@@ -12,7 +12,7 @@ test("Agent avatar upload stores content before saving the exact canonical revis
   const avatarKey = `upload_png_${"a".repeat(40)}`;
   const uploadIntentId = "profile_image_upload_intent_avatar";
   const result = await uploadAgentAvatar({
-    agentDefinitionId: "agent",
+    agentId: "agent",
     expectedRevisionId: "revision-7",
     file,
     saveProfile: async (input) => {
@@ -40,7 +40,7 @@ test("Agent avatar upload never saves a profile after content upload failure", a
   let saved = false;
   await assert.rejects(
     uploadAgentAvatar({
-      agentDefinitionId: "agent",
+      agentId: "agent",
       expectedRevisionId: "revision",
       file: new File(["bad"], "bad.png", { type: "image/png" }),
       saveProfile: async () => {

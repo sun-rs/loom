@@ -1,3 +1,8 @@
+import {
+  identityDisplayName,
+  directRoomDisplayName,
+} from "./identity-display-name.ts";
+import { roomTimelineNoticeSql } from "./human-activity-notices.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import {
   HumanActivityRequestSchema,
@@ -130,7 +135,7 @@ export class HumanActivity {
       )
       .all(...args, p.before, p.limit + 1);
     const taken = rows.slice(0, p.limit);
-    return HumanActivityResponseSchema.parse({
+    const result = HumanActivityResponseSchema.parse({
       total,
       // Same eligibility/read/done rules, evaluated before pagination and visible filters.
       summary: {
@@ -172,17 +177,21 @@ export class HumanActivity {
                   "SELECT * FROM tasks WHERE thread_id = ? AND EXISTS(SELECT 1 FROM memberships WHERE room_id=tasks.room_id AND principal_id=?)",
                 )
                 .get(threadId, actorId);
+        const roomName =
+          directRoomDisplayName(this.db, roomId, actorId) ?? row.room_name;
         return {
           key: activityKey(roomId, text(row, "kind"), threadId),
           roomId,
-          roomName: row.room_name,
+          roomName,
           kind: threadId ? "thread" : row.kind,
           ...(thread
             ? { threadId, rootMessageId: thread.root_message_id }
             : {}),
-          title: thread?.title ?? row.room_name,
+          title: thread?.title ?? roomName,
           latestMessage: messageProjectionFromRow(row),
-          senderName: row.sender_name,
+          senderName:
+            identityDisplayName(this.db, text(row, "actor_id")) ??
+            row.sender_name,
           latestSeq: row.latest_seq,
           unreadCount: row.unread_count,
           hasMention: row.has_mention === 1,
@@ -210,32 +219,89 @@ export class HumanActivity {
         ? { nextCursor: p.next(integer(taken.at(-1)!, "position")) }
         : {}),
     });
+    // System notices are durable Room events, not fabricated chat messages.
+    // Merge them only into navigation attention; message-card paging stays unchanged.
+    const notices = this.db
+      .prepare(
+        `
+      SELECT r.room_id, COUNT(*) AS unread_count
+      FROM rooms r JOIN room_events e ON e.room_id = r.room_id
+      LEFT JOIN human_activity_frontiers f ON f.room_id=r.room_id AND f.scope_id='' AND f.principal_id=?
+      WHERE ${discoveryReadableRooms}
+        AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?)
+        AND ${roomTimelineNoticeSql} AND e.room_seq > COALESCE(f.read_seq,0)
+      GROUP BY r.room_id
+    `,
+      )
+      .all(actorId, input.workspaceId, actorId, actorId);
+    for (const notice of notices) {
+      const roomId = text(notice, "room_id");
+      const existing = result.summary!.rooms.find(
+        (room) => room.roomId === roomId,
+      );
+      if (existing) existing.unreadCount += Number(notice.unread_count);
+      else
+        result.summary!.rooms.push({
+          roomId,
+          unreadCount: Number(notice.unread_count),
+          hasMention: false,
+        });
+    }
+    return result;
   }
 
   mark(actorId: string, request: HumanActivityMarkRequest) {
     requireDiscoveryHuman(this.db, actorId);
     const input = HumanActivityMarkRequestSchema.parse(request);
     this.requireScope(actorId, input.roomId, input.threadId);
-    // Port of Raft markDone(throughActivitySeq): never substitute the newest server head.
+    // Passive viewport/done requests retain their supplied frontier. Explicit
+    // list selection acknowledges the current conversation head in this transaction.
     const scope = input.threadId ?? "";
     const max = Number(
       this.db
         .prepare(
-          "SELECT COALESCE(MAX(room_seq),0) AS n FROM discovery_messages WHERE room_id = ? AND thread_id IS ?",
+          `SELECT MAX(n) AS n FROM (SELECT COALESCE(MAX(room_seq),0) AS n FROM discovery_messages WHERE room_id = ? AND thread_id IS ? UNION ALL SELECT COALESCE(MAX(e.room_seq),0) AS n FROM room_events e WHERE e.room_id=? AND ${roomTimelineNoticeSql} AND ? IS NULL AND ? <> 'unread')`,
         )
-        .get(input.roomId, input.threadId ?? null)!.n,
+        .get(
+          input.roomId,
+          input.threadId ?? null,
+          input.roomId,
+          input.threadId ?? null,
+          input.action,
+        )!.n,
     );
     if (input.throughSeq > max)
       throw new Error("activity frontier exceeds visible message sequence");
+    let readThroughSeq = input.throughSeq;
+    if (input.action === "read" && input.threadId === undefined) {
+      if (input.source === "channel-list") {
+        readThroughSeq = max;
+      } else if (input.source === "viewport") {
+        // Automatic navigation must not consume unseen system notices before a list click.
+        const firstNotice = this.db
+          .prepare(
+            `SELECT MIN(e.room_seq) AS n FROM room_events e WHERE e.room_id=? AND ${roomTimelineNoticeSql} AND e.room_seq>COALESCE((SELECT read_seq FROM human_activity_frontiers WHERE principal_id=? AND room_id=? AND scope_id=''),0)`,
+          )
+          .get(input.roomId, actorId, input.roomId)!.n;
+        if (firstNotice !== null)
+          readThroughSeq = Math.min(readThroughSeq, Number(firstNotice) - 1);
+      }
+    }
     if (input.action === "unread") {
       if (input.throughSeq !== max)
         throw new Error("activity changed; reload before marking unread");
       const last = Number(
         this.db
           .prepare(
-            "SELECT COALESCE(MAX(room_seq),0) AS n FROM discovery_messages WHERE room_id=? AND thread_id IS ? AND actor_id<>?",
+            `SELECT MAX(n) AS n FROM (SELECT COALESCE(MAX(room_seq),0) AS n FROM discovery_messages WHERE room_id=? AND thread_id IS ? AND actor_id<>? UNION ALL SELECT COALESCE(MAX(e.room_seq),0) AS n FROM room_events e WHERE e.room_id=? AND ${roomTimelineNoticeSql} AND ? IS NULL)`,
           )
-          .get(input.roomId, input.threadId ?? null, actorId)!.n,
+          .get(
+            input.roomId,
+            input.threadId ?? null,
+            actorId,
+            input.roomId,
+            input.threadId ?? null,
+          )!.n,
       );
       const before = Math.max(0, last - 1);
       this.db
@@ -261,7 +327,7 @@ export class HumanActivity {
         actorId,
         input.roomId,
         scope,
-        input.throughSeq,
+        readThroughSeq,
         input.action === "done" ? input.throughSeq : 0,
       );
     const row = this.db

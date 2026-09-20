@@ -10,6 +10,8 @@ export type SearchDestination = {
   principalId?: string;
   kind: "channel" | "agent" | "human";
   privateChannel?: boolean;
+  archived?: boolean;
+  searchText?: string;
   avatarKey?: string;
 };
 export function SearchDestinationCard({
@@ -25,6 +27,7 @@ export function SearchDestinationCard({
     <button
       type="button"
       className={common ? "rah-search-common" : "rah-search-destination"}
+      data-archived={entry.archived || undefined}
       onClick={() => onOpen(entry)}
     >
       {entry.kind === "channel" ? (
@@ -44,6 +47,9 @@ export function SearchDestinationCard({
         <span className="rah-search-card-name">
           <b>{entry.title}</b>
           {!common && <small>{entry.badge}</small>}
+          {entry.archived && (
+            <small className="rah-search-archived-badge">已归档</small>
+          )}
         </span>
         <span className="rah-search-card-subtitle">{entry.subtitle}</span>
       </span>

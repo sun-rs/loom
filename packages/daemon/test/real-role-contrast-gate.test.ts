@@ -251,7 +251,7 @@ test(
           prepared.humanAccessToken,
           "/v3/client/agents/onboard",
           {
-            agentDefinitionId: agent.agent.definition.agentDefinitionId,
+            agentId: agent.agent.definition.agentId,
             basedOnRoomSeq: onboardDelivery.latestRoomSeq,
             idempotencyKey: `real-role-contrast-onboard-${role.handle}`,
             roomId,

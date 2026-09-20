@@ -6,7 +6,7 @@ export function useVisibleMessageRead(
   element: RefObject<HTMLElement | null>,
   scope: string | undefined,
   messages: readonly { messageId: string; roomSeq: number }[],
-  acknowledge: ((throughSeq: number) => Promise<void>) | undefined,
+  acknowledge: ((throughSeq: number) => Promise<void | number>) | undefined,
 ) {
   const seen = useRef({ scope, throughSeq: 0 });
   useEffect(() => {
@@ -23,11 +23,16 @@ export function useVisibleMessageRead(
         return;
       const viewport = node.getBoundingClientRect();
       const rows = [
-        ...node.querySelectorAll<HTMLElement>("[data-message-id]"),
+        ...node.querySelectorAll<HTMLElement>(
+          "[data-message-id], [data-read-event-id]",
+        ),
       ].map((row) => {
         const rect = row.getBoundingClientRect();
         return {
-          seq: sequences.get(row.dataset.messageId ?? "") ?? 0,
+          seq:
+            sequences.get(
+              row.dataset.messageId ?? row.dataset.readEventId ?? "",
+            ) ?? 0,
           top: rect.top,
           bottom: rect.bottom,
         };
@@ -36,10 +41,15 @@ export function useVisibleMessageRead(
       if (throughSeq <= state.throughSeq) return;
       const previous = state.throughSeq;
       state.throughSeq = throughSeq;
-      void acknowledge(throughSeq).catch(() => {
-        // Failed acknowledgement may retry on the next visibility/scroll/render event.
-        if (state.throughSeq === throughSeq) state.throughSeq = previous;
-      });
+      void acknowledge(throughSeq)
+        .then((accepted) => {
+          if (typeof accepted === "number" && state.throughSeq === throughSeq)
+            state.throughSeq = accepted;
+        })
+        .catch(() => {
+          // Failed acknowledgement may retry on the next visibility/scroll/render event.
+          if (state.throughSeq === throughSeq) state.throughSeq = previous;
+        });
     };
     const schedule = () => {
       clearTimeout(timer);

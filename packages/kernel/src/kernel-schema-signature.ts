@@ -1,5 +1,32 @@
 import type { DatabaseSync } from "node:sqlite";
 
+export function isPresentedWindowMigration(
+  name: string,
+  current: string,
+  expected: string,
+): boolean {
+  if (name !== "table:activation_presented_windows") return false;
+  const legacy = JSON.parse(expected) as { columns: Column[] };
+  legacy.columns = legacy.columns
+    .filter(
+      (column) =>
+        !["sent_at", "sent_by_host_id", "pending_ack_seq"].includes(
+          column.name,
+        ),
+    )
+    .map((column) => ({
+      ...column,
+      name:
+        column.name === "presented_seqs_json"
+          ? "message_seqs_json"
+          : column.name === "rendered_at"
+            ? "presented_at"
+            : column.name,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return JSON.stringify(legacy) === current;
+}
+
 function quoted(name: string): string {
   return `"${name.replaceAll('"', '""')}"`;
 }
@@ -213,4 +240,23 @@ export function isKnownLegacyDrift(
   )
     live.uniqueKeys = [...live.uniqueKeys, observationKey].sort();
   return JSON.stringify(live) === expected;
+}
+
+/** Exactly the v56 account UNIQUE and missing mention column, never a drift waiver. */
+export function isIdentityAccountsMigration(
+  name: string,
+  current: string,
+  expected: string,
+): boolean {
+  if (name !== "table:principals" && name !== "table:messages") return false;
+  const live = JSON.parse(current) as TableShape;
+  const target = JSON.parse(expected) as TableShape;
+  if (name === "table:messages")
+    target.columns = target.columns.filter((c) => c.name !== "mentions_json");
+  else
+    target.uniqueKeys = [
+      ...target.uniqueKeys,
+      '[[0,"handle",0,"BINARY"]]',
+    ].sort();
+  return JSON.stringify(target) === JSON.stringify(live);
 }

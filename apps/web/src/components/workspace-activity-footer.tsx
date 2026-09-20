@@ -13,13 +13,13 @@ export function WorkspaceActivityFooter({
   const [, setClockRevision] = useState(0);
   const latest = latestWorkspaceActivity(agents);
   useEffect(() => {
-    if (!latest) return;
+    if (!latest || !Number.isFinite(latest.expiresAt)) return;
     const timer = window.setTimeout(
       () => setClockRevision((revision) => revision + 1),
       Math.max(0, latest.expiresAt - Date.now()) + 50,
     );
     return () => window.clearTimeout(timer);
-  }, [latest?.agent.agentDefinitionId, latest?.expiresAt]);
+  }, [latest?.agent.agentId, latest?.expiresAt]);
   if (!latest) return null;
   return (
     <footer
@@ -27,7 +27,7 @@ export function WorkspaceActivityFooter({
       data-testid="live-agent-activity-bar"
       title={latest.presentation.label}
     >
-      <AgentAvatar agent={latest.agent} size="sidebar" />
+      <AgentAvatar agent={latest.agent} size="sidebar" showStatus={false} />
       <AgentStatusDot
         activity={latest.presentation.activity}
         className="rah-live-agent-activity-dot"

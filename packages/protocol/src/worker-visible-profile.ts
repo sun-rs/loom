@@ -102,7 +102,7 @@ export const WorkerVisibleProfileMetadataSchema = z
     createdAgents: z
       .array(
         Person.extend({
-          agentDefinitionId: IdentifierSchema,
+          agentId: IdentifierSchema,
           state: AgentDefinitionStateSchema,
           runtimes: z
             .array(
@@ -126,7 +126,9 @@ export const WorkerVisibleProfileMetadataSchema = z
       .object({
         modelBindingIds: z.array(IdentifierSchema).max(16),
         modelBindingIdsTruncated: z.boolean(),
+        customModelId: z.string().optional(),
         modelSelection: z.enum([
+          "custom_model",
           "binding_ids",
           "capability_class",
           "runtime_default",
@@ -161,7 +163,11 @@ export const WorkerVisibleProfileMetadataSchema = z
         runtimeProfileRevisionId: IdentifierSchema.optional(),
         model: z
           .object({
-            source: z.enum(["runtime_default", "explicit_binding"]),
+            source: z.enum([
+              "runtime_default",
+              "explicit_binding",
+              "custom_model",
+            ]),
             modelBindingId: IdentifierSchema.optional(),
             provider: IdentifierSchema.optional(),
             modelId: IdentifierSchema.optional(),

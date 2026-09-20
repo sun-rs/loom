@@ -13,7 +13,7 @@ const avatarAgent = {
   connectionStatus: "offline" as const,
   presence: {
     activity: "offline" as const,
-    agentDefinitionId: "isolated",
+    agentId: "isolated",
     reason: "host_offline" as const,
   },
 };
@@ -36,7 +36,7 @@ const client = {
     agents: [
       {
         id: "isolated",
-        agentDefinitionId: "isolated",
+        agentId: "isolated",
         participantId: "isolated",
         type: "agent",
         avatarKey: avatarAgent.avatarKey,

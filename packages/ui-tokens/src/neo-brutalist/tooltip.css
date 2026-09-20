@@ -1,7 +1,8 @@
 /* Raft index-BVfbaScj.js pR/JLe/zi; brutal arrow is hidden. */
 .rah-tooltip-positioner {
   isolation: isolate;
-  z-index: 50;
+  /* Body portals must paint above dialogs/drawers (100–130). */
+  z-index: 140;
   outline: none;
 }
 .rah-tooltip {

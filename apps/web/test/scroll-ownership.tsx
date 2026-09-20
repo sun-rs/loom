@@ -12,7 +12,7 @@ import "../src/product.css";
 import "../src/agent-directory.css";
 
 const agent: WorkspaceAgentView = {
-  agentDefinitionId: "fixture",
+  agentId: "fixture",
   createdAt: "2026-09-16T00:00:00Z",
   createdBy: "fixture",
   displayName: "Fixture",
@@ -50,7 +50,6 @@ function Fixture() {
   const [activities, setActivities] = useState(() =>
     Array.from({ length: 80 }, (_, i) => activity(i)),
   );
-  const [activityHistory, setActivityHistory] = useState(false);
   const [open, setOpen] = useState("");
   const thread = useThreadFocusReturn();
   const search = useSearchChannelPreview();
@@ -84,24 +83,7 @@ function Fixture() {
           agent={agent}
           activities={activities}
           error={undefined}
-          hasEarlier={new URLSearchParams(location.search).has(
-            "activityRepair",
-          )}
           loading={false}
-          history={activityHistory}
-          onLatest={() => {
-            setActivityHistory(false);
-            setActivities(Array.from({ length: 80 }, (_, i) => activity(i)));
-          }}
-          onLoadEarlier={() => {
-            setActivityHistory(true);
-            setActivities((current) => [
-              ...Array.from({ length: 20 }, (_, i) =>
-                activity(current[0]!.serverSequence - 20 + i),
-              ),
-              ...current,
-            ]);
-          }}
           onOpenRoom={() => {}}
         />
       </div>

@@ -140,7 +140,7 @@ test("remote configured Runtime combines profile secrets with one activation-sco
         toSeq: 1,
         agent: {
           agentDefinitionRevision: {
-            agentDefinitionId: "agent-definition-remote-profile",
+            agentId: "agent-definition-remote-profile",
             agentDefinitionRevisionId: "agent-revision-remote-profile-v1",
             contentDigest: `sha256:${"1".repeat(64)}`,
             createdAt: "2026-08-29T12:00:00.000+08:00",

@@ -7,11 +7,11 @@ export type ProductNavigationRequest = {
   target: NavigationTarget;
   /** Ephemeral search presentation; never sent to the business resolver. */
   highlightQuery?: string;
-  surface?: "activity" | "tasks" | "room-tasks";
+  surface?: "activity" | "tasks" | "room-tasks" | "room";
 };
 
 export type NavigationPresentation = {
-  agentDefinitionId?: string;
+  agentId?: string;
   agentTab?: AgentRouteTab;
   focusedMessageId?: string;
   inputRequestId?: string;
@@ -23,11 +23,11 @@ export type NavigationPresentation = {
 
 export function navigationPresentation(
   target: NavigationTarget,
-  originSurface?: "activity" | "tasks" | "room-tasks",
+  originSurface?: "activity" | "tasks" | "room-tasks" | "room",
 ): NavigationPresentation {
   if (target.kind === "agent")
     return {
-      agentDefinitionId: target.agentDefinitionId,
+      agentId: target.agentId,
       agentTab: normalizeAgentRouteTab(target.tab),
       surface: "agents",
       tab: "chat",
@@ -119,7 +119,7 @@ export function navigationSearch(
   params.set("target", target.kind);
   if (target.kind === "agent") {
     params.set("surface", "agents");
-    params.set("agent", target.agentDefinitionId);
+    params.set("agent", target.agentId);
     params.set("agentTab", normalizeAgentRouteTab(target.tab));
     return `?${params}`;
   }
@@ -156,11 +156,7 @@ export function navigationSearch(
 }
 
 function retainsActivityBackground(target: NavigationTarget): boolean {
-  return (
-    target.kind === "thread" ||
-    target.kind === "task" ||
-    (target.kind === "message" && target.rootMessageId !== undefined)
-  );
+  return target.kind !== "agent" && target.kind !== "computer";
 }
 
 export function roomTabFromSearch(search: string): "chat" | "tasks" | "files" {

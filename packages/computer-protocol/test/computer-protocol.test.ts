@@ -77,7 +77,7 @@ function placement() {
 function agentRuntimeContext() {
   return {
     agentDefinitionRevision: {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       agentDefinitionRevisionId: "agent-revision-1",
       contentDigest: digest("3"),
       createdAt: at,

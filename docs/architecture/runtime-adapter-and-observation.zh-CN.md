@@ -277,3 +277,7 @@ Human 可通过 host.runtime.list 的可选 refreshOfferId 请求 daemon 对已�
 RuntimeGuideSettings 是 Host 本地启动配置的唯一所有者。可编辑作用域仅为 AgentDefinition + runtime；执行时使用 Activation 的 Agent 身份读取。全局启动配置更新返回 conflict；仅 enabled 字段的独立 Guide 更新仍允许，系统受控通信、模型及环境参数保持保护。启动配置与 canonical 模型策略独立保存，下一次启动生效，不改写活动 Run。旧的全局继承策略已由[只读 Provider 设置](../audits/2026-09-13-provider-settings-readonly.zh-CN.md)取代。
 
 2026-09-13 用户范围收敛：Agent 额外启动配置仅支持环境变量；历史自定义 argv 不再应用或开放写入，系统生成参数与独立 Guide 设置保留。详见[环境变量收口](../audits/2026-09-13-agent-environment-only.zh-CN.md)。
+
+## 显式自定义模型
+
+ModelIntent.customModel 由 Protocol 定义原生 runtime/modelId，不能与 exactBindingIds 或 capabilityClass 混用，fallback 必须关闭。Kernel 只允许匹配 customModelRuntime 的 Offer；AgentHost 再检查原生 Claude/Codex adapter 并原样传参。未探测的自定义模型不获得虚构的 binding 或 effort/tier 能力，Placement/RunAttempt 以 custom_model 保留来源。目录候选与运行可用性分离，详见[候选与自定义 ID 审计](../audits/2026-09-20-claude-catalog-custom-models.zh-CN.md)。

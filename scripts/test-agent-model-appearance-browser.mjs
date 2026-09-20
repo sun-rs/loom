@@ -90,12 +90,14 @@ try {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 844 });
     for (const [id, label] of [
-      ["aihubmix", "aihubmix/model"],
-      ["deepseek", "deepseek/model"],
-      ["codex", "codex/model"],
-      ["claude", "claude/model"],
-      ["kimi", "kimi/model"],
-      ["grokbuild", "grokbuild/model"],
+      ["aihubmix", "model"],
+      ["deepseek", "model"],
+      ["codex", "model"],
+      ["claude", "model"],
+      ["kimi", "model"],
+      ["grokbuild", "model"],
+      ["deleted-opencode", "iiiiitoken/gemini-3.8-flash-high"],
+      ["deleted-kimi", "kimi-code/k3"],
     ]) {
       const labelNode = page.locator(
         `[data-message-id="${id}"] .rah-message-agent-model`,

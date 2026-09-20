@@ -4,11 +4,7 @@ import {
 } from "@rah-os/protocol";
 export type AgentProfileEditInput = Pick<
   ClientAgentProfileRequest,
-  | "agentDefinitionId"
-  | "avatarUploadIntentId"
-  | "expectedRevisionId"
-  | "field"
-  | "value"
+  "agentId" | "avatarUploadIntentId" | "expectedRevisionId" | "field" | "value"
 >;
 export type AgentProfileField = ClientAgentProfileRequest["field"];
 
@@ -18,7 +14,7 @@ export function validProfileField(
 ): boolean {
   return ClientAgentProfileRequestSchema.safeParse({
     action: "update_profile",
-    agentDefinitionId: "validation",
+    agentId: "validation",
     expectedRevisionId: "validation",
     basedOnRoomSeq: 0,
     idempotencyKey: "validation",

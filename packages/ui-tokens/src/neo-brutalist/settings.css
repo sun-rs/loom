@@ -154,9 +154,31 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px;
+  padding: 12px 16px;
   border: 2px solid var(--ink-30);
   margin-top: 8px;
+}
+.rah-settings-archive-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.rah-settings-archive-actions .btn {
+  height: 28px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 12px;
+}
+.rah-settings-archive-actions .rah-settings-archive-delete {
+  width: 28px;
+  padding: 0;
+}
+.rah-settings-archive-actions .btn svg {
+  width: 14px;
+  height: 14px;
 }
 .rah-settings-archive-identity {
   display: flex;
@@ -193,8 +215,6 @@
   border: 0;
   background: transparent;
   font: 700 14px/20px var(--sans);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 .rah-settings-archive-identity p {
   margin: 2px 0 0;

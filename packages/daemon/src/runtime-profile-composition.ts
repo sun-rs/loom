@@ -41,7 +41,7 @@ export function createConfiguredRuntime(input: {
   executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
   launchEnvironment?: (
     runtimeId: string,
-    agentDefinitionId?: string,
+    agentId?: string,
   ) => Record<string, string>;
   guideEnabled?: (runtimeId: string | undefined) => boolean;
   agentMemoryCoordinator?: AgentMemoryCoordinator;
@@ -81,7 +81,7 @@ export function createConfiguredRuntime(input: {
         const launchEnv =
           input.launchEnvironment?.(
             runtimeId ?? "unknown",
-            scope.agent?.agentDefinitionRevision.agentDefinitionId,
+            scope.agent?.agentDefinitionRevision.agentId,
           ) ?? {};
         const secretLease = await input.credentialEnvironment.resolve();
         const leases = [secretLease, { env: launchEnv }];

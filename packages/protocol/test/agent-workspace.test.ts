@@ -11,8 +11,8 @@ import {
 
 test("Agent workspace roots distinguish the persistent Agent workspace from the frozen runtime project", () => {
   assert.deepEqual(
-    AgentWorkspaceRootsRequestSchema.parse({ agentDefinitionId: "agent-1" }),
-    { agentDefinitionId: "agent-1" },
+    AgentWorkspaceRootsRequestSchema.parse({ agentId: "agent-1" }),
+    { agentId: "agent-1" },
   );
   const roots = AgentWorkspaceRootsSchema.parse({
     defaultRootId: "agent-workspace",
@@ -45,12 +45,12 @@ test("Agent workspace roots distinguish the persistent Agent workspace from the 
 test("workspace list/read requests default to the Agent workspace and responses bind one root", () => {
   assert.deepEqual(
     AgentWorkspaceListRequestSchema.parse({
-      agentDefinitionId: "agent-1",
+      agentId: "agent-1",
       includeHidden: false,
       path: "src",
     }),
     {
-      agentDefinitionId: "agent-1",
+      agentId: "agent-1",
       includeHidden: false,
       path: "src",
       rootId: "agent-workspace",
@@ -69,7 +69,7 @@ test("workspace list/read requests default to the Agent workspace and responses 
   assert.equal(listing.rootId, "runtime-project");
   assert.throws(() =>
     AgentWorkspaceListRequestSchema.parse({
-      agentDefinitionId: "agent-1",
+      agentId: "agent-1",
       includeHidden: false,
       path: "/etc",
       rootId: "runtime-project",

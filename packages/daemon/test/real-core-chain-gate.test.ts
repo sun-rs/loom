@@ -360,7 +360,7 @@ test(
       const handleByParticipantId = new Map<string, string>();
 
       const configureAgent = async (input: {
-        agentDefinitionId: string;
+        agentId: string;
         executable: string;
         handle: string;
         idempotencyKey: string;
@@ -384,7 +384,7 @@ test(
         );
         await postJson(originOf(), token, "/v3/client/agents/manage", {
           action: "configure",
-          agentDefinitionId: input.agentDefinitionId,
+          agentId: input.agentId,
           basedOnRoomSeq: control.latestRoomSeq,
           displayName: `core-chain ${input.handle}`,
           handle: input.handle,
@@ -409,7 +409,7 @@ test(
         );
         assert.ok(agent, `Agent missing for ${role.executable}`);
         await configureAgent({
-          agentDefinitionId: agent.definition.agentDefinitionId,
+          agentId: agent.definition.agentId,
           executable: role.executable,
           handle: role.handle,
           idempotencyKey: `core-chain-config-${role.handle}`,
@@ -417,10 +417,7 @@ test(
           reasoning: role.reasoning,
         });
         participantIdByHandle.set(role.handle, agent.definition.participantId);
-        definitionIdByHandle.set(
-          role.handle,
-          agent.definition.agentDefinitionId,
-        );
+        definitionIdByHandle.set(role.handle, agent.definition.agentId);
         handleByParticipantId.set(agent.definition.participantId, role.handle);
         const roomDelivery = await syncRoom(
           originOf(),
@@ -429,7 +426,7 @@ test(
           "core-chain-room-admin",
         );
         await postJson(originOf(), token, "/v3/client/agents/onboard", {
-          agentDefinitionId: agent.definition.agentDefinitionId,
+          agentId: agent.definition.agentId,
           basedOnRoomSeq: roomDelivery.latestRoomSeq,
           idempotencyKey: `core-chain-onboard-a-${role.handle}`,
           roomId: roomA,
@@ -471,7 +468,7 @@ test(
           "core-chain-room-b-admin",
         );
         await postJson(originOf(), token, "/v3/client/agents/onboard", {
-          agentDefinitionId: definitionIdByHandle.get(handle)!,
+          agentId: definitionIdByHandle.get(handle)!,
           basedOnRoomSeq: delivery.latestRoomSeq,
           idempotencyKey: `core-chain-onboard-b-${handle}`,
           roomId: roomB,
@@ -1136,7 +1133,7 @@ test(
       const sessionReset = await postJson<{
         providerContinuityRecords: number;
       }>(originOf(), token, "/v3/client/agents/execution/reset", {
-        agentDefinitionId: definitionIdByHandle.get("mem-a")!,
+        agentId: definitionIdByHandle.get("mem-a")!,
         basedOnRoomSeq: resetControl.latestRoomSeq,
         idempotencyKey: "core-chain-fresh-provider-session",
         mode: "session",
@@ -1303,7 +1300,7 @@ test(
 
       // The switch itself.
       await configureAgent({
-        agentDefinitionId: definitionIdByHandle.get("mem-a")!,
+        agentId: definitionIdByHandle.get("mem-a")!,
         executable: SWITCH_TARGET.executable,
         handle: "mem-a",
         idempotencyKey: "core-chain-s4-switch",
@@ -2047,7 +2044,7 @@ function agentMemoryHomes(
 
 function agentDefinitionState(
   databasePath: string,
-  agentDefinitionId: string,
+  agentId: string,
 ): { currentRevisionId: string; executionPolicyRevisionId: string } {
   return readOnlyLedger(databasePath, (database) => {
     const row = database
@@ -2059,9 +2056,9 @@ function agentDefinitionState(
              ON r.agent_definition_revision_id = d.current_revision_id
           WHERE d.agent_definition_id = ?`,
       )
-      .get(agentDefinitionId) as
+      .get(agentId) as
       { policy_revision_id?: string; revision_id?: string } | undefined;
-    assert.ok(row, `no AgentDefinition row for ${agentDefinitionId}`);
+    assert.ok(row, `no AgentDefinition row for ${agentId}`);
     return {
       currentRevisionId: String(row.revision_id ?? ""),
       executionPolicyRevisionId: String(row.policy_revision_id ?? ""),

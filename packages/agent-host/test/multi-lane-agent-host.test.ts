@@ -121,7 +121,7 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
         role: `parallel worker ${String(index)}`,
         skillRefs: [],
       });
-      agentDefinitionIds.push(created.definition.agentDefinitionId);
+      agentDefinitionIds.push(created.definition.agentId);
     }
     const host = authenticateHost(kernel, "multi-lane-host", [
       agentA.principal.principalId,
@@ -299,7 +299,7 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
 
       const disabled = kernel.manageWorkspaceAgent(humanActor, {
         action: "set_state",
-        agentDefinitionId: agentDefinitionIds[0]!,
+        agentId: agentDefinitionIds[0]!,
         basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
         idempotencyKey: "multi-lane-agent-a-disable-active",
         state: "disabled",
@@ -328,7 +328,7 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
       );
       kernel.manageWorkspaceAgent(humanActor, {
         action: "set_state",
-        agentDefinitionId: agentDefinitionIds[0]!,
+        agentId: agentDefinitionIds[0]!,
         basedOnRoomSeq: disabled.event.roomSeq,
         idempotencyKey: "multi-lane-agent-a-enable-after-drain",
         state: "enabled",

@@ -139,7 +139,7 @@ test("opaque browser ids do not depend on secure-context randomUUID", () => {
 test("Workspace Agent directory is independent from Room membership and reports Runtime bindings", () => {
   const agent = {
     currentRevision: {
-      agentDefinitionId: "definition-alice",
+      agentId: "definition-alice",
       agentDefinitionRevisionId: "definition-alice-v1",
       contentDigest: `sha256:${"a".repeat(64)}`,
       createdAt,
@@ -156,7 +156,7 @@ test("Workspace Agent directory is independent from Room membership and reports 
       skillRefs: [],
     },
     definition: {
-      agentDefinitionId: "definition-alice",
+      agentId: "definition-alice",
       controlRoomId: "catalog-control",
       createdAt,
       currentRevisionId: "definition-alice-v1",
@@ -169,7 +169,7 @@ test("Workspace Agent directory is independent from Room membership and reports 
   const runtime = {
     agentBindings: [
       {
-        agentDefinitionId: "definition-alice",
+        agentId: "definition-alice",
         handle: "Alice",
         participantId: "agent-alice",
       },
@@ -193,7 +193,7 @@ test("Workspace Agent directory is independent from Room membership and reports 
   });
   assert.deepEqual(directory, [
     {
-      agentDefinitionId: "definition-alice",
+      agentId: "definition-alice",
       agentDefinitionRevisionId: "definition-alice-v1",
       createdAt,
       createdBy: "human-main",
@@ -289,7 +289,7 @@ test("Room membership drives Message delivery while mentions only raise attentio
       ],
       body: "@Kimi",
     }),
-    [],
+    ["agent-kimi"],
   );
   assert.deepEqual(
     taskParticipantsForSelection({
@@ -388,7 +388,12 @@ test("Room view model preserves canonical order and maps Task workflow to Raft c
   const view = createRoomViewModel({
     members: [
       { handle: "Hakase", kind: "human", principalId: "human-main" },
-      { handle: "Alice", kind: "agent", principalId: "agent-main" },
+      {
+        handle: "Alice",
+        displayName: "Gemini",
+        kind: "agent",
+        principalId: "agent-main",
+      },
     ],
     messages,
     tasks: [
@@ -404,7 +409,7 @@ test("Room view model preserves canonical order and maps Task workflow to Raft c
     view.messages.map(({ author, body }) => ({ author, body })),
     [
       { author: "Hakase", body: "first" },
-      { author: "Alice", body: "second" },
+      { author: "Gemini", body: "second" },
     ],
   );
   assert.deepEqual(
@@ -423,7 +428,7 @@ test("Room view model preserves canonical order and maps Task workflow to Raft c
   const submitted = view.taskColumns
     .find(({ id }) => id === "review")
     ?.tasks.at(0);
-  assert.equal(submitted?.assigneeLabel, "Alice");
+  assert.equal(submitted?.assigneeLabel, "Gemini");
   assert.equal(submitted?.submissionSummary, "ready");
 });
 

@@ -25,6 +25,10 @@ try {
     name: "最近动态",
     exact: true,
   });
+  await expect(preview.locator("dt").first()).toHaveCSS(
+    "color",
+    "rgba(0, 0, 0, 0.45)",
+  );
   await activity.click();
   const panel = page.getByRole("main", { name: "Agent 详情侧栏", exact: true });
   await expect(panel).toBeVisible();

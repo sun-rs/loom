@@ -42,8 +42,8 @@ for (const engine of ["chrome", "firefox"]) {
     const agents = (
       await post("agents/list", { controlRoomId: workspace.controlRoomId })
     ).agents;
-    const id = agents[0].definition.agentDefinitionId;
-    const seed = await post("agents/get", { agentDefinitionId: id });
+    const id = agents[0].definition.agentId;
+    const seed = await post("agents/get", { agentId: id });
     const frontier = await post("rooms/sync", {
       roomId: workspace.controlRoomId,
       consumerId: "skills-gate-seed",
@@ -51,7 +51,7 @@ for (const engine of ["chrome", "firefox"]) {
     });
     await post("agents/manage", {
       action: "configure",
-      agentDefinitionId: id,
+      agentId: id,
       handle: seed.agent.handle,
       displayName: seed.agent.currentRevision.displayName ?? seed.agent.handle,
       role: seed.agent.currentRevision.role,
@@ -63,7 +63,7 @@ for (const engine of ["chrome", "firefox"]) {
       idempotencyKey: crypto.randomUUID(),
     });
     const initialSkills = await post("agents/skills/list", {
-      agentDefinitionId: id,
+      agentId: id,
     });
     writeFileSync(
       join(output, `${engine}-initial-skills.json`),
@@ -167,7 +167,7 @@ for (const engine of ["chrome", "firefox"]) {
         .waitFor();
       assert.equal(requestCount, failedReads + 1);
       await page.unroute("**/v3/client/agents/skills/list");
-      const beforeSwitch = await post("agents/get", { agentDefinitionId: id });
+      const beforeSwitch = await post("agents/get", { agentId: id });
       let releaseOld;
       const oldWait = new Promise((resolve) => {
         releaseOld = resolve;
@@ -218,7 +218,7 @@ for (const engine of ["chrome", "firefox"]) {
       releaseOld();
       await page.waitForTimeout(100);
       assert.ok(!(await skills.innerText()).includes("STALE CLI"));
-      const afterSwitch = await post("agents/get", { agentDefinitionId: id });
+      const afterSwitch = await post("agents/get", { agentId: id });
       assert.notEqual(
         afterSwitch.policy.executionPolicyRevisionId,
         beforeSwitch.policy.executionPolicyRevisionId,
@@ -229,7 +229,7 @@ for (const engine of ["chrome", "firefox"]) {
       );
       await page.unroute("**/v3/client/agents/skills/list");
       const currentSkills = await post("agents/skills/list", {
-        agentDefinitionId: id,
+        agentId: id,
       });
       const unavailable = {
         state: "unavailable",

@@ -182,7 +182,7 @@ test("self profile metadata uses one current revision and control event without 
     );
     const current = f.kernel.getWorkspaceAgentManagementView(
       f.actor,
-      f.definition.definition.agentDefinitionId,
+      f.definition.definition.agentId,
     ).agent.currentRevision;
     assert.equal(current.revision, 2);
     assert.equal(current.role, f.definition.revision.role);
@@ -230,7 +230,7 @@ test("self update fails closed after Human CAS conflict or membership removal", 
     const read = f.profiles.get(f.execution, {});
     f.kernel.manageWorkspaceAgent(f.actor, {
       action: "update_profile",
-      agentDefinitionId: f.definition.definition.agentDefinitionId,
+      agentId: f.definition.definition.agentId,
       expectedRevisionId: read.writeContext.expectedRevisionId,
       basedOnRoomSeq: read.writeContext.controlRoomSeq,
       idempotencyKey: "human",

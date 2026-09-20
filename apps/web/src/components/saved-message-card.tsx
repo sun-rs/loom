@@ -93,10 +93,7 @@ export function SavedMessageCard({
             <time>{formatSavedRelativeTime(row.message.createdAt)}</time>
           </span>
           <span className="rah-saved-message-body">
-            {activityDisplayText(
-              row.message.body,
-              entities?.humans().map((member) => member.principal) ?? [],
-            )}
+            {activityDisplayText(row.message.body, entities?.people() ?? [])}
           </span>
         </span>
         <span className="rah-saved-remove-wrap">

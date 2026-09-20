@@ -21,6 +21,7 @@ const OFFICIAL_AVATAR_PACK = avatarPack as OfficialAvatarPack;
 export function AgentAvatar({
   agent,
   showStatus = true,
+  muted = agent.state === "tombstoned",
   size,
 }: {
   agent: Pick<
@@ -33,6 +34,7 @@ export function AgentAvatar({
     | "presence"
   > & { participantId?: string };
   showStatus?: boolean;
+  muted?: boolean;
   size:
     | "header"
     | "profile"
@@ -50,7 +52,7 @@ export function AgentAvatar({
   return (
     <span
       aria-label={`${agent.displayName} 头像`}
-      className={`rah-agent-avatar is-${size}`}
+      className={`rah-agent-avatar is-${size}${muted ? " is-deleted" : ""}`}
       role="img"
       style={
         uploaded
@@ -85,7 +87,7 @@ export function AgentAvatar({
           )}
         </span>
       )}
-      {showStatus ? (
+      {showStatus && agent.state !== "tombstoned" ? (
         <AgentStatusDot
           className="rah-agent-avatar-presence"
           size={size === "sidebar" ? "sm" : "md"}

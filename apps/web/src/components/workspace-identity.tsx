@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import {
   useCallback,
   useEffect,
@@ -387,7 +388,7 @@ function WorkspaceIdentityDialog({
     }
   }
   return (
-    <div className="rah-dialog-layer">
+    <DialogLayer className="rah-dialog-layer">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭空间设置背景"
@@ -470,6 +471,6 @@ function WorkspaceIdentityDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

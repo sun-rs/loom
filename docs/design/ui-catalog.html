@@ -2972,6 +2972,17 @@ body.overlay-open { overflow: hidden; }
   }
 }
 
+/* Header-local menus must paint above positioned rich-message content. */
+.rah-panel-header[data-header-kind="thread"] {
+  position: relative;
+  z-index: 2;
+}
+.thread > .messages {
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+}
+
 /* ===== packages/ui-tokens/src/neo-brutalist/identity.css ===== */
 .rah-agent-status-dot {
   display: inline-block;
@@ -4149,6 +4160,26 @@ button.rah-entity-card:disabled {
   }
 }
 
+/* Create failure: shared dialog border/type, soft danger surface. */
+.rah-agent-create-error.rah-dialog-error {
+  border: var(--bd);
+  background: color-mix(in srgb, var(--coral) 15%, white);
+  color: var(--ink);
+  font: inherit;
+  padding: 12px;
+  margin: 0 0 16px;
+}
+
+/* Raft create-agent-channel-context: px-3 py-2 text-xs font-bold. */
+.rah-agent-create-channel {
+  border: var(--bd);
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--cyan) 60%, white);
+  color: var(--ink);
+  font: 700 12px/16px var(--sans);
+  margin: 0;
+}
+
 /* ===== packages/ui-tokens/src/neo-brutalist/preview.css ===== */
 /* PreviewCard owns placement/lifetime; every identity preview owns the same frame.
    Preserve the existing compact graph shadow as an explicit presentation variant. */
@@ -4190,7 +4221,7 @@ button.rah-entity-card:disabled {
   font: 11px/1.25 var(--mono);
 }
 .rah-agent-preview dt {
-  color: var(--ink-40);
+  color: var(--ink-45);
 }
 .rah-agent-preview dd {
   color: var(--ink-70);
@@ -4421,9 +4452,31 @@ button.rah-entity-card:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px;
+  padding: 12px 16px;
   border: 2px solid var(--ink-30);
   margin-top: 8px;
+}
+.rah-settings-archive-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.rah-settings-archive-actions .btn {
+  height: 28px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 12px;
+}
+.rah-settings-archive-actions .rah-settings-archive-delete {
+  width: 28px;
+  padding: 0;
+}
+.rah-settings-archive-actions .btn svg {
+  width: 14px;
+  height: 14px;
 }
 .rah-settings-archive-identity {
   display: flex;
@@ -4460,8 +4513,6 @@ button.rah-entity-card:disabled {
   border: 0;
   background: transparent;
   font: 700 14px/20px var(--sans);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 .rah-settings-archive-identity p {
   margin: 2px 0 0;
@@ -5266,7 +5317,8 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 /* Raft index-BVfbaScj.js pR/JLe/zi; brutal arrow is hidden. */
 .rah-tooltip-positioner {
   isolation: isolate;
-  z-index: 50;
+  /* Body portals must paint above dialogs/drawers (100–130). */
+  z-index: 140;
   outline: none;
 }
 .rah-tooltip {
@@ -5582,6 +5634,28 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
   opacity: 0.5;
 }
 
+/* Raft channel-autocomplete-popover: distinct from Agent autocomplete. */
+.rah-choice-row[data-choice-profile="channel-autocomplete"] {
+  color: var(--ink);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"]:hover {
+  background: var(--yellow);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-current] {
+  background: var(--pink);
+  font-weight: 700;
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-archived] {
+  color: rgb(0 0 0 / 45%);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-archived]:hover {
+  background: rgb(0 0 0 / 5%);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-archived][data-choice-current] {
+  background: rgb(0 0 0 / 10%);
+  color: var(--ink-70);
+}
+
 /* ===== packages/ui-tokens/src/neo-brutalist/index.css ===== */
 /* RAH Neo-Brutalist UI: one production and fixture stylesheet entry.
    Preserve adoption order while migrating legacy page families incrementally.
@@ -5711,21 +5785,29 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 
 .rah-thread-followers-trigger {
   align-items: center;
-  background: var(--bg);
+  background: white;
   border: var(--bd);
   box-shadow: var(--shadow-s);
   cursor: pointer;
   display: flex;
   font: 700 12px/16px var(--sans);
-  gap: 3px;
+  gap: 4px;
   padding: 0 6px;
 }
 
 .rah-thread-followers-trigger .rah-agent-avatar.is-compact {
   height: 18px;
-  margin-left: 0;
+  border: 1px solid white;
+  box-sizing: border-box;
   flex-shrink: 0;
   width: 18px;
+}
+
+.rah-thread-follower-avatars {
+  display: flex;
+}
+.rah-thread-follower-avatars .rah-agent-avatar + .rah-agent-avatar {
+  margin-left: -4px;
 }
 
 .rah-thread-followers-trigger > svg {
@@ -5746,14 +5828,21 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 
 .rah-thread-followers-popover {
   width: 288px;
+  top: calc(100% + 6px);
+}
+
+.rah-thread-followers-list {
+  max-height: 288px;
+  overflow-y: auto;
+  padding: 8px;
 }
 
 .rah-thread-followers-popover > strong {
   background: var(--cream);
   border-bottom: var(--bd);
   display: block;
-  font-size: 14px;
-  padding: 10px 12px;
+  font: 700 14px/20px var(--sans);
+  padding: 8px 12px;
 }
 
 .rah-thread-followers-popover > p {
@@ -5775,13 +5864,13 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 .rah-thread-follower-row {
   align-items: center;
   display: flex;
-  gap: 9px;
-  min-height: 52px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 6px 4px;
 }
 
-.rah-thread-follower-row + .rah-thread-follower-row {
-  border-top: 1px solid var(--ink-10);
+.rah-thread-follower-profile .rah-agent-avatar {
+  width: 28px;
+  height: 28px;
 }
 
 .rah-thread-follower-copy {
@@ -5799,7 +5888,7 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 }
 
 .rah-thread-follower-row b {
-  font-size: 13px;
+  font: 700 14px/20px var(--sans);
 }
 
 .rah-thread-follower-row small {
@@ -6565,33 +6654,88 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 }
 
 .rah-thread-follower-undo-list {
-  bottom: 96px;
+  align-items: center;
+  pointer-events: none;
+  bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  left: 12px;
-  position: absolute;
-  right: 12px;
-  z-index: 8;
+  left: 50%;
+  position: fixed;
+  transform: translateX(-50%);
+  width: min(384px, calc(100vw - 32px));
+  z-index: 70;
 }
 
 .rah-thread-follower-undo {
+  pointer-events: auto;
+  width: fit-content;
+  max-width: 100%;
   align-items: center;
-  background: var(--bg);
+  background: var(--green);
   border: var(--bd-heavy);
   box-shadow: var(--shadow-s);
   display: flex;
-  font: 600 12px/18px var(--sans);
+  font: 400 14px/20px var(--sans);
   gap: 12px;
   justify-content: space-between;
   padding: 8px 10px;
 }
 
 .rah-thread-follower-undo button {
-  background: var(--yellow);
+  background: var(--black);
+  color: white;
   border: var(--bd);
-  font: inherit;
+  font: 700 12px/20px var(--sans);
+  flex-shrink: 0;
   padding: 2px 8px;
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform 150ms,
+    box-shadow 150ms,
+    background-color 150ms;
+}
+
+.rah-thread-follower-undo button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-s);
+}
+.rah-thread-follower-undo button:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+.rah-thread-follower-undo .rah-thread-follower-toast-close {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  background: white;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rah-thread-follower-toast-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rah-thread-follower-undo > span:not(.rah-thread-follower-success-icon) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rah-thread-follower-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  height: 28px;
+  border: var(--bd);
+  background: white;
+  box-shadow: var(--shadow-s);
+}
+.rah-thread-follower-success-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .rah-message-history-trigger {
@@ -6672,6 +6816,40 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.rah-system-message-group {
+  margin-bottom: 4px;
+}
+.rah-system-message-summary {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+.rah-system-message-summary button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: rgb(0 0 0 / 50%);
+  font: 400 12px/16px var(--sans);
+  cursor: pointer;
+}
+.rah-system-message-summary button:hover {
+  color: rgb(0 0 0 / 75%);
+}
+.rah-system-message-summary svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: rgb(0 0 0 / 35%);
+  transform: rotate(90deg);
+}
+.rah-system-message-summary [aria-expanded="true"] svg {
+  transform: rotate(-90deg);
 }
 
 .rah-scroll-to-bottom {
@@ -7040,9 +7218,14 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
   font-weight: 700;
   padding: 0;
   text-decoration-color: rgba(0, 0, 0, 0.3);
+}
+
+.rah-rich-agent-reference,
+.rah-settings-archive-name {
   text-decoration-line: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
+  text-decoration-skip-ink: auto;
 }
 
 .rah-rich-agent-reference:hover,
@@ -8101,7 +8284,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   display: flex;
   justify-content: center;
   left: 0;
-  padding: 20px;
+  padding: 16px;
   position: fixed;
   right: 0;
   top: 0;
@@ -8124,9 +8307,11 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   box-shadow: var(--shadow-l);
   display: flex;
   flex-direction: column;
-  max-height: min(720px, calc(100vh - 40px));
+  max-height: min(720px, calc(100dvh - 32px));
   max-width: 520px;
-  min-width: min(420px, calc(100vw - 40px));
+  min-width: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
   position: relative;
   width: 100%;
   z-index: 1;
@@ -9105,7 +9290,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-channel-confirmation > footer .btn {
   min-height: 28px;
   height: 28px;
-  font: 700 12px/16px var(--sans);
+  font: 700 12px/12px var(--sans);
   padding: 4px 10px;
 }
 .rah-channel-confirmation > footer .btn-orange {
@@ -9504,22 +9689,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     flex-direction: column;
   }
 
-  .rah-dialog-layer {
-    align-items: stretch;
-    padding: 0;
-  }
-
   .rah-channel-settings-drawer {
     border-left: 0;
     max-width: none;
-    width: 100%;
-  }
-
-  .rah-dialog {
-    border-width: 0 0 3px;
-    max-height: none;
-    max-width: none;
-    min-width: 0;
     width: 100%;
   }
 
@@ -9663,6 +9835,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   max-height: calc(100dvh - 40px);
   min-width: 0;
   width: min(448px, calc(100vw - 32px));
+  max-width: 448px;
   padding: 24px;
   overflow-y: auto;
   box-shadow: var(--shadow-m);
@@ -9695,7 +9868,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 /* Raft Field keeps a description line even when there is no hint. */
 .rah-agent-create-dialog:not(.rah-agent-manage-dialog)
   form
-  label:not(:has(small))::after {
+  label:not(:has(small)):not(.rah-runtime-fast-mode):not(
+    .rah-runtime-custom-model
+  )::after {
   content: "";
   min-height: 16px;
 }
@@ -9729,18 +9904,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-agent-create-fields {
   display: contents;
 }
+.rah-agent-create-fields > .rah-runtime-edit-field {
+  margin-bottom: 16px;
+}
 .rah-create-model-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-.rah-agent-provider-editor {
-  display: grid;
-  gap: 4px;
-}
-.rah-agent-provider-editor label {
-  display: grid;
-  gap: 4px;
 }
 .rah-create-agent-select > svg {
   position: absolute;
@@ -9823,12 +9993,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-thread-back {
   display: none;
 }
-.rah-product-shell:not([data-conversation-layout="split"])
+.rah-product-shell[data-conversation-layout="fullscreen"]
   > .thread
   .rah-thread-close {
   display: none;
 }
-.rah-product-shell:not([data-conversation-layout="split"])
+.rah-product-shell[data-conversation-layout="fullscreen"]
   > .thread
   .rah-thread-back {
   display: inline-flex;
@@ -9968,7 +10138,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-thread-follower-profile {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
   align-self: stretch;
@@ -10007,6 +10177,20 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 14px;
   height: 14px;
 }
+.rah-channel-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-40);
+  font-size: 18px;
+  font-weight: 700;
+}
+.rah-channel-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
 .rah-channel-archived-badge {
   display: inline-flex;
   flex-shrink: 0;
@@ -10037,6 +10221,77 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   font: inherit;
   color: inherit;
   text-decoration: underline;
+}
+
+/* Raft channel-autocomplete-popover px-3 py-2, max-h-48. */
+.rah-composer-mention-menu.rah-channel-mention-menu {
+  right: 12px;
+  bottom: calc(100% + 4px);
+  max-width: none;
+  max-height: 192px;
+  min-width: 0;
+  padding: 0;
+}
+.rah-channel-mention-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  padding: 8px 12px;
+  text-align: left;
+  font: 500 14px/20px var(--sans);
+  cursor: pointer;
+}
+.rah-channel-mention-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--black);
+  background: var(--yellow);
+  font-size: 12px;
+}
+.rah-channel-mention-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+.rah-channel-mention-copy > span {
+  max-width: 50%;
+  flex: none;
+}
+.rah-channel-mention-copy > :is(span, small) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rah-channel-mention-copy small {
+  color: var(--ink-40);
+  font: 500 12px/16px var(--sans);
+}
+.rah-channel-mention-archived {
+  flex: none;
+  margin-left: auto;
+  border: 1px solid var(--ink-40);
+  padding: 2px 4px;
+  font: 700 9px/9px var(--sans);
+  color: rgb(0 0 0 / 45%);
+  background: rgb(0 0 0 / 5%);
+}
+.rah-channel-mention-row:has(.rah-channel-mention-archived)
+  .rah-channel-mention-icon {
+  border-color: var(--ink-40);
+  background: rgb(0 0 0 / 5%);
+}
+
+.rah-channel-mention-row:has(.rah-channel-mention-archived)
+  .rah-channel-mention-copy
+  small {
+  color: rgb(0 0 0 / 30%);
 }
 
 /* ===== apps/web/src/agent-directory.css ===== */
@@ -10093,6 +10348,17 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   margin-bottom: var(--space-1);
 }
 
+.rah-agent-relationship {
+  font: 500 14px/20px var(--sans);
+}
+.rah-agent-relationship.is-selected {
+  font-weight: 700;
+}
+.rah-member-self {
+  color: var(--ink-40);
+  margin-left: 4px;
+  font: inherit;
+}
 .rah-agent-relationship svg {
   height: 14px;
   width: 14px;
@@ -10117,15 +10383,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-agent-sidebar-section > header > b {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font: 700 12px/16px var(--sans);
+  letter-spacing: 0.1em;
 }
 
 .rah-agent-sidebar-section > header > span {
   color: var(--ink-40);
-  font-family: var(--mono);
-  font-size: 11px;
+  font: 700 12px/16px var(--mono);
 }
 
 .rah-agent-create-control {
@@ -10207,33 +10471,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   flex: none;
   height: 6px;
   width: 6px;
-}
-
-.rah-agent-member-row > span:nth-child(2) {
-  align-items: baseline;
-  display: flex;
-  flex: 1;
-  gap: 6px;
-  min-width: 0;
-}
-
-.rah-agent-member-row b {
-  font-size: 13px;
-  line-height: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rah-agent-member-row small {
-  color: var(--ink-40);
-  flex: 1;
-  font-family: var(--mono);
-  font-size: 10px;
-  line-height: 16px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .rah-agent-member-row:not(.is-selected):hover,
@@ -10482,10 +10719,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-agent-avatar-choice:hover:not(:disabled),
 .rah-agent-avatar-choice:focus-visible,
 .rah-agent-avatar-choice[data-selected="true"],
-.rah-agent-avatar-upload:hover:not(:disabled),
-.rah-agent-avatar-upload:focus-visible,
 .rah-agent-avatar-upload[data-selected="true"] {
   background: color-mix(in srgb, var(--pink) 20%, var(--paper));
+  border-color: var(--pink);
+}
+
+.rah-agent-avatar-upload:hover:not(:disabled),
+.rah-agent-avatar-upload:focus-visible {
   border-color: var(--pink);
 }
 
@@ -10502,10 +10742,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-agent-avatar-upload {
-  color: var(--ink-40);
+  color: var(--ink-60);
   cursor: pointer;
-  font-size: 24px;
-  font-weight: 700;
+}
+
+.rah-agent-avatar-upload > svg {
+  width: 16px;
+  height: 16px;
 }
 
 .rah-product-shell .rah-agent-avatar-upload:disabled {
@@ -10693,22 +10936,35 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   line-height: 14px;
 }
 
-.rah-agent-activity-pane > header {
+.rah-agent-activity-surface > header {
   align-items: center;
-  border-bottom: 1px solid var(--ink-10);
+  border-bottom: 2px solid var(--ink);
+  flex-shrink: 0;
+  background: var(--paper);
   display: flex;
   justify-content: space-between;
   padding: 8px 20px;
 }
 
-.rah-agent-activity-pane > header h3 {
+.rah-agent-activity-surface > header h3 {
+  color: var(--ink-60);
+  margin: 0;
   font-size: 12px;
   font-weight: 700;
+  line-height: 16px;
 }
 
-.rah-agent-activity-pane > header p {
-  color: var(--ink-40);
-  font: 10px/1.5 var(--mono);
+.rah-agent-diagnostic-copy.btn {
+  padding: 4px 8px;
+  gap: 6px;
+  height: auto;
+  font-size: 12px;
+  line-height: 16px;
+  box-shadow: var(--shadow-s);
+}
+.rah-agent-diagnostic-copy.btn svg {
+  width: 12px;
+  height: 12px;
 }
 
 .rah-agent-activity-list article {
@@ -10820,8 +11076,10 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   border: var(--bd);
   box-shadow: var(--shadow-m);
   padding: 24px;
-  width: 448px;
-  max-width: 100%;
+  width: min(448px, calc(100vw - 32px));
+  max-width: 448px;
+  max-height: calc(100dvh - 40px);
+  align-self: center;
   min-width: 0;
   overflow: auto;
 }
@@ -10831,14 +11089,25 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   margin-bottom: 16px;
 }
 .rah-runtime-edit-dialog > header h2 {
-  font-size: 18px;
-  font-weight: 700;
+  font: 700 18px/28px var(--sans);
 }
-.rah-runtime-edit-dialog form {
+/* Raft AgentDetailPanel runtime form actions: text-sm px-4 py-2. */
+.rah-runtime-edit-dialog footer .btn {
+  font: 700 14px/20px var(--sans);
+  padding: 8px 16px;
+}
+.rah-runtime-edit-dialog footer .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rah-dialog.rah-runtime-edit-dialog form:not(.rah-attachment-comment-composer) {
   padding: 0;
+  gap: 16px;
 }
 .rah-runtime-edit-field > b {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 14px;
   line-height: 20px;
   margin-bottom: 4px;
@@ -10847,19 +11116,25 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   color: var(--pink);
   font-style: normal;
 }
+.rah-runtime-edit-field > .rah-runtime-custom-model {
+  margin-bottom: 8px;
+}
 .rah-runtime-picker {
   width: 100%;
 }
+.rah-runtime-edit-field > label.rah-runtime-custom-model > input,
 .rah-runtime-picker .task-filter-trigger {
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   height: auto;
   padding: 8px 12px;
   background: var(--bg);
   border: var(--bd);
   box-shadow: var(--shadow-s);
-  font-size: 14px;
-  line-height: 20px;
+  font:
+    400 16px/24px system-ui,
+    sans-serif;
+  color: #000;
   text-align: left;
 }
 .rah-runtime-picker .task-filter-trigger > svg:last-child {
@@ -11104,11 +11379,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     font-size: 16px;
   }
 
-  .rah-agent-activity-pane > header {
-    align-items: flex-start;
-    padding: 10px 14px;
-  }
-
   .rah-agent-activity-list article {
     gap: 8px;
     grid-template-columns: 62px 8px minmax(0, 1fr);
@@ -11126,7 +11396,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 /* Raft sL option/iL: 12px padding, 14px column gap, 14/20 title, 12/16 description. */
-.rah-runtime-edit-dialog form .rah-runtime-fast-mode {
+.rah-dialog:is(.rah-runtime-edit-dialog, .rah-agent-create-dialog)
+  form
+  label.rah-runtime-fast-mode {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
   align-items: start;
@@ -11137,6 +11409,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   box-shadow: var(--shadow-s);
   padding: 12px;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .rah-runtime-fast-mode > b {
   font: 700 14px/20px var(--sans);
@@ -11152,7 +11426,10 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   height: 16px;
   margin-top: 2px;
 }
-.rah-runtime-edit-dialog form .rah-runtime-fast-mode input[type="checkbox"] {
+.rah-dialog:is(.rah-runtime-edit-dialog, .rah-agent-create-dialog)
+  form
+  label.rah-runtime-fast-mode
+  input[type="checkbox"] {
   appearance: none;
   display: block;
   width: 16px;
@@ -11166,15 +11443,19 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   background: var(--bg);
   cursor: inherit;
 }
-.rah-runtime-edit-dialog form .rah-runtime-fast-mode input:checked {
-  background: var(--yellow);
+.rah-dialog:is(.rah-runtime-edit-dialog, .rah-agent-create-dialog)
+  form
+  label.rah-runtime-fast-mode
+  input:checked {
+  background: var(--ink);
 }
 .rah-runtime-fast-check > svg {
   position: absolute;
   inset: 2px;
   width: 12px;
   height: 12px;
-  color: var(--ink);
+  color: white;
+  stroke-width: 4;
   pointer-events: none;
   visibility: hidden;
 }
@@ -11296,6 +11577,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-agent-activity-surface {
   position: relative;
   display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -11304,6 +11586,43 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-agent-activity-surface > .rah-scroll-to-bottom {
   bottom: 16px;
+}
+.rah-agent-avatar.is-deleted {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.rah-agent-deleted-badge {
+  border: 1px solid var(--ink);
+  background: #d1d5db;
+  color: var(--ink-60);
+  padding: 2px 6px;
+  font: 700 10px/15px var(--sans);
+  flex-shrink: 0;
+}
+.rah-agent-unavailable > header {
+  gap: 16px;
+}
+.rah-agent-unavailable {
+  flex: 1;
+}
+.rah-agent-unavailable > .rah-empty-state {
+  min-height: 0;
+}
+.rah-agent-unavailable > header h2 {
+  flex: 1;
+  font: 700 20px/28px var(--sans);
+}
+.rah-agent-unavailable-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bd);
+  background: #e5e7eb;
+}
+.rah-agent-unavailable-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 /* ===== apps/web/src/member-relationship-graph.css ===== */
@@ -13040,20 +13359,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   grid-column: 2;
   grid-row: 1;
 }
-.app.rah-search-channel-open > .channel,
-.app.rah-search-channel-open > .thread {
-  grid-column: 3;
-  grid-row: 1;
-  min-width: 0;
-  width: auto;
-  border-left: var(--bd);
-}
-.app.rah-search-channel-open > .thread .rah-thread-close {
-  display: inline-flex;
-}
-.app.rah-search-channel-open > .thread .rah-thread-back {
-  display: none;
-}
 .app.rah-search-channel-open > .rah-search-resizer {
   position: absolute;
   display: block;
@@ -13097,13 +13402,90 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 }
 
+/* Activity uses the conversation shell; its feed replaces only the sidebar.
+   Bounds come from Raft Ift/Tft, panel selection from conversationPanels. */
+.app.rah-activity-preview > .rah-discovery {
+  grid-column: 2;
+  grid-row: 1;
+  width: auto;
+  min-width: 0;
+  border-right: var(--bd);
+}
+.app.rah-activity-preview > .rah-search-resizer {
+  position: absolute;
+  display: block;
+  left: calc(var(--rail-w) + var(--sidebar-w) - 4px);
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 25;
+}
+.app.rah-activity-preview[data-activity-primary="thread"]:not(
+    .rah-global-shell
+  ):not(.rah-task-modal-open):not(.rah-agent-peek-open) {
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
+}
+.app.rah-activity-preview[data-activity-primary="thread"]:not(
+    .rah-global-shell
+  ):not(.rah-task-modal-open):not(.rah-agent-peek-open)
+  > .thread {
+  grid-column: 3;
+}
+.app.rah-activity-preview[data-activity-primary="thread"] .rah-thread-resizer {
+  display: none;
+}
+@media (max-width: 767px) {
+  .app.rah-activity-preview,
+  .app.rah-activity-preview[data-activity-primary="thread"]:not(
+      .rah-global-shell
+    ):not(.rah-task-modal-open):not(.rah-agent-peek-open) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app.rah-activity-preview > .rah-discovery,
+  .app.rah-activity-preview > .rah-search-resizer {
+    display: none;
+  }
+  .app.rah-activity-preview[data-activity-primary="thread"]:not(
+      .rah-global-shell
+    ):not(.rah-task-modal-open):not(.rah-agent-peek-open)
+    > .thread {
+    grid-column: 1;
+  }
+}
+
+/* Fullscreen Activity previews share chat's single back affordance. */
+@media (max-width: 767px) {
+  .app.rah-activity-preview .rah-search-preview-close {
+    display: none;
+  }
+}
+/* Keep the 8px pointer target, but draw only the shared 2px divider on focus. */
+.app.rah-activity-preview > .rah-search-resizer:focus-visible {
+  outline: none;
+}
+.app.rah-activity-preview[data-activity-primary="thread"] > .thread {
+  border-left: 0;
+}
+
+/* Raft search entity cards retain neutral, outlined archived treatment. */
+.rah-search-destination[data-archived] .rah-search-card-name,
+.rah-search-destination[data-archived] .rah-search-card-subtitle {
+  color: var(--ink-40);
+}
+.rah-search-destination[data-archived] .rah-search-channel-icon,
+.rah-search-destination[data-archived] .rah-search-card-name small {
+  color: var(--ink-40);
+  border-color: var(--ink-40);
+  background: rgb(0 0 0 / 4%);
+}
+
 /* ===== apps/web/src/task-detail.css ===== */
 /* Raft release/v1.12.0 index-BVfbaScj db/t9 and TaskModalHead-CFi1iRLr.
    Structural port: same modal dimensions; existing RAH Thread and dialog owners. */
 .rah-task-detail-layer {
   padding: 16px;
 }
-.app .rah-task-detail-dialog .thread-side-column {
+.rah-task-detail-dialog .thread-side-column {
   position: relative;
   inset: auto;
   display: flex;
@@ -13380,13 +13762,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-task-detail-assignment {
   display: flex;
-  gap: 24px;
+  gap: 8px;
   min-width: 0;
   max-width: 100%;
 }
-.rah-task-detail-assignment > div:last-child {
+.rah-task-detail-assignment > dd {
   min-width: 0;
-  flex: 1;
 }
 .rah-task-detail-assignment .task-filter-trigger {
   max-width: 100%;
@@ -13410,7 +13791,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     gap: 12px;
   }
   .rah-task-approval-compact .rah-task-detail-assignment {
-    gap: 12px;
+    gap: 8px;
     flex: 0 1 auto;
   }
   .rah-task-approval-compact
@@ -13525,6 +13906,20 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 12px;
   height: 12px;
   flex: none;
+}
+/* Raft Select chrome=field: anchor-width, text-field/font-field, py-1.5. */
+.rah-discovery-popover.is-field .rah-discovery-popover-options > button {
+  height: auto;
+  min-height: 37px;
+  padding: 6px 12px;
+  font:
+    400 16px/24px system-ui,
+    sans-serif;
+}
+.rah-discovery-popover.is-field .rah-discovery-popover-search input {
+  font:
+    400 16px/24px system-ui,
+    sans-serif;
 }
 .rah-discovery-option-leading {
   display: flex;
@@ -13648,6 +14043,17 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 100%;
   text-align: left;
   cursor: inherit;
+}
+/* Stretch the native open button over the card's padding and empty footer.
+   The status control stays above it and retains its own menu/drag boundary. */
+.rah-global-card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.rah-global-card-footer .rah-task-status-picker {
+  position: relative;
+  z-index: 1;
 }
 .rah-global-card-row {
   display: flex;
@@ -14012,10 +14418,23 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   color: var(--ink);
   cursor: pointer;
 }
+.msg-head {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.msg-head > * {
+  flex-shrink: 0;
+}
 .rah-message-sender:hover {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
+}
+.msg-head .rah-deleted-message-sender,
+.msg-head .rah-deleted-message-sender:hover {
+  cursor: default;
+  text-decoration: none;
 }
 .rah-message-avatar-trigger {
   align-self: start;
@@ -14231,14 +14650,16 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   line-height: 20px;
   font-weight: 500;
 }
-.rah-room-sidebar .channel-row.is-selected {
-  font-weight: 500;
+.rah-room-sidebar .channel-row.is-selected,
+.rah-room-sidebar .channel-row[data-unread="true"] {
+  font-weight: 700;
 }
 .rah-sidebar-channel-entry {
   position: relative;
 }
 .rah-sidebar-channel-name,
-.rah-direct-row-name {
+.rah-direct-row-name,
+.rah-agent-member-row b {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -14257,7 +14678,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 18px;
   border-width: 1px;
 }
-.rah-direct-row-identity {
+.rah-direct-row-identity,
+.rah-agent-member-row > span:nth-child(2) {
   display: flex;
   align-items: baseline;
   gap: 4px;
@@ -14265,15 +14687,27 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   flex: 1;
   overflow: hidden;
 }
-.rah-direct-row-name {
+.rah-direct-row-name,
+.rah-agent-member-row b {
   flex: 0 1 auto;
   max-width: 70%;
+  font: inherit;
+  font-size: 14px;
 }
-.rah-direct-room-row small {
+.rah-agent-member-row {
+  font: 500 14px/20px var(--sans);
+}
+.rah-agent-member-row.is-selected {
+  font-weight: 700;
+}
+.rah-direct-room-row small,
+.rah-agent-member-row small {
   flex: 1;
   min-width: 0;
   /* 批次 3b 裁决 1：描述字重继承行的 500（Raft `text-xs text-black/40` 无字重声明）。 */
-  font: var(--fw-medium) 12px/16px var(--sans);
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--ink-40);
   white-space: nowrap;
   overflow: hidden;
@@ -17017,6 +17451,12 @@ html[data-rah-hide-empty-sidebar-sections="true"]
 </svg>
 <!-- Verbatim geometry from Raft index-WTraJnrd.js: RFe, TFe, yze; circle-user-round also verified in live Search DOM. -->
 <svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Raft v1.16.0 index-CKeqacxz.js E7e/AI, Lucide upload; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
+  <!-- Raft v1.16.0 AgentDetailPanel-CW_VMZT6.js Hl/Ia, Lucide clipboard; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+  <!-- Raft v1.16.0 index-CKeqacxz.js T7e/Ul, Lucide triangle-alert; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
   <!-- Raft release/v1.16.0 index-CKeqacxz.js IKe/l5; Lucide archive-restore, ISC /legal/lucide-icons-LICENSE.txt. -->
   <symbol id="raft-icon-archive-restore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h2"/><path d="M20 8v11a2 2 0 0 1-2 2h-2"/><path d="m9 15 3-3 3 3"/><path d="M12 12v9"/>
@@ -17286,6 +17726,13 @@ npm run check:ui-catalog</pre>
     </tbody></table></div>
     <h4 class="uic-md-head">登记规则</h4>
     <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>选择器</th><th>状态</th><th>上游期望（字面量）</th><th>文件</th><th>上游来源</th></tr></thead><tbody><tr>
+  <td>.rah-room-sidebar .channel-row[data-unread=&quot;true&quot;]</td>
+  <td>base</td>
+  <td class="uic-expect">font-weight: 700</td>
+  <td>apps/web/src/chat-surface.css</td>
+  <td>Raft 1.16.0 lx; docs/audits/2026-09-20-surface-selection-parity.zh-CN.md</td>
+</tr>
+<tr>
   <td>html[data-rah-hide-empty-sidebar-sections=&quot;true&quot;] .rah-room-sidebar [data-sidebar-group]:has(.side-section[data-empty=&quot;true&quot;])</td>
   <td>base</td>
   <td class="uic-expect">display: none</td>
@@ -17540,7 +17987,7 @@ npm run check:ui-catalog</pre>
 <tr>
   <td>.rah-direct-room-row small</td>
   <td>base</td>
-  <td class="uic-expect">flex: 1; min-width: 0; font: 500 12px/16px &quot;Raft Quote Glyphs&quot;, &quot;Space Grotesk&quot;, system-ui, sans-serif; color: rgba(0,0,0,.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis</td>
+  <td class="uic-expect">flex: 1; min-width: 0; font: inherit; font-size: 12px; line-height: 16px; color: rgba(0,0,0,.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis</td>
   <td>apps/web/src/chat-surface.css</td>
   <td>docs/evidence/raft-web-20260908-current/index-BVfbaScj.js `min-w-0 flex-1 truncate text-xs text-black/40`</td>
 </tr>
@@ -17610,9 +18057,9 @@ npm run check:ui-catalog</pre>
   <td>.rah-room-sidebar .channel-row.is-selected</td>
   <td>base</td>
   <td><span class="uic-badge uic-badge-amber">registered-unresolved</span></td>
-  <td>font-weight: 500</td>
+  <td>font-weight: 700</td>
   <td>apps/web/src/chat-surface.css</td>
-  <td>同上：房间侧栏的选中行把字重钉回 500。</td>
+  <td>2026-09-20 用户确认选中加粗；Raft 1.16.0 lx selected font-bold，详见大页选择审计。</td>
   <td>2026-09-11</td>
   <td>双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。</td>
 </tr>

@@ -120,7 +120,7 @@ export type AgentMemoryWorkspaceSnapshot = z.infer<
 >;
 
 export const ClientAgentMemoryGetRequestSchema = z
-  .object({ agentDefinitionId: IdentifierSchema })
+  .object({ agentId: IdentifierSchema })
   .strict();
 export type ClientAgentMemoryGetRequest = z.infer<
   typeof ClientAgentMemoryGetRequestSchema
@@ -138,7 +138,7 @@ export type ClientAgentMemoryGetResponse = z.infer<
 
 export const ClientAgentMemoryReadRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     relativePath: AgentMemoryRelativePathSchema,
   })
   .strict();
@@ -160,7 +160,7 @@ export type ClientAgentMemoryReadResponse = z.infer<
 
 export const ClientAgentMemoryResetRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     confirmation: z.literal("RESET_AGENT_MEMORY"),
     idempotencyKey: IdentifierSchema,
   })

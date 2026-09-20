@@ -231,7 +231,7 @@ test("all automatically contains Workspace Agents and rejects manual membership 
       )!.definition;
     k.manageWorkspaceAgent(a, {
       action: "set_state",
-      agentDefinitionId: definition.agentDefinitionId,
+      agentId: definition.agentId,
       basedOnRoomSeq: head(w.controlRoom.roomId),
       idempotencyKey: "stop-first",
       state: "disabled",
@@ -242,7 +242,7 @@ test("all automatically contains Workspace Agents and rejects manual membership 
     );
     k.manageWorkspaceAgent(a, {
       action: "set_state",
-      agentDefinitionId: definition.agentDefinitionId,
+      agentId: definition.agentId,
       basedOnRoomSeq: head(w.controlRoom.roomId),
       idempotencyKey: "delete-first",
       state: "tombstoned",

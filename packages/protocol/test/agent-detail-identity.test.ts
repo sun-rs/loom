@@ -11,7 +11,7 @@ const digest = (character: string) => `sha256:${character.repeat(64)}`;
 
 const child = {
   currentRevision: {
-    agentDefinitionId: "agent-child-definition",
+    agentId: "agent-child-definition",
     agentDefinitionRevisionId: "agent-child-revision",
     contentDigest: digest("a"),
     createdAt: at,
@@ -28,7 +28,7 @@ const child = {
     skillRefs: [],
   },
   definition: {
-    agentDefinitionId: "agent-child-definition",
+    agentId: "agent-child-definition",
     controlRoomId: "room-control",
     createdAt: at,
     currentRevisionId: "agent-child-revision",

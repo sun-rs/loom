@@ -7,7 +7,7 @@ import { parseAgentEnvironment } from "./agent-launch-environment.ts";
 /** Daemon-owned environment preferences; never copied into Room policy or messages. */
 export function useAgentEnvironmentDraft(
   client: RahClient,
-  agentDefinitionId: string,
+  agentId: string,
   runtimeId: string | undefined,
 ) {
   const [data, setData] = useState<RuntimeGuideSettingsView>();
@@ -20,7 +20,7 @@ export function useAgentEnvironmentDraft(
     setLoadError(undefined);
     setDrafts({});
     client
-      .request("runtime.guide.read", { agentDefinitionId })
+      .request("runtime.guide.read", { agentId })
       .then((value) => {
         if (active) setData(value);
       })
@@ -30,7 +30,7 @@ export function useAgentEnvironmentDraft(
     return () => {
       active = false;
     };
-  }, [client, agentDefinitionId, reload]);
+  }, [client, agentId, reload]);
   const row = data?.runtimes.find((item) => item.runtimeId === runtimeId);
   const rows =
     (runtimeId && drafts[runtimeId]) ||
@@ -63,7 +63,7 @@ export function useAgentEnvironmentDraft(
       if (!row || !data || validationError)
         throw new Error("请先检查环境变量配置");
       const result = await client.request("runtime.guide.update", {
-        agentDefinitionId,
+        agentId,
         runtimeId: row.runtimeId,
         environment,
         expectedRevision: data.revision,

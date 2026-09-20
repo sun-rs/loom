@@ -266,40 +266,40 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/push/test",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.memory.config.get",
       path: "/v3/client/agents/memory/config/get",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.skills.list",
       path: "/v3/client/agents/skills/list",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.workspace.roots",
       path: "/v3/client/agents/workspace/roots",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.workspace.summary",
       path: "/v3/client/agents/workspace/summary",
     },
     {
       input: {
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         patch: { expectedRevision: 0, set: { enabled: false } },
       },
       operation: "agent.memory.config.patch",
       path: "/v3/client/agents/memory/config/patch",
     },
     {
-      input: { agentDefinitionId: "agent-definition", limit: 25 },
+      input: { agentId: "agent-definition", limit: 25 },
       operation: "agent.activity.list",
       path: "/v3/client/agents/activity/list",
     },
     {
-      input: { agentDefinitionId: "agent-definition", limit: 25 },
+      input: { agentId: "agent-definition", limit: 25 },
       operation: "agent.trajectory.list",
       path: "/v3/client/agents/trajectory/list",
     },
@@ -309,13 +309,13 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/agents/presence/list",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.reminder.list",
       path: "/v3/client/agents/reminders/list",
     },
     {
       input: {
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         path: "",
         includeHidden: false,
       },
@@ -323,18 +323,18 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/agents/workspace/list",
     },
     {
-      input: { agentDefinitionId: "agent-definition", path: "notes/guide.md" },
+      input: { agentId: "agent-definition", path: "notes/guide.md" },
       operation: "agent.workspace.read",
       path: "/v3/client/agents/workspace/read",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.get",
       path: "/v3/client/agents/get",
     },
     {
       input: {
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         basedOnRoomSeq: 7,
         idempotencyKey: "execution-reset-1",
         mode: "session",
@@ -343,13 +343,13 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/agents/execution/reset",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.memory.get",
       path: "/v3/client/agents/memory/get",
     },
     {
       input: {
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         relativePath: "MEMORY.md",
       },
       operation: "agent.memory.read",
@@ -357,7 +357,7 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     },
     {
       input: {
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         confirmation: "RESET_AGENT_MEMORY",
         idempotencyKey: "memory-reset-1",
       },
@@ -365,7 +365,7 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/agents/memory/reset",
     },
     {
-      input: { agentDefinitionId: "agent-definition" },
+      input: { agentId: "agent-definition" },
       operation: "agent.room.list",
       path: "/v3/client/agents/rooms/list",
     },
@@ -382,7 +382,7 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     {
       input: {
         action: "set_state",
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         basedOnRoomSeq: 1,
         idempotencyKey: "agent-disable",
         state: "disabled",
@@ -392,7 +392,7 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     },
     {
       input: {
-        agentDefinitionId: "agent-definition",
+        agentId: "agent-definition",
         basedOnRoomSeq: 1,
         idempotencyKey: "agent-onboard",
         roomId: "room-main",

@@ -62,6 +62,7 @@ test("Agent reasoning choices are derived only from verified runtime bindings", 
     {
       label: "Verified Model",
       modelBindingId: "probed-model",
+      nativeId: "verified",
     },
   ]);
   assert.deepEqual(supportedReasoningLevels(probedRuntime, "probed-model"), [
@@ -116,7 +117,7 @@ test("OpenCode labels preserve provider identity when model names collide", () =
   } as LocalRuntimeInventoryEntry;
   assert.deepEqual(
     runtimeModelOptions(r).map((x) => x.label),
-    ["deepseek · DeepSeek", "aihubmix · DeepSeek"],
+    ["DeepSeek · DeepSeek", "Aihubmix · DeepSeek"],
   );
 });
 
@@ -150,7 +151,7 @@ test("Fast mode requires a verified model service tier", () => {
   );
 });
 
-test("runtime options retain provider-qualified friendly model labels", () => {
+test("OpenCode options prefer real names with provider first and preserve native IDs", () => {
   const binding = {
     modelBindingId: "aihubmix/deepseek-v4",
     modelId: "deepseek-v4",
@@ -166,10 +167,17 @@ test("runtime options retain provider-qualified friendly model labels", () => {
     cliId: "opencode",
     modelBindingDescriptors: [binding],
   } satisfies LocalRuntimeInventoryEntry;
-  assert.equal(runtimeModelLabel(openCode, binding), "aihubmix · DeepSeek V4");
+  assert.equal(runtimeModelLabel(openCode, binding), "Aihubmix · DeepSeek V4");
+  assert.equal(
+    runtimeModelLabel(openCode, {
+      ...binding,
+      modelId: "aihubmix/deepseek-v4",
+    }),
+    "Aihubmix · DeepSeek V4",
+  );
   assert.equal(
     runtimeModelLabel(openCode, { ...binding, provider: "deepseek" }),
-    "deepseek · DeepSeek V4",
+    "DeepSeek · DeepSeek V4",
   );
   assert.equal(
     runtimeModelOptions(openCode)[0]?.label,
@@ -177,8 +185,21 @@ test("runtime options retain provider-qualified friendly model labels", () => {
   );
   assert.equal(
     runtimeModelLabel(openCode, { ...binding, displayName: undefined }),
-    "aihubmix · deepseek-v4",
+    "Aihubmix · DeepSeek-V4",
   );
+  assert.equal(
+    runtimeModelLabel(openCode, {
+      ...binding,
+      modelId: "aihubmix/gpt-6-astra",
+      displayName: undefined,
+    }),
+    "Aihubmix · GPT-6-Astra",
+  );
+  assert.equal(
+    runtimeModelOptions(openCode)[0]?.modelBindingId,
+    binding.modelBindingId,
+  );
+  assert.equal(runtimeModelOptions(openCode)[0]?.nativeId, binding.modelId);
   for (const cliId of ["codex", "claude", "kimi"] as const) {
     assert.equal(
       runtimeModelLabel({ ...runtime, cliId }, binding),
@@ -197,6 +218,6 @@ test("runtime options retain provider-qualified friendly model labels", () => {
       { ...runtime, executable: "/usr/local/bin/opencode" },
       binding,
     ),
-    "aihubmix · DeepSeek V4",
+    "Aihubmix · DeepSeek V4",
   );
 });

@@ -27,7 +27,7 @@ test("joining an existing Room member reconciles without repeating onboarding", 
   });
 
   const result = await ensureRoomMembership(client, {
-    agentDefinitionId: "definition-codex",
+    agentId: "definition-codex",
     basedOnRoomSeq: 7,
     idempotencyKey: "join-codex",
     participantId: membership.principalId,
@@ -54,7 +54,7 @@ test("a concurrent join conflict is successful only after canonical membership p
   });
 
   const result = await ensureRoomMembership(client, {
-    agentDefinitionId: "definition-codex",
+    agentId: "definition-codex",
     basedOnRoomSeq: 7,
     idempotencyKey: "join-codex",
     participantId: membership.principalId,
@@ -79,7 +79,7 @@ test("a failed join is not hidden when canonical membership still disagrees", as
 
   await assert.rejects(
     ensureRoomMembership(client, {
-      agentDefinitionId: "definition-codex",
+      agentId: "definition-codex",
       basedOnRoomSeq: 7,
       idempotencyKey: "join-codex",
       participantId: membership.principalId,

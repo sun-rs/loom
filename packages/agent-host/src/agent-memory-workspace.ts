@@ -81,11 +81,7 @@ export async function prepareAgentMemoryWorkspace(input: {
     "participantId",
     512,
   );
-  requiredText(
-    input.agent.agentDefinitionRevision.agentDefinitionId,
-    "agentDefinitionId",
-    512,
-  );
+  requiredText(input.agent.agentDefinitionRevision.agentId, "agentId", 512);
   const rootDirectory = resolve(input.rootDirectory);
   await ensurePrivateDirectory(rootDirectory, "Agent memory root");
   const workspacePath = agentMemoryWorkspacePath(rootDirectory, participantId);

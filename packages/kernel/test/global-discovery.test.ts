@@ -5,6 +5,246 @@ import { join } from "node:path";
 import test from "node:test";
 import { RoomKernel } from "../src/index.ts";
 
+test("unarchive is durable unread activity even for its actor and an empty channel", () => {
+  const f = fixture();
+  try {
+    f.kernel.archiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "archive-notice",
+    });
+    const restored = f.kernel.unarchiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "restore-notice",
+    });
+    const unread = () =>
+      f.kernel
+        .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+        .summary?.rooms.find((room) => room.roomId === f.channel.roomId)
+        ?.unreadCount ?? 0;
+    assert.equal(unread(), 1);
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: restored.event.roomSeq,
+      action: "read",
+      source: "viewport",
+    });
+    assert.equal(
+      unread(),
+      1,
+      "automatic navigation must retain the restore notice",
+    );
+    const reloaded = new RoomKernel({ databasePath: f.databasePath });
+    try {
+      reloaded.initialize();
+      assert.equal(
+        reloaded
+          .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+          .summary?.rooms.find((room) => room.roomId === f.channel.roomId)
+          ?.unreadCount,
+        1,
+      );
+    } finally {
+      reloaded.close();
+    }
+    assert.throws(
+      () =>
+        f.kernel.markHumanActivity(f.stranger, {
+          roomId: f.channel.roomId,
+          throughSeq: 0,
+          action: "read",
+          source: "channel-list",
+        }),
+      /member/i,
+    );
+    f.kernel.unarchiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: restored.event.roomSeq - 1,
+      idempotencyKey: "restore-notice",
+    });
+    assert.equal(unread(), 1);
+    assert.equal(
+      f.kernel
+        .listHumanActivity(f.stranger, { workspaceId: f.workspaceId })
+        .summary?.rooms.some((room) => room.roomId === f.channel.roomId),
+      false,
+    );
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: 0,
+      action: "read",
+      source: "channel-list",
+    });
+    assert.equal(unread(), 0);
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: 0,
+      action: "unread",
+    });
+    assert.equal(unread(), 1);
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: restored.event.roomSeq,
+      action: "read",
+    });
+    assert.equal(unread(), 0);
+  } finally {
+    f.close();
+  }
+});
+
+test("restoring excludes the archive notice without erasing earlier unread messages", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "unread before archive", true);
+    f.kernel.archiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "archive-with-unread",
+    });
+    f.kernel.unarchiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "restore-with-unread",
+    });
+    assert.equal(
+      f.kernel
+        .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+        .summary?.rooms.find((room) => room.roomId === f.channel.roomId)
+        ?.unreadCount,
+      2,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("visible messages cannot bypass restore acknowledgement; selection and late viewport reads remain monotonic", () => {
+  const f = fixture();
+  try {
+    f.kernel.archiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "archive",
+    });
+    const restored = f.kernel.unarchiveWorkspaceRoom(f.actor, {
+      roomId: f.channel.roomId,
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "restore",
+    });
+    f.post(f.channel.roomId, "later visible reply", true);
+    const latest = f.head(f.channel.roomId);
+    const visible = f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: latest,
+      action: "read",
+      source: "viewport",
+    });
+    assert.equal(visible.readThroughSeq, restored.event.roomSeq - 1);
+    const selected = f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: 0,
+      action: "read",
+      source: "channel-list",
+    });
+    assert.equal(selected.readThroughSeq, latest);
+    const late = f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: restored.event.roomSeq - 1,
+      action: "read",
+      source: "viewport",
+    });
+    assert.equal(late.readThroughSeq, selected.readThroughSeq);
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: latest,
+      action: "read",
+      source: "viewport",
+    });
+    const reopened = new RoomKernel({ databasePath: f.databasePath });
+    try {
+      reopened.initialize();
+      assert.equal(
+        reopened
+          .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+          .summary?.rooms.find((room) => room.roomId === f.channel.roomId)
+          ?.unreadCount ?? 0,
+        0,
+      );
+    } finally {
+      reopened.close();
+    }
+  } finally {
+    f.close();
+  }
+});
+
+test("channel and DM unread counts share click acknowledgement; visible system notices count too", () => {
+  const f = fixture();
+  try {
+    const unread = (roomId: string) =>
+      f.kernel
+        .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+        .summary?.rooms.find((r) => r.roomId === roomId)?.unreadCount ?? 0;
+    for (const roomId of [f.channel.roomId, f.direct.roomId]) {
+      f.post(roomId, "first incoming", true);
+      f.post(roomId, "second incoming", true);
+      assert.equal(unread(roomId), 2);
+      f.kernel.markHumanActivity(f.actor, {
+        roomId,
+        action: "read",
+        throughSeq: 0,
+        source: "channel-list",
+      });
+      assert.equal(
+        unread(roomId),
+        0,
+        "click acknowledges the current conversation, not only restore events",
+      );
+    }
+    const agent = f.kernel.provisionPrincipal({
+      handle: "new-member",
+      kind: "agent",
+    });
+    f.kernel.addMember(f.actor, {
+      roomId: f.channel.roomId,
+      principalId: agent.principal.principalId,
+    });
+    assert.equal(
+      unread(f.channel.roomId),
+      1,
+      "member-joined system notice is unread",
+    );
+    f.post(f.channel.roomId, "third incoming", true);
+    assert.equal(
+      unread(f.channel.roomId),
+      2,
+      "message and system notice aggregate once",
+    );
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      action: "read",
+      throughSeq: f.head(f.channel.roomId),
+      source: "viewport",
+    });
+    assert.equal(
+      unread(f.channel.roomId),
+      2,
+      "automatic navigation cannot acknowledge a pending notice",
+    );
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      action: "read",
+      throughSeq: 0,
+      source: "channel-list",
+    });
+    assert.equal(unread(f.channel.roomId), 0);
+  } finally {
+    f.close();
+  }
+});
+
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-global-discovery-"));
   const databasePath = join(directory, "test.db");
@@ -57,6 +297,13 @@ function fixture() {
     basedOnControlRoomSeq: head(workspace.controlRoom.roomId),
     idempotencyKey: "dm",
   });
+  for (const room of [channel, second, direct, workspace.controlRoom])
+    kernel.markHumanActivity(actor, {
+      roomId: room.roomId,
+      throughSeq: 0,
+      action: "read",
+      source: "channel-list",
+    });
   let serial = 0;
   const post = (roomId: string, body: string, asPeer = false) =>
     kernel.postRoomMessage(asPeer ? peerActor : actor, {

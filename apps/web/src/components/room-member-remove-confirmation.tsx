@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
@@ -19,7 +20,7 @@ export function RoomMemberRemoveConfirmation({
 }) {
   const ref = useDialogProtocol({ blocked, onClose: onCancel });
   return (
-    <div
+    <DialogLayer
       className="rah-dialog-layer rah-room-visibility-confirm"
       role="presentation"
     >
@@ -62,6 +63,6 @@ export function RoomMemberRemoveConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

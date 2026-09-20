@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
@@ -11,7 +12,7 @@ export function ServiceRestartConfirmation({
 }) {
   const ref = useDialogProtocol({ blocked: false, onClose });
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭重启服务确认"
@@ -44,6 +45,6 @@ export function ServiceRestartConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

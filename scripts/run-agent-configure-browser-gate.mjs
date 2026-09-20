@@ -40,10 +40,10 @@ for (const engine of ["chrome", "firefox"]) {
     const agent = (
       await post("agents/list", { controlRoomId: workspace.controlRoomId })
     ).agents[0];
-    const id = agent.definition.agentDefinitionId;
+    const id = agent.definition.agentId;
     // Old shell seed predates required instructions. Establish the same explicit
     // instruction-bearing definition that production provisioning creates.
-    const seed = await post("agents/get", { agentDefinitionId: id });
+    const seed = await post("agents/get", { agentId: id });
     const frontier = await post("rooms/sync", {
       roomId: workspace.controlRoomId,
       consumerId: "configure-gate",
@@ -51,7 +51,7 @@ for (const engine of ["chrome", "firefox"]) {
     });
     await post("agents/manage", {
       action: "configure",
-      agentDefinitionId: id,
+      agentId: id,
       handle: seed.agent.handle,
       displayName: seed.agent.currentRevision.displayName ?? seed.agent.handle,
       role: seed.agent.currentRevision.role,
@@ -72,7 +72,7 @@ for (const engine of ["chrome", "firefox"]) {
 
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-      const before = await post("agents/get", { agentDefinitionId: id });
+      const before = await post("agents/get", { agentId: id });
       await page.goto(
         fixture.origin + `/?surface=agents&agent=${id}&agentTab=profile`,
       );
@@ -123,7 +123,7 @@ for (const engine of ["chrome", "firefox"]) {
       await page
         .getByRole("button", { name: "编辑运行时配置", exact: true })
         .waitFor();
-      const after = await post("agents/get", { agentDefinitionId: id });
+      const after = await post("agents/get", { agentId: id });
       assert.equal(
         after.agent.currentRevision.revision,
         before.agent.currentRevision.revision + 1,

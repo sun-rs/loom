@@ -35,6 +35,7 @@ export const KNOWN_LOCAL_CLIS = Object.freeze([
 ]);
 
 export type ConfiguredLocalRuntime = {
+  customModelRuntime?: "claude" | "codex";
   cliId?: LocalRuntimeInventoryEntry["cliId"];
   agentBindings: LocalRuntimeInventoryEntry["agentBindings"];
   available: boolean;
@@ -101,6 +102,11 @@ export function configuredRuntimeSnapshot(input: {
   const { probeReport, runtimeOfferId, runtimeProfileRevision } = input;
   const cliId = runtimeProfileCliId(runtimeProfileRevision);
   return {
+    ...(runtimeProfileRevision.manifest.adapter.kind === "claude-stream-json/v1"
+      ? { customModelRuntime: "claude" as const }
+      : runtimeProfileRevision.manifest.adapter.kind === "codex-app-server/v1"
+        ? { customModelRuntime: "codex" as const }
+        : {}),
     ...(cliId === undefined ? {} : { cliId }),
     available: probeReport.available,
     displayName: runtimeProfileRevision.manifest.displayName,
@@ -225,7 +231,7 @@ export function buildLocalRuntimeInventoryResponse(input: {
             ) === true
               ? [
                   {
-                    agentDefinitionId: entry.definition.agentDefinitionId,
+                    agentId: entry.definition.agentId,
                     handle: entry.handle,
                     participantId: entry.definition.participantId,
                   },

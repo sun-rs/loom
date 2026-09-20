@@ -234,10 +234,23 @@
   color: var(--ink);
   cursor: pointer;
 }
+.msg-head {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.msg-head > * {
+  flex-shrink: 0;
+}
 .rah-message-sender:hover {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
+}
+.msg-head .rah-deleted-message-sender,
+.msg-head .rah-deleted-message-sender:hover {
+  cursor: default;
+  text-decoration: none;
 }
 .rah-message-avatar-trigger {
   align-self: start;

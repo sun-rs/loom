@@ -72,7 +72,7 @@ test("exact model identity selects the same runtime irrespective of inventory or
   ]) {
     const result = runtimeProfilePresentation(inputs, intent);
     assert.equal(result.runtime, b);
-    assert.equal(result.modelLabel, "Verified Model");
+    assert.equal(result.modelLabel, "real-model");
     assert.equal(result.reasoningLabel, "High");
   }
 });
@@ -122,7 +122,65 @@ test("full Agent directory uses the same scoped runtime join as identity preview
   );
   assert.match(
     source,
-    /entities\?\.runtimesForAgent\(selectedAgent\.agentDefinitionId\)/,
+    /entities\?\.runtimesForAgent\(selectedAgent\.agentId\)/,
   );
   assert.doesNotMatch(source, /runtimes\.filter\(/);
+});
+
+test("missing runtime catalogs show native model IDs for historical Agents", () => {
+  for (const [binding, native] of [
+    ["local:kimi-cli/v1:kimi-code/k3", "kimi-code/k3"],
+    [
+      "local:opencode-cli/v1:iiiiitoken/gemini-3.8-flash-high",
+      "iiiiitoken/gemini-3.8-flash-high",
+    ],
+    ["local:codex-cli/v1:gpt-6-astra", "gpt-6-astra"],
+    ["vendor/model", "vendor/model"],
+  ]) {
+    for (const state of ["ready", "loading", "error"] as const)
+      assert.equal(
+        runtimeProfilePresentation([], { exactBindingIds: [binding!] }, state)
+          .modelLabel,
+        native,
+      );
+  }
+});
+
+test("profile model identity is native across catalog, custom and unavailable runtime paths", () => {
+  for (const native of [
+    "kimi-code/k3",
+    "iiiiitoken/gemini-3.8-flash-high",
+    "gpt-6-astra",
+  ]) {
+    const binding = `local:test-cli/v1:${native}`;
+    const entry = runtime("test");
+    entry.modelBindingDescriptors.push({
+      modelBindingId: binding,
+      modelId: binding,
+      displayName: "Friendly model",
+      provider: "synthetic-provider",
+      evidence: "probed",
+      capabilityClasses: [],
+      supportedReasoning: [],
+      supportedServiceTiers: [],
+    });
+    for (const state of ["ready", "loading", "error"] as const) {
+      assert.equal(
+        runtimeProfilePresentation(
+          [entry],
+          { exactBindingIds: [binding] },
+          state,
+        ).modelLabel,
+        native,
+      );
+      assert.equal(
+        runtimeProfilePresentation(
+          [],
+          { customModel: { modelId: binding } },
+          state,
+        ).modelLabel,
+        native,
+      );
+    }
+  }
 });

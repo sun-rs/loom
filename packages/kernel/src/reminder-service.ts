@@ -150,7 +150,7 @@ export class ReminderService {
         )
         .run(
           reminderId,
-          owner.agentDefinitionId,
+          owner.agentId,
           scope.participantId,
           scope.roomId,
           targetRoomId,
@@ -190,7 +190,7 @@ export class ReminderService {
     const input = WorkerReminderListRequestSchema.parse(untrustedInput);
     const scope = this.#requireWorker(worker);
     const owner = this.#requireOwnerAgent(scope.participantId);
-    return this.#list(owner.agentDefinitionId, input);
+    return this.#list(owner.agentId, input);
   }
 
   cancel(
@@ -341,10 +341,10 @@ export class ReminderService {
       .prepare(
         "SELECT control_room_id FROM agent_definitions WHERE agent_definition_id = ? AND state != 'tombstoned'",
       )
-      .get(input.agentDefinitionId);
+      .get(input.agentId);
     if (definition === undefined) {
       throw new NotFoundError(
-        `agent definition ${input.agentDefinitionId} was not found`,
+        `agent definition ${input.agentId} was not found`,
       );
     }
     requireRoomMember(
@@ -353,7 +353,7 @@ export class ReminderService {
       actorId,
     );
     return ClientAgentRemindersListResponseSchema.parse({
-      reminders: this.#list(input.agentDefinitionId, input),
+      reminders: this.#list(input.agentId, input),
     });
   }
 
@@ -833,7 +833,7 @@ export class ReminderService {
     return targetRoomId;
   }
 
-  #requireOwnerAgent(participantId: string): { agentDefinitionId: string } {
+  #requireOwnerAgent(participantId: string): { agentId: string } {
     const row = this.#database
       .prepare(
         `SELECT agent_definition_id FROM agent_definitions
@@ -845,7 +845,7 @@ export class ReminderService {
         `participant ${participantId} has no active Agent definition`,
       );
     }
-    return { agentDefinitionId: text(row, "agent_definition_id") };
+    return { agentId: text(row, "agent_definition_id") };
   }
 
   #requireOwnedReminder(
@@ -898,7 +898,7 @@ export class ReminderService {
   }
 
   #list(
-    agentDefinitionId: string,
+    agentId: string,
     input: {
       all?: boolean | undefined;
       status?: "scheduled" | "fired" | "canceled" | undefined;
@@ -920,14 +920,14 @@ export class ReminderService {
               `SELECT * FROM reminders WHERE owner_agent_id = ?
                ORDER BY fire_at_ms, reminder_id`,
             )
-            .all(agentDefinitionId)
+            .all(agentId)
         : this.#database
             .prepare(
               `SELECT * FROM reminders
                WHERE owner_agent_id = ? AND status IN (${statuses.map(() => "?").join(", ")})
                ORDER BY fire_at_ms, reminder_id`,
             )
-            .all(agentDefinitionId, ...statuses);
+            .all(agentId, ...statuses);
     return rows.map((row) => reminderFromRow(row));
   }
 }

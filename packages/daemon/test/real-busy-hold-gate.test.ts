@@ -227,8 +227,8 @@ test(
         (candidate) => candidate.handle === spec.agentHandle,
       );
       assert.ok(agent, `Agent missing for ${runtime.executable}`);
-      const agentDefinitionId = agent.definition.agentDefinitionId;
-      const agentId = agent.definition.participantId;
+      const agentId = agent.definition.agentId;
+      const participantId = agent.definition.participantId;
 
       const controlDelivery = await syncRoom(
         origin,
@@ -242,7 +242,7 @@ test(
         "/v3/client/agents/manage",
         {
           action: "configure",
-          agentDefinitionId,
+          agentId,
           basedOnRoomSeq: controlDelivery.latestRoomSeq,
           displayName: spec.displayName,
           handle: spec.agentHandle,
@@ -274,7 +274,7 @@ test(
         prepared.humanAccessToken,
         "/v3/client/agents/onboard",
         {
-          agentDefinitionId,
+          agentId,
           basedOnRoomSeq: roomDelivery.latestRoomSeq,
           idempotencyKey: "real-busy-hold-onboard",
           roomId,
@@ -286,7 +286,8 @@ test(
         eventsOf()
           .filter(
             (event) =>
-              event.type === "message.posted" && event.actorId === agentId,
+              event.type === "message.posted" &&
+              event.actorId === participantId,
           )
           .map((event) => ({
             body: String(event.payload.body ?? ""),
@@ -299,11 +300,11 @@ test(
       const attemptsOf = () =>
         activeObserver
           .listRunAttempts({ roomId })
-          .filter((attempt) => attempt.participantId === agentId);
+          .filter((attempt) => attempt.participantId === participantId);
       const activationsOf = () =>
         activeObserver
           .listActivations({ roomId })
-          .filter((activation) => activation.participantId === agentId);
+          .filter((activation) => activation.participantId === participantId);
       const agentsIdle = () =>
         activationsOf().every(
           (activation) =>
@@ -319,12 +320,12 @@ test(
         );
       };
       const trajectoryOf = () =>
-        agentTrajectory(activeObserver, humanActor, agentDefinitionId);
+        agentTrajectory(activeObserver, humanActor, agentId);
       // The two mechanism facts, read from the canonical state DB and the
       // recorded trajectory rather than from the published bodies: a run that
       // never held anything, or that recovered by retyping the original by
       // hand, would otherwise pass this gate for the wrong reason.
-      const heldDraftsOf = () => heldMessageDrafts(databasePath, agentId);
+      const heldDraftsOf = () => heldMessageDrafts(databasePath, participantId);
       const originalHeldDraftsOf = () =>
         heldDraftsOf().filter((draft) => draft.body.includes(ORIGINAL_MARKER));
       const sendDraftInvocationsOf = () => sendDraftInvocations(trajectoryOf());
@@ -462,7 +463,7 @@ test(
             basedOnRoomSeq: beforeOriginal.latestRoomSeq,
             body: HUMAN_ORIGINAL_REQUEST,
             idempotencyKey: "real-busy-hold-original",
-            recipients: [{ participantId: agentId, reason: "mention" }],
+            recipients: [{ participantId: participantId, reason: "mention" }],
             roomId,
           },
         );
@@ -497,7 +498,7 @@ test(
             basedOnRoomSeq: beforeFollowUp.latestRoomSeq,
             body: HUMAN_FOLLOW_UP_REQUEST,
             idempotencyKey: "real-busy-hold-follow-up",
-            recipients: [{ participantId: agentId, reason: "mention" }],
+            recipients: [{ participantId: participantId, reason: "mention" }],
             roomId,
           },
         );
@@ -723,13 +724,13 @@ function heldMessageDrafts(
 function agentTrajectory(
   kernel: RoomKernel,
   actor: Parameters<RoomKernel["sync"]>[0],
-  agentDefinitionId: string,
+  agentId: string,
 ): RuntimeTrajectoryRecord[] {
   const collected: RuntimeTrajectoryRecord[] = [];
   let beforeActivityId: string | undefined;
   for (let page = 0; page < 50; page += 1) {
     const delivery = kernel.listAgentTrajectory(actor, {
-      agentDefinitionId,
+      agentId,
       limit: 100,
       ...(beforeActivityId === undefined ? {} : { beforeActivityId }),
     });

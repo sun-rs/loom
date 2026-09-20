@@ -720,7 +720,7 @@ test("current schema preserves a schema v40 reclaimed file receipt while adding 
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      56,
+      57,
     );
     assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
@@ -793,7 +793,7 @@ test("current schema atomically replaces the schema v41 GC scan index", () => {
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      56,
+      57,
     );
     assert.deepEqual(
       audit
@@ -1146,7 +1146,7 @@ test("deleting a cross-Room Reminder target clears its durable Reminder graph wi
       )
       .run(
         "reminder_cross_target",
-        definition.definition.agentDefinitionId,
+        definition.definition.agentId,
         agent.principal.principalId,
         source.roomId,
         f.channel.room.roomId,

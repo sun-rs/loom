@@ -52,7 +52,7 @@ try {
   const agent = (
     await post("agents/list", { controlRoomId: workspace.controlRoomId })
   ).agents[0];
-  const id = agent.definition.agentDefinitionId;
+  const id = agent.definition.agentId;
   const participantId = agent.definition.participantId;
   const send = async (body) => {
     const sync = await post("rooms/sync", {
@@ -97,7 +97,7 @@ try {
     .getByRole("button", { name: "保存运行时配置", exact: true })
     .click();
   await dialog.waitFor({ state: "hidden" });
-  const configured = await post("agents/get", { agentDefinitionId: id });
+  const configured = await post("agents/get", { agentId: id });
   assert.notEqual(
     configured.agent.currentRevision.agentDefinitionRevisionId,
     first.agent.agentDefinitionRevision.agentDefinitionRevisionId,

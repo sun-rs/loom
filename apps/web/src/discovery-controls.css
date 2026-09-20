@@ -102,6 +102,20 @@
   height: 12px;
   flex: none;
 }
+/* Raft Select chrome=field: anchor-width, text-field/font-field, py-1.5. */
+.rah-discovery-popover.is-field .rah-discovery-popover-options > button {
+  height: auto;
+  min-height: 37px;
+  padding: 6px 12px;
+  font:
+    400 16px/24px system-ui,
+    sans-serif;
+}
+.rah-discovery-popover.is-field .rah-discovery-popover-search input {
+  font:
+    400 16px/24px system-ui,
+    sans-serif;
+}
 .rah-discovery-option-leading {
   display: flex;
   align-items: center;
@@ -224,6 +238,17 @@
   width: 100%;
   text-align: left;
   cursor: inherit;
+}
+/* Stretch the native open button over the card's padding and empty footer.
+   The status control stays above it and retains its own menu/drag boundary. */
+.rah-global-card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.rah-global-card-footer .rah-task-status-picker {
+  position: relative;
+  z-index: 1;
 }
 .rah-global-card-row {
   display: flex;

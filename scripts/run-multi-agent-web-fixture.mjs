@@ -291,15 +291,15 @@ if (command === "debug models" || command === "debug models --bundled") {
       role: `${agent.principal.handle} deterministic fixture worker`,
       skillRefs: [],
     });
-    agentDefinitionIds.push(definition.definition.agentDefinitionId);
+    agentDefinitionIds.push(definition.definition.agentId);
   }
 
   let roomSeq = latestRoomSeq(seed, humanActor, productRoom.room.roomId);
-  for (const [index, agentDefinitionId] of agentDefinitionIds
+  for (const [index, agentId] of agentDefinitionIds
     .slice(0, onboardAgentCount)
     .entries()) {
     const onboarded = seed.onboardAgentToRoom(humanActor, {
-      agentDefinitionId,
+      agentId,
       basedOnRoomSeq: roomSeq,
       idempotencyKey: `web-multi-agent-onboard-${String(index)}`,
       roomId: productRoom.room.roomId,
@@ -318,6 +318,34 @@ if (command === "debug models" || command === "debug models --bundled") {
     }
   }
 
+  if (process.env.RAH_FIXTURE_UNREAD_MATRIX === "1")
+    (await import("./unread-matrix-fixture.mjs")).seedUnreadMatrix(
+      seed,
+      humanActor,
+      productWorkspace,
+      agents,
+    );
+  if (process.env.RAH_FIXTURE_TASK_IDENTITY === "1") {
+    const roomId = taskMatrixRoom.room.roomId;
+    seed.addMember(humanActor, {
+      principalId: agents[0].principal.principalId,
+      roomId,
+    });
+    const task = seed.createTask(humanActor, {
+      roomId,
+      title: "FAKE historical identity task",
+      idempotencyKey: "identity-task",
+      assigneeId: agents[0].principal.principalId,
+    }).task;
+    seed.postMessage(seed.authenticateAccessToken(agents[0].accessToken), {
+      roomId,
+      threadId: task.threadId,
+      body: "FAKE historical Agent reply",
+      recipients: [],
+      basedOnRoomSeq: latestRoomSeq(seed, humanActor, roomId),
+      idempotencyKey: "identity-reply",
+    });
+  }
   seed.postMessage(humanActor, {
     basedOnRoomSeq: roomSeq,
     body: [

@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -186,7 +187,7 @@ function HideAllConfirmation({
 }) {
   const ref = useDialogProtocol({ blocked: busy, onClose });
   return (
-    <div className="rah-dialog-layer rah-room-visibility-confirm">
+    <DialogLayer className="rah-dialog-layer rah-room-visibility-confirm">
       <div
         className="rah-dialog-backdrop"
         onClick={() => {
@@ -231,6 +232,6 @@ function HideAllConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

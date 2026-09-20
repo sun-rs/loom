@@ -15,12 +15,24 @@ const row = (sequence: number): RuntimeTrajectoryRecord => ({
   serverSequence: sequence,
   entry: { kind: "text", text: String(sequence) },
 });
-test("paging older than 500 entries reveals the requested older page instead of silently discarding it", () => {
+test("live activity retains the latest 500 records with overlap deduplicated", () => {
   const existing = Array.from({ length: 500 }, (_, i) => row(i + 51));
   const older = Array.from({ length: 50 }, (_, i) => row(i + 1));
   const merged = mergeTrajectoryWindow(existing, older);
   assert.equal(merged.length, 500);
-  assert.equal(merged[0]?.serverSequence, 1);
-  assert.equal(merged.at(-1)?.serverSequence, 500);
+  assert.equal(merged[0]?.serverSequence, 51);
+  assert.equal(merged.at(-1)?.serverSequence, 550);
   assert.equal(mergeTrajectoryWindow(merged, older).length, 500);
+});
+
+test("new polling tails extend the initial 50 instead of replacing them", () => {
+  const initial = Array.from({ length: 50 }, (_, i) => row(50 - i));
+  const incoming = Array.from({ length: 50 }, (_, i) => row(75 - i));
+  const merged = mergeTrajectoryWindow(initial, incoming);
+  assert.equal(merged.length, 75);
+  assert.deepEqual(
+    merged.map((entry) => entry.serverSequence),
+    Array.from({ length: 75 }, (_, i) => i + 1),
+  );
+  assert.deepEqual(mergeTrajectoryWindow(merged, incoming), merged);
 });

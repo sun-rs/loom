@@ -34,7 +34,7 @@ export function MessageAgentAvatar({ agent }: { agent: WorkspaceAgentView }) {
       label={`查看 ${agent.displayName} 动态`}
       triggerClassName="rah-message-avatar-trigger"
       className="rah-agent-preview"
-      onClick={() => context?.onOpen(agent.agentDefinitionId, origin)}
+      onClick={() => context?.onOpen(agent.agentId, origin)}
       content={
         context
           ? (close) => (
@@ -43,7 +43,7 @@ export function MessageAgentAvatar({ agent }: { agent: WorkspaceAgentView }) {
                 client={context.client}
                 onOpenActivity={() => {
                   close();
-                  context.onOpen(agent.agentDefinitionId, origin);
+                  context.onOpen(agent.agentId, origin);
                 }}
               />
             )
@@ -71,7 +71,7 @@ export function MessageAgentReference({
       label={`查看 ${agent.displayName} 动态`}
       triggerClassName="rah-rich-agent-reference"
       className="rah-agent-preview"
-      onClick={() => context?.onOpen(agent.agentDefinitionId, origin)}
+      onClick={() => context?.onOpen(agent.agentId, origin)}
       content={
         context
           ? (close) => (
@@ -80,7 +80,7 @@ export function MessageAgentReference({
                 client={context.client}
                 onOpenActivity={() => {
                   close();
-                  context.onOpen(agent.agentDefinitionId, origin);
+                  context.onOpen(agent.agentId, origin);
                 }}
               />
             )
@@ -112,7 +112,7 @@ function AgentPreview({
   const context = useContext(AgentMessageContext);
   const [detail, setDetail] = useState<ClientAgentGetResponse>();
   const activityScope = JSON.stringify([
-    agent.agentDefinitionId,
+    agent.agentId,
     entities?.scope?.actorId,
     entities?.scope?.workspaceId,
   ]);
@@ -127,7 +127,7 @@ function AgentPreview({
   const [profileError, setProfileError] = useState(false);
   const canReadActivity =
     context?.canManageAgents === true ||
-    (detail?.agent.definition.agentDefinitionId === agent.agentDefinitionId &&
+    (detail?.agent.definition.agentId === agent.agentId &&
       detail?.creator?.kind === "human" &&
       detail.creator.principalId === entities?.scope?.actorId);
   const currentActivity =
@@ -147,7 +147,7 @@ function AgentPreview({
     void client
       .request(
         "agent.get",
-        { agentDefinitionId: agent.agentDefinitionId },
+        { agentId: agent.agentId },
         { signal: controller.signal },
       )
       .then((d) => {
@@ -162,7 +162,7 @@ function AgentPreview({
     return () => controller.abort();
   }, [
     client,
-    agent.agentDefinitionId,
+    agent.agentId,
     agent.agentDefinitionRevisionId,
     entities?.scope?.actorId,
     entities?.scope?.workspaceId,
@@ -183,7 +183,7 @@ function AgentPreview({
     void client
       .request(
         "agent.trajectory.list",
-        { agentDefinitionId: agent.agentDefinitionId, limit: 5 },
+        { agentId: agent.agentId, limit: 5 },
         { signal: controller.signal },
       )
       .then((a) => {
@@ -210,7 +210,7 @@ function AgentPreview({
     return () => controller.abort();
   }, [
     client,
-    agent.agentDefinitionId,
+    agent.agentId,
     canReadActivity,
     entities?.scope?.actorId,
     entities?.scope?.workspaceId,
@@ -221,37 +221,54 @@ function AgentPreview({
     agent.presence?.trajectoryVersion ?? agent.presence?.activityAt,
   ]);
   const runtimeView = runtimeProfilePresentation(
-    entities?.runtimesForAgent(agent.agentDefinitionId) ?? [],
-    detail?.policy.modelIntent,
+    (agent.state === "tombstoned" && detail
+      ? entities?.runtimesForOffers(
+          detail.policy.required.allowedOfferIds ?? [],
+        )
+      : entities?.runtimesForAgent(agent.agentId)) ?? [],
+    detail?.policy.modelIntent ??
+      (agent.modelBindingId
+        ? { exactBindingIds: [agent.modelBindingId] }
+        : undefined),
     profileLoading ? "loading" : profileError ? "error" : "ready",
   );
-  const boundComputer = entities?.computerForAgent(
-    agent.agentDefinitionId,
-  )?.displayName;
+  const boundComputer = entities?.computerForAgent(agent.agentId)?.displayName;
+  const deleted = agent.state === "tombstoned";
+  const connectionLabel = deleted ? "离线" : agentConnectionLabel(agent);
+  const runtimeLabel = runtimeView.runtime?.displayName
+    ? runtimeView.runtimeLabel
+    : agent.runtimeLabels.join(" / ") || runtimeView.runtimeLabel;
   return (
     <>
       <div className="rah-agent-preview-identity">
-        <AgentAvatar agent={agent} size="preview" showStatus={false} />
+        <AgentAvatar
+          agent={agent}
+          size="preview"
+          showStatus={false}
+          muted={false}
+        />
         <div>
           <div className="rah-preview-name-line">
             <b>{agent.displayName}</b>
             <AgentStatusDot
               className="rah-preview-presence"
               activity={agentPresencePresentation(agent).activity}
-              label={agentConnectionLabel(agent)}
+              label={connectionLabel}
               size="sm"
             />
-            <small>{agentConnectionLabel(agent)}</small>
+            <small>{connectionLabel}</small>
           </div>
           <small>@{agent.handle}</small>
           <dl>
             <dt>计算机</dt>
-            <dd title={boundComputer}>{boundComputer ?? "未绑定"}</dd>
+            <dd title={boundComputer}>
+              {deleted ? "未分配计算机" : (boundComputer ?? "未绑定")}
+            </dd>
             <dt>运行时</dt>
-            <dd title={runtimeView.runtimeLabel}>{runtimeView.runtimeLabel}</dd>
+            <dd title={runtimeLabel}>{runtimeLabel}</dd>
             <dt>模型</dt>
             <dd title={runtimeView.modelLabel}>{runtimeView.modelLabel}</dd>
-            {runtimeView.reasoningLabel ? (
+            {!profileError && runtimeView.reasoningLabel ? (
               <>
                 <dt>推理强度</dt>
                 <dd title={runtimeView.reasoningLabel}>

@@ -40,10 +40,10 @@ for (const engine of ["chrome", "firefox"]) {
     const agent = (
       await post("agents/list", { controlRoomId: workspace.controlRoomId })
     ).agents[0];
-    const id = agent.definition.agentDefinitionId;
+    const id = agent.definition.agentId;
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-      const before = await post("agents/get", { agentDefinitionId: id });
+      const before = await post("agents/get", { agentId: id });
       await page.goto(
         fixture.origin + `/?surface=agents&agent=${id}&agentTab=profile`,
       );
@@ -134,7 +134,7 @@ for (const engine of ["chrome", "firefox"]) {
         .locator(".rah-agent-actions-section")
         .getByRole("button", { name: "重启 / 重置", exact: true })
         .waitFor();
-      const after = await post("agents/get", { agentDefinitionId: id });
+      const after = await post("agents/get", { agentId: id });
       assert.deepEqual(
         after.agent.currentRevision,
         before.agent.currentRevision,

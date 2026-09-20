@@ -172,7 +172,7 @@ for (const binding of cases.filter(
         assert.deepEqual(app.health().participantIds, [participantId]);
         await post("/v3/client/agents/manage", {
           action: "configure",
-          agentDefinitionId: agent.definition.agentDefinitionId,
+          agentId: agent.definition.agentId,
           basedOnRoomSeq: head(prepared.metadata.controlRoomId),
           idempotencyKey: "target-config",
           displayName: `Target verifier ${binding.cli}`,

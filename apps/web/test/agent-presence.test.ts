@@ -24,7 +24,7 @@ test("avatars consume full presence, not CLI installation or an old timeline row
     assert.deepEqual(
       agentPresencePresentation({
         ...agent,
-        presence: { agentDefinitionId: "a", activity, reason },
+        presence: { agentId: "a", activity, reason },
       }),
       { activity, label, pulse },
     );
@@ -34,7 +34,7 @@ test("avatars consume full presence, not CLI installation or an old timeline row
       ...agent,
       state: "disabled",
       presence: {
-        agentDefinitionId: "a",
+        agentId: "a",
         activity: "working",
         reason: "working",
       },
@@ -56,7 +56,7 @@ test("the workspace work strip selects only Raft live activity inside the 90 sec
     connectionStatus: "online" as const,
     presence: {
       activityAt: new Date(now - age).toISOString(),
-      agentDefinitionId: id,
+      agentId: id,
       activity,
       reason: activity,
     },
@@ -87,4 +87,22 @@ test("the workspace work strip selects only Raft live activity inside the 90 sec
     pulse: true,
   });
   assert.equal(latest?.expiresAt, now - 1_000 + RAFT_LIVE_ACTIVITY_TTL_MS);
+});
+
+test("queued initialization remains visible until the durable queue changes", () => {
+  const now = Date.parse("2026-09-20T00:05:00Z");
+  const queued = {
+    state: "enabled",
+    runtimeAvailable: true,
+    presence: {
+      agentId: "new",
+      activity: "online",
+      reason: "initializing",
+      activityAt: "2026-09-20T00:00:00Z",
+    },
+  } as Parameters<typeof latestWorkspaceActivity>[0][number];
+  assert.equal(
+    latestWorkspaceActivity([queued], now)?.presentation.label,
+    "等待初始化…",
+  );
 });

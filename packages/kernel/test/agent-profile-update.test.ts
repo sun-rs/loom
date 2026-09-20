@@ -77,7 +77,7 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
     });
     const initialDetail = kernel.getWorkspaceAgentManagementView(
       actor,
-      created.agent.definition.agentDefinitionId,
+      created.agent.definition.agentId,
     );
     assert.equal(
       initialDetail.creator?.principalId,
@@ -88,7 +88,7 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
     now.setTime(now.getTime() + 600_000); // Host/offer expired: metadata must remain editable.
     const request = ClientAgentManageRequestSchema.parse({
       action: "update_profile",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       expectedRevisionId:
         created.agent.currentRevision.agentDefinitionRevisionId,
       basedOnRoomSeq: created.event.roomSeq,
@@ -126,8 +126,7 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
         key,
       );
     assert.deepEqual(
-      kernel.getWorkspaceAgentManagementView(actor, request.agentDefinitionId)
-        .policy,
+      kernel.getWorkspaceAgentManagementView(actor, request.agentId).policy,
       created.policy,
     );
     assert.equal(
@@ -192,8 +191,7 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
     );
     assert.deepEqual(avatarSaved.policy, undefined);
     assert.deepEqual(
-      kernel.getWorkspaceAgentManagementView(actor, request.agentDefinitionId)
-        .policy,
+      kernel.getWorkspaceAgentManagementView(actor, request.agentId).policy,
       created.policy,
     );
     const uploadedAvatarKey = `upload_png_${"b".repeat(40)}`;
@@ -223,7 +221,7 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
     actor = kernel.authenticateAccessToken(owner.accessToken);
     const persisted = kernel.getWorkspaceAgentManagementView(
       actor,
-      request.agentDefinitionId,
+      request.agentId,
     );
     assert.deepEqual(persisted.agent, uploadedAvatarSaved.agent);
     assert.deepEqual(persisted.policy, created.policy);
@@ -235,14 +233,14 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
     assert.deepEqual(persisted.createdAgents, []);
     const disabled = kernel.manageWorkspaceAgent(actor, {
       action: "set_state",
-      agentDefinitionId: request.agentDefinitionId,
+      agentId: request.agentId,
       basedOnRoomSeq: uploadedAvatarSaved.event.roomSeq,
       idempotencyKey: "disable",
       state: "disabled",
     });
     const deleted = kernel.manageWorkspaceAgent(actor, {
       action: "set_state",
-      agentDefinitionId: request.agentDefinitionId,
+      agentId: request.agentId,
       basedOnRoomSeq: disabled.event.roomSeq,
       idempotencyKey: "delete",
       state: "tombstoned",
@@ -267,7 +265,7 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
 test("profile command cannot smuggle role/policy/handle changes or invalid fields", () => {
   const command = {
     action: "update_profile",
-    agentDefinitionId: "agent",
+    agentId: "agent",
     expectedRevisionId: "revision",
     basedOnRoomSeq: 0,
     idempotencyKey: "edit",

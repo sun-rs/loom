@@ -25,7 +25,7 @@ test("typed navigation targets cover canonical product identities and reject URL
       roomId: "room-design",
       inputRequestId: "input-1",
     },
-    { kind: "agent", agentDefinitionId: "agent-alice", tab: "activity" },
+    { kind: "agent", agentId: "agent-alice", tab: "activity" },
     { kind: "computer", hostId: "host-mac" },
     { kind: "artifact", roomId: "room-design", artifactId: "artifact-1" },
   ] as const;

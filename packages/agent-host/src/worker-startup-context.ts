@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import {
   AgentRuntimeContextSchema,
   ContextManifestSchema,
+  canonicalAgentIdField,
 } from "@rah-os/protocol";
 import { readAgentMemoryWorkspaceFile } from "./agent-memory-materialization.ts";
 import { agentMemoryWorkspacePath } from "./agent-memory-workspace.ts";
@@ -21,7 +22,7 @@ export async function workerStartupContext(
     if (env[key] !== undefined) context[key] = env[key];
   if (env.RAH_AGENT_CONTEXT_JSON)
     context.agent = AgentRuntimeContextSchema.parse(
-      JSON.parse(env.RAH_AGENT_CONTEXT_JSON),
+      canonicalAgentIdField(JSON.parse(env.RAH_AGENT_CONTEXT_JSON)),
     );
   if (env.RAH_CONTEXT_MANIFEST_JSON)
     context.manifest = ContextManifestSchema.parse(

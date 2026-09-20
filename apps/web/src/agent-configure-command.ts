@@ -11,7 +11,7 @@ import type {
 type Configure = Extract<ClientAgentManageRequest, { action: "configure" }>;
 export type AgentConfigurationInput = Omit<
   Configure,
-  "action" | "agentDefinitionId" | "basedOnRoomSeq" | "idempotencyKey"
+  "action" | "agentId" | "basedOnRoomSeq" | "idempotencyKey"
 >;
 
 /** One editor command over the existing Room barrier and canonical management owner. */
@@ -38,8 +38,7 @@ export function createAgentConfigureCommand(options: {
         mutate: async (basedOnRoomSeq) => {
           if (!request) {
             const latest = await options.client.request("agent.get", {
-              agentDefinitionId:
-                options.detail.agent.definition.agentDefinitionId,
+              agentId: options.detail.agent.definition.agentId,
             });
             if (
               latest.agent.currentRevision.revision !==
@@ -51,8 +50,7 @@ export function createAgentConfigureCommand(options: {
             request = structuredClone({
               ...input,
               action: "configure" as const,
-              agentDefinitionId:
-                options.detail.agent.definition.agentDefinitionId,
+              agentId: options.detail.agent.definition.agentId,
               basedOnRoomSeq,
               idempotencyKey: options.createKey(),
             });

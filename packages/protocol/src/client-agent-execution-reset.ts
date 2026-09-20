@@ -13,7 +13,7 @@ export type AgentExecutionResetMode = z.infer<
 
 export const ClientAgentExecutionResetRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
     mode: AgentExecutionResetModeSchema,
@@ -25,7 +25,7 @@ export type ClientAgentExecutionResetRequest = z.infer<
 
 export const ClientAgentExecutionResetResponseSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     completedAt: TimestampSchema,
     computerHostId: IdentifierSchema,
     deduplicated: z.boolean(),

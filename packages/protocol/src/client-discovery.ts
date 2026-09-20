@@ -148,6 +148,7 @@ export const HumanActivityMarkRequestSchema = z
     threadId: IdentifierSchema.optional(),
     throughSeq: z.number().int().nonnegative(),
     action: z.enum(["read", "done", "unread"]),
+    source: z.enum(["viewport", "channel-list"]).optional(),
   })
   .strict();
 export const HumanActivityMarkResponseSchema = z

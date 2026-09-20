@@ -53,8 +53,10 @@ Human creator/Room manager 通过 `task.workflow.update` 可以选择全部五�
 Task schema 中 claim owner/expiry 必须成对；执行阶段根据实际 claim 展示，人工进行中
 不代表 Runtime 正在运行。已有提交、审阅和历史记录保留。
 
-Human 负责人编辑与状态独立，允许 Room 内 Human/Agent 或未指派；统一使用
-assign/unassign 接口。将次级角色成员提升为 owner 时移除其冲突角色；取消负责人清除
+Human 负责人编辑允许 Room 内 Human/Agent 或未指派；统一使用
+assign/unassign 接口。2026-09-20 对齐 Raft：完成状态拒绝人工指派和取消指派，
+须先重新打开；待办、进行中、待确认和已关闭沿用原权限控制。删除 Agent 的系统清理
+仍解除所有状态任务的负责人而保留任务状态，不受人工编辑限制。将次级角色成员提升为 owner 时移除其冲突角色；取消负责人清除
 次级角色。单一 owner 不变。旧 Worker claim 原子撤销，已有停止请求负责真实进程终止；
 停止未完成前拒绝新 claim，界面仍可继续编辑最新的意图。不是通过前端隐藏限制规避后端。
 变更、事件、通知/Outbox 在同一事务；保留权限、最新 Room seq 与精确幂等校验。

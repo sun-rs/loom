@@ -16,7 +16,9 @@ Multica `11861145abc59a0d39c8c8f24ad837d4584e664f` 的
 `chat-model-identifier.ts` 为唯一聊天格式所有者，消费已授权目录中的provider/modelId，
 不按运行时名称分支，不从displayName推断provider，不发起新CLI探测。
 去除外围空白，已有相同 `provider/` 前缀时不重复添加；模型ID内部路径原样保留。
-无目录条目时仍回退完整绑定ID，未配置模型和Human仍不显示模型标签。
+无目录条目时回退绑定ID的模型部分，去掉 `local:<runtime>/vN:` 传输命名空间；
+2026-09-20 修正此前直接显示完整绑定ID的行为。已删除与存活Agent共用此规则，
+保留provider和模型内部路径，不改变持久绑定。未配置模型和Human仍不显示模型标签。
 Room、DM、Thread通过现有MessageAgentModelName共用；tooltip与正文一致。
 本项为RAH展示逻辑，不新增运行时适配器、协议或历史模型归因能力。
 
@@ -40,3 +42,36 @@ fixture不代表已新增grokbuild适配器；它只验证现有目录数据的�
 `iiiiitoken/gemini-3.8-flash-high`、`kimi-code/k3`，标签后仍紧接时间。
 刷新、本机、LAN和Tailnet构建身份均通过；截图为 `/tmp/rah-compact-model-formal.png`。
 未发送消息、修改Agent配置、运行付费CLI、提交或推送；未声称Raft同条件在线双边验收。
+
+## 2026-09-20 无目录回退修复
+
+新增回归测试先复现 `local:opencode-cli/v1:iiiiitoken/gemini-3.8-flash-high`
+未去前缀的失败，再由同一聊天格式所有者修复；Kimi对应显示 `kimi-code/k3`。
+不按删除状态分支，普通含冒号模型ID保持不变。真实消息组件fixture覆盖两种已删除
+Agent的标签和title，桌面及390px窗口均与模型ID一致；不创建第二套历史身份逻辑。
+
+本批3项格式单测、模型外观浏览器门禁及删除Agent任务身份门禁通过，TypeScript、
+正式bundle构建、diff检查通过。全仓库check仍被既有message-present surface登记
+问题阻断；format检查仍有5个本批未改文件的问题，不宣称全绿。
+正式工作台经过活动检查、备份和优雅重启，构建为
+`105b6d25d0531b639db244ea23da657d2a552560e241d3a31b257c9f73c00b3f`。
+新浏览器打开真实任务中的已删除Gemini历史回复，核对标签及title均为
+`iiiiitoken/gemini-3.8-flash-high`，并检查截图。Kimi由隔离组件浏览器验证，
+未声称本批观察到正式Kimi历史消息。未发送消息或运行付费CLI。
+
+## 2026-09-20 原生 ID 显示规则修正
+
+按用户确认，撤销此前“额外拼接 provider 元数据”的规则。共享 `chatModelIdentifier`
+只去掉 `local:<runtime>/vN:` 内部绑定前缀，不读取 provider 来构造显示字符串。
+Codex 原生 slug、Claude 原生 value 原样显示；OpenCode/Kimi 的原生 provider/model
+仍保持原样。有目录及无目录（含已删除身份）使用同一规则；不改目录元数据或执行绑定。
+这是 RAH CLI 身份显示的产品修正，不宣称复制 Raft 服务端。
+
+先修改单测复现 `openai/gpt-5.6` 等额外前缀失败，再最小修改共享显示函数。
+四项单测通过；消息组件浏览器门禁覆盖标签及 title、1440/390px、目录及删除身份回退。
+
+本次浏览器门禁、类型检查、正式构建及 diff 检查通过；全仓库检查仍有既有登记与
+五个无关文件格式阻断。正式实例已备份并安全重启，冻结构建
+`757dc9f7024c0485c2948e285d7523ad0485400393c8701c0bb1b86360fd1cd5`。
+新真实浏览器从正式历史消息观察到 `gpt-6-astra`、`opus[1m]`、`kimi-code/k3`、
+`iiiiitoken/gemini-3.8-flash-high`，无额外提供方拼接。未发送消息或运行付费模型。

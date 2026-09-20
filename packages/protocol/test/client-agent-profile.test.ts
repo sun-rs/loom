@@ -5,7 +5,7 @@ import { ClientAgentProfileRequestSchema } from "../src/index.ts";
 
 const base = {
   action: "update_profile" as const,
-  agentDefinitionId: "agent",
+  agentId: "agent",
   expectedRevisionId: "revision",
   basedOnRoomSeq: 0,
   idempotencyKey: "avatar-update",

@@ -118,10 +118,10 @@ for (const mode of ["direct", "gated", undefined] as const) {
         runtimeProfileRegistry: registry,
         runtimeProfileRevision: revision,
         supervisorDirectory: directory,
-        launchEnvironment: (_runtimeId, agentDefinitionId) => {
-          assert.equal(agentDefinitionId, "definition-delivery");
+        launchEnvironment: (_runtimeId, agentId) => {
+          assert.equal(agentId, "definition-delivery");
           return {
-            AGENT_ENV_FIXTURE: agentDefinitionId,
+            AGENT_ENV_FIXTURE: agentId,
             RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
               runtimeId: "claude",
               additionalArgs: enabled ? ["--verbose"] : [],
@@ -172,7 +172,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
             participantId: agent.principal.principalId,
             handle: "delivery-agent",
             agentDefinitionRevision: {
-              agentDefinitionId: "definition-delivery",
+              agentId: "definition-delivery",
               agentDefinitionRevisionId: "revision-delivery",
               contentDigest: `sha256:${"1".repeat(64)}`,
               createdAt: "2026-09-11T00:00:00.000Z",

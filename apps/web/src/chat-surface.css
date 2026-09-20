@@ -4,14 +4,16 @@
   line-height: 20px;
   font-weight: 500;
 }
-.rah-room-sidebar .channel-row.is-selected {
-  font-weight: 500;
+.rah-room-sidebar .channel-row.is-selected,
+.rah-room-sidebar .channel-row[data-unread="true"] {
+  font-weight: 700;
 }
 .rah-sidebar-channel-entry {
   position: relative;
 }
 .rah-sidebar-channel-name,
-.rah-direct-row-name {
+.rah-direct-row-name,
+.rah-agent-member-row b {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -30,7 +32,8 @@
   width: 18px;
   border-width: 1px;
 }
-.rah-direct-row-identity {
+.rah-direct-row-identity,
+.rah-agent-member-row > span:nth-child(2) {
   display: flex;
   align-items: baseline;
   gap: 4px;
@@ -38,15 +41,27 @@
   flex: 1;
   overflow: hidden;
 }
-.rah-direct-row-name {
+.rah-direct-row-name,
+.rah-agent-member-row b {
   flex: 0 1 auto;
   max-width: 70%;
+  font: inherit;
+  font-size: 14px;
 }
-.rah-direct-room-row small {
+.rah-agent-member-row {
+  font: 500 14px/20px var(--sans);
+}
+.rah-agent-member-row.is-selected {
+  font-weight: 700;
+}
+.rah-direct-room-row small,
+.rah-agent-member-row small {
   flex: 1;
   min-width: 0;
   /* 批次 3b 裁决 1：描述字重继承行的 500（Raft `text-xs text-black/40` 无字重声明）。 */
-  font: var(--fw-medium) 12px/16px var(--sans);
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--ink-40);
   white-space: nowrap;
   overflow: hidden;

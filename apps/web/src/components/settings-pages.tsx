@@ -321,7 +321,7 @@ export function AppearanceSettingsContent() {
                 displayName: "Cindy",
                 // Static appearance sample, never an actual Agent observation.
                 presence: {
-                  agentDefinitionId: "appearance-preview",
+                  agentId: "appearance-preview",
                   activity: "online",
                   reason: "online",
                 },
@@ -546,10 +546,6 @@ export function WorkspaceProfileSettingsContent({
         ) : null}
       </form>
       {children}
-      <p className="rah-settings-footnote">
-        本地版服务器即当前协作空间；它由本机 daemon 承载，不依赖 Raft
-        中央服务器。
-      </p>
     </SettingsPage>
   );
 }

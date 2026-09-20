@@ -1,3 +1,7 @@
+import {
+  identityDisplayName,
+  directRoomDisplayName,
+} from "./identity-display-name.ts";
 import { messageAttachmentCommentState } from "./attachment-comment-counts.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
@@ -363,9 +367,14 @@ export class MessageSocial {
       ),
       items: taken.map((row) => ({
         message: messageProjectionFromRow(row),
-        roomName: row.room_name,
+        roomName:
+          directRoomDisplayName(db, String(row.room_id), actorId) ??
+          row.room_name,
         roomKind: row.room_kind,
-        senderName: row.sender_display_name ?? row.sender_handle,
+        senderName:
+          identityDisplayName(db, String(row.sender_principal_id)) ??
+          row.sender_display_name ??
+          row.sender_handle,
         sender: {
           principalId: row.sender_principal_id,
           handle: row.sender_handle,

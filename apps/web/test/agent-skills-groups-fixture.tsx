@@ -38,7 +38,7 @@ createRoot(document.getElementById("root")!).render(
   <div className="rah-product-shell" data-conversation-layout="single">
     <AgentSkillsSection
       client={client}
-      agentDefinitionId="fixture"
+      agentId="fixture"
       executionPolicyRevisionId="fixture-policy"
     />
   </div>,

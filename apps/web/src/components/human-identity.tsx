@@ -44,7 +44,7 @@ export function HumanIdentity({
           size="compact"
         />
         <b>{name}</b>
-        <small>@{person.displayName || person.handle}</small>
+        <small>@{person.handle}</small>
       </>
     ));
   if (!context) return <span className={className}>{contents}</span>;
@@ -84,7 +84,7 @@ function HumanPreview({ principalId }: { principalId: string }) {
         />
         <div>
           <h2>{human.displayName || human.handle}</h2>
-          <p>@{human.displayName || human.handle}</p>
+          <p>@{human.handle}</p>
         </div>
       </div>
       {human.description && (

@@ -65,7 +65,7 @@ test("DaemonApplication launches a real fake child that edits its own profile an
           description:field(out,'Description'),
           avatarKey:field(out,'Avatar'),
           participantId:field(out,'ID'),
-          agentDefinitionId:field(out,'Agent Definition'),
+          agentId:field(out,'Agent Definition'),
         },
         writeContext:{
           controlRoomId:field(out,'Control Room'),
@@ -323,7 +323,7 @@ test("DaemonApplication launches a real fake child that edits its own profile an
     const updates = control.events.filter(
       (event) =>
         event.type === "agent.profile_updated" &&
-        event.aggregateId === definition.definition.agentDefinitionId,
+        event.aggregateId === definition.definition.agentId,
     );
     assert.equal(updates.length, 2);
     assert.ok(

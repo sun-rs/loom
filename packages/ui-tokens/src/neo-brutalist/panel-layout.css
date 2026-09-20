@@ -163,3 +163,14 @@
     height: var(--rah-mobile-root-icon);
   }
 }
+
+/* Header-local menus must paint above positioned rich-message content. */
+.rah-panel-header[data-header-kind="thread"] {
+  position: relative;
+  z-index: 2;
+}
+.thread > .messages {
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+}

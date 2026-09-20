@@ -1,3 +1,4 @@
+import { identityDisplayName } from "./identity-display-name.ts";
 import { refreshAttachmentCommentCounts } from "./attachment-comment-counts.ts";
 import { followAgentThreadParticipants } from "./agent-thread-subscriptions.ts";
 import { boundRows } from "./bounded-read-rows.ts";
@@ -122,11 +123,13 @@ export class AttachmentCommentsService {
         senderId: text(row, "actor_id"),
         senderType: text(row, "kind") as "human" | "agent",
         senderName:
-          typeof row.display_name === "string"
+          identityDisplayName(this.#c.database, text(row, "actor_id")) ??
+          (typeof row.display_name === "string"
             ? row.display_name
-            : text(row, "handle"),
+            : text(row, "handle")),
         reactions: this.#reactions(text(row, "message_id")),
         content: JSON.parse(text(row, "comment_payload")).body,
+        mentions: JSON.parse(String(row.mentions_json ?? "[]")),
         createdAt: text(row, "created_at"),
         anchor: row.anchor_json ? JSON.parse(text(row, "anchor_json")) : null,
       });

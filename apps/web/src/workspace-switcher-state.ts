@@ -3,7 +3,10 @@ import type { Workspace } from "@rah-os/protocol";
 const PREFIX = "rah:workspace-switcher:v1";
 const MAX_ORDERED_WORKSPACES = 128;
 const MAX_LOCATION_LENGTH = 4096;
+// Search and Activity have independent rail entries; neither may capture Chat.
+const CHAT_SURFACES = new Set(["room", "saved"]);
 const GLOBAL_SURFACES = new Set([
+  "room",
   "activity",
   "computers",
   "saved",
@@ -97,9 +100,37 @@ export function rememberWorkspaceLocation(
       return;
     }
     storage.setItem(key, search);
+    const surface = new URLSearchParams(search).get("surface") ?? "room";
+    if (CHAT_SURFACES.has(surface) || surface === "agents") {
+      storage.setItem(
+        `${key}:${surface === "agents" ? "agents" : "room"}`,
+        search,
+      );
+    }
   } catch {
     // Best effort, matching Raft's guarded localStorage route memory.
   }
+}
+
+export function recallWorkspaceSurface(
+  storage: Storage,
+  principalId: string,
+  workspaceId: string,
+  surface: "room" | "agents",
+): string | undefined {
+  try {
+    const value = storage.getItem(
+      `${workspacePreferenceKey(principalId, `location:${workspaceId}`)}:${surface}`,
+    );
+    if (!value?.startsWith("?") || value.length > MAX_LOCATION_LENGTH) return;
+    const params = new URLSearchParams(value);
+    const target = params.get("surface") ?? "room";
+    if (surface === "room" ? CHAT_SURFACES.has(target) : target === surface)
+      return value;
+  } catch {
+    /* Navigation preferences are best effort. */
+  }
+  return undefined;
 }
 
 export function resolveWorkspaceLocation(

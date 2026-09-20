@@ -40,7 +40,7 @@ test("Computer pane does not reuse Room dimensions or synthesize Agent avatars",
     "utf8",
   );
   assert.match(card, /<AgentAvatar/u);
-  assert.match(card, /onOpen\(agent\.agentDefinitionId\)/u);
+  assert.match(card, /onOpen\(agent\.agentId\)/u);
   assert.doesNotMatch(source, /binding\.handle\.slice\(0, 1\)\.toUpperCase/u);
 });
 

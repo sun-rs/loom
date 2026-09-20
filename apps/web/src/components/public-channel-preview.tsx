@@ -287,6 +287,7 @@ function PublicChannelPane({
                       message={{
                         actorId: message.actorId,
                         body: message.body,
+                        mentions: message.mentions,
                         createdAt: message.createdAt,
                         messageId: message.messageId,
                         roomId: message.roomId,

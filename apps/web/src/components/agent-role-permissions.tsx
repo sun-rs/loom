@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useDialogProtocol } from "../dialog-protocol.ts";
@@ -54,7 +55,7 @@ function RoleDialog({
 }) {
   const ref = useDialogProtocol({ blocked: false, onClose });
   return createPortal(
-    <div className="rah-dialog-layer">
+    <DialogLayer className="rah-dialog-layer">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭角色说明"
@@ -100,7 +101,7 @@ function RoleDialog({
           )}
         </div>
       </section>
-    </div>,
+    </DialogLayer>,
     document.body,
   );
 }

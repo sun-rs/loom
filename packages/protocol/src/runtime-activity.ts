@@ -141,7 +141,7 @@ export type RuntimeTrajectoryRecord = z.infer<
 
 export const ClientAgentTrajectoryListRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     beforeActivityId: IdentifierSchema.optional(),
     limit: z.number().int().min(1).max(100).default(50),
   })

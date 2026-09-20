@@ -138,7 +138,7 @@ export function ComputerRuntimeInspector({
   if (!runtime.available) return <span className={className}>{children}</span>;
   const panel = (
     <div
-      aria-label={`${runtime.displayName} 本机 Runtime 详情`}
+      aria-label={`${runtimeProductLabel(runtime)} 本机 Runtime 详情`}
       className={`rah-computer-runtime-inspector${mobile ? " is-mobile" : ""}`}
       onMouseEnter={cancelClose}
       onMouseLeave={scheduleClose}
@@ -152,7 +152,7 @@ export function ComputerRuntimeInspector({
     >
       <header>
         <div>
-          <strong>{runtime.displayName}</strong>
+          <strong>{runtimeProductLabel(runtime)}</strong>
           <span>本机探测</span>
         </div>
         <button

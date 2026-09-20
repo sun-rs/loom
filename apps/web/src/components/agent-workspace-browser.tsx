@@ -13,16 +13,15 @@ import "../agent-workspace.css";
 type Entry = AgentWorkspaceListing["entries"][number];
 export function AgentWorkspaceBrowser({
   client,
-  agentDefinitionId,
+  agentId,
 }: {
   client: RahClient;
-  agentDefinitionId: string;
+  agentId: string;
 }) {
   const [hidden, setHidden] = useState(() => {
       try {
         return (
-          localStorage.getItem(`rah:workspace-hidden:${agentDefinitionId}`) ===
-          "true"
+          localStorage.getItem(`rah:workspace-hidden:${agentId}`) === "true"
         );
       } catch {
         return false;
@@ -53,13 +52,12 @@ export function AgentWorkspaceBrowser({
   useEffect(() => {
     try {
       setHidden(
-        localStorage.getItem(`rah:workspace-hidden:${agentDefinitionId}`) ===
-          "true",
+        localStorage.getItem(`rah:workspace-hidden:${agentId}`) === "true",
       );
     } catch {
       setHidden(false);
     }
-  }, [agentDefinitionId]);
+  }, [agentId]);
   useEffect(() => {
     const controller = new AbortController();
     setFile(undefined);
@@ -68,7 +66,7 @@ export function AgentWorkspaceBrowser({
       void client
         .request(
           "agent.workspace.read",
-          { agentDefinitionId, rootId, path: selected },
+          { agentId, rootId, path: selected },
           { signal: controller.signal },
         )
         .then((value) => {
@@ -81,7 +79,7 @@ export function AgentWorkspaceBrowser({
             );
         });
     return () => controller.abort();
-  }, [client, agentDefinitionId, rootId, selected, revision]);
+  }, [client, agentId, rootId, selected, revision]);
   const selectFile = (path: string) => {
     setViewMode("preview");
     setSelected(path);
@@ -136,7 +134,7 @@ export function AgentWorkspaceBrowser({
                   setHidden(next);
                   try {
                     localStorage.setItem(
-                      `rah:workspace-hidden:${agentDefinitionId}`,
+                      `rah:workspace-hidden:${agentId}`,
                       String(next),
                     );
                   } catch {
@@ -187,10 +185,10 @@ export function AgentWorkspaceBrowser({
             }}
           >
             <Directory
-              key={`${agentDefinitionId}:${rootId}:${hidden}`}
+              key={`${agentId}:${rootId}:${hidden}`}
               revision={revision}
               client={client}
-              agentDefinitionId={agentDefinitionId}
+              agentId={agentId}
               rootId={rootId}
               path=""
               depth={0}
@@ -326,7 +324,7 @@ export function AgentWorkspaceBrowser({
 }
 function Directory({
   client,
-  agentDefinitionId,
+  agentId,
   rootId,
   path,
   depth,
@@ -337,7 +335,7 @@ function Directory({
   revision,
 }: {
   client: RahClient;
-  agentDefinitionId: string;
+  agentId: string;
   rootId: AgentWorkspaceRoot["rootId"];
   path: string;
   depth: number;
@@ -359,7 +357,7 @@ function Directory({
     void client
       .request(
         "agent.workspace.list",
-        { agentDefinitionId, rootId, path, includeHidden: hidden },
+        { agentId, rootId, path, includeHidden: hidden },
         { signal: controller.signal },
       )
       .then((value) => {
@@ -372,7 +370,7 @@ function Directory({
         if (!controller.signal.aborted) setError(true);
       });
     return () => controller.abort();
-  }, [client, agentDefinitionId, rootId, path, hidden, retry, revision]);
+  }, [client, agentId, rootId, path, hidden, retry, revision]);
   if (error && !listing)
     return (
       <div role="alert">
@@ -468,7 +466,7 @@ function Directory({
             <div role="group">
               <Directory
                 client={client}
-                agentDefinitionId={agentDefinitionId}
+                agentId={agentId}
                 rootId={rootId}
                 path={entry.path}
                 revision={revision}

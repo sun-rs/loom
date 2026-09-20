@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { InteractivePopoverContent } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import { useEffect, useState } from "react";
 
@@ -186,7 +187,7 @@ function HumanInputRequestDialog({
   const [pending, setPending] = useState(false);
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭回答窗口"
         className="rah-dialog-backdrop"
@@ -263,7 +264,7 @@ function HumanInputRequestDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 

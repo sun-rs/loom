@@ -464,3 +464,23 @@ test("planner selection materializes directly into a strict PlacementDecision", 
   });
   assert.equal(decision.runtimeOfferId, "offer-decision");
 });
+
+test("explicit custom model IDs require a matching native runtime and never fall back", () => {
+  const request = input([offer("custom", { customModelRuntime: "claude" })]);
+  request.candidates[0]!.executionPolicy = policy({
+    modelIntent: {
+      customModel: { runtime: "claude", modelId: "claude-opus-5" },
+      fallback: "disabled",
+    },
+  });
+  const selected = planNextPlacement(request);
+  assert.deepEqual(selected.selection?.resolvedModel, {
+    source: "custom_model",
+    runtime: "claude",
+    modelId: "claude-opus-5",
+  });
+  for (const runtime of [undefined, "codex"] as const) {
+    request.offers[0]!.customModelRuntime = runtime;
+    assert.equal(planNextPlacement(request).selection, undefined);
+  }
+});

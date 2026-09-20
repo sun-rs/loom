@@ -13,7 +13,7 @@ const agents: WorkspaceAgentView[] = ["Alice", "Kimi", "Grok", "Cindy"].map(
     participantId: handle,
     handle,
     displayName: handle,
-    agentDefinitionId: `agent-${handle}`,
+    agentId: `agent-${handle}`,
     createdAt: "2026-08-31T00:00:00.000Z",
     createdBy: "owner",
     executionPolicyRevisionId: "policy",

@@ -1396,15 +1396,17 @@ function configuredLines(configured: Json): string[] {
         : "any registered runtime"
     }`,
     `- Model: ${
-      selection === "capability_class"
-        ? `capability class ${asString(configured.capabilityClass) ?? "-"}`
-        : selection === "runtime_default"
-          ? "runtime default"
-          : models.length > 0
-            ? models.join(", ")
-            : bindings.length > 0
-              ? bindings.join(", ")
-              : "(none)"
+      selection === "custom_model"
+        ? (asString(configured.customModelId) ?? "-")
+        : selection === "capability_class"
+          ? `capability class ${asString(configured.capabilityClass) ?? "-"}`
+          : selection === "runtime_default"
+            ? "runtime default"
+            : models.length > 0
+              ? models.join(", ")
+              : bindings.length > 0
+                ? bindings.join(", ")
+                : "(none)"
     }`,
     `- Reasoning: ${asString(configured.reasoning) ?? "default"}`,
     `- Tools: ${asString(configured.toolAccessMode) ?? "unknown"}`,
@@ -1447,7 +1449,9 @@ function actualRunLines(run: Json): string[] {
       `- Run Model: ${
         model.source === "explicit_binding"
           ? `${asString(model.provider) ?? "-"}/${asString(model.modelId) ?? "-"}`
-          : "runtime default"
+          : model.source === "custom_model"
+            ? (asString(model.modelId) ?? "-")
+            : "runtime default"
       }`,
     );
   }
@@ -1562,7 +1566,7 @@ function renderSelfProfile(result: Json): string {
     `- Description: ${asString(profile.description) ?? "(none)"}`,
     `- Avatar: ${asString(profile.avatarKey) ?? "(none)"}`,
     `- ID: ${asString(profile.participantId) ?? "-"}`,
-    `- Agent Definition: ${asString(profile.agentDefinitionId) ?? "-"}`,
+    `- Agent Definition: ${asString(profile.agentId) ?? "-"}`,
     `- Control Room: ${asString(context.controlRoomId) ?? "-"}`,
     `- Control Room Seq: ${asNumber(context.controlRoomSeq) ?? "-"}`,
     `- Expected Revision: ${asString(context.expectedRevisionId) ?? "-"}`,

@@ -11,7 +11,7 @@ const client = {
   },
 } as unknown as RahClient;
 const agent: WorkspaceAgentView = {
-  agentDefinitionId: "fixture-agent",
+  agentId: "fixture-agent",
   participantId: "fixture-agent",
   createdAt: "2026-09-01T00:00:00Z",
   createdBy: "fixture-human",

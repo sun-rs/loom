@@ -73,7 +73,7 @@ function fixture() {
     role: "Agent",
     skillRefs: [],
   });
-  const agentId = definition.definition.agentDefinitionId;
+  const agentId = definition.definition.agentId;
   const participantId = agentPrincipal.principal.principalId;
   const db = new DatabaseSync(databasePath);
   return {
@@ -92,7 +92,7 @@ function fixture() {
     participantId,
     request: () => ({
       action: "set_state" as const,
-      agentDefinitionId: agentId,
+      agentId: agentId,
       basedOnRoomSeq: currentSeq(),
       idempotencyKey: "delete",
       state: "tombstoned" as const,
@@ -149,7 +149,7 @@ test("a blocked deletion exposes the blocking row, recovery identity and operato
     );
     assert.equal(f.kernel.reconcileAgentDeletions(), 0);
     const diagnostics = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     assert.equal(diagnostics.status, "blocked");
     assert.equal(diagnostics.reasonCode, "missing_runtime_termination_proof");
@@ -192,7 +192,7 @@ test("an orphaned run keeps the deletion blocked and names the recovery driver t
       .run(run.runAttemptId);
     assert.equal(f.kernel.reconcileAgentDeletions(), 0);
     const blocked = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     assert.equal(blocked.status, "blocked");
     assert.equal(blocked.blocker?.runAttemptState, "orphaned");
@@ -211,7 +211,7 @@ test("an orphaned run keeps the deletion blocked and names the recovery driver t
     assert.equal(f.kernel.reconcileAgentDeletions(), 0);
     assert.equal(
       f.kernel.getAgentDeletionDiagnostics(f.actor, {
-        agentDefinitionId: f.agentId,
+        agentId: f.agentId,
       }).status,
       "blocked",
     );
@@ -246,7 +246,7 @@ test("an orphaned run keeps the deletion blocked and names the recovery driver t
     assert.equal(f.kernel.reconcileAgentDeletions(), 1);
     assert.equal(
       f.kernel.getAgentDeletionDiagnostics(f.actor, {
-        agentDefinitionId: f.agentId,
+        agentId: f.agentId,
       }).status,
       "completed",
     );
@@ -372,7 +372,7 @@ test("a returning Host that proves termination lets the existing reconciler fini
       ["blocked", "cleared"],
     );
     const done = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     assert.equal(done.status, "completed");
     assert.equal(done.blocker, undefined);
@@ -394,18 +394,18 @@ test("the block diagnostic survives restart and reports one state change per cha
       RuntimeTerminationProofError,
     );
     const changes: string[] = [];
-    const record = (change: { agentDefinitionId: string; kind: string }) =>
-      changes.push(`${change.kind}:${change.agentDefinitionId}`);
+    const record = (change: { agentId: string; kind: string }) =>
+      changes.push(`${change.kind}:${change.agentId}`);
     assert.equal(f.kernel.reconcileAgentDeletions(record), 0);
     assert.equal(f.kernel.reconcileAgentDeletions(record), 0);
     assert.equal(f.kernel.reconcileAgentDeletions(record), 0);
     assert.deepEqual(changes, [`blocked:${f.agentId}`]);
     const before = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     f.reopen();
     const after = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     assert.equal(after.status, "blocked");
     assert.equal(after.firstObservedAt, before.firstObservedAt);
@@ -417,14 +417,14 @@ test("the block diagnostic survives restart and reports one state change per cha
       )
       .run(run.runAttemptId);
     const later: string[] = [];
-    const recordLater = (change: { agentDefinitionId: string; kind: string }) =>
+    const recordLater = (change: { agentId: string; kind: string }) =>
       later.push(change.kind);
     assert.equal(f.kernel.reconcileAgentDeletions(recordLater), 0);
     assert.equal(f.kernel.reconcileAgentDeletions(recordLater), 0);
     assert.deepEqual(later, ["blocked"]);
     assert.equal(
       f.kernel.getAgentDeletionDiagnostics(f.actor, {
-        agentDefinitionId: f.agentId,
+        agentId: f.agentId,
       }).firstObservedAt,
       before.firstObservedAt,
     );
@@ -491,7 +491,7 @@ test("a blocked deletion keeps fencing new execution, history and the duplicate 
       "disabled",
     );
     const diagnostics = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     assert.equal(diagnostics.status, "blocked");
     assert.equal(diagnostics.participantId, f.participantId);
@@ -510,12 +510,12 @@ test("the diagnostic is manager-only and reports a not-requested Agent without i
     assert.throws(
       () =>
         f.kernel.getAgentDeletionDiagnostics(stranger, {
-          agentDefinitionId: f.agentId,
+          agentId: f.agentId,
         }),
       /member|manager|owner/,
     );
     const idle = f.kernel.getAgentDeletionDiagnostics(f.actor, {
-      agentDefinitionId: f.agentId,
+      agentId: f.agentId,
     });
     assert.equal(idle.status, "not_requested");
     assert.equal(idle.blocker, undefined);

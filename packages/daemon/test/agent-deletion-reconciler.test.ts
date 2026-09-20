@@ -34,7 +34,7 @@ async function runTicks(
 test("a block is reported once per state change, not once per 1000ms tick", async () => {
   const sink = { failures: [] as string[], status: [] as string[] };
   const blocked = {
-    agentDefinitionId: "agent_1",
+    agentId: "agent_1",
     blocker: {
       hostId: "host-a",
       kind: "run_attempt" as const,
@@ -51,7 +51,7 @@ test("a block is reported once per state change, not once per 1000ms tick", asyn
     5,
     (tick, report) => {
       if (tick === 1) report(blocked);
-      if (tick === 4) report({ agentDefinitionId: "agent_1", kind: "cleared" });
+      if (tick === 4) report({ agentId: "agent_1", kind: "cleared" });
     },
     sink,
   );
@@ -93,7 +93,7 @@ test("without an explicit status sink the existing failure sink receives block c
   const controller = new AbortController();
   const kernel = {
     reconcileAgentDeletions: (report?: (change: never) => void) => {
-      report?.({ agentDefinitionId: "agent_2", kind: "cleared" } as never);
+      report?.({ agentId: "agent_2", kind: "cleared" } as never);
       controller.abort();
       return 1;
     },

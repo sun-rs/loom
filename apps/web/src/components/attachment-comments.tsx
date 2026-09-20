@@ -276,6 +276,7 @@ export function AttachmentComments({
                 <div className="rah-attachment-comment-body">
                   <MessageMarkdown
                     source={comment.content}
+                    mentions={comment.mentions ?? []}
                     references={references}
                   />
                 </div>

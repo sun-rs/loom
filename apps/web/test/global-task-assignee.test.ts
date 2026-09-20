@@ -125,3 +125,33 @@ test("active assignment uses the same backend edit and causal identity", async (
     ],
   ]);
 });
+
+test("done blocks assignee edits but other Raft workflow statuses allow them", () => {
+  for (const workflowStatus of [
+    "todo",
+    "in_progress",
+    "in_review",
+    "done",
+    "closed",
+  ] as const) {
+    assert.equal(
+      taskAssigneeMode(
+        {
+          ...task,
+          workflowStatus,
+          state: (
+            {
+              todo: "todo",
+              in_progress: "in_progress",
+              in_review: "submitted",
+              done: "completed",
+              closed: "cancelled",
+            } as const
+          )[workflowStatus],
+        },
+        "h",
+      ),
+      workflowStatus === "done" ? "readonly" : "idle",
+    );
+  }
+});

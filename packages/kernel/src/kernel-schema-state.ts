@@ -5,6 +5,8 @@ import { integer } from "./sqlite-row.ts";
 import {
   indexSignature,
   isKnownLegacyDrift,
+  isPresentedWindowMigration,
+  isIdentityAccountsMigration,
   sqlSignature,
   tableSignature,
 } from "./kernel-schema-signature.ts";
@@ -13,7 +15,11 @@ import {
 export type KernelSchemaChange = {
   detail?: string;
   kind:
-    "legacy_drift" | "unexpected_drift" | "missing_object" | "schema_version";
+    | "legacy_drift"
+    | "unexpected_drift"
+    | "missing_object"
+    | "schema_version"
+    | "table_migration";
   name: string;
 };
 
@@ -109,6 +115,14 @@ export function compareSchema(input: {
     const current = live.get(name);
     if (current === undefined) pending.push({ kind: "missing_object", name });
     else if (current !== signature) {
+      if (
+        isPresentedWindowMigration(name, current, signature) ||
+        (input.databaseSchemaVersion < 57 &&
+          isIdentityAccountsMigration(name, current, signature))
+      ) {
+        pending.push({ kind: "table_migration", name });
+        continue;
+      }
       const known =
         isKnownLegacyDrift(name, current, signature) &&
         (name !== "table:room_deletion_receipts" ||

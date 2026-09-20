@@ -1044,7 +1044,7 @@ const AGENT_PROFILE = {
     startedAt: "2026-09-09T02:00:00.000Z",
     state: "running",
   },
-  agentDefinitionId: "def-1",
+  agentId: "def-1",
   agentState: "enabled",
   availability: {
     activity: "busy",
@@ -1174,7 +1174,7 @@ test("profile-show renders formatHumanProfile and the created-Agent list with it
       configured: null,
       createdAgents: [
         {
-          agentDefinitionId: "def-1",
+          agentId: "def-1",
           displayName: "Alice",
           handle: "alice",
           kind: "agent",
@@ -1190,7 +1190,7 @@ test("profile-show renders formatHumanProfile and the created-Agent list with it
           state: "enabled",
         },
         {
-          agentDefinitionId: "def-2",
+          agentId: "def-2",
           displayName: "Bob",
           handle: "bob",
           kind: "agent",
@@ -1236,7 +1236,7 @@ test("profile-show renders formatHumanProfile and the created-Agent list with it
 test("profile-self-get and profile-update render the writable metadata and the write context", () => {
   const self = {
     profile: {
-      agentDefinitionId: "def-1",
+      agentId: "def-1",
       displayName: "Alice",
       participantId: "participant-a",
     },

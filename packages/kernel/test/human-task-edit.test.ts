@@ -183,7 +183,7 @@ test("Human manager can move between all five statuses without inventing Runtime
     f.cleanup();
   }
 });
-test("Human can assign to self, another member, or nobody in every workflow state", () => {
+test("Human can assign in non-done states; done rejects assignment and unassignment without events", () => {
   const f = createTaskFixture();
   try {
     for (const status of [
@@ -205,6 +205,32 @@ test("Human can assign to self, another member, or nobody in every workflow stat
         idempotencyKey: `status-${status}`,
         workflowStatus: status,
       });
+      if (status === "done") {
+        const before = seq();
+        for (const assigneeId of [f.created.task.creatorId, f.agentId]) {
+          assert.throws(
+            () =>
+              f.kernel.assignTask(f.managerActor, {
+                taskId,
+                basedOnRoomSeq: seq(),
+                idempotencyKey: `done-assign-${assigneeId}`,
+                assigneeId,
+              }),
+            /reopen/i,
+          );
+        }
+        assert.throws(
+          () =>
+            f.kernel.unassignTask(f.managerActor, {
+              taskId,
+              basedOnRoomSeq: seq(),
+              idempotencyKey: "done-unassign",
+            }),
+          /reopen/i,
+        );
+        assert.equal(seq(), before);
+        continue;
+      }
       for (const assigneeId of [f.created.task.creatorId, f.agentId]) {
         const r = f.kernel.assignTask(f.managerActor, {
           taskId,

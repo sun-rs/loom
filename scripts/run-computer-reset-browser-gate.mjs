@@ -84,7 +84,7 @@ try {
           const summaries = await Promise.all(
             before.map((agent) =>
               post("agents/workspace/summary", {
-                agentDefinitionId: agent.definition.agentDefinitionId,
+                agentId: agent.definition.agentId,
               }),
             ),
           );
@@ -142,10 +142,7 @@ try {
             .click();
           await dialog.waitFor({ state: "hidden" });
           assert.equal(requests.length, 3);
-          assert.equal(
-            new Set(requests.map((r) => r.agentDefinitionId)).size,
-            2,
-          );
+          assert.equal(new Set(requests.map((r) => r.agentId)).size, 2);
           assert.equal(requests[1].idempotencyKey, requests[2].idempotencyKey);
           assert.equal(responses[1].operationId, responses[2].operationId);
           assert.equal(responses[2].deduplicated, true);
@@ -171,7 +168,7 @@ try {
           const afterSummaries = await Promise.all(
             before.map((agent) =>
               post("agents/workspace/summary", {
-                agentDefinitionId: agent.definition.agentDefinitionId,
+                agentId: agent.definition.agentId,
               }),
             ),
           );

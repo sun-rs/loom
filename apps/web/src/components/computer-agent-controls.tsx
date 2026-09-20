@@ -27,7 +27,7 @@ export function ComputerAgentControls({
   client?: RahClient | undefined;
   bindings: readonly {
     agent: WorkspaceAgentView;
-    agentDefinitionId: string;
+    agentId: string;
     runtimeLabel: string;
   }[];
   onCreate?: (() => void) | undefined;
@@ -46,7 +46,7 @@ export function ComputerAgentControls({
   const keys = useRef(new Map<string, string>());
   const lastAction = useRef<string | undefined>(undefined);
   const scope = bindings
-    .map((b) => b.agentDefinitionId)
+    .map((b) => b.agentId)
     .sort()
     .join("|");
   useEffect(() => {
@@ -78,7 +78,7 @@ export function ComputerAgentControls({
         state,
         keys: keys.current,
         currentState: (id) =>
-          bindings.find((b) => b.agentDefinitionId === id)?.agent.state,
+          bindings.find((b) => b.agentId === id)?.agent.state,
         apply: onSetState,
         signal: controller.signal,
         onProgress: (count) => setResult(`已完成 ${count} 项`),
@@ -110,9 +110,7 @@ export function ComputerAgentControls({
               type="button"
               aria-label="全选 Agent"
               disabled={pending}
-              onClick={() =>
-                setSelected(bindings.map((b) => b.agentDefinitionId))
-              }
+              onClick={() => setSelected(bindings.map((b) => b.agentId))}
             >
               <Icon name="check" />
               全选
@@ -158,8 +156,8 @@ export function ComputerAgentControls({
               pending ||
               !selected.some(
                 (id) =>
-                  bindings.find((b) => b.agentDefinitionId === id)?.agent
-                    .state !== "enabled",
+                  bindings.find((b) => b.agentId === id)?.agent.state !==
+                  "enabled",
               )
             }
             onClick={() => void apply("enabled")}
@@ -174,8 +172,8 @@ export function ComputerAgentControls({
               pending ||
               !selected.some(
                 (id) =>
-                  bindings.find((b) => b.agentDefinitionId === id)?.agent
-                    .state !== "disabled",
+                  bindings.find((b) => b.agentId === id)?.agent.state !==
+                  "disabled",
               )
             }
             onClick={() => {
@@ -183,8 +181,8 @@ export function ComputerAgentControls({
               setStopIds(
                 selected.filter(
                   (id) =>
-                    bindings.find((b) => b.agentDefinitionId === id)?.agent
-                      .state !== "disabled",
+                    bindings.find((b) => b.agentId === id)?.agent.state !==
+                    "disabled",
                 ),
               );
             }}
@@ -213,8 +211,8 @@ export function ComputerAgentControls({
           {bindings.map((binding) => (
             <div
               className="rah-computer-select-row"
-              data-selected={selected.includes(binding.agentDefinitionId)}
-              key={binding.agentDefinitionId}
+              data-selected={selected.includes(binding.agentId)}
+              key={binding.agentId}
             >
               {selecting ? (
                 <>
@@ -222,14 +220,12 @@ export function ComputerAgentControls({
                     type="checkbox"
                     aria-label={`选择 ${binding.agent.displayName}`}
                     disabled={pending}
-                    checked={selected.includes(binding.agentDefinitionId)}
+                    checked={selected.includes(binding.agentId)}
                     onChange={(e) =>
                       setSelected((ids) =>
                         e.target.checked
-                          ? [...ids, binding.agentDefinitionId]
-                          : ids.filter(
-                              (id) => id !== binding.agentDefinitionId,
-                            ),
+                          ? [...ids, binding.agentId]
+                          : ids.filter((id) => id !== binding.agentId),
                       )
                     }
                   />
@@ -248,7 +244,7 @@ export function ComputerAgentControls({
                   binding.agent.presence?.reason === "error" ? (
                     <ComputerAgentError
                       client={client}
-                      id={binding.agentDefinitionId}
+                      id={binding.agentId}
                       version={binding.agent.presence.trajectoryVersion}
                     />
                   ) : undefined

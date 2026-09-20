@@ -1,3 +1,4 @@
+import { bindMessageMentions } from "./identity-accounts.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type { Attachment } from "@rah-os/protocol";
 
@@ -253,6 +254,7 @@ export function createTaskThreadReply(
       "UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ? WHERE thread_id = ? AND room_id = ?",
     )
     .run(input.createdAt, threadId, input.roomId);
+  bindMessageMentions(database, messageId);
   return { messageId, threadId };
 }
 

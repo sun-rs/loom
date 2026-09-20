@@ -1,5 +1,18 @@
 # Client、Daemon 与部署边界
 
+## 历史呈现表兼容迁移
+
+Kernel 对 `activation_presented_windows` 的旧 `message_seqs_json` / `presented_at`
+结构执行显式事务迁移：保留数据并重命名为 `presented_seqs_json` / `rendered_at`，
+新增送达与待确认字段保持 NULL，不能把历史呈现解释成 ACK。
+只读结构检查仅把完整匹配的旧结构识别为待迁移；未知约束漂移仍拒绝启动。
+正式重启先在备份副本预检，再由 Kernel 迁移正式库，禁止删表绕过检查。
+回归证据：`packages/kernel/test/presented-schema-compatibility.test.ts`。
+
+引导元数据中的 Agent 列表是历史记录，不是当前授权来源。重启时仅排除
+canonical catalog 中已 tombstoned 的引导 Agent；其余引导 Agent 仍须通过
+Host 凭证范围校验。不得恢复已删除 Agent 的权限或篡改原始引导记录。
+
 ## Composer 计算机文件引用
 
 Human API `POST /v3/client/computers/files/list` 通过 AgentHost 的有界目录读取器

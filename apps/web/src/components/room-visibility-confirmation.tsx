@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
@@ -19,7 +20,7 @@ export function RoomVisibilityConfirmation({
   const ref = useDialogProtocol({ blocked, onClose: onCancel });
   const label = visibility === "public" ? "公开" : "私密";
   return (
-    <div
+    <DialogLayer
       className="rah-dialog-layer rah-room-visibility-confirm"
       role="presentation"
     >
@@ -62,6 +63,6 @@ export function RoomVisibilityConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

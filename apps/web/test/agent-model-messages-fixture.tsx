@@ -5,7 +5,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { MessageArticle } from "../src/components/conversation-panes.tsx";
 const agent: WorkspaceAgentView = {
-  agentDefinitionId: "fixture-agent",
+  agentId: "fixture-agent",
   participantId: "fixture-agent",
   createdAt: "2026-09-14T00:00:00Z",
   createdBy: "fixture-human",
@@ -34,15 +34,30 @@ const configuredAgents = [
   "grokbuild",
 ].map((id) => ({
   ...agent,
-  agentDefinitionId: id,
+  agentId: id,
   participantId: id,
   displayName: `Fixture ${id}`,
   modelBindingId: `${id}/model`,
 }));
+const fallbackAgents: WorkspaceAgentView[] = [
+  [
+    "deleted-opencode",
+    "local:opencode-cli/v1:iiiiitoken/gemini-3.8-flash-high",
+  ],
+  ["deleted-kimi", "local:kimi-cli/v1:kimi-code/k3"],
+].map(([id, modelBindingId]) => ({
+  ...agent,
+  agentId: id!,
+  participantId: id!,
+  displayName: `Fixture ${id}`,
+  state: "deleted",
+  modelBindingId,
+}));
+const allAgents = [...configuredAgents, ...fallbackAgents];
 const runtimes = configuredAgents.map((entry) => ({
   agentBindings: [
     {
-      agentDefinitionId: entry.agentDefinitionId,
+      agentId: entry.agentId,
       participantId: entry.participantId,
       handle: entry.handle,
     },
@@ -50,22 +65,22 @@ const runtimes = configuredAgents.map((entry) => ({
   available: true,
   configured: true,
   source: "configured",
-  cliId: ["codex", "claude", "kimi"].includes(entry.agentDefinitionId)
-    ? entry.agentDefinitionId
-    : entry.agentDefinitionId === "grokbuild"
+  cliId: ["codex", "claude", "kimi"].includes(entry.agentId)
+    ? entry.agentId
+    : entry.agentId === "grokbuild"
       ? undefined
       : "opencode",
-  executable: entry.agentDefinitionId,
+  executable: entry.agentId,
   displayName: "Fixture runtime",
-  runtimeOfferId: entry.agentDefinitionId,
-  runtimeProfileId: entry.agentDefinitionId,
+  runtimeOfferId: entry.agentId,
+  runtimeProfileId: entry.agentId,
   runtimeProfileRevisionId: "fixture-revision",
   modelBindingDescriptors: [
     {
       modelBindingId: entry.modelBindingId,
       modelId: "model",
       displayName: "DeepSeek V4",
-      provider: entry.agentDefinitionId,
+      provider: entry.agentId,
       evidence: "probed",
       capabilityClasses: [],
       supportedReasoning: [],
@@ -79,7 +94,7 @@ const entities = createWorkspaceEntities({
   human: undefined,
   hostId: "fixture-host",
   computer: undefined,
-  agents: [agent, ...configuredAgents],
+  agents: [agent, ...allAgents],
   runtimes,
 });
 export function AgentModelMessagesFixture() {
@@ -89,7 +104,7 @@ export function AgentModelMessagesFixture() {
         "agent",
         "human",
         "unconfigured",
-        ...configuredAgents.map((entry) => entry.agentDefinitionId),
+        ...allAgents.map((entry) => entry.agentId),
       ].map((kind) => (
         <MessageArticle
           key={kind}
@@ -106,12 +121,10 @@ export function AgentModelMessagesFixture() {
             ? { messageAgent: agent }
             : kind === "unconfigured"
               ? { messageAgent: { ...agent, modelBindingId: undefined } }
-              : configuredAgents.some(
-                    (entry) => entry.agentDefinitionId === kind,
-                  )
+              : allAgents.some((entry) => entry.agentId === kind)
                 ? {
-                    messageAgent: configuredAgents.find(
-                      (entry) => entry.agentDefinitionId === kind,
+                    messageAgent: allAgents.find(
+                      (entry) => entry.agentId === kind,
                     )!,
                   }
                 : {})}

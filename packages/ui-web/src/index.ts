@@ -19,6 +19,7 @@ import {
 } from "@rah-os/protocol";
 
 export type RoomMessageView = {
+  mentions?: Message["mentions"];
   attachmentComment?: Message["attachmentComment"];
   attachments?: readonly import("@rah-os/protocol").Attachment[];
   actorId: string;
@@ -114,7 +115,7 @@ export type MobileNavigationDestination =
 export type WorkspaceAgentView = {
   modelBindingId?: string;
   presence?: import("@rah-os/protocol").AgentPresence;
-  agentDefinitionId: string;
+  agentId: string;
   agentDefinitionRevisionId?: string;
   avatarKey?: string;
   createdAt: string;
@@ -211,15 +212,14 @@ export function workspaceAgentDirectory(input: {
     .map((agent) => {
       const boundRuntimes = input.runtimes.filter((runtime) =>
         runtime.agentBindings.some(
-          ({ agentDefinitionId }) =>
-            agentDefinitionId === agent.definition.agentDefinitionId,
+          ({ agentId }) => agentId === agent.definition.agentId,
         ),
       );
       return Object.freeze({
         ...(agent.modelBindingId
           ? { modelBindingId: agent.modelBindingId }
           : {}),
-        agentDefinitionId: agent.definition.agentDefinitionId,
+        agentId: agent.definition.agentId,
         agentDefinitionRevisionId:
           agent.currentRevision.agentDefinitionRevisionId,
         ...(agent.currentRevision.avatarKey === undefined
@@ -297,7 +297,7 @@ export function mentionedRoomAgentIds(input: {
 }): string[] {
   const agentsByHandle = new Map<string, RoomAgentTarget[]>();
   for (const agent of input.agents) {
-    const key = messageReferenceNameKey(agent.handle);
+    const key = agent.handle;
     agentsByHandle.set(key, [...(agentsByHandle.get(key) ?? []), agent]);
   }
   const uniqueAgents = [...agentsByHandle.values()].flatMap((agents) =>
@@ -307,12 +307,10 @@ export function mentionedRoomAgentIds(input: {
     messageMentionCandidates(
       input.body,
       uniqueAgents.map(({ handle }) => handle),
-    ).map(({ handle }) => messageReferenceNameKey(handle)),
+    ).map(({ handle }) => handle),
   );
   return uniqueAgents
-    .filter(({ handle }) =>
-      mentionedHandles.has(messageReferenceNameKey(handle)),
-    )
+    .filter(({ handle }) => mentionedHandles.has(handle))
     .map(({ participantId }) => participantId)
     .sort();
 }
@@ -604,7 +602,10 @@ export function createRoomViewModel(input: {
   tasks: readonly Task[];
 }): RoomViewModel {
   const handles = new Map(
-    input.members.map((member) => [member.principalId, member.handle]),
+    input.members.map((member) => [
+      member.principalId,
+      member.displayName || member.handle,
+    ]),
   );
   const tasks = (status: ReturnType<typeof taskWorkflowStatus>) =>
     input.tasks
@@ -640,6 +641,9 @@ export function createRoomViewModel(input: {
             actorId: message.actorId,
             author: handles.get(message.actorId) ?? message.actorId,
             body: message.body,
+            ...(message.mentions === undefined
+              ? {}
+              : { mentions: message.mentions }),
             ...(message.attachmentComment
               ? { attachmentComment: message.attachmentComment }
               : {}),

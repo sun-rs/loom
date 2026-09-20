@@ -349,6 +349,53 @@ if (mode === "trajectory") {
   if (!delivery || delivery.cursorAfter < requiredThrough) {
     throw new Error("worker Task sync did not reach the Activation range");
   }
+  const firstRun = events.find(
+    (event) =>
+      event.type === "agent.first_run_requested" &&
+      event.payload.participantId === agentContext?.participantId,
+  );
+  if (firstRun) {
+    publishTrajectory({
+      kind: "status",
+      activity: "working",
+      detailKind: "starting",
+    });
+    await new Promise((resolve) =>
+      setTimeout(resolve, Number(process.env.RAH_FAKE_FIRST_RUN_DELAY_MS ?? 0)),
+    );
+    if (firstRun.payload.greetingEnabled) {
+      const sendGreeting = (body) =>
+        JSON.parse(
+          execFileSync(
+            process.env.RAH_WORKER_CLI,
+            [
+              "worker",
+              "message-post",
+              "--json",
+              "--top-level",
+              "--idempotency-key",
+              firstRun.payload.messageKey,
+            ],
+            { encoding: "utf8", input: body },
+          ),
+        );
+      const sent = sendGreeting(
+        "[Fake CLI fixture] Hello from a newly created Agent.",
+      );
+      if (!sent.event)
+        throw new Error("First-run fixture greeting was not committed");
+      const replay = sendGreeting(
+        "[Fake CLI fixture] A retry must not publish this alternative greeting.",
+      );
+      if (!replay.deduplicated || replay.event.eventId !== sent.event.eventId)
+        throw new Error("First-run greeting retry was duplicated");
+    }
+    await request("/v1/worker/acknowledge", {
+      throughSeq: delivery.cursorAfter,
+    });
+    process.stdout.write("first-run fixture completed\n");
+    process.exit(0);
+  }
   if (
     process.env.RAH_FAKE_MESSAGE_TOOLS === "1" &&
     events.some(

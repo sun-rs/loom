@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -227,7 +228,7 @@ function RevokeDeviceDialog({
 }) {
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭撤销设备窗口"
         className="rah-dialog-backdrop"
@@ -276,7 +277,7 @@ function RevokeDeviceDialog({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 

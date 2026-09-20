@@ -8,6 +8,7 @@ export function releaseDeletedAgentTasks(
   owner: WorkspaceAgentManagementOwner,
   participantId: string,
   request: RoomEvent,
+  eventKey = request.eventId,
 ): void {
   const { database: db, events } = owner;
   const now = owner.now().toISOString();
@@ -15,7 +16,7 @@ export function releaseDeletedAgentTasks(
   const tasks = db
     .prepare(
       `SELECT DISTINCT t.* FROM tasks t LEFT JOIN task_participants p ON p.task_id=t.task_id
-    WHERE t.workflow_status NOT IN ('done','closed') AND (t.assignee_id=? OR t.claimed_by=? OR p.participant_id=?)`,
+    WHERE t.assignee_id=? OR t.claimed_by=? OR (t.workflow_status NOT IN ('done','closed') AND p.participant_id=?)`,
     )
     .all(participantId, participantId, participantId);
   for (const task of tasks) {
@@ -26,8 +27,7 @@ export function releaseDeletedAgentTasks(
     if (owned)
       db.prepare(
         `UPDATE tasks SET assignee_id=NULL,claimed_by=NULL,claim_until=NULL,claim_until_ms=NULL,
-      state=CASE WHEN workflow_status='in_review' THEN 'submitted' ELSE 'todo' END,
-      workflow_status=CASE WHEN workflow_status='in_review' THEN 'in_review' ELSE 'todo' END,updated_at=? WHERE task_id=?`,
+      updated_at=? WHERE task_id=?`,
       ).run(now, id);
     db.prepare(
       "DELETE FROM task_participants WHERE task_id=? AND participant_id=?",
@@ -38,7 +38,7 @@ export function releaseDeletedAgentTasks(
         aggregateId: id,
         aggregateType: "task",
         roomId,
-        idempotencyKey: `${request.eventId}:task:${id}`,
+        idempotencyKey: `${eventKey}:task:${id}`,
         type: owned ? "task.unassigned" : "task.participant_removed",
         payload: {
           taskId: id,
@@ -57,6 +57,29 @@ export function releaseDeletedAgentTasks(
         },
       },
       request,
+    );
+  }
+}
+
+/** Repair old tombstones using their authenticated, durable deletion intent. */
+export function reconcileDeletedAgentTaskOwners(
+  owner: Omit<WorkspaceAgentManagementOwner, "actorId">,
+): void {
+  const requests = owner.database
+    .prepare(
+      `SELECT DISTINCT e.*, a.participant_id
+    FROM agent_definitions a JOIN room_events e ON e.aggregate_id=a.agent_definition_id
+    WHERE a.state='tombstoned' AND e.type='agent.deletion_requested'
+    AND EXISTS (SELECT 1 FROM tasks t WHERE t.assignee_id=a.participant_id OR t.claimed_by=a.participant_id)`,
+    )
+    .all();
+  for (const row of requests) {
+    const request = owner.events.eventFromRow(row);
+    releaseDeletedAgentTasks(
+      { ...owner, actorId: request.actorId },
+      text(row, "participant_id"),
+      request,
+      `${request.eventId}:owner-repair-v1`,
     );
   }
 }

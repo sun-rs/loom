@@ -88,8 +88,21 @@ export const ModelCapabilityClassSchema = z.enum([
 ]);
 export type ModelCapabilityClass = z.infer<typeof ModelCapabilityClassSchema>;
 
+export const CustomModelSchema = z
+  .object({
+    runtime: z.enum(["claude", "codex"]),
+    modelId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(256)
+      .regex(/^[^\s\x00-\x1f\x7f]+$/u),
+  })
+  .strict();
+
 export const ModelIntentSchema = z
   .object({
+    customModel: CustomModelSchema.optional(),
     exactBindingIds: UniqueIdentifierArraySchema.min(1).optional(),
     capabilityClass: ModelCapabilityClassSchema.optional(),
     reasoning: ReasoningLevelSchema.optional(),
@@ -97,6 +110,19 @@ export const ModelIntentSchema = z
     fallback: z.enum(["disabled", "same_profile", "compatible_offer"]),
   })
   .strict()
+  .refine(
+    (intent) =>
+      !intent.customModel ||
+      (!intent.exactBindingIds &&
+        !intent.capabilityClass &&
+        intent.fallback === "disabled" &&
+        (!intent.reasoning || intent.reasoning === "default") &&
+        (!intent.serviceTier || intent.serviceTier === "default")),
+    {
+      message:
+        "custom model requires exclusive selection, disabled fallback and default effort/tier",
+    },
+  )
   .refine(
     (intent) =>
       intent.exactBindingIds === undefined ||

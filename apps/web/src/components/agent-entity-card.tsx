@@ -28,7 +28,7 @@ export function AgentEntityCard({
       name={agent.displayName}
       subtitle={runtimeLabel}
       label={`打开 ${agent.displayName} Agent 资料`}
-      onClick={() => onOpen(agent.agentDefinitionId)}
+      onClick={() => onOpen(agent.agentId)}
       disabled={disabled}
       trailing={
         <>

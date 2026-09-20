@@ -132,7 +132,7 @@ test("new Agent mutations expose only Raft unattended and automatic session poli
       ClientAgentManageRequestSchema.parse({
         ...provision,
         action: "configure",
-        agentDefinitionId: "agent-alice",
+        agentId: "agent-alice",
         sessionPolicy,
       }),
     );
@@ -148,7 +148,7 @@ test("new Agent mutations expose only Raft unattended and automatic session poli
       ClientAgentManageRequestSchema.parse({
         ...provision,
         action: "configure",
-        agentDefinitionId: "agent-alice",
+        agentId: "agent-alice",
         toolAccessMode,
       }),
     );
@@ -755,13 +755,13 @@ test("Client API v3 Agent catalog onboarding resolves definitions instead of acc
   );
   assert.deepEqual(
     ClientAgentOnboardRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 1,
       idempotencyKey: "agent-onboard-1",
       roomId: "room-work",
     }),
     {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 1,
       idempotencyKey: "agent-onboard-1",
       roomId: "room-work",
@@ -769,7 +769,7 @@ test("Client API v3 Agent catalog onboarding resolves definitions instead of acc
   );
   assert.throws(() =>
     ClientAgentOnboardRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 1,
       idempotencyKey: "agent-onboard-1",
       participantId: "injected-agent",
@@ -778,9 +778,9 @@ test("Client API v3 Agent catalog onboarding resolves definitions instead of acc
   );
   assert.deepEqual(
     ClientAgentRoomsListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
     }),
-    { agentDefinitionId: "agent-definition-1" },
+    { agentId: "agent-definition-1" },
   );
   assert.deepEqual(
     ClientAgentRoomsListResponseSchema.parse({
@@ -807,31 +807,31 @@ test("Client API v3 Agent catalog onboarding resolves definitions instead of acc
 test("Agent activity is a bounded canonical timeline with an opaque continuation", () => {
   assert.deepEqual(
     ClientAgentActivityListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
     }),
-    { agentDefinitionId: "agent-definition-1", limit: 50 },
+    { agentId: "agent-definition-1", limit: 50 },
   );
   assert.deepEqual(
     ClientAgentActivityListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       beforeActivityId: "event-7",
       limit: 25,
     }),
     {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       beforeActivityId: "event-7",
       limit: 25,
     },
   );
   assert.throws(() =>
     ClientAgentActivityListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       limit: 101,
     }),
   );
   assert.throws(() =>
     ClientAgentActivityListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       participantId: "injected-agent",
     }),
   );
@@ -908,9 +908,9 @@ test("Agent activity is a bounded canonical timeline with an opaque continuation
 test("Agent runtime trajectory is typed, bounded, and independently pageable", () => {
   assert.deepEqual(
     ClientAgentTrajectoryListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
     }),
-    { agentDefinitionId: "agent-definition-1", limit: 50 },
+    { agentId: "agent-definition-1", limit: 50 },
   );
   const response = ClientAgentTrajectoryListResponseSchema.parse({
     activities: [
@@ -951,7 +951,7 @@ test("Agent runtime trajectory is typed, bounded, and independently pageable", (
   );
   assert.throws(() =>
     ClientAgentTrajectoryListRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       participantId: "injected-agent",
     }),
   );

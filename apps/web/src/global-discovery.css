@@ -733,20 +733,6 @@
   grid-column: 2;
   grid-row: 1;
 }
-.app.rah-search-channel-open > .channel,
-.app.rah-search-channel-open > .thread {
-  grid-column: 3;
-  grid-row: 1;
-  min-width: 0;
-  width: auto;
-  border-left: var(--bd);
-}
-.app.rah-search-channel-open > .thread .rah-thread-close {
-  display: inline-flex;
-}
-.app.rah-search-channel-open > .thread .rah-thread-back {
-  display: none;
-}
 .app.rah-search-channel-open > .rah-search-resizer {
   position: absolute;
   display: block;
@@ -788,4 +774,81 @@
   .app.rah-search-channel-open > .thread .rah-thread-back {
     display: inline-flex;
   }
+}
+
+/* Activity uses the conversation shell; its feed replaces only the sidebar.
+   Bounds come from Raft Ift/Tft, panel selection from conversationPanels. */
+.app.rah-activity-preview > .rah-discovery {
+  grid-column: 2;
+  grid-row: 1;
+  width: auto;
+  min-width: 0;
+  border-right: var(--bd);
+}
+.app.rah-activity-preview > .rah-search-resizer {
+  position: absolute;
+  display: block;
+  left: calc(var(--rail-w) + var(--sidebar-w) - 4px);
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 25;
+}
+.app.rah-activity-preview[data-activity-primary="thread"]:not(
+    .rah-global-shell
+  ):not(.rah-task-modal-open):not(.rah-agent-peek-open) {
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
+}
+.app.rah-activity-preview[data-activity-primary="thread"]:not(
+    .rah-global-shell
+  ):not(.rah-task-modal-open):not(.rah-agent-peek-open)
+  > .thread {
+  grid-column: 3;
+}
+.app.rah-activity-preview[data-activity-primary="thread"] .rah-thread-resizer {
+  display: none;
+}
+@media (max-width: 767px) {
+  .app.rah-activity-preview,
+  .app.rah-activity-preview[data-activity-primary="thread"]:not(
+      .rah-global-shell
+    ):not(.rah-task-modal-open):not(.rah-agent-peek-open) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app.rah-activity-preview > .rah-discovery,
+  .app.rah-activity-preview > .rah-search-resizer {
+    display: none;
+  }
+  .app.rah-activity-preview[data-activity-primary="thread"]:not(
+      .rah-global-shell
+    ):not(.rah-task-modal-open):not(.rah-agent-peek-open)
+    > .thread {
+    grid-column: 1;
+  }
+}
+
+/* Fullscreen Activity previews share chat's single back affordance. */
+@media (max-width: 767px) {
+  .app.rah-activity-preview .rah-search-preview-close {
+    display: none;
+  }
+}
+/* Keep the 8px pointer target, but draw only the shared 2px divider on focus. */
+.app.rah-activity-preview > .rah-search-resizer:focus-visible {
+  outline: none;
+}
+.app.rah-activity-preview[data-activity-primary="thread"] > .thread {
+  border-left: 0;
+}
+
+/* Raft search entity cards retain neutral, outlined archived treatment. */
+.rah-search-destination[data-archived] .rah-search-card-name,
+.rah-search-destination[data-archived] .rah-search-card-subtitle {
+  color: var(--ink-40);
+}
+.rah-search-destination[data-archived] .rah-search-channel-icon,
+.rah-search-destination[data-archived] .rah-search-card-name small {
+  color: var(--ink-40);
+  border-color: var(--ink-40);
+  background: rgb(0 0 0 / 4%);
 }

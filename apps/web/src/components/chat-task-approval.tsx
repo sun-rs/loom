@@ -7,7 +7,7 @@ import {
 } from "@rah-os/client-core";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { NavigationTarget, Principal, Room, Task } from "@rah-os/protocol";
-import { createRoomViewModel } from "@rah-os/ui-web";
+import { createRoomViewModel, mentionedRoomAgentIds } from "@rah-os/ui-web";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { useMobileLayout } from "../use-mobile-layout.ts";
 import { useDiscoveryQuery } from "../use-discovery-query.ts";
@@ -53,18 +53,26 @@ export function ChatTaskApproval({
   canAttachFiles: boolean;
   canForward: boolean;
   onTaskWorkflow: (task: Task) => Promise<void>;
-  onChanged: () => void;
+  onChanged: (task?: Task) => void;
   onClose: () => void;
 }) {
   const mobile = useMobileLayout();
+  const ios =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const compact =
+    mobile &&
+    ios &&
+    (window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true);
   const result = useDiscoveryQuery(client, "task.get", {
     roomId: target.roomId,
     taskId: target.taskId,
   });
   const task = result.data?.task;
-  const changed = () => {
+  const changed = (updated?: Task) => {
     result.refresh();
-    onChanged();
+    onChanged(updated);
   };
   const metadata = (
     <TaskDetailMetadata
@@ -82,13 +90,13 @@ export function ChatTaskApproval({
   return (
     <TaskThreadPresentation
       modal
-      compact={mobile}
+      compact={compact}
       task={task}
       roomName={room.name}
       error={result.error}
       onClose={onClose}
     >
-      {mobile || !task ? (
+      {compact || !task ? (
         metadata
       ) : (
         <ChatTaskDiscussion
@@ -207,13 +215,14 @@ function ChatTaskDiscussion({
           basedOnRoomSeq,
           body,
           idempotencyKey,
-          recipientIds: agents
-            .filter(
+          recipientIds: mentionedRoomAgentIds({
+            agents: agents.filter(
               (agent) =>
                 agent.state === "enabled" &&
                 activeMemberIds.includes(agent.participantId),
-            )
-            .map((agent) => agent.participantId),
+            ),
+            body,
+          }),
           ...(attachmentIds.length ? { attachmentIds } : {}),
         }),
     });

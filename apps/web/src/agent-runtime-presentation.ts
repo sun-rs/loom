@@ -1,3 +1,4 @@
+import { chatModelIdentifier } from "./chat-model-identifier.ts";
 import type { LocalRuntimeInventoryEntry, ModelIntent } from "@rah-os/protocol";
 import { runtimeReasoningOptions } from "./agent-runtime-capabilities.ts";
 
@@ -26,6 +27,8 @@ export function runtimeProfilePresentation(
   const model = runtime?.modelBindingDescriptors.find(
     (m) => m.modelBindingId === bindingId,
   );
+  const nativeModelId =
+    intent?.customModel?.modelId ?? model?.modelId ?? bindingId;
   const reasoning = intent?.reasoning;
   // A saved explicit intent remains visible even if discovery is temporarily
   // unavailable. An unsupported default must not pretend to be a capability.
@@ -37,7 +40,9 @@ export function runtimeProfilePresentation(
         ? "多个运行时绑定"
         : "未绑定",
     modelLabel: intent
-      ? (model?.displayName ?? model?.modelId ?? bindingId ?? "未选择模型")
+      ? nativeModelId
+        ? chatModelIdentifier({ modelId: nativeModelId })
+        : "未选择模型"
       : state === "loading"
         ? "加载中…"
         : state === "error"
@@ -75,4 +80,15 @@ export function runtimeProductLabel(
     default:
       return runtime.displayName;
   }
+}
+
+/** Exact legacy auto-generated captions; never strip arbitrary user descriptions. */
+export function runtimeProductName(name: string): string {
+  const legacy: Record<string, string> = {
+    "Codex · native app-server": "Codex CLI",
+    "Claude Code · native stream-json": "Claude Code",
+    "Kimi CLI · native ACP": "Kimi Code",
+    "OpenCode · native local server": "OpenCode",
+  };
+  return legacy[name] ?? name;
 }

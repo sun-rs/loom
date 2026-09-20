@@ -49,7 +49,7 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
             modelBindingDescriptors: [],
             agentBindings: [
               {
-                agentDefinitionId: agent.agentDefinitionId,
+                agentId: agent.agentId,
                 participantId: agent.participantId,
                 handle: agent.handle,
               },
@@ -68,7 +68,7 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
               throw new Error("fixture profile read failed");
             return {
               agent: {
-                definition: { agentDefinitionId: agent.agentDefinitionId },
+                definition: { agentId: agent.agentId },
               },
               creator: {
                 kind: "human",
@@ -104,7 +104,7 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
           };
         },
       }) as unknown as RahClient,
-    [mode, agent.agentDefinitionId],
+    [mode, agent.agentId],
   );
   return (
     <section data-fixture="agent-preview-content">
@@ -149,7 +149,7 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
               ...agent,
               description: "Description must stay in the profile only",
               presence: {
-                agentDefinitionId: agent.agentDefinitionId,
+                agentId: agent.agentId,
                 trajectoryVersion: activityVersion,
                 activity: "working",
                 reason: "working",

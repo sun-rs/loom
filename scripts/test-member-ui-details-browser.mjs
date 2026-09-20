@@ -10,6 +10,7 @@ try {
     const response = await route.fetch();
     const data = await response.json();
     for (const runtime of data.runtimes) {
+      runtime.customModelRuntime = "codex";
       for (const model of runtime.modelBindingDescriptors)
         model.supportedServiceTiers = ["default", "priority"];
     }
@@ -41,10 +42,57 @@ try {
   const dialog = p.getByRole("dialog", { name: "编辑运行时配置" });
   await dialog.getByRole("button", { name: /^模型：/ }).click();
   await p.getByRole("menuitemradio").first().click();
+  await dialog.getByRole("button", { name: /^模型：/ }).click();
+  await p.getByRole("menuitemradio", { name: "自定义", exact: true }).click();
+  const custom = dialog.getByRole("textbox", {
+    name: "自定义模型 ID",
+    exact: true,
+  });
+  await custom.waitFor();
+  assert.equal(await custom.getAttribute("placeholder"), "自定义模型 ID");
+  for (const width of [1440, 390]) {
+    await p.setViewportSize({ width, height: 844 });
+    const geometry = await custom.evaluate((el) => {
+      const trigger = el
+        .closest(".rah-runtime-edit-field")
+        .querySelector(".task-filter-trigger");
+      return {
+        height: el.getBoundingClientRect().height,
+        otherHeight: trigger.getBoundingClientRect().height,
+        font: getComputedStyle(el).fontSize,
+        otherFont: getComputedStyle(trigger).fontSize,
+      };
+    });
+    assert.equal(
+      geometry.height,
+      geometry.otherHeight,
+      JSON.stringify(geometry),
+    );
+    assert.equal(geometry.font, geometry.otherFont);
+  }
+  await p.setViewportSize({ width: 1440, height: 900 });
+
+  await dialog
+    .getByRole("button", { name: "模型：自定义", exact: true })
+    .click();
+  await p.getByRole("menuitemradio").first().click();
+  assert.equal(await custom.count(), 0);
   await dialog.getByRole("checkbox", { name: "快速模式" }).waitFor();
   await dialog.getByRole("button", { name: "刷新模型", exact: true }).click();
   await dialog.getByRole("alert").waitFor();
   assert.equal(refreshes, 1);
+  assert.equal(
+    await dialog
+      .getByRole("button", { name: /^模型：/ })
+      .evaluate(
+        (el) =>
+          el
+            .closest(".rah-runtime-edit-field")
+            .querySelectorAll(":scope > small").length,
+      ),
+    0,
+    "model selector must not render a raw ID caption below the control",
+  );
   const fastBox = await dialog
     .getByRole("checkbox", { name: "快速模式" })
     .boundingBox();
@@ -52,6 +100,17 @@ try {
   assert.equal(fastBox.height, 16);
   const fastCard = dialog.locator(".rah-runtime-fast-mode");
   const cardBox = await fastCard.boundingBox();
+  assert.ok(
+    await dialog.evaluate(
+      (el) =>
+        el.querySelector(".rah-agent-launch-settings").getBoundingClientRect()
+          .top -
+          el.querySelector(".rah-runtime-fast-mode").getBoundingClientRect()
+            .bottom >=
+        16,
+    ),
+    "runtime edit retains a field gap before More",
+  );
   assert.ok(cardBox.height >= 64, "fast mode is an option card");
   const fast = dialog.getByRole("checkbox", { name: "快速模式", exact: true });
   await fastCard.click({
@@ -69,13 +128,26 @@ try {
     await fast.evaluate((e) => getComputedStyle(e).backgroundColor),
     await fast.evaluate((e) => {
       const s = document.createElement("i");
-      s.style.background = "var(--yellow)";
+      s.style.background = "var(--ink)";
       e.parentElement.append(s);
       const c = getComputedStyle(s).backgroundColor;
       s.remove();
       return c;
     }),
   );
+  assert.equal(
+    await fastCard
+      .locator(".rah-runtime-fast-check > svg")
+      .evaluate((el) => getComputedStyle(el).color),
+    "rgb(255, 255, 255)",
+  );
+  await fastCard.locator("span[id]").dblclick();
+  assert.equal(
+    await p.evaluate(() => window.getSelection()?.toString()),
+    "",
+    "double clicking option-card text must not select it",
+  );
+  await fast.check();
   await p.screenshot({ path: "/tmp/rah-fast-mode-card.png" });
   assert.equal(
     await fastCard.locator(".rah-runtime-fast-check > svg").isVisible(),

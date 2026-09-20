@@ -117,7 +117,7 @@ export type ExecutionPolicyRecord = {
 
 export type AgentDefinitionContent = Omit<
   AgentDefinitionRevision,
-  | "agentDefinitionId"
+  | "agentId"
   | "agentDefinitionRevisionId"
   | "contentDigest"
   | "createdAt"

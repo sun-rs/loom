@@ -14,14 +14,14 @@ test("retired Agent MCP links fall back to the same Agent profile", () => {
     agentRouteFromSearch(
       "?surface=agents&agent=agent_definition_alice&agentTab=mcp",
     ),
-    { agentDefinitionId: "agent_definition_alice", tab: "profile" },
+    { agentId: "agent_definition_alice", tab: "profile" },
   );
 });
 
 test("an older typed Agent navigation target cannot reopen the retired tab", () => {
   const target = {
     kind: "agent",
-    agentDefinitionId: "agent_definition_alice",
+    agentId: "agent_definition_alice",
     tab: "mcp",
   } as unknown as NavigationTarget;
   assert.equal(navigationPresentation(target).agentTab, "profile");

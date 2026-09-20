@@ -204,7 +204,7 @@ test("private runtime composition keeps actual cwd, Worker root, prompt and reco
         participantId: agent.principalId,
         handle: agent.handle,
         agentDefinitionRevision: {
-          agentDefinitionId: `definition-${agent.principalId}`,
+          agentId: `definition-${agent.principalId}`,
           agentDefinitionRevisionId: `revision-${agent.principalId}`,
           contentDigest: `sha256:${"1".repeat(64)}`,
           createdAt: "2026-09-11T00:00:00.000Z",

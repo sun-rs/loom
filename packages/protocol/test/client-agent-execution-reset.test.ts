@@ -9,13 +9,13 @@ import {
 test("Agent execution reset exposes the complete Raft restart/session/full mode contract", () => {
   assert.deepEqual(
     ClientAgentExecutionResetRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 42,
       idempotencyKey: "reset-1",
       mode: "session",
     }),
     {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 42,
       idempotencyKey: "reset-1",
       mode: "session",
@@ -23,7 +23,7 @@ test("Agent execution reset exposes the complete Raft restart/session/full mode 
   );
   assert.equal(
     ClientAgentExecutionResetRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 42,
       idempotencyKey: "reset-full-1",
       mode: "full",
@@ -32,7 +32,7 @@ test("Agent execution reset exposes the complete Raft restart/session/full mode 
   );
   assert.throws(() =>
     ClientAgentExecutionResetRequestSchema.parse({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       basedOnRoomSeq: 42,
       idempotencyKey: "reset-unknown-1",
       mode: "workspace",
@@ -42,7 +42,7 @@ test("Agent execution reset exposes the complete Raft restart/session/full mode 
 
 test("Agent execution reset response carries terminal Host evidence", () => {
   const response = ClientAgentExecutionResetResponseSchema.parse({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     completedAt: "2026-09-01T02:00:00.000Z",
     computerHostId: "host-local",
     deduplicated: false,

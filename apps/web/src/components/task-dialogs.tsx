@@ -1,3 +1,5 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useState } from "react";
 
@@ -30,6 +32,7 @@ export function TaskReassignDialog({
   onConfirm: (assigneeId: string, reason: string) => Promise<void>;
   taskTitle: string;
 }) {
+  const entities = useWorkspaceEntities();
   const candidates = agents.filter(
     ({ participantId }) => participantId !== currentAssigneeId,
   );
@@ -42,7 +45,7 @@ export function TaskReassignDialog({
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   const valid = assigneeId !== "" && reason.trim().length > 0;
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭改派任务窗口"
         className="rah-dialog-backdrop"
@@ -101,7 +104,8 @@ export function TaskReassignDialog({
               ) : null}
               {candidates.map((agent) => (
                 <option key={agent.participantId} value={agent.participantId}>
-                  {agent.handle}
+                  {entities?.person(agent.participantId)?.displayName ||
+                    agent.handle}
                 </option>
               ))}
             </select>
@@ -138,7 +142,7 @@ export function TaskReassignDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -157,7 +161,7 @@ export function TaskCloseDialog({
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   const valid = reason.trim().length > 0;
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭任务窗口"
         className="rah-dialog-backdrop"
@@ -234,7 +238,7 @@ export function TaskCloseDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -307,7 +311,10 @@ export function TaskCreateDialog({
         : "创建任务";
 
   return (
-    <div className="rah-dialog-layer rah-task-create-layer" role="presentation">
+    <DialogLayer
+      className="rah-dialog-layer rah-task-create-layer"
+      role="presentation"
+    >
       <button
         aria-label="关闭新建任务窗口"
         className="rah-dialog-backdrop"
@@ -424,7 +431,7 @@ export function TaskCreateDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 

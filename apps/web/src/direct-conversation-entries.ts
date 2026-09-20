@@ -9,6 +9,21 @@ export type DirectConversationEntry = {
   roomId?: string;
 };
 
+export function directConversationPeer(
+  agents: readonly WorkspaceAgentView[],
+  room: Room | undefined,
+  humanId: string | undefined,
+): WorkspaceAgentView | undefined {
+  if (
+    room?.kind !== "direct" ||
+    humanId === undefined ||
+    !room.directParticipantIds?.includes(humanId)
+  )
+    return undefined;
+  const peer = room.directParticipantIds?.find((id) => id !== humanId);
+  return agents.find((agent) => agent.participantId === peer);
+}
+
 /** Presentation only. room.direct.open remains the sole open-or-create owner. */
 export function directConversationEntries(
   agents: readonly WorkspaceAgentView[],
@@ -20,7 +35,14 @@ export function directConversationEntries(
   );
   const matchedRooms = new Set<string>();
   const rows: DirectConversationEntry[] = agents
-    .filter((agent) => agent.state !== "tombstoned")
+    .filter(
+      (agent) =>
+        agent.state !== "tombstoned" ||
+        directRooms.some(
+          (room) =>
+            directConversationPeer([agent], room, humanId) !== undefined,
+        ),
+    )
     .map((agent) => {
       const room = directRooms.find(
         (room) =>

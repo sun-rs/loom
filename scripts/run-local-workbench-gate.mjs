@@ -152,7 +152,7 @@ if (args.join(" ") === "debug models --bundled") {
   assert.notEqual(runtime?.runtimeOfferId, undefined);
   assert.notEqual(modelBinding, undefined);
   const agentDetail = await firstSession.client.request("agent.get", {
-    agentDefinitionId: agents.agents[0].definition.agentDefinitionId,
+    agentId: agents.agents[0].definition.agentId,
   });
   const controlSync = await firstSession.client.request("room.sync", {
     consumerId: "local-workbench-gate-control",
@@ -160,7 +160,7 @@ if (args.join(" ") === "debug models --bundled") {
   });
   await firstSession.client.request("agent.manage", {
     action: "configure",
-    agentDefinitionId: agentDetail.agent.definition.agentDefinitionId,
+    agentId: agentDetail.agent.definition.agentId,
     avatarKey: agentDetail.agent.currentRevision.avatarKey,
     basedOnRoomSeq: controlSync.latestRoomSeq,
     description: agentDetail.agent.currentRevision.description,
@@ -242,7 +242,7 @@ if (args.join(" ") === "debug models --bundled") {
     ],
   );
   const restoredAgent = await secondSession.client.request("agent.get", {
-    agentDefinitionId: agentDetail.agent.definition.agentDefinitionId,
+    agentId: agentDetail.agent.definition.agentId,
   });
   assert.deepEqual(restoredAgent.policy.modelIntent.exactBindingIds, [
     modelBinding.modelBindingId,

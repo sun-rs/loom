@@ -168,9 +168,12 @@ try {
   await p.setViewportSize({ width: 390, height: 844 });
   await expect(results).toBeHidden();
   await expect(
-    p.getByRole("button", { name: "返回搜索结果", exact: true }),
+    p.locator(".thread").getByRole("button", { name: "返回聊天", exact: true }),
   ).toBeVisible();
   await p.screenshot({ path: "/tmp/rah-search-layout-task-mobile.png" });
+  await p.locator(".thread .rah-thread-back").click();
+  await expect(p.locator(".thread")).toHaveCount(0);
+  await expect(p.locator(".rah-search-channel-open > .channel")).toBeVisible();
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.getByRole("button", { name: "关闭搜索预览", exact: true }).click();
   await expect(p.locator(".rah-search-channel-open")).toHaveCount(0);

@@ -192,6 +192,7 @@ rl.on("line", (line) => {
     const runPolicy = async (
       mode: ToolAccessMode | undefined,
       suffix: string,
+      custom = false,
     ) => {
       const policyRecordPath = join(directory, `app-server-${suffix}.json`);
       const runtime = implementations.createRuntime(
@@ -205,13 +206,19 @@ rl.on("line", (line) => {
           cwd: directory,
           supervisorDirectory: join(directory, "supervisors"),
         },
-        {
-          modelBindingId: binding!.modelBindingId,
-          modelId: binding!.modelId,
-          provider: binding!.provider,
-          reasoning: "high",
-          source: "explicit_binding",
-        },
+        custom
+          ? {
+              source: "custom_model",
+              runtime: "codex",
+              modelId: "vendor/custom-gpt-v2",
+            }
+          : {
+              modelBindingId: binding!.modelBindingId,
+              modelId: binding!.modelId,
+              provider: binding!.provider,
+              reasoning: "high",
+              source: "explicit_binding",
+            },
         mode,
       );
       const trajectory: unknown[] = [];
@@ -244,6 +251,12 @@ rl.on("line", (line) => {
       };
     };
 
+    const customRun = await runPolicy("full_access", "custom", true);
+    assert.equal(
+      customRun.frames.find((frame) => frame.method === "thread/start").params
+        .model,
+      "vendor/custom-gpt-v2",
+    );
     const fullAccess = await runPolicy("full_access", "full-access");
     const frames = fullAccess.frames;
     assert.equal(frames[0].activationId, "activation-codex-full-access");

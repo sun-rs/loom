@@ -5,7 +5,7 @@ import { RuntimeTrajectoryActivitySchema } from "./runtime-activity.ts";
 // Content-free observation, never Room/Task state or a telemetry transcript.
 export const AgentPresenceSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     activity: RuntimeTrajectoryActivitySchema,
     activityAt: TimestampSchema.optional(),
     // Content-free tail invalidation hint, never delivery ACK or business state.
@@ -13,6 +13,7 @@ export const AgentPresenceSchema = z
     reason: z.enum([
       "idle",
       "starting",
+      "initializing",
       "thinking",
       "working",
       "online",

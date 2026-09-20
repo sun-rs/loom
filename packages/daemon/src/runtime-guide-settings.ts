@@ -92,10 +92,10 @@ export class RuntimeGuideSettings {
   runtimeOptions() {
     return {
       guideEnabled: (runtimeId: string | undefined) => this.enabled(runtimeId),
-      launchEnvironment: (runtimeId: string, agentDefinitionId?: string) => {
-        const row = this.read(
-          agentDefinitionId ? { agentDefinitionId } : {},
-        ).runtimes.find((r) => r.runtimeId === runtimeId);
+      launchEnvironment: (runtimeId: string, agentId?: string) => {
+        const row = this.read(agentId ? { agentId } : {}).runtimes.find(
+          (r) => r.runtimeId === runtimeId,
+        );
         return {
           ...row?.inheritedEnvironment,
           ...row?.environment,
@@ -118,9 +118,9 @@ export class RuntimeGuideSettings {
         ...row,
         enabled: this.enabled(row.runtimeId),
         additionalArgs: [],
-        environment: scope.agentDefinitionId
+        environment: scope.agentId
           ? {
-              ...this.#state.agents?.[scope.agentDefinitionId]?.[row.runtimeId]
+              ...this.#state.agents?.[scope.agentId]?.[row.runtimeId]
                 ?.environment,
             }
           : {},
@@ -141,7 +141,7 @@ export class RuntimeGuideSettings {
         "Guide settings revision changed; reload settings",
       );
     if (
-      !input.agentDefinitionId &&
+      !input.agentId &&
       (input.enabled === undefined ||
         input.environment !== undefined ||
         input.additionalArgs !== undefined ||
@@ -150,14 +150,14 @@ export class RuntimeGuideSettings {
       throw new ConflictError(
         "Provider settings are read-only; configure launch settings on an Agent",
       );
-    if (input.agentDefinitionId && input.additionalArgs !== undefined)
+    if (input.agentId && input.additionalArgs !== undefined)
       throw new ConflictError(
         "Agent configuration supports environment variables only",
       );
     const agents = structuredClone(this.#state.agents ?? {});
     const enabled = [...this.#state.enabled];
-    if (input.agentDefinitionId) {
-      const perAgent = agents[input.agentDefinitionId] ?? {};
+    if (input.agentId) {
+      const perAgent = agents[input.agentId] ?? {};
       perAgent[input.runtimeId] = AgentLaunchOverlaySchema.parse({
         additionalArgs:
           input.additionalArgs === undefined
@@ -166,7 +166,7 @@ export class RuntimeGuideSettings {
         environment:
           input.environment ?? perAgent[input.runtimeId]?.environment ?? {},
       });
-      agents[input.agentDefinitionId] = perAgent;
+      agents[input.agentId] = perAgent;
     } else {
       if (
         !capabilities.find((row) => row.runtimeId === input.runtimeId)
@@ -208,10 +208,6 @@ export class RuntimeGuideSettings {
     } finally {
       rmSync(temporary, { force: true });
     }
-    return this.read(
-      input.agentDefinitionId
-        ? { agentDefinitionId: input.agentDefinitionId }
-        : {},
-    );
+    return this.read(input.agentId ? { agentId: input.agentId } : {});
   }
 }

@@ -18,7 +18,7 @@ export type EnsureRoomMembershipRemovedResult =
 export async function ensureRoomMembership(
   client: RahClient,
   input: {
-    agentDefinitionId: string;
+    agentId: string;
     basedOnRoomSeq: number;
     idempotencyKey: string;
     participantId: string;
@@ -34,7 +34,7 @@ export async function ensureRoomMembership(
 
   try {
     const result = await client.request("agent.onboard", {
-      agentDefinitionId: input.agentDefinitionId,
+      agentId: input.agentId,
       basedOnRoomSeq: input.basedOnRoomSeq,
       idempotencyKey: input.idempotencyKey,
       roomId: input.roomId,

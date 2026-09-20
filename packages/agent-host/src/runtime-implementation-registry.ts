@@ -356,6 +356,11 @@ export class RuntimeImplementationRegistry {
       );
     }
     validateMatchingProbeReport(revision, probeReport, true);
+    if (
+      resolvedModel?.source === "custom_model" &&
+      customModelRuntime(revision) !== resolvedModel.runtime
+    )
+      throw new Error("custom model does not match native runtime");
     return implementation.create(
       revision,
       options,
@@ -545,6 +550,9 @@ function createClaudeStreamJsonRuntime(
       ? []
       : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
   ];
+  if (resolvedModel?.source === "custom_model") {
+    args.push("--model", resolvedModel.modelId);
+  }
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
     args.push("--model", resolvedModel.modelId);
@@ -707,6 +715,9 @@ function createCodexAppServerRuntime(
       ? []
       : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
   ];
+  if (resolvedModel?.source === "custom_model") {
+    args.push("--model", resolvedModel.modelId);
+  }
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
     args.push("--model", resolvedModel.modelId);
@@ -1306,6 +1317,9 @@ export function buildRuntimeOfferFromProfile(input: {
     }
   }
   return RuntimeOfferSchema.parse({
+    ...(customModelRuntime(revision)
+      ? { customModelRuntime: customModelRuntime(revision) }
+      : {}),
     capabilityEvidence: [...revision.manifest.declaredCapabilities]
       .sort()
       .map((capability) => ({ capability, evidence: "declared" as const })),
@@ -1499,4 +1513,14 @@ async function hashFile(path: string): Promise<string> {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return `sha256:${hash.digest("hex")}`;
+}
+
+function customModelRuntime(
+  revision: RuntimeProfileRevision,
+): "claude" | "codex" | undefined {
+  return revision.manifest.adapter.kind === "claude-stream-json/v1"
+    ? "claude"
+    : revision.manifest.adapter.kind === "codex-app-server/v1"
+      ? "codex"
+      : undefined;
 }

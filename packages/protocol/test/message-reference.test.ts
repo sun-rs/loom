@@ -10,7 +10,7 @@ import {
 test("message references preserve typed canonical identities instead of display-only hrefs", () => {
   const references = [
     {
-      agentDefinitionId: "agent-alice",
+      agentId: "agent-alice",
       kind: "agent",
       principalId: "principal-alice",
       readState: "read",

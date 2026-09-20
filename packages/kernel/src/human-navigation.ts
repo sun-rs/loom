@@ -124,7 +124,7 @@ export class HumanNavigation {
     if (target.kind === "agent") {
       const row = this.#requireRow(
         "SELECT control_room_id FROM agent_definitions WHERE agent_definition_id=? AND state<>'tombstoned'",
-        target.agentDefinitionId,
+        target.agentId,
       );
       requireRoomMember(db, text(row, "control_room_id"), actorId);
       return { target };

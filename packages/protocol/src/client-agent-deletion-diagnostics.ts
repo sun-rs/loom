@@ -48,7 +48,7 @@ export type AgentDeletionStatus = z.infer<typeof AgentDeletionStatusSchema>;
 
 export const AgentDeletionDiagnosticsSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     blocker: AgentDeletionBlockerSchema.optional(),
     /** First observation of an uninterrupted block; survives restart. */
     firstObservedAt: TimestampSchema.optional(),
@@ -68,7 +68,7 @@ export type AgentDeletionDiagnostics = z.infer<
 >;
 
 export const ClientAgentDeletionDiagnosticsRequestSchema = z
-  .object({ agentDefinitionId: IdentifierSchema })
+  .object({ agentId: IdentifierSchema })
   .strict();
 export type ClientAgentDeletionDiagnosticsRequest = z.infer<
   typeof ClientAgentDeletionDiagnosticsRequestSchema

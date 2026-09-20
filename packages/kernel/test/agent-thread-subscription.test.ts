@@ -399,6 +399,92 @@ test("member removal retains history and follows but fences Thread delivery unti
   }
 });
 
+test("channel joins never subscribe existing threads; only existing members can be added as followers", () => {
+  const state = fixture();
+  const db = new DatabaseSync(state.databasePath);
+  try {
+    const outsider = state.kernel.provisionPrincipal({
+      handle: "new-channel-agent",
+      kind: "agent",
+    }).principal;
+    const root = state.kernel.postMessage(state.humanActor, {
+      roomId: state.room.roomId,
+      body: "Existing task discussion",
+      recipients: [],
+      idempotencyKey: "boundary-root",
+    });
+    const create = {
+      roomId: state.room.roomId,
+      rootMessageId: root.event.aggregateId,
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "boundary-thread",
+      recipientIds: [outsider.principalId],
+    };
+    assert.throws(
+      () => state.kernel.createThread(state.humanActor, create),
+      /member/i,
+    );
+    const thread = state.kernel.createThread(state.humanActor, {
+      ...create,
+      recipientIds: [],
+    });
+    const reply = {
+      roomId: state.room.roomId,
+      threadId: thread.thread.threadId,
+      basedOnRoomSeq: thread.event.roomSeq,
+      idempotencyKey: "boundary-reply",
+      recipientIds: [outsider.principalId],
+      body: "explicit outside recipient",
+    };
+    assert.throws(
+      () => state.kernel.replyThread(state.humanActor, reply),
+      /member/i,
+    );
+    const followers = () =>
+      db
+        .prepare(
+          "SELECT participant_id FROM agent_thread_follows WHERE thread_id = ? AND following = 1",
+        )
+        .all(thread.thread.threadId)
+        .map((row) => row.participant_id);
+    followAgentThreadParticipants(db, {
+      threadId: thread.thread.threadId,
+      participantIds: [outsider.principalId],
+      source: "mention",
+      updatedAt: "2026-09-20T00:00:00.000Z",
+    });
+    assert.deepEqual(
+      followers(),
+      [],
+      "even the internal writer fences nonmembers",
+    );
+    const joined = state.kernel.addRoomMember(state.humanActor, {
+      roomId: state.room.roomId,
+      principalId: outsider.principalId,
+      role: "member",
+      basedOnRoomSeq: thread.event.roomSeq,
+      idempotencyKey: "boundary-join",
+    });
+    assert.deepEqual(
+      followers(),
+      [],
+      "joining the channel must not subscribe an existing discussion",
+    );
+    state.kernel.replyThread(state.humanActor, {
+      ...reply,
+      basedOnRoomSeq: joined.event.roomSeq,
+    });
+    assert.deepEqual(
+      followers(),
+      [outsider.principalId],
+      "explicit thread addition is allowed only after channel join",
+    );
+  } finally {
+    db.close();
+    state.close();
+  }
+});
+
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-agent-thread-follow-"));
   const databasePath = join(directory, "room.db");

@@ -4,7 +4,7 @@ import type { AgentDeletionDiagnostics } from "@rah-os/protocol";
 import { agentDeletionNotice } from "../src/agent-deletion-notice.ts";
 
 const blocked: AgentDeletionDiagnostics = {
-  agentDefinitionId: "agent_definition_1",
+  agentId: "agent_definition_1",
   blocker: {
     activationId: "activation_1",
     hostId: "mac-mini",

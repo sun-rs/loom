@@ -4,12 +4,12 @@ import type { RahClient } from "@rah-os/client-sdk";
 /** Read only the current Agent/runtime overlay; Host remains its persistence owner. */
 export function AgentEnvironmentSummary({
   client,
-  agentDefinitionId,
+  agentId,
   runtimeId,
   refresh,
 }: {
   client: RahClient;
-  agentDefinitionId: string;
+  agentId: string;
   runtimeId: string | undefined;
   refresh: number;
 }) {
@@ -18,16 +18,12 @@ export function AgentEnvironmentSummary({
     keys: string[];
     error?: string;
   }>();
-  const identity = `${agentDefinitionId}:${runtimeId}`;
+  const identity = `${agentId}:${runtimeId}`;
   useEffect(() => {
     if (!runtimeId) return;
     const controller = new AbortController();
     client
-      .request(
-        "runtime.guide.read",
-        { agentDefinitionId },
-        { signal: controller.signal },
-      )
+      .request("runtime.guide.read", { agentId }, { signal: controller.signal })
       .then((data) => {
         if (!controller.signal.aborted)
           setResult({
@@ -43,7 +39,7 @@ export function AgentEnvironmentSummary({
           setResult({ identity, keys: [], error: "无法读取环境变量" });
       });
     return () => controller.abort();
-  }, [client, agentDefinitionId, runtimeId, refresh, identity]);
+  }, [client, agentId, runtimeId, refresh, identity]);
   if (!runtimeId || result?.identity !== identity) return null;
   if (result.error) return <p role="alert">{result.error}</p>;
   if (!result.keys.length) return null;

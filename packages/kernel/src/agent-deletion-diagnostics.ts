@@ -198,12 +198,12 @@ export function describeAgentDeletionBlocker(blocker: AgentDeletionBlocker): {
 /** One reportable change of the block state; emitted at most once per change. */
 export type AgentDeletionBlockChange =
   | {
-      agentDefinitionId: string;
+      agentId: string;
       blocker: AgentDeletionBlocker;
       kind: "blocked";
       summary: string;
     }
-  | { agentDefinitionId: string; kind: "cleared" };
+  | { agentId: string; kind: "cleared" };
 
 export type AgentDeletionBlockRecord = {
   firstObservedAt: string;
@@ -212,13 +212,13 @@ export type AgentDeletionBlockRecord = {
 
 export function readAgentDeletionBlockRecord(
   database: DatabaseSync,
-  agentDefinitionId: string,
+  agentId: string,
 ): AgentDeletionBlockRecord | undefined {
   const row = database
     .prepare(
       "SELECT blocker_signature, first_observed_at FROM agent_deletion_blocks WHERE agent_definition_id=?",
     )
-    .get(agentDefinitionId);
+    .get(agentId);
   if (!row) return undefined;
   return {
     firstObservedAt: text(row, "first_observed_at"),
@@ -234,49 +234,40 @@ export function readAgentDeletionBlockRecord(
 export function recordAgentDeletionBlock(
   database: DatabaseSync,
   input: {
-    agentDefinitionId: string;
+    agentId: string;
     blocker: AgentDeletionBlocker;
     now: string;
     participantId: string;
   },
 ): boolean {
   const signature = agentDeletionBlockerSignature(input.blocker);
-  const existing = readAgentDeletionBlockRecord(
-    database,
-    input.agentDefinitionId,
-  );
+  const existing = readAgentDeletionBlockRecord(database, input.agentId);
   if (existing?.signature === signature) return false;
   if (existing) {
     database
       .prepare(
         "UPDATE agent_deletion_blocks SET blocker_signature=?, participant_id=?, recorded_at=? WHERE agent_definition_id=?",
       )
-      .run(signature, input.participantId, input.now, input.agentDefinitionId);
+      .run(signature, input.participantId, input.now, input.agentId);
     return true;
   }
   database
     .prepare(
       "INSERT INTO agent_deletion_blocks (agent_definition_id, participant_id, blocker_signature, first_observed_at, recorded_at) VALUES (?,?,?,?,?)",
     )
-    .run(
-      input.agentDefinitionId,
-      input.participantId,
-      signature,
-      input.now,
-      input.now,
-    );
+    .run(input.agentId, input.participantId, signature, input.now, input.now);
   return true;
 }
 
 /** Returns true when an observation row existed and was cleared. */
 export function clearAgentDeletionBlock(
   database: DatabaseSync,
-  agentDefinitionId: string,
+  agentId: string,
 ): boolean {
-  if (!readAgentDeletionBlockRecord(database, agentDefinitionId)) return false;
+  if (!readAgentDeletionBlockRecord(database, agentId)) return false;
   database
     .prepare("DELETE FROM agent_deletion_blocks WHERE agent_definition_id=?")
-    .run(agentDefinitionId);
+    .run(agentId);
   return true;
 }
 
@@ -288,14 +279,14 @@ export function clearAgentDeletionBlock(
 export function readAgentDeletionDiagnostics(
   database: DatabaseSync,
   input: {
-    agentDefinitionId: string;
+    agentId: string;
     now: string;
     participantId: string;
     state: string;
   },
 ): AgentDeletionDiagnostics {
   const base = {
-    agentDefinitionId: input.agentDefinitionId,
+    agentId: input.agentId,
     observedAt: input.now,
     participantId: input.participantId,
   };
@@ -303,7 +294,7 @@ export function readAgentDeletionDiagnostics(
     .prepare(
       "SELECT created_at FROM room_events WHERE aggregate_id=? AND type='agent.deletion_requested' LIMIT 1",
     )
-    .get(input.agentDefinitionId);
+    .get(input.agentId);
   const requestedAt = requestRow ? text(requestRow, "created_at") : undefined;
   if (input.state === "tombstoned")
     return {
@@ -329,10 +320,7 @@ export function readAgentDeletionDiagnostics(
       status: "pending",
       summary: "删除意图已登记，没有阻塞的运行时行，正在等待后台协调器完成。",
     };
-  const record = readAgentDeletionBlockRecord(
-    database,
-    input.agentDefinitionId,
-  );
+  const record = readAgentDeletionBlockRecord(database, input.agentId);
   const described = describeAgentDeletionBlocker(blocker);
   return {
     ...base,

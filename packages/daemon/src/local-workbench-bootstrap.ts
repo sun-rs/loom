@@ -109,7 +109,7 @@ export async function prepareLocalWorkbench(input: {
   // Schema transitions are detected read-only and snapshotted before the Kernel
   // is allowed to migrate. Nothing pending means nothing is copied.
   await protectKernelSchemaMigration({ stateDirectory });
-  verifyCanonicalState({
+  const participantIds = verifyCanonicalState({
     hostAccessToken,
     humanAccessToken,
     metadata,
@@ -136,6 +136,7 @@ export async function prepareLocalWorkbench(input: {
   });
   return {
     config: buildConfig({
+      participantIds,
       hostSecretPath,
       metadata,
       registryDatabasePath,
@@ -363,6 +364,7 @@ async function prepareRuntimeRegistry(input: {
 }
 
 function buildConfig(input: {
+  participantIds: readonly string[];
   hostSecretPath: string;
   metadata: LocalWorkbenchMetadata;
   registryDatabasePath: string;
@@ -378,7 +380,7 @@ function buildConfig(input: {
       credential: { path: input.hostSecretPath, source: "file" },
       hostId: input.metadata.hostId,
       maxConcurrent: input.runtimeSpecs.length,
-      participantIds: input.metadata.bootstrapParticipantIds,
+      participantIds: input.participantIds,
     },
     hostStaleAfterMs: 60_000,
     leaseMs: 60_000,
@@ -432,7 +434,7 @@ function verifyCanonicalState(input: {
   humanAccessToken: string;
   metadata: LocalWorkbenchMetadata;
   stateDirectory: string;
-}): void {
+}): readonly string[] {
   const kernel = new RoomKernel({
     databasePath: join(input.stateDirectory, "room.db"),
   });
@@ -472,9 +474,21 @@ function verifyCanonicalState(input: {
       throw new Error("local workbench canonical default Room was not found");
     }
     const host = kernel.authenticateHostAccessToken(input.hostAccessToken);
+    const deleted = new Set(
+      kernel
+        .listAgentCatalog(actor, {
+          controlRoomId: input.metadata.controlRoomId,
+          includeDeleted: true,
+        })
+        .filter((entry) => entry.definition.state === "tombstoned")
+        .map((entry) => entry.definition.participantId),
+    );
+    const participantIds = input.metadata.bootstrapParticipantIds.filter(
+      (id) => !deleted.has(id),
+    );
     if (
       host.hostId !== input.metadata.hostId ||
-      input.metadata.bootstrapParticipantIds.some(
+      participantIds.some(
         (participantId) => !host.participantIds.includes(participantId),
       )
     ) {
@@ -494,6 +508,7 @@ function verifyCanonicalState(input: {
       });
       renameSync(pending, join(input.stateDirectory, "workbench.json"));
     }
+    return participantIds;
   } finally {
     kernel.close();
   }

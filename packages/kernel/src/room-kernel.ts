@@ -1,3 +1,6 @@
+import { migrateIdentityAccounts } from "./identity-accounts.ts";
+import { assertAgentFirstRunSatisfied } from "./agent-first-run.ts";
+import { reconcileDeletedAgentTaskOwners } from "./task-agent-deletion.ts";
 import { editHumanTask } from "./human-task-edit.ts";
 import type {
   AgentDeletionDiagnostics,
@@ -19,6 +22,7 @@ import {
 import {
   deferPresentedAcknowledgement,
   markPresentedWindowSent,
+  migrateActivationPresentedWindows,
   presentedFreshnessFloor,
   presentedWindowAcknowledgement,
   readPresentedDeliveryPhases,
@@ -414,7 +418,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 56;
+export const KERNEL_SCHEMA_VERSION = 57;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -806,6 +810,9 @@ export class RoomKernel {
       this.#database.exec(SCHEMA_OBJECT_SQL);
       initializeHeldMessageDrafts(this.#database, this.#now());
     });
+    unit("activation-presented-window-compatibility", "transactional", () =>
+      migrateActivationPresentedWindows(this.#database),
+    );
     unit("collaboration-v7", "external", () =>
       migrateCollaborationSchemaV7(this.#database, this.#timestamp()),
     );
@@ -868,6 +875,14 @@ export class RoomKernel {
           this.#now(),
         ),
       ),
+    );
+    unit("deleted-agent-task-owners", "transactional", () =>
+      reconcileDeletedAgentTaskOwners({
+        database: this.#database,
+        events: this.#roomEvents,
+        now: this.#now,
+        createId: this.#createId,
+      }),
     );
     unit("task-review-backfill", "external", () =>
       this.#taskReviews.backfillLegacySubmissions(),
@@ -1027,6 +1042,9 @@ export class RoomKernel {
       });
     }
     let compactedRuntimeOfferObservationCount = 0;
+    unit("identity-accounts-v57", "external", () =>
+      migrateIdentityAccounts(this.#database),
+    );
     unit("placement-columns-and-version", "transactional", () => {
       const placementColumns = this.#database
         .prepare("PRAGMA table_info(placements)")
@@ -1501,12 +1519,12 @@ export class RoomKernel {
   }
   listWorkspaceAgentRooms(
     actor: AuthenticatedActorContext,
-    input: { agentDefinitionId: string },
+    input: { agentId: string },
   ): Room[] {
     return ar.listWorkspaceAgentRooms(
       this.#database,
       this.#requireAuthenticatedActor(actor),
-      input.agentDefinitionId,
+      input.agentId,
     );
   }
   listAgentActivity(
@@ -3139,13 +3157,13 @@ export class RoomKernel {
         actorId,
         input.basedOnRoomSeq,
       );
-      const agentDefinitionId = this.#createId("agent_definition");
+      const agentId = this.#createId("agent_definition");
       const agentDefinitionRevisionId = this.#createId(
         "agent_definition_revision",
       );
       const createdAt = this.#timestamp();
       const definition = AgentDefinitionSchema.parse({
-        agentDefinitionId,
+        agentId,
         controlRoomId: input.controlRoomId,
         createdAt,
         currentRevisionId: agentDefinitionRevisionId,
@@ -3155,7 +3173,7 @@ export class RoomKernel {
       });
       const revision = AgentDefinitionRevisionSchema.parse({
         ...content,
-        agentDefinitionId,
+        agentId,
         agentDefinitionRevisionId,
         contentDigest,
         createdAt,
@@ -3167,7 +3185,7 @@ export class RoomKernel {
           "INSERT INTO agent_definitions(agent_definition_id, participant_id, control_room_id, state, current_revision_id, created_at, updated_at) VALUES(?, ?, ?, 'enabled', ?, ?, ?)",
         )
         .run(
-          agentDefinitionId,
+          agentId,
           input.participantId,
           input.controlRoomId,
           agentDefinitionRevisionId,
@@ -3177,11 +3195,11 @@ export class RoomKernel {
       this.#insertAgentDefinitionRevision(revision);
       const event = this.#appendEvent({
         actorId,
-        aggregateId: agentDefinitionId,
+        aggregateId: agentId,
         aggregateType: "agent_definition",
         idempotencyKey: input.idempotencyKey,
         payload: {
-          agentDefinitionId,
+          agentId,
           agentDefinitionRevisionId,
           basedOnRoomSeq: input.basedOnRoomSeq,
           contentDigest,
@@ -3203,15 +3221,13 @@ export class RoomKernel {
   reviseAgentDefinition(
     actor: AuthenticatedActorContext,
     input: AgentDefinitionContent & {
-      agentDefinitionId: string;
+      agentId: string;
       basedOnRoomSeq: number;
       idempotencyKey: string;
     },
   ): AgentDefinitionMutationResult {
     return this.#transaction(() => {
-      const definitionRow = this.#requireAgentDefinitionRow(
-        input.agentDefinitionId,
-      );
+      const definitionRow = this.#requireAgentDefinitionRow(input.agentId);
       const controlRoomId = text(definitionRow, "control_room_id");
       const actorId = this.#requireHumanControlActor(actor, controlRoomId);
       this.#assertIdempotencyKey(input.idempotencyKey);
@@ -3230,7 +3246,7 @@ export class RoomKernel {
       if (previous !== undefined) {
         const event = this.#assertControlEventReplay(previous, {
           actorId,
-          aggregateId: input.agentDefinitionId,
+          aggregateId: input.agentId,
           contentDigest,
           eventType: "agent.revised",
         });
@@ -3249,7 +3265,7 @@ export class RoomKernel {
       const createdAt = this.#timestamp();
       const revision = AgentDefinitionRevisionSchema.parse({
         ...content,
-        agentDefinitionId: input.agentDefinitionId,
+        agentId: input.agentId,
         agentDefinitionRevisionId,
         contentDigest,
         createdAt,
@@ -3261,17 +3277,17 @@ export class RoomKernel {
         .prepare(
           "UPDATE agent_definitions SET current_revision_id = ?, updated_at = ? WHERE agent_definition_id = ?",
         )
-        .run(agentDefinitionRevisionId, createdAt, input.agentDefinitionId);
+        .run(agentDefinitionRevisionId, createdAt, input.agentId);
       const definition = this.#agentDefinitionFromRow(
-        this.#requireAgentDefinitionRow(input.agentDefinitionId),
+        this.#requireAgentDefinitionRow(input.agentId),
       );
       const event = this.#appendEvent({
         actorId,
-        aggregateId: input.agentDefinitionId,
+        aggregateId: input.agentId,
         aggregateType: "agent_definition",
         idempotencyKey: input.idempotencyKey,
         payload: {
-          agentDefinitionId: input.agentDefinitionId,
+          agentId: input.agentId,
           agentDefinitionRevisionId,
           basedOnRoomSeq: input.basedOnRoomSeq,
           contentDigest,
@@ -3329,7 +3345,7 @@ export class RoomKernel {
           ? getWorkspaceAgentManagementView(
               this.#database,
               actorId,
-              input.agentDefinitionId,
+              input.agentId,
             ).agent.currentRevision.avatarKey
           : undefined;
       if (input.action === "update_profile" && input.field === "avatarKey") {
@@ -3392,7 +3408,7 @@ export class RoomKernel {
         clearAgentDeletionBlock(this.#database, request.aggregateId);
         if (hadBlock)
           onBlockChange?.({
-            agentDefinitionId: request.aggregateId,
+            agentId: request.aggregateId,
             kind: "cleared",
           });
       } catch (error) {
@@ -3401,14 +3417,14 @@ export class RoomKernel {
         const blocker = findAgentDeletionBlocker(this.#database, participantId);
         if (!blocker) continue;
         const changed = recordAgentDeletionBlock(this.#database, {
-          agentDefinitionId: request.aggregateId,
+          agentId: request.aggregateId,
           blocker,
           now: this.#now().toISOString(),
           participantId,
         });
         if (changed)
           onBlockChange?.({
-            agentDefinitionId: request.aggregateId,
+            agentId: request.aggregateId,
             blocker,
             kind: "blocked",
             summary: describeAgentDeletionBlocker(blocker).summary,
@@ -3420,17 +3436,17 @@ export class RoomKernel {
   /** Read-only projection of a durable deletion intent and what blocks it. */
   getAgentDeletionDiagnostics(
     actor: AuthenticatedActorContext,
-    input: { agentDefinitionId: string },
+    input: { agentId: string },
   ): AgentDeletionDiagnostics {
     const actorId = this.#requireAuthenticatedActor(actor);
-    const record = readAgentDefinition(this.#database, input.agentDefinitionId);
+    const record = readAgentDefinition(this.#database, input.agentId);
     requireHumanControlRoomManager(
       this.#database,
       record.definition.controlRoomId,
       actorId,
     );
     return readAgentDeletionDiagnostics(this.#database, {
-      agentDefinitionId: input.agentDefinitionId,
+      agentId: input.agentId,
       now: this.#now().toISOString(),
       participantId: record.definition.participantId,
       state: record.definition.state,
@@ -3438,22 +3454,23 @@ export class RoomKernel {
   }
   getWorkspaceAgentManagementView(
     actor: AuthenticatedActorContext,
-    agentDefinitionId: string,
+    agentId: string,
   ) {
     return getWorkspaceAgentManagementView(
       this.#database,
       this.#requireAuthenticatedActor(actor),
-      agentDefinitionId,
+      agentId,
     );
   }
   listAgentCatalog(
     actor: AuthenticatedActorContext,
-    input: { controlRoomId?: string } = {},
+    input: { controlRoomId?: string; includeDeleted?: boolean } = {},
   ): AgentCatalogEntry[] {
     return ar.listAgentCatalog(
       this.#database,
       this.#requireAuthenticatedActor(actor),
       input.controlRoomId,
+      input.includeDeleted,
     );
   }
   listAgentPresence(
@@ -3471,7 +3488,7 @@ export class RoomKernel {
   onboardAgentToRoom(
     actor: AuthenticatedActorContext,
     input: {
-      agentDefinitionId: string;
+      agentId: string;
       basedOnRoomSeq: number;
       idempotencyKey: string;
       roomId: string;
@@ -3488,7 +3505,7 @@ export class RoomKernel {
         );
       }
       const definition = this.#agentDefinitionFromRow(
-        this.#requireAgentDefinitionRow(input.agentDefinitionId),
+        this.#requireAgentDefinitionRow(input.agentId),
       );
       this.#requireMember(definition.controlRoomId, actorId);
       this.#collaboration.requireSameWorkspace(
@@ -3497,7 +3514,7 @@ export class RoomKernel {
       );
       if (definition.state !== "enabled") {
         throw new ConflictError(
-          `AgentDefinition ${input.agentDefinitionId} is not enabled`,
+          `AgentDefinition ${input.agentId} is not enabled`,
         );
       }
       return this.#collaboration.addRoomMember(principal, {
@@ -5013,6 +5030,7 @@ export class RoomKernel {
         );
       }
       this.#activationObligations.assertSatisfied(input.activationId);
+      assertAgentFirstRunSatisfied(this.#database, row);
       const updatedAt = this.#timestamp();
       resolveActivationRetryFence(this.#database, {
         activationId: input.activationId,
@@ -5408,7 +5426,7 @@ export class RoomKernel {
       )
       .run(
         revision.agentDefinitionRevisionId,
-        revision.agentDefinitionId,
+        revision.agentId,
         revision.revision,
         revision.contentDigest,
         JSON.stringify(revision),
@@ -5466,14 +5484,12 @@ export class RoomKernel {
     return ExecutionPolicyRevisionSchema.parse(jsonObject(row, "policy_json"));
   }
 
-  #requireAgentDefinitionRow(agentDefinitionId: string): Row {
+  #requireAgentDefinitionRow(agentId: string): Row {
     const row = this.#database
       .prepare("SELECT * FROM agent_definitions WHERE agent_definition_id = ?")
-      .get(agentDefinitionId);
+      .get(agentId);
     if (row === undefined) {
-      throw new NotFoundError(
-        `AgentDefinition ${agentDefinitionId} was not found`,
-      );
+      throw new NotFoundError(`AgentDefinition ${agentId} was not found`);
     }
     return row;
   }
@@ -5494,7 +5510,7 @@ export class RoomKernel {
 
   #agentDefinitionFromRow(row: Row): AgentDefinition {
     return AgentDefinitionSchema.parse({
-      agentDefinitionId: text(row, "agent_definition_id"),
+      agentId: text(row, "agent_definition_id"),
       controlRoomId: text(row, "control_room_id"),
       createdAt: text(row, "created_at"),
       currentRevisionId: text(row, "current_revision_id"),

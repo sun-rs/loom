@@ -175,9 +175,14 @@ try {
   assert.equal(await p.locator(".thread .rah-thread-back").isVisible(), false);
   await input.fill("Preserved responsive draft");
   await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForFunction(
+    () =>
+      document.querySelector(".rah-agent-peek")?.getBoundingClientRect()
+        .width === 390,
+  );
   assert.equal(await p.locator(".thread").isVisible(), false);
   assert.equal((await p.locator(".rah-agent-peek").boundingBox()).width, 390);
-  await p.getByRole("button", { name: "关闭 Agent 侧栏", exact: true }).click();
+  await p.locator(".rah-agent-peek .rah-agent-mobile-back").click();
   await p.locator(".thread").waitFor({ state: "visible" });
   assert.equal(await input.inputValue(), "Preserved responsive draft");
   assert.equal(await p.locator(".thread .rah-thread-close").isVisible(), false);
@@ -237,6 +242,11 @@ try {
     true,
   );
   await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForFunction(
+    () =>
+      document.querySelector(".rah-agent-peek")?.getBoundingClientRect()
+        .width === 390,
+  );
   assert.equal(
     await p
       .locator(".rah-product-shell > .channel:not(.rah-agent-peek)")
@@ -244,7 +254,7 @@ try {
     false,
   );
   assert.equal((await p.locator(".rah-agent-peek").boundingBox()).width, 390);
-  await p.getByRole("button", { name: "关闭 Agent 侧栏", exact: true }).click();
+  await p.locator(".rah-agent-peek .rah-agent-mobile-back").click();
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.locator(".msg").first().hover();
   await p
@@ -254,32 +264,11 @@ try {
     .click();
   await trigger.click();
   await popup.getByRole("button", { name: "移除 Alice", exact: true }).click();
-  const confirmation = p.getByRole("dialog", { name: "移除关注", exact: true });
-  await confirmation.waitFor();
-  await confirmation.getByRole("button", { name: "关闭", exact: true }).hover();
-  await p.screenshot({ path: "/tmp/rah-remove-follow-confirm.png" });
-  assert.equal(removes, 0);
-  await confirmation.getByRole("button", { name: "取消", exact: true }).click();
-  assert.equal(removes, 0);
-  for (const cancel of ["escape", "outside"]) {
-    await popup
-      .getByRole("button", { name: "移除 Alice", exact: true })
-      .click();
-    await confirmation.waitFor();
-    if (cancel === "escape") await p.keyboard.press("Escape");
-    else await p.mouse.click(10, 10);
-    await confirmation.waitFor({ state: "hidden" });
-    assert.equal(removes, 0);
-  }
-  await popup.getByRole("button", { name: "移除 Alice", exact: true }).click();
-  await confirmation
-    .getByRole("button", { name: "移除关注", exact: true })
-    .click();
-  await confirmation.getByRole("alert").waitFor();
-  await confirmation.getByRole("button", { name: "取消", exact: true }).click();
-  await popup
-    .getByRole("button", { name: "移除 Alice", exact: true })
-    .waitFor();
+  assert.equal(
+    await p.getByRole("dialog", { name: "移除关注", exact: true }).count(),
+    0,
+  );
+  await popup.getByRole("alert").waitFor();
   assert.equal(removes, 1);
   assert.equal(await p.locator(".rah-agent-peek").count(), 0);
   await p.screenshot({ path: "/tmp/rah-follower-row.png" });
@@ -386,9 +375,14 @@ try {
   );
   assert.equal(await directRoom.isVisible(), true);
   await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForFunction(
+    () =>
+      document.querySelector(".rah-agent-peek")?.getBoundingClientRect()
+        .width === 390,
+  );
   await directRoom.waitFor({ state: "hidden" });
   assert.equal((await p.locator(".rah-agent-peek").boundingBox()).width, 390);
-  await p.getByRole("button", { name: "关闭 Agent 侧栏", exact: true }).click();
+  await p.locator(".rah-agent-peek .rah-agent-mobile-back").click();
   await directRoom.waitFor({ state: "visible" });
   console.log(
     "Follower pointer/keyboard opens shared inspector; remove stays independent",

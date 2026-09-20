@@ -35,7 +35,7 @@ try {
       ).json()
     ).agents[0];
     await page.goto(
-      `${fixture.origin}/?surface=agents&agent=${agent.definition.agentDefinitionId}&agentTab=profile`,
+      `${fixture.origin}/?surface=agents&agent=${agent.definition.agentId}&agentTab=profile`,
     );
     await page.getByRole("button", { name: "删除 Agent", exact: true }).click();
     const dialog = page.getByRole("dialog", {
@@ -228,7 +228,7 @@ try {
         ).json()
       ).agents[0];
       await page.goto(
-        `${fixture.origin}/?surface=agents&agent=${agent.definition.agentDefinitionId}&agentTab=profile`,
+        `${fixture.origin}/?surface=agents&agent=${agent.definition.agentId}&agentTab=profile`,
       );
       await page
         .getByRole("button", { name: "删除 Agent", exact: true })
@@ -308,7 +308,7 @@ try {
       const agent = agents.find((a) => a.definition.state === "enabled");
       assert.ok(agent);
       await page.goto(
-        `${fixture.origin}/?surface=agents&agent=${agent.definition.agentDefinitionId}&agentTab=profile`,
+        `${fixture.origin}/?surface=agents&agent=${agent.definition.agentId}&agentTab=profile`,
       );
       await page
         .getByRole("button", { name: "删除 Agent", exact: true })
@@ -341,11 +341,7 @@ try {
         ).json()
       ).agents;
       assert.equal(
-        after.some(
-          (a) =>
-            a.definition.agentDefinitionId ===
-            agent.definition.agentDefinitionId,
-        ),
+        after.some((a) => a.definition.agentId === agent.definition.agentId),
         false,
       );
     },

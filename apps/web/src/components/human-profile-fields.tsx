@@ -97,7 +97,7 @@ export function HumanProfileFields({
         <div>
           <h2 title={name}>{name}</h2>
           <p>
-            @{human.displayName || human.handle}
+            @{human.handle}
             {self ? " （你）" : ""}
           </p>
         </div>

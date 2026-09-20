@@ -1,5 +1,6 @@
 import { useMobileLayout } from "../use-mobile-layout.ts";
 import { useAgentStart } from "../use-agent-start.ts";
+import { AgentUnavailablePanel } from "./agent-unavailable-panel.tsx";
 import { ThreadPanelResizer } from "./thread-panel-resizer.tsx";
 import { AgentEnvironmentSummary } from "./agent-environment-summary.tsx";
 import { AgentHeaderActions } from "./agent-header-actions.tsx";
@@ -179,12 +180,12 @@ export function AgentDirectoryPane({
   onRetryHumans?: (() => void) | undefined;
   fullResetEnabled: boolean;
   onCreate: () => void;
-  onManage: (agentDefinitionId: string) => void;
+  onManage: (agentId: string) => void;
   onChangeState?: AgentStateChange | undefined;
-  onEditRuntime: (agentDefinitionId: string) => void;
+  onEditRuntime: (agentId: string) => void;
   onResetExecution?:
     | ((
-        agentDefinitionId: string,
+        agentId: string,
         mode: AgentExecutionResetMode,
         idempotencyKey: string,
       ) => Promise<void>)
@@ -220,7 +221,7 @@ export function AgentDirectoryPane({
   const [mobileDetailOpen, setMobileDetailOpen] = useState(() =>
     shouldOpenAgentMobileDetail({
       humanPrincipalId: initialHumanPrincipalId,
-      agentDefinitionId: initialAgentDefinitionId,
+      agentId: initialAgentDefinitionId,
       panel,
       view: initialView,
     }),
@@ -228,6 +229,9 @@ export function AgentDirectoryPane({
   const [tab, setTab] = useState<AgentTab>(
     initialTab ?? (panel ? "activity" : "profile"),
   );
+  useEffect(() => {
+    if (!panel && !mobile) setMobileDetailOpen(true);
+  }, [mobile, panel]);
   const panelTrigger = useRef<HTMLElement | null>(
     document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -274,11 +278,8 @@ export function AgentDirectoryPane({
   const [agentActivities, setAgentActivities] = useState<
     RuntimeTrajectoryRecord[]
   >([]);
-  const [agentActivityCursor, setAgentActivityCursor] = useState<string>();
   const [agentActivityError, setAgentActivityError] = useState<string>();
   const [agentActivityLoading, setAgentActivityLoading] = useState(false);
-  const [activityHistory, setActivityHistory] = useState(false);
-  const [activityReload, setActivityReload] = useState(0);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [remindersError, setRemindersError] = useState<string>();
   const [remindersLoading, setRemindersLoading] = useState(false);
@@ -287,16 +288,14 @@ export function AgentDirectoryPane({
     "enabled" | "disabled" | "tombstoned"
   >();
   const [headerResetOpen, setHeaderResetOpen] = useState(false);
-  const activityScope = useRef<AbortController | undefined>(undefined);
-  const activityHistoryRef = useRef(false);
   const selectedAgent =
     memberView !== "agent"
       ? undefined
-      : agents.find(
-          ({ agentDefinitionId }) =>
-            agentDefinitionId === selectedAgentDefinitionId,
-        );
-  const detailAgentId = selectedAgent?.agentDefinitionId;
+      : agents.find(({ agentId }) => agentId === selectedAgentDefinitionId);
+  const unavailableAgent =
+    memberView === "agent" &&
+    entities?.agent(selectedAgentDefinitionId ?? "")?.state === "tombstoned";
+  const detailAgentId = unavailableAgent ? undefined : selectedAgent?.agentId;
   const startAgent = useAgentStart(detailAgentId, onChangeState);
   const requestStartStop = () => {
     if (selectedAgent?.state === "enabled") setStateAction("disabled");
@@ -310,16 +309,17 @@ export function AgentDirectoryPane({
   const detailPolicyId = selectedAgent?.executionPolicyRevisionId;
   const detailAgentState = selectedAgent?.state;
   const visibleAgentDetail =
-    agentDetail?.agent.definition.agentDefinitionId === detailAgentId
+    agentDetail?.agent.definition.agentId === detailAgentId
       ? agentDetail
       : undefined;
   const selectedRuntimes =
     selectedAgent === undefined
       ? []
-      : (entities?.runtimesForAgent(selectedAgent.agentDefinitionId) ?? []);
+      : (entities?.runtimesForAgent(selectedAgent.agentId) ?? []);
   useEffect(() => {
     if (!panel && initialAgentDefinitionId !== undefined) {
       setSelectedAgentDefinitionId(initialAgentDefinitionId);
+      setMobileDetailOpen(true);
     }
   }, [initialAgentDefinitionId, panel]);
 
@@ -327,7 +327,8 @@ export function AgentDirectoryPane({
     if (!panel) {
       setMemberView(initialView ?? "agent");
       setHumanId(initialHumanPrincipalId);
-      if (initialView === "human") setMobileDetailOpen(true);
+      if (initialView === "human" || initialView === "relationship")
+        setMobileDetailOpen(true);
     }
   }, [initialView, initialHumanPrincipalId, panel]);
 
@@ -340,24 +341,32 @@ export function AgentDirectoryPane({
   }, [initialTab, panel]);
 
   useEffect(() => {
-    if (memberView !== "agent") return;
+    if (memberView !== "agent" || unavailableAgent) return;
     const resolution = reconcileAgentRouteIdentity(
       selectedAgentDefinitionId,
-      agents.map(({ agentDefinitionId }) => agentDefinitionId),
+      agents.map(({ agentId }) => agentId),
     );
     if (!resolution.replace) return;
-    setSelectedAgentDefinitionId(resolution.agentDefinitionId);
+    setSelectedAgentDefinitionId(resolution.agentId);
+    setMobileDetailOpen(true);
     setTab("profile");
     if (!panel) {
       onRouteChange?.(
         {
-          agentDefinitionId: resolution.agentDefinitionId,
+          agentId: resolution.agentId,
           tab: "profile",
         },
         { replace: true },
       );
     }
-  }, [agents, memberView, onRouteChange, panel, selectedAgentDefinitionId]);
+  }, [
+    agents,
+    memberView,
+    onRouteChange,
+    panel,
+    selectedAgentDefinitionId,
+    unavailableAgent,
+  ]);
 
   useEffect(() => {
     if (detailAgentId === undefined) {
@@ -371,7 +380,7 @@ export function AgentDirectoryPane({
     void client
       .request(
         "agent.get",
-        { agentDefinitionId: detailAgentId },
+        { agentId: detailAgentId },
         { signal: controller.signal },
       )
       .then((response) => {
@@ -403,7 +412,7 @@ export function AgentDirectoryPane({
     void client
       .request(
         "agent.room.list",
-        { agentDefinitionId: detailAgentId },
+        { agentId: detailAgentId },
         { signal: controller.signal },
       )
       .then((response) => {
@@ -433,7 +442,7 @@ export function AgentDirectoryPane({
       try {
         const response = await client.request(
           "agent.reminder.list",
-          { agentDefinitionId: detailAgentId, status: "scheduled" },
+          { agentId: detailAgentId, status: "scheduled" },
           { signal: controller.signal },
         );
         if (!controller.signal.aborted) {
@@ -460,31 +469,35 @@ export function AgentDirectoryPane({
   }, [client, detailAgentId, tab]);
 
   useEffect(() => {
-    const agentDefinitionId = selectedAgent?.agentDefinitionId;
-    if (tab !== "activity" || agentDefinitionId === undefined) return;
+    const agentId = selectedAgent?.agentId;
+    if (tab !== "activity" || agentId === undefined) return;
     const controller = new AbortController();
-    activityScope.current = controller;
-    activityHistoryRef.current = false;
-    setActivityHistory(false);
     let polling = false;
+    let firstSequence: number | undefined;
     setAgentActivities([]);
-    setAgentActivityCursor(undefined);
     setAgentActivityError(undefined);
     setAgentActivityLoading(true);
     const refresh = async (initial: boolean): Promise<void> => {
-      if (polling || controller.signal.aborted || activityHistoryRef.current)
-        return;
+      if (polling || controller.signal.aborted) return;
       polling = true;
       try {
         const response = await client.request(
           "agent.trajectory.list",
-          { agentDefinitionId, limit: 50 },
+          { agentId, limit: firstSequence === undefined ? 50 : 100 },
           { signal: controller.signal },
         );
-        if (controller.signal.aborted || activityHistoryRef.current) return;
-        // Poll a complete bounded tail; do not stitch two non-contiguous pages.
-        setAgentActivities(mergeTrajectoryWindow([], response.activities));
-        setAgentActivityCursor(response.nextCursor);
+        if (controller.signal.aborted) return;
+        // Reconcile the bounded live tail without backfilling pre-open history.
+        if (firstSequence === undefined && response.activities.length > 0)
+          firstSequence = Math.min(
+            ...response.activities.map((record) => record.serverSequence),
+          );
+        const incoming = response.activities.filter(
+          (record) => record.serverSequence >= (firstSequence ?? 0),
+        );
+        setAgentActivities((current) =>
+          mergeTrajectoryWindow(current, incoming),
+        );
         setAgentActivityError(undefined);
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -503,51 +516,13 @@ export function AgentDirectoryPane({
       window.clearInterval(timer);
       controller.abort();
     };
-  }, [client, selectedAgent?.agentDefinitionId, tab, activityReload]);
+  }, [client, selectedAgent?.agentId, tab]);
 
-  async function loadEarlierAgentActivity(): Promise<void> {
-    const controller = activityScope.current;
-    if (
-      agentActivityCursor === undefined ||
-      selectedAgent === undefined ||
-      agentActivityLoading ||
-      controller === undefined ||
-      controller.signal.aborted
-    ) {
-      return;
-    }
-    activityHistoryRef.current = true;
-    setActivityHistory(true);
-    setAgentActivityLoading(true);
-    setAgentActivityError(undefined);
-    try {
-      const response = await client.request(
-        "agent.trajectory.list",
-        {
-          agentDefinitionId: selectedAgent.agentDefinitionId,
-          beforeActivityId: agentActivityCursor,
-          limit: 50,
-        },
-        { signal: controller.signal },
-      );
-      if (controller.signal.aborted) return;
-      setAgentActivities((current) =>
-        mergeTrajectoryWindow(current, response.activities),
-      );
-      setAgentActivityCursor(response.nextCursor);
-    } catch (error) {
-      if (!controller.signal.aborted)
-        setAgentActivityError(errorMessage(error));
-    } finally {
-      if (!controller.signal.aborted) setAgentActivityLoading(false);
-    }
-  }
-
-  function selectAgent(agentDefinitionId: string): void {
+  function selectAgent(agentId: string): void {
     setMemberView("agent");
-    setSelectedAgentDefinitionId(agentDefinitionId);
+    setSelectedAgentDefinitionId(agentId);
     setTab("profile");
-    if (!panel) onRouteChange?.({ agentDefinitionId, tab: "profile" });
+    if (!panel) onRouteChange?.({ agentId, tab: "profile" });
     setDirectRoomError(undefined);
     setMobileDetailOpen(true);
   }
@@ -557,7 +532,7 @@ export function AgentDirectoryPane({
     setHumanId(principalId);
     setMobileDetailOpen(true);
     onRouteChange?.({
-      agentDefinitionId: undefined,
+      agentId: undefined,
       humanPrincipalId: principalId,
       tab: "profile",
       view: "human",
@@ -569,7 +544,7 @@ export function AgentDirectoryPane({
     setMemberView("relationship");
     setMobileDetailOpen(true);
     onRouteChange?.({
-      agentDefinitionId: undefined,
+      agentId: undefined,
       tab: "profile",
       view: "relationship",
     });
@@ -578,14 +553,14 @@ export function AgentDirectoryPane({
   function closeRelationship(): void {
     setMemberView("agent");
     setMobileDetailOpen(false);
-    onRouteChange?.({ agentDefinitionId: undefined, tab: "profile" });
+    onRouteChange?.({ agentId: undefined, tab: "profile" });
   }
 
   function selectTab(nextTab: AgentTab): void {
     setTab(nextTab);
     if (!panel && selectedAgent !== undefined) {
       onRouteChange?.({
-        agentDefinitionId: selectedAgent.agentDefinitionId,
+        agentId: selectedAgent.agentId,
         tab: nextTab,
       });
     }
@@ -703,10 +678,11 @@ export function AgentDirectoryPane({
           onCreate={onCreate}
           onRelationship={selectRelationship}
           onSelect={selectAgent}
+          onOpenDirectRoom={canMessage ? onOpenDirectRoom : undefined}
           relationshipSelected={!mobile && memberView === "relationship"}
           selectedAgentDefinitionId={
             !mobile && memberView === "agent"
-              ? selectedAgent?.agentDefinitionId
+              ? selectedAgent?.agentId
               : undefined
           }
         />
@@ -746,6 +722,8 @@ export function AgentDirectoryPane({
             onClose={panel ? onClose : undefined}
             onOpenAgent={selectAgent}
           />
+        ) : unavailableAgent ? (
+          <AgentUnavailablePanel onClose={onClose ?? onPanelBack} />
         ) : agents.length === 0 ? (
           <p className="rah-empty-copy">
             当前没有可见 AgentDefinition。请先确认 daemon 已探测并启用了真实
@@ -757,13 +735,13 @@ export function AgentDirectoryPane({
           <section className="rah-agent-detail-panel">
             {stateAction && onChangeState && (
               <AgentStateDialog
-                key={`${selectedAgent.agentDefinitionId}:${stateAction}`}
+                key={`${selectedAgent.agentId}:${stateAction}`}
                 agent={selectedAgent}
                 state={stateAction}
                 onChange={onChangeState}
-                loadDeletionDiagnostics={(agentDefinitionId) =>
+                loadDeletionDiagnostics={(agentId) =>
                   client.request("agent.deletion.diagnostics", {
-                    agentDefinitionId,
+                    agentId,
                   })
                 }
                 onClose={() => setStateAction(undefined)}
@@ -775,7 +753,7 @@ export function AgentDirectoryPane({
                 fullResetEnabled={fullResetEnabled}
                 onClose={() => setHeaderResetOpen(false)}
                 onConfirm={(mode, key) =>
-                  onResetExecution(selectedAgent.agentDefinitionId, mode, key)
+                  onResetExecution(selectedAgent.agentId, mode, key)
                 }
               />
             )}
@@ -787,13 +765,10 @@ export function AgentDirectoryPane({
               messagePending={directRoomOpening}
               onBack={() => {
                 if (onPanelBack) return onPanelBack();
+                if (onClose) return onClose();
                 setMobileDetailOpen(false);
-                onRouteChange?.({
-                  agentDefinitionId: undefined,
-                  tab: "profile",
-                });
               }}
-              onManage={() => onManage(selectedAgent.agentDefinitionId)}
+              onManage={() => onManage(selectedAgent.agentId)}
               onStartStop={
                 canManage && onChangeState && !startAgent.pending
                   ? requestStartStop
@@ -815,20 +790,16 @@ export function AgentDirectoryPane({
             {tab === "activity" ? (
               <AgentActivityPane
                 onOpenRoom={onOpenRoom}
-                key={selectedAgent.agentDefinitionId}
+                key={selectedAgent.agentId}
                 activities={agentActivities}
                 agent={selectedAgent}
                 error={agentActivityError}
-                hasEarlier={agentActivityCursor !== undefined}
                 loading={agentActivityLoading}
-                onLoadEarlier={() => void loadEarlierAgentActivity()}
-                history={activityHistory}
-                onLatest={() => setActivityReload((value) => value + 1)}
               />
             ) : tab === "profile" ? (
               <AgentProfilePane
                 launchSettingsRefresh={launchSettingsRefresh}
-                key={selectedAgent.agentDefinitionId}
+                key={selectedAgent.agentId}
                 client={client}
                 computerLabel={computerLabel}
                 onDiagnostics={() => selectTab("activity")}
@@ -839,7 +810,7 @@ export function AgentDirectoryPane({
                 error={agentDetailError}
                 fullResetEnabled={fullResetEnabled}
                 loading={agentDetailLoading}
-                onManage={() => onManage(selectedAgent.agentDefinitionId)}
+                onManage={() => onManage(selectedAgent.agentId)}
                 onStartStop={
                   canManage && onChangeState && !startAgent.pending
                     ? requestStartStop
@@ -850,15 +821,13 @@ export function AgentDirectoryPane({
                     ? () => setStateAction("tombstoned")
                     : undefined
                 }
-                onEditRuntime={() =>
-                  onEditRuntime(selectedAgent.agentDefinitionId)
-                }
+                onEditRuntime={() => onEditRuntime(selectedAgent.agentId)}
                 onResetExecution={
                   onResetExecution === undefined
                     ? undefined
                     : (mode, idempotencyKey) =>
                         onResetExecution(
-                          selectedAgent.agentDefinitionId,
+                          selectedAgent.agentId,
                           mode,
                           idempotencyKey,
                         )
@@ -885,8 +854,8 @@ export function AgentDirectoryPane({
               />
             ) : tab === "workspace" ? (
               <AgentWorkspaceBrowser
-                key={selectedAgent.agentDefinitionId}
-                agentDefinitionId={selectedAgent.agentDefinitionId}
+                key={selectedAgent.agentId}
+                agentId={selectedAgent.agentId}
                 client={client}
               />
             ) : null}
@@ -1040,13 +1009,13 @@ export function AgentDetailHeader({
   return (
     <PanelHeader kind="agent" className="rah-agent-detail-head">
       <PanelHeaderAction
-        aria-label={onClose ? "返回聊天" : (backLabel ?? "返回成员列表")}
+        aria-label={backLabel ?? (onClose ? "返回聊天" : "返回成员列表")}
         className="rah-agent-mobile-back"
-        onClick={onClose ?? onBack}
+        onClick={onBack}
       >
         <Icon name="arrow-left" />
       </PanelHeaderAction>
-      <AgentAvatar agent={agent} size="header" />
+      <AgentAvatar agent={agent} showStatus={false} size="header" />
       <div className="rah-agent-detail-identity">
         <h2>{agent.displayName}</h2>
         {agent.description && <p>{agent.description}</p>}
@@ -1134,7 +1103,7 @@ export function AgentProfilePane({
     | ((mode: AgentExecutionResetMode, idempotencyKey: string) => Promise<void>)
     | undefined;
   onSaveProfile?: ((input: AgentProfileEditInput) => Promise<void>) | undefined;
-  onSelectAgent: (agentDefinitionId: string) => void;
+  onSelectAgent: (agentId: string) => void;
   runtimes: readonly LocalRuntimeInventoryEntry[];
 }) {
   const [resetOpen, setResetOpen] = useState(false);
@@ -1174,14 +1143,14 @@ export function AgentProfilePane({
         </div>
       </AgentProfileAvatarEditor>
       <AgentProfileFieldEditor
-        agentDefinitionId={agent.agentDefinitionId}
+        agentId={agent.agentId}
         revisionId={agent.agentDefinitionRevisionId}
         field="displayName"
         value={agent.displayName}
         onSave={canManage ? onSaveProfile : undefined}
       />
       <AgentProfileFieldEditor
-        agentDefinitionId={agent.agentDefinitionId}
+        agentId={agent.agentId}
         revisionId={agent.agentDefinitionRevisionId}
         field="description"
         value={agent.description ?? ""}
@@ -1193,7 +1162,7 @@ export function AgentProfilePane({
           <div>
             <dt>计算机</dt>
             <dd>
-              <AgentComputerIdentity agentId={agent.agentDefinitionId} />
+              <AgentComputerIdentity agentId={agent.agentId} />
             </dd>
           </div>
           <div>
@@ -1286,7 +1255,7 @@ export function AgentProfilePane({
         {canManage && (
           <AgentEnvironmentSummary
             client={client}
-            agentDefinitionId={agent.agentDefinitionId}
+            agentId={agent.agentId}
             runtimeId={
               runtimes.find(
                 (runtime) =>
@@ -1320,7 +1289,7 @@ export function AgentProfilePane({
           <div className="rah-agent-created-list">
             {createdAgents.map((createdAgent) => (
               <AgentEntityCard
-                key={createdAgent.agentDefinitionId}
+                key={createdAgent.agentId}
                 agent={createdAgent}
                 runtimeLabel={
                   createdAgent.runtimeLabels.join(" · ") || undefined
@@ -1333,7 +1302,7 @@ export function AgentProfilePane({
       </ProfileSection>
       <AgentSkillsSection
         client={client}
-        agentDefinitionId={agent.agentDefinitionId}
+        agentId={agent.agentId}
         executionPolicyRevisionId={agent.executionPolicyRevisionId}
       />
       <ProfileSection title="操作" className="rah-agent-actions-section">
@@ -1408,7 +1377,7 @@ function AgentProfileAvatarEditor({
   const [error, setError] = useState<string>();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const pickerId = `rah-agent-avatar-picker-${agent.agentDefinitionId}`;
+  const pickerId = `rah-agent-avatar-picker-${agent.agentId}`;
   const currentUploadedAvatar = isUploadedProfileImageKey(agent.avatarKey);
   const currentOfficialAvatarKey = currentUploadedAvatar
     ? undefined
@@ -1453,7 +1422,7 @@ function AgentProfileAvatarEditor({
     setError(undefined);
     try {
       await onSaveProfile({
-        agentDefinitionId: agent.agentDefinitionId,
+        agentId: agent.agentId,
         expectedRevisionId: revisionId,
         field: "avatarKey",
         value: avatarKey,
@@ -1478,7 +1447,7 @@ function AgentProfileAvatarEditor({
     setError(undefined);
     try {
       await uploadAgentAvatar({
-        agentDefinitionId: agent.agentDefinitionId,
+        agentId: agent.agentId,
         expectedRevisionId: revisionId,
         file,
         saveProfile: onSaveProfile,
@@ -1511,13 +1480,13 @@ function AgentProfileAvatarEditor({
             title="更换头像"
             type="button"
           >
-            <AgentAvatar agent={agent} size="profile" />
+            <AgentAvatar agent={agent} showStatus={false} size="profile" />
             <span className="rah-agent-profile-avatar-edit" aria-hidden="true">
               <Icon name="pencil" />
             </span>
           </button>
         ) : (
-          <AgentAvatar agent={agent} size="profile" />
+          <AgentAvatar agent={agent} showStatus={false} size="profile" />
         )}
         {children}
       </div>
@@ -1545,7 +1514,7 @@ function AgentProfileAvatarEditor({
               {currentUploadedAvatar ? (
                 <AgentAvatar agent={agent} showStatus={false} size="header" />
               ) : (
-                <span aria-hidden="true">⇧</span>
+                <Icon name="upload" />
               )}
             </button>
             <input
@@ -1620,21 +1589,13 @@ export function AgentActivityPane({
   activities,
   agent,
   error,
-  hasEarlier,
   loading,
-  onLoadEarlier,
-  history,
-  onLatest,
 }: {
   onOpenRoom: (roomId: string) => void;
   activities: readonly RuntimeTrajectoryRecord[];
   agent: WorkspaceAgentView;
   error: string | undefined;
-  hasEarlier: boolean;
   loading: boolean;
-  onLoadEarlier: () => void;
-  history: boolean;
-  onLatest: () => void;
 }) {
   const [copyError, setCopyError] = useState<string>();
   const [copied, setCopied] = useState(false);
@@ -1660,7 +1621,7 @@ export function AgentActivityPane({
       element.scrollTop = element.scrollHeight;
       lastScrollTop.current = element.scrollTop;
     }
-  }, [agent.agentDefinitionId]);
+  }, [agent.agentId]);
 
   useLayoutEffect(() => {
     const element = scrollArea.current;
@@ -1681,7 +1642,13 @@ export function AgentActivityPane({
   useEffect(() => {
     setCopyError(undefined);
     setCopied(false);
-  }, [agent.agentDefinitionId]);
+  }, [agent.agentId]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   useEffect(() => {
     const element = scrollArea.current;
@@ -1692,21 +1659,13 @@ export function AgentActivityPane({
       if (followLatest.current) element.scrollTop = element.scrollHeight;
       lastScrollTop.current = element.scrollTop;
     }
-  }, [visibleActivities.at(-1)?.serverSequence, history]);
+  }, [visibleActivities.at(-1)?.serverSequence]);
 
   async function copyDiagnostics(): Promise<void> {
     setCopyError(undefined);
     try {
       await navigator.clipboard.writeText(
-        renderAgentActivityDiagnostics(
-          {
-            agentDefinitionId: agent.agentDefinitionId,
-            displayName: agent.displayName,
-            handle: agent.handle,
-            participantId: agent.participantId,
-          },
-          activities,
-        ),
+        renderAgentActivityDiagnostics(agent, activities),
       );
       setCopied(true);
     } catch (copyFailure) {
@@ -1717,12 +1676,23 @@ export function AgentActivityPane({
 
   return (
     <div className="rah-agent-activity-surface">
+      <header>
+        <h3>活动诊断</h3>
+        <button
+          className="btn rah-agent-diagnostic-copy"
+          type="button"
+          onClick={() => void copyDiagnostics()}
+        >
+          <Icon name={copied ? "check" : "clipboard"} />
+          {copied ? "已复制" : "复制诊断信息"}
+        </button>
+      </header>
       <section
         aria-label={`${agent.displayName} 动态`}
         className="rah-agent-activity-pane rah-scroll-main"
         onScroll={(event) => {
           const element = event.currentTarget;
-          if (earlierAnchor.current) {
+          if (!followLatest.current) {
             const top = element.getBoundingClientRect().top;
             const row = Array.from(
               element.querySelectorAll<HTMLElement>("[data-activity-id]"),
@@ -1743,51 +1713,12 @@ export function AgentActivityPane({
         }}
         ref={scrollArea}
       >
-        <header>
-          <div>
-            <h3>活动诊断</h3>
-          </div>
-          <button
-            className="btn"
-            disabled={activities.length === 0}
-            onClick={() => void copyDiagnostics()}
-            title="复制已加载的安全诊断元数据"
-          >
-            {copied ? "已复制" : "复制诊断信息"}
-          </button>
-        </header>
         {error === undefined ? null : (
           <div className="rah-inline-error">{error}</div>
         )}
         {copyError === undefined ? null : (
           <div className="rah-inline-error">{copyError}</div>
         )}
-        {hasEarlier ? (
-          <button
-            className="btn"
-            disabled={loading}
-            onClick={() => {
-              followLatest.current = false;
-              const element = scrollArea.current;
-              if (element) {
-                const top = element.getBoundingClientRect().top;
-                const row = Array.from(
-                  element.querySelectorAll<HTMLElement>("[data-activity-id]"),
-                ).find(
-                  (candidate) => candidate.getBoundingClientRect().bottom > top,
-                );
-                if (row)
-                  earlierAnchor.current = {
-                    id: row.dataset.activityId!,
-                    offset: row.getBoundingClientRect().top - top,
-                  };
-              }
-              onLoadEarlier();
-            }}
-          >
-            {loading ? "正在读取…" : "加载更早记录"}
-          </button>
-        ) : null}
         {loading && activities.length === 0 ? (
           <p className="rah-agent-activity-empty" role="status">
             正在读取活动…
@@ -1810,13 +1741,6 @@ export function AgentActivityPane({
             ))}
           </div>
         )}
-        {activities.length > 0 && (
-          <p className="rah-agent-activity-note">
-            未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider
-            的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning
-            summary，原始思维链不会进入该投影。
-          </p>
-        )}
       </section>
       {!atBottom && visibleActivities.length > 0 ? (
         <button
@@ -1831,7 +1755,6 @@ export function AgentActivityPane({
               lastScrollTop.current = element.scrollTop;
             }
             setAtBottom(true);
-            if (history) onLatest();
           }}
         >
           <span aria-hidden="true">↓</span> 回到底部

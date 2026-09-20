@@ -6,7 +6,7 @@ import { UploadedProfileImageKeySchema } from "./profile-image.ts";
 export const ClientAgentProfileRequestSchema = z
   .object({
     action: z.literal("update_profile"),
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     expectedRevisionId: IdentifierSchema,
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,

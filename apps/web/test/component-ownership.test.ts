@@ -339,7 +339,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentSurface, /const MAX_SIDEBAR_WIDTH = 320/u);
   assert.match(agentSurface, /const DEFAULT_SIDEBAR_WIDTH = 240/u);
   assert.match(agentSurface, /reconcileAgentRouteIdentity/u);
-  assert.match(agentSurface, /agents\.map\(\(\{ agentDefinitionId \}\)/u);
+  assert.match(agentSurface, /agents\.map\(\(\{ agentId \}\)/u);
   assert.match(agentSurface, /选择一个 Agent/u);
   assert.doesNotMatch(agentSurface, /选择一个频道/u);
   assert.match(agentSurface, /rah-agent-mobile-back/u);

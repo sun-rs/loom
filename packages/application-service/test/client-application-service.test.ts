@@ -54,7 +54,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       reset: async (_actor, input) => {
         executionResetCalls += 1;
         return {
-          agentDefinitionId: input.agentDefinitionId,
+          agentId: input.agentId,
           completedAt: "2026-09-01T02:00:00.000Z",
           computerHostId: "client-host",
           deduplicated: executionResetCalls > 1,
@@ -554,14 +554,14 @@ test("Client API authenticates humans and exposes canonical Room work without ow
 
     const unknownAgentSettings = await request(
       "/v3/client/runtime-guide/read",
-      { agentDefinitionId: "not-an-agent" },
+      { agentId: "not-an-agent" },
       human.accessToken,
     );
     assert.equal(unknownAgentSettings.status, 404);
     const unknownAgentUpdate = await request(
       "/v3/client/runtime-guide/update",
       {
-        agentDefinitionId: "not-an-agent",
+        agentId: "not-an-agent",
         runtimeId: "codex",
         environment: { LABEL: "private" },
         expectedRevision: 0,
@@ -744,14 +744,14 @@ test("Client API authenticates humans and exposes canonical Room work without ow
 
     const memoryResponse = await request(
       "/v3/client/agents/memory/get",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       human.accessToken,
     );
     assert.equal(memoryResponse.status, 200);
     const memory = await jsonObject(memoryResponse);
     assert.equal(memory.computerHostId, "client-host");
     const summaryInput = {
-      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+      agentId: agentDefinition.definition.agentId,
     };
     const summaryResponse = await request(
       "/v3/client/agents/workspace/summary",
@@ -789,7 +789,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       "unauthorized or arbitrary-root input must not reach Host I/O",
     );
     const skillsInput = {
-      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+      agentId: agentDefinition.definition.agentId,
     };
     const skillsResponse = await request(
       "/v3/client/agents/skills/list",
@@ -823,13 +823,13 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(skillsCalls, 1);
     const workspaceInput = {
-      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+      agentId: agentDefinition.definition.agentId,
       path: "",
       includeHidden: false,
     };
     const workspaceRootsResponse = await request(
       "/v3/client/agents/workspace/roots",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       human.accessToken,
     );
     assert.equal(workspaceRootsResponse.status, 200);
@@ -870,7 +870,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const management = await jsonObject(
       await request(
         "/v3/client/agents/get",
-        { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+        { agentId: agentDefinition.definition.agentId },
         human.accessToken,
       ),
     );
@@ -884,7 +884,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     }).latestRoomSeq;
     const configPatch = "/v3/client/agents/memory/config/patch";
     const configIdentity = {
-      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+      agentId: agentDefinition.definition.agentId,
     };
     assert.equal((await request(configGet, configIdentity)).status, 401);
     assert.equal(
@@ -968,7 +968,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const memoryFileResponse = await request(
       "/v3/client/agents/memory/read",
       {
-        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        agentId: agentDefinition.definition.agentId,
         relativePath: "MEMORY.md",
       },
       human.accessToken,
@@ -986,7 +986,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const memoryResetResponse = await request(
       "/v3/client/agents/memory/reset",
       {
-        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        agentId: agentDefinition.definition.agentId,
         confirmation: "RESET_AGENT_MEMORY",
         idempotencyKey: "client-memory-reset-1",
       },
@@ -999,7 +999,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const executionResetResponse = await request(
       "/v3/client/agents/execution/reset",
       {
-        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        agentId: agentDefinition.definition.agentId,
         basedOnRoomSeq: kernel.sync(humanActor, {
           afterSeq: 0,
           consumerId: "execution-reset-sequence",
@@ -1377,8 +1377,8 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const agents = await jsonObject(agentsResponse);
     assert.equal(agents.agents.length, 1);
     assert.equal(
-      agents.agents[0]?.definition.agentDefinitionId,
-      agentDefinition.definition.agentDefinitionId,
+      agents.agents[0]?.definition.agentId,
+      agentDefinition.definition.agentId,
     );
     assert.equal(agents.agents[0]?.handle, "client-agent");
 
@@ -1434,7 +1434,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       "/v3/client/agents/manage",
       {
         action: "configure",
-        agentDefinitionId: provisioned.agent.definition.agentDefinitionId,
+        agentId: provisioned.agent.definition.agentId,
         basedOnRoomSeq: provisioned.event.roomSeq,
         displayName: "Alice Reviewer",
         handle: "client-alice-reviewer",
@@ -1454,7 +1454,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(managed.policy.revision, 2);
     const agentGetResponse = await request(
       "/v3/client/agents/get",
-      { agentDefinitionId: provisioned.agent.definition.agentDefinitionId },
+      { agentId: provisioned.agent.definition.agentId },
       human.accessToken,
     );
     assert.equal(agentGetResponse.status, 200);
@@ -1483,7 +1483,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         Object.keys(presence)
           .filter((key) => key !== "activityAt")
           .sort(),
-        ["activity", "agentDefinitionId", "reason", "trajectoryVersion"],
+        ["activity", "agentId", "reason", "trajectoryVersion"],
       );
       assert.ok(Number.isSafeInteger(presence.trajectoryVersion));
       assert.ok(presence.trajectoryVersion >= 0);
@@ -1519,7 +1519,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const onboardResponse = await request(
       "/v3/client/agents/onboard",
       {
-        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        agentId: agentDefinition.definition.agentId,
         basedOnRoomSeq: 1,
         idempotencyKey: "client-agent-onboarded",
         roomId: agentOnboardRoom.roomId,
@@ -1532,7 +1532,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(onboarded.membership.role, "member");
     const agentRoomsResponse = await request(
       "/v3/client/agents/rooms/list",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       human.accessToken,
     );
     assert.equal(agentRoomsResponse.status, 200);
@@ -1544,14 +1544,14 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     const hiddenAgentRoomsResponse = await request(
       "/v3/client/agents/rooms/list",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       otherHuman.accessToken,
     );
     assert.equal(hiddenAgentRoomsResponse.status, 404);
     const agentActivityResponse = await request(
       "/v3/client/agents/activity/list",
       {
-        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        agentId: agentDefinition.definition.agentId,
         limit: 1,
       },
       human.accessToken,
@@ -1566,21 +1566,21 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal("payload" in agentActivity.activities[0], false);
     const agentRemindersResponse = await request(
       "/v3/client/agents/reminders/list",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       human.accessToken,
     );
     assert.equal(agentRemindersResponse.status, 200);
     assert.deepEqual((await jsonObject(agentRemindersResponse)).reminders, []);
     const hiddenAgentActivityResponse = await request(
       "/v3/client/agents/activity/list",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       otherHuman.accessToken,
     );
     assert.equal(hiddenAgentActivityResponse.status, 404);
     const agentTrajectoryResponse = await request(
       "/v3/client/agents/trajectory/list",
       {
-        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        agentId: agentDefinition.definition.agentId,
         limit: 50,
       },
       human.accessToken,
@@ -1592,7 +1592,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     const hiddenAgentTrajectoryResponse = await request(
       "/v3/client/agents/trajectory/list",
-      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      { agentId: agentDefinition.definition.agentId },
       otherHuman.accessToken,
     );
     assert.equal(hiddenAgentTrajectoryResponse.status, 404);
@@ -1601,7 +1601,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         await request(
           "/v3/client/agents/onboard",
           {
-            agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+            agentId: agentDefinition.definition.agentId,
             basedOnRoomSeq: 1,
             idempotencyKey: "client-agent-onboarded",
             roomId: agentOnboardRoom.roomId,

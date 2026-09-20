@@ -1,3 +1,4 @@
+import { identityDisplayName } from "./identity-display-name.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -67,7 +68,9 @@ export class RoomWebPushProjection {
     const sender = this.#database
       .prepare("SELECT handle FROM principals WHERE principal_id = ?")
       .get(event.actorId);
-    const senderName = sender ? text(sender, "handle") : "RAH OS";
+    const senderName =
+      identityDisplayName(this.#database, event.actorId) ??
+      (sender ? text(sender, "handle") : "RAH OS");
 
     if (event.type === "message.posted") {
       return this.#messageCandidates({
@@ -111,7 +114,9 @@ export class RoomWebPushProjection {
       )
       .get(input.event.aggregateId);
     if (!activation) return [];
-    const handle = text(activation, "handle");
+    const handle =
+      identityDisplayName(this.#database, text(activation, "participant_id")) ??
+      text(activation, "handle");
     const count =
       typeof input.event.payload.sameErrorCount === "number"
         ? String(input.event.payload.sameErrorCount)

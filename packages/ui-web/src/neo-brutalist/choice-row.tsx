@@ -9,21 +9,33 @@ type Profile =
       profile: "member-selection";
       selection?: "check" | "tint";
       selected?: boolean;
+      archived?: never;
       current?: never;
     }
   | {
       profile: "member-browse";
       selection?: never;
       selected?: never;
+      archived?: never;
       current?: never;
     }
   | {
       profile: "property-option" | "autocomplete";
       selection?: never;
       selected?: never;
+      archived?: never;
       current?: boolean;
     };
-type Props = Profile &
+type Props = (
+  | Profile
+  | {
+      profile: "channel-autocomplete";
+      current?: boolean;
+      selection?: never;
+      selected?: never;
+      archived?: boolean;
+    }
+) &
   (
     | ({ as?: "button"; clearHighlightOnDeselect?: boolean } & Omit<
         ComponentPropsWithRef<"button">,
@@ -42,6 +54,7 @@ export function ChoiceRow({
   selection,
   selected,
   current,
+  archived,
   clearHighlightOnDeselect = false,
   className = "",
   ...props
@@ -56,6 +69,7 @@ export function ChoiceRow({
   const state = {
     className: `rah-choice-row ${className}`,
     "data-choice-profile": profile,
+    "data-choice-archived": archived || undefined,
     "data-choice-current": current || undefined,
     "data-choice-highlight-dismissed":
       (clearHighlightOnDeselect && highlightDismissed && !current) || undefined,

@@ -10,7 +10,7 @@ import {
 const references = {
   agents: [
     {
-      agentDefinitionId: "agent-alice",
+      agentId: "agent-alice",
       handle: "Alice",
       principalId: "participant-alice",
       readState: "read" as const,
@@ -81,7 +81,7 @@ test("Raft-style rich text only promotes resolvable Agent, Task and Room referen
     [
       { kind: "text", value: "请 " },
       {
-        agentDefinitionId: "agent-alice",
+        agentId: "agent-alice",
         kind: "agent",
         principalId: "participant-alice",
         readState: "read",
@@ -157,7 +157,7 @@ test("Raft typed-reference grammar covers self/human, DM, Thread, Computer, App 
     value: "@Hakase",
   });
   assert.deepEqual(tokens[2], {
-    agentDefinitionId: "agent-alice",
+    agentId: "agent-alice",
     kind: "agent",
     principalId: "participant-alice",
     readState: "read",
@@ -233,7 +233,7 @@ test("canonical handles only promote when they resolve to one identity", () => {
     agents: [
       ...references.agents,
       {
-        agentDefinitionId: "agent-other-alice",
+        agentId: "agent-other-alice",
         handle: "alice",
         principalId: "participant-other-alice",
       },
@@ -249,7 +249,8 @@ test("canonical handles only promote when they resolve to one identity", () => {
     ],
   };
   assert.deepEqual(tokenizeMessageText("@Alice #shared", conflicted), [
-    { kind: "text", value: "@Alice #shared" },
+    ...tokenizeMessageText("@Alice", references),
+    { kind: "text", value: " #shared" },
   ]);
   assert.equal(
     tokenizeMessageText("#agent-council", conflicted).at(0)?.kind,
@@ -260,7 +261,7 @@ test("canonical handles only promote when they resolve to one identity", () => {
 test("Agent display names are not routing aliases", () => {
   assert.deepEqual(tokenizeMessageText("@Alice Agent", references), [
     {
-      agentDefinitionId: "agent-alice",
+      agentId: "agent-alice",
       kind: "agent",
       principalId: "participant-alice",
       readState: "read",
@@ -335,4 +336,28 @@ test("Task references keep Raft's measured 40 percent rest and solid hover color
     /\.rah-rich-thread-reference\s*\{[^}]*color-mix\(in srgb, var\(--cyan\) 30%, transparent\)/su,
   );
   assert.match(css, /\.rah-rich-unresolved-reference\s*\{[^}]*opacity: 0\.6/su);
+});
+
+test("historical mentions stay bound to the deleted identity after account reuse", () => {
+  const catalog = {
+    agents: [
+      { agentId: "old", principalId: "old-person", handle: "Kimi" },
+      { agentId: "new", principalId: "new-person", handle: "Kimi" },
+    ],
+    mentions: [
+      {
+        handle: "Kimi",
+        principalId: "old-person",
+        agentId: "old",
+        start: 0,
+        end: 5,
+      },
+    ],
+  };
+  const token = tokenizeMessageText("@Kimi", catalog)[0];
+  assert.equal(token?.kind, "agent");
+  if (token?.kind === "agent") assert.equal(token.agentId, "old");
+  assert.deepEqual(tokenizeMessageText("@Kimi", { ...catalog, mentions: [] }), [
+    { kind: "text", value: "@Kimi" },
+  ]);
 });

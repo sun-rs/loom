@@ -74,13 +74,13 @@ function fixture() {
     });
 
   const definition = create(parent.principal.principalId, "definition");
-  const agentId = definition.definition.agentDefinitionId;
+  const agentId = definition.definition.agentId;
   const participantId = parent.principal.principalId;
   const db = new DatabaseSync(databasePath);
   const request = () => ({
     action: "set_state" as const,
     state: "tombstoned" as const,
-    agentDefinitionId: agentId,
+    agentId: agentId,
     basedOnRoomSeq: currentSeq(),
     idempotencyKey: "delete",
   });
@@ -97,6 +97,8 @@ function fixture() {
     actor,
     agentId,
     participantId,
+    agentActor: kernel.authenticateAccessToken(parent.accessToken),
+    workspaceId: workspace.workspace.workspaceId,
     request,
     currentSeq,
     roomId: workspace.controlRoom.roomId,
@@ -269,6 +271,74 @@ test("deletion rejects stale/unauthorized requests before stopping and preserves
     f.cleanup();
   }
 });
+test("deletion unassigns terminal tasks and preserves workflow history", () => {
+  const f = fixture();
+  try {
+    const tasks = (["in_progress", "in_review", "done", "closed"] as const).map(
+      (status) => {
+        const task = f.kernel.createTask(f.actor, {
+          roomId: f.roomId,
+          title: `Keep ${status}`,
+          idempotencyKey: `task-${status}`,
+          assigneeId: f.participantId,
+        }).task;
+        // Seed each existing canonical status, independent of runtime/review machinery.
+        const state = {
+          in_progress: "in_progress",
+          in_review: "submitted",
+          done: "completed",
+          closed: "cancelled",
+        }[status];
+        f.db
+          .prepare("UPDATE tasks SET state=?,workflow_status=? WHERE task_id=?")
+          .run(state, status, task.taskId);
+        return { task, status };
+      },
+    );
+    f.kernel.manageWorkspaceAgent(f.actor, f.request());
+    for (const { task, status } of tasks) {
+      const row = f.db
+        .prepare("SELECT * FROM tasks WHERE task_id=?")
+        .get(task.taskId)!;
+      assert.equal(row.assignee_id, null, status);
+      assert.equal(row.claimed_by, null, status);
+      assert.equal(
+        row.workflow_status,
+        status,
+        "deletion must not close, complete or reopen a task",
+      );
+    }
+    // Simulate a pre-fix closed-task assignment surviving deletion in an older DB.
+    const closed = tasks.at(-1)!.task;
+    f.db
+      .prepare("UPDATE tasks SET assignee_id=? WHERE task_id=?")
+      .run(f.participantId, closed.taskId);
+    f.reopen();
+    assert.equal(
+      f.db
+        .prepare("SELECT assignee_id FROM tasks WHERE task_id=?")
+        .get(closed.taskId)!.assignee_id,
+      null,
+    );
+    const count = f.db
+      .prepare(
+        "SELECT count(*) n FROM room_events WHERE aggregate_id=? AND type='task.unassigned'",
+      )
+      .get(closed.taskId)!.n;
+    f.reopen();
+    assert.equal(
+      f.db
+        .prepare(
+          "SELECT count(*) n FROM room_events WHERE aggregate_id=? AND type='task.unassigned'",
+        )
+        .get(closed.taskId)!.n,
+      count,
+    );
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("a live runtime, forged exit identity, and late worker calls cannot cross the deletion fence", () => {
   const f = fixture();
   try {
@@ -514,6 +584,49 @@ test("deletion cancels stale input and reassignment operations without completin
         .get(task.task.taskId)!.workflow_status,
       "todo",
     );
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("Activity DM titles and sender labels use the renamed identity after deletion", () => {
+  const f = fixture();
+  try {
+    const dm = f.kernel.openDirectRoom(f.actor, {
+      workspaceId: f.workspaceId,
+      peerPrincipalId: f.participantId,
+      basedOnControlRoomSeq: f.currentSeq(),
+      idempotencyKey: "activity-dm",
+    });
+    f.db
+      .prepare(
+        "UPDATE rooms SET name = 'OpenCode · native local server' WHERE room_id = ?",
+      )
+      .run(dm.roomId);
+    f.kernel.postMessage(f.agentActor, {
+      roomId: dm.roomId,
+      basedOnRoomSeq: 1,
+      body: "original text",
+      recipients: [],
+      idempotencyKey: "activity-message",
+    });
+    f.db
+      .prepare(
+        "UPDATE agent_definition_revisions SET definition_json = json_set(definition_json, '$.displayName', 'Gemini') WHERE agent_definition_id = ?",
+      )
+      .run(f.agentId);
+    const card = () =>
+      f.kernel
+        .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+        .items.find((item) => item.roomId === dm.roomId)!;
+    assert.equal(card().title, "Gemini");
+    assert.equal(card().roomName, "Gemini");
+    assert.equal(card().senderName, "Gemini");
+    f.kernel.manageWorkspaceAgent(f.actor, f.request());
+    f.kernel.provisionPrincipal({ handle: "Gemini", kind: "agent" });
+    assert.equal(card().title, "Gemini");
+    assert.equal(card().senderName, "Gemini");
+    assert.equal(card().latestMessage.body, "original text");
   } finally {
     f.cleanup();
   }

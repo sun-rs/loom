@@ -9,9 +9,9 @@ import type { AgentWorkspaceSummary } from "@rah-os/protocol";
 import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 
 type Agent = {
-  agentDefinitionId: string;
+  agentId: string;
   handle: string;
-  agent?: Pick<WorkspaceAgentView, "state" | "presence">;
+  agent?: Pick<WorkspaceAgentView, "state" | "presence" | "displayName">;
 };
 type Row = Agent & { summary?: AgentWorkspaceSummary; error?: string };
 export function ComputerWorkspaceSummary({
@@ -27,7 +27,7 @@ export function ComputerWorkspaceSummary({
   const [pending, setPending] = useState(false);
   const active = useRef<AbortController | undefined>(undefined);
   const scope = agents
-    .map((a) => a.agentDefinitionId)
+    .map((a) => a.agentId)
     .sort()
     .join("|");
   useEffect(() => {
@@ -52,7 +52,7 @@ export function ComputerWorkspaceSummary({
       try {
         const summary = await client.request(
           "agent.workspace.summary",
-          { agentDefinitionId: agent.agentDefinitionId },
+          { agentId: agent.agentId },
           { signal: controller.signal },
         );
         result.push({ ...agent, summary });
@@ -91,66 +91,70 @@ export function ComputerWorkspaceSummary({
           点击扫描，检查这台 Computer 上的工作区目录。
         </p>
       ) : (
-        rows.map((row) => (
-          <div
-            className="rah-workspace-summary-row"
-            key={row.agentDefinitionId}
-            data-workspace-summary
-          >
-            <Icon name="folder-open" />
-            <div className="rah-workspace-summary-body">
-              <div className="rah-workspace-summary-heading">
-                <button
-                  className="rah-workspace-summary-name"
-                  type="button"
-                  onClick={() => onOpen(row.agentDefinitionId)}
-                >
-                  {row.handle}
-                </button>
-                {row.agent ? (
-                  <span
-                    className={`rah-workspace-state ${computerWorkspaceState(row.agent) === "ACTIVE" ? "is-active" : ""}`}
+        rows.map((savedRow) => {
+          const row = {
+            ...savedRow,
+            ...agents.find((agent) => agent.agentId === savedRow.agentId),
+          };
+          const name = row.agent?.displayName || row.handle;
+          return (
+            <div
+              className="rah-workspace-summary-row"
+              key={row.agentId}
+              data-workspace-summary
+            >
+              <Icon name="folder-open" />
+              <div className="rah-workspace-summary-body">
+                <div className="rah-workspace-summary-heading">
+                  <button
+                    className="rah-workspace-summary-name"
+                    type="button"
+                    onClick={() => onOpen(row.agentId)}
                   >
-                    {computerWorkspaceState(row.agent)}
-                  </span>
+                    {name}
+                  </button>
+                  {row.agent ? (
+                    <span
+                      className={`rah-workspace-state ${computerWorkspaceState(row.agent) === "ACTIVE" ? "is-active" : ""}`}
+                    >
+                      {computerWorkspaceState(row.agent)}
+                    </span>
+                  ) : null}
+                </div>
+                {row.error ? (
+                  <p role="alert">{row.error}</p>
+                ) : row.summary ? (
+                  <>
+                    <code>{row.summary.rootPath}</code>
+                    <p>
+                      {row.summary.state === "absent"
+                        ? "工作区尚未创建"
+                        : `${row.summary.totalSizeBytes.toLocaleString()} bytes · ${row.summary.fileCount} 个文件`}
+                      {row.summary.lastModified
+                        ? ` · 修改于 ${formatRahDateTime(row.summary.lastModified, { month: "long", day: "numeric" })}`
+                        : ""}
+                      {row.summary.truncated
+                        ? " · 部分结果（已达到扫描上限）"
+                        : ""}
+                    </p>
+                  </>
                 ) : null}
               </div>
-              {row.error ? (
-                <p role="alert">{row.error}</p>
-              ) : row.summary ? (
-                <>
-                  <code>{row.summary.rootPath}</code>
-                  <p>
-                    {row.summary.state === "absent"
-                      ? "工作区尚未创建"
-                      : `${row.summary.totalSizeBytes.toLocaleString()} bytes · ${row.summary.fileCount} 个文件`}
-                    {row.summary.lastModified
-                      ? ` · 修改于 ${formatRahDateTime(row.summary.lastModified, { month: "long", day: "numeric" })}`
-                      : ""}
-                    {row.summary.truncated
-                      ? " · 部分结果（已达到扫描上限）"
-                      : ""}
-                  </p>
-                </>
+              {row.summary?.state !== "absent" && row.summary ? (
+                <ComputerWorkspaceDelete
+                  client={client}
+                  id={row.agentId}
+                  name={name}
+                  onDeleted={() =>
+                    setRows((current) =>
+                      current?.filter((item) => item.agentId !== row.agentId),
+                    )
+                  }
+                />
               ) : null}
             </div>
-            {row.summary?.state !== "absent" && row.summary ? (
-              <ComputerWorkspaceDelete
-                client={client}
-                id={row.agentDefinitionId}
-                name={row.handle}
-                onDeleted={() =>
-                  setRows((current) =>
-                    current?.filter(
-                      (item) =>
-                        item.agentDefinitionId !== row.agentDefinitionId,
-                    ),
-                  )
-                }
-              />
-            ) : null}
-          </div>
-        ))
+          );
+        })
       )}
       {agents.length > 50 ? (
         <p role="status">

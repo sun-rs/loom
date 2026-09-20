@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
@@ -17,7 +18,7 @@ export function ComputerStopConfirmation({
 }) {
   const ref = useDialogProtocol({ blocked: pending, onClose });
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭停止确认"
@@ -60,6 +61,6 @@ export function ComputerStopConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

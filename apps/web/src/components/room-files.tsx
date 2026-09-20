@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { MessageAttachmentCard } from "./message-attachment-card.tsx";
 import { AttachmentComments } from "./attachment-comments.tsx";
 import {
@@ -442,7 +443,7 @@ export function FilePreview({
   }, [context?.client, file, kind, initialContent]);
   // Message rows own layout containment; modal geometry must belong to the viewport.
   return createPortal(
-    <div className="rah-dialog-layer">
+    <DialogLayer className="rah-dialog-layer">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭文件预览"
@@ -590,7 +591,7 @@ export function FilePreview({
           )}
         </div>
       </section>
-    </div>,
+    </DialogLayer>,
     document.body,
   );
 }

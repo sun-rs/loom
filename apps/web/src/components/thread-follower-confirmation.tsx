@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { createPortal } from "react-dom";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
@@ -18,7 +19,7 @@ export function ThreadFollowerConfirmation({
 }) {
   const ref = useDialogProtocol({ blocked: busy, onClose });
   return createPortal(
-    <div className="rah-dialog-layer rah-room-visibility-confirm">
+    <DialogLayer className="rah-dialog-layer rah-room-visibility-confirm">
       <div
         className="rah-dialog-backdrop"
         onClick={() => {
@@ -59,7 +60,7 @@ export function ThreadFollowerConfirmation({
           </button>
         </footer>
       </section>
-    </div>,
+    </DialogLayer>,
     document.body,
   );
 }

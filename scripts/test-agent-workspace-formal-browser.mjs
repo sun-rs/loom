@@ -70,15 +70,15 @@ try {
       await post("agents/list", { controlRoomId: workspace.controlRoomId })
     ).agents;
     assert.ok(agents.length);
-    const agentDefinitionId = agents[0].definition.agentDefinitionId;
+    const agentId = agents[0].definition.agentId;
     assert.deepEqual(
-      (await post("agents/workspace/roots", { agentDefinitionId })).roots.map(
+      (await post("agents/workspace/roots", { agentId })).roots.map(
         (root) => root.rootId,
       ),
       ["agent-workspace"],
     );
     await page.goto(
-      `${origin}/?surface=agents&agent=${encodeURIComponent(agentDefinitionId)}&agentTab=workspace`,
+      `${origin}/?surface=agents&agent=${encodeURIComponent(agentId)}&agentTab=workspace`,
     );
     const pane = page.locator(".rah-workspace-browser");
     const file = pane.getByRole("treeitem", { name: "MEMORY.md", exact: true });

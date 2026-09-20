@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { createPortal } from "react-dom";
 import { useEffect, useState, type ComponentType } from "react";
 import type { Props as EmojiPickerProps } from "emoji-picker-react";
@@ -26,7 +27,7 @@ export function SectionCreateDialog({
     [error, setError] = useState<string>();
   const dialog = useDialogProtocol({ blocked: pending || open, onClose });
   return createPortal(
-    <div className="rah-dialog-layer rah-section-create-layer">
+    <DialogLayer className="rah-dialog-layer rah-section-create-layer">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭新建分区窗口"
@@ -128,7 +129,7 @@ export function SectionCreateDialog({
           </footer>
         </form>
       </section>
-    </div>,
+    </DialogLayer>,
     document.body,
   );
 }

@@ -61,14 +61,14 @@ export type AgentMemoryConfigSnapshot = z.infer<
   typeof AgentMemoryConfigSnapshotSchema
 >;
 export const ClientAgentMemoryConfigGetRequestSchema = z
-  .object({ agentDefinitionId: IdentifierSchema })
+  .object({ agentId: IdentifierSchema })
   .strict();
 export type ClientAgentMemoryConfigGetRequest = z.infer<
   typeof ClientAgentMemoryConfigGetRequestSchema
 >;
 export const ClientAgentMemoryConfigPatchRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     patch: AgentMemoryConfigPatchSchema,
   })
   .strict();

@@ -1,6 +1,6 @@
 import type { RuntimeTrajectoryRecord } from "@rah-os/protocol";
 
-/** Earlier paging keeps the requested older edge. Live mode reads a fresh tail. */
+/** Raft live activity window: stable identities, ascending order, latest 500. */
 export function mergeTrajectoryWindow(
   current: readonly RuntimeTrajectoryRecord[],
   incoming: readonly RuntimeTrajectoryRecord[],
@@ -10,5 +10,5 @@ export function mergeTrajectoryWindow(
   );
   return [...records.values()]
     .sort((left, right) => left.serverSequence - right.serverSequence)
-    .slice(0, 500);
+    .slice(-500);
 }

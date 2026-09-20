@@ -36,13 +36,13 @@ export const RuntimeLaunchEnvironmentSchema = z
         });
   });
 export const RuntimeGuideReadSchema = z
-  .object({ agentDefinitionId: z.string().min(1).max(200).optional() })
+  .object({ agentId: z.string().min(1).max(200).optional() })
   .strict();
 export type RuntimeGuideRead = z.infer<typeof RuntimeGuideReadSchema>;
 export const RuntimeGuideUpdateSchema = z
   .object({
     runtimeId: RuntimeGuideIdSchema,
-    agentDefinitionId: z.string().min(1).max(200).optional(),
+    agentId: z.string().min(1).max(200).optional(),
     environment: RuntimeLaunchEnvironmentSchema.optional(),
     enabled: z.boolean().optional(),
     additionalArgs: z.array(z.string().min(1).max(2048)).max(64).optional(),
@@ -69,7 +69,7 @@ export const RuntimeGuideUpdateSchema = z
   )
   .refine(
     (value) =>
-      !value.agentDefinitionId ||
+      !value.agentId ||
       (value.enabled === undefined && value.overrideArgs === undefined),
     "Agent settings cannot change global Guide or managed launch arguments",
   );

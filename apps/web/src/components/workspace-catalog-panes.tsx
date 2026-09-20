@@ -69,7 +69,7 @@ export function ComputerRuntimePane({
   agents?: readonly WorkspaceAgentView[];
   canEditProfile?: boolean;
   onDetailOpenChange?: ((open: boolean) => void) | undefined;
-  onOpenAgent: (agentDefinitionId: string) => void;
+  onOpenAgent: (agentId: string) => void;
   onUpdateComputerProfile?: (
     input: ClientComputerProfileUpdateRequest,
   ) => Promise<void>;

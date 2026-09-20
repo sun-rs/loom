@@ -32,7 +32,7 @@ test("Skills reads authorize before and after Host I/O and reject policy-switch 
       };
     },
   };
-  const read = (body = { agentDefinitionId: "agent-a" }) =>
+  const read = (body = { agentId: "agent-a" }) =>
     routeAgentWorkspace(
       human as never,
       {} as never,
@@ -43,9 +43,7 @@ test("Skills reads authorize before and after Host I/O and reject policy-switch 
     );
   await read();
   assert.equal(calls, 1);
-  await assert.rejects(
-    read({ agentDefinitionId: "agent-a", path: "/" } as never),
-  );
+  await assert.rejects(read({ agentId: "agent-a", path: "/" } as never));
   assert.equal(calls, 1);
   allowed = false;
   await assert.rejects(read(), /permission denied/);

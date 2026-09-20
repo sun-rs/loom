@@ -29,6 +29,7 @@ export function AgentSidebar({
   onCreate,
   onRelationship,
   onSelect,
+  onOpenDirectRoom,
   relationshipSelected,
   selectedAgentDefinitionId,
 }: {
@@ -47,11 +48,14 @@ export function AgentSidebar({
   selectedHumanId: string | undefined;
   onCreate: () => void;
   onRelationship: () => void;
-  onSelect: (agentDefinitionId: string) => void;
+  onSelect: (agentId: string) => void;
+  onOpenDirectRoom?: ((principalId: string) => Promise<void>) | undefined;
   relationshipSelected: boolean;
   selectedAgentDefinitionId: string | undefined;
 }) {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [directError, setDirectError] = useState<string>();
+  const openingDirect = useRef(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -89,6 +93,7 @@ export function AgentSidebar({
         <h1>成员</h1>
       </PanelHeader>
       <div className="rah-agent-sidebar-scroll rah-scroll-main">
+        {directError ? <p role="alert">{directError}</p> : null}
         <button
           aria-current={relationshipSelected ? "page" : undefined}
           className={`rah-agent-relationship rah-interaction-row${relationshipSelected ? " is-selected" : ""}`}
@@ -127,7 +132,7 @@ export function AgentSidebar({
                     role="menuitem"
                     type="button"
                   >
-                    <Icon name="briefcase" />
+                    <Icon name="bot" />
                     创建 Agent
                   </button>
                   <button
@@ -136,7 +141,7 @@ export function AgentSidebar({
                     title="外部 Agent 激活协议尚未接入"
                     type="button"
                   >
-                    <Icon name="link" />
+                    <Icon name="link-2" />
                     创建外部 Agent
                   </button>
                 </div>
@@ -156,20 +161,37 @@ export function AgentSidebar({
           )}
           {agents.map((agent) => (
             <MemberContextActions
-              key={agent.agentDefinitionId}
+              key={agent.agentId}
               agent={agent}
               principalId={agent.participantId}
               control={contextControl}
             >
               <button
                 aria-current={
-                  agent.agentDefinitionId === selectedAgentDefinitionId
+                  agent.agentId === selectedAgentDefinitionId
                     ? "page"
                     : undefined
                 }
-                className={`rah-agent-member-row rah-interaction-row${agent.agentDefinitionId === selectedAgentDefinitionId ? " is-selected" : ""}`}
-                key={agent.agentDefinitionId}
-                onClick={() => onSelect(agent.agentDefinitionId)}
+                className={`rah-agent-member-row rah-interaction-row${agent.agentId === selectedAgentDefinitionId ? " is-selected" : ""}`}
+                key={agent.agentId}
+                onClick={(event) => {
+                  if (event.detail < 2) onSelect(agent.agentId);
+                }}
+                onDoubleClick={(event) => {
+                  event.preventDefault();
+                  if (!onOpenDirectRoom || openingDirect.current) return;
+                  openingDirect.current = true;
+                  setDirectError(undefined);
+                  void onOpenDirectRoom(agent.participantId)
+                    .catch((error) =>
+                      setDirectError(
+                        error instanceof Error ? error.message : "无法打开私信",
+                      ),
+                    )
+                    .finally(() => {
+                      openingDirect.current = false;
+                    });
+                }}
               >
                 <AgentAvatar agent={agent} size="sidebar" />
                 <span>
@@ -233,10 +255,12 @@ export function AgentSidebar({
                   size="sidebar"
                 />
                 <span>
-                  <b>{human.displayName || human.handle}</b>
-                  {human.principalId === currentHumanId ? (
-                    <small>（你）</small>
-                  ) : null}
+                  <b>
+                    {human.displayName || human.handle}
+                    {human.principalId === currentHumanId ? (
+                      <span className="rah-member-self">（你）</span>
+                    ) : null}
+                  </b>
                 </span>
               </button>
             </MemberContextActions>

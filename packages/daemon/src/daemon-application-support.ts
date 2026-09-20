@@ -376,7 +376,7 @@ async function resetAgentExecution(
   const existing = await input.coordinator.receipt(operationId);
   if (existing !== null) {
     return await input.coordinator.reset({
-      agentDefinitionId: request.agentDefinitionId,
+      agentId: request.agentId,
       mode: request.mode,
       operationId,
       ownerParticipantId: existing.ownerParticipantId,
@@ -385,7 +385,7 @@ async function resetAgentExecution(
 
   const management = input.human.getWorkspaceAgentManagementView(
     actor,
-    request.agentDefinitionId,
+    request.agentId,
   );
   const ownerParticipantId = management.agent.definition.participantId;
   const wasDisabled = management.agent.definition.state === "disabled";
@@ -393,7 +393,7 @@ async function resetAgentExecution(
   const disabledResult = wasDisabled
     ? undefined
     : manageAgentStateAtLatest(input.human, actor, {
-        agentDefinitionId: request.agentDefinitionId,
+        agentId: request.agentId,
         basedOnRoomSeq: request.basedOnRoomSeq,
         idempotencyKey: `${request.idempotencyKey}:execution-reset:disable`,
         state: "disabled",
@@ -403,7 +403,7 @@ async function resetAgentExecution(
   try {
     const receipt = await input.coordinator.reset(
       {
-        agentDefinitionId: request.agentDefinitionId,
+        agentId: request.agentId,
         mode: request.mode,
         operationId,
         ownerParticipantId,
@@ -411,7 +411,7 @@ async function resetAgentExecution(
       {
         afterContinuity: async () => {
           manageAgentStateAtLatest(input.human, actor, {
-            agentDefinitionId: request.agentDefinitionId,
+            agentId: request.agentId,
             basedOnRoomSeq: disabledSeq,
             idempotencyKey: `${request.idempotencyKey}:execution-reset:enable`,
             state: "enabled",
@@ -425,7 +425,7 @@ async function resetAgentExecution(
     if (!disabled) throw error;
     try {
       manageAgentStateAtLatest(input.human, actor, {
-        agentDefinitionId: request.agentDefinitionId,
+        agentId: request.agentId,
         basedOnRoomSeq: disabledSeq,
         idempotencyKey: `${request.idempotencyKey}:execution-reset:restore`,
         state: "enabled",
@@ -446,7 +446,7 @@ function executionResetOperationId(
   return `agent_execution_reset_${createHash("sha256")
     .update(
       JSON.stringify({
-        agentDefinitionId: request.agentDefinitionId,
+        agentId: request.agentId,
         idempotencyKey: request.idempotencyKey,
       }),
     )
@@ -457,7 +457,7 @@ function manageAgentStateAtLatest(
   human: HumanApplicationPort,
   actor: AuthenticatedActorContext,
   input: Readonly<{
-    agentDefinitionId: string;
+    agentId: string;
     basedOnRoomSeq: number;
     idempotencyKey: string;
     state: "disabled" | "enabled";
@@ -468,7 +468,7 @@ function manageAgentStateAtLatest(
     try {
       return human.manageWorkspaceAgent(actor, {
         action: "set_state",
-        agentDefinitionId: input.agentDefinitionId,
+        agentId: input.agentId,
         basedOnRoomSeq,
         idempotencyKey: input.idempotencyKey,
         state: input.state,

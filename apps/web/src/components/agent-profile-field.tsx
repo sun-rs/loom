@@ -10,13 +10,13 @@ import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 
 /** Raft hc field editing contract. Parent keys this editor by durable Agent identity. */
 export function AgentProfileFieldEditor({
-  agentDefinitionId,
+  agentId,
   revisionId,
   field,
   value,
   onSave,
 }: {
-  agentDefinitionId: string;
+  agentId: string;
   revisionId: string | undefined;
   field: AgentProfileField;
   value: string;
@@ -53,7 +53,7 @@ export function AgentProfileFieldEditor({
     setError(undefined);
     try {
       await onSave({
-        agentDefinitionId,
+        agentId,
         expectedRevisionId: edit.revisionId,
         field,
         value: edit.value.trim(),

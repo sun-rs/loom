@@ -27,7 +27,7 @@ test("typed targets encode reload-safe internal navigation without public share 
   );
   assert.equal(
     navigationSearch({
-      target: { kind: "agent", agentDefinitionId: "agent-1", tab: "activity" },
+      target: { kind: "agent", agentId: "agent-1", tab: "activity" },
     }),
     "?target=agent&surface=agents&agent=agent-1&agentTab=activity",
   );
@@ -128,7 +128,7 @@ test("resolved target presentation maps to the existing Raft surfaces and tabs",
   );
 });
 
-test("Activity Room targets leave the feed while Thread targets retain its background", () => {
+test("Activity Room and Thread targets retain the feed", () => {
   assert.equal(
     navigationSearch(
       {
@@ -137,11 +137,11 @@ test("Activity Room targets leave the feed while Thread targets retain its backg
       },
       "?surface=activity&filter=mentions",
     ),
-    "?target=room&room=room-1",
+    "?surface=activity&filter=mentions&target=room&room=room-1",
   );
   assert.deepEqual(
     navigationPresentation({ kind: "room", roomId: "room-1" }, "activity"),
-    { roomId: "room-1", surface: "room", tab: "chat" },
+    { roomId: "room-1", surface: "activity", tab: "chat" },
   );
   assert.equal(
     navigationPresentation(

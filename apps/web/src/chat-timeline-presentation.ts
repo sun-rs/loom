@@ -42,6 +42,53 @@ export type ThreadReceiptTimelineItem =
     }
   | (ReminderReceiptPresentation & { kind: "reminder-fired" });
 
+export type SystemNotice = Exclude<ChatTimelineItem, { kind: "message" }>;
+export type GroupedChatTimelineItem =
+  | ChatTimelineItem
+  | {
+      kind: "system-group";
+      createdAt: string;
+      roomSeq: number;
+      eventId: string;
+      items: SystemNotice[];
+    };
+
+export function groupChatTimeline(
+  items: readonly ChatTimelineItem[],
+): GroupedChatTimelineItem[] {
+  const result: GroupedChatTimelineItem[] = [];
+  for (let index = 0; index < items.length;) {
+    const first = items[index]!;
+    if (first.kind === "message") {
+      result.push(first);
+      index++;
+      continue;
+    }
+    const notices: SystemNotice[] = [first];
+    let end = index + 1;
+    for (; end < items.length; end++) {
+      const next = items[end]!;
+      if (
+        next.kind === "message" ||
+        chatLocalDateKey(next.createdAt) !== chatLocalDateKey(first.createdAt)
+      )
+        break;
+      notices.push(next);
+    }
+    if (notices.length > 2) {
+      result.push({
+        kind: "system-group",
+        createdAt: first.createdAt,
+        roomSeq: first.roomSeq,
+        eventId: first.eventId,
+        items: notices,
+      });
+    } else result.push(...notices);
+    index = end;
+  }
+  return result;
+}
+
 export function buildChatTimeline({
   events,
   members,
@@ -52,7 +99,10 @@ export function buildChatTimeline({
   messages: readonly RoomMessageView[];
 }): ChatTimelineItem[] {
   const handles = new Map(
-    members.map((member) => [member.principalId, member.handle]),
+    members.map((member) => [
+      member.principalId,
+      member.displayName || member.handle,
+    ]),
   );
   const items: ChatTimelineItem[] = messages.map((message) => ({
     createdAt: message.createdAt,
@@ -63,7 +113,10 @@ export function buildChatTimeline({
   for (const event of events) {
     if (event.type === "room.archived" || event.type === "room.unarchived") {
       const archived = event.type === "room.archived";
-      const actor = handles.get(event.actorId) ?? event.actorId;
+      const member = members.find(
+        (candidate) => candidate.principalId === event.actorId,
+      );
+      const actor = member?.displayName ?? member?.handle ?? event.actorId;
       items.push({
         createdAt: event.createdAt,
         eventId: event.eventId,
@@ -252,7 +305,7 @@ export function chatDateLabel(
   return `${labelParts.month}月${labelParts.day}日${labelParts.weekday}`;
 }
 
-export function chatTimelineKey(item: ChatTimelineItem) {
+export function chatTimelineKey(item: GroupedChatTimelineItem) {
   return item.kind === "message"
     ? item.message.messageId
     : `event:${item.eventId}`;

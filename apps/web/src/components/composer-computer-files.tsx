@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -79,7 +80,7 @@ export function ComposerComputerFiles({
     : (listing?.path ?? location.path);
   const absolutePath = location.absolutePath ?? listing?.absolutePath ?? "";
   return createPortal(
-    <div
+    <DialogLayer
       className="rah-dialog-layer rah-computer-file-layer"
       role="presentation"
     >
@@ -242,7 +243,7 @@ export function ComposerComputerFiles({
           </div>
         </footer>
       </section>
-    </div>,
+    </DialogLayer>,
     document.body,
   );
 }

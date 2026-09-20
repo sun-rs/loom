@@ -19,7 +19,7 @@ export function readAgentPresence(
     activityAt?: string,
   ) =>
     AgentPresenceSchema.parse({
-      agentDefinitionId: agent.definition.agentDefinitionId,
+      agentId: agent.definition.agentId,
       trajectoryVersion: readAgentTrajectoryVersion(
         database,
         agent.definition.participantId,
@@ -47,6 +47,25 @@ export function readAgentPresence(
     database
       .prepare(`${runSql} ORDER BY r.rowid DESC LIMIT 1`)
       .get(agent.definition.participantId);
+  // A durable first-run request is visible before capability refresh/spawn.
+  // This is queued initialization, never evidence that a runtime is working.
+  if (
+    !run ||
+    !["starting", "running", "orphaned"].includes(String(run.state))
+  ) {
+    const queued = database
+      .prepare(
+        `SELECT a.created_at FROM activations a
+      JOIN room_events e ON e.room_id=a.room_id AND e.room_seq BETWEEN a.from_seq AND a.to_seq
+      WHERE a.participant_id=? AND a.state IN ('queued','leased')
+      AND e.type='agent.first_run_requested'
+      AND json_extract(e.payload_json,'$.participantId')=a.participant_id
+      ORDER BY a.created_at DESC LIMIT 1`,
+      )
+      .get(agent.definition.participantId);
+    if (queued)
+      return result("offline", "initializing", String(queued.created_at));
+  }
   const hosts = run
     ? database
         .prepare("SELECT * FROM agent_hosts WHERE host_id = ?")

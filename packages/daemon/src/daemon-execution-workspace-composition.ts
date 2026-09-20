@@ -104,7 +104,7 @@ export async function createDaemonExecutionWorkspaceComposition(input: {
       afterOnline: async () => {
         for (const receipt of completedWorkspaceResets.values()) {
           await resetCoordinator.reset({
-            agentDefinitionId: receipt.agentDefinitionId,
+            agentId: receipt.agentId,
             mode: receipt.mode,
             operationId: receipt.operationId,
             ownerParticipantId: receipt.ownerParticipantId,

@@ -10,7 +10,7 @@ const at = "2026-09-02T00:00:00.000Z";
 const digest = (character: string) => `sha256:${character.repeat(64)}`;
 const catalog = {
   currentRevision: {
-    agentDefinitionId: "child-definition",
+    agentId: "child-definition",
     agentDefinitionRevisionId: "child-revision",
     contentDigest: digest("a"),
     createdAt: at,
@@ -28,7 +28,7 @@ const catalog = {
     skillRefs: [],
   },
   definition: {
-    agentDefinitionId: "child-definition",
+    agentId: "child-definition",
     controlRoomId: "room-control",
     createdAt: at,
     currentRevisionId: "child-revision",
@@ -74,7 +74,7 @@ const detail = {
 
 test("created-Agent rows prefer the live directory but retain a canonical fallback", () => {
   const live = {
-    agentDefinitionId: "child-definition",
+    agentId: "child-definition",
     agentDefinitionRevisionId: "child-revision",
     connectionStatus: "online" as const,
     createdAt: at,

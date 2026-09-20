@@ -51,6 +51,7 @@ export function agentPresencePresentation(agent: PresenceSubject) {
     idle: "休眠 · 等待唤醒",
     online: "在线",
     starting: "正在启动",
+    initializing: "等待初始化…",
     working: "工作中…",
     thinking: "思考中…",
     error: "运行异常",
@@ -87,21 +88,26 @@ export function latestWorkspaceActivity<T extends PresenceSubject>(
     const presentation = agentPresencePresentation(agent);
     if (
       presentation.activity !== "thinking" &&
-      presentation.activity !== "working"
+      presentation.activity !== "working" &&
+      agent.presence?.reason !== "initializing"
     )
       continue;
     const activityAt = Date.parse(agent.presence?.activityAt ?? "");
     if (
       !Number.isFinite(activityAt) ||
       activityAt > now ||
-      now - activityAt >= RAFT_LIVE_ACTIVITY_TTL_MS ||
+      (agent.presence?.reason !== "initializing" &&
+        now - activityAt >= RAFT_LIVE_ACTIVITY_TTL_MS) ||
       (latest && latest.activityAt >= activityAt)
     )
       continue;
     latest = {
       agent,
       activityAt,
-      expiresAt: activityAt + RAFT_LIVE_ACTIVITY_TTL_MS,
+      expiresAt:
+        agent.presence?.reason === "initializing"
+          ? Infinity
+          : activityAt + RAFT_LIVE_ACTIVITY_TTL_MS,
       presentation,
     };
   }

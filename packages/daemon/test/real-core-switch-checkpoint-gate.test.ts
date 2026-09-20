@@ -340,7 +340,7 @@ test(
       const handleByParticipantId = new Map<string, string>();
 
       const configureAgent = async (input: {
-        agentDefinitionId: string;
+        agentId: string;
         executable: string;
         handle: string;
         idempotencyKey: string;
@@ -364,7 +364,7 @@ test(
         );
         await postJson(originOf(), token, "/v3/client/agents/manage", {
           action: "configure",
-          agentDefinitionId: input.agentDefinitionId,
+          agentId: input.agentId,
           basedOnRoomSeq: control.latestRoomSeq,
           displayName: `core-chain ${input.handle}`,
           handle: input.handle,
@@ -398,10 +398,7 @@ test(
         assert.deepEqual(intent.exactBindingIds, [authorized.modelBindingId]);
         assert.equal(intent.reasoning, role.reasoning);
         participantIdByHandle.set(role.handle, agent.definition.participantId);
-        definitionIdByHandle.set(
-          role.handle,
-          agent.definition.agentDefinitionId,
-        );
+        definitionIdByHandle.set(role.handle, agent.definition.agentId);
         handleByParticipantId.set(agent.definition.participantId, role.handle);
       }
       const memA = participantIdByHandle.get("mem-a")!;
@@ -612,7 +609,7 @@ test(
 
       // The switch itself.
       await configureAgent({
-        agentDefinitionId: definitionIdByHandle.get("mem-a")!,
+        agentId: definitionIdByHandle.get("mem-a")!,
         executable: SWITCH_TARGET.executable,
         handle: "mem-a",
         idempotencyKey: "core-chain-s4-switch",
@@ -1230,7 +1227,7 @@ function readOnlyLedger<T>(
 
 function agentDefinitionState(
   databasePath: string,
-  agentDefinitionId: string,
+  agentId: string,
 ): { currentRevisionId: string; executionPolicyRevisionId: string } {
   return readOnlyLedger(databasePath, (database) => {
     const row = database
@@ -1242,9 +1239,9 @@ function agentDefinitionState(
              ON r.agent_definition_revision_id = d.current_revision_id
           WHERE d.agent_definition_id = ?`,
       )
-      .get(agentDefinitionId) as
+      .get(agentId) as
       { policy_revision_id?: string; revision_id?: string } | undefined;
-    assert.ok(row, `no AgentDefinition row for ${agentDefinitionId}`);
+    assert.ok(row, `no AgentDefinition row for ${agentId}`);
     return {
       currentRevisionId: String(row.revision_id ?? ""),
       executionPolicyRevisionId: String(row.policy_revision_id ?? ""),

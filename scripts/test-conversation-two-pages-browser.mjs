@@ -252,7 +252,7 @@ try {
         path: `/tmp/rah-two-pages-${engine.name()}-${kind}-${width}.png`,
       });
     }
-    await profile.getByRole("button", { name: /关闭.*侧栏/ }).click();
+    await profile.locator(".rah-agent-mobile-back").click();
     await expect(thread).toBeVisible();
     assert.ok(
       Math.abs((await thread.boundingBox()).width - 390) < 2,
@@ -268,7 +268,7 @@ try {
       .click();
     await expect(profile).toBeVisible();
     await expect(channel).toBeHidden();
-    await profile.getByRole("button", { name: /关闭.*侧栏/ }).click();
+    await profile.locator(".rah-agent-mobile-back").click();
     await expect(channel).toBeVisible();
     await page.reload();
     await expect(channel).toBeVisible();

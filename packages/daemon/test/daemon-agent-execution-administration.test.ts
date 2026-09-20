@@ -26,7 +26,7 @@ test("daemon reset disables, waits for Host effect, enables inside the fence, an
         await hooks?.afterContinuity?.();
         calls.push("host:receipt");
         return receipt({
-          agentDefinitionId: input.agentDefinitionId,
+          agentId: input.agentId,
           mode: input.mode,
           operationId: input.operationId,
           ownerParticipantId: input.ownerParticipantId,
@@ -37,7 +37,7 @@ test("daemon reset disables, waits for Host effect, enables inside the fence, an
   });
 
   const result = await administration.reset(actor, {
-    agentDefinitionId: "definition-1",
+    agentId: "definition-1",
     basedOnRoomSeq: 11,
     idempotencyKey: "reset-1",
     mode: "session",
@@ -69,7 +69,7 @@ test("daemon reset restores scheduling if the Host effect fails", async () => {
   await assert.rejects(
     async () =>
       await administration.reset(actor, {
-        agentDefinitionId: "definition-1",
+        agentId: "definition-1",
         basedOnRoomSeq: 20,
         idempotencyKey: "reset-2",
         mode: "restart",
@@ -105,7 +105,7 @@ test("daemon reset retries stale Room sequence and replays a receipt without a s
     human,
   });
   const request = {
-    agentDefinitionId: "definition-1",
+    agentId: "definition-1",
     basedOnRoomSeq: 3,
     idempotencyKey: "reset-3",
     mode: "restart" as const,
@@ -168,7 +168,7 @@ for (const mode of ["restart", "session", "full"] as const) {
       },
     });
     await administration.reset(actor, {
-      agentDefinitionId: "definition-1",
+      agentId: "definition-1",
       basedOnRoomSeq: 11,
       idempotencyKey: "stopped",
       mode,
@@ -194,7 +194,7 @@ test("failed reset of a stopped Agent leaves it stopped", async () => {
   await assert.rejects(
     async () =>
       await administration.reset(actor, {
-        agentDefinitionId: "definition-1",
+        agentId: "definition-1",
         basedOnRoomSeq: 11,
         idempotencyKey: "failed-stopped",
         mode: "full",
@@ -206,14 +206,14 @@ test("failed reset of a stopped Agent leaves it stopped", async () => {
 
 function receipt(
   input: Readonly<{
-    agentDefinitionId: string;
+    agentId: string;
     mode: "restart" | "session" | "full";
     operationId: string;
     ownerParticipantId: string;
   }>,
 ): ClientAgentExecutionResetResponse {
   return {
-    agentDefinitionId: input.agentDefinitionId,
+    agentId: input.agentId,
     completedAt: "2026-09-01T02:00:00.000Z",
     computerHostId: "host-local",
     deduplicated: false,

@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
 import { tmpdir, hostname } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { DatabaseSync } from "node:sqlite";
 
 import {
   buildRuntimeOfferFromProfile,
@@ -182,6 +183,73 @@ function fakeRuntimeSpec(workspaceCwd: string): LocalWorkbenchRuntimeSpec {
     workspaceCwd,
   };
 }
+
+test("restart preserves deletion of a bootstrap Agent without restoring its Host scope", async () => {
+  const parent = mkdtempSync(join(tmpdir(), "rah-deleted-bootstrap-"));
+  const stateDirectory = join(parent, "state");
+  const workspaceCwd = join(parent, "workspace");
+  mkdirSync(workspaceCwd);
+  const spec = fakeRuntimeSpec(workspaceCwd);
+  const input = {
+    runtimeSpecs: [
+      spec,
+      {
+        ...spec,
+        agentHandle: "OtherAgent",
+        cliId: "other",
+        runtimeProfileId: "local-workbench-profile-other",
+      },
+    ],
+    stateDirectory,
+    workspaceCwd,
+  };
+  try {
+    const first = await prepareLocalWorkbench(input);
+    const kernel = new RoomKernel({
+      databasePath: join(stateDirectory, "room.db"),
+    });
+    const actor = kernel.authenticateHumanAccessToken(first.humanAccessToken);
+    const agent = kernel.listAgentCatalog(actor)[0]!;
+    const db = new DatabaseSync(join(stateDirectory, "room.db"), {
+      readOnly: true,
+    });
+    const seq = Number(
+      db
+        .prepare("SELECT next_seq - 1 AS seq FROM rooms WHERE room_id = ?")
+        .get(first.metadata.controlRoomId)!.seq,
+    );
+    db.close();
+    const disabled = kernel.manageWorkspaceAgent(actor, {
+      action: "set_state",
+      agentId: agent.definition.agentId,
+      state: "disabled",
+      basedOnRoomSeq: seq,
+      idempotencyKey: "disable-bootstrap",
+    });
+    kernel.manageWorkspaceAgent(actor, {
+      action: "set_state",
+      agentId: agent.definition.agentId,
+      state: "tombstoned",
+      basedOnRoomSeq: disabled.event.roomSeq,
+      idempotencyKey: "delete-bootstrap",
+    });
+    kernel.close();
+    const second = await prepareLocalWorkbench(input);
+    assert.deepEqual(
+      second.config.host.participantIds,
+      first.metadata.bootstrapParticipantIds.filter(
+        (id) => id !== agent.definition.participantId,
+      ),
+    );
+    assert.deepEqual(
+      second.metadata.bootstrapParticipantIds,
+      first.metadata.bootstrapParticipantIds,
+    );
+    assert.equal(second.hostAccessToken, first.hostAccessToken);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
 
 test("a role edit changes the compiled standing prompt digest without minting a RuntimeProfile revision", async () => {
   const parent = mkdtempSync(join(tmpdir(), "rah-memory-prompt-revision-"));

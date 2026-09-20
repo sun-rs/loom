@@ -1,3 +1,4 @@
+import { canonicalAgentIdField } from "@rah-os/protocol";
 import {
   SystemChannelVisibilityReadSchema,
   SystemChannelVisibilityUpdateSchema,
@@ -695,7 +696,8 @@ export class ClientApplicationService {
 
     const session = this.#authenticate(request);
     const actor = session.actor;
-    const body = await readJsonObject(request);
+    const body = canonicalAgentIdField(await readJsonObject(request));
+    if (body.target) body.target = canonicalAgentIdField(body.target);
     const path = route.path;
     if (AGENT_WORKSPACE_PATHS.includes(path)) {
       writeJson(
@@ -738,10 +740,10 @@ export class ClientApplicationService {
       const settingsInput = path.endsWith("/update")
         ? parseClientRequest(RuntimeGuideUpdateSchema, body)
         : parseClientRequest(RuntimeGuideReadSchema, body);
-      if (settingsInput.agentDefinitionId)
+      if (settingsInput.agentId)
         this.#human.getWorkspaceAgentManagementView(
           actor,
-          settingsInput.agentDefinitionId,
+          settingsInput.agentId,
         );
       const value = path.endsWith("/update")
         ? this.#runtimeGuideSettings.update(
@@ -909,6 +911,7 @@ export class ClientApplicationService {
         ClientAgentsListResponseSchema.parse({
           agents: this.#human.listAgentCatalog(actor, {
             controlRoomId: command.controlRoomId,
+            includeDeleted: command.includeDeleted ?? false,
           }),
         }),
       );
@@ -920,10 +923,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientAgentGetResponseSchema.parse(
-          this.#human.getWorkspaceAgentManagementView(
-            actor,
-            command.agentDefinitionId,
-          ),
+          this.#human.getWorkspaceAgentManagementView(actor, command.agentId),
         ),
       );
       return;
@@ -950,7 +950,7 @@ export class ClientApplicationService {
       const command = path.endsWith("/patch")
         ? parseClientRequest(ClientAgentMemoryConfigPatchRequestSchema, body)
         : parseClientRequest(ClientAgentMemoryConfigGetRequestSchema, body);
-      const owner = this.#agentMemoryOwner(actor, command.agentDefinitionId);
+      const owner = this.#agentMemoryOwner(actor, command.agentId);
       const administration = this.#requireAgentMemoryAdministration();
       if (
         !administration.getCleanerConfig ||
@@ -998,10 +998,7 @@ export class ClientApplicationService {
         ClientAgentMemoryGetRequestSchema,
         body,
       );
-      const ownerParticipantId = this.#agentMemoryOwner(
-        actor,
-        command.agentDefinitionId,
-      );
+      const ownerParticipantId = this.#agentMemoryOwner(actor, command.agentId);
       const administration = this.#requireAgentMemoryAdministration();
       writeJson(
         response,
@@ -1018,10 +1015,7 @@ export class ClientApplicationService {
         ClientAgentMemoryReadRequestSchema,
         body,
       );
-      const ownerParticipantId = this.#agentMemoryOwner(
-        actor,
-        command.agentDefinitionId,
-      );
+      const ownerParticipantId = this.#agentMemoryOwner(actor, command.agentId);
       const administration = this.#requireAgentMemoryAdministration();
       writeJson(
         response,
@@ -1041,10 +1035,7 @@ export class ClientApplicationService {
         ClientAgentMemoryResetRequestSchema,
         body,
       );
-      const ownerParticipantId = this.#agentMemoryOwner(
-        actor,
-        command.agentDefinitionId,
-      );
+      const ownerParticipantId = this.#agentMemoryOwner(actor, command.agentId);
       const administration = this.#requireAgentMemoryAdministration();
       const receipt = await administration.resetWorkspace(
         ownerParticipantId,
@@ -1074,7 +1065,7 @@ export class ClientApplicationService {
         200,
         ClientAgentActivityListResponseSchema.parse(
           this.#human.listAgentActivity(actor, {
-            agentDefinitionId: command.agentDefinitionId,
+            agentId: command.agentId,
             ...(command.beforeActivityId === undefined
               ? {}
               : { beforeActivityId: command.beforeActivityId }),
@@ -1108,7 +1099,7 @@ export class ClientApplicationService {
         200,
         ClientAgentTrajectoryListResponseSchema.parse(
           this.#human.listAgentTrajectory(actor, {
-            agentDefinitionId: command.agentDefinitionId,
+            agentId: command.agentId,
             ...(command.beforeActivityId === undefined
               ? {}
               : { beforeActivityId: command.beforeActivityId }),
@@ -2007,12 +1998,9 @@ export class ClientApplicationService {
     if (cursors.size === 0) this.#deliveredCursors.delete(key);
   }
 
-  #agentMemoryOwner(
-    actor: AuthenticatedActorContext,
-    agentDefinitionId: string,
-  ): string {
-    return this.#human.getWorkspaceAgentManagementView(actor, agentDefinitionId)
-      .agent.definition.participantId;
+  #agentMemoryOwner(actor: AuthenticatedActorContext, agentId: string): string {
+    return this.#human.getWorkspaceAgentManagementView(actor, agentId).agent
+      .definition.participantId;
   }
 
   #requireAgentMemoryAdministration(): AgentMemoryAdministrationPort {

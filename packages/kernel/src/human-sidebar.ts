@@ -47,9 +47,12 @@ export class HumanSidebar {
       } else
         for (const peer of db
           .prepare(
-            "SELECT principal_id FROM memberships WHERE room_id=? AND principal_id<>?",
+            `SELECT CASE WHEN left_principal_id = ? THEN right_principal_id
+                    ELSE left_principal_id END AS principal_id
+             FROM direct_room_pairs WHERE room_id = ?
+               AND (left_principal_id = ? OR right_principal_id = ?)`,
           )
-          .all(String(r.room_id), actorId)) {
+          .all(actorId, String(r.room_id), actorId, actorId)) {
           const key = `peer:${peer.principal_id}`;
           keys.add(key);
           if (r.recent) recent[key] = String(r.recent);

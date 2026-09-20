@@ -1,5 +1,6 @@
 import type {
   MessageReference,
+  MessageMentionBinding,
   MessageReferenceReadState,
   ParticipantKind,
   RoomKind,
@@ -11,8 +12,9 @@ import {
 } from "@rah-os/protocol";
 
 export type MessageTextReferenceCatalog = {
+  mentions?: readonly MessageMentionBinding[] | undefined;
   agents?: readonly {
-    agentDefinitionId: string;
+    agentId: string;
     handle: string;
     principalId: string;
     readState?: MessageReferenceReadState;
@@ -221,10 +223,13 @@ export function tokenizeMessageText(
         ? []
         : [{ candidate: match[0], index: match.index }],
     ),
-    ...messageMentionCandidates(value, [
-      ...(references.agents ?? []).map(({ handle }) => handle),
-      ...(references.principals ?? []).map(({ handle }) => handle),
-    ]).map(({ start, value: candidate }) => ({ candidate, index: start })),
+    ...messageMentionCandidates(
+      value,
+      references.mentions?.map((b) => b.handle) ?? [
+        ...(references.agents ?? []).map(({ handle }) => handle),
+        ...(references.principals ?? []).map(({ handle }) => handle),
+      ],
+    ).map(({ start, value: candidate }) => ({ candidate, index: start })),
   ].sort(
     (left, right) =>
       left.index - right.index ||
@@ -249,18 +254,31 @@ export function tokenizeMessageText(
     let token: MessageTextToken | undefined;
     if (candidate.startsWith("@")) {
       const name = candidate.slice(1);
-      const agentMatches = (references.agents ?? []).filter(
-        ({ handle }) => key(handle) === key(name),
-      );
-      const principalMatches = (references.principals ?? []).filter(
-        ({ handle }) => key(handle) === key(name),
+      const binding = references.mentions?.find((b) => b.handle === name);
+      const agentMatches = binding?.agentId
+        ? [
+            {
+              agentId: binding.agentId,
+              principalId: binding.principalId,
+              readState: (references.agents ?? []).find(
+                (a) => a.principalId === binding.principalId,
+              )?.readState,
+            },
+          ]
+        : references.mentions !== undefined
+          ? []
+          : (references.agents ?? []).filter(({ handle }) => handle === name);
+      const principalMatches = (references.principals ?? []).filter((person) =>
+        references.mentions === undefined
+          ? person.handle === name
+          : person.principalId === binding?.principalId,
       );
       if (agentMatches.length + principalMatches.length !== 1)
         token = undefined;
       else if (agentMatches[0] !== undefined) {
         const agent = agentMatches[0];
         token = {
-          agentDefinitionId: agent.agentDefinitionId,
+          agentId: agent.agentId,
           kind: "agent",
           principalId: agent.principalId,
           ...(agent.readState === undefined

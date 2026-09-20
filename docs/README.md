@@ -1,6 +1,64 @@
+[共享导航与折叠设计](./product/shared-conversation-navigation.zh-CN.md)：搜索、动态、聊天的真实来源、宽度和退出语义。
+
+[频道设置成员资料返回修复](./audits/2026-09-20-settings-profile-back.zh-CN.md)：返回上一层与关闭侧栏分离，保留聊天分栏语义。
+
+- [消息列提及误订阅全部成员修复](audits/2026-09-20-thread-explicit-mention-recipients.zh-CN.md)
+
+- [Composer 与搜索页 @ / # 引用](audits/2026-09-20-composer-search-references.zh-CN.md)
+
+[Raft / RAH 组件样式源码审计](./audits/2026-09-20-ui-style-source-audit.zh-CN.md)：逐组件尺寸、颜色、字体、弹窗差异与证据边界。
+
+[Composer @ / # 匹配对齐](./audits/2026-09-20-composer-suggestion-ranking.zh-CN.md)：字段、拼音、排序、数量限制及身份边界。
+
+[裸符号搜索目录与关注资格](./audits/2026-09-20-search-sigil-directory.zh-CN.md)：裸 @／# 不查正文，频道成员与消息列关注保持独立。
+
+[频道添加成员面板](./audits/2026-09-20-channel-add-members.zh-CN.md)：紧凑选择、蓝色标签、复用创建弹窗与自动加入失败重试。
+
+[Agent 账号与历史身份绑定](./audits/2026-09-20-agent-account-identity.zh-CN.md)：区分大小写的存活账号唯一、删除后复用、显示名可重复、agentId 兼容与历史提及绑定。
+
+[身份显示名称入口核查](./audits/2026-09-20-identity-display-name-coverage.zh-CN.md)：统一展示名，保留寻址账号与历史原文，列明各入口证据边界。
+
+[已删除 Agent 模型预览与重建名称](./audits/2026-09-20-deleted-agent-preview-model.zh-CN.md)：补齐预览前缀清理，区分内部 ID 与全局 handle 约束。
+
+[动态打开延迟](./audits/2026-09-20-activity-open-latency.zh-CN.md)：移除重复目标读取，触屏跳过桌面双击等待，保留权限和身份完整性。
+
+[Claude 目录与自定义模型](./audits/2026-09-20-claude-catalog-custom-models.zh-CN.md)：去除 Default，补充 Raft 别名/版本候选，Claude/Codex 支持显式原生 ID。
+
+[动态卡片身份名称](./audits/2026-09-20-activity-identity-labels.zh-CN.md)：私聊标题与摘要发言人按独立身份显示最新名称，覆盖改名和删除。
+
+[模型选择器名称](./audits/2026-09-20-model-picker-labels.zh-CN.md)：提供方 · 真实模型显示名，保留原生 ID 核对与绑定。
+
+[CLI 产品名称统一](./audits/2026-09-20-runtime-product-names.zh-CN.md)：移除前端 native 传输描述，兼容旧私聊标题。
+
+[Task 属性同行布局](./audits/2026-09-20-task-assignee-status-and-live-badge.zh-CN.md)：状态、负责人、创建人按标签＋值成组横排，窄屏整组换行。
+
+当前任务视图修复：[看板／列表偏好记忆](./audits/2026-09-20-task-view-memory.zh-CN.md)。
+
+[动态响应式分栏修复](./audits/2026-09-20-activity-responsive-navigation-investigation.zh-CN.md)：动态始终留在本页，复用聊天分栏与返回，修复空白列、分隔线和根消息校验冲突。
+
+[聊天主导航恢复修正](./audits/2026-09-20-surface-selection-parity.zh-CN.md)：搜索／动态不再覆盖聊天记忆，保留频道、私聊及已保存的恢复。
+
+[新 Agent 首次初始化与报到](./audits/2026-09-20-agent-first-run-greeting.zh-CN.md)：从 Raft 实际 CLI session 验证系统 Inbox 触发，新建身份同事务排队、设置开关、实际发言完成证明及跨尝试去重。
+
+[恢复频道未读计数修正](./audits/2026-09-20-archive-notice-unread-correction.zh-CN.md)：归档通知保留历史但不计入列表未读，恢复通知正常计数，不清除已有未读消息。
+
+[Task 卡片点击范围](./audits/2026-09-20-task-card-hit-area.zh-CN.md)：卡片内边距、底部空白及文字单击打开，状态菜单独立。
+
+[Task 负责人权限与实时徽标](./audits/2026-09-20-task-assignee-status-and-live-badge.zh-CN.md)：完成禁止更换负责人，重开恢复；Human/Agent 显示名与取消指派立即反映到聊天。
+
+[归档频道卡片尺寸](./audits/2026-09-20-archived-card-sizing.zh-CN.md)：对齐 Raft 卡片内边距和 28px 取消归档按钮，删除说明文字。
+
+[频道与私聊统一未读](./audits/2026-09-20-conversation-unread-rule.zh-CN.md)：普通消息和正文系统通知共用未读数量、字体加粗与列表点击阅读确认。
+
+[系统通知与恢复确认](./audits/2026-09-19-system-notices-and-restore-read.zh-CN.md)：显示名、连续三条起折叠；恢复提醒由侧栏点击确认，自动跳转不确认。
+
+[已删除 Agent 的任务身份与负责人](./audits/2026-09-20-deleted-agent-task-identity.zh-CN.md)：统一显示名和历史头像，删除解除所有状态任务的负责人，保留任务状态并幂等补齐旧库。
+
+[已删除 Agent 历史消息身份](./audits/2026-09-19-deleted-agent-message-ui.zh-CN.md)：保留授权历史身份，灰色头像、禁用名字提及和不可用面板。
+
 [创建 Agent 运行时设置](./audits/2026-09-18-agent-create-runtime-settings.zh-CN.md)：移除高级身份字段，统一模型、推理、Provider 和环境变量，保留失败重试边界。
 
-[Agent 资料编辑样式](./audits/2026-09-18-agent-profile-field-ui.zh-CN.md)：名称、描述输入框与紧凑操作按钮对齐 Raft，描述框自动高度且不可拖拽。
+[Agent 资料编辑样式](./audits/2026-09-18-agent-profile-field-ui.zh-CN.md)：名称、描述输入框与紧凑操作按钮对齐 Raft，描述框自动高度且不可拖拽；头像上传采用 Raft upload 图标，悬停只变边框。
 
 [归档确认弹窗统一](./audits/2026-09-18-archive-dialog-parity.zh-CN.md)：侧栏和频道设置共用 Raft 风格确认框，含桌面和移动尺寸验证。
 
@@ -921,3 +979,6 @@ Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证
   [Agent 重启语义及弹窗修复](./audits/2026-09-18-agent-reset-parity.zh-CN.md)：停止状态支持三种重启，修复弹窗样式覆盖。
   [移除 Agent 报告问题](./audits/2026-09-18-agent-issue-report-retirement.zh-CN.md)：按用户要求退役入口、弹窗和本地报告导出。
   [创建 Agent 弹窗视觉对齐](./audits/2026-09-18-agent-create-dialog-parity.zh-CN.md)：对齐上游布局参数，修正 WebKit 控件外观与窄屏拉伸。
+  [大页选择与窄屏主内容](./audits/2026-09-20-surface-selection-parity.zh-CN.md)：聊天空选择回列表，成员详情随窄屏展示，独立导航记忆、共享字体、未读加粗与双击私信。
+
+- [消息列关注菜单层级与绿色移除提示](product/raft-frontend-local-contract.zh-CN.md#消息列关注菜单层级与移除提示2026-09-20)：源码参数、层级回归与正式页面验证边界。

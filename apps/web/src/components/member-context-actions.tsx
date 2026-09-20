@@ -38,10 +38,7 @@ export function MemberContextActions({
   const [action, setAction] = useState<"state" | "reset">();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
-  const startAgent = useAgentStart(
-    agent?.agentDefinitionId,
-    control.onChangeState,
-  );
+  const startAgent = useAgentStart(agent?.agentId, control.onChangeState);
   const send = async () => {
     if (pending) return;
     setPending(true);
@@ -123,7 +120,7 @@ export function MemberContextActions({
           agentName={agent.displayName}
           fullResetEnabled={control.fullResetEnabled}
           onConfirm={(mode, key) =>
-            control.onResetExecution!(agent.agentDefinitionId, mode, key)
+            control.onResetExecution!(agent.agentId, mode, key)
           }
           onClose={() => setAction(undefined)}
         />

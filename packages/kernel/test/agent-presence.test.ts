@@ -53,7 +53,7 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
   const db = new DatabaseSync(":memory:");
   const agent = {
     definition: {
-      agentDefinitionId: "agent",
+      agentId: "agent",
       participantId: "p",
       state: "enabled",
     },
@@ -61,13 +61,14 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
   let clock = 100_000;
   db.exec(`CREATE TABLE agent_hosts(host_id,instance_id,state,last_seen_ms,participant_ids_json);
     CREATE TABLE placements(placement_id,host_instance_id);
-    CREATE TABLE activations(activation_id,lease_until_ms);
+    CREATE TABLE activations(activation_id,lease_until_ms,participant_id,room_id,from_seq,to_seq,state,created_at);
+    CREATE TABLE room_events(room_id,room_seq,type,payload_json);
     CREATE TABLE run_attempts(run_attempt_id,placement_id,activation_id,participant_id,host_id,state,runtime_run_id,started_at);
     CREATE TABLE runtime_processes(run_attempt_id,state,exit_code,runtime_run_id);
     CREATE TABLE run_trajectory_entries(runtime_run_id,run_attempt_id,producer_sequence,entry_json,observed_at, participant_id DEFAULT 'p', server_sequence INTEGER PRIMARY KEY AUTOINCREMENT);
     INSERT INTO agent_hosts VALUES('h','g1','online',100000,'["p"]');
     INSERT INTO placements VALUES('pl','g1');
-    INSERT INTO activations VALUES('a',999999);`);
+    INSERT INTO activations(activation_id,lease_until_ms) VALUES('a',999999);`);
   const read = () => readAgentPresence(db, agent, new Date(clock));
   try {
     assert.deepEqual(

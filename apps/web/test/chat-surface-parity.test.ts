@@ -115,18 +115,12 @@ test("Direct Room and profile avatars share the Agent detail and canonical avata
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(
-    navigation,
-    /onOpenDirectPeer:\s*\(agentDefinitionId: string\) => void/u,
-  );
+  assert.match(navigation, /onOpenDirectPeer:\s*\(agentId: string\) => void/u);
   assert.match(
     navigation,
     /aria-label=\{`打开 \$\{directPeer\.displayName\} Agent 资料`\}/u,
   );
-  assert.match(
-    navigation,
-    /onOpenDirectPeer\(directPeer\.agentDefinitionId\)/u,
-  );
+  assert.match(navigation, /onOpenDirectPeer\(directPeer\.agentId\)/u);
 
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
   assert.match(app, /onOpenDirectPeer=\{\(id\) => openAgentPeek\(id\)\}/u);

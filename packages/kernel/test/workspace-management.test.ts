@@ -11,7 +11,7 @@ import { RoomKernel } from "../src/index.ts";
 
 const digest = (character: string) => `sha256:${character.repeat(64)}`;
 
-test("startup rejects a legacy mention directory with ambiguous canonical handles", () => {
+test("startup accepts distinct case-sensitive account names", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-mention-directory-"));
   const databasePath = join(directory, "room.db");
   const kernel = new RoomKernel({ databasePath });
@@ -29,10 +29,7 @@ test("startup rejects a legacy mention directory with ambiguous canonical handle
 
     const reopened = new RoomKernel({ databasePath });
     try {
-      assert.throws(
-        () => reopened.initialize(),
-        /ambiguous principal handle identity/i,
-      );
+      assert.doesNotThrow(() => reopened.initialize());
     } finally {
       reopened.close();
     }
@@ -53,7 +50,7 @@ test("a Human creates a managed Workspace and Rooms through its control Room", (
     assert.throws(
       () =>
         kernel.provisionPrincipal({
-          handle: "WORKSPACE-OWNER",
+          handle: "workspace-owner",
           kind: "human",
         }),
       /handle .* already in use/i,
@@ -600,7 +597,7 @@ test("an AgentDefinition cannot be onboarded across Workspace boundaries", () =>
     assert.throws(
       () =>
         kernel.onboardAgentToRoom(ownerActor, {
-          agentDefinitionId: definition.definition.agentDefinitionId,
+          agentId: definition.definition.agentId,
           basedOnRoomSeq: kernel.sync(ownerActor, {
             afterSeq: 0,
             consumerId: "workspace-b-agent-onboard",
@@ -759,8 +756,8 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
     const replay = kernel.provisionWorkspaceAgent(ownerActor, request);
     assert.equal(replay.deduplicated, true);
     assert.equal(
-      replay.agent.definition.agentDefinitionId,
-      created.agent.definition.agentDefinitionId,
+      replay.agent.definition.agentId,
+      created.agent.definition.agentId,
     );
     assert.throws(
       () =>
@@ -786,8 +783,7 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
         })
         .some(
           ({ definition }) =>
-            definition.agentDefinitionId ===
-            created.agent.definition.agentDefinitionId,
+            definition.agentId === created.agent.definition.agentId,
         ),
       true,
     );
@@ -801,7 +797,7 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       workspaceId: workspace.workspace.workspaceId,
     }).room;
     const onboarded = kernel.onboardAgentToRoom(ownerActor, {
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       basedOnRoomSeq: kernel.sync(ownerActor, {
         afterSeq: 0,
         consumerId: "agent-alice-onboard-sequence",
@@ -816,7 +812,7 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
     );
     assert.deepEqual(
       kernel.listWorkspaceAgentRooms(ownerActor, {
-        agentDefinitionId: created.agent.definition.agentDefinitionId,
+        agentId: created.agent.definition.agentId,
       }),
       [room],
       "the Agent chat directory contains only shared non-control Rooms",
@@ -952,7 +948,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       workspaceId: workspace.workspace.workspaceId,
     }).room;
     kernel.onboardAgentToRoom(ownerActor, {
-      agentDefinitionId: definition.definition.agentDefinitionId,
+      agentId: definition.definition.agentId,
       basedOnRoomSeq: kernel.sync(ownerActor, {
         afterSeq: 0,
         consumerId: "activity-onboard-sequence",
@@ -1044,7 +1040,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       runtimeRunId,
     });
     const trajectoryFirstPage = kernel.listAgentTrajectory(ownerActor, {
-      agentDefinitionId: definition.definition.agentDefinitionId,
+      agentId: definition.definition.agentId,
       limit: 1,
     });
     assert.equal(presence().activity, "working");
@@ -1058,7 +1054,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
     assert.ok(trajectoryFirstPage.activities[0]?.context?.roomName);
     assert.ok(trajectoryFirstPage.nextCursor);
     const trajectorySecondPage = kernel.listAgentTrajectory(ownerActor, {
-      agentDefinitionId: definition.definition.agentDefinitionId,
+      agentId: definition.definition.agentId,
       beforeActivityId: trajectoryFirstPage.nextCursor,
       limit: 50,
     });
@@ -1066,7 +1062,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
     assert.equal(trajectorySecondPage.activities[0]?.entry.kind, "status");
     assert.equal(
       kernel.listAgentTrajectory(viewerActor, {
-        agentDefinitionId: definition.definition.agentDefinitionId,
+        agentId: definition.definition.agentId,
       }).activities.length,
       0,
       "a control-Room viewer must not learn trajectory from an inaccessible work Room",
@@ -1136,13 +1132,13 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
     );
 
     const firstPage = kernel.listAgentActivity(ownerActor, {
-      agentDefinitionId: definition.definition.agentDefinitionId,
+      agentId: definition.definition.agentId,
       limit: 2,
     });
     assert.equal(firstPage.activities.length, 2);
     assert.ok(firstPage.nextCursor);
     const secondPage = kernel.listAgentActivity(ownerActor, {
-      agentDefinitionId: definition.definition.agentDefinitionId,
+      agentId: definition.definition.agentId,
       beforeActivityId: firstPage.nextCursor,
       limit: 100,
     });
@@ -1195,7 +1191,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
     assert.ok(
       kernel
         .listAgentActivity(viewerActor, {
-          agentDefinitionId: definition.definition.agentDefinitionId,
+          agentId: definition.definition.agentId,
           limit: 100,
         })
         .activities.every(
@@ -1207,7 +1203,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
     assert.throws(
       () =>
         kernel.listAgentActivity(outsiderActor, {
-          agentDefinitionId: definition.definition.agentDefinitionId,
+          agentId: definition.definition.agentId,
           limit: 100,
         }),
       /not found/i,
@@ -1215,7 +1211,7 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
     assert.throws(
       () =>
         kernel.listAgentActivity(ownerActor, {
-          agentDefinitionId: definition.definition.agentDefinitionId,
+          agentId: definition.definition.agentId,
           beforeActivityId: "unknown-activity-cursor",
           limit: 100,
         }),
@@ -1330,7 +1326,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     now.setTime(now.getTime() + 1000);
     const configured = kernel.manageWorkspaceAgent(ownerActor, {
       action: "configure",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       avatarKey: "star",
       basedOnRoomSeq: created.event.roomSeq,
       description: "Reviews production changes.",
@@ -1362,7 +1358,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     assert.equal(
       kernel.manageWorkspaceAgent(ownerActor, {
         action: "configure",
-        agentDefinitionId: created.agent.definition.agentDefinitionId,
+        agentId: created.agent.definition.agentId,
         avatarKey: "star",
         basedOnRoomSeq: created.event.roomSeq,
         description: "Reviews production changes.",
@@ -1387,7 +1383,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       workspaceId: workspace.workspace.workspaceId,
     });
     kernel.onboardAgentToRoom(ownerActor, {
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       basedOnRoomSeq: kernel.sync(ownerActor, {
         afterSeq: 0,
         consumerId: "agent-manage-room-onboard",
@@ -1399,7 +1395,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
 
     const disabled = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       basedOnRoomSeq: roomResult.event.roomSeq,
       idempotencyKey: "agent-manage-disable",
       state: "disabled",
@@ -1415,7 +1411,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     assert.equal(kernel.scheduleNextPlacement({ leaseMs: 30_000 }), null);
     const enabled = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       basedOnRoomSeq: disabled.event.roomSeq,
       idempotencyKey: "agent-manage-enable",
       state: "enabled",
@@ -1445,7 +1441,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     );
     const pausedWithQueuedWork = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       basedOnRoomSeq: enabled.event.roomSeq,
       idempotencyKey: "agent-manage-pause-queued",
       state: "disabled",
@@ -1457,7 +1453,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     );
     const resumedWithQueuedWork = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       basedOnRoomSeq: pausedWithQueuedWork.event.roomSeq,
       idempotencyKey: "agent-manage-resume-queued",
       state: "enabled",
@@ -1501,7 +1497,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     now.setTime(now.getTime() + 1000);
     const disposableConfigured = kernel.manageWorkspaceAgent(ownerActor, {
       action: "configure",
-      agentDefinitionId: disposable.agent.definition.agentDefinitionId,
+      agentId: disposable.agent.definition.agentId,
       basedOnRoomSeq: disposable.event.roomSeq,
       displayName: "Disposable",
       handle: "disposable-agent",
@@ -1531,7 +1527,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     );
     const disposableDisabled = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
-      agentDefinitionId: disposable.agent.definition.agentDefinitionId,
+      agentId: disposable.agent.definition.agentId,
       basedOnRoomSeq: disposableConfigured.event.roomSeq,
       idempotencyKey: "agent-manage-disposable-disable",
       state: "disabled",
@@ -1539,11 +1535,21 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     const lastSeenBeforeDelete = kernel
       .listHosts()
       .map((host) => [host.hostId, host.lastSeenAt]);
+    const oldDirect = kernel.openDirectRoom(ownerActor, {
+      basedOnControlRoomSeq: disposableDisabled.event.roomSeq,
+      idempotencyKey: "old-disposable-direct",
+      peerPrincipalId: disposable.agent.definition.participantId,
+      workspaceId: workspace.workspace.workspaceId,
+    });
     now.setTime(now.getTime() + 1000);
     const deleted = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
-      agentDefinitionId: disposable.agent.definition.agentDefinitionId,
-      basedOnRoomSeq: disposableDisabled.event.roomSeq,
+      agentId: disposable.agent.definition.agentId,
+      basedOnRoomSeq: kernel.sync(ownerActor, {
+        roomId: workspace.controlRoom.roomId,
+        consumerId: "recreate-control",
+        afterSeq: 0,
+      }).latestRoomSeq,
       idempotencyKey: "agent-manage-disposable-delete",
       state: "tombstoned",
     });
@@ -1555,14 +1561,56 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     assert.equal(deleted.agent.definition.state, "tombstoned");
     assert.equal(deleted.event.type, "agent.tombstoned");
     assert.equal(
+      kernel.getWorkspaceAgentManagementView(
+        ownerActor,
+        disposable.agent.definition.agentId,
+      ).membershipRole,
+      undefined,
+    );
+    assert.deepEqual(
+      kernel.listAgentTrajectory(ownerActor, {
+        agentId: disposable.agent.definition.agentId,
+        limit: 5,
+      }).activities,
+      [],
+      "authorized historical diagnostics remain readable after deletion",
+    );
+    const historicalOutsider = kernel.provisionPrincipal({
+      kind: "human",
+      handle: "historical-outsider",
+    });
+    assert.throws(
+      () =>
+        kernel.listAgentTrajectory(
+          kernel.authenticateAccessToken(historicalOutsider.accessToken),
+          {
+            agentId: disposable.agent.definition.agentId,
+            limit: 5,
+          },
+        ),
+      /was not found/,
+      "deletion never grants a nonmember access to diagnostics",
+    );
+    assert.equal(
+      kernel
+        .listAgentCatalog(ownerActor, {
+          controlRoomId: workspace.controlRoom.roomId,
+          includeDeleted: true,
+        })
+        .find(
+          (entry) =>
+            entry.definition.agentId === disposable.agent.definition.agentId,
+        )?.definition.state,
+      "tombstoned",
+    );
+    assert.equal(
       kernel
         .listAgentCatalog(ownerActor, {
           controlRoomId: workspace.controlRoom.roomId,
         })
         .some(
           ({ definition }) =>
-            definition.agentDefinitionId ===
-            disposable.agent.definition.agentDefinitionId,
+            definition.agentId === disposable.agent.definition.agentId,
         ),
       false,
     );
@@ -1571,6 +1619,60 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
         .heartbeatHost(secondHost)
         .participantIds.includes(disposable.agent.definition.participantId),
       false,
+    );
+    const recreateInput = {
+      basedOnRoomSeq: deleted.event.roomSeq,
+      controlRoomId: workspace.controlRoom.roomId,
+      displayName: "Disposable",
+      handle: "disposable-agent",
+      idempotencyKey: "recreate-disposable",
+      instructions: "New identity.",
+      modelIntent: { fallback: "disabled" as const },
+      role: "Temporary Agent",
+      runtimeOfferId: offer.runtimeOfferId,
+      sessionPolicy: "prefer_resume" as const,
+    };
+    const recreated = kernel.provisionWorkspaceAgent(ownerActor, recreateInput);
+    assert.notEqual(
+      recreated.agent.definition.agentId,
+      disposable.agent.definition.agentId,
+    );
+    assert.notEqual(
+      recreated.agent.definition.participantId,
+      disposable.agent.definition.participantId,
+    );
+    assert.equal(recreated.agent.currentRevision.displayName, "Disposable");
+    assert.equal(recreated.agent.handle, "disposable-agent");
+    assert.equal(
+      kernel.provisionWorkspaceAgent(ownerActor, recreateInput).agent.definition
+        .agentId,
+      recreated.agent.definition.agentId,
+    );
+    const historical = kernel.getWorkspaceAgentManagementView(
+      ownerActor,
+      disposable.agent.definition.agentId,
+    );
+    assert.equal(historical.agent.handle, "disposable-agent");
+    assert.equal(historical.agent.definition.state, "tombstoned");
+    const newDirect = kernel.openDirectRoom(ownerActor, {
+      basedOnControlRoomSeq: recreated.event.roomSeq,
+      idempotencyKey: "new-disposable-direct",
+      peerPrincipalId: recreated.agent.definition.participantId,
+      workspaceId: workspace.workspace.workspaceId,
+    });
+    assert.notEqual(newDirect.roomId, oldDirect.roomId);
+    const retainedDirect = kernel
+      .listRooms(ownerActor)
+      .find((room) => room.roomId === oldDirect.roomId);
+    assert.ok(
+      retainedDirect?.directParticipantIds?.includes(
+        disposable.agent.definition.participantId,
+      ),
+    );
+    assert.ok(
+      !retainedDirect?.directParticipantIds?.includes(
+        recreated.agent.definition.participantId,
+      ),
     );
   } finally {
     kernel.close();

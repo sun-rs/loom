@@ -27,7 +27,7 @@ import { WorkspaceSwitcherFixture } from "./workspace-switcher-fixture.tsx";
 
 const agent: WorkspaceAgentView = {
   participantId: "fixture-agent",
-  agentDefinitionId: "fixture-agent",
+  agentId: "fixture-agent",
   handle: "fixture",
   displayName: "很长的 Agent 名称 / Long-name-avatar-inspector-test ".repeat(5),
   description: "测试组件布局，不连接任何 Provider",
@@ -205,10 +205,6 @@ function Fixture() {
             activities={[]}
             error={bodyState === "error" ? "没有读取权限" : undefined}
             loading={bodyState === "loading"}
-            hasEarlier={false}
-            history={false}
-            onLoadEarlier={click}
-            onLatest={click}
             onOpenRoom={click}
           />
         </div>

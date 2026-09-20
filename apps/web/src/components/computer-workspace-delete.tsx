@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -70,7 +71,7 @@ function Confirm({
     setError(undefined);
     try {
       await client.request("agent.memory.reset", {
-        agentDefinitionId: id,
+        agentId: id,
         confirmation: "RESET_AGENT_MEMORY",
         idempotencyKey: key.current,
       });
@@ -84,7 +85,7 @@ function Confirm({
     }
   }
   return (
-    <div className="rah-dialog-layer rah-workspace-delete-confirm">
+    <DialogLayer className="rah-dialog-layer rah-workspace-delete-confirm">
       <div className="rah-dialog-backdrop" />
       <section
         role="dialog"
@@ -123,6 +124,6 @@ function Confirm({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

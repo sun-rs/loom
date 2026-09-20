@@ -96,6 +96,19 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
         ),
       "provisioned Agent joins all in the same transaction",
     );
+    const firstRun = kernel
+      .sync(actor, {
+        roomId: all.room.roomId,
+        consumerId: "first-run-test",
+        afterSeq: 0,
+      })
+      .events.filter((event) => event.type === "agent.first_run_requested");
+    assert.equal(firstRun.length, 1);
+    assert.equal(
+      firstRun[0]!.payload.participantId,
+      first.agent.definition.participantId,
+    );
+    assert.equal(firstRun[0]!.payload.greetingEnabled, true);
     const firstKey = first.agent.currentRevision.avatarKey!;
     assert.ok(OFFICIAL_AGENT_AVATAR_KEYS.includes(firstKey));
     const replay = kernel.provisionWorkspaceAgent(actor, request);

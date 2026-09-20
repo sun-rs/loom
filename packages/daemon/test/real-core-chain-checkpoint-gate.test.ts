@@ -209,7 +209,7 @@ test(
         token,
         "/v3/client/agents/execution/reset",
         {
-          agentDefinitionId: entry.definition.agentDefinitionId,
+          agentId: entry.definition.agentId,
           basedOnRoomSeq: head.latestRoomSeq,
           idempotencyKey: "core-chain-fresh-provider-session",
           mode: "session",

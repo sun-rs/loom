@@ -79,7 +79,7 @@ export const WorkerVisibleProfileSchema = z
     description: z.string().max(3000).optional(),
     avatarKey: IdentifierSchema.optional(),
     isSelf: z.boolean(),
-    agentDefinitionId: IdentifierSchema.optional(),
+    agentId: IdentifierSchema.optional(),
     agentState: AgentDefinitionStateSchema.optional(),
   })
   .strict();

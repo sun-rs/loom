@@ -205,7 +205,7 @@ export function MemberRelationshipSurface({
                     onClick={() =>
                       member.type === "human"
                         ? humanIdentity?.onOpenHuman(member.principalId)
-                        : onOpenAgent(member.agentDefinitionId)
+                        : onOpenAgent(member.agentId)
                     }
                     className="rah-member-graph-summary-row"
                     key={memberKey(member)}
@@ -386,7 +386,7 @@ function MemberGraphCanvas({
                 onClick={
                   member.type === "human"
                     ? () => humanIdentity?.onOpenHuman(member.principalId)
-                    : () => onOpenAgent(member.agentDefinitionId)
+                    : () => onOpenAgent(member.agentId)
                 }
                 triggerClassName={`rah-member-graph-node-trigger is-${member.type}`}
                 content={
@@ -426,9 +426,7 @@ function MemberNodeAvatar({
 }) {
   const entities = useWorkspaceEntities();
   if (member.type === "agent") {
-    const agent = agents.find(
-      ({ agentDefinitionId }) => agentDefinitionId === member.agentDefinitionId,
-    );
+    const agent = agents.find(({ agentId }) => agentId === member.agentId);
     return agent ? (
       <AgentAvatar agent={agent} showStatus={false} size="sidebar" />
     ) : (
@@ -442,7 +440,7 @@ function MemberNodeAvatar({
           participantId: member.participantId,
           presence: {
             activity: "offline",
-            agentDefinitionId: member.agentDefinitionId,
+            agentId: member.agentId,
             reason: "host_offline",
           },
           runtimeAvailable: false,
@@ -490,9 +488,7 @@ function MemberGraphPreview({
   return (
     <div className="rah-member-graph-preview-body">
       <b>{memberDisplayName(member)}</b>
-      <small>
-        @{member.type === "human" ? memberDisplayName(member) : member.handle}
-      </small>
+      <small>@{memberDisplayName(member)}</small>
       <dl>
         <dt>身份</dt>
         <dd>{member.type === "agent" ? "Agent" : "人类"}</dd>

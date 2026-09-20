@@ -112,7 +112,7 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
         role: `split worker ${handles[index]!}`,
         skillRefs: [],
       });
-      agentDefinitionIds.push(definition.definition.agentDefinitionId);
+      agentDefinitionIds.push(definition.definition.agentId);
     }
 
     const hostCredential = seed.provisionHostCredential({
@@ -286,11 +286,11 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     };
 
     let roomSeq = 1;
-    for (const [index, agentDefinitionId] of agentDefinitionIds.entries()) {
+    for (const [index, agentId] of agentDefinitionIds.entries()) {
       const onboarded = await clientRequest<{ event: { roomSeq: number } }>(
         "/v3/client/agents/onboard",
         {
-          agentDefinitionId,
+          agentId,
           basedOnRoomSeq: roomSeq,
           idempotencyKey: `split-agent-onboard-${String(index)}`,
           roomId,

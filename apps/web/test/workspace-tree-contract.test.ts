@@ -8,7 +8,7 @@ test("refresh invalidates directory requests without remounting the expanded tre
   );
   assert.doesNotMatch(
     source,
-    /key=\{`\$\{agentDefinitionId\}:\$\{hidden\}:\$\{revision\}`\}/,
+    /key=\{`\$\{agentId\}:\$\{hidden\}:\$\{revision\}`\}/,
   );
   assert.match(source, /revision=\{revision\}/);
   assert.match(source, /clearTimeout\(copyTimer\.current\)/);

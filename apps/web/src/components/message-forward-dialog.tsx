@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useEffect, useMemo, useState } from "react";
 
@@ -107,7 +108,7 @@ export function MessageForwardDialog({
   }
 
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭转发消息窗口"
         className="rah-dialog-backdrop"
@@ -230,7 +231,7 @@ export function MessageForwardDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 

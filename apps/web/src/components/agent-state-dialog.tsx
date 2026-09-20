@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import type { AgentDeletionDiagnostics } from "@rah-os/protocol";
 import { AgentDeletionStatus } from "./agent-deletion-status.tsx";
@@ -31,7 +32,7 @@ export function AgentStateDialog({
    * without it and never keeps a second copy of deletion state.
    */
   loadDeletionDiagnostics?: (
-    agentDefinitionId: string,
+    agentId: string,
   ) => Promise<AgentDeletionDiagnostics>;
 }) {
   const [key] = useState(() => `web-agent-state-${browserOpaqueId()}`);
@@ -59,7 +60,7 @@ export function AgentStateDialog({
     setError(undefined);
     setDiagnostics(undefined);
     try {
-      await onChange(agent.agentDefinitionId, state, key);
+      await onChange(agent.agentId, state, key);
       if (request.current()) onClose();
     } catch (error) {
       if (request.current())
@@ -68,7 +69,7 @@ export function AgentStateDialog({
       // block projection so the operator sees what must terminate first.
       if (state === "tombstoned" && loadDeletionDiagnostics) {
         try {
-          const read = await loadDeletionDiagnostics(agent.agentDefinitionId);
+          const read = await loadDeletionDiagnostics(agent.agentId);
           if (request.current()) setDiagnostics(read);
         } catch {
           // A failed diagnostic read must not replace the original error.
@@ -82,7 +83,7 @@ export function AgentStateDialog({
     }
   }
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭 Agent 操作窗口"
         className="rah-dialog-backdrop"
@@ -113,7 +114,7 @@ export function AgentStateDialog({
           <>
             <p>
               {state === "disabled"
-                ? `确定要停止“${agent.displayName}”吗？该 Agent 将停止处理消息。`
+                ? `确定停止“${agent.displayName}”吗？停止后不再处理消息。`
                 : `确定要删除“${agent.displayName}”吗？这会移除 Agent 身份及关联权限，且无法撤销。`}
             </p>
             {error && (
@@ -159,6 +160,6 @@ export function AgentStateDialog({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

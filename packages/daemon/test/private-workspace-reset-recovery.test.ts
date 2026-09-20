@@ -95,7 +95,7 @@ async function fixture(t: TestContext, privateWorkspace = true) {
   assert.ok(cwd);
   await writeFile(join(cwd, "original.txt"), "original work");
   const input = {
-    agentDefinitionId: "definition-reset",
+    agentId: "definition-reset",
     mode: "full" as const,
     operationId: "reset-operation",
     ownerParticipantId: principal.principalId,

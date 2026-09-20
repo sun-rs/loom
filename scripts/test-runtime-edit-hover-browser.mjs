@@ -34,6 +34,37 @@ try {
     exact: true,
   });
   await dialog.waitFor();
+  assert.equal(
+    await dialog
+      .locator("h2")
+      .evaluate((el) => getComputedStyle(el).lineHeight),
+    "28px",
+  );
+  assert.deepEqual(
+    await dialog
+      .locator("footer .btn")
+      .first()
+      .evaluate((el) => {
+        const s = getComputedStyle(el);
+        return [s.fontSize, s.lineHeight, s.padding];
+      }),
+    ["14px", "20px", "8px 16px"],
+  );
+
+  assert.equal(
+    await dialog
+      .locator("footer .btn-pink")
+      .evaluate((el) => getComputedStyle(el).opacity),
+    "0.5",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+    390,
+  );
+  await page.screenshot({ path: "/tmp/rah-style-runtime-390.png" });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: "/tmp/rah-style-runtime-1440.png" });
   await page.keyboard.press("Escape");
   await dialog.waitFor({ state: "hidden" });
   await edit.press("Enter");

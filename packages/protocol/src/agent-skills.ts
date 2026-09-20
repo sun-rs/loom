@@ -29,7 +29,7 @@ export const AgentSkillsScopeSchema = z
   .strict();
 export const AgentSkillsListRequestSchema = z
   .object({
-    agentDefinitionId: z.string().min(1),
+    agentId: z.string().min(1),
   })
   .strict();
 export const AgentSkillsListSchema = z

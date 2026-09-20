@@ -1,3 +1,4 @@
+import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { MembershipRole } from "@rah-os/protocol";
 import { useEffect, useRef, useState } from "react";
@@ -98,8 +99,8 @@ export function HumanProfilePane({
       <PanelHeader kind="surface" className="rah-agent-detail-head">
         <PanelHeaderAction
           className="rah-agent-mobile-back"
-          aria-label={onClose ? "返回聊天" : (backLabel ?? "返回成员列表")}
-          onClick={onClose ?? onBack}
+          aria-label={backLabel ?? (onClose ? "返回聊天" : "返回成员列表")}
+          onClick={onBack}
         >
           <Icon name="arrow-left" />
         </PanelHeaderAction>
@@ -112,7 +113,7 @@ export function HumanProfilePane({
         )}
         <div className="rah-agent-detail-identity">
           <h2>{name}</h2>
-          {human && <p>@{human.displayName || human.handle}</p>}
+          {human && <p>@{human.handle}</p>}
         </div>
         {human && human.principalId !== actorId && context && (
           <PanelHeaderAction
@@ -297,11 +298,11 @@ export function HumanProfilePane({
                 <div className="rah-profile-cards">
                   {profile.createdAgents.map((agent) => (
                     <AgentEntityCard
-                      key={agent.agentDefinitionId}
+                      key={agent.agentId}
                       agent={agent}
                       runtimeLabel={entities
-                        ?.runtimesForAgent(agent.agentDefinitionId)
-                        .map((runtime) => runtime.displayName)
+                        ?.runtimesForAgent(agent.agentId)
+                        .map(runtimeProductLabel)
                         .join(" · ")}
                       onOpen={onOpenAgent}
                     />

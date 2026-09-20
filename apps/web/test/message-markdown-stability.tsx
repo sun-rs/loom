@@ -38,7 +38,7 @@ const original = [
 const references: MessageMarkdownReferences = {
   agents: [
     {
-      agentDefinitionId: "agent-alice",
+      agentId: "agent-alice",
       createdAt: "2026-09-02T00:00:00.000Z",
       createdBy: "human",
       displayName: "Alice Assistant",
@@ -108,7 +108,7 @@ const previewClient = {
 } as unknown as RahClient;
 
 const workingAgent = {
-  agentDefinitionId: "agent-working",
+  agentId: "agent-working",
   avatarKey: "skull",
   connectionStatus: "online",
   createdAt: "2026-09-03T00:00:00.000Z",
@@ -120,7 +120,7 @@ const workingAgent = {
   presence: {
     activity: "thinking",
     activityAt: new Date().toISOString(),
-    agentDefinitionId: "agent-working",
+    agentId: "agent-working",
     reason: "thinking",
   },
   role: "Assistant",
@@ -132,13 +132,13 @@ const workingAgent = {
 
 const onlineAgent = {
   ...workingAgent,
-  agentDefinitionId: "agent-online",
+  agentId: "agent-online",
   displayName: "Online Agent",
   handle: "OnlineAgent",
   participantId: "participant-online",
   presence: {
     activity: "online",
-    agentDefinitionId: "agent-online",
+    agentId: "agent-online",
     reason: "online",
   },
 } as WorkspaceAgentView;
@@ -470,8 +470,8 @@ function Fixture() {
           value={{
             client: previewClient,
             computerLabel: undefined,
-            onOpen: (agentDefinitionId) => {
-              openedTarget.current = `agent:${agentDefinitionId}`;
+            onOpen: (agentId) => {
+              openedTarget.current = `agent:${agentId}`;
             },
             runtimes: [],
           }}

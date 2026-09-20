@@ -19,7 +19,7 @@ export function updateAgentProfile(
   return updateAgentProfilePatch(
     owner,
     {
-      agentDefinitionId: input.agentDefinitionId,
+      agentId: input.agentId,
       expectedRevisionId: input.expectedRevisionId,
       basedOnRoomSeq: input.basedOnRoomSeq,
       idempotencyKey: input.idempotencyKey,
@@ -35,7 +35,7 @@ export function updateAgentProfile(
 export function updateAgentProfilePatch(
   owner: WorkspaceAgentManagementOwner,
   input: {
-    agentDefinitionId: string;
+    agentId: string;
     expectedRevisionId: string;
     basedOnRoomSeq: number;
     idempotencyKey: string;
@@ -44,7 +44,7 @@ export function updateAgentProfilePatch(
   },
   requestDigest: string,
 ) {
-  const record = readAgentDefinition(owner.database, input.agentDefinitionId);
+  const record = readAgentDefinition(owner.database, input.agentId);
   if (record.definition.state === "tombstoned")
     throw new ConflictError("a tombstoned Agent cannot be edited");
   const previous = record.currentRevision;
@@ -58,7 +58,7 @@ export function updateAgentProfilePatch(
     contentDigest: _digest,
     createdAt: _createdAt,
     createdBy: _createdBy,
-    agentDefinitionId: _agent,
+    agentId: _agent,
     ...content
   } = previous;
   if (input.patch.description === "") delete content.description;
@@ -71,7 +71,7 @@ export function updateAgentProfilePatch(
   const createdAt = owner.now().toISOString();
   const revision = AgentDefinitionRevisionSchema.parse({
     ...content,
-    agentDefinitionId: input.agentDefinitionId,
+    agentId: input.agentId,
     agentDefinitionRevisionId: owner.createId("agent_definition_revision"),
     revision: previous.revision + 1,
     contentDigest: canonicalDigest(content),
@@ -84,7 +84,7 @@ export function updateAgentProfilePatch(
     )
     .run(
       revision.agentDefinitionRevisionId,
-      revision.agentDefinitionId,
+      revision.agentId,
       revision.revision,
       revision.contentDigest,
       JSON.stringify(revision),
@@ -96,21 +96,17 @@ export function updateAgentProfilePatch(
     .prepare(
       "UPDATE agent_definitions SET current_revision_id = ?, updated_at = ? WHERE agent_definition_id = ?",
     )
-    .run(
-      revision.agentDefinitionRevisionId,
-      createdAt,
-      input.agentDefinitionId,
-    );
+    .run(revision.agentDefinitionRevisionId, createdAt, input.agentId);
   const principal = owner.database
     .prepare("SELECT handle FROM principals WHERE principal_id = ?")
     .get(record.definition.participantId)!;
   return owner.events.append({
     actorId: owner.actorId,
-    aggregateId: input.agentDefinitionId,
+    aggregateId: input.agentId,
     aggregateType: "agent_definition",
     idempotencyKey: input.idempotencyKey,
     payload: {
-      agentDefinitionId: input.agentDefinitionId,
+      agentId: input.agentId,
       agentDefinitionRevisionId: revision.agentDefinitionRevisionId,
       agentState: record.definition.state,
       basedOnRoomSeq: input.basedOnRoomSeq,

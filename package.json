@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:web:agent-first-run": "node scripts/test-agent-first-run-browser.mjs",
     "test:web:agent-start": "node scripts/test-agent-direct-start-browser.mjs",
     "check:repository-identity": "node scripts/repository-identity.mjs",
     "test:repository-identity": "node --test scripts/repository-identity.test.mjs",
@@ -38,9 +39,10 @@
     "test:web:error-boundary": "node scripts/test-surface-error-boundary-browser.mjs",
     "test:web:agent-configure": "node scripts/run-agent-configure-browser-gate.mjs",
     "test:web:browser": "node scripts/run-real-browser-gate.mjs",
+    "test:web:shared-navigation": "node scripts/test-shared-navigation-browser.mjs && node scripts/test-search-history-stability-browser.mjs",
     "test:web:mobile-navigation": "node scripts/test-mobile-tab-navigation-browser.mjs && node scripts/test-task-empty-stability-browser.mjs && node scripts/test-task-touch-scroll-browser.mjs",
     "test:web:chat-approval": "node scripts/test-chat-approval-browser.mjs",
-    "test:web:task-presentation": "node scripts/test-task-presentation-browser.mjs && node scripts/test-task-title-retry-browser.mjs",
+    "test:web:task-presentation": "node scripts/test-task-presentation-browser.mjs && node scripts/test-task-title-retry-browser.mjs && node scripts/test-task-card-hit-area-browser.mjs",
     "test:web:message-menu": "node scripts/test-mobile-message-menu-browser.mjs",
     "test:web:message-selection": "node scripts/test-message-selection-refinement-browser.mjs",
     "test:web:sidebar-geometry": "node scripts/test-sidebar-geometry-browser.mjs",
@@ -79,6 +81,7 @@
     "ui:contract:generate": "node scripts/ui-behavior-registry.mjs --write",
     "test:web:local-help": "node scripts/run-local-help-browser-gate.mjs",
     "test:web:file-download": "node scripts/run-file-download-browser-gate.mjs",
+    "test:web:room-add-members": "node scripts/test-room-add-members-browser.mjs",
     "test:web:agent-model-appearance": "node scripts/test-agent-model-appearance-browser.mjs",
     "test:web:settings-repair": "node scripts/test-settings-repair-browser.mjs && node scripts/test-settings-archive-browser.mjs && node scripts/test-agent-activity-repair-browser.mjs",
     "test:web:agent-preview": "node scripts/run-agent-preview-browser-gate.mjs",

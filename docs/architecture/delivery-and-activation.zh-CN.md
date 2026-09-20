@@ -292,3 +292,15 @@ Activation 的执行授权按当前 `attempt_count` 对应的 Run／Placement �
 Inbox/Activation。界面“重新打开任务”不是重新委派执行。closed/cancelled 后退回重做、
 重新指派及后续显式消息仍沿用各自投递合同；Worker 的证据式状态接口不变。
 见 [本批验证及用户要求](../audits/2026-09-15-message-touch-selection-export.zh-CN.md)。
+
+## 新 Agent 首次初始化
+
+产品 #all 存在时，新身份 provision 与定向 `agent.first_run_requested` 在同一
+Kernel 事务提交，通过现有 Inbox → Activation → AgentHost → RunAttempt 调度。
+Workspace `agentAllChannelGreetingEnabled` 默认开启，设置只影响随后创建的身份；
+关闭仍初始化但不发介绍。请求与保留发送键均绑定 participant ID，同名不合并。
+报到完成由实际 message.posted 证明，读取确认或成功退出不能替代；提交后跨执行
+尝试的重试返回同一消息。停止、删除、离线恢复使用原有围栏，无新的任务或调度队列。
+无 #all 的 headless Workspace 不调度，也不回退到 control Room。
+来源、一次性条件、异步能力发布限制及测试见
+[首次报到审计](../audits/2026-09-20-agent-first-run-greeting.zh-CN.md)。

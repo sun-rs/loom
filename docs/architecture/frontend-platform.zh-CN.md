@@ -1,5 +1,9 @@
 # 前端平台架构：Web/PWA 优先、共享状态内核与薄原生壳
 
+2026-09-20：大页导航偏好由 workspace-switcher-state 按 Human/Workspace/大页隔离保存；
+聊天临时资料侧栏不覆盖成员大页选择。窄屏有选中内容展示右侧，无选中内容展示列表。
+详见[选择记忆与响应式验收](../audits/2026-09-20-surface-selection-parity.zh-CN.md)。
+
 2026-09-04 资源维护政策更新：[ADR 0028](../adr/0028-owned-neo-brutalist-ui-library.md)
 和 [RAH Neo-Brutalist UI](../design/neo-brutalist-ui.md) 取代下文旧 snapshot→generated
 采用描述。资源现在是内部可维护源码，通用展示组件位于 ui-web/src/neo-brutalist；
@@ -36,10 +40,11 @@ scroll 事件的原生滚动。参见[滚动所有者排查](../audits/2026-09-1
 - 不承诺 React DOM component 可以无成本转成 SwiftUI；
 - 不在 Phase 4 前用静态页面填补尚未存在的 daemon command。
 
-当前会话布局采用[Room／私聊最多两页](../audits/2026-09-14-two-page-conversation-layout.zh-CN.md)：
-conversation-panels统一选择点击来源和最新目标，Thread与人员页共用右侧槽位宽度；
-Room设置和Task详情模态是独立覆盖层。先为inspector扣宽再给Room/Thread分栏的旧三列策略
-已被取代，保留页面的草稿和测量继续归原组件owner。
+当前搜索、动态和聊天采用[共享导航与折叠合同](../product/shared-conversation-navigation.zh-CN.md)：
+`conversation-panels` 选择真实来源和最新目标，最多两个内容槽加一个列表，逻辑路径可以更深。
+`conversation-layout` 仅依赖可用宽度；列表仍在时最右层显示 X，独占内容区时显示返回。
+隐藏不关闭，关闭只退出当前层，保留页面的草稿和测量继续归原组件 owner。
+Room 设置抽屉和 Task 详情模态是独立容器，不套用主内容的按钮互斥规则。
 
 ## 2. 单向依赖与数据流
 
@@ -379,3 +384,9 @@ Agent 与 Human 目录复用 `useReconciledQuery` 的可见性轮询、超时及
 2026-09-14 移动主页细化：主页覆盖聊天时不标记后台聊天选中，搜索/动态统一从导航抽屉进入；主页与抽屉共用同位置工作区标题。触摸上下文菜单由共享 owner 锁定背景滚动并区分滑动与外部点击。见[实现与验证](../audits/2026-09-14-mobile-home-context-menu-stability.zh-CN.md)。
 
 2026-09-14 最新移动导航决策：[iOS 风格根导航](../audits/2026-09-14-mobile-ios-tab-navigation.zh-CN.md)替代上文左侧抽屉。首页/任务/成员/设置共享底部浮层导航，详情隐藏并使用原有逐层返回；搜索、动态、铃铛回到首页。屏幕内可编辑搜索控件采用移动 16px 字号并保留手动缩放。业务状态及导航动作 owner 不变。
+
+2026-09-20 [会话未读统一合同](../audits/2026-09-20-conversation-unread-rule.zh-CN.md)：HumanActivity 合并普通消息与正文系统通知，sidebar bold/badge 共用 summary；列表点击统一确认当前会话边界，不新增浏览器计数。
+
+2026-09-20：首次初始化排队状态由 Kernel 从现有 Activation/first-run event 投影为
+presence 的 initializing 原因，底栏显示“等待初始化”；真实工作仍依赖 RunAttempt/轨迹。
+[初始化和动态栏证据](../audits/2026-09-20-agent-first-run-greeting.zh-CN.md)。

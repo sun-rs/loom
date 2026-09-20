@@ -73,13 +73,13 @@ export function requireAgentExecutionEnabled(
 
 export function readAgentDefinition(
   database: DatabaseSync,
-  agentDefinitionId: string,
+  agentId: string,
 ): AgentDefinitionRecord {
   const row = requireRow(
     database
       .prepare("SELECT * FROM agent_definitions WHERE agent_definition_id = ?")
-      .get(agentDefinitionId),
-    `AgentDefinition ${agentDefinitionId} was not found`,
+      .get(agentId),
+    `AgentDefinition ${agentId} was not found`,
   );
   return {
     currentRevision: AgentDefinitionRevisionSchema.parse(
@@ -102,9 +102,9 @@ export function readAgentDefinition(
 export function getWorkspaceAgentManagementView(
   database: DatabaseSync,
   actorId: string,
-  agentDefinitionId: string,
+  agentId: string,
 ): ClientAgentGetResponse {
-  const record = readAgentDefinition(database, agentDefinitionId);
+  const record = readAgentDefinition(database, agentId);
   requireHumanControlRoomManager(
     database,
     record.definition.controlRoomId,
@@ -135,12 +135,15 @@ export function getWorkspaceAgentManagementView(
       record.definition.controlRoomId,
       record.definition.participantId,
     ),
-    creator: readOriginalAgentCreator(database, agentDefinitionId),
-    membershipRole: roomRole(
-      database,
-      record.definition.controlRoomId,
-      record.definition.participantId,
-    ),
+    creator: readOriginalAgentCreator(database, agentId),
+    membershipRole:
+      record.definition.state === "tombstoned"
+        ? undefined
+        : roomRole(
+            database,
+            record.definition.controlRoomId,
+            record.definition.participantId,
+          ),
     agent: {
       currentRevision: record.currentRevision,
       definition: record.definition,
@@ -152,7 +155,7 @@ export function getWorkspaceAgentManagementView(
 
 function readOriginalAgentCreator(
   database: DatabaseSync,
-  agentDefinitionId: string,
+  agentId: string,
 ): ClientAgentCreator | null {
   const row = database
     .prepare(
@@ -164,7 +167,7 @@ function readOriginalAgentCreator(
          AND agent_definition_revisions.revision = 1
        LIMIT 1`,
     )
-    .get(agentDefinitionId);
+    .get(agentId);
   if (row === undefined) return null;
   const kind = text(row, "kind");
   if (kind !== "human" && kind !== "agent") return null;
@@ -237,8 +240,8 @@ export function manageWorkspaceAgentTransaction(
   const definitionRow = requireRow(
     owner.database
       .prepare("SELECT * FROM agent_definitions WHERE agent_definition_id = ?")
-      .get(input.agentDefinitionId),
-    `AgentDefinition ${input.agentDefinitionId} was not found`,
+      .get(input.agentId),
+    `AgentDefinition ${input.agentId} was not found`,
   );
   const controlRoomId = text(definitionRow, "control_room_id");
   requireHumanControlRoomManager(owner.database, controlRoomId, owner.actorId);
@@ -255,7 +258,7 @@ export function manageWorkspaceAgentTransaction(
     const event = owner.events.eventFromRow(previous);
     if (
       event.actorId !== owner.actorId ||
-      event.aggregateId !== input.agentDefinitionId ||
+      event.aggregateId !== input.agentId ||
       event.payload.requestDigest !== requestDigest ||
       ![
         "agent.configured",
@@ -278,7 +281,7 @@ export function manageWorkspaceAgentTransaction(
       .prepare(
         "SELECT 1 FROM room_events WHERE aggregate_id=? AND type='agent.deletion_requested' LIMIT 1",
       )
-      .get(input.agentDefinitionId)
+      .get(input.agentId)
   ) {
     throw new ConflictError("Agent deletion is in progress");
   }
@@ -317,7 +320,9 @@ function configureAgent(
   }
   const participantId = text(definitionRow, "participant_id");
   const handleOwner = owner.database
-    .prepare("SELECT principal_id FROM principals WHERE handle = ?")
+    .prepare(
+      "SELECT p.principal_id FROM principals p LEFT JOIN agent_definitions a ON a.participant_id=p.principal_id WHERE p.handle = ? COLLATE BINARY AND (a.state IS NULL OR a.state<>'tombstoned')",
+    )
     .get(input.handle);
   if (
     handleOwner !== undefined &&
@@ -450,7 +455,7 @@ function configureAgent(
   };
   const revision = AgentDefinitionRevisionSchema.parse({
     ...revisionContent,
-    agentDefinitionId: input.agentDefinitionId,
+    agentId: input.agentId,
     agentDefinitionRevisionId,
     contentDigest: canonicalDigest(revisionContent),
     createdAt,
@@ -463,7 +468,7 @@ function configureAgent(
     )
     .run(
       revision.agentDefinitionRevisionId,
-      revision.agentDefinitionId,
+      revision.agentId,
       revision.revision,
       revision.contentDigest,
       JSON.stringify(revision),
@@ -478,7 +483,7 @@ function configureAgent(
     .prepare(
       "UPDATE agent_definitions SET current_revision_id = ?, updated_at = ? WHERE agent_definition_id = ?",
     )
-    .run(agentDefinitionRevisionId, createdAt, input.agentDefinitionId);
+    .run(agentDefinitionRevisionId, createdAt, input.agentId);
   if (hostChanged) {
     revokeHostParticipant(
       owner.database,
@@ -497,11 +502,11 @@ function configureAgent(
   );
   const event = owner.events.append({
     actorId: owner.actorId,
-    aggregateId: input.agentDefinitionId,
+    aggregateId: input.agentId,
     aggregateType: "agent_definition",
     idempotencyKey: input.idempotencyKey,
     payload: {
-      agentDefinitionId: input.agentDefinitionId,
+      agentId: input.agentId,
       agentDefinitionRevisionId,
       agentState: text(definitionRow, "state"),
       basedOnRoomSeq: input.basedOnRoomSeq,
@@ -596,14 +601,14 @@ function setAgentState(
     .prepare(
       "UPDATE agent_definitions SET state = ?, updated_at = ? WHERE agent_definition_id = ?",
     )
-    .run(input.state, updatedAt, input.agentDefinitionId);
+    .run(input.state, updatedAt, input.agentId);
   const event = owner.events.append({
     actorId: owner.actorId,
-    aggregateId: input.agentDefinitionId,
+    aggregateId: input.agentId,
     aggregateType: "agent_definition",
     idempotencyKey: input.idempotencyKey,
     payload: {
-      agentDefinitionId: input.agentDefinitionId,
+      agentId: input.agentId,
       agentDefinitionRevisionId: currentRevisionId,
       agentState: input.state,
       basedOnRoomSeq: input.basedOnRoomSeq,
@@ -628,7 +633,7 @@ function setAgentState(
         idempotencyKey: `${input.idempotencyKey}:activation-retry-resume:${retry.activationId}`,
         payload: {
           activationId: retry.activationId,
-          agentDefinitionId: input.agentDefinitionId,
+          agentId: input.agentId,
           errorFingerprint: retry.errorFingerprint,
           ...(retry.mergedActivationId === undefined
             ? {}
@@ -725,7 +730,7 @@ export function managementResultFromEvent(
   const definitionRow = requireRow(
     database
       .prepare("SELECT * FROM agent_definitions WHERE agent_definition_id = ?")
-      .get(eventPayloadText(event, "agentDefinitionId")),
+      .get(eventPayloadText(event, "agentId")),
     "managed AgentDefinition was not found",
   );
   const revision = AgentDefinitionRevisionSchema.parse(
@@ -742,7 +747,7 @@ export function managementResultFromEvent(
     ),
   );
   const definition = AgentDefinitionSchema.parse({
-    agentDefinitionId: text(definitionRow, "agent_definition_id"),
+    agentId: text(definitionRow, "agent_definition_id"),
     controlRoomId: text(definitionRow, "control_room_id"),
     createdAt: text(definitionRow, "created_at"),
     currentRevisionId: revision.agentDefinitionRevisionId,
@@ -882,7 +887,7 @@ function requireRow(row: Row | undefined, message: string): Row {
 
 function definitionFromRow(row: Row) {
   return AgentDefinitionSchema.parse({
-    agentDefinitionId: text(row, "agent_definition_id"),
+    agentId: text(row, "agent_definition_id"),
     controlRoomId: text(row, "control_room_id"),
     createdAt: text(row, "created_at"),
     currentRevisionId: text(row, "current_revision_id"),

@@ -1,3 +1,4 @@
+import { canonicalAgentIdField } from "@rah-os/protocol";
 export type Row = Record<string, null | number | bigint | string | Uint8Array>;
 
 export function text(row: Row, key: string): string {
@@ -35,7 +36,11 @@ export function jsonObject(row: Row, key: string): Record<string, unknown> {
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`expected ${key} to contain a JSON object`);
   }
-  return parsed as Record<string, unknown>;
+  return (
+    key === "definition_json" || key === "payload_json"
+      ? canonicalAgentIdField(parsed)
+      : parsed
+  ) as Record<string, unknown>;
 }
 
 export function stringArray(row: Row, key: string): string[] {

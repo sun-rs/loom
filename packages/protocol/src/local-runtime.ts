@@ -22,7 +22,7 @@ export const LocalRuntimeInventoryEntrySchema = z
     agentBindings: z.array(
       z
         .object({
-          agentDefinitionId: IdentifierSchema,
+          agentId: IdentifierSchema,
           handle: IdentifierSchema,
           participantId: IdentifierSchema,
         })
@@ -30,6 +30,7 @@ export const LocalRuntimeInventoryEntrySchema = z
     ),
     available: z.boolean(),
     configured: z.boolean(),
+    customModelRuntime: z.enum(["claude", "codex"]).optional(),
     cliId: z.enum(["codex", "kimi", "opencode", "claude"]).optional(),
     displayName: z.string().trim().min(1),
     executable: z.string().trim().min(1),

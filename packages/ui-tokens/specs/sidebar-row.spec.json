@@ -318,6 +318,14 @@
   "fixtureMarkupFile": "packages/ui-tokens/specs/sidebar-row.fixture-markup.json",
   "rules": [
     {
+      "file": "apps/web/src/chat-surface.css",
+      "selector": ".rah-room-sidebar .channel-row[data-unread=\"true\"]",
+      "state": "base",
+      "source": "Raft 1.16.0 lx; docs/audits/2026-09-20-surface-selection-parity.zh-CN.md",
+      "reason": "用户确认未读会话即使未选中也加粗，与原数字标识共享 canonical unreadCount。",
+      "declarations": { "font-weight": "700" }
+    },
+    {
       "file": "apps/web/src/mobile-navigation.css",
       "selector": "html[data-rah-hide-empty-sidebar-sections=\"true\"] .rah-room-sidebar [data-sidebar-group]:has(.side-section[data-empty=\"true\"])",
       "state": "base",
@@ -776,7 +784,9 @@
       "declarations": {
         "flex": "1",
         "min-width": "0",
-        "font": "500 12px/16px \"Raft Quote Glyphs\", \"Space Grotesk\", system-ui, sans-serif",
+        "font": "inherit",
+        "font-size": "12px",
+        "line-height": "16px",
         "color": "rgba(0,0,0,.4)",
         "white-space": "nowrap",
         "overflow": "hidden",
@@ -898,9 +908,9 @@
       "status": "registered-unresolved",
       "pending": "room-sidebar-reuses-channel-row",
       "source": "apps/web/src/chat-surface.css",
-      "reason": "同上：房间侧栏的选中行把字重钉回 500。",
+      "reason": "2026-09-20 用户确认选中加粗；Raft 1.16.0 lx selected font-bold，详见大页选择审计。",
       "declarations": {
-        "font-weight": "500"
+        "font-weight": "700"
       },
       "since": "2026-09-11",
       "evidenceNeeded": "双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。"

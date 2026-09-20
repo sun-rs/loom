@@ -3,7 +3,7 @@
 .rah-task-detail-layer {
   padding: 16px;
 }
-.app .rah-task-detail-dialog .thread-side-column {
+.rah-task-detail-dialog .thread-side-column {
   position: relative;
   inset: auto;
   display: flex;
@@ -280,13 +280,12 @@
 
 .rah-task-detail-assignment {
   display: flex;
-  gap: 24px;
+  gap: 8px;
   min-width: 0;
   max-width: 100%;
 }
-.rah-task-detail-assignment > div:last-child {
+.rah-task-detail-assignment > dd {
   min-width: 0;
-  flex: 1;
 }
 .rah-task-detail-assignment .task-filter-trigger {
   max-width: 100%;
@@ -310,7 +309,7 @@
     gap: 12px;
   }
   .rah-task-approval-compact .rah-task-detail-assignment {
-    gap: 12px;
+    gap: 8px;
     flex: 0 1 auto;
   }
   .rah-task-approval-compact

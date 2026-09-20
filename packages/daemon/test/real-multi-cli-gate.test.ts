@@ -170,7 +170,7 @@ test(
           "/v3/client/agents/manage",
           {
             action: "configure",
-            agentDefinitionId: agent.definition.agentDefinitionId,
+            agentId: agent.definition.agentId,
             basedOnRoomSeq: controlDelivery.latestRoomSeq,
             displayName: spec.displayName,
             handle: spec.agentHandle,

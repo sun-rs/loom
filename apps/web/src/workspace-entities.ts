@@ -116,10 +116,7 @@ export function createPrincipalObservationFence(
 export function createWorkspaceEntities(input: Input) {
   const scoped = Boolean(input.workspaceId && input.actorId);
   const agents = new Map(
-    (scoped ? input.agents : []).map((agent) => [
-      agent.agentDefinitionId,
-      agent,
-    ]),
+    (scoped ? input.agents : []).map((agent) => [agent.agentId, agent]),
   );
   const people = new Map<string, PersonIdentity>();
   const humans = new Map(
@@ -161,7 +158,7 @@ export function createWorkspaceEntities(input: Input) {
       ...(agent.avatarKey ? { avatarKey: agent.avatarKey } : {}),
     });
     edges.push({
-      from: `agent:${agent.agentDefinitionId}`,
+      from: `agent:${agent.agentId}`,
       to: `principal:${agent.participantId}`,
       kind: "identity",
     });
@@ -172,13 +169,13 @@ export function createWorkspaceEntities(input: Input) {
       const runtimeId = runtime.runtimeOfferId ?? runtime.runtimeProfileId;
       if (!runtime.configured || !runtimeId) continue;
       for (const binding of runtime.agentBindings) {
-        const agent = agents.get(binding.agentDefinitionId);
+        const agent = agents.get(binding.agentId);
         if (!agent || agent.participantId !== binding.participantId) continue;
-        const options = bindings.get(agent.agentDefinitionId) ?? new Map();
+        const options = bindings.get(agent.agentId) ?? new Map();
         options.set(runtimeId, runtime);
-        bindings.set(agent.agentDefinitionId, options);
+        bindings.set(agent.agentId, options);
         edges.push({
-          from: `agent:${agent.agentDefinitionId}`,
+          from: `agent:${agent.agentId}`,
           to: `runtime:${runtimeId}`,
           kind: "uses-runtime",
         });
@@ -202,7 +199,7 @@ export function createWorkspaceEntities(input: Input) {
   return {
     catalogRevision: JSON.stringify(
       [...agents.values()].map((agent) => [
-        agent.agentDefinitionId,
+        agent.agentId,
         agent.agentDefinitionRevisionId,
         agent.state,
       ]),
@@ -216,6 +213,7 @@ export function createWorkspaceEntities(input: Input) {
     human: (id: string) => humans.get(id),
     humans: () => [...humans.values()],
     person: (id: string) => people.get(id),
+    people: () => [...people.values()],
     humanProfile(profile: HumanProfileResponse) {
       if (!scoped || profile.workspaceId !== input.workspaceId)
         return undefined;
@@ -252,6 +250,12 @@ export function createWorkspaceEntities(input: Input) {
     computerForAgent: (id: string) =>
       bindings.has(id) ? input.computer : undefined,
     runtimesForAgent,
+    runtimesForOffers: (offerIds: readonly string[]) =>
+      input.runtimes.filter((runtime) =>
+        offerIds.includes(
+          runtime.runtimeOfferId ?? runtime.runtimeProfileId ?? "",
+        ),
+      ),
     runtimeForAgent(id: string, modelBindingId?: string) {
       return selectBoundRuntime(runtimesForAgent(id), modelBindingId);
     },
@@ -260,7 +264,7 @@ export function createWorkspaceEntities(input: Input) {
         const agent = agents.get(id)!;
         return {
           agent,
-          agentDefinitionId: id,
+          agentId: id,
           handle: agent.handle,
           runtimeLabel: runtimesForAgent(id)
             .map(runtimeProductLabel)

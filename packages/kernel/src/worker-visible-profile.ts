@@ -64,7 +64,7 @@ export function visibleWorkerProfile(
     ...(description !== undefined ? { description } : {}),
     ...(avatarKey !== undefined ? { avatarKey } : {}),
     isSelf: principal.principalId === scope.participantId,
-    ...(definitionId ? { agentDefinitionId: definitionId } : {}),
+    ...(definitionId ? { agentId: definitionId } : {}),
     ...(state ? { agentState: state } : {}),
     ...workerProfileLifecycle(db, scope, row, definitionId, now),
     creator: creator ? person(creator) : null,
@@ -82,7 +82,7 @@ export function visibleWorkerProfile(
         const configured = configuration(db, child, metadata);
         return {
           ...person(child),
-          agentDefinitionId: text(child, "agent_definition_id"),
+          agentId: text(child, "agent_definition_id"),
           state: text(child, "agent_state"),
           runtimes: configured.runtimeTargets.map((target) => ({
             runtimeOfferId: target.runtimeOfferId,
@@ -147,11 +147,16 @@ function configuration(
     ids = policy.required.allowedOfferIds ?? [],
     bindingIds = policy.modelIntent.exactBindingIds ?? [];
   return {
-    modelSelection: bindingIds.length
-      ? "binding_ids"
-      : policy.modelIntent.capabilityClass
-        ? "capability_class"
-        : "runtime_default",
+    ...(policy.modelIntent.customModel
+      ? { customModelId: policy.modelIntent.customModel.modelId }
+      : {}),
+    modelSelection: policy.modelIntent.customModel
+      ? "custom_model"
+      : bindingIds.length
+        ? "binding_ids"
+        : policy.modelIntent.capabilityClass
+          ? "capability_class"
+          : "runtime_default",
     ...(policy.modelIntent.capabilityClass
       ? { capabilityClass: policy.modelIntent.capabilityClass }
       : {}),
@@ -234,6 +239,9 @@ function actualRun(
     model: model
       ? {
           source: model.source,
+          ...(model.source === "custom_model"
+            ? { modelId: model.modelId }
+            : {}),
           ...(model.source === "explicit_binding"
             ? {
                 modelBindingId: model.modelBindingId,

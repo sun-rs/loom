@@ -1,10 +1,11 @@
+import { runtimeProductName } from "../agent-runtime-presentation.ts";
 import {
   rememberTaskFilters,
   restoreTaskFilters,
 } from "../task-filter-session.ts";
 import { useMobileLayout } from "../use-mobile-layout.ts";
 import { activityDisplayText } from "../activity-display-names.ts";
-import { useResponsiveTaskView } from "../use-responsive-task-view.ts";
+import { useTaskViewPreference } from "../use-task-view-preference.ts";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
@@ -62,12 +63,17 @@ import {
   SearchDestinationCard,
   type SearchDestination,
 } from "./search-cards.tsx";
-import { visibleSearchResults } from "../search-visible-results.ts";
+import {
+  visibleSearchResults,
+  searchDirectoryMatches,
+  isDirectoryOnlySearch,
+} from "../search-visible-results.ts";
 
 type Props = {
   client: RahClient;
   workspaceId: string;
   rooms: readonly Room[];
+  archivedRooms?: readonly Room[];
   currentHuman: Principal | undefined;
   surface: GlobalSurface;
   onOpen: DiscoveryNavigationHandler;
@@ -80,6 +86,7 @@ type Props = {
 };
 
 export function GlobalDiscoverySurface(props: Props) {
+  const entities = useWorkspaceEntities();
   const catalog = useDiscoveryQuery(props.client, "search", {
     workspaceId: props.workspaceId,
     query: "",
@@ -90,8 +97,34 @@ export function GlobalDiscoverySurface(props: Props) {
   ) : props.surface === "search" ? (
     <GlobalSearch
       {...props}
-      rooms={catalog.data?.rooms ?? props.rooms}
-      people={people}
+      rooms={[
+        ...new Map(
+          [
+            ...(catalog.data?.rooms ?? []),
+            ...props.rooms,
+            ...(props.archivedRooms ?? []),
+          ]
+            .filter((room) => room.workspaceId === props.workspaceId)
+            .map((room) => [room.roomId, room]),
+        ).values(),
+      ]}
+      people={[
+        ...new Map(
+          [...people, ...(entities?.people() ?? [])]
+            .filter(
+              (person) =>
+                person.kind !== "agent" ||
+                entities
+                  ?.agents()
+                  .some(
+                    (agent) =>
+                      agent.participantId === person.principalId &&
+                      agent.state !== "tombstoned",
+                  ),
+            )
+            .map((person) => [person.principalId, person]),
+        ).values(),
+      ]}
     />
   ) : (
     <GlobalActivity {...props} people={people} />
@@ -319,10 +352,14 @@ function GlobalTasks({
     result.refresh();
   }, [taskRefreshVersion, result.refresh]);
   const selectedView = params.get("view");
-  const { ref: taskPaneRef, view } = useResponsiveTaskView(
-    selectedView === "board" || selectedView === "list"
-      ? selectedView
-      : undefined,
+  const {
+    ref: taskPaneRef,
+    view,
+    remember,
+  } = useTaskViewPreference(
+    workspaceId,
+    currentHuman?.principalId,
+    selectedView,
   );
   const tasks = result.data?.tasks ?? [];
   const columns = createRoomViewModel({
@@ -349,7 +386,10 @@ function GlobalTasks({
           key={mode}
           role="radio"
           aria-checked={view === mode}
-          onClick={() => change("view", [mode])}
+          onClick={() => {
+            remember(mode);
+            change("view", [mode]);
+          }}
         >
           <Icon name={mode === "board" ? "columns-3" : "layout-list"} />
           {mode === "board" ? "看板" : "列表"}
@@ -459,6 +499,7 @@ function GlobalSearch({
   const filters = useFilters("search");
   const { params, change } = filters;
   const query = params.get("q") ?? "";
+  const directoryOnly = isDirectoryOnlySearch(query);
   const scopes = normalizeScopes(params.getAll("scope"));
   const senderKind = senderKindForScopes(scopes);
   const sender = people.find(
@@ -497,7 +538,7 @@ function GlobalSearch({
       ...(beforeBound ? { before: beforeBound } : {}),
       ...(filters.cursor ? { cursor: filters.cursor } : {}),
     },
-    !composing && searchActive,
+    !composing && searchActive && !directoryOnly,
   );
   const searchScope = JSON.stringify({
     workspaceId,
@@ -517,42 +558,58 @@ function GlobalSearch({
     readSearchHistory(window.localStorage, workspaceId),
   );
   const destinations: SearchDestination[] = [
-    ...rooms.map((room): SearchDestination => {
-      const rawPeer = people.find(
-        (person) =>
-          room.directParticipantIds?.includes(person.principalId) &&
-          person.principalId !== currentHuman?.principalId,
-      );
-      const peer = rawPeer
-        ? (entities?.resolvePerson(rawPeer) ?? rawPeer)
-        : undefined;
-      return {
-        key: `room:${room.roomId}`,
-        privateChannel: room.visibility === "private",
-        title: peer?.displayName || peer?.handle || room.name,
-        subtitle: peer
-          ? `@${peer.kind === "human" ? peer.displayName || peer.handle : peer.handle}`
-          : room.description || "频道",
-        badge: peer ? (peer.kind === "agent" ? "Agent" : "人类成员") : "频道",
-        roomId: room.roomId,
-        kind: peer ? (peer.kind === "agent" ? "agent" : "human") : "channel",
-        ...(peer?.avatarKey ? { avatarKey: peer.avatarKey } : {}),
-        ...(peer ? { principalId: peer.principalId } : {}),
-      };
-    }),
+    ...rooms
+      .filter(
+        (room) =>
+          room.kind === "channel" ||
+          people.some(
+            (person) =>
+              room.directParticipantIds?.includes(person.principalId) &&
+              person.principalId !== currentHuman?.principalId,
+          ),
+      )
+      .map((room): SearchDestination => {
+        const rawPeer = people.find(
+          (person) =>
+            room.directParticipantIds?.includes(person.principalId) &&
+            person.principalId !== currentHuman?.principalId,
+        );
+        const peer = rawPeer
+          ? (entities?.resolvePerson(rawPeer) ?? rawPeer)
+          : undefined;
+        return {
+          key: `room:${room.roomId}`,
+          archived: !!room.archivedAt,
+          privateChannel: room.visibility === "private",
+          ...(peer ? { searchText: peer.handle } : {}),
+          title: peer?.displayName || peer?.handle || room.name,
+          subtitle: peer
+            ? `@${peer.displayName || peer.handle}`
+            : room.description || "频道",
+          badge: peer ? (peer.kind === "agent" ? "Agent" : "人类成员") : "频道",
+          roomId: room.roomId,
+          kind: peer ? (peer.kind === "agent" ? "agent" : "human") : "channel",
+          ...(peer?.avatarKey ? { avatarKey: peer.avatarKey } : {}),
+          ...(peer ? { principalId: peer.principalId } : {}),
+        };
+      }),
     ...people
       .filter((person) => person.principalId !== currentHuman?.principalId)
       .map((person) => entities?.resolvePerson(person) ?? person)
       .map((person) => ({
         key: `person:${person.principalId}`,
         title: person.displayName || person.handle,
-        subtitle: `@${person.kind === "human" ? person.displayName || person.handle : person.handle}`,
+        searchText: person.handle,
+        subtitle: `@${person.displayName || person.handle}`,
         badge: person.kind === "agent" ? "Agent" : "人类成员",
         principalId: person.principalId,
         kind: person.kind === "agent" ? ("agent" as const) : ("human" as const),
         ...(person.avatarKey ? { avatarKey: person.avatarKey } : {}),
       })),
   ];
+  const directoryMatches = composing
+    ? undefined
+    : searchDirectoryMatches(query, destinations);
   const usageScope = `${workspaceId}:${currentHuman?.principalId ?? "local"}`;
   const frequent = frequentSearchEntities(
     window.localStorage,
@@ -587,10 +644,20 @@ function GlobalSearch({
   useEffect(() => {
     setHistory(readSearchHistory(window.localStorage, workspaceId));
   }, [workspaceId]);
-  const groupedHits = useMemo(() => groupSearchHits(searchHits), [searchHits]);
+  const groupedHits = useMemo(
+    () => (directoryOnly ? [] : groupSearchHits(searchHits)),
+    [searchHits, directoryOnly],
+  );
   const visibleResults = visibleSearchResults(
-    result.data,
-    searchHits,
+    directoryMatches
+      ? {
+          rooms: directoryMatches.filter((entry) => entry.kind === "channel"),
+          principals: directoryMatches
+            .filter((entry) => entry.kind !== "channel")
+            .map((entry) => ({ principalId: entry.principalId! })),
+        }
+      : result.data,
+    directoryOnly ? [] : searchHits,
     currentHuman?.principalId,
   );
   const [personError, setPersonError] = useState<string>();
@@ -826,7 +893,7 @@ function GlobalSearch({
           )
         ) : (
           <div className="result-list">
-            {result.loading && !result.data ? (
+            {result.loading && !result.data && !directoryMatches?.length ? (
               <SearchResultSkeleton />
             ) : result.error && !result.data ? (
               <section className="rah-search-failure" role="alert">
@@ -837,14 +904,17 @@ function GlobalSearch({
                 </button>
               </section>
             ) : null}
-            {result.data && (
+            {(result.data || directoryMatches) && (
               <p className="rah-search-count">{visibleResults.count} 条结果</p>
             )}
             {Boolean(
-              result.data?.rooms.length || visibleResults.principals.length,
+              directoryMatches?.length ||
+              result.data?.rooms.length ||
+              visibleResults.principals.length,
             ) && <h2 className="rah-search-section-title">服务器内容</h2>}
-            {destinations
-              .filter((entry) =>
+            {(
+              directoryMatches ??
+              destinations.filter((entry) =>
                 entry.roomId
                   ? result.data?.rooms.some(
                       (room) => room.roomId === entry.roomId,
@@ -853,13 +923,13 @@ function GlobalSearch({
                       (person) => person.principalId === entry.principalId,
                     ),
               )
-              .map((entry) => (
-                <SearchDestinationCard
-                  key={entry.key}
-                  entry={entry}
-                  onOpen={openDestination}
-                />
-              ))}
+            ).map((entry) => (
+              <SearchDestinationCard
+                key={entry.key}
+                entry={entry}
+                onOpen={openDestination}
+              />
+            ))}
             {groupedHits.length > 0 && (
               <h2 className="rah-search-section-title">消息</h2>
             )}
@@ -874,7 +944,7 @@ function GlobalSearch({
             ))}
             {!result.loading &&
               !result.error &&
-              result.data &&
+              (result.data || directoryMatches) &&
               visibleResults.count === 0 && (
                 <EmptyState
                   context="search"
@@ -926,7 +996,7 @@ function SearchResultPanel({
       {group.kind === "thread" && (
         <header>
           <span>消息列</span>
-          <b>#{first.roomName}</b>
+          <b>#{runtimeProductName(first.roomName)}</b>
           <span>{group.hits.length} 条匹配</span>
           <time>
             {formatActivityRelativeTime(
@@ -956,7 +1026,7 @@ function SearchResultPanel({
                   ?.kind === "direct"
                   ? "@"
                   : "#"}
-                {hit.roomName}
+                {runtimeProductName(hit.roomName)}
                 {hit.rootMessageId && " · 消息列"}
               </span>
               <span className="rah-search-hit-author">
@@ -983,7 +1053,7 @@ function SearchResultPanel({
                 searchExcerpt(
                   activityDisplayText(
                     hit.message.body,
-                    entities?.humans().map((member) => member.principal) ?? [],
+                    entities?.people() ?? [],
                   ),
                   query,
                 ),
@@ -1013,19 +1083,26 @@ function GlobalActivity({
   const entities = useWorkspaceEntities();
   const humans = [
     ...new Map(
-      [...people, ...(currentHuman ? [currentHuman] : [])]
-        .filter((person) => person.kind === "human")
-        .map(
-          (person) =>
-            [
-              person.principalId,
-              entities?.resolvePerson(person) ?? person,
-            ] as const,
-        ),
+      [
+        ...people,
+        ...(entities?.people() ?? []),
+        ...(currentHuman ? [currentHuman] : []),
+      ].map(
+        (person) =>
+          [
+            person.principalId,
+            entities?.resolvePerson(person) ?? person,
+          ] as const,
+      ),
     ).values(),
   ];
   const displayText = (source: string) => activityDisplayText(source, humans);
   const actionGate = useRef(createLatestRequest());
+  const openingKey = useRef<string | undefined>(undefined);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
   useEffect(() => () => actionGate.current.cancel(), [client, workspaceId]);
   const filters = useFilters("activity");
   const filter =
@@ -1047,11 +1124,25 @@ function GlobalActivity({
     setPending(undefined);
     setError(undefined);
   }, [actionScope, client, workspaceId]);
+  useEffect(
+    () => () => clearTimeout(clickTimer.current),
+    [actionScope, client, workspaceId],
+  );
   async function mark(
     item: HumanActivityItem,
     action: "done" | "read",
     open = false,
+    enterChat = false,
   ) {
+    if (
+      open &&
+      !enterChat &&
+      (openingKey.current === item.key ||
+        new URLSearchParams(window.location.search).get("previewMessage") ===
+          item.latestMessage.messageId)
+    )
+      return;
+    if (open) openingKey.current = item.key;
     const epoch = open
       ? (beginNavigation?.() ?? navigationEpoch?.())
       : navigationEpoch?.();
@@ -1063,27 +1154,16 @@ function GlobalActivity({
     try {
       // Do not clear unread if the exact target is unavailable (e.g. membership revoked).
       if (open) {
-        const context = await client.request(
-          "message.context",
-          {
-            messageId: item.latestMessage.messageId,
-          },
-          { signal: request.signal },
-        );
+        // Activity already carries the stable message and Room IDs. The shared
+        // navigation resolver checks access and supplies canonical Thread context.
         if (!request.current()) return;
         await onOpen({
           target: {
             kind: "message",
-            roomId: context.message.roomId,
-            messageId: context.message.messageId,
-            ...(context.message.threadId === undefined
-              ? {}
-              : { threadId: context.message.threadId }),
-            ...(context.rootMessageId === undefined
-              ? {}
-              : { rootMessageId: context.rootMessageId }),
+            roomId: item.roomId,
+            messageId: item.latestMessage.messageId,
           },
-          surface: "activity",
+          surface: enterChat ? "room" : "activity",
         });
         // The mounted conversation acknowledges the messages actually in its viewport.
         return;
@@ -1102,7 +1182,10 @@ function GlobalActivity({
       if (request.current())
         setError(failure instanceof Error ? failure.message : "处理失败");
     } finally {
-      if (request.owns()) setPending(undefined);
+      if (request.owns()) {
+        setPending(undefined);
+        openingKey.current = undefined;
+      }
     }
   }
   async function readVisible() {
@@ -1207,8 +1290,24 @@ function GlobalActivity({
               >
                 <button
                   className="fc-content rah-activity-open"
-                  onClick={() => void mark(item, "read", true)}
-                  disabled={pending !== undefined}
+                  onClick={(event) => {
+                    clearTimeout(clickTimer.current);
+                    if (event.detail >= 2) {
+                      void mark(item, "read", true, true);
+                    } else if (
+                      event.detail === 0 ||
+                      (event.nativeEvent as PointerEvent).pointerType ===
+                        "touch"
+                    ) {
+                      void mark(item, "read", true);
+                    } else {
+                      // Raft Activity mn: reserve 220ms for a second click.
+                      clickTimer.current = setTimeout(
+                        () => void mark(item, "read", true),
+                        220,
+                      );
+                    }
+                  }}
                 >
                   {item.threadId && (
                     <span className="fc-channel">

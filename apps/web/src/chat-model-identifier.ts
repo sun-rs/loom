@@ -3,9 +3,7 @@ export function chatModelIdentifier(model: {
   modelId: string;
   provider?: string;
 }): string {
-  const modelId = model.modelId.trim();
-  const provider = model.provider?.trim();
-  return provider && !modelId.startsWith(`${provider}/`)
-    ? `${provider}/${modelId}`
-    : modelId;
+  // A missing runtime catalog exposes the stored local binding instead.
+  // Strip only its transport namespace; preserve the provider/model identity.
+  return model.modelId.trim().replace(/^local:[^:]+\/v\d+:/u, "");
 }

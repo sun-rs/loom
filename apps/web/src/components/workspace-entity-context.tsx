@@ -1,3 +1,5 @@
+import { ComposerChannelContext } from "./composer-channel-context.tsx";
+import type { ComposerChannel } from "../composer-mention.ts";
 import type { ConversationOrigin } from "../conversation-panels.ts";
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -52,6 +54,7 @@ export const AgentMessageContext = createContext<
 
 export function WorkspaceEntityProvider({
   entities,
+  channels = [],
   client,
   onOpen,
   onOpenHuman,
@@ -62,6 +65,7 @@ export function WorkspaceEntityProvider({
   canManageAgents = false,
 }: {
   entities: WorkspaceEntities;
+  channels?: readonly ComposerChannel[];
   client: RahClient;
   onOpen: (id: string, origin?: ConversationOrigin) => void;
   onOpenHuman: (id: string, origin?: ConversationOrigin) => void;
@@ -102,27 +106,31 @@ export function WorkspaceEntityProvider({
   }
   const fence = principalFence.current.fence;
   return (
-    <WorkspaceEntityContext.Provider value={entities}>
-      <AgentMessageContext.Provider value={{ client, onOpen, canManageAgents }}>
-        <HumanIdentityContext.Provider
-          value={{
-            client,
-            onOpenHuman,
-            onPrincipalUpdated,
-            onOpenDirect,
-            capturePrincipal: fence.capture,
-            beginPrincipalWrite: fence.beginWrite,
-            finishPrincipalWrite: fence.finishWrite,
-            subscribePrincipal: fence.subscribe,
-            commitPrincipal: fence.commit,
-            observePrincipal: fence.observe,
-          }}
+    <ComposerChannelContext.Provider value={channels}>
+      <WorkspaceEntityContext.Provider value={entities}>
+        <AgentMessageContext.Provider
+          value={{ client, onOpen, canManageAgents }}
         >
-          <ComputerIdentityContext.Provider value={onOpenComputer}>
-            {children}
-          </ComputerIdentityContext.Provider>
-        </HumanIdentityContext.Provider>
-      </AgentMessageContext.Provider>
-    </WorkspaceEntityContext.Provider>
+          <HumanIdentityContext.Provider
+            value={{
+              client,
+              onOpenHuman,
+              onPrincipalUpdated,
+              onOpenDirect,
+              capturePrincipal: fence.capture,
+              beginPrincipalWrite: fence.beginWrite,
+              finishPrincipalWrite: fence.finishWrite,
+              subscribePrincipal: fence.subscribe,
+              commitPrincipal: fence.commit,
+              observePrincipal: fence.observe,
+            }}
+          >
+            <ComputerIdentityContext.Provider value={onOpenComputer}>
+              {children}
+            </ComputerIdentityContext.Provider>
+          </HumanIdentityContext.Provider>
+        </AgentMessageContext.Provider>
+      </WorkspaceEntityContext.Provider>
+    </ComposerChannelContext.Provider>
   );
 }

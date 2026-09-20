@@ -160,7 +160,7 @@ export function resolveWorkerReadTarget(
     if (!handle || extra.length || suffix === "")
       throw new NotFoundError("read target is unavailable");
     where =
-      "r.kind='direct' AND peer.handle=? AND (d.left_principal_id=? OR d.right_principal_id=?)";
+      "r.kind='direct' AND peer.handle=? COLLATE BINARY AND NOT EXISTS (SELECT 1 FROM agent_definitions a WHERE a.participant_id=peer.principal_id AND a.state='tombstoned') AND (d.left_principal_id=? OR d.right_principal_id=?)";
     values = [handle, origin.participantId, origin.participantId];
     threadRef = suffix;
     directHandle = handle;

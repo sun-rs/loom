@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
@@ -29,7 +30,7 @@ import {
 
 export type AgentMembershipIdentity = Pick<
   WorkspaceAgentView,
-  "agentDefinitionId" | "handle" | "participantId"
+  "agentId" | "handle" | "participantId"
 >;
 
 export function RoomCreateDialog({
@@ -73,7 +74,7 @@ export function RoomCreateDialog({
   );
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭新建频道窗口"
         className="rah-dialog-backdrop"
@@ -297,7 +298,7 @@ export function RoomCreateDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -316,6 +317,7 @@ export function RoomMembersDialog({
   onArchive,
   onClose: onClosed,
   renderProfile,
+  onCreateAgent,
   onHideAll,
   onDelete,
   onLeave,
@@ -341,6 +343,7 @@ export function RoomMembersDialog({
   onArchive: () => Promise<void>;
   onClose: () => void;
   onHideAll?: () => Promise<void>;
+  onCreateAgent?: (() => void) | undefined;
   renderProfile?: (
     target: { kind: "agent" | "human"; id: string },
     onBack: () => void,
@@ -550,6 +553,7 @@ export function RoomMembersDialog({
     try {
       await (archive ? onArchive() : onUnarchive());
       setArchiveConfirmOpen(false);
+      if (!archive) onClose();
     } catch (caught) {
       setActionError(errorMessage(caught));
       throw caught;
@@ -689,10 +693,13 @@ export function RoomMembersDialog({
             }
             blocked={mutationBlocked}
             canAdd={canAdd}
+            archived={roomArchived}
             fixedMembership={fixedMembership}
             canManageRoles={canManageRoles}
             canRemove={canRemove}
             candidates={candidates}
+            channelName={room?.name ?? ""}
+            onCreateAgent={onCreateAgent}
             humans={humans}
             memberships={memberships}
             onBack={back}
@@ -749,7 +756,7 @@ export function RoomMembersDialog({
                     <AgentAvatar agent={agent} size="header" />
                   </button>
                 ))}
-                {!fixedMembership && (
+                {!fixedMembership && !roomArchived && (
                   <button
                     aria-label="添加成员"
                     className="rah-channel-member-add"
@@ -952,23 +959,29 @@ export function RoomMembersDialog({
                 )}
                 {room?.slug !== "all" && (
                   <>
-                    <button
-                      className="btn rah-channel-visibility-button"
-                      ref={visibilityTriggerRef}
-                      disabled={!canUpdate || roomArchived || mutationBlocked}
-                      onClick={() => {
-                        setActionError(undefined);
-                        setVisibilityConfirm(
-                          room?.visibility === "public" ? "private" : "public",
-                        );
-                      }}
-                      type="button"
-                    >
-                      <Icon
-                        name={room?.visibility === "public" ? "lock" : "hash"}
-                      />
-                      {room?.visibility === "public" ? "设为私密" : "设为公开"}
-                    </button>
+                    {!roomArchived && (
+                      <button
+                        className="btn rah-channel-visibility-button"
+                        ref={visibilityTriggerRef}
+                        disabled={!canUpdate || roomArchived || mutationBlocked}
+                        onClick={() => {
+                          setActionError(undefined);
+                          setVisibilityConfirm(
+                            room?.visibility === "public"
+                              ? "private"
+                              : "public",
+                          );
+                        }}
+                        type="button"
+                      >
+                        <Icon
+                          name={room?.visibility === "public" ? "lock" : "hash"}
+                        />
+                        {room?.visibility === "public"
+                          ? "设为私密"
+                          : "设为公开"}
+                      </button>
+                    )}
                     {roomArchived ? (
                       <button
                         className="btn"
@@ -1165,7 +1178,10 @@ function RoomAgentSosDialog({
   const blocked = stopping || resuming;
   const dialogRef = useDialogProtocol({ blocked, onClose });
   return (
-    <div className="rah-dialog-layer rah-room-sos-dialog" role="presentation">
+    <DialogLayer
+      className="rah-dialog-layer rah-room-sos-dialog"
+      role="presentation"
+    >
       <div aria-hidden="true" className="rah-dialog-backdrop" />
       <section
         aria-labelledby="rah-room-sos-title"
@@ -1246,7 +1262,7 @@ function RoomAgentSosDialog({
           </>
         )}
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -1265,7 +1281,7 @@ export function RoomArchiveConfirmation({
 }) {
   const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
   return (
-    <div
+    <DialogLayer
       className="rah-dialog-layer rah-room-archive-confirm"
       role="presentation"
     >
@@ -1310,7 +1326,7 @@ export function RoomArchiveConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -1329,7 +1345,7 @@ function RoomLeaveConfirmation({
 }) {
   const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
   return (
-    <div
+    <DialogLayer
       className="rah-dialog-layer rah-room-leave-confirm"
       role="presentation"
     >
@@ -1378,11 +1394,11 @@ function RoomLeaveConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
-function RoomDeleteConfirmation({
+export function RoomDeleteConfirmation({
   blocked,
   error,
   name,
@@ -1397,7 +1413,7 @@ function RoomDeleteConfirmation({
 }) {
   const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
   return (
-    <div
+    <DialogLayer
       className="rah-dialog-layer rah-room-delete-confirm"
       role="presentation"
     >
@@ -1442,7 +1458,7 @@ function RoomDeleteConfirmation({
           </button>
         </footer>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 

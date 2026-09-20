@@ -7,13 +7,13 @@ export function projectCreatedAgentViews(
 ): WorkspaceAgentView[] {
   if (detail === undefined) return [];
   const live = new Map(
-    directory.map((agent) => [agent.agentDefinitionId, agent] as const),
+    directory.map((agent) => [agent.agentId, agent] as const),
   );
   return detail.createdAgents.map((entry) => {
-    const current = live.get(entry.definition.agentDefinitionId);
+    const current = live.get(entry.definition.agentId);
     if (current !== undefined) return current;
     return {
-      agentDefinitionId: entry.definition.agentDefinitionId,
+      agentId: entry.definition.agentId,
       agentDefinitionRevisionId:
         entry.currentRevision.agentDefinitionRevisionId,
       ...(entry.currentRevision.avatarKey === undefined

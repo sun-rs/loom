@@ -1,3 +1,7 @@
+import {
+  identityDisplayName,
+  directRoomDisplayName,
+} from "./identity-display-name.ts";
 import { boundRows } from "./bounded-read-rows.ts";
 import {
   resolveWorkerReadTarget,
@@ -459,8 +463,12 @@ export class GlobalDiscovery {
       ...(filtered ? { rooms: [], principals: [] } : directory),
       hits: taken.map((row) => ({
         message: messageProjectionFromRow(row),
-        roomName: row.room_name,
-        senderName: row.sender_name,
+        roomName:
+          directRoomDisplayName(this.db, text(row, "room_id"), actorId) ??
+          row.room_name,
+        senderName:
+          identityDisplayName(this.db, text(row, "actor_id")) ??
+          row.sender_name,
         target: {
           kind: "message",
           roomId: row.room_id,

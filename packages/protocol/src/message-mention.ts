@@ -26,7 +26,7 @@ function maskRange(mask: string[], start: number, end: number): void {
  * code, math, authored links, URLs and HTML/autolink syntax are not delivery
  * instructions and therefore remain masked for every caller.
  */
-function visibleMessageText(source: string): string {
+export function visibleMessageText(source: string): string {
   // RegExp match.index and String#slice are UTF-16 code-unit based. Keep this
   // mask on the same index system; a code-point spread would shift every range
   // after an astral character such as an emoji.
@@ -157,7 +157,7 @@ export function unresolvedMentionHandles(
     )
       continue;
     const handle = token.slice(1);
-    const key = messageReferenceNameKey(handle);
+    const key = handle;
     if (seen.has(key)) continue;
     seen.add(key);
     unresolved.push(handle);
@@ -176,23 +176,11 @@ export function messageMentionCandidates(
 ): MessageMentionCandidate[] {
   const visible = visibleMessageText(source);
   const candidates: MessageMentionCandidate[] = [];
-  const handlesByKey = new Map<string, Set<string>>();
-  for (const handle of knownHandles.filter(Boolean)) {
-    const key = messageReferenceNameKey(handle);
-    const values = handlesByKey.get(key) ?? new Set<string>();
-    values.add(handle);
-    handlesByKey.set(key, values);
-  }
-  // Case/NFKC-equivalent but differently spelled handles are ambiguous. A
-  // mention must fail closed instead of selecting one identity or waking both.
-  const handles = [...handlesByKey.values()]
-    .filter((values) => values.size === 1)
-    .map((values) => [...values][0]!)
-    .sort(
-      (left, right) => right.length - left.length || left.localeCompare(right),
-    );
+  const handles = [...new Set(knownHandles.filter(Boolean))].sort(
+    (left, right) => right.length - left.length || left.localeCompare(right),
+  );
   for (const handle of handles) {
-    const pattern = new RegExp(`@${escapedPattern(handle)}`, "giu");
+    const pattern = new RegExp(`@${escapedPattern(handle)}`, "gu");
     const unicodeBoundary = /[^\x00-\x7f]/u.test(handle);
     for (const match of visible.matchAll(pattern)) {
       if (match.index === undefined) continue;

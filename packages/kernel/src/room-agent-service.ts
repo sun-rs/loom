@@ -116,6 +116,7 @@ export function listAgentCatalogRows(
   database: DatabaseSync,
   actorId: string,
   controlRoomId?: string,
+  includeDeleted = false,
 ): Row[] {
   return database
     .prepare(
@@ -136,17 +137,23 @@ export function listAgentCatalogRows(
        JOIN memberships
          ON memberships.room_id = agent_definitions.control_room_id
         AND memberships.principal_id = ?
-       WHERE agent_definitions.state <> 'tombstoned'
+       WHERE (? = 1 OR agent_definitions.state <> 'tombstoned')
          AND (? IS NULL OR agent_definitions.control_room_id = ?)
        ORDER BY principals.handle, agent_definitions.agent_definition_id`,
     )
-    .all(actorId, controlRoomId ?? null, controlRoomId ?? null);
+    .all(
+      actorId,
+      includeDeleted ? 1 : 0,
+      controlRoomId ?? null,
+      controlRoomId ?? null,
+    );
 }
 
 export function listAgentCatalog(
   database: DatabaseSync,
   actorId: string,
   controlRoomId?: string,
+  includeDeleted = false,
 ): AgentCatalogEntry[] {
   const principal = database
     .prepare("SELECT kind FROM principals WHERE principal_id = ?")
@@ -156,7 +163,12 @@ export function listAgentCatalog(
       "Agent catalog requires an authenticated Human principal",
     );
   }
-  return listAgentCatalogRows(database, actorId, controlRoomId).map((row) =>
+  return listAgentCatalogRows(
+    database,
+    actorId,
+    controlRoomId,
+    includeDeleted,
+  ).map((row) =>
     AgentCatalogEntrySchema.parse({
       ...(nullableText(row, "model_binding_id")
         ? { modelBindingId: text(row, "model_binding_id") }
@@ -165,7 +177,7 @@ export function listAgentCatalog(
         jsonObject(row, "definition_json"),
       ),
       definition: AgentDefinitionSchema.parse({
-        agentDefinitionId: text(row, "agent_definition_id"),
+        agentId: text(row, "agent_definition_id"),
         controlRoomId: text(row, "control_room_id"),
         createdAt: text(row, "created_at"),
         currentRevisionId: text(row, "current_revision_id"),
@@ -181,7 +193,7 @@ export function listAgentCatalog(
 export function listWorkspaceAgentRooms(
   database: DatabaseSync,
   actorId: string,
-  agentDefinitionId: string,
+  agentId: string,
 ): Room[] {
   const definition = database
     .prepare(
@@ -199,11 +211,9 @@ export function listWorkspaceAgentRooms(
        WHERE agent_definitions.agent_definition_id = ?
          AND agent_definitions.state <> 'tombstoned'`,
     )
-    .get(actorId, agentDefinitionId);
+    .get(actorId, agentId);
   if (definition === undefined) {
-    throw new NotFoundError(
-      `AgentDefinition ${agentDefinitionId} was not found`,
-    );
+    throw new NotFoundError(`AgentDefinition ${agentId} was not found`);
   }
   return database
     .prepare(
@@ -228,7 +238,7 @@ export function listWorkspaceAgentRooms(
 }
 
 export type AgentActivityListInput = {
-  agentDefinitionId: string;
+  agentId: string;
   beforeActivityId?: string;
   limit?: number;
 };
@@ -256,11 +266,9 @@ export function listAgentActivity(
        WHERE agent_definitions.agent_definition_id = ?
          AND agent_definitions.state <> 'tombstoned'`,
     )
-    .get(actorId, input.agentDefinitionId);
+    .get(actorId, input.agentId);
   if (scope === undefined) {
-    throw new NotFoundError(
-      `AgentDefinition ${input.agentDefinitionId} was not found`,
-    );
+    throw new NotFoundError(`AgentDefinition ${input.agentId} was not found`);
   }
   const limit = input.limit ?? 50;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
@@ -303,7 +311,7 @@ export function listAgentActivity(
     workspaceId,
     actorId,
     participantId,
-    input.agentDefinitionId,
+    input.agentId,
     participantId,
     participantId,
     participantId,
@@ -438,7 +446,7 @@ export function listAgentActivity(
   const hasMore = rows.length > limit;
   const activities = rows
     .slice(0, limit)
-    .map((row) => activityRecord(row, participantId, input.agentDefinitionId));
+    .map((row) => activityRecord(row, participantId, input.agentId));
   return {
     activities,
     ...(hasMore && activities.length > 0
@@ -450,7 +458,7 @@ export function listAgentActivity(
 function activityRecord(
   row: Row,
   participantId: string,
-  agentDefinitionId: string,
+  agentId: string,
 ): AgentActivityRecord {
   if (text(row, "source") === "managed_mcp_call") {
     return managedMcpActivityRecord(row);
@@ -460,7 +468,7 @@ function activityRecord(
     Number(row.agent_run) === 1 || Number(row.agent_activation) === 1
       ? "runtime"
       : text(row, "aggregate_type") === "agent_definition" &&
-          text(row, "aggregate_id") === agentDefinitionId
+          text(row, "aggregate_id") === agentId
         ? "configuration"
         : text(row, "actor_id") === participantId
           ? "performed"

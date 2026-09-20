@@ -210,6 +210,7 @@ export class MessageForwardingService {
           attachments:
             attachmentsJson === null ? [] : JSON.parse(attachmentsJson),
           body: text(row, "body"),
+          mentions: JSON.parse(String(row.mentions_json ?? "[]")),
           createdAt: text(row, "created_at"),
           isThreadChild: threadId !== null,
           sourceMessageId: text(row, "message_id"),

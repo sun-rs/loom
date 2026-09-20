@@ -15,7 +15,7 @@ const digest = (character: string) => `sha256:${character.repeat(64)}`;
 
 test("placement protocol keeps Agent identity and immutable behavior revisions separate", () => {
   const definition = AgentDefinitionSchema.parse({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     controlRoomId: "room-control",
     createdAt: at,
     currentRevisionId: "agent-revision-1",
@@ -26,7 +26,7 @@ test("placement protocol keeps Agent identity and immutable behavior revisions s
   assert.equal(definition.participantId, "agent-1");
 
   const revision = AgentDefinitionRevisionSchema.parse({
-    agentDefinitionId: definition.agentDefinitionId,
+    agentId: definition.agentId,
     agentDefinitionRevisionId: "agent-revision-1",
     contentDigest: digest("a"),
     createdAt: at,

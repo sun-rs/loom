@@ -119,13 +119,21 @@
 .rah-room-add-candidate > span:last-child {
   min-width: 0;
   flex: 1;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .rah-room-add-candidate b {
   font-size: 14px;
   font-weight: 500;
+  line-height: 20px;
+  display: block;
 }
 .rah-room-add-candidate small {
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: block;
   font-size: 12px;
   color: #666;
@@ -142,13 +150,17 @@
   box-sizing: border-box;
 }
 .rah-room-add-candidate[aria-pressed="true"] .rah-room-member-checkbox {
-  background: var(--pink);
+  background: var(--black);
+  color: white;
 }
 .rah-room-add-candidate:disabled {
   cursor: default;
 }
 .rah-room-add-submit {
-  margin: 18px 16px;
+  margin: 16px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 20px;
   width: calc(100% - 32px);
   min-height: 36px;
 }
@@ -553,5 +565,108 @@
   .rah-room-member-entry,
   .rah-room-member-entry.rah-member-row {
     padding-block: 4px;
+  }
+}
+
+.rah-room-member-page.is-add .rah-room-member-search input {
+  height: 40px;
+  min-height: 40px;
+}
+.rah-room-add-candidates {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rah-room-add-candidate-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.rah-room-selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+}
+.rah-room-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 2px solid var(--black);
+  padding: 2px 6px;
+  background: var(--cyan);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+}
+.rah-room-selected-chip > span {
+  max-width: 128px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rah-room-selected-chip button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  cursor: pointer;
+}
+.rah-room-selected-chip svg {
+  width: 12px;
+  height: 12px;
+}
+.rah-room-create-agent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  width: 100%;
+  border: 0;
+  border-top: 2px solid var(--black);
+  padding: 10px 12px;
+  text-align: left;
+  background: white;
+  color: var(--black);
+  cursor: pointer;
+}
+.rah-room-create-agent:hover {
+  background: #0000000d;
+}
+.rah-room-create-agent > span:last-child {
+  min-width: 0;
+}
+.rah-room-create-agent b {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+}
+.rah-room-create-agent small {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+  color: #0008;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rah-room-create-agent-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 2px dashed var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rah-room-create-agent-icon svg {
+  width: 14px;
+  height: 14px;
+}
+@media (max-height: 600px) {
+  .rah-room-add-candidate {
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 }

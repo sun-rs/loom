@@ -28,7 +28,7 @@ function agent(
 ): AgentRuntimeContext {
   return {
     agentDefinitionRevision: {
-      agentDefinitionId: `definition-${participantId}`,
+      agentId: `definition-${participantId}`,
       agentDefinitionRevisionId: `revision-${participantId}`,
       contentDigest: `sha256:${"1".repeat(64)}`,
       createdAt: "2026-08-29T12:00:00.000+08:00",

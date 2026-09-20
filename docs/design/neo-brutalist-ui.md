@@ -112,6 +112,8 @@ over the actual surface; a sampled screenshot RGB must not replace that recipe.
 | `property-option`  | Agent assignee and equivalent property options | Yellow 30%                | Shared menu highlight: yellow 30%     | Preserve the selected-value checkmark          |
 | `autocomplete`     | Chat mention and sidebar conversation search   | Yellow 50%                | Opaque yellow                         | Accept the candidate using the existing action |
 
+| `channel-autocomplete` | Composer channel references | Opaque yellow; archived black 5% | Pink; archived black 10% | Insert the channel reference |
+
 These profiles are exported by `ChoiceRow` in `ui-web/neo-brutalist/choice-row`.
 `profile` is required. `current` is available only for autocomplete/property
 options. Member selection explicitly opts into `selection="tint"` plus `selected`;
@@ -407,3 +409,21 @@ PWA 复制文本页使用浅黄底黑框的只读内容区：通过 contentedita
 
 PWA 紧凑 Task 审批状态和负责人共一组，负责人省略超长文字；创建人按可用宽度换行。
 来源与测试见 [消息长按和导出](../audits/2026-09-15-message-touch-selection-export.zh-CN.md)。
+
+### Channel reference autocomplete
+
+`channel-autocomplete` is a source-backed ChoiceRow profile for composer `#`
+references: white idle, opaque yellow hover, pink keyboard-current candidate.
+Archived references remain selectable, with 45% black text, 5% black hover,
+10% black current and a right aligned archived badge. Current means the keyboard
+candidate index, not the currently open Room. The Agent `autocomplete` profile
+retains its separate yellow-current contract. Row colors stay in ui-tokens;
+composer owns caret/query and the application supplies its authenticated Room
+list, including archives. Protocol owns Markdown visibility masking. Names,
+model IDs and search fields do not use this popup.
+
+Search `@` / `#` filters the loaded authorized identity/Channel directory locally
+and renders ordinary search result cards immediately, independently of literal
+message-search responses. Archived Channels are included; deleted Agents are not
+new navigation candidates. IDs deduplicate identities, never display names.
+See [composer and search references](../audits/2026-09-20-composer-search-references.zh-CN.md).

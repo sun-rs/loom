@@ -10,7 +10,7 @@ import {
 const fixture = {
   agents: [
     {
-      agentDefinitionId: "agent_definition_alice",
+      agentId: "agent_definition_alice",
       avatarKey: "robot",
       channelIds: ["room_alpha", "room_beta"],
       displayName: "Alice",

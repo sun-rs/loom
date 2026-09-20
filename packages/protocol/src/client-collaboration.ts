@@ -82,6 +82,7 @@ export type ClientWorkspaceCreateRequest = z.infer<
 
 export const ClientWorkspaceUpdateRequestSchema = z
   .object({
+    agentAllChannelGreetingEnabled: z.boolean().optional(),
     workspaceId: IdentifierSchema,
     name: z.string().trim().min(1).max(120),
     avatarKey: z
@@ -124,7 +125,7 @@ export type ClientRoomsListResponse = z.infer<
 >;
 
 export const ClientAgentRoomsListRequestSchema = z
-  .object({ agentDefinitionId: IdentifierSchema })
+  .object({ agentId: IdentifierSchema })
   .strict();
 export type ClientAgentRoomsListRequest = z.infer<
   typeof ClientAgentRoomsListRequestSchema
@@ -249,7 +250,7 @@ export type AgentActivityRecord = z.infer<typeof AgentActivityRecordSchema>;
 
 export const ClientAgentActivityListRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     beforeActivityId: IdentifierSchema.optional(),
     limit: z.number().int().min(1).max(100).default(50),
   })

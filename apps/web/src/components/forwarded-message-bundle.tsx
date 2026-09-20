@@ -78,6 +78,7 @@ export function ForwardedMessageBundleView({
                 </header>
                 <MessageMarkdown
                   source={item.body}
+                  mentions={item.mentions ?? []}
                   references={{
                     agents: entities?.agents() ?? [],
                     principals:

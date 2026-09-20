@@ -24,7 +24,7 @@ test("message mention grammar supports CJK prose and dotted handles with stable 
       value: "@team.bot",
     },
   ]);
-  assert.equal(messageHasMention("请@Alice", "alice"), true);
+  assert.equal(messageHasMention("请@Alice", "alice"), false);
   assert.equal(messageHasMention("x.@Alice", "Alice"), false);
   assert.equal(messageHasMention("@Alice-extra", "Alice"), false);
 });
@@ -80,15 +80,16 @@ test("composer mention queries share the canonical visible-prose mask", () => {
   assert.equal(messageMentionQueryAt("[@Ali](https://x.test)", 5), undefined);
 });
 
-test("case or NFKC ambiguous handles fail closed", () => {
-  assert.deepEqual(messageMentionCandidates("@Alice", ["Alice", "alice"]), []);
+test("account mentions distinguish case and compatibility characters", () => {
   assert.deepEqual(
-    messageMentionCandidates("@Ａlice", ["Alice", "Ａlice"]),
-    [],
+    messageMentionCandidates("@Kimi @KiMi @kimi", ["Kimi", "KiMi"]).map(
+      (x) => x.handle,
+    ),
+    ["Kimi", "KiMi"],
   );
   assert.equal(
-    messageMentionCandidates("@Alice", ["Alice", "Alice"]).length,
-    1,
+    messageMentionCandidates("@Ａlice", ["Alice", "Ａlice"])[0]?.handle,
+    "Ａlice",
   );
 });
 
@@ -103,7 +104,7 @@ test("unresolved mention tokens are the ones that woke nobody", () => {
   // reported even though the directory does carry a matching handle.
   assert.deepEqual(
     unresolvedMentionHandles("@Alice ping", ["Alice", "alice"]),
-    ["Alice"],
+    [],
   );
   // Code is masked, which is why Raft tells an author to wrap a literal name.
   assert.deepEqual(
@@ -117,5 +118,6 @@ test("unresolved mention tokens are the ones that woke nobody", () => {
   // Repeats collapse on the shared comparison key.
   assert.deepEqual(unresolvedMentionHandles("@carol and @Carol", []), [
     "carol",
+    "Carol",
   ]);
 });

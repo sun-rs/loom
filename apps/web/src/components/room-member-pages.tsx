@@ -28,6 +28,7 @@ export function RoomMemberPage({
   blocked,
   canAdd,
   fixedMembership = false,
+  archived = false,
   canManageRoles,
   canRemove,
   candidates,
@@ -37,6 +38,8 @@ export function RoomMemberPage({
   onOpenProfile,
   onOpenAdd,
   onAddSelection,
+  onCreateAgent,
+  channelName,
   onRemove,
   onRole,
 }: {
@@ -45,11 +48,14 @@ export function RoomMemberPage({
   blocked: boolean;
   canAdd: boolean;
   fixedMembership?: boolean;
+  archived?: boolean;
   canManageRoles: boolean;
   canRemove: boolean;
   candidates: readonly Candidate[];
   humans: readonly Principal[];
   memberships: readonly RoomMembership[];
+  channelName?: string;
+  onCreateAgent?: (() => void) | undefined;
   onBack: () => void;
   onOpenProfile?: (target: { kind: "agent" | "human"; id: string }) => void;
   onOpenAdd: () => void;
@@ -143,6 +149,27 @@ export function RoomMemberPage({
         )}
       </header>
       <div className={`rah-room-member-page rah-scroll-main is-${view}`}>
+        {view === "add" && selectedAgents.length > 0 && (
+          <div className="rah-room-selected-chips">
+            {selectedAgents.map((agent) => (
+              <span className="rah-room-selected-chip" key={agent.agentId}>
+                <span>{agent.displayName}</span>
+                <button
+                  type="button"
+                  aria-label={`取消选择 ${agent.displayName}`}
+                  disabled={blocked}
+                  onClick={() =>
+                    setSelected((ids) =>
+                      ids.filter((id) => id !== agent.participantId),
+                    )
+                  }
+                >
+                  <Icon name="x" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="rah-room-member-search">
           {view === "add" && (
             <label htmlFor="rah-room-member-query">搜索</label>
@@ -171,33 +198,54 @@ export function RoomMemberPage({
                     : "没有其他可添加的 Agent。"}
                 </p>
               )}
-              {visibleAgents.map((agent) => (
-                <ChoiceRow
-                  profile="member-selection"
-                  key={agent.participantId}
-                  className="rah-room-add-candidate"
-                  aria-label={`选择 ${agent.displayName}`}
-                  aria-pressed={selected.includes(agent.participantId)}
-                  disabled={blocked || !canAdd || agent.state !== "enabled"}
-                  onClick={() =>
-                    setSelected((ids) =>
-                      ids.includes(agent.participantId)
-                        ? ids.filter((id) => id !== agent.participantId)
-                        : [...ids, agent.participantId],
-                    )
-                  }
+              <div className="rah-room-add-candidate-scroll">
+                {visibleAgents.map((agent) => (
+                  <ChoiceRow
+                    profile="member-selection"
+                    key={agent.participantId}
+                    className="rah-room-add-candidate"
+                    aria-label={`选择 ${agent.displayName}`}
+                    aria-pressed={selected.includes(agent.participantId)}
+                    disabled={blocked || !canAdd || agent.state !== "enabled"}
+                    onClick={() =>
+                      setSelected((ids) =>
+                        ids.includes(agent.participantId)
+                          ? ids.filter((id) => id !== agent.participantId)
+                          : [...ids, agent.participantId],
+                      )
+                    }
+                  >
+                    <span
+                      className="rah-room-member-checkbox"
+                      aria-hidden="true"
+                    >
+                      {selected.includes(agent.participantId) ? "✓" : ""}
+                    </span>
+                    <AgentAvatar agent={agent} size="compact" />
+                    <span>
+                      <b>{agent.displayName}</b>
+                      {agent.description && <small>{agent.description}</small>}
+                      {agent.state !== "enabled" && <small>Agent 已停用</small>}
+                    </span>
+                  </ChoiceRow>
+                ))}
+              </div>
+              {onCreateAgent && (
+                <button
+                  type="button"
+                  className="rah-room-create-agent"
+                  disabled={blocked || !canAdd}
+                  onClick={onCreateAgent}
                 >
-                  <span className="rah-room-member-checkbox" aria-hidden="true">
-                    {selected.includes(agent.participantId) ? "✓" : ""}
+                  <span className="rah-room-create-agent-icon">
+                    <Icon name="plus" />
                   </span>
-                  <AgentAvatar agent={agent} size="compact" />
                   <span>
-                    <b>{agent.displayName}</b>
-                    {agent.description && <small>{agent.description}</small>}
-                    {agent.state !== "enabled" && <small>Agent 已停用</small>}
+                    <b>创建一个新 Agent</b>
+                    <small>建好后自动加入 #{channelName}</small>
                   </span>
-                </ChoiceRow>
-              ))}
+                </button>
+              )}
             </section>
             <button
               className="btn btn-pink rah-room-add-submit"
@@ -371,7 +419,7 @@ export function RoomMemberPage({
                     onClick={() =>
                       onOpenProfile?.({
                         kind: "agent",
-                        id: agent.agentDefinitionId,
+                        id: agent.agentId,
                       })
                     }
                     onKeyDown={(e) => {
@@ -382,7 +430,7 @@ export function RoomMemberPage({
                         e.preventDefault();
                         onOpenProfile?.({
                           kind: "agent",
-                          id: agent.agentDefinitionId,
+                          id: agent.agentId,
                         });
                       }
                     }}
@@ -418,7 +466,7 @@ export function RoomMemberPage({
                 )}
               </details>
             </div>
-            {!fixedMembership && (
+            {!fixedMembership && !archived && (
               <footer className="rah-room-members-footer">
                 <button
                   className="btn rah-room-members-add"

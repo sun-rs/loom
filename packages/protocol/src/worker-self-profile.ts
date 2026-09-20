@@ -73,7 +73,7 @@ export const WorkerSelfProfileResponseSchema = z
     profile: z
       .object({
         participantId: IdentifierSchema,
-        agentDefinitionId: IdentifierSchema,
+        agentId: IdentifierSchema,
         displayName: z.string().min(1).max(128),
         description: z.string().max(3000).optional(),
         avatarKey: IdentifierSchema.optional(),

@@ -175,7 +175,7 @@ function Fixture() {
         运行工作区根回归
       </button>
       <output id="workspace-roots-report">{report}</output>
-      <AgentWorkspaceBrowser agentDefinitionId="agent-alice" client={client} />
+      <AgentWorkspaceBrowser agentId="agent-alice" client={client} />
     </main>
   );
 }

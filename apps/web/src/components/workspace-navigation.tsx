@@ -392,6 +392,9 @@ export function RoomSidebar({
             {room ? (
               <div className="rah-sidebar-channel-entry">
                 <button
+                  data-unread={
+                    (unread(room.roomId)?.unreadCount ?? 0) > 0 || undefined
+                  }
                   className={`channel-row${showConversationSelection && room.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
                   onClick={() => onSelect(room.roomId)}
                 >
@@ -410,6 +413,9 @@ export function RoomSidebar({
             ) : entry ? (
               <button
                 aria-label={`私信 ${entry.label}`}
+                data-unread={
+                  (unread(entry.roomId)?.unreadCount ?? 0) > 0 || undefined
+                }
                 aria-current={
                   entry.roomId !== undefined &&
                   entry.roomId === activeRoomId &&
@@ -719,7 +725,9 @@ export function RoomSidebar({
           </SidebarDrag>
         </div>
       </ChatContextActions>
-      <WorkspaceActivityFooter agents={agents} />
+      <WorkspaceActivityFooter
+        agents={agents.filter((agent) => agent.state !== "tombstoned")}
+      />
     </aside>
   );
 }
@@ -727,6 +735,7 @@ export function RoomSidebar({
 export function ChannelHeader({
   onSearch,
   onCloseSearchPreview,
+  previewLabel = "搜索",
   directPeer,
   memberCount,
   onManageAgents,
@@ -736,10 +745,11 @@ export function ChannelHeader({
 }: {
   onSearch: () => void;
   onCloseSearchPreview?: (() => void) | undefined;
+  previewLabel?: string;
   directPeer: WorkspaceAgentView | undefined;
   memberCount: number;
   onManageAgents: () => void;
-  onOpenDirectPeer: (agentDefinitionId: string) => void;
+  onOpenDirectPeer: (agentId: string) => void;
   onOpenRooms: () => void;
   room: Room | undefined;
 }) {
@@ -748,7 +758,13 @@ export function ChannelHeader({
   return (
     <PanelHeader kind="conversation" className="rah-conversation-head">
       <PanelHeaderAction
-        aria-label={onCloseSearchPreview ? "返回搜索结果" : "返回主页"}
+        aria-label={
+          onCloseSearchPreview && previewLabel !== "聊天"
+            ? previewLabel === "搜索"
+              ? "返回搜索结果"
+              : `返回${previewLabel}列表`
+            : "返回主页"
+        }
         className="rah-mobile-only rah-mobile-back"
         onClick={onCloseSearchPreview ?? onOpenRooms}
       >
@@ -764,7 +780,7 @@ export function ChannelHeader({
             <button
               aria-label={`打开 ${directPeer.displayName} Agent 资料`}
               className="rah-direct-header-avatar"
-              onClick={() => onOpenDirectPeer(directPeer.agentDefinitionId)}
+              onClick={() => onOpenDirectPeer(directPeer.agentId)}
               title="Agent 资料"
               type="button"
             >
@@ -775,7 +791,12 @@ export function ChannelHeader({
           <PanelHeaderIcon name="hash" glyphSize={14} />
         )}
         <div className={`channel-title${direct ? " rah-direct-title" : ""}`}>
-          <h1 className="rah-panel-title">{title}</h1>
+          <div className="rah-channel-title-line">
+            <h1 className="rah-panel-title">{title}</h1>
+            {!direct && room?.archivedAt !== undefined ? (
+              <span className="rah-channel-archived-badge">已归档</span>
+            ) : null}
+          </div>
           <p
             className={`channel-sub${direct ? " rah-direct-status" : ""}`}
             data-presence={
@@ -784,7 +805,7 @@ export function ChannelHeader({
                 : "offline"
             }
           >
-            {direct && directPeer ? (
+            {direct && directPeer && directPeer.state !== "tombstoned" ? (
               <AgentStatusDot
                 className="rah-header-presence"
                 activity={agentPresencePresentation(directPeer).activity}
@@ -794,14 +815,13 @@ export function ChannelHeader({
             ) : null}
             {direct
               ? directPeer
-                ? agentConnectionLabel(directPeer)
+                ? directPeer.state === "tombstoned"
+                  ? "已删除"
+                  : agentConnectionLabel(directPeer)
                 : "状态未知"
               : (room?.description ?? "RAH OS canonical Room")}
           </p>
         </div>
-        {!direct && room?.archivedAt !== undefined ? (
-          <span className="rah-channel-archived-badge">已归档</span>
-        ) : null}
       </div>
       {!direct || onCloseSearchPreview ? (
         <div className="head-actions">
@@ -827,7 +847,7 @@ export function ChannelHeader({
           {onCloseSearchPreview ? (
             <PanelHeaderAction
               className="rah-search-preview-close"
-              aria-label="关闭搜索预览"
+              aria-label={`关闭${previewLabel}预览`}
               onClick={onCloseSearchPreview}
             >
               <Icon name="x" />

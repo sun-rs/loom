@@ -52,7 +52,7 @@ export function localComputerDiagnosticText(input: {
   const computer = input.computer;
   const boundAgentDefinitionIds = new Set(
     input.runtimes.flatMap((runtime) =>
-      runtime.agentBindings.map(({ agentDefinitionId }) => agentDefinitionId),
+      runtime.agentBindings.map(({ agentId }) => agentId),
     ),
   );
   return JSON.stringify(
@@ -75,11 +75,9 @@ export function localComputerDiagnosticText(input: {
             },
       hostId: input.hostId,
       agents: input.agents
-        .filter(({ agentDefinitionId }) =>
-          boundAgentDefinitionIds.has(agentDefinitionId),
-        )
+        .filter(({ agentId }) => boundAgentDefinitionIds.has(agentId))
         .map((agent) => ({
-          agentDefinitionId: agent.agentDefinitionId,
+          agentId: agent.agentId,
           displayName: agent.displayName,
           handle: agent.handle,
           runtimeAvailable: agent.runtimeAvailable,

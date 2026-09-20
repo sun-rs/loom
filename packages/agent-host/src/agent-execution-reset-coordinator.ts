@@ -1,3 +1,4 @@
+import { canonicalAgentIdField } from "@rah-os/protocol";
 import { randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, rename } from "node:fs/promises";
 import { join } from "node:path";
@@ -32,7 +33,7 @@ export type AgentExecutionWorkspaceQuarantine = Readonly<{
 }>;
 
 export type AgentExecutionResetInput = Readonly<{
-  agentDefinitionId: string;
+  agentId: string;
   mode: AgentExecutionResetMode;
   operationId: string;
   ownerParticipantId: string;
@@ -251,7 +252,7 @@ export class AgentExecutionResetCoordinator {
       }
       await hooks.afterContinuity?.();
       const receipt = ClientAgentExecutionResetResponseSchema.parse({
-        agentDefinitionId: input.agentDefinitionId,
+        agentId: input.agentId,
         completedAt: this.#now().toISOString(),
         computerHostId: this.#computerHostId,
         deduplicated: false,
@@ -349,10 +350,9 @@ export async function readAgentExecutionResetReceipt(
     ) {
       throw new Error("Agent execution reset receipt is not a private file");
     }
-    const value = JSON.parse(await readFile(path, "utf8")) as Record<
-      string,
-      unknown
-    >;
+    const value = canonicalAgentIdField(
+      JSON.parse(await readFile(path, "utf8")),
+    ) as Record<string, unknown>;
     if (value.schemaVersion !== 1) {
       throw new Error("unsupported Agent execution reset receipt version");
     }
@@ -395,10 +395,7 @@ function validateInput(
   input: AgentExecutionResetInput,
 ): AgentExecutionResetInput {
   return Object.freeze({
-    agentDefinitionId: requiredIdentifier(
-      input.agentDefinitionId,
-      "agentDefinitionId",
-    ),
+    agentId: requiredIdentifier(input.agentId, "agentId"),
     mode: AgentExecutionResetModeSchema.parse(input.mode),
     operationId: requiredIdentifier(input.operationId, "operationId"),
     ownerParticipantId: requiredIdentifier(
@@ -413,7 +410,7 @@ function assertReceiptIdentity(
   input: AgentExecutionResetInput,
 ): void {
   if (
-    receipt.agentDefinitionId !== input.agentDefinitionId ||
+    receipt.agentId !== input.agentId ||
     receipt.mode !== input.mode ||
     receipt.ownerParticipantId !== input.ownerParticipantId
   ) {
@@ -424,11 +421,7 @@ function assertReceiptIdentity(
 }
 
 function operationIdentity(input: AgentExecutionResetInput): string {
-  return JSON.stringify([
-    input.agentDefinitionId,
-    input.mode,
-    input.ownerParticipantId,
-  ]);
+  return JSON.stringify([input.agentId, input.mode, input.ownerParticipantId]);
 }
 
 function requiredIdentifier(value: string, name: string): string {

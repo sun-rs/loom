@@ -1,3 +1,4 @@
+import { bindMessageMentions } from "./identity-accounts.ts";
 import { allowsAgentChannelAttention } from "./agent-channel-attention.ts";
 import type { DatabaseSync } from "node:sqlite";
 
@@ -79,6 +80,12 @@ export class RoomEventWriter {
     ) {
       throw new ConflictError(`Room ${input.roomId} is archived and read-only`);
     }
+    const messageId =
+      input.type === "message.posted"
+        ? input.aggregateId
+        : input.payload.sourceMessageId;
+    if (typeof messageId === "string")
+      bindMessageMentions(this.#database, messageId);
     const roomSeq = integer(room, "next_seq");
     const event = RoomEventSchema.parse({
       actorId: input.actorId,
@@ -87,7 +94,21 @@ export class RoomEventWriter {
       createdAt: this.#timestamp(),
       eventId: this.#createId("event"),
       idempotencyKey: input.idempotencyKey,
-      payload: input.payload,
+      payload:
+        input.type === "message.posted"
+          ? {
+              ...input.payload,
+              mentions: JSON.parse(
+                String(
+                  this.#database
+                    .prepare(
+                      "SELECT mentions_json FROM messages WHERE message_id=?",
+                    )
+                    .get(input.aggregateId)?.mentions_json ?? "[]",
+                ),
+              ),
+            }
+          : input.payload,
       roomId: input.roomId,
       roomSeq,
       schemaVersion: 1,

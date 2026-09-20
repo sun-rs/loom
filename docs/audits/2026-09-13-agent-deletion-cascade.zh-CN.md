@@ -9,6 +9,8 @@ Raft Web `index-MqTUR4Ez.js`（SHA-256 `9cf480531f38c29136637f7b373f285a0e915711
 - Computer 1.0.31 的 `chunk-5Y2HSDGS.js:33248`：stopAgent 取消排队启动、自动重启、通知计时器，撤销运行凭据，停止 runtime；41163 接收 agent:stop。版本与完整下载哈希见[1.0.31 源码审查](2026-09-13-raft-computer-1.0.31-source-review.zh-CN.md)。中央服务器删除实现不可见，不能声称已经证明其服务端 stop/delete 时序或文件清理范围。
 - 对照 Multica `server/internal/handler/agent.go:2320` 的 ArchiveAgent：归档身份后取消 pending/active tasks。它不是 Raft 删除实现，也不构成 RAH 删除 Room Task 的依据。
 
+2026-09-20 更新：[任务身份与负责人](2026-09-20-deleted-agent-task-identity.zh-CN.md)替代下方旧任务释放规则：所有状态解除负责人，保持原任务状态，启动补齐旧 tombstone。
+
 ## 本地行为
 
 唯一 durable owner 是 Kernel `agent-deletion.ts`，沿用 `/agents/manage` 的 tombstoned 命令。一次用户确认生成 `agent.deletion_requested`，先通过原认证、manager、freshness 和幂等校验，持久停用 Agent。HTTP 断开、30 秒等待超时均不会撤销请求。Daemon 每秒调用同一 Kernel 完成器，启动时也恢复未完成请求；重复打开弹窗可加入已有删除请求，无第二队列或另一个身份状态模型。
@@ -46,6 +48,13 @@ Chrome Raft 实测视口 1098×1172、DPR 2。只打开并取消 Alice 删除框
 | 错误态      | 橙色 20% 背景，2px 边框，12px padding，14/20px 正文，下面 16px      |
 
 名称/准确文案不同会改变内在文本宽度和换行，不能把这些内容差异称为同内容逐像素验收。
+
+2026-09-19 停止确认补充：复核 Raft v1.16.0 `index-CKeqacxz.js` 的 `zs`
+确认组件，384px 宽度、24px 内边距和 14/22.75px 正文无需调整。
+截图中的 Claude Code 比 Claude 更长，原提示因换行增高。RAH 本地措辞精简为
+“确定停止‘名称’吗？停止后不再处理消息。”，保留自然换行及全部停止语义；这是本地文案调整，
+不是上游逐字复用。`scripts/test-member-context-browser.mjs` 检查提示内容、
+Claude Code 与短名称的桌面等高，以及 390px 视口、关闭与焦点交互。
 
 字体取证：线上 `index-DPaRRgFJ.css` 声明 Space Grotesk TTF，但本次请求 `/assets/space-grotesk-0.ttf` 与 `space-grotesk-3.ttf` 均返回 404。Raft 标题实测宽 100.9609375px，删除按钮宽 86.9765625px；本地原 WOFF2 分别为 96.4140625px 与 85.9375px。临时浏览器实验改用系统字体回退后，度量与线上吻合（原生与 headless 舍入差小于 0.01px）。本批仅将该确认框的字体栈改为实际回退栈，根字号设为 16/24px；不修改全站字体，也不将无法加载的 TTF 宣称为已提取字体。若上游修复字体资源，需要重新复验。
 

@@ -78,7 +78,7 @@ test("an official avatar profile revision is atomic, stale-safe, and persistent"
     now.setTime(now.getTime() + 600_000);
     const request = ClientAgentManageRequestSchema.parse({
       action: "update_profile",
-      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      agentId: created.agent.definition.agentId,
       expectedRevisionId:
         created.agent.currentRevision.agentDefinitionRevisionId,
       basedOnRoomSeq: created.event.roomSeq,
@@ -131,7 +131,7 @@ test("an official avatar profile revision is atomic, stale-safe, and persistent"
     actor = kernel.authenticateAccessToken(owner.accessToken);
     const persisted = kernel.getWorkspaceAgentManagementView(
       actor,
-      request.agentDefinitionId,
+      request.agentId,
     );
     assert.deepEqual(persisted.agent, saved.agent);
     assert.deepEqual(persisted.policy, created.policy);
@@ -144,7 +144,7 @@ test("an official avatar profile revision is atomic, stale-safe, and persistent"
 test("avatar profile input accepts official or authenticated upload keys", () => {
   const command = {
     action: "update_profile",
-    agentDefinitionId: "agent",
+    agentId: "agent",
     expectedRevisionId: "revision",
     basedOnRoomSeq: 0,
     idempotencyKey: "edit",

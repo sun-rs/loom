@@ -92,6 +92,7 @@ export function SettingsSurface({
   archivedRooms = [],
   onOpenRoom,
   onUnarchiveRoom,
+  onDeleteRoom,
   canManageWorkspace,
   client,
   currentPrincipal,
@@ -103,6 +104,7 @@ export function SettingsSurface({
   archivedRooms?: readonly Room[];
   onOpenRoom?: (roomId: string) => void;
   onUnarchiveRoom?: (room: Room) => Promise<void>;
+  onDeleteRoom?: (room: Room) => Promise<void>;
   agents: readonly WorkspaceAgentView[];
   canManageWorkspace: boolean;
   client: RahClient;
@@ -188,6 +190,7 @@ export function SettingsSurface({
                 rooms={archivedRooms}
                 onOpen={onOpenRoom}
                 onUnarchive={onUnarchiveRoom}
+                {...(onDeleteRoom ? { onDelete: onDeleteRoom } : {})}
               />
             ) : null}
           </WorkspaceProfileSettingsContent>

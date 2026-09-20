@@ -51,6 +51,17 @@
   margin-bottom: var(--space-1);
 }
 
+.rah-agent-relationship {
+  font: 500 14px/20px var(--sans);
+}
+.rah-agent-relationship.is-selected {
+  font-weight: 700;
+}
+.rah-member-self {
+  color: var(--ink-40);
+  margin-left: 4px;
+  font: inherit;
+}
 .rah-agent-relationship svg {
   height: 14px;
   width: 14px;
@@ -75,15 +86,13 @@
 }
 
 .rah-agent-sidebar-section > header > b {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font: 700 12px/16px var(--sans);
+  letter-spacing: 0.1em;
 }
 
 .rah-agent-sidebar-section > header > span {
   color: var(--ink-40);
-  font-family: var(--mono);
-  font-size: 11px;
+  font: 700 12px/16px var(--mono);
 }
 
 .rah-agent-create-control {
@@ -165,33 +174,6 @@
   flex: none;
   height: 6px;
   width: 6px;
-}
-
-.rah-agent-member-row > span:nth-child(2) {
-  align-items: baseline;
-  display: flex;
-  flex: 1;
-  gap: 6px;
-  min-width: 0;
-}
-
-.rah-agent-member-row b {
-  font-size: 13px;
-  line-height: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rah-agent-member-row small {
-  color: var(--ink-40);
-  flex: 1;
-  font-family: var(--mono);
-  font-size: 10px;
-  line-height: 16px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .rah-agent-member-row:not(.is-selected):hover,
@@ -440,10 +422,13 @@
 .rah-agent-avatar-choice:hover:not(:disabled),
 .rah-agent-avatar-choice:focus-visible,
 .rah-agent-avatar-choice[data-selected="true"],
-.rah-agent-avatar-upload:hover:not(:disabled),
-.rah-agent-avatar-upload:focus-visible,
 .rah-agent-avatar-upload[data-selected="true"] {
   background: color-mix(in srgb, var(--pink) 20%, var(--paper));
+  border-color: var(--pink);
+}
+
+.rah-agent-avatar-upload:hover:not(:disabled),
+.rah-agent-avatar-upload:focus-visible {
   border-color: var(--pink);
 }
 
@@ -460,10 +445,13 @@
 }
 
 .rah-agent-avatar-upload {
-  color: var(--ink-40);
+  color: var(--ink-60);
   cursor: pointer;
-  font-size: 24px;
-  font-weight: 700;
+}
+
+.rah-agent-avatar-upload > svg {
+  width: 16px;
+  height: 16px;
 }
 
 .rah-product-shell .rah-agent-avatar-upload:disabled {
@@ -651,22 +639,35 @@
   line-height: 14px;
 }
 
-.rah-agent-activity-pane > header {
+.rah-agent-activity-surface > header {
   align-items: center;
-  border-bottom: 1px solid var(--ink-10);
+  border-bottom: 2px solid var(--ink);
+  flex-shrink: 0;
+  background: var(--paper);
   display: flex;
   justify-content: space-between;
   padding: 8px 20px;
 }
 
-.rah-agent-activity-pane > header h3 {
+.rah-agent-activity-surface > header h3 {
+  color: var(--ink-60);
+  margin: 0;
   font-size: 12px;
   font-weight: 700;
+  line-height: 16px;
 }
 
-.rah-agent-activity-pane > header p {
-  color: var(--ink-40);
-  font: 10px/1.5 var(--mono);
+.rah-agent-diagnostic-copy.btn {
+  padding: 4px 8px;
+  gap: 6px;
+  height: auto;
+  font-size: 12px;
+  line-height: 16px;
+  box-shadow: var(--shadow-s);
+}
+.rah-agent-diagnostic-copy.btn svg {
+  width: 12px;
+  height: 12px;
 }
 
 .rah-agent-activity-list article {
@@ -778,8 +779,10 @@
   border: var(--bd);
   box-shadow: var(--shadow-m);
   padding: 24px;
-  width: 448px;
-  max-width: 100%;
+  width: min(448px, calc(100vw - 32px));
+  max-width: 448px;
+  max-height: calc(100dvh - 40px);
+  align-self: center;
   min-width: 0;
   overflow: auto;
 }
@@ -789,14 +792,25 @@
   margin-bottom: 16px;
 }
 .rah-runtime-edit-dialog > header h2 {
-  font-size: 18px;
-  font-weight: 700;
+  font: 700 18px/28px var(--sans);
 }
-.rah-runtime-edit-dialog form {
+/* Raft AgentDetailPanel runtime form actions: text-sm px-4 py-2. */
+.rah-runtime-edit-dialog footer .btn {
+  font: 700 14px/20px var(--sans);
+  padding: 8px 16px;
+}
+.rah-runtime-edit-dialog footer .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rah-dialog.rah-runtime-edit-dialog form:not(.rah-attachment-comment-composer) {
   padding: 0;
+  gap: 16px;
 }
 .rah-runtime-edit-field > b {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 14px;
   line-height: 20px;
   margin-bottom: 4px;
@@ -805,19 +819,25 @@
   color: var(--pink);
   font-style: normal;
 }
+.rah-runtime-edit-field > .rah-runtime-custom-model {
+  margin-bottom: 8px;
+}
 .rah-runtime-picker {
   width: 100%;
 }
+.rah-runtime-edit-field > label.rah-runtime-custom-model > input,
 .rah-runtime-picker .task-filter-trigger {
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   height: auto;
   padding: 8px 12px;
   background: var(--bg);
   border: var(--bd);
   box-shadow: var(--shadow-s);
-  font-size: 14px;
-  line-height: 20px;
+  font:
+    400 16px/24px system-ui,
+    sans-serif;
+  color: #000;
   text-align: left;
 }
 .rah-runtime-picker .task-filter-trigger > svg:last-child {
@@ -1062,11 +1082,6 @@
     font-size: 16px;
   }
 
-  .rah-agent-activity-pane > header {
-    align-items: flex-start;
-    padding: 10px 14px;
-  }
-
   .rah-agent-activity-list article {
     gap: 8px;
     grid-template-columns: 62px 8px minmax(0, 1fr);
@@ -1084,7 +1099,9 @@
 }
 
 /* Raft sL option/iL: 12px padding, 14px column gap, 14/20 title, 12/16 description. */
-.rah-runtime-edit-dialog form .rah-runtime-fast-mode {
+.rah-dialog:is(.rah-runtime-edit-dialog, .rah-agent-create-dialog)
+  form
+  label.rah-runtime-fast-mode {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
   align-items: start;
@@ -1095,6 +1112,8 @@
   box-shadow: var(--shadow-s);
   padding: 12px;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .rah-runtime-fast-mode > b {
   font: 700 14px/20px var(--sans);
@@ -1110,7 +1129,10 @@
   height: 16px;
   margin-top: 2px;
 }
-.rah-runtime-edit-dialog form .rah-runtime-fast-mode input[type="checkbox"] {
+.rah-dialog:is(.rah-runtime-edit-dialog, .rah-agent-create-dialog)
+  form
+  label.rah-runtime-fast-mode
+  input[type="checkbox"] {
   appearance: none;
   display: block;
   width: 16px;
@@ -1124,15 +1146,19 @@
   background: var(--bg);
   cursor: inherit;
 }
-.rah-runtime-edit-dialog form .rah-runtime-fast-mode input:checked {
-  background: var(--yellow);
+.rah-dialog:is(.rah-runtime-edit-dialog, .rah-agent-create-dialog)
+  form
+  label.rah-runtime-fast-mode
+  input:checked {
+  background: var(--ink);
 }
 .rah-runtime-fast-check > svg {
   position: absolute;
   inset: 2px;
   width: 12px;
   height: 12px;
-  color: var(--ink);
+  color: white;
+  stroke-width: 4;
   pointer-events: none;
   visibility: hidden;
 }
@@ -1254,6 +1280,7 @@
 .rah-agent-activity-surface {
   position: relative;
   display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -1262,4 +1289,41 @@
 
 .rah-agent-activity-surface > .rah-scroll-to-bottom {
   bottom: 16px;
+}
+.rah-agent-avatar.is-deleted {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.rah-agent-deleted-badge {
+  border: 1px solid var(--ink);
+  background: #d1d5db;
+  color: var(--ink-60);
+  padding: 2px 6px;
+  font: 700 10px/15px var(--sans);
+  flex-shrink: 0;
+}
+.rah-agent-unavailable > header {
+  gap: 16px;
+}
+.rah-agent-unavailable {
+  flex: 1;
+}
+.rah-agent-unavailable > .rah-empty-state {
+  min-height: 0;
+}
+.rah-agent-unavailable > header h2 {
+  flex: 1;
+  font: 700 20px/28px var(--sans);
+}
+.rah-agent-unavailable-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bd);
+  background: #e5e7eb;
+}
+.rah-agent-unavailable-icon svg {
+  width: 24px;
+  height: 24px;
 }

@@ -32,14 +32,14 @@ export function requestAgentDeletion(
   command: AgentDeleteCommand,
 ): RoomEvent {
   const { database: db, events } = owner;
-  const agent = readAgentDefinition(db, command.agentDefinitionId);
+  const agent = readAgentDefinition(db, command.agentId);
   const roomId = agent.definition.controlRoomId;
   requireHumanControlRoomManager(db, roomId, owner.actorId);
   const digest = canonicalDigest({
     domain: "rah/agent-deletion/v1",
     action: command.action,
     state: command.state,
-    agentDefinitionId: command.agentDefinitionId,
+    agentId: command.agentId,
     idempotencyKey: command.idempotencyKey,
   });
   const old = db
@@ -50,7 +50,7 @@ export function requestAgentDeletion(
     if (
       event.type !== "agent.deletion_requested" ||
       event.actorId !== owner.actorId ||
-      event.aggregateId !== command.agentDefinitionId ||
+      event.aggregateId !== command.agentId ||
       event.payload.requestDigest !== digest
     )
       throw new IdempotencyConflictError(
@@ -71,7 +71,7 @@ export function requestAgentDeletion(
     .prepare(
       "SELECT * FROM room_events WHERE aggregate_id=? AND type='agent.deletion_requested' LIMIT 1",
     )
-    .get(command.agentDefinitionId);
+    .get(command.agentId);
   if (pending) return events.eventFromRow(pending);
   if (agent.definition.state !== "disabled")
     manageWorkspaceAgentTransaction(owner, {
@@ -81,7 +81,7 @@ export function requestAgentDeletion(
     });
   return events.append({
     actorId: owner.actorId,
-    aggregateId: command.agentDefinitionId,
+    aggregateId: command.agentId,
     aggregateType: "agent_definition",
     idempotencyKey: command.idempotencyKey,
     roomId,
@@ -150,7 +150,7 @@ export function finishAgentDeletion(
         payload: {
           activationId: id,
           reason: "agent_deleted",
-          agentDefinitionId: request.aggregateId,
+          agentId: request.aggregateId,
         },
       },
       request,
@@ -163,7 +163,7 @@ export function finishAgentDeletion(
     {
       action: "set_state",
       state: "tombstoned",
-      agentDefinitionId: request.aggregateId,
+      agentId: request.aggregateId,
       basedOnRoomSeq:
         integer(
           db

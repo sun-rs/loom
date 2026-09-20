@@ -66,7 +66,7 @@ Raft 的前端发布源码是**可见产品行为**的首要证据：触发入�
 ### 2026-08-31 补强后的状态与导航 owner
 
 - Computer 连接来自已认证本机 Host 记录及心跳时效，CLI清单独立；配置/重绑/删除Agent不得刷新心跳。未知与离线分开，不能用PATH或绿色静态样式伪报在线。Avatar、资料、DM、Member Host与Computer统一投影观测。
-- `HumanActivity` 的summary复用列表同一ACL/follow/read/done资格，但取最新frontier；旧cursor分页仍冻结内容。Room/DM入口只数顶层消息，Thread未读进入全局Activity。粉点隐藏不是read。
+- `HumanActivity` 的summary复用列表同一ACL/follow/read/done资格，但取最新frontier；旧cursor分页仍冻结内容。Room/DM入口数顶层消息与恢复频道通知，Thread未读进入全局Activity。粉点隐藏不是read。归档事件保留正文历史但不计入侧栏未读，避免频道恢复时把此前归档动作算成新消息；其他原有未读消息不受影响。恢复通知即使操作者本人也计入未读；自动跳转/刷新不清除，聊天侧栏点击该频道才持久确认。`activity.mark` 的 `source=viewport` 不跨未确认恢复通知，`source=channel-list` 确认到最新恢复事件；现有显式 read/done/unread 保留。详见[当前系统通知合同](../audits/2026-09-19-system-notices-and-restore-read.zh-CN.md)。
 - 系统Computer notice与Human InputRequest并列展示，不共用业务状态。dismiss只记当前故障版本偏好；恢复后再次离线形成新事项。通知展开仍保留待处理点，手机/桌面共用同一来源。
 - Inbox以5s可见/15s后台间隔单飞读取；15s请求超时中止旧信号再重试，旧响应与卸载不得写回。列表读取不resolve；只有用户明确回答才执行canonical resolve。
 - Activity打开Thread保留Activity中栏、筛选及精确room/root/message；URL恢复/关闭/筛选由现有导航owner协调。latest ticket的`current`保护导航/错误/刷新，`owns`仅释放本次pending，避免自身导航作废后按钮永久禁用，也避免旧action清新pending。
@@ -115,9 +115,75 @@ PDF 附件的本地 canvas 阅读补充：支持页码跳转、10%–2500% 相�
 有明确保存的模型绑定才显示。Agent 目录以现有 ACL 投影当前策略的可选 `modelBindingId`，
 不按消息读取完整策略，不推断历史 Run 的模型。详见[来源和验证记录](../audits/2026-09-14-agent-model-appearance.zh-CN.md)。
 
+2026-09-20 用户补充：所有 Agent 悬浮资料卡、资料模型字段与对话模型后缀统一显示
+CLI 原生模型 ID，仅移除 RAH `local:…/v1:` 内部绑定前缀，保留原生 provider/model。
+目录可用、自定义模型、目录缺失均适用，不因删除、停止或重启状态改变规则。
+模型选择器的友好显示名规则不变。共享 owner 为 `runtimeProfilePresentation` 与
+`chatModelIdentifier`，详见[补充验证](../audits/2026-09-20-deleted-agent-preview-model.zh-CN.md)。
+
+## 消息列菜单裁剪（2026-09-20）
+
+按用户要求移除消息列右上角菜单的“在新标签页中打开”及其 window.open 处理，
+保留搜索、在频道中查看与关注操作。这是明确的本地产品差异；不影响其他位置链接。
+浏览器菜单断言先复现多余项，再确认移除后回归通过；类型检查和正式构建通过。
+全仓库仍有此前接口登记和 5 个格式文件阻断。
+
+## 系统消息时间补齐（2026-09-20）
+
+按用户提供的 Raft 对照截图，系统消息正文前显示事件时间。原本仅归档变更使用
+`ChatMessageTime`，成员加入和提醒遗漏；现在 `ChatSystemNotice` 的每条消息及
+Thread 提醒均复用已有时间组件，遵循设备时间格式。折叠摘要不代表独立事件，
+展开后逐条显示各自的 `createdAt`；不新增时间字段或改写事件。
+Raft 发布源码的 `message.system.summary.*` 分组语义已核查；本次是本地组件复用，
+不声称复制上游 CSS。归档浏览器 gate 新增逐条时间断言，先复现缺少 time 元素，
+修复后桌面和 390px 截图检查通过。类型检查、正式构建、时间线单元测试通过。
+正式备份重启后，#all 成员加入消息时间及刷新验证通过；全仓库仍受既有接口登记
+及 5 个格式文件阻断。
+
 ## 文件评论计数（2026-09-14）
 
 附件卡片评论数来自 AttachmentCommentsService 的持久附件关联，不使用线程回复数或当前评论分页长度。
 Attachment.commentCount 是可重建显示投影；挂载的旧消息通过已有 MessageSocial 批量读模型的
 attachmentCommentCounts 更新，保持有界窗口及权限检查。整文件引用使用 Raft file-text 图标。
 详见[源码、数据与验证证据](../audits/2026-09-14-file-comment-count-and-glyph.zh-CN.md)。
+
+### 新 Agent 报到设置
+
+服务器资料复用现有配置保存与开关组件，提供 `agentAllChannelGreetingEnabled`，
+默认开启，仅影响之后创建的身份。现有 Agent 不补发；关闭时仍可首次初始化。
+首次消息必须由 Agent 经 Worker 接口发出，前端不得模拟介绍或把创建响应视为已报到。
+准确的上游证据、本地调度与验收边界见
+[首次报到审计](../audits/2026-09-20-agent-first-run-greeting.zh-CN.md)。
+
+## 消息列成员头像组（2026-09-20）
+
+按 Raft 发布 Web 的 `thread-followers-${placement}-trigger` 实现参数适配：
+header 头像 18px，白色 1px 边框，相邻头像重叠 4px；头像组与人数间隔 4px。
+按钮维持 28px 高、左右 6px 内边距、白底。最多显示 3 个头像，人数仍为全部关注者数。
+源码分析副本和 SHA-256 同[添加成员审计](../audits/2026-09-20-channel-add-members.zh-CN.md)。
+这是参数与结构适配，不是发布 bundle 的字节级复制。
+浏览器 gate 使用 5 名关注者确认 3 个头像/人数 5、-4px 几何，并继续验证刷新不跳动、
+零人数隐藏、菜单和关注操作。测试先确认旧 3px 正间距失败，再修复并通过。
+正式备份重启后在 Solars 消息列验证：总人数保留、仅 3 个头像、实际重叠 4px。
+正式构建 `9e328e2c9b9152c212750bd40856f61c5c4630ffe0ef36f6b986ef3499ef7632`。
+类型检查、正式构建及 CSS 门禁通过；完整 check/format 仍受上述既有阻断项影响。
+
+## 消息列关注菜单层级与移除提示（2026-09-20）
+
+层级由共享 panel-layout 管理：消息列头部建立 z-index 2 的定位层，正文建立
+z-index 0 的独立 stacking context，正文内定位元素不能越过头部菜单。
+默认正式页面未直接复现截图中的穿透；浏览器回归给正文消息添加较高定位层级后，
+菜单命中测试先失败，隔离后通过。保留既有菜单关闭、焦点和关注者数据路径。
+
+Raft 发布 Web 源码版本及哈希同上述头像组证据：移除调用 `To.success`，
+使用 `thread-follower-removal-toast` 和撤销 action；solid success 映射
+`bg-brutal-lime`。本地使用对应 `--green`、确认图标、黑底白字撤销按钮及
+“已将 NAME 移出此消息列的关注者。”文案。属于结构与参数适配，不是 bundle 复制；
+保留服务端 undoToken 与到期边界，不用前端模拟恢复成功。
+
+`test-thread-header-menu-browser.mjs` 覆盖层级命中、绿色提示、撤销与既有失败处理。
+绿色样式断言先失败再通过。类型检查、正式构建及相关 CSS 门禁通过。
+备份并重启正式构建 `4f4160a1f1bb52ac08ffce0f1463688c0fe82549543782bc11b20e5da7049942` 后，
+真实 Solars 消息列在 1440、900、390px 宽度下菜单命中与截图检查通过，刷新、Escape
+通过；成功移除/撤销只在隔离 fixture 验证，没有修改正式关注者。完整 check 仍被
+既有 `/v1/worker/message-present` 登记项阻断，format 仍有既有 5 个文件问题。

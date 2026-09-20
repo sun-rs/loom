@@ -363,7 +363,7 @@ test("the minimal profile update carries no write context and still fails a conc
     );
     f.kernel.manageWorkspaceAgent(f.actor, {
       action: "update_profile",
-      agentDefinitionId: f.created.agent.definition.agentDefinitionId,
+      agentId: f.created.agent.definition.agentId,
       basedOnRoomSeq: current.writeContext.controlRoomSeq,
       expectedRevisionId: current.writeContext.expectedRevisionId,
       field: "displayName",
@@ -624,10 +624,8 @@ test("revoking the bearer while JSON awaits its final body chunk rejects metadat
     assert.equal(response.status, 401, response.body);
     assert.equal(count(), initial);
     assert.equal(
-      f.kernel.getWorkspaceAgentManagementView(
-        f.actor,
-        before.profile.agentDefinitionId,
-      ).agent.currentRevision.displayName,
+      f.kernel.getWorkspaceAgentManagementView(f.actor, before.profile.agentId)
+        .agent.currentRevision.displayName,
       before.profile.displayName,
     );
   } finally {

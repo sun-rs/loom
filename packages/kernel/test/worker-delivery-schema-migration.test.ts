@@ -43,7 +43,7 @@ test("schema 54 without Worker receipts upgrades atomically and preserves Room e
     try {
       assert.equal(
         upgraded.prepare("PRAGMA user_version").get()!.user_version,
-        56,
+        57,
       );
       assert.deepEqual(
         upgraded

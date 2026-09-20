@@ -379,7 +379,7 @@ test("GenericProcessAdapter passes the frozen Agent configuration to the real pr
       ...envelope,
       agent: {
         agentDefinitionRevision: {
-          agentDefinitionId: "agent-definition-process-test",
+          agentId: "agent-definition-process-test",
           agentDefinitionRevisionId: "agent-definition-revision-process-test",
           contentDigest: `sha256:${"a".repeat(64)}`,
           createdAt: "2026-08-27T00:00:00.000Z",

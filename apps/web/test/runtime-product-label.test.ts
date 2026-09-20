@@ -37,3 +37,26 @@ test("versioned executables use the authenticated inventory CLI identity", () =>
     "Claude Code",
   );
 });
+
+test("legacy generated runtime captions lose only the known transport suffix", () => {
+  assert.equal(
+    presentation.runtimeProductName("Codex · native app-server"),
+    "Codex CLI",
+  );
+  assert.equal(
+    presentation.runtimeProductName("Claude Code · native stream-json"),
+    "Claude Code",
+  );
+  assert.equal(
+    presentation.runtimeProductName("Kimi CLI · native ACP"),
+    "Kimi Code",
+  );
+  assert.equal(
+    presentation.runtimeProductName("OpenCode · native local server"),
+    "OpenCode",
+  );
+  assert.equal(
+    presentation.runtimeProductName("Custom · research"),
+    "Custom · research",
+  );
+});

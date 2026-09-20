@@ -9,7 +9,7 @@ import {
 
 const detail = {
   agent: {
-    definition: { agentDefinitionId: "agent" },
+    definition: { agentId: "agent" },
     currentRevision: { revision: 1 },
   },
 } as ClientAgentGetResponse;

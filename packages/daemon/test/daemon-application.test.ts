@@ -313,7 +313,7 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
         role: `daemon v4 worker ${String(index)}`,
         skillRefs: [],
       });
-      agentDefinitionIds.push(definition.definition.agentDefinitionId);
+      agentDefinitionIds.push(definition.definition.agentId);
     }
 
     const hostCredential = seed.provisionHostCredential({
@@ -429,7 +429,7 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     const runtimeInventory = await requireJson<{
       hostId: string;
       runtimes: Array<{
-        agentBindings: Array<{ agentDefinitionId: string }>;
+        agentBindings: Array<{ agentId: string }>;
         runtimeOfferId?: string;
         runtimeProfileId?: string;
       }>;
@@ -445,7 +445,7 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     assert.deepEqual(
       configuredInventory
         .flatMap(({ agentBindings }) =>
-          agentBindings.map(({ agentDefinitionId }) => agentDefinitionId),
+          agentBindings.map(({ agentId }) => agentId),
         )
         .sort(),
       [...agentDefinitionIds].sort(),
@@ -473,22 +473,22 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     const roomId = roomCreated.room.roomId;
 
     const catalog = await requireJson<{
-      agents: Array<{ definition: { agentDefinitionId: string } }>;
+      agents: Array<{ definition: { agentId: string } }>;
     }>(
       await clientRequest(firstOrigin, "/v3/client/agents/list", {
         controlRoomId: catalogRoom.roomId,
       }),
     );
     assert.deepEqual(
-      catalog.agents.map((entry) => entry.definition.agentDefinitionId).sort(),
+      catalog.agents.map((entry) => entry.definition.agentId).sort(),
       [...agentDefinitionIds].sort(),
     );
 
     let roomSeq = 1;
-    for (const [index, agentDefinitionId] of agentDefinitionIds.entries()) {
+    for (const [index, agentId] of agentDefinitionIds.entries()) {
       const onboarded = await requireJson<{ event: { roomSeq: number } }>(
         await clientRequest(firstOrigin, "/v3/client/agents/onboard", {
-          agentDefinitionId,
+          agentId,
           basedOnRoomSeq: roomSeq,
           idempotencyKey: `p3c-agent-onboard-${String(index)}`,
           roomId,

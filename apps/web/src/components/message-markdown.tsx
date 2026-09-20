@@ -1,3 +1,4 @@
+import type { MessageMentionBinding } from "@rah-os/protocol";
 import {
   Children,
   createContext,
@@ -166,7 +167,7 @@ function referenceTarget(
 ): NavigationTarget | undefined {
   switch (token.kind) {
     case "agent":
-      return { agentDefinitionId: token.agentDefinitionId, kind: "agent" };
+      return { agentId: token.agentId, kind: "agent" };
     case "human":
       return undefined; // HumanIdentity owns profile navigation, never an implicit DM.
     case "room":
@@ -229,10 +230,10 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
   );
   if (token.kind === "agent") {
     const candidate = context.references.agents.find(
-      ({ agentDefinitionId }) => agentDefinitionId === token.agentDefinitionId,
+      ({ agentId }) => agentId === token.agentId,
     );
     const agent =
-      candidate && (entities?.agent(candidate.agentDefinitionId) ?? candidate);
+      candidate && (entities?.agent(candidate.agentId) ?? candidate);
     return agent === undefined ? (
       content
     ) : (
@@ -435,19 +436,22 @@ export function MessageMarkdown({
   onOpenFile,
   references,
   source,
+  mentions,
 }: {
   highlightQuery?: string | undefined;
   onOpenFile?: OpenFile;
   references?: MessageMarkdownReferences | undefined;
   source: string;
+  mentions?: readonly MessageMentionBinding[] | undefined;
 }) {
   const richText =
     references === undefined
       ? undefined
       : {
           catalog: {
+            mentions,
             agents: references.agents.map((agent) => ({
-              agentDefinitionId: agent.agentDefinitionId,
+              agentId: agent.agentId,
               handle: agent.handle,
               principalId: agent.participantId,
               ...(references.mentionReadStates?.[agent.participantId] ===
@@ -474,11 +478,7 @@ export function MessageMarkdown({
                 const directRoomId = references.rooms.find(
                   ({ kind, peerNames = [] }) =>
                     kind === "direct" &&
-                    peerNames.some(
-                      (name) =>
-                        name.toLocaleLowerCase() ===
-                        principal.handle.toLocaleLowerCase(),
-                    ),
+                    peerNames.some((name) => name === principal.handle),
                 )?.roomId;
                 return {
                   ...(directRoomId === undefined ? {} : { directRoomId }),

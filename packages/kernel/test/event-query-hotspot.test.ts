@@ -88,10 +88,10 @@ function hotspotFixture(options: { unrelatedEvents?: number } = {}) {
     new Date(1800000000000 + offsetMs).toISOString();
   const addAgent = (key: string, state: string) => {
     const participantId = `participant-${key}`;
-    const agentDefinitionId = `agent-def-${key}`;
+    const agentId = `agent-def-${key}`;
     insertPrincipal.run(participantId, `handle-${key}`, timestamp(0));
     insertAgent.run(
-      agentDefinitionId,
+      agentId,
       participantId,
       roomId,
       state,
@@ -99,7 +99,7 @@ function hotspotFixture(options: { unrelatedEvents?: number } = {}) {
       timestamp(0),
       timestamp(0),
     );
-    return { agentDefinitionId, participantId };
+    return { agentId, participantId };
   };
   const addDeletionEvent = (aggregateId: string, createdAtMs: number) => {
     const eventId = `del-evt-${aggregateId}`;
@@ -122,7 +122,7 @@ function hotspotFixture(options: { unrelatedEvents?: number } = {}) {
   // the ordering decides which rows are returned at all.
   const pendingCount = 55;
   const pending: Array<{
-    agentDefinitionId: string;
+    agentId: string;
     participantId: string;
     createdAtMs: number;
   }> = [];
@@ -138,18 +138,18 @@ function hotspotFixture(options: { unrelatedEvents?: number } = {}) {
     [shuffled[index], shuffled[swap]] = [shuffled[swap]!, shuffled[index]!];
   }
   for (const entry of shuffled) {
-    addDeletionEvent(entry.agentDefinitionId, entry.createdAtMs);
+    addDeletionEvent(entry.agentId, entry.createdAtMs);
   }
 
   // Exclusion cases, each with a created_at early enough to win on ordering if
   // the WHERE clause or the join ever stopped filtering them out.
   const enabledWithDeletion = addAgent("enabled-with-deletion", "enabled");
-  addDeletionEvent(enabledWithDeletion.agentDefinitionId, -600000);
+  addDeletionEvent(enabledWithDeletion.agentId, -600000);
   const tombstonedWithDeletion = addAgent(
     "tombstoned-with-deletion",
     "tombstoned",
   );
-  addDeletionEvent(tombstonedWithDeletion.agentDefinitionId, -600000);
+  addDeletionEvent(tombstonedWithDeletion.agentId, -600000);
   const disabledWithoutDeletion = addAgent(
     "disabled-without-deletion",
     "disabled",
@@ -162,7 +162,7 @@ function hotspotFixture(options: { unrelatedEvents?: number } = {}) {
     .slice()
     .sort((left, right) => left.createdAtMs - right.createdAtMs)
     .slice(0, 50)
-    .map((entry) => entry.agentDefinitionId);
+    .map((entry) => entry.agentId);
 
   const plan = (sql: string, parameters: unknown[] = []): string[] =>
     database
@@ -262,9 +262,9 @@ test("the reconcile query returns the 50 oldest disabled agents awaiting deletio
     assert.equal(fixture.pending.length, 55);
 
     const excludedIds = [
-      excluded.enabledWithDeletion.agentDefinitionId,
-      excluded.tombstonedWithDeletion.agentDefinitionId,
-      excluded.disabledWithoutDeletion.agentDefinitionId,
+      excluded.enabledWithDeletion.agentId,
+      excluded.tombstonedWithDeletion.agentId,
+      excluded.disabledWithoutDeletion.agentId,
       ...excluded.missingAggregateIds,
     ];
     for (const id of excludedIds) {

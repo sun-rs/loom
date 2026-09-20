@@ -46,3 +46,25 @@
   ) {
   opacity: 0.5;
 }
+
+/* Raft channel-autocomplete-popover: distinct from Agent autocomplete. */
+.rah-choice-row[data-choice-profile="channel-autocomplete"] {
+  color: var(--ink);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"]:hover {
+  background: var(--yellow);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-current] {
+  background: var(--pink);
+  font-weight: 700;
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-archived] {
+  color: rgb(0 0 0 / 45%);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-archived]:hover {
+  background: rgb(0 0 0 / 5%);
+}
+.rah-choice-row[data-choice-profile="channel-autocomplete"][data-choice-archived][data-choice-current] {
+  background: rgb(0 0 0 / 10%);
+  color: var(--ink-70);
+}

@@ -145,7 +145,7 @@ test("Agent Memory browser contracts are bounded and reset is explicit", () => {
   assert.throws(
     () =>
       ClientAgentMemoryReadRequestSchema.parse({
-        agentDefinitionId: "definition-1",
+        agentId: "definition-1",
         relativePath: "../MEMORY.md",
       }),
     /path|relative/iu,
@@ -153,7 +153,7 @@ test("Agent Memory browser contracts are bounded and reset is explicit", () => {
   assert.throws(
     () =>
       ClientAgentMemoryResetRequestSchema.parse({
-        agentDefinitionId: "definition-1",
+        agentId: "definition-1",
         confirmation: "yes",
         idempotencyKey: "reset-1",
       }),
@@ -161,7 +161,7 @@ test("Agent Memory browser contracts are bounded and reset is explicit", () => {
   );
   assert.equal(
     ClientAgentMemoryResetRequestSchema.parse({
-      agentDefinitionId: "definition-1",
+      agentId: "definition-1",
       confirmation: "RESET_AGENT_MEMORY",
       idempotencyKey: "reset-1",
     }).confirmation,

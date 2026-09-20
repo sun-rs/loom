@@ -1,5 +1,7 @@
 # Human Task 状态和负责人编辑
 
+当前规则已由 [2026-09-20 新版源码核对](2026-09-20-task-assignee-status-and-live-badge.zh-CN.md)修正：完成任务须先重开才能人工更换负责人。下文保留旧版本证据。
+
 ## 来源与证据边界
 
 Raft 授权归档 `index-MqTUR4Ez.js`，SHA256

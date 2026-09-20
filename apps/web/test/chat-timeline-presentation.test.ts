@@ -4,6 +4,7 @@ import test from "node:test";
 import type { Principal, RoomEvent } from "@rah-os/protocol";
 import {
   buildChatTimeline,
+  groupChatTimeline,
   buildThreadReceiptTimeline,
   chatDateLabel,
   chatLocalDateKey,
@@ -14,6 +15,46 @@ const members: Principal[] = [
   { principalId: "human", handle: "Hakase", kind: "human" },
   { principalId: "agent", handle: "Cindy", kind: "agent" },
 ];
+
+test("system groups require three consecutive notices on the same date", () => {
+  const notices = buildChatTimeline({
+    events: [1, 2, 3].map((seq) => event(seq, "room.archived", {})),
+    members,
+    messages: [],
+  });
+  assert.equal(groupChatTimeline(notices.slice(0, 2)).length, 2);
+  const grouped = groupChatTimeline(notices);
+  assert.equal(grouped.length, 1);
+  assert.equal(grouped[0]?.kind, "system-group");
+  if (grouped[0]?.kind === "system-group")
+    assert.equal(grouped[0].items.length, 3);
+  assert.equal(
+    groupChatTimeline([
+      ...notices.slice(0, 2),
+      { ...notices[2]!, createdAt: "2026-08-24T11:20:00.000Z" },
+    ]).length,
+    3,
+  );
+});
+
+test("membership notifications use display names, retaining handle only as fallback", () => {
+  const [notice] = buildChatTimeline({
+    events: [event(1, "membership.added", { participantId: "agent" })],
+    members: [
+      {
+        principalId: "agent",
+        handle: "cli-account",
+        displayName: "Gemini",
+        kind: "agent",
+      },
+    ],
+    messages: [],
+  });
+  assert.equal(
+    notice?.kind === "membership-added" && notice.text,
+    "@Gemini was added to this channel.",
+  );
+});
 
 const event = (
   roomSeq: number,
@@ -70,7 +111,11 @@ test("chat timeline interleaves canonical membership notices by Room sequence", 
 test("archive lifecycle notices come from durable Room events in sequence", () => {
   const items = buildChatTimeline({
     events: [event(5, "room.unarchived", {}), event(4, "room.archived", {})],
-    members,
+    members: members.map((member) =>
+      member.principalId === "human"
+        ? { ...member, handle: "owner", displayName: "Hakase" }
+        : member,
+    ),
     messages: [],
   });
   assert.deepEqual(

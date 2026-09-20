@@ -31,7 +31,7 @@ import { agentMemoryMaterializationReceiptPath } from "../src/agent-memory-mater
 function agent(): AgentRuntimeContext {
   return {
     agentDefinitionRevision: {
-      agentDefinitionId: "definition-alice",
+      agentId: "definition-alice",
       agentDefinitionRevisionId: "revision-alice-1",
       contentDigest: `sha256:${"1".repeat(64)}`,
       createdAt: "2026-08-30T09:00:00.000+08:00",

@@ -18,13 +18,21 @@ export function MessageAgentModelName({
 }) {
   const entities = useWorkspaceEntities();
   const bindingId = agent.modelBindingId;
-  const runtime = entities?.runtimeForAgent(agent.agentDefinitionId, bindingId);
+  const runtime = entities?.runtimeForAgent(agent.agentId, bindingId);
   const model = bindingId
     ? runtime?.modelBindingDescriptors.find(
         (entry) => entry.modelBindingId === bindingId,
       )
     : undefined;
   return (
-    <MessageModelName name={model ? chatModelIdentifier(model) : bindingId} />
+    <MessageModelName
+      name={
+        model
+          ? chatModelIdentifier(model)
+          : bindingId
+            ? chatModelIdentifier({ modelId: bindingId })
+            : undefined
+      }
+    />
   );
 }

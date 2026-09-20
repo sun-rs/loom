@@ -26,7 +26,7 @@ export function pushTargetFromSearch(
     kind === "agent"
       ? {
           kind,
-          agentDefinitionId: params.get("agent"),
+          agentId: params.get("agent"),
           tab: params.get("agentTab") ?? undefined,
         }
       : kind === "computer"

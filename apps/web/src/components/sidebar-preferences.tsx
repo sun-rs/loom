@@ -1,6 +1,8 @@
 import {
   createContext,
   useContext,
+  useImperativeHandle,
+  type Ref,
   useEffect,
   useRef,
   useState,
@@ -20,7 +22,9 @@ const Context = createContext<{
   setDisclosure: (section: string, open: boolean) => void;
 } | null>(null);
 export const useSidebarPreferences = () => useContext(Context);
+export type SidebarPreferencesHandle = { refresh: () => Promise<void> };
 export function SidebarPreferencesProvider({
+  ref,
   client,
   workspaceId,
   enabled,
@@ -28,6 +32,7 @@ export function SidebarPreferencesProvider({
   hostInstanceId,
   children,
 }: {
+  ref?: Ref<SidebarPreferencesHandle>;
   client: RahClient;
   workspaceId: string | undefined;
   enabled: boolean;
@@ -42,6 +47,8 @@ export function SidebarPreferencesProvider({
   const epoch = useRef(0),
     head = useRef<State | undefined>(undefined),
     writing = useRef(false);
+  const refresh = useRef<() => Promise<void>>(async () => {});
+  useImperativeHandle(ref, () => ({ refresh: () => refresh.current() }), []);
   useEffect(() => {
     let alive = true,
       loading = false;
@@ -52,8 +59,8 @@ export function SidebarPreferencesProvider({
     setPending(false);
     setError(undefined);
     if (!enabled || !workspaceId) return;
-    const load = async () => {
-      if (loading || writing.current) return;
+    const load = async (force = false) => {
+      if ((!force && loading) || writing.current) return;
       loading = true;
       try {
         const next = await client.request("sidebar.get", { workspaceId });
@@ -74,16 +81,19 @@ export function SidebarPreferencesProvider({
         loading = false;
       }
     };
+    refresh.current = () => load(true);
+    const onFocus = () => void load();
     void load();
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") void load();
     }, 5000);
-    window.addEventListener("focus", load);
+    window.addEventListener("focus", onFocus);
     return () => {
       alive = false;
       ++epoch.current;
       clearInterval(timer);
-      window.removeEventListener("focus", load);
+      window.removeEventListener("focus", onFocus);
+      refresh.current = async () => {};
     };
   }, [client, workspaceId, enabled]);
   async function patch(p: Partial<Omit<SidebarPreferences, "version">>) {

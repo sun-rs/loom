@@ -31,13 +31,13 @@ test("restart preserves Provider continuity and replays one terminal receipt", a
   });
 
   const first = await coordinator.reset({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     mode: "restart",
     operationId: "operation-1",
     ownerParticipantId: "agent-1",
   });
   const replay = await coordinator.reset({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     mode: "restart",
     operationId: "operation-1",
     ownerParticipantId: "agent-1",
@@ -83,13 +83,13 @@ test("session reset quarantines Provider continuity exactly once", async () => {
   });
 
   const result = await coordinator.reset({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     mode: "session",
     operationId: "operation-2",
     ownerParticipantId: "agent-1",
   });
   const replay = await coordinator.reset({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     mode: "session",
     operationId: "operation-2",
     ownerParticipantId: "agent-1",
@@ -139,7 +139,7 @@ test("full reset composes workspace and Provider continuity under one execution 
 
   const result = await coordinator.reset(
     {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       mode: "full",
       operationId: "operation-full-1",
       ownerParticipantId: "agent-1",
@@ -195,7 +195,7 @@ test("full reset rolls continuity and workspace back before releasing its fence"
   await assert.rejects(
     coordinator.reset(
       {
-        agentDefinitionId: "agent-definition-1",
+        agentId: "agent-definition-1",
         mode: "full",
         operationId: "operation-full-rollback",
         ownerParticipantId: "agent-1",
@@ -238,7 +238,7 @@ test("continuity failure rolls back and releases only after rollback succeeds", 
   await assert.rejects(
     coordinator.reset(
       {
-        agentDefinitionId: "agent-definition-1",
+        agentId: "agent-definition-1",
         mode: "session",
         operationId: "operation-3",
         ownerParticipantId: "agent-1",
@@ -264,14 +264,14 @@ test("an idempotency operation cannot change Agent or mode", async () => {
     rootDirectory,
   });
   await coordinator.reset({
-    agentDefinitionId: "agent-definition-1",
+    agentId: "agent-definition-1",
     mode: "restart",
     operationId: "operation-4",
     ownerParticipantId: "agent-1",
   });
   await assert.rejects(
     coordinator.reset({
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       mode: "session",
       operationId: "operation-4",
       ownerParticipantId: "agent-1",
@@ -329,7 +329,7 @@ test("a durable reset decision survives finalize failure and replay only finaliz
   const rootDirectory = await mkdtemp(join(tmpdir(), "rah-reset-finalize-"));
   const calls: string[] = [];
   const input = {
-    agentDefinitionId: "definition",
+    agentId: "definition",
     ownerParticipantId: "owner",
     operationId: "finalize-op",
     mode: "full" as const,

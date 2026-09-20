@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { Room } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
-import { directConversationEntries } from "../src/direct-conversation-entries.ts";
+import {
+  directConversationEntries,
+  directConversationPeer,
+} from "../src/direct-conversation-entries.ts";
 
 const alice: WorkspaceAgentView = {
-  agentDefinitionId: "def-a",
+  agentId: "def-a",
   createdAt: "2026-08-30T00:00:00.000Z",
   createdBy: "human",
   displayName: "Renamed Alice",
@@ -35,7 +38,7 @@ test("DM entry exists before a Room; durable pair identity survives rename and s
     "agent-a",
   );
   const rows = directConversationEntries(
-    [alice, { ...alice, agentDefinitionId: "def-b", participantId: "agent-b" }],
+    [alice, { ...alice, agentId: "def-b", participantId: "agent-b" }],
     [direct],
     "human",
   );
@@ -62,6 +65,48 @@ test("existing Human DM stays reachable; archived/tombstoned entries cannot masq
   assert.equal(rows[0]?.peerPrincipalId, "bob");
 });
 
+test("deleted Agent DM keeps its identity beside a new same-name Agent and survives reload", () => {
+  const deleted = { ...alice, state: "tombstoned" as const };
+  const replacement = {
+    ...alice,
+    agentId: "def-new",
+    participantId: "agent-new",
+  };
+  const newRoom = {
+    ...direct,
+    roomId: "dm-new",
+    directParticipantIds: ["human", "agent-new"] as [string, string],
+  };
+  for (const rooms of [[direct], [direct, newRoom]]) {
+    const rows = directConversationEntries(
+      [deleted, replacement],
+      rooms,
+      "human",
+    );
+    assert.equal(rows.length, 2);
+    const old = rows.find((row) => row.roomId === "dm-a");
+    assert.equal(old?.label, alice.displayName);
+    assert.equal(old?.agent?.agentId, "def-a");
+    assert.equal(old?.agent?.state, "tombstoned");
+    assert.equal(
+      rows.find((row) => row.peerPrincipalId === "agent-new")?.roomId,
+      rooms.length === 2 ? "dm-new" : undefined,
+    );
+    assert.equal(
+      directConversationPeer([deleted, replacement], direct, "human")?.agentId,
+      "def-a",
+    );
+    assert.deepEqual(
+      directConversationEntries(
+        JSON.parse(JSON.stringify([deleted, replacement])),
+        JSON.parse(JSON.stringify(rooms)),
+        "human",
+      ),
+      rows,
+    );
+  }
+});
+
 test("Agent profile queries are keyed by identity/revision rather than transient view objects", () => {
   const source = readFileSync(
     new URL("../src/components/agent-directory-pane.tsx", import.meta.url),
@@ -74,7 +119,7 @@ test("Agent profile queries are keyed by identity/revision rather than transient
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
   assert.match(
     app,
-    /const agentDirectoryQuery = useReconciledQuery\(\s*client,\s*"agent.list",\s*\{ controlRoomId: activeWorkspace\?\.controlRoomId \?\? "none" \},[\s\S]*?\sreload,\s*\);/u,
+    /const agentDirectoryQuery = useReconciledQuery\(\s*client,\s*"agent.list",\s*\{\s*controlRoomId: activeWorkspace\?\.controlRoomId \?\? "none",\s*includeDeleted: true,\s*\},[\s\S]*?\sreload,\s*\);/u,
   );
 });
 

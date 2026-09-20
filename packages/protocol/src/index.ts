@@ -22,6 +22,7 @@ import {
   AgentExecutionWorkspaceSchema,
 } from "./agent-definition.ts";
 import {
+  CustomModelSchema,
   CapabilityEvidenceLevelSchema,
   ExecutionPolicyRevisionSchema,
   ExplicitReasoningLevelSchema,
@@ -824,7 +825,7 @@ export type ClientAgentProvisionResponse = z.infer<
 export const ClientAgentConfigureRequestSchema =
   ClientAgentProvisionRequestSchema.omit({ controlRoomId: true }).extend({
     action: z.literal("configure"),
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
   });
 export type ClientAgentConfigureRequest = z.infer<
   typeof ClientAgentConfigureRequestSchema
@@ -856,7 +857,7 @@ export * from "./agent-workspace.ts";
 export * from "./member-graph.ts";
 export * from "./client-task-reassignment.ts";
 export const ClientAgentGetRequestSchema = z
-  .object({ agentDefinitionId: IdentifierSchema })
+  .object({ agentId: IdentifierSchema })
   .strict();
 export type ClientAgentGetRequest = z.infer<typeof ClientAgentGetRequestSchema>;
 export const ClientAgentCreatorSchema = z.discriminatedUnion("kind", [
@@ -913,6 +914,7 @@ export type RuntimeProfileProbeReportRef = z.infer<
 
 export const RuntimeOfferSchema = z
   .object({
+    customModelRuntime: z.enum(["claude", "codex"]).optional(),
     supportsAgentPrivateWorkspace: z.boolean().optional(),
     runtimeOfferId: IdentifierSchema,
     hostId: IdentifierSchema,
@@ -1029,6 +1031,7 @@ export type RuntimeOfferProjection = z.infer<
 >;
 
 export const ResolvedModelSchema = z.discriminatedUnion("source", [
+  CustomModelSchema.extend({ source: z.literal("custom_model") }).strict(),
   z
     .object({
       source: z.literal("runtime_default"),
@@ -1054,6 +1057,12 @@ function resolvedModelsEqual(
 ): boolean {
   if (left.source !== right.source) return false;
   if (left.source === "runtime_default") return true;
+  if (left.source === "custom_model")
+    return (
+      right.source === "custom_model" &&
+      left.runtime === right.runtime &&
+      left.modelId === right.modelId
+    );
   if (right.source !== "explicit_binding") return false;
   return (
     left.modelBindingId === right.modelBindingId &&
@@ -1679,3 +1688,10 @@ export * from "./worker-task-update.ts";
 
 export * from "./system-channel-visibility.ts";
 export * from "./composer-controls.ts";
+
+export {
+  MessageMentionBindingSchema,
+  type MessageMentionBinding,
+} from "./collaboration.ts";
+
+export { canonicalAgentIdField } from "./agent-id-compat.ts";

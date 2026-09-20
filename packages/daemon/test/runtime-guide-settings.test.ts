@@ -73,7 +73,7 @@ test("Legacy global launch overlays are retained but never exposed or executed; 
     writeFileSync(path, JSON.stringify(legacy));
     const store = new RuntimeGuideSettings(path);
     store.update({
-      agentDefinitionId: "a",
+      agentId: "a",
       runtimeId: "codex",
 
       environment: { LABEL: "agent" },
@@ -118,7 +118,7 @@ test("Legacy global launch overlays are retained but never exposed or executed; 
       assert.throws(
         () =>
           store.update({
-            agentDefinitionId: "a",
+            agentId: "a",
             runtimeId: "codex",
             expectedRevision: 1,
             ...change,
@@ -129,7 +129,7 @@ test("Legacy global launch overlays are retained but never exposed or executed; 
     assert.throws(
       () =>
         store.update({
-          agentDefinitionId: "a",
+          agentId: "a",
           runtimeId: "codex",
           expectedRevision: 0,
           environment: {},
@@ -138,7 +138,7 @@ test("Legacy global launch overlays are retained but never exposed or executed; 
     );
     assert.equal(store.read().revision, 1);
     store.update({
-      agentDefinitionId: "a",
+      agentId: "a",
       runtimeId: "codex",
       expectedRevision: 1,
       environment: {},
@@ -149,7 +149,7 @@ test("Legacy global launch overlays are retained but never exposed or executed; 
     );
     assert.deepEqual(
       store
-        .read({ agentDefinitionId: "a" })
+        .read({ agentId: "a" })
         .runtimes.find((r) => r.runtimeId === "codex")!.effectiveArgs,
       row.defaultArgs,
     );
@@ -212,7 +212,7 @@ test("Agent CLI arguments are retired while environment reaches an isolated chil
     assert.throws(
       () =>
         store.update({
-          agentDefinitionId: "a",
+          agentId: "a",
           runtimeId: "codex",
           expectedRevision: 0,
           additionalArgs: ["--debug"],
@@ -220,12 +220,12 @@ test("Agent CLI arguments are retired while environment reaches an isolated chil
       /environment|环境变量/i,
     );
     assert.deepEqual(
-      store.read({ agentDefinitionId: "a" }).runtimes[0]!.additionalArgs,
+      store.read({ agentId: "a" }).runtimes[0]!.additionalArgs,
       [],
     );
     for (const runtimeId of ["codex", "claude", "kimi", "opencode"] as const) {
       store.update({
-        agentDefinitionId: "a",
+        agentId: "a",
         runtimeId,
         expectedRevision: store.read().revision,
         environment: { LABEL: "agent-value" },

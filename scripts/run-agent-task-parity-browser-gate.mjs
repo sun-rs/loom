@@ -34,7 +34,7 @@ for (const engine of ["chrome", "firefox"]) {
     const agent = (
       await post("agents/list", { controlRoomId: workspace.controlRoomId })
     ).agents[0];
-    const id = agent.definition.agentDefinitionId;
+    const id = agent.definition.agentId;
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.goto(`${fixture.origin}/?surface=computers`);
@@ -91,8 +91,7 @@ for (const engine of ["chrome", "firefox"]) {
       );
       await page.unroute("**/v3/client/agents/manage");
       assert.equal(
-        (await post("agents/get", { agentDefinitionId: id })).agent.definition
-          .state,
+        (await post("agents/get", { agentId: id })).agent.definition.state,
         "disabled",
       );
       await head
@@ -107,8 +106,7 @@ for (const engine of ["chrome", "firefox"]) {
         .click();
       await start.waitFor({ state: "hidden" });
       assert.equal(
-        (await post("agents/get", { agentDefinitionId: id })).agent.definition
-          .state,
+        (await post("agents/get", { agentId: id })).agent.definition.state,
         "enabled",
       );
       await head
@@ -200,7 +198,7 @@ for (const engine of ["chrome", "firefox"]) {
     const runtime = (await inventoryResponse.json()).runtimes.find(
       (runtime) => runtime.available && runtime.runtimeOfferId,
     );
-    const detail = await post("agents/get", { agentDefinitionId: id });
+    const detail = await post("agents/get", { agentId: id });
     const head = await post("rooms/sync", {
       roomId: workspace.controlRoomId,
       consumerId: `delete-fixture-${engine}`,
@@ -217,7 +215,7 @@ for (const engine of ["chrome", "firefox"]) {
       modelIntent: detail.policy.modelIntent,
       idempotencyKey: `disposable-ui-agent-${engine}`,
     });
-    const disposableId = disposable.agent.definition.agentDefinitionId;
+    const disposableId = disposable.agent.definition.agentId;
     await page.goto(
       `${fixture.origin}/?surface=agents&agent=${disposableId}&agentTab=profile`,
     );
@@ -242,9 +240,7 @@ for (const engine of ["chrome", "firefox"]) {
     assert.equal(
       (
         await post("agents/list", { controlRoomId: workspace.controlRoomId })
-      ).agents.some(
-        (agent) => agent.definition.agentDefinitionId === disposableId,
-      ),
+      ).agents.some((agent) => agent.definition.agentId === disposableId),
       false,
     );
     results.push({ engine, directDeletion: true });

@@ -16,7 +16,7 @@ import {
 function agent(): AgentRuntimeContext {
   return {
     agentDefinitionRevision: {
-      agentDefinitionId: "definition-admin",
+      agentId: "definition-admin",
       agentDefinitionRevisionId: "revision-admin",
       contentDigest: `sha256:${"1".repeat(64)}`,
       createdAt: "2026-08-30T09:00:00.000+08:00",

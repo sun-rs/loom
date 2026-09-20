@@ -121,7 +121,7 @@ test("hidden all disappears from lists and denies Human/Agent reads and writes; 
     assert.equal(
       k
         .listWorkspaceAgentRooms(a, {
-          agentDefinitionId: definition.definition.agentDefinitionId,
+          agentId: definition.definition.agentId,
         })
         .some((x) => x.roomId === r.roomId),
       false,

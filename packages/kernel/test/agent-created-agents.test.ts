@@ -93,8 +93,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
         .listAgentCatalog(actor)
         .find(
           (entry) =>
-            entry.definition.agentDefinitionId ===
-            parentDefinition.definition.agentDefinitionId,
+            entry.definition.agentId === parentDefinition.definition.agentId,
         )?.modelBindingId,
       "fixture-model",
       "chat catalog exposes the saved model binding without per-message profile requests",
@@ -109,7 +108,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
       .prepare(
         "SELECT agent_definition_revision_id, definition_json FROM agent_definition_revisions WHERE agent_definition_id = ? AND revision = 1",
       )
-      .get(childDefinition.definition.agentDefinitionId)!;
+      .get(childDefinition.definition.agentId)!;
     const definition = JSON.parse(String(row.definition_json)) as Record<
       string,
       unknown
@@ -131,7 +130,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
     actor = kernel.authenticateAccessToken(owner.accessToken);
     const detail = kernel.getWorkspaceAgentManagementView(
       actor,
-      parentDefinition.definition.agentDefinitionId,
+      parentDefinition.definition.agentId,
     );
     assert.equal(detail.creator?.principalId, owner.principal.principalId);
     assert.deepEqual(
@@ -139,12 +138,12 @@ test("created Agents come from revision-one identity provenance and exclude tomb
         workspaceId: workspace.workspace.workspaceId,
         principalId: owner.principal.principalId,
       }).createdAgentDefinitionIds,
-      [parentDefinition.definition.agentDefinitionId],
+      [parentDefinition.definition.agentId],
       "Human and Agent views use the same revision-one creation edge",
     );
     assert.deepEqual(
-      detail.createdAgents.map((agent) => agent.definition.agentDefinitionId),
-      [childDefinition.definition.agentDefinitionId],
+      detail.createdAgents.map((agent) => agent.definition.agentId),
+      [childDefinition.definition.agentId],
     );
 
     const outsider = kernel.provisionPrincipal({
@@ -154,7 +153,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
     assert.throws(() =>
       kernel.getWorkspaceAgentManagementView(
         kernel.authenticateAccessToken(outsider.accessToken),
-        parentDefinition.definition.agentDefinitionId,
+        parentDefinition.definition.agentId,
       ),
     );
 
@@ -174,7 +173,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
       action: "update_profile",
       field: "displayName",
       value: "Edited by admin",
-      agentDefinitionId: parentDefinition.definition.agentDefinitionId,
+      agentId: parentDefinition.definition.agentId,
       expectedRevisionId: parentDefinition.definition.currentRevisionId,
       basedOnRoomSeq: currentSeq(),
       idempotencyKey: "other-editor",
@@ -185,7 +184,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
         workspaceId: workspace.workspace.workspaceId,
         principalId: actor.principalId,
       }).createdAgentDefinitionIds,
-      [parentDefinition.definition.agentDefinitionId],
+      [parentDefinition.definition.agentId],
     );
     assert.deepEqual(
       kernel.humanProfiles.get(actor, {
@@ -197,14 +196,14 @@ test("created Agents come from revision-one identity provenance and exclude tomb
 
     kernel.manageWorkspaceAgent(actor, {
       action: "set_state",
-      agentDefinitionId: childDefinition.definition.agentDefinitionId,
+      agentId: childDefinition.definition.agentId,
       basedOnRoomSeq: currentSeq(),
       idempotencyKey: "child-disable",
       state: "disabled",
     });
     kernel.manageWorkspaceAgent(actor, {
       action: "set_state",
-      agentDefinitionId: childDefinition.definition.agentDefinitionId,
+      agentId: childDefinition.definition.agentId,
       basedOnRoomSeq: currentSeq(),
       idempotencyKey: "child-tombstone",
       state: "tombstoned",
@@ -212,7 +211,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
     assert.deepEqual(
       kernel.getWorkspaceAgentManagementView(
         actor,
-        parentDefinition.definition.agentDefinitionId,
+        parentDefinition.definition.agentId,
       ).createdAgents,
       [],
     );

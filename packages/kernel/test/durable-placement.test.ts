@@ -272,7 +272,7 @@ function addAgent(
 
 test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 56);
+  assert.equal(KERNEL_SCHEMA_VERSION, 57);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -2478,7 +2478,7 @@ test("RunAttempt references frozen placement after Agent and Policy v2 activatio
     sessionPolicy: policy.sessionPolicy,
   }).policy;
   const agentV2 = kernel.reviseAgentDefinition(humanActor, {
-    agentDefinitionId: agentDefinition.agentDefinitionId,
+    agentId: agentDefinition.agentId,
     basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
     executionPolicyRevisionId: policyV2.executionPolicyRevisionId,
     idempotencyKey: "agent-v2",

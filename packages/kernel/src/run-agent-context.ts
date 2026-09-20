@@ -69,7 +69,7 @@ export function agentRuntimeContextFromPlacement(
          JOIN principals ON principals.principal_id = agent_definitions.participant_id
         WHERE agent_definitions.agent_definition_id = ?`,
     )
-    .get(revision.agentDefinitionId);
+    .get(revision.agentId);
   const participantId = text(placement, "participant_id");
   if (
     definition === undefined ||

@@ -43,15 +43,15 @@ try {
     const agent = (
       await post("agents/list", { controlRoomId: workspace.controlRoomId })
     ).agents[0];
-    const agentDefinitionId = agent.definition.agentDefinitionId;
-    const url = `${fixture.origin}/?surface=agents&agent=${agentDefinitionId}&agentTab=workspace`;
+    const agentId = agent.definition.agentId;
+    const url = `${fixture.origin}/?surface=agents&agent=${agentId}&agentTab=workspace`;
     await page.goto(url);
     const pane = page.locator(".rah-workspace-browser");
     const file = pane.getByRole("treeitem", { name: "MEMORY.md", exact: true });
     await expect(file).toBeVisible({ timeout: 20000 });
     await expect(pane.getByRole("combobox")).toHaveCount(0);
     await expect(pane.locator("footer")).toHaveCount(0);
-    const roots = await post("agents/workspace/roots", { agentDefinitionId });
+    const roots = await post("agents/workspace/roots", { agentId });
     assert.deepEqual(
       roots.roots.map((root) => root.rootId),
       ["agent-workspace"],
@@ -61,7 +61,7 @@ try {
         `${fixture.origin}/v3/client/agents/workspace/${operation}`,
         {
           data: {
-            agentDefinitionId,
+            agentId,
             rootId: "runtime-project",
             path: operation === "read" ? "README.md" : "",
           },

@@ -5,6 +5,11 @@
 
 ## 上游来源
 
+2026-09-20：[当前发布源码复核与用户状态裁决](../../audits/2026-09-20-surface-selection-parity.zh-CN.md)。
+产品频道/私信行选中或未读均为 700；普通行为 500。描述继承当前行字重，
+12px/16px sans；成员列表与私信列表复用同一字体规则。此前钉回 500 的
+选中态裁决在本产品表面被本次用户要求取代，夹具通用 channel-row 默认值不变。
+
 2026-09-15 本地产品补充：[默认折叠、触摸选择与移动密度](../../audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md)。
 下面的上游表仍保留原值；当前 PWA 采用分组上间距 8px、条目下间距 2px，桌面为
 12px/4px。最新[同设备截图细化](../../audits/2026-09-15-sidebar-copy-home-refinement.zh-CN.md)

@@ -199,7 +199,7 @@ export type WorkerReminderLogResponse = z.infer<
 
 export const ClientAgentRemindersListRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     all: z.boolean().optional(),
     status: ReminderStatusSchema.optional(),
   })

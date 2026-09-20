@@ -1,3 +1,4 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import type { RoomAgentTarget } from "@rah-os/ui-web";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
@@ -18,6 +19,7 @@ export function TaskParticipantFields({
   onManageAgents?: () => void;
   taskTargetIssue: string | undefined;
 }) {
+  const entities = useWorkspaceEntities();
   const owner = agents.find(
     ({ participantId }) => participantId === assigneeId,
   );
@@ -26,7 +28,7 @@ export function TaskParticipantFields({
       ? agents.length === 0
         ? "创建未指派任务（当前 Room 无 Agent）"
         : "未指定负责人"
-      : `${owner.handle} 负责`;
+      : `${entities?.person(owner.participantId)?.displayName || owner.handle} 负责`;
   return (
     <section className="rah-agent-targets" aria-label="任务目标 Agents">
       <header>
@@ -61,7 +63,8 @@ export function TaskParticipantFields({
               <option value="">未指定</option>
               {agents.map((agent) => (
                 <option key={agent.participantId} value={agent.participantId}>
-                  {agent.handle}
+                  {entities?.person(agent.participantId)?.displayName ||
+                    agent.handle}
                 </option>
               ))}
             </select>

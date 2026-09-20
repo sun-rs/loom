@@ -78,3 +78,164 @@ test("Room, DM and Thread reuse the Raft mention menu and its yellow active row"
     /\[data-choice-profile="autocomplete"\]\[data-choice-current\][^{]*\{\s*background:\s*var\(--yellow\)/u,
   );
 });
+
+test("channel completion filters visible channels, retains archived references and inserts at caret", async () => {
+  const {
+    composerChannelMatch,
+    filterComposerChannels,
+    completeComposerChannel,
+  } = await import("../src/composer-mention.ts");
+  const channels = [
+    { roomId: "all", name: "all", kind: "channel", description: "General" },
+    {
+      roomId: "old",
+      name: "old-project",
+      kind: "channel",
+      archivedAt: "2026-09-01",
+    },
+    { roomId: "dm", name: "private", kind: "direct" },
+  ] as const;
+  const match = composerChannelMatch("看 #old 后文", 6);
+  assert.deepEqual(match, { start: 2, end: 6, query: "old" });
+  assert.deepEqual(
+    filterComposerChannels(channels, match!).map((x) => x.roomId),
+    ["old"],
+  );
+  assert.deepEqual(
+    completeComposerChannel("看 #old 后文", "old-project", match!),
+    { text: "看 #old-project 后文", caret: 15 },
+  );
+  assert.equal(composerChannelMatch("https://example.com/#old", 24), undefined);
+  assert.equal(composerChannelMatch("`#old`", 5), undefined);
+  assert.equal(composerChannelMatch("#old-project 已完成", 16), undefined);
+  assert.equal(
+    filterComposerChannels(channels, { start: 0, end: 1, query: "" }).length,
+    2,
+  );
+});
+
+test("Raft mention fields, stable ranking, pinyin and bounded fuzzy matching", () => {
+  const rows = [
+    {
+      participantId: "description",
+      handle: "other",
+      displayName: "Other",
+      description: "parity",
+    },
+    { participantId: "display", handle: "another", displayName: "Parity" },
+    { participantId: "account", handle: "Parity", displayName: "Different" },
+    { participantId: "case", handle: "parity", displayName: "Different" },
+    { participantId: "prefix", handle: "parity-a", displayName: "Different" },
+    { participantId: "zh", handle: "helper", displayName: "李云龙" },
+    { participantId: "fuzzy", handle: "abc-def", displayName: "Different" },
+    {
+      participantId: "far",
+      handle: "a123456789b123456789c",
+      displayName: "Different",
+    },
+  ];
+  const query = (query: string) =>
+    filterComposerMentionAgents(rows, {
+      start: 0,
+      end: query.length + 1,
+      query,
+    }).map((x) => x.participantId);
+  assert.deepEqual(query("parity"), [
+    "account",
+    "case",
+    "display",
+    "description",
+    "prefix",
+  ]);
+  assert.deepEqual(query("liyunlong"), ["zh"]);
+  assert.deepEqual(query("lyl"), ["zh"]);
+  assert.deepEqual(query("abdf"), ["fuzzy"]);
+  assert.ok(!query("abc").includes("far"));
+  assert.equal(
+    completeComposerMention("@par", "Parity", {
+      start: 0,
+      end: 4,
+      query: "par",
+    }).text,
+    "@Parity ",
+  );
+});
+
+test("composer empty queries retain all candidates; nonempty queries cap at 30 for both types", async () => {
+  const { filterComposerChannels } = await import("../src/composer-mention.ts");
+  const rows = Array.from({ length: 40 }, (_, i) => ({
+    participantId: String(i),
+    handle: `agent${i}`,
+    displayName: `Agent ${i}`,
+    roomId: String(i),
+    name: `channel${i}`,
+    kind: "channel",
+    description: "documentation",
+  }));
+  assert.equal(
+    filterComposerMentionAgents(rows, { start: 0, end: 1, query: "" }).length,
+    40,
+  );
+  assert.equal(
+    filterComposerMentionAgents(rows, { start: 0, end: 6, query: "agent" })
+      .length,
+    30,
+  );
+  assert.equal(
+    filterComposerChannels(rows, { start: 0, end: 1, query: "" }).length,
+    40,
+  );
+  assert.equal(
+    filterComposerChannels(rows, { start: 0, end: 4, query: "doc" }).length,
+    30,
+  );
+  assert.deepEqual(
+    filterComposerChannels(
+      [{ roomId: "zh", kind: "channel", name: "研发中心", archivedAt: "old" }],
+      { start: 0, end: 5, query: "yfzx" },
+    ).map((x) => x.roomId),
+    ["zh"],
+  );
+});
+
+test("thread recent participants precede other ranked candidates without introducing candidates", async () => {
+  const { prioritizeComposerParticipants } =
+    await import("../src/composer-mention.ts");
+  assert.deepEqual(
+    prioritizeComposerParticipants(agents, [
+      "agent_cindy",
+      "outsider",
+      "agent_cindy",
+      "agent_alice",
+    ]).map((x) => x.participantId),
+    ["agent_cindy", "agent_alice"],
+  );
+});
+
+test("word boundaries outrank substring; description does not gain fuzzy-name matching", () => {
+  const rows = [
+    { participantId: "substring", handle: "xhelper", displayName: "x" },
+    { participantId: "token", handle: "team-helper", displayName: "x" },
+    { participantId: "prefix", handle: "helper-team", displayName: "x" },
+    {
+      participantId: "source",
+      handle: "other",
+      displayName: "x",
+      sourceServerLabel: "helper",
+    },
+    {
+      participantId: "description",
+      handle: "unrelated",
+      displayName: "x",
+      description: "a-b-c",
+    },
+  ];
+  const query = (query: string) =>
+    filterComposerMentionAgents(rows, {
+      start: 0,
+      end: query.length + 1,
+      query,
+    }).map((x) => x.participantId);
+  assert.deepEqual(query("helper"), ["source", "prefix", "token", "substring"]);
+  assert.ok(!query("ac").includes("description"));
+});

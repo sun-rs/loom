@@ -1,6 +1,72 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { RoomKernel } from "../src/index.ts";
+import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+test("historical DM remains closable after its peer leaves memberships", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-sidebar-deleted-"));
+  const databasePath = join(directory, "room.db");
+  const k = new RoomKernel({ databasePath });
+  k.initialize();
+  try {
+    const human = k.provisionPrincipal({ handle: "owner", kind: "human" });
+    const peer = k.provisionPrincipal({ handle: "removed", kind: "agent" });
+    const actor = k.authenticateAccessToken(human.accessToken);
+    const w = k.createWorkspace(actor, {
+      name: "w",
+      slug: "w",
+      idempotencyKey: "w",
+    });
+    k.addMember(actor, {
+      roomId: w.controlRoom.roomId,
+      principalId: peer.principal.principalId,
+    });
+    const room = k.openDirectRoom(actor, {
+      workspaceId: w.workspace.workspaceId,
+      peerPrincipalId: peer.principal.principalId,
+      basedOnControlRoomSeq: k.sync(actor, {
+        roomId: w.controlRoom.roomId,
+        consumerId: "test",
+      }).latestRoomSeq,
+      idempotencyKey: "dm",
+    });
+    // Reproduce the membership projection left by Agent deletion; the durable pair survives.
+    const db = new DatabaseSync(databasePath);
+    db.prepare("DELETE FROM memberships WHERE principal_id = ?").run(
+      peer.principal.principalId,
+    );
+    db.close();
+    const scope = { workspaceId: w.workspace.workspaceId };
+    const key = `peer:${peer.principal.principalId}`;
+    const result = k.humanSidebar.patch(actor, {
+      ...scope,
+      expectedVersion: 0,
+      idempotencyKey: "close",
+      patch: { hiddenDms: [key] },
+    });
+    assert.deepEqual(result.preferences.hiddenDms, [key]);
+    assert.deepEqual(k.humanSidebar.get(actor, scope).preferences.hiddenDms, [
+      key,
+    ]);
+    assert.ok(k.listRooms(actor).some((r) => r.roomId === room.roomId));
+    assert.throws(
+      () =>
+        k.humanSidebar.patch(actor, {
+          ...scope,
+          expectedVersion: 1,
+          idempotencyKey: "unauthorized",
+          patch: { hiddenDms: ["peer:unknown"] },
+        }),
+      /unavailable|inaccessible/,
+    );
+  } finally {
+    k.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 test("sidebar order is private, version fenced, idempotent and ACL validated", () => {
   const k = new RoomKernel({ databasePath: ":memory:" });
   k.initialize();

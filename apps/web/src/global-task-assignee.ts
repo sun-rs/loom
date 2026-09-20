@@ -1,4 +1,5 @@
 import type { RahClient } from "@rah-os/client-sdk";
+import { raftTaskGroup } from "./global-discovery-model.ts";
 import type { Task } from "@rah-os/protocol";
 import {
   RoomSession,
@@ -9,10 +10,12 @@ import {
 export type TaskAssigneeIntent =
   { kind: "assign"; assigneeId: string } | { kind: "unassign" };
 export function taskAssigneeMode(
-  _task: Task,
+  task: Task,
   principalId: string | undefined,
 ): "idle" | "readonly" {
-  return principalId === undefined ? "readonly" : "idle";
+  return principalId === undefined || raftTaskGroup(task) === "done"
+    ? "readonly"
+    : "idle";
 }
 
 /** One UI command identity. After an uncertain response, replay exactly the first

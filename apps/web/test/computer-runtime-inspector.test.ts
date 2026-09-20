@@ -17,7 +17,7 @@ import {
 const runtime = {
   agentBindings: [
     {
-      agentDefinitionId: "agent-a",
+      agentId: "agent-a",
       handle: "alice",
       participantId: "participant-a",
     },
@@ -56,7 +56,7 @@ const computer = {
 } satisfies LocalComputerObservation;
 
 const agent = {
-  agentDefinitionId: "agent-a",
+  agentId: "agent-a",
   createdAt: "2026-09-02T00:00:00.000Z",
   createdBy: "human-a",
   displayName: "Alice",
@@ -72,7 +72,7 @@ const agent = {
 
 const unrelatedAgent = {
   ...agent,
-  agentDefinitionId: "agent-b",
+  agentId: "agent-b",
   displayName: "Bob",
   handle: "bob",
   participantId: "participant-b",
@@ -118,7 +118,7 @@ test("Computer diagnostics are bounded, credential-free canonical observations",
     hostId: "host-a",
     agents: [
       {
-        agentDefinitionId: "agent-a",
+        agentId: "agent-a",
         displayName: "Alice",
         handle: "alice",
         runtimeAvailable: true,

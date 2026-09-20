@@ -201,7 +201,7 @@ test("Workspace member graph is an ACL-safe projection of visible active Channel
     assert.equal(graph.humans.length, 2);
     assert.equal(graph.agents.length, 3);
     const isolatedNode = graph.agents.find(
-      (agent) => agent.id === isolated.agent.definition.agentDefinitionId,
+      (agent) => agent.id === isolated.agent.definition.agentId,
     );
     assert.deepEqual(isolatedNode?.channelIds, []);
     assert.ok(
@@ -214,7 +214,7 @@ test("Workspace member graph is an ACL-safe projection of visible active Channel
     assert.equal(graph.truncated, false);
     const ownerAlice = graph.edges.find(
       (edge) =>
-        edge.source === `agent:${alice.agent.definition.agentDefinitionId}` &&
+        edge.source === `agent:${alice.agent.definition.agentId}` &&
         edge.target === `human:${owner.principal.principalId}`,
     );
     assert.equal(ownerAlice?.weight, 2);

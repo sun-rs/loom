@@ -15,6 +15,10 @@
 退出后的旧加入意图不能复活成员身份。所有正文读取仍使用原成员权限。
 这是[公开频道合同](../design/public-channel-discovery-and-join.md)的第一阶段，非完整公共阅读。
 
+Agent 删除的 Task 生命周期：Kernel 在终止 fence 成立后解除所有状态任务的该 Agent 负责人/认领，保留 workflow/state；删除不等于关闭或完成。历史 tombstone 负责人依据原删除 Room event 幂等补齐，详见[任务身份合同](../audits/2026-09-20-deleted-agent-task-identity.zh-CN.md)。
+
+身份合同更新：账号保留大小写，仅存活身份占用；显示名可重复，账号与显示名均不能作为持久身份键。`agentId` 为独立 Agent 身份，`participantId` 保持 Room Principal 关联；旧 `agentDefinitionId` 只在兼容读取边界接受。消息提及在写入事务固定身份，删除/重建不改变旧消息指向。见[迁移与证据](../audits/2026-09-20-agent-account-identity.zh-CN.md)。
+
 ## 1. 产品边界
 
 RAH OS 的第一等对象是 `Room`，不是任何 Provider Session。
@@ -50,6 +54,11 @@ RAH OS 不统一：
 - Provider transcript/history 格式。
 
 ## 2. 身份、Runtime 与 Model 解耦
+
+同名重建不复用身份：Kernel 为新 Agent 分配独立 AgentDefinition/Participant，
+显示名允许与 tombstone 重复；若创建请求的 handle 被 tombstone 占用，分配
+唯一数字后缀，保留旧 handle 与历史引用不变。DM 始终按 Participant 配对。
+参见[删除身份与同名重建证据](../audits/2026-09-19-deleted-agent-message-ui.zh-CN.md)。
 
 | 对象                        | Owner              | 生命周期                 |
 | --------------------------- | ------------------ | ------------------------ |

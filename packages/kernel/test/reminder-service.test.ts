@@ -238,7 +238,7 @@ test("Raft-compatible Reminder schedule is anchored, owner scoped, and idempoten
     assert.equal(created.reminder.msgId, fixture.messageId);
     assert.equal(
       created.reminder.ownerAgentId,
-      fixture.definition.definition.agentDefinitionId,
+      fixture.definition.definition.agentId,
     );
     assert.equal(
       latestRoomSeq(fixture.kernel, fixture.humanActor, fixture.room.roomId),
@@ -271,7 +271,7 @@ test("Raft-compatible Reminder schedule is anchored, owner scoped, and idempoten
     assert.deepEqual(
       fixture.kernel.reminders
         .listHuman(fixture.humanActor, {
-          agentDefinitionId: fixture.definition.definition.agentDefinitionId,
+          agentId: fixture.definition.definition.agentId,
         })
         .reminders.map(({ reminderId }) => reminderId),
       [created.reminder.reminderId],

@@ -1,12 +1,9 @@
-/** Raft live CSS: thread-layout min-width 680, landscape OR viewport >=1280;
- * below md (768) the active conversation occupies the entire viewport. */
+/** Shared width-only presentation. Resizing never changes navigation intent. */
 export function conversationLayout(
   width: number,
-  height: number,
+  _height: number,
   navigationWidth: number,
 ) {
   if (width < 768) return "fullscreen";
-  return width - navigationWidth >= 680 && (width > height || width >= 1280)
-    ? "split"
-    : "replace";
+  return width - navigationWidth >= 680 ? "split" : "replace";
 }

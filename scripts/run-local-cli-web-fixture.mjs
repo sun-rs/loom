@@ -133,7 +133,7 @@ try {
       skillRefs: [],
     });
     runtimeDefinitions.push({
-      agentDefinitionId: definition.definition.agentDefinitionId,
+      agentId: definition.definition.agentId,
       runtimeOfferId,
       spec,
     });

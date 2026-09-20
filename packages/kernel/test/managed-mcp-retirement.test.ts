@@ -179,7 +179,7 @@ test("retired MCP failure receipts remain readable across reopen without a mutat
       reopened.initialize();
       const actor = f.humanActor;
       const page = reopened.listAgentActivity(actor, {
-        agentDefinitionId: f.agentDefinition.definition.agentDefinitionId,
+        agentId: f.agentDefinition.definition.agentId,
         limit: 100,
       });
       const entry = page.activities.find(
@@ -190,7 +190,7 @@ test("retired MCP failure receipts remain readable across reopen without a mutat
       assert.equal("managedMcp" in reopened, false);
       assert.throws(() =>
         reopened.listAgentActivity(f.outsiderActor, {
-          agentDefinitionId: f.agentDefinition.definition.agentDefinitionId,
+          agentId: f.agentDefinition.definition.agentId,
         }),
       );
       assert.deepEqual(

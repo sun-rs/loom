@@ -19,7 +19,7 @@ const members: Array<MemberGraphHuman | MemberGraphAgent> = [
     type: "human",
   },
   {
-    agentDefinitionId: "agent_alice",
+    agentId: "agent_alice",
     channelIds: ["room_alpha", "room_beta"],
     displayName: "Alice",
     handle: "alice",
@@ -28,7 +28,7 @@ const members: Array<MemberGraphHuman | MemberGraphAgent> = [
     type: "agent",
   },
   {
-    agentDefinitionId: "agent_kimi",
+    agentId: "agent_kimi",
     channelIds: ["room_alpha"],
     displayName: "Kimi",
     handle: "kimi",

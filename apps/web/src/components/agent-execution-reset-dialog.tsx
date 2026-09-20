@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useRef, useState } from "react";
 
@@ -75,7 +76,7 @@ export function AgentExecutionResetDialog({
   }
 
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭 Agent 重启窗口"
         className="rah-dialog-backdrop"
@@ -190,6 +191,6 @@ export function AgentExecutionResetDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }

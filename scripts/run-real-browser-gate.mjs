@@ -2521,7 +2521,7 @@ try {
         ),
       ].map((item) => item.textContent?.trim()),
     ),
-    ["在消息列中搜索", "在新标签页中打开", "在频道中查看", "取消关注消息列"],
+    ["在消息列中搜索", "在频道中查看", "取消关注消息列"],
     "a provisional Raft Thread must expose root-message follow state",
   );
   await clickButton(browser, { text: "取消关注消息列" });
@@ -2556,7 +2556,7 @@ try {
         ),
       ].map((item) => item.textContent?.trim()),
     ),
-    ["在消息列中搜索", "在新标签页中打开", "在频道中查看", "取消关注消息列"],
+    ["在消息列中搜索", "在频道中查看", "取消关注消息列"],
   );
   await dispatchKey(browser, "Escape", 27);
   await waitFor(
@@ -4353,9 +4353,9 @@ try {
         const kimi = agents?.body?.agents?.find(
           (entry) => entry?.handle === "Kimi",
         );
-        const activity = kimi?.definition?.agentDefinitionId
+        const activity = kimi?.definition?.agentId
           ? await request("/v3/client/agents/activity/list", {
-              agentDefinitionId: kimi.definition.agentDefinitionId,
+              agentId: kimi.definition.agentId,
               limit: 20,
             })
           : undefined;

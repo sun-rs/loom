@@ -35,3 +35,23 @@ test("activity identity formatting preserves code, absent identities, and ambigu
     "@owner",
   );
 });
+
+test("Agent excerpts use the renamed display name without changing authored code", () => {
+  const agent = {
+    principalId: "old-agent",
+    kind: "agent" as const,
+    handle: "OpenCode",
+    displayName: "Gemini",
+  };
+  assert.equal(
+    activityDisplayText("请 @OpenCode 看看 `@OpenCode`", [agent]),
+    "请 @Gemini 看看 `@OpenCode`",
+  );
+  assert.equal(
+    activityDisplayText("@OpenCode", [
+      agent,
+      { ...agent, principalId: "new-agent" },
+    ]),
+    "@OpenCode",
+  );
+});

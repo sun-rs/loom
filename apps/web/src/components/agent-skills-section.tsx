@@ -12,14 +12,14 @@ import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 // Raft release/v1.12.0 AgentDetailPanel ic/rc/lc/Ps/oc: source groups and cards.
 export function AgentSkillsSection({
   client,
-  agentDefinitionId,
+  agentId,
   executionPolicyRevisionId,
 }: {
   client: RahClient;
-  agentDefinitionId: string;
+  agentId: string;
   executionPolicyRevisionId: string;
 }) {
-  const key = `${agentDefinitionId}:${executionPolicyRevisionId}`;
+  const key = `${agentId}:${executionPolicyRevisionId}`;
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState<{
     key: string;
@@ -30,11 +30,7 @@ export function AgentSkillsSection({
     const controller = new AbortController();
     setState({ key });
     void client
-      .request(
-        "agent.skills.list",
-        { agentDefinitionId },
-        { signal: controller.signal },
-      )
+      .request("agent.skills.list", { agentId }, { signal: controller.signal })
       .then((result) => {
         if (controller.signal.aborted) return;
         if (result.executionPolicyRevisionId !== executionPolicyRevisionId) {
@@ -54,7 +50,7 @@ export function AgentSkillsSection({
           });
       });
     return () => controller.abort();
-  }, [client, agentDefinitionId, executionPolicyRevisionId, key, retry]);
+  }, [client, agentId, executionPolicyRevisionId, key, retry]);
   const visible = state.key === key ? state : undefined;
   const result = visible?.result;
   const allReadable =

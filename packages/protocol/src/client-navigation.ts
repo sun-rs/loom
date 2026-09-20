@@ -50,7 +50,7 @@ export const NavigationTargetSchema = z.discriminatedUnion("kind", [
     .strict(),
   z
     .object({
-      agentDefinitionId: IdentifierSchema,
+      agentId: IdentifierSchema,
       kind: z.literal("agent"),
       tab: AgentNavigationTabSchema.optional(),
     })

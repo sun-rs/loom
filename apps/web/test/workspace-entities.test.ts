@@ -19,7 +19,7 @@ const human: Principal = {
   avatarKey: "human-avatar",
 };
 const agent: WorkspaceAgentView = {
-  agentDefinitionId: "same-id",
+  agentId: "same-id",
   participantId: "agent-principal",
   displayName: "Alice",
   handle: "alice",
@@ -43,7 +43,7 @@ const runtime = (id: string): LocalRuntimeInventoryEntry => ({
   modelBindingDescriptors: [],
   agentBindings: [
     {
-      agentDefinitionId: agent.agentDefinitionId,
+      agentId: agent.agentId,
       participantId: agent.participantId,
       handle: agent.handle,
     },
@@ -77,7 +77,7 @@ test("an authorized Human profile response is not overwritten by an unversioned 
     },
     membership: { role: "owner", joinedAt: "2026-09-04T00:00:00Z" },
     canReadCreatedAgents: true,
-    createdAgentDefinitionIds: [agent.agentDefinitionId, "missing"],
+    createdAgentDefinitionIds: [agent.agentId, "missing"],
     truncated: false,
   };
   const projection = createWorkspaceEntities(input).humanProfile(profile)!;
@@ -185,18 +185,17 @@ test("typed identity joins Agent, principal, Computer and runtime without name m
     directory.person(agent.participantId)?.avatarKey,
     agent.avatarKey,
   );
-  assert.equal(directory.agent(agent.agentDefinitionId), agent);
+  assert.equal(directory.agent(agent.agentId), agent);
   assert.equal(
-    directory.computerForAgent(agent.agentDefinitionId)?.displayName,
+    directory.computerForAgent(agent.agentId)?.displayName,
     "My Computer",
   );
   assert.equal(
-    directory.runtimeForAgent(agent.agentDefinitionId)?.runtimeProfileId,
+    directory.runtimeForAgent(agent.agentId)?.runtimeProfileId,
     "runtime-a",
   );
   assert.equal(
-    directory.runtimeForAgent(agent.agentDefinitionId, "unknown-model")
-      ?.runtimeProfileId,
+    directory.runtimeForAgent(agent.agentId, "unknown-model")?.runtimeProfileId,
     "runtime-a",
     "unknown model metadata cannot erase a unique runtime binding",
   );
@@ -276,7 +275,7 @@ test("unknown bindings and ambiguous runtime selection fail closed, never first/
     ...input,
     runtimes: [runtime("runtime-b"), runtime("runtime-a")],
   });
-  assert.equal(directory.runtimeForAgent(agent.agentDefinitionId), undefined);
+  assert.equal(directory.runtimeForAgent(agent.agentId), undefined);
   assert.deepEqual(
     directory.computerAgents().map((binding) => binding.runtimeLabel),
     ["runtime-a · runtime-b"],
@@ -296,7 +295,7 @@ test("unknown bindings and ambiguous runtime selection fail closed, never first/
 test("rebuilding after switch, removal or rename cannot resurrect old directory data", () => {
   assert.equal(
     createWorkspaceEntities({ ...input, workspaceId: undefined }).agent(
-      agent.agentDefinitionId,
+      agent.agentId,
     ),
     undefined,
   );

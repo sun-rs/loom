@@ -16,7 +16,7 @@ export const AgentWorkspaceRootIdSchema = z.enum([
 ]);
 export const AgentWorkspaceRootKindSchema = AgentWorkspaceRootIdSchema;
 export const AgentWorkspaceRootsRequestSchema = z
-  .object({ agentDefinitionId: z.string().min(1) })
+  .object({ agentId: z.string().min(1) })
   .strict();
 const AgentWorkspaceRootSchema = z
   .object({
@@ -48,7 +48,7 @@ export const AgentWorkspaceRootsSchema = z
   });
 export const AgentWorkspaceListRequestSchema = z
   .object({
-    agentDefinitionId: z.string().min(1),
+    agentId: z.string().min(1),
     rootId: AgentWorkspaceRootIdSchema.default("agent-workspace"),
     path: Path.default(""),
     includeHidden: z.boolean().default(false),
@@ -56,7 +56,7 @@ export const AgentWorkspaceListRequestSchema = z
   .strict();
 export const AgentWorkspaceReadRequestSchema = z
   .object({
-    agentDefinitionId: z.string().min(1),
+    agentId: z.string().min(1),
     rootId: AgentWorkspaceRootIdSchema.default("agent-workspace"),
     path: Path.refine((p) => p.length > 0),
   })

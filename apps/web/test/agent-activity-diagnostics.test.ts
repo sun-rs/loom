@@ -4,7 +4,6 @@ import test from "node:test";
 import type { RuntimeTrajectoryRecord } from "@rah-os/protocol";
 
 import {
-  MAX_AGENT_DIAGNOSTIC_ACTIVITIES,
   MAX_AGENT_DIAGNOSTIC_BYTES,
   renderAgentActivityDiagnostics,
 } from "../src/agent-activity-diagnostics.ts";
@@ -27,10 +26,10 @@ const activity: RuntimeTrajectoryRecord = {
   serverSequence: 1,
 };
 
-test("Agent diagnostics export bounded trajectory metadata without Provider content", () => {
+test("Agent diagnostics exports a current metadata snapshot without trajectory records", () => {
   const output = renderAgentActivityDiagnostics(
     {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       displayName: "Alice",
       handle: "alice",
       participantId: "agent-1",
@@ -38,26 +37,25 @@ test("Agent diagnostics export bounded trajectory metadata without Provider cont
     [activity],
   );
 
-  assert.match(output, /Alice \(@alice\)/u);
-  assert.match(output, /kind=tool_start/u);
-  assert.match(output, /tool="room\.snapshot"/u);
-  assert.match(output, /runAttemptId="run-1"/u);
-  assert.doesNotMatch(output, /must-not-leak|apiKey|toolInput/u);
+  assert.match(output, /agentId: agent-definition-1/u);
+  assert.match(output, /activityKind: tool_start/u);
+  assert.match(output, /lastActivityAtUtc: 2026-08-29T08:00:00.000Z/u);
+  assert.doesNotMatch(
+    output,
+    /must-not-leak|apiKey|toolInput|room.snapshot|run-1|activityId=/u,
+  );
 });
 
-test("Agent diagnostics export is capped by record count and UTF-8 bytes", () => {
-  const activities = Array.from(
-    { length: MAX_AGENT_DIAGNOSTIC_ACTIVITIES + 100 },
-    (_, index) => ({
-      ...activity,
-      activityId: `activity-${index}-${"x".repeat(1_024)}`,
-      producerSequence: index + 1,
-      serverSequence: index + 1,
-    }),
-  );
+test("diagnostic snapshot stays constant size when history grows", () => {
+  const activities = Array.from({ length: 300 }, (_, index) => ({
+    ...activity,
+    activityId: `activity-${index}-${"x".repeat(1_024)}`,
+    producerSequence: index + 1,
+    serverSequence: index + 1,
+  }));
   const output = renderAgentActivityDiagnostics(
     {
-      agentDefinitionId: "agent-definition-1",
+      agentId: "agent-definition-1",
       displayName: "Alice",
       handle: "alice",
       participantId: "agent-1",
@@ -65,8 +63,7 @@ test("Agent diagnostics export is capped by record count and UTF-8 bytes", () =>
     activities,
   );
 
-  assert.match(output, /Activity total: 300/u);
-  assert.match(output, /Exported records: 200/u);
+  assert.ok(output.split("\n").length <= 16);
   assert.ok(
     new TextEncoder().encode(output).length <= MAX_AGENT_DIAGNOSTIC_BYTES,
   );

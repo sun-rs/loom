@@ -63,7 +63,7 @@ function Matrix({ nested = false }: { nested?: boolean }) {
 }
 const agents: WorkspaceAgentView[] = ["agent-a", "agent-b"].map((id) => ({
   participantId: id,
-  agentDefinitionId: id,
+  agentId: id,
   handle: id,
   displayName: id,
   description: "Fixture only",
@@ -77,13 +77,37 @@ const agents: WorkspaceAgentView[] = ["agent-a", "agent-b"].map((id) => ({
   runtimeLabels: [],
   connectionStatus: "offline",
 }));
+const rankingFixture = location.search.includes("ranking");
+const rankingAgents = Array.from({ length: 40 }, (_, i) => ({
+  ...agents[0]!,
+  participantId: `rank-${i}`,
+  agentId: `rank-${i}`,
+  handle: i === 0 ? "Parity" : i === 1 ? "parity" : `agent-${i}`,
+  displayName: i === 2 ? "李云龙" : `Agent ${i}`,
+  description: "documentation helper",
+}));
 function MentionFixture() {
   const [body, setBody] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mention = useComposerMention({
-    agents,
+    agents: rankingFixture ? rankingAgents : agents,
     body,
     id: "fixture-mention",
+    channels: [
+      {
+        roomId: "all",
+        name: "all",
+        kind: "channel",
+        description: "General channel",
+      },
+      {
+        roomId: "test",
+        name: rankingFixture ? "研发中心" : "test",
+        kind: "channel",
+        description: "研发中心",
+      },
+      { roomId: "old", name: "old", kind: "channel", archivedAt: "2026-09-01" },
+    ],
     setBody,
     textareaRef,
   });
@@ -113,7 +137,8 @@ function MentionFixture() {
 }
 function Fixture() {
   const [values, setValues] = useState(["a"]);
-  if (location.search === "?mention") return <MentionFixture />;
+  if (new URLSearchParams(location.search).has("mention"))
+    return <MentionFixture />;
   return (
     <main style={{ padding: 20, background: "white" }}>
       <style>{`section { display: grid; gap: 4px; margin: 16px 0; max-width: 360px; } section .rah-choice-row { text-align:left; padding:8px 12px; border:1px solid #ddd; font:14px/20px sans-serif; }`}</style>

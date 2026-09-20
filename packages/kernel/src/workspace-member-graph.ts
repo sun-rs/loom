@@ -20,7 +20,7 @@ type MutableMember = {
   id: string;
   participantId?: string;
   principalId?: string;
-  agentDefinitionId?: string;
+  agentId?: string;
   type: "agent" | "human";
 };
 
@@ -139,10 +139,10 @@ export function listWorkspaceMemberGraph(
       type: "human" as const,
     }));
   const agents = [...members.values()]
-    .filter((member) => member.type === "agent" && member.agentDefinitionId)
+    .filter((member) => member.type === "agent" && member.agentId)
     .slice(0, 500)
     .map((member) => ({
-      agentDefinitionId: member.agentDefinitionId!,
+      agentId: member.agentId!,
       ...(member.avatarKey === undefined
         ? {}
         : { avatarKey: member.avatarKey }),
@@ -209,20 +209,19 @@ function memberFromRow(row: Row): MutableMember {
       type: "human",
     };
   }
-  const agentDefinitionId =
-    nullableText(row, "agent_definition_id") ?? undefined;
+  const agentId = nullableText(row, "agent_definition_id") ?? undefined;
   const definition =
     row.definition_json === null || row.definition_json === undefined
       ? undefined
       : AgentDefinitionRevisionSchema.parse(jsonObject(row, "definition_json"));
   const avatarKey = definition?.avatarKey ?? principalAvatarKey;
   return {
-    ...(agentDefinitionId === undefined ? {} : { agentDefinitionId }),
+    ...(agentId === undefined ? {} : { agentId }),
     ...(avatarKey === undefined ? {} : { avatarKey }),
     channelIds: roomId === null ? [] : [roomId],
     displayName: definition?.displayName ?? principalDisplayName,
     handle,
-    id: agentDefinitionId ?? principalId,
+    id: agentId ?? principalId,
     participantId: principalId,
     type: "agent",
   };

@@ -19,8 +19,8 @@ export async function runAgentDeletionReconciler(
       kernel.reconcileAgentDeletions((change) => {
         onStatus(
           change.kind === "cleared"
-            ? `Agent deletion unblocked and completed: ${change.agentDefinitionId}`
-            : `Agent deletion blocked: ${change.agentDefinitionId}; ${change.summary}` +
+            ? `Agent deletion unblocked and completed: ${change.agentId}`
+            : `Agent deletion blocked: ${change.agentId}; ${change.summary}` +
                 ` (${change.blocker.table}${change.blocker.runAttemptId === undefined ? "" : `, run attempt ${change.blocker.runAttemptId}`}` +
                 `${change.blocker.hostId === undefined ? "" : `, host ${change.blocker.hostId}`}` +
                 `${change.blocker.recoveryDriver === undefined ? "" : `, recovery driver ${change.blocker.recoveryDriver}`})`,

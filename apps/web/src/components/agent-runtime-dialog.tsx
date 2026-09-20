@@ -1,8 +1,14 @@
+import { RuntimeFastMode } from "./runtime-fast-mode.tsx";
+import {
+  modelIntentDraft,
+  selectedModelIntent,
+} from "../runtime-model-selection.ts";
+import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { useAgentEnvironmentDraft } from "../use-agent-environment-draft.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { AgentLaunchSettingsEditor } from "./agent-launch-settings-editor.tsx";
-import { AgentProviderEditor, providerKeys } from "./agent-provider-editor.tsx";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState } from "react";
 import type {
   ClientAgentGetResponse,
   LocalRuntimeInventoryEntry,
@@ -17,7 +23,7 @@ import {
   runtimeToolAccessModes,
 } from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { DiscoveryFilter } from "./discovery-filter.tsx";
+import { RuntimePicker } from "./runtime-picker.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import type { AgentConfigureInput } from "./agent-dialogs.tsx";
 
@@ -50,7 +56,7 @@ export function AgentRuntimeDialog({
     detail.policy.required.allowedOfferIds?.[0] ?? "",
   );
   const [bindingId, setBindingId] = useState(
-    detail.policy.modelIntent.exactBindingIds?.[0] ?? "",
+    modelIntentDraft(detail.policy.modelIntent),
   );
   const [reasoning, setReasoning] = useState<ReasoningLevel>(
     detail.policy.modelIntent.reasoning ?? "default",
@@ -73,10 +79,10 @@ export function AgentRuntimeDialog({
   );
   const environmentDraft = useAgentEnvironmentDraft(
     client,
-    detail.agent.definition.agentDefinitionId,
+    detail.agent.definition.agentId,
     runtime?.cliId,
   );
-  const models = runtimeModelOptions(runtime);
+  const models = runtimeModelOptions(runtime, bindingId);
   const efforts = runtimeReasoningOptions(runtime, bindingId);
   const fastTier = runtimeFastTier(runtime, bindingId);
   const valid =
@@ -86,7 +92,7 @@ export function AgentRuntimeDialog({
     efforts.some((effort) => effort.value === reasoning);
   const changed =
     offerId !== detail.policy.required.allowedOfferIds?.[0] ||
-    bindingId !== (detail.policy.modelIntent.exactBindingIds?.[0] ?? "") ||
+    bindingId !== modelIntentDraft(detail.policy.modelIntent) ||
     reasoning !== (detail.policy.modelIntent.reasoning ?? "default") ||
     serviceTier !== (detail.policy.modelIntent.serviceTier ?? "default");
 
@@ -123,10 +129,7 @@ export function AgentRuntimeDialog({
           instructions: revision.instructions ?? revision.role,
           runtimeOfferId: offerId,
           modelIntent: {
-            ...detail.policy.modelIntent,
-            exactBindingIds: [bindingId],
-            fallback: "disabled",
-            reasoning,
+            ...selectedModelIntent(bindingId, reasoning),
             serviceTier,
           },
           toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
@@ -144,7 +147,7 @@ export function AgentRuntimeDialog({
   }
 
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭运行时配置"
@@ -183,7 +186,7 @@ export function AgentRuntimeDialog({
             value={offerId}
             options={options.map((item) => ({
               id: item.runtimeOfferId!,
-              label: item.displayName,
+              label: runtimeProductLabel(item),
             }))}
             onChange={(next) => {
               setOfferId(next);
@@ -192,14 +195,10 @@ export function AgentRuntimeDialog({
               setServiceTier("default");
             }}
           />
-          <AgentProviderEditor
-            runtimeId={runtime?.cliId}
-            rows={environmentDraft.rows}
-            onChange={environmentDraft.setRows}
-            disabled={pending || refreshing || !environmentDraft.ready}
-          />
           <RuntimePicker
             label="模型"
+            key={runtime?.cliId}
+            customRuntime={runtime?.customModelRuntime}
             belowControl={
               refreshing && (
                 <p className="rah-runtime-model-status" role="status">
@@ -244,6 +243,7 @@ export function AgentRuntimeDialog({
             options={models.map((item) => ({
               id: item.modelBindingId,
               label: item.label,
+              nativeId: item.nativeId,
             }))}
             onChange={(next) => {
               setBindingId(next);
@@ -268,40 +268,19 @@ export function AgentRuntimeDialog({
           {fastTier && (
             <div className="rah-runtime-edit-field">
               <b>模式</b>
-              <label className="rah-runtime-fast-mode">
-                <span className="rah-runtime-fast-check">
-                  <input
-                    type="checkbox"
-                    aria-labelledby="runtime-fast-mode-title"
-                    aria-describedby="runtime-fast-mode-description"
-                    checked={serviceTier === fastTier}
-                    disabled={pending || refreshing || savingLaunch}
-                    onChange={(event) =>
-                      setServiceTier(
-                        event.target.checked ? fastTier : "default",
-                      )
-                    }
-                  />
-                  <Icon name="check" />
-                </span>
-                <b id="runtime-fast-mode-title">快速模式</b>
-                <span id="runtime-fast-mode-description">
-                  以更高的单 token 成本换取更快速度启动此运行时。
-                </span>
-              </label>
+              <RuntimeFastMode
+                checked={serviceTier === fastTier}
+                disabled={pending || refreshing || savingLaunch}
+                onChange={(checked) =>
+                  setServiceTier(checked ? fastTier : "default")
+                }
+              />
             </div>
           )}
           <AgentLaunchSettingsEditor
-            hiddenKeys={runtime?.cliId === "claude" ? providerKeys : []}
             draft={environmentDraft}
             blocked={pending || refreshing}
           />
-          {!valid && (
-            <p role="status">
-              当前配置缺少可用的 Runtime
-              或模型证据。请选择可用配置；不会自动替换成默认值。
-            </p>
-          )}
           <p className="rah-runtime-edit-note">
             保存后立即更新配置，供后续新调度的执行使用；正在运行的执行不会热切换。Agent
             身份、人设和私有记忆保持不变。
@@ -335,64 +314,6 @@ export function AgentRuntimeDialog({
           </footer>
         </form>
       </section>
-    </div>
-  );
-}
-
-function RuntimePicker({
-  label,
-  value,
-  options,
-  onChange,
-  disabled,
-  required = false,
-  action,
-  belowControl,
-}: {
-  label: string;
-  value: string;
-  options: { id: string; label: string }[];
-  onChange: (value: string) => void;
-  disabled: boolean;
-  required?: boolean;
-  action?: ReactNode;
-  belowControl?: ReactNode;
-}) {
-  return (
-    <div className="rah-runtime-edit-field">
-      <b
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <span>
-          {label}
-          {required && <em> *</em>}
-        </span>
-        {action}
-      </b>
-      <DiscoveryFilter
-        label={label}
-        triggerAriaLabel={`${label}：${options.find((item) => item.id === value)?.label ?? "请选择"}`}
-        icon={null}
-        values={[value]}
-        options={options}
-        multiple={false}
-        clearable={false}
-        selected={false}
-        showCount={false}
-        disabled={disabled}
-        className="rah-runtime-picker"
-        triggerLabel={
-          options.find((item) => item.id === value)?.label ?? "请选择"
-        }
-        onChange={(values) => {
-          if (values[0] !== undefined) onChange(values[0]);
-        }}
-      />
-      {belowControl}
-    </div>
+    </DialogLayer>
   );
 }

@@ -4,7 +4,7 @@ import {
   requireHumanTaskManager,
   requireRoomMember,
 } from "./collaboration-policy.ts";
-import { NotFoundError, StaleContextError } from "./errors.ts";
+import { ConflictError, NotFoundError, StaleContextError } from "./errors.ts";
 import { integer, nullableText, text } from "./sqlite-row.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
 import {
@@ -86,6 +86,10 @@ export function editHumanTask(
     ) - 1;
   if (seq !== input.basedOnRoomSeq)
     throw new StaleContextError(input.basedOnRoomSeq, seq);
+  if (!workflow && text(task, "workflow_status") === "done")
+    throw new ConflictError(
+      "Completed tasks cannot change assignee; reopen the task first",
+    );
   if (!workflow && edit.assigneeId !== null)
     requireRoomMember(db, roomId, edit.assigneeId);
   const at = context.now().toISOString();

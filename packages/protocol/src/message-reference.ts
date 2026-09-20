@@ -54,7 +54,7 @@ const PrincipalReferenceCommon = {
 export const MessageAgentReferenceSchema = z
   .object({
     ...PrincipalReferenceCommon,
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     kind: z.literal("agent"),
   })
   .strict();

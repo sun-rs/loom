@@ -18,7 +18,7 @@ export function ComputerAgentError({
       void client
         .request(
           "agent.trajectory.list",
-          { agentDefinitionId: id, limit: 100 },
+          { agentId: id, limit: 100 },
           { signal: c.signal },
         )
         .then((result) => {

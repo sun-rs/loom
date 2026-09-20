@@ -239,3 +239,17 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     );
   assert.equal(localCliRuntimeSpec("unknown", workspaceCwd), undefined);
 });
+
+test("built-in CLI names expose products without transport descriptions", () => {
+  for (const [cli, label] of [
+    ["codex", "Codex CLI"],
+    ["claude", "Claude Code"],
+    ["kimi", "Kimi Code"],
+    ["opencode", "OpenCode"],
+  ]) {
+    assert.equal(
+      localCliRuntimeSpec(cli!, "/tmp/rah-label-test")?.displayName,
+      label,
+    );
+  }
+});

@@ -1,3 +1,4 @@
+import { agentGreetingEnabled, firstRunReplay } from "./agent-first-run.ts";
 import {
   readSystemChannelVisibility,
   changeSystemChannelVisibility,
@@ -299,7 +300,9 @@ export class CollaborationService {
         event.actorId !== actor.principalId ||
         event.aggregateId !== input.workspaceId ||
         event.payload.name !== input.name ||
-        event.payload.avatarKey !== input.avatarKey
+        event.payload.avatarKey !== input.avatarKey ||
+        event.payload.agentAllChannelGreetingEnabled !==
+          input.agentAllChannelGreetingEnabled
       )
         throw this.#idempotencyConflict(input.idempotencyKey);
       return {
@@ -320,7 +323,16 @@ export class CollaborationService {
       aggregateId: input.workspaceId,
       aggregateType: "workspace",
       idempotencyKey: input.idempotencyKey,
-      payload: { name: input.name, avatarKey: input.avatarKey },
+      payload: {
+        name: input.name,
+        avatarKey: input.avatarKey,
+        ...(input.agentAllChannelGreetingEnabled === undefined
+          ? {}
+          : {
+              agentAllChannelGreetingEnabled:
+                input.agentAllChannelGreetingEnabled,
+            }),
+      },
       roomId,
       type: "workspace.updated",
     });
@@ -975,7 +987,15 @@ export class CollaborationService {
          ORDER BY workspaces.slug, workspaces.workspace_id`,
       )
       .all(actorId)
-      .map((row) => workspaceProjectionFromRow(row));
+      .map((row) => ({
+        ...workspaceProjectionFromRow(row),
+        agentAllChannelGreetingEnabled: agentGreetingEnabled(
+          this.#database,
+          typeof row.workspace_control_room_id === "string"
+            ? row.workspace_control_room_id
+            : undefined,
+        ),
+      }));
   }
 
   listRooms(actorId: string, input: { workspaceId?: string } = {}): Room[] {
@@ -1761,6 +1781,19 @@ export class CollaborationService {
     if (!Number.isInteger(freshnessFloorSeq) || freshnessFloorSeq < 0) {
       throw new Error("freshnessFloorSeq must be a non-negative integer");
     }
+    const greetingReplay = firstRunReplay(
+      this.#database,
+      {
+        participantId: actor.principalId,
+        roomId: input.roomId,
+        activationId: input.activationId,
+      },
+      input.idempotencyKey,
+      input.threadId,
+      (row) => this.#events.eventFromRow(row),
+    );
+    if (greetingReplay)
+      return { activationIds: [], deduplicated: true, event: greetingReplay };
     const attachments = input.attachments ?? [];
     const createdAt = this.#timestamp();
     if (input.threadId !== undefined) {
@@ -2157,7 +2190,15 @@ export class CollaborationService {
     if (row === undefined) {
       throw new NotFoundError(`Workspace ${workspaceId} was not found`);
     }
-    return WorkspaceSchema.parse(workspaceProjectionFromRow(row));
+    return WorkspaceSchema.parse({
+      ...workspaceProjectionFromRow(row),
+      agentAllChannelGreetingEnabled: agentGreetingEnabled(
+        this.#database,
+        typeof row.workspace_control_room_id === "string"
+          ? row.workspace_control_room_id
+          : undefined,
+      ),
+    });
   }
 
   #requiredLabel(value: string, field: string): string {

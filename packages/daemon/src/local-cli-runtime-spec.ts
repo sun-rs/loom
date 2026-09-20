@@ -12,7 +12,7 @@ export function localCliRuntimeSpec(
       avatarKey: "claude",
       cliId: "claude",
       description: "Claude Code connected through the local account.",
-      displayName: "Claude Code · native stream-json",
+      displayName: "Claude Code",
       executable,
       instructions:
         "Use canonical Room context, make changes only when requested, and report concise evidence.",
@@ -32,7 +32,7 @@ export function localCliRuntimeSpec(
       avatarKey: "codex",
       cliId: "codex",
       description: "Codex connected through the local OpenAI account.",
-      displayName: "Codex · native app-server",
+      displayName: "Codex CLI",
       executable,
       instructions:
         "Work from canonical Room context, preserve unrelated changes, and provide verified results.",
@@ -52,7 +52,7 @@ export function localCliRuntimeSpec(
       avatarKey: "kimi",
       cliId: "kimi",
       description: "Kimi CLI connected through the local Coding Plan account.",
-      displayName: "Kimi CLI · native ACP",
+      displayName: "Kimi Code",
       executable,
       instructions:
         "Use canonical Room context, complete the assigned work, and report explicit evidence.",
@@ -72,7 +72,7 @@ export function localCliRuntimeSpec(
       avatarKey: "opencode",
       cliId: "opencode",
       description: "OpenCode connected through its configured local provider.",
-      displayName: "OpenCode · native local server",
+      displayName: "OpenCode",
       executable,
       instructions:
         "Treat canonical Room state as collaboration truth and report only verified outcomes.",

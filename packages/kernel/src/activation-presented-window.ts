@@ -60,6 +60,19 @@ export function migrateActivationPresentedWindows(
   database: DatabaseSync,
 ): void {
   database.exec(ACTIVATION_PRESENTED_WINDOW_SCHEMA);
+  const columns = database
+    .prepare("PRAGMA table_info(activation_presented_windows)")
+    .all();
+  if (columns.some((column) => column.name === "message_seqs_json")) {
+    // Historical rendering is not evidence of delivery or acknowledgement.
+    database.exec(`
+      ALTER TABLE activation_presented_windows RENAME COLUMN message_seqs_json TO presented_seqs_json;
+      ALTER TABLE activation_presented_windows RENAME COLUMN presented_at TO rendered_at;
+      ALTER TABLE activation_presented_windows ADD COLUMN sent_at TEXT;
+      ALTER TABLE activation_presented_windows ADD COLUMN sent_by_host_id TEXT;
+      ALTER TABLE activation_presented_windows ADD COLUMN pending_ack_seq INTEGER;
+    `);
+  }
 }
 
 /**
@@ -319,7 +332,8 @@ export function renderPresentedWindow(
     ...window,
     events,
     ...notice,
-    presentedThroughSeq: presentedPrefix(database, scope, window)?.throughSeq ?? 0,
+    presentedThroughSeq:
+      presentedPrefix(database, scope, window)?.throughSeq ?? 0,
   };
 }
 
@@ -421,16 +435,11 @@ export function markPresentedWindowSent(
       `UPDATE activation_presented_windows SET sent_at=?, sent_by_host_id=?
         WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
     )
-    .run(
-      sentAt,
-      hostId,
-      key.activationId,
-      key.consumerId,
-      key.runAttemptId,
-    );
+    .run(sentAt, hostId, key.activationId, key.consumerId, key.runAttemptId);
   const pending = (row as Row)["pending_ack_seq"];
   return {
-    pendingAckSeq: pending == null ? undefined : integer(row as Row, "pending_ack_seq"),
+    pendingAckSeq:
+      pending == null ? undefined : integer(row as Row, "pending_ack_seq"),
   };
 }
 
@@ -483,7 +492,11 @@ function presentedPrefix(
   scope: ActivationCredentialScope,
   window: PresentedWindow,
 ):
-  | { throughSeq: number; presentedSeqs: readonly number[]; messageSeqs: readonly number[] }
+  | {
+      throughSeq: number;
+      presentedSeqs: readonly number[];
+      messageSeqs: readonly number[];
+    }
   | undefined {
   const presented = new Set(window.presentedSeqs);
   const rows = database

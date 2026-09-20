@@ -26,6 +26,7 @@ export type WorkspaceState = z.infer<typeof WorkspaceStateSchema>;
 
 export const WorkspaceSchema = z
   .object({
+    agentAllChannelGreetingEnabled: z.boolean().optional(),
     archivedAt: TimestampSchema.optional(),
     avatarKey: z
       .string()
@@ -89,6 +90,17 @@ export const RoomMembershipSchema = z
   .strict();
 export type RoomMembership = z.infer<typeof RoomMembershipSchema>;
 
+export const MessageMentionBindingSchema = z
+  .object({
+    start: z.number().int().nonnegative(),
+    end: z.number().int().positive(),
+    handle: z.string(),
+    principalId: IdentifierSchema,
+    agentId: IdentifierSchema.optional(),
+  })
+  .strict();
+export type MessageMentionBinding = z.infer<typeof MessageMentionBindingSchema>;
+
 export const ForwardedMessageAuthorSnapshotSchema = z
   .object({
     avatarKey: z
@@ -107,6 +119,7 @@ export type ForwardedMessageAuthorSnapshot = z.infer<
 
 export const ForwardedMessageSnapshotSchema = z
   .object({
+    mentions: z.array(MessageMentionBindingSchema).optional(),
     actor: ForwardedMessageAuthorSnapshotSchema,
     attachmentPolicy: z.literal("projected").optional(),
     attachments: z.array(AttachmentSchema).max(10).default([]),
@@ -167,6 +180,7 @@ export type ForwardedMessageBundle = z.infer<
 
 export const MessageSchema = z
   .object({
+    mentions: z.array(MessageMentionBindingSchema).optional(),
     attachmentComment: z
       .object({ attachmentId: IdentifierSchema, filename: z.string() })
       .strict()

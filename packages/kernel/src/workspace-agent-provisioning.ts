@@ -1,4 +1,6 @@
+import { requestAgentFirstRun } from "./agent-first-run.ts";
 import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
+import { allocateRecreatedAgentHandle } from "./message-reference-identity.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -102,9 +104,13 @@ export function provisionWorkspaceAgentTransaction(
       `Room ${input.controlRoomId} is not a Workspace control Room`,
     );
   }
-  if (!principalHandleIsAvailable(owner.database, normalized.handle)) {
+  const handle = allocateRecreatedAgentHandle(
+    owner.database,
+    normalized.handle,
+  );
+  if (!principalHandleIsAvailable(owner.database, handle)) {
     throw new ConflictError(
-      `principal handle ${normalized.handle} is already in use`,
+      `Agent name "${normalized.handle}" is already taken`,
     );
   }
 
@@ -185,14 +191,14 @@ export function provisionWorkspaceAgentTransaction(
   const participantId = owner.createId("principal");
   const executionPolicyId = owner.createId("execution_policy");
   const executionPolicyRevisionId = owner.createId("execution_policy_revision");
-  const agentDefinitionId = owner.createId("agent_definition");
+  const agentId = owner.createId("agent_definition");
   const agentDefinitionRevisionId = owner.createId("agent_definition_revision");
 
   owner.database
     .prepare(
       "INSERT INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'agent', ?)",
     )
-    .run(participantId, normalized.handle, createdAt);
+    .run(participantId, handle, createdAt);
   owner.database
     .prepare(
       "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'member', ?)",
@@ -289,7 +295,7 @@ export function provisionWorkspaceAgentTransaction(
     skillRefs: [],
   };
   const definition = AgentDefinitionSchema.parse({
-    agentDefinitionId,
+    agentId,
     controlRoomId: input.controlRoomId,
     createdAt,
     currentRevisionId: agentDefinitionRevisionId,
@@ -299,7 +305,7 @@ export function provisionWorkspaceAgentTransaction(
   });
   const revision = AgentDefinitionRevisionSchema.parse({
     ...definitionContent,
-    agentDefinitionId,
+    agentId,
     agentDefinitionRevisionId,
     contentDigest: canonicalDigest(definitionContent),
     createdAt,
@@ -311,7 +317,7 @@ export function provisionWorkspaceAgentTransaction(
       "INSERT INTO agent_definitions(agent_definition_id, participant_id, control_room_id, state, current_revision_id, created_at, updated_at) VALUES(?, ?, ?, 'enabled', ?, ?, ?)",
     )
     .run(
-      agentDefinitionId,
+      agentId,
       participantId,
       input.controlRoomId,
       agentDefinitionRevisionId,
@@ -321,11 +327,11 @@ export function provisionWorkspaceAgentTransaction(
   insertAgentDefinitionRevision(owner.database, revision);
   owner.events.append({
     actorId: owner.actorId,
-    aggregateId: agentDefinitionId,
+    aggregateId: agentId,
     aggregateType: "agent_definition",
     idempotencyKey: `${input.idempotencyKey}:definition`,
     payload: {
-      agentDefinitionId,
+      agentId,
       agentDefinitionRevisionId,
       basedOnRoomSeq: input.basedOnRoomSeq + 2,
       contentDigest: revision.contentDigest,
@@ -346,11 +352,11 @@ export function provisionWorkspaceAgentTransaction(
   );
   const event = owner.events.append({
     actorId: owner.actorId,
-    aggregateId: agentDefinitionId,
+    aggregateId: agentId,
     aggregateType: "agent_definition",
     idempotencyKey: input.idempotencyKey,
     payload: {
-      agentDefinitionId,
+      agentId,
       agentDefinitionRevisionId,
       executionPolicyRevisionId,
       hostId: offer.hostId,
@@ -364,6 +370,13 @@ export function provisionWorkspaceAgentTransaction(
     type: "agent.provisioned",
   });
   reconcileAllChannelMemberships(owner.database, owner.events, owner.now());
+  requestAgentFirstRun(
+    owner.database,
+    owner.events,
+    input.controlRoomId,
+    participantId,
+    owner.now(),
+  );
   return workspaceAgentProvisionResult(owner.database, event, false);
 }
 
@@ -438,7 +451,7 @@ function insertAgentDefinitionRevision(
     )
     .run(
       revision.agentDefinitionRevisionId,
-      revision.agentDefinitionId,
+      revision.agentId,
       revision.revision,
       revision.contentDigest,
       JSON.stringify(revision),
@@ -492,11 +505,11 @@ function workspaceAgentProvisionResult(
   const definitionRow = requireRow(
     database
       .prepare("SELECT * FROM agent_definitions WHERE agent_definition_id = ?")
-      .get(eventPayloadText(event, "agentDefinitionId")),
+      .get(eventPayloadText(event, "agentId")),
     "provisioned AgentDefinition was not found",
   );
   const definition = AgentDefinitionSchema.parse({
-    agentDefinitionId: text(definitionRow, "agent_definition_id"),
+    agentId: text(definitionRow, "agent_definition_id"),
     controlRoomId: text(definitionRow, "control_room_id"),
     createdAt: text(definitionRow, "created_at"),
     currentRevisionId: text(definitionRow, "current_revision_id"),

@@ -31,7 +31,7 @@ export type MemberGraphHuman = z.infer<typeof MemberGraphHumanSchema>;
 
 export const MemberGraphAgentSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     avatarKey: z
       .string()
       .regex(/^[a-z0-9_-]{1,64}$/)
@@ -44,8 +44,8 @@ export const MemberGraphAgentSchema = z
     type: z.literal("agent"),
   })
   .strict()
-  .refine((member) => member.id === member.agentDefinitionId, {
-    message: "Agent id must equal agentDefinitionId",
+  .refine((member) => member.id === member.agentId, {
+    message: "Agent id must equal agentId",
     path: ["id"],
   });
 export type MemberGraphAgent = z.infer<typeof MemberGraphAgentSchema>;

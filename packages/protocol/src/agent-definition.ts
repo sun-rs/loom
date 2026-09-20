@@ -25,7 +25,7 @@ export type AgentDefinitionState = z.infer<typeof AgentDefinitionStateSchema>;
 
 export const AgentDefinitionSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     participantId: IdentifierSchema,
     controlRoomId: IdentifierSchema,
     state: AgentDefinitionStateSchema,
@@ -75,7 +75,7 @@ export const AgentDefinitionRevisionSchema = z
   .object({
     executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
     agentDefinitionRevisionId: IdentifierSchema,
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     revision: z.number().int().positive(),
     displayName: z.string().trim().min(1).max(128).optional(),
     description: z.string().trim().max(2_000).optional(),
@@ -133,7 +133,10 @@ export const AgentCatalogEntrySchema = z
 export type AgentCatalogEntry = z.infer<typeof AgentCatalogEntrySchema>;
 
 export const ClientAgentsListRequestSchema = z
-  .object({ controlRoomId: IdentifierSchema })
+  .object({
+    controlRoomId: IdentifierSchema,
+    includeDeleted: z.boolean().optional(),
+  })
   .strict();
 export type ClientAgentsListRequest = z.infer<
   typeof ClientAgentsListRequestSchema
@@ -148,7 +151,7 @@ export type ClientAgentsListResponse = z.infer<
 
 export const ClientAgentOnboardRequestSchema = z
   .object({
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
     roomId: IdentifierSchema,

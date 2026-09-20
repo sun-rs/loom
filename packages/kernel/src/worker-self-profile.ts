@@ -117,7 +117,7 @@ export class WorkerSelfProfileService {
             activationId: scope.activationId,
             roomId: controlRoomId,
             operation: "profile-update",
-            subjectId: record.definition.agentDefinitionId,
+            subjectId: record.definition.agentId,
             content: [
               presented.patch.displayName ?? null,
               presented.patch.description ?? null,
@@ -149,7 +149,7 @@ export class WorkerSelfProfileService {
         if (
           event.type !== "agent.profile_updated" ||
           event.actorId !== scope.participantId ||
-          event.aggregateId !== record.definition.agentDefinitionId ||
+          event.aggregateId !== record.definition.agentId ||
           event.payload.requestDigest !== digest
         )
           throw new IdempotencyConflictError(
@@ -185,7 +185,7 @@ export class WorkerSelfProfileService {
       const event = updateAgentProfilePatch(
         { ...this.#context, actorId: scope.participantId },
         {
-          agentDefinitionId: record.definition.agentDefinitionId,
+          agentId: record.definition.agentId,
           expectedRevisionId: input.writeContext.expectedRevisionId,
           basedOnRoomSeq: input.writeContext.controlRoomSeq,
           idempotencyKey: input.idempotencyKey,
@@ -208,7 +208,7 @@ export class WorkerSelfProfileService {
       // builds on its own result rather than conflicting with it.
       this.#recordObservation(
         scope,
-        record.definition.agentDefinitionId,
+        record.definition.agentId,
         String(event.payload.agentDefinitionRevisionId),
       );
       return this.#result(event, scope.participantId, false);
@@ -236,13 +236,13 @@ export class WorkerSelfProfileService {
   ): void {
     this.#recordObservation(
       scope,
-      record.definition.agentDefinitionId,
+      record.definition.agentId,
       record.currentRevision.agentDefinitionRevisionId,
     );
   }
   #recordObservation(
     scope: ActivationCredentialScope,
-    agentDefinitionId: string,
+    agentId: string,
     revisionId: string,
   ): void {
     this.#context.database
@@ -258,7 +258,7 @@ export class WorkerSelfProfileService {
       .run(
         scope.participantId,
         scope.runAttemptId,
-        agentDefinitionId,
+        agentId,
         revisionId,
         this.#context.now().toISOString(),
       );
@@ -272,11 +272,7 @@ export class WorkerSelfProfileService {
         `SELECT observed_revision_id FROM worker_self_profile_observations
          WHERE participant_id=? AND run_attempt_id=? AND agent_definition_id=?`,
       )
-      .get(
-        scope.participantId,
-        scope.runAttemptId,
-        record.definition.agentDefinitionId,
-      );
+      .get(scope.participantId, scope.runAttemptId, record.definition.agentId);
     return row === undefined ? undefined : text(row, "observed_revision_id");
   }
   #authorize(execution: AuthenticatedWorkerExecutionContext) {
@@ -334,7 +330,7 @@ export class WorkerSelfProfileService {
     return P.WorkerSelfProfileResponseSchema.parse({
       profile: {
         participantId,
-        agentDefinitionId: revision.agentDefinitionId,
+        agentId: revision.agentId,
         displayName:
           revision.displayName ??
           text(

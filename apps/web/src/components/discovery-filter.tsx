@@ -15,6 +15,7 @@ export const REACTION_HOVER_CLOSE_MS = 120;
 export type DiscoveryOption = {
   id: string;
   label: string;
+  title?: string;
   leading?: ReactNode;
   reserveLeadingSlot?: boolean;
   searchText?: string;
@@ -63,7 +64,7 @@ export function DiscoveryFilter({
   popoverClassName?: string;
   popoverTitle?: string;
   searchPlaceholder?: string;
-  variant?: "selection" | "status" | "reaction" | "sidebar";
+  variant?: "selection" | "status" | "reaction" | "sidebar" | "field";
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -105,10 +106,14 @@ export function DiscoveryFilter({
     if (!open) return;
     const place = () => {
       if (!menu.current || !trigger.current) return;
-      const origin = trigger.current.getBoundingClientRect(),
-        popup = menu.current.getBoundingClientRect();
+      const origin = trigger.current.getBoundingClientRect();
+      if (variant === "field") menu.current.style.width = `${origin.width}px`;
+      const popup = menu.current.getBoundingClientRect();
       const gutter = variant === "status" || variant === "reaction" ? 8 : 12,
-        gap = variant === "status" || variant === "reaction" ? 4 : 8;
+        gap =
+          variant === "status" || variant === "reaction" || variant === "field"
+            ? 4
+            : 8;
       const anchor =
         variant === "reaction" ||
         (variant === "status" && window.innerWidth < 640)
@@ -319,7 +324,9 @@ export function DiscoveryFilter({
                     role={multiple ? "menuitemcheckbox" : "menuitemradio"}
                     aria-checked={values.includes(option.id)}
                     disabled={Boolean(option.disabledReason)}
-                    title={option.disabledReason ?? option.label}
+                    title={
+                      option.disabledReason ?? option.title ?? option.label
+                    }
                     aria-label={option.label}
                     onClick={() => choose(option.id)}
                   >
@@ -333,7 +340,7 @@ export function DiscoveryFilter({
                     role={multiple ? "menuitemcheckbox" : "menuitemradio"}
                     aria-checked={values.includes(option.id)}
                     disabled={Boolean(option.disabledReason)}
-                    title={option.disabledReason}
+                    title={option.disabledReason ?? option.title}
                     onClick={() => choose(option.id)}
                   >
                     {content}

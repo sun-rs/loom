@@ -4,7 +4,7 @@ import { IdentifierSchema } from "./common.ts";
 export const ClientAgentStateRequestSchema = z
   .object({
     action: z.literal("set_state"),
-    agentDefinitionId: IdentifierSchema,
+    agentId: IdentifierSchema,
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
     state: z.enum(["enabled", "disabled", "tombstoned"]),

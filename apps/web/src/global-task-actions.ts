@@ -56,7 +56,7 @@ export async function applyGlobalTaskTransition(input: {
       roomId: task.roomId,
       consumerId: `global-task-${idempotencyKey}`,
     });
-  await runRoomMutationAtLatest({
+  return runRoomMutationAtLatest({
     session,
     mutate: async (basedOnRoomSeq) => {
       const [health, currentResult] = await Promise.all([

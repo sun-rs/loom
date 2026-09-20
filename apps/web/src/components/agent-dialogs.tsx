@@ -1,3 +1,10 @@
+import { RuntimeFastMode } from "./runtime-fast-mode.tsx";
+import {
+  modelIntentDraft,
+  selectedModelIntent,
+} from "../runtime-model-selection.ts";
+import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import {
   useEffect,
   useMemo,
@@ -6,13 +13,13 @@ import {
   type ComponentProps,
 } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
+import { RuntimePicker } from "./runtime-picker.tsx";
 import { RuntimeGuideIdSchema } from "@rah-os/protocol";
 import { parseAgentEnvironment } from "../agent-launch-environment.ts";
 import {
   RuntimeEnvironmentEditor,
   type EnvironmentRow,
 } from "./runtime-environment-editor.tsx";
-import { AgentProviderEditor, providerKeys } from "./agent-provider-editor.tsx";
 
 import type {
   ClientAgentGetResponse,
@@ -40,7 +47,7 @@ export type AgentCreateInput = Omit<
 >;
 export type AgentConfigureInput = Omit<
   Extract<ClientAgentManageRequest, { action: "configure" }>,
-  "action" | "agentDefinitionId" | "basedOnRoomSeq" | "idempotencyKey"
+  "action" | "agentId" | "basedOnRoomSeq" | "idempotencyKey"
 >;
 
 const RAFT_AVATAR_KEYS = [
@@ -76,6 +83,8 @@ function CreateAgentSelect(props: ComponentProps<"select">) {
 export function AgentCreateDialog({
   client,
   computerLabel,
+  autoJoinChannelName,
+  onCreated,
   onClose,
   onCreate,
   onRefreshModels,
@@ -83,6 +92,8 @@ export function AgentCreateDialog({
 }: {
   client: RahClient;
   computerLabel: string | undefined;
+  autoJoinChannelName?: string | undefined;
+  onCreated?: ((agentId: string) => Promise<void>) | undefined;
   onClose: () => void;
   onCreate: (input: AgentCreateInput) => Promise<string>;
   onRefreshModels: (offerId: string) => Promise<void>;
@@ -124,7 +135,7 @@ export function AgentCreateDialog({
   const selectedRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
-  const modelOptions = runtimeModelOptions(selectedRuntime);
+  const modelOptions = runtimeModelOptions(selectedRuntime, modelBindingId);
   const rows = environmentRows[runtimeOfferId] ?? [];
   const setRows = (next: EnvironmentRow[]) =>
     setEnvironmentRows((old) => ({ ...old, [runtimeOfferId]: next }));
@@ -186,20 +197,21 @@ export function AgentCreateDialog({
       if (Object.keys(environment).length) {
         const runtimeId = RuntimeGuideIdSchema.parse(selectedRuntime?.cliId);
         const current = await client.request("runtime.guide.read", {
-          agentDefinitionId: created.current,
+          agentId: created.current,
         });
         await client.request("runtime.guide.update", {
-          agentDefinitionId: created.current,
+          agentId: created.current,
           runtimeId,
           environment,
           expectedRevision: current.revision,
         });
       }
+      await onCreated?.(created.current!);
       onClose();
     } catch (error) {
       setActionError(
         (created.current
-          ? "Agent 已创建，配置尚未保存；重试不会重复创建。"
+          ? "Agent 已创建，后续设置或加入频道尚未完成；重试不会重复创建。"
           : "") + errorMessage(error),
       );
     } finally {
@@ -209,7 +221,7 @@ export function AgentCreateDialog({
   }
 
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭创建 Agent 窗口"
         className="rah-dialog-backdrop"
@@ -241,6 +253,16 @@ export function AgentCreateDialog({
             void submit();
           }}
         >
+          {autoJoinChannelName && (
+            <p className="rah-agent-create-channel">
+              创建完成后将自动加入 #{autoJoinChannelName}
+            </p>
+          )}
+          {actionError === undefined ? null : (
+            <p className="rah-dialog-error rah-agent-create-error" role="alert">
+              {actionError}
+            </p>
+          )}
           <fieldset
             className="rah-agent-create-fields"
             disabled={pending || refreshing || createdAgentId !== undefined}
@@ -285,38 +307,36 @@ export function AgentCreateDialog({
                 {description.length}/2000
               </small>
             </label>
-            <label>
-              <span>
-                运行时 <em>*</em>
-              </span>
-              <CreateAgentSelect
-                aria-label="运行时"
-                onChange={(event) => {
-                  setRuntimeOfferId(event.target.value);
-                  setServiceTier("default");
-                }}
-                value={runtimeOfferId}
-              >
-                <option value="">请选择…</option>
-                {runtimeOptions.map((runtime) => (
-                  <option
-                    key={runtime.runtimeOfferId}
-                    value={runtime.runtimeOfferId}
-                  >
-                    {runtime.displayName}
-                  </option>
-                ))}
-              </CreateAgentSelect>
-            </label>
-            <AgentProviderEditor
-              runtimeId={selectedRuntime?.cliId}
-              rows={rows}
-              onChange={setRows}
+            <RuntimePicker
+              label="运行时"
+              required
               disabled={pending || createdAgentId !== undefined}
+              options={runtimeOptions.map((runtime) => ({
+                id: runtime.runtimeOfferId!,
+                label: runtimeProductLabel(runtime),
+              }))}
+              onChange={(next) => {
+                setRuntimeOfferId(next);
+                setServiceTier("default");
+              }}
+              value={runtimeOfferId}
             />
-            <label>
-              <span className="rah-create-model-label">
-                模型
+            <RuntimePicker
+              label="模型"
+              key={selectedRuntime?.cliId}
+              customRuntime={selectedRuntime?.customModelRuntime}
+              disabled={
+                pending ||
+                refreshing ||
+                !selectedRuntime ||
+                createdAgentId !== undefined
+              }
+              options={modelOptions.map((option) => ({
+                id: option.modelBindingId,
+                label: option.label,
+                nativeId: option.nativeId,
+              }))}
+              action={
                 <button
                   type="button"
                   className="rah-runtime-model-refresh"
@@ -339,71 +359,50 @@ export function AgentCreateDialog({
                 >
                   <Icon name="refresh-cw" />
                 </button>
-              </span>
-              <CreateAgentSelect
-                aria-label="模型"
-                onChange={(event) => {
-                  const next = event.target.value;
-                  setModelBindingId(next);
-                  setServiceTier("default");
-                  setReasoning((current) =>
-                    normalizeReasoningLevel(current, selectedRuntime, next),
-                  );
-                }}
-                value={modelBindingId}
-              >
-                <option value="" disabled>
-                  请选择模型
-                </option>
-                {modelOptions.map((option) => (
-                  <option
-                    key={option.modelBindingId}
-                    value={option.modelBindingId}
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </CreateAgentSelect>
-              {runtimeOfferId === "" ? (
-                <small>
-                  请选择一台在线的 Computer 以及运行时以检查可用模型。
-                </small>
-              ) : null}
-            </label>
-            <label>
-              推理强度
-              <CreateAgentSelect
-                aria-label="推理强度"
-                value={reasoning}
-                onChange={(event) =>
-                  setReasoning(event.target.value as ReasoningLevel)
-                }
-              >
-                {reasoningOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </CreateAgentSelect>
-            </label>
+              }
+              onChange={(next) => {
+                setModelBindingId(next);
+                setServiceTier("default");
+                setReasoning((current) =>
+                  normalizeReasoningLevel(current, selectedRuntime, next),
+                );
+              }}
+              value={modelBindingId}
+              belowControl={
+                runtimeOfferId === "" ? (
+                  <small>
+                    请选择一台在线的 Computer 以及运行时以检查可用模型。
+                  </small>
+                ) : null
+              }
+            />
+            <RuntimePicker
+              label="推理强度"
+              disabled={
+                pending || createdAgentId !== undefined || !selectedRuntime
+              }
+              options={reasoningOptions.map((option) => ({
+                id: option.value,
+                label: option.label,
+              }))}
+              value={reasoning}
+              onChange={(next) => setReasoning(next as ReasoningLevel)}
+            />
             {fastTier && (
-              <label className="rah-runtime-fast-mode">
-                <input
-                  type="checkbox"
+              <div className="rah-runtime-edit-field">
+                <b>模式</b>
+                <RuntimeFastMode
                   checked={serviceTier === fastTier}
-                  onChange={(event) =>
-                    setServiceTier(event.target.checked ? fastTier : "default")
+                  disabled={pending || createdAgentId !== undefined}
+                  onChange={(checked) =>
+                    setServiceTier(checked ? fastTier : "default")
                   }
                 />
-                快速模式
-              </label>
+              </div>
             )}
             <details className="rah-agent-launch-settings">
               <summary>更多</summary>
               <RuntimeEnvironmentEditor
-                hiddenKeys={
-                  selectedRuntime?.cliId === "claude" ? providerKeys : []
-                }
                 rows={rows}
                 disabled={pending || createdAgentId !== undefined}
                 onChange={setRows}
@@ -411,11 +410,7 @@ export function AgentCreateDialog({
             </details>
           </fieldset>
           {environmentError && <p role="alert">{environmentError}</p>}
-          {actionError === undefined ? null : (
-            <p className="rah-dialog-error" role="alert">
-              {actionError}
-            </p>
-          )}
+
           <footer>
             <button
               className="btn"
@@ -432,13 +427,15 @@ export function AgentCreateDialog({
               {pending
                 ? "正在保存…"
                 : createdAgentId
-                  ? "重试保存配置"
+                  ? autoJoinChannelName
+                    ? "重试完成创建"
+                    : "重试保存配置"
                   : "创建 Agent"}
             </button>
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -487,7 +484,7 @@ export function AgentManageDialog({
   const initialRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
-  const configuredModelBindingId = policy.modelIntent.exactBindingIds?.[0];
+  const configuredModelBindingId = modelIntentDraft(policy.modelIntent);
   const initialModelBindingId = normalizeModelBindingId(
     configuredModelBindingId,
     initialRuntime,
@@ -508,7 +505,7 @@ export function AgentManageDialog({
   const selectedRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
-  const modelOptions = runtimeModelOptions(selectedRuntime);
+  const modelOptions = runtimeModelOptions(selectedRuntime, modelBindingId);
   const reasoningOptions = runtimeReasoningOptions(
     selectedRuntime,
     modelBindingId,
@@ -544,7 +541,7 @@ export function AgentManageDialog({
   };
 
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
         aria-label="关闭 Agent 设置窗口"
         className="rah-dialog-backdrop"
@@ -564,7 +561,8 @@ export function AgentManageDialog({
             <p>AGENT</p>
             <h2 id="rah-agent-manage-title">设置 {revision.displayName}</h2>
             <p>
-              @{detail.agent.handle} · 版本 {revision.revision}
+              @{revision.displayName || detail.agent.handle} · 版本{" "}
+              {revision.revision}
             </p>
           </div>
           <button
@@ -646,42 +644,37 @@ export function AgentManageDialog({
                     key={runtime.runtimeOfferId}
                     value={runtime.runtimeOfferId}
                   >
-                    {runtime.displayName}
+                    {runtimeProductLabel(runtime)}
                   </option>
                 ))}
               </select>
             </label>
-            <label>
-              模型
-              <select
-                onChange={(event) => {
-                  const next = event.target.value;
+            <div>
+              <RuntimePicker
+                label="模型"
+                key={selectedRuntime?.cliId}
+                customRuntime={selectedRuntime?.customModelRuntime}
+                disabled={pending || !selectedRuntime}
+                value={modelBindingId}
+                options={modelOptions.map((option) => ({
+                  id: option.modelBindingId,
+                  label: option.label,
+                  nativeId: option.nativeId,
+                }))}
+                onChange={(next) => {
                   setModelBindingId(next);
                   setReasoning((current) =>
                     normalizeReasoningLevel(current, selectedRuntime, next),
                   );
                 }}
-                value={modelBindingId}
-              >
-                <option value="" disabled>
-                  请选择模型
-                </option>
-                {modelOptions.map((option) => (
-                  <option
-                    key={option.modelBindingId}
-                    value={option.modelBindingId}
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              />
               {configuredModelBindingId !== undefined &&
               configuredModelBindingId !== modelBindingId ? (
                 <small>
                   旧模型绑定没有当前 Runtime 证据；请明确选择模型后保存。
                 </small>
               ) : null}
-            </label>
+            </div>
           </div>
           <label>
             人设指令
@@ -809,14 +802,13 @@ export function AgentManageDialog({
           </footer>
         </form>
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
 function handleFromName(value: string): string {
   return value
     .trim()
-    .toLocaleLowerCase()
     .replace(/[^\p{L}\p{N}._-]+/gu, "-")
     .replace(/^[-._]+|[-._]+$/gu, "")
     .slice(0, 64);
@@ -835,11 +827,5 @@ function modelIntent(
   modelBindingId: string,
   reasoning: ReasoningLevel,
 ): ClientAgentProvisionRequest["modelIntent"] {
-  return {
-    fallback: "disabled",
-    ...(modelBindingId === "runtime_default"
-      ? {}
-      : { exactBindingIds: [modelBindingId] }),
-    reasoning,
-  };
+  return selectedModelIntent(modelBindingId, reasoning);
 }

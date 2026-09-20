@@ -31,7 +31,7 @@ export function readAgentTrajectoryVersion(
 }
 
 export type AgentTrajectoryListInput = {
-  agentDefinitionId: string;
+  agentId: string;
   beforeActivityId?: string;
   limit?: number;
 };
@@ -227,14 +227,11 @@ export function listAgentTrajectory(
        JOIN principals AS actor
          ON actor.principal_id = actor_control_membership.principal_id
         AND actor.kind = 'human'
-       WHERE agent_definitions.agent_definition_id = ?
-         AND agent_definitions.state <> 'tombstoned'`,
+       WHERE agent_definitions.agent_definition_id = ?`,
     )
-    .get(actorId, input.agentDefinitionId);
+    .get(actorId, input.agentId);
   if (scope === undefined) {
-    throw new NotFoundError(
-      `AgentDefinition ${input.agentDefinitionId} was not found`,
-    );
+    throw new NotFoundError(`AgentDefinition ${input.agentId} was not found`);
   }
   const limit = input.limit ?? 50;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {

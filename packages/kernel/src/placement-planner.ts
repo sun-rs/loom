@@ -312,6 +312,11 @@ function resolveModel(
   policy: ExecutionPolicyRevision,
 ): ResolvedModel | undefined {
   const intent = policy.modelIntent;
+  if (intent.customModel) {
+    if (offer.customModelRuntime !== intent.customModel.runtime)
+      return undefined;
+    return { source: "custom_model", ...intent.customModel };
+  }
   const reasoning = intent.reasoning ?? "default";
   const serviceTier = intent.serviceTier ?? "default";
   const needsBinding =

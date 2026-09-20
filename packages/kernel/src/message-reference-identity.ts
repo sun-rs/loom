@@ -8,11 +8,23 @@ export function principalHandleIsAvailable(
   database: DatabaseSync,
   handle: string,
 ): boolean {
-  const wanted = messageReferenceNameKey(handle);
-  return !database
-    .prepare("SELECT handle FROM principals")
-    .all()
-    .some((row) => messageReferenceNameKey(text(row, "handle")) === wanted);
+  return (
+    database
+      .prepare(
+        `SELECT 1 FROM principals p
+    LEFT JOIN agent_definitions a ON a.participant_id=p.principal_id
+    WHERE p.handle=? COLLATE BINARY AND (a.state IS NULL OR a.state<>'tombstoned')`,
+      )
+      .get(handle) === undefined
+  );
+}
+
+/** A recreated Agent gets a new identity, never an invented account suffix. */
+export function allocateRecreatedAgentHandle(
+  _database: DatabaseSync,
+  requested: string,
+): string {
+  return requested;
 }
 
 export function workspaceRoomSlugIsAvailable(
@@ -37,11 +49,13 @@ export function assertMessageReferenceDirectoryIsUnambiguous(
 ): void {
   assertUnique(
     database
-      .prepare("SELECT principal_id, handle FROM principals")
+      .prepare(
+        "SELECT p.principal_id,p.handle FROM principals p LEFT JOIN agent_definitions a ON a.participant_id=p.principal_id WHERE a.state IS NULL OR a.state<>'tombstoned'",
+      )
       .all()
       .map((row) => ({
         id: text(row, "principal_id"),
-        key: messageReferenceNameKey(text(row, "handle")),
+        key: text(row, "handle"),
       })),
     "principal handle",
   );

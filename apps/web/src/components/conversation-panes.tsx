@@ -1,4 +1,8 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
+import { ThreadFollowerToast } from "./thread-follower-toast.tsx";
 import { MessageTextDialog } from "./message-text-dialog.tsx";
+import { ChatSystemNotice } from "./chat-system-notice.tsx";
+import { NavigationReceiptLink } from "./navigation-receipt-link.tsx";
 import { ComposerSubmitControl } from "./composer-submit-control.tsx";
 import { fileReferenceText } from "../composer-controls.ts";
 import { useMessageActions } from "../use-message-actions.ts";
@@ -7,7 +11,6 @@ import { activityDisplayText } from "../activity-display-names.ts";
 import { useTaskInitialScroll } from "../use-task-initial-scroll.ts";
 import { useMessageHighlight } from "../use-message-highlight.ts";
 import { useComposerAutosize } from "../use-composer-autosize.ts";
-import { ThreadFollowerConfirmation } from "./thread-follower-confirmation.tsx";
 import { MessageAgentModelName } from "./message-model-name.tsx";
 import {
   useWorkspaceEntities,
@@ -83,15 +86,13 @@ import { useSidebarPreferences } from "./sidebar-preferences.tsx";
 import { roomLongMessagesCollapsed } from "../room-preferences.ts";
 import {
   buildChatTimeline,
+  groupChatTimeline,
   buildThreadReceiptTimeline,
   chatLocalDateKey,
   chatTimelineKey,
   threadReminderReceipts,
 } from "../chat-timeline-presentation.ts";
-import {
-  navigationSearch,
-  shouldHandleClientNavigation,
-} from "../navigation-target.ts";
+import { navigationSearch } from "../navigation-target.ts";
 import { useMessageContextMenu } from "../use-message-context-menu.ts";
 import { MessageContextMenu } from "./message-context-menu.tsx";
 import { MessageSelectionToolbar } from "./message-selection-toolbar.tsx";
@@ -174,7 +175,7 @@ export function ChatPane({
   focusHighlightRequest?: number | undefined;
   focusHighlightQuery?: string | undefined;
   onReturnToLatest?: () => void;
-  onReadThrough?: ((throughSeq: number) => Promise<void>) | undefined;
+  onReadThrough?: ((throughSeq: number) => Promise<void | number>) | undefined;
   agents: readonly RoomAgentTarget[];
   canManageAnyTask: boolean;
   canCreateTask: boolean;
@@ -293,13 +294,41 @@ export function ChatPane({
     messages,
     roomId,
   });
+  const entities = useWorkspaceEntities();
+  const [expandedSystemGroups, setExpandedSystemGroups] = useState<Set<string>>(
+    new Set(),
+  );
+  useEffect(() => setExpandedSystemGroups(new Set()), [roomId]);
   const timelineItems = useMemo(
     () =>
-      buildChatTimeline({ events: roomEvents, members: roomMembers, messages }),
-    [messages, roomEvents, roomMembers],
+      groupChatTimeline(
+        buildChatTimeline({
+          events: roomEvents,
+          members: roomMembers.map(
+            (member) => entities?.resolvePerson(member) ?? member,
+          ),
+          messages,
+        }),
+      ),
+    [entities, messages, roomEvents, roomMembers],
   );
   const messagesRef = useRef<HTMLElement>(null);
-  useVisibleMessageRead(messagesRef, roomId, messages, onReadThrough);
+  const readableItems = useMemo(
+    () => [
+      ...messages,
+      ...timelineItems
+        .flatMap((item) =>
+          item.kind === "message"
+            ? []
+            : item.kind === "system-group"
+              ? item.items
+              : [item],
+        )
+        .map((item) => ({ messageId: item.eventId, roomSeq: item.roomSeq })),
+    ],
+    [messages, timelineItems],
+  );
+  useVisibleMessageRead(messagesRef, roomId, readableItems, onReadThrough);
   const timelineRef = useRef<MessageTimelineHandle>(null);
   const positionedMessage = useRef<string | undefined>(undefined);
   const previousFocus = useRef(focusedMessageId);
@@ -550,24 +579,19 @@ export function ChatPane({
                   {showDate ? (
                     <ChatDateDivider createdAt={item.createdAt} />
                   ) : null}
-                  <p className="rah-chat-system-notice">
-                    {item.kind === "archive-changed" ? (
-                      <>
-                        <ChatMessageTime value={item.createdAt} />{" "}
-                      </>
-                    ) : null}
-                    {item.kind === "reminder-fired" ? (
-                      <NavigationReceiptLink
-                        {...(onOpenTarget === undefined
-                          ? {}
-                          : { onOpenTarget })}
-                        target={item.target}
-                        text={item.text}
-                      />
-                    ) : (
-                      item.text
-                    )}
-                  </p>
+                  <ChatSystemNotice
+                    item={item}
+                    expanded={expandedSystemGroups.has(item.eventId)}
+                    onToggle={() =>
+                      setExpandedSystemGroups((previous) => {
+                        const next = new Set(previous);
+                        if (next.has(item.eventId)) next.delete(item.eventId);
+                        else next.add(item.eventId);
+                        return next;
+                      })
+                    }
+                    {...(onOpenTarget ? { onOpenTarget } : {})}
+                  />
                 </>
               );
             }
@@ -1000,7 +1024,7 @@ export function MessageArticle({
   const authorName =
     person?.kind === "human"
       ? person.displayName || person.handle
-      : message.author;
+      : messageAgent?.displayName || message.author;
   const social = useMessageSocial(message);
   const {
     anchor: contextMenu,
@@ -1167,18 +1191,29 @@ export function MessageArticle({
       )}
       <div className="msg-body">
         <header className="msg-head">
-          {messageAgent && onMention ? (
+          {messageAgent && messageAgent.state !== "tombstoned" && onMention ? (
             <button
               className="rah-message-sender"
-              title={`提及 @${messageAgent.handle}`}
+              title={`提及 @${messageAgent.displayName || messageAgent.handle}`}
               onClick={() => onMention(messageAgent.handle)}
             >
-              {message.author}
+              {authorName}
             </button>
           ) : (
-            <b>{authorName}</b>
+            <b
+              className={
+                messageAgent?.state === "tombstoned"
+                  ? "rah-deleted-message-sender"
+                  : undefined
+              }
+            >
+              {authorName}
+            </b>
           )}
           {messageAgent ? <MessageAgentModelName agent={messageAgent} /> : null}
+          {messageAgent?.state === "tombstoned" && (
+            <span className="rah-agent-deleted-badge">已删除</span>
+          )}
           <ChatMessageTime value={message.createdAt} />
         </header>
         {message.body.trim().length === 0 ? null : (
@@ -1224,6 +1259,7 @@ export function MessageArticle({
                 })),
                 threads: referenceThreads,
               }}
+              mentions={message.mentions}
               source={message.body}
             />
           </CollapsibleMessage>
@@ -1254,7 +1290,22 @@ export function MessageArticle({
           >
             <Icon name="eye" />
             <span>#{task.taskNumber}</span>
-            {taskAgent === undefined ? null : <span>@{taskAgent.handle}</span>}
+            {task.assigneeId ? (
+              <span>
+                @
+                {entities?.person(task.assigneeId)?.displayName ||
+                  entities?.person(task.assigneeId)?.handle ||
+                  (taskAgent?.participantId === task.assigneeId
+                    ? taskAgent.displayName || taskAgent.handle
+                    : referencePrincipals.find(
+                        (person) => person.principalId === task.assigneeId,
+                      )?.displayName ||
+                      referencePrincipals.find(
+                        (person) => person.principalId === task.assigneeId,
+                      )?.handle) ||
+                  "未知成员"}
+              </span>
+            ) : null}
           </button>
         )}
         <MessageAttachments
@@ -1505,9 +1556,17 @@ export function ThreadPane({
       participantIds.has(participantId),
     );
   }, [mentionAgentIds, messageAgents]);
+  const recentMentionParticipants = useMemo(
+    () =>
+      [...(root ? [root, ...replies] : replies)]
+        .reverse()
+        .map((message) => message.actorId),
+    [root, replies],
+  );
   const composerMention = useComposerMention({
     agents: composerMentionAgents,
     body,
+    recentParticipantIds: recentMentionParticipants,
     id: "thread-composer-mentions",
     setBody,
     textareaRef: composerRef,
@@ -1550,11 +1609,9 @@ export function ThreadPane({
   const [followerPendingIds, setFollowerPendingIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const [removeFollowerTarget, setRemoveFollowerTarget] =
-    useState<WorkspaceAgentView>();
   const [followerActionError, setFollowerActionError] = useState<string>();
   const [removedFollowers, setRemovedFollowers] = useState<
-    { agent: WorkspaceAgentView; undoToken: string }[]
+    { agent: WorkspaceAgentView; undoToken: string; restored?: boolean }[]
   >([]);
   useEffect(() => {
     if (
@@ -1590,9 +1647,21 @@ export function ThreadPane({
     [reminderReceipts, replies],
   );
   const messagesElement = useRef<HTMLElement>(null);
+  const activeReplyRoot = useRef(root?.messageId);
+  activeReplyRoot.current = root?.messageId;
+  const [sentScroll, setSentScroll] = useState<{
+    rootId: string;
+    version: number;
+  }>();
   useTaskInitialScroll(
     messagesElement,
-    hideHeader && task && replies.length > 0 ? task.taskId : undefined,
+    sentScroll && sentScroll.rootId === root?.messageId
+      ? `sent:${sentScroll.rootId}:${sentScroll.version}`
+      : hideHeader && task && replies.length > 0
+        ? task.taskId
+        : root && !focusedMessageId && !searchOpen
+          ? `thread:${root.messageId}`
+          : undefined,
   );
 
   useVisibleMessageRead(
@@ -1603,7 +1672,6 @@ export function ThreadPane({
   );
   const positionedMessage = useRef<string | undefined>(undefined);
   useEffect(() => {
-    setRemoveFollowerTarget(undefined);
     setFollowing(undefined);
     setFollowersOpen(false);
     setOverflowOpen(false);
@@ -1741,7 +1809,7 @@ export function ThreadPane({
     }
   });
   useEffect(() => {
-    if (removeFollowerTarget || (!followersOpen && !overflowOpen)) return;
+    if (!followersOpen && !overflowOpen) return;
     const closeOutside = (event: PointerEvent) => {
       if (!(event.target instanceof Node)) return;
       if (followersOpen && !followersOwnerRef.current?.contains(event.target))
@@ -1753,7 +1821,7 @@ export function ThreadPane({
     return () => {
       window.removeEventListener("pointerdown", closeOutside);
     };
-  }, [followersOpen, overflowOpen, removeFollowerTarget]);
+  }, [followersOpen, overflowOpen]);
 
   function closeThreadLayerOnEscape(
     event: ReactKeyboardEvent<HTMLDivElement>,
@@ -1838,7 +1906,6 @@ export function ThreadPane({
         { agent, undoToken: result.undoToken },
       ]);
       setFollowerActionError(undefined);
-      setRemoveFollowerTarget(undefined);
       const delay = Math.max(0, Date.parse(result.undoExpiresAt) - Date.now());
       const previousTimer = followerUndoTimers.current.get(agent.participantId);
       if (previousTimer !== undefined) window.clearTimeout(previousTimer);
@@ -1875,7 +1942,11 @@ export function ThreadPane({
         undoToken: pending.undoToken,
       });
       setRemovedFollowers((current) =>
-        current.filter(({ undoToken }) => undoToken !== pending.undoToken),
+        current.map((notice) =>
+          notice.undoToken === pending.undoToken
+            ? { ...notice, restored: true }
+            : notice,
+        ),
       );
       const timer = followerUndoTimers.current.get(pending.agent.participantId);
       if (timer !== undefined) window.clearTimeout(timer);
@@ -1956,6 +2027,12 @@ export function ThreadPane({
           uploadDraftKey,
           submittedFiles.map((row) => row.id),
         );
+      if (root && activeReplyRoot.current === root.messageId) {
+        setSentScroll((current) => ({
+          rootId: root.messageId,
+          version: (current?.version ?? 0) + 1,
+        }));
+      }
       acceptDraft();
       setSubmitError(undefined);
     } catch (caught) {
@@ -1975,18 +2052,6 @@ export function ThreadPane({
       ref={threadPanelRef}
     >
       {resizer}
-      {removeFollowerTarget && (
-        <ThreadFollowerConfirmation
-          name={removeFollowerTarget.displayName}
-          busy={followerPendingIds.has(removeFollowerTarget.participantId)}
-          error={followerActionError}
-          onClose={() => {
-            setRemoveFollowerTarget(undefined);
-            setFollowerActionError(undefined);
-          }}
-          onConfirm={() => void removeFollower(removeFollowerTarget)}
-        />
-      )}
       {hideHeader ? null : (
         <PanelHeader kind="thread" className="rah-thread-head">
           <PanelHeaderAction
@@ -2031,14 +2096,19 @@ export function ThreadPane({
                     <Icon name="circle-question-mark" />
                   ) : (
                     <>
-                      {followers.slice(0, 3).map((agent) => (
-                        <AgentAvatar
-                          agent={agent}
-                          key={agent.participantId}
-                          showStatus={false}
-                          size="compact"
-                        />
-                      ))}
+                      <span
+                        className="rah-thread-follower-avatars"
+                        aria-hidden="true"
+                      >
+                        {followers.slice(0, 3).map((agent) => (
+                          <AgentAvatar
+                            agent={agent}
+                            key={agent.participantId}
+                            showStatus={false}
+                            size="compact"
+                          />
+                        ))}
+                      </span>
                       <span>
                         {followersLoading && followerCount === undefined
                           ? "…"
@@ -2077,63 +2147,62 @@ export function ThreadPane({
                     ) : followers.length === 0 ? (
                       <p>暂无 Agent 正在关注。</p>
                     ) : (
-                      followers.map((agent) => (
-                        <div
-                          className="rah-thread-follower-row"
-                          key={agent.participantId}
-                        >
-                          <button
-                            className="rah-thread-follower-profile"
-                            aria-label={`查看 ${agent.displayName} 资料`}
-                            disabled={!agentIdentity}
-                            onClick={() => {
-                              setFollowersOpen(false);
-                              agentIdentity?.onOpen(
-                                agent.agentDefinitionId,
-                                "thread",
-                              );
-                            }}
-                            type="button"
+                      <div className="rah-thread-followers-list">
+                        {followers.map((agent) => (
+                          <div
+                            className="rah-thread-follower-row"
+                            key={agent.participantId}
                           >
-                            <AgentAvatar
-                              agent={agent}
-                              showStatus={false}
-                              size="member"
-                            />
-                            <span className="rah-thread-follower-copy">
-                              <b>{agent.displayName}</b>
-                            </span>
-                          </button>
-                          {followersCanManage && onRemoveFollower ? (
                             <button
-                              className="rah-thread-follower-remove"
-                              aria-label={`移除 ${agent.displayName}`}
-                              disabled={followerPendingIds.has(
-                                agent.participantId,
-                              )}
+                              className="rah-thread-follower-profile"
+                              aria-label={`查看 ${agent.displayName} 资料`}
+                              disabled={!agentIdentity}
                               onClick={() => {
-                                setFollowerActionError(undefined);
-                                setRemoveFollowerTarget(agent);
+                                setFollowersOpen(false);
+                                agentIdentity?.onOpen(agent.agentId, "thread");
                               }}
                               type="button"
                             >
-                              <svg
-                                aria-hidden="true"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M18 6 6 18m0-12 12 12" />
-                              </svg>
+                              <AgentAvatar
+                                agent={agent}
+                                showStatus={false}
+                                size="member"
+                              />
+                              <span className="rah-thread-follower-copy">
+                                <b>{agent.displayName}</b>
+                              </span>
                             </button>
-                          ) : null}
-                        </div>
-                      ))
+                            {followersCanManage && onRemoveFollower ? (
+                              <button
+                                className="rah-thread-follower-remove"
+                                aria-label={`移除 ${agent.displayName}`}
+                                disabled={followerPendingIds.has(
+                                  agent.participantId,
+                                )}
+                                onClick={() => {
+                                  setFollowerActionError(undefined);
+                                  void removeFollower(agent);
+                                }}
+                                type="button"
+                              >
+                                <svg
+                                  aria-hidden="true"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M18 6 6 18m0-12 12 12" />
+                                </svg>
+                              </button>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 ) : null}
@@ -2172,30 +2241,6 @@ export function ThreadPane({
                     type="button"
                   >
                     <Icon name="search" /> 在消息列中搜索
-                  </button>
-                  <button
-                    disabled={!roomId || !root}
-                    onClick={() => {
-                      if (!roomId || !root) return;
-                      window.open(
-                        navigationSearch({
-                          target: {
-                            kind: "message",
-                            roomId,
-                            messageId: root.messageId,
-                            rootMessageId: root.messageId,
-                            ...(threadId ? { threadId } : {}),
-                          },
-                        }),
-                        "_blank",
-                        "noopener,noreferrer",
-                      );
-                      setOverflowOpen(false);
-                    }}
-                    role="menuitem"
-                    type="button"
-                  >
-                    <Icon name="external-link" /> 在新标签页中打开
                   </button>
                   <button
                     disabled={onViewInChannel === undefined}
@@ -2480,6 +2525,7 @@ export function ThreadPane({
               className="rah-chat-system-notice"
               key={`reminder:${item.eventId}`}
             >
+              <ChatMessageTime value={item.createdAt} />{" "}
               <NavigationReceiptLink
                 {...(onOpenTarget === undefined ? {} : { onOpenTarget })}
                 target={item.target}
@@ -2577,26 +2623,59 @@ export function ThreadPane({
         )}
       </section>
       {removedFollowers.length === 0 ? null : (
-        <div className="rah-thread-follower-undo-list">
+        <DialogLayer className="rah-thread-follower-undo-list">
           {removedFollowers.map((removedFollower) => (
-            <div
-              className="rah-thread-follower-undo"
-              key={removedFollower.undoToken}
-              role="status"
+            <ThreadFollowerToast
+              key={`${removedFollower.undoToken}:${!!removedFollower.restored}`}
+              onDismiss={() =>
+                setRemovedFollowers((current) =>
+                  current.filter(
+                    ({ undoToken }) => undoToken !== removedFollower.undoToken,
+                  ),
+                )
+              }
             >
-              <span>已移除 {removedFollower.agent.displayName}</span>
-              <button
-                disabled={followerPendingIds.has(
-                  removedFollower.agent.participantId,
-                )}
-                onClick={() => void restoreFollower(removedFollower)}
-                type="button"
+              <span
+                className="rah-thread-follower-success-icon"
+                aria-hidden="true"
               >
-                撤销
-              </button>
-            </div>
+                <Icon name="circle-check-big" />
+              </span>
+              <span>
+                {removedFollower.restored
+                  ? `已恢复 ${removedFollower.agent.displayName} 的关注。`
+                  : `已将 ${removedFollower.agent.displayName} 移出此消息列的关注者。`}
+              </span>
+              {removedFollower.restored ? (
+                <button
+                  className="rah-thread-follower-toast-close"
+                  aria-label="关闭提示"
+                  type="button"
+                  onClick={() =>
+                    setRemovedFollowers((current) =>
+                      current.filter(
+                        (notice) =>
+                          notice.undoToken !== removedFollower.undoToken,
+                      ),
+                    )
+                  }
+                >
+                  <Icon name="x" />
+                </button>
+              ) : (
+                <button
+                  disabled={followerPendingIds.has(
+                    removedFollower.agent.participantId,
+                  )}
+                  onClick={() => void restoreFollower(removedFollower)}
+                  type="button"
+                >
+                  撤销
+                </button>
+              )}
+            </ThreadFollowerToast>
           ))}
-        </div>
+        </DialogLayer>
       )}
       {messageSelection.active ? (
         <MessageSelectionToolbar
@@ -2713,30 +2792,6 @@ export function ThreadPane({
         />
       ) : null}
     </aside>
-  );
-}
-
-function NavigationReceiptLink({
-  onOpenTarget,
-  target,
-  text,
-}: {
-  onOpenTarget?: (target: NavigationTarget) => void;
-  target: Extract<NavigationTarget, { kind: "message" }>;
-  text: string;
-}) {
-  return (
-    <a
-      href={navigationSearch({ target })}
-      onClick={(event) => {
-        if (onOpenTarget === undefined || !shouldHandleClientNavigation(event))
-          return;
-        event.preventDefault();
-        onOpenTarget(target);
-      }}
-    >
-      {text}
-    </a>
   );
 }
 

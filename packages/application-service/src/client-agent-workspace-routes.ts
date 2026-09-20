@@ -60,21 +60,17 @@ export async function routeAgentWorkspace(
     const input = parse(AgentSkillsListRequestSchema, body);
     const skills = port.skills;
     if (!skills) throw new Error("此 Computer 尚未提供 Skills 读取能力");
-    const view = human.getWorkspaceAgentManagementView(
-      actor,
-      input.agentDefinitionId,
-    );
+    const view = human.getWorkspaceAgentManagementView(actor, input.agentId);
     const result = await authorizedResult(
       human,
       actor,
-      input.agentDefinitionId,
+      input.agentId,
       async (owner) =>
         AgentSkillsListSchema.parse(await skills(owner, view.policy)),
     );
     if (
-      human.getWorkspaceAgentManagementView(actor, input.agentDefinitionId)
-        .policy.executionPolicyRevisionId !==
-      view.policy.executionPolicyRevisionId
+      human.getWorkspaceAgentManagementView(actor, input.agentId).policy
+        .executionPolicyRevisionId !== view.policy.executionPolicyRevisionId
     )
       throw new Error(
         "Agent runtime configuration changed while reading Skills; retry with current configuration",
@@ -85,60 +81,46 @@ export async function routeAgentWorkspace(
     const input = parse(AgentWorkspaceRootsRequestSchema, body);
     const summary = port.summary;
     if (!summary) throw new Error("此 Computer 尚未提供工作区扫描能力");
-    return authorizedResult(
-      human,
-      actor,
-      input.agentDefinitionId,
-      async (owner) => AgentWorkspaceSummarySchema.parse(await summary(owner)),
+    return authorizedResult(human, actor, input.agentId, async (owner) =>
+      AgentWorkspaceSummarySchema.parse(await summary(owner)),
     );
   }
   if (path.endsWith("/roots")) {
     const input = parse(AgentWorkspaceRootsRequestSchema, body);
-    return authorizedResult(
-      human,
-      actor,
-      input.agentDefinitionId,
-      async (owner) => AgentWorkspaceRootsSchema.parse(await port.roots(owner)),
+    return authorizedResult(human, actor, input.agentId, async (owner) =>
+      AgentWorkspaceRootsSchema.parse(await port.roots(owner)),
     );
   }
   if (path.endsWith("/list")) {
     const input = parse(AgentWorkspaceListRequestSchema, body);
-    return authorizedResult(
-      human,
-      actor,
-      input.agentDefinitionId,
-      async (owner) =>
-        AgentWorkspaceListSchema.parse(
-          await port.list(
-            owner,
-            input.rootId,
-            input.path,
-            input.includeHidden === true,
-          ),
+    return authorizedResult(human, actor, input.agentId, async (owner) =>
+      AgentWorkspaceListSchema.parse(
+        await port.list(
+          owner,
+          input.rootId,
+          input.path,
+          input.includeHidden === true,
         ),
+      ),
     );
   }
   const input = parse(AgentWorkspaceReadRequestSchema, body);
-  return authorizedResult(
-    human,
-    actor,
-    input.agentDefinitionId,
-    async (owner) =>
-      AgentWorkspaceFileSchema.parse(
-        await port.read(owner, input.rootId, input.path),
-      ),
+  return authorizedResult(human, actor, input.agentId, async (owner) =>
+    AgentWorkspaceFileSchema.parse(
+      await port.read(owner, input.rootId, input.path),
+    ),
   );
 }
 
 async function authorizedResult<T>(
   human: HumanApplicationPort,
   actor: AuthenticatedActorContext,
-  agentDefinitionId: string,
+  agentId: string,
   read: (owner: string) => Promise<T>,
 ): Promise<T> {
   const authorize = () =>
-    human.getWorkspaceAgentManagementView(actor, agentDefinitionId).agent
-      .definition.participantId;
+    human.getWorkspaceAgentManagementView(actor, agentId).agent.definition
+      .participantId;
   const owner = authorize();
   const result = await read(owner);
   // Do not release file content after management access was revoked during I/O.

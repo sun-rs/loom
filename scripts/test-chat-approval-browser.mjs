@@ -16,8 +16,17 @@ try {
       viewport: { width, height: width === 390 ? 844 : 900 },
       hasTouch: width === 390,
       isMobile: width === 390,
+      ...(width === 390
+        ? {
+            userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+          }
+        : {}),
     });
     const page = await context.newPage();
+    if (width === 390)
+      await page.addInitScript(() =>
+        Object.defineProperty(navigator, "standalone", { value: true }),
+      );
     await page.addInitScript(() => {
       window.__scrollCalls = [];
       const scroll = Element.prototype.scrollTo;

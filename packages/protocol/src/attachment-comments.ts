@@ -1,3 +1,4 @@
+import { MessageMentionBindingSchema } from "./collaboration.ts";
 import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
 // Raft 1.0.18 preserves an extensible type/data anchor, including lines,
@@ -60,6 +61,7 @@ export const AttachmentCommentsResponseSchema = z
                 .strict(),
             ),
             content: z.string(),
+            mentions: z.array(MessageMentionBindingSchema).optional(),
             createdAt: z.string(),
             anchor: AttachmentCommentAnchorSchema.nullable(),
           })

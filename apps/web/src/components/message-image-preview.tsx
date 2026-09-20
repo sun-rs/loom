@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { RoomMessageView } from "@rah-os/ui-web";
@@ -60,7 +61,7 @@ export function MessageImagePreview({
     }
   }
   return createPortal(
-    <div className="rah-dialog-layer rah-message-image-layer">
+    <DialogLayer className="rah-dialog-layer rah-message-image-layer">
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭分享预览背景"
@@ -166,7 +167,7 @@ export function MessageImagePreview({
           </a>
         </footer>
       </section>
-    </div>,
+    </DialogLayer>,
     document.body,
   );
 }

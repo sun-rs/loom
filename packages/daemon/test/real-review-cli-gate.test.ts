@@ -139,7 +139,7 @@ test(
           "/v3/client/agents/manage",
           {
             action: "configure",
-            agentDefinitionId: agent.definition.agentDefinitionId,
+            agentId: agent.definition.agentId,
             basedOnRoomSeq: controlDelivery.latestRoomSeq,
             displayName: spec.displayName,
             handle: spec.agentHandle,
@@ -175,7 +175,7 @@ test(
           prepared.humanAccessToken,
           "/v3/client/agents/onboard",
           {
-            agentDefinitionId: agent.definition.agentDefinitionId,
+            agentId: agent.definition.agentId,
             basedOnRoomSeq: roomDelivery.latestRoomSeq,
             idempotencyKey: `real-multi-cli-onboard-${String(index)}`,
             roomId: prepared.metadata.defaultRoomId,

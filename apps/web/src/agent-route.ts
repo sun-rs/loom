@@ -10,18 +10,18 @@ export type AgentRouteTab = (typeof AGENT_ROUTE_TABS)[number];
 
 export type AgentRouteSelection =
   | {
-      agentDefinitionId: undefined;
+      agentId: undefined;
       humanPrincipalId: string;
       tab: "profile";
       view: "human";
     }
   | {
-      agentDefinitionId: undefined;
+      agentId: undefined;
       tab: "profile";
       view: "relationship";
     }
   | {
-      agentDefinitionId: string | undefined;
+      agentId: string | undefined;
       tab: AgentRouteTab;
       view?: "agent";
     };
@@ -35,7 +35,7 @@ export function normalizeAgentRouteTab(value: unknown): AgentRouteTab {
 }
 
 export function agentDirectoryRootRoute(): AgentRouteSelection {
-  return { agentDefinitionId: undefined, tab: "profile" };
+  return { agentId: undefined, tab: "profile" };
 }
 
 export function agentRouteFromSearch(search: string): AgentRouteSelection {
@@ -45,7 +45,7 @@ export function agentRouteFromSearch(search: string): AgentRouteSelection {
   }
   if (params.get("memberView") === "relationship") {
     return {
-      agentDefinitionId: undefined,
+      agentId: undefined,
       tab: "profile",
       view: "relationship",
     };
@@ -54,7 +54,7 @@ export function agentRouteFromSearch(search: string): AgentRouteSelection {
     const id = params.get("human")?.trim();
     return id && id.length <= 512
       ? {
-          agentDefinitionId: undefined,
+          agentId: undefined,
           humanPrincipalId: id,
           tab: "profile",
           view: "human",
@@ -64,8 +64,7 @@ export function agentRouteFromSearch(search: string): AgentRouteSelection {
   const rawAgent = params.get("agent")?.trim();
   const rawTab = params.get("agentTab");
   return {
-    agentDefinitionId:
-      rawAgent && rawAgent.length <= 512 ? rawAgent : undefined,
+    agentId: rawAgent && rawAgent.length <= 512 ? rawAgent : undefined,
     tab: normalizeAgentRouteTab(rawTab),
   };
 }
@@ -84,8 +83,7 @@ export function agentRouteSearch(
     params.set("memberView", "relationship");
     return `?${params}`;
   }
-  if (selection.agentDefinitionId)
-    params.set("agent", selection.agentDefinitionId);
+  if (selection.agentId) params.set("agent", selection.agentId);
   params.set("agentTab", selection.tab);
   return `?${params}`;
 }
@@ -93,10 +91,10 @@ export function agentRouteSearch(
 export function reconcileAgentRouteIdentity(
   requestedAgentDefinitionId: string | undefined,
   canonicalAgentDefinitionIds: readonly string[],
-): { agentDefinitionId: string | undefined; replace: boolean } {
+): { agentId: string | undefined; replace: boolean } {
   if (canonicalAgentDefinitionIds.length === 0) {
     return {
-      agentDefinitionId: requestedAgentDefinitionId,
+      agentId: requestedAgentDefinitionId,
       replace: false,
     };
   }
@@ -105,26 +103,26 @@ export function reconcileAgentRouteIdentity(
     canonicalAgentDefinitionIds.includes(requestedAgentDefinitionId)
   ) {
     return {
-      agentDefinitionId: requestedAgentDefinitionId,
+      agentId: requestedAgentDefinitionId,
       replace: false,
     };
   }
   return {
-    agentDefinitionId: canonicalAgentDefinitionIds[0],
+    agentId: canonicalAgentDefinitionIds[0],
     replace: true,
   };
 }
 
 export function shouldOpenAgentMobileDetail(input: {
   humanPrincipalId?: string | undefined;
-  agentDefinitionId: string | undefined;
+  agentId: string | undefined;
   panel: boolean;
   view: AgentRouteSelection["view"];
 }): boolean {
   return (
     !input.panel &&
-    input.view !== "relationship" &&
-    (input.agentDefinitionId !== undefined ||
+    (input.view === "relationship" ||
+      input.agentId !== undefined ||
       (input.view === "human" && input.humanPrincipalId !== undefined))
   );
 }

@@ -1,3 +1,4 @@
+import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useState, type ReactNode } from "react";
@@ -66,7 +67,7 @@ function TaskThreadModal({
     onClose,
   });
   return (
-    <div
+    <DialogLayer
       className={`rah-dialog-layer rah-task-detail-layer${compact ? " rah-task-approval-layer" : ""}`}
     >
       <button
@@ -113,7 +114,7 @@ function TaskThreadModal({
           children
         )}
       </section>
-    </div>
+    </DialogLayer>
   );
 }
 
@@ -133,7 +134,7 @@ export function TaskDetailMetadata({
   people: readonly Principal[];
   canManage: boolean;
   writeEnabled: boolean;
-  onChanged: () => void;
+  onChanged: (task?: Task) => void;
   agents: readonly RoomAgentTarget[];
   principalId: string | undefined;
   activeMemberIds: readonly string[];
@@ -168,14 +169,14 @@ export function TaskDetailMetadata({
     setPending(true);
     setError(undefined);
     try {
-      await applyGlobalTaskTransition({
+      const result = await applyGlobalTaskTransition({
         client,
         task,
         target,
         canManageAnyTask: canManage,
         idempotencyKey: `task-detail-${browserOpaqueId()}`,
       });
-      onChanged();
+      onChanged(result.task);
     } catch (failure) {
       setError(
         failure instanceof Error ? failure.message : "任务更新失败，请重试",
@@ -214,57 +215,55 @@ export function TaskDetailMetadata({
       </div>
       <dl className="rah-task-detail-properties">
         <div className="rah-task-detail-assignment">
-          <div>
-            <dt>状态</dt>
-            <dd>
-              <DiscoveryFilter
-                label="任务状态"
-                triggerLabel={column.label}
-                triggerAriaLabel={`任务 #${task.taskNumber} 状态：${column.label}`}
-                icon={null}
-                multiple={false}
-                searchable={false}
-                clearable={false}
-                variant="status"
-                className="rah-task-state rah-task-status-picker"
-                triggerClassName={`chip-${column.tone}`}
-                disabled={pending || !writeEnabled || !canManage}
-                values={[current]}
-                selected={false}
-                options={columns.map((item) => {
-                  const reason = globalTaskTransition(
-                    task,
-                    item.id,
-                    canManage,
-                  ).reason;
-                  return {
-                    id: item.id,
-                    label: item.label,
-                    ...(item.id === current || !reason
-                      ? {}
-                      : { disabledReason: reason }),
-                  };
-                })}
-                onChange={(values) => void choose(values[0] as TaskColumnId)}
-              />
-            </dd>
-          </div>
-          <div>
-            <dt>负责人</dt>
-            <dd>
-              <TaskAssigneeControl
-                client={client}
-                task={task}
-                people={people.filter((person) =>
-                  activeMemberIds.includes(person.principalId),
-                )}
-                principalId={principalId}
-                label={personName(task.assigneeId)}
-                writeEnabled={writeEnabled && canManage}
-                onChanged={onChanged}
-              />
-            </dd>
-          </div>
+          <dt>状态</dt>
+          <dd>
+            <DiscoveryFilter
+              label="任务状态"
+              triggerLabel={column.label}
+              triggerAriaLabel={`任务 #${task.taskNumber} 状态：${column.label}`}
+              icon={null}
+              multiple={false}
+              searchable={false}
+              clearable={false}
+              variant="status"
+              className="rah-task-state rah-task-status-picker"
+              triggerClassName={`chip-${column.tone}`}
+              disabled={pending || !writeEnabled || !canManage}
+              values={[current]}
+              selected={false}
+              options={columns.map((item) => {
+                const reason = globalTaskTransition(
+                  task,
+                  item.id,
+                  canManage,
+                ).reason;
+                return {
+                  id: item.id,
+                  label: item.label,
+                  ...(item.id === current || !reason
+                    ? {}
+                    : { disabledReason: reason }),
+                };
+              })}
+              onChange={(values) => void choose(values[0] as TaskColumnId)}
+            />
+          </dd>
+        </div>
+        <div className="rah-task-detail-assignment">
+          <dt>负责人</dt>
+          <dd>
+            <TaskAssigneeControl
+              client={client}
+              task={task}
+              people={people.filter((person) =>
+                activeMemberIds.includes(person.principalId),
+              )}
+              principalId={principalId}
+              label={personName(task.assigneeId)}
+              writeEnabled={writeEnabled && canManage}
+              onChanged={onChanged}
+            />
+          </dd>
         </div>
         <div className="rah-task-detail-creator">
           <dt>创建人</dt>

@@ -63,8 +63,8 @@ for (const engine of engines)
         ).agents;
         assert.ok(agents.length >= 2);
         const [a, b] = agents;
-        const aId = a.definition.agentDefinitionId,
-          bId = b.definition.agentDefinitionId;
+        const aId = a.definition.agentId,
+          bId = b.definition.agentId;
         const name = (agent) =>
           agent.currentRevision.displayName ?? agent.handle;
         const header = page.locator(".rah-agent-detail-head");
@@ -106,7 +106,7 @@ for (const engine of engines)
         await page.route("**/v3/client/agents/manage", async (route) => {
           const body = route.request().postDataJSON();
           requests.push(body);
-          if (body.agentDefinitionId !== aId || body.action !== "set_state")
+          if (body.agentId !== aId || body.action !== "set_state")
             return route.continue();
           if (outcome === "success") {
             const response = await route.fetch();
@@ -160,7 +160,7 @@ for (const engine of engines)
         const completed = page.waitForResponse(
           (response) =>
             response.url().endsWith("/v3/client/agents/manage") &&
-            response.request().postDataJSON().agentDefinitionId === aId,
+            response.request().postDataJSON().agentId === aId,
         );
         release();
         await (await completed).finished();
@@ -213,13 +213,11 @@ for (const engine of engines)
           "late completion must preserve focus in B",
         );
         assert.equal(
-          (await post("agents/get", { agentDefinitionId: aId })).agent
-            .definition.state,
+          (await post("agents/get", { agentId: aId })).agent.definition.state,
           outcome === "success" ? "disabled" : "enabled",
         );
         assert.equal(
-          (await post("agents/get", { agentDefinitionId: bId })).agent
-            .definition.state,
+          (await post("agents/get", { agentId: bId })).agent.definition.state,
           "enabled",
         );
         await dialog()
@@ -227,18 +225,15 @@ for (const engine of engines)
           .click();
         await dialog().waitFor({ state: "hidden" });
         assert.equal(
-          (await post("agents/get", { agentDefinitionId: bId })).agent
-            .definition.state,
+          (await post("agents/get", { agentId: bId })).agent.definition.state,
           "disabled",
         );
         assert.equal(
-          requests.filter((request) => request.agentDefinitionId === aId)
-            .length,
+          requests.filter((request) => request.agentId === aId).length,
           1,
         );
         assert.equal(
-          requests.filter((request) => request.agentDefinitionId === bId)
-            .length,
+          requests.filter((request) => request.agentId === bId).length,
           1,
         );
         assert.notEqual(

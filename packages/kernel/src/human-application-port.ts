@@ -184,8 +184,8 @@ export function createHumanApplicationPort(
       kernel.humanTaskHistory.list(actor, input),
     updateAuthenticatedPrincipal: (actor, input) =>
       kernel.updateAuthenticatedPrincipal(actor, input),
-    getWorkspaceAgentManagementView: (actor, agentDefinitionId) =>
-      kernel.getWorkspaceAgentManagementView(actor, agentDefinitionId),
+    getWorkspaceAgentManagementView: (actor, agentId) =>
+      kernel.getWorkspaceAgentManagementView(actor, agentId),
     listAgentActivity: (actor, input) => kernel.listAgentActivity(actor, input),
     listAgentTrajectory: (actor, input) =>
       kernel.listAgentTrajectory(actor, input),

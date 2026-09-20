@@ -13,7 +13,7 @@ import { globalSurfaceFromSearch } from "../src/global-discovery-model.ts";
 
 test("Agent identity and tab survive refresh without carrying hidden conversation state", () => {
   const selection: AgentRouteSelection = {
-    agentDefinitionId: "agent_definition_alice",
+    agentId: "agent_definition_alice",
     tab: "profile",
   };
   const search = agentRouteSearch(
@@ -34,16 +34,16 @@ test("Agent route rejects unknown tabs and incomplete identities", () => {
     agentRouteFromSearch(
       "?surface=agents&agent=agent_definition_alice&agentTab=unknown",
     ),
-    { agentDefinitionId: "agent_definition_alice", tab: "profile" },
+    { agentId: "agent_definition_alice", tab: "profile" },
   );
   assert.deepEqual(agentRouteFromSearch("?surface=agents&agentTab=activity"), {
-    agentDefinitionId: undefined,
+    agentId: undefined,
     tab: "activity",
   });
   assert.deepEqual(
     agentRouteFromSearch("?surface=room&agent=agent_definition_alice"),
     {
-      agentDefinitionId: undefined,
+      agentId: undefined,
       tab: "profile",
     },
   );
@@ -52,7 +52,7 @@ test("Agent route rejects unknown tabs and incomplete identities", () => {
 test("Agent route serialization keeps only canonical Agent navigation state", () => {
   assert.equal(
     agentRouteSearch("?surface=agents&agent=old&agentTab=chat", {
-      agentDefinitionId: "agent_definition_kimi",
+      agentId: "agent_definition_kimi",
       tab: "workspace",
     }),
     "?surface=agents&agent=agent_definition_kimi&agentTab=workspace",
@@ -61,7 +61,7 @@ test("Agent route serialization keeps only canonical Agent navigation state", ()
 
 test("relationship view is a reload-safe Agent surface mutually exclusive with Agent detail", () => {
   const relationship: AgentRouteSelection = {
-    agentDefinitionId: undefined,
+    agentId: undefined,
     tab: "profile",
     view: "relationship",
   };
@@ -81,7 +81,7 @@ test("relationship view is a reload-safe Agent surface mutually exclusive with A
 
 test("Agent route keeps the requested identity while the canonical directory hydrates", () => {
   assert.deepEqual(reconcileAgentRouteIdentity("agent_definition_alice", []), {
-    agentDefinitionId: "agent_definition_alice",
+    agentId: "agent_definition_alice",
     replace: false,
   });
   assert.deepEqual(
@@ -89,18 +89,18 @@ test("Agent route keeps the requested identity while the canonical directory hyd
       "agent_definition_alice",
       "agent_definition_kimi",
     ]),
-    { agentDefinitionId: "agent_definition_alice", replace: true },
+    { agentId: "agent_definition_alice", replace: true },
   );
   assert.deepEqual(
     reconcileAgentRouteIdentity(undefined, ["agent_definition_alice"]),
-    { agentDefinitionId: "agent_definition_alice", replace: true },
+    { agentId: "agent_definition_alice", replace: true },
   );
 });
 
 test("a canonical Agent deep link reopens mobile detail after reload", () => {
   assert.equal(
     shouldOpenAgentMobileDetail({
-      agentDefinitionId: "agent_definition_alice",
+      agentId: "agent_definition_alice",
       panel: false,
       view: undefined,
     }),
@@ -108,7 +108,7 @@ test("a canonical Agent deep link reopens mobile detail after reload", () => {
   );
   assert.equal(
     shouldOpenAgentMobileDetail({
-      agentDefinitionId: undefined,
+      agentId: undefined,
       panel: false,
       view: undefined,
     }),
@@ -116,15 +116,15 @@ test("a canonical Agent deep link reopens mobile detail after reload", () => {
   );
   assert.equal(
     shouldOpenAgentMobileDetail({
-      agentDefinitionId: undefined,
+      agentId: undefined,
       panel: false,
       view: "relationship",
     }),
-    false,
+    true,
   );
   assert.equal(
     shouldOpenAgentMobileDetail({
-      agentDefinitionId: "agent_definition_alice",
+      agentId: "agent_definition_alice",
       panel: true,
       view: undefined,
     }),
@@ -134,14 +134,14 @@ test("a canonical Agent deep link reopens mobile detail after reload", () => {
 
 test("entering the mobile Agent root does not reopen a stale detail selection", () => {
   assert.deepEqual(agentDirectoryRootRoute(), {
-    agentDefinitionId: undefined,
+    agentId: undefined,
     tab: "profile",
   });
 });
 
 test("Human profile routes preserve principal identity and exclude stale Agent/Room state", () => {
   const human: AgentRouteSelection = {
-    agentDefinitionId: undefined,
+    agentId: undefined,
     humanPrincipalId: "human_owner",
     tab: "profile",
     view: "human",
