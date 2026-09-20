@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { readUiSource as read } from "./ui-source.ts";
-test("three panel handles share one event implementation and keep width policy owners", () => {
+test("panel and directory handles share one event implementation and keep width policy owners", () => {
   for (const panel of ["room-sidebar", "thread-panel", "profile-panel"]) {
     const wrapper = read(`components/${panel}-resizer.tsx`);
     assert.match(wrapper, /<PanelResizer/);
@@ -11,10 +11,28 @@ test("three panel handles share one event implementation and keep width policy o
     assert.match(wrapper, new RegExp(`${panel}-resize.ts`));
   }
   const shared = read("components/panel-resizer.tsx");
-  assert.match(shared, /onLostPointerCapture=\{finish\}/);
-  assert.match(shared, /onPointerCancel=\{finish\}/);
-  assert.match(shared, /onPointerUp=\{finish\}/);
+  assert.match(shared, /onLostPointerCapture: finish/);
+  assert.match(shared, /onPointerCancel: finish/);
+  assert.match(shared, /onPointerUp: finish/);
   assert.doesNotMatch(shared, /client-sdk|client-core|localStorage|fetch\(/);
+  const directories = read("components/directory-width-layout.tsx");
+  assert.match(directories, /usePanelResize\(/);
+  assert.doesNotMatch(
+    directories,
+    /onPointer(?:Down|Move|Up)|setPointerCapture/,
+  );
+  for (const file of [
+    "agent-directory-pane",
+    "workspace-catalog-panes",
+    "agent-workspace-browser",
+  ]) {
+    const pane = read(`components/${file}.tsx`);
+    assert.match(pane, /<DirectoryWidthLayout/);
+    assert.doesNotMatch(
+      pane,
+      /setSidebarWidth|setTreeWidth|onResizePointerMove/,
+    );
+  }
 });
 
 test("migrated geometry cannot be redefined in former page owners", () => {

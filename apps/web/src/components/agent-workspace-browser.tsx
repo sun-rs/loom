@@ -1,4 +1,8 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  DirectoryWidthLayout,
+  DirectoryWidthResizer,
+} from "./directory-width-layout.tsx";
+import { useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   AgentWorkspaceFile,
@@ -36,8 +40,6 @@ export function AgentWorkspaceBrowser({
     [copy, setCopy] = useState(false);
   const [copyError, setCopyError] = useState<string>();
   const [viewMode, setViewMode] = useState<"preview" | "raw">("preview");
-  const [treeWidth, setTreeWidth] = useState(256);
-  const drag = useRef<{ x: number; width: number } | undefined>(undefined);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -85,9 +87,10 @@ export function AgentWorkspaceBrowser({
     setSelected(path);
   };
   return (
-    <section
+    <DirectoryWidthLayout
+      kind="files"
+      as="section"
       className="rah-workspace-browser"
-      style={{ "--rah-tree-width": `${treeWidth}px` } as CSSProperties}
     >
       <header className="rah-workspace-path">
         <code>{root?.rootPath ?? ""}</code>
@@ -199,62 +202,7 @@ export function AgentWorkspaceBrowser({
             />
           </div>
         </nav>
-        <div
-          className="rah-workspace-resizer"
-          role="separator"
-          aria-label="调整文件树宽度"
-          aria-orientation="vertical"
-          aria-valuemin={160}
-          aria-valuemax={600}
-          aria-valuenow={treeWidth}
-          tabIndex={0}
-          onPointerDown={(event) => {
-            if (event.button !== 0) return;
-            drag.current = { x: event.clientX, width: treeWidth };
-            event.currentTarget.setPointerCapture(event.pointerId);
-            event.preventDefault();
-          }}
-          onPointerMove={(event) => {
-            if (drag.current)
-              setTreeWidth(
-                Math.max(
-                  160,
-                  Math.min(
-                    600,
-                    drag.current.width + event.clientX - drag.current.x,
-                  ),
-                ),
-              );
-          }}
-          onPointerUp={(event) => {
-            drag.current = undefined;
-            if (event.currentTarget.hasPointerCapture(event.pointerId))
-              event.currentTarget.releasePointerCapture(event.pointerId);
-          }}
-          onPointerCancel={() => {
-            drag.current = undefined;
-          }}
-          onKeyDown={(event) => {
-            if (
-              ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
-            ) {
-              event.preventDefault();
-              setTreeWidth((width) =>
-                event.key === "Home"
-                  ? 160
-                  : event.key === "End"
-                    ? 600
-                    : Math.max(
-                        160,
-                        Math.min(
-                          600,
-                          width + (event.key === "ArrowLeft" ? -16 : 16),
-                        ),
-                      ),
-              );
-            }
-          }}
-        />
+        <DirectoryWidthResizer />
         <section className="rah-workspace-preview" aria-label="文件预览">
           {selected ? (
             <>
@@ -319,7 +267,7 @@ export function AgentWorkspaceBrowser({
           )}
         </section>
       </div>
-    </section>
+    </DirectoryWidthLayout>
   );
 }
 function Directory({

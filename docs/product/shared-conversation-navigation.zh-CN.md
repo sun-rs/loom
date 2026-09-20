@@ -4,7 +4,7 @@
 
 ## 状态与唯一 owner
 
-App 的 Room、Thread、profile intent 与搜索预览 URL 保持导航所有权，不另建业务数据栈。`conversationPanels` 选择最新目标和真实来源；`conversationLayout` 与其测量 hook 只计算呈现。消息、草稿、虚拟滚动和任务状态仍归原 owner。设置抽屉内部导航不参与主内容分栏。
+App 的 Room、Thread、profile intent 与搜索预览 URL 保持导航所有权，不另建业务数据栈。`conversationPanels` 选择最新目标和真实来源；`conversationLayout` 与其测量 hook 只计算呈现。连续栏宽状态归 `ConversationLayoutShell`，只把离散折叠模式交给 App；稳定 children 不随拖动重建。容器观察器不随栏宽重新订阅。消息、草稿、虚拟滚动和任务状态仍归原 owner。设置抽屉内部导航不参与主内容分栏。
 
 路径可以是列表→频道→消息列→资料，共四层；最多同时显示列表及最后两个内容层。直接从结果打开消息列时，路径是列表→消息列→资料，不能补造频道。关闭最右层只移除该层；被宽度隐藏的来源保留。重新放大只恢复仍打开的层。
 
@@ -71,3 +71,5 @@ Multica 对照补充：本地版本 `11861145abc59a0d39c8c8f24ad837d4584e664f` �
 新增 `test-search-history-stability-browser.mjs`：无 Agent 的隔离频道，旧根与回复后追加 65 条频道消息，通过真实搜索结果打开。DOM 观察器先复现根节点被卸载，修复后跨至少三次后台读取保留节点、草稿与可见内容；覆盖 1600/900/390、人员资料关闭、直接旧根消息列以及关闭后不复活。纳入 `test:web:shared-navigation`。
 
 此修复 Chromium、Firefox 历史稳定性回归、共享导航回归及类型检查通过，正式构建与 diff 检查通过；全仓 check 仍止于已有未登记接口，format 仍有上述 5 个已有告警。已验证状态备份后重启正式工作台，冻结 build `904cb1bd5a29a4e3eb8ee2cad0029bdb8d2c78ce03d91eb57fd92d9aaefeae15`。正式浏览器通过真实 Kimi 搜索的旧消息列连续三轮读取无卸载，并检查 1600/900/390 缩放、Human 资料及已删除 Gemini 的不可用资料面板、关闭恢复。最初尝试按截图的“到岗”摘要选项定位未匹配当前结果，改用实际存在的旧消息列；不声称复现了截图同一条消息。正式验收只读，未发送消息或运行付费 Provider。
+
+缩放实现及测量证据见[宽度渲染隔离](../audits/2026-09-20-resize-render-isolation.zh-CN.md)。

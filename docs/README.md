@@ -1,3 +1,11 @@
+[移动端根入口列表](./audits/2026-09-21-mobile-root-entry.zh-CN.md)：底部导航先显示列表，明确链接与缩窄继续保留详情。
+
+[移动端会话标题栏与搜索身份修复](./audits/2026-09-21-mobile-conversation-chrome.zh-CN.md)：单页返回、不可用资料图标、身份去重与按下反馈；偶发白屏仍待复现。
+
+[其余可拖动页面测量](./audits/2026-09-21-directory-resize-isolation.zh-CN.md)：任务大页不变，成员、Computer、文件树宽度隔离。
+
+[分栏缩放性能证据](./audits/2026-09-20-resize-render-isolation.zh-CN.md)：UI 里程碑、宽度隔离、观察器和回归验证。
+
 [共享导航与折叠设计](./product/shared-conversation-navigation.zh-CN.md)：搜索、动态、聊天的真实来源、宽度和退出语义。
 
 [频道设置成员资料返回修复](./audits/2026-09-20-settings-profile-back.zh-CN.md)：返回上一层与关闭侧栏分离，保留聊天分栏语义。

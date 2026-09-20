@@ -89,6 +89,7 @@ function hasExplicitSettingsSection(search: string): boolean {
 }
 
 export function SettingsSurface({
+  indexRequest = 0,
   archivedRooms = [],
   onOpenRoom,
   onUnarchiveRoom,
@@ -101,6 +102,7 @@ export function SettingsSurface({
   onPrincipalUpdated,
   workspace,
 }: {
+  indexRequest?: number;
   archivedRooms?: readonly Room[];
   onOpenRoom?: (roomId: string) => void;
   onUnarchiveRoom?: (room: Room) => Promise<void>;
@@ -135,6 +137,10 @@ export function SettingsSurface({
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, []);
+  useEffect(() => {
+    if (indexRequest > 0 && !hasExplicitSettingsSection(window.location.search))
+      setMobileIndex(true);
+  }, [indexRequest]);
   const select = (next: SettingsSection) => {
     setSection(next);
     setMobileIndex(false);

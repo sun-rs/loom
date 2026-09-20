@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent, type KeyboardEvent } from "react";
 
 export type PanelResizeProps = {
   width: number;
@@ -6,31 +6,24 @@ export type PanelResizeProps = {
   onWidthCommit?: ((width: number) => void) | undefined;
 };
 
-// Single pointer/capture owner. Width policy and persistence remain with each
-// existing panel. No storage, navigation, provider, or business state here.
-export function PanelResizer({
+// Shared pointer/capture owner; visual wrappers retain their existing CSS.
+export function usePanelResize({
   width,
   onWidthChange,
   onWidthCommit,
-  label,
-  className,
-  min,
-  max,
   direction,
   clamp,
   nextWidth,
-  testId,
-  highlight = true,
+  preventSelection = true,
 }: PanelResizeProps & {
-  label: string;
-  className: string;
-  min: number;
-  max: number;
   direction: 1 | -1;
   clamp: (width: number) => number;
-  nextWidth: (width: number, key: string) => number | undefined;
-  testId?: string;
-  highlight?: boolean;
+  nextWidth: (
+    width: number,
+    key: string,
+    shiftKey: boolean,
+  ) => number | undefined;
+  preventSelection?: boolean;
 }) {
   const origin = useRef<
     { pointerId: number; x: number; width: number; latest: number } | undefined
@@ -46,44 +39,67 @@ export function PanelResizer({
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
   };
+  return {
+    dragging,
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+      const next = nextWidth(width, event.key, event.shiftKey);
+      if (next === undefined) return;
+      event.preventDefault();
+      onWidthChange(next);
+      onWidthCommit?.(next);
+    },
+    onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0 || origin.current) return;
+      origin.current = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        width,
+        latest: width,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setDragging(true);
+      if (preventSelection) event.preventDefault();
+    },
+    onPointerMove: (event: PointerEvent<HTMLDivElement>) => {
+      const drag = origin.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      drag.latest = clamp(drag.width + direction * (event.clientX - drag.x));
+      onWidthChange(drag.latest);
+    },
+    onPointerUp: finish,
+    onPointerCancel: finish,
+    onLostPointerCapture: finish,
+  };
+}
+
+export function PanelResizer({
+  label,
+  className,
+  min,
+  max,
+  testId,
+  highlight = true,
+  ...props
+}: Parameters<typeof usePanelResize>[0] & {
+  label: string;
+  className: string;
+  min: number;
+  max: number;
+  testId?: string;
+  highlight?: boolean;
+}) {
+  const { dragging, ...handlers } = usePanelResize(props);
   return (
     <div
+      {...handlers}
       aria-label={label}
       aria-orientation="vertical"
       aria-valuemax={max}
       aria-valuemin={min}
-      aria-valuenow={width}
+      aria-valuenow={props.width}
       className={`rah-panel-resizer ${className}${dragging ? " is-dragging" : ""}`}
       data-testid={testId}
       data-highlight={highlight}
-      onKeyDown={(event) => {
-        const next = nextWidth(width, event.key);
-        if (next === undefined) return;
-        event.preventDefault();
-        onWidthChange(next);
-        onWidthCommit?.(next);
-      }}
-      onPointerDown={(event) => {
-        if (event.button !== 0 || origin.current) return;
-        origin.current = {
-          pointerId: event.pointerId,
-          x: event.clientX,
-          width,
-          latest: width,
-        };
-        event.currentTarget.setPointerCapture(event.pointerId);
-        setDragging(true);
-        event.preventDefault();
-      }}
-      onPointerMove={(event) => {
-        const drag = origin.current;
-        if (!drag || drag.pointerId !== event.pointerId) return;
-        drag.latest = clamp(drag.width + direction * (event.clientX - drag.x));
-        onWidthChange(drag.latest);
-      }}
-      onPointerUp={finish}
-      onPointerCancel={finish}
-      onLostPointerCapture={finish}
       role="separator"
       tabIndex={0}
     />

@@ -846,7 +846,7 @@ export function ChannelHeader({
           )}
           {onCloseSearchPreview ? (
             <PanelHeaderAction
-              className="rah-search-preview-close"
+              className="rah-search-preview-close rah-desktop-only"
               aria-label={`关闭${previewLabel}预览`}
               onClick={onCloseSearchPreview}
             >

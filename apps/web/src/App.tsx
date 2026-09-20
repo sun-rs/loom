@@ -5,9 +5,10 @@ import { useMobileLayout } from "./use-mobile-layout.ts";
 import { WorkspaceNavigation } from "./components/workspace-navigation-shell.tsx";
 import { SurfaceErrorBoundary } from "./components/surface-error-boundary.tsx";
 import {
-  SearchPreviewResizer,
-  useSearchPreviewWidth,
-} from "./components/search-preview-resizer.tsx";
+  ConversationLayoutShell,
+  ConversationLayoutResizer,
+} from "./components/conversation-layout-shell.tsx";
+import type { conversationLayout } from "./conversation-layout.ts";
 import {
   conversationPanels,
   type ConversationPanelIntent,
@@ -16,19 +17,11 @@ import {
 import { IdentityOriginContext } from "./components/workspace-entity-context.tsx";
 import { changeSystemChannel } from "./components/system-channel-settings.tsx";
 import { browserOpaqueId } from "./browser-opaque-id.ts";
-import { useConversationLayout } from "./use-conversation-layout.ts";
 import { createAgentConfigureCommand } from "./agent-configure-command.ts";
 import { useSearchChannelPreview } from "./use-search-channel-preview.ts";
 import { PublicChannelPreview } from "./components/public-channel-preview.tsx";
 import { InteractivePopover } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ensureRoomMembership,
@@ -136,16 +129,12 @@ import { AgentDirectoryPane } from "./components/agent-directory-pane.tsx";
 import { SettingsSurface } from "./components/settings-surface.tsx";
 import { ConversationTabs } from "./components/conversation-tabs.tsx";
 import { HumanInboxCenter } from "./components/human-inbox.tsx";
-import { RoomSidebarResizer } from "./components/room-sidebar-resizer.tsx";
-import { ThreadPanelResizer } from "./components/thread-panel-resizer.tsx";
 import {
   ChannelHeader,
   RoomSidebar,
   type Surface,
   type Tab,
 } from "./components/workspace-navigation.tsx";
-import { useRoomSidebarWidth } from "./use-room-sidebar-width.ts";
-import { useThreadPanelWidth } from "./use-thread-panel-width.ts";
 import { useThreadFocusReturn } from "./thread-focus-return.ts";
 import { loadThreadHistoryPages } from "./thread-history.ts";
 import { applyGlobalTaskTransition } from "./global-task-actions.ts";
@@ -273,16 +262,6 @@ function WorkspaceScreen({
   onDisconnect: () => void;
 }) {
   useDefaultWebPush(client);
-  const {
-    width: roomSidebarWidth,
-    setWidth: setRoomSidebarWidth,
-    commit: commitRoomSidebarWidth,
-  } = useRoomSidebarWidth();
-  const {
-    width: threadPanelWidth,
-    setWidth: setThreadPanelWidth,
-    commit: commitThreadPanelWidth,
-  } = useThreadPanelWidth();
   const { rememberThreadFocus, restoreThreadFocus } = useThreadFocusReturn();
   const [health, setHealth] = useState<ClientHealthResponse>();
   const [currentPrincipal, setCurrentPrincipal] = useState<Principal>();
@@ -324,18 +303,6 @@ function WorkspaceScreen({
   const navigationGeneration = useRef(0);
   const diagnosticNavigation = useRef(createLatestRequest());
   const searchPreview = useSearchChannelPreview();
-  const searchLayout = useSearchPreviewWidth(
-    "search",
-    (activeThreadRootMessageId !== undefined && !searchPreview.threadId) ||
-      peekAgentId !== undefined ||
-      peekHumanId !== undefined,
-  );
-  const activityLayout = useSearchPreviewWidth(
-    "activity",
-    (activeThreadRootMessageId !== undefined && !searchPreview.threadId) ||
-      peekAgentId !== undefined ||
-      peekHumanId !== undefined,
-  );
   const [surface, setSurfaceState] = useState<Surface>(() =>
     globalSurfaceFromSearch(window.location.search),
   );
@@ -794,6 +761,7 @@ function WorkspaceScreen({
     new URLSearchParams(window.location.search).has("inputRequest"),
   );
   const mobileLayout = useMobileLayout();
+  const [settingsIndexRequest, setSettingsIndexRequest] = useState(0);
   useEffect(() => {
     if (
       mobileLayout &&
@@ -3409,18 +3377,13 @@ function WorkspaceScreen({
   const peekRetained =
     (surface === "room" || conversationPreview) &&
     (peekAgentId !== undefined || peekHumanId !== undefined);
-  const conversationLayout = useConversationLayout(
-    conversationPreview
-      ? surface === "search"
-        ? searchLayout.width
-        : activityLayout.width
-      : roomSidebarWidth,
-  );
+  const [layoutMode, setLayoutMode] =
+    useState<ReturnType<typeof conversationLayout>>("replace");
   const panels = conversationPanels({
     ...panelIntent,
     thread: activeThreadRootMessageId !== undefined && !taskModalOpen,
     profile: peekRetained,
-    split: conversationLayout.mode === "split",
+    split: layoutMode === "split",
   });
   const peekOpen = panels.profile;
   const openMobileHome = useCallback(() => {
@@ -3595,22 +3558,27 @@ function WorkspaceScreen({
               open={humanInboxOpen}
               onOpenChange={setHumanInboxOpen}
             >
-              <div
-                ref={conversationLayout.ref}
-                data-conversation-layout={conversationLayout.mode}
+              <ConversationLayoutShell
+                scope={
+                  conversationPreview
+                    ? surface === "search"
+                      ? "search"
+                      : "activity"
+                    : "room"
+                }
+                compact={
+                  (activeThreadRootMessageId !== undefined &&
+                    !searchPreview.threadId) ||
+                  peekAgentId !== undefined ||
+                  peekHumanId !== undefined
+                }
+                onModeChange={setLayoutMode}
                 data-conversation-shell={
                   surface === "room" || conversationPreview ? "true" : undefined
                 }
                 data-profile-source={panels.source}
                 data-activity-primary={previewThreadPrimary ? "thread" : "room"}
                 className={`app rah-product-shell${globalSurface && !conversationPreview ? " rah-global-shell" : ""}${conversationPreview ? " rah-activity-preview" : ""}${taskModalOpen ? " rah-task-modal-open" : ""}${surface === "search" && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}`}
-                style={
-                  {
-                    "--rah-room-sidebar-width": `${conversationPreview ? (surface === "search" ? searchLayout.width : activityLayout.width) : roomSidebarWidth}px`,
-                    "--thread-w": `${threadPanelWidth}px`,
-                    "--rah-search-width": `${searchLayout.width}px`,
-                  } as CSSProperties
-                }
               >
                 <WorkspaceNavigation
                   homeOpen={mobileRoomsOpen}
@@ -3634,9 +3602,23 @@ function WorkspaceScreen({
                   }}
                   onSelect={(nextSurface) => {
                     let restoredSurface = nextSurface;
+                    if (mobileLayout && nextSurface === "agents")
+                      navigateAgentRoute({
+                        agentId: undefined,
+                        tab: "profile",
+                      });
+                    if (mobileLayout && nextSurface === "settings") {
+                      const params = new URLSearchParams(
+                        window.location.search,
+                      );
+                      params.delete("settingsSection");
+                      window.history.replaceState(null, "", `?${params}`);
+                      setSettingsIndexRequest((value) => value + 1);
+                    }
                     if (nextSurface === "room") setTab("chat");
                     setMobileRoomsOpen(false);
                     if (
+                      !mobileLayout &&
                       (nextSurface === "agents" || nextSurface === "room") &&
                       activeWorkspace &&
                       currentPrincipal
@@ -3670,13 +3652,10 @@ function WorkspaceScreen({
                   }}
                 />
                 {conversationPreview && surface === "activity" ? (
-                  <SearchPreviewResizer
-                    layout={activityLayout}
-                    label="调整动态列表宽度"
-                  />
+                  <ConversationLayoutResizer kind="activity" />
                 ) : null}
                 {surface === "search" && searchPreview.roomId ? (
-                  <SearchPreviewResizer layout={searchLayout} />
+                  <ConversationLayoutResizer kind="search" />
                 ) : null}
                 {navigationError === undefined ? null : (
                   <div className="rah-navigation-error" role="alert">
@@ -3829,11 +3808,7 @@ function WorkspaceScreen({
                   </SurfaceErrorBoundary>
                 ) : null}
                 {surface === "room" || surface === "saved" ? (
-                  <RoomSidebarResizer
-                    onWidthChange={setRoomSidebarWidth}
-                    onWidthCommit={commitRoomSidebarWidth}
-                    width={roomSidebarWidth}
-                  />
+                  <ConversationLayoutResizer kind="room" />
                 ) : null}
                 {mobileRoomsOpen ? (
                   <button
@@ -3920,6 +3895,7 @@ function WorkspaceScreen({
                 ) : surface === "settings" ? (
                   <SurfaceErrorBoundary surface="设置">
                     <SettingsSurface
+                      indexRequest={settingsIndexRequest}
                       archivedRooms={archivedRooms.filter(
                         (room) =>
                           room.workspaceId === activeWorkspace?.workspaceId,
@@ -4329,11 +4305,9 @@ function WorkspaceScreen({
                       {...agentDetailProps}
                       activityRequest={peekActivityRequest}
                       panelActive={peekOpen}
-                      panelSizing={{
-                        width: threadPanelWidth,
-                        setWidth: setThreadPanelWidth,
-                        commit: commitThreadPanelWidth,
-                      }}
+                      panelResizer={
+                        <ConversationLayoutResizer kind="profile" />
+                      }
                       initialAgentDefinitionId={peekAgentId}
                       initialTab={peekHumanId ? "profile" : "activity"}
                       initialView={peekHumanId ? "human" : "agent"}
@@ -4575,11 +4549,7 @@ function WorkspaceScreen({
                           resizer={
                             taskModalOpen ||
                             (surface === "search" && previewJoined) ? null : (
-                              <ThreadPanelResizer
-                                onWidthChange={setThreadPanelWidth}
-                                onWidthCommit={commitThreadPanelWidth}
-                                width={threadPanelWidth}
-                              />
+                              <ConversationLayoutResizer kind="thread" />
                             )
                           }
                           roomEvents={roomData?.roomEvents ?? []}
@@ -4856,7 +4826,7 @@ function WorkspaceScreen({
                     }
                   />
                 ) : null}
-              </div>
+              </ConversationLayoutShell>
             </InteractivePopover>
           </WorkspaceEntityProvider>
         </DiagnosticNavigationContext.Provider>

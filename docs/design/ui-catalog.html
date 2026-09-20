@@ -11612,18 +11612,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   flex: 1;
   font: 700 20px/28px var(--sans);
 }
-.rah-agent-unavailable-icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border: var(--bd);
-  background: #e5e7eb;
-}
-.rah-agent-unavailable-icon svg {
-  width: 24px;
-  height: 24px;
-}
 
 /* ===== apps/web/src/member-relationship-graph.css ===== */
 .rah-member-graph-surface {
@@ -14800,6 +14788,15 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 }
 
+/* Mobile rows keep no persistent selection on return, but pressing a target
+   must acknowledge the tap before navigation replaces the list. */
+@media (max-width: 767px) {
+  .sidebar.rah-room-sidebar .channel-row:active {
+    background: var(--pink);
+    transition: none;
+  }
+}
+
 /* ===== apps/web/src/message-social.css ===== */
 /* Raft $tt/t8/FW/SavedPanel geometry; local services supply only typed state. */
 .msg-actions {
@@ -17716,7 +17713,7 @@ npm run check:ui-catalog</pre>
   <div class="uic-stage"><div class="rah-product-shell" style="padding:calc(var(--space-2) * 3)"><button type="button" class="rah-sidebar-disclosure" aria-expanded="true" data-probe="sidebar-disclosure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke="currentColor" fill="none"></path></svg><span>频道</span><span class="count" data-probe="sidebar-count">3</span></button><button type="button" class="task-filter-trigger rah-interaction-flat" aria-label="私信排序" disabled="" data-probe="sidebar-sort-disabled"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"></path></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"></path></svg></button><button aria-label="新建频道" class="rah-side-create rah-interaction-flat" disabled="" title="新建频道" data-probe="sidebar-create-disabled"><svg aria-hidden="true"><use href="/@fs/Users/sun/Code/repos/rah_os/packages/ui-tokens/src/neo-brutalist/extracted/raft-icons.svg#raft-icon-plus"></use></svg></button></div></div>
 </figure></div>
     <h4 class="uic-md-head">响应式分支（产品 CSS 中触及本组件的 @media）</h4>
-    <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>条件</th><th>选择器</th></tr></thead><tbody><tr><td>(max-height:600px)]:py-1 md:py-1`—— 基态 8px，≥768px 与视口高 ≤600px 收到 4px。RAH 基态写的是 ≥768px 的 4px， 这里补上窄视口分支；max-height 放在后面，与上游在窄且矮时同为 4px 一致。 */ @media (max-width: 767.98px)</td><td>.channel-row</td></tr><tr><td>(max-height: 600px)</td><td>.channel-row</td></tr><tr><td>(max-width: 767px)</td><td>.rah-room-sidebar .channel-row, .rah-room-sidebar .dm-row</td></tr></tbody></table></div>
+    <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>条件</th><th>选择器</th></tr></thead><tbody><tr><td>(max-height:600px)]:py-1 md:py-1`—— 基态 8px，≥768px 与视口高 ≤600px 收到 4px。RAH 基态写的是 ≥768px 的 4px， 这里补上窄视口分支；max-height 放在后面，与上游在窄且矮时同为 4px 一致。 */ @media (max-width: 767.98px)</td><td>.channel-row</td></tr><tr><td>(max-height: 600px)</td><td>.channel-row</td></tr><tr><td>(max-width: 767px)</td><td>.sidebar.rah-room-sidebar .channel-row:active</td></tr><tr><td>(max-width: 767px)</td><td>.rah-room-sidebar .channel-row, .rah-room-sidebar .dm-row</td></tr></tbody></table></div>
     <h4 class="uic-md-head">上游来源</h4>
     <div class="uic-scroll"><table class="uic-table"><tbody>
       <tr><th>上游选择器</th><td>.btn-flat-sm</td></tr>
@@ -18039,6 +18036,13 @@ npm run check:ui-catalog</pre>
   <td class="uic-expect">outline-style: none</td>
   <td>apps/web/src/product.css</td>
   <td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css `.btn-flat-sm:focus,.btn-flat-sm:focus-visible{outline-style:none}`</td>
+</tr>
+<tr>
+  <td>.sidebar.rah-room-sidebar .channel-row:active</td>
+  <td>active</td>
+  <td class="uic-expect">background: #FE7DA8; transition: none</td>
+  <td>apps/web/src/chat-surface.css</td>
+  <td>docs/evidence/raft-web-20260908-current/index-BVfbaScj.js bg-brutal-pink; docs/audits/2026-09-21-mobile-conversation-chrome.zh-CN.md</td>
 </tr></tbody></table></div>
     <h4 class="uic-md-head">令牌契约</h4>
     <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>令牌</th><th>上游推导</th><th>来源</th></tr></thead><tbody><tr><td>--space-1</td><td>{&quot;kind&quot;:&quot;spacing-multiple&quot;,&quot;factor&quot;:1}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --spacing</td></tr><tr><td>--space-1-5</td><td>{&quot;kind&quot;:&quot;spacing-multiple&quot;,&quot;factor&quot;:1.5}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --spacing（Tailwind gap-1.5）</td></tr><tr><td>--space-2</td><td>{&quot;kind&quot;:&quot;spacing-multiple&quot;,&quot;factor&quot;:2}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --spacing</td></tr><tr><td>--space-3</td><td>{&quot;kind&quot;:&quot;spacing-multiple&quot;,&quot;factor&quot;:3}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --spacing（Tailwind mt-3）</td></tr><tr><td>--control-6</td><td>{&quot;kind&quot;:&quot;spacing-multiple&quot;,&quot;factor&quot;:6}</td><td>docs/evidence/raft-web-20260908-current/index-BVfbaScj.js `btn-flat-sm flex size-6`</td></tr><tr><td>--icon-3</td><td>{&quot;kind&quot;:&quot;literal&quot;,&quot;value&quot;:&quot;12px&quot;,&quot;source&quot;:&quot;lucide size attribute&quot;}</td><td>docs/evidence/raft-web-20260908-current/index-BVfbaScj.js 分区标题 chevron size=12</td></tr><tr><td>--icon-3-5</td><td>{&quot;kind&quot;:&quot;literal&quot;,&quot;value&quot;:&quot;14px&quot;,&quot;source&quot;:&quot;lucide size attribute&quot;}</td><td>docs/evidence/raft-web-20260908-current/index-BVfbaScj.js lucide size=14</td></tr><tr><td>--fw-bold</td><td>{&quot;kind&quot;:&quot;upstream-var&quot;,&quot;name&quot;:&quot;--font-weight-bold&quot;}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --font-weight-bold</td></tr><tr><td>--fw-medium</td><td>{&quot;kind&quot;:&quot;upstream-var&quot;,&quot;name&quot;:&quot;--font-weight-medium&quot;}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --font-weight-medium</td></tr><tr><td>--tracking-widest</td><td>{&quot;kind&quot;:&quot;upstream-var&quot;,&quot;name&quot;:&quot;--tracking-widest&quot;}</td><td>docs/evidence/raft-web-20260908-current/index-D8Neh8lc.css :root --tracking-widest</td></tr></tbody></table></div>

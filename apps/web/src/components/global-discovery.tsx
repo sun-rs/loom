@@ -65,6 +65,7 @@ import {
 } from "./search-cards.tsx";
 import {
   visibleSearchResults,
+  uniqueSearchDestinations,
   searchDirectoryMatches,
   isDirectoryOnlySearch,
 } from "../search-visible-results.ts";
@@ -660,6 +661,18 @@ function GlobalSearch({
     directoryOnly ? [] : searchHits,
     currentHuman?.principalId,
   );
+  const matchingDestinations = uniqueSearchDestinations(
+    directoryMatches ??
+      destinations.filter((entry) =>
+        entry.roomId
+          ? result.data?.rooms.some((room) => room.roomId === entry.roomId)
+          : visibleResults.principals.some(
+              (person) => person.principalId === entry.principalId,
+            ),
+      ),
+  );
+  const visibleCount =
+    matchingDestinations.length + (directoryOnly ? 0 : searchHits.length);
   const [personError, setPersonError] = useState<string>();
   const box = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -905,25 +918,14 @@ function GlobalSearch({
               </section>
             ) : null}
             {(result.data || directoryMatches) && (
-              <p className="rah-search-count">{visibleResults.count} 条结果</p>
+              <p className="rah-search-count">{visibleCount} 条结果</p>
             )}
             {Boolean(
               directoryMatches?.length ||
               result.data?.rooms.length ||
               visibleResults.principals.length,
             ) && <h2 className="rah-search-section-title">服务器内容</h2>}
-            {(
-              directoryMatches ??
-              destinations.filter((entry) =>
-                entry.roomId
-                  ? result.data?.rooms.some(
-                      (room) => room.roomId === entry.roomId,
-                    )
-                  : visibleResults.principals.some(
-                      (person) => person.principalId === entry.principalId,
-                    ),
-              )
-            ).map((entry) => (
+            {matchingDestinations.map((entry) => (
               <SearchDestinationCard
                 key={entry.key}
                 entry={entry}
@@ -945,7 +947,7 @@ function GlobalSearch({
             {!result.loading &&
               !result.error &&
               (result.data || directoryMatches) &&
-              visibleResults.count === 0 && (
+              visibleCount === 0 && (
                 <EmptyState
                   context="search"
                   placement="section"

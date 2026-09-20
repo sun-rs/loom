@@ -1,5 +1,7 @@
 # 前端平台架构：Web/PWA 优先、共享状态内核与薄原生壳
 
+2026-09-21：移动端底部大页入口先显示列表，不恢复成员详情；明确链接和已打开详情缩窄仍保留详情。见[入口合同修正](../audits/2026-09-21-mobile-root-entry.zh-CN.md)。
+
 2026-09-20：大页导航偏好由 workspace-switcher-state 按 Human/Workspace/大页隔离保存；
 聊天临时资料侧栏不覆盖成员大页选择。窄屏有选中内容展示右侧，无选中内容展示列表。
 详见[选择记忆与响应式验收](../audits/2026-09-20-surface-selection-parity.zh-CN.md)。

@@ -55,3 +55,17 @@ export function searchDirectoryMatches<
 export function isDirectoryOnlySearch(query: string): boolean {
   return query.trim() === "@" || query.trim() === "#";
 }
+
+/** A person's existing DM and directory entry are one navigation destination.
+ * Keep different identity IDs even when names and avatars happen to match. */
+export function uniqueSearchDestinations<
+  T extends { key: string; principalId?: string },
+>(entries: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    const id = entry.principalId ? `person:${entry.principalId}` : entry.key;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}

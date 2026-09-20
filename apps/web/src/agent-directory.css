@@ -1315,15 +1315,3 @@
   flex: 1;
   font: 700 20px/28px var(--sans);
 }
-.rah-agent-unavailable-icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border: var(--bd);
-  background: #e5e7eb;
-}
-.rah-agent-unavailable-icon svg {
-  width: 24px;
-  height: 24px;
-}

@@ -1,3 +1,7 @@
+import {
+  DirectoryWidthLayout,
+  DirectoryWidthResizer,
+} from "./directory-width-layout.tsx";
 import { useMobileLayout } from "../use-mobile-layout.ts";
 import { useAgentStart } from "../use-agent-start.ts";
 import { AgentUnavailablePanel } from "./agent-unavailable-panel.tsx";
@@ -5,12 +9,7 @@ import { ThreadPanelResizer } from "./thread-panel-resizer.tsx";
 import { AgentEnvironmentSummary } from "./agent-environment-summary.tsx";
 import { AgentHeaderActions } from "./agent-header-actions.tsx";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type {
-  CSSProperties,
-  KeyboardEvent,
-  PointerEvent,
-  ReactNode,
-} from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -105,13 +104,10 @@ const RAFT_AGENT_TABS: ReadonlyArray<{
   { icon: "folder-open", id: "workspace", label: "工作区" },
 ];
 
-const MIN_SIDEBAR_WIDTH = 180;
-const MAX_SIDEBAR_WIDTH = 320;
-const DEFAULT_SIDEBAR_WIDTH = 240;
-
 export function AgentDirectoryPane({
   activityRequest,
   panelSizing,
+  panelResizer,
   panelActive = true,
   launchSettingsRefresh = 0,
   initialAgentDefinitionId,
@@ -151,6 +147,7 @@ export function AgentDirectoryPane({
 }: {
   activityRequest?: number;
   panelActive?: boolean;
+  panelResizer?: ReactNode;
   panelSizing?: {
     width: number;
     setWidth: (width: number) => void;
@@ -260,13 +257,8 @@ export function AgentDirectoryPane({
       panelTrigger.current?.focus();
     };
   }, [panel]);
-  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const storedProfilePanelWidth = useProfilePanelWidth();
   const profilePanelWidth = panelSizing ?? storedProfilePanelWidth;
-  const [resizing, setResizing] = useState(false);
-  const resizeOrigin = useRef<{ clientX: number; width: number } | undefined>(
-    undefined,
-  );
   const [agentDetail, setAgentDetail] = useState<ClientAgentGetResponse>();
   const [agentDetailError, setAgentDetailError] = useState<string>();
   const [agentDetailLoading, setAgentDetailLoading] = useState(false);
@@ -317,9 +309,9 @@ export function AgentDirectoryPane({
       ? []
       : (entities?.runtimesForAgent(selectedAgent.agentId) ?? []);
   useEffect(() => {
-    if (!panel && initialAgentDefinitionId !== undefined) {
+    if (!panel) {
       setSelectedAgentDefinitionId(initialAgentDefinitionId);
-      setMobileDetailOpen(true);
+      setMobileDetailOpen(initialAgentDefinitionId !== undefined);
     }
   }, [initialAgentDefinitionId, panel]);
 
@@ -342,6 +334,8 @@ export function AgentDirectoryPane({
 
   useEffect(() => {
     if (memberView !== "agent" || unavailableAgent) return;
+    // Automatic desktop selection is not a request to open a mobile detail.
+    if (mobile && !panel && selectedAgentDefinitionId === undefined) return;
     const resolution = reconcileAgentRouteIdentity(
       selectedAgentDefinitionId,
       agents.map(({ agentId }) => agentId),
@@ -361,6 +355,7 @@ export function AgentDirectoryPane({
     }
   }, [
     agents,
+    mobile,
     memberView,
     onRouteChange,
     panel,
@@ -580,51 +575,13 @@ export function AgentDirectoryPane({
     }
   }
 
-  function onResizePointerDown(event: PointerEvent<HTMLDivElement>): void {
-    resizeOrigin.current = { clientX: event.clientX, width: sidebarWidth };
-    setResizing(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function onResizePointerMove(event: PointerEvent<HTMLDivElement>): void {
-    const origin = resizeOrigin.current;
-    if (origin === undefined) return;
-    setSidebarWidth(
-      clampSidebarWidth(origin.width + event.clientX - origin.clientX),
-    );
-  }
-
-  function onResizePointerEnd(event: PointerEvent<HTMLDivElement>): void {
-    resizeOrigin.current = undefined;
-    setResizing(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  function onResizeKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
-    if (event.key === "Home") {
-      event.preventDefault();
-      setSidebarWidth(MIN_SIDEBAR_WIDTH);
-    } else if (event.key === "End") {
-      event.preventDefault();
-      setSidebarWidth(MAX_SIDEBAR_WIDTH);
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-      event.preventDefault();
-      const direction = event.key === "ArrowLeft" ? -1 : 1;
-      setSidebarWidth((current) =>
-        clampSidebarWidth(current + direction * (event.shiftKey ? 32 : 8)),
-      );
-    }
-  }
-
   const rootStyle = {
-    "--rah-agent-sidebar-width": `${sidebarWidth}px`,
     "--rah-agent-profile-panel-width": `${profilePanelWidth.width}px`,
   } as CSSProperties;
 
   return (
-    <main
+    <DirectoryWidthLayout
+      kind="agents"
       inert={panel && !panelActive}
       className={`channel rah-agent-runtime-page rah-agent-directory-page${memberView === "relationship" && !panel ? " is-relationship-view" : ""}${onPanelBack ? " is-embedded-profile" : ""}${panel ? " rah-agent-peek is-mobile-detail-open" : mobileDetailOpen ? " is-mobile-detail-open" : ""}`}
       aria-label={
@@ -636,22 +593,23 @@ export function AgentDirectoryPane({
       }
       style={rootStyle}
     >
-      {panel && !onPanelBack ? (
-        panelSizing ? (
-          <ThreadPanelResizer
-            inspector
-            onWidthChange={panelSizing.setWidth}
-            onWidthCommit={panelSizing.commit}
-            width={panelSizing.width}
-          />
-        ) : (
-          <ProfilePanelResizer
-            onWidthChange={profilePanelWidth.setWidth}
-            onWidthCommit={profilePanelWidth.commit}
-            width={profilePanelWidth.width}
-          />
-        )
-      ) : null}
+      {panel && !onPanelBack
+        ? (panelResizer ??
+          (panelSizing ? (
+            <ThreadPanelResizer
+              inspector
+              onWidthChange={panelSizing.setWidth}
+              onWidthCommit={panelSizing.commit}
+              width={panelSizing.width}
+            />
+          ) : (
+            <ProfilePanelResizer
+              onWidthChange={profilePanelWidth.setWidth}
+              onWidthCommit={profilePanelWidth.commit}
+              width={profilePanelWidth.width}
+            />
+          )))
+        : null}
       <section className="rah-agent-directory-body">
         <AgentSidebar
           contextControl={{
@@ -686,21 +644,7 @@ export function AgentDirectoryPane({
               : undefined
           }
         />
-        <div
-          aria-label="调整成员边栏宽度"
-          aria-orientation="vertical"
-          aria-valuemax={MAX_SIDEBAR_WIDTH}
-          aria-valuemin={MIN_SIDEBAR_WIDTH}
-          aria-valuenow={sidebarWidth}
-          className={`rah-agent-sidebar-resizer${resizing ? " is-dragging" : ""}`}
-          onKeyDown={onResizeKeyDown}
-          onPointerCancel={onResizePointerEnd}
-          onPointerDown={onResizePointerDown}
-          onPointerMove={onResizePointerMove}
-          onPointerUp={onResizePointerEnd}
-          role="separator"
-          tabIndex={0}
-        />
+        <DirectoryWidthResizer />
         {memberView === "relationship" && !panel ? (
           <MemberRelationshipSurface
             agents={agents}
@@ -723,7 +667,15 @@ export function AgentDirectoryPane({
             onOpenAgent={selectAgent}
           />
         ) : unavailableAgent ? (
-          <AgentUnavailablePanel onClose={onClose ?? onPanelBack} />
+          <AgentUnavailablePanel
+            backLabel={
+              onPanelBack ? "返回成员管理" : panel ? "返回聊天" : "返回成员列表"
+            }
+            onClose={onClose ?? onPanelBack}
+            onBack={
+              onPanelBack ?? onClose ?? (() => setMobileDetailOpen(false))
+            }
+          />
         ) : agents.length === 0 ? (
           <p className="rah-empty-copy">
             当前没有可见 AgentDefinition。请先确认 daemon 已探测并启用了真实
@@ -862,7 +814,7 @@ export function AgentDirectoryPane({
           </section>
         )}
       </section>
-    </main>
+    </DirectoryWidthLayout>
   );
 }
 
@@ -1942,10 +1894,6 @@ function relativeReminderTime(value: string): string {
 }
 
 export { AgentAvatar } from "./agent-avatar.tsx";
-
-function clampSidebarWidth(width: number): number {
-  return Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, width));
-}
 
 function formatActivityTime(timestamp: string): string {
   return formatRahDateTime(timestamp, {

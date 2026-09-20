@@ -116,12 +116,18 @@ try {
     await oldMention.click();
     await expect(page.locator(".rah-agent-unavailable")).toBeVisible();
     await page
-      .getByRole("button", { name: "关闭 Agent 详情", exact: true })
+      .getByRole("button", {
+        name: width < 768 ? "返回聊天" : "关闭 Agent 详情",
+        exact: true,
+      })
       .click();
     await oldAvatar.click();
     await expect(page.locator(".rah-agent-unavailable")).toBeVisible();
     await page
-      .getByRole("button", { name: "关闭 Agent 详情", exact: true })
+      .getByRole("button", {
+        name: width < 768 ? "返回聊天" : "关闭 Agent 详情",
+        exact: true,
+      })
       .click();
     await page.reload();
     await expect(oldAvatar.locator(".rah-agent-avatar")).toHaveCSS(

@@ -86,11 +86,15 @@ test("thread panel exposes the Raft header, history and action contracts", () =>
   assert.match(css, /\.rah-thread-title b\s*\{[^}]*font-size:\s*16px/su);
 });
 
-test("WorkspaceScreen owns one persistent thread-panel width and its resizer", () => {
+test("layout shell owns one persistent thread/profile width outside WorkspaceScreen", () => {
   const app = read("App.tsx");
-  assert.match(app, /useThreadPanelWidth/u);
-  assert.match(app, /--thread-w/u);
-  assert.match(app, /<ThreadPanelResizer/u);
+  const shell = read("components/conversation-layout-shell.tsx");
+  assert.doesNotMatch(app, /useThreadPanelWidth/u);
+  assert.equal(shell.match(/useThreadPanelWidth\(\)/gu)?.length, 1);
+  assert.match(shell, /--thread-w/u);
+  assert.match(shell, /<ThreadPanelResizer/u);
+  assert.match(app, /<ConversationLayoutResizer kind="thread"/u);
+  assert.match(app, /<ConversationLayoutResizer kind="profile"/u);
   assert.match(app, /loadEarlierThreadMessages/u);
   assert.match(app, /searchActiveThread/u);
 });

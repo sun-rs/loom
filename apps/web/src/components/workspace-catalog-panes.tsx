@@ -1,3 +1,7 @@
+import {
+  DirectoryWidthLayout,
+  DirectoryWidthResizer,
+} from "./directory-width-layout.tsx";
 import { useMobileLayout } from "../use-mobile-layout.ts";
 import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
 import { WorkbenchServiceRestart } from "./workbench-service-restart.tsx";
@@ -5,7 +9,6 @@ import type { AgentResetOperation } from "../agent-reset-batch.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { ComputerWorkspaceSummary } from "./computer-workspace-summary.tsx";
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 
 import type {
   ClientComputerProfileUpdateRequest,
@@ -15,15 +18,6 @@ import type {
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { computerStatusLabel } from "../attention-presentation.ts";
 
-import {
-  clampComputerSidebarWidth,
-  nextComputerSidebarWidth,
-  readComputerSidebarWidth,
-  RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH,
-  RAFT_COMPUTER_SIDEBAR_MAX_WIDTH,
-  RAFT_COMPUTER_SIDEBAR_MIN_WIDTH,
-  writeComputerSidebarWidth,
-} from "../computer-sidebar-resize.ts";
 import { localComputerDiagnosticText } from "../computer-runtime-inspector-model.ts";
 import {
   ComputerAgentControls,
@@ -77,20 +71,10 @@ export function ComputerRuntimePane({
   const mobile = useMobileLayout();
   const [mobileDetailOpen, setSelected] = useState(false);
   const selected = !mobile || mobileDetailOpen;
-  const [sidebarWidth, setSidebarWidth] = useState(() =>
-    typeof window === "undefined"
-      ? RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH
-      : readComputerSidebarWidth(window.localStorage),
-  );
-  const sidebarWidthRef = useRef(sidebarWidth);
-  const [resizing, setResizing] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<
     "diagnostic" | "doctor" | "error"
   >();
   const copyFeedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
-  const resizeOrigin = useRef<{ clientX: number; width: number } | undefined>(
     undefined,
   );
   const entities = useWorkspaceEntities();
@@ -101,49 +85,7 @@ export function ComputerRuntimePane({
   const statusLabel = computerStatusLabel(computer);
   const online = computer?.status === "online";
   const bindings = entities?.computerAgents() ?? [];
-  const rootStyle = {
-    "--rah-computer-sidebar-width": `${sidebarWidth}px`,
-  } as CSSProperties;
-
   useEffect(() => () => clearTimeout(copyFeedbackTimer.current), []);
-
-  function applySidebarWidth(width: number): void {
-    sidebarWidthRef.current = width;
-    setSidebarWidth(width);
-  }
-
-  function onResizePointerDown(event: PointerEvent<HTMLDivElement>): void {
-    if (event.button !== 0) return;
-    resizeOrigin.current = { clientX: event.clientX, width: sidebarWidth };
-    setResizing(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-    event.preventDefault();
-  }
-
-  function onResizePointerMove(event: PointerEvent<HTMLDivElement>): void {
-    const origin = resizeOrigin.current;
-    if (origin === undefined) return;
-    applySidebarWidth(
-      clampComputerSidebarWidth(origin.width + event.clientX - origin.clientX),
-    );
-  }
-
-  function onResizePointerEnd(event: PointerEvent<HTMLDivElement>): void {
-    resizeOrigin.current = undefined;
-    setResizing(false);
-    writeComputerSidebarWidth(window.localStorage, sidebarWidthRef.current);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  function onResizeKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
-    const width = nextComputerSidebarWidth(sidebarWidth, event.key);
-    if (width === undefined) return;
-    event.preventDefault();
-    applySidebarWidth(width);
-    writeComputerSidebarWidth(window.localStorage, width);
-  }
 
   async function copyComputerEvidence(
     kind: "diagnostic" | "doctor",
@@ -163,9 +105,9 @@ export function ComputerRuntimePane({
   }
 
   return (
-    <main
+    <DirectoryWidthLayout
+      kind="computers"
       className={`rah-computer-directory${selected ? " is-detail" : " is-list"}`}
-      style={rootStyle}
     >
       <aside className="rah-computer-sidebar">
         <PanelHeader kind="sidebar">
@@ -228,21 +170,7 @@ export function ComputerRuntimePane({
           </section>
         </div>
       </aside>
-      <div
-        aria-label="调整计算机边栏宽度"
-        aria-orientation="vertical"
-        aria-valuemax={RAFT_COMPUTER_SIDEBAR_MAX_WIDTH}
-        aria-valuemin={RAFT_COMPUTER_SIDEBAR_MIN_WIDTH}
-        aria-valuenow={sidebarWidth}
-        className={`rah-computer-sidebar-resizer${resizing ? " is-dragging" : ""}`}
-        onKeyDown={onResizeKeyDown}
-        onPointerCancel={onResizePointerEnd}
-        onPointerDown={onResizePointerDown}
-        onPointerMove={onResizePointerMove}
-        onPointerUp={onResizePointerEnd}
-        role="separator"
-        tabIndex={0}
-      />
+      <DirectoryWidthResizer />
       {hostId === undefined ? (
         <section className="rah-computer-empty">
           {inventoryError === undefined
@@ -374,7 +302,7 @@ export function ComputerRuntimePane({
           </div>
         </section>
       )}
-    </main>
+    </DirectoryWidthLayout>
   );
 }
 
