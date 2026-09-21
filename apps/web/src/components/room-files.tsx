@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { MessageAttachmentCard } from "./message-attachment-card.tsx";
 import { AttachmentComments } from "./attachment-comments.tsx";
@@ -543,7 +544,7 @@ export function FilePreview({
                 client={context?.client}
               />
             ) : !content ? (
-              <p>正在加载…</p>
+              <LoadingState />
             ) : content.image ? (
               <img alt={file.filename} src={content.image} />
             ) : content.text !== undefined ? (
@@ -686,7 +687,7 @@ export function RoomFilesPane({
           />
         ) : null}
         {pending ? (
-          <p role="status">正在加载文件…</p>
+          <LoadingState />
         ) : cursor ? (
           <button onClick={() => void more()}>加载更多文件</button>
         ) : null}

@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { formatLaunchArgs } from "../runtime-launch-editor-model.ts";
 import codexIcon from "@rah-os/ui-tokens/runtime-icons/codex.svg";
 import claudeIcon from "@rah-os/ui-tokens/runtime-icons/claude.svg";
@@ -87,7 +88,7 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
         </p>
       </header>
       {error ? <p role="alert">{error}</p> : null}
-      {!data && !error ? <p role="status">正在读取设置…</p> : null}
+      {!data && !error ? <LoadingState /> : null}
       <div className="rah-runtime-settings-list">
         {data?.runtimes.map((row) => (
           <section

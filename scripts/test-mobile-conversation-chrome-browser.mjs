@@ -42,6 +42,31 @@ try {
       idempotencyKey: crypto.randomUUID(),
     })
   ).room;
+  for (const room of [f.roomId, dm.roomId]) {
+    for (const surface of ["room", "search", "activity"]) {
+      await check(`desktop primary ${surface} ${room}`, async () => {
+        await p.setViewportSize({ width: 1440, height: 900 });
+        await p.goto(
+          f.origin +
+            "/?" +
+            new URLSearchParams(
+              surface === "room" ? { room } : { surface, previewRoom: room },
+            ),
+        );
+        const header = p.locator(".rah-conversation-head");
+        await expect(header).toBeVisible();
+        await expect(header.locator(".rah-search-preview-close")).toHaveCount(
+          0,
+        );
+        await expect(header.locator(".rah-mobile-back")).toBeHidden();
+        await p.setViewportSize({ width: 390, height: 844 });
+        await expect(header.locator(".rah-mobile-back")).toBeVisible();
+        await expect(header.locator(".rah-search-preview-close")).toHaveCount(
+          0,
+        );
+      });
+    }
+  }
   await check("mobile press is pink", async () => {
     await p.goto(f.origin + "/?surface=room");
     const row = p

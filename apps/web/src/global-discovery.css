@@ -631,7 +631,7 @@
   grid-template-columns: var(--rail-w) minmax(0, 560px) minmax(0, 1fr);
 }
 .rah-search-channel-open > .channel {
-  border-left: var(--bd);
+  border-left: 0;
 }
 .rah-public-preview-messages {
   flex: 1;
@@ -697,6 +697,20 @@
 }
 .rah-discovery.search-main .filter-bar {
   padding: 12px 16px;
+}
+@media (max-width: 767px) and (hover: none) and (pointer: coarse) {
+  /* Touch-only narrow surfaces scroll; mouse-driven windows keep wrapping.
+     Search filters use portaled menus, so the row can scroll without clipping them. */
+  .rah-discovery.search-main .filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  .rah-discovery.search-main .filter-bar > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 }
 @media (max-width: 767px) {
   .rah-search-history-edit {
@@ -851,4 +865,13 @@
   color: var(--ink-40);
   border-color: var(--ink-40);
   background: rgb(0 0 0 / 4%);
+}
+
+/* The list owns the 2px seam. Keep the drag highlight on that same seam. */
+.app:is(.rah-search-channel-open, .rah-activity-preview)
+  > .rah-search-resizer::after {
+  left: 2px;
+}
+.app.rah-search-channel-open > .rah-search-resizer:focus-visible {
+  outline: none;
 }

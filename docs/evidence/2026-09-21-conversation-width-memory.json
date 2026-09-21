@@ -1,0 +1,32 @@
+{
+  "build": "f0e9313940797dba2e1b7bc6ba864fd7ab30c6ec0e093242a52c6d53ffecfa9f",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "formalPanels": [
+    {
+      "surface": "search",
+      "list": 320,
+      "profile": 380
+    },
+    {
+      "surface": "activity",
+      "list": 320,
+      "profile": 380
+    },
+    {
+      "surface": "room",
+      "list": 240,
+      "profile": 380
+    }
+  ],
+  "errors": [],
+  "isolatedBrowsers": ["chromium", "firefox"],
+  "mobileViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "resizeWorkspaceRenders": 0,
+  "dragWorkspaceRenders": [0, 2, 2]
+}

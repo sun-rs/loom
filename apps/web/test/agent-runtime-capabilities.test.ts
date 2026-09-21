@@ -71,9 +71,17 @@ test("Agent reasoning choices are derived only from verified runtime bindings", 
     "high",
   ]);
   assert.deepEqual(runtimeReasoningOptions(probedRuntime, "probed-model"), [
-    { label: "Runtime 默认", value: "default" },
-    { label: "Balanced", value: "medium" },
-    { label: "High", value: "high" },
+    { label: "默认", value: "default" },
+    {
+      label: "Balanced",
+      value: "medium",
+      description: "在日常任务中平衡速度与推理深度",
+    },
+    {
+      label: "High",
+      value: "high",
+      description: "针对复杂问题提供更深入的推理",
+    },
   ]);
   assert.deepEqual(supportedReasoningLevels(probedRuntime), ["default"]);
   assert.equal(normalizeModelBindingId("declared-only", probedRuntime), "");

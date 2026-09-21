@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { runtimeProductName } from "./agent-runtime-presentation.ts";
 import { ChatTaskApproval } from "./components/chat-task-approval.tsx";
 import { directConversationPeer } from "./direct-conversation-entries.ts";
@@ -277,7 +278,7 @@ function WorkspaceScreen({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [archivedRooms, setArchivedRooms] = useState<Room[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<string>();
-  const [roomData, setRoomData] = useState<RoomData>();
+  const [storedRoomData, setRoomData] = useState<RoomData>();
   const [activeThreadRootMessageId, setActiveThreadRootMessageId] = useState<
     string | undefined
   >(() => {
@@ -308,6 +309,25 @@ function WorkspaceScreen({
   );
   const conversationPreview =
     (surface === "activity" || surface === "search") && !!searchPreview.roomId;
+  const roomActivityQuery = useReconciledQuery(
+    client,
+    "room.agent.activity.list",
+    { roomId: activeRoomId ?? "none" },
+    !!activeRoomId &&
+      health?.capabilities.agentRead === true &&
+      (surface === "room" || conversationPreview),
+  );
+  const roomData = useMemo(
+    () =>
+      storedRoomData
+        ? {
+            ...storedRoomData,
+            agentActivity:
+              roomActivityQuery?.data?.agents ?? storedRoomData.agentActivity,
+          }
+        : undefined,
+    [storedRoomData, roomActivityQuery?.data],
+  );
   const previewThreadPrimary = conversationPreview && !!searchPreview.threadId;
   const surfaceRef = useRef(surface);
   surfaceRef.current = surface;
@@ -787,6 +807,7 @@ function WorkspaceScreen({
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [roomReadTick, setRoomReadTick] = useState(0);
   const [directoryRevision, setDirectoryRevision] = useState(0);
   const sessions = useRef(new Map<string, RoomSession>());
   const messageSessions = useRef(new Map<string, MessageSession>());
@@ -922,7 +943,9 @@ function WorkspaceScreen({
           setHumanInboxLoading(false);
           timer = setTimeout(
             reconcile,
-            document.visibilityState === "visible" ? 5000 : 15000,
+            document.visibilityState === "visible" && humanInboxOpen
+              ? 5000
+              : 15000,
           );
         }
       }
@@ -941,7 +964,7 @@ function WorkspaceScreen({
       window.removeEventListener("focus", focus);
       document.removeEventListener("visibilitychange", focus);
     };
-  }, [refreshHumanInbox, reload]);
+  }, [refreshHumanInbox, reload, humanInboxOpen]);
 
   const resolveHumanInputRequest = useCallback(
     async (request: InputRequest, answer: string) => {
@@ -976,6 +999,11 @@ function WorkspaceScreen({
 
   useEffect(() => {
     const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+      setError("连接超时，请重试");
+      setLoading(false);
+    }, 15000);
     void (async () => {
       try {
         const [currentHealth, workspaceResult, principalResult] =
@@ -1051,10 +1079,14 @@ function WorkspaceScreen({
       } catch (caught) {
         if (!controller.signal.aborted) setError(errorMessage(caught));
       } finally {
+        clearTimeout(timeout);
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
-    return () => controller.abort();
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [client, directoryRevision]);
 
   useEffect(() => {
@@ -1253,8 +1285,15 @@ function WorkspaceScreen({
     agentDirectoryQuery,
   ]);
 
+  const roomIdentitySources = useRef({ scopedAgentCatalog, localRuntimes });
+  roomIdentitySources.current = { scopedAgentCatalog, localRuntimes };
   useEffect(() => {
-    if (activeRoomId === undefined || health === undefined) return;
+    if (
+      activeRoomId === undefined ||
+      health === undefined ||
+      (surface !== "room" && !conversationPreview && !taskModalOpen)
+    )
+      return;
     const read = roomDataReads.current.begin();
     const taskWindowBeforeRead = taskWindows.current.get(activeRoomId);
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -1277,14 +1316,13 @@ function WorkspaceScreen({
             )
           : undefined;
         // These authenticated reads do not depend on the Room delivery receipt.
-        // Join them before publishing so identity/task/thread data still appear together.
+        // Keep identity/task/thread facts together; diagnostic activity reconciles separately.
         const [
           roomCatchUp,
           messageResult,
           taskResult,
           threadResult,
           membershipResult,
-          agentActivityResult,
         ] = await Promise.all([
           session.syncUntilCurrent({
             limit: 500,
@@ -1329,13 +1367,6 @@ function WorkspaceScreen({
             : Promise.resolve({
                 memberships: [] as RoomMembership[],
               }),
-          health.capabilities.agentRead
-            ? client.request(
-                "room.agent.activity.list",
-                { roomId: activeRoomId },
-                { signal: read.signal },
-              )
-            : Promise.resolve({ agents: [] as RoomAgentActivity[] }),
         ]);
         const mentionReadStates = await loadMessageReferenceReadStates(
           client,
@@ -1351,14 +1382,14 @@ function WorkspaceScreen({
             principal,
           ]),
         );
-        for (const entry of scopedAgentCatalog) {
+        for (const entry of roomIdentitySources.current.scopedAgentCatalog) {
           knownPrincipals.set(entry.definition.participantId, {
             handle: entry.handle,
             kind: "agent",
             principalId: entry.definition.participantId,
           });
         }
-        for (const runtime of localRuntimes) {
+        for (const runtime of roomIdentitySources.current.localRuntimes) {
           for (const binding of runtime.agentBindings) {
             knownPrincipals.set(binding.participantId, {
               handle: binding.handle,
@@ -1381,7 +1412,7 @@ function WorkspaceScreen({
             : (roomCatchUp.state.snapshot?.members ?? []).map(
                 ({ principalId }) => principalId,
               ),
-          agentActivity: agentActivityResult.agents,
+          agentActivity: [],
           caughtUp,
           hasEarlierMessages: messageResult.hasEarlier,
           latestRoomSeq: roomCatchUp.state.latestRoomSeq,
@@ -1412,7 +1443,7 @@ function WorkspaceScreen({
         if (read.current()) {
           setLoading(false);
           timer = setTimeout(
-            () => setReload((value) => value + 1),
+            () => setRoomReadTick((value) => value + 1),
             roomPollDelay({
               caughtUp,
               consecutiveFailures: consecutivePollFailures.current,
@@ -1431,9 +1462,11 @@ function WorkspaceScreen({
     client,
     consumerPrefix,
     health,
-    localRuntimes,
     reload,
-    scopedAgentCatalog,
+    roomReadTick,
+    surface,
+    conversationPreview,
+    taskModalOpen,
   ]);
 
   useEffect(() => {
@@ -3374,6 +3407,27 @@ function WorkspaceScreen({
     runtimes: localRuntimes,
     workspaceId: activeWorkspace?.workspaceId,
   };
+  const renderTaskProfile = (
+    target: { kind: "agent" | "human"; id: string },
+    onBack: () => void,
+    onClose: () => void,
+  ) => (
+    <AgentDirectoryPane
+      {...agentDetailProps}
+      key={`${target.kind}:${target.id}`}
+      panel
+      panelResizer={<></>}
+      initialView={target.kind}
+      initialTab={target.kind === "human" ? "profile" : "activity"}
+      initialAgentDefinitionId={target.kind === "agent" ? target.id : undefined}
+      initialHumanPrincipalId={target.kind === "human" ? target.id : undefined}
+      onRouteChange={undefined}
+      onPanelBack={onBack}
+      panelBackLabel="返回审批"
+      panelCloseLabel="关闭任务详情"
+      onClose={onClose}
+    />
+  );
   const peekRetained =
     (surface === "room" || conversationPreview) &&
     (peekAgentId !== undefined || peekHumanId !== undefined);
@@ -3474,6 +3528,32 @@ function WorkspaceScreen({
       setPeekHumanId(undefined);
     },
   };
+  useEffect(() => {
+    if (health !== undefined || error)
+      document.documentElement.removeAttribute("data-rah-boot");
+  }, [health, error]);
+  if (health === undefined)
+    return (
+      <div className="rah-boot-loading">
+        {error ? (
+          <div className="rah-inline-error" role="alert">
+            <p>{error}</p>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => {
+                setError(undefined);
+                setDirectoryRevision((value) => value + 1);
+              }}
+            >
+              重试
+            </button>
+          </div>
+        ) : (
+          <LoadingState />
+        )}
+      </div>
+    );
   return (
     <SidebarPreferencesProvider
       ref={sidebarPreferencesRef}
@@ -3559,6 +3639,7 @@ function WorkspaceScreen({
               onOpenChange={setHumanInboxOpen}
             >
               <ConversationLayoutShell
+                panelKind={peekOpen ? "profile" : "thread"}
                 scope={
                   conversationPreview
                     ? surface === "search"
@@ -3601,6 +3682,15 @@ function WorkspaceScreen({
                     setSurface("tasks");
                   }}
                   onSelect={(nextSurface) => {
+                    if (
+                      nextSurface === surface &&
+                      (surface === "search" || surface === "activity")
+                    ) {
+                      setPeekAgentId(undefined);
+                      setPeekHumanId(undefined);
+                      closeSearchPreview();
+                      return;
+                    }
                     let restoredSurface = nextSurface;
                     if (mobileLayout && nextSurface === "agents")
                       navigateAgentRoute({
@@ -4335,6 +4425,8 @@ function WorkspaceScreen({
                   >
                     <IdentityOriginContext.Provider value="thread">
                       <TaskThreadPresentation
+                        key={globalTaskDetail?.taskId}
+                        renderProfile={renderTaskProfile}
                         modal={taskModalOpen}
                         task={detailTask}
                         roomName={activeConversationName}
@@ -4573,6 +4665,8 @@ function WorkspaceScreen({
                 activeRoom &&
                 chatTaskTarget.roomId === activeRoom.roomId ? (
                   <ChatTaskApproval
+                    key={chatTaskTarget.taskId}
+                    renderProfile={renderTaskProfile}
                     client={client}
                     target={chatTaskTarget}
                     room={

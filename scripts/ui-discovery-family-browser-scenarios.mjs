@@ -420,12 +420,12 @@ export async function verifyDiscoveryFamily(page, origin, output, engine) {
     };
     await page.route("**/v3/client/search", delaySearch);
     await query.fill(loadingMarker);
-    const searchSkeleton = page.getByRole("status", { name: "正在搜索" });
+    const searchSkeleton = page.locator(".result-list .rah-loading-state");
     await searchSkeleton.waitFor();
     assert.equal(
-      await searchSkeleton.locator(".rah-search-result-skeleton-card").count(),
-      5,
-      "Raft Search loading uses five bounded result skeletons",
+      await searchSkeleton.locator(".rah-loading-spinner").count(),
+      1,
+      "Search uses the shared initial loading indicator",
     );
     await page.screenshot({
       path: join(output, `${engine}-search-loading-${width}.png`),

@@ -6,10 +6,12 @@ import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
 
 export function AgentUnavailablePanel({
   onClose,
+  closeLabel,
   onBack = onClose,
   backLabel = "返回聊天",
 }: {
   backLabel?: string | undefined;
+  closeLabel?: string | undefined;
   onBack?: (() => void) | undefined;
   onClose?: (() => void) | undefined;
 }) {
@@ -25,12 +27,12 @@ export function AgentUnavailablePanel({
             <Icon name="arrow-left" />
           </PanelHeaderAction>
         )}
-        <PanelHeaderIcon name="bot" />
-        <h2>Agent 不可用</h2>
+        <PanelHeaderIcon name="bot" className="rah-agent-unavailable-icon" />
+        <h2 className="rah-panel-title">Agent 不可用</h2>
         {onClose && (
           <PanelHeaderAction
             className="rah-desktop-only"
-            aria-label="关闭 Agent 详情"
+            aria-label={closeLabel ?? "关闭 Agent 详情"}
             onClick={onClose}
           >
             <Icon name="x" />

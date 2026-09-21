@@ -15,6 +15,7 @@ export const REACTION_HOVER_CLOSE_MS = 120;
 export type DiscoveryOption = {
   id: string;
   label: string;
+  description?: string | undefined;
   title?: string;
   leading?: ReactNode;
   reserveLeadingSlot?: boolean;
@@ -313,6 +314,11 @@ export function DiscoveryFilter({
                     )}
                     <span className={option.italic ? "is-italic" : ""}>
                       {option.label}
+                      {option.description && (
+                        <small className="rah-discovery-option-description">
+                          {option.description}
+                        </small>
+                      )}
                     </span>
                     {values.includes(option.id) && <Icon name="check" />}
                   </>
@@ -336,6 +342,7 @@ export function DiscoveryFilter({
                   <ChoiceRow
                     profile="property-option"
                     className="rah-property-choice"
+                    aria-label={option.label}
                     key={option.id}
                     role={multiple ? "menuitemcheckbox" : "menuitemradio"}
                     aria-checked={values.includes(option.id)}

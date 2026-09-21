@@ -14,6 +14,7 @@ import type {
 export interface RuntimeReasoningOption {
   label: string;
   value: ReasoningLevel;
+  description?: string | undefined;
 }
 
 export const DEFAULT_TOOL_ACCESS_MODE =
@@ -33,10 +34,11 @@ export function runtimeReasoningOptions(
         ? customModelEffortLevels(custom)
         : [];
     return [
-      { label: "Runtime 默认", value: "default" },
+      { label: "默认", value: "default" },
       ...levels.map((value) => ({
         value,
         label: fallbackReasoningLabel(value),
+        description: reasoningDescription(value),
       })),
     ];
   }
@@ -47,9 +49,10 @@ export function runtimeReasoningOptions(
     ]),
   );
   return [
-    { label: "Runtime 默认", value: "default" },
+    { label: "默认", value: "default" },
     ...descriptor.supportedReasoning.map((value) => ({
       label: observedLabels.get(value) ?? fallbackReasoningLabel(value),
+      description: reasoningDescription(value),
       value,
     })),
   ];
@@ -192,4 +195,17 @@ export function runtimeReasoningNotice(
     customModelEffortLevels(custom).length > 0
     ? "可按模型文档选择推理强度；当前 CLI 与账户支持尚未验证。"
     : undefined;
+}
+
+// Raft reasoningEffort.*Description translations; presentation never adds capabilities.
+function reasoningDescription(value: ReasoningLevel): string | undefined {
+  const descriptions: Partial<Record<ReasoningLevel, string>> = {
+    low: "快速响应，推理较轻",
+    medium: "在日常任务中平衡速度与推理深度",
+    high: "针对复杂问题提供更深入的推理",
+    xhigh: "针对复杂问题提供极高推理深度",
+    max: "针对最难的问题提供最大推理深度",
+    ultra: "最大推理深度",
+  };
+  return descriptions[value];
 }

@@ -13,6 +13,7 @@ import { useMobileLayout } from "../use-mobile-layout.ts";
 import { useDiscoveryQuery } from "../use-discovery-query.ts";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import {
+  type TaskProfileRenderer,
   TaskDetailMetadata,
   TaskThreadPresentation,
 } from "./global-task-detail.tsx";
@@ -22,6 +23,7 @@ type TaskTarget = Extract<NavigationTarget, { kind: "task" }>;
 /** Chat approvals own only overlay presentation. They never navigate or focus
  * the source conversation. Canonical reads/mutations retain their shared owners. */
 export function ChatTaskApproval({
+  renderProfile,
   client,
   target,
   room,
@@ -39,6 +41,7 @@ export function ChatTaskApproval({
   onChanged,
   onClose,
 }: {
+  renderProfile?: TaskProfileRenderer | undefined;
   client: RahClient;
   target: TaskTarget;
   room: Room;
@@ -89,6 +92,7 @@ export function ChatTaskApproval({
   );
   return (
     <TaskThreadPresentation
+      renderProfile={renderProfile}
       modal
       compact={compact}
       task={task}

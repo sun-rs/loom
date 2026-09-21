@@ -5,6 +5,7 @@ import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 export function useReconciledQuery<
   K extends
     | "room.preview"
+    | "room.agent.activity.list"
     | "file.comments"
     | "room.member.list"
     | "host.runtime.list"
@@ -54,7 +55,18 @@ export function useReconciledQuery<
           }),
         ]);
         if (!stopped && !request.signal.aborted)
-          setState({ client, key, data });
+          setState((old) => {
+            // Stable equal projections must not restart dependent Room reads or
+            // reset mounted content merely because a polling request completed.
+            if (
+              old?.client === client &&
+              old.key === key &&
+              old.error === undefined &&
+              JSON.stringify(old.data) === JSON.stringify(data)
+            )
+              return old;
+            return { client, key, data };
+          });
       } catch (error) {
         if (!stopped)
           setState((old) => ({

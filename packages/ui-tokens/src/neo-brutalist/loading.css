@@ -1,0 +1,54 @@
+/* Raft v1.17.3 cream is reserved for boot; local loading preserves its surface. */
+.rah-loading-state {
+  display: flex;
+  flex: 1;
+  min-height: 160px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: #737373;
+  font-size: 14px;
+  font-weight: 600;
+}
+.rah-loading-state.is-inline {
+  display: inline-flex;
+  width: auto;
+  min-height: 0;
+  background: transparent;
+  font: inherit;
+}
+.rah-loading-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: rah-loading-spin 800ms linear infinite;
+}
+@keyframes rah-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-loading-spinner {
+    animation-duration: 2400ms;
+  }
+}
+.rah-boot-loading {
+  background: var(--cream, #fffaef);
+  display: flex;
+  min-height: 100dvh;
+}
+.messages > .rah-loading-state,
+.rah-profile-body > .rah-loading-state,
+.feed-wrap > .rah-loading-state,
+.result-list > .rah-loading-state {
+  min-height: 100%;
+}
+.feed:has(.rah-loading-state) .feed-wrap {
+  height: 100%;
+}

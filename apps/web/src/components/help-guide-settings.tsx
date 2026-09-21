@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { useEffect, useState } from "react";
 import { SettingsPage } from "./settings-primitives.tsx";
 
@@ -44,7 +45,7 @@ export function HelpGuideSettings() {
           </button>
         </div>
       ) : (
-        <p role="status">正在读取操作指南…</p>
+        <LoadingState />
       )}
     </SettingsPage>
   );

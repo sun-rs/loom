@@ -399,7 +399,7 @@
 }
 .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source] {
   grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(320px, 1fr) min(
-      var(--thread-w),
+      var(--rah-conversation-profile-width, 380px),
       calc(100% - var(--rail-w) - var(--sidebar-w) - 320px)
     );
 }

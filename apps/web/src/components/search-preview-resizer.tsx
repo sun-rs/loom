@@ -1,45 +1,47 @@
 import { useEffect, useState } from "react";
 import { PanelResizer } from "@rah-os/ui-web/neo-brutalist/panel-resizer";
+import {
+  discoveryWidthPolicy,
+  discoveryWidthKey,
+  readDiscoveryWidth,
+} from "../discovery-width.ts";
 // Raft Zw + iQe: independent wide (400..720,560) and compact (320..480,320)
 // layout preferences. Shared PanelResizer owns capture, keyboard and cancellation.
-export function useSearchPreviewWidth(scope = "search", forceCompact = false) {
+export function useSearchPreviewWidth(forceCompact = false) {
   const [viewport, setViewport] = useState(window.innerWidth);
-  const read = (key: string, fallback: number, min: number, max: number) => {
+  const read = (compact: boolean) => {
     try {
-      const v = Number(localStorage.getItem(key));
-      return v >= min && v <= max ? v : fallback;
+      return readDiscoveryWidth(window.localStorage, compact);
     } catch {
-      return fallback;
+      return compact ? 320 : 560;
     }
   };
-  const [wide, setWide] = useState(() =>
-    read(`rah:${scope}-width`, 560, 400, 720),
-  );
-  const [small, setSmall] = useState(() =>
-    read(`rah:${scope}-compact-width`, 320, 320, 480),
-  );
+  const [wide, setWide] = useState(() => read(false));
+  const [small, setSmall] = useState(() => read(true));
   useEffect(() => {
     const update = () => setViewport(window.innerWidth);
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
-  const compact = forceCompact || viewport < 1024,
-    min = compact ? 320 : 400,
-    max = Math.max(min, Math.min(compact ? 480 : 720, viewport - 64 - 400));
+  const { compact, min, max, defaultWidth } = discoveryWidthPolicy(
+    viewport,
+    forceCompact,
+  );
   const clamp = (v: number) => Math.max(min, Math.min(max, Math.round(v)));
   const width = clamp(compact ? small : wide);
   const setWidth = compact ? setSmall : setWide;
   const commit = (v: number) => {
     try {
-      localStorage.setItem(
-        compact ? `rah:${scope}-compact-width` : `rah:${scope}-width`,
-        String(v),
-      );
+      localStorage.setItem(discoveryWidthKey(compact), String(v));
     } catch {
       /* Optional layout preference. */
     }
   };
-  return { width, min, max, clamp, setWidth, commit };
+  const reset = () => {
+    setWidth(defaultWidth);
+    commit(defaultWidth);
+  };
+  return { width, min, max, clamp, setWidth, commit, reset };
 }
 export function SearchPreviewResizer({
   layout,
@@ -51,6 +53,7 @@ export function SearchPreviewResizer({
   return (
     <PanelResizer
       label={label}
+      onWidthReset={layout.reset}
       className="rah-search-resizer"
       width={layout.width}
       onWidthChange={layout.setWidth}

@@ -87,7 +87,7 @@ try {
     );
     const saved = await p.evaluate(
       (key) => localStorage.getItem(key),
-      surface === "room" ? "rah:room-sidebar-width" : `rah:${surface}-width`,
+      surface === "room" ? "rah:room-sidebar-width" : "rah:search-width",
     );
     assert.ok(Number(saved) < (surface === "room" ? 240 : 560));
     await p.reload();

@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import {
   DirectoryWidthLayout,
   DirectoryWidthResizer,
@@ -238,7 +239,7 @@ export function AgentWorkspaceBrowser({
               {error ? (
                 <p role="alert">{error}</p>
               ) : !file ? (
-                <p role="status">正在读取文件…</p>
+                <LoadingState />
               ) : file.encoding === "utf-8" ? (
                 selected.endsWith(".md") && viewMode === "preview" ? (
                   <div className="rah-workspace-markdown">
@@ -326,7 +327,7 @@ function Directory({
         <button onClick={() => setRetry((r) => r + 1)}>重试</button>
       </div>
     );
-  if (!listing) return <p role="status">正在加载…</p>;
+  if (!listing) return <LoadingState />;
   if (listing.state === "absent") return <p>尚未建立 Agent 私有目录。</p>;
   const toggle = (entry: Entry, open?: boolean) =>
     setExpanded((values) =>

@@ -45,7 +45,13 @@ export function useDialogProtocol(input: {
         ...(dialogRef.current?.querySelectorAll<HTMLElement>(
           FOCUSABLE_SELECTOR,
         ) ?? []),
-      ];
+      ].filter(
+        (element) =>
+          element.tabIndex >= 0 &&
+          element.getClientRects().length > 0 &&
+          getComputedStyle(element).visibility !== "hidden" &&
+          !element.closest("[inert]"),
+      );
       if (focusable.length === 0) {
         event.preventDefault();
         dialogRef.current?.focus();
@@ -60,7 +66,12 @@ export function useDialogProtocol(input: {
       ) {
         event.preventDefault();
         last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          document.activeElement === dialogRef.current ||
+          !dialogRef.current?.contains(document.activeElement))
+      ) {
         event.preventDefault();
         first?.focus();
       }

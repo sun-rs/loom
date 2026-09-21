@@ -1,3 +1,4 @@
+import { sendStaticFile } from "./static-file-response.ts";
 import {
   handleWorkbenchServiceControl,
   type WorkbenchServiceControl,
@@ -8,7 +9,7 @@ import {
   randomUUID,
   X509Certificate,
 } from "node:crypto";
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import {
   request as createHttpRequest,
   type IncomingHttpHeaders,
@@ -498,16 +499,7 @@ export class LanWorkbenchGateway {
           : "public, max-age=31536000, immutable",
     );
     this.#setWebBuildHeader(response);
-    if (request.method === "HEAD") {
-      response.end();
-      return;
-    }
-    await new Promise<void>((resolvePromise, reject) => {
-      const stream = createReadStream(staticPath);
-      stream.once("error", reject);
-      stream.once("end", resolvePromise);
-      stream.pipe(response);
-    });
+    await sendStaticFile(request, response, staticPath);
   }
 
   #setWebBuildHeader(response: ServerResponse): void {

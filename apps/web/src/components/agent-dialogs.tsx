@@ -392,6 +392,7 @@ export function AgentCreateDialog({
               options={reasoningOptions.map((option) => ({
                 id: option.value,
                 label: option.label,
+                description: option.description,
               }))}
               value={reasoning}
               onChange={(next) => setReasoning(next as ReasoningLevel)}
@@ -827,7 +828,7 @@ function errorMessage(error: unknown): string {
 }
 
 function reasoningLabel(reasoning: ReasoningLevel): string {
-  if (reasoning === "default") return "Runtime 默认";
+  if (reasoning === "default") return "默认";
   return reasoning[0]!.toUpperCase() + reasoning.slice(1);
 }
 

@@ -1,0 +1,4220 @@
+{
+  "scope": "Source-isolated layout render, not authenticated Raft end-to-end acceptance",
+  "version": "Raft v1.17.3",
+  "conditions": {
+    "zoom": 1,
+    "deviceScaleFactor": 1,
+    "workspaceGrid": false,
+    "defaultDesktopRail": 64,
+    "defaultFontSize": 16
+  },
+  "source": {
+    "main": {
+      "sha256": "0799a867d1d1fd706b9fb9068ebec05002acc39261ae3ab3ed706e239fd8ca9f"
+    },
+    "css": {
+      "sha256": "79f48ab187ec19bde8876c356a71ea13d13fffe8e65c4ed1ab475dfe7c62f187"
+    },
+    "profile": {
+      "sha256": "01aaa0e613e26f603f6828944905509b246c03ccfc949770c47f747c0a546ac3"
+    }
+  },
+  "landscape": [
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 560,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 560,
+      "main": 656,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 560,
+      "main": 480,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 560,
+      "main": 440,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 560,
+      "main": 439,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 560,
+      "main": 400,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 816,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 496,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 360
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 640
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 639
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 600
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 599
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 516
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 384
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 390
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 836,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 300,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 299,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 260,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": 639
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": 600
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": 599
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 516
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": 384
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 560,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 560,
+      "main": 656,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 560,
+      "main": 480,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 560,
+      "main": 440,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 560,
+      "main": 439,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 560,
+      "main": 400,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 816,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 496,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 360
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 640
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 639
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 600
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 599
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 516
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 384
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 390
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 836,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 300,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 299,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 260,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": 639
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": 600
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": 599
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 516
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": 384
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 240,
+      "main": 1296,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 240,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 240,
+      "main": 800,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 240,
+      "main": 760,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 240,
+      "main": 759,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 240,
+      "main": 720,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": 240,
+      "main": 464,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 240,
+      "main": 896,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 240,
+      "main": 576,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 240,
+      "main": 400,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 240,
+      "main": 360,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 240,
+      "main": 359,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 240,
+      "main": 320,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 240,
+      "main": 320,
+      "side": 399
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": 240,
+      "main": 320,
+      "side": 360
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 596
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 464
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 390
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 240,
+      "main": 916,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 240,
+      "main": 420,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 240,
+      "main": 380,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 240,
+      "main": 379,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 240,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": 719
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": 680
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": 679
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": 596
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": 240,
+      "main": 464,
+      "side": 464
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": null,
+      "main": 1536,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": null,
+      "main": 1216,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": null,
+      "main": 1040,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": null,
+      "main": 1000,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": null,
+      "main": 999,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": null,
+      "main": 960,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": null,
+      "main": 959,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": null,
+      "main": 920,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": null,
+      "main": 919,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": null,
+      "main": 704,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": null,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": null,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": null,
+      "main": 1536,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": null,
+      "main": 1216,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": null,
+      "main": 1040,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": null,
+      "main": 1000,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": null,
+      "main": 999,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": null,
+      "main": 960,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": null,
+      "main": 959,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": null,
+      "main": 920,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": null,
+      "main": 919,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": null,
+      "main": 704,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": null,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": null,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": null,
+      "main": 1156,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": null,
+      "main": 660,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": null,
+      "main": 620,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": null,
+      "main": 619,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": null,
+      "main": 580,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": null,
+      "main": 959,
+      "side": 959
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": null,
+      "main": 920,
+      "side": 920
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": null,
+      "main": 919,
+      "side": 919
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": 836
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": null,
+      "main": 704,
+      "side": 704
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": null,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "firefox",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": null,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 560,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 560,
+      "main": 656,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 560,
+      "main": 480,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 560,
+      "main": 440,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 560,
+      "main": 439,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 560,
+      "main": 400,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 816,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 496,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 360
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 640
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 639
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 600
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 599
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 516
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 384
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 836,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 300,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 299,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 260,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": 639
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": 600
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": 599
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 516
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": 384
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 560,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 560,
+      "main": 656,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 560,
+      "main": 480,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 560,
+      "main": 440,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 560,
+      "main": 439,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 560,
+      "main": 400,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 816,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 496,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 320,
+      "side": 360
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 640
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 639
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 600
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 599
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 516
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 384
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 320,
+      "main": 836,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 320,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 320,
+      "main": 300,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 320,
+      "main": 299,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 320,
+      "main": 260,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": 639
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": 600
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": 599
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 516
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": 320,
+      "main": 384,
+      "side": 384
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "activity",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 240,
+      "main": 1296,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 240,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 240,
+      "main": 800,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 240,
+      "main": 760,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 240,
+      "main": 759,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 240,
+      "main": 720,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": 240,
+      "main": 464,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 240,
+      "main": 896,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 240,
+      "main": 576,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 240,
+      "main": 400,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 240,
+      "main": 360,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 240,
+      "main": 359,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 240,
+      "main": 320,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 240,
+      "main": 320,
+      "side": 399
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": 240,
+      "main": 320,
+      "side": 360
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 596
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 464
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 0,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": 240,
+      "main": 916,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": 240,
+      "main": 420,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": 240,
+      "main": 380,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": 240,
+      "main": 379,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": 240,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": 719
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": 680
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": 679
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": 596
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": 240,
+      "main": 464,
+      "side": 464
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": 0,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": 0,
+      "main": 390,
+      "side": 390
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1600,
+      "rail": 64,
+      "list": null,
+      "main": 1536,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1280,
+      "rail": 64,
+      "list": null,
+      "main": 1216,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1104,
+      "rail": 64,
+      "list": null,
+      "main": 1040,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1064,
+      "rail": 64,
+      "list": null,
+      "main": 1000,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1063,
+      "rail": 64,
+      "list": null,
+      "main": 999,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1024,
+      "rail": 64,
+      "list": null,
+      "main": 960,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 1023,
+      "rail": 64,
+      "list": null,
+      "main": 959,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 984,
+      "rail": 64,
+      "list": null,
+      "main": 920,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 983,
+      "rail": 64,
+      "list": null,
+      "main": 919,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 900,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 768,
+      "rail": 64,
+      "list": null,
+      "main": 704,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 767,
+      "rail": 0,
+      "list": null,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "two",
+      "viewport": 390,
+      "rail": 0,
+      "list": null,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1600,
+      "rail": 64,
+      "list": null,
+      "main": 1536,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1280,
+      "rail": 64,
+      "list": null,
+      "main": 1216,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1104,
+      "rail": 64,
+      "list": null,
+      "main": 1040,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1064,
+      "rail": 64,
+      "list": null,
+      "main": 1000,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1063,
+      "rail": 64,
+      "list": null,
+      "main": 999,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1024,
+      "rail": 64,
+      "list": null,
+      "main": 960,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 1023,
+      "rail": 64,
+      "list": null,
+      "main": 959,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 984,
+      "rail": 64,
+      "list": null,
+      "main": 920,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 983,
+      "rail": 64,
+      "list": null,
+      "main": 919,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 900,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 768,
+      "rail": 64,
+      "list": null,
+      "main": 704,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 767,
+      "rail": 0,
+      "list": null,
+      "main": 767,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "thread",
+      "viewport": 390,
+      "rail": 0,
+      "list": null,
+      "main": 390,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1600,
+      "rail": 64,
+      "list": null,
+      "main": 1156,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1280,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1104,
+      "rail": 64,
+      "list": null,
+      "main": 660,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1064,
+      "rail": 64,
+      "list": null,
+      "main": 620,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1063,
+      "rail": 64,
+      "list": null,
+      "main": 619,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1024,
+      "rail": 64,
+      "list": null,
+      "main": 580,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 1023,
+      "rail": 64,
+      "list": null,
+      "main": 959,
+      "side": 959
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 984,
+      "rail": 64,
+      "list": null,
+      "main": 920,
+      "side": 920
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 983,
+      "rail": 64,
+      "list": null,
+      "main": 919,
+      "side": 919
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 900,
+      "rail": 64,
+      "list": null,
+      "main": 836,
+      "side": 836
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 768,
+      "rail": 64,
+      "list": null,
+      "main": 704,
+      "side": 704
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 767,
+      "rail": 0,
+      "list": null,
+      "main": 767,
+      "side": 767
+    },
+    {
+      "engine": "chromium",
+      "kind": "tasks",
+      "mode": "profile",
+      "viewport": 390,
+      "rail": 0,
+      "list": null,
+      "main": 390,
+      "side": 390
+    }
+  ],
+  "portrait": [
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 656,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 655,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 480,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 440,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 400,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 496,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 895
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 720
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 680
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 640
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 639
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 600
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 599
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 515,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 300,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 260,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": 639
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": 600
+    },
+    {
+      "engine": "firefox",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": 599
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 975,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 800,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 760,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 720,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": null
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 576,
+      "side": 400
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 975
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 800
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 760
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 720
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 719
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 680
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 595,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 420,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 380,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": 719
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": 680
+    },
+    {
+      "engine": "firefox",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": 679
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 656,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 655,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 480,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 440,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 560,
+      "main": 400,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "two",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 496,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 895
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 720
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 680
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 640
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 639
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 600
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "thread",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 0,
+      "side": 599
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 516,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 515,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 300,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 260,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 639,
+      "side": 639
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 600,
+      "side": 600
+    },
+    {
+      "engine": "chromium",
+      "kind": "search",
+      "mode": "profile",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 320,
+      "main": 599,
+      "side": 599
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 976,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 975,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 800,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 760,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 720,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "two",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": null
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 576,
+      "side": 400
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 975
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 800
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 760
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 720
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 719
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 680
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "thread",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 0,
+      "side": 679
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1280,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 596,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1279,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 595,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1104,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 420,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1064,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 380,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1024,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 340,
+      "side": 380
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 1023,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 719,
+      "side": 719
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 984,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 680,
+      "side": 680
+    },
+    {
+      "engine": "chromium",
+      "kind": "chat",
+      "mode": "profile",
+      "viewport": 983,
+      "height": 1400,
+      "rail": 64,
+      "list": 240,
+      "main": 679,
+      "side": 679
+    }
+  ],
+  "memoryHook": [
+    {
+      "name": "empty",
+      "widths": [560, 320]
+    },
+    {
+      "name": "equal",
+      "widths": [440, 440]
+    },
+    {
+      "name": "different",
+      "widths": [600, 360]
+    },
+    {
+      "name": "out-of-range",
+      "widths": [560, 320]
+    }
+  ]
+}

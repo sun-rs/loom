@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import {
   MemberContextActions,
   type MemberContextControl,
@@ -222,10 +223,8 @@ export function AgentSidebar({
                 重试成员列表
               </button>
             </div>
-          ) : humanDirectoryLoading ? (
-            <p className="rah-profile-notice" role="status">
-              正在读取成员列表…
-            </p>
+          ) : humanDirectoryLoading && !humans.length ? (
+            <LoadingState />
           ) : humans.length === 0 ? (
             <p className="rah-profile-notice">暂无可访问的人类成员</p>
           ) : null}

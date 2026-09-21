@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { useContext, type ReactNode } from "react";
 import type { Principal } from "@rah-os/protocol";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
@@ -69,7 +70,7 @@ function HumanPreview({ principalId }: { principalId: string }) {
     entities?.scope?.workspaceId,
   );
   if (error) return <p className="rah-profile-notice">无法读取成员资料</p>;
-  if (!profile) return <p className="rah-profile-notice">正在读取成员资料…</p>;
+  if (!profile) return <LoadingState />;
   const human = {
     ...profile.principal,
     ...entities?.resolvePerson(profile.principal),

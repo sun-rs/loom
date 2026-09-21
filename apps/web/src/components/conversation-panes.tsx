@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { ThreadFollowerToast } from "./thread-follower-toast.tsx";
 import { MessageTextDialog } from "./message-text-dialog.tsx";
@@ -544,9 +545,7 @@ export function ChatPane({
         }}
         ref={messagesRef}
       >
-        {loading && timelineItems.length === 0 ? (
-          <p className="rah-empty-copy">正在同步 Room…</p>
-        ) : null}
+        {loading && timelineItems.length === 0 ? <LoadingState /> : null}
         {!loading && timelineItems.length === 0 ? <ChatEmptyState /> : null}
         <MessageTimeline
           followOnAppend={
@@ -561,7 +560,11 @@ export function ChatPane({
                 onClick={() => void loadEarlier()}
                 type="button"
               >
-                {earlierMessagesLoading ? "正在加载…" : "加载更早消息"}
+                {earlierMessagesLoading ? (
+                  <LoadingState inline />
+                ) : (
+                  "加载更早消息"
+                )}
               </button>
             ) : undefined
           }
@@ -2499,7 +2502,7 @@ export function ThreadPane({
             onClick={() => void loadEarlierReplies()}
             type="button"
           >
-            {earlierRepliesLoading ? "正在载入更早回复…" : "载入更早回复"}
+            {earlierRepliesLoading ? <LoadingState inline /> : "载入更早回复"}
           </button>
         ) : replies.length === 0 ? (
           <EmptyState
@@ -2516,9 +2519,7 @@ export function ThreadPane({
             </div>
           </div>
         )}
-        {loading && replies.length === 0 ? (
-          <p className="rah-empty-copy">正在同步 Thread…</p>
-        ) : null}
+        {loading && replies.length === 0 ? <LoadingState /> : null}
         {replyTimeline.map((item) =>
           item.kind === "reminder-fired" ? (
             <p

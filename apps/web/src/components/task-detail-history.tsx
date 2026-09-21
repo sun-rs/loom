@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -43,7 +44,7 @@ export function TaskDetailHistory({
   return (
     <div className="rah-task-detail-history-body">
       {result.loading ? (
-        <p role="status">正在加载操作时间线…</p>
+        <LoadingState />
       ) : result.error ? (
         <div role="alert">
           <p>无法加载操作时间线：{result.error}</p>

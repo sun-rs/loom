@@ -9,10 +9,16 @@ import {
   RAFT_PROFILE_PANEL_MAX_WIDTH,
 } from "../profile-panel-resize.ts";
 
-export function ProfilePanelResizer(props: PanelResizeProps) {
+export function ProfilePanelResizer({
+  conversation = false,
+  ...props
+}: PanelResizeProps & { conversation?: boolean }) {
   return (
     <PanelResizer
       {...props}
+      measureParent
+      highlight={!conversation}
+      {...(conversation ? { testId: "conversation-inspector-resizer" } : {})}
       label="调整 Agent 资料面板宽度"
       className="rah-agent-profile-resizer"
       direction={-1}

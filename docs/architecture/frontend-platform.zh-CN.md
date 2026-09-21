@@ -392,3 +392,5 @@ Agent 与 Human 目录复用 `useReconciledQuery` 的可见性轮询、超时及
 2026-09-20：首次初始化排队状态由 Kernel 从现有 Activation/first-run event 投影为
 presence 的 initializing 原因，底栏显示“等待初始化”；真实工作仍依赖 RunAttempt/轨迹。
 [初始化和动态栏证据](../audits/2026-09-20-agent-first-run-greeting.zh-CN.md)。
+
+初始加载与轮询遵循[统一加载状态和等待修复](../audits/2026-09-21-pwa-loading-performance.zh-CN.md)：同一读取不被定时刷新取消，后台读取保留现有内容，Room 诊断不阻塞正文。

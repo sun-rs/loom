@@ -20,7 +20,12 @@ export function RuntimePicker({
 }: {
   label: string;
   value: string;
-  options: { id: string; label: string; nativeId?: string }[];
+  options: {
+    id: string;
+    label: string;
+    nativeId?: string;
+    description?: string | undefined;
+  }[];
   onChange: (value: string) => void;
   disabled: boolean;
   required?: boolean;

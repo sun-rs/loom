@@ -16,6 +16,7 @@ export function ThreadPanelResizer({
   return (
     <PanelResizer
       {...props}
+      measureParent
       label={inspector ? "调整 Agent 资料面板宽度" : "调整消息列宽度"}
       className={inspector ? "rah-agent-profile-resizer" : "rah-thread-resizer"}
       direction={-1}

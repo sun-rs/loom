@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { useComposerAutosize } from "../use-composer-autosize.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
@@ -190,7 +191,7 @@ export function AttachmentComments({
         </button>
       </div>
       <div className="rah-attachment-comments-list" inert={!open}>
-        {!data && !request?.error && <p role="status">正在加载评论…</p>}
+        {!data && !request?.error && <LoadingState />}
         {request?.error && (
           <div role="alert">
             {request.error}

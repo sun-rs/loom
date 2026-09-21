@@ -142,6 +142,7 @@
   --mint: #A9D877;                       /* fallback: bundle --color-brutal-lime */
   --presence-off: #A0A09A;               /* 离线状态点（iOS 截图估读，非 bundle 实测） */
   --gray-chip: #E8E6E0;                  /* 已关闭、未安装、加载态 chip */
+  --agent-unavailable-icon-bg: oklch(92.8% .006 264.531); /* Raft --color-gray-200 */
   --runtime-unavailable-bg: oklch(96.7% .003 264.542); /* Raft index-D8Neh8lc.css --color-gray-100 */
   --hover-yellow: #FFF3C4;               /* 下拉行 hover */
   --soft-signal: rgba(255, 212, 64, .3); /* 悬浮工具条按钮 hover 底（实测 hover:bg-soft-signal/30） */
@@ -5656,10 +5657,67 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
   color: var(--ink-70);
 }
 
+/* ===== packages/ui-tokens/src/neo-brutalist/loading.css ===== */
+/* Raft v1.17.3 cream is reserved for boot; local loading preserves its surface. */
+.rah-loading-state {
+  display: flex;
+  flex: 1;
+  min-height: 160px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: #737373;
+  font-size: 14px;
+  font-weight: 600;
+}
+.rah-loading-state.is-inline {
+  display: inline-flex;
+  width: auto;
+  min-height: 0;
+  background: transparent;
+  font: inherit;
+}
+.rah-loading-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: rah-loading-spin 800ms linear infinite;
+}
+@keyframes rah-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-loading-spinner {
+    animation-duration: 2400ms;
+  }
+}
+.rah-boot-loading {
+  background: var(--cream, #fffaef);
+  display: flex;
+  min-height: 100dvh;
+}
+.messages > .rah-loading-state,
+.rah-profile-body > .rah-loading-state,
+.feed-wrap > .rah-loading-state,
+.result-list > .rah-loading-state {
+  min-height: 100%;
+}
+.feed:has(.rah-loading-state) .feed-wrap {
+  height: 100%;
+}
+
 /* ===== packages/ui-tokens/src/neo-brutalist/index.css ===== */
 /* RAH Neo-Brutalist UI: one production and fixture stylesheet entry.
    Preserve adoption order while migrating legacy page families incrementally.
    overlays.css is already imported by styles.css; do not import it twice. */
+
 
 
 
@@ -10337,7 +10395,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   background: transparent;
   border: 2px solid transparent;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   height: var(--raft-members-sidebar-row-height);
   padding: var(--raft-members-sidebar-row-padding);
   text-align: left;
@@ -10365,13 +10423,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-agent-sidebar-section {
-  margin-top: 8px;
+  margin-top: 12px;
 }
-
 .rah-agent-sidebar-section > header {
+  margin-bottom: 4px;
   align-items: center;
   display: flex;
-  gap: 6px;
+  gap: 4px;
   height: 24px;
   padding-inline: 8px;
 }
@@ -10456,10 +10514,11 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   color: var(--ink-40);
   display: flex;
   font: 10px/15px var(--mono);
-  gap: 5px;
-  height: 19px;
+  gap: 4px;
+  height: 15px;
+  margin: 6px 0 2px;
   overflow: hidden;
-  padding-inline: 12px;
+  padding-inline: 8px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -11599,8 +11658,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   font: 700 10px/15px var(--sans);
   flex-shrink: 0;
 }
-.rah-agent-unavailable > header {
-  gap: 16px;
+.rah-agent-unavailable-icon {
+  background: var(--agent-unavailable-icon-bg);
 }
 .rah-agent-unavailable {
   flex: 1;
@@ -11610,7 +11669,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-agent-unavailable > header h2 {
   flex: 1;
-  font: 700 20px/28px var(--sans);
 }
 
 /* ===== apps/web/src/member-relationship-graph.css ===== */
@@ -13245,7 +13303,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   grid-template-columns: var(--rail-w) minmax(0, 560px) minmax(0, 1fr);
 }
 .rah-search-channel-open > .channel {
-  border-left: var(--bd);
+  border-left: 0;
 }
 .rah-public-preview-messages {
   flex: 1;
@@ -13311,6 +13369,20 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-discovery.search-main .filter-bar {
   padding: 12px 16px;
+}
+@media (max-width: 767px) and (hover: none) and (pointer: coarse) {
+  /* Touch-only narrow surfaces scroll; mouse-driven windows keep wrapping.
+     Search filters use portaled menus, so the row can scroll without clipping them. */
+  .rah-discovery.search-main .filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  .rah-discovery.search-main .filter-bar > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 }
 @media (max-width: 767px) {
   .rah-search-history-edit {
@@ -13465,6 +13537,15 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   color: var(--ink-40);
   border-color: var(--ink-40);
   background: rgb(0 0 0 / 4%);
+}
+
+/* The list owns the 2px seam. Keep the drag highlight on that same seam. */
+.app:is(.rah-search-channel-open, .rah-activity-preview)
+  > .rah-search-resizer::after {
+  left: 2px;
+}
+.app.rah-search-channel-open > .rah-search-resizer:focus-visible {
+  outline: none;
 }
 
 /* ===== apps/web/src/task-detail.css ===== */
@@ -13788,6 +13869,27 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     > span {
     max-width: 10ch;
   }
+}
+
+/* Avatar navigation remains inside the task dialog and its focus scope. */
+.rah-task-modal-discussion {
+  display: contents;
+}
+.rah-task-detail-bar[hidden],
+.rah-task-modal-discussion[hidden] {
+  display: none;
+}
+.rah-task-modal-profile {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.rah-task-modal-profile > .rah-agent-peek {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 0;
 }
 
 /* ===== apps/web/src/discovery-controls.css ===== */
@@ -14167,6 +14269,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .rah-discovery-popover-options
   > button:last-child {
   border-bottom: 0;
+}
+
+.rah-discovery-option-description {
+  display: block;
+  white-space: normal;
+  font: 400 12px/16px var(--sans);
+  color: var(--ink-50);
 }
 
 /* ===== apps/web/src/identity-interactions.css ===== */
@@ -14571,7 +14680,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source] {
   grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(320px, 1fr) min(
-      var(--thread-w),
+      var(--rah-conversation-profile-width, 380px),
       calc(100% - var(--rail-w) - var(--sidebar-w) - 320px)
     );
 }
@@ -17613,8 +17722,8 @@ html[data-rah-hide-empty-sidebar-sections="true"]
   <p>本页只用产品自身的样式表渲染，页面外壳与它所记录的刻度同源。所有数值来自已提交的规格与令牌文件。</p>
   <dl>
     <div><dt>组件规格</dt><dd>2</dd></div>
-    <div><dt>令牌</dt><dd>149</dd></div>
-    <div><dt>内联样式表</dt><dd>43</dd></div>
+    <div><dt>令牌</dt><dd>150</dd></div>
+    <div><dt>内联样式表</dt><dd>44</dd></div>
     <div><dt>生成器</dt><dd>scripts/build-ui-catalog.mjs</dd></div>
   </dl>
 </header>
@@ -18813,8 +18922,8 @@ npm run check:ui-catalog</pre>
 <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>令牌</th><th>值</th><th>样例</th><th>登记说明</th></tr></thead><tbody><tr><td>--bw-2</td><td>2px</td><td><span class="uic-ruler" style="width:var(--bw-2)"></span></td><td>bundle --tw-border-style: solid 的结构描边宽度</td></tr><tr><td>--bd</td><td>var(--bw-2) solid var(--black)</td><td></td><td></td></tr><tr><td>--bd-heavy</td><td>2px solid var(--black)</td><td></td><td>全宽分隔线（实测同为 2px）</td></tr><tr><td>--shadow-s</td><td>2px 2px 0 var(--ink)</td><td></td><td>小按钮、chip、小徽标</td></tr><tr><td>--shadow-m</td><td>4px 4px 0 var(--ink)</td><td></td><td>卡片、选中态、输入框、下拉面板</td></tr><tr><td>--shadow-l</td><td>6px 6px 0 var(--ink)</td><td></td><td>模态、抽屉</td></tr><tr><td>--shadow-xs</td><td>1px 1px 0 var(--ink)</td><td></td><td>微型件</td></tr><tr><td>--shadow-press</td><td>1px 1px 0 var(--ink)</td><td></td><td>按压态（实测 .active:shadow-brutal-active）</td></tr><tr><td>--shadow-inset-check</td><td>inset 0 0 0 2.5px var(--bg)</td><td></td><td></td></tr><tr><td>--shadow-soft</td><td>0 4px 16px rgba(20,17,17,.10)</td><td></td><td></td></tr><tr><td>--shadow-side</td><td>-6px 0 0 rgba(20,17,17,.12)</td><td></td><td></td></tr><tr><td>--shadow-logo</td><td>2px 2px 0 var(--ink)</td><td></td><td></td></tr><tr><td>--press-translate</td><td>1px</td><td><span class="uic-ruler" style="width:var(--press-translate)"></span></td><td></td></tr><tr><td>--transition-fast</td><td>.1s</td><td></td><td></td></tr></tbody></table></div>
 <h3>桌面布局度量（7）</h3>
 <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>令牌</th><th>值</th><th>样例</th><th>登记说明</th></tr></thead><tbody><tr><td>--rail-w</td><td>64px</td><td><span class="uic-ruler" style="width:var(--rail-w)"></span></td><td>图标导航栏宽；40px rail item 保持不变</td></tr><tr><td>--sidebar-w</td><td>320px</td><td><span class="uic-ruler" style="width:var(--sidebar-w)"></span></td><td>live DOM: sidebar wrapper inline width 320px</td></tr><tr><td>--thread-w</td><td>520px</td><td><span class="uic-ruler" style="width:var(--thread-w)"></span></td><td>消息列展开宽度</td></tr><tr><td>--head-h</td><td>62px</td><td><span class="uic-ruler" style="width:var(--head-h)"></span></td><td>侧栏 / 频道 / 消息列头部共同高度</td></tr><tr><td>--tabs-h</td><td>28px</td><td><span class="uic-ruler" style="width:var(--tabs-h)"></span></td><td>聊天 / 任务 / 文件分段带总高度</td></tr><tr><td>--message-line</td><td>20px</td><td><span class="uic-ruler" style="width:var(--message-line)"></span></td><td>14px 聊天正文行高</td></tr><tr><td>--composer-box-h</td><td>96px</td><td><span class="uic-ruler" style="width:var(--composer-box-h)"></span></td><td>带边框 composer 盒总高度</td></tr></tbody></table></div>
-<h3>语义色（50）</h3>
-<div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>令牌</th><th>值</th><th>样例</th><th>登记说明</th></tr></thead><tbody><tr><td>--yellow</td><td>var(--brutal-yellow)</td><td></td><td>导航栏、激活标签、频道徽标、滚动条</td></tr><tr><td>--pink</td><td>var(--brutal-pink)</td><td></td><td>选中态、主按钮、发送键</td></tr><tr><td>--cyan</td><td>var(--brutal-cyan)</td><td></td><td>进行中、运行时 chip</td></tr><tr><td>--lavender</td><td>#BBAFE6</td><td><span class="uic-swatch" style="background:#BBAFE6"></span></td><td>提及 chip、待确认、附件图标（bundle: --color-brutal-lavender）</td></tr><tr><td>--orange</td><td>#F8A16F</td><td><span class="uic-swatch" style="background:#F8A16F"></span></td><td>待办、警告级操作（bundle 实测 hex）</td></tr><tr><td>--coral</td><td>#F97264</td><td><span class="uic-swatch" style="background:#F97264"></span></td><td>危险操作（删除）（bundle 实测 hex）</td></tr><tr><td>--green</td><td>#A9D877</td><td><span class="uic-swatch" style="background:#A9D877"></span></td><td>fallback: bundle --color-brutal-lime</td></tr><tr><td>--mint</td><td>#A9D877</td><td><span class="uic-swatch" style="background:#A9D877"></span></td><td>fallback: bundle --color-brutal-lime</td></tr><tr><td>--presence-off</td><td>#A0A09A</td><td><span class="uic-swatch" style="background:#A0A09A"></span></td><td>离线状态点（iOS 截图估读，非 bundle 实测）</td></tr><tr><td>--gray-chip</td><td>#E8E6E0</td><td><span class="uic-swatch" style="background:#E8E6E0"></span></td><td>已关闭、未安装、加载态 chip</td></tr><tr><td>--runtime-unavailable-bg</td><td>oklch(96.7% .003 264.542)</td><td><span class="uic-swatch" style="background:oklch(96.7% .003 264.542)"></span></td><td>Raft index-D8Neh8lc.css --color-gray-100</td></tr><tr><td>--hover-yellow</td><td>#FFF3C4</td><td><span class="uic-swatch" style="background:#FFF3C4"></span></td><td>下拉行 hover</td></tr><tr><td>--soft-signal</td><td>rgba(255, 212, 64, .3)</td><td><span class="uic-swatch" style="background:rgba(255, 212, 64, .3)"></span></td><td>悬浮工具条按钮 hover 底（实测 hover:bg-soft-signal/30）</td></tr><tr><td>--m-tabbar</td><td>#EFEFEA</td><td><span class="uic-swatch" style="background:#EFEFEA"></span></td><td>移动端胶囊底栏底色（iOS 截图估读）</td></tr><tr><td>--m-tab-active</td><td>#E3E3DC</td><td><span class="uic-swatch" style="background:#E3E3DC"></span></td><td>移动端胶囊 tab 激活底（iOS 截图估读）</td></tr><tr><td>--pink-soft</td><td>#FBD7E2</td><td><span class="uic-swatch" style="background:#FBD7E2"></span></td><td>移动端发送键软底（移动 web 实测 chat-390）</td></tr><tr><td>--soft-line</td><td>#B2B2B2</td><td><span class="uic-swatch" style="background:#B2B2B2"></span></td><td>移动端软件描边/图标（移动 web 实测 chat-390）</td></tr><tr><td>--attachment-comment-stone</td><td>#c0b9b1</td><td><span class="uic-swatch" style="background:#c0b9b1"></span></td><td></td></tr><tr><td>--cream</td><td>var(--brutal-cream)</td><td></td><td>侧栏、二级侧栏底色</td></tr><tr><td>--paper</td><td>#FFFFFF</td><td><span class="uic-swatch" style="background:#FFFFFF"></span></td><td>live Raft layer-panel：顶栏 / 标签栏 / 输入区</td></tr><tr><td>--bg</td><td>#FFFFFF</td><td><span class="uic-swatch" style="background:#FFFFFF"></span></td><td>内容流底色</td></tr><tr><td>--black</td><td>#000000</td><td><span class="uic-swatch" style="background:#000000"></span></td><td>fallback: bundle --color-black，结构描边</td></tr><tr><td>--ink</td><td>var(--brutal-black)</td><td></td><td>fallback: bundle --color-brutal-black，正文/阴影墨</td></tr><tr><td>--muted</td><td>#555552</td><td><span class="uic-swatch" style="background:#555552"></span></td><td>次要文字</td></tr><tr><td>--preview-bg</td><td>rgba(0,0,0,.03)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.03)"></span></td><td>live: bg-black/[0.03]</td></tr><tr><td>--preview-hover-bg</td><td>rgba(0,0,0,.08)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.08)"></span></td><td>live: hover:bg-black/[0.08]</td></tr><tr><td>--preview-count</td><td>rgba(0,0,0,.55)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.55)"></span></td><td>live: text-black/55</td></tr><tr><td>--preview-sender</td><td>rgba(0,0,0,.70)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.70)"></span></td><td>live: text-black/70</td></tr><tr><td>--preview-time</td><td>rgba(0,0,0,.40)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.40)"></span></td><td>live: text-black/40</td></tr><tr><td>--focus-ink</td><td>#000000</td><td><span class="uic-swatch" style="background:#000000"></span></td><td>live focus-visible:outline-black</td></tr><tr><td>--placeholder</td><td>rgba(20,17,17,.50)</td><td><span class="uic-swatch" style="background:rgba(20,17,17,.50)"></span></td><td>preflight: currentColor 50% transparent</td></tr><tr><td>--scrim</td><td>rgba(20, 17, 17, .3)</td><td><span class="uic-swatch" style="background:rgba(20, 17, 17, .3)"></span></td><td>模态遮罩</td></tr><tr><td>--ink-40</td><td>rgba(0,0,0,.4)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.4)"></span></td><td></td></tr><tr><td>--ink-45</td><td>rgba(0,0,0,.45)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.45)"></span></td><td>live pinned-empty hint: text-black/45</td></tr><tr><td>--ink-50</td><td>rgba(0,0,0,.5)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.5)"></span></td><td></td></tr><tr><td>--ink-55</td><td>rgba(0,0,0,.55)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.55)"></span></td><td>live: text-black/55</td></tr><tr><td>--ink-08</td><td>rgba(0,0,0,.08)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.08)"></span></td><td>live: black/8</td></tr><tr><td>--ink-05</td><td>rgba(0,0,0,.05)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.05)"></span></td><td>live: black/5</td></tr><tr><td>--ink-10</td><td>rgba(0,0,0,.1)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.1)"></span></td><td>live: black/10</td></tr><tr><td>--ink-20</td><td>rgba(0,0,0,.2)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.2)"></span></td><td></td></tr><tr><td>--ink-30</td><td>rgba(0,0,0,.3)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.3)"></span></td><td></td></tr><tr><td>--ink-60</td><td>rgba(0,0,0,.6)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.6)"></span></td><td></td></tr><tr><td>--ink-70</td><td>rgba(0,0,0,.7)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.7)"></span></td><td>live: text-black/70</td></tr><tr><td>--scrollbar-thumb</td><td>rgba(0,0,0,.24)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.24)"></span></td><td></td></tr><tr><td>--scrollbar-thumb-hover</td><td>rgba(0,0,0,.36)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.36)"></span></td><td>容器 hover（webkit 兜底路径）</td></tr><tr><td>--scrollbar-thumb-active</td><td>rgba(0,0,0,.52)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.52)"></span></td><td>滑块 hover（webkit 兜底路径）</td></tr><tr><td>--tab-active</td><td>var(--brutal-yellow-400)</td><td></td><td>激活 tab（实测刻度 yellow-400）</td></tr><tr><td>--tab-hover</td><td>oklch(95.08% .00036 1.5)</td><td><span class="uic-swatch" style="background:oklch(95.08% .00036 1.5)"></span></td><td>未激活 tab hover（实测近白暖灰）</td></tr><tr><td>--term-ink</td><td>#F5F2E9</td><td><span class="uic-swatch" style="background:#F5F2E9"></span></td><td>终端块文字（实测米色）</td></tr><tr><td>--preview-text</td><td>rgba(0,0,0,.60)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.60)"></span></td><td>live: text-black/60</td></tr></tbody></table></div>
+<h3>语义色（51）</h3>
+<div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>令牌</th><th>值</th><th>样例</th><th>登记说明</th></tr></thead><tbody><tr><td>--yellow</td><td>var(--brutal-yellow)</td><td></td><td>导航栏、激活标签、频道徽标、滚动条</td></tr><tr><td>--pink</td><td>var(--brutal-pink)</td><td></td><td>选中态、主按钮、发送键</td></tr><tr><td>--cyan</td><td>var(--brutal-cyan)</td><td></td><td>进行中、运行时 chip</td></tr><tr><td>--lavender</td><td>#BBAFE6</td><td><span class="uic-swatch" style="background:#BBAFE6"></span></td><td>提及 chip、待确认、附件图标（bundle: --color-brutal-lavender）</td></tr><tr><td>--orange</td><td>#F8A16F</td><td><span class="uic-swatch" style="background:#F8A16F"></span></td><td>待办、警告级操作（bundle 实测 hex）</td></tr><tr><td>--coral</td><td>#F97264</td><td><span class="uic-swatch" style="background:#F97264"></span></td><td>危险操作（删除）（bundle 实测 hex）</td></tr><tr><td>--green</td><td>#A9D877</td><td><span class="uic-swatch" style="background:#A9D877"></span></td><td>fallback: bundle --color-brutal-lime</td></tr><tr><td>--mint</td><td>#A9D877</td><td><span class="uic-swatch" style="background:#A9D877"></span></td><td>fallback: bundle --color-brutal-lime</td></tr><tr><td>--presence-off</td><td>#A0A09A</td><td><span class="uic-swatch" style="background:#A0A09A"></span></td><td>离线状态点（iOS 截图估读，非 bundle 实测）</td></tr><tr><td>--gray-chip</td><td>#E8E6E0</td><td><span class="uic-swatch" style="background:#E8E6E0"></span></td><td>已关闭、未安装、加载态 chip</td></tr><tr><td>--agent-unavailable-icon-bg</td><td>oklch(92.8% .006 264.531)</td><td><span class="uic-swatch" style="background:oklch(92.8% .006 264.531)"></span></td><td>Raft --color-gray-200</td></tr><tr><td>--runtime-unavailable-bg</td><td>oklch(96.7% .003 264.542)</td><td><span class="uic-swatch" style="background:oklch(96.7% .003 264.542)"></span></td><td>Raft index-D8Neh8lc.css --color-gray-100</td></tr><tr><td>--hover-yellow</td><td>#FFF3C4</td><td><span class="uic-swatch" style="background:#FFF3C4"></span></td><td>下拉行 hover</td></tr><tr><td>--soft-signal</td><td>rgba(255, 212, 64, .3)</td><td><span class="uic-swatch" style="background:rgba(255, 212, 64, .3)"></span></td><td>悬浮工具条按钮 hover 底（实测 hover:bg-soft-signal/30）</td></tr><tr><td>--m-tabbar</td><td>#EFEFEA</td><td><span class="uic-swatch" style="background:#EFEFEA"></span></td><td>移动端胶囊底栏底色（iOS 截图估读）</td></tr><tr><td>--m-tab-active</td><td>#E3E3DC</td><td><span class="uic-swatch" style="background:#E3E3DC"></span></td><td>移动端胶囊 tab 激活底（iOS 截图估读）</td></tr><tr><td>--pink-soft</td><td>#FBD7E2</td><td><span class="uic-swatch" style="background:#FBD7E2"></span></td><td>移动端发送键软底（移动 web 实测 chat-390）</td></tr><tr><td>--soft-line</td><td>#B2B2B2</td><td><span class="uic-swatch" style="background:#B2B2B2"></span></td><td>移动端软件描边/图标（移动 web 实测 chat-390）</td></tr><tr><td>--attachment-comment-stone</td><td>#c0b9b1</td><td><span class="uic-swatch" style="background:#c0b9b1"></span></td><td></td></tr><tr><td>--cream</td><td>var(--brutal-cream)</td><td></td><td>侧栏、二级侧栏底色</td></tr><tr><td>--paper</td><td>#FFFFFF</td><td><span class="uic-swatch" style="background:#FFFFFF"></span></td><td>live Raft layer-panel：顶栏 / 标签栏 / 输入区</td></tr><tr><td>--bg</td><td>#FFFFFF</td><td><span class="uic-swatch" style="background:#FFFFFF"></span></td><td>内容流底色</td></tr><tr><td>--black</td><td>#000000</td><td><span class="uic-swatch" style="background:#000000"></span></td><td>fallback: bundle --color-black，结构描边</td></tr><tr><td>--ink</td><td>var(--brutal-black)</td><td></td><td>fallback: bundle --color-brutal-black，正文/阴影墨</td></tr><tr><td>--muted</td><td>#555552</td><td><span class="uic-swatch" style="background:#555552"></span></td><td>次要文字</td></tr><tr><td>--preview-bg</td><td>rgba(0,0,0,.03)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.03)"></span></td><td>live: bg-black/[0.03]</td></tr><tr><td>--preview-hover-bg</td><td>rgba(0,0,0,.08)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.08)"></span></td><td>live: hover:bg-black/[0.08]</td></tr><tr><td>--preview-count</td><td>rgba(0,0,0,.55)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.55)"></span></td><td>live: text-black/55</td></tr><tr><td>--preview-sender</td><td>rgba(0,0,0,.70)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.70)"></span></td><td>live: text-black/70</td></tr><tr><td>--preview-time</td><td>rgba(0,0,0,.40)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.40)"></span></td><td>live: text-black/40</td></tr><tr><td>--focus-ink</td><td>#000000</td><td><span class="uic-swatch" style="background:#000000"></span></td><td>live focus-visible:outline-black</td></tr><tr><td>--placeholder</td><td>rgba(20,17,17,.50)</td><td><span class="uic-swatch" style="background:rgba(20,17,17,.50)"></span></td><td>preflight: currentColor 50% transparent</td></tr><tr><td>--scrim</td><td>rgba(20, 17, 17, .3)</td><td><span class="uic-swatch" style="background:rgba(20, 17, 17, .3)"></span></td><td>模态遮罩</td></tr><tr><td>--ink-40</td><td>rgba(0,0,0,.4)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.4)"></span></td><td></td></tr><tr><td>--ink-45</td><td>rgba(0,0,0,.45)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.45)"></span></td><td>live pinned-empty hint: text-black/45</td></tr><tr><td>--ink-50</td><td>rgba(0,0,0,.5)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.5)"></span></td><td></td></tr><tr><td>--ink-55</td><td>rgba(0,0,0,.55)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.55)"></span></td><td>live: text-black/55</td></tr><tr><td>--ink-08</td><td>rgba(0,0,0,.08)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.08)"></span></td><td>live: black/8</td></tr><tr><td>--ink-05</td><td>rgba(0,0,0,.05)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.05)"></span></td><td>live: black/5</td></tr><tr><td>--ink-10</td><td>rgba(0,0,0,.1)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.1)"></span></td><td>live: black/10</td></tr><tr><td>--ink-20</td><td>rgba(0,0,0,.2)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.2)"></span></td><td></td></tr><tr><td>--ink-30</td><td>rgba(0,0,0,.3)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.3)"></span></td><td></td></tr><tr><td>--ink-60</td><td>rgba(0,0,0,.6)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.6)"></span></td><td></td></tr><tr><td>--ink-70</td><td>rgba(0,0,0,.7)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.7)"></span></td><td>live: text-black/70</td></tr><tr><td>--scrollbar-thumb</td><td>rgba(0,0,0,.24)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.24)"></span></td><td></td></tr><tr><td>--scrollbar-thumb-hover</td><td>rgba(0,0,0,.36)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.36)"></span></td><td>容器 hover（webkit 兜底路径）</td></tr><tr><td>--scrollbar-thumb-active</td><td>rgba(0,0,0,.52)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.52)"></span></td><td>滑块 hover（webkit 兜底路径）</td></tr><tr><td>--tab-active</td><td>var(--brutal-yellow-400)</td><td></td><td>激活 tab（实测刻度 yellow-400）</td></tr><tr><td>--tab-hover</td><td>oklch(95.08% .00036 1.5)</td><td><span class="uic-swatch" style="background:oklch(95.08% .00036 1.5)"></span></td><td>未激活 tab hover（实测近白暖灰）</td></tr><tr><td>--term-ink</td><td>#F5F2E9</td><td><span class="uic-swatch" style="background:#F5F2E9"></span></td><td>终端块文字（实测米色）</td></tr><tr><td>--preview-text</td><td>rgba(0,0,0,.60)</td><td><span class="uic-swatch" style="background:rgba(0,0,0,.60)"></span></td><td>live: text-black/60</td></tr></tbody></table></div>
 <h3>刻度层（组件不得直接消费）（49）</h3>
 <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>令牌</th><th>值</th><th>样例</th><th>登记说明</th></tr></thead><tbody><tr><td>--brutal-yellow-50</td><td>oklch(98.4% .017 84.56)</td><td><span class="uic-swatch" style="background:oklch(98.4% .017 84.56)"></span></td><td></td></tr><tr><td>--brutal-yellow-100</td><td>oklch(97.5% .027 85.64)</td><td><span class="uic-swatch" style="background:oklch(97.5% .027 85.64)"></span></td><td></td></tr><tr><td>--brutal-yellow-200</td><td>oklch(94% .066 86.23)</td><td><span class="uic-swatch" style="background:oklch(94% .066 86.23)"></span></td><td></td></tr><tr><td>--brutal-yellow-300</td><td>oklch(91.3% .103 88.02)</td><td><span class="uic-swatch" style="background:oklch(91.3% .103 88.02)"></span></td><td></td></tr><tr><td>--brutal-yellow-400</td><td>oklch(88.3% .162 91.89)</td><td><span class="uic-swatch" style="background:oklch(88.3% .162 91.89)"></span></td><td></td></tr><tr><td>--brutal-yellow-500</td><td>oklch(75.9% .155 92.93)</td><td><span class="uic-swatch" style="background:oklch(75.9% .155 92.93)"></span></td><td></td></tr><tr><td>--brutal-yellow-600</td><td>oklch(63.7% .13 92.64)</td><td><span class="uic-swatch" style="background:oklch(63.7% .13 92.64)"></span></td><td></td></tr><tr><td>--brutal-yellow-700</td><td>oklch(50.8% .104 92.9)</td><td><span class="uic-swatch" style="background:oklch(50.8% .104 92.9)"></span></td><td></td></tr><tr><td>--brutal-yellow-800</td><td>oklch(38.8% .08 93.41)</td><td><span class="uic-swatch" style="background:oklch(38.8% .08 93.41)"></span></td><td></td></tr><tr><td>--brutal-yellow-900</td><td>oklch(26% .053 92.86)</td><td><span class="uic-swatch" style="background:oklch(26% .053 92.86)"></span></td><td></td></tr><tr><td>--brutal-yellow-950</td><td>oklch(19.9% .041 93.21)</td><td><span class="uic-swatch" style="background:oklch(19.9% .041 93.21)"></span></td><td></td></tr><tr><td>--brutal-yellow</td><td>#FFD440</td><td><span class="uic-swatch" style="background:#FFD440"></span></td><td></td></tr><tr><td>--brutal-pink-50</td><td>oklch(96.8% .017 359.4)</td><td><span class="uic-swatch" style="background:oklch(96.8% .017 359.4)"></span></td><td></td></tr><tr><td>--brutal-pink-100</td><td>oklch(93.6% .034 2.02)</td><td><span class="uic-swatch" style="background:oklch(93.6% .034 2.02)"></span></td><td></td></tr><tr><td>--brutal-pink-200</td><td>oklch(87.1% .073 .34)</td><td><span class="uic-swatch" style="background:oklch(87.1% .073 .34)"></span></td><td></td></tr><tr><td>--brutal-pink-300</td><td>oklch(80.8% .116 .76)</td><td><span class="uic-swatch" style="background:oklch(80.8% .116 .76)"></span></td><td></td></tr><tr><td>--brutal-pink-400</td><td>oklch(74.9% .162 .71)</td><td><span class="uic-swatch" style="background:oklch(74.9% .162 .71)"></span></td><td></td></tr><tr><td>--brutal-pink-500</td><td>oklch(66.2% .244 .59)</td><td><span class="uic-swatch" style="background:oklch(66.2% .244 .59)"></span></td><td></td></tr><tr><td>--brutal-pink-600</td><td>oklch(56.5% .226 .56)</td><td><span class="uic-swatch" style="background:oklch(56.5% .226 .56)"></span></td><td></td></tr><tr><td>--brutal-pink-700</td><td>oklch(45.6% .182 .91)</td><td><span class="uic-swatch" style="background:oklch(45.6% .182 .91)"></span></td><td></td></tr><tr><td>--brutal-pink-800</td><td>oklch(35.4% .142 .38)</td><td><span class="uic-swatch" style="background:oklch(35.4% .142 .38)"></span></td><td></td></tr><tr><td>--brutal-pink-900</td><td>oklch(24.6% .098 .96)</td><td><span class="uic-swatch" style="background:oklch(24.6% .098 .96)"></span></td><td></td></tr><tr><td>--brutal-pink-950</td><td>oklch(19.8% .08 359.99)</td><td><span class="uic-swatch" style="background:oklch(19.8% .08 359.99)"></span></td><td></td></tr><tr><td>--brutal-pink</td><td>#FE7DA8</td><td><span class="uic-swatch" style="background:#FE7DA8"></span></td><td></td></tr><tr><td>--brutal-cyan-50</td><td>oklch(97.4% .016 226.9)</td><td><span class="uic-swatch" style="background:oklch(97.4% .016 226.9)"></span></td><td></td></tr><tr><td>--brutal-cyan-100</td><td>oklch(94.5% .033 226.27)</td><td><span class="uic-swatch" style="background:oklch(94.5% .033 226.27)"></span></td><td></td></tr><tr><td>--brutal-cyan-200</td><td>oklch(89.2% .07 224.23)</td><td><span class="uic-swatch" style="background:oklch(89.2% .07 224.23)"></span></td><td></td></tr><tr><td>--brutal-cyan-300</td><td>oklch(83.5% .114 220.86)</td><td><span class="uic-swatch" style="background:oklch(83.5% .114 220.86)"></span></td><td></td></tr><tr><td>--brutal-cyan-400</td><td>oklch(78.3% .135 219.2)</td><td><span class="uic-swatch" style="background:oklch(78.3% .135 219.2)"></span></td><td></td></tr><tr><td>--brutal-cyan-500</td><td>oklch(67.2% .116 219.07)</td><td><span class="uic-swatch" style="background:oklch(67.2% .116 219.07)"></span></td><td></td></tr><tr><td>--brutal-cyan-600</td><td>oklch(56.9% .099 219.95)</td><td><span class="uic-swatch" style="background:oklch(56.9% .099 219.95)"></span></td><td></td></tr><tr><td>--brutal-cyan-700</td><td>oklch(46% .079 219.13)</td><td><span class="uic-swatch" style="background:oklch(46% .079 219.13)"></span></td><td></td></tr><tr><td>--brutal-cyan-800</td><td>oklch(34.8% .06 219.02)</td><td><span class="uic-swatch" style="background:oklch(34.8% .06 219.02)"></span></td><td></td></tr><tr><td>--brutal-cyan-900</td><td>oklch(24.6% .043 221.18)</td><td><span class="uic-swatch" style="background:oklch(24.6% .043 221.18)"></span></td><td></td></tr><tr><td>--brutal-cyan-950</td><td>oklch(18.5% .032 217.82)</td><td><span class="uic-swatch" style="background:oklch(18.5% .032 217.82)"></span></td><td></td></tr><tr><td>--brutal-cyan</td><td>#27CCF3</td><td><span class="uic-swatch" style="background:#27CCF3"></span></td><td></td></tr><tr><td>--brutal-cream-50</td><td>oklch(99.5% .006 87.5)</td><td><span class="uic-swatch" style="background:oklch(99.5% .006 87.5)"></span></td><td></td></tr><tr><td>--brutal-cream-100</td><td>oklch(99.1% .01 87.41)</td><td><span class="uic-swatch" style="background:oklch(99.1% .01 87.41)"></span></td><td></td></tr><tr><td>--brutal-cream-200</td><td>oklch(98.6% .015 86.39)</td><td><span class="uic-swatch" style="background:oklch(98.6% .015 86.39)"></span></td><td></td></tr><tr><td>--brutal-cream-300</td><td>oklch(94.6% .041 88)</td><td><span class="uic-swatch" style="background:oklch(94.6% .041 88)"></span></td><td></td></tr><tr><td>--brutal-cream-400</td><td>oklch(87.1% .09 91)</td><td><span class="uic-swatch" style="background:oklch(87.1% .09 91)"></span></td><td></td></tr><tr><td>--brutal-cream-500</td><td>oklch(76.6% .158 95.1)</td><td><span class="uic-swatch" style="background:oklch(76.6% .158 95.1)"></span></td><td></td></tr><tr><td>--brutal-cream-600</td><td>oklch(64.6% .133 95)</td><td><span class="uic-swatch" style="background:oklch(64.6% .133 95)"></span></td><td></td></tr><tr><td>--brutal-cream-700</td><td>oklch(52.1% .107 95.2)</td><td><span class="uic-swatch" style="background:oklch(52.1% .107 95.2)"></span></td><td></td></tr><tr><td>--brutal-cream-800</td><td>oklch(39.6% .082 95)</td><td><span class="uic-swatch" style="background:oklch(39.6% .082 95)"></span></td><td></td></tr><tr><td>--brutal-cream-900</td><td>oklch(27.6% .057 95.1)</td><td><span class="uic-swatch" style="background:oklch(27.6% .057 95.1)"></span></td><td></td></tr><tr><td>--brutal-cream-950</td><td>oklch(19% .039 94.7)</td><td><span class="uic-swatch" style="background:oklch(19% .039 94.7)"></span></td><td></td></tr><tr><td>--brutal-cream</td><td>#FFFAEF</td><td><span class="uic-swatch" style="background:#FFFAEF"></span></td><td></td></tr><tr><td>--brutal-black</td><td>#141111</td><td><span class="uic-swatch" style="background:#141111"></span></td><td></td></tr></tbody></table></div>
 </section>

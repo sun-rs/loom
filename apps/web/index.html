@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-rah-boot>
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -15,9 +15,22 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/rah-app-icon.svg" type="image/svg+xml" />
     <title>RAH OS</title>
+    <style>
+      html[data-rah-boot],
+      html[data-rah-boot] body {
+        margin: 0;
+        background: #fffaef;
+      }
+    </style>
+    <link rel="stylesheet" href="/src/boot-loading.css" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="rah-loading-state rah-boot-loading" role="status">
+        <span class="rah-loading-spinner" aria-hidden="true"></span
+        ><span>加载中…</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

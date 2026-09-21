@@ -1,7 +1,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { conversationLayout } from "./conversation-layout.ts";
 /** Display measurement only. Keep both mounted panes, draft and scroll owners. */
-export function useConversationLayout(sidebarWidth: number): {
+export function useConversationLayout(
+  sidebarWidth: number,
+  panelKind: "thread" | "profile" = "thread",
+): {
   ref: (element: HTMLDivElement | null) => void;
   mode: ReturnType<typeof conversationLayout>;
 } {
@@ -9,11 +12,13 @@ export function useConversationLayout(sidebarWidth: number): {
   const [mode, setMode] =
     useState<ReturnType<typeof conversationLayout>>("replace");
   const measure = useRef<(() => void) | null>(null);
+  const panel = useRef(panelKind);
   const sidebar = useRef(sidebarWidth);
   useLayoutEffect(() => {
     sidebar.current = sidebarWidth;
+    panel.current = panelKind;
     measure.current?.();
-  }, [sidebarWidth]);
+  }, [sidebarWidth, panelKind]);
   useLayoutEffect(() => {
     if (!element) return;
     const update = () => {
@@ -24,6 +29,7 @@ export function useConversationLayout(sidebarWidth: number): {
           element.clientWidth,
           window.innerHeight,
           rail + sidebar.current,
+          panel.current,
         ),
       );
     };

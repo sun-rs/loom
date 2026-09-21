@@ -5,7 +5,11 @@ import { claudeModelSuggestions } from "./runtime-model-selection.ts";
  * Catalog names win; missing historical catalogs use the same bounded parser.
  */
 export function modelDisplayName(
-  model: { modelId: string; provider?: string; displayName?: string },
+  model: {
+    modelId: string;
+    provider?: string;
+    displayName?: string | undefined;
+  },
   cliId?: string,
 ): string {
   const id = chatModelIdentifier(model);

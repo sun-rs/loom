@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { InteractivePopoverContent } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import { useEffect, useState } from "react";
@@ -99,12 +100,8 @@ export function HumanInboxCenter({
               ))}
             </div>
           )}
-          {loading ? (
-            <div className="notification-empty">
-              <Icon name="bell" />
-              <strong>正在读取 Inbox</strong>
-              <p>从 canonical InputRequest 投影加载。</p>
-            </div>
+          {loading && requests.length === 0 && systemNotices.length === 0 ? (
+            <LoadingState />
           ) : error !== undefined ? (
             <div className="notification-empty is-error">
               <Icon name="bell" />

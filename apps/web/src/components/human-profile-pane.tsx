@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { MembershipRole } from "@rah-os/protocol";
@@ -27,6 +28,7 @@ export function HumanProfilePane({
   onBack,
   backLabel,
   onClose,
+  closeLabel,
   canChangeRole,
   onChangeRole,
   onOpenAgent,
@@ -36,6 +38,7 @@ export function HumanProfilePane({
   workspaceId: string | undefined;
   onBack: () => void;
   backLabel?: string | undefined;
+  closeLabel?: string | undefined;
   onClose?: (() => void) | undefined;
   canChangeRole: boolean;
   onChangeRole: (principalId: string, role: MembershipRole) => Promise<void>;
@@ -138,7 +141,7 @@ export function HumanProfilePane({
         {onClose && (
           <PanelHeaderAction
             className="rah-desktop-only"
-            aria-label="关闭 Human 侧栏"
+            aria-label={closeLabel ?? "关闭 Human 侧栏"}
             onClick={onClose}
           >
             <Icon name="x" />
@@ -154,9 +157,7 @@ export function HumanProfilePane({
             </button>
           </div>
         ) : !profile || !human ? (
-          <p className="rah-profile-notice" role="status">
-            正在读取成员资料…
-          </p>
+          <LoadingState />
         ) : (
           <>
             <HumanProfileFields key={human.principalId} human={human} />

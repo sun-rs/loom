@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import {
   useEffect,
   useMemo,
@@ -319,7 +320,7 @@ function MemberGraphCanvas({
     };
   }, [size.height, size.width]);
   if (!data && loading) {
-    return <div className="rah-member-graph-empty">正在加载关系图…</div>;
+    return <LoadingState />;
   }
   if (members.length === 0 && channels.length === 0) {
     return <div className="rah-member-graph-empty">暂无可见成员关系</div>;

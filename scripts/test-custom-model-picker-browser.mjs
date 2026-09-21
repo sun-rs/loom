@@ -109,6 +109,16 @@ try {
         .getByRole("menuitemradio", { name: "Claude Sonnet 5", exact: true })
         .click();
       await create.getByRole("button", { name: /^推理强度：/ }).click();
+      await expect(
+        page.getByRole("menuitemradio", { name: "默认", exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("menuitemradio", { name: "High", exact: true }),
+      ).toContainText("针对复杂问题提供更深入的推理");
+      await expect(
+        page.getByRole("menuitemradio", { name: "Ultra", exact: true }),
+      ).toHaveCount(0);
+
       await page
         .getByRole("menuitemradio", { name: "High", exact: true })
         .click();
@@ -122,9 +132,21 @@ try {
         await create
           .getByRole("button", { name: /^推理强度：High/ })
           .scrollIntoViewIfNeeded();
-        await page.screenshot({
-          path: `/tmp/claude-version-effort-${width}.png`,
+        await create.getByRole("button", { name: /^推理强度：High/ }).click();
+        const high = page.getByRole("menuitemradio", {
+          name: "High",
+          exact: true,
         });
+        await expect(high).toContainText("针对复杂问题提供更深入的推理");
+        await high.scrollIntoViewIfNeeded();
+        const description = high.locator("small");
+        await expect(description).toBeVisible();
+        assert.equal(
+          await description.evaluate((e) => getComputedStyle(e).fontSize),
+          "12px",
+        );
+        await page.screenshot({ path: `/tmp/effort-description-${width}.png` });
+        await page.keyboard.press("Escape");
       }
       await create
         .getByRole("button", { name: "创建 Agent", exact: true })

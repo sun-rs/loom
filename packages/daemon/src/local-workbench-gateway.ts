@@ -1,3 +1,4 @@
+import { sendStaticFile } from "./static-file-response.ts";
 import { recoveryAssetPath, recoveryShell } from "./web-recovery-assets.ts";
 import { readFile } from "node:fs/promises";
 import { isIP } from "node:net";
@@ -5,7 +6,7 @@ import {
   handleWorkbenchServiceControl,
   type WorkbenchServiceControl,
 } from "./workbench-service-control.ts";
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import {
   createServer,
   request as createHttpRequest,
@@ -437,22 +438,17 @@ export class LocalWorkbenchGateway {
             : "public, max-age=31536000, immutable",
       );
     }
-    if (request.method === "HEAD") {
-      response.end();
-      return;
-    }
     if (isIndex && recoveryNonce) {
+      if (request.method === "HEAD") {
+        response.end();
+        return;
+      }
       response.end(
         recoveryShell(await readFile(staticPath, "utf8"), recoveryNonce),
       );
       return;
     }
-    await new Promise<void>((resolvePromise, reject) => {
-      const stream = createReadStream(staticPath);
-      stream.once("error", reject);
-      stream.once("end", resolvePromise);
-      stream.pipe(response);
-    });
+    await sendStaticFile(request, response, staticPath);
   }
 
   #setWebBuildHeader(response: ServerResponse): void {

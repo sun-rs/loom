@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { runtimeProductName } from "../agent-runtime-presentation.ts";
 import {
   rememberTaskFilters,
@@ -53,7 +54,6 @@ import { taskPersonOptions } from "./task-person-options.tsx";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { formatActivityRelativeTime } from "../activity-relative-time.ts";
 import { formatRahDateTime } from "../date-time-presentation.ts";
-import { SearchResultSkeleton } from "@rah-os/ui-web/neo-brutalist/search-result-skeleton";
 import {
   frequentSearchEntities,
   recordSearchOpen,
@@ -268,11 +268,22 @@ function Pager({
     </nav>
   );
 }
-function Failure({ error }: { error?: string | undefined }) {
+function Failure({
+  error,
+  onRetry,
+}: {
+  error?: string | undefined;
+  onRetry?: (() => void) | undefined;
+}) {
   return error ? (
-    <p role="alert" className="rah-inline-error">
-      {error}
-    </p>
+    <div role="alert" className="rah-inline-error">
+      <p>{error}</p>
+      {onRetry && (
+        <button type="button" className="btn" onClick={onRetry}>
+          重试
+        </button>
+      )}
+    </div>
   ) : null;
 }
 function Header({
@@ -450,9 +461,9 @@ function GlobalTasks({
           {!mobile && viewControl}
         </div>
       </section>
-      <Failure error={result.error} />
-      {result.loading && !result.data ? (
-        <p role="status">正在加载任务…</p>
+      <Failure error={result.error} onRetry={result.refresh} />
+      {result.error && !result.data ? null : result.loading && !result.data ? (
+        <LoadingState />
       ) : !tasks.length ? (
         <EmptyState
           context="task"
@@ -907,7 +918,7 @@ function GlobalSearch({
         ) : (
           <div className="result-list">
             {result.loading && !result.data && !directoryMatches?.length ? (
-              <SearchResultSkeleton />
+              <LoadingState />
             ) : result.error && !result.data ? (
               <section className="rah-search-failure" role="alert">
                 <b>搜索失败</b>
@@ -1269,7 +1280,7 @@ function GlobalActivity({
             : "全部已读"}
         </button>
       </section>
-      <Failure error={error ?? result.error} />
+      <Failure error={error ?? result.error} onRetry={result.refresh} />
       <section className="feed">
         {!result.loading && !result.data?.items.length && !result.error ? (
           <EmptyState
@@ -1281,9 +1292,7 @@ function GlobalActivity({
           />
         ) : (
           <div className="feed-wrap">
-            {result.loading && !result.data && (
-              <p role="status">正在加载动态…</p>
-            )}
+            {result.loading && !result.data && <LoadingState />}
             {result.data?.items.map((item) => (
               <article
                 key={item.key}

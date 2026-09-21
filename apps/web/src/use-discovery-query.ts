@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 
 type Query =
@@ -16,72 +16,92 @@ export function useDiscoveryQuery<K extends Query>(
   enabled = true,
 ) {
   const queryKey = JSON.stringify([operation, input]);
-  const [tick, refresh] = useState(0);
+  const refresh = useRef<() => void>(() => {});
   const [result, setResult] = useState<{
+    client?: RahClient;
     key: string;
     data?: RahClientOperationMap[K]["output"];
     error?: string;
     loading: boolean;
   }>({ key: "", loading: true });
   useEffect(() => {
-    if (
-      !enabled ||
-      (operation !== "activity.list" &&
-        operation !== "task.global.list" &&
-        operation !== "task.get" &&
-        operation !== "thread.followers")
-    )
-      return;
-    const refreshVisible = () => {
-      if (document.visibilityState === "visible") refresh((value) => value + 1);
+    if (!enabled) return;
+    let stopped = false;
+    let pending = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let deadline: ReturnType<typeof setTimeout> | undefined;
+    let active: AbortController | undefined;
+    const polling = [
+      "activity.list",
+      "task.global.list",
+      "task.get",
+      "thread.followers",
+    ].includes(operation);
+    const load = async () => {
+      if (stopped || pending) return;
+      clearTimeout(timer);
+      pending = true;
+      const controller = new AbortController();
+      active = controller;
+      setResult((old) => ({
+        ...(old.client === client && old.key === queryKey ? old : {}),
+        client,
+        key: queryKey,
+        loading: true,
+      }));
+      try {
+        const data = await Promise.race([
+          client.request(operation, JSON.parse(queryKey)[1], {
+            signal: controller.signal,
+          }),
+          new Promise<never>((_, reject) => {
+            deadline = setTimeout(() => {
+              controller.abort();
+              reject(new Error("读取超时，请重试"));
+            }, 15000);
+          }),
+        ]);
+        if (!stopped)
+          setResult({ client, key: queryKey, data, loading: false });
+      } catch (error) {
+        if (!stopped)
+          setResult((old) => ({
+            ...(old.client === client && old.key === queryKey ? old : {}),
+            client,
+            key: queryKey,
+            error: error instanceof Error ? error.message : "查询失败",
+            loading: false,
+          }));
+      } finally {
+        clearTimeout(deadline);
+        pending = false;
+        if (!stopped && polling)
+          timer = setTimeout(
+            load,
+            document.visibilityState === "visible" ? 5000 : 15000,
+          );
+      }
     };
-    const interval = window.setInterval(refreshVisible, 5000);
-    window.addEventListener("focus", refreshVisible);
+    const focus = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    refresh.current = () => {
+      void load();
+    };
+    timer = setTimeout(load, operation === "search" ? 200 : 0);
+    if (polling) window.addEventListener("focus", focus);
     return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("focus", refreshVisible);
+      stopped = true;
+      clearTimeout(timer);
+      clearTimeout(deadline);
+      active?.abort();
+      refresh.current = () => {};
+      window.removeEventListener("focus", focus);
     };
-  }, [enabled, operation]);
-  useEffect(() => {
-    const controller = new AbortController();
-    if (!enabled) return () => controller.abort();
-    setResult((old) => ({
-      ...(old.key === queryKey ? old : {}),
-      key: queryKey,
-      loading: true,
-    }));
-    const [, request] = JSON.parse(queryKey) as [
-      K,
-      RahClientOperationMap[K]["input"],
-    ];
-    // Small debounce on Search, including fast query/filter/Workspace changes.
-    const timer = window.setTimeout(
-      () => {
-        void client
-          .request(operation, request, { signal: controller.signal })
-          .then((data) => {
-            if (!controller.signal.aborted)
-              setResult({ key: queryKey, data, loading: false });
-          })
-          .catch((error: unknown) => {
-            if (!controller.signal.aborted)
-              setResult((old) => ({
-                ...(old.key === queryKey ? old : {}),
-                key: queryKey,
-                error: error instanceof Error ? error.message : "查询失败",
-                loading: false,
-              }));
-          });
-      },
-      operation === "search" ? 200 : 0,
-    );
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [client, enabled, operation, queryKey, tick]);
-  const current = result.key === queryKey && enabled;
-  const refreshResult = useCallback(() => refresh((value) => value + 1), []);
+  }, [client, enabled, operation, queryKey]);
+  const current =
+    result.client === client && result.key === queryKey && enabled;
+  const refreshResult = useCallback(() => refresh.current(), []);
   return {
     data: current ? result.data : undefined,
     error: current ? result.error : undefined,

@@ -1,7 +1,12 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
-import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import {
+  AgentMessageContext,
+  HumanIdentityContext,
+  useWorkspaceEntities,
+} from "./workspace-entity-context.tsx";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
-import { useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Task } from "@rah-os/protocol";
 import { createRoomViewModel, type TaskColumnId } from "@rah-os/ui-web";
@@ -19,17 +24,25 @@ import { MessageMarkdown } from "./message-markdown.tsx";
 import { TaskAssigneeControl } from "./task-assignee-control.tsx";
 import type { RoomAgentTarget } from "@rah-os/ui-web";
 
+export type TaskProfileRenderer = (
+  target: { kind: "agent" | "human"; id: string },
+  onBack: () => void,
+  onClose: () => void,
+) => ReactNode;
+
 /** Raft index-BVfbaScj db({presentation:"modal"}) / t9: a modal around the
  * existing Thread, not a second discussion or Task execution owner. */
 export function TaskThreadPresentation({
   modal,
   compact = false,
+  renderProfile,
   children,
   roomName,
   task,
   error,
   onClose,
 }: {
+  renderProfile?: TaskProfileRenderer | undefined;
   modal: boolean;
   compact?: boolean;
   children: ReactNode;
@@ -40,6 +53,7 @@ export function TaskThreadPresentation({
 }) {
   return modal ? (
     <TaskThreadModal
+      renderProfile={renderProfile}
       compact={compact}
       roomName={roomName}
       task={task}
@@ -54,6 +68,7 @@ export function TaskThreadPresentation({
 }
 
 function TaskThreadModal({
+  renderProfile,
   compact,
   children,
   roomName,
@@ -61,11 +76,28 @@ function TaskThreadModal({
   error,
   onClose,
 }: Omit<Parameters<typeof TaskThreadPresentation>[0], "modal">) {
+  const agentIdentity = useContext(AgentMessageContext);
+  const humanIdentity = useContext(HumanIdentityContext);
+  const [profile, setProfile] = useState<Parameters<TaskProfileRenderer>[0]>();
+  const profileTrigger = useRef<HTMLElement | null>(null);
+  const openProfile = (target: Parameters<TaskProfileRenderer>[0]) => {
+    profileTrigger.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setProfile(target);
+  };
+  const closeProfile = () => setProfile(undefined);
+  const closeCurrent = profile ? closeProfile : onClose;
   const dialog = useDialogProtocol({
     blocked: false,
     initialFocus: "container",
-    onClose,
+    onClose: closeCurrent,
   });
+  useEffect(() => {
+    if (profile) dialog.current?.focus({ preventScroll: true });
+    else profileTrigger.current?.focus({ preventScroll: true });
+  }, [profile, dialog]);
   return (
     <DialogLayer
       className={`rah-dialog-layer rah-task-detail-layer${compact ? " rah-task-approval-layer" : ""}`}
@@ -86,7 +118,10 @@ function TaskThreadModal({
         tabIndex={-1}
         data-testid="task-thread-modal"
       >
-        <header className="rah-dialog-header rah-task-detail-bar">
+        <header
+          hidden={!!profile}
+          className="rah-dialog-header rah-task-detail-bar"
+        >
           <PanelHeaderAction
             className={compact ? "rah-hidden" : "rah-mobile-only"}
             aria-label="返回任务页面"
@@ -111,7 +146,39 @@ function TaskThreadModal({
             {error}
           </div>
         ) : (
-          children
+          <>
+            <div className="rah-task-modal-discussion" hidden={!!profile}>
+              <AgentMessageContext.Provider
+                value={
+                  agentIdentity && renderProfile
+                    ? {
+                        ...agentIdentity,
+                        onOpen: (id) => openProfile({ kind: "agent", id }),
+                      }
+                    : agentIdentity
+                }
+              >
+                <HumanIdentityContext.Provider
+                  value={
+                    humanIdentity && renderProfile
+                      ? {
+                          ...humanIdentity,
+                          onOpenHuman: (id) =>
+                            openProfile({ kind: "human", id }),
+                        }
+                      : humanIdentity
+                  }
+                >
+                  {children}
+                </HumanIdentityContext.Provider>
+              </AgentMessageContext.Provider>
+            </div>
+            {profile && renderProfile ? (
+              <div className="rah-task-modal-profile">
+                {renderProfile(profile, closeProfile, onClose)}
+              </div>
+            ) : null}
+          </>
         )}
       </section>
     </DialogLayer>
@@ -143,12 +210,7 @@ export function TaskDetailMetadata({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
-  if (!task)
-    return (
-      <p className="rah-task-detail-loading" role="status">
-        正在加载任务…
-      </p>
-    );
+  if (!task) return <LoadingState />;
   const columns = createRoomViewModel({
     members: people,
     tasks: [task],

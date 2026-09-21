@@ -823,7 +823,7 @@ export function ChannelHeader({
           </p>
         </div>
       </div>
-      {!direct || onCloseSearchPreview ? (
+      {!direct ? (
         <div className="head-actions">
           {!direct && (
             <>
@@ -844,15 +844,6 @@ export function ChannelHeader({
               </PanelHeaderAction>
             </>
           )}
-          {onCloseSearchPreview ? (
-            <PanelHeaderAction
-              className="rah-search-preview-close rah-desktop-only"
-              aria-label={`关闭${previewLabel}预览`}
-              onClick={onCloseSearchPreview}
-            >
-              <Icon name="x" />
-            </PanelHeaderAction>
-          ) : null}
         </div>
       ) : null}
     </PanelHeader>

@@ -125,7 +125,9 @@ try {
     await expect(
       thread.getByRole("textbox", { name: "Thread 回复输入框", exact: true }),
     ).toHaveValue("Draft survives historical polling");
-    assert.ok((await thread.boundingBox()).width >= 360);
+    await expect
+      .poll(async () => (await thread.boundingBox())?.width ?? 0)
+      .toBeGreaterThanOrEqual(360);
   }
   await thread
     .locator('.rah-message-avatar-trigger[aria-label$="资料"]')

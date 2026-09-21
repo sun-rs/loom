@@ -69,6 +69,23 @@ try {
         ),
     );
     await expect(channel).toBeVisible();
+    await expect(channel.locator(".rah-search-preview-close")).toHaveCount(0);
+    if (surface !== "room") {
+      const seam = await page.evaluate(() => {
+        const list = document.querySelector(".rah-discovery");
+        const room = document.querySelector(".channel");
+        const drag = document.querySelector(".rah-search-resizer");
+        return {
+          total:
+            parseFloat(getComputedStyle(list).borderRightWidth) +
+            parseFloat(getComputedStyle(room).borderLeftWidth),
+          hit: drag.getBoundingClientRect().width,
+          line: getComputedStyle(drag, "::after").width,
+        };
+      });
+      assert.deepEqual(seam, { total: 2, hit: 8, line: "2px" });
+    }
+
     const composer = channel.getByRole("textbox", {
       name: "消息输入框",
       exact: true,
@@ -135,7 +152,18 @@ try {
     await expect(thread).toBeHidden();
     await expect(profile).toBeHidden();
     await page.screenshot({ path: `/tmp/shared-navigation-${surface}.png` });
-    await channel.locator(".rah-search-preview-close").click();
+    if (surface === "room") {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await channel.locator(".rah-mobile-back").click();
+    } else {
+      await page
+        .getByRole("navigation", { name: "主导航" })
+        .getByRole("button", {
+          name: surface === "search" ? "搜索" : "动态",
+          exact: true,
+        })
+        .click();
+    }
     await expect(channel.locator(".rah-conversation-head")).toHaveCount(0);
     console.log(surface + " nested four-layer path passed");
   }

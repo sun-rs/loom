@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { lazy, Suspense, useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import {
@@ -45,11 +46,11 @@ export function AttachmentMediaPreview({
     return () => controller.abort();
   }, [client, file.attachmentId, file.size, media.mimeType]);
   if (error) return <p role="alert">{error}</p>;
-  if (!url) return <p role="status">正在加载…</p>;
+  if (!url) return <LoadingState />;
   const failed = () => setError("浏览器无法解码此文件，请下载查看。");
   if (media.kind === "pdf")
     return (
-      <Suspense fallback={<p role="status">正在加载 PDF 查看器…</p>}>
+      <Suspense fallback={<LoadingState />}>
         <PdfAttachmentPreview url={url} filename={file.filename} />
       </Suspense>
     );

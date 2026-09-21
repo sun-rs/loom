@@ -96,18 +96,18 @@ test("message context menu exposes only source-backed Thread and Task actions", 
   assert.match(conversation, /messageTaskMenuAction/u);
 });
 
-test("Search owns Raft loading, failure recovery, and IME request barriers", () => {
+test("Search owns shared loading, failure recovery, and IME request barriers", () => {
   const discovery = read("components/global-discovery.tsx");
-  const skeleton = readLibrary("neo-brutalist/search-result-skeleton.tsx");
+  const loading = readLibrary("neo-brutalist/loading-state.tsx");
 
   assert.match(
     discovery,
     /onCompositionStart=\{\(\) => setComposing\(true\)\}/u,
   );
   assert.match(discovery, /!composing && searchActive/u);
-  assert.match(discovery, /<SearchResultSkeleton/u);
+  assert.match(discovery, /<LoadingState/u);
   assert.match(discovery, /搜索失败/u);
   assert.match(discovery, /onClick=\{result\.refresh\}/u);
-  assert.match(skeleton, /aria-busy="true"/u);
-  assert.match(skeleton, /Array\.from\(\{ length: 5 \}/u);
+  assert.match(loading, /role="status"/u);
+  assert.match(loading, /rah-loading-spinner/u);
 });

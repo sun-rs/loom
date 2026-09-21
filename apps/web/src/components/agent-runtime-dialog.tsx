@@ -268,6 +268,7 @@ export function AgentRuntimeDialog({
             options={efforts.map((item) => ({
               id: item.value,
               label: item.label,
+              description: item.description,
             }))}
             onChange={(next) => setReasoning(next as ReasoningLevel)}
           />

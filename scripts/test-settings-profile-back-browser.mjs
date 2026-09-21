@@ -11,7 +11,28 @@ try {
       .getByRole("button", { name: "频道详情与设置", exact: true })
       .click();
     const drawer = p.locator(".rah-channel-settings-drawer");
+    if (width === 1440) {
+      await expect(
+        drawer.getByRole("button", { name: "关闭频道设置", exact: true }),
+      ).toBeHidden();
+      await expect(drawer.getByRole("button", { name: /^返回/ })).toHaveCount(
+        0,
+      );
+    }
+    await drawer.getByRole("button", { name: "添加成员", exact: true }).click();
+    await expect(
+      drawer.getByRole("button", { name: "返回频道设置", exact: true }),
+    ).toBeVisible();
+    await expect(drawer.getByRole("button", { name: /^关闭/ })).toBeHidden();
+    await drawer
+      .getByRole("button", { name: "返回频道设置", exact: true })
+      .click();
+
     await drawer.getByRole("button", { name: "管理成员", exact: true }).click();
+    await expect(
+      drawer.getByRole("button", { name: "返回频道设置", exact: true }),
+    ).toBeVisible();
+    await expect(drawer.getByRole("button", { name: /^关闭/ })).toBeHidden();
     const row = drawer.locator(".rah-member-row").first();
     await row.click();
     await expect(drawer.locator(".rah-agent-detail-head")).toBeVisible();

@@ -40,6 +40,7 @@
     "test:web:agent-configure": "node scripts/run-agent-configure-browser-gate.mjs",
     "test:web:browser": "node scripts/run-real-browser-gate.mjs",
     "test:web:resize-isolation": "node scripts/test-resize-render-isolation-browser.mjs && node scripts/test-directory-resize-isolation-browser.mjs",
+    "test:web:loading": "node scripts/test-discovery-slow-loading-browser.mjs && node scripts/test-room-nonblocking-activity-browser.mjs && node scripts/test-initial-loading-timeout-browser.mjs",
     "test:web:shared-navigation": "node scripts/test-shared-navigation-browser.mjs && node scripts/test-search-history-stability-browser.mjs",
     "test:web:mobile-chrome": "node scripts/test-mobile-conversation-chrome-browser.mjs && RAH_BROWSER=webkit node scripts/test-mobile-conversation-chrome-browser.mjs",
     "test:web:mobile-navigation": "node scripts/test-mobile-root-entry-browser.mjs && node scripts/test-mobile-tab-navigation-browser.mjs && node scripts/test-task-empty-stability-browser.mjs && node scripts/test-task-touch-scroll-browser.mjs",

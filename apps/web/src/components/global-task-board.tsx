@@ -122,7 +122,6 @@ export function GlobalTaskBoard({
         idempotencyKey,
       });
       onChanged();
-      setNotice(`任务 #${task.taskNumber} 已更新`);
     } catch (failure) {
       const message =
         failure instanceof Error ? failure.message : "操作失败，请重试";

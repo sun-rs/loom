@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Room } from "@rah-os/protocol";
@@ -170,7 +171,7 @@ function PublicChannelPane({
           </button>
         </div>
       ) : !current ? (
-        <p role="status">正在加载频道…</p>
+        <LoadingState />
       ) : (
         <>
           {tab === "files" ? (

@@ -90,6 +90,7 @@
   --mint: #A9D877;                       /* fallback: bundle --color-brutal-lime */
   --presence-off: #A0A09A;               /* 离线状态点（iOS 截图估读，非 bundle 实测） */
   --gray-chip: #E8E6E0;                  /* 已关闭、未安装、加载态 chip */
+  --agent-unavailable-icon-bg: oklch(92.8% .006 264.531); /* Raft --color-gray-200 */
   --runtime-unavailable-bg: oklch(96.7% .003 264.542); /* Raft index-D8Neh8lc.css --color-gray-100 */
   --hover-yellow: #FFF3C4;               /* 下拉行 hover */
   --soft-signal: rgba(255, 212, 64, .3); /* 悬浮工具条按钮 hover 底（实测 hover:bg-soft-signal/30） */

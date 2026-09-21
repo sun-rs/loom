@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { skillSourceLabel } from "../agent-skills-presentation.ts";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -80,9 +81,7 @@ export function AgentSkillsSection({
           </button>
         </div>
       ) : !result ? (
-        <p className="rah-agent-profile-status" role="status">
-          正在加载技能…
-        </p>
+        <LoadingState />
       ) : (
         <div className="rah-agent-skills-scopes">
           <SkillsScope

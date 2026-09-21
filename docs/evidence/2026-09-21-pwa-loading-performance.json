@@ -1,0 +1,225 @@
+{
+  "environment": "Formal localhost Chromium 390x844, cold context, service workers blocked, read-only request policy; single ~11s samples, not iPhone/LAN latency measurements",
+  "formalBuild": "af493dcf41cef569d40572938878e77add154dbac410213452a5e2be0fa52ba3",
+  "before": {
+    "completedApiRequests": 125,
+    "requestCountsByPath": {
+      "/v3/client/push/configuration": 1,
+      "/v1/local/runtimes/list": 3,
+      "/v3/client/health": 1,
+      "/v3/client/workspaces/list": 1,
+      "/v3/client/principals/me": 1,
+      "/v3/client/rooms/list": 1,
+      "/v3/client/sidebar/get": 3,
+      "/v3/client/activity/list": 3,
+      "/v3/client/notifications/list": 3,
+      "/v3/client/workspaces/humans": 3,
+      "/v3/client/agents/list": 3,
+      "/v3/client/agents/presence/list": 11,
+      "/v3/client/tasks/global": 3,
+      "/v3/client/input-requests/list": 42,
+      "/v3/client/messages/list": 6,
+      "/v3/client/tasks/list": 12,
+      "/v3/client/threads/list": 6,
+      "/v3/client/rooms/members/list": 6,
+      "/v3/client/rooms/agents/activity/list": 6,
+      "/v3/client/rooms/sync": 6,
+      "/v3/client/rooms/acknowledge": 5,
+      "/v3/client/messages/reference-read-states": 5,
+      "/v3/client/search": 1
+    },
+    "assets": [
+      {
+        "name": "/assets/index-5h_1dz2k.js",
+        "ms": 2.4000000953674316,
+        "bytes": 199629,
+        "decoded": 199329
+      },
+      {
+        "name": "/assets/index-BJBxUuem.css",
+        "ms": 2.9000000953674316,
+        "bytes": 312138,
+        "decoded": 311838
+      },
+      {
+        "name": "/assets/mount-app-CXSgpBqh.js",
+        "ms": 4.099999904632568,
+        "bytes": 1834748,
+        "decoded": 1834448
+      },
+      {
+        "name": "/assets/rolldown-runtime-hePW80VL.js",
+        "ms": 2.4000000953674316,
+        "bytes": 1016,
+        "decoded": 716
+      },
+      {
+        "name": "/assets/navigation-target-C7QD8akr.js",
+        "ms": 3.0999999046325684,
+        "bytes": 4127,
+        "decoded": 3827
+      },
+      {
+        "name": "/assets/mount-app-CMldfFD6.css",
+        "ms": 2.5999999046325684,
+        "bytes": 46307,
+        "decoded": 46007
+      },
+      {
+        "name": "/assets/interaction-icons-DJZ3JUKm.svg",
+        "ms": 7,
+        "bytes": 21032,
+        "decoded": 20732
+      },
+      {
+        "name": "/assets/raft-icons-DSg0ee6X.svg",
+        "ms": 7.1000001430511475,
+        "bytes": 10187,
+        "decoded": 9887
+      },
+      {
+        "name": "/assets/interaction-icons-DJZ3JUKm.svg",
+        "ms": 12.700000047683716,
+        "bytes": 21032,
+        "decoded": 20732
+      },
+      {
+        "name": "/assets/raft-icons-DSg0ee6X.svg",
+        "ms": 12.600000143051147,
+        "bytes": 10187,
+        "decoded": 9887
+      },
+      {
+        "name": "/assets/space-grotesk-latin-DPT1xrvW.woff2",
+        "ms": 31.200000047683716,
+        "bytes": 22620,
+        "decoded": 22320
+      },
+      {
+        "name": "/assets/raft-icons-DSg0ee6X.svg",
+        "ms": 13.700000047683716,
+        "bytes": 10187,
+        "decoded": 9887
+      },
+      {
+        "name": "/assets/interaction-icons-DJZ3JUKm.svg",
+        "ms": 12.299999952316284,
+        "bytes": 21032,
+        "decoded": 20732
+      },
+      {
+        "name": "/assets/space-mono-400-latin-Wy3NpCq4.woff2",
+        "ms": 9.200000047683716,
+        "bytes": 9764,
+        "decoded": 9464
+      }
+    ],
+    "longTasksMs": []
+  },
+  "after": {
+    "completedApiRequests": 52,
+    "requestCountsByPath": {
+      "/v3/client/push/configuration": 1,
+      "/v1/local/runtimes/list": 3,
+      "/v3/client/health": 1,
+      "/v3/client/workspaces/list": 1,
+      "/v3/client/principals/me": 1,
+      "/v3/client/rooms/list": 1,
+      "/v3/client/tasks/global": 3,
+      "/v3/client/sidebar/get": 3,
+      "/v3/client/activity/list": 3,
+      "/v3/client/notifications/list": 3,
+      "/v3/client/workspaces/humans": 3,
+      "/v3/client/agents/list": 3,
+      "/v3/client/agents/presence/list": 11,
+      "/v3/client/input-requests/list": 14,
+      "/v3/client/search": 1
+    },
+    "assets": [
+      {
+        "name": "/assets/index-CO7xet4N.css",
+        "ms": 7.3999998569488525,
+        "bytes": 52984,
+        "decoded": 313007
+      },
+      {
+        "name": "/assets/index-BQ-igcQm.js",
+        "ms": 6.599999904632568,
+        "bytes": 53039,
+        "decoded": 199329
+      },
+      {
+        "name": "/assets/mount-app-bjsh_Zwe.js",
+        "ms": 47.200000047683716,
+        "bytes": 610140,
+        "decoded": 1834005
+      },
+      {
+        "name": "/assets/rolldown-runtime-hePW80VL.js",
+        "ms": 2.8999998569488525,
+        "bytes": 1016,
+        "decoded": 716
+      },
+      {
+        "name": "/assets/mount-app-CMldfFD6.css",
+        "ms": 3.4000000953674316,
+        "bytes": 8446,
+        "decoded": 46007
+      },
+      {
+        "name": "/assets/navigation-target-C7QD8akr.js",
+        "ms": 3.0999999046325684,
+        "bytes": 1511,
+        "decoded": 3827
+      },
+      {
+        "name": "/assets/space-grotesk-latin-DPT1xrvW.woff2",
+        "ms": 6.200000047683716,
+        "bytes": 22620,
+        "decoded": 22320
+      },
+      {
+        "name": "/assets/interaction-icons-DJZ3JUKm.svg",
+        "ms": 11.700000047683716,
+        "bytes": 4855,
+        "decoded": 20732
+      },
+      {
+        "name": "/assets/raft-icons-DSg0ee6X.svg",
+        "ms": 11.399999856948853,
+        "bytes": 2032,
+        "decoded": 9887
+      },
+      {
+        "name": "/assets/raft-icons-DSg0ee6X.svg",
+        "ms": 14,
+        "bytes": 2032,
+        "decoded": 9887
+      },
+      {
+        "name": "/assets/interaction-icons-DJZ3JUKm.svg",
+        "ms": 13.200000047683716,
+        "bytes": 4855,
+        "decoded": 20732
+      },
+      {
+        "name": "/assets/space-mono-400-latin-Wy3NpCq4.woff2",
+        "ms": 10.200000047683716,
+        "bytes": 9764,
+        "decoded": 9464
+      }
+    ],
+    "longTasksMs": []
+  },
+  "slowTask6500ms": [
+    {
+      "path": "/v3/client/tasks/global",
+      "start": 178,
+      "ms": 6507
+    },
+    {
+      "path": "/v3/client/tasks/global",
+      "start": 11688
+    }
+  ]
+}

@@ -135,6 +135,137 @@ try {
       path: `/tmp/rah-deleted-task-${process.env.RAH_BROWSER ?? "chromium"}-${width}.png`,
     });
   }
+  await post("tasks/workflow", {
+    taskId: task.taskId,
+    workflowStatus: "todo",
+    basedOnRoomSeq: await head(room.roomId),
+    idempotencyKey: crypto.randomUUID(),
+  });
+  await post("threads/reply", {
+    roomId: room.roomId,
+    threadId: task.threadId,
+    body: "FAKE avatar navigation reply",
+    recipientIds: [],
+    basedOnRoomSeq: await head(room.roomId),
+    idempotencyKey: crypto.randomUUID(),
+  });
+  // Cold PWA entry through Tasks must keep avatar navigation inside approval.
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.addInitScript(() =>
+      Object.defineProperty(navigator, "standalone", { value: true }),
+    );
+    await page.goto(`${fixture.origin}/?surface=tasks`);
+    await page.reload();
+    await page
+      .locator(".rah-global-card-open")
+      .filter({ hasText: task.title })
+      .first()
+      .click();
+    await expect(modal).toBeVisible();
+    await expect(
+      modal.getByText("FAKE avatar navigation reply", { exact: true }),
+    ).toBeVisible();
+    const composer = modal.locator("textarea").last();
+    await composer.fill("FAKE preserved approval draft");
+    const discussion = await modal
+      .locator(".thread-side-column")
+      .elementHandle();
+    await modal
+      .locator(".rah-message-avatar-trigger")
+      .filter({
+        has: page.locator(".rah-agent-avatar"),
+      })
+      .first()
+      .click();
+    await expect(modal.locator(".rah-agent-unavailable")).toBeVisible();
+    const unavailable = modal.locator(".rah-agent-unavailable");
+    await expect(unavailable.locator("header h2")).toHaveCSS(
+      "font-size",
+      "16px",
+    );
+    await expect(unavailable.locator("header h2")).toHaveCSS(
+      "line-height",
+      "20px",
+    );
+    await expect(unavailable.locator(".rah-panel-header-icon")).toHaveCSS(
+      "background-color",
+      /\boklch\(0\.928 0\.006 264\.531\d*\)/,
+    );
+    await page.keyboard.press("Tab");
+    await expect(
+      modal.getByRole("button", {
+        name: "返回审批",
+        exact: true,
+      }),
+    ).toBeFocused();
+    // Exercise the dialog's explicit reverse wrap, independent of Safari's
+    // platform preference for skipping buttons in native forward traversal.
+    await page.keyboard.press("Shift+Tab");
+    await expect(
+      modal.getByRole("button", {
+        name: width < 768 ? "返回审批" : "关闭任务详情",
+        exact: true,
+      }),
+    ).toBeFocused();
+    await page.screenshot({
+      path: `/tmp/task-avatar-unavailable-${process.env.RAH_BROWSER ?? "chromium"}-${width}.png`,
+    });
+    await modal
+      .getByRole("button", {
+        name: "返回审批",
+        exact: true,
+      })
+      .click();
+    await expect(modal.getByTestId("task-detail-metadata")).toBeVisible();
+    await expect(composer).toHaveValue("FAKE preserved approval draft");
+
+    await modal
+      .locator(".rah-message-avatar-trigger")
+      .filter({ hasNot: page.locator(".rah-agent-avatar") })
+      .first()
+      .click();
+    await expect(modal.locator(".rah-agent-directory-page")).toBeVisible();
+    await expect(page.locator(".rah-error-boundary")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(modal.getByTestId("task-detail-metadata")).toBeVisible();
+    assert.equal(
+      await discussion.evaluate(
+        (node) => node.isConnected && node.getClientRects().length > 0,
+      ),
+      true,
+      "original discussion stays mounted through profiles",
+    );
+    if (width >= 768) {
+      await modal
+        .locator(".rah-message-avatar-trigger")
+        .filter({ has: page.locator(".rah-agent-avatar") })
+        .first()
+        .click();
+      await expect(
+        modal.getByRole("button", { name: "返回审批", exact: true }),
+      ).toBeVisible();
+      await modal
+        .getByRole("button", { name: "关闭任务详情", exact: true })
+        .click();
+      await expect(modal).toHaveCount(0);
+      await page
+        .locator(".rah-global-card-open")
+        .filter({ hasText: task.title })
+        .first()
+        .click();
+      await expect(modal.getByTestId("task-detail-metadata")).toBeVisible();
+      await expect(modal.locator(".rah-task-modal-profile")).toHaveCount(0);
+    }
+    await expect(page).toHaveURL(/surface=tasks/);
+    await modal
+      .getByRole("button", {
+        name: width < 768 ? "返回任务页面" : "关闭任务详情",
+        exact: true,
+      })
+      .click();
+    await expect(modal).toHaveCount(0);
+  }
   console.log(
     "Renamed task chip, deleted historical reply/avatar, unassigned closed task and reload verified",
   );

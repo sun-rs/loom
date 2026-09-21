@@ -26,20 +26,18 @@ try {
     exact: true,
   });
   await expect(separator).toBeVisible();
-  const headerButtons = ["搜索当前对话", "频道详情与设置", "关闭搜索预览"];
-  const bounds = await Promise.all(
-    headerButtons.map((name) =>
-      p.getByRole("button", { name, exact: true }).boundingBox(),
-    ),
-  );
-  assert.ok(bounds.every(Boolean));
-  const searchGap = bounds[1].x - bounds[0].x - bounds[0].width;
-  const closeGap = bounds[2].x - bounds[1].x - bounds[1].width;
-  assert.equal(
-    closeGap,
-    searchGap,
-    "search/settings/close share the same action gap",
-  );
+  for (const name of ["搜索当前对话", "频道详情与设置"])
+    await expect(p.getByRole("button", { name, exact: true })).toBeVisible();
+  await expect(
+    p
+      .locator(".rah-conversation-head")
+      .getByRole("button", { name: "关闭搜索预览", exact: true }),
+  ).toHaveCount(0);
+  const returnToResults = async () => {
+    await p.setViewportSize({ width: 390, height: 844 });
+    await p.getByRole("button", { name: "返回搜索结果", exact: true }).click();
+    await p.setViewportSize({ width: 1440, height: 900 });
+  };
   const results = p.locator(".rah-discovery");
   const before = (await results.boundingBox()).width;
   const box = await separator.boundingBox();
@@ -49,9 +47,11 @@ try {
   await p.mouse.up();
   assert.ok((await results.boundingBox()).width < before - 40);
   await expect(
-    p.getByRole("button", { name: "关闭搜索预览", exact: true }),
-  ).toBeVisible();
-  await p.getByRole("button", { name: "关闭搜索预览", exact: true }).click();
+    p
+      .locator(".rah-conversation-head")
+      .getByRole("button", { name: "关闭搜索预览", exact: true }),
+  ).toHaveCount(0);
+  await returnToResults();
   await expect(p.locator(".rah-search-channel-open")).toHaveCount(0);
   await hit.hover();
   await expect(hit.locator("mark")).not.toHaveCount(0);
@@ -144,8 +144,10 @@ try {
       p.locator('.msg[data-focused="true"]').filter({ hasText: text }).first(),
     ).toBeVisible();
     await expect(
-      p.getByRole("button", { name: "关闭搜索预览", exact: true }),
-    ).toBeVisible();
+      p
+        .locator(".rah-conversation-head")
+        .getByRole("button", { name: "关闭搜索预览", exact: true }),
+    ).toHaveCount(0);
   }
   await p
     .locator('.channel [data-testid="message-task-badge"]')
@@ -175,7 +177,7 @@ try {
   await expect(p.locator(".thread")).toHaveCount(0);
   await expect(p.locator(".rah-search-channel-open > .channel")).toBeVisible();
   await p.setViewportSize({ width: 1440, height: 900 });
-  await p.getByRole("button", { name: "关闭搜索预览", exact: true }).click();
+  await returnToResults();
   await expect(p.locator(".rah-search-channel-open")).toHaveCount(0);
   await expect(p.locator(".channel")).toHaveCount(0);
   await expect(p.locator(".thread")).toHaveCount(0);

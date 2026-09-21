@@ -185,10 +185,7 @@ export async function verifyHumanProfile(browser, origin, output, engine) {
     });
     await page.locator(".rah-agent-human-section button").click();
     await pending;
-    await page
-      .getByRole("status")
-      .filter({ hasText: "正在读取成员资料" })
-      .waitFor();
+    await page.getByRole("status").filter({ hasText: "加载中" }).waitFor();
     const agentRow = page
       .locator(
         ".rah-agent-sidebar-section:not(.rah-agent-human-section) .rah-agent-member-row",

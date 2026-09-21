@@ -1,3 +1,4 @@
+import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import {
   DirectoryWidthLayout,
   DirectoryWidthResizer,
@@ -116,6 +117,8 @@ export function AgentDirectoryPane({
   initialView,
   panel = false,
   onPanelBack,
+  panelBackLabel = "返回成员管理",
+  panelCloseLabel,
   onClose,
   agents,
   canCreate,
@@ -160,6 +163,8 @@ export function AgentDirectoryPane({
   initialView?: AgentRouteSelection["view"];
   panel?: boolean;
   onPanelBack?: () => void;
+  panelBackLabel?: string;
+  panelCloseLabel?: string;
   onClose?: () => void;
   agents: readonly WorkspaceAgentView[];
   canCreate: boolean;
@@ -661,15 +666,17 @@ export function AgentDirectoryPane({
             onChangeRole={onChangeHumanRole}
             principalId={humanId}
             workspaceId={workspaceId}
-            backLabel={onPanelBack ? "返回成员管理" : undefined}
+            closeLabel={panelCloseLabel}
+            backLabel={onPanelBack ? panelBackLabel : undefined}
             onBack={onPanelBack ?? onClose ?? closeRelationship}
             onClose={panel ? onClose : undefined}
             onOpenAgent={selectAgent}
           />
         ) : unavailableAgent ? (
           <AgentUnavailablePanel
+            closeLabel={panelCloseLabel}
             backLabel={
-              onPanelBack ? "返回成员管理" : panel ? "返回聊天" : "返回成员列表"
+              onPanelBack ? panelBackLabel : panel ? "返回聊天" : "返回成员列表"
             }
             onClose={onClose ?? onPanelBack}
             onBack={
@@ -711,7 +718,8 @@ export function AgentDirectoryPane({
             )}
             <AgentDetailHeader
               onClose={onClose}
-              backLabel={onPanelBack ? "返回成员管理" : undefined}
+              closeLabel={panelCloseLabel}
+              backLabel={onPanelBack ? panelBackLabel : undefined}
               agent={selectedAgent}
               canMessage={canMessage}
               messagePending={directRoomOpening}
@@ -845,7 +853,7 @@ export function AgentChatPane({
         <div className="rah-inline-error">{error}</div>
       )}
       {loading && rooms.length === 0 ? (
-        <p className="rah-agent-chat-status">正在读取 Agent 聊天目录…</p>
+        <LoadingState />
       ) : error !== undefined && rooms.length === 0 ? null : (
         <>
           <AgentChatRoomGroup
@@ -939,6 +947,7 @@ function AgentChatRoomGroup({
 export function AgentDetailHeader({
   onClose,
   backLabel,
+  closeLabel,
   agent,
   canMessage,
   messagePending,
@@ -949,6 +958,7 @@ export function AgentDetailHeader({
 }: {
   onClose?: (() => void) | undefined;
   backLabel?: string | undefined;
+  closeLabel?: string | undefined;
   agent: WorkspaceAgentView;
   canMessage: boolean;
   messagePending: boolean;
@@ -985,7 +995,7 @@ export function AgentDetailHeader({
         {onClose ? (
           <PanelHeaderAction
             className="rah-desktop-only"
-            aria-label="关闭 Agent 侧栏"
+            aria-label={closeLabel ?? "关闭 Agent 侧栏"}
             onClick={onClose}
           >
             <Icon name="x" />
@@ -1175,7 +1185,7 @@ export function AgentProfilePane({
         }
       >
         {loading && detail === undefined ? (
-          <p className="rah-agent-profile-status">正在读取 canonical 配置…</p>
+          <LoadingState />
         ) : detail !== undefined ? (
           <div className="rah-agent-runtime-chips">
             <ProfileChip
@@ -1231,7 +1241,7 @@ export function AgentProfilePane({
         className="rah-agent-created-section"
       >
         {detail === undefined && loading ? (
-          <p className="rah-agent-profile-status">正在读取身份关系…</p>
+          <LoadingState />
         ) : detail === undefined ? (
           <p className="rah-agent-profile-status is-error">
             暂时无法读取身份关系
@@ -1679,9 +1689,7 @@ export function AgentActivityPane({
           <div className="rah-inline-error">{copyError}</div>
         )}
         {loading && activities.length === 0 ? (
-          <p className="rah-agent-activity-empty" role="status">
-            正在读取活动…
-          </p>
+          <LoadingState />
         ) : activities.length === 0 && error === undefined ? (
           <EmptyState
             context="profile"
@@ -1787,9 +1795,7 @@ export function AgentRemindersPane({
 }) {
   return (
     <section className="rah-agent-reminders-pane rah-scroll-main">
-      {loading ? (
-        <p className="rah-agent-reminders-loading">正在读取…</p>
-      ) : null}
+      {loading ? <LoadingState /> : null}
       {error ? (
         <div className="rah-agent-reminders-error" role="alert">
           <strong>提醒读取失败</strong>

@@ -1,3 +1,15 @@
+[移除任务成功占行提示](./audits/2026-09-21-task-success-notice.zh-CN.md)：保留失败与保存状态，更新成功后不再显示额外文字行。
+
+[聊天／成员列表间距复核](./audits/2026-09-21-list-spacing.zh-CN.md)：Raft CSS 几何对照，修正成员分区及头像、计算机小标题间距。
+
+[分栏宽度与拖拽记忆实施](./audits/2026-09-21-conversation-width-memory.zh-CN.md)：搜索／动态共享宽与紧凑偏好，人物资料独立宽度，压缩不覆盖桌面记忆。
+
+[Raft 默认分栏与压缩边界测试](./audits/2026-09-21-raft-width-render.zh-CN.md)：Firefox／Chromium 源码隔离渲染及已登录官方 Chrome 测量；含真实拖拽记忆与尺寸恢复。
+
+[PWA 加载性能与统一等待状态](./audits/2026-09-21-pwa-loading-performance.zh-CN.md)：慢请求、不可见 Room 读取、静态压缩、启动奶黄色与沿用页面底色的局部加载。
+
+[一级正文按钮与分隔线](./audits/2026-09-21-navigation-chrome-roles.zh-CN.md)：频道/私聊桌面无 X，保留后续详情退出；设置抽屉逐层源码核对。
+
 [模型显示名称统一](./audits/2026-09-21-model-display-names.zh-CN.md)：选择器、资料、预览与聊天共享标签解析，原始 ID 保留在提示与执行配置。
 
 [Claude 具体版本推理强度闭环](./audits/2026-09-21-claude-custom-effort.zh-CN.md)：按文档限定档位，保留配置、Placement 与 CLI 参数，区分提交许可和本机探测。
@@ -87,8 +99,6 @@
 [文件引用窗口共享样式](./audits/2026-09-18-file-dialog-chrome.zh-CN.md)：标题栏、关闭按钮和确认按钮复用 Task 弹窗及 UI 库规则，覆盖桌面和移动端 portal。
 
 [运行超时与隔离撤销](./audits/2026-09-18-runtime-timeout-and-quarantine.zh-CN.md)：对照 Raft 的存活判定，避免固定总时长反复杀死活进程；人工停止可撤销已确认终止的隔离执行，保留消息与审计事实。
-
-[运行时调度对齐第一批](./audits/2026-09-18-runtime-scheduling-alignment.zh-CN.md)：按 Raft Computer 1.0.32 将 Claude 从 gated 改为原生 direct，保留已有 Provider session；记录忙时回复后仍有后续运行的实证与常驻生命周期边界。
 
 [Kimi K3 跨 CLI 实测](./audits/2026-09-18-k3-transport-benchmark.zh-CN.md)：官方 K3/high 在 OpenCode 与 Kimi CLI 的原生、恢复和 RAH 私聊对照；两条接入路径仍有共同模型往返，不能把功能通过当作性能闭合。
 
@@ -684,8 +694,6 @@ P2 Agent workspace / 本地项目文件历史 owner 合同：[Raft workspace 请
 
 前端鼠标、键盘和触屏状态的当前统一基线：[Raft 前端操作状态合同](./product/2026-09-02-raft-interaction-state-contract.zh-CN.md)、[双边 computed-style 与真实浏览器审计](./audits/2026-09-02-raft-interaction-state-verification.zh-CN.md)。该批把 rail、导航行、平面按钮、brutal 按钮、segmented、消息工具条和输入 focus 收敛为共享协议；条件弹层、逐实例拖拽和缺失发布 chunk 仍须继续追踪，不能据此宣称全站交互 1:1。
 
-核心调度当前最高优先级审计与同日修复复核：[Raft 业务合同、四条 P0 completion-proof 反例、typed obligation、双 Agent 浏览器报数、Thread subscription、Held Draft、Runtime error fingerprint fence、Reminder 与 restart/busy 组合证据](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。Room / Inbox / Activation 主骨架成立；schema 30–34 依次关闭 typed completion proof、Thread follow、Held Draft、poison retry 主合同和 Reminder authoritative schedule；真实 Worker gate又覆盖报数中途重启及单 Agent busy 跨 Room。schema 35/36 现补齐结构化 Runtime `actionRequired/sticky/recoverable`、正向 jitter、跨 Room Reminder target、Thread receipt 与 reload-safe typed permalink。它关闭本轮列出的精细缺口，但不等于所有 Provider 都能发出结构化错误，也不把本地内部链接、`#room` target 扩大为 Raft 中央公开 URL 或未验证的 DM target。
-
 普通 Channel 永久删除的 Raft 可见合同、schema 40 显式引用图、文件 GC 回执和崩溃恢复边界：[产品合同](./product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)；实现与 Chrome/Firefox 隔离真删除证据：[验证审计](./audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。正式用户 Room 不用于破坏性验收。
 
 Room 删除后文件回收的长期运行状态机、Multica 结构性移植、周期 worker、lease/backoff/tombstone 与 schema 42 验收范围：[Reconciler 合同](./product/2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)；实现、迁移、失败注入和浏览器证据：[验证审计](./audits/2026-09-03-room-file-gc-reconciler-verification.zh-CN.md)；10 万回执 CPU/内存/磁盘压力与剩余缺口裁决：[性能审计](./audits/2026-09-03-room-file-gc-performance-and-remaining-gaps.zh-CN.md)。
@@ -734,8 +742,6 @@ Agent 字段、头像与模型配置：[设计与边界](./product/2026-09-01-ag
 Agent 自定义图片头像当前施工合同：[Raft picker/上传行为、既有 ProfileImageStore 复用、revision 竞态与安全 GC 边界](./product/2026-09-02-agent-custom-avatar-contract.zh-CN.md)。本合同以既有认证、内容寻址图片 owner 扩展 Agent 消费方，不新建第二套文件服务；其完成状态以合同内最新 `C/A/L/D` 证据为准。
 
 这里仅保存能约束代码和验收的长期文档。阶段性讨论、旧 RAH 的 Session/UI 细节和 provider transcript 适配经验不迁入本仓库。
-
-核心调度最新审计与修复状态：[Raft 业务合同一致性审计](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。completion-proof P0、双 Agent 报数、Thread follow、Held Draft、poison retry、Reminder 主合同、restart/busy 跨 Room，以及本轮 structured Runtime 分支、跨 Room `#channel` target 和 Thread receipt/permalink 已进入工作树并有定向回归；正式全门禁、重启与浏览器结果以审计末尾最新复核为准。未声明 DM Reminder target、公开分享 URL 或所有 Provider 结构化错误覆盖。
 
 Raft 产品行为的首要监督基线：[Raft 官方教程监督基线](./product/raft-official-tutorial-supervision.zh-CN.md)。
 
@@ -872,7 +878,6 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 12. [Raft UI 产品集成边界](./architecture/raft-ui-product-integration.zh-CN.md)
 13. [Runtime Adapter 与观察平面](./architecture/runtime-adapter-and-observation.zh-CN.md)
 14. [Worker Application Service](./architecture/worker-application-service.zh-CN.md)
-15. [Runtime Registry 与多 Lane 调度架构](./architecture/runtime-registry-and-multi-lane-scheduling.zh-CN.md)
 16. [Memory 与 Context Fabric](./architecture/memory-and-context.zh-CN.md)
 17. [Core 模块边界与源码规模 Ratchet](./architecture/core-module-boundaries.zh-CN.md)
 18. [架构优势对照基准](./experiments/competitive-benchmark.zh-CN.md)
@@ -994,3 +999,7 @@ Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证
   [大页选择与窄屏主内容](./audits/2026-09-20-surface-selection-parity.zh-CN.md)：聊天空选择回列表，成员详情随窄屏展示，独立导航记忆、共享字体、未读加粗与双击私信。
 
 - [消息列关注菜单层级与绿色移除提示](product/raft-frontend-local-contract.zh-CN.md#消息列关注菜单层级与移除提示2026-09-20)：源码参数、层级回归与正式页面验证边界。
+
+- [任务审批内头像导航修复](audits/2026-09-21-task-modal-avatar-navigation.zh-CN.md)
+
+- [窄屏搜索筛选单行滚动](audits/2026-09-21-mobile-search-filter-scroll.zh-CN.md)
