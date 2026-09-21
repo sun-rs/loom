@@ -264,7 +264,7 @@ export function AttachmentComments({
                     onClick={() =>
                       setStatus(
                         onJump(anchor)
-                          ? "已定位评论位置"
+                          ? undefined
                           : "此位置不在当前可呈现的预览范围内",
                       )
                     }
@@ -360,7 +360,13 @@ export function AttachmentComments({
             disabled={pending || !canComment}
           />
           <div className="composer-bar rah-attachment-comment-footer">
-            <span role="status">{status}</span>
+            {error ? (
+              <span role="alert" title={error}>
+                发送失败
+              </span>
+            ) : status ? (
+              <span role="status">{status}</span>
+            ) : null}
             <button
               type="submit"
               className="sq-btn"
@@ -371,7 +377,6 @@ export function AttachmentComments({
             </button>
           </div>
         </div>
-        {error && <p role="alert">{error}</p>}
       </form>
     </aside>
   );

@@ -1,3 +1,5 @@
+[移除操作完成占行提示](./audits/2026-09-21-completed-feedback.zh-CN.md)：取消拖动、设置保存、测试推送和服务重启完成后不再占行；保留失败提示。
+
 [移除任务成功占行提示](./audits/2026-09-21-task-success-notice.zh-CN.md)：保留失败与保存状态，更新成功后不再显示额外文字行。
 
 [聊天／成员列表间距复核](./audits/2026-09-21-list-spacing.zh-CN.md)：Raft CSS 几何对照，修正成员分区及头像、计算机小标题间距。

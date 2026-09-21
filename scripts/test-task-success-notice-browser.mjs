@@ -12,6 +12,19 @@ try {
     .filter({ hasText: "Keep the Room-first delivery contract" })
     .first();
   await expect(card).toBeVisible();
+  await card.getByRole("button", { name: /移动任务 #/ }).focus();
+  await page.keyboard.press("Space");
+  await expect(card).toHaveClass(/is-dragging/);
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  await page.keyboard.press("Escape");
+  await expect(card).not.toHaveClass(/is-dragging/);
+  await expect(page.getByText("已取消拖动，任务未改变")).toHaveCount(0);
+  await expect(page.locator(".rah-task-drag-notice")).toBeHidden();
   await card.getByRole("button", { name: /任务 #\d+ 状态：/ }).click();
   const response = page.waitForResponse(
     (r) =>

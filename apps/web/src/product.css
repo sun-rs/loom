@@ -3161,7 +3161,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-dialog-error {
   background: var(--orange);
-  border-bottom: var(--bd);
   font: 11px/1.5 var(--mono);
   padding: 8px 12px;
 }

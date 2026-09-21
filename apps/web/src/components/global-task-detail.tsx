@@ -332,7 +332,6 @@ export function TaskDetailMetadata({
           <dd>{personName(task.creatorId)}</dd>
         </div>
       </dl>
-      {pending ? <p role="status">正在保存任务…</p> : null}
       {error ? (
         <p role="alert" className="rah-inline-error">
           {error}

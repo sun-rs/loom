@@ -175,7 +175,7 @@ export function GlobalTaskBoard({
         }}
         onDragCancel={() => {
           setDragging(undefined);
-          setNotice("已取消拖动，任务未改变");
+          setNotice("");
         }}
         onDragEnd={({ active, over }) => {
           const task =

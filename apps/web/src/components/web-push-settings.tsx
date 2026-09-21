@@ -25,7 +25,6 @@ export function WebPushSettingsContent({
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string>();
-  const [success, setSuccess] = useState<string>();
   const reads = useRef(createLatestRequest());
   const writing = useRef(false);
   const [desired, setDesired] = useState(() =>
@@ -70,20 +69,17 @@ export function WebPushSettingsContent({
   }, [refresh]);
   async function action(
     operation: () => Promise<BrowserPushStatus | undefined>,
-    successMessage?: string,
   ) {
     if (writing.current) return;
     const ticket = reads.current.begin();
     writing.current = true;
     setChecking(false);
     setBusy(true);
-    setSuccess(undefined);
     try {
       const next = await operation();
       if (!ticket.current()) return;
       if (next) setStatus(next);
       setError(undefined);
-      setSuccess(successMessage);
     } catch (failure) {
       if (!ticket.current()) return;
       setError(failure instanceof Error ? failure.message : "通知操作失败");
@@ -159,18 +155,14 @@ export function WebPushSettingsContent({
                   const { delivered } = await client.request("push.test", {});
                   if (delivered === 0) throw new Error("没有可投递的设备订阅");
                   return undefined;
-                }, "已提交测试推送，请检查系统通知。");
+                });
               }}
             >
               发送测试推送
             </button>
           ) : null}
         </div>
-        {success ? (
-          <p className="rah-settings-success" role="status">
-            {success}
-          </p>
-        ) : null}
+
         <div className="rah-settings-divider" />
         <label className="rah-settings-check-row">
           <input

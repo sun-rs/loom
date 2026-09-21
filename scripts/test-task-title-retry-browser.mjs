@@ -46,6 +46,10 @@ try {
   await expect(
     dialog.getByRole("textbox", { name: "任务 2", exact: true }),
   ).toBeDisabled();
+  await expect(dialog.locator(".rah-dialog-error")).toHaveCSS(
+    "border-bottom-width",
+    "0px",
+  );
   await retry.click();
   await expect(dialog).toBeHidden();
   assert.equal(requests.length, 3);

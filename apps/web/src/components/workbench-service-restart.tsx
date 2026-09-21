@@ -56,7 +56,7 @@ export function WorkbenchServiceRestart() {
     restartLock.current = true;
     setConfirmOpen(false);
     setPending(true);
-    setMessage("正在重启服务，等待重新连接…");
+    setMessage("");
     try {
       let response: Response | undefined;
       try {
@@ -79,7 +79,7 @@ export function WorkbenchServiceRestart() {
           if (signal.aborted) return;
           if (status.available && status.state === "online") {
             setGeneration(status.generation);
-            setMessage("服务已由其他请求重启，已刷新连接状态。");
+            setMessage("");
           } else {
             setGeneration(undefined);
             setStatusState("error");
@@ -99,7 +99,7 @@ export function WorkbenchServiceRestart() {
             status.generation !== generation
           ) {
             setGeneration(status.generation);
-            setMessage("服务已重启，连接已恢复");
+            setMessage("");
             return;
           }
         } catch {
@@ -130,7 +130,10 @@ export function WorkbenchServiceRestart() {
         onClick={() => setConfirmOpen(true)}
         type="button"
       >
-        <Icon name="refresh-cw" />
+        <Icon
+          name="refresh-cw"
+          className={pending ? "rah-service-restart-spinning" : ""}
+        />
         {pending ? "正在重启服务…" : "重启服务"}
       </button>
       {statusState === "error" && (
@@ -143,16 +146,18 @@ export function WorkbenchServiceRestart() {
           重试连接
         </button>
       )}
-      <p role="status" hidden={statusState === "available" && !message}>
-        {message ||
-          (statusState === "loading"
-            ? "正在读取服务状态…"
-            : statusState === "error"
-              ? "暂时无法读取服务状态，请重试。"
-              : statusState === "unavailable"
-                ? "当前连接未提供服务重启能力。"
-                : "重启本机工作台服务，页面将自动重新连接。")}
-      </p>
+      {statusState !== "available" || message ? (
+        <p role="status">
+          {message ||
+            (statusState === "loading"
+              ? "正在读取服务状态…"
+              : statusState === "error"
+                ? "暂时无法读取服务状态，请重试。"
+                : statusState === "unavailable"
+                  ? "当前连接未提供服务重启能力。"
+                  : "重启本机工作台服务，页面将自动重新连接。")}
+        </p>
+      ) : null}
       {confirmOpen && (
         <ServiceRestartConfirmation
           onClose={() => setConfirmOpen(false)}

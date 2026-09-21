@@ -632,3 +632,17 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.rah-service-restart-spinning {
+  animation: rah-service-restart-spin 1s linear infinite;
+}
+@keyframes rah-service-restart-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-service-restart-spinning {
+    animation: none;
+  }
+}

@@ -236,16 +236,9 @@ export function LanguageRegionSettingsContent() {
             保存
           </button>
         </div>
-        {saveState !== "idle" ? (
-          <p
-            className={
-              saveState === "saved" ? "rah-settings-saved" : "rah-inline-error"
-            }
-            role={saveState === "saved" ? "status" : "alert"}
-          >
-            {saveState === "saved"
-              ? "已保存到此设备。"
-              : "仅本次生效，无法保存到此设备。"}
+        {saveState === "error" ? (
+          <p className="rah-inline-error" role="alert">
+            仅本次生效，无法保存到此设备。
           </p>
         ) : null}
       </form>
@@ -306,9 +299,11 @@ export function AppearanceSettingsContent() {
             </button>
           ))}
         </div>
-        <p className="rah-settings-saved">
-          {storageError ? "仅本次生效，无法保存到此设备。" : "已保存到此设备。"}
-        </p>
+        {storageError ? (
+          <p className="rah-inline-error" role="alert">
+            仅本次生效，无法保存到此设备。
+          </p>
+        ) : null}
         <div>
           <p className="rah-settings-preview-label">预览</p>
           <div
@@ -371,11 +366,11 @@ export function AppearanceSettingsContent() {
             保留持久化动态记录；关闭后隐藏本设备 Room
             列表底部的瞬态工作条，并停止实时状态动画。
           </p>
-          <p className="rah-settings-saved">
-            {activityStorageError
-              ? "仅本次生效，无法保存到此设备。"
-              : "已保存到此设备。"}
-          </p>
+          {activityStorageError ? (
+            <p className="rah-inline-error" role="alert">
+              仅本次生效，无法保存到此设备。
+            </p>
+          ) : null}
         </div>
         <label className="rah-settings-switch">
           <input
@@ -401,11 +396,11 @@ export function AppearanceSettingsContent() {
           <p id="rah-agent-model-description">
             在聊天里 Agent 名字旁显示它使用的模型。桌面端默认开启。
           </p>
-          <p className="rah-settings-saved">
-            {modelStorageError
-              ? "仅本次生效，无法保存到此设备。"
-              : "已保存到此设备。"}
-          </p>
+          {modelStorageError ? (
+            <p className="rah-inline-error" role="alert">
+              仅本次生效，无法保存到此设备。
+            </p>
+          ) : null}
         </div>
         <label className="rah-settings-switch">
           <input
@@ -427,11 +422,11 @@ export function AppearanceSettingsContent() {
         <div>
           <strong id="rah-hide-empty-label">隐藏空的侧栏分区</strong>
           <p>当侧栏分区没有内容时，整块隐藏不显示。</p>
-          <p className="rah-settings-saved">
-            {hideEmptyStorageError
-              ? "仅本次生效，无法保存到此设备。"
-              : "已保存到此设备。"}
-          </p>
+          {hideEmptyStorageError ? (
+            <p className="rah-inline-error" role="alert">
+              仅本次生效，无法保存到此设备。
+            </p>
+          ) : null}
         </div>
         <label className="rah-settings-switch">
           <input

@@ -8903,7 +8903,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-dialog-error {
   background: var(--orange);
-  border-bottom: var(--bd);
   font: 11px/1.5 var(--mono);
   padding: 8px 12px;
 }
@@ -12667,6 +12666,20 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.rah-service-restart-spinning {
+  animation: rah-service-restart-spin 1s linear infinite;
+}
+@keyframes rah-service-restart-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-service-restart-spinning {
+    animation: none;
+  }
 }
 
 /* ===== apps/web/src/global-discovery.css ===== */
