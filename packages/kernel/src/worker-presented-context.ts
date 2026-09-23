@@ -1,3 +1,4 @@
+import { wasWorkerMessagePresented } from "./worker-message-presentations.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import type { RoomEvent } from "@rah-os/protocol";
@@ -18,8 +19,8 @@ import { readWorkerTargetReadPosition } from "./worker-target-read-position.ts";
  * is therefore to carry the already-presented fact in the delivery instead of
  * suppressing the delivery.
  *
- * Nothing here writes: the read position is read exactly as recorded by
- * `worker-target-read-position.ts` and is never advanced by a sync.
+ * Nothing here writes: target high-water positions and exact message receipts
+ * are read as recorded. A high-water mark alone cannot annotate a message.
  */
 
 /** The listed ids are a sample; `count` is always the whole number. */
@@ -146,7 +147,12 @@ export function collectWorkerPresentedContext(
     const presentedThroughSeq = positionFor(threadId);
     if (
       presentedThroughSeq === undefined ||
-      event.roomSeq > presentedThroughSeq
+      event.roomSeq > presentedThroughSeq ||
+      !wasWorkerMessagePresented(
+        database,
+        { participantId: input.participantId, roomId: input.roomId, threadId },
+        event.roomSeq,
+      )
     )
       continue;
     const targetKey = threadId ?? ROOM_TARGET_KEY;

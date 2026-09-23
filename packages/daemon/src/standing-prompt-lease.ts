@@ -97,7 +97,10 @@ export function standingPromptLease(
     diagnostics: Object.freeze([
       `[rah-os] standing prompt compiler v${String(STANDING_PROMPT_COMPILER_VERSION)} digest ${compiled.deterministicDigest}`,
     ]),
-    env: Object.freeze({}),
+    env: Object.freeze({
+      RAH_REQUIRE_SESSION_CONTINUITY:
+        agent.instanceChannelId === undefined ? "0" : "1",
+    }),
     standingPromptDigest: compiled.deterministicDigest,
   });
 }

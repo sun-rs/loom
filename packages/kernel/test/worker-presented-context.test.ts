@@ -118,6 +118,7 @@ test("a re-delivered event reports alreadyPresented with the participant's own l
       participantId: "agent-1",
       roomId: "room-1",
       throughRoomSeq: 8,
+      messageSeqs: [8],
       updatedAt: at,
     });
     const context = collectWorkerPresentedContext(database, {
@@ -168,6 +169,7 @@ test("respondedAfter counts only this participant's own later messages at the sa
       participantId: "agent-1",
       roomId: "room-1",
       throughRoomSeq: 6,
+      messageSeqs: [4],
       updatedAt: at,
     });
     const context = collectWorkerPresentedContext(database, {
@@ -204,6 +206,7 @@ test("respondedAfter caps the listed message ids while reporting the whole count
       participantId: "agent-1",
       roomId: "room-1",
       throughRoomSeq: 9,
+      messageSeqs: [1],
       updatedAt: at,
     });
     const context = collectWorkerPresentedContext(database, {
@@ -239,6 +242,7 @@ test("a Thread event is scored against the Thread read position, not the Room on
       participantId: "agent-1",
       roomId: "room-1",
       throughRoomSeq: 9,
+      messageSeqs: [1],
       updatedAt: at,
     });
     assert.equal(
@@ -255,6 +259,7 @@ test("a Thread event is scored against the Thread read position, not the Room on
       roomId: "room-1",
       threadId: "thread-1",
       throughRoomSeq: 5,
+      messageSeqs: [5],
       updatedAt: at,
     });
     const context = collectWorkerPresentedContext(database, {
@@ -316,6 +321,7 @@ test("non-message events are never scored against a target read position", () =>
       participantId: "agent-1",
       roomId: "room-1",
       throughRoomSeq: 9,
+      messageSeqs: [1],
       updatedAt: at,
     });
     const membership = {
@@ -332,6 +338,34 @@ test("non-message events are never scored against a target read position", () =>
     assert.equal(
       collectWorkerPresentedContext(database, {
         events: [membership],
+        participantId: "agent-1",
+        roomId: "room-1",
+      }),
+      undefined,
+    );
+  } finally {
+    database.close();
+  }
+});
+
+test("reading a later message does not label earlier unseen Human work as presented", () => {
+  const database = ledger();
+  try {
+    const earlier = post(database, {
+      actorId: "human-1",
+      messageId: "unseen",
+      roomSeq: 3,
+    });
+    post(database, { actorId: "human-1", messageId: "seen", roomSeq: 8 });
+    recordWorkerTargetReadPosition(database, {
+      participantId: "agent-1",
+      roomId: "room-1",
+      throughRoomSeq: 8,
+      updatedAt: at,
+    });
+    assert.equal(
+      collectWorkerPresentedContext(database, {
+        events: [earlier],
         participantId: "agent-1",
         roomId: "room-1",
       }),

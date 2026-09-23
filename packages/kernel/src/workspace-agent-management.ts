@@ -376,6 +376,16 @@ function configureAgent(
   const sessionPolicy = "prefer_resume" as const;
   assertRuntimeOfferSupportsToolAccess(offerBinding.offer, toolAccessMode);
   const currentOfferId = currentPolicy.required.allowedOfferIds?.[0];
+  if (
+    currentOfferId !== input.runtimeOfferId &&
+    owner.database
+      .prepare("SELECT 1 FROM role_instances WHERE agent_id=?")
+      .get(input.agentId)
+  ) {
+    throw new ConflictError(
+      "Role instance cannot switch runtime; create another instance",
+    );
+  }
   let hostChanged = false;
   if (currentOfferId !== undefined) {
     const currentOfferRow = owner.database

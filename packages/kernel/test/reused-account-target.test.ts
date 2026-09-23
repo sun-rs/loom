@@ -6,6 +6,8 @@ test("new account addressing selects the live peer while old DM remains addressa
   const db = new DatabaseSync(":memory:");
   try {
     db.exec(`CREATE TABLE rooms(room_id TEXT,kind TEXT,system_hidden INTEGER);
+ CREATE TABLE role_instances(instance_id TEXT,channel_id TEXT);
+ CREATE TABLE run_attempts(participant_id TEXT,room_id TEXT,state TEXT);
  CREATE TABLE principals(principal_id TEXT,handle TEXT,kind TEXT);
  CREATE TABLE memberships(principal_id TEXT,room_id TEXT);
  CREATE TABLE agent_definitions(participant_id TEXT,state TEXT);

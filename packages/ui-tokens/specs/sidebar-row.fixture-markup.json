@@ -3,7 +3,7 @@
   "component": "sidebar-row",
   "note": "outerHTML of each fixture probe after React rendered it in real Chrome, at the gate's primary viewport. docs/design/ui-catalog.html renders exactly these strings; no component markup in the catalog is hand-written.",
   "viewport": "1440x900",
-  "cssInputsSha256": "25bce0667bd6eafb3c0788d6ca1ba7752cee7cc42160af7c9dd5f2034f2c14a1",
+  "cssInputsSha256": "c5b10ee69d92f1cf2a06025accff692aedc2c47c6efcbcba6f35f0f46f66f499",
   "fixtureSha256": "fef45e09041a3902d135c0ac7c98f4c9c66b125fdf6b9fe3c24c6137f907392a",
   "gateScriptSha256": "bc7e998c999fee56cd3ecde9592703aaeb96beea610b5424f0e331de22e8e59b",
   "structureSha256": "614f16ae2a3d0f06b62133d51b9b55eb4b27cb64437096bc0b92a4b5284a20a8",

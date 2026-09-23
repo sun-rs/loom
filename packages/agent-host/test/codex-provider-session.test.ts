@@ -70,42 +70,77 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
       contentDigest: revision.contentDigest,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     });
-    const runtime = implementations.createRuntime(active, report, {
-      activationEnvironment: () => ({
-        // The daemon compiles the standing prompt per RunAttempt and appends
-        // it here; the RuntimeProfile freezes no prompt of its own.
-        args: [
-          "--prompt",
-          "canonical room worker prompt",
-          "-c",
-          "features.memories=true",
-        ],
-        env: {
-          FAKE_CODEX_RECORD_PATH: recordPath,
-          RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
-            runtimeId: "codex",
-            additionalArgs: ["--test-extra", "value with spaces"],
-          }),
-        },
-        standingPromptDigest: "sha256-standing-prompt-digest",
-      }),
-      cwd: directory,
-      providerSessionStore: new ProviderSessionStore({
-        rootDirectory: join(directory, "provider-sessions"),
-      }),
-      supervisorDirectory: join(directory, "supervisors"),
-    });
+    let strictContinuity = false;
+    let promptDigest = "sha256-standing-prompt-digest";
+    const createRuntime = () =>
+      implementations.createRuntime(active, report, {
+        activationEnvironment: () => ({
+          // The daemon compiles the standing prompt per RunAttempt and appends
+          // it here; the RuntimeProfile freezes no prompt of its own.
+          args: [
+            "--prompt",
+            "canonical room worker prompt",
+            "-c",
+            "features.memories=true",
+          ],
+          env: {
+            RAH_REQUIRE_SESSION_CONTINUITY: strictContinuity ? "1" : "0",
+            FAKE_CODEX_RECORD_PATH: recordPath,
+            RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+              runtimeId: "codex",
+              additionalArgs: ["--test-extra", "value with spaces"],
+            }),
+          },
+          standingPromptDigest: promptDigest,
+        }),
+        cwd: directory,
+        providerSessionStore: new ProviderSessionStore({
+          rootDirectory: join(directory, "provider-sessions"),
+        }),
+        supervisorDirectory: join(directory, "supervisors"),
+      });
+    let runtime = createRuntime();
+    const originalRuntime = runtime;
     const trajectory: unknown[] = [];
     const runs = new Map<string, Awaited<ReturnType<typeof runtime.start>>>();
     const runActivation = async (
       suffix: string,
       participantId = "agent-codex-resume",
       completion: "cancel" | "reap" = "reap",
+      instance = false,
+      requireExisting = false,
     ) => {
       const activationId = `activation-${suffix}`;
       const runAttemptId = `run-${suffix}`;
       const run = await runtime.start(
         {
+          ...(instance
+            ? {
+                agent: {
+                  instanceChannelId: "room-codex-resume",
+                  instanceSessionRequired: requireExisting,
+                  participantId,
+                  schemaVersion: 1 as const,
+                  agentDefinitionRevision: {
+                    agentId: "instance-definition",
+                    agentDefinitionRevisionId: "agent-definition-resume-v1",
+                    revision: 1,
+                    role: "reviewer",
+                    instructionRefs: [],
+                    skillRefs: [],
+                    memoryPolicyRef: {
+                      artifactId: "memory-resume",
+                      versionId: "memory-resume-v1",
+                      contentDigest: `sha256:${"b".repeat(64)}` as const,
+                    },
+                    executionPolicyRevisionId: "policy",
+                    contentDigest: `sha256:${"a".repeat(64)}` as const,
+                    createdBy: "owner",
+                    createdAt: "2026-08-29T08:00:00.000Z",
+                  },
+                },
+              }
+            : {}),
           activationId,
           consumerId: `consumer-${suffix}`,
           contextManifest: contextManifest({
@@ -139,6 +174,19 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
       return { exit: await runtime.reap(run), run };
     };
 
+    assert.equal(
+      (await runActivation("strict-seed", "instance-strict")).exit.code,
+      0,
+    );
+    strictContinuity = true;
+    const lost = await runActivation("strict-missing", "instance-strict");
+    assert.equal(
+      lost.exit.code,
+      1,
+      "bound instance must not silently create a replacement session",
+    );
+    assert.equal(lost.exit.failure?.retryDisposition, "sticky_terminal");
+    strictContinuity = false;
     assert.equal((await runActivation("resume-fresh")).exit.code, 0);
     assert.equal((await runActivation("resume-resumed")).exit.code, 0);
     assert.equal((await runActivation("resume-missing")).exit.code, 0);
@@ -166,10 +214,54 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
       0,
     );
 
+    assert.equal(
+      (await runActivation("instance-initial", "instance-stable", "reap", true))
+        .exit.code,
+      0,
+    );
+    runtime = createRuntime(); // Recreate adapter and store from disk, as after Host restart.
+    promptDigest = "changed-compiler-or-runtime-config";
+    assert.equal(
+      (
+        await runActivation(
+          "instance-config-change",
+          "instance-stable",
+          "reap",
+          true,
+          true,
+        )
+      ).exit.code,
+      0,
+    );
+
+    // Lost Host records must not dispatch even a new native thread/start.
+    rmSync(join(directory, "provider-sessions"), {
+      recursive: true,
+      force: true,
+    });
+    await assert.rejects(
+      runActivation(
+        "instance-binding-lost",
+        "instance-stable",
+        "reap",
+        true,
+        true,
+      ),
+      /RAH_SESSION_CONTINUITY_REQUIRED/,
+    );
     const records = readFileSync(recordPath, "utf8")
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    assert.equal(
+      records.filter(
+        (r) =>
+          r.activationId === "activation-strict-missing" &&
+          r.frame?.method === "thread/start",
+      ).length,
+      0,
+      "no fresh thread after failed resume",
+    );
     for (const record of records.filter((entry) => entry.args)) {
       assert.ok(record.args.includes("value with spaces"));
       assert.ok(record.args.includes("--test-extra"));
@@ -207,6 +299,16 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
           (method): method is string =>
             typeof method === "string" && !method.startsWith("process/"),
         );
+    assert.deepEqual(methodsFor("instance-binding-lost"), []);
+    assert.equal(methodsFor("instance-initial").includes("thread/start"), true);
+    assert.equal(
+      methodsFor("instance-config-change").includes("thread/resume"),
+      true,
+    );
+    assert.equal(
+      methodsFor("instance-config-change").includes("thread/start"),
+      false,
+    );
     assert.equal(methodsFor("resume-fresh").includes("thread/start"), true);
     assert.equal(methodsFor("resume-fresh").includes("thread/resume"), false);
     assert.equal(methodsFor("resume-resumed").includes("thread/resume"), true);
@@ -272,11 +374,13 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
     assert.match(JSON.stringify(trajectory), /此前 Codex 会话无法恢复/u);
     assert.match(JSON.stringify(trajectory), /工作轮次结束：interrupted/u);
     assert.doesNotMatch(
-      JSON.stringify(runtime.diagnostics(permission.run)),
+      JSON.stringify(originalRuntime.diagnostics(permission.run)),
       /codex-thread-fallback/u,
     );
     assert.doesNotMatch(
-      JSON.stringify(runtime.diagnostics(runs.get("codex-cancel-seed")!)),
+      JSON.stringify(
+        originalRuntime.diagnostics(runs.get("codex-cancel-seed")!),
+      ),
       /codex-thread-cancelled/u,
     );
     profileRegistry.close();

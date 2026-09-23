@@ -1,0 +1,511 @@
+{
+  "capturedAt": "2026-09-21T06:06:55.623355+00:00",
+  "sessions": {
+    "claude": {
+      "sessionHash": "e8a7029571e4468e04f794defa9b149351331affeb834ddfa54945ad1cde54ab",
+      "standingPromptDigest": "f10607ca3db70d8283d2db0d258c970079e62937be74624512208497235f7c98",
+      "recordedAt": "2026-09-21T05:51:03.316Z"
+    },
+    "codex": {
+      "sessionHash": "1971af68b8e972935ed63d74a8eb46e11067088d5d81bdc57cbf11d454bf004b",
+      "standingPromptDigest": "9f5a1aac5c5da54bfea8080311478cb1ad7806ecf0b4537d920a271663a9391c",
+      "recordedAt": "2026-09-21T06:06:54.023Z"
+    }
+  },
+  "samples": [
+    {
+      "provider": "claude",
+      "runId": "run_6b206996-3b33-4dfd-8565-7c593c34edcd",
+      "roomId": "room_cc7835f6-70fa-46eb-bf63-7d1765cb7610",
+      "state": "exited",
+      "start": "2026-09-21T05:50:06.822Z",
+      "end": "2026-09-21T05:50:19.820Z",
+      "human": {
+        "body": "修复验证 C1：17+26 等于多少？只通过聊天回复一次“C1 43”。这是普通聊天测试，不创建任务、不修改记忆或项目文件。",
+        "created_at": "2026-09-21T05:50:06.770Z"
+      },
+      "reply": {
+        "actor_id": "principal_ac85c383-a4f3-44c7-b246-68112a4b416b",
+        "body": "C1 43",
+        "created_at": "2026-09-21T05:50:16.119Z"
+      },
+      "latencySeconds": 9.349,
+      "responses": [
+        {
+          "at": "2026-09-21T05:50:12.191Z",
+          "input": 48659,
+          "cache": 17423,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:50:15.867Z",
+          "input": 54262,
+          "cache": 48657,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:50:17.898Z",
+          "input": 54518,
+          "cache": 54260,
+          "model": "claude-sonnet-5"
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T05:50:12.191Z",
+          "workerCommands": ["message-check"],
+          "tool": "Bash"
+        },
+        {
+          "at": "2026-09-21T05:50:15.867Z",
+          "workerCommands": ["message-post"],
+          "tool": "Bash"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T05:50:13.129Z",
+          "bytes": 9158,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:50:16.131Z",
+          "bytes": 143,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "claude",
+      "runId": "run_37d55b12-a9cf-40df-a18c-84dfcf7c4616",
+      "roomId": "room_cc7835f6-70fa-46eb-bf63-7d1765cb7610",
+      "state": "exited",
+      "start": "2026-09-21T05:50:51.656Z",
+      "end": "2026-09-21T05:51:03.329Z",
+      "human": {
+        "body": "修复验证 C2：上一条测试要求的完整答案是什么？只回复那一条答案。这是普通聊天测试，不创建任务、不修改记忆或项目文件。",
+        "created_at": "2026-09-21T05:50:51.438Z"
+      },
+      "reply": {
+        "actor_id": "principal_ac85c383-a4f3-44c7-b246-68112a4b416b",
+        "body": "C1 43",
+        "created_at": "2026-09-21T05:50:59.498Z"
+      },
+      "latencySeconds": 8.06,
+      "responses": [
+        {
+          "at": "2026-09-21T05:50:56.042Z",
+          "input": 55243,
+          "cache": 54516,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:50:59.268Z",
+          "input": 59997,
+          "cache": 55241,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:51:02.405Z",
+          "input": 61747,
+          "cache": 59995,
+          "model": "claude-sonnet-5"
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T05:50:56.042Z",
+          "workerCommands": ["message-check"],
+          "tool": "Bash"
+        },
+        {
+          "at": "2026-09-21T05:50:59.268Z",
+          "workerCommands": ["message-post"],
+          "tool": "Bash"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T05:50:56.676Z",
+          "bytes": 6368,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:50:59.511Z",
+          "bytes": 143,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "runId": "run_31276009-5ec7-4338-a68e-ba07a77798f7",
+      "roomId": "room_1d8b3ca2-bc60-4f51-ac5f-22d8fbf60eb0",
+      "state": "exited",
+      "start": "2026-09-21T05:52:11.162Z",
+      "end": "2026-09-21T05:52:32.531Z",
+      "human": {
+        "body": "修复验证 D1：17+26 等于多少？只通过聊天回复一次“D1 43”。这是普通聊天测试，不创建任务、不修改记忆或项目文件。",
+        "created_at": "2026-09-21T05:52:11.079Z"
+      },
+      "reply": {
+        "actor_id": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+        "body": "D1 43",
+        "created_at": "2026-09-21T05:52:27.383Z"
+      },
+      "latencySeconds": 16.304,
+      "responses": [
+        {
+          "at": "2026-09-21T05:52:20.915Z",
+          "input": 27701,
+          "cache": 11008
+        },
+        {
+          "at": "2026-09-21T05:52:27.256Z",
+          "input": 29809,
+          "cache": 27392
+        },
+        {
+          "at": "2026-09-21T05:52:31.998Z",
+          "input": 29998,
+          "cache": 29440
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T05:52:20.748Z",
+          "workerCommands": ["message-check"],
+          "tool": "exec"
+        },
+        {
+          "at": "2026-09-21T05:52:27.153Z",
+          "workerCommands": ["message-post"],
+          "tool": "exec"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T05:52:21.434Z",
+          "bytes": 2998,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:52:27.394Z",
+          "bytes": 269,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "runId": "run_8cad3991-d3ab-484a-b02d-82ccd591d8e8",
+      "roomId": "room_1d8b3ca2-bc60-4f51-ac5f-22d8fbf60eb0",
+      "state": "exited",
+      "start": "2026-09-21T05:52:49.906Z",
+      "end": "2026-09-21T05:53:06.598Z",
+      "human": {
+        "body": "修复验证 D2：上一条测试要求的完整答案是什么？只回复那一条答案。这是普通聊天测试，不创建任务、不修改记忆或项目文件。",
+        "created_at": "2026-09-21T05:52:49.771Z"
+      },
+      "reply": {
+        "actor_id": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+        "body": "D1 43",
+        "created_at": "2026-09-21T05:53:04.761Z"
+      },
+      "latencySeconds": 14.99,
+      "responses": [
+        {
+          "at": "2026-09-21T05:52:58.818Z",
+          "input": 30199,
+          "cache": 11008
+        },
+        {
+          "at": "2026-09-21T05:53:04.570Z",
+          "input": 31922,
+          "cache": 29440
+        },
+        {
+          "at": "2026-09-21T05:53:06.077Z",
+          "input": 32127,
+          "cache": 31488
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T05:52:58.754Z",
+          "workerCommands": ["message-check"],
+          "tool": "exec"
+        },
+        {
+          "at": "2026-09-21T05:53:04.491Z",
+          "workerCommands": ["message-post"],
+          "tool": "exec"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T05:52:59.415Z",
+          "bytes": 1967,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:53:04.773Z",
+          "bytes": 269,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "runId": "run_1c5d329c-f3a7-49f0-b584-fe40a12f4860",
+      "roomId": "room_1d8b3ca2-bc60-4f51-ac5f-22d8fbf60eb0",
+      "state": "exited",
+      "start": "2026-09-21T05:59:50.116Z",
+      "end": "2026-09-21T06:00:10.646Z",
+      "human": {
+        "body": "修复验证 B3：17+26 等于多少？请回复“B3 43”。稍后会有独立问题B4，它不撤销本题，两题都需要回答。普通聊天测试，不创建任务、不修改记忆或项目文件。",
+        "created_at": "2026-09-21T05:59:50.076Z"
+      },
+      "reply": {
+        "actor_id": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+        "body": "B3 43",
+        "created_at": "2026-09-21T06:00:08.190Z"
+      },
+      "latencySeconds": 18.114,
+      "responses": [
+        {
+          "at": "2026-09-21T06:00:02.715Z",
+          "input": 32328,
+          "cache": 29440
+        },
+        {
+          "at": "2026-09-21T06:00:08.023Z",
+          "input": 34071,
+          "cache": 31488
+        },
+        {
+          "at": "2026-09-21T06:00:10.127Z",
+          "input": 34243,
+          "cache": 33536
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T06:00:02.629Z",
+          "workerCommands": ["message-check"],
+          "tool": "exec"
+        },
+        {
+          "at": "2026-09-21T06:00:07.945Z",
+          "workerCommands": ["message-post"],
+          "tool": "exec"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T06:00:03.477Z",
+          "bytes": 2028,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T06:00:08.201Z",
+          "bytes": 269,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "runId": "run_5917441b-4bea-4234-a12b-d36d3ec9e9f8",
+      "roomId": "room_1d8b3ca2-bc60-4f51-ac5f-22d8fbf60eb0",
+      "state": "exited",
+      "start": "2026-09-21T06:05:30.415Z",
+      "end": "2026-09-21T06:05:49.273Z",
+      "human": {
+        "body": "修复验证 B4：29+39 等于多少？请回复“B4 68”。这条不撤销B3；若B3尚未回答，请同时补上“B3 43”。普通聊天测试，不创建任务、不修改记忆或项目文件。",
+        "created_at": "2026-09-21T06:05:30.320Z"
+      },
+      "reply": {
+        "actor_id": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+        "body": "B4 68",
+        "created_at": "2026-09-21T06:05:46.884Z"
+      },
+      "latencySeconds": 16.564,
+      "responses": [
+        {
+          "at": "2026-09-21T06:05:42.195Z",
+          "input": 35968,
+          "cache": 33536
+        },
+        {
+          "at": "2026-09-21T06:05:46.732Z",
+          "input": 37716,
+          "cache": 31488
+        },
+        {
+          "at": "2026-09-21T06:05:48.746Z",
+          "input": 37893,
+          "cache": 35584
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T06:05:42.124Z",
+          "workerCommands": ["message-check"],
+          "tool": "exec"
+        },
+        {
+          "at": "2026-09-21T06:05:46.623Z",
+          "workerCommands": ["message-post"],
+          "tool": "exec"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T06:05:42.592Z",
+          "bytes": 2011,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T06:05:46.895Z",
+          "bytes": 269,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "runId": "run_300e48e4-3ac7-43d8-a34c-069ee3af3ee1",
+      "roomId": "room_1d8b3ca2-bc60-4f51-ac5f-22d8fbf60eb0",
+      "state": "exited",
+      "start": "2026-09-21T06:06:07.674Z",
+      "end": "2026-09-21T06:06:38.821Z",
+      "human": {
+        "body": "修复验证 B5：17+26 等于多少？回复“B5 43”。稍后B6是独立问题，不撤销本题。普通聊天，不创建任务或修改记忆文件。",
+        "created_at": "2026-09-21T06:06:07.512Z"
+      },
+      "reply": {
+        "actor_id": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+        "body": "B5 43\nB6 68",
+        "created_at": "2026-09-21T06:06:35.633Z"
+      },
+      "latencySeconds": 28.121,
+      "responses": [
+        {
+          "at": "2026-09-21T06:06:20.217Z",
+          "input": 39516,
+          "cache": 37632
+        },
+        {
+          "at": "2026-09-21T06:06:28.127Z",
+          "input": 41346,
+          "cache": 36608
+        },
+        {
+          "at": "2026-09-21T06:06:35.486Z",
+          "input": 41727,
+          "cache": 40704
+        },
+        {
+          "at": "2026-09-21T06:06:38.299Z",
+          "input": 42010,
+          "cache": 38656
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T06:06:20.115Z",
+          "workerCommands": ["message-check"],
+          "tool": "exec"
+        },
+        {
+          "at": "2026-09-21T06:06:28.000Z",
+          "workerCommands": ["message-post"],
+          "tool": "exec"
+        },
+        {
+          "at": "2026-09-21T06:06:35.362Z",
+          "workerCommands": ["message-post"],
+          "tool": "exec"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T06:06:20.722Z",
+          "bytes": 1926,
+          "startup": true,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T06:06:28.259Z",
+          "bytes": 1281,
+          "startup": false,
+          "error": true
+        },
+        {
+          "at": "2026-09-21T06:06:35.797Z",
+          "bytes": 512,
+          "startup": false,
+          "error": false
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "runId": "run_dc814a73-8491-4bff-90d1-bd362b8f6a43",
+      "roomId": "room_1d8b3ca2-bc60-4f51-ac5f-22d8fbf60eb0",
+      "state": "exited",
+      "start": "2026-09-21T06:06:38.831Z",
+      "end": "2026-09-21T06:06:54.537Z",
+      "human": {
+        "body": "修复验证 B6：29+39 等于多少？回复“B6 68”。这条不撤销B5，若尚未回答请同时补上“B5 43”。普通聊天，不创建任务或修改记忆文件。",
+        "created_at": "2026-09-21T06:06:17.182Z"
+      },
+      "reply": null,
+      "latencySeconds": null,
+      "responses": [
+        {
+          "at": "2026-09-21T06:06:50.178Z",
+          "input": 42216,
+          "cache": 41728
+        },
+        {
+          "at": "2026-09-21T06:06:54.012Z",
+          "input": 44012,
+          "cache": 41728
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T06:06:50.073Z",
+          "workerCommands": ["message-check"],
+          "tool": "exec"
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T06:06:50.577Z",
+          "bytes": 2139,
+          "startup": true,
+          "error": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Existing formal Agent identities and Room history; prompt digest upgrade may start a new provider session.",
+    "Native response accounting uses completed response IDs, not request-start timing."
+  ]
+}

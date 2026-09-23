@@ -1,3 +1,4 @@
+import { ProviderSystemMemory } from "./provider-system-memory.ts";
 import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
@@ -567,6 +568,7 @@ function createClaudeStreamJsonRuntime(
       args.push("--effort", resolvedModel.reasoning);
     }
   }
+  const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
@@ -584,16 +586,24 @@ function createClaudeStreamJsonRuntime(
       );
       if (providerSessionStore === undefined || key === undefined) return lease;
       const previous =
-        (await providerSessionStore.load(key)) ??
+        (await providerSessionStore.load(key, {
+          requireExisting: input.agent?.instanceSessionRequired === true,
+          instance: input.agent?.instanceChannelId !== undefined,
+        })) ??
         (lease.compatibleStandingPromptDigest === undefined
           ? null
           : await providerSessionStore.load({
               ...key,
               standingPromptDigest: lease.compatibleStandingPromptDigest,
             }));
-      if (previous === null) return lease;
+      const preparedLease = systemMemory.prepare(
+        input.runAttemptId,
+        lease,
+        previous,
+      );
+      if (previous === null) return preparedLease;
       return {
-        ...lease,
+        ...preparedLease,
         args: [
           ...(lease.args ?? []),
           "--resume-session",
@@ -647,6 +657,13 @@ function createClaudeStreamJsonRuntime(
               await providerSessionStore.record(
                 key,
                 evidence.providerSessionId,
+                {
+                  instance: input.agent?.instanceChannelId !== undefined,
+                  systemMemorySha256: systemMemory.evidence(
+                    input.runAttemptId,
+                    evidence.providerSessionId,
+                  ),
+                },
               );
             }
           },
@@ -732,6 +749,7 @@ function createCodexAppServerRuntime(
       args.push("--reasoning", resolvedModel.reasoning);
     }
   }
+  const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
@@ -748,10 +766,18 @@ function createCodexAppServerRuntime(
         lease.standingPromptDigest,
       );
       if (providerSessionStore === undefined || key === undefined) return lease;
-      const previous = await providerSessionStore.load(key);
-      if (previous === null) return lease;
+      const previous = await providerSessionStore.load(key, {
+        requireExisting: input.agent?.instanceSessionRequired === true,
+        instance: input.agent?.instanceChannelId !== undefined,
+      });
+      const preparedLease = systemMemory.prepare(
+        input.runAttemptId,
+        lease,
+        previous,
+      );
+      if (previous === null) return preparedLease;
       return {
-        ...lease,
+        ...preparedLease,
         args: [
           ...(lease.args ?? []),
           "--resume-session",
@@ -817,6 +843,13 @@ function createCodexAppServerRuntime(
               await providerSessionStore.record(
                 key,
                 evidence.providerSessionId,
+                {
+                  instance: input.agent?.instanceChannelId !== undefined,
+                  systemMemorySha256: systemMemory.evidence(
+                    input.runAttemptId,
+                    evidence.providerSessionId,
+                  ),
+                },
               );
             }
           },
@@ -981,7 +1014,10 @@ function createKimiAcpRuntime(
         lease.standingPromptDigest,
       );
       if (providerSessionStore === undefined || key === undefined) return lease;
-      const previous = await providerSessionStore.load(key);
+      const previous = await providerSessionStore.load(key, {
+        requireExisting: input.agent?.instanceSessionRequired === true,
+        instance: input.agent?.instanceChannelId !== undefined,
+      });
       if (previous === null) return lease;
       return {
         ...lease,
@@ -1038,6 +1074,7 @@ function createKimiAcpRuntime(
               await providerSessionStore.record(
                 key,
                 evidence.providerSessionId,
+                { instance: input.agent?.instanceChannelId !== undefined },
               );
             }
           },
@@ -1140,7 +1177,10 @@ function createOpenCodeServerRuntime(
         lease.standingPromptDigest,
       );
       if (providerSessionStore === undefined || key === undefined) return lease;
-      const previous = await providerSessionStore.load(key);
+      const previous = await providerSessionStore.load(key, {
+        requireExisting: input.agent?.instanceSessionRequired === true,
+        instance: input.agent?.instanceChannelId !== undefined,
+      });
       if (previous === null) return lease;
       return {
         ...lease,
@@ -1200,6 +1240,7 @@ function createOpenCodeServerRuntime(
               await providerSessionStore.record(
                 key,
                 evidence.providerSessionId,
+                { instance: input.agent?.instanceChannelId !== undefined },
               );
             }
           },

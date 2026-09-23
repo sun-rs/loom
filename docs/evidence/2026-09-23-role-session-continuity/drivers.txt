@@ -1,0 +1,15 @@
+✔ Claude custom native model ID reaches the CLI unchanged (610.571416ms)
+✔ Claude version model and explicit effort both reach the CLI (356.379667ms)
+✔ Claude stream-json resumes only accepted sessions and interrupts natively (2677.412917ms)
+✔ Codex automatically resumes Host-private Provider sessions with Raft fallback rules (6115.47275ms)
+✔ Kimi resumes Host-private ACP sessions and only retries proven side-effect-free loss (11756.342375ms)
+✔ OpenCode native server resumes sessions, auto-authorizes, recovers 404, and aborts before kill (5675.182417ms)
+✔ Role is inert configuration; two channel instances receive independent conversations (157.377333ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12090.279625

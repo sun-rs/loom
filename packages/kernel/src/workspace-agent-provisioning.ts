@@ -44,6 +44,7 @@ import type {
 } from "./types.ts";
 
 type WorkspaceAgentProvisioningOwner = {
+  roleInstance?: { roleId: string; roleRevisionId: string; channelId: string };
   actorId: string;
   createId: (prefix: string) => string;
   database: DatabaseSync;
@@ -369,14 +370,25 @@ export function provisionWorkspaceAgentTransaction(
     roomId: input.controlRoomId,
     type: "agent.provisioned",
   });
+  if (owner.roleInstance)
+    owner.database
+      .prepare("INSERT INTO role_instances VALUES(?,?,?,?,?)")
+      .run(
+        participantId,
+        agentId,
+        owner.roleInstance.roleId,
+        owner.roleInstance.roleRevisionId,
+        owner.roleInstance.channelId,
+      );
   reconcileAllChannelMemberships(owner.database, owner.events, owner.now());
-  requestAgentFirstRun(
-    owner.database,
-    owner.events,
-    input.controlRoomId,
-    participantId,
-    owner.now(),
-  );
+  if (!owner.roleInstance)
+    requestAgentFirstRun(
+      owner.database,
+      owner.events,
+      input.controlRoomId,
+      participantId,
+      owner.now(),
+    );
   return workspaceAgentProvisionResult(owner.database, event, false);
 }
 
@@ -497,7 +509,7 @@ function grantHostParticipant(
     .run(JSON.stringify(participantIds), hostId, credentialId);
 }
 
-function workspaceAgentProvisionResult(
+export function workspaceAgentProvisionResult(
   database: DatabaseSync,
   event: RoomEvent,
   deduplicated: boolean,

@@ -310,6 +310,7 @@ export class WorkerReadService {
       // carry it back on a send. MAX() semantics mean an older page never
       // rewinds the position, and a Thread page never advances its Room.
       recordWorkerTargetReadPosition(this.#db, {
+        messageSeqs: rows.map((row) => integer(row, "event_order")),
         participantId: scope.participantId,
         roomId: scope.roomId,
         ...(input.threadId === undefined || input.threadId === null

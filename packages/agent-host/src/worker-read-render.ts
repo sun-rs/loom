@@ -503,9 +503,9 @@ function presentedContextLines(presentedContext: unknown): string[] {
   for (const item of asArray(context.targets).map(asRecord)) {
     const threadId = asString(item.threadId);
     lines.push(
-      `Already presented: target ${asString(item.roomId) ?? "-"}${
+      `Presentation high-water: target ${asString(item.roomId) ?? "-"}${
         threadId === undefined ? "" : ` threadId=${threadId}`
-      } through seq ${asNumber(item.presentedThroughSeq) ?? "-"}.`,
+      } seq ${asNumber(item.presentedThroughSeq) ?? "-"}; not a contiguous read frontier.`,
     );
   }
   for (const item of asArray(context.events).map(asRecord)) {
@@ -516,9 +516,7 @@ function presentedContextLines(presentedContext: unknown): string[] {
     lines.push(
       `Already presented: seq ${asNumber(item.roomSeq) ?? "-"} (msg=${
         asString(item.messageId) ?? "-"
-      }) was already presented through seq ${
-        asNumber(item.presentedThroughSeq) ?? "-"
-      }; you posted ${asNumber(responded.count) ?? 0} message(s) at that target afterwards${
+      }) was already presented; you posted ${asNumber(responded.count) ?? 0} message(s) at that target afterwards${
         ids === "" ? "" : ` (${ids})`
       }.`,
     );

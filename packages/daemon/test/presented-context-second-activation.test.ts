@@ -371,14 +371,14 @@ test("the follow-up Activation's sync states that the message was already presen
     );
     assert.ok(
       observed.syncText.includes(
-        `Already presented: target ${roomId} through seq ${String(followUpRequest.roomSeq)}.`,
+        `Presentation high-water: target ${roomId} seq ${String(followUpRequest.roomSeq)}; not a contiguous read frontier.`,
       ),
       observed.syncText,
     );
     // The 20 re-derivation steps in the incident were hunting for exactly this.
     assert.ok(
       observed.syncText.includes(
-        `Already presented: seq ${String(followUpRequest.roomSeq)} (msg=${followUpRequest.payload.messageId as string}) was already presented through seq ${String(followUpRequest.roomSeq)}; you posted 2 message(s) at that target afterwards (${originalReply.payload.messageId as string}, ${followUpReply.payload.messageId as string}).`,
+        `Already presented: seq ${String(followUpRequest.roomSeq)} (msg=${followUpRequest.payload.messageId as string}) was already presented; you posted 2 message(s) at that target afterwards (${originalReply.payload.messageId as string}, ${followUpReply.payload.messageId as string}).`,
       ),
       observed.syncText,
     );

@@ -243,6 +243,7 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
     assert.notEqual(binding, undefined);
     let promptDigest = "sha256-standing-prompt-digest";
     let compatibleDigest: string | undefined;
+    let strictContinuity = false;
     const runtime = implementations.createRuntime(
       active,
       report,
@@ -252,6 +253,7 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
           // it here; the RuntimeProfile freezes no prompt of its own.
           args: ["--prompt", "canonical room worker prompt"],
           env: {
+            RAH_REQUIRE_SESSION_CONTINUITY: strictContinuity ? "1" : "0",
             FAKE_CLAUDE_RECORD_PATH: recordPath,
             RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
               runtimeId: "claude",
@@ -329,6 +331,16 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       return await runtime.reap(run);
     };
 
+    assert.equal((await runActivation("strict-missing", "seed")).code, 0);
+    strictContinuity = true;
+    const lost = await runActivation("strict-missing", "run");
+    assert.equal(
+      lost.code,
+      1,
+      "bound instance must not silently create a replacement session",
+    );
+    assert.equal(lost.failure?.retryDisposition, "sticky_terminal");
+    strictContinuity = false;
     assert.equal((await runActivation("resumed", "seed")).code, 0);
     compatibleDigest = promptDigest;
     promptDigest = "sha256-direct-prompt-digest";
@@ -360,6 +372,15 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    assert.equal(
+      records.filter(
+        (r) =>
+          r.activationId === "activation-claude-strict-missing-run" &&
+          r.kind === "spawn",
+      ).length,
+      1,
+      "no fresh Claude child after failed resume",
+    );
     for (const record of records.filter((entry) => entry.kind === "spawn")) {
       assert.ok(record.args.includes("value with spaces"));
       assert.ok(record.args.includes("--test-extra"));

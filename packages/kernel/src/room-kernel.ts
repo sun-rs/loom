@@ -30,7 +30,7 @@ import {
   type RenderedPresentedWindow,
 } from "./activation-presented-window.ts";
 import { claimTaskTransaction, type TaskClaimInput } from "./task-claim.ts";
-import { projectPlacementCandidates } from "./placement-candidate-projection.ts";
+import { projectPlacementPlannerInput } from "./placement-planner-projection.ts";
 import { assertRuntimeWorkspaceProvenance } from "./runtime-workspace-provenance.ts";
 import { listHostExecutionWorkspaceBindings } from "./host-execution-workspaces.ts";
 import type { RuntimeNoticeInput } from "./runtime-pending-notice.ts";
@@ -81,7 +81,6 @@ import type {
   InPlaceWorkspaceSharing,
   RoomKernelOptions,
 } from "./room-kernel-options.ts";
-import { busyWorkspaceMountRevisionIds } from "./workspace-lease.ts";
 export type {
   InPlaceWorkspaceSharing,
   PlacementCapacityPolicy,
@@ -186,12 +185,10 @@ import {
 import { authorizedHostParticipantIds } from "./host-authorization.ts";
 import {
   backfillAgentMemoryHomes,
-  memoryHomeAuthorizedHosts,
   memoryHomeEligibleParticipants,
 } from "./agent-memory-home.ts";
 import {
   AgentExclusiveOperationService,
-  activeAgentExclusiveOperationParticipantIds,
   assertAgentHasNoExclusiveOperation as assertAgentUnfenced,
   nextUnfencedActivation,
   nextUnfencedReservedPlacement,
@@ -418,7 +415,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 57;
+export const KERNEL_SCHEMA_VERSION = 60;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -462,6 +459,7 @@ export class RoomKernel {
   readonly restoreHumanThreadAgentFollower;
   readonly humanSidebar;
   readonly humanNavigation;
+  readonly roles;
   readonly humanProfiles;
   readonly publicChannels;
   readonly humanNotifications;
@@ -665,6 +663,7 @@ export class RoomKernel {
     });
     this.humanSidebar = humanCommands.humanSidebar;
     this.humanNavigation = humanCommands.humanNavigation;
+    this.roles = humanCommands.roles;
     this.humanProfiles = humanCommands.humanProfiles;
     this.humanTaskHistory = humanCommands.humanTaskHistory;
     this.taskAmendments = humanCommands.taskAmendments;
@@ -5814,38 +5813,19 @@ export class RoomKernel {
     now: Date,
     schedulerVersion: string,
   ): PlacementPlannerInput {
-    const offerRows = this.#database
-      .prepare(
-        `SELECT runtime_offers.*
-         FROM runtime_offers
-         JOIN agent_hosts ON agent_hosts.host_id = runtime_offers.host_id
-         WHERE runtime_offers.lease_until_ms > ?
-           AND agent_hosts.state = 'online'
-           AND agent_hosts.instance_id = runtime_offers.host_instance_id
-         ORDER BY runtime_offers.runtime_offer_id`,
-      )
-      .all(now.getTime());
-    const offers = offerRows
-      .map((row) => this.#runtimeOfferFromRow(row))
-      .filter((offer) => this.#runtimeOfferEvidenceIsCurrentlyTrusted(offer));
-    const workspaceDefinitionIds = [
-      ...new Set(
-        offers.flatMap((offer) =>
-          offer.workspaceMountDescriptors.map(
-            (workspace) => workspace.workspaceDefinitionId,
-          ),
-        ),
-      ),
-    ].sort();
-    const workspaceDefinitionId =
-      workspaceDefinitionIds.length === 1
-        ? workspaceDefinitionIds[0]!
-        : "workspace-unconfigured";
-
-    const candidates = projectPlacementCandidates({
+    return projectPlacementPlannerInput({
       database: this.#database,
       now,
-      workspaceDefinitionId,
+      schedulerVersion,
+      defaultMaxConcurrent: this.#defaultPlacementMaxConcurrent,
+      hostLimits: this.#hostPlacementLimits,
+      poolLimits: this.#poolPlacementLimits,
+      profileLimits: this.#runtimeProfilePlacementLimits,
+      sharing: this.#inPlaceWorkspaceSharing,
+      readRuntimeOffer: (row) => this.#runtimeOfferFromRow(row),
+      isTrustedOffer: (offer) =>
+        this.#runtimeOfferEvidenceIsCurrentlyTrusted(offer),
+      readPlacement: (row) => this.#placementFromRow(row),
       readAgentRevision: (id) =>
         this.#agentDefinitionRevisionFromRow(
           this.#requireAgentDefinitionRevisionRow(id),
@@ -5855,176 +5835,6 @@ export class RoomKernel {
           this.#requireExecutionPolicyRevisionRow(id),
         ),
     });
-
-    const hostRows = this.#database
-      .prepare(
-        "SELECT * FROM agent_hosts WHERE state = 'online' ORDER BY host_id",
-      )
-      .all();
-    const reservationRows = this.#database
-      .prepare(
-        "SELECT placement_id, resource_type, resource_id FROM placement_capacity_reservations ORDER BY placement_id, resource_type, resource_id",
-      )
-      .all();
-    const reservationKeys = new Set<string>();
-    const reservedByResource = new Map<string, number>();
-    for (const row of reservationRows) {
-      const placementId = text(row, "placement_id");
-      const resourceType = text(row, "resource_type");
-      const resourceId = text(row, "resource_id");
-      reservationKeys.add(`${placementId}:${resourceType}:${resourceId}`);
-      const resourceKey = `${resourceType}:${resourceId}`;
-      reservedByResource.set(
-        resourceKey,
-        (reservedByResource.get(resourceKey) ?? 0) + 1,
-      );
-    }
-    const unprovenRuntimePlacementRows = this.#database
-      .prepare(
-        `SELECT DISTINCT placements.*
-         FROM placements
-         JOIN run_attempts ON run_attempts.placement_id = placements.placement_id
-         JOIN runtime_processes
-           ON runtime_processes.run_attempt_id = run_attempts.run_attempt_id
-         WHERE runtime_processes.state <> 'terminated'
-         ORDER BY placements.placement_id`,
-      )
-      .all();
-    const unprovenRuntimePlacements = unprovenRuntimePlacementRows.map(
-      (row) => ({
-        placement: this.#placementFromRow(row),
-        runtimeProfileId: text(row, "runtime_profile_id"),
-      }),
-    );
-    for (const { placement, runtimeProfileId } of unprovenRuntimePlacements) {
-      const implicitResources: Array<
-        ["host" | "offer" | "pool" | "profile", string]
-      > = [
-        ["offer", placement.runtimeOfferId],
-        ["host", placement.hostId],
-        [
-          "profile",
-          capacityProfileResourceId(placement.hostId, runtimeProfileId),
-        ],
-        ...placement.capacityPoolIds.map((capacityPoolId): ["pool", string] => [
-          "pool",
-          capacityPoolId,
-        ]),
-      ];
-      for (const [resourceType, resourceId] of implicitResources) {
-        const reservationKey = `${placement.placementId}:${resourceType}:${resourceId}`;
-        if (reservationKeys.has(reservationKey)) continue;
-        reservationKeys.add(reservationKey);
-        const resourceKey = `${resourceType}:${resourceId}`;
-        reservedByResource.set(
-          resourceKey,
-          (reservedByResource.get(resourceKey) ?? 0) + 1,
-        );
-      }
-    }
-    const reserved = (resourceType: string, resourceId: string): number =>
-      reservedByResource.get(`${resourceType}:${resourceId}`) ?? 0;
-    const uniqueHosts = new Map<
-      string,
-      { adminMaxConcurrent: number; hostId: string; reserved: number }
-    >();
-    const uniqueProfiles = new Map<
-      string,
-      {
-        adminMaxConcurrent: number;
-        hostId: string;
-        reserved: number;
-        runtimeProfileId: string;
-      }
-    >();
-    const uniquePools = new Map<
-      string,
-      {
-        adminMaxConcurrent: number;
-        capacityPoolId: string;
-        reserved: number;
-      }
-    >();
-    for (const offer of offers) {
-      uniqueHosts.set(offer.hostId, {
-        adminMaxConcurrent:
-          this.#hostPlacementLimits.get(offer.hostId) ??
-          this.#defaultPlacementMaxConcurrent,
-        hostId: offer.hostId,
-        reserved: reserved("host", offer.hostId),
-      });
-      uniqueProfiles.set(
-        capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
-        {
-          adminMaxConcurrent:
-            this.#runtimeProfilePlacementLimits.get(
-              capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
-            ) ?? this.#defaultPlacementMaxConcurrent,
-          hostId: offer.hostId,
-          reserved: reserved(
-            "profile",
-            capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
-          ),
-          runtimeProfileId: offer.runtimeProfileId,
-        },
-      );
-      for (const capacityPoolId of offer.capacityPoolIds) {
-        uniquePools.set(capacityPoolId, {
-          adminMaxConcurrent:
-            this.#poolPlacementLimits.get(capacityPoolId) ??
-            this.#defaultPlacementMaxConcurrent,
-          capacityPoolId,
-          reserved: reserved("pool", capacityPoolId),
-        });
-      }
-    }
-
-    return {
-      activeHostInstances: hostRows.map((row) => ({
-        hostId: text(row, "host_id"),
-        hostInstanceId: text(row, "instance_id"),
-      })),
-      activeParticipantIds: [
-        ...new Set([
-          ...this.#database
-            .prepare(
-              "SELECT DISTINCT participant_id FROM activations WHERE state = 'quarantined' OR (state = 'leased' AND lease_until_ms > ?) ORDER BY participant_id",
-            )
-            .all(now.getTime())
-            .map((row) => text(row, "participant_id")),
-          ...this.#database
-            .prepare(
-              "SELECT DISTINCT participant_id FROM runtime_processes WHERE state <> 'terminated' ORDER BY participant_id",
-            )
-            .all()
-            .map((row) => text(row, "participant_id")),
-          ...activeAgentExclusiveOperationParticipantIds(this.#database),
-        ]),
-      ].sort(),
-      authorizedHostParticipants: memoryHomeAuthorizedHosts(
-        this.#database,
-        hostRows,
-      ),
-      busyWorkspaceMountRevisionIds: busyWorkspaceMountRevisionIds({
-        database: this.#database,
-        sharing: this.#inPlaceWorkspaceSharing,
-        unprovenRuntimePlacements,
-      }),
-      candidates,
-      capacities: {
-        hosts: [...uniqueHosts.values()],
-        offers: offers.map((offer) => ({
-          reserved: reserved("offer", offer.runtimeOfferId),
-          runtimeOfferId: offer.runtimeOfferId,
-          structuralFailureCount: 0,
-        })),
-        pools: [...uniquePools.values()],
-        profiles: [...uniqueProfiles.values()],
-      },
-      now: now.toISOString(),
-      offers,
-      schedulerVersion,
-    };
   }
 
   #snapshot(roomId: string): RoomSnapshot {

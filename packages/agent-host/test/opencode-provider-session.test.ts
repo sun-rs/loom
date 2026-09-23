@@ -75,6 +75,7 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
     const binding =
       report.reportVersion === 2 ? report.modelBindings[0] : undefined;
     assert.notEqual(binding, undefined);
+    let strictContinuity = false;
     const runtime = implementations.createRuntime(
       active,
       report,
@@ -83,7 +84,10 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
           // The daemon compiles the standing prompt per RunAttempt and appends
           // it here; the RuntimeProfile freezes no prompt of its own.
           args: ["--prompt", "canonical room worker prompt"],
-          env: { FAKE_OPENCODE_RECORD_PATH: recordPath },
+          env: {
+            FAKE_OPENCODE_RECORD_PATH: recordPath,
+            RAH_REQUIRE_SESSION_CONTINUITY: strictContinuity ? "1" : "0",
+          },
           standingPromptDigest: "sha256-standing-prompt-digest",
         }),
         cwd: directory,
@@ -145,6 +149,16 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
       return await runtime.reap(run);
     };
 
+    assert.equal((await runActivation("strict-missing", "seed")).code, 0);
+    strictContinuity = true;
+    const lost = await runActivation("strict-missing", "run");
+    assert.equal(
+      lost.code,
+      1,
+      "bound instance must not silently create a replacement session",
+    );
+    assert.equal(lost.failure?.retryDisposition, "sticky_terminal");
+    strictContinuity = false;
     assert.equal((await runActivation("resumed", "seed")).code, 0);
     assert.equal((await runActivation("resumed", "run")).code, 0);
     assert.equal((await runActivation("missing", "seed")).code, 0);
@@ -156,6 +170,16 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    assert.equal(
+      records.filter(
+        (r) =>
+          r.activationId === "activation-opencode-strict-missing-run" &&
+          r.method === "POST" &&
+          r.path === "/session",
+      ).length,
+      0,
+      "no fresh session after failed resume",
+    );
     const forActivation = (suffix: string) =>
       records.filter(
         (record) => record.activationId === `activation-opencode-${suffix}`,

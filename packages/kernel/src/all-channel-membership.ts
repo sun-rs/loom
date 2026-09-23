@@ -15,6 +15,7 @@ export function reconcileAllChannelMemberships(
     FROM rooms r JOIN rooms c ON c.workspace_id=r.workspace_id AND c.kind='control'
     JOIN agent_definitions a ON a.control_room_id=c.room_id AND a.state<>'tombstoned'
     WHERE r.kind='channel' AND r.slug='all'
+    AND NOT EXISTS (SELECT 1 FROM role_instances i WHERE i.instance_id=a.participant_id)
     AND NOT EXISTS (SELECT 1 FROM memberships m WHERE m.room_id=r.room_id AND m.principal_id=a.participant_id)
     ORDER BY r.room_id,a.participant_id`,
     )

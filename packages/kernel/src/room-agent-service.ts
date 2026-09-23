@@ -124,6 +124,7 @@ export function listAgentCatalogRows(
          agent_definitions.*,
          agent_definition_revisions.definition_json,
          principals.handle,
+         (SELECT channel_id FROM role_instances WHERE agent_id=agent_definitions.agent_definition_id) AS instance_channel_id,
          json_extract(execution_policy_revisions.policy_json, '$.modelIntent.exactBindingIds[0]') AS model_binding_id
        FROM agent_definitions
        JOIN agent_definition_revisions
@@ -170,6 +171,9 @@ export function listAgentCatalog(
     includeDeleted,
   ).map((row) =>
     AgentCatalogEntrySchema.parse({
+      ...(nullableText(row, "instance_channel_id")
+        ? { instanceChannelId: text(row, "instance_channel_id") }
+        : {}),
       ...(nullableText(row, "model_binding_id")
         ? { modelBindingId: text(row, "model_binding_id") }
         : {}),

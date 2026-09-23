@@ -62,3 +62,12 @@ Computer 不切分、筛选、摘要、重排或改写索引。不引入自动�
 - 13 个定向测试文件共 68 项通过：包含 byte-exact 源码 SHA、原文/BOM/CRLF 不变、整份超预算回退、目录错误降级与安全根拒绝、真实 Node 子进程的跨 Room/RuntimeProfile/目录持续性、本地/远程启动接入。
 - `npm run check`：类型检查通过；后端 627 项中 625 通过、2 项付费门禁跳过；Web 单测 25 项通过。`npm run format:check` 与 `git diff --check` 通过。
 - 未运行付费模型或真实浏览器召回对照，未改在线配置、未部署/重启/提交。旧冻结 prompt 与 v2 envelope 的配对迁移必须在发布门禁中验证，不能仅升级文件就宣布在线 Agent 已采用新规则。
+
+## 2026-09-21 原生传输适配
+
+Claude/Codex 支持将完整原始索引作为 system 记忆数据提供，属于 RAH 传输适配，
+不是上游原码复用。当前文件始终由既有安全 reader 完整读取并校验；原生恢复只认
+首次 snapshot digest，变化或缺少元数据时仍输出完整索引。没有片段选择或“已读”
+业务收据。显式 `startupMemoryTransport: "tool"` 回退。Kimi/OpenCode 保持原路径。
+默认启用基于两家真实首次/续聊/记忆更新反例及修正版验证；压缩后完整重读要求不变，
+未据此宣称自动压缩恢复验收。见[启动记忆传输修复](../audits/2026-09-21-startup-memory-transport.zh-CN.md)。

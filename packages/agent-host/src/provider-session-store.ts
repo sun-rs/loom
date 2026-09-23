@@ -34,6 +34,7 @@ export type ProviderSessionKey = Readonly<{
 export type ProviderSessionRecord = ProviderSessionKey &
   Readonly<{
     providerSessionId: string;
+    systemMemorySha256?: string;
     recordedAt: string;
     schemaVersion: 1;
   }>;
@@ -59,8 +60,17 @@ export class ProviderSessionStore {
 
   async load(
     uncheckedKey: ProviderSessionKey,
+    options: { instance?: boolean; requireExisting?: boolean } = {},
   ): Promise<ProviderSessionRecord | null> {
     const key = validateKey(uncheckedKey);
+    if (options.instance) {
+      const record = await this.#loadInstance(key);
+      if (record === null && options.requireExisting)
+        throw new Error(
+          "RAH_SESSION_CONTINUITY_REQUIRED: previously launched instance has no session binding",
+        );
+      return record;
+    }
     await this.#ensurePrivateRoot();
     const path = this.#recordPath(key);
     let metadata;
@@ -96,8 +106,20 @@ export class ProviderSessionStore {
   async record(
     uncheckedKey: ProviderSessionKey,
     providerSessionId: string,
+    metadata: {
+      systemMemorySha256?: string | undefined;
+      instance?: boolean;
+    } = {},
   ): Promise<ProviderSessionRecord> {
-    const key = validateKey(uncheckedKey);
+    const validated = validateKey(uncheckedKey);
+    if (metadata.instance) {
+      const previous = await this.#loadInstance(validated);
+      if (previous && previous.providerSessionId !== providerSessionId)
+        throw new Error(
+          "RAH_SESSION_CONTINUITY_REQUIRED: refusing instance session replacement",
+        );
+    }
+    const key = metadata.instance ? instanceKey(validated) : validated;
     const sessionId = requiredText(
       providerSessionId,
       "providerSessionId",
@@ -109,6 +131,7 @@ export class ProviderSessionStore {
     }
     const value: ProviderSessionRecord = Object.freeze({
       ...key,
+      ...systemMemoryMetadata(metadata.systemMemorySha256),
       providerSessionId: sessionId,
       recordedAt: now.toISOString(),
       schemaVersion: 1,
@@ -138,6 +161,53 @@ export class ProviderSessionStore {
       throw error;
     }
     return value;
+  }
+
+  /** One native session per instance/provider, independent of configuration
+   * revisions. Existing records are adopted only when identity is unambiguous.
+   * This remains Host session metadata, not a second Room execution queue. */
+  async #loadInstance(
+    key: ProviderSessionKey,
+  ): Promise<ProviderSessionRecord | null> {
+    const stable = instanceKey(key);
+    const bound = await this.load(stable);
+    if (bound) return bound;
+    const candidates: ProviderSessionRecord[] = [];
+    // One-time adoption of pre-binding MVP records. Never choose by mtime.
+    for (const entry of await readdir(this.#rootDirectory, {
+      withFileTypes: true,
+    })) {
+      if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+      const path = join(this.#rootDirectory, entry.name);
+      const metadata = await lstat(path);
+      assertPrivateFile(metadata, path);
+      if (metadata.size > MAX_RECORD_BYTES)
+        throw new Error("Provider session record exceeds its safe byte limit");
+      const record = validateRecord(JSON.parse(await readFile(path, "utf8")));
+      if (entry.name !== this.#recordName(validateKey(record)))
+        throw new Error(
+          "Provider session record identity does not match its filename",
+        );
+      if (record.participantId === key.participantId) candidates.push(record);
+    }
+    if (candidates.length === 0) return null;
+    if (
+      candidates.some((record) => record.provider !== key.provider) ||
+      new Set(candidates.map((record) => record.providerSessionId)).size !== 1
+    )
+      throw new Error(
+        "RAH_SESSION_CONTINUITY_REQUIRED: ambiguous or incompatible instance binding",
+      );
+    const first = candidates[0]!;
+    // A memory digest is safe only when all records agree; otherwise use the
+    // existing tool fallback, never assume a newer system snapshot was read.
+    const digests = new Set(
+      candidates.map((record) => record.systemMemorySha256),
+    );
+    return this.record(stable, first.providerSessionId, {
+      systemMemorySha256:
+        digests.size === 1 ? first.systemMemorySha256 : undefined,
+    });
   }
 
   async invalidate(uncheckedKey: ProviderSessionKey): Promise<void> {
@@ -449,6 +519,7 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     "runtimeProfileRevisionId",
     "schemaVersion",
     "workspaceMountRevisionId",
+    ...(record.systemMemorySha256 === undefined ? [] : ["systemMemorySha256"]),
     ...(record.standingPromptDigest === undefined
       ? []
       : ["standingPromptDigest"]),
@@ -474,6 +545,7 @@ function validateRecord(value: unknown): ProviderSessionRecord {
   }
   return Object.freeze({
     ...key,
+    ...systemMemoryMetadata(record.systemMemorySha256),
     providerSessionId: requiredText(
       record.providerSessionId,
       "providerSessionId",
@@ -534,4 +606,20 @@ async function syncDirectory(directory: string): Promise<void> {
 
 function isMissing(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
+}
+
+function systemMemoryMetadata(value: unknown): { systemMemorySha256?: string } {
+  if (value === undefined) return {};
+  if (typeof value !== "string" || !/^[a-f0-9]{64}$/.test(value))
+    throw new Error("Invalid Provider system memory digest");
+  return { systemMemorySha256: value };
+}
+
+function instanceKey(key: ProviderSessionKey): ProviderSessionKey {
+  return {
+    participantId: key.participantId,
+    provider: key.provider,
+    runtimeProfileRevisionId: "instance-session/v1",
+    workspaceMountRevisionId: "instance-session/v1",
+  };
 }

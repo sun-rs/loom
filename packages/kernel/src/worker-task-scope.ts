@@ -1,3 +1,4 @@
+import { requireInstanceWorkerRoom } from "./instance-worker-scope.ts";
 import type { WorkerVisibleRoomScope } from "./worker-read-targets.ts";
 import type { DatabaseSync } from "node:sqlite";
 
@@ -132,6 +133,7 @@ export function requireWorkerRoomVisibility(
   database: DatabaseSync,
   scope: WorkerVisibleRoomScope,
 ): void {
+  requireInstanceWorkerRoom(database, scope.participantId, scope.roomId);
   const member = database
     .prepare(
       `SELECT principals.principal_id FROM memberships

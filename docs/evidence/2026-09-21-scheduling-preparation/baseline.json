@@ -1,0 +1,578 @@
+{
+  "capturedAt": "2026-09-20T16:51:33.887080+00:00",
+  "baselineCommit": "9f5a83e99b6efb5efeb3dac5413d782be5100209",
+  "initialGitStatus": "?? scratchpad/",
+  "cliVersions": {
+    "node": "25.9.0",
+    "codex": "0.155.1",
+    "claude": "2.1.278",
+    "kimi": "0.39.1",
+    "opencode": "1.18.30"
+  },
+  "formalHealth": {
+    "buildIdentity": {
+      "schemaVersion": 1,
+      "kind": "development",
+      "version": "0.0.0-dev+local",
+      "builtAt": "2026-09-20T16:42:35.284Z",
+      "buildId": "179d7a0b517d363b"
+    },
+    "service": "rah-os-local-core",
+    "state": "online"
+  },
+  "formalAssetLeases": [
+    {
+      "processId": 5120,
+      "releaseDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/1787488a7d6b11f8879e2331484ed905b97b93334d3b0487eafe3377de396784",
+      "schemaVersion": 1,
+      "startedAt": "2026-09-20T16:43:07.736Z"
+    }
+  ],
+  "formalBackend": "source-loaded run-local-workbench.mjs; no immutable backend hash exposed; equality to commit NOT established",
+  "sourceSha256": {
+    "packages/agent-host/src/provider-activation-input.js": "c821be7a3c0cd1c59f077b0428e7e1aff14e2ad1c05bab4fe9041d3dc491d2b1",
+    "packages/agent-host/src/provider-session-store.ts": "33e120823400dff3d313dab352b56f87a9ee4c71be9db161f47238b8f626a642",
+    "packages/agent-host/src/runtime-implementation-registry.ts": "bcc123c161ba62a5d1ced11c386c8d76f663098f132c6afdb828983cecf66e00",
+    "packages/agent-host/src/kimi-acp-driver.mjs": "a4311611c9d21d4283d0c38de6066a3734e29ee0ac513f475d7a2d6498a74a73",
+    "packages/agent-host/src/provider-trajectory-normalizer.js": "48258d5488a8b4b59a9aa369d5b00e90a254d5d9589d803330a3cbe46d3faa62",
+    "packages/daemon/src/standing-prompt-compiler.ts": "258e29d6a36c0552bcbb8f611b52aa1487f1a0a8e17276fde8073550934ee8fe",
+    "packages/agent-host/src/worker-startup-context.ts": "98acbfa2e50cdce6bf479f017d78f247e168168cf74b375e01ed1d2e65707808",
+    "packages/application-service/src/worker-application-service.ts": "28a18cad8952a0f94bfad90d7d3255bc5167b89a1c783a000e3c260657e2cefb"
+  },
+  "raft": {
+    "version": "Computer 1.0.32",
+    "mainSha256": "531f41e2ee626d729c92933fbc753008af42380c5745c54b5d0af9901e43d170",
+    "sourcePath": "/Users/sun/Code/repos/raft-runtime-forensics/artifacts/extracted/raft-computer-1.0.32/main.js",
+    "license": "analysis-only; no redistribution or production dependency",
+    "upstreamUrl": "https://cdn.raft.build/computer/1.0.32/raft-computer-darwin-arm64"
+  },
+  "multicaRevision": "11861145abc59a0d39c8c8f24ad837d4584e664f",
+  "currentAgentPolicies": [
+    {
+      "participantId": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_88286e11-256c-4c51-a4d4-06222a6af6f8",
+      "modelIntent": {
+        "exactBindingIds": ["local:codex-cli/v1:gpt-6-astra"],
+        "reasoning": "low",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-codex:runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7"
+      ]
+    },
+    {
+      "participantId": "principal_4dcf00cf-1d21-48c0-827c-547315cb5451",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_f5d87b11-5184-4512-a33c-f6928c7b9a05",
+      "modelIntent": {
+        "exactBindingIds": ["local:kimi-cli/v1:kimi-code/k3"],
+        "reasoning": "max",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-kimi:runtime_profile_revision_cf72ab5d-867d-496e-8fee-7a8c124d0349"
+      ]
+    },
+    {
+      "participantId": "principal_4a3d4d61-1fb4-469c-8601-a4013ea965fd",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_f89a769a-f19e-40e1-9d40-52304a6a94d9",
+      "modelIntent": {
+        "exactBindingIds": [
+          "local:opencode-cli/v1:iiiiitoken/gemini-3.8-flash-high"
+        ],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-opencode:runtime_profile_revision_a6ed3ace-7c69-409a-b8a9-eee647fdacd3"
+      ]
+    },
+    {
+      "participantId": "principal_ac85c383-a4f3-44c7-b246-68112a4b416b",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_6689ea36-8586-4e0b-9556-c51db1809fd6",
+      "modelIntent": {
+        "exactBindingIds": ["local:claude-cli/v1:opus[1m]"],
+        "reasoning": "high",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-claude:runtime_profile_revision_5ac1b94f-599c-440c-abab-7f68b3a86fed"
+      ]
+    },
+    {
+      "participantId": "principal_dbbd74c5-b036-4073-8df6-3d3d6cc3ebeb",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_cf6b4d05-fbb9-46d6-952c-a2383e428832",
+      "modelIntent": {
+        "exactBindingIds": ["local:opencode-cli/v1:iiiiitoken/grok-4.6"],
+        "reasoning": "high",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-opencode:runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b"
+      ]
+    },
+    {
+      "participantId": "principal_0c825546-4126-40e7-9522-9adc33fe4c11",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_d7252bf2-22ac-42e7-a099-a8a947c9b02b",
+      "modelIntent": {
+        "exactBindingIds": [
+          "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash"
+        ],
+        "reasoning": "max",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-opencode:runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b"
+      ]
+    },
+    {
+      "participantId": "principal_024ecc0d-c330-45ed-bc2d-984c97871aa0",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_d39e1730-0f1c-4c52-8a45-d95628a52387",
+      "modelIntent": {
+        "exactBindingIds": [
+          "local:opencode-cli/v1:iiiiitoken/gemini-3.8-flash-high"
+        ],
+        "reasoning": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-opencode:runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b"
+      ]
+    },
+    {
+      "participantId": "principal_88899c13-7178-48df-aa8b-2e152d143851",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_df13b8f7-27a5-4800-8e0c-cb0e3477d62b",
+      "modelIntent": {
+        "exactBindingIds": [
+          "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash"
+        ],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-opencode:runtime_profile_revision_a6ed3ace-7c69-409a-b8a9-eee647fdacd3"
+      ]
+    },
+    {
+      "participantId": "principal_f0846528-8f53-4c45-8576-7ad05ef11299",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_eade93e7-f58d-4264-aab4-50fa5f7729e3",
+      "modelIntent": {
+        "exactBindingIds": [
+          "local:kimi-cli/v1:kimi-code/kimi-for-coding-highspeed"
+        ],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-kimi:runtime_profile_revision_cf72ab5d-867d-496e-8fee-7a8c124d0349"
+      ]
+    },
+    {
+      "participantId": "principal_6d4b1a50-39d9-4140-b576-5d781bbe17c6",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_0853d930-ff1c-4d40-886e-f94bcddf9ae2",
+      "modelIntent": {
+        "exactBindingIds": ["local:kimi-cli/v1:kimi-code/k3"],
+        "reasoning": "max",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-kimi:runtime_profile_revision_17bc932b-f2cf-42f6-a57f-459905a9d056"
+      ]
+    },
+    {
+      "participantId": "principal_d6fb542d-2f7d-4038-8d83-d211b5d186d6",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_3cd10331-a642-4aea-8d7f-ea15a582a51e",
+      "modelIntent": {
+        "exactBindingIds": ["local:codex-cli/v1:gpt-5.6-sol"],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-codex:runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7"
+      ]
+    },
+    {
+      "participantId": "principal_308e2c2e-5b53-4ef3-9fce-c3f2326255bb",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_0e5c9f62-9814-47a4-ab92-53472748b05e",
+      "modelIntent": {
+        "exactBindingIds": ["local:codex-cli/v1:gpt-6-astra"],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-codex:runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7"
+      ]
+    },
+    {
+      "participantId": "principal_041f29e9-561b-4a43-845d-4d14c3755fbc",
+      "state": "tombstoned",
+      "policyRevision": "execution_policy_revision_5a78eba4-db64-4066-b91c-29a28dc4caf5",
+      "modelIntent": {
+        "exactBindingIds": ["local:kimi-cli/v1:kimi-code/kimi-for-coding"],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-kimi:runtime_profile_revision_17bc932b-f2cf-42f6-a57f-459905a9d056"
+      ]
+    },
+    {
+      "participantId": "principal_851fc90d-458c-4ed6-9633-a2b4c38c7473",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_b27ad511-a3d0-4c75-b873-32af69343e38",
+      "modelIntent": {
+        "exactBindingIds": ["local:opencode-cli/v1:opencode/big-pickle"],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-opencode:runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b"
+      ]
+    },
+    {
+      "participantId": "principal_9d3a841b-7523-4189-8a08-bb613c9dbf0d",
+      "state": "enabled",
+      "policyRevision": "execution_policy_revision_7e836e84-dc9c-4b9b-af0c-3973fce0b0b2",
+      "modelIntent": {
+        "exactBindingIds": ["local:codex-cli/v1:gpt-6-astra"],
+        "reasoning": "default",
+        "serviceTier": "default",
+        "fallback": "disabled"
+      },
+      "sessionPolicy": "prefer_resume",
+      "allowedOfferIds": [
+        "local-workbench-offer-codex:runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7"
+      ]
+    }
+  ],
+  "providerSessionRecords": [
+    {
+      "participantId": "principal_4dcf00cf-1d21-48c0-827c-547315cb5451",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_1861366f-2257-4c52-bd8e-acf956e656a6",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-01T17:23:14.311Z",
+      "providerSessionIdSha256": "7d4a5b82e5da33cc331cb98cfcb4c316001e3fb8f6679df623edea8d39109993"
+    },
+    {
+      "participantId": "principal_4a3d4d61-1fb4-469c-8601-a4013ea965fd",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_a5e5ee49-5e5e-463a-8d93-c84df4c6de71",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-04T08:52:29.417Z",
+      "providerSessionIdSha256": "a0fc9e2dcca8f23a0240e8ba4179789e93a73477888bc19f2b2414288f339248"
+    },
+    {
+      "participantId": "principal_4a3d4d61-1fb4-469c-8601-a4013ea965fd",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_9e7447ee-29f4-4db2-85b5-8190c7b72fe6",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-01T16:10:31.488Z",
+      "providerSessionIdSha256": "a13a6734bcf911044d17fe56de43d4bbdbe5f4e7ee7cf8b83258aa0b31c62f10"
+    },
+    {
+      "participantId": "principal_041f29e9-561b-4a43-845d-4d14c3755fbc",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_17bc932b-f2cf-42f6-a57f-459905a9d056",
+      "standingPromptDigest": "6a047d1d4f7a15aececac65e47e508ea69b665b4bebab7d8dc85814245fe5aef",
+      "workspaceMountRevisionId": "agent-private-ce3a810beda3736046c6954cbd264bc15d8bcfa9ded2447d95651cd0900e924c",
+      "recordedAt": "2026-09-20T12:00:57.446Z",
+      "providerSessionIdSha256": "c2ee5048e9d2fafd84f60c9313133cb8a2fa14e194deb05ebb7fd30828048fb8"
+    },
+    {
+      "participantId": "principal_0c825546-4126-40e7-9522-9adc33fe4c11",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b",
+      "standingPromptDigest": "3b6073487e7a4cea7f5474c99da9b1e55aeee048ee0e8a12f83d724f3540b878",
+      "workspaceMountRevisionId": "agent-private-9ffa26fde5de22e1056c4f11fe50c5f997d083f433f5bb9f4b4ee2b2a631402c",
+      "recordedAt": "2026-09-20T13:49:04.676Z",
+      "providerSessionIdSha256": "edd173fddcc0c0e8c7463268670b8ca322199ee86e9bf430083192fbd357f129"
+    },
+    {
+      "participantId": "principal_024ecc0d-c330-45ed-bc2d-984c97871aa0",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_a6ed3ace-7c69-409a-b8a9-eee647fdacd3",
+      "standingPromptDigest": "927590e64892dbd925aefd7fa06f1d5dec0d8801d7df11123fa47953480156e6",
+      "workspaceMountRevisionId": "agent-private-6b5eb708a9e0bfccc36cfd612d524aa9301c8d2205d12a543a48216d8b57ec2a",
+      "recordedAt": "2026-09-20T01:54:47.208Z",
+      "providerSessionIdSha256": "a57421e7d860d69c1eca26d6840c1b6e58279273606c3386651db161a37e4de7"
+    },
+    {
+      "participantId": "principal_4dcf00cf-1d21-48c0-827c-547315cb5451",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_ef36aa4e-193c-41bd-96a6-df0db9f53208",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-04T08:53:53.575Z",
+      "providerSessionIdSha256": "a69bd1d194c0d0310ffae1a8eb47ac4b431cd077d310442b99ab84f6cc2c8f5d"
+    },
+    {
+      "participantId": "principal_308e2c2e-5b53-4ef3-9fce-c3f2326255bb",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7",
+      "standingPromptDigest": "10cc1da4d537df00ecd4bc6cf8cd4f7420b71ec0ea5653f4f5e4e122c4efb36d",
+      "workspaceMountRevisionId": "agent-private-528b3fef20f6b957f631b7311940e8a7bee396be09111064a1615bc7587f441c",
+      "recordedAt": "2026-09-20T12:01:08.760Z",
+      "providerSessionIdSha256": "17ac4ba97b05c89bc8ccfdcaf3c4bdb65aeca0a3f5e004e79f326b19a80faa77"
+    },
+    {
+      "participantId": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_46b684e2-9df2-4bfa-910b-4193875cd7ca",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-08-30T15:08:39.561Z",
+      "providerSessionIdSha256": "1ba29cc99c2b82e3074c18e430fb6c8f38e3df3b5267ff148692472fc3c4008e"
+    },
+    {
+      "participantId": "principal_dbbd74c5-b036-4073-8df6-3d3d6cc3ebeb",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b",
+      "standingPromptDigest": "92631cf4363ba5f47398465d7733ec9c6c98dbf14b2ef2518f3be243de00605e",
+      "workspaceMountRevisionId": "agent-private-bda8266975989c4a150e9b804de83e2ff0b1bf254c81ad9cb1a3ff15edb11cc9",
+      "recordedAt": "2026-09-20T13:18:01.397Z",
+      "providerSessionIdSha256": "71b3ce9d0f79a81b3ca5503ba54ed652d63ec834526cfe80c3b837fa53071920"
+    },
+    {
+      "participantId": "principal_4dcf00cf-1d21-48c0-827c-547315cb5451",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_367bd6c7-0b91-4a94-afc6-bb1131cc6b82",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-01T15:17:51.433Z",
+      "providerSessionIdSha256": "d1f13d4b3e10a80154c8115430045dc671de72dd66f418e0cef3eb25b4454f2f"
+    },
+    {
+      "participantId": "principal_ac85c383-a4f3-44c7-b246-68112a4b416b",
+      "provider": "claude-stream-json/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_0987b990-a922-4fac-9ac8-2585f96bb63e",
+      "standingPromptDigest": "f7726ada2fdef4e7c6e7c016ceaa057380e9a812524d4645530d7555b3764808",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-20T01:53:32.264Z",
+      "providerSessionIdSha256": "e4e6ec8fbc033ed4f8f6aaedeace90820f255884287f146f833255ad94e44b23"
+    },
+    {
+      "participantId": "principal_ac85c383-a4f3-44c7-b246-68112a4b416b",
+      "provider": "claude-stream-json/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_5ac1b94f-599c-440c-abab-7f68b3a86fed",
+      "standingPromptDigest": "f7726ada2fdef4e7c6e7c016ceaa057380e9a812524d4645530d7555b3764808",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-20T13:49:16.788Z",
+      "providerSessionIdSha256": "eaa17a16a1d363ddb3dc7556249cd6e6c6e2ea8fcbc3f5b9b8d982d123a4071e"
+    },
+    {
+      "participantId": "principal_4a3d4d61-1fb4-469c-8601-a4013ea965fd",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_a6ed3ace-7c69-409a-b8a9-eee647fdacd3",
+      "standingPromptDigest": "0891fce71f6d1fd21de4c0135e3e4713ba92fefb0fae0e480a57558df88e5253",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-17T05:38:05.466Z",
+      "providerSessionIdSha256": "aed63fe974709efe36c6aff300d48103b812b272d0c2bbb8ea61d621732472dd"
+    },
+    {
+      "participantId": "principal_9d3a841b-7523-4189-8a08-bb613c9dbf0d",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7",
+      "standingPromptDigest": "cdd7837f0b71a6f1254bc5fb5dbf8bbc30138dffe9a6db918d1cdea64529f0e1",
+      "workspaceMountRevisionId": "agent-private-960f16ed093b5cef9019569fbff95e4e7a4a052172e15eecb3d9bf7d7ba03763",
+      "recordedAt": "2026-09-20T12:19:54.009Z",
+      "providerSessionIdSha256": "d2abd3c8b5857f2dea0364878e79bf13047c0dd822e9884715135a4ec7a6ae73"
+    },
+    {
+      "participantId": "principal_4dcf00cf-1d21-48c0-827c-547315cb5451",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_cf72ab5d-867d-496e-8fee-7a8c124d0349",
+      "standingPromptDigest": "6d22a9443f543f96b487657cd1d29ca867368a7f81ce305ee4217739ab1bb712",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-18T00:20:28.538Z",
+      "providerSessionIdSha256": "07ba4dc77e6ebbb815c6731f0aaf8ae41df077d8594e54e401b4835d5a0732ba"
+    },
+    {
+      "participantId": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7",
+      "standingPromptDigest": "953dc824497cb52f5d9640545b3dc39e459f0d0818c368e60675494020397b82",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-20T12:20:19.482Z",
+      "providerSessionIdSha256": "4a068dadb7fa79d9ced41510f73d03e3d79e510398c13e03bb6cf59939f03272"
+    },
+    {
+      "participantId": "principal_d6fb542d-2f7d-4038-8d83-d211b5d186d6",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7",
+      "standingPromptDigest": "84566f10c71492ce3b5301d5c6d07bcefafb5b722c923f41a04e60149aa99d92",
+      "workspaceMountRevisionId": "agent-private-0463e5d8c5fd30546bfc1a6483df2d7c10cc716b2d08383c05e33e5ea15a4e33",
+      "recordedAt": "2026-09-20T08:51:14.576Z",
+      "providerSessionIdSha256": "9140331a7d0daa6d7bc0d57314d4ca8e270274fb1d6357b5fe26111af20ba73c"
+    },
+    {
+      "participantId": "principal_6d4b1a50-39d9-4140-b576-5d781bbe17c6",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_17bc932b-f2cf-42f6-a57f-459905a9d056",
+      "standingPromptDigest": "e6b087c9a24a72b8fc91ed1ce0e4b868812f8a6e431169b35b3f352ec41eeab3",
+      "workspaceMountRevisionId": "agent-private-3a803ed2d1444fa9a00615fdfc65e338f4863e7df4243ab9d501d4565dc6bbb6",
+      "recordedAt": "2026-09-20T09:25:59.197Z",
+      "providerSessionIdSha256": "6fc5d7a6ea17053d07a4f235d5912659957f837eeb489b1e31d16a661a75c7a0"
+    },
+    {
+      "participantId": "principal_6d4b1a50-39d9-4140-b576-5d781bbe17c6",
+      "provider": "kimi-acp/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_cf72ab5d-867d-496e-8fee-7a8c124d0349",
+      "standingPromptDigest": "e6b087c9a24a72b8fc91ed1ce0e4b868812f8a6e431169b35b3f352ec41eeab3",
+      "workspaceMountRevisionId": "agent-private-3a803ed2d1444fa9a00615fdfc65e338f4863e7df4243ab9d501d4565dc6bbb6",
+      "recordedAt": "2026-09-20T01:53:19.765Z",
+      "providerSessionIdSha256": "6334bd4a1b0b9b0eae14d575be28de05227ad6331ee2ba2f55191a1bb29dc181"
+    },
+    {
+      "participantId": "principal_dbbd74c5-b036-4073-8df6-3d3d6cc3ebeb",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_a6ed3ace-7c69-409a-b8a9-eee647fdacd3",
+      "standingPromptDigest": "92631cf4363ba5f47398465d7733ec9c6c98dbf14b2ef2518f3be243de00605e",
+      "workspaceMountRevisionId": "agent-private-bda8266975989c4a150e9b804de83e2ff0b1bf254c81ad9cb1a3ff15edb11cc9",
+      "recordedAt": "2026-09-20T01:54:34.087Z",
+      "providerSessionIdSha256": "c9ebc1f6c1cad44d2ca2e62a881435477471392a074a3eabe73ea3b6004b9927"
+    },
+    {
+      "participantId": "principal_0c825546-4126-40e7-9522-9adc33fe4c11",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_a6ed3ace-7c69-409a-b8a9-eee647fdacd3",
+      "standingPromptDigest": "3b6073487e7a4cea7f5474c99da9b1e55aeee048ee0e8a12f83d724f3540b878",
+      "workspaceMountRevisionId": "agent-private-9ffa26fde5de22e1056c4f11fe50c5f997d083f433f5bb9f4b4ee2b2a631402c",
+      "recordedAt": "2026-09-20T01:53:24.985Z",
+      "providerSessionIdSha256": "ce15008de279a0f50cea2ea13ce5b1fa43b6afd9f94a7288fdd9810282f6e04a"
+    },
+    {
+      "participantId": "principal_308e2c2e-5b53-4ef3-9fce-c3f2326255bb",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7",
+      "standingPromptDigest": "86c660c8fc9d07b536701b35a53183fede3c800e70b22a2455ff1011fbe15056",
+      "workspaceMountRevisionId": "agent-private-528b3fef20f6b957f631b7311940e8a7bee396be09111064a1615bc7587f441c",
+      "recordedAt": "2026-09-20T12:19:33.331Z",
+      "providerSessionIdSha256": "d55dcbd00233603c21f4b4965637c6c48cf02c8ce6712bab7064914b1b1f0179"
+    },
+    {
+      "participantId": "principal_4a3d4d61-1fb4-469c-8601-a4013ea965fd",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_492f1f7f-6357-4521-af03-7eaa4411191f",
+      "standingPromptDigest": null,
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-01T17:24:54.158Z",
+      "providerSessionIdSha256": "94e0a705c9f985961049f7e930865b0b82760c6502f7350b54771f71c1a86012"
+    },
+    {
+      "participantId": "principal_851fc90d-458c-4ed6-9633-a2b4c38c7473",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b",
+      "standingPromptDigest": "d7424179c143a95a64f3cae77c95caa6281d0fba8f5b68720cebd9d2de4bbac3",
+      "workspaceMountRevisionId": "agent-private-b625509dd7b4bf874c41b35cda685592124e3b4a5bf98afdf2efcbeddabf66c9",
+      "recordedAt": "2026-09-20T12:20:32.264Z",
+      "providerSessionIdSha256": "8384a6c3793213754c33a19c02b536733fef0b300ff33cd549fa40c5dc75f2b2"
+    },
+    {
+      "participantId": "principal_024ecc0d-c330-45ed-bc2d-984c97871aa0",
+      "provider": "opencode-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b",
+      "standingPromptDigest": "927590e64892dbd925aefd7fa06f1d5dec0d8801d7df11123fa47953480156e6",
+      "workspaceMountRevisionId": "agent-private-6b5eb708a9e0bfccc36cfd612d524aa9301c8d2205d12a543a48216d8b57ec2a",
+      "recordedAt": "2026-09-20T13:52:28.796Z",
+      "providerSessionIdSha256": "6f60080207f9845a3bf6b5839c96bf46265c3d2f446b899a6de497a3f99da257"
+    },
+    {
+      "participantId": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_a2dd3ca6-1497-4e12-8eec-d82ee2507ecd",
+      "standingPromptDigest": "719674adffa79f0376de8710f4422f93e48a8d94ce86e16198f752e18a4af4dd",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-18T13:19:36.289Z",
+      "providerSessionIdSha256": "96b2e9bc58cbef393ad374caeabbe31bc884740d0007a319cd970cce341dd25d"
+    },
+    {
+      "participantId": "principal_dfae45b8-4e5b-4279-b4cf-e4c3b485578b",
+      "provider": "codex-app-server/v1",
+      "runtimeProfileRevisionId": "runtime_profile_revision_49556abb-af8b-42aa-af90-6e24391162c4",
+      "standingPromptDigest": "953dc824497cb52f5d9640545b3dc39e459f0d0818c368e60675494020397b82",
+      "workspaceMountRevisionId": "local-workbench-mount-6ab3941a7716bf4f",
+      "recordedAt": "2026-09-20T01:53:24.325Z",
+      "providerSessionIdSha256": "3913a59f474146727102bbd5934864ee0fcd88cd807abe1f12dd3abbbc4e8b12"
+    }
+  ],
+  "activeRunStates": [],
+  "paidProviderRuns": 0,
+  "activeRuntimeProfiles": [
+    {
+      "profileId": "local-workbench-profile-codex",
+      "revisionId": "runtime_profile_revision_2f25a74e-15ed-45bd-98d8-f0ed40b26de7",
+      "contentDigest": "sha256:ed0c997c036e908676def78e43dfde33f46fee3de3c892ea23249a0a9f10b50a",
+      "adapter": "codex-app-server/v1",
+      "executable": "/opt/homebrew/Caskroom/codex/0.155.1/bin/codex",
+      "versionOutput": "codex-cli 0.155.1",
+      "fixedArgsCount": 0
+    },
+    {
+      "profileId": "local-workbench-profile-kimi",
+      "revisionId": "runtime_profile_revision_17bc932b-f2cf-42f6-a57f-459905a9d056",
+      "contentDigest": "sha256:53dbbf911f0a4d10c302ce5c74c216619b68fbf6d386df947a1ea28832a52680",
+      "adapter": "kimi-acp/v1",
+      "executable": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "versionOutput": "0.39.1",
+      "fixedArgsCount": 0
+    },
+    {
+      "profileId": "local-workbench-profile-opencode",
+      "revisionId": "runtime_profile_revision_209e0eef-803d-4f97-97b1-d629cf84cc9b",
+      "contentDigest": "sha256:0d3b2e0aeb5ada5078198453724bb55f6a2dd224fdb1d373e94eb2fe95a84a97",
+      "adapter": "opencode-server/v1",
+      "executable": "/opt/homebrew/lib/node_modules/opencode-ai/bin/opencode.exe",
+      "versionOutput": "1.18.30",
+      "fixedArgsCount": 0
+    },
+    {
+      "profileId": "local-workbench-profile-claude",
+      "revisionId": "runtime_profile_revision_5ac1b94f-599c-440c-abab-7f68b3a86fed",
+      "contentDigest": "sha256:617c2122a763bf1c02ca57376e049c5d69c05cc36564c5f020dd32e41365beae",
+      "adapter": "claude-stream-json/v1",
+      "executable": "/Users/sun/.local/share/claude/versions/2.1.278",
+      "versionOutput": "2.1.278 (Claude Code)",
+      "fixedArgsCount": 0
+    }
+  ]
+}

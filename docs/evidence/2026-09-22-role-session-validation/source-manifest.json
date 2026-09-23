@@ -1,0 +1,64 @@
+[
+  {
+    "repository": "kimi-code",
+    "commit": "5efca0c3116743855c28426000073bfe34a4862f",
+    "path": "packages/node-sdk/src/sdk-rpc-client-v2.ts",
+    "sha256": "faa0ced438e711ff162f050c4d23c55d1f8501f3bebf6b04c52794944d5b755b",
+    "use": "read-only analysis; not copied into product"
+  },
+  {
+    "repository": "kimi-code",
+    "commit": "5efca0c3116743855c28426000073bfe34a4862f",
+    "path": "packages/agent-core-v2/src/workspace/sessionLifecycle/sessionLifecycleService.ts",
+    "sha256": "b9b543bede1b3821c4a23c3f7839d37b11e7984fecbe9dd8ad9e533a676dea79",
+    "use": "read-only analysis; not copied into product"
+  },
+  {
+    "repository": "kimi-code",
+    "commit": "5efca0c3116743855c28426000073bfe34a4862f",
+    "path": "packages/agent-core-v2/src/workspace/sessionLifecycle/internal/forkTurnSlice.ts",
+    "sha256": "72072bfd07f7f25cce0a35ed22becac79f252e7ae6d699f6fe8a5a0f96578239",
+    "use": "read-only analysis; not copied into product"
+  },
+  {
+    "repository": "opencode",
+    "commit": "3104c1428ec91f809e5ab86631300de41eb6952e",
+    "path": "packages/opencode/src/session/session.ts",
+    "sha256": "0c56ae3535e29cae0de51156eaba2842c0896309f1d6b12525566b4a8ba4c7f2",
+    "use": "read-only analysis; not copied into product"
+  },
+  {
+    "repository": "opencode",
+    "commit": "3104c1428ec91f809e5ab86631300de41eb6952e",
+    "path": "packages/opencode/src/server/routes/instance/httpapi/groups/session.ts",
+    "sha256": "3fd2ae22b6bbc211adc45011243a42fa869862355ad08c086c591792d8fa91dc",
+    "use": "read-only analysis; not copied into product"
+  },
+  {
+    "repository": "opencode",
+    "commit": "3104c1428ec91f809e5ab86631300de41eb6952e",
+    "path": "packages/opencode/test/session/session.test.ts",
+    "sha256": "dd8089afffbcef407be4dbf0ee54019841d4c461f623c09897b8618cfb211c7c",
+    "use": "read-only analysis; not copied into product"
+  },
+  {
+    "repository": "rah_os working tree",
+    "path": "packages/agent-host/src/provider-session-store.ts",
+    "sha256": "aa4066f1345e3fd8ce970e3f7f7ba1dd87229a7cd936c0cf6a3d72b14bf8afb5"
+  },
+  {
+    "repository": "rah_os working tree",
+    "path": "packages/agent-host/src/runtime-tool-access.ts",
+    "sha256": "fdba686f4d3507b46a08c817cc6650ca6da8f4494d069c0af588a00b47ca9c99"
+  },
+  {
+    "repository": "rah_os working tree",
+    "path": "packages/agent-host/src/runtime-implementation-registry.ts",
+    "sha256": "3a269ea28219335bb6eebb908469903224c735428970d94ed613684eddf87105"
+  },
+  {
+    "repository": "rah_os working tree",
+    "path": "packages/kernel/src/worker-task-scope.ts",
+    "sha256": "d261ab6d1b884df81652f16f6e17b5df34f904538d4764c38daf6a15e5d2db48"
+  }
+]

@@ -24,7 +24,15 @@ export function classifyRuntimeFailure(message: string): RuntimeFailure {
   const inputTooLarge = INPUT_TOO_LARGE_PATTERN.test(normalized);
   const modelConfig = MODEL_CONFIG_PATTERN.test(normalized);
   const zeroEvidence = /codex_zero_evidence_turn_completed/iu.test(normalized);
-  const sticky = actionRequired || inputTooLarge || modelConfig || zeroEvidence;
+  const continuityRequired = normalized.includes(
+    "RAH_SESSION_CONTINUITY_REQUIRED",
+  );
+  const sticky =
+    actionRequired ||
+    inputTooLarge ||
+    modelConfig ||
+    zeroEvidence ||
+    continuityRequired;
   const errorClass = actionRequired
     ? "AuthError"
     : inputTooLarge

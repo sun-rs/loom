@@ -1,0 +1,241 @@
+{
+  "capturedAt": "2026-09-21T06:08:41.931309+00:00",
+  "limitations": [
+    "Different existing histories; not equal-context A/B.",
+    "Raft post tool completion vs RAH database commit: endpoints differ.",
+    "Only completed response usage and tool metadata extracted; reasoning excluded."
+  ],
+  "browserSubmissionCompletedAtMs": {
+    "C1": 1789970102232,
+    "C2": 1789970143113,
+    "D1": 1789970212024,
+    "D2": 1789970301365
+  },
+  "providers": {
+    "claude": {
+      "sourceSha256": "44dd951502d38a28a7ba0e7baabb5615bec8c083af512ec2c950012c1f4b1389",
+      "responses": [
+        {
+          "at": "2026-09-21T05:55:09.876Z",
+          "input": 96887,
+          "cache": 0,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:55:12.158Z",
+          "input": 97127,
+          "cache": 96885,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:55:16.064Z",
+          "input": 97360,
+          "cache": 97125,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:55:45.627Z",
+          "input": 97535,
+          "cache": 97358,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:55:48.429Z",
+          "input": 97773,
+          "cache": 97533,
+          "model": "claude-sonnet-5"
+        },
+        {
+          "at": "2026-09-21T05:55:52.384Z",
+          "input": 98006,
+          "cache": 97771,
+          "model": "claude-sonnet-5"
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T05:55:09.876Z",
+          "tool": "Bash",
+          "verbs": ["check"]
+        },
+        {
+          "at": "2026-09-21T05:55:12.158Z",
+          "tool": "Bash",
+          "verbs": ["send"]
+        },
+        {
+          "at": "2026-09-21T05:55:45.627Z",
+          "tool": "Bash",
+          "verbs": ["check"]
+        },
+        {
+          "at": "2026-09-21T05:55:48.429Z",
+          "tool": "Bash",
+          "verbs": ["send"]
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T05:55:10.593Z",
+          "bytes": 264,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:55:14.640Z",
+          "bytes": 137,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:55:46.381Z",
+          "bytes": 277,
+          "error": false
+        },
+        {
+          "at": "2026-09-21T05:55:50.619Z",
+          "bytes": 137,
+          "error": false
+        }
+      ],
+      "contexts": []
+    },
+    "codex": {
+      "sourceSha256": "57251b3ef369094fd9f862d7a9abed006e287a79dbb69d4c87bf225d2c7f46dd",
+      "responses": [
+        {
+          "at": "2026-09-21T05:57:00.951Z",
+          "input": 29948,
+          "cache": 11008
+        },
+        {
+          "at": "2026-09-21T05:57:05.111Z",
+          "input": 30142,
+          "cache": 29440
+        },
+        {
+          "at": "2026-09-21T05:57:09.524Z",
+          "input": 30326,
+          "cache": 29440
+        },
+        {
+          "at": "2026-09-21T05:58:27.601Z",
+          "input": 30405,
+          "cache": 29440
+        },
+        {
+          "at": "2026-09-21T05:58:31.755Z",
+          "input": 30598,
+          "cache": 29440
+        },
+        {
+          "at": "2026-09-21T05:58:35.172Z",
+          "input": 30795,
+          "cache": 30464
+        },
+        {
+          "at": "2026-09-21T06:07:32.359Z",
+          "input": 30874,
+          "cache": 30464
+        },
+        {
+          "at": "2026-09-21T06:07:36.047Z",
+          "input": 31070,
+          "cache": 30464
+        },
+        {
+          "at": "2026-09-21T06:07:40.590Z",
+          "input": 31556,
+          "cache": 30464
+        },
+        {
+          "at": "2026-09-21T06:07:43.886Z",
+          "input": 31830,
+          "cache": 30464
+        }
+      ],
+      "calls": [
+        {
+          "at": "2026-09-21T05:57:00.839Z",
+          "tool": "exec",
+          "verbs": ["check"]
+        },
+        {
+          "at": "2026-09-21T05:57:04.993Z",
+          "tool": "exec",
+          "verbs": ["send"]
+        },
+        {
+          "at": "2026-09-21T05:58:27.512Z",
+          "tool": "exec",
+          "verbs": ["check"]
+        },
+        {
+          "at": "2026-09-21T05:58:31.625Z",
+          "tool": "exec",
+          "verbs": ["send"]
+        },
+        {
+          "at": "2026-09-21T06:07:32.226Z",
+          "tool": "exec",
+          "verbs": ["check"]
+        },
+        {
+          "at": "2026-09-21T06:07:35.916Z",
+          "tool": "exec",
+          "verbs": ["send"]
+        },
+        {
+          "at": "2026-09-21T06:07:40.471Z",
+          "tool": "exec",
+          "verbs": ["send"]
+        }
+      ],
+      "outputs": [
+        {
+          "at": "2026-09-21T05:57:01.567Z",
+          "bytes": 389
+        },
+        {
+          "at": "2026-09-21T05:57:07.134Z",
+          "bytes": 262
+        },
+        {
+          "at": "2026-09-21T05:58:28.231Z",
+          "bytes": 402
+        },
+        {
+          "at": "2026-09-21T05:58:33.818Z",
+          "bytes": 262
+        },
+        {
+          "at": "2026-09-21T06:07:32.919Z",
+          "bytes": 388
+        },
+        {
+          "at": "2026-09-21T06:07:36.646Z",
+          "bytes": 1305
+        },
+        {
+          "at": "2026-09-21T06:07:42.181Z",
+          "bytes": 421
+        }
+      ],
+      "contexts": [
+        {
+          "at": "2026-09-21T05:56:55.679Z",
+          "model": "gpt-5.6-luna",
+          "effort": "low"
+        },
+        {
+          "at": "2026-09-21T05:58:24.683Z",
+          "model": "gpt-5.6-luna",
+          "effort": "low"
+        },
+        {
+          "at": "2026-09-21T06:07:26.777Z",
+          "model": "gpt-5.6-luna",
+          "effort": "low"
+        }
+      ]
+    }
+  }
+}

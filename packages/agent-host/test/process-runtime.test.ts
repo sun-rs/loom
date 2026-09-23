@@ -1210,3 +1210,42 @@ test(
     }
   },
 );
+
+for (const supervised of [false, true])
+  test(`session binding failure stops the owned runtime (${supervised ? "supervised" : "direct"})`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), "rah-binding-failure-"));
+    const adapter = new GenericProcessAdapter({
+      command: process.execPath,
+      args: [
+        "-e",
+        `require('node:fs').writeSync(3, JSON.stringify({protocol:'rah-provider-session/v1', provider:'fixture-provider/v1', providerSessionId:'unexpected', state:'ready'})+'\\n'); setInterval(()=>{},1000);`,
+      ],
+      cwd: directory,
+      ...(supervised
+        ? { supervisorDirectory: join(directory, "supervisors") }
+        : {}),
+      terminationGraceMs: 20,
+      recordProviderSessionEvidence: async () => {
+        throw new Error("disk write rejected");
+      },
+    });
+    const run = await startProcess(adapter);
+    try {
+      const exit = await Promise.race([
+        adapter.reap(run),
+        new Promise<never>((_, reject) => {
+          const timer = setTimeout(
+            () => reject(new Error("binding failure left process alive")),
+            1500,
+          );
+          timer.unref();
+        }),
+      ]);
+      assert.equal(exit.failure?.retryDisposition, "sticky_terminal");
+      assert.match(exit.failure!.message, /RAH_SESSION_CONTINUITY_REQUIRED/);
+      assert.equal(await adapter.isAlive(run), false);
+    } finally {
+      await adapter.cancel(run);
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });

@@ -25,6 +25,10 @@ import type {
 } from "@rah-os/protocol";
 
 import { deliveryAcceptanceRegistration } from "./delivery-acceptance-registration.ts";
+import {
+  startupMemorySystemLease,
+  useSystemMemoryTransport,
+} from "./startup-memory-system-lease.ts";
 import { standingPromptLease } from "./standing-prompt-lease.ts";
 
 export { assertRuntimeProfileRevisionStillActive };
@@ -38,6 +42,7 @@ type RuntimeWorkerService = Pick<
   >;
 
 export function createConfiguredRuntime(input: {
+  startupMemoryTransport?: "tool" | "system" | undefined;
   executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
   launchEnvironment?: (
     runtimeId: string,
@@ -101,16 +106,13 @@ export function createConfiguredRuntime(input: {
                 : { toolAccessMode: input.toolAccessMode }),
               workspacePath: input.cwd,
             });
-            if (promptLease !== undefined) {
-              leases.push(promptLease);
-            }
             const activation = {
               activationId: scope.activationId,
               computerHostId: scope.hostId,
               roomId: scope.roomId,
               runAttemptId: scope.runAttemptId,
             };
-            leases.push(
+            const memoryLease =
               input.agentMemoryCoordinator === undefined
                 ? await prepareAgentMemoryRun({
                     activation,
@@ -125,8 +127,22 @@ export function createConfiguredRuntime(input: {
                     scope.agent,
                     activation,
                     { cwd: input.cwd },
-                  ),
-            );
+                  );
+            leases.push(memoryLease);
+            if (promptLease !== undefined) {
+              leases.push(
+                useSystemMemoryTransport(
+                  input.startupMemoryTransport,
+                  runtimeId,
+                ) && memoryLease.env.RAH_AGENT_MEMORY_DIR !== undefined
+                  ? await startupMemorySystemLease({
+                      participantId: scope.agent.participantId,
+                      memoryDirectory: memoryLease.env.RAH_AGENT_MEMORY_DIR,
+                      promptLease,
+                    })
+                  : promptLease,
+              );
+            }
           }
           const credential =
             typeof input.workerService.issueActivationCredentialForWorkspace ===
@@ -202,4 +218,24 @@ export function createConfiguredRuntime(input: {
   return input.executionWorkspace
     ? withRuntimeExecutionWorkspace(runtime, input.executionWorkspace)
     : runtime;
+}
+
+/** Share credential resolver construction across the v3/v4 composition paths. */
+export function createConfiguredCredentialEnvironment(
+  manifest: RuntimeProfileRevision["manifest"],
+  bindings: Record<
+    string,
+    Parameters<import("@rah-os/agent-host").SecretProvider["load"]>[0]
+  >,
+  secrets: import("@rah-os/agent-host").SecretProvider,
+): RuntimeCredentialEnvironmentBinding {
+  return new RuntimeCredentialEnvironmentBinding({
+    manifest,
+    resolvers: Object.fromEntries(
+      Object.entries(bindings).map(([slotId, reference]) => [
+        slotId,
+        async () => await secrets.load(reference),
+      ]),
+    ),
+  });
 }

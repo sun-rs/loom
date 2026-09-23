@@ -65,6 +65,10 @@ export type HumanApplicationPort = Pick<
   | "updateWorkspaceRoom"
   | "updateTaskWorkflowStatus"
 > & {
+  reviseRole: RoomKernel["roles"]["revise"];
+  createRole: RoomKernel["roles"]["create"];
+  listRoles: RoomKernel["roles"]["list"];
+  instantiateRole: RoomKernel["roles"]["instantiate"];
   listMessageSocial: RoomKernel["messageSocial"]["list"];
   reactMessage: RoomKernel["messageSocial"]["react"];
   saveMessage: RoomKernel["messageSocial"]["save"];
@@ -108,6 +112,10 @@ export function createHumanApplicationPort(
   kernel: RoomKernel,
 ): HumanApplicationPort {
   const port: HumanApplicationPort = {
+    reviseRole: (actor, input) => kernel.roles.revise(actor, input),
+    createRole: (actor, input) => kernel.roles.create(actor, input),
+    listRoles: (actor, input) => kernel.roles.list(actor, input),
+    instantiateRole: (actor, input) => kernel.roles.instantiate(actor, input),
     previewChannel: (actor, input) =>
       kernel.publicChannels.preview(actor, input),
     discoverPublicChannels: (actor, input) =>

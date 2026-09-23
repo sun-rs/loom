@@ -1,0 +1,25 @@
+✔ Provider sessions are owner-private, durable, and keyed by immutable runtime locality (33.497791ms)
+✔ Provider session storage fails closed on an aliased root (14.051292ms)
+✔ Provider sessions can quarantine and roll back every continuity record for one Agent (91.134709ms)
+✔ Provider continuity quarantine replays the same durable operation after a process restart (69.584125ms)
+✔ the standing prompt digest is part of Provider session locality (19.429334ms)
+✔ native system memory digest is optional transport metadata and survives a store reload (19.795042ms)
+✔ Raft runtime errors separate action-required, sticky, and recoverable branches (2.547792ms)
+✔ Raft runtime retry delay is capped exponential backoff with positive-only jitter (0.094708ms)
+✔ the lease carries the compiled standing prompt for the activation agent (1.619958ms)
+✔ the lease digest is the compiler's agent-only deterministic digest (0.757125ms)
+✔ the lease reports the compiler version and digest as a diagnostic (0.211583ms)
+✔ an activation without an Agent layer contributes no prompt (0.037459ms)
+✔ a 64 KiB instructions body stays inside the runtime argument byte cap (0.365459ms)
+✔ delivery mode reaches the exact driver prompt and continuity digest (0.48025ms)
+✔ Claude direct delivery can reuse only the same Agent's former gated prompt (0.746083ms)
+✔ channel Role instances require continuity; legacy agents keep their existing policy (0.286583ms)
+✔ Role is inert configuration; two channel instances receive independent conversations (166.608458ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 463.092666

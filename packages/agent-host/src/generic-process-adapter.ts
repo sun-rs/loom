@@ -217,13 +217,16 @@ class RuntimeTrajectoryCollector {
   #finished = false;
   #queue = Promise.resolve();
   #terminalFailure: RuntimeFailure | undefined;
+  #bindingFailure: RuntimeFailure | undefined;
+  readonly #onBindingFailure: () => void;
 
   get terminalFailure(): RuntimeFailure | undefined {
-    return this.#terminalFailure;
+    return this.#bindingFailure ?? this.#terminalFailure;
   }
 
   constructor(input: {
     activation: ActivationEnvelope;
+    onBindingFailure: () => void;
     diagnostics: BoundedOutput;
     lifecycle: RuntimeStartLifecycle;
     recordProviderSessionEvidence?: GenericProcessAdapterOptions["recordProviderSessionEvidence"];
@@ -233,6 +236,7 @@ class RuntimeTrajectoryCollector {
     runtimeRunId: string;
   }) {
     this.#activation = input.activation;
+    this.#onBindingFailure = input.onBindingFailure;
     this.#redactions = input.redactions ?? [];
     this.#diagnostics = input.diagnostics;
     this.#lifecycle = input.lifecycle;
@@ -318,10 +322,21 @@ class RuntimeTrajectoryCollector {
         if (this.busyInput.receive(frame)) return;
         const providerSession = parseProviderSessionEvidence(frame);
         if (providerSession !== null) {
-          await this.#recordProviderSessionEvidence?.(
-            this.#activation,
-            providerSession,
-          );
+          if (this.#bindingFailure) return;
+          try {
+            await this.#recordProviderSessionEvidence?.(
+              this.#activation,
+              providerSession,
+            );
+          } catch (error) {
+            this.#bindingFailure = classifyRuntimeFailure(
+              `RAH_SESSION_CONTINUITY_REQUIRED: session binding failed: ${errorMessage(error)}`,
+            );
+            this.#diagnostics.append(
+              "[rah-os] session binding failed; terminating runtime\n",
+            );
+            this.#onBindingFailure();
+          }
           return;
         }
         const acceptance = parseDeliveryAcceptance(frame);
@@ -797,6 +812,14 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     });
     const activity = new RuntimeTrajectoryCollector({
       activation: input,
+      onBindingFailure: () => {
+        // Do not await reap from the collector: finish waits for this queue.
+        void this.cancel({ runId }).catch((error) => {
+          stderr.append(
+            `[rah-os] binding failure termination failed: ${errorMessage(error)}\n`,
+          );
+        });
+      },
       diagnostics: stderr,
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
@@ -1137,6 +1160,14 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     });
     const activity = new RuntimeTrajectoryCollector({
       activation: input,
+      onBindingFailure: () => {
+        // Do not await reap from the collector: finish waits for this queue.
+        void this.cancel({ runId }).catch((error) => {
+          stderr.append(
+            `[rah-os] binding failure termination failed: ${errorMessage(error)}\n`,
+          );
+        });
+      },
       diagnostics: stderr,
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,

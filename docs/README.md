@@ -1,4 +1,44 @@
+[CLI 效率 gate 首次失败报告](./audits/2026-09-23-cli-efficiency-gate.zh-CN.md)：Role 首轮结论未进 box，旧 Agent 误建 Task；有效续聊总输入约为原生 5 倍。包含测试夹具失败与模型许可事故，不宣称效率通过。
+
+[原生 CLI 效率阶段 Gate](./design/cli-efficiency-gate.zh-CN.md)：调度/上下文/session 累计修改后的必备对照，逐轮记录旧 Agent、Role 实例与原生 CLI 的成本、延迟及质量；不是每次小改动的付费测试。
+
+[真实 Codex 实例纵向验收](./audits/2026-09-23-instance-real-continuity.zh-CN.md)：代码审查、忙时私聊排队、daemon 重启后同 session 续聊通过；记录实际 token，并发现新实例首轮约 30 秒挂载发布等待，尚待修复。
+
+[实例续聊与私聊撤销主线修复](./audits/2026-09-23-instance-continuity-mainline.zh-CN.md)：绑定失败终止，丢失记录阻断新建，撤销频道成员同步阻断私聊执行；复用现有持久账本与执行通道。
+
+[实例跨配置续聊修复](./audits/2026-09-23-instance-stable-session.zh-CN.md)：四家启动/保存改用实例稳定 session 键，拒绝歧义和静默换 ID；记录丢失的 Kernel 绑定闭合仍待完成。
+
+[Codex 原生 fork 验证](./audits/2026-09-23-codex-native-fork.zh-CN.md)：本机真实 CLI + 本地假模型验证截止点、身份交接与重启续聊；发现 fork 参数不会自动更新模型身份，产品 fork 入口尚未接入。
+
+[实例私聊纵向 MVP](./audits/2026-09-23-instance-private-box.zh-CN.md)：频道实例的私有 box、忙时排队和右侧会话；隔离 Fake CLI 两轮、响应式重开与正式备份重启通过，真实 CLI 私聊待验收。
+
+[Role 配置修订](./audits/2026-09-23-role-revisions.zh-CN.md)：模板保存新版本，旧实例保持原配置并标记版本落后，新实例使用新配置；完整纵向 API / UI 路径。
+
+[Role 实例续聊保护](./audits/2026-09-23-role-session-continuity-guard.zh-CN.md)：新实例恢复失败停止并报错，四家驱动不再静默新建；保留旧 Agent 兼容，真实 CLI 验收仍待进行。
+
+[Role 纵向 MVP 第一条路径](./audits/2026-09-23-role-vertical-mvp.zh-CN.md)：配置 → 频道实例 → composer/box 两轮回复，临时库、隔离 Fake CLI 浏览器与完整检查通过；正式工作台已备份重启，仅新增空表，原生 CLI 续聊尚未验收。
+
+[Role 纵向 MVP](./design/role-instance-vertical-mvp.zh-CN.md)：2026-09-23 最新施工优先级。先贯通配置 → 频道实例 → box 回复与续聊，再推进下一条业务路径；P1–P8 不再作为横向串行阻塞。
+
+[Role 重构 P0 与 UI 范围确认](./audits/2026-09-23-role-refactor-p0.zh-CN.md)：用户已认可施工设计；[UI 合同](./design/role-instance-ui-contract.zh-CN.md)保留大页结构、Role 管理与统一右侧详情，P0 基线门禁已收敛，完整检查、备份重启与正式页面冒烟通过；下一步按纵向 MVP 施工，尚未进行 Role 正式迁移。
+
+[Role/Instance/Session 重构施工设计（Review 版）](./design/role-instance-refactor-execution-plan.zh-CN.md)：2026-09-23 当前施工主文档；包含模块映射、数据/事务设计、P0–P8 门槛、正式迁移与分条件回滚。已获用户认可；按最新纵向 MVP 顺序继续，未进行正式数据切换。
+
+[实例 Session 绑定代码基础](./audits/2026-09-22-instance-binding-foundation.zh-CN.md)：协议与 Kernel 纯规则已实现；[ADR 0032](./adr/0032-instance-session-binding-contract.md)明确尚未接入持久事务、调度与正式迁移。
+
+[Role/Session v0.2 技术增补](./design/role-instance-session-v0.2.zh-CN.md)：fork 截止点、Side 禁写、实例绑定与私聊目标授权；[第一批验证](./audits/2026-09-22-role-session-validation.zh-CN.md)包含 48 项既有回归与非模型隔离实验。新架构尚未实施。
+
+[Role / 频道实例 / 原生 Session 设计 v0.1](./design/role-instance-session-v0.1.zh-CN.md)：待评审的新架构；包含已确认决定、建议默认值、身份/调度/记忆权限与迁移边界。配套 [能力核查](./audits/2026-09-22-role-session-capabilities.zh-CN.md) 和 [反例审查](./audits/2026-09-22-role-session-design-review.zh-CN.md)。尚未改变现行产品合同或行为。
+
 [移除操作完成占行提示](./audits/2026-09-21-completed-feedback.zh-CN.md)：取消拖动、设置保存、测试推送和服务重启完成后不再占行；保留失败提示。
+
+- [真实项目三轮审查：原生 CLI / Raft / RAH token 与质量试验](audits/2026-09-21-project-review-token-pilot.zh-CN.md)
+
+[启动记忆传输修复](./audits/2026-09-21-startup-memory-transport.zh-CN.md)：完整索引使用原生 system 通道，恢复会话按首次快照校验，变更时完整回退，保留真实失败反例与修正版验收。
+
+[调度修复后的正式续聊与 Raft 对照](./audits/2026-09-21-scheduling-followthrough.zh-CN.md)：同题真实回复、重复 startup 输入增长、答完后只读 follow-up 及下一阶段安全边界。
+
+[调度修复实施与真实 CLI 验证](./audits/2026-09-21-scheduling-repair-implementation.zh-CN.md)：紧凑业务投影、启动上下文、精确消息展示记录及剩余验收边界。
 
 [移除任务成功占行提示](./audits/2026-09-21-task-success-notice.zh-CN.md)：保留失败与保存状态，更新成功后不再显示额外文字行。
 
@@ -12,9 +52,19 @@
 
 [一级正文按钮与分隔线](./audits/2026-09-21-navigation-chrome-roles.zh-CN.md)：频道/私聊桌面无 X，保留后续详情退出；设置抽屉逐层源码核对。
 
+- [调度修复方案与 Raft 源码对照审查](audits/2026-09-21-scheduling-repair-raft-review.zh-CN.md)
+- [Claude / Codex 调度与输入膨胀根因结论](audits/2026-09-21-scheduling-root-causes.zh-CN.md)
+- [Speed_test 后续核实：输入负担、有效档位与忙时追加](audits/2026-09-21-speed-test-followup.zh-CN.md)
+
+[Speed_test 首轮真实双边观察](./audits/2026-09-21-speed-test-pilot.zh-CN.md)：定位 Codex 问候未发帖路径，记录 Raft/RAH 四人明确回复测试及配置、会话和计时限制。
+
 [模型显示名称统一](./audits/2026-09-21-model-display-names.zh-CN.md)：选择器、资料、预览与聊天共享标签解析，原始 ID 保留在提示与执行配置。
 
+- [2026-09-21 真实 CLI 调度与延迟补验](audits/2026-09-21-real-cli-scheduling-verification.zh-CN.md)：35 次隔离提交，核实会话连续性、技术事件输入膨胀和忙时已答后的后续运行；保留失败与对照限制。
+
 [Claude 具体版本推理强度闭环](./audits/2026-09-21-claude-custom-effort.zh-CN.md)：按文档限定档位，保留配置、Placement 与 CLI 参数，区分提交许可和本机探测。
+
+- [2026-09-21 调度与回复延迟修复前准备](audits/2026-09-21-scheduling-preparation.zh-CN.md)：冻结提交、源码对照、只读阶段表、确定性回归和分批验收；未运行付费模型、未改变调度。
 
 [移动端根入口列表](./audits/2026-09-21-mobile-root-entry.zh-CN.md)：底部导航先显示列表，明确链接与缩窄继续保留详情。
 
@@ -101,6 +151,8 @@
 [文件引用窗口共享样式](./audits/2026-09-18-file-dialog-chrome.zh-CN.md)：标题栏、关闭按钮和确认按钮复用 Task 弹窗及 UI 库规则，覆盖桌面和移动端 portal。
 
 [运行超时与隔离撤销](./audits/2026-09-18-runtime-timeout-and-quarantine.zh-CN.md)：对照 Raft 的存活判定，避免固定总时长反复杀死活进程；人工停止可撤销已确认终止的隔离执行，保留消息与审计事实。
+
+[运行时调度对齐第一批](./audits/2026-09-18-runtime-scheduling-alignment.zh-CN.md)：按 Raft Computer 1.0.32 将 Claude 从 gated 改为原生 direct，保留已有 Provider session；记录忙时回复后仍有后续运行的实证与常驻生命周期边界。
 
 [Kimi K3 跨 CLI 实测](./audits/2026-09-18-k3-transport-benchmark.zh-CN.md)：官方 K3/high 在 OpenCode 与 Kimi CLI 的原生、恢复和 RAH 私聊对照；两条接入路径仍有共同模型往返，不能把功能通过当作性能闭合。
 
@@ -696,6 +748,8 @@ P2 Agent workspace / 本地项目文件历史 owner 合同：[Raft workspace 请
 
 前端鼠标、键盘和触屏状态的当前统一基线：[Raft 前端操作状态合同](./product/2026-09-02-raft-interaction-state-contract.zh-CN.md)、[双边 computed-style 与真实浏览器审计](./audits/2026-09-02-raft-interaction-state-verification.zh-CN.md)。该批把 rail、导航行、平面按钮、brutal 按钮、segmented、消息工具条和输入 focus 收敛为共享协议；条件弹层、逐实例拖拽和缺失发布 chunk 仍须继续追踪，不能据此宣称全站交互 1:1。
 
+核心调度当前最高优先级审计与同日修复复核：[Raft 业务合同、四条 P0 completion-proof 反例、typed obligation、双 Agent 浏览器报数、Thread subscription、Held Draft、Runtime error fingerprint fence、Reminder 与 restart/busy 组合证据](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。Room / Inbox / Activation 主骨架成立；schema 30–34 依次关闭 typed completion proof、Thread follow、Held Draft、poison retry 主合同和 Reminder authoritative schedule；真实 Worker gate又覆盖报数中途重启及单 Agent busy 跨 Room。schema 35/36 现补齐结构化 Runtime `actionRequired/sticky/recoverable`、正向 jitter、跨 Room Reminder target、Thread receipt 与 reload-safe typed permalink。它关闭本轮列出的精细缺口，但不等于所有 Provider 都能发出结构化错误，也不把本地内部链接、`#room` target 扩大为 Raft 中央公开 URL 或未验证的 DM target。
+
 普通 Channel 永久删除的 Raft 可见合同、schema 40 显式引用图、文件 GC 回执和崩溃恢复边界：[产品合同](./product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)；实现与 Chrome/Firefox 隔离真删除证据：[验证审计](./audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。正式用户 Room 不用于破坏性验收。
 
 Room 删除后文件回收的长期运行状态机、Multica 结构性移植、周期 worker、lease/backoff/tombstone 与 schema 42 验收范围：[Reconciler 合同](./product/2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)；实现、迁移、失败注入和浏览器证据：[验证审计](./audits/2026-09-03-room-file-gc-reconciler-verification.zh-CN.md)；10 万回执 CPU/内存/磁盘压力与剩余缺口裁决：[性能审计](./audits/2026-09-03-room-file-gc-performance-and-remaining-gaps.zh-CN.md)。
@@ -744,6 +798,8 @@ Agent 字段、头像与模型配置：[设计与边界](./product/2026-09-01-ag
 Agent 自定义图片头像当前施工合同：[Raft picker/上传行为、既有 ProfileImageStore 复用、revision 竞态与安全 GC 边界](./product/2026-09-02-agent-custom-avatar-contract.zh-CN.md)。本合同以既有认证、内容寻址图片 owner 扩展 Agent 消费方，不新建第二套文件服务；其完成状态以合同内最新 `C/A/L/D` 证据为准。
 
 这里仅保存能约束代码和验收的长期文档。阶段性讨论、旧 RAH 的 Session/UI 细节和 provider transcript 适配经验不迁入本仓库。
+
+核心调度最新审计与修复状态：[Raft 业务合同一致性审计](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。completion-proof P0、双 Agent 报数、Thread follow、Held Draft、poison retry、Reminder 主合同、restart/busy 跨 Room，以及本轮 structured Runtime 分支、跨 Room `#channel` target 和 Thread receipt/permalink 已进入工作树并有定向回归；正式全门禁、重启与浏览器结果以审计末尾最新复核为准。未声明 DM Reminder target、公开分享 URL 或所有 Provider 结构化错误覆盖。
 
 Raft 产品行为的首要监督基线：[Raft 官方教程监督基线](./product/raft-official-tutorial-supervision.zh-CN.md)。
 
@@ -880,6 +936,7 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 12. [Raft UI 产品集成边界](./architecture/raft-ui-product-integration.zh-CN.md)
 13. [Runtime Adapter 与观察平面](./architecture/runtime-adapter-and-observation.zh-CN.md)
 14. [Worker Application Service](./architecture/worker-application-service.zh-CN.md)
+15. [Runtime Registry 与多 Lane 调度架构](./architecture/runtime-registry-and-multi-lane-scheduling.zh-CN.md)
 16. [Memory 与 Context Fabric](./architecture/memory-and-context.zh-CN.md)
 17. [Core 模块边界与源码规模 Ratchet](./architecture/core-module-boundaries.zh-CN.md)
 18. [架构优势对照基准](./experiments/competitive-benchmark.zh-CN.md)

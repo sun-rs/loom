@@ -265,6 +265,17 @@ function navigation() {
       // callbacks now share the navigation owner, so supply their real route
       // parser and inactive state without weakening the original assertions.
       globalTaskDetailFromSearch,
+      conversationPreview: false,
+      previewThreadPrimary: false,
+      surfaceRef: {
+        get current() {
+          return state.surface;
+        },
+      },
+      sidebarPreferencesRef: { current: undefined },
+      setPanelIntent: noop,
+      setRoomData: noop,
+      openingKey: { current: undefined },
       setGlobalTaskDetail: noop,
       taskModalOpen: false,
       navigationGeneration: generation,
@@ -288,7 +299,7 @@ function activityScope() {
     refreshed: 0,
     opened: [],
   };
-  const window = { location: { href: "http://isolated/?surface=activity" } };
+  const window = { location: new URL("http://isolated/?surface=activity") };
   const actionGate = { current: createLatestRequest() };
   const old = { key: "old-a", roomId: "a", latestSeq: 10 };
   const next = {
@@ -301,6 +312,7 @@ function activityScope() {
   const scope = {
     window,
     actionGate,
+    openingKey: { current: undefined },
     navigationEpoch: () => nav.generation.current,
     beginNavigation: nav.invalidateNavigation,
     setPending: (value) => {
@@ -309,7 +321,10 @@ function activityScope() {
     setError: (value) => {
       state.error = value;
     },
-    onOpen: (value) => state.opened.push(value),
+    onOpen: (value) => {
+      state.opened.push(value);
+      return b.promise;
+    },
     client: {
       request: (operation) =>
         operation === "activity.mark" ? a.promise : b.promise,
@@ -323,13 +338,23 @@ function activityScope() {
   return { a, b, state, scope, next, changeFilter };
 }
 
-test("Activity context becomes stale before effect cleanup and filter change releases pending", async () => {
+test("Activity open delegates immediately without marking read and filter cleanup releases pending", async () => {
   const f = activityScope();
+  f.scope.client.request = () => {
+    throw new Error(
+      "Opening must not mark unread before visibility acknowledgement",
+    );
+  };
   const p = declaration(activity, "mark", f.scope)(f.next, "read", true);
   f.scope.window.location.href += "&filter=mentions";
   f.b.resolve({});
   await p;
-  assert.deepEqual(f.state.opened, []);
+  assert.deepEqual(f.state.opened, [
+    {
+      target: { kind: "message", roomId: "b", messageId: "message-b" },
+      surface: "activity",
+    },
+  ]);
   effect(activity, "setPending(undefined)", f.scope)();
   assert.equal(f.state.pending, undefined);
 });
@@ -448,6 +473,7 @@ function mutationScope() {
     response = deferred();
   const scope = {
     ...nav.scope,
+    agentDirectory: [],
     directRoomOpenRequests: { current: new Map() },
     activeWorkspace: { workspaceId: "workspace-a", controlRoomId: "control-a" },
     health: { capabilities: { roomWrite: true, threadRead: true } },
@@ -757,6 +783,7 @@ function inboxFixture(request) {
     removeEventListener: (event) => windowEvents.delete(event),
   };
   const scope = {
+    humanInboxOpen: true,
     health: { capabilities: { inputRequestRead: true } },
     currentPrincipal: { principalId: "human" },
     rooms: [{ roomId: "room" }],
@@ -903,16 +930,22 @@ test("hung Inbox read times out, retries, and cannot later overwrite the retry",
 
 test("Activity exact Thread callback keeps the list background and opens the requested identity", async () => {
   const nav = navigation();
+  nav.state.surface = "activity";
   const scope = {
     ...nav.scope,
     surface: "activity",
+    searchPreview: {
+      open: (roomId, messageId, threadId, rootMessageId) => {
+        nav.state.preview = { roomId, messageId, threadId, rootMessageId };
+      },
+    },
     rooms: [
       { roomId: "r", kind: "channel" },
       { roomId: "room", kind: "channel" },
     ],
     window: {
       location: { search: "?surface=activity&filter=mentions" },
-      history: { pushState: noop },
+      history: { pushState: noop, replaceState: noop },
     },
     discoveryLocation: () =>
       "?surface=activity&room=r&thread=r:root&message=reply",
@@ -955,6 +988,7 @@ test("Activity exact Thread callback keeps the list background and opens the req
 
 function activityRouteFixture(search = "?surface=activity&filter=mentions") {
   const nav = navigation();
+  nav.state.surface = "activity";
   const location = new URL(search, "http://isolated/");
   const window = {
     location,
@@ -972,6 +1006,22 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
   const scope = {
     ...nav.scope,
     surface: "activity",
+    searchPreview: declaration(
+      "apps/web/src/use-search-channel-preview.ts",
+      "useSearchChannelPreview",
+      {
+        window,
+        document: { activeElement: null },
+        HTMLElement: class {},
+        useRef: (current) => ({ current }),
+        useState: (initial) => [
+          typeof initial === "function" ? initial() : initial,
+          noop,
+        ],
+        useEffect: noop,
+        useCallback: (fn) => fn,
+      },
+    )(),
     rooms: [
       { roomId: "r", kind: "channel" },
       { roomId: "room", kind: "channel" },
@@ -980,7 +1030,14 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
     discoveryLocation,
     navigationPresentation,
     client: {
-      request: async (_, input) => ({ target: input.target }),
+      request: async (_, input) => ({
+        target: {
+          ...input.target,
+          ...(input.target.messageId === "reply"
+            ? { rootMessageId: "root" }
+            : {}),
+        },
+      }),
     },
     setNavigationError: noop,
     setFocusHighlightQuery: noop,
@@ -1059,6 +1116,7 @@ test("closing the current Thread invalidates an Activity target without strandin
   f.nav.state.thread = "previous";
   const request = deferred();
   const state = { pending: undefined, opened: 0 };
+  f.scope.client.request = () => request.promise;
   const mark = declaration(activity, "mark", {
     ...f.scope,
     beginNavigation: f.nav.invalidateNavigation,
@@ -1069,7 +1127,7 @@ test("closing the current Thread invalidates an Activity target without strandin
     setError: noop,
     onOpen: (value) => {
       state.opened++;
-      f.open(value);
+      return f.open(value);
     },
     client: { request: () => request.promise },
     result: { refresh: noop },
@@ -1096,9 +1154,21 @@ test("closing the current Thread invalidates an Activity target without strandin
     messageContext: { message: { threadId: "previous" } },
     restoreThreadFocus: noop,
   })();
-  request.resolve({});
+  request.resolve({
+    target: {
+      kind: "message",
+      roomId: "room",
+      messageId: "next-reply",
+      rootMessageId: "next",
+    },
+  });
   await opening;
-  assert.equal(state.opened, 0);
+  assert.equal(state.opened, 1);
+  assert.equal(
+    f.window.location.searchParams.get("previewMessage"),
+    null,
+    "stale resolver must not apply the target",
+  );
   assert.equal(f.nav.state.thread, undefined);
   assert.equal(
     state.pending,
@@ -1130,8 +1200,8 @@ test("changing Activity filters after a Thread opens preserves the current exact
   filters.change("filter", ["unread"]);
   assert.equal(f.window.location.searchParams.get("filter"), "unread");
   assert.equal(f.window.location.searchParams.get("room"), "room");
-  assert.equal(f.window.location.searchParams.get("thread"), "room:root");
-  assert.equal(f.window.location.searchParams.get("message"), "reply");
+  assert.equal(f.window.location.searchParams.get("previewRoot"), "root");
+  assert.equal(f.window.location.searchParams.get("previewMessage"), "reply");
 });
 
 test("changing Activity filters after Thread close cannot resurrect stale route identities", () => {
@@ -1181,8 +1251,8 @@ test("clearing Activity filters preserves a currently open exact Thread route", 
   filters.clear();
   assert.equal(f.window.location.searchParams.get("filter"), null);
   assert.equal(f.window.location.searchParams.get("room"), "room");
-  assert.equal(f.window.location.searchParams.get("thread"), "room:root");
-  assert.equal(f.window.location.searchParams.get("message"), "reply");
+  assert.equal(f.window.location.searchParams.get("previewRoot"), "root");
+  assert.equal(f.window.location.searchParams.get("previewMessage"), "reply");
 });
 
 test("Inbox cleanup clears the active deadline even when the transport never settles", async () => {
@@ -1318,4 +1388,17 @@ test("Inbox transient failure recovers without reload and clears only read-model
   } finally {
     cleanup();
   }
+});
+
+test("instance private box returns its canonical target without replacing the channel or inspector", async () => {
+  const f = mutationScope();
+  f.scope.agentDirectory = [
+    { participantId: "instance", instanceChannelId: "original-room" },
+  ];
+  f.nav.state.peek = "instance-profile";
+  const opened = callback("openDirectRoom", f.scope)("instance");
+  f.response.resolve({ room: { roomId: "private-box" } });
+  assert.deepEqual(await opened, { roomId: "private-box" });
+  assert.equal(f.nav.state.selected, "original-room");
+  assert.equal(f.nav.state.peek, "instance-profile");
 });

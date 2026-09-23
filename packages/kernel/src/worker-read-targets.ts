@@ -1,3 +1,4 @@
+import { instanceWorkerRoomPredicate } from "./instance-worker-scope.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import type { ActivationCredentialScope } from "@rah-os/protocol";
 import { roomProjectionFromRow } from "./collaboration-projection.ts";
@@ -16,6 +17,7 @@ export type WorkerVisibleRoomScope = Pick<
 export const WORKER_VISIBLE_ROOMS = `SELECT r.*, r.rowid AS room_order, d.left_principal_id, d.right_principal_id,
   peer.handle AS peer_handle FROM rooms r
   JOIN memberships membership ON membership.room_id=r.room_id AND r.system_hidden=0
+    AND ${instanceWorkerRoomPredicate("membership.principal_id", "r.room_id")}
   LEFT JOIN direct_room_pairs d ON d.room_id=r.room_id
   LEFT JOIN principals peer ON peer.principal_id=CASE WHEN d.left_principal_id=membership.principal_id
     THEN d.right_principal_id ELSE d.left_principal_id END`;

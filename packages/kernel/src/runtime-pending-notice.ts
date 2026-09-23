@@ -56,17 +56,20 @@ export function pendingRuntimeNotice(
     JOIN principals sender ON sender.principal_id=m.actor_id
     LEFT JOIN direct_room_pairs d ON d.room_id=i.room_id
     LEFT JOIN principals peer ON peer.principal_id=CASE WHEN d.left_principal_id=i.participant_id THEN d.right_principal_id ELSE d.left_principal_id END
-    LEFT JOIN worker_target_read_positions read ON read.participant_id=i.participant_id
-      AND read.room_id=i.room_id AND read.thread_key=COALESCE(m.thread_id,'')
+    LEFT JOIN worker_message_presentations read ON read.participant_id=i.participant_id
+      AND read.room_id=i.room_id AND read.thread_key=COALESCE(m.thread_id,'') AND read.room_seq=i.event_seq
     WHERE i.participant_id=? AND i.state='pending'
+      AND (NOT EXISTS (SELECT 1 FROM role_instances ri WHERE ri.instance_id=i.participant_id)
+        OR (i.room_id=? AND sender.kind='human'))
       AND NOT (i.room_id=? AND i.event_seq<=?)
-      AND i.event_seq>COALESCE(read.through_room_seq,0)
+      AND read.room_seq IS NULL
       AND i.event_id NOT IN (SELECT value FROM json_each(?))
     ORDER BY i.created_at DESC, i.rowid DESC LIMIT 21
   `,
     )
     .all(
       text(activation, "participant_id"),
+      text(activation, "room_id"),
       text(activation, "room_id"),
       integer(activation, "to_seq"),
       JSON.stringify(excluded),

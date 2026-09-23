@@ -1,3 +1,4 @@
+import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
   providerLaunchArguments,
   providerLaunchPolicy,
@@ -21,7 +22,10 @@ import {
 } from "./provider-trajectory-normalizer.js";
 
 import { attachClaudeBusyInput } from "./claude-busy-input.js";
-import { providerActivationInput } from "./provider-activation-input.js";
+import {
+  assertSessionReplacementAllowed,
+  providerActivationInput,
+} from "./provider-activation-input.js";
 
 const INTERRUPT_TIMEOUT_MS = 750;
 const TERM_TIMEOUT_MS = 300;
@@ -71,6 +75,7 @@ try {
     !turn.toolActivity &&
     isMissingSessionError(turn.error)
   ) {
+    assertSessionReplacementAllowed();
     trajectoryWriter.emit(
       runtimeStatusTrajectory(
         "working",
@@ -449,6 +454,8 @@ function parseArguments(args) {
     else if (flag === "--executable") parsed.executable = value;
     else if (flag === "--model") parsed.model = value;
     else if (flag === "--prompt") parsed.prompt = value;
+    else if (flag === "--prompt-file")
+      parsed.prompt = readProviderPromptFile(value);
     else if (flag === "--resume-session") parsed.resumeSession = value;
     else if (flag === "--tool-access-mode") parsed.toolAccessMode = value;
     else if (flag === "--mcp-config") {

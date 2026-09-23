@@ -1,3 +1,4 @@
+import { ROLE_CATALOG_SCHEMA } from "./role-catalog-schema.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { ACTIVATION_PRESENTED_WINDOW_SCHEMA } from "./activation-presented-window.ts";
 
@@ -10,7 +11,8 @@ PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 `;
 
-export const SCHEMA_OBJECT_SQL = `
+export const SCHEMA_OBJECT_SQL = `${ROLE_CATALOG_SCHEMA}
+
 CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
   secret_name TEXT PRIMARY KEY,
   secret_value TEXT NOT NULL

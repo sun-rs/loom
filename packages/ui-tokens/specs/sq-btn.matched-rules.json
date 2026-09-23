@@ -2,7 +2,7 @@
   "generatedBy": "node scripts/run-component-spec-browser-gate.mjs sq-btn --report-matching-rules",
   "component": "sq-btn",
   "note": "Rules Chrome reports as matching each fixture probe element. The static checker refuses it once the CSS inputs, the fixture files, the rendered fixture DOM or this gate program change, and refuses it if any probe declared in the spec is absent.",
-  "cssInputsSha256": "25bce0667bd6eafb3c0788d6ca1ba7752cee7cc42160af7c9dd5f2034f2c14a1",
+  "cssInputsSha256": "c5b10ee69d92f1cf2a06025accff692aedc2c47c6efcbcba6f35f0f46f66f499",
   "fixtureSha256": "a727338cd2b1a215b119ee2cbcce91c3632dd2f6125cccacd1c4c830f96bea97",
   "gateScriptSha256": "bc7e998c999fee56cd3ecde9592703aaeb96beea610b5424f0e331de22e8e59b",
   "structureSha256": "08f539335909b3ae8c7df078e1e217ef9527209c997cd3aaa43cf8070423b7be",

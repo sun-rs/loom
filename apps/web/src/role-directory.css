@@ -1,0 +1,28 @@
+.rah-role-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rah-role-page > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  flex-wrap: wrap;
+}
+.rah-role-page > header h2 {
+  margin: 0;
+  flex: 1;
+}
+.rah-role-page-body {
+  overflow: auto;
+  min-height: 0;
+}
+.rah-role-page-body > p {
+  margin: 16px;
+}
+.rah-role-page select {
+  display: block;
+  max-width: 100%;
+  margin-top: 8px;
+}

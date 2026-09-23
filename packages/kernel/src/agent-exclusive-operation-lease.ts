@@ -1,3 +1,4 @@
+import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -198,6 +199,7 @@ export function nextUnfencedActivation(
       `SELECT candidate.*
        FROM activations AS candidate
        WHERE candidate.participant_id IN (${placeholders})
+         AND ${activeInstancePrivateBoxPredicate("candidate.room_id")}
          AND NOT EXISTS (
            SELECT 1 FROM agent_definitions AS managed_agent
            WHERE managed_agent.participant_id = candidate.participant_id

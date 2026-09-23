@@ -27,6 +27,7 @@ import {
   type AgentHostControlPort,
 } from "./agent-host-control.ts";
 import {
+  classifyRuntimeFailure,
   RUNTIME_ERROR_RETRY_JITTER_RATIO,
   runtimeErrorRetryDelay,
   runtimeErrorJitterRandom,
@@ -875,7 +876,7 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "exited",
       });
-      if (exit.code !== 0) {
+      if (exit.code !== 0 || exit.failure !== undefined) {
         return this.#retryFailedActivation(
           activation,
           exit.failure?.message ??
@@ -1016,6 +1017,12 @@ export class AgentHost {
     runtimeFailure?: RuntimeFailure,
   ): Promise<HostCycleResult> {
     const { activationId } = activation;
+    // Startup binding failures happen before a driver can emit a structured exit.
+    if (
+      runtimeFailure === undefined &&
+      failure.includes("RAH_SESSION_CONTINUITY_REQUIRED")
+    )
+      runtimeFailure = classifyRuntimeFailure(failure);
     try {
       await this.#control.retryActivation({
         activationId,

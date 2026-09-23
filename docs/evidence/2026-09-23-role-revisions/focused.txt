@@ -1,0 +1,18 @@
+✔ RahClient covers every existing Human API v3 operation (1.343792ms)
+✔ HttpRahClient maps the complete Human API surface to v3 routes (8.821708ms)
+✔ FakeRahClient validates the same typed operation contract as HTTP (0.819708ms)
+✔ HttpRahClient owns route, auth, parsing, and structured errors (0.41325ms)
+✔ health is unauthenticated GET while business operations require a token (0.717625ms)
+✔ the Core package dependency boundary excludes daemon, transport, and UI shells (1.148291ms)
+✔ RahCore capacity policy fails closed on invalid or ambiguous admin limits (0.41875ms)
+✔ RahCore is a headless lifecycle boundary over canonical Room state and multi-lane execution (86.657833ms)
+✔ Role is inert configuration; two channel instances receive independent conversations (168.407042ms)
+✔ schema 59 Role becomes an immutable revision without altering its configuration or receipt (118.299833ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 484.735292

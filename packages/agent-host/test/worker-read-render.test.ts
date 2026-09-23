@@ -384,10 +384,13 @@ test("sync states the already-presented ledger facts as text", () => {
     },
     snapshot: null,
   });
-  assert.match(text ?? "", /Already presented: target room-1 through seq 5\./u);
   assert.match(
     text ?? "",
-    /seq 5 \(msg=message-1\) was already presented through seq 5; you posted 2 message\(s\) at that target afterwards \(message-2\)\./u,
+    /Presentation high-water: target room-1 seq 5; not a contiguous read frontier\./u,
+  );
+  assert.match(
+    text ?? "",
+    /seq 5 \(msg=message-1\) was already presented; you posted 2 message\(s\) at that target afterwards \(message-2\)\./u,
   );
 });
 

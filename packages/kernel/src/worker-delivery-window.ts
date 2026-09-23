@@ -52,6 +52,9 @@ export function recordCheckedWorkerMessages(
       roomId: scope.roomId,
       ...(threadId === "" ? {} : { threadId }),
       throughRoomSeq,
+      messageSeqs: messages
+        .filter((message) => (message.thread_id ?? "") === threadId)
+        .map((message) => integer(message, "room_seq")),
       updatedAt,
     });
 }

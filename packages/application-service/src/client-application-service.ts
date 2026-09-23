@@ -1,3 +1,12 @@
+import {
+  RoleCreateRequestSchema,
+  RoleReviseRequestSchema,
+  RoleCreateResponseSchema,
+  RoleListRequestSchema,
+  RoleListResponseSchema,
+  RoleInstantiateRequestSchema,
+  RoleInstantiateResponseSchema,
+} from "@rah-os/protocol";
 import { canonicalAgentIdField } from "@rah-os/protocol";
 import {
   SystemChannelVisibilityReadSchema,
@@ -388,6 +397,10 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/manage",
   "/agents/onboard",
   "/agents/provision",
+  "/roles/create",
+  "/roles/revise",
+  "/roles/list",
+  "/roles/instantiate",
   "/messages/forward",
   "/messages/forward/targets",
   "/messages/reference-read-states",
@@ -1172,6 +1185,44 @@ export class ClientApplicationService {
         200,
         ClientRoomMemberMutationResponseSchema.parse(
           this.#human.onboardAgentToRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/roles/revise") {
+      const command = parseClientRequest(RoleReviseRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        RoleCreateResponseSchema.parse(this.#human.reviseRole(actor, command)),
+      );
+      return;
+    }
+    if (path === "/roles/create") {
+      const command = parseClientRequest(RoleCreateRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        RoleCreateResponseSchema.parse(this.#human.createRole(actor, command)),
+      );
+      return;
+    }
+    if (path === "/roles/list") {
+      const command = parseClientRequest(RoleListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        RoleListResponseSchema.parse(this.#human.listRoles(actor, command)),
+      );
+      return;
+    }
+    if (path === "/roles/instantiate") {
+      const command = parseClientRequest(RoleInstantiateRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        RoleInstantiateResponseSchema.parse(
+          this.#human.instantiateRole(actor, command),
         ),
       );
       return;

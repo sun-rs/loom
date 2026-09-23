@@ -1,0 +1,207 @@
+{
+  "experiments": [
+    {
+      "case": "rejected-stale-codex",
+      "authorization": [
+        {
+          "executable": "claude",
+          "modelId": "sonnet",
+          "reasoning": "low"
+        },
+        {
+          "executable": "codex",
+          "modelId": "gpt-5.6-luna",
+          "reasoning": "low"
+        }
+      ],
+      "rows": [
+        {
+          "provider": "claude",
+          "round": 1,
+          "answer": ["claude-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 10.149,
+          "completed": true
+        },
+        {
+          "provider": "codex",
+          "round": 1,
+          "answer": ["codex-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 31.254,
+          "completed": true
+        },
+        {
+          "provider": "codex",
+          "round": 2,
+          "answer": ["codex-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 16.51,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "case": "rejected-stale-claude",
+      "authorization": [
+        {
+          "executable": "claude",
+          "modelId": "sonnet",
+          "reasoning": "low"
+        }
+      ],
+      "rows": [
+        {
+          "provider": "claude",
+          "round": 1,
+          "answer": ["claude-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 9.025,
+          "completed": true
+        },
+        {
+          "provider": "claude",
+          "round": 2,
+          "answer": [
+            "本次记忆与上次未变，其中的验收口令仍是同一个：claude-memory-1-Q72（记忆中并未出现新口令）。"
+          ],
+          "runs": 1,
+          "replySeconds": 8.155,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "case": "stopped-on-answer-label-not-nonce",
+      "authorization": [
+        {
+          "executable": "claude",
+          "modelId": "sonnet",
+          "reasoning": "low"
+        },
+        {
+          "executable": "codex",
+          "modelId": "gpt-5.6-luna",
+          "reasoning": "low"
+        }
+      ],
+      "rows": [
+        {
+          "provider": "claude",
+          "round": 1,
+          "answer": ["claude-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 7.195,
+          "completed": true
+        },
+        {
+          "provider": "codex",
+          "round": 1,
+          "answer": ["验收口令：codex-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 19.077,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "case": "passed",
+      "authorization": [
+        {
+          "executable": "claude",
+          "modelId": "sonnet",
+          "reasoning": "low"
+        },
+        {
+          "executable": "codex",
+          "modelId": "gpt-5.6-luna",
+          "reasoning": "low"
+        }
+      ],
+      "rows": [
+        {
+          "provider": "claude",
+          "round": 1,
+          "answer": ["claude-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 10.437,
+          "completed": true
+        },
+        {
+          "provider": "codex",
+          "round": 1,
+          "answer": ["codex-memory-1-Q72"],
+          "runs": 1,
+          "replySeconds": 26.579,
+          "completed": true
+        },
+        {
+          "provider": "codex",
+          "round": 2,
+          "answer": ["codex-memory-2-Q72"],
+          "runs": 1,
+          "replySeconds": 16.009,
+          "completed": true
+        },
+        {
+          "provider": "claude",
+          "round": 2,
+          "answer": ["claude-memory-2-Q72"],
+          "runs": 1,
+          "replySeconds": 8.411,
+          "completed": true
+        }
+      ]
+    }
+  ],
+  "verifiedSessions": [
+    {
+      "provider": "codex-app-server/v1",
+      "sessionHash": "6cd0e3e32a762269490e21bf507b6181e260e7bd89c0e61e836c8963d6e2cecb",
+      "hasOriginalSystemMemoryDigest": true,
+      "startupResultsInSameSession": [
+        {
+          "at": "2026-09-21T06:33:33.172Z",
+          "systemReference": true,
+          "fullIndex": false,
+          "newNonce": false,
+          "bytes": 1661,
+          "byteScope": "serialized native tool result"
+        },
+        {
+          "at": "2026-09-21T06:33:51.190Z",
+          "systemReference": false,
+          "fullIndex": true,
+          "newNonce": true,
+          "bytes": 3529,
+          "byteScope": "serialized native tool result"
+        }
+      ]
+    },
+    {
+      "provider": "claude-stream-json/v1",
+      "sessionHash": "ba6dd6ef17deb15c018229ecbf4e76afc417c8ddf92d6628bbbdfb2ff56f1b38",
+      "hasOriginalSystemMemoryDigest": true,
+      "startupResultsInSameSession": [
+        {
+          "at": "2026-09-21T06:33:04.460Z",
+          "systemReference": true,
+          "fullIndex": false,
+          "newNonce": false,
+          "bytes": 1472
+        },
+        {
+          "at": "2026-09-21T06:34:03.836Z",
+          "systemReference": false,
+          "fullIndex": true,
+          "newNonce": true,
+          "bytes": 3331
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Isolated test memory only; no claim of formal same-history performance gain.",
+    "Optional label normalization accepts exactly one current nonce; old or other-Agent nonce still fails."
+  ]
+}

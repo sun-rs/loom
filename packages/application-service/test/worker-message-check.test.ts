@@ -604,3 +604,38 @@ test("real CLI HTTP check recovers lost ACK response via replay and a new Run", 
     await f.close();
   }
 });
+
+test("model check omits execution audit payloads but drains their cursor and retains business facts", async () => {
+  const f = await fixture(120);
+  try {
+    f.database
+      .prepare(
+        "UPDATE room_events SET type='run.finished', payload_json=? WHERE room_id=? AND type='message.posted' AND aggregate_id<>?",
+      )
+      .run(
+        JSON.stringify({ diagnostic: "PRIVATE_RUN_PAYLOAD" }),
+        f.room.roomId,
+        f.source.event.aggregateId,
+      );
+    const raw = await f.call("sync");
+    assert.ok(
+      raw.body.events.some((event: any) => event.type === "run.finished"),
+    );
+    const check = await f.cli();
+    assert.equal(check.exit, 0, check.stderr);
+    assert.doesNotMatch(check.stdout, /PRIVATE_RUN_PAYLOAD|type=run.finished/);
+    assert.match(check.stdout, /Please carry this durable work/);
+    assert.match(check.stdout, /task.created/);
+    const page = await f.call("message-check");
+    assert.equal(page.body.delivery.cursorAfter, f.activation.toSeq);
+    assert.ok(
+      f.database
+        .prepare(
+          "SELECT COUNT(*) AS n FROM room_events WHERE type='run.finished'",
+        )
+        .get()!.n,
+    );
+  } finally {
+    await f.close();
+  }
+});

@@ -33,6 +33,7 @@ const adapterSourcePath = fileURLToPath(
 const HOST_CANARY_ENVIRONMENT = {
   RAH_AGENT_MEMORY_DIR: "CANARY-agent-memory-dir",
   RAH_AGENT_MEMORY_INDEX: "CANARY-agent-memory-index",
+  RAH_AGENT_MEMORY_SYSTEM_SHA256: "CANARY-system-memory-digest",
   RAH_DATA_HOME: "CANARY-data-home",
   RAH_DEV_DIAGNOSTIC_TOKEN: "CANARY-dev-diagnostic",
   RAH_LAN_CERT_PATH: "CANARY-lan-cert",
@@ -163,6 +164,7 @@ test("resolveActivationEnvironment drops host RAH service variables and keeps de
 test("resolveActivationEnvironment keeps the controlled Worker carrier and PATH-first tool wrapper", () => {
   const environment = resolveActivationEnvironment({
     configured: {
+      RAH_AGENT_MEMORY_SYSTEM_SHA256: "untrusted-static-memory-proof",
       RAH_WORKER_API_URL: "https://untrusted-static.example.test",
       RAH_WORKER_TOKEN: "static-legacy-token",
     },
@@ -176,6 +178,7 @@ test("resolveActivationEnvironment keeps the controlled Worker carrier and PATH-
     },
   });
 
+  assert.equal(environment.RAH_AGENT_MEMORY_SYSTEM_SHA256, undefined);
   assert.equal(environment.RAH_WORKER_API_URL, "http://127.0.0.1:43123");
   assert.equal(environment.RAH_WORKER_SESSION_FILE, "/leased/session");
   assert.equal(environment.RAH_WORKER_TOKEN, undefined);

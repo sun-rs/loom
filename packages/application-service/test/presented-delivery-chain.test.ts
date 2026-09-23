@@ -243,7 +243,10 @@ test("a --target post into this Activation's own Room acknowledges through the s
       idempotencyKey: "answer-3",
     });
     assert.equal(posted.status, 200);
-    assert.ok("event" in posted.body, JSON.stringify(posted.body).slice(0, 200));
+    assert.ok(
+      "event" in posted.body,
+      JSON.stringify(posted.body).slice(0, 200),
+    );
     assert.equal(context.cursor(), first.event.roomSeq);
   } finally {
     await context.close();
@@ -505,10 +508,7 @@ test("a reassignment the budget could not render stops the cursor before it", as
     const run = context.activate();
     const presented = await run.call("message-present");
     assert.ok(presented.body.noticeCount > 0);
-    assert.equal(
-      presented.body.presentedThroughSeq,
-      posted[posted.length - 1],
-    );
+    assert.equal(presented.body.presentedThroughSeq, posted[posted.length - 1]);
     assert.ok(
       !presented.body.presentedSeqs.includes(reassigned.event.roomSeq),
       "an unrendered reassignment must not be in the presented set",
@@ -525,9 +525,9 @@ test("a reassignment the budget could not render stops the cursor before it", as
     assert.equal(refused.status, 409);
     assert.equal(context.cursor(), 0);
     const check = await run.call("message-check");
-    const delivered = (
-      check.body.delivery.events as { roomSeq: number }[]
-    ).map((event) => event.roomSeq);
+    const delivered = (check.body.delivery.events as { roomSeq: number }[]).map(
+      (event) => event.roomSeq,
+    );
     assert.ok(delivered.includes(reassigned.event.roomSeq));
   } finally {
     await context.close();
@@ -630,8 +630,7 @@ test("a parked marker from another Room is never replayed", async () => {
 test("the present response stays bounded as the range grows", async () => {
   const context = await fixture();
   try {
-    for (let index = 0; index < 60; index++)
-      context.post(`bulk ${index}`);
+    for (let index = 0; index < 60; index++) context.post(`bulk ${index}`);
     const run = context.activate();
     const presented = await run.call("message-present");
     assert.equal(presented.status, 200);

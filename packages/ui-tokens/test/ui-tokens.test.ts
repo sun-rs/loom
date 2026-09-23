@@ -53,11 +53,23 @@ const verifiedGitBranchAddition = `  <!-- Raft index-MqTUR4Ez.js I6e/Ec, SHA256 
   </symbol>
 `;
 
+// Source-backed additions: 2026-09-18-agent-profile-field-ui,
+// 2026-09-18-settings-activity-repair, 2026-09-19-deleted-agent-message-ui.
+// Preserve the original base hash; pin the complete additions independently.
+const verifiedProfileAndUnavailableIconsAddition = `  <!-- Raft v1.16.0 index-CKeqacxz.js E7e/AI, Lucide upload; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
+  <!-- Raft v1.16.0 AgentDetailPanel-CW_VMZT6.js Hl/Ia, Lucide clipboard; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+  <!-- Raft v1.16.0 index-CKeqacxz.js T7e/Ul, Lucide triangle-alert; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+`;
+
 test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent tabs, profile, and Reminder live DOM", () => {
   const content = readFileSync(
     join(packageRoot, "src", "interaction-icons.svg"),
   );
   const source = content.toString("utf8");
+  assert.ok(source.includes(verifiedProfileAndUnavailableIconsAddition));
   assert.ok(source.includes(verifiedArchiveRestoreAddition));
   assert.ok(source.includes(verifiedCircleCheckBigAddition));
   assert.ok(source.includes(verifiedListChecksAddition));
@@ -89,6 +101,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     createHash("sha256")
       .update(
         source
+          .replace(verifiedProfileAndUnavailableIconsAddition, "")
           .replace(verifiedArchiveRestoreAddition, "")
           .replace(verifiedListChecksAddition, "")
           .replace(verifiedCircleCheckBigAddition, "")

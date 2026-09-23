@@ -64,7 +64,15 @@ test("both task surfaces share container-based defaults with explicit selection 
     "components/conversation-panes.tsx",
   ]) {
     const source = readWeb(path);
-    assert.match(source, /useResponsiveTaskView\(/u);
+    if (path === "components/global-discovery.tsx") {
+      assert.match(source, /useTaskViewPreference\(/u);
+      const preference = readWeb("use-task-view-preference.ts");
+      assert.match(preference, /useResponsiveTaskView\(/u);
+      assert.match(
+        preference,
+        /explicit === "board" \|\| explicit === "list" \? explicit : undefined/u,
+      );
+    } else assert.match(source, /useResponsiveTaskView\(/u);
     assert.match(source, /ref=\{taskPaneRef\}/u);
     assert.doesNotMatch(source, /const defaultView = "board"/u);
   }

@@ -464,7 +464,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(prompt, /`Already presented:` lines/u);
   assert.match(
     prompt,
-    /a target line states the Room sequence you were already shown at that target/isu,
+    /a Presentation high-water target line is the highest observed sequence, not proof that every earlier message was shown/isu,
   );
   assert.match(
     prompt,
@@ -757,4 +757,18 @@ test("Task workflow teaches Agent completion after Human approval without a seco
   assert.match(prompt, /--status closed/);
   assert.doesNotMatch(prompt, /Human acceptance remains the only transition/);
   assert.doesNotMatch(prompt, /artifact-publish[^\n]*--idempotency-key/);
+});
+
+test("configured Agent startup uses compact context without rereading audit manifests", () => {
+  const { text } = standingPromptLayers({ agent: fixtureAgent }).find(
+    (layer) => layer.id === "platform",
+  )!;
+  assert.doesNotMatch(text, /First parse process\.env\.RAH_AGENT_CONTEXT_JSON/);
+  assert.match(text, /message-check --startup/);
+  assert.match(text, /already stated in this prompt/);
+  assert.match(
+    standingPromptLayers().find((layer) => layer.id === "platform")!.text,
+    /frozen AgentDefinition role and instructions/,
+    "legacy invocations must still obtain their role instructions",
+  );
 });

@@ -1,3 +1,4 @@
+import { RoleCatalog } from "./role-catalog.ts";
 import { TaskDeletionService } from "./task-deletion.ts";
 import { TaskAmendmentService } from "./task-amendment.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -42,6 +43,7 @@ export function createHumanCommandServices(options: {
     transaction: options.transaction,
   };
   return Object.freeze({
+    roles: new RoleCatalog(options),
     followHumanThread: (
       actor: AuthenticatedActorContext,
       input: Parameters<HumanActivity["follow"]>[1],

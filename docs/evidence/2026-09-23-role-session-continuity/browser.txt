@@ -1,0 +1,5 @@
+
+> rah-os@0.0.0 test:web:role-mvp
+> node scripts/test-role-mvp-browser.mjs
+
+PASS: UI Role creation, instance provisioning, two Fake CLI box replies, reload, desktop/mobile.

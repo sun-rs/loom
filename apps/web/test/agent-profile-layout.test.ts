@@ -64,7 +64,7 @@ test("narrow profile does not inflate its hero or force creation metadata into o
   assert.match(rule(".rah-agent-profile-hero h3"), /text-overflow: ellipsis/u);
 });
 
-test("execution reset and local issue report remain capability-gated", () => {
+test("execution reset remains capability-gated and retired issue reports stay absent", () => {
   const source = read("components/agent-directory-pane.tsx");
   const buttons = [
     ...source.matchAll(/<button\b[^>]*>[\s\S]*?<\/button>/gu),
@@ -74,12 +74,13 @@ test("execution reset and local issue report remain capability-gated", () => {
   assert.match(reset, /onResetExecution === undefined/u);
   assert.match(reset, /onClick=/u);
   assert.doesNotMatch(reset, /暂不可用/u);
-  const report = buttons.find((value) => value.includes("报告问题"));
-  assert.ok(report);
-  assert.match(report, /disabled=\{!canManage\}/u);
-  assert.match(report, /onClick=\{\(\) => setIssueReportOpen\(true\)\}/u);
-  assert.match(report, /不会自动上传/u);
-  assert.doesNotMatch(report, /暂不可用/u);
+  assert.doesNotMatch(
+    source,
+    /报告问题|setIssueReportOpen|AgentIssueReportDialog/u,
+  );
+  const diagnostics = buttons.find((value) => value.includes("查看活动诊断"));
+  assert.ok(diagnostics);
+  assert.match(diagnostics, /onClick=\{onDiagnostics\}/u);
   const resetDialog = read("components/agent-execution-reset-dialog.tsx");
   assert.match(resetDialog, /mode: "restart"/u);
   assert.match(resetDialog, /mode: "session"/u);

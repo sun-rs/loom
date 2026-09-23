@@ -1,3 +1,7 @@
+import {
+  migrateWorkerMessagePresentations,
+  recordWorkerMessagePresentations,
+} from "./worker-message-presentations.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import { integer } from "./sqlite-row.ts";
@@ -25,6 +29,7 @@ export type WorkerTargetAddress = {
 const ROOM_TARGET_KEY = "";
 
 export function migrateWorkerTargetReadPositions(database: DatabaseSync): void {
+  migrateWorkerMessagePresentations(database);
   database.exec(`
     CREATE TABLE IF NOT EXISTS worker_target_read_positions (
       participant_id TEXT NOT NULL REFERENCES principals(principal_id),
@@ -164,7 +169,11 @@ function threadKey(threadId: string | undefined): string {
  */
 export function recordWorkerTargetReadPosition(
   database: DatabaseSync,
-  input: WorkerTargetAddress & { throughRoomSeq: number; updatedAt: string },
+  input: WorkerTargetAddress & {
+    throughRoomSeq: number;
+    updatedAt: string;
+    messageSeqs?: readonly number[];
+  },
 ): void {
   if (
     !Number.isSafeInteger(input.throughRoomSeq) ||
@@ -172,6 +181,8 @@ export function recordWorkerTargetReadPosition(
   ) {
     return;
   }
+  if (input.messageSeqs)
+    recordWorkerMessagePresentations(database, input, input.messageSeqs);
   const nextOrder =
     integer(
       database

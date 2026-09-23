@@ -197,3 +197,128 @@ test("the standing prompt digest is part of Provider session locality", async ()
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("native system memory digest is optional transport metadata and survives a store reload", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-session-memory-"));
+  try {
+    const store = new ProviderSessionStore({ rootDirectory: directory });
+    await store.record(key, "native-memory-session", {
+      systemMemorySha256: "a".repeat(64),
+    });
+    assert.equal((await store.load(key))?.systemMemorySha256, "a".repeat(64));
+    await store.record(key, "legacy-session");
+    assert.equal((await store.load(key))?.systemMemorySha256, undefined);
+    await assert.rejects(
+      store.record(key, "bad", { systemMemorySha256: "not-a-digest" }),
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("instance session survives configuration key changes and Host restart without replacing identity", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-instance-session-"));
+  try {
+    const store = new ProviderSessionStore({ rootDirectory: directory });
+    // Adopt an existing MVP session, without creating a new provider session.
+    await store.record(key, "original-session", {
+      systemMemorySha256: "a".repeat(64),
+    });
+    const changed = {
+      ...key,
+      runtimeProfileRevisionId: "profile-v2",
+      workspaceMountRevisionId: "mount-v2",
+      standingPromptDigest: "changed-prompt",
+    };
+    const adopted = await store.load(changed, { instance: true });
+    assert.equal(adopted?.providerSessionId, "original-session");
+    assert.equal(adopted?.systemMemorySha256, "a".repeat(64));
+    await store.record(changed, "original-session", { instance: true });
+    const restarted = new ProviderSessionStore({ rootDirectory: directory });
+    assert.equal(
+      (await restarted.load(key, { instance: true }))?.providerSessionId,
+      "original-session",
+    );
+    await assert.rejects(
+      restarted.record(changed, "silent-replacement", { instance: true }),
+      /continuity/i,
+    );
+    await assert.rejects(
+      restarted.load(
+        { ...changed, provider: "other-cli/v1" },
+        { instance: true },
+      ),
+      /continuity/i,
+    );
+    assert.equal(
+      (await restarted.load(changed, { instance: true }))?.providerSessionId,
+      "original-session",
+    );
+    // Legacy Agents still resolve exact configuration keys.
+    assert.equal(await restarted.load(changed), null);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("instance adoption refuses ambiguous histories and keeps participants separate", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-instance-session-conflict-"),
+  );
+  try {
+    const store = new ProviderSessionStore({ rootDirectory: directory });
+    await store.record(key, "first-session");
+    await store.record(
+      { ...key, standingPromptDigest: "other" },
+      "second-session",
+    );
+    await assert.rejects(store.load(key, { instance: true }), /continuity/i);
+    assert.equal(
+      await store.load(
+        { ...key, participantId: "new-instance" },
+        { instance: true },
+      ),
+      null,
+    );
+    await store.record(
+      { ...key, participantId: "new-instance" },
+      "independent-session",
+      { instance: true },
+    );
+    assert.equal(
+      (
+        await store.load(
+          { ...key, participantId: "new-instance" },
+          { instance: true },
+        )
+      )?.providerSessionId,
+      "independent-session",
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("previously launched instance cannot silently restart after binding record loss", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-instance-lost-binding-"));
+  try {
+    const store = new ProviderSessionStore({ rootDirectory: directory });
+    assert.equal(await store.load(key, { instance: true }), null);
+    await store.record(key, "bound-session", { instance: true });
+    assert.equal(
+      (await store.load(key, { instance: true, requireExisting: true }))
+        ?.providerSessionId,
+      "bound-session",
+    );
+    for (const file of readdirSync(directory)) rmSync(join(directory, file));
+    await assert.rejects(
+      new ProviderSessionStore({ rootDirectory: directory }).load(key, {
+        instance: true,
+        requireExisting: true,
+      }),
+      /RAH_SESSION_CONTINUITY_REQUIRED/,
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

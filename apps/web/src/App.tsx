@@ -1,3 +1,5 @@
+import { RoleDirectoryPane } from "./components/role-directory-pane.tsx";
+import "./role-directory.css";
 import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { runtimeProductName } from "./agent-runtime-presentation.ts";
 import { ChatTaskApproval } from "./components/chat-task-approval.tsx";
@@ -277,6 +279,7 @@ function WorkspaceScreen({
   const [peekHumanId, setPeekHumanId] = useState<string>();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [archivedRooms, setArchivedRooms] = useState<Room[]>([]);
+  const [roleDirectoryOpen, setRoleDirectoryOpen] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<string>();
   const [storedRoomData, setRoomData] = useState<RoomData>();
   const [activeThreadRootMessageId, setActiveThreadRootMessageId] = useState<
@@ -2930,7 +2933,7 @@ function WorkspaceScreen({
   );
 
   const openDirectRoom = useCallback(
-    async (peerPrincipalId: string): Promise<void> => {
+    async (peerPrincipalId: string): Promise<void | Room> => {
       const navigationIntent = invalidateNavigation();
       const requestKey = `${activeWorkspace?.workspaceId}:${peerPrincipalId}`;
       let operation = directRoomOpenRequests.current.get(requestKey);
@@ -2978,6 +2981,13 @@ function WorkspaceScreen({
           : [...current, room],
       );
       if (navigationGeneration.current !== navigationIntent) return;
+      if (
+        agentDirectory.some(
+          (agent) =>
+            agent.participantId === peerPrincipalId && agent.instanceChannelId,
+        )
+      )
+        return room;
       setPeekAgentId(undefined);
       setPeekHumanId(undefined);
       setFocusedMessageId(undefined);
@@ -2994,6 +3004,7 @@ function WorkspaceScreen({
     },
     [
       activeWorkspace,
+      agentDirectory,
       client,
       consumerPrefix,
       health?.capabilities.roomWrite,
@@ -3386,7 +3397,7 @@ function WorkspaceScreen({
         ? resetAgentExecution
         : undefined,
     onOpenDirectRoom: async (id: string) => {
-      await openDirectRoom(id);
+      return await openDirectRoom(id);
     },
     onOpenMessage: (target: Extract<NavigationTarget, { kind: "message" }>) => {
       void openDiscoveryLocation({
@@ -3810,7 +3821,9 @@ function WorkspaceScreen({
                         workspaceMembershipRole !== undefined
                       }
                       currentHumanId={currentPrincipal?.principalId}
-                      onOpenDirectRoom={openDirectRoom}
+                      onOpenDirectRoom={async (id) => {
+                        await openDirectRoom(id);
+                      }}
                       contextControl={{
                         onArchive: sidebarArchive,
                         onUnread: sidebarUnread,
@@ -3922,7 +3935,9 @@ function WorkspaceScreen({
                       navigationEpoch={navigationEpoch}
                       beginNavigation={invalidateNavigation}
                       onOpen={openDiscoveryLocation}
-                      onPerson={openDirectRoom}
+                      onPerson={async (id) => {
+                        await openDirectRoom(id);
+                      }}
                       onClose={() => {
                         setFocusedMessageId(undefined);
                         setSurface("room");
@@ -4064,7 +4079,46 @@ function WorkspaceScreen({
                   </SurfaceErrorBoundary>
                 ) : surface === "agents" ? (
                   <SurfaceErrorBoundary surface="成员目录">
-                    <AgentDirectoryPane {...agentDetailProps} />
+                    {roleDirectoryOpen && activeWorkspace?.controlRoomId ? (
+                      <RoleDirectoryPane
+                        key={activeWorkspace.controlRoomId}
+                        client={client}
+                        controlRoomId={activeWorkspace.controlRoomId}
+                        rooms={rooms}
+                        runtimes={localRuntimes}
+                        computerLabel={
+                          computer?.displayName ?? computer?.hostname
+                        }
+                        sessionFor={(roomId) =>
+                          roomSessionFor(
+                            sessions.current,
+                            client,
+                            consumerPrefix,
+                            roomId,
+                          )
+                        }
+                        onBack={() => setRoleDirectoryOpen(false)}
+                        onJoined={() => setReload((value) => value + 1)}
+                        onRefreshModels={async (refreshOfferId) =>
+                          setLocalRuntimes(
+                            (
+                              await client.request("host.runtime.list", {
+                                refreshOfferId,
+                              })
+                            ).runtimes,
+                          )
+                        }
+                      />
+                    ) : (
+                      <AgentDirectoryPane
+                        {...agentDetailProps}
+                        onOpenRoles={
+                          canManageCurrentWorkspaceAgent
+                            ? () => setRoleDirectoryOpen(true)
+                            : undefined
+                        }
+                      />
+                    )}
                   </SurfaceErrorBoundary>
                 ) : surface === "computers" ? (
                   <SurfaceErrorBoundary surface="Computer 运行时">

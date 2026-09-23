@@ -1,3 +1,4 @@
+import { requireActiveInstancePrivateBox } from "./instance-worker-scope.ts";
 import { agentGreetingEnabled, firstRunReplay } from "./agent-first-run.ts";
 import {
   readSystemChannelVisibility,
@@ -817,6 +818,26 @@ export class CollaborationService {
       actor.principalId,
     );
     const peer = this.#requirePrincipalRow(input.peerPrincipalId);
+    const instance = this.#database
+      .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
+      .get(input.peerPrincipalId);
+    const actorIsInstance = this.#database
+      .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
+      .get(actor.principalId);
+    if (actorIsInstance || (instance && actor.kind !== "human"))
+      throw new ForbiddenError("Only a Human can open an instance private box");
+    if (instance) {
+      requireRoomMember(
+        this.#database,
+        text(instance, "channel_id"),
+        actor.principalId,
+      );
+      requireRoomMember(
+        this.#database,
+        text(instance, "channel_id"),
+        input.peerPrincipalId,
+      );
+    }
     if (
       this.#membershipRow(workspace.controlRoomId, input.peerPrincipalId) ===
       undefined
@@ -944,6 +965,11 @@ export class CollaborationService {
     actorId: string,
     input: { principalId: string; roomId: string },
   ): void {
+    const instance = this.#database
+      .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
+      .get(input.principalId);
+    if (instance && text(instance, "channel_id") !== input.roomId)
+      throw new ForbiddenError("Role instance cannot join another channel");
     this.#assertMutableMembershipRoom(input.roomId);
     requireRoomManager(this.#database, input.roomId, actorId);
     this.#requirePrincipal(input.principalId);
@@ -1033,6 +1059,11 @@ export class CollaborationService {
       roomId: string;
     },
   ): RoomMembershipMutationResult {
+    const instance = this.#database
+      .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
+      .get(input.principalId);
+    if (instance && text(instance, "channel_id") !== input.roomId)
+      throw new ForbiddenError("Role instance cannot join another channel");
     this.#assertMutableMembershipRoom(input.roomId);
     const actorRole = requireRoomManager(
       this.#database,
@@ -1691,6 +1722,7 @@ export class CollaborationService {
       }
       return { activationIds: [], deduplicated: true, event };
     }
+    requireActiveInstancePrivateBox(this.#database, input.roomId);
     const recipients = this.#normalizeRecipients(
       input.roomId,
       actor.principalId,
@@ -2096,6 +2128,7 @@ export class CollaborationService {
     // messages it had not seen, so the target's read position advances here —
     // and only here — as part of sending.
     recordWorkerTargetReadPosition(this.#database, {
+      messageSeqs: holdContext.newerMessages.map((event) => event.roomSeq),
       participantId: text(row, "participant_id"),
       roomId,
       ...(threadId === undefined ? {} : { threadId }),
@@ -2338,6 +2371,22 @@ export class CollaborationService {
   }
 
   #assertNoActiveMembershipWork(roomId: string, principalId: string): void {
+    const privateBoxes = this.#database
+      .prepare(
+        `
+      SELECT DISTINCT peer.room_id, i.instance_id FROM role_instances i
+      JOIN memberships peer ON peer.principal_id=i.instance_id
+      JOIN rooms r ON r.room_id=peer.room_id AND r.kind='direct'
+      JOIN memberships actor ON actor.room_id=r.room_id AND actor.principal_id=?
+      WHERE i.channel_id=?
+    `,
+      )
+      .all(principalId, roomId);
+    for (const box of privateBoxes)
+      this.#assertNoActiveMembershipWork(
+        text(box, "room_id"),
+        text(box, "instance_id"),
+      );
     const activeTask = this.#database
       .prepare(
         `SELECT 1 AS present FROM tasks

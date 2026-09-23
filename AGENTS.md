@@ -69,6 +69,23 @@ Room membership owns participation and delivery. DM open-or-create uses the
 canonical direct-Room policy, not an invented client-only conversation. A Room
 is not a filesystem project; runtime cwd and Agent memory home are separate.
 
+## Vertical MVP first (owner decision, 2026-09-23)
+
+Build the smallest usable end-to-end business flow before broadening subsystems.
+For the Role refactor, prioritize: save Role configuration -> instantiate in a
+Channel -> send a Human message -> instance reads/replies through the existing
+box -> follow-up resumes the same session. Reuse existing delivery/runtime/UI
+owners. Do not complete all identity, lifecycle, memory, provider and UI layers
+horizontally before connecting a usable path. Keep main-page structure intact.
+
+Defer Side, fork, automatic recovery, platform memory migration, exhaustive CLI
+parity and speculative rare-edge fallbacks until the basic flow works. Record
+these explicitly with triggers and limitations; do not build disabled APIs or
+large frameworks in anticipation. Authentication, channel/instance isolation,
+idempotency and preservation of existing data remain necessary MVP behavior.
+Tests should establish the vertical workflow and these critical invariants,
+not chase hypothetical completeness. See the current vertical MVP plan.
+
 ## TDD is mandatory
 
 For every behavior change:
@@ -259,6 +276,15 @@ tests. Label fixture URLs and Fake CLI replies unmistakably; never hand a
 fixture URL to the user as the formal product. Real-provider acceptance is
 opt-in, narrowly scoped and records actual model/effort/results. Never use
 GPT-5.6 Ultra for tests; Claude defaults to Sonnet unless explicitly approved.
+
+After a meaningful batch of scheduling, prompt/context delivery, memory transport,
+or provider-session changes, run the opt-in native CLI efficiency comparison gate
+before declaring performance accepted. Compare per-round tokens, model generations,
+latency, continuity and answer quality for both legacy Agents and Role instances.
+Do not run paid gates for every small edit. Follow
+`docs/design/cli-efficiency-gate.zh-CN.md`; exact model authorization still applies,
+failures and excess costs must remain visible, and successful replies alone do not
+constitute efficiency acceptance.
 
 Before a code handoff run:
 

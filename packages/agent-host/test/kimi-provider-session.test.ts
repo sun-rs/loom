@@ -71,12 +71,16 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
       contentDigest: revision.contentDigest,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     });
+    let strictContinuity = false;
     const runtime = implementations.createRuntime(active, report, {
       activationEnvironment: () => ({
         // The daemon compiles the standing prompt per RunAttempt and appends
         // it here; the RuntimeProfile freezes no prompt of its own.
         args: ["--prompt", "canonical room worker prompt"],
-        env: { FAKE_KIMI_RECORD_PATH: recordPath },
+        env: {
+          FAKE_KIMI_RECORD_PATH: recordPath,
+          RAH_REQUIRE_SESSION_CONTINUITY: strictContinuity ? "1" : "0",
+        },
         standingPromptDigest: "sha256-standing-prompt-digest",
       }),
       cwd: directory,
@@ -140,6 +144,16 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
     ]) {
       assert.equal((await runActivation(scenario, "seed")).code, 0);
     }
+    assert.equal((await runActivation("strict-missing", "seed")).code, 0);
+    strictContinuity = true;
+    const lost = await runActivation("strict-missing", "run");
+    assert.equal(
+      lost.code,
+      1,
+      "bound instance must not silently create a replacement session",
+    );
+    assert.equal(lost.failure?.retryDisposition, "sticky_terminal");
+    strictContinuity = false;
     assert.equal((await runActivation("resumed", "run")).code, 0);
     assert.equal((await runActivation("missing", "run")).code, 0);
     assert.equal((await runActivation("prompt-missing", "run")).code, 0);
@@ -152,6 +166,15 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    assert.equal(
+      records.filter(
+        (r) =>
+          r.activationId === "activation-kimi-strict-missing-run" &&
+          r.frame?.method === "session/new",
+      ).length,
+      0,
+      "no fresh session after failed resume",
+    );
     const methodsFor = (suffix: string): string[] =>
       records
         .filter((record) => record.activationId === `activation-kimi-${suffix}`)
@@ -411,7 +434,7 @@ rl.on("line", (line) => {
     send({jsonrpc:"2.0",id:frame.id,result:{protocolVersion:1,agentCapabilities:{sessionCapabilities:{resume:{}},mcpCapabilities:{http:true,sse:true}}}});
   } else if (frame.method === "session/resume") {
     activeSessionId = frame.params.sessionId;
-    if (activationId === "activation-kimi-missing-run") {
+    if (activationId.endsWith("missing-run") && !activationId.includes("prompt-missing") && !activationId.includes("tool-missing")) {
       send({jsonrpc:"2.0",id:frame.id,error:{code:-32602,message:"Invalid params",data:{session_id:"Session not found: " + activeSessionId}}});
     } else if (activationId === "activation-kimi-transient-run") {
       send({jsonrpc:"2.0",id:frame.id,error:{code:-32000,message:"provider temporarily unavailable"}});

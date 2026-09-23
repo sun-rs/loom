@@ -1,0 +1,41 @@
+{
+  "at": "2026-09-21T05:41:02.991024+00:00",
+  "pid": 38760,
+  "previousPid": 30749,
+  "schemaVersion": 58,
+  "buildIdentity": "1aac55a094588f20",
+  "webBuildId": "a63675d2d41e0dc50732c897e926d6dfd681867403599a3efd4cdeb03f237b84",
+  "backup": "/Users/sun/.rah/backups/pre-restart-7ade0ea5-e8bd-49db-8d0b-cfc823dbb938",
+  "durableData": {
+    "messages": {
+      "rows": 217,
+      "unchanged": true
+    },
+    "agent_definitions": {
+      "rows": 15,
+      "unchanged": true
+    },
+    "agent_definition_revisions": {
+      "rows": 94,
+      "unchanged": true
+    },
+    "memberships": {
+      "rows": 48,
+      "unchanged": true
+    },
+    "agent_memory_homes": {
+      "rows": 13,
+      "unchanged": true
+    }
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4173/?room=room_7098fb72-cebe-403e-b562-759a4dd24424",
+    "observed": [
+      "fresh Chrome loads formal all channel history and composer",
+      "Speed_test navigation loads prior S1 and B1/B2 four-agent messages",
+      "channel settings reports five members"
+    ],
+    "paidCallFromFormalBrowser": false
+  },
+  "memoryFilesUnchanged": 355
+}

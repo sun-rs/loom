@@ -1,3 +1,4 @@
+import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type {
   AgentDefinitionRevision,
@@ -22,6 +23,7 @@ export function projectPlacementCandidates(input: {
          JOIN agent_definitions
            ON agent_definitions.participant_id = activations.participant_id
          WHERE activations.state = 'queued'
+           AND ${activeInstancePrivateBoxPredicate("activations.room_id")}
            AND activations.available_at_ms <= ?
            AND NOT EXISTS (
              SELECT 1 FROM room_agent_sos_holds AS hold

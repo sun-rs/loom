@@ -18,6 +18,7 @@ import {
   WorkerChannelAttentionRequestSchema,
   WorkerChannelAttentionResponseSchema,
 } from "@rah-os/protocol";
+import { projectWorkerMessageCheck } from "@rah-os/kernel";
 import { StaleContextError } from "@rah-os/kernel";
 import { WorkerTaskHeldResponseSchema } from "@rah-os/protocol";
 import {
@@ -762,11 +763,13 @@ export class WorkerApplicationService {
         replay || grant.messageCheck === undefined
           ? (grant.messageCheck = { pending: new Map<number, number[]>() })
           : grant.messageCheck;
-      const delivery = this.#kernel.syncWorker(grant.execution, {
-        ...(check.cursor === undefined
-          ? { replayDelivery: true }
-          : { afterSeq: check.cursor }),
-      });
+      const delivery = projectWorkerMessageCheck(
+        this.#kernel.syncWorker(grant.execution, {
+          ...(check.cursor === undefined
+            ? { replayDelivery: true }
+            : { afterSeq: check.cursor }),
+        }),
+      );
       grant.deliveredCursors.add(delivery.cursorAfter);
       grant.knownRoomSeqs.add(delivery.cursorAfter);
       check.pending.set(

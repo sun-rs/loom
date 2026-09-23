@@ -1139,3 +1139,121 @@ function createClock(initial = "2026-08-25T00:00:00.000Z") {
     },
   };
 }
+
+test("session binding failure quarantines even when the process exits zero", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-auth-"));
+  try {
+    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "auth-failure-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "auth-failure-agent",
+      kind: "agent",
+    });
+    const actor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(actor, {
+      name: "Auth failure",
+      slug: "auth-failure",
+    });
+    kernel.addMember(actor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    kernel.postMessage(actor, {
+      body: "Use the configured runtime",
+      idempotencyKey: "auth-failure-message",
+      recipients: [
+        { participantId: agent.principal.principalId, reason: "mention" },
+      ],
+      roomId: room.roomId,
+    });
+    const runtime = new FakeRuntimeAdapter();
+    runtime.enqueueExit({
+      code: 0,
+      failure: classifyRuntimeFailure(
+        "RAH_SESSION_CONTINUITY_REQUIRED: session binding rejected",
+      ),
+    });
+    const host = new AgentHost({
+      host: authenticateHost(kernel, "auth-failure-host", [
+        agent.principal.principalId,
+      ]),
+      kernel,
+      leaseMs: 30_000,
+      runtime,
+    });
+
+    const result = await host.reconcileOnce();
+
+    assert.equal(result.state, "failed");
+    const activation = kernel.listActivations({ roomId: room.roomId })[0];
+    assert.equal(activation?.state, "quarantined");
+    assert.equal(activation?.attemptCount, 1);
+    assert.deepEqual(await host.reconcileOnce(), { state: "idle" });
+    kernel.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("missing session binding at startup quarantines without a retry loop", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-auth-"));
+  try {
+    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "auth-failure-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "auth-failure-agent",
+      kind: "agent",
+    });
+    const actor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(actor, {
+      name: "Auth failure",
+      slug: "auth-failure",
+    });
+    kernel.addMember(actor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    kernel.postMessage(actor, {
+      body: "Use the configured runtime",
+      idempotencyKey: "auth-failure-message",
+      recipients: [
+        { participantId: agent.principal.principalId, reason: "mention" },
+      ],
+      roomId: room.roomId,
+    });
+    const runtime = new FakeRuntimeAdapter({
+      onStart: () => {
+        throw new Error(
+          "RAH_SESSION_CONTINUITY_REQUIRED: missing binding before spawn",
+        );
+      },
+    });
+    const host = new AgentHost({
+      host: authenticateHost(kernel, "auth-failure-host", [
+        agent.principal.principalId,
+      ]),
+      kernel,
+      leaseMs: 30_000,
+      runtime,
+    });
+
+    const result = await host.reconcileOnce();
+
+    assert.equal(result.state, "failed");
+    const activation = kernel.listActivations({ roomId: room.roomId })[0];
+    assert.equal(activation?.state, "quarantined");
+    assert.equal(activation?.attemptCount, 1);
+    assert.deepEqual(await host.reconcileOnce(), { state: "idle" });
+    kernel.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

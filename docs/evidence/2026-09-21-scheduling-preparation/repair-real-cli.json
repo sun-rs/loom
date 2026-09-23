@@ -1,0 +1,101 @@
+{
+  "authorization": [
+    {
+      "executable": "claude",
+      "modelId": "sonnet",
+      "reasoning": "low"
+    },
+    {
+      "executable": "codex",
+      "modelId": "gpt-5.6-luna",
+      "reasoning": "low"
+    }
+  ],
+  "isolated": true,
+  "sameSessionPerProvider": true,
+  "sessionHashes": {
+    "codex": "48e91efe8ecea3737f380a76949480526652ae3f9b36b6e79a1fe671611b7613",
+    "claude": "41b18e5e9af0da03423dad29d874362bb793181c198d0337c94414f2f656a7b0"
+  },
+  "rows": [
+    {
+      "provider": "claude",
+      "round": 1,
+      "replySeconds": 9.793,
+      "idleSeconds": 12.508,
+      "replies": 1,
+      "runs": 1,
+      "answer": "已记住青松47。",
+      "inputTokensByResponse": [40760, 43095, 43353],
+      "cacheReadTokensByResponse": [0, 40758, 43093],
+      "responsesCompletedBeforeReply": 2
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "replySeconds": 14.589,
+      "idleSeconds": 16.596,
+      "replies": 1,
+      "runs": 1,
+      "answer": "已记住青松47。",
+      "inputTokensByResponse": [24020, 24174, 24803, 24972],
+      "cacheReadTokensByResponse": [5888, 23296, 23296, 24320],
+      "responsesCompletedBeforeReply": 3
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "replySeconds": 11.535,
+      "idleSeconds": 13.23,
+      "replies": 1,
+      "runs": 1,
+      "answer": "青松47",
+      "inputTokensByResponse": [25176, 25720, 25879],
+      "cacheReadTokensByResponse": [24320, 24320, 25344],
+      "responsesCompletedBeforeReply": 2
+    },
+    {
+      "provider": "claude",
+      "round": 2,
+      "replySeconds": 8.069,
+      "idleSeconds": 10.868,
+      "replies": 1,
+      "runs": 1,
+      "answer": "青松47",
+      "inputTokensByResponse": [44070, 46105, 46328],
+      "cacheReadTokensByResponse": [43351, 44068, 46103],
+      "responsesCompletedBeforeReply": 2
+    }
+  ],
+  "codexContexts": [
+    {
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "turnId": "01a0c277-1816-72f3-a24a-46933c08f929"
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "turnId": "01a0c277-582f-7563-bcf7-cb487f168a40"
+    }
+  ],
+  "claudeStartup": [
+    {
+      "at": 1789968973625.0,
+      "utf8Bytes": 1456,
+      "containsFirstQuestion": true,
+      "containsSecondQuestion": false
+    },
+    {
+      "at": 1789969014741.0,
+      "utf8Bytes": 1250,
+      "containsFirstQuestion": false,
+      "containsSecondQuestion": false
+    }
+  ],
+  "limitations": [
+    "New isolated sessions; not a same-history before/after speed comparison.",
+    "Native completed response count is not request-start timing.",
+    "No live Raft comparison in this batch."
+  ]
+}

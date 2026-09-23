@@ -1,3 +1,4 @@
+import { requireActiveInstancePrivateBox } from "./instance-worker-scope.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -18,6 +19,7 @@ export function prepareRunPlacement(
   host: AuthenticatedHostContext,
   now: string,
 ): Row | undefined {
+  requireActiveInstancePrivateBox(database, text(activation, "room_id"));
   bindManagedAgentMemoryHome(
     database,
     text(activation, "participant_id"),
@@ -64,9 +66,10 @@ export function agentRuntimeContextFromPlacement(
   );
   const definition = database
     .prepare(
-      `SELECT agent_definitions.participant_id, principals.handle
+      `SELECT agent_definitions.participant_id, principals.handle, role_instances.channel_id
          FROM agent_definitions
          JOIN principals ON principals.principal_id = agent_definitions.participant_id
+         LEFT JOIN role_instances ON role_instances.instance_id = agent_definitions.participant_id
         WHERE agent_definitions.agent_definition_id = ?`,
     )
     .get(revision.agentId);
@@ -81,6 +84,19 @@ export function agentRuntimeContextFromPlacement(
   }
   return AgentRuntimeContextSchema.parse({
     agentDefinitionRevision: revision,
+    ...(typeof definition.channel_id === "string"
+      ? {
+          instanceChannelId: definition.channel_id,
+          // A prior prepared process may have created native context even if it
+          // crashed before reporting its ID. Missing Host evidence must fail closed.
+          instanceSessionRequired:
+            database
+              .prepare(
+                "SELECT 1 FROM run_attempts r WHERE participant_id=? AND (runtime_run_id IS NOT NULL OR EXISTS (SELECT 1 FROM runtime_processes p WHERE p.run_attempt_id=r.run_attempt_id)) LIMIT 1",
+              )
+              .get(participantId) !== undefined,
+        }
+      : {}),
     handle: text(definition, "handle"),
     participantId,
     schemaVersion: 1,

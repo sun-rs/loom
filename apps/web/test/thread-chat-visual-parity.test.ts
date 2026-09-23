@@ -25,7 +25,7 @@ test("reaction placement uses the official right edge, four pixel gap and eight 
   );
   assert.match(
     source,
-    /variant === "status" \|\| variant === "reaction" \? 4 : 8/u,
+    /variant === "status" \|\| variant === "reaction" \|\| variant === "field"\s*\? 4\s*: 8/u,
   );
   assert.match(
     source,

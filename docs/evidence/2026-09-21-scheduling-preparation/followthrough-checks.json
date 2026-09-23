@@ -1,0 +1,32 @@
+{
+  "capturedAt": "2026-09-21T06:13:57.795153+00:00",
+  "recoveryTests": {
+    "total": 49,
+    "passed": 49
+  },
+  "check": {
+    "parityPassed": 34,
+    "typecheck": "passed",
+    "unitTotal": 1790,
+    "unitPassed": 1771,
+    "unitFailed": 2,
+    "unitSkipped": 17,
+    "failures": [
+      "RoomKernel source-size ratchet",
+      "interaction icon frozen hash"
+    ],
+    "laterChainedSteps": "not run"
+  },
+  "format": {
+    "repository": "12 existing files reported",
+    "changedDocumentsAndEvidence": "passed"
+  },
+  "diffCheck": "passed",
+  "formal": {
+    "buildId": "1aac55a094588f20",
+    "state": "online",
+    "unfinishedRuns": 0,
+    "browser": "B5 and B6 replies visible"
+  },
+  "productionSchedulingChangesThisRound": false
+}

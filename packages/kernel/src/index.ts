@@ -129,3 +129,4 @@ export type {
   ResolvedWorkerTaskCausality,
   WorkerTaskCommandIdentity,
 } from "./worker-task-command-identity.ts";
+export { projectWorkerMessageCheck } from "./worker-message-projection.ts";

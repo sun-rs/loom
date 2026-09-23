@@ -1,3 +1,4 @@
+import { instanceWorkerRoomPredicate } from "./instance-worker-scope.ts";
 import {
   identityDisplayName,
   directRoomDisplayName,
@@ -277,7 +278,7 @@ export class GlobalDiscovery {
       ? undefined
       : this.db
           .prepare(
-            "SELECT r.room_id FROM rooms r JOIN memberships m ON m.room_id=r.room_id WHERE m.principal_id=? AND r.kind IN ('channel','direct') ORDER BY r.room_id LIMIT 501",
+            `SELECT r.room_id FROM rooms r JOIN memberships m ON m.room_id=r.room_id WHERE m.principal_id=? AND r.kind IN ('channel','direct') AND ${instanceWorkerRoomPredicate("m.principal_id", "r.room_id")} ORDER BY r.room_id LIMIT 501`,
           )
           .all(origin.participantId)
           .map((row) => text(row, "room_id"));

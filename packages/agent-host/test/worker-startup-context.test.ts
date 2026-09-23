@@ -99,3 +99,73 @@ for (const failure of ["none", "wrong-owner", "output"])
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+test("startup keeps actionable scope but excludes manifest placement bookkeeping", async () => {
+  const { workerStartupContext } =
+    await import("../src/worker-startup-context.ts");
+  const result = await workerStartupContext({
+    RAH_ROOM_ID: "room-1",
+    RAH_FROM_SEQ: "4",
+    RAH_TO_SEQ: "8",
+    RAH_CONTEXT_MANIFEST_JSON: JSON.stringify({
+      schemaVersion: 1,
+      activationId: "activation-1",
+      participantId: "agent-1",
+      roomId: "room-1",
+      runAttemptId: "run-technical",
+      contextManifestId: "manifest-technical",
+      contentDigest: "sha256:" + "a".repeat(64),
+      createdAt: "2026-09-21T00:00:00Z",
+      eventRanges: [{ fromSeq: 4, toSeq: 8 }],
+      throughRoomSeq: 8,
+    }),
+  });
+  assert.match(result, /room-1/);
+  assert.match(result, /4/);
+  assert.match(result, /8/);
+  assert.doesNotMatch(
+    result,
+    /manifest-technical|run-technical|contentDigest|eventRanges/,
+  );
+});
+
+test("startup does not append an unchanged system-delivered index, but returns the full index after a change", async () => {
+  const { createHash } = await import("node:crypto");
+  const { workerStartupContext } =
+    await import("../src/worker-startup-context.ts");
+  const root = mkdtempSync(join(tmpdir(), "rah-system-startup-"));
+  chmodSync(root, 0o700);
+  const directory = agentMemoryWorkspacePath(root, "agent-1");
+  mkdirSync(directory, { mode: 0o700 });
+  const original = "\uFEFF# Whole original\r\nA memory fact\n";
+  writeFileSync(join(directory, "MEMORY.md"), original, { mode: 0o600 });
+  const env = {
+    RAH_PARTICIPANT_ID: "agent-1",
+    RAH_AGENT_MEMORY_DIR: directory,
+    RAH_AGENT_MEMORY_INDEX: join(directory, "MEMORY.md"),
+    RAH_AGENT_MEMORY_SYSTEM_SHA256: createHash("sha256")
+      .update(original)
+      .digest("hex"),
+  };
+  try {
+    const result = await workerStartupContext(env);
+    assert.ok(
+      !result.includes(original),
+      "do not accumulate another copy in tool history",
+    );
+    assert.match(result, /complete original MEMORY.md.*system prompt/i);
+    const changed = original + "New correction\n";
+    writeFileSync(join(directory, "MEMORY.md"), changed, { mode: 0o600 });
+    assert.ok((await workerStartupContext(env)).includes(changed));
+    assert.ok(
+      (
+        await workerStartupContext({
+          ...env,
+          RAH_AGENT_MEMORY_SYSTEM_SHA256: undefined,
+        })
+      ).includes(changed),
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import {
   AgentRuntimeContextSchema,
@@ -20,14 +21,20 @@ export async function workerStartupContext(
     "RAH_TO_SEQ",
   ])
     if (env[key] !== undefined) context[key] = env[key];
-  if (env.RAH_AGENT_CONTEXT_JSON)
-    context.agent = AgentRuntimeContextSchema.parse(
+  if (env.RAH_AGENT_CONTEXT_JSON) {
+    const agent = AgentRuntimeContextSchema.parse(
       canonicalAgentIdField(JSON.parse(env.RAH_AGENT_CONTEXT_JSON)),
     );
+    context.agent = {
+      participantId: agent.participantId,
+      handle: agent.handle,
+      revision: agent.agentDefinitionRevision.agentDefinitionRevisionId,
+    };
+  }
   if (env.RAH_CONTEXT_MANIFEST_JSON)
-    context.manifest = ContextManifestSchema.parse(
-      JSON.parse(env.RAH_CONTEXT_MANIFEST_JSON),
-    );
+    // Validate the frozen manifest; technical provenance stays in the host,
+    // not repeated in model conversation history. Scope above remains explicit.
+    ContextManifestSchema.parse(JSON.parse(env.RAH_CONTEXT_MANIFEST_JSON));
   if (env.RAH_AGENT_APP_INBOX_JSON)
     context.appInbox = JSON.parse(env.RAH_AGENT_APP_INBOX_JSON);
 
@@ -49,6 +56,14 @@ export async function workerStartupContext(
       relativePath: "MEMORY.md",
     });
     memory = read.content;
+    // This is only a transport optimization: always read and validate the full
+    // current index. A mismatch (including an edit during this Run) returns it
+    // verbatim. No model-read, delivery, or Task receipt is inferred here.
+    if (
+      env.RAH_AGENT_MEMORY_SYSTEM_SHA256 ===
+      createHash("sha256").update(memory).digest("hex")
+    )
+      return `## Current Activation context\n${JSON.stringify(context)}\n\nThe complete original MEMORY.md is supplied in the current system prompt; the current file still matches that launch snapshot. Read that data completely.\n\n## Canonical Room delivery\n`;
   }
   return `## Current Activation context\n${JSON.stringify(context)}\n\n## Complete original MEMORY.md\n${memory}\n\n## Canonical Room delivery\n`;
 }

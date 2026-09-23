@@ -1,5 +1,8 @@
 import { providerLaunchArguments } from "./provider-launch-arguments.js";
-import { providerActivationInput } from "./provider-activation-input.js";
+import {
+  assertSessionReplacementAllowed,
+  providerActivationInput,
+} from "./provider-activation-input.js";
 import { spawn } from "node:child_process";
 import {
   chmodSync,
@@ -172,6 +175,7 @@ try {
   );
   let requestedResume = options.resumeSession;
   if (requestedResume !== undefined && !supportsSessionResume(initialize)) {
+    assertSessionReplacementAllowed();
     requestedResume = undefined;
     trajectoryWriter.emit(
       runtimeStatusTrajectory(
@@ -193,6 +197,7 @@ try {
     ) {
       throw error;
     }
+    assertSessionReplacementAllowed();
     acceptCurrentTurnUpdates = false;
     trajectoryWriter.emit(
       runtimeStatusTrajectory(

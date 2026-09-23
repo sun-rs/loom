@@ -69,6 +69,9 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "room_agent_sos_operations",
   "room_agent_sos_targets",
   "room_events",
+  "role_instances",
+  "role_revisions",
+  "role_templates",
   "room_files",
   "rooms",
   "run_attempts",
@@ -84,6 +87,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "task_submissions",
   "tasks",
   "threads",
+  "worker_message_presentations",
   "worker_target_context_windows",
   "worker_target_read_positions",
   "worker_task_history_read_positions",
@@ -92,6 +96,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
 
 const CONTROL_ROOM_ONLY_REFERENCES = [
   ["agent_definitions", "control_room_id"],
+  ["role_templates", "control_room_id"],
   ["execution_policies", "control_room_id"],
   ["execution_policy_revisions", "control_room_id"],
   ["managed_mcp_servers", "control_room_id"],
@@ -162,6 +167,15 @@ export class RoomDeletionService {
       }
       requireRoomManager(this.#database, input.roomId, actorId);
       assertPermanentChannelChange(room);
+      if (
+        this.#database
+          .prepare("SELECT 1 FROM role_instances WHERE channel_id=? LIMIT 1")
+          .get(input.roomId)
+      ) {
+        throw new ConflictError(
+          "Channels with Role instances cannot be deleted in this MVP; archive the channel instead",
+        );
+      }
       const latestRoomSeq = integer(room, "next_seq") - 1;
       if (input.basedOnRoomSeq !== latestRoomSeq) {
         throw new StaleContextError(input.basedOnRoomSeq, latestRoomSeq);
@@ -304,6 +318,7 @@ export class RoomDeletionService {
       `DELETE FROM attachment_comment_links WHERE room_id=?`,
       `DELETE FROM room_files WHERE room_id=?`,
       `DELETE FROM held_message_drafts WHERE room_id=?`,
+      `DELETE FROM worker_message_presentations WHERE room_id=?`,
       `DELETE FROM worker_target_read_positions WHERE room_id=?`,
       `DELETE FROM worker_task_history_read_positions WHERE room_id=?`,
       `DELETE FROM worker_target_context_windows WHERE room_id=?`,

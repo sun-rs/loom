@@ -82,6 +82,8 @@ function CreateAgentSelect(props: ComponentProps<"select">) {
 }
 
 export function AgentCreateDialog({
+  purpose = "agent",
+  initialConfiguration,
   client,
   computerLabel,
   autoJoinChannelName,
@@ -91,6 +93,8 @@ export function AgentCreateDialog({
   onRefreshModels,
   runtimes,
 }: {
+  purpose?: "agent" | "role";
+  initialConfiguration?: AgentCreateInput;
   client: RahClient;
   computerLabel: string | undefined;
   autoJoinChannelName?: string | undefined;
@@ -111,14 +115,29 @@ export function AgentCreateDialog({
       ),
     [runtimes],
   );
-  const [displayName, setDisplayName] = useState("");
-  const [description, setDescription] = useState("");
-  const [runtimeOfferId, setRuntimeOfferId] = useState("");
-  const [modelBindingId, setModelBindingId] = useState("");
-  const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
+  const [displayName, setDisplayName] = useState(
+    initialConfiguration?.displayName ?? "",
+  );
+  const [description, setDescription] = useState(
+    initialConfiguration?.description ?? "",
+  );
+  const [instructions, setInstructions] = useState(
+    initialConfiguration?.instructions ?? "",
+  );
+  const [runtimeOfferId, setRuntimeOfferId] = useState(
+    initialConfiguration?.runtimeOfferId ?? "",
+  );
+  const [modelBindingId, setModelBindingId] = useState(
+    initialConfiguration
+      ? modelIntentDraft(initialConfiguration.modelIntent)
+      : "",
+  );
+  const [reasoning, setReasoning] = useState<ReasoningLevel>(
+    initialConfiguration?.modelIntent.reasoning ?? "default",
+  );
   const [serviceTier, setServiceTier] = useState<
     "default" | "fast" | "priority"
-  >("default");
+  >(initialConfiguration?.modelIntent.serviceTier ?? "default");
   const [environmentRows, setEnvironmentRows] = useState<
     Record<string, EnvironmentRow[]>
   >({});
@@ -148,7 +167,8 @@ export function AgentCreateDialog({
     environmentError = errorMessage(error);
   }
   const fastTier = runtimeFastTier(selectedRuntime, modelBindingId);
-  const handle = handleFromName(displayName) || "agent";
+  const handle =
+    initialConfiguration?.handle ?? (handleFromName(displayName) || "agent");
   const reasoningOptions = runtimeReasoningOptions(
     selectedRuntime,
     modelBindingId,
@@ -178,24 +198,37 @@ export function AgentCreateDialog({
     setActionError(undefined);
     try {
       if (!created.current) {
+        const { description: _priorDescription, ...unchanged } =
+          initialConfiguration ?? {};
         created.current = await onCreate({
+          ...unchanged,
           ...(description.trim() ? { description: description.trim() } : {}),
           displayName: displayName.trim(),
           handle,
           instructions:
+            (purpose === "role" ? instructions.trim() : "") ||
             description.trim() ||
             "作为通用 Agent，遵循用户指令并清晰报告执行结果。",
-          role: `${displayName.trim()} Agent`,
-          modelIntent: {
-            ...modelIntent(modelBindingId, reasoning),
-            serviceTier: fastTier ? serviceTier : "default",
-          },
+          role: initialConfiguration?.role ?? `${displayName.trim()} Agent`,
+          modelIntent:
+            initialConfiguration &&
+            modelBindingId ===
+              modelIntentDraft(initialConfiguration.modelIntent) &&
+            reasoning ===
+              (initialConfiguration.modelIntent.reasoning ?? "default") &&
+            serviceTier ===
+              (initialConfiguration.modelIntent.serviceTier ?? "default")
+              ? initialConfiguration.modelIntent
+              : {
+                  ...modelIntent(modelBindingId, reasoning),
+                  serviceTier: fastTier ? serviceTier : "default",
+                },
           runtimeOfferId,
           toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
         });
         setCreatedAgentId(created.current);
       }
-      if (Object.keys(environment).length) {
+      if (purpose === "agent" && Object.keys(environment).length) {
         const runtimeId = RuntimeGuideIdSchema.parse(selectedRuntime?.cliId);
         const current = await client.request("runtime.guide.read", {
           agentId: created.current,
@@ -238,7 +271,13 @@ export function AgentCreateDialog({
         tabIndex={-1}
       >
         <header>
-          <h2 id="rah-agent-create-title">创建 AGENT</h2>
+          <h2 id="rah-agent-create-title">
+            {purpose === "role"
+              ? initialConfiguration
+                ? "编辑 ROLE"
+                : "创建 ROLE"
+              : "创建 AGENT"}
+          </h2>
           <button
             aria-label="关闭"
             className="sq-btn rah-card-dialog-close"
@@ -308,6 +347,19 @@ export function AgentCreateDialog({
                 {description.length}/2000
               </small>
             </label>
+            {purpose === "role" && (
+              <label>
+                角色指令
+                <textarea
+                  aria-label="角色指令"
+                  maxLength={64 * 1024}
+                  rows={3}
+                  value={instructions}
+                  onChange={(event) => setInstructions(event.target.value)}
+                  placeholder="说明职责、工作范围和约束"
+                />
+              </label>
+            )}
             <RuntimePicker
               label="运行时"
               required
@@ -409,14 +461,16 @@ export function AgentCreateDialog({
                 />
               </div>
             )}
-            <details className="rah-agent-launch-settings">
-              <summary>更多</summary>
-              <RuntimeEnvironmentEditor
-                rows={rows}
-                disabled={pending || createdAgentId !== undefined}
-                onChange={setRows}
-              />
-            </details>
+            {purpose === "agent" && (
+              <details className="rah-agent-launch-settings">
+                <summary>更多</summary>
+                <RuntimeEnvironmentEditor
+                  rows={rows}
+                  disabled={pending || createdAgentId !== undefined}
+                  onChange={setRows}
+                />
+              </details>
+            )}
           </fieldset>
           {environmentError && <p role="alert">{environmentError}</p>}
 
@@ -439,7 +493,11 @@ export function AgentCreateDialog({
                   ? autoJoinChannelName
                     ? "重试完成创建"
                     : "重试保存配置"
-                  : "创建 Agent"}
+                  : purpose === "role"
+                    ? initialConfiguration
+                      ? "保存 Role"
+                      : "创建 Role"
+                    : "创建 Agent"}
             </button>
           </footer>
         </form>

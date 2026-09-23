@@ -194,7 +194,7 @@ test("source-backed interaction exceptions stay explicit", () => {
   );
   assert.match(
     discoveryFilter,
-    /variant === "reaction" \? \([\s\S]*?title=\{option\.disabledReason \?\? option\.label\}[\s\S]*?aria-label=\{option\.label\}/u,
+    /variant === "reaction" \? \([\s\S]*?title=\{\s*option\.disabledReason \?\? option\.title \?\? option\.label\s*\}[\s\S]*?aria-label=\{option\.label\}/u,
   );
   assert.match(messageSocialComponent, /className="rah-message-saved-badge"/u);
   assert.match(

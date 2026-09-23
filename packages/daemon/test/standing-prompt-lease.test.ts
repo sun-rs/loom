@@ -202,3 +202,33 @@ test("Claude direct delivery can reuse only the same Agent's former gated prompt
     undefined,
   );
 });
+
+test("channel Role instances require continuity; legacy agents keep their existing policy", () => {
+  const agent = agentContext({ role: "Reviewer" });
+  assert.equal(
+    standingPromptLease(envelope(agent))?.env.RAH_REQUIRE_SESSION_CONTINUITY,
+    "0",
+  );
+  assert.equal(
+    standingPromptLease(envelope({ ...agent, instanceChannelId: "room-7" }))
+      ?.env.RAH_REQUIRE_SESSION_CONTINUITY,
+    "1",
+  );
+});
+
+test("channel and instance private box retain the same provider session prompt key", () => {
+  const agent = {
+    ...agentContext({ instructions: "Review only.", role: "Reviewer" }),
+    instanceChannelId: "channel",
+  };
+  const channel = standingPromptLease(
+    { ...envelope(agent), roomId: "channel" },
+    options,
+  )!;
+  const privateBox = standingPromptLease(
+    { ...envelope(agent), roomId: "private-box" },
+    options,
+  )!;
+  assert.equal(channel.standingPromptDigest, privateBox.standingPromptDigest);
+  assert.equal(privateBox.env?.RAH_REQUIRE_SESSION_CONTINUITY, "1");
+});

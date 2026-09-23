@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:web:role-mvp": "node scripts/test-role-mvp-browser.mjs",
     "test:web:agent-first-run": "node scripts/test-agent-first-run-browser.mjs",
     "test:web:agent-start": "node scripts/test-agent-direct-start-browser.mjs",
     "check:repository-identity": "node scripts/repository-identity.mjs",
@@ -129,7 +130,9 @@
     "test:web:sidebar-touch": "node scripts/test-sidebar-touch-browser.mjs && RAH_TOUCH_ENGINE=webkit node scripts/test-sidebar-touch-browser.mjs",
     "test:release-identity": "node --test scripts/release-version.test.mjs scripts/workbench-web-assets.test.mjs",
     "test:ci-workflow": "node --test scripts/ci-workflow-order.test.mjs",
-    "test:workbench-launch": "node --test scripts/workbench-launch-mode.test.mjs scripts/workbench-launch-receipt.test.mjs"
+    "test:workbench-launch": "node --test scripts/workbench-launch-mode.test.mjs scripts/workbench-launch-receipt.test.mjs",
+    "test:cli:efficiency": "node scripts/test-cli-efficiency.mjs",
+    "test:cli:efficiency:unit": "node --test scripts/cli-efficiency/*.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

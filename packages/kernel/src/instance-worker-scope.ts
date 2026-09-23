@@ -1,0 +1,73 @@
+import type { DatabaseSync } from "node:sqlite";
+import { ForbiddenError } from "./errors.ts";
+
+/** Role instances share one execution lane between channel and private box.
+ * Private targets are exposed only while executing that target. Public channel
+ * history stays readable under existing membership. Legacy Agents
+ * retain their cross-Room addressing policy. No second capability queue. */
+export function instanceWorkerRoomPredicate(participant: string, room: string) {
+  return `(NOT EXISTS (SELECT 1 FROM role_instances ri WHERE ri.instance_id=${participant})
+    OR EXISTS (SELECT 1 FROM rooms public_room WHERE public_room.room_id=${room} AND public_room.kind='channel')
+    OR EXISTS (SELECT 1 FROM run_attempts ra WHERE ra.participant_id=${participant}
+      AND ra.room_id=${room} AND ra.state IN ('starting','running')))`;
+}
+
+export function requireInstanceWorkerRoom(
+  database: DatabaseSync,
+  participantId: string,
+  roomId: string,
+) {
+  const allowed = database
+    .prepare(
+      `SELECT 1 WHERE ${instanceWorkerRoomPredicate(":participant", ":room")}`,
+    )
+    .get({ participant: participantId, room: roomId });
+  if (!allowed)
+    throw new ForbiddenError(
+      "Room is outside this instance execution scope (private box isolation)",
+    );
+}
+
+export function requireInstanceReplyTarget(
+  database: DatabaseSync,
+  participantId: string,
+  originRoomId: string,
+  targetRoomId: string,
+) {
+  if (
+    originRoomId !== targetRoomId &&
+    database
+      .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
+      .get(participantId)
+  )
+    throw new ForbiddenError(
+      "Instance reply must stay in its active execution target",
+    );
+}
+
+/** New private work requires both peers to remain in the instance's source channel.
+ * Historical private messages remain readable to their original Human. */
+export function activeInstancePrivateBoxPredicate(room: string) {
+  return `NOT EXISTS (
+    SELECT 1 FROM rooms r
+    JOIN memberships peer ON peer.room_id=r.room_id
+    JOIN role_instances i ON i.instance_id=peer.principal_id
+    WHERE r.room_id=${room} AND r.kind='direct'
+      AND EXISTS (SELECT 1 FROM memberships member WHERE member.room_id=r.room_id
+        AND NOT EXISTS (SELECT 1 FROM memberships source
+          WHERE source.room_id=i.channel_id AND source.principal_id=member.principal_id))
+  )`;
+}
+export function requireActiveInstancePrivateBox(
+  database: DatabaseSync,
+  roomId: string,
+) {
+  if (
+    !database
+      .prepare(`SELECT 1 WHERE ${activeInstancePrivateBoxPredicate("?")}`)
+      .get(roomId)
+  )
+    throw new ForbiddenError(
+      "Instance private box is inactive: source channel membership removed",
+    );
+}

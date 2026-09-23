@@ -359,3 +359,37 @@ test("excluding a full notice window exposes older pending identities instead of
   assert.equal(next.eventIds.length, 5);
   assert.ok(next.eventIds.every((id) => !first.eventIds.includes(id)));
 });
+
+test("a bounded read suppresses only shown messages and preserves an earlier unanswered Human request", (t) => {
+  const f = fixture(t);
+  const first = f.post();
+  const last = f.post();
+  const page = f.kernel.workerReads.history(f.execution, {
+    channel: "#a",
+    after: first.event.aggregateId,
+    limit: 1,
+  });
+  assert.equal(page.messages.length, 1);
+  assert.equal(page.messages[0]!.messageId, last.event.aggregateId);
+  const notice = f.kernel.readPendingRuntimeNotice(f.host, f.input);
+  assert.ok(notice);
+  assert.ok(notice.eventIds.includes(first.event.eventId));
+  assert.ok(!notice.eventIds.includes(last.event.eventId));
+});
+
+test("a bounded hold does not suppress the older messages omitted from its context", (t) => {
+  const f = fixture(t);
+  const first = f.post();
+  for (let i = 0; i < 24; i++) f.post();
+  const held = f.kernel.postWorkerMessage(f.execution, {
+    body: "reply from the original request",
+  });
+  assert.ok("state" in held);
+  assert.equal(held.state, "held");
+  if (held.state !== "held") throw new Error("expected a held draft");
+  assert.equal(held.newerMessages.length, 20);
+  const notice = f.kernel.readPendingRuntimeNotice(f.host, f.input);
+  assert.ok(notice);
+  assert.ok(notice.eventIds.includes(first.event.eventId));
+  assert.equal(notice.eventIds.length, 5);
+});

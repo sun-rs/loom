@@ -111,6 +111,8 @@ export type AgentDefinitionRevision = z.infer<
 
 export const AgentRuntimeContextSchema = z
   .object({
+    instanceSessionRequired: z.boolean().optional(),
+    instanceChannelId: IdentifierSchema.optional(),
     agentDefinitionRevision: AgentDefinitionRevisionSchema,
     // Added to v1 as a backward-compatible field: newly issued launch claims
     // always freeze it, while an older remote Computer may still omit it.
@@ -123,6 +125,7 @@ export type AgentRuntimeContext = z.infer<typeof AgentRuntimeContextSchema>;
 
 export const AgentCatalogEntrySchema = z
   .object({
+    instanceChannelId: IdentifierSchema.optional(),
     // Saved explicit model choice, projected from the current execution policy.
     modelBindingId: IdentifierSchema.optional(),
     currentRevision: AgentDefinitionRevisionSchema,

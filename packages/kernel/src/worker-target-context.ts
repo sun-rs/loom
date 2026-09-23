@@ -1,3 +1,4 @@
+import { requireInstanceReplyTarget } from "./instance-worker-scope.ts";
 import {
   workerAddressing,
   workerAddressingBudget,
@@ -268,6 +269,9 @@ export class WorkerTargetContextService {
       // Raft's read commands record the consumed sequence for the target so the
       // send never has to carry it. This is the same fact, kept server-side.
       recordWorkerTargetReadPosition(this.#context.database, {
+        messageSeqs: window.events
+          .filter((event) => event.type === "message.posted")
+          .map((event) => event.roomSeq),
         participantId: origin.participantId,
         roomId: target.roomId,
         ...(target.threadId === undefined ? {} : { threadId: target.threadId }),
@@ -317,6 +321,12 @@ export class WorkerTargetContextService {
         origin,
         input.channel,
         this.#context.openDirect,
+      );
+      requireInstanceReplyTarget(
+        this.#context.database,
+        origin.participantId,
+        origin.roomId,
+        target.roomId,
       );
       const threadId = workerReadThread(target, input.threadId) ?? undefined;
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);

@@ -1,0 +1,657 @@
+{
+  "capturedAt": "2026-09-20T20:31:27.018781+00:00",
+  "baselineCommit": "9f5a83e99b6efb5efeb3dac5413d782be5100209",
+  "userAuthorization": "2026-09-21: Claude sonnet/low; Codex gpt-5.6-luna/high explicit exception; OpenCode deepseek/deepseek-v4-flash/low; Kimi kimi-code/k3/low",
+  "humanSubmissions": {
+    "rahDM": 16,
+    "nativeCLI": 16,
+    "rahBusy": 3,
+    "total": 35
+  },
+  "modelsAssertedNoFallback": true,
+  "summary": [
+    {
+      "provider": "claude",
+      "rahReplySeconds": [9.008, 7.31, 9.307, 7.61],
+      "nativeReplySeconds": [3.692, 3.395, 3.827, 4.498],
+      "rahWarmMedianSeconds": 7.61,
+      "nativeWarmMedianSeconds": 3.8266783750000033,
+      "rahFirstInputTokens": [40778, 45385, 51827, 57744],
+      "nativeFirstInputTokens": [25965, 26062, 26157, 26245]
+    },
+    {
+      "provider": "codex",
+      "rahReplySeconds": [26.233, 15.983, 14.664, 19.005],
+      "nativeReplySeconds": [7.039, 5.848, 6.759, 7.346],
+      "rahWarmMedianSeconds": 15.983,
+      "nativeWarmMedianSeconds": 6.75856362500001,
+      "rahFirstInputTokens": [24130, 26381, 29439, 32467],
+      "nativeFirstInputTokens": [13489, 13534, 13577, 13627]
+    },
+    {
+      "provider": "opencode",
+      "rahReplySeconds": [4.379, 4.083, 3.818, 4.231],
+      "nativeReplySeconds": [2.273, 2.213, 1.784, 2.112],
+      "rahWarmMedianSeconds": 4.083,
+      "nativeWarmMedianSeconds": 2.112014332999999,
+      "rahFirstInputTokens": [20592, 22595, 25606, 28601],
+      "nativeFirstInputTokens": [2006, 2044, 2077, 2109]
+    },
+    {
+      "provider": "kimi",
+      "rahReplySeconds": [9.058, 5.779, 5.811, 5.754],
+      "nativeReplySeconds": [31.445, 17.283, 16.919, 16.135],
+      "rahWarmMedianSeconds": 5.779,
+      "nativeWarmMedianSeconds": 16.918611833000003,
+      "rahFirstInputTokens": [31558, 33601, 36635, 39719],
+      "nativeFirstInputTokens": [21252, 20632, 20812, 20990]
+    }
+  ],
+  "rahRounds": [
+    {
+      "provider": "claude",
+      "round": 1,
+      "replySeconds": 9.008,
+      "idleSeconds": 11.627,
+      "answer": "已记住青松47。",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 40778,
+      "firstCacheReadTokens": 0,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.1,
+      "startupOutput": [
+        {
+          "at": 1789935689161.0,
+          "utf8Bytes": 3869,
+          "containsFirstQuestion": true,
+          "containsSecondQuestion": false
+        }
+      ],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "replySeconds": 26.233,
+      "idleSeconds": 31.968,
+      "answer": "已记住青松47。",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 24130,
+      "firstCacheReadTokens": 11008,
+      "observedModelResponsesOrRequestsBeforePost": 3,
+      "totalObservedModelResponsesOrRequests": 4,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.014,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "opencode",
+      "round": 1,
+      "replySeconds": 4.379,
+      "idleSeconds": 5.232,
+      "answer": "已记住青松47",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 20592,
+      "firstCacheReadTokens": 1664,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "assistant-step created",
+      "firstRunStartSeconds": 0.232,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "kimi",
+      "round": 1,
+      "replySeconds": 9.058,
+      "idleSeconds": 11.698,
+      "answer": "已记住青松47。",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 31558,
+      "firstCacheReadTokens": 19200,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "llm.request start",
+      "firstRunStartSeconds": 0.255,
+      "startupOutput": [],
+      "kimiPrompt": [
+        {
+          "at": 1789935732890,
+          "serializedBytes": 50309
+        }
+      ]
+    },
+    {
+      "provider": "kimi",
+      "round": 2,
+      "replySeconds": 5.779,
+      "idleSeconds": 7.692,
+      "answer": "43",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 33601,
+      "firstCacheReadTokens": 33024,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "llm.request start",
+      "firstRunStartSeconds": 0.117,
+      "startupOutput": [],
+      "kimiPrompt": [
+        {
+          "at": 1789935744464,
+          "serializedBytes": 1462
+        }
+      ]
+    },
+    {
+      "provider": "opencode",
+      "round": 2,
+      "replySeconds": 4.083,
+      "idleSeconds": 4.716,
+      "answer": "43",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 22595,
+      "firstCacheReadTokens": 22272,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "assistant-step created",
+      "firstRunStartSeconds": 0.206,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "replySeconds": 15.983,
+      "idleSeconds": 18.688,
+      "answer": "43",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 26381,
+      "firstCacheReadTokens": 25344,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.256,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "claude",
+      "round": 2,
+      "replySeconds": 7.31,
+      "idleSeconds": 10.277,
+      "answer": "43",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 45385,
+      "firstCacheReadTokens": 44666,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.171,
+      "startupOutput": [
+        {
+          "at": 1789935779744.0,
+          "utf8Bytes": 6416,
+          "containsFirstQuestion": false,
+          "containsSecondQuestion": true
+        }
+      ],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "claude",
+      "round": 3,
+      "replySeconds": 9.307,
+      "idleSeconds": 12.507,
+      "answer": "青松47",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 51827,
+      "firstCacheReadTokens": 51109,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.191,
+      "startupOutput": [
+        {
+          "at": 1789935790150.0,
+          "utf8Bytes": 6418,
+          "containsFirstQuestion": false,
+          "containsSecondQuestion": false
+        }
+      ],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "codex",
+      "round": 3,
+      "replySeconds": 14.664,
+      "idleSeconds": 18.268,
+      "answer": "青松47",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 29439,
+      "firstCacheReadTokens": 28416,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.243,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "opencode",
+      "round": 3,
+      "replySeconds": 3.818,
+      "idleSeconds": 4.715,
+      "answer": "青松47",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 25606,
+      "firstCacheReadTokens": 25344,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "assistant-step created",
+      "firstRunStartSeconds": 0.067,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "kimi",
+      "round": 3,
+      "replySeconds": 5.811,
+      "idleSeconds": 7.692,
+      "answer": "青松47",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 36635,
+      "firstCacheReadTokens": 36096,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "llm.request start",
+      "firstRunStartSeconds": 0.115,
+      "startupOutput": [],
+      "kimiPrompt": [
+        {
+          "at": 1789935821390,
+          "serializedBytes": 1462
+        }
+      ]
+    },
+    {
+      "provider": "kimi",
+      "round": 4,
+      "replySeconds": 5.754,
+      "idleSeconds": 7.838,
+      "answer": "验收完成",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 39719,
+      "firstCacheReadTokens": 39168,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "llm.request start",
+      "firstRunStartSeconds": 0.216,
+      "startupOutput": [],
+      "kimiPrompt": [
+        {
+          "at": 1789935829212,
+          "serializedBytes": 1462
+        }
+      ]
+    },
+    {
+      "provider": "opencode",
+      "round": 4,
+      "replySeconds": 4.231,
+      "idleSeconds": 5.349,
+      "answer": "验收完成",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 28601,
+      "firstCacheReadTokens": 28288,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "assistant-step created",
+      "firstRunStartSeconds": 0.158,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "codex",
+      "round": 4,
+      "replySeconds": 19.005,
+      "idleSeconds": 21.369,
+      "answer": "验收完成",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 32467,
+      "firstCacheReadTokens": 31488,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.065,
+      "startupOutput": [],
+      "kimiPrompt": []
+    },
+    {
+      "provider": "claude",
+      "round": 4,
+      "replySeconds": 7.61,
+      "idleSeconds": 11.258,
+      "answer": "验收完成。",
+      "replyCount": 1,
+      "attemptCount": 1,
+      "firstInputTokens": 57744,
+      "firstCacheReadTokens": 57025,
+      "observedModelResponsesOrRequestsBeforePost": 2,
+      "totalObservedModelResponsesOrRequests": 3,
+      "requestCountBasis": "distinct completed native response/message; not request-start time",
+      "firstRunStartSeconds": 0.039,
+      "startupOutput": [
+        {
+          "at": 1789935867913.0,
+          "utf8Bytes": 6400,
+          "containsFirstQuestion": false,
+          "containsSecondQuestion": false
+        }
+      ],
+      "kimiPrompt": []
+    }
+  ],
+  "nativeRounds": [
+    {
+      "provider": "claude",
+      "round": 1,
+      "replySeconds": 3.692240833,
+      "exitSeconds": 4.633781875,
+      "answer": "已记住青松47。",
+      "firstInputTokens": 25965,
+      "model": "claude-sonnet-5",
+      "effort": "low (explicit CLI --effort)",
+      "sessionSha256": "67a61d40f3cf135295549ff7fbee92c883d8aff3054777923102e75dd032e450"
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "replySeconds": 7.039072416999999,
+      "exitSeconds": 14.734941584000001,
+      "answer": "已记住青松47",
+      "firstInputTokens": 13489,
+      "model": "gpt-5.6-luna",
+      "effort": "high",
+      "sessionSha256": "d46b3863fddaff5b786809eee824c8424dc42773f84f9a6ea81f8e153152a1f6"
+    },
+    {
+      "provider": "opencode",
+      "round": 1,
+      "replySeconds": 2.272892250000001,
+      "exitSeconds": 2.2980537499999993,
+      "answer": "已记住青松47",
+      "firstInputTokens": 2006,
+      "model": "deepseek/deepseek-v4-flash",
+      "effort": "low",
+      "sessionSha256": "886916f33073eca107e616c24c13d81f4708d4d15516253aa5a939e28fafd41b"
+    },
+    {
+      "provider": "kimi",
+      "round": 1,
+      "replySeconds": 31.444586125,
+      "exitSeconds": 31.616576833,
+      "answer": "已记住青松47。",
+      "firstInputTokens": 21252,
+      "model": "kimi-code/k3",
+      "effort": "low",
+      "sessionSha256": "725182ace21b4de68992451f9b2a9b6152f53a4cc4702873256ca75487885157"
+    },
+    {
+      "provider": "kimi",
+      "round": 2,
+      "replySeconds": 17.282795750000005,
+      "exitSeconds": 17.423941791999997,
+      "answer": "43",
+      "firstInputTokens": 20632,
+      "model": "kimi-code/k3",
+      "effort": "low",
+      "sessionSha256": "725182ace21b4de68992451f9b2a9b6152f53a4cc4702873256ca75487885157"
+    },
+    {
+      "provider": "opencode",
+      "round": 2,
+      "replySeconds": 2.2133131670000004,
+      "exitSeconds": 2.238715249999994,
+      "answer": "43",
+      "firstInputTokens": 2044,
+      "model": "deepseek/deepseek-v4-flash",
+      "effort": "low",
+      "sessionSha256": "886916f33073eca107e616c24c13d81f4708d4d15516253aa5a939e28fafd41b"
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "replySeconds": 5.848461207999994,
+      "exitSeconds": 13.569377833000006,
+      "answer": "43",
+      "firstInputTokens": 13534,
+      "model": "gpt-5.6-luna",
+      "effort": "high",
+      "sessionSha256": "d46b3863fddaff5b786809eee824c8424dc42773f84f9a6ea81f8e153152a1f6"
+    },
+    {
+      "provider": "claude",
+      "round": 2,
+      "replySeconds": 3.394980708000003,
+      "exitSeconds": 4.964341207999998,
+      "answer": "43",
+      "firstInputTokens": 26062,
+      "model": "claude-sonnet-5",
+      "effort": "low (explicit CLI --effort)",
+      "sessionSha256": "67a61d40f3cf135295549ff7fbee92c883d8aff3054777923102e75dd032e450"
+    },
+    {
+      "provider": "claude",
+      "round": 3,
+      "replySeconds": 3.8266783750000033,
+      "exitSeconds": 4.765744750000013,
+      "answer": "青松47",
+      "firstInputTokens": 26157,
+      "model": "claude-sonnet-5",
+      "effort": "low (explicit CLI --effort)",
+      "sessionSha256": "67a61d40f3cf135295549ff7fbee92c883d8aff3054777923102e75dd032e450"
+    },
+    {
+      "provider": "codex",
+      "round": 3,
+      "replySeconds": 6.75856362500001,
+      "exitSeconds": 13.96950450000001,
+      "answer": "青松47",
+      "firstInputTokens": 13577,
+      "model": "gpt-5.6-luna",
+      "effort": "high",
+      "sessionSha256": "d46b3863fddaff5b786809eee824c8424dc42773f84f9a6ea81f8e153152a1f6"
+    },
+    {
+      "provider": "opencode",
+      "round": 3,
+      "replySeconds": 1.783552625000011,
+      "exitSeconds": 1.8093375000000087,
+      "answer": "青松47",
+      "firstInputTokens": 2077,
+      "model": "deepseek/deepseek-v4-flash",
+      "effort": "low",
+      "sessionSha256": "886916f33073eca107e616c24c13d81f4708d4d15516253aa5a939e28fafd41b"
+    },
+    {
+      "provider": "kimi",
+      "round": 3,
+      "replySeconds": 16.918611833000003,
+      "exitSeconds": 17.069939333,
+      "answer": "青松47",
+      "firstInputTokens": 20812,
+      "model": "kimi-code/k3",
+      "effort": "low",
+      "sessionSha256": "725182ace21b4de68992451f9b2a9b6152f53a4cc4702873256ca75487885157"
+    },
+    {
+      "provider": "kimi",
+      "round": 4,
+      "replySeconds": 16.135137667000016,
+      "exitSeconds": 16.285872625000003,
+      "answer": "验收完成。",
+      "firstInputTokens": 20990,
+      "model": "kimi-code/k3",
+      "effort": "low",
+      "sessionSha256": "725182ace21b4de68992451f9b2a9b6152f53a4cc4702873256ca75487885157"
+    },
+    {
+      "provider": "opencode",
+      "round": 4,
+      "replySeconds": 2.112014332999999,
+      "exitSeconds": 2.139685375000001,
+      "answer": "验收完成",
+      "firstInputTokens": 2109,
+      "model": "deepseek/deepseek-v4-flash",
+      "effort": "low",
+      "sessionSha256": "886916f33073eca107e616c24c13d81f4708d4d15516253aa5a939e28fafd41b"
+    },
+    {
+      "provider": "codex",
+      "round": 4,
+      "replySeconds": 7.346307082999992,
+      "exitSeconds": 14.689837750000006,
+      "answer": "验收完成",
+      "firstInputTokens": 13627,
+      "model": "gpt-5.6-luna",
+      "effort": "high",
+      "sessionSha256": "d46b3863fddaff5b786809eee824c8424dc42773f84f9a6ea81f8e153152a1f6"
+    },
+    {
+      "provider": "claude",
+      "round": 4,
+      "replySeconds": 4.498426999999996,
+      "exitSeconds": 5.385691540999979,
+      "answer": "验收完成。",
+      "firstInputTokens": 26245,
+      "model": "claude-sonnet-5",
+      "effort": "low (explicit CLI --effort)",
+      "sessionSha256": "67a61d40f3cf135295549ff7fbee92c883d8aff3054777923102e75dd032e450"
+    }
+  ],
+  "rahSessionHashes": {
+    "claude": "b9206a729af2d58c76aa764eaa01f57c21e6b57caf810ce7128b6b503f415b18",
+    "kimi": "936dfbcf7f584a122dd646e5640fb80cfc26cc049fe5086cc5c9c649e1b2e4dd",
+    "codex": "6a8c4049f1d5ccc8f38e7c2f5d24ff1ce37860b1d4c57443199f2743353a7975",
+    "opencode": "25e9ca7d7d2ac8626b886fcdca1d603ae725d1a0ffe722fff99ddf8f35446bc7"
+  },
+  "nativeSourceHashes": {
+    "claude": "89ed32c48da213c88000286922abf50ff9306f08b1dee74912e14c7d59adcf60",
+    "codex": "c0686da9d8e2b43baf380c66aba156df4e8c06c40af7a22ed50980a8c0de5c35",
+    "kimi": "32764ac24abdd90c9f5c737acc81798e331d9e5eb88c3628eae36a84fea85621"
+  },
+  "busy": [
+    {
+      "state": "exited",
+      "durationSeconds": 12.521,
+      "replies": ["WARMUP"],
+      "workerActions": ["message-check", "message-post"],
+      "modelMessageCount": 3,
+      "firstInputTokens": 40776
+    },
+    {
+      "state": "exited",
+      "durationSeconds": 13.129,
+      "replies": ["BUSY-B2"],
+      "workerActions": ["message-check", "message-post", "message-post"],
+      "modelMessageCount": 4,
+      "firstInputTokens": 45394
+    },
+    {
+      "state": "exited",
+      "durationSeconds": 9.87,
+      "replies": [],
+      "workerActions": ["message-check"],
+      "modelMessageCount": 2,
+      "firstInputTokens": 52764
+    }
+  ],
+  "busyHarnessCaveat": "Original fixture waits for BOTH B1 and B2 replies; B2 says only reply B2, so this overconstrains legitimate supersession. Preserve fixture failure; use ledger/native trace for the observed follow-up run, not a passing business gate.",
+  "sourceScriptSha256": {
+    "rah-dm.mjs": "385f245bae258a90b0b4e456f4b20d97a587c940c2a007b054995f1bb7aff161",
+    "native.mjs": "c388eb0a53704f963944f8ca3a9eae1a9529ef54963685b2d932768510bbc9b1",
+    "busy.mjs": "a4577276c2a3dbdfb2c8ddd27fb53384a1f6c9535e780cb3e1264a6887edfaa8",
+    "analyze.py": "1e9b969c49c09a59dce3ac830920b064d8ff2a7a7b5a207444cd93131b3c8588"
+  },
+  "limitations": [
+    "No live Raft same-model bilateral run; native CLI has different standing prompts and tools.",
+    "Four samples per provider, three warm; no stable p90 or long-session claim.",
+    "Sequential RAH then native, not randomized/interleaved; cache/account/backend load differ.",
+    "Codex exec turn.completed usage is cumulative in these traces; firstInput uses token_usage_record.usage, not cumulative counter.",
+    "Kimi native slower than RAH is an observed counterexample, not proof of RAH acceleration.",
+    "Fresh isolation and model choices differ from old formal samples; cannot attribute all changes to session freshness."
+  ],
+  "answerAssertions": {
+    "checked": 32,
+    "passed": 32,
+    "normalization": "strip sentence punctuation and whitespace only"
+  },
+  "processResults": {
+    "rahDM": 0,
+    "nativeCLI": 0,
+    "busy": 1,
+    "busyFailure": "over-constrained fixture wait timed out after all 3 runs exited; not a passing business gate"
+  },
+  "formalBusinessMutations": false,
+  "isolationCleanup": [
+    {
+      "scenario": "rah-dm-results.json",
+      "closedAt": "2026-09-20T20:24:34.032Z",
+      "shutdownError": null,
+      "activeRunsAtInspection": 0
+    },
+    {
+      "scenario": "busy-results.json",
+      "closedAt": "2026-09-20T20:32:02.645Z",
+      "shutdownError": null,
+      "activeRunsAtInspection": 0
+    }
+  ],
+  "noiseReproduction": {
+    "command": "node --test docs/evidence/2026-09-21-scheduling-preparation/reproduce-scheduling-noise.mjs",
+    "exitCode": 1,
+    "logSha256": "e9abb11c42c344db6b9bf0f30e7f5dc36019828e86a4c315381395bc871c4854"
+  },
+  "inputGrowthEvidence": {
+    "defaultStandingPromptUtf8Bytes": 47158,
+    "claudeSecondStartup": {
+      "contextHeaderUtf8Bytes": 2854,
+      "memorySectionUtf8Bytes": 135,
+      "deliverySectionUtf8Bytes": 3371,
+      "deliveryEventCount": 9,
+      "internalEventExamples": [
+        "placement.reserved",
+        "run.created",
+        "run.runtime_prepared",
+        "run.started",
+        "run.termination_proven"
+      ]
+    },
+    "entirePriorHumanHistoryReplayed": false,
+    "scope": "four isolated DM rounds; old history and recovery windows require separate checks"
+  },
+  "formalServiceAtHandoff": {
+    "loopback4173": "connection_refused",
+    "recordedPid5120": "not_present",
+    "cause": "not established",
+    "formalServiceStopOrRestartIssuedByThisTest": false
+  }
+}

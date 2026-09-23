@@ -1,0 +1,125 @@
+{
+  "capturedAt": "2026-09-20T16:57:32.610358+00:00",
+  "baselineCommit": "9f5a83e99b6efb5efeb3dac5413d782be5100209",
+  "productionBehaviorChanged": false,
+  "formalRestart": false,
+  "paidModelCalls": 0,
+  "upstreamLiveBilateralTest": false,
+  "checks": [
+    {
+      "id": "targeted-regressions",
+      "command": "node --test packages/agent-host/test/{provider-session-store,claude-provider-session,codex-provider-session,kimi-provider-session,opencode-provider-session,worker-message-check,worker-startup-context,host-busy-notice,codex-busy-boundary}.test.ts packages/application-service/test/worker-message-check.test.ts packages/kernel/test/{room-agent-sos,room-sos-persistent-pause,freshness-hold-window,runtime-pending-notice}.test.ts packages/daemon/test/{busy-hold-recovery-chain,standing-prompt-compiler}.test.ts",
+      "exitCode": 0,
+      "result": {
+        "tests": 77,
+        "pass": 77,
+        "fail": 0
+      },
+      "logSha256": "0e523dd3c24e212af1554136c1caa5d64c79312dc98d82ea51967fec2a5130f5"
+    },
+    {
+      "id": "analyzer-red",
+      "command": "node --test scripts/scheduling-phase-audit.test.mjs",
+      "exitCode": 1,
+      "result": {
+        "reason": "module not yet implemented; test-first evidence"
+      },
+      "logSha256": "f746f0fdf50c9b45f35f6f8e7734fb64d5ad1cb2f84e773fd0908af24c4a8e66"
+    },
+    {
+      "id": "analyzer-green",
+      "command": "node --test scripts/scheduling-phase-audit.test.mjs",
+      "exitCode": 0,
+      "result": {
+        "tests": 4,
+        "pass": 4,
+        "fail": 0
+      },
+      "logSha256": "951ff1b3a2372361466e6237f972cd761dd15202a645b945f2c0b86adddb5287"
+    },
+    {
+      "id": "prompt-reproduction",
+      "command": "node --test docs/evidence/2026-09-21-scheduling-preparation/reproduce-post-ack.mjs",
+      "exitCode": 1,
+      "result": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1,
+        "intentional": "frozen production compiler still says and then acknowledge; not repaired"
+      },
+      "logSha256": "e7c5507c98f4f4bb3f9d679f07b6609a072dd1ea7b745e35df4c4f767c05be39"
+    },
+    {
+      "id": "full-check",
+      "command": "npm run check",
+      "exitCode": 1,
+      "result": {
+        "stoppedAt": "check:raft-parity",
+        "reason": "undeclared agent-facing surface: /v1/worker/message-present"
+      },
+      "logSha256": "2c87ca005650d0d149ab762b23db4b0db5559cab9a17726220d6831ca44983ad"
+    },
+    {
+      "id": "backend-suite",
+      "command": "npm test",
+      "exitCode": 1,
+      "result": {
+        "tests": 1777,
+        "pass": 1757,
+        "fail": 3,
+        "skipped": 17,
+        "failureDetails": [
+          "RoomKernel 7102 lines exceeds 6925 ratchet",
+          "upgrade-migration-protection expects schema 56; actual 57",
+          "ui-tokens interaction icon geometry SHA mismatch"
+        ]
+      },
+      "logSha256": "9e42ffc9337a33bcdc672e77c9ef9401db9155486501e902e1b5011be3f433b1"
+    },
+    {
+      "id": "format-full",
+      "command": "npm run format:check",
+      "exitCode": 1,
+      "result": {
+        "existingFiles": [
+          "docs/product/2026-09-18-batch1-wake-body-delivery.zh-CN.md",
+          "packages/agent-host/test/wake-message-input.test.ts",
+          "packages/application-service/test/presented-delivery-chain.test.ts",
+          "packages/daemon/test/codex-delivery-acceptance-chain.test.ts",
+          "packages/kernel/test/activation-presented-window.test.ts"
+        ]
+      },
+      "logSha256": "a18b3cb422fd7fc30b30abddf12e44337f3eca41dfc1a6f0d14d97bebdb99816"
+    },
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "logSha256": "cf7bc7053f695c7d8d3b0ae392b5b24d6cd7baabdc30c79862dc6974e45b67eb"
+    },
+    {
+      "id": "changed-format",
+      "command": "npx prettier --check <all files changed in this preparation>",
+      "exitCode": 0,
+      "logSha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "id": "diff-and-links",
+      "command": "git diff --check; report relative links existence check",
+      "exitCode": 0,
+      "result": {
+        "brokenLinks": 0
+      }
+    }
+  ],
+  "compiledDefaultPrompt": {
+    "utf8Bytes": 47158,
+    "characters": 47004,
+    "tokens": null
+  },
+  "limitations": [
+    "Source-backed Raft comparison, not current-live speed acceptance",
+    "Formal backend source identity cannot be established from health",
+    "One RED checks prompt behavior, not actual model generation count"
+  ]
+}

@@ -1,4 +1,22 @@
 import {
+  type RoleCreateRequest,
+  type RoleReviseRequest,
+  type RoleCreateResponse,
+  type RoleListRequest,
+  type RoleListResponse,
+  type RoleInstantiateRequest,
+  type RoleInstantiateResponse,
+} from "@rah-os/protocol";
+import {
+  RoleCreateRequestSchema,
+  RoleReviseRequestSchema,
+  RoleCreateResponseSchema,
+  RoleListRequestSchema,
+  RoleListResponseSchema,
+  RoleInstantiateRequestSchema,
+  RoleInstantiateResponseSchema,
+} from "@rah-os/protocol";
+import {
   SystemChannelVisibilityReadSchema,
   SystemChannelVisibilityUpdateSchema,
   SystemChannelVisibilityResponseSchema,
@@ -373,6 +391,13 @@ export type RahClientOperationMap = ComposerOperationMap &
     "agent.onboard": {
       input: ClientAgentOnboardRequest;
       output: ClientRoomMemberMutationResponse;
+    };
+    "role.revise": { input: RoleReviseRequest; output: RoleCreateResponse };
+    "role.create": { input: RoleCreateRequest; output: RoleCreateResponse };
+    "role.list": { input: RoleListRequest; output: RoleListResponse };
+    "role.instantiate": {
+      input: RoleInstantiateRequest;
+      output: RoleInstantiateResponse;
     };
     "agent.provision": {
       input: ClientAgentProvisionRequest;
@@ -763,6 +788,34 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRoomMemberMutationResponseSchema,
     path: "/v3/client/agents/onboard",
+  },
+  "role.revise": {
+    authenticated: true,
+    input: RoleReviseRequestSchema,
+    output: RoleCreateResponseSchema,
+    method: "POST",
+    path: "/v3/client/roles/revise",
+  },
+  "role.create": {
+    authenticated: true,
+    input: RoleCreateRequestSchema,
+    output: RoleCreateResponseSchema,
+    method: "POST",
+    path: "/v3/client/roles/create",
+  },
+  "role.list": {
+    authenticated: true,
+    input: RoleListRequestSchema,
+    output: RoleListResponseSchema,
+    method: "POST",
+    path: "/v3/client/roles/list",
+  },
+  "role.instantiate": {
+    authenticated: true,
+    input: RoleInstantiateRequestSchema,
+    output: RoleInstantiateResponseSchema,
+    method: "POST",
+    path: "/v3/client/roles/instantiate",
   },
   "agent.provision": {
     authenticated: true,

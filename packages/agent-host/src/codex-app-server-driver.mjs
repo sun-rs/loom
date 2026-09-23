@@ -1,3 +1,4 @@
+import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
   providerLaunchArguments,
   providerLaunchPolicy,
@@ -169,6 +170,7 @@ try {
     } catch (error) {
       resumeRecovery = classifyCodexResumeError(errorMessage(error));
       if (resumeRecovery === undefined) throw error;
+      assertSessionReplacementAllowed();
       trajectoryWriter.emit(
         runtimeStatusTrajectory(
           "working",
@@ -495,6 +497,8 @@ function parseArguments(args) {
     if (name === "--executable") parsed.executable = value;
     else if (name === "--tool-access-mode") parsed.toolAccessMode = value;
     else if (name === "--prompt") parsed.prompt = value;
+    else if (name === "--prompt-file")
+      parsed.prompt = readProviderPromptFile(value);
     else if (name === "--model") parsed.model = value;
     else if (name === "--reasoning") parsed.reasoning = value;
     else if (name === "--resume-session") parsed.resumeSession = value;
@@ -621,4 +625,7 @@ class RpcError extends Error {
     this.code = code;
   }
 }
-import { providerActivationInput } from "./provider-activation-input.js";
+import {
+  assertSessionReplacementAllowed,
+  providerActivationInput,
+} from "./provider-activation-input.js";

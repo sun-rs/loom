@@ -1,5 +1,8 @@
 import { providerLaunchArguments } from "./provider-launch-arguments.js";
-import { providerActivationInput } from "./provider-activation-input.js";
+import {
+  assertSessionReplacementAllowed,
+  providerActivationInput,
+} from "./provider-activation-input.js";
 import { spawn } from "node:child_process";
 import { writeSync } from "node:fs";
 import { createServer } from "node:net";
@@ -102,6 +105,7 @@ try {
       resumed = true;
     } catch (error) {
       if (!(error instanceof HttpError) || error.status !== 404) throw error;
+      assertSessionReplacementAllowed();
       trajectoryWriter.emit(
         runtimeStatusTrajectory(
           "working",
@@ -127,6 +131,7 @@ try {
       error.status === 404 &&
       !observedToolActivity
     ) {
+      assertSessionReplacementAllowed();
       trajectoryWriter.emit(
         runtimeStatusTrajectory(
           "working",

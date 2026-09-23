@@ -1,0 +1,31 @@
+✖ Role is inert configuration; two channel instances receive independent conversations (103.854375ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 374.351291
+
+✖ failing tests:
+
+test at packages/kernel/test/role-channel-mvp.test.ts:18:1
+✖ Role is inert configuration; two channel instances receive independent conversations (103.854375ms)
+  AssertionError [ERR_ASSERTION]: launch context must retain Role origin for strict native resume
+  + actual - expected
+
+  + undefined
+  - 'room_5ac66055-5820-4bea-bd0f-5996a0c46000'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/kernel/test/role-channel-mvp.test.ts:159:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'room_5ac66055-5820-4bea-bd0f-5996a0c46000',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

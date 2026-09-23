@@ -89,7 +89,9 @@ test("attachment, task and thread-context affordances ride the Raft suffixes", (
   assert.ok(rendered.includes("- (no earlier thread replies)"));
   assert.ok(rendered.includes("Recent thread context (truncated):"));
   assert.ok(rendered.includes("[attachments: spec.md (12345 bytes)]"));
-  assert.ok(rendered.includes("[task #42 status=in_progress assignee=agent:agent-1]"));
+  assert.ok(
+    rendered.includes("[task #42 status=in_progress assignee=agent:agent-1]"),
+  );
 });
 
 test("a non-message event renders in the Worker read renderer's own shape", () => {

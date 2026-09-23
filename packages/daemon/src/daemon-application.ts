@@ -19,7 +19,6 @@ import {
   GenericProcessAdapter,
   createWorkerToolTransportEnvironment,
   MultiLaneAgentHost,
-  RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
   UnixSocketInstanceLock,
@@ -54,6 +53,7 @@ import { createDaemonWebPush } from "./daemon-web-push.ts";
 import {
   assertRuntimeProfileRevisionStillActive,
   createConfiguredRuntime,
+  createConfiguredCredentialEnvironment,
 } from "./runtime-profile-composition.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
 import {
@@ -363,18 +363,13 @@ export class DaemonApplication {
             runtimeProfileRevision: activeRevision,
           }),
         );
-        const credentialEnvironment = new RuntimeCredentialEnvironmentBinding({
-          manifest: activeRevision.manifest,
-          resolvers: Object.fromEntries(
-            Object.entries(runtimeOptions.credentialBindings).map(
-              ([slotId, reference]) => [
-                slotId,
-                async () => await this.#secretProvider.load(reference),
-              ],
-            ),
-          ),
-        });
+        const credentialEnvironment = createConfiguredCredentialEnvironment(
+          activeRevision.manifest,
+          runtimeOptions.credentialBindings,
+          this.#secretProvider,
+        );
         runtime = createConfiguredRuntime({
+          startupMemoryTransport: this.#config.startupMemoryTransport,
           ...runtimeGuideSettings.runtimeOptions(),
           agentMemoryCoordinator: activeAgentMemoryCoordinator,
           credentialEnvironment,
@@ -469,18 +464,10 @@ export class DaemonApplication {
               `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
             );
           }
-          const credentialEnvironment = new RuntimeCredentialEnvironmentBinding(
-            {
-              manifest: activeRevision.manifest,
-              resolvers: Object.fromEntries(
-                Object.entries(runtimeOptions.credentialBindings).map(
-                  ([slotId, reference]) => [
-                    slotId,
-                    async () => await this.#secretProvider.load(reference),
-                  ],
-                ),
-              ),
-            },
+          const credentialEnvironment = createConfiguredCredentialEnvironment(
+            activeRevision.manifest,
+            runtimeOptions.credentialBindings,
+            this.#secretProvider,
           );
           const placementKernel = kernel;
           if (placementKernel === undefined) {
@@ -524,6 +511,7 @@ export class DaemonApplication {
               }
             }
             return createConfiguredRuntime({
+              startupMemoryTransport: this.#config.startupMemoryTransport,
               ...runtimeGuideSettings.runtimeOptions(),
               agentMemoryCoordinator: activeAgentMemoryCoordinator,
               credentialEnvironment,
