@@ -341,7 +341,7 @@ test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reas
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 65);
+    assert.equal(KERNEL_SCHEMA_VERSION, 66);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -587,7 +587,7 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        65,
+        66,
       );
       assert.equal(
         database
@@ -642,7 +642,7 @@ function cleanup(
 test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 65);
+    assert.equal(KERNEL_SCHEMA_VERSION, 66);
     const recorded = state.kernel.runtimeProcessCleanup.record(
       state.host,
       cleanup(state, "cleanup-1"),
@@ -693,7 +693,7 @@ test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on t
   }
 });
 
-test("S2-0 an unresolved cleanup blocks admission until a later clean sweep", () => {
+test("S2-0 an unresolved cleanup blocks admission until a later clean sweep of that runtime", () => {
   const state = fixture();
   try {
     const participantId = state.kernel.listRunAttempts({
@@ -710,6 +710,7 @@ test("S2-0 an unresolved cleanup blocks admission until a later clean sweep", ()
         killedCount: 1,
         remainingCount: 1,
         remainingPorts: [5173],
+        runtimeRunId: "dead-runtime",
       }),
     );
     const blocked = admission();
@@ -719,15 +720,30 @@ test("S2-0 an unresolved cleanup blocks admission until a later clean sweep", ()
       state.kernel.runtimeProcessCleanup.blockedParticipants(state.host),
       [participantId],
     );
+    // A record must name its runtime: no synthetic participant "all clear".
+    assert.throws(() =>
+      state.kernel.runtimeProcessCleanup.record(
+        state.host,
+        cleanup(state, "cleanup-janitor-anonymous", {
+          killedCount: 0,
+          releasedPorts: [],
+          runAttemptId: undefined,
+          runtimeRunId: undefined,
+          trigger: "janitor",
+        }),
+      ),
+    );
+    assert.equal(admission().blocked, true);
     state.advance();
     state.kernel.runtimeProcessCleanup.record(
       state.host,
       cleanup(state, "cleanup-janitor", {
         foundCount: 1,
         killedCount: 1,
+        observedAt: "2026-09-24T01:00:09.000Z",
         releasedPorts: [5173],
         runAttemptId: undefined,
-        runtimeRunId: undefined,
+        runtimeRunId: "dead-runtime",
         trigger: "janitor",
       }),
     );
@@ -746,9 +762,15 @@ test("S2-0 an unresolved cleanup blocks admission until a later clean sweep", ()
     );
     const capped = admission();
     assert.match(capped.blocked ? capped.reason : "", /listening_ports/u);
-    // The janitor never clears a cap alert of a runtime that is still live.
+    // The janitor never re-sweeps (or clears) a cap alert of a live runtime.
     assert.deepEqual(
       state.kernel.runtimeProcessCleanup.blockedParticipants(state.host),
+      [],
+    );
+    assert.deepEqual(
+      state.kernel.runtimeProcessCleanup.resweepTargets(state.host, {
+        participantId,
+      }),
       [],
     );
   } finally {
@@ -756,18 +778,168 @@ test("S2-0 an unresolved cleanup blocks admission until a later clean sweep", ()
   }
 });
 
-test("S2-0 the cleanup notice is claimed by exactly one next run", () => {
+test("S2-0 review P1-1: admission aggregates every unresolved runtime, in either order", () => {
+  for (const order of ["a-then-b", "b-then-a"] as const) {
+    const state = fixture();
+    try {
+      const participantId = state.kernel.listRunAttempts({
+        roomId: state.roomId,
+      })[0]!.participantId;
+      const admission = () =>
+        state.kernel.runtimeProcessCleanup.admission(state.host, {
+          participantId,
+        });
+      const failA = () =>
+        state.kernel.runtimeProcessCleanup.record(
+          state.host,
+          cleanup(state, `a-${order}`, {
+            killedCount: 0,
+            remainingCount: 1,
+            runtimeRunId: "runtime-a",
+          }),
+        );
+      const cleanB = () =>
+        state.kernel.runtimeProcessCleanup.record(
+          state.host,
+          cleanup(state, `b-${order}`, { runtimeRunId: "runtime-b" }),
+        );
+      if (order === "a-then-b") {
+        failA();
+        state.advance();
+        cleanB();
+      } else {
+        cleanB();
+        state.advance();
+        failA();
+      }
+      const blocked = admission();
+      assert.equal(blocked.blocked, true, order);
+      assert.match(blocked.blocked ? blocked.reason : "", /runtime-a/u);
+      assert.deepEqual(
+        state.kernel.runtimeProcessCleanup
+          .resweepTargets(state.host, { participantId })
+          .map((target) => target.runtimeRunId),
+        ["runtime-a"],
+      );
+      assert.throws(
+        () =>
+          state.kernel.runtimeProcessCleanup.assertNoUnresolved(participantId),
+        /leftover processes/u,
+      );
+      state.advance();
+      state.kernel.runtimeProcessCleanup.record(
+        state.host,
+        cleanup(state, `a-clean-${order}`, {
+          observedAt: "2026-09-24T01:00:30.000Z",
+          runtimeRunId: "runtime-a",
+          trigger: "janitor",
+        }),
+      );
+      assert.deepEqual(admission(), { blocked: false }, order);
+    } finally {
+      state.cleanup();
+    }
+  }
+});
+
+test("S2-0 review P1-2: a pending cleanup blocks until a newer recorded sweep; older observations never clear it", () => {
   const state = fixture();
   try {
     const participantId = state.kernel.listRunAttempts({
       roomId: state.roomId,
     })[0]!.participantId;
-    const claim = () =>
-      state.kernel.runtimeProcessCleanup.claimNotice(state.host, {
+    const admission = () =>
+      state.kernel.runtimeProcessCleanup.admission(state.host, {
         participantId,
-        runAttemptId: state.runAttemptId,
       });
+    state.kernel.runtimeProcessCleanup.markPending(state.host, {
+      observedAt: "2026-09-24T01:00:10.000Z",
+      participantId,
+      runAttemptId: state.runAttemptId,
+      runtimeRunId: "runtime-p",
+    });
+    const pending = admission();
+    assert.equal(pending.blocked, true);
+    assert.match(pending.blocked ? pending.reason : "", /not confirmed/u);
+    assert.deepEqual(
+      state.kernel.runtimeProcessCleanup
+        .resweepTargets(state.host, {})
+        .map((target) => [target.participantId, target.runtimeRunId]),
+      [[participantId, "runtime-p"]],
+    );
+    // A janitor sweep observed before the pending mark is history only.
     state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "stale-janitor", {
+        observedAt: "2026-09-24T01:00:09.000Z",
+        runtimeRunId: "runtime-p",
+        trigger: "janitor",
+      }),
+    );
+    assert.equal(admission().blocked, true);
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "after-run", {
+        observedAt: "2026-09-24T01:00:11.000Z",
+        runtimeRunId: "runtime-p",
+      }),
+    );
+    assert.deepEqual(admission(), { blocked: false });
+    // Unknown processes (unverifiable tags) block like remaining ones.
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "unknown", {
+        observedAt: "2026-09-24T01:00:12.000Z",
+        portsObserved: false,
+        runtimeRunId: "runtime-p",
+        unknownCount: 1,
+      }),
+    );
+    const unknown = admission();
+    assert.match(
+      unknown.blocked ? unknown.reason : "",
+      /could not be verified/u,
+    );
+    const [row] = state.kernel.runtimeProcessCleanup
+      .listForRunAttempt(state.runAttemptId)
+      .filter((entry) => entry.cleanupId === "unknown");
+    assert.equal(row?.portsObserved, false);
+    assert.equal(row?.unknownCount, 1);
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-0 review P2-1: janitor runtime lookup pages instead of truncating at 500", () => {
+  const state = fixture();
+  try {
+    const noise = Array.from(
+      { length: 1_200 },
+      (_, index) => `unknown-${index}`,
+    );
+    const targets = state.kernel.runtimeProcessCleanup.resolveRuntimes(
+      state.host,
+      { runtimeRunIds: [...noise, state.runtimeRunId] },
+    );
+    assert.deepEqual(
+      targets.map((target) => target.runtimeRunId),
+      [state.runtimeRunId],
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-0 review P2-2: the cleanup notice is reserved per run, released on failure and consumed only on acceptance", () => {
+  const state = fixture();
+  try {
+    const participantId = state.kernel.listRunAttempts({
+      roomId: state.roomId,
+    })[0]!.participantId;
+    const service = state.kernel.runtimeProcessCleanup;
+    const reserve = (runAttemptId: string) =>
+      service.reserveNotice(state.host, { participantId, runAttemptId });
+    service.record(
       state.host,
       cleanup(state, "cleanup-quiet", {
         foundCount: 0,
@@ -775,17 +947,70 @@ test("S2-0 the cleanup notice is claimed by exactly one next run", () => {
         releasedPorts: [],
       }),
     );
-    assert.equal(claim(), null);
-    state.kernel.runtimeProcessCleanup.record(
-      state.host,
-      cleanup(state, "cleanup-loud"),
-    );
-    const line = claim();
+    assert.equal(reserve(state.runAttemptId), null);
+    service.record(state.host, cleanup(state, "cleanup-loud"));
+    const line = reserve(state.runAttemptId);
     assert.ok(line !== null);
     assert.match(line, /2 leftover background process/u);
     assert.match(line, /port 3000/u);
-    assert.ok(line.length <= 240);
-    assert.equal(claim(), null);
+    assert.match(line, /\(notice [0-9a-f]{8}\)/u);
+    assert.ok(line.length <= 300);
+    // Same-run retry: the same content, even after a newer row appears.
+    service.record(
+      state.host,
+      cleanup(state, "cleanup-later", {
+        killedCount: 1,
+        releasedPorts: [],
+        runtimeRunId: "runtime-later",
+      }),
+    );
+    assert.equal(reserve(state.runAttemptId), line);
+    // A live reservation is not handed to another run.
+    assert.doesNotMatch(reserve("run-other") ?? "", /port 3000/u);
+    // Early failure: the reservation is released and the next run gets it.
+    service.releaseNotice(state.host, {
+      participantId,
+      runAttemptId: state.runAttemptId,
+    });
+    const redelivered = reserve("run-next");
+    assert.match(redelivered ?? "", /port 3000/u);
+    assert.match(redelivered ?? "", /\(notice [0-9a-f]{8}\)/u);
+    service.acceptNotice(state.host, {
+      participantId,
+      runAttemptId: "run-next",
+    });
+    assert.equal(reserve("run-after"), null);
+    assert.equal(
+      reserve("run-next"),
+      redelivered,
+      "same-run retry after acceptance",
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-0 review P2-2: a reservation of a finished run that never accepted is delivered again", () => {
+  const state = fixture();
+  try {
+    const participantId = state.kernel.listRunAttempts({
+      roomId: state.roomId,
+    })[0]!.participantId;
+    const service = state.kernel.runtimeProcessCleanup;
+    service.record(state.host, cleanup(state, "cleanup-loud"));
+    // Reserved by a run that is no longer live work (crashed Host).
+    const first = service.reserveNotice(state.host, {
+      participantId,
+      runAttemptId: "run-crashed",
+    });
+    assert.ok(first !== null);
+    assert.equal(
+      service.reserveNotice(state.host, {
+        participantId,
+        runAttemptId: "run-next",
+      }),
+      first,
+    );
   } finally {
     state.cleanup();
   }
@@ -808,5 +1033,88 @@ test("S2-0 room removal waits for an unresolved leftover cleanup", () => {
     );
   } finally {
     state.cleanup();
+  }
+});
+
+test("S2-0 review: a schema 65 database backfills per-runtime cleanup state and accepted notices", () => {
+  const state = fixture();
+  const { databasePath } = state;
+  const participantId = state.kernel.listRunAttempts({
+    roomId: state.roomId,
+  })[0]!.participantId;
+  state.kernel.close();
+  try {
+    const legacy = new DatabaseSync(databasePath);
+    legacy.exec(`DROP TABLE runtime_cleanup_states;
+      ALTER TABLE runtime_process_cleanups DROP COLUMN unknown_count;
+      ALTER TABLE runtime_process_cleanups DROP COLUMN ports_observed;
+      ALTER TABLE runtime_process_cleanups DROP COLUMN notice_accepted_at;
+      PRAGMA user_version = 65;`);
+    const insert = legacy.prepare(
+      `INSERT INTO runtime_process_cleanups(cleanup_id, host_id, participant_id,
+         runtime_run_id, trigger, found_count, killed_count, remaining_count,
+         released_ports_json, remaining_ports_json, cap_exceeded_json, error,
+         blocking, notice_run_attempt_id, observed_at, recorded_at)
+       VALUES(?, 'usage-host', ?, ?, ?, 1, ?, ?, '[]', '[]', '[]', NULL, ?, ?, ?, ?)`,
+    );
+    // The v64 bug: a later anonymous janitor row hid runtime-a's leftover.
+    insert.run(
+      "old-a",
+      participantId,
+      "runtime-a",
+      "run_end",
+      0,
+      1,
+      1,
+      null,
+      "2026-09-24T01:00:01.000Z",
+      "2026-09-24T01:00:01.000Z",
+    );
+    insert.run(
+      "old-janitor",
+      participantId,
+      null,
+      "janitor",
+      0,
+      0,
+      0,
+      null,
+      "2026-09-24T01:00:02.000Z",
+      "2026-09-24T01:00:02.000Z",
+    );
+    insert.run(
+      "old-claimed",
+      participantId,
+      "runtime-b",
+      "run_end",
+      1,
+      0,
+      0,
+      "run-old",
+      "2026-09-24T01:00:03.000Z",
+      "2026-09-24T01:00:03.000Z",
+    );
+    legacy.close();
+    const upgraded = new RoomKernel({ databasePath });
+    upgraded.initialize();
+    try {
+      const admission = upgraded.runtimeProcessCleanup.admission(state.host, {
+        participantId,
+      });
+      assert.equal(admission.blocked, true);
+      assert.match(admission.blocked ? admission.reason : "", /runtime-a/u);
+      // A notice claimed before the upgrade counts as delivered.
+      assert.equal(
+        upgraded.runtimeProcessCleanup.reserveNotice(state.host, {
+          participantId,
+          runAttemptId: "run-new",
+        }),
+        null,
+      );
+    } finally {
+      upgraded.close();
+    }
+  } finally {
+    rmSync(join(databasePath, ".."), { force: true, recursive: true });
   }
 });

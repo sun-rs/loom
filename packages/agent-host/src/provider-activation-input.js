@@ -15,22 +15,33 @@ export const ACTIVATION_FINISH_RULES =
 const RUNTIME_NOTICE_LIMIT = 300;
 
 /**
- * S2-0: the Host's one-line leftover-process cleanup notice for this run
- * (`RAH_RUNTIME_NOTICE`, a Host fence). The Kernel hands it to exactly one
- * RunAttempt; it is appended as a single bounded line, never Room content.
+ * S2-0: the Host's one-line leftover-process cleanup notice for this run. A
+ * driver reads it from `RAH_RUNTIME_NOTICE` (a Host fence); the Host passes it
+ * explicitly when it composes the input itself (the Codex wake file, the warm
+ * turn), so the acceptance digest covers the notice. The Kernel reserves it
+ * for one RunAttempt (at-least-once); it is one bounded line, never Room
+ * content.
  */
-export function withRuntimeNotice(text) {
-  const notice = (process.env.RAH_RUNTIME_NOTICE ?? "")
+export function withRuntimeNotice(
+  text,
+  runtimeNotice = process.env.RAH_RUNTIME_NOTICE,
+) {
+  const notice = (runtimeNotice ?? "")
     .split("\n")[0]
     .trim()
     .slice(0, RUNTIME_NOTICE_LIMIT);
   return notice === "" ? text : `${text}\n${notice}`;
 }
 
-export function providerActivationInput() {
-  return withRuntimeNotice(`${ACTIVATION_ENVIRONMENT_LINE}
+export function providerActivationInput(
+  runtimeNotice = process.env.RAH_RUNTIME_NOTICE,
+) {
+  return withRuntimeNotice(
+    `${ACTIVATION_ENVIRONMENT_LINE}
 Your first Worker call is \`"$RAH_WORKER_CLI" worker message-check --startup\`. It returns the current Agent identity and execution scope, the complete original MEMORY.md, and the current Activation's canonical messages together. This fulfills those startup reads; read additional notes only when needed. Inspect the returned content before acting. If the command fails, correct that failure; never infer missing memory or no work from an error. Delivery acknowledgement is not a reply or Task completion.
-${ACTIVATION_FINISH_RULES}`);
+${ACTIVATION_FINISH_RULES}`,
+    runtimeNotice,
+  );
 }
 
 /** Role instances may never replace a bound native session implicitly. */

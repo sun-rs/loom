@@ -5,7 +5,10 @@ import {
   runtimeSupportsBodiedWake,
   writeWakeInputFile,
 } from "./bodied-wake.ts";
-import { providerActivationInput } from "./provider-activation-input.js";
+import {
+  providerActivationInput,
+  withRuntimeNotice,
+} from "./provider-activation-input.js";
 import { RAH_WORKER_API_URL_ENV } from "./worker-credential-file.ts";
 import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
@@ -827,6 +830,8 @@ function createCodexAppServerRuntime(
   // acceptance must still match then.
   const wakeFiles = new Map<string, string>();
   const preparedWakeDigests = new Map<string, string>();
+  // Per RunAttempt: the digest of a wake file that carried the notice line.
+  const noticeWakeDigests = new Map<string, string>();
   const remember = (map: Map<string, string>, key: string, value: string) => {
     if (map.size >= 64 && !map.has(key)) map.delete(map.keys().next().value!);
     map.set(key, value);
@@ -860,17 +865,27 @@ function createCodexAppServerRuntime(
         `[rah-os] bodied wake unavailable for ${input.runAttemptId}, using the startup wake: ${error instanceof Error ? error.message : String(error)}\n`,
       );
     }
+    // S2-0 review P2-2: the Host appends the notice line itself, so the
+    // file is the whole input and the acceptance digest covers the notice.
+    const notice = input.runtimeNotice ?? "";
     if (bodied === undefined) {
-      // The fixed startup wake; no digest is remembered, so its acceptance
-      // registers nothing and the model confirms delivery with message-check.
-      await writeWakeInputFile(path, providerActivationInput());
+      // The fixed startup wake; no window digest is remembered, so its
+      // acceptance registers no send and the model confirms delivery with
+      // message-check. It can still confirm the notice line.
+      const digest = await writeWakeInputFile(
+        path,
+        providerActivationInput(notice),
+      );
+      if (notice !== "")
+        remember(noticeWakeDigests, input.runAttemptId, digest);
       return;
     }
-    remember(
-      preparedWakeDigests,
-      input.runAttemptId,
-      await writeWakeInputFile(path, bodied),
+    const digest = await writeWakeInputFile(
+      path,
+      withRuntimeNotice(bodied, notice),
     );
+    remember(preparedWakeDigests, input.runAttemptId, digest);
+    if (notice !== "") remember(noticeWakeDigests, input.runAttemptId, digest);
   };
   return new GenericProcessAdapter({
     ...processOptions,
@@ -948,14 +963,20 @@ function createCodexAppServerRuntime(
             // Only the exact text this Host prepared for this RunAttempt may be
             // registered as sent; the driver cannot vouch for any other input.
             const prepared = preparedWakeDigests.get(input.runAttemptId);
+            const noticed = noticeWakeDigests.get(input.runAttemptId);
             // The fixed startup wake has no presented window behind it.
-            if (prepared === undefined) return;
-            if (acceptance.inputSha256 !== prepared) {
-              throw new Error(
-                "runtime delivery acceptance does not match the prepared wake input",
-              );
+            if (prepared !== undefined) {
+              if (acceptance.inputSha256 !== prepared) {
+                throw new Error(
+                  "runtime delivery acceptance does not match the prepared wake input",
+                );
+              }
+              await recordDeliveryAcceptance(input, acceptance);
             }
-            await recordDeliveryAcceptance(input, acceptance);
+            return {
+              runtimeNoticeAccepted:
+                noticed !== undefined && acceptance.inputSha256 === noticed,
+            };
           },
         }),
     ...(providerSessionStore === undefined

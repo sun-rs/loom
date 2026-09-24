@@ -161,6 +161,7 @@ test("S2-0 cleanup record input is bounded and strict", () => {
   const valid = {
     cleanupId: "cleanup-1",
     participantId: "agent-1",
+    runtimeRunId: "process:runtime-1",
     trigger: "janitor",
     foundCount: 1,
     killedCount: 1,
@@ -179,6 +180,12 @@ test("S2-0 cleanup record input is bounded and strict", () => {
     { ...valid, releasedPorts: [70_000] },
     { ...valid, capExceeded: ["cpu"] },
     { ...valid, extra: true },
+    // Every record names its runtime (no participant-wide "all clear").
+    { ...valid, runtimeRunId: undefined },
+    { ...valid, unknownCount: -1 },
   ])
     assert.throws(() => RuntimeProcessCleanupRecordInputSchema.parse(invalid));
+  const parsed = RuntimeProcessCleanupRecordInputSchema.parse(valid);
+  assert.equal(parsed.unknownCount, 0);
+  assert.equal(parsed.portsObserved, true);
 });

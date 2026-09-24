@@ -89,7 +89,7 @@ export class MultiLaneAgentHost {
           .janitor(control, "host_start")
           .catch((error: unknown) => {
             process.stderr.write(
-              `[rah-os] host-start leftover-process janitor failed: ${error instanceof Error ? error.message : String(error)}\n`,
+              `[rah-os] host-start leftover-process janitor failed (admission paused until a scan succeeds): ${error instanceof Error ? error.message : String(error)}\n`,
             );
           });
         janitorLoop = this.#processHygiene.runPeriodic(

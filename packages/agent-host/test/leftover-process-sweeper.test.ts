@@ -11,6 +11,7 @@ import {
   GenericProcessAdapter,
   LeftoverProcessSweeper,
   createSystemProcessTable,
+  parseDarwinEnvironmentTags,
   type ActivationEnvelope,
   type ProcessIdentity,
   type ProcessRecord,
@@ -34,6 +35,12 @@ class FakeProcessTable implements ProcessTable {
   readonly signals: Array<[number, string]> = [];
   /** pid -> identity to substitute after the first scan (PID reuse). */
   readonly reuseAfterScan = new Map<number, FakeProcess>();
+  /** Called after a signal was applied (children spawned on TERM, reuse). */
+  onSignal?: (pid: number, signal: NodeJS.Signals) => void;
+  /** lsof unavailable: listeningPorts / listenersOnPorts throw. */
+  portsFail = false;
+  /** Listeners of processes outside this table (port -> pid). */
+  readonly foreignListeners = new Map<number, number>();
   #scanned = false;
 
   add(process: Partial<FakeProcess> & { pid: number }): void {
@@ -77,10 +84,27 @@ class FakeProcessTable implements ProcessTable {
   async listeningPorts(
     pids: readonly number[],
   ): Promise<Map<number, number[]>> {
+    if (this.portsFail) throw new Error("lsof: timed out");
     const result = new Map<number, number[]>();
     for (const pid of pids) {
       const ports = this.processes.get(pid)?.ports;
       if (ports?.length) result.set(pid, [...ports]);
+    }
+    return result;
+  }
+
+  async listenersOnPorts(
+    ports: readonly number[],
+  ): Promise<Map<number, number[]>> {
+    if (this.portsFail) throw new Error("lsof: timed out");
+    const result = new Map<number, number[]>();
+    for (const port of ports) {
+      const pids = [...this.processes.values()]
+        .filter((entry) => entry.ports?.includes(port))
+        .map((entry) => entry.pid);
+      const foreign = this.foreignListeners.get(port);
+      if (foreign !== undefined) pids.push(foreign);
+      if (pids.length > 0) result.set(port, pids);
     }
     return result;
   }
@@ -91,6 +115,7 @@ class FakeProcessTable implements ProcessTable {
     if (!entry || entry.unkillable) return;
     if (signal === "SIGTERM" && entry.ignoresTerm) return;
     this.processes.delete(pid);
+    this.onSignal?.(pid, signal);
   }
 }
 
@@ -187,12 +212,153 @@ test("S2-0 sweeper measures a live runtime footprint without signalling", async 
   const footprint = await sweeper(table).measure(new Set(["process:live"]));
   assert.deepEqual(footprint, {
     listeningPorts: [3000, 3001],
+    portsObserved: true,
     processCount: 2,
     rssKb: 2_500,
   });
   assert.equal(table.signals.length, 0);
   const tagged = await sweeper(table).taggedRuntimeIds();
   assert.deepEqual([...tagged], ["process:live"]);
+});
+
+test("S2-0 review P1-3: the final rescan counts descendants spawned during the last pass", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 21, runtimeId: "process:dead" });
+  // 21 exits on TERM and leaves tagged 22; 22 exits on TERM and leaves 23.
+  table.onSignal = (pid) => {
+    if (pid === 21) table.add({ pid: 22, runtimeId: "process:dead" });
+    if (pid === 22) table.add({ pid: 23, runtimeId: "process:dead" });
+  };
+  const result = await sweeper(table).sweep(new Set(["process:dead"]));
+  assert.ok(table.processes.has(23), "the bounded passes stop before 23");
+  assert.equal(result.remaining, 1);
+  assert.equal(result.killed, 2);
+});
+
+test("S2-0 review: identity is re-verified immediately before each signal", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 20, runtimeId: "process:dead" });
+  table.add({ pid: 21, runtimeId: "process:dead" });
+  // After 20 is signalled, 21 exits and its pid is reused by a bystander.
+  table.onSignal = (pid) => {
+    if (pid !== 20) return;
+    table.processes.set(21, {
+      command: "bystander",
+      pgid: 21,
+      pid: 21,
+      ppid: 1,
+      rssKb: 1,
+      startedAt: "reused",
+      uid: UID,
+    });
+  };
+  await sweeper(table).sweep(new Set(["process:dead"]));
+  assert.deepEqual(
+    table.signals.filter(([pid]) => pid === 21),
+    [],
+    "the reused pid is never signalled",
+  );
+  assert.ok(table.processes.has(21));
+});
+
+test("S2-0 review P2-1: lsof failure leaves port state unknown but keeps counts", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 20, ports: [3000], rssKb: 700, runtimeId: "process:live" });
+  table.portsFail = true;
+  const footprint = await sweeper(table).measure(new Set(["process:live"]));
+  assert.deepEqual(footprint, {
+    listeningPorts: [],
+    portsObserved: false,
+    processCount: 1,
+    rssKb: 700,
+  });
+  const result = await sweeper(table).sweep(new Set(["process:live"]));
+  assert.equal(result.portsObserved, false);
+  assert.equal(result.killed, 1);
+  assert.equal(result.remaining, 0);
+  assert.deepEqual(result.releasedPorts, []);
+});
+
+test("S2-0 review P2-1: a released port that still has a listener is not reported released", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 20, ports: [3000, 3001], runtimeId: "process:dead" });
+  // After the kill another process (outside the target) listens on 3001.
+  table.foreignListeners.set(3001, 99);
+  const result = await sweeper(table).sweep(new Set(["process:dead"]));
+  assert.equal(result.portsObserved, true);
+  assert.deepEqual(result.releasedPorts, [3000]);
+  assert.deepEqual(result.remainingPorts, []);
+});
+
+test("S2-0 review P2-1: members of a tagged-led group are found after the leader exits", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 20, runtimeId: "process:gone" });
+  // Untagged (environment cleared), re-parented member of group 20.
+  table.add({ pid: 21, pgid: 20, ppid: 1 });
+  const own = sweeper(table);
+  // Observed while the leader was alive (resource-cap measurement).
+  await own.measure(new Set(["process:gone"]));
+  table.processes.delete(20);
+  const result = await own.sweep(new Set(["process:gone"]));
+  assert.equal(result.found, 1);
+  assert.equal(result.killed, 1);
+  assert.equal(table.processes.has(21), false);
+});
+
+test("S2-0 review P2-1: a reused group leader pid drops the remembered group", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 20, runtimeId: "process:gone" });
+  const own = sweeper(table);
+  await own.measure(new Set(["process:gone"]));
+  table.processes.delete(20);
+  // pid 20 now leads an unrelated group with its own member.
+  table.add({ pid: 20, startedAt: "reborn" });
+  table.add({ pid: 22, pgid: 20, ppid: 20 });
+  const result = await own.sweep(new Set(["process:gone"]));
+  assert.equal(result.found, 0);
+  assert.equal(table.signals.length, 0);
+});
+
+test("S2-0 review P2-1: an ambiguous tag is never signalled and is reported unknown", async () => {
+  const table = new FakeProcessTable();
+  table.add({ pid: 20, tagCandidates: ["process:dead", "process:other"] });
+  table.add({ pid: 21, tagCandidates: ["process:unrelated"] });
+  const result = await sweeper(table).sweep(new Set(["process:dead"]));
+  assert.equal(table.signals.length, 0);
+  assert.equal(result.unknown, 1);
+  assert.equal(result.remaining, 0);
+});
+
+test("S2-0 review P2-1: macOS environment tags parse only the suffix, and ambiguity is explicit", () => {
+  const command = "node server.js --flag LOOM_RUNTIME_ID=process:argv";
+  assert.deepEqual(
+    parseDarwinEnvironmentTags(
+      `${command} PATH=/bin LOOM_RUNTIME_ID=process:a LOOM_RUN_ID=run_1`,
+      command,
+    ),
+    { runId: "run_1", runtimeId: "process:a" },
+  );
+  // An argv that only contains the tag text is not a tag.
+  assert.deepEqual(
+    parseDarwinEnvironmentTags(`${command} PATH=/bin`, command),
+    {},
+  );
+  // A value that embeds a second, different tag: two candidates, no winner.
+  assert.deepEqual(
+    parseDarwinEnvironmentTags(
+      `${command} NOTE=x LOOM_RUNTIME_ID=process:b LOOM_RUNTIME_ID=process:a`,
+      command,
+    ),
+    { tagCandidates: ["process:a", "process:b"] },
+  );
+  // The command changed between the two ps calls: candidates only.
+  assert.deepEqual(
+    parseDarwinEnvironmentTags(
+      "node other.js LOOM_RUNTIME_ID=process:a",
+      command,
+    ),
+    { tagCandidates: ["process:a"] },
+  );
 });
 
 function activationEnvelope(runAttemptId: string): ActivationEnvelope {

@@ -35,6 +35,7 @@ export type {
 } from "./instance-runtime.ts";
 export type {
   RuntimeCleanupAdmission,
+  RuntimeCleanupResweepTarget,
   RuntimeCleanupTarget,
 } from "./runtime-process-cleanup.ts";
 export type {

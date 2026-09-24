@@ -50,6 +50,39 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/s
 还必须人工确认源文件范围、证据准确性、前后连续和输出质量；不自动冒称 parity。
 不得因当前失败临时放宽。对每一项超额解释固定平台成本、重复输入、额外工具轮次及提供商等待。
 
+## S2-a 热进程对照（Role 实例，Codex）
+
+`role-warm` 组与 `role`（每轮冷启动）组使用同一 Role 配置，只在隔离 gate daemon 的配置中打开
+`warmRuntimes.codex.enabled`（产品默认仍关闭）。默认组序不变；`RAH_EFFICIENCY_WARM=1` 时在末尾追加
+`role-warm`，也可显式指定 `RAH_EFFICIENCY_ORDER=native,role,role-warm`（必须含 `native`、不得重复）。
+
+```sh
+RAH_EFFICIENCY_ORDER=native,role,role-warm npm run test:cli:efficiency -- --paid
+```
+
+- 每轮从产品用量接口记录 `execution`（`mode`、`sessionResumeMs`、`lateFrameCount`、`instanceRuntimeId`）；
+  每轮模式的 `role` 组为 `null`。热进程轮次以 `turn_quiesced` 证明结束、无退出码，按 `exited` 判成功。
+- `role-warm` 断言：第 1 轮 `cold`，第 2–3 轮 `warm` 且同一 `instanceRuntimeId`、该参与者只有 1 条
+  `instance_runtimes` 记录、原生 thread 不变；Room 有效回复落库，且轨迹中每个 box-post 都带 `--turn`
+  （只记布尔值，不记句柄）。违反即 `arm.warmFailures` 非空、该组失败。
+- 默认 `role-warm` 第 3 轮前**不重启** daemon（重启必然回收热进程）；`RAH_EFFICIENCY_WARM_RESTART=1`
+  保留重启，此时第 3 轮须为带 `sessionResumeMs` 的冷恢复，运行时记录为 2 条。
+- 模型围栏：热驱动走 `--listen unix://`（Unix socket 上的 WebSocket），gate shim 占用驱动的 socket 路径、
+  真实 CLI 改用同目录 `u.sock`，逐条校验客户端文本消息后原样转发；压缩扩展帧、二进制帧或违规请求直接断开。
+- 合同 §6 预算不变，`role` 与 `role-warm` 各自对原生组判定。`result.warmVsCold` 另报逐轮回复耗时、
+  排队、总输入、生成数、恢复耗时（热 − 冷），以及 `coldResumeCostAvoided`：只对实际为 `warm` 的续聊轮
+  求和冷 − 热。它是整轮差（恢复、进程启动与工作路径波动合计），不是单独的恢复测量；
+  热组中实测的冷恢复单列为 `measuredColdResumeMs`。
+
+恢复耗时与 session 形态的关系用免费探针记录（不起 turn、不调模型；勿对正在被其他进程驱动的 thread 运行）：
+
+```sh
+node scripts/cli-efficiency/resume-probe.mjs --thread <thread-id> --repeat 3 [--json]
+```
+
+它每次新起 `codex app-server`（stdio JSON-RPC），计时 `initialize` 与 `thread/resume`，报告 rollout 文件字节数、
+行数，并比较探测前后文件是否被修改。
+
 ## 证据与后续范围
 
 证据写入打印的隔离目录 `result.json`，包含失败轮次，不包含账户凭证或完整工具输出。

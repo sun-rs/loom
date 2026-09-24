@@ -419,7 +419,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 65;
+export const KERNEL_SCHEMA_VERSION = 66;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1108,6 +1108,7 @@ export class RoomKernel {
       // The version stamp commits with the last schema unit: an interrupted
       // upgrade can never advertise a version its objects do not have.
       InstanceRuntime.migrateInstanceRuntimeColumnsV65(this.#database);
+      RunAttemptUsageService.migrateCleanupV66(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
       this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
     });

@@ -158,9 +158,13 @@ export type RunAttemptUsageRecord = z.infer<typeof RunAttemptUsageRecordSchema>;
  * S2-0 leftover-process cleanup (S2 spec §6a). The Host sweeps processes that
  * carry a dead runtime's `LOOM_RUNTIME_ID` tag (plus their descendants and
  * tagged-led process groups) and records the counts here. Diagnostics next to
- * the ledger: no Room event, Inbox, Task or trajectory effect. An unresolved
- * record (processes remaining, a sweep error, or a resource-cap alert) stops
- * new work for the participant until a later clean sweep.
+ * the ledger: no Room event, Inbox, Task or trajectory effect. Every record
+ * names its runtime; the participant is admitted only when no runtime of it
+ * is unresolved (processes remaining or unverifiable, a sweep error, a
+ * resource-cap alert, or a cleanup marked pending and not yet recorded).
+ * `releasedPorts` are ports held by swept processes that are no longer alive
+ * (and, when the post-kill check ran, have no listener now); `portsObserved`
+ * is false when ports could not be queried (unknown, not empty).
  */
 export const RuntimeProcessCleanupTriggerSchema = z.enum([
   "run_end",
@@ -197,17 +201,25 @@ const RuntimeProcessCleanupShape = {
   observedAt: TimestampSchema,
 } as const;
 
-/** The Host's authenticated write for one of its participants. */
+/** The Host's authenticated write for one runtime of its participants. */
 export const RuntimeProcessCleanupRecordInputSchema = z
-  .object({ ...RuntimeProcessCleanupShape, participantId: IdentifierSchema })
+  .object({
+    ...RuntimeProcessCleanupShape,
+    participantId: IdentifierSchema,
+    runtimeRunId: IdentifierSchema,
+    unknownCount: CleanupCountSchema.default(0),
+    portsObserved: z.boolean().default(true),
+  })
   .strict();
-export type RuntimeProcessCleanupRecordInput = z.infer<
+export type RuntimeProcessCleanupRecordInput = z.input<
   typeof RuntimeProcessCleanupRecordInputSchema
 >;
 
 export const RuntimeProcessCleanupSchema = z
   .object({
     ...RuntimeProcessCleanupShape,
+    unknownCount: CleanupCountSchema,
+    portsObserved: z.boolean(),
     blocking: z.boolean(),
     recordedAt: TimestampSchema,
   })

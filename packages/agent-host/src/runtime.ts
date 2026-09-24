@@ -25,7 +25,8 @@ export type ActivationEnvelope = Pick<
   runAttemptId: string;
   /**
    * S2-0: one short Host line for the next wake (what leftover-process
-   * cleanup killed or released). Delivered once; never Room content.
+   * cleanup killed or released). Reserved for this RunAttempt and delivered
+   * at least once (stable dedup id in the line); never Room content.
    */
   runtimeNotice?: string;
 };
@@ -86,6 +87,12 @@ export type RuntimeStartLifecycle = {
     runtimeRunId: string;
   }): Promise<void>;
   registerPrepared(run: RunHandle): Promise<void>;
+  /**
+   * S2-0 review P2-2: the runtime confirmed that the input it accepted
+   * carried `runtimeNotice` verbatim (e.g. a digest-matched Codex turn/start
+   * acceptance). Transport acceptance only, never "read" or "understood".
+   */
+  recordRuntimeNoticeAccepted?(): Promise<void>;
 };
 
 export type RuntimeBusyNotice = {

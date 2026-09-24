@@ -72,9 +72,19 @@ export type AgentHostControlPort = {
   readRuntimeCleanupAdmission?(
     input: Parameters<RoomKernel["runtimeProcessCleanup"]["admission"]>[1],
   ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["admission"]>>;
-  claimRuntimeCleanupNotice?(
-    input: Parameters<RoomKernel["runtimeProcessCleanup"]["claimNotice"]>[1],
-  ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["claimNotice"]>>;
+  /** S2-0 review: the runtime is due a sweep; blocks until one is recorded. */
+  markRuntimeCleanupPending?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["markPending"]>[1],
+  ): Promise<void>;
+  reserveRuntimeCleanupNotice?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["reserveNotice"]>[1],
+  ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["reserveNotice"]>>;
+  acceptRuntimeCleanupNotice?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["acceptNotice"]>[1],
+  ): Promise<void>;
+  releaseRuntimeCleanupNotice?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["releaseNotice"]>[1],
+  ): Promise<void>;
   resolveRuntimeCleanupTargets?(
     input: Parameters<
       RoomKernel["runtimeProcessCleanup"]["resolveRuntimes"]
@@ -82,9 +92,9 @@ export type AgentHostControlPort = {
   ): Promise<
     ReturnType<RoomKernel["runtimeProcessCleanup"]["resolveRuntimes"]>
   >;
-  listRuntimeCleanupBlockedParticipants?(): Promise<
-    ReturnType<RoomKernel["runtimeProcessCleanup"]["blockedParticipants"]>
-  >;
+  listRuntimeCleanupResweepTargets?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["resweepTargets"]>[1],
+  ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["resweepTargets"]>>;
   /** S2-a: the `turn_quiesced` proof of one warm turn. */
   recordTurnQuiesced?(
     input: Parameters<RoomKernel["instanceRuntimes"]["recordTurnQuiesced"]>[1],
@@ -224,12 +234,18 @@ export function createKernelAgentHostControlPort(
       kernel.runtimeProcessCleanup.record(host, input),
     readRuntimeCleanupAdmission: async (input) =>
       kernel.runtimeProcessCleanup.admission(host, input),
-    claimRuntimeCleanupNotice: async (input) =>
-      kernel.runtimeProcessCleanup.claimNotice(host, input),
+    markRuntimeCleanupPending: async (input) =>
+      kernel.runtimeProcessCleanup.markPending(host, input),
+    reserveRuntimeCleanupNotice: async (input) =>
+      kernel.runtimeProcessCleanup.reserveNotice(host, input),
+    acceptRuntimeCleanupNotice: async (input) =>
+      kernel.runtimeProcessCleanup.acceptNotice(host, input),
+    releaseRuntimeCleanupNotice: async (input) =>
+      kernel.runtimeProcessCleanup.releaseNotice(host, input),
     resolveRuntimeCleanupTargets: async (input) =>
       kernel.runtimeProcessCleanup.resolveRuntimes(host, input),
-    listRuntimeCleanupBlockedParticipants: async () =>
-      kernel.runtimeProcessCleanup.blockedParticipants(host),
+    listRuntimeCleanupResweepTargets: async (input) =>
+      kernel.runtimeProcessCleanup.resweepTargets(host, input),
     recordTurnQuiesced: async (input) =>
       kernel.instanceRuntimes.recordTurnQuiesced(host, input),
     instanceRuntimes: createKernelInstanceRuntimeControl(kernel, host),

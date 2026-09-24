@@ -53,14 +53,18 @@ export function measure(sessionId, round, usageOptions) {
       )
       .map((e) => {
         const args = e.payload.arguments ?? e.payload.input ?? "";
+        const kind = /message-post/.test(args)
+          ? "box-post"
+          : /message-check/.test(args)
+            ? "box-check"
+            : "other";
+        // S2-a: whether the Worker call carried the per-turn handle flag
+        // (boolean only; the handle itself is never recorded).
         return {
           at: e.timestamp,
           name: e.payload.name,
-          kind: /message-post/.test(args)
-            ? "box-post"
-            : /message-check/.test(args)
-              ? "box-check"
-              : "other",
+          kind,
+          ...(kind === "other" ? {} : { turnHandle: /--turn\b/.test(args) }),
         };
       }),
   };

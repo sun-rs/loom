@@ -259,6 +259,7 @@ export {
   LeftoverProcessSweeper,
   LOOM_RUN_ID_ENV,
   LOOM_RUNTIME_ID_ENV,
+  parseDarwinEnvironmentTags,
   RAH_RUNTIME_NOTICE_ENV,
 } from "./leftover-process-sweeper.ts";
 export type {

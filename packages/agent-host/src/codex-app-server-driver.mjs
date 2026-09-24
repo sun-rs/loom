@@ -211,11 +211,13 @@ try {
           (resumeRecovery === undefined
             ? ""
             : "The previous Provider thread was not recovered. Use canonical Room history and workspace memory as the recovery point.\n") +
-          // S1-d: the Host-prepared bodied wake when present; otherwise the
-          // fixed startup wake. The driver never composes Room content itself.
+          // S1-d: the Host-prepared wake file when present, verbatim (the
+          // Host already appended the S2-0 notice line, so the digest below
+          // covers it); otherwise the fixed startup wake plus the env notice.
+          // The driver never composes Room content itself.
           (options.wakeInput === undefined
             ? providerActivationInput()
-            : withRuntimeNotice(options.wakeInput)),
+            : options.wakeInput),
         type: "text",
       },
     ],
@@ -240,9 +242,11 @@ try {
   // input now belongs to, so this is an acknowledgement of THIS injection and
   // not merely "the process is alive". It is emitted only here: a stdin write
   // returning, or the process starting, never reaches this line.
-  // Only a Host-prepared bodied wake has a presented window behind it; the
-  // fixed wake reports nothing, so no rendering is ever marked sent for text
-  // the runtime did not receive.
+  // Digest scope: the Host-prepared wake file verbatim, which is the whole
+  // turn input (bodied or startup wake plus the notice line) except the
+  // fixed recovery line this driver prepends on a replaced session; the Host
+  // then fails to match and registers nothing. The Host decides what a match
+  // proves: a presented window (bodied wake) and/or the notice line.
   if (options.wakeInput !== undefined)
     writeDeliveryAcceptance(
       activeThreadId,
@@ -655,5 +659,4 @@ class RpcError extends Error {
 import {
   assertSessionReplacementAllowed,
   providerActivationInput,
-  withRuntimeNotice,
 } from "./provider-activation-input.js";

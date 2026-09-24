@@ -543,15 +543,67 @@ export class AgentHost {
     runAttempt ??= await this.#control.createRunAttempt({
       activationId: activation.activationId,
     });
+    // S2-0 review P2-2: the cleanup notice is reserved for this attempt and
+    // settled after it: accepted when the runtime confirmed the input that
+    // carried it, or (runtimes without a confirmation) when the run
+    // completed; otherwise released for the next run (at-least-once, with a
+    // stable dedup id in the line).
+    const notice = await this.#reserveRuntimeNotice(activation, runAttempt);
+    let result: HostCycleResult | undefined;
     try {
-      return await this.#runClaimedAttempt(
+      result = await this.#runClaimedAttempt(
         runtime,
         activation,
         runAttempt,
         agentContext,
+        notice,
       );
+      return result;
     } finally {
+      await this.#settleRuntimeNotice(
+        activation,
+        runAttempt,
+        notice,
+        result?.state === "completed",
+      );
       await this.#releaseRuntimeTurn(runtime, activation, runAttempt);
+    }
+  }
+
+  async #reserveRuntimeNotice(
+    activation: Activation,
+    runAttempt: RunAttempt,
+  ): Promise<{ accepted: boolean; text: string } | undefined> {
+    if (this.#processHygiene === undefined) return undefined;
+    try {
+      const text = await this.#processHygiene.reserveNotice(this.#control, {
+        participantId: activation.participantId,
+        runAttemptId: runAttempt.runAttemptId,
+      });
+      return text === undefined ? undefined : { accepted: false, text };
+    } catch {
+      // Informational; its loss never blocks the run (it stays pending).
+      return undefined;
+    }
+  }
+
+  async #settleRuntimeNotice(
+    activation: Activation,
+    runAttempt: RunAttempt,
+    notice: { accepted: boolean; text: string } | undefined,
+    completed: boolean,
+  ): Promise<void> {
+    if (notice === undefined || notice.accepted) return;
+    const input = {
+      participantId: activation.participantId,
+      runAttemptId: runAttempt.runAttemptId,
+    };
+    try {
+      if (completed)
+        await this.#processHygiene?.acceptNotice(this.#control, input);
+      else await this.#processHygiene?.releaseNotice(this.#control, input);
+    } catch {
+      // An unreleased reservation of a finished run returns to pending.
     }
   }
 
@@ -583,16 +635,9 @@ export class AgentHost {
     activation: Activation,
     runAttempt: RunAttempt,
     agentContext: ActivationEnvelope["agent"],
+    notice: { accepted: boolean; text: string } | undefined,
   ): Promise<HostCycleResult> {
-    let runtimeNotice: string | undefined;
-    try {
-      runtimeNotice = await this.#processHygiene?.claimNotice(this.#control, {
-        participantId: activation.participantId,
-        runAttemptId: runAttempt.runAttemptId,
-      });
-    } catch {
-      // The notice is informational; its loss never blocks the run.
-    }
+    const runtimeNotice = notice?.text;
     const envelope: ActivationEnvelope = {
       activationId: activation.activationId,
       ...(agentContext === undefined ? {} : { agent: agentContext }),
@@ -622,6 +667,18 @@ export class AgentHost {
             recordUsage: async (usage) => {
               await this.#control.recordRunAttemptUsage?.(usage);
             },
+            ...(notice === undefined
+              ? {}
+              : {
+                  recordRuntimeNoticeAccepted: async () => {
+                    if (notice.accepted) return;
+                    await this.#processHygiene?.acceptNotice(this.#control, {
+                      participantId: activation.participantId,
+                      runAttemptId: runAttempt.runAttemptId,
+                    });
+                    notice.accepted = true;
+                  },
+                }),
             recordUsageGap: async (gap) => {
               await this.#control.recordRunAttemptUsageGap?.(gap);
             },
@@ -1106,7 +1163,7 @@ export class AgentHost {
         .janitor(this.#control, "host_start")
         .catch((error: unknown) => {
           process.stderr.write(
-            `[rah-os] host-start leftover-process janitor failed: ${errorMessage(error)}\n`,
+            `[rah-os] host-start leftover-process janitor failed (admission paused until a scan succeeds): ${errorMessage(error)}\n`,
           );
         });
       janitorLoop = this.#processHygiene.runPeriodic(
@@ -1341,7 +1398,8 @@ export class AgentHost {
     try {
       await this.#processHygiene.afterRun(this.#control, input);
     } catch (error) {
-      // Recording failed: the next admission re-sweeps; never fail the run.
+      // Never fail the run: hygiene keeps an unwritten result as an in-memory
+      // admission fence and the Kernel keeps the runtime pending.
       process.stderr.write(
         `[rah-os] leftover-process cleanup for ${input.runAttemptId} failed: ${errorMessage(error)}\n`,
       );

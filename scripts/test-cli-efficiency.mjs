@@ -16,14 +16,13 @@ import { nativeRound } from "./cli-efficiency/native.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
 import { budgets, compareArm } from "./cli-efficiency/metrics.mjs";
+import { parseArmOrder, compareWarmCold } from "./cli-efficiency/warm.mjs";
 assert.ok(
   process.argv.includes("--paid"),
   "Requires explicit --paid and user authorization",
 );
-const order = (process.env.RAH_EFFICIENCY_ORDER ?? "native,legacy,role").split(
-  ",",
-);
-assert.deepEqual([...order].sort(), ["legacy", "native", "role"]);
+// Default native,legacy,role; RAH_EFFICIENCY_WARM=1 appends role-warm.
+const order = parseArmOrder(process.env);
 const root = mkdtempSync(join(tmpdir(), "rah-cli-efficiency-"));
 const commit = execFileSync(
   "git",
@@ -120,19 +119,42 @@ try {
   // work-path variance are reported, and every round carries the exact
   // total-input decomposition (printed below when that budget fails).
   result.comparisons = Object.fromEntries(
-    ["legacy", "role"].map((kind) => {
-      const nat = result.arms.native.rounds.map((r) => r.metrics);
-      const rah = result.arms[kind].rounds.map((r) => r.metrics);
-      const complete =
-        rah.length === nat.length && [...nat, ...rah].every(Boolean);
-      return [
-        kind,
-        complete
-          ? compareArm(nat, rah)
-          : { status: "missing-evidence", failures: ["metricsMissing"] },
-      ];
-    }),
+    order
+      .filter((kind) => kind !== "native")
+      .map((kind) => {
+        const nat = result.arms.native.rounds.map((r) => r.metrics);
+        const rah = result.arms[kind].rounds.map((r) => r.metrics);
+        const complete =
+          rah.length === nat.length && [...nat, ...rah].every(Boolean);
+        return [
+          kind,
+          complete
+            ? compareArm(nat, rah)
+            : { status: "missing-evidence", failures: ["metricsMissing"] },
+        ];
+      }),
   );
+  // S2-a: warm vs cold (per-turn) Role instance, reported only; the §6
+  // budgets above apply to role and role-warm each against native.
+  if (result.arms.role && result.arms["role-warm"]) {
+    result.warmVsCold = compareWarmCold(
+      result.arms.role.rounds,
+      result.arms["role-warm"].rounds,
+    );
+    for (const r of result.warmVsCold.rounds)
+      console.log(
+        `warm-vs-cold round ${r.round} (${r.mode}): ` +
+          `reply ${r.replySeconds.cold}s→${r.replySeconds.warm}s, ` +
+          `input ${r.input.cold}→${r.input.warm}, ` +
+          `generations ${r.generations.cold}→${r.generations.warm}, ` +
+          `resume ${r.sessionResumeMs.warm ?? "-"}ms, ` +
+          `lateFrames ${r.lateFrameCount}`,
+      );
+    console.log(
+      "cold resume cost avoided " +
+        JSON.stringify(result.warmVsCold.coldResumeCostAvoided),
+    );
+  }
   for (const [kind, c] of Object.entries(result.comparisons))
     for (const [i, r] of (c.rounds ?? []).entries())
       if (r.failures.includes("input"))

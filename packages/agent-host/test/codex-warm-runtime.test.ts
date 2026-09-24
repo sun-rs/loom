@@ -43,7 +43,11 @@ const fakeServerPath = fileURLToPath(
 type Harness = Awaited<ReturnType<typeof harness>>;
 
 async function harness(
-  options: { interruptQuiesceTimeoutMs?: number; idleTtlMs?: number } = {},
+  options: {
+    hostHygiene?: boolean;
+    interruptQuiesceTimeoutMs?: number;
+    idleTtlMs?: number;
+  } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-codex-"));
   chmodSync(directory, 0o700);
@@ -162,6 +166,7 @@ async function harness(
       kernel,
       leaseMs: 30_000,
       pollIntervalMs: 20,
+      ...(options.hostHygiene === true ? { processHygiene: hygiene } : {}),
       retryAfterMs: 0,
       runtime: adapter,
     });
@@ -263,6 +268,51 @@ function alive(pid: number): boolean {
     return false;
   }
 }
+
+test("S2-0 review P2-2: a warm turn carries the cleanup notice inside the accepted digest and consumes it once", async () => {
+  const state = await harness({ hostHygiene: true });
+  try {
+    state.kernel.runtimeProcessCleanup.record(state.current.host, {
+      capExceeded: [],
+      cleanupId: "warm-notice-cleanup",
+      foundCount: 1,
+      killedCount: 1,
+      observedAt: new Date().toISOString(),
+      participantId: state.participantId,
+      releasedPorts: [],
+      remainingCount: 0,
+      remainingPorts: [],
+      runtimeRunId: "process:earlier-cold-run",
+      trigger: "run_end",
+    });
+    for (let turn = 1; turn <= 2; turn += 1) {
+      state.post(`[fake:ack] question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+    }
+    const texts = state
+      .records()
+      .filter(
+        (record) =>
+          record.event === "request" && record.method === "turn/start",
+      )
+      .map((record) => JSON.stringify(record.params));
+    assert.equal(texts.length, 2);
+    assert.match(texts[0]!, /1 leftover background process was stopped/u);
+    assert.doesNotMatch(texts[1]!, /Host cleanup/u);
+    const [row] = sql(
+      state,
+      "SELECT notice_run_attempt_id, notice_accepted_at FROM runtime_process_cleanups WHERE cleanup_id = 'warm-notice-cleanup'",
+    );
+    assert.ok(row?.notice_accepted_at, "accepted through the digest match");
+    const firstRun = state.kernel
+      .listRunAttempts({ roomId: state.roomId })
+      .sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0]!;
+    assert.equal(row?.notice_run_attempt_id, firstRun.runAttemptId);
+  } finally {
+    await state.cleanup();
+  }
+});
 
 test("three Activations run on one warm process and one thread, each quiesced", async () => {
   const state = await harness();

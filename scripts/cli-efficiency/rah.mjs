@@ -1,4 +1,10 @@
 import { isEffectiveAnswer } from "./metrics.mjs";
+import {
+  runSucceeded,
+  replyTurnHandle,
+  warmExecutionFailures,
+} from "./warm.mjs";
+import { DatabaseSync } from "node:sqlite";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import {
@@ -26,6 +32,28 @@ import {
 } from "./common.mjs";
 export async function rahArm({ kind, root, cwd, questions, arm, save }) {
   const stateDirectory = join(root, "state");
+  // Every instance runtime of the participant owning `instanceRuntimeId`
+  // (read-only; no secrets, handles or paths).
+  const runtimeRows = (instanceRuntimeId) => {
+    const db = new DatabaseSync(join(stateDirectory, "room.db"), {
+      readOnly: true,
+    });
+    try {
+      return db
+        .prepare(
+          `SELECT instance_runtime_id, pid, native_session_id, session_resume_ms,
+                  state, turn_count, terminated_reason, started_at
+             FROM instance_runtimes
+            WHERE participant_id = (SELECT participant_id FROM instance_runtimes
+                                     WHERE instance_runtime_id = ?)
+            ORDER BY started_at`,
+        )
+        .all(instanceRuntimeId)
+        .map((row) => ({ ...row }));
+    } finally {
+      db.close();
+    }
+  };
   const realCodex = execFileSync("which", ["codex"], {
     encoding: "utf8",
   }).trim();
@@ -45,8 +73,19 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
     stateDirectory,
     workspaceCwd: cwd,
   });
+  // role-warm: the S2-a warm Codex runtime (off by default in the product).
+  // Its daemon restart before round 3 is skipped unless
+  // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
+  // resume at round 3; the per-turn arms keep the restart.
+  const warm = kind === "role-warm";
+  const config = warm
+    ? { ...prepared.config, warmRuntimes: { codex: { enabled: true } } }
+    : prepared.config;
+  const restartBeforeRound =
+    warm && process.env.RAH_EFFICIENCY_WARM_RESTART !== "1" ? undefined : 3;
+  Object.assign(arm, { warmRuntimes: warm, restartBeforeRound });
   const configPath = join(root, "config.json");
-  writeFileSync(configPath, JSON.stringify(prepared.config), { mode: 0o600 });
+  writeFileSync(configPath, JSON.stringify(config), { mode: 0o600 });
   let child, exit, origin, observer, participantId, agentId, roomId, actor;
   let sessionId;
   async function start() {
@@ -169,7 +208,7 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
         idempotencyKey: randomUUID(),
       })
     ).room.roomId;
-    if (kind === "role") {
+    if (kind === "role" || warm) {
       const role = (
         await post("/v3/client/roles/create", {
           controlRoomId: control,
@@ -225,7 +264,7 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
     Object.assign(arm, { participantId, roomId });
     save();
     for (let i = 0; i < questions.length; i++) {
-      if (i === 2) {
+      if (i + 1 === restartBeforeRound) {
         await stop();
         await start();
       }
@@ -282,7 +321,19 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
           exitCode: r.exitCode,
         }));
       assert.equal(round.runs.length, 1, "Unexpected follow-up Run");
-      assert.equal(round.runs[0].exitCode, 0);
+      // Product-recorded usage; compareRounds requires it complete and
+      // cross-checks it against the transcript-derived RAH usage.
+      const productUsage = await post("/v3/client/agents/run-usage/get", {
+        agentId,
+        runAttemptId: round.runs[0].runAttemptId,
+      });
+      // S2-a execution record: null for per-turn runs.
+      round.execution = productUsage.execution ?? null;
+      save();
+      assert.ok(
+        runSucceeded(round.runs[0], round.execution),
+        "RunAttempt did not succeed",
+      );
       round.queueSeconds =
         (Date.parse(round.runs[0].startedAt) - Date.parse(round.startedAt)) /
         1000;
@@ -291,20 +342,29 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       )
         .map((p) => JSON.parse(readFileSync(p)))
         .filter((s) => s.participantId === participantId);
-      assert.equal(records.length, 1);
-      const current = records[0].providerSessionId;
+      // Warm turns: the instance runtime's native thread is authoritative;
+      // a provider-session record, when present, must agree with it.
+      const runtimeThread = round.execution
+        ? runtimeRows(round.execution.instanceRuntimeId).find(
+            (r) => r.instance_runtime_id === round.execution.instanceRuntimeId,
+          )?.native_session_id
+        : undefined;
+      if (!round.execution) assert.equal(records.length, 1);
+      else
+        assert.ok(
+          records.length <= 1 && (runtimeThread || records.length),
+          "Warm turn has no native thread evidence",
+        );
+      const current = runtimeThread ?? records[0].providerSessionId;
+      if (runtimeThread && records.length)
+        assert.equal(records[0].providerSessionId, runtimeThread);
       if (sessionId) assert.equal(current, sessionId, "Session changed");
       sessionId = current;
       round.sessionId = sessionId;
       round.metrics = measure(sessionId, round, {
         replyAt: effective?.createdAt ?? null,
       });
-      // Product-recorded usage; compareRounds requires it complete and
-      // cross-checks it against the transcript-derived RAH usage.
-      const productUsage = await post("/v3/client/agents/run-usage/get", {
-        agentId,
-        runAttemptId: round.runs[0].runAttemptId,
-      });
+      round.replyTurnHandle = replyTurnHandle(round.metrics.toolCalls);
       round.metrics.productUsage = {
         completeness: productUsage.completeness,
         gaps: productUsage.gaps,
@@ -336,6 +396,16 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
           readFileSync(join(cwd, file)),
           "Actual workspace changed",
         );
+    if (warm) {
+      const first = arm.rounds[0].execution?.instanceRuntimeId;
+      arm.instanceRuntimes = first ? runtimeRows(first) : [];
+      arm.warmFailures = warmExecutionFailures(arm.rounds, {
+        restartBeforeRound,
+        runtimeCount: arm.instanceRuntimes.length,
+      });
+      save();
+      assert.deepEqual(arm.warmFailures, [], "Warm execution contract");
+    }
     arm.status = "complete";
   } finally {
     await stop();

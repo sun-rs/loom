@@ -79,10 +79,17 @@ export type GenericProcessAdapterOptions = {
     input: ActivationEnvelope,
     evidence: RuntimeProviderSessionEvidence,
   ) => Promise<void> | void;
+  /**
+   * May report that the accepted input carried this run's S2-0 notice line
+   * verbatim (its digest matched a Host-composed input that included it).
+   */
   recordDeliveryAcceptance?: (
     input: ActivationEnvelope,
     acceptance: RuntimeDeliveryAcceptance,
-  ) => Promise<void> | void;
+  ) =>
+    | Promise<void | RuntimeDeliveryAcceptanceOutcome>
+    | void
+    | RuntimeDeliveryAcceptanceOutcome;
   supervisorControlTimeoutMs?: number;
   supervisorDirectory?: string;
   supervisorStartupTimeoutMs?: number;
@@ -107,6 +114,10 @@ export type RuntimeProviderSessionEvidence = Readonly<{
  * id is never Room or UI truth. Receiving it is the ONLY thing that lets the
  * Host register the send; no stdin write, spawn or exit code reaches it.
  */
+export type RuntimeDeliveryAcceptanceOutcome = {
+  runtimeNoticeAccepted?: boolean;
+};
+
 export type RuntimeDeliveryAcceptance = Readonly<{
   protocol: "rah-delivery-accepted/v1";
   provider: string;
@@ -441,7 +452,12 @@ export class RuntimeTrajectoryCollector {
         }
         const acceptance = parseDeliveryAcceptance(frame);
         if (acceptance !== null) {
-          await this.#recordDeliveryAcceptance?.(this.#activation, acceptance);
+          const outcome = await this.#recordDeliveryAcceptance?.(
+            this.#activation,
+            acceptance,
+          );
+          if (outcome?.runtimeNoticeAccepted === true)
+            await this.#lifecycle.recordRuntimeNoticeAccepted?.();
           return;
         }
         if (isRecord(frame) && frame.protocol === "rah-provider-usage/v1") {

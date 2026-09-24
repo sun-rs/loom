@@ -159,13 +159,14 @@ async function fixture() {
           .get(room.roomId, agentId)?.n ?? 0,
       ),
     /** Runs one Activation through the real runtime and returns what happened. */
-    async runActivation() {
+    async runActivation(options: { runtimeNotice?: string } = {}) {
       const activation = kernel.leaseNextActivation(host, { leaseMs: 600_000 });
       assert.ok(activation, "an Activation must be queued");
       const attempt = kernel.createRunAttempt(host, {
         activationId: activation.activationId,
       });
       let runtimeRunId = "";
+      let noticeAccepted = 0;
       const handle = await runtime.start(
         {
           activationId: activation.activationId,
@@ -176,9 +177,15 @@ async function fixture() {
           reason: activation.reason,
           roomId: room.roomId,
           runAttemptId: attempt.runAttemptId,
+          ...(options.runtimeNotice === undefined
+            ? {}
+            : { runtimeNotice: options.runtimeNotice }),
           toSeq: activation.toSeq,
         },
         {
+          recordRuntimeNoticeAccepted: async () => {
+            noticeAccepted += 1;
+          },
           registerPrepared: async (run) => {
             runtimeRunId = run.runId;
             kernel.prepareRunAttemptRuntime(host, {
@@ -221,6 +228,7 @@ async function fixture() {
       return {
         activation,
         diagnostics,
+        noticeAccepted,
         wake: records.find((record) => record.wake !== undefined)
           ?.wake as string,
         commands: records
@@ -385,6 +393,55 @@ test("bodied wake: an oversized first message falls back to the startup wake and
     assert.equal(result.sentAt, null, "no rendering was sent to the runtime");
     assert.equal(checkCommands(result.commands).length, 1);
     assert.equal(context.cursor(), result.activation.toSeq);
+    assert.doesNotThrow(() => result.complete());
+  } finally {
+    await context.close();
+  }
+});
+
+const NOTICE =
+  "Host cleanup after your previous run: 1 leftover background process was stopped. Restart anything you still need. (notice 0123abcd)";
+
+test("S2-0 review P2-2: the cleanup notice rides the bodied wake inside the accepted digest", async () => {
+  const context = await fixture();
+  try {
+    context.post("what is the build status?");
+    const result = await context.runActivation({ runtimeNotice: NOTICE });
+    assert.equal(result.wake.split(NOTICE).length - 1, 1, result.wake);
+    assert.ok(result.wake.endsWith(`\n${NOTICE}`));
+    // The acceptance digest covers the actual input, notice included, so
+    // the presented window still registers as sent.
+    assert.ok(result.sentAt !== null, result.diagnostics);
+    assert.equal(result.noticeAccepted, 1);
+    assert.doesNotThrow(() => result.complete());
+  } finally {
+    await context.close();
+  }
+});
+
+test("S2-0 review P2-2: a startup-wake fallback carries the notice and confirms only the notice", async () => {
+  const context = await fixture();
+  try {
+    context.post("x".repeat(70 * 1024));
+    const result = await context.runActivation({ runtimeNotice: NOTICE });
+    assert.match(result.wake, /message-check --startup/u);
+    assert.equal(result.wake.split(NOTICE).length - 1, 1);
+    assert.equal(result.sentAt, null, "no rendering was sent to the runtime");
+    assert.equal(result.noticeAccepted, 1);
+    assert.doesNotThrow(() => result.complete());
+  } finally {
+    await context.close();
+  }
+});
+
+test("bodied wake: without a notice nothing is confirmed for one", async () => {
+  const context = await fixture();
+  try {
+    context.post("hello");
+    const result = await context.runActivation();
+    assert.ok(result.sentAt !== null);
+    assert.equal(result.noticeAccepted, 0);
+    assert.doesNotMatch(result.wake, /Host cleanup/u);
     assert.doesNotThrow(() => result.complete());
   } finally {
     await context.close();

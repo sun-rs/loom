@@ -76,6 +76,15 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 未经真实 Codex 验证：多轮协议、`turn/steer` 时序、thread 卸载行为、`turn/completed` 与用量帧顺序、后台终端（未使用 `thread/backgroundTerminals`）。打包产品构建回退为每轮模式。
 - 未做（S2-b/c）：LRU、RSS/时长回收、四信号卡死判定、其余三家驱动。
 
+### 十、S2-0 审查修复与门禁冷热对比（schema 66）
+
+- 清扫状态按运行时聚合（`runtime_cleanup_states`：pending/blocked/resolved），实例只有在全部运行时已解决时才可准入；观测按时间顺序生效，旧观测不会解除新状态；janitor 不再写"整实例已清空"。
+- 清扫前先在 Kernel 标记 pending；记录写入失败、ps 失败、启动扫描失败一律视为未知并阻断准入，直到完整清扫成功。
+- 有界清扫后对完整目标集合复扫，仍存在或无法确定的计入残留/未知并阻断；ps/lsof 带 15 s 超时，失败抛错而非返回空；lsof 失败时端口状态为未知；记住组长存活时见过的进程组；`resolveRuntimes` 分页。
+- macOS 环境行须按 pid 与启动时间匹配，只读取 `LOOM_RUNTIME_ID=<id>`；冲突或两次 ps 之间命令变化的进程不发信号、计为未知。每次发信号前重读身份（`lstart` 只精确到秒、`kill` 非原子，仍有很小的 PID 复用窗口）。
+- 清理通知改为按 Run 预留 → 接受 → 释放，至少一次投递并带去重标识；Codex 接收摘要覆盖包含通知的完整输入。
+- 门禁：新增 `role-warm` 组（`RAH_EFFICIENCY_ORDER=native,role,role-warm`），逐轮记录执行模式、session 恢复耗时、迟到帧，输出冷热对比；无模型的 `scripts/cli-efficiency/resume-probe.mjs` 测量 thread 恢复耗时。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

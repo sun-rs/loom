@@ -26,6 +26,7 @@ const leftoverCliPath = fileURLToPath(
 
 const EMPTY_FOOTPRINT: LeftoverFootprint = {
   listeningPorts: [],
+  portsObserved: true,
   processCount: 0,
   rssKb: 0,
 };
@@ -37,9 +38,11 @@ function sweepResult(
     footprint: EMPTY_FOOTPRINT,
     found: 0,
     killed: 0,
+    portsObserved: true,
     releasedPorts: [],
     remaining: 0,
     remainingPorts: [],
+    unknown: 0,
     ...overrides,
   };
 }
@@ -274,6 +277,7 @@ test("S2-0 a resource cap during a busy run alerts and blocks admission without 
     const sweeper = new ScriptedSweeper();
     sweeper.footprint = {
       listeningPorts: [3000, 3001, 3002],
+      portsObserved: true,
       processCount: 3,
       rssKb: 10,
     };
@@ -444,3 +448,338 @@ for (const scenario of ["run_end", "runtime_crash", "host_start"] as const) {
     },
   );
 }
+
+// ---------------------------------------------------------------------------
+// S2-0 independent review (2026-09-24) regressions.
+
+type HygieneControl = ReturnType<typeof createKernelAgentHostControlPort>;
+
+for (const order of ["a-then-b", "b-then-a"] as const)
+  test(`S2-0 review P1-1: one runtime's clean sweep never admits past another's leftovers (${order})`, async () => {
+    const f = fixture(`agg-${order}`);
+    try {
+      const sweeper = new ScriptedSweeper();
+      let aStuck = true;
+      sweeper.next = (ids) =>
+        ids.has("runtime-a") && aStuck
+          ? sweepResult({ found: 1, remaining: 1 })
+          : sweepResult();
+      const hygiene = new RuntimeProcessHygiene({
+        onAlert: () => undefined,
+        sweeper,
+      });
+      const control = createKernelAgentHostControlPort(f.kernel, f.host);
+      const sweepRuntime = (runtimeId: string) =>
+        hygiene.afterRuntime(control, {
+          participantId: f.agentId,
+          runtimeId,
+          trigger: "runtime_crash",
+        });
+      for (const runtimeId of order === "a-then-b"
+        ? ["runtime-a", "runtime-b"]
+        : ["runtime-b", "runtime-a"])
+        await sweepRuntime(runtimeId);
+      const blocked = await hygiene.admit(control, f.agentId);
+      assert.equal(blocked.blocked, true);
+      assert.match(blocked.blocked ? blocked.reason : "", /runtime-a/u);
+      aStuck = false;
+      assert.deepEqual(await hygiene.admit(control, f.agentId), {
+        blocked: false,
+      });
+    } finally {
+      f.cleanup();
+    }
+  });
+
+test("S2-0 review P1-1: the periodic janitor interleaved with afterRun never sweeps one runtime twice at once, and the newest observation decides", async () => {
+  const f = fixture("interleave");
+  try {
+    const gates: Array<() => void> = [];
+    let active = 0;
+    let maxActive = 0;
+    let calls = 0;
+    const sweeper = new ScriptedSweeper();
+    sweeper.sweep = async (ids) => {
+      sweeper.sweeps.push([...ids].sort());
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      calls += 1;
+      const call = calls;
+      await new Promise<void>((resolve) => gates.push(resolve));
+      active -= 1;
+      // The first (afterRun) sweep leaves one; the janitor's later one too.
+      return call <= 2
+        ? sweepResult({ found: 1, remaining: 1 })
+        : sweepResult();
+    };
+    let tick = Date.parse("2026-09-24T02:00:00.000Z");
+    const hygiene = new RuntimeProcessHygiene({
+      now: () => new Date((tick += 1_000)),
+      onAlert: () => undefined,
+      sweeper,
+    });
+    const control = createKernelAgentHostControlPort(f.kernel, f.host);
+    const afterRun = hygiene.afterRuntime(control, {
+      participantId: f.agentId,
+      runtimeId: "runtime-r",
+      trigger: "run_end",
+    });
+    while (gates.length === 0) await new Promise((r) => setImmediate(r));
+    // The janitor finds runtime-r pending and wants to re-sweep it.
+    const janitor = hygiene.janitor(control, "janitor");
+    for (let index = 0; index < 20; index += 1)
+      await new Promise((r) => setImmediate(r));
+    assert.equal(active, 1, "the janitor waits for the running sweep");
+    gates.shift()!();
+    while (gates.length === 0) await new Promise((r) => setImmediate(r));
+    gates.shift()!();
+    await Promise.all([afterRun, janitor]);
+    assert.equal(maxActive, 1);
+    assert.equal(
+      (await control.readRuntimeCleanupAdmission!({ participantId: f.agentId }))
+        .blocked,
+      true,
+    );
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("S2-0 review P1-1: a participant-only janitor with nothing tagged never clears a live resource-cap block", async () => {
+  const f = fixture("cap-live");
+  try {
+    const sweeper = new ScriptedSweeper();
+    sweeper.footprint = {
+      listeningPorts: [3000, 3001, 3002],
+      portsObserved: true,
+      processCount: 3,
+      rssKb: 10,
+    };
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => (release = resolve));
+    const runtime = new FakeRuntimeAdapter({
+      onReap: async () => {
+        await released;
+        return { code: 0 };
+      },
+      onStart: f.acknowledge,
+    });
+    const control = createKernelAgentHostControlPort(f.kernel, f.host);
+    let whileBusy:
+      Promise<Awaited<ReturnType<RuntimeProcessHygiene["admit"]>>> | undefined;
+    const hygiene: RuntimeProcessHygiene = new RuntimeProcessHygiene({
+      capCheckIntervalMs: 1,
+      caps: { maxListeningPorts: 2 },
+      onAlert: () => {
+        whileBusy = hygiene.admit(control, f.agentId).finally(release);
+      },
+      sweeper,
+    });
+    const host = new AgentHost({
+      host: f.host,
+      kernel: f.kernel,
+      leaseMs: 30_000,
+      processHygiene: hygiene,
+      runtime,
+    });
+    f.post();
+    assert.equal((await host.reconcileOnce()).state, "completed");
+    const admission = await whileBusy!;
+    assert.equal(admission.blocked, true);
+    assert.match(admission.blocked ? admission.reason : "", /listening_ports/u);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("S2-0 review P1-2: a failed cleanup record write fences admission until the retry succeeds", async () => {
+  const f = fixture("record-fail");
+  try {
+    const sweeper = new ScriptedSweeper();
+    sweeper.next = () => sweepResult({ found: 1, killed: 1 });
+    const hygiene = new RuntimeProcessHygiene({
+      onAlert: () => undefined,
+      sweeper,
+    });
+    const real = createKernelAgentHostControlPort(f.kernel, f.host);
+    let failing = true;
+    const control: HygieneControl = {
+      ...real,
+      markRuntimeCleanupPending: async (input) => {
+        if (failing) throw new Error("kernel unavailable");
+        return await real.markRuntimeCleanupPending!(input);
+      },
+      recordRuntimeProcessCleanup: async (input) => {
+        if (failing) throw new Error("kernel unavailable");
+        return await real.recordRuntimeProcessCleanup!(input);
+      },
+    };
+    // Never throws into the run's own outcome.
+    await hygiene.afterRuntime(control, {
+      participantId: f.agentId,
+      runtimeId: "runtime-w",
+      trigger: "run_end",
+    });
+    const fenced = await hygiene.admit(control, f.agentId);
+    assert.equal(fenced.blocked, true);
+    assert.match(
+      fenced.blocked ? fenced.reason : "",
+      /RAH_RUNTIME_CLEANUP_BLOCKED: .*not recorded/u,
+    );
+    failing = false;
+    assert.deepEqual(await hygiene.admit(control, f.agentId), {
+      blocked: false,
+    });
+    assert.equal(sweeper.sweeps.length, 1, "the recorded result is retried");
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("S2-0 review P1-2: a Host that dies after marking a cleanup pending leaves the runtime blocked until a sweep is recorded", async () => {
+  const f = fixture("pending-crash");
+  try {
+    const control = createKernelAgentHostControlPort(f.kernel, f.host);
+    await control.markRuntimeCleanupPending!({
+      observedAt: new Date().toISOString(),
+      participantId: f.agentId,
+      runtimeRunId: "runtime-lost",
+    });
+    // A new Host process (fresh hygiene) re-sweeps the pending runtime.
+    const sweeper = new ScriptedSweeper();
+    const hygiene = new RuntimeProcessHygiene({ sweeper });
+    assert.deepEqual(await hygiene.admit(control, f.agentId), {
+      blocked: false,
+    });
+    assert.deepEqual(sweeper.sweeps, [["runtime-lost"]]);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("S2-0 review P1-2: a ps failure blocks admission and a later successful sweep unblocks", async () => {
+  const f = fixture("ps-fail");
+  try {
+    const sweeper = new ScriptedSweeper();
+    let psDown = true;
+    sweeper.next = () => {
+      if (psDown) throw new Error("ps: timed out");
+      return sweepResult();
+    };
+    const hygiene = new RuntimeProcessHygiene({
+      onAlert: () => undefined,
+      sweeper,
+    });
+    const control = createKernelAgentHostControlPort(f.kernel, f.host);
+    await hygiene.afterRuntime(control, {
+      participantId: f.agentId,
+      runtimeId: "runtime-ps",
+      trigger: "run_end",
+    });
+    const blocked = await hygiene.admit(control, f.agentId);
+    assert.match(blocked.blocked ? blocked.reason : "", /ps: timed out/u);
+    psDown = false;
+    assert.deepEqual(await hygiene.admit(control, f.agentId), {
+      blocked: false,
+    });
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("S2-0 review P1-2: a failed host-start scan is unknown, not empty, and blocks until a scan succeeds", async () => {
+  const f = fixture("scan-fail");
+  try {
+    const sweeper = new ScriptedSweeper();
+    let psDown = true;
+    sweeper.taggedRuntimeIds = async () => {
+      if (psDown) throw new Error("ps: exited 2");
+      return new Set<string>();
+    };
+    const hygiene = new RuntimeProcessHygiene({ sweeper });
+    const control = createKernelAgentHostControlPort(f.kernel, f.host);
+    await assert.rejects(
+      hygiene.janitor(control, "host_start"),
+      /ps: exited 2/u,
+    );
+    const blocked = await hygiene.admit(control, f.agentId);
+    assert.match(
+      blocked.blocked ? blocked.reason : "",
+      /process scan unavailable: ps: exited 2/u,
+    );
+    psDown = false;
+    assert.deepEqual(await hygiene.admit(control, f.agentId), {
+      blocked: false,
+    });
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("S2-0 review P2-2: an early start failure releases the notice; a failed run without acceptance redelivers it; acceptance consumes it", async () => {
+  const f = fixture("notice");
+  try {
+    const sweeper = new ScriptedSweeper();
+    sweeper.next = (ids) =>
+      ids.has("fake-run-1")
+        ? sweepResult({ found: 1, killed: 1, releasedPorts: [4000] })
+        : sweepResult();
+    let failStart = false;
+    let confirm = false;
+    const runtime = new FakeRuntimeAdapter({
+      onStart: (input) => {
+        if (failStart) {
+          failStart = false;
+          throw new Error("launch failed before the input was sent");
+        }
+        f.acknowledge(input);
+      },
+    });
+    const confirming = {
+      probe: () => runtime.probe(),
+      reap: (run: Parameters<FakeRuntimeAdapter["reap"]>[0]) =>
+        runtime.reap(run),
+      cancel: (run: Parameters<FakeRuntimeAdapter["cancel"]>[0]) =>
+        runtime.cancel(run),
+      async start(
+        input: Parameters<FakeRuntimeAdapter["start"]>[0],
+        lifecycle: Parameters<FakeRuntimeAdapter["start"]>[1],
+      ) {
+        const run = await runtime.start(input, lifecycle);
+        if (confirm && input.runtimeNotice !== undefined)
+          await lifecycle.recordRuntimeNoticeAccepted?.();
+        return run;
+      },
+    };
+    const host = new AgentHost({
+      host: f.host,
+      kernel: f.kernel,
+      leaseMs: 30_000,
+      processHygiene: new RuntimeProcessHygiene({ sweeper }),
+      retryAfterMs: 0,
+      runtime: confirming,
+    });
+    f.post();
+    assert.equal((await host.reconcileOnce()).state, "completed");
+    // Run 2 fails to launch: its reserved notice goes back.
+    failStart = true;
+    f.post();
+    assert.equal((await host.reconcileOnce()).state, "failed");
+    const notice = runtime.starts[1]?.runtimeNotice;
+    assert.match(notice ?? "", /port 4000/u);
+    // Run 3 gets the same line, then exits non-zero without confirming.
+    runtime.enqueueExit({ code: 3 });
+    assert.equal((await host.reconcileOnce()).state, "failed");
+    assert.equal(runtime.starts[2]?.runtimeNotice, notice);
+    // Run 4 confirms acceptance and then fails: consumed anyway.
+    confirm = true;
+    runtime.enqueueExit({ code: 3 });
+    assert.equal((await host.reconcileOnce()).state, "failed");
+    assert.equal(runtime.starts[3]?.runtimeNotice, notice);
+    f.post();
+    await host.reconcileOnce();
+    assert.equal(runtime.starts[4]?.runtimeNotice, undefined);
+  } finally {
+    f.cleanup();
+  }
+});

@@ -257,6 +257,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     });
     const diagnostics = new BoundedOutput(65_536, [credential.accessToken]);
     let preparedDigest: string | undefined;
+    let noticeDigest: string | undefined;
     turn.collector = new RuntimeTrajectoryCollector({
       activation: input,
       diagnostics,
@@ -280,12 +281,22 @@ export class CodexWarmAdapter implements RuntimeAdapter {
               ),
           }),
       recordDeliveryAcceptance: async (activation, acceptance) => {
-        if (preparedDigest === undefined) return;
-        if (acceptance.inputSha256 !== preparedDigest)
-          throw new Error(
-            "runtime delivery acceptance does not match the prepared wake input",
+        // The driver hashes the full turn text (wake + handle + notice).
+        if (preparedDigest !== undefined) {
+          if (acceptance.inputSha256 !== preparedDigest)
+            throw new Error(
+              "runtime delivery acceptance does not match the prepared wake input",
+            );
+          await this.#options.recordDeliveryAcceptance?.(
+            activation,
+            acceptance,
           );
-        await this.#options.recordDeliveryAcceptance?.(activation, acceptance);
+        }
+        return {
+          runtimeNoticeAccepted:
+            noticeDigest !== undefined &&
+            acceptance.inputSha256 === noticeDigest,
+        };
       },
       redactions: [credential.accessToken],
       runAttemptId: input.runAttemptId,
@@ -293,9 +304,11 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     });
     await lifecycle.registerPrepared(handle);
     const wake = await this.#wakeText(input, runtime, turn);
-    preparedDigest = wake.bodied
-      ? createHash("sha256").update(wake.text, "utf8").digest("hex")
-      : undefined;
+    const fullDigest = createHash("sha256")
+      .update(wake.text, "utf8")
+      .digest("hex");
+    preparedDigest = wake.bodied ? fullDigest : undefined;
+    noticeDigest = wake.noticed ? fullDigest : undefined;
     turn.beginSent = true;
     runtime.command({
       op: "turn.begin",
@@ -445,7 +458,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     input: ActivationEnvelope,
     runtime: WarmRuntime,
     turn: WarmTurn,
-  ): Promise<{ bodied: boolean; text: string }> {
+  ): Promise<{ bodied: boolean; noticed: boolean; text: string }> {
     const handle = turn.handle!.handle;
     let bodied: string | undefined;
     if (this.#options.renderWake !== undefined) {
@@ -465,13 +478,15 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         );
       }
     }
-    const base = bodied ?? providerActivationInput();
+    // Never the Host process's own environment: the notice is appended below.
+    const base = bodied ?? providerActivationInput("");
     const notice = (input.runtimeNotice ?? "")
       .split("\n")[0]!
       .trim()
       .slice(0, RUNTIME_NOTICE_LIMIT);
     return {
       bodied: bodied !== undefined,
+      noticed: notice !== "",
       text:
         withWorkerTurnHandle(base, handle) +
         (notice === "" ? "" : `\n${notice}`),
