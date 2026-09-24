@@ -146,6 +146,7 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - OpenCode 1.18.32（源码只读核实）：每次模型请求都重建 system（agent prompt/默认 → env → instructions 文件 → 最后一条用户消息的 system）。常驻提示词改为内容寻址、0600 的 instructions 文件，经 `OPENCODE_CONFIG_CONTENT` 注入并合并已有配置；不再发送逐消息 system，因此压缩后自动插入的"Continue"步骤也带规则；`session.compacted` 只记诊断。
 - 带正文唤醒：驱动自选 user messageID，第一个 parentID 指向它的 assistant 作为接收证明；`--final`：发帖工具结束后 `POST /session/:id/abort`（先读取已持久化消息，避免截断发帖工具）。
 - 常驻 OpenCode（`warmRuntimes.opencode`，默认关闭）：每实例一个长驻 serve + 持久 SSE；轮次边界取我们同步 `POST /message` 的响应（自动续写后的后续步骤 parent 是合成的 Continue 消息，不能用 parent 判定）；SSE 重连后按消息列表对账、不重发；拒绝忙时输入。
+- Kimi 漂移复测（k3-256k/low 冷模式，96e1dd0，`docs/evo/evidence/2026-09-25-drift-kimi-cold-r2.json`）：20 轮送达 100%，每轮恰好一条回复、0 重试（第 9 轮不再重复），目标错投 0，无越权建任务，未出现应沉默时发言，`--final` 100%，ACK 100%；两次强制压缩后规则卡仍生效。门禁因格式率判为退化而失败：5 轮超出"≤40 字"，全部是答案本身含长标识符（第 1 轮在压缩前就已超长），属模型遵守度，不是规则遗忘。
 - 待付费验证：abort 与下一次模型请求的真实时序、真实 SSE 顺序、压缩后规则进入续写步骤。
 
 ## 已知缺陷（待阶段 3 修复）
