@@ -7,7 +7,7 @@ import {
   buildCompactionSafetySection,
 } from "../src/raft-memory/upstream-standing-prompt.ts";
 import { localWorkbenchWorkerPrompt } from "../../daemon/src/local-cli-runtime-spec.ts";
-import { workerHelpTopic } from "../src/worker-help-topics.ts";
+import { workerHelpTopic } from "../src/standing-protocol.ts";
 
 test("vendored Raft 1.0.18 memory source is byte-exact except the explicit export footer", () => {
   const file = readFileSync(

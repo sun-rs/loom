@@ -6,6 +6,10 @@ import {
   writeWakeInputFile,
 } from "./bodied-wake.ts";
 import {
+  RAH_PROTOCOL_NOTICE_ENV,
+  SessionProtocolUpgrade,
+} from "./session-protocol-upgrade.ts";
+import {
   providerActivationInput,
   withRuntimeNotice,
 } from "./provider-activation-input.js";
@@ -636,8 +640,10 @@ function createClaudeStreamJsonRuntime(
   }
   const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
+  const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
   return new GenericProcessAdapter({
     ...processOptions,
+    acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     nativeBusyInput: true,
     guideRuntimeId: "claude",
     busyInputMode: "direct",
@@ -668,9 +674,15 @@ function createClaudeStreamJsonRuntime(
         lease,
         previous,
       );
+      const protocolNotice = protocolUpgrade.prepare(
+        input,
+        lease,
+        key,
+        previous,
+      );
       if (previous === null) return preparedLease;
       return {
-        ...preparedLease,
+        ...protocolUpgrade.withNotice(preparedLease, protocolNotice),
         args: [
           ...(lease.args ?? []),
           "--resume-session",
@@ -727,6 +739,8 @@ function createClaudeStreamJsonRuntime(
                 {
                   instance: input.agent?.instanceChannelId !== undefined,
                   instanceGeneration: input.agent?.instanceSessionGeneration,
+                  standingProtocolVersion:
+                    protocolUpgrade.currentVersion(input),
                   systemMemorySha256: systemMemory.evidence(
                     input.runAttemptId,
                     evidence.providerSessionId,
@@ -819,6 +833,7 @@ function createCodexAppServerRuntime(
   }
   const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
+  const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
   // S1-d: the bodied wake needs the Host to register the driver's acceptance;
   // without that registration a presented window can never confirm delivery.
   const bodiedWake =
@@ -868,13 +883,15 @@ function createCodexAppServerRuntime(
     // S2-0 review P2-2: the Host appends the notice line itself, so the
     // file is the whole input and the acceptance digest covers the notice.
     const notice = input.runtimeNotice ?? "";
+    // P2-3: the protocol line rides in the same Host-composed file.
+    const protocolNotice = lease.env[RAH_PROTOCOL_NOTICE_ENV] ?? "";
     if (bodied === undefined) {
       // The fixed startup wake; no window digest is remembered, so its
       // acceptance registers no send and the model confirms delivery with
       // message-check. It can still confirm the notice line.
       const digest = await writeWakeInputFile(
         path,
-        providerActivationInput(notice),
+        providerActivationInput(notice, undefined, protocolNotice),
       );
       if (notice !== "")
         remember(noticeWakeDigests, input.runAttemptId, digest);
@@ -882,7 +899,7 @@ function createCodexAppServerRuntime(
     }
     const digest = await writeWakeInputFile(
       path,
-      withRuntimeNotice(bodied, notice),
+      withRuntimeNotice(bodied, notice, protocolNotice),
     );
     remember(preparedWakeDigests, input.runAttemptId, digest);
     if (notice !== "") remember(noticeWakeDigests, input.runAttemptId, digest);
@@ -893,6 +910,7 @@ function createCodexAppServerRuntime(
     finalReplyInterrupt: true,
     guideRuntimeId: "codex",
     busyInputMode: "direct",
+    acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     ...(bodiedWake ? { beforeLaunch } : {}),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
@@ -910,10 +928,9 @@ function createCodexAppServerRuntime(
         instance: input.agent?.instanceChannelId !== undefined,
         instanceGeneration: input.agent?.instanceSessionGeneration,
       });
-      const preparedLease = systemMemory.prepare(
-        input.runAttemptId,
-        lease,
-        previous,
+      const preparedLease = protocolUpgrade.withNotice(
+        systemMemory.prepare(input.runAttemptId, lease, previous),
+        protocolUpgrade.prepare(input, lease, key, previous),
       );
       if (previous === null) return await withBodiedWake(input, preparedLease);
       return await withBodiedWake(input, {
@@ -1002,6 +1019,8 @@ function createCodexAppServerRuntime(
                 {
                   instance: input.agent?.instanceChannelId !== undefined,
                   instanceGeneration: input.agent?.instanceSessionGeneration,
+                  standingProtocolVersion:
+                    protocolUpgrade.currentVersion(input),
                   systemMemorySha256: systemMemory.evidence(
                     input.runAttemptId,
                     evidence.providerSessionId,
@@ -1038,7 +1057,12 @@ function createCodexWarmRuntime(
   const coldStartRun = new Map<string, string>();
   const provider = "codex-app-server/v1";
   const recordDeliveryAcceptance = options.recordDeliveryAcceptance;
+  // P2-3: the warm turn text is Host-composed, so the line is appended per
+  // turn (`protocolNotice`) rather than through the process environment.
+  const protocolUpgrade = new SessionProtocolUpgrade(store);
   return new CodexWarmAdapter({
+    acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
+    protocolNotice: (input) => protocolUpgrade.noticeFor(input),
     // S2-b: an idle runtime restarts when the probed binary changes.
     ...(executableIdentity?.resolvedExecutablePath === undefined
       ? {}
@@ -1080,6 +1104,7 @@ function createCodexWarmRuntime(
         instanceGeneration: input.agent?.instanceSessionGeneration,
       });
       coldStartRun.set(input.participantId, input.runAttemptId);
+      protocolUpgrade.prepare(input, lease, key, previous);
       const prepared = systemMemory.prepare(
         input.runAttemptId,
         lease,
@@ -1145,6 +1170,7 @@ function createCodexWarmRuntime(
                 coldStartRun.get(input.participantId) ?? input.runAttemptId,
                 evidence.providerSessionId,
               ),
+              standingProtocolVersion: protocolUpgrade.currentVersion(input),
             });
           },
         }),
@@ -1287,8 +1313,10 @@ function createKimiAcpRuntime(
     }
   }
   const standingPromptDigests = createStandingPromptDigestLedger();
+  const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
   return new GenericProcessAdapter({
     ...processOptions,
+    acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -1304,9 +1332,15 @@ function createKimiAcpRuntime(
         instance: input.agent?.instanceChannelId !== undefined,
         instanceGeneration: input.agent?.instanceSessionGeneration,
       });
+      const protocolNotice = protocolUpgrade.prepare(
+        input,
+        lease,
+        key,
+        previous,
+      );
       if (previous === null) return lease;
       return {
-        ...lease,
+        ...protocolUpgrade.withNotice(lease, protocolNotice),
         args: [
           ...(lease.args ?? []),
           "--resume-session",
@@ -1363,6 +1397,8 @@ function createKimiAcpRuntime(
                 {
                   instance: input.agent?.instanceChannelId !== undefined,
                   instanceGeneration: input.agent?.instanceSessionGeneration,
+                  standingProtocolVersion:
+                    protocolUpgrade.currentVersion(input),
                 },
               );
             }
@@ -1454,8 +1490,10 @@ function createOpenCodeServerRuntime(
     mode,
   );
   const standingPromptDigests = createStandingPromptDigestLedger();
+  const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
   return new GenericProcessAdapter({
     ...processOptions,
+    acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -1471,9 +1509,15 @@ function createOpenCodeServerRuntime(
         instance: input.agent?.instanceChannelId !== undefined,
         instanceGeneration: input.agent?.instanceSessionGeneration,
       });
+      const protocolNotice = protocolUpgrade.prepare(
+        input,
+        lease,
+        key,
+        previous,
+      );
       if (previous === null) return lease;
       return {
-        ...lease,
+        ...protocolUpgrade.withNotice(lease, protocolNotice),
         args: [
           ...(lease.args ?? []),
           "--resume-session",
@@ -1533,6 +1577,8 @@ function createOpenCodeServerRuntime(
                 {
                   instance: input.agent?.instanceChannelId !== undefined,
                   instanceGeneration: input.agent?.instanceSessionGeneration,
+                  standingProtocolVersion:
+                    protocolUpgrade.currentVersion(input),
                 },
               );
             }

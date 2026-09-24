@@ -115,6 +115,14 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - `preemptedFollowUp` 按证据判定（final 提交后无后续输出为 true，有则 false，无法读取为 unknown）；冷路径新增 `sessionResumeMs`（`thread/resume` 请求到响应，与热路径同口径）。
 - 局限：RSS 只统计进程组；每 Activation 卡死计数在内存中，Host 重启归零；固定（pin）接口待 S2-e 使用；均未经真实 Codex 验证。
 
+### 十五、第六轮审查修复（schema 68）
+
+- 回复目标守卫改为在目标解析后对两条发帖路由统一判定（显式 threadId、频道顶层、带或不带 thread 后缀的 `--target`）；`--final`、带 based-on、或本轮送达尚未确认时的发帖都视为"回复本轮"并受检；放行依据：送达消息所在/为根的 thread、本 Agent 在窗口后新开的 thread、送达消息所在的频道顶层、与本 Agent 有关或本轮 task-get 过的旧 Task thread（`activation_task_reads`）；`--final` 发往其他 Room 也拒绝；错误提示不再建议去掉 based-on。
+- 漂移门禁汇总把 ACK 未完成、重试、常驻缺句柄等硬失败纳入判定；不可观测的 targetRejections 汇总为 null。
+- `finalInterrupt` 分为 requested / accepted / terminal；已观察到的后续生成不可被后续工具完成抹除；无法归属时为 unknown。
+- 协议版本记在 Host 的 session 绑定上；已续聊 session 协议落后时，下一轮唤醒加一行"Protocol updated"，并提供 `worker help protocol`（Activation 完成后才标记已更新）。
+- 未修：`maintainFinalReplyInterrupt` 单次读取失败即停止监视；8 位 thread 短引用歧义返回 NotFound 而非 Conflict；常驻进程启动键未包含协议版本；审查建议的若干免费交错场景未补。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

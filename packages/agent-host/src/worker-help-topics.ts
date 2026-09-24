@@ -173,11 +173,15 @@ all four passing means: mark the PR Ready, execute the ordinary protected merge,
 
 export type WorkerHelpTopicName = keyof typeof TOPICS;
 
+/**
+ * The topics the standing prompt points at. The `protocol` card and the
+ * complete lookup (`workerHelpTopic`) live in `standing-protocol.ts`.
+ */
 export const WORKER_HELP_TOPIC_NAMES = Object.keys(
   TOPICS,
 ) as readonly WorkerHelpTopicName[];
 
-export function workerHelpTopic(name: string): string | undefined {
+export function staticWorkerHelpTopic(name: string): string | undefined {
   return Object.hasOwn(TOPICS, name)
     ? TOPICS[name as WorkerHelpTopicName]
     : undefined;

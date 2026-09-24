@@ -135,6 +135,10 @@ export type CodexWarmAdapterOptions = {
   recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
   acceptTimeoutMs?: number;
   interruptQuiesceTimeoutMs?: number;
+  /** P2-3: the protocol-update line this turn must carry, if any. */
+  protocolNotice?: (input: ActivationEnvelope) => string | undefined;
+  /** P2-3: completion evidence for a warm turn that carried the line. */
+  acceptSessionProtocol?: RuntimeAdapter["acceptSessionProtocol"];
   /** The CLI binary; its fingerprint change recycles an idle runtime. */
   cliExecutable?: string;
 };
@@ -585,6 +589,15 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     return await recover.call(this.#options.legacy, input);
   }
 
+  /** P2-3: either path may have carried the line; each no-ops otherwise. */
+  async acceptSessionProtocol(input: {
+    participantId: string;
+    runAttemptId: string;
+  }): Promise<void> {
+    await this.#options.acceptSessionProtocol?.(input);
+    await this.#options.legacy.acceptSessionProtocol?.(input);
+  }
+
   async releaseTurn(input: {
     participantId: string;
     runAttemptId: string;
@@ -664,18 +677,20 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         );
       }
     }
-    // Never the Host process's own environment: the notice is appended below.
-    const base = bodied ?? providerActivationInput("", handle);
+    // Never the Host process's own environment: the notices are appended below.
+    const base = bodied ?? providerActivationInput("", handle, "");
     const notice = (input.runtimeNotice ?? "")
       .split("\n")[0]!
       .trim()
       .slice(0, RUNTIME_NOTICE_LIMIT);
+    const protocol = this.#options.protocolNotice?.(input) ?? "";
     return {
       bodied: bodied !== undefined,
       noticed: notice !== "",
       text:
         withWorkerTurnHandle(base, handle) +
-        (notice === "" ? "" : `\n${notice}`),
+        (notice === "" ? "" : `\n${notice}`) +
+        (protocol === "" ? "" : `\n${protocol}`),
     };
   }
 

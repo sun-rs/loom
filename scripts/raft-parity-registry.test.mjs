@@ -287,8 +287,8 @@ const judgmentRow = (id, needle) => ({
   id,
   kind: "prompt-paragraph",
   rah: {
-    file: "packages/daemon/src/standing-prompt-compiler.ts",
-    symbol: "standing-prompt-compiler.ts",
+    file: "packages/agent-host/src/standing-protocol.ts",
+    symbol: "standing-protocol.ts",
     needles: [needle],
   },
   raft: null,
@@ -322,12 +322,12 @@ test("removing a judgment paragraph lowers the counted total", () => {
   assert.deepEqual(present.errors, []);
   assert.equal(present.judgmentPresent, 1);
 
-  const stripped = file("packages/daemon/src/standing-prompt-compiler.ts")
+  const stripped = file("packages/agent-host/src/standing-protocol.ts")
     .toString()
     .replaceAll(JUDGMENT_NEEDLE, "");
   const result = validateRegistry(
     mutated,
-    reader({ "packages/daemon/src/standing-prompt-compiler.ts": stripped }),
+    reader({ "packages/agent-host/src/standing-protocol.ts": stripped }),
     noUpstream,
   );
 

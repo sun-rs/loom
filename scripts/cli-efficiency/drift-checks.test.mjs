@@ -333,11 +333,122 @@ test("a definite target rejection then a corrected post counts as delivered-corr
   assert.equal(round.checks.wrongTarget, 0);
   assert.equal(round.checks.targetRejections, 2);
   assert.deepEqual(round.failures, []);
-  const rounds = passAll();
+  // Codex rollouts observe refusals on every round (0 when none).
+  const rounds = scenario.map((s) =>
+    evaluateRound(s, evidenceFor(s, { targetRejections: 0 }), ctx),
+  );
   const index = rounds.findIndex((r) => r.round === spec.round);
   rounds[index] = round;
   const sum = summarizeDrift(rounds, { compactAt: [8, 15], compactions });
   assert.equal(sum.totals.targetRejections, 2);
+  assert.equal(sum.totals.targetRejectionsUnobservedRounds, 0);
   assert.equal(sum.status, "pass");
   assert.match(formatDriftTable(rounds).split("\n")[0], /\brej\b/u);
+});
+
+/**
+ * P1-2 (2026-09-25 review): every hard per-round failure reaches the summary
+ * even when no compaction window covers it; format stays a reported rate.
+ */
+test("a single hard per-round failure with everything else fine violates the gate", () => {
+  const spec = specOf("qa");
+  const variants = {
+    ackIncomplete: evidenceFor(spec, {
+      activations: [
+        { activationId: `a${spec.round}`, state: "running", attemptCount: 1 },
+      ],
+    }),
+    retried: (() => {
+      const ev = evidenceFor(spec);
+      ev.runs.push({ ...ev.runs[0], runAttemptId: "r-retry" });
+      return ev;
+    })(),
+    forbiddenTask: evidenceFor(spec, {
+      newTasks: [{ taskId: "t", creatorId: "agent" }],
+    }),
+  };
+  for (const [failure, evidence] of Object.entries(variants)) {
+    const rounds = passAll();
+    const index = rounds.findIndex((r) => r.round === spec.round);
+    rounds[index] = evaluateRound(spec, evidence, ctx);
+    assert.deepEqual(rounds[index].failures, [failure]);
+    const sum = summarizeDrift(rounds, { compactAt: [], compactions: [] });
+    assert.equal(sum.status, "violated", failure);
+    assert.equal(sum.criteria.noHardRoundFailure, false, failure);
+    assert.deepEqual(sum.hardFailures, [`round${spec.round}:${failure}`]);
+  }
+  const acks = passAll();
+  acks[0] = evaluateRound(
+    scenario[0],
+    evidenceFor(scenario[0], {
+      activations: [{ activationId: "a1", state: "running", attemptCount: 1 }],
+    }),
+    ctx,
+  );
+  const ackSum = summarizeDrift(acks, { compactAt: [], compactions: [] });
+  assert.equal(ackSum.criteria.ack100, false);
+  assert.equal(ackSum.totals.ackIncomplete, 1);
+});
+
+test("warm Codex: a missing turn handle outside any window violates the gate", () => {
+  const warm = { ...ctx, mode: "warm" };
+  const good = codexToolCalls([
+    {
+      payload: {
+        type: "function_call",
+        arguments: '{"cmd":"worker message-post --final --turn T"}',
+      },
+    },
+  ]);
+  const bad = codexToolCalls([
+    {
+      payload: {
+        type: "function_call",
+        arguments: '{"cmd":"worker message-post --final"}',
+      },
+    },
+  ]);
+  const rounds = scenario.map((s) =>
+    evaluateRound(
+      s,
+      evidenceFor(s, {
+        toolCalls: s.expect.reply ? (s.round === 2 ? bad : good) : [],
+      }),
+      warm,
+    ),
+  );
+  const sum = summarizeDrift(rounds, { compactAt: [], compactions: [] });
+  assert.equal(sum.criteria.turnHandle100, false);
+  assert.equal(sum.status, "violated");
+});
+
+test("a format miss alone stays a reported statistic, not a hard failure", () => {
+  const rounds = scenario.map((s) => {
+    const ev = evidenceFor(s);
+    if (s.round === 2 && ev.replies[0]) ev.replies[0].body = "无前缀";
+    return evaluateRound(s, ev, ctx);
+  });
+  const sum = summarizeDrift(rounds, { compactAt: [], compactions: [] });
+  assert.equal(sum.criteria.noHardRoundFailure, true);
+  assert.ok(sum.totals.formatRate < 1);
+  assert.equal(sum.status, "pass");
+});
+
+test("unobservable target rejections stay unknown, never summed as zero", () => {
+  const sum = summarizeDrift(passAll(), { compactAt: [], compactions: [] });
+  assert.equal(sum.totals.targetRejections, null);
+  assert.equal(sum.totals.targetRejectionsUnobservedRounds, scenario.length);
+  const mixed = passAll();
+  mixed[0] = evaluateRound(
+    scenario[0],
+    evidenceFor(scenario[0], { targetRejections: 1 }),
+    ctx,
+  );
+  const partial = summarizeDrift(mixed, { compactAt: [], compactions: [] });
+  assert.equal(partial.totals.targetRejections, null);
+  assert.equal(partial.totals.targetRejectionsObserved, 1);
+  assert.equal(
+    partial.totals.targetRejectionsUnobservedRounds,
+    scenario.length - 1,
+  );
 });

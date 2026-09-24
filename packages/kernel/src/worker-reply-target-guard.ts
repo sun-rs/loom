@@ -34,23 +34,45 @@ function deliveredFromSeq(
     : Math.min(fromSeq, integer(replay, "after_seq") + 1);
 }
 
+/** Whether the consumer already confirmed this Activation's delivered range
+ * (`message-check` or an implicit post ACK). Read-only. */
+function deliveryConfirmed(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+): boolean {
+  const cursor = database
+    .prepare(
+      "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id=?",
+    )
+    .get(scope.roomId, scope.participantId, scope.consumerId);
+  return cursor !== undefined && integer(cursor, "last_seq") >= scope.toSeq;
+}
+
 /**
- * A reply that cites this Activation's delivered messages (the model's own
- * `basedOnRoomSeq`) and targets a Thread of this Activation's Room must go to
- * a Thread those messages came from, a Thread rooted at one of them, or a
- * Thread this participant opened after the window head (its own Task Thread).
- * Anything else is the drift failure where a compacted session re-used an
- * earlier round's Thread; it is refused before any write, and the error names
- * the target(s) the delivered messages arrived in.
+ * Reply-target guard, judged after the post's target is normalized on every
+ * route (the originating route's explicit `threadId`/`null`, and `--target`
+ * with or without a Thread suffix), so the same reply cannot escape it by
+ * changing syntax.
  *
- * Posts without a model-cited `basedOnRoomSeq` (deliberate posts elsewhere),
- * posts to the Room itself and posts to other Rooms are not judged here.
+ * A post in this Activation's Room is a reply to this turn when it is marked
+ * `final`, when it cites this turn's delivered messages with a model-submitted
+ * `basedOnRoomSeq`, or while this turn's delivered range is still unconfirmed.
+ * A `final` post elsewhere (another Room) is refused too: `final` always names
+ * this turn's reply. Only a non-final, uncited post after confirmation is a
+ * deliberate post that this guard does not judge.
  *
- * Applied on the `--target` route only, where the model names the place from
- * memory. The originating route's explicit canonical `threadId` keeps its own
- * contract: an old Task Thread read through `task-get` stays addressable, and
- * newer or foreign Threads keep their stale/forbidden refusals
- * (`collaboration-closure.test.ts`).
+ * A reply must land where the delivered messages arrived, with explicit
+ * evidence for anything else:
+ * - a Thread a delivered event belongs to, or one rooted at a delivered
+ *   message, or one this participant opened after the window head;
+ * - the Room top level when a delivered inbox item arrived there (or the
+ *   window delivered no inbox item at all);
+ * - an old Task Thread whose Task this participant is assigned to, claimed,
+ *   created, collaborates on or reviews, or read with `task-get` in this
+ *   Activation.
+ * Anything else is the drift failure where a compacted session re-uses an
+ * earlier round's target; it is refused before any write, naming the
+ * target(s) the delivered messages arrived in.
  */
 export function assertWorkerReplyTarget(
   database: DatabaseSync,
@@ -59,12 +81,28 @@ export function assertWorkerReplyTarget(
     roomId: string;
     threadId: string | undefined;
     modelBasedOnRoomSeq: number | undefined;
+    final: boolean | undefined;
   },
 ): void {
-  if (input.modelBasedOnRoomSeq === undefined) return;
-  if (input.threadId === undefined || input.roomId !== scope.roomId) return;
+  const final = input.final === true;
+  if (input.roomId !== scope.roomId) {
+    if (!final) return;
+    const fromSeq = deliveredFromSeq(database, scope);
+    if (fromSeq === undefined) return;
+    refuse(database, scope, fromSeq, "a final reply in another Room");
+  }
+  if (
+    !final &&
+    input.modelBasedOnRoomSeq === undefined &&
+    deliveryConfirmed(database, scope)
+  )
+    return;
   const fromSeq = deliveredFromSeq(database, scope);
   if (fromSeq === undefined) return;
+  if (input.threadId === undefined) {
+    if (roomTopLevelDelivered(database, scope, fromSeq)) return;
+    refuse(database, scope, fromSeq, "the Room top level");
+  }
   const allowed = database
     .prepare(
       `SELECT 1 FROM threads t WHERE t.thread_id=? AND t.room_id=? AND (
@@ -79,6 +117,12 @@ export function assertWorkerReplyTarget(
           WHERE e.room_id=t.room_id AND e.room_seq > ?
             AND e.type IN ('thread.created','task.created')
             AND json_extract(e.payload_json, '$.threadId')=t.thread_id))
+        OR EXISTS (SELECT 1 FROM tasks k WHERE k.thread_id=t.thread_id AND (
+            k.assignee_id=? OR k.claimed_by=? OR k.creator_id=?
+            OR EXISTS (SELECT 1 FROM task_participants p
+              WHERE p.task_id=k.task_id AND p.participant_id=?)
+            OR EXISTS (SELECT 1 FROM activation_task_reads r
+              WHERE r.task_id=k.task_id AND r.activation_id=?)))
       ) LIMIT 1`,
     )
     .get(
@@ -90,13 +134,48 @@ export function assertWorkerReplyTarget(
       scope.toSeq,
       scope.participantId,
       scope.toSeq,
+      scope.participantId,
+      scope.participantId,
+      scope.participantId,
+      scope.participantId,
+      scope.activationId,
     );
   if (allowed !== undefined) return;
+  refuse(database, scope, fromSeq, `Thread ${input.threadId}`);
+}
+
+/** A delivered inbox item arrived at the Room top level, or the window
+ * delivered no inbox item at all (nothing narrower to hold the reply to). */
+function roomTopLevelDelivered(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  fromSeq: number,
+): boolean {
+  const rows = database
+    .prepare(
+      `SELECT COALESCE(tasks.thread_id, json_extract(e.payload_json, '$.threadId')) AS reply_thread_id
+        FROM inbox_items i JOIN room_events e ON e.event_id=i.event_id
+        LEFT JOIN tasks ON e.aggregate_type='task' AND tasks.task_id=e.aggregate_id
+        WHERE i.participant_id=? AND i.room_id=? AND i.event_seq BETWEEN ? AND ?`,
+    )
+    .all(scope.participantId, scope.roomId, fromSeq, scope.toSeq);
+  return (
+    rows.length === 0 ||
+    rows.some((row) => nullableText(row, "reply_thread_id") === null)
+  );
+}
+
+function refuse(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  fromSeq: number,
+  place: string,
+): never {
   const targets = deliveredReplyTargets(database, scope, fromSeq);
   const named = targets.map((target) => `--target ${target}`).join(" or ");
   throw new ReplyTargetMismatchError(
-    `reply target Thread ${input.threadId} is not where this Activation's messages arrived`,
-    `Nothing was sent. Resend the reply with ${named} and the same --based-on-room-seq. To post in that Thread deliberately, omit --based-on-room-seq.`,
+    `reply target ${place} is not where this Activation's messages arrived`,
+    `Nothing was sent. Resend this turn's reply with ${named} and the same --based-on-room-seq. A post in another Thread needs explicit evidence, such as reading that Thread's Task with task-get first.`,
   );
 }
 

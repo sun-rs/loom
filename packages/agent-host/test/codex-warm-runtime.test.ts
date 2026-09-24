@@ -27,6 +27,7 @@ import {
   RuntimeProcessHygiene,
   type RuntimeAdapter,
   type WarmRuntimePolicyOverrides,
+  type CodexWarmAdapterOptions,
 } from "../src/index.ts";
 
 /**
@@ -50,6 +51,8 @@ async function harness(
     interruptQuiesceTimeoutMs?: number;
     idleTtlMs?: number;
     policy?: WarmRuntimePolicyOverrides;
+    protocolNotice?: CodexWarmAdapterOptions["protocolNotice"];
+    acceptSessionProtocol?: CodexWarmAdapterOptions["acceptSessionProtocol"];
   } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-codex-"));
@@ -143,6 +146,12 @@ async function harness(
         ? {}
         : { interruptQuiesceTimeoutMs: options.interruptQuiesceTimeoutMs }),
       isWarm: () => true,
+      ...(options.protocolNotice === undefined
+        ? {}
+        : { protocolNotice: options.protocolNotice }),
+      ...(options.acceptSessionProtocol === undefined
+        ? {}
+        : { acceptSessionProtocol: options.acceptSessionProtocol }),
       issueWorkerCredential: async (input) =>
         worker.issueActivationCredential(host, input),
       legacy,
@@ -328,6 +337,41 @@ test("S2-0 review P2-2: a warm turn carries the cleanup notice inside the accept
       .listRunAttempts({ roomId: state.roomId })
       .sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0]!;
     assert.equal(row?.notice_run_attempt_id, firstRun.runAttemptId);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("P2-3: a warm turn carries the protocol line until a completed turn accepts it", async () => {
+  let accepted: string | undefined;
+  const carried: string[] = [];
+  const state = await harness({
+    protocolNotice: (input) => {
+      if (accepted !== undefined) return undefined;
+      carried.push(input.runAttemptId);
+      return "Protocol updated (vtest): help protocol summarizes the current rules.";
+    },
+    acceptSessionProtocol: async (input) => {
+      if (carried.includes(input.runAttemptId)) accepted = input.runAttemptId;
+    },
+  });
+  try {
+    for (let turn = 1; turn <= 2; turn += 1) {
+      state.post(`[fake:ack] question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+    }
+    const texts = state
+      .records()
+      .filter(
+        (record) =>
+          record.event === "request" && record.method === "turn/start",
+      )
+      .map((record) => JSON.stringify(record.params));
+    assert.equal(texts.length, 2);
+    assert.match(texts[0]!, /Protocol updated \(vtest\)/u);
+    assert.doesNotMatch(texts[1]!, /Protocol updated/u);
+    assert.equal(accepted, carried[0]);
   } finally {
     await state.cleanup();
   }

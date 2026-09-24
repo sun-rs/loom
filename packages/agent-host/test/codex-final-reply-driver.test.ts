@@ -147,6 +147,9 @@ test("final reply: the turn ends at the tool boundary with no follow-up generati
   );
   assert.deepEqual(finalFrame(result.frames), {
     protocol: "rah-final-interrupt/v1",
+    requested: true,
+    accepted: true,
+    terminal: true,
     sent: true,
     preemptedFollowUp: true,
   });
@@ -184,6 +187,9 @@ test("a rejected interrupt falls back to the unchanged turn and never fails the 
   assert.ok(result.records.some((r) => r.event === "follow-up-generation"));
   assert.deepEqual(finalFrame(result.frames), {
     protocol: "rah-final-interrupt/v1",
+    requested: true,
+    accepted: false,
+    terminal: false,
     sent: false,
     preemptedFollowUp: "unknown",
   });
@@ -204,6 +210,9 @@ test("a signal that arrives after the follow-up began still ends the turn and re
   );
   assert.deepEqual(finalFrame(result.frames), {
     protocol: "rah-final-interrupt/v1",
+    requested: true,
+    accepted: true,
+    terminal: true,
     sent: true,
     preemptedFollowUp: false,
   });

@@ -34,9 +34,9 @@ import {
   workerServerFailureError,
 } from "./worker-cli-error.ts";
 import {
-  WORKER_HELP_TOPIC_NAMES,
+  WORKER_CLI_HELP_TOPIC_NAMES,
   workerHelpTopic,
-} from "./worker-help-topics.ts";
+} from "./standing-protocol.ts";
 import carrierPackage from "../package.json" with { type: "json" };
 import { parseWorkerChannelAttentionCommand } from "./worker-channel-attention-cli.ts";
 import {
@@ -311,7 +311,7 @@ export async function runWorkerCliCommand(
         runtime.stderr,
         cliError(
           "INVALID_ARG",
-          `Unknown help topic '${arguments_[2]!}'. Topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.`,
+          `Unknown help topic '${arguments_[2]!}'. Topics: ${WORKER_CLI_HELP_TOPIC_NAMES.join(", ")}.`,
         ),
       );
       return 1;
@@ -2003,7 +2003,7 @@ rah worker task-update TASK --status todo|in_progress|in_review|done|closed [--s
 rah worker task-submit TASK --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
 rah worker task-review TASK --disposition approved|changes_requested --summary TEXT
 TASK addresses one Task as --target "#channel" --number N, or as --task-id ID.
-Guidance on demand: rah worker help <topic>, topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.
+Guidance on demand: rah worker help <topic>, topics: ${WORKER_CLI_HELP_TOPIC_NAMES.join(", ")}.
 `;
 }
 

@@ -273,22 +273,34 @@ export type RunAttemptExecution = z.infer<typeof RunAttemptExecutionSchema>;
 
 /**
  * Final-reply turn end: a `final` Worker post committed in this RunAttempt,
- * and whether the Host's native interrupt landed. `sent` is false until the
- * runtime reports an interrupt it issued (unsupported, failed or lost report:
- * the turn ran on as before). `preemptedFollowUp` is true when no follow-up
- * generation was observed after the final post's tool call finished (model
- * output, a new tool call, or a usage report advancing the thread total
- * beyond the generations already seen; an unchanged repeat is not one),
- * false when one was, `unknown` when the interrupt was not sent or the
- * usage evidence could not be read.
+ * and what the Host's native interrupt achieved, as separate facts:
+ * `requested` (the interrupt request was written), `accepted` (the runtime
+ * answered it: true; refused: false; timeout or lost answer: `unknown`) and
+ * `terminal` (the turn ended interrupted: true; with another status: false;
+ * not observed: `unknown`). `sent` (kept for older readers) is requested and
+ * not refused — a request, not proof the interrupt landed.
+ *
+ * `preemptedFollowUp` is true when no follow-up generation was observed after
+ * the final post's tool call finished; false once one was (model output, a
+ * new tool call, or a usage report advancing the thread total beyond every
+ * observed response — irreversible within the turn); `unknown` when the
+ * interrupt was not sent or the evidence could not be attributed. It covers
+ * recorded evidence only, not every request a provider may have started.
  */
 export const FinalInterruptPreemptionSchema = z.union([
+  z.boolean(),
+  z.literal("unknown"),
+]);
+export const FinalInterruptFactSchema = z.union([
   z.boolean(),
   z.literal("unknown"),
 ]);
 export const RunAttemptFinalInterruptSchema = z
   .object({
     committedRoomSeq: z.number().int().positive(),
+    requested: z.boolean(),
+    accepted: FinalInterruptFactSchema,
+    terminal: FinalInterruptFactSchema,
     sent: z.boolean(),
     preemptedFollowUp: FinalInterruptPreemptionSchema,
   })
@@ -296,9 +308,13 @@ export const RunAttemptFinalInterruptSchema = z
 export type RunAttemptFinalInterrupt = z.infer<
   typeof RunAttemptFinalInterruptSchema
 >;
+/** Older Hosts report only `sent` and `preemptedFollowUp`. */
 export const RunAttemptFinalInterruptRecordInputSchema = z
   .object({
     runAttemptId: IdentifierSchema,
+    requested: z.boolean().optional(),
+    accepted: FinalInterruptFactSchema.optional(),
+    terminal: FinalInterruptFactSchema.optional(),
     sent: z.boolean(),
     preemptedFollowUp: FinalInterruptPreemptionSchema,
   })

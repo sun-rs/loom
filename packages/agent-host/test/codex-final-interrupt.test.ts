@@ -14,6 +14,10 @@ const tool = (method: string, id = "post") => ({
   params: { item: { id, type: "commandExecution" } },
 });
 const delta = { method: "item/agentMessage/delta", params: { delta: "sent" } };
+const outcome = (report: { sent: boolean; preemptedFollowUp: unknown }) => ({
+  sent: report.sent,
+  preemptedFollowUp: report.preemptedFollowUp,
+});
 
 test("armed while the posting tool runs: interrupts at its completion, before any follow-up output", async () => {
   const calls: string[] = [];
@@ -28,7 +32,7 @@ test("armed while the posting tool runs: interrupts at its completion, before an
   tracker.observe(tool("item/completed"));
   assert.deepEqual(calls, ["interrupt"]);
   assert.equal(tracker.issued, true);
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: true,
   });
@@ -49,7 +53,7 @@ test("armed after the follow-up generation began: interrupts at once and reports
   assert.equal(tracker.arm(), false, "armed once");
   tracker.observe(delta);
   assert.equal(interrupts, 1, "one interrupt per turn");
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: false,
   });
@@ -61,7 +65,7 @@ test("output after the interrupt was issued still means the follow-up was not pr
   tracker.arm();
   tracker.observe(tool("item/completed"));
   tracker.observe(delta);
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: false,
   });
@@ -93,7 +97,7 @@ test("an unchanged usage repeat after the interrupt is not a follow-up generatio
   tracker.arm();
   tracker.observe(tool("item/completed"));
   tracker.observe(usage(1_110));
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: true,
   });
@@ -106,7 +110,7 @@ test("the posting generation's own usage arriving after the tool finished is not
   tracker.arm();
   tracker.observe(tool("item/completed"));
   tracker.observe(usage(1_110));
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: true,
   });
@@ -119,7 +123,7 @@ test("an advancing usage report after the posting generation settled is a follow
   tracker.arm();
   tracker.observe(tool("item/completed"));
   tracker.observe(usage(1_300, 190));
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: false,
   });
@@ -134,7 +138,7 @@ test("an unreadable usage report after the tool finished makes preemption unknow
     method: "thread/tokenUsage/updated",
     params: { tokenUsage: {} },
   });
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: true,
     preemptedFollowUp: "unknown",
   });
@@ -149,7 +153,7 @@ test("a rejected interrupt reports not sent and unknown preemption (the turn run
     },
   });
   tracker.arm();
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: false,
     preemptedFollowUp: "unknown",
   });
@@ -166,7 +170,7 @@ test("never armed: nothing is interrupted and the report is unknown", async () =
   tracker.observe(tool("item/completed"));
   assert.equal(interrupts, 0);
   assert.equal(tracker.armed, false);
-  assert.deepEqual(await tracker.report(), {
+  assert.deepEqual(outcome(await tracker.report()), {
     sent: false,
     preemptedFollowUp: "unknown",
   });
@@ -186,4 +190,128 @@ test("parallel tools: waits until the last one completes", () => {
   assert.equal(interrupts, 0);
   tracker.observe(tool("item/completed", "b"));
   assert.equal(interrupts, 1);
+});
+
+/**
+ * P2-1 (2026-09-25 review). The posting call is the tool item whose command
+ * is the `--final` message post; the follow-up window opens when IT completes
+ * and follow-up evidence in that window is irreversible.
+ */
+const post = (method: string) => ({
+  method,
+  params: {
+    item: {
+      id: "post",
+      type: "commandExecution",
+      command: "rah worker message-post --target '#c' --final",
+    },
+  },
+});
+const turnCompleted = (status: string) => ({
+  method: "turn/completed",
+  params: { threadId: "t", turn: { id: "turn", status } },
+});
+
+test("review sequence 1: the interrupt at the post's completion followed only by a late usage frame is preempted", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(post("item/started"));
+  tracker.arm();
+  tracker.observe(post("item/completed"));
+  tracker.observe(usage(1_110));
+  tracker.observe(turnCompleted("interrupted"));
+  assert.deepEqual(await tracker.report(), {
+    requested: true,
+    accepted: true,
+    terminal: true,
+    sent: true,
+    preemptedFollowUp: true,
+  });
+});
+
+test("review sequence 2: a follow-up generation observed before a later tool completed stays observed", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(post("item/started"));
+  tracker.observe(post("item/completed"));
+  tracker.observe(delta);
+  tracker.observe(tool("item/started", "later"));
+  tracker.arm();
+  tracker.observe(tool("item/completed", "later"));
+  assert.equal((await tracker.report()).preemptedFollowUp, false);
+});
+
+test("without an identifiable posting call, output between tools makes preemption unknown, never true", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(tool("item/started", "a"));
+  tracker.observe(tool("item/completed", "a"));
+  tracker.observe(delta);
+  tracker.observe(tool("item/started", "b"));
+  tracker.arm();
+  tracker.observe(tool("item/completed", "b"));
+  assert.equal((await tracker.report()).preemptedFollowUp, "unknown");
+});
+
+test("a tool started after the post in the same window is follow-up even after it completes", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(post("item/started"));
+  tracker.observe(tool("item/started", "parallel"));
+  tracker.arm();
+  tracker.observe(post("item/completed"));
+  tracker.observe(tool("item/completed", "parallel"));
+  // The parallel tool began with the posting response: not a follow-up.
+  assert.equal((await tracker.report()).preemptedFollowUp, true);
+});
+
+test("requested, accepted and terminal are reported separately", async () => {
+  const lost = createCodexFinalInterrupt({
+    interrupt: async () => {
+      throw new Error("turn/interrupt timed out");
+    },
+  });
+  lost.observe(post("item/started"));
+  lost.arm();
+  lost.observe(post("item/completed"));
+  lost.observe(turnCompleted("completed"));
+  const report = await lost.report();
+  assert.equal(report.requested, true);
+  assert.equal(report.accepted, "unknown");
+  assert.equal(report.terminal, false);
+  // A timed-out request was still written; never "proved".
+  assert.equal(report.sent, true);
+
+  const rejected = createCodexFinalInterrupt({
+    interrupt: async () => {
+      throw Object.assign(new Error("no active turn"), {
+        providerRejected: true,
+      });
+    },
+  });
+  rejected.arm();
+  const refused = await rejected.report();
+  assert.equal(refused.requested, true);
+  assert.equal(refused.accepted, false);
+  assert.equal(refused.terminal, "unknown");
+  assert.equal(refused.sent, false);
+});
+
+test("a --final inside the heredoc body does not identify the posting call", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  const quoted = (method: string) => ({
+    method,
+    params: {
+      item: {
+        id: "note",
+        type: "commandExecution",
+        command:
+          "rah worker message-post --target '#c' <<'EOF'\nuse --final last\nEOF",
+      },
+    },
+  });
+  tracker.observe(quoted("item/started"));
+  tracker.observe(quoted("item/completed"));
+  tracker.observe(delta);
+  tracker.observe(post("item/started"));
+  tracker.arm();
+  tracker.observe(post("item/completed"));
+  // The window opened at the real post, not the earlier quoted one.
+  assert.equal((await tracker.report()).preemptedFollowUp, true);
 });

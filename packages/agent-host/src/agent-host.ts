@@ -567,6 +567,8 @@ export class AgentHost {
         notice,
         result?.state === "completed",
       );
+      if (result?.state === "completed")
+        await this.#acceptSessionProtocol(runtime, activation, runAttempt);
       await this.#releaseRuntimeTurn(runtime, activation, runAttempt);
     }
   }
@@ -605,6 +607,25 @@ export class AgentHost {
       else await this.#processHygiene?.releaseNotice(this.#control, input);
     } catch {
       // An unreleased reservation of a finished run returns to pending.
+    }
+  }
+
+  /** P2-3: completion is the acceptance evidence for a protocol notice. */
+  async #acceptSessionProtocol(
+    runtime: RuntimeAdapter,
+    activation: Activation,
+    runAttempt: RunAttempt,
+  ): Promise<void> {
+    try {
+      await runtime.acceptSessionProtocol?.({
+        participantId: activation.participantId,
+        runAttemptId: runAttempt.runAttemptId,
+      });
+    } catch (error) {
+      // The binding keeps its older version; the next turn repeats the line.
+      process.stderr.write(
+        `[rah-os] protocol notice acceptance for ${runAttempt.runAttemptId} failed: ${errorMessage(error)}\n`,
+      );
     }
   }
 

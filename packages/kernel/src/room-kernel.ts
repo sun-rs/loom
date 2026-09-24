@@ -41,7 +41,11 @@ import { WorkerTargetContextService } from "./worker-target-context.ts";
 import { AttachmentCommentsService } from "./attachment-comments.ts";
 import { AgentChannelAttentionService } from "./agent-channel-attention.ts";
 import { postWorkerMessageTransaction } from "./worker-message-command.ts";
-import { RunAttemptFinalReplyService } from "./run-attempt-final-reply.ts";
+import { readWorkerTask } from "./activation-task-reads.ts";
+import {
+  migrateRunAttemptFinalReplyFacts,
+  RunAttemptFinalReplyService,
+} from "./run-attempt-final-reply.ts";
 import { WorkerReadService } from "./worker-read-tools.ts";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -314,7 +318,6 @@ import { ProfileImageLifecycleService } from "./profile-image-lifecycle.ts";
 import { createHumanCommandServices } from "./human-command-services.ts";
 import {
   requireWorkerTaskDelivery,
-  requireWorkerTaskVisibility,
   workerTaskInputResponder,
 } from "./worker-task-scope.ts";
 import { listWorkerTaskTrajectory } from "./worker-task-trajectory.ts";
@@ -420,7 +423,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 67;
+export const KERNEL_SCHEMA_VERSION = 68;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -832,9 +835,10 @@ export class RoomKernel {
       this.#database.exec(SCHEMA_OBJECT_SQL);
       initializeHeldMessageDrafts(this.#database, this.#now());
     });
-    unit("activation-presented-window-compatibility", "transactional", () =>
-      migrateActivationPresentedWindows(this.#database),
-    );
+    unit("activation-presented-window-compatibility", "transactional", () => {
+      migrateActivationPresentedWindows(this.#database);
+      migrateRunAttemptFinalReplyFacts(this.#database);
+    });
     unit("collaboration-v7", "external", () =>
       migrateCollaborationSchemaV7(this.#database, this.#timestamp()),
     );
@@ -2190,7 +2194,7 @@ export class RoomKernel {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
       return this.#taskFromRow(
-        requireWorkerTaskVisibility(this.#database, scope, input.taskId),
+        readWorkerTask(this.#database, scope, input.taskId, this.#timestamp()),
       );
     });
   }

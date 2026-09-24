@@ -35,6 +35,12 @@ export type ProviderSessionRecord = ProviderSessionKey &
   Readonly<{
     providerSessionId: string;
     systemMemorySha256?: string;
+    /**
+     * P2-3: the standing protocol version this native session actually
+     * received — at creation, or through a later accepted protocol notice.
+     * Absent on records written before tracking: unknown, treated as outdated.
+     */
+    standingProtocolVersion?: string;
     recordedAt: string;
     schemaVersion: 1;
   }>;
@@ -118,20 +124,65 @@ export class ProviderSessionStore {
       systemMemorySha256?: string | undefined;
       instance?: boolean;
       instanceGeneration?: number | undefined;
+      /** The current compiled protocol; kept only for a new session. */
+      standingProtocolVersion?: string | undefined;
     } = {},
   ): Promise<ProviderSessionRecord> {
     const validated = validateKey(uncheckedKey);
     const generation = instanceGenerationOf(metadata.instanceGeneration);
+    let protocolVersion = metadata.standingProtocolVersion;
     if (metadata.instance) {
       const previous = await this.#loadInstance(validated, generation);
       if (previous && previous.providerSessionId !== providerSessionId)
         throw new Error(
           "RAH_SESSION_CONTINUITY_REQUIRED: refusing instance session replacement",
         );
+      // A resumed session reports itself again on every run, but it still
+      // holds the standing prompt it was created with: keep that version
+      // until `acceptStandingProtocol` proves a notice turn was accepted.
+      if (previous) protocolVersion = previous.standingProtocolVersion;
     }
-    const key = metadata.instance
-      ? instanceKey(validated, generation)
-      : validated;
+    return await this.#write(
+      metadata.instance ? instanceKey(validated, generation) : validated,
+      providerSessionId,
+      metadata.systemMemorySha256,
+      protocolVersion,
+    );
+  }
+
+  /**
+   * P2-3: a turn that carried the protocol-update line was accepted, so the
+   * bound session now has `version`'s rules in its history. Only the same
+   * session advances; a missing or different binding is left untouched.
+   */
+  async acceptStandingProtocol(
+    uncheckedKey: ProviderSessionKey,
+    options: { instanceGeneration?: number | undefined },
+    providerSessionId: string,
+    version: string,
+  ): Promise<void> {
+    const validated = validateKey(uncheckedKey);
+    const stable = instanceKey(
+      validated,
+      instanceGenerationOf(options.instanceGeneration),
+    );
+    const bound = await this.load(stable);
+    if (bound === null || bound.providerSessionId !== providerSessionId) return;
+    if (bound.standingProtocolVersion === version) return;
+    await this.#write(
+      stable,
+      providerSessionId,
+      bound.systemMemorySha256,
+      requiredText(version, "standingProtocolVersion", MAX_IDENTIFIER_LENGTH),
+    );
+  }
+
+  async #write(
+    key: ProviderSessionKey,
+    providerSessionId: string,
+    systemMemorySha256: string | undefined,
+    standingProtocolVersion: string | undefined,
+  ): Promise<ProviderSessionRecord> {
     const sessionId = requiredText(
       providerSessionId,
       "providerSessionId",
@@ -143,7 +194,10 @@ export class ProviderSessionStore {
     }
     const value: ProviderSessionRecord = Object.freeze({
       ...key,
-      ...systemMemoryMetadata(metadata.systemMemorySha256),
+      ...systemMemoryMetadata(systemMemorySha256),
+      ...(standingProtocolVersion === undefined
+        ? {}
+        : { standingProtocolVersion }),
       providerSessionId: sessionId,
       recordedAt: now.toISOString(),
       schemaVersion: 1,
@@ -538,6 +592,9 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     ...(record.standingPromptDigest === undefined
       ? []
       : ["standingPromptDigest"]),
+    ...(record.standingProtocolVersion === undefined
+      ? []
+      : ["standingProtocolVersion"]),
   ];
   if (
     Object.keys(record).sort().join("\0") !== expectedKeys.sort().join("\0") ||
@@ -561,6 +618,15 @@ function validateRecord(value: unknown): ProviderSessionRecord {
   return Object.freeze({
     ...key,
     ...systemMemoryMetadata(record.systemMemorySha256),
+    ...(record.standingProtocolVersion === undefined
+      ? {}
+      : {
+          standingProtocolVersion: requiredText(
+            record.standingProtocolVersion,
+            "standingProtocolVersion",
+            MAX_IDENTIFIER_LENGTH,
+          ),
+        }),
     providerSessionId: requiredText(
       record.providerSessionId,
       "providerSessionId",

@@ -461,6 +461,9 @@ test("final-reply interrupt is reported per round and summarized per arm, never 
       toolCalls: [post],
       finalInterrupt: {
         committedRoomSeq: 4,
+        requested: true,
+        accepted: true,
+        terminal: true,
         sent: true,
         preemptedFollowUp: true,
       },
@@ -505,16 +508,48 @@ test("final-reply interrupt is reported per round and summarized per arm, never 
   assert.deepEqual(
     r.rounds.map((x) => x.finalInterrupt),
     [
-      { committed: true, sent: true, preemptedFollowUp: true },
-      { committed: true, sent: true, preemptedFollowUp: false },
-      { committed: true, sent: false, preemptedFollowUp: "unknown" },
-      { committed: false, sent: false, preemptedFollowUp: null },
+      {
+        committed: true,
+        requested: true,
+        accepted: true,
+        terminal: true,
+        sent: true,
+        preemptedFollowUp: true,
+      },
+      // Older product reads: requested follows sent, the rest stays unknown.
+      {
+        committed: true,
+        requested: true,
+        accepted: "unknown",
+        terminal: "unknown",
+        sent: true,
+        preemptedFollowUp: false,
+      },
+      {
+        committed: true,
+        requested: false,
+        accepted: "unknown",
+        terminal: "unknown",
+        sent: false,
+        preemptedFollowUp: "unknown",
+      },
+      {
+        committed: false,
+        requested: false,
+        accepted: null,
+        terminal: null,
+        sent: false,
+        preemptedFollowUp: null,
+      },
       null,
     ],
   );
   assert.deepEqual(r.finalInterrupt, {
     rounds: 5,
     committed: 3,
+    requested: 2,
+    accepted: 1,
+    terminal: 1,
     sent: 2,
     preempted: 1,
     notPreempted: 1,

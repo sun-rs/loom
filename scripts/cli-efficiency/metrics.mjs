@@ -107,14 +107,28 @@ function usageEvidence(rah) {
 }
 // Final-reply turn end (product usage `finalInterrupt`), reported per round
 // and never budgeted. `null` from the product means no `final` post
-// committed; an absent field means the evidence was not collected.
+// committed; an absent field means the evidence was not collected. The
+// interrupt is three facts: requested, accepted (the runtime answered) and
+// terminal (the turn ended interrupted); older product reads carry only
+// `sent`, so requested follows it and the other two stay unknown.
 function finalInterruptOf(rah) {
   if (rah.finalInterrupt === undefined) return null;
   const f = rah.finalInterrupt;
   if (f === null)
-    return { committed: false, sent: false, preemptedFollowUp: null };
+    return {
+      committed: false,
+      requested: false,
+      accepted: null,
+      terminal: null,
+      sent: false,
+      preemptedFollowUp: null,
+    };
+  const fact = (v) => (typeof v === "boolean" ? v : "unknown");
   return {
     committed: true,
+    requested: typeof f.requested === "boolean" ? f.requested : f.sent === true,
+    accepted: fact(f.accepted),
+    terminal: fact(f.terminal),
     sent: f.sent === true,
     preemptedFollowUp: f.preemptedFollowUp,
   };
@@ -123,6 +137,9 @@ function summarizeFinalInterrupts(rahRounds) {
   const out = {
     rounds: rahRounds.length,
     committed: 0,
+    requested: 0,
+    accepted: 0,
+    terminal: 0,
     sent: 0,
     preempted: 0,
     notPreempted: 0,
@@ -136,6 +153,9 @@ function summarizeFinalInterrupts(rahRounds) {
     else if (!f.committed) out.noFinalPost += 1;
     else {
       out.committed += 1;
+      if (f.requested) out.requested += 1;
+      if (f.accepted === true) out.accepted += 1;
+      if (f.terminal === true) out.terminal += 1;
       if (f.sent) out.sent += 1;
       if (f.preemptedFollowUp === true) out.preempted += 1;
       else if (f.preemptedFollowUp === false) out.notPreempted += 1;

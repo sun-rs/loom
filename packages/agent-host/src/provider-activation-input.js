@@ -17,13 +17,24 @@ const RUNTIME_NOTICE_LIMIT = 300;
 export function withRuntimeNotice(
   text,
   runtimeNotice = process.env.RAH_RUNTIME_NOTICE,
+  protocolNotice = process.env.RAH_PROTOCOL_NOTICE,
 ) {
-  const notice = (runtimeNotice ?? "")
-    .split("\n")[0]
-    .trim()
-    .slice(0, RUNTIME_NOTICE_LIMIT);
-  return notice === "" ? text : `${text}\n${notice}`;
+  return [text, oneLine(runtimeNotice), oneLine(protocolNotice)]
+    .filter((line) => line !== "")
+    .join("\n");
 }
+
+function oneLine(value) {
+  return (value ?? "").split("\n")[0].trim().slice(0, RUNTIME_NOTICE_LIMIT);
+}
+
+/**
+ * P2-3: `RAH_PROTOCOL_NOTICE` is the Host's one line for a resumed native
+ * session whose recorded standing protocol is older than the current one
+ * (`session-protocol-upgrade.ts`). Like the cleanup notice it is a bounded
+ * line, never Room content, and the Host passes it explicitly when it
+ * composes the input itself.
+ */
 
 /** ` --turn <handle>` on a warm runtime, empty otherwise. */
 export function turnArgument(turnHandle) {
@@ -40,10 +51,12 @@ export function turnArgument(turnHandle) {
 export function providerActivationInput(
   runtimeNotice = process.env.RAH_RUNTIME_NOTICE,
   turnHandle,
+  protocolNotice = process.env.RAH_PROTOCOL_NOTICE,
 ) {
   return withRuntimeNotice(
     `Run message-check --startup${turnArgument(turnHandle)} first.`,
     runtimeNotice,
+    protocolNotice,
   );
 }
 

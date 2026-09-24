@@ -6,6 +6,7 @@ import { INSTANCE_RUNTIME_SCHEMA } from "./instance-runtime.ts";
 import { INSTANCE_SESSION_SCHEMA } from "./instance-session.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { ACTIVATION_PRESENTED_WINDOW_SCHEMA } from "./activation-presented-window.ts";
+import { ACTIVATION_TASK_READS_SCHEMA } from "./activation-task-reads.ts";
 
 export const LEGACY_WORKSPACE_ID = "workspace_legacy";
 
@@ -604,6 +605,7 @@ CREATE TABLE IF NOT EXISTS activation_delivery_windows (
   PRIMARY KEY (activation_id, consumer_id)
 ) STRICT;
 ${ACTIVATION_PRESENTED_WINDOW_SCHEMA}
+${ACTIVATION_TASK_READS_SCHEMA}
 CREATE TABLE IF NOT EXISTS activation_retry_fences (
   activation_id TEXT PRIMARY KEY REFERENCES activations(activation_id),
   room_id TEXT NOT NULL REFERENCES rooms(room_id),

@@ -9,6 +9,19 @@ export const DRIFT_CRITERIA = {
   degradationWindow: 3,
 };
 
+// Per-round failures that are statistics, not hard gate failures. Format is
+// reported as a rate (and judged per compaction window), never as a hard
+// failure of the whole run. Every other per-round failure is hard.
+export const SOFT_ROUND_FAILURES = new Set(["format"]);
+// Hard failures that mean the ledger evidence itself is missing: reported as
+// evidence gaps (status `missing-evidence`), not as violations.
+const EVIDENCE_GAP_FAILURES = [
+  "activationMissing",
+  "runFailed",
+  "roundTimeout",
+  "sessionChanged",
+];
+
 const codePoints = (s) => [...s].length;
 
 export function checkFormat(body, format) {
@@ -227,10 +240,17 @@ export function summarizeRounds(evaluated, extras = []) {
     expectedReplies: withReply.length,
     delivered: withReply.filter((e) => e.checks.delivered).length,
     wrongTarget: evaluated.reduce((a, e) => a + (e.checks.wrongTarget ?? 0), 0),
-    targetRejections: evaluated.reduce(
+    // Unobservable (null) rounds keep the total unknown; never summed as 0.
+    targetRejections: evaluated.some((e) => e.checks.targetRejections == null)
+      ? null
+      : evaluated.reduce((a, e) => a + e.checks.targetRejections, 0),
+    targetRejectionsObserved: evaluated.reduce(
       (a, e) => a + (e.checks.targetRejections ?? 0),
       0,
     ),
+    targetRejectionsUnobservedRounds: evaluated.filter(
+      (e) => e.checks.targetRejections == null,
+    ).length,
     silentRounds: silent.length,
     silenceViolations: silent.filter((e) => e.checks.silenceViolation).length,
     forbiddenTasks: evaluated.reduce((a, e) => a + e.checks.forbiddenTasks, 0),
@@ -254,6 +274,11 @@ export function summarizeRounds(evaluated, extras = []) {
     ),
     quarantined: evaluated.reduce((a, e) => a + e.checks.quarantined, 0),
     retries: evaluated.reduce((a, e) => a + e.checks.retries, 0),
+    ackIncomplete: evaluated.filter((e) => e.failures.includes("ackIncomplete"))
+      .length,
+    turnHandleMissing: evaluated.filter((e) =>
+      e.failures.includes("turnHandleMissing"),
+    ).length,
     failedRounds: evaluated
       .filter((e) => e.failures.length)
       .map((e) => e.round),
@@ -288,7 +313,8 @@ export function summarizeDrift(
     if (post.wrongTarget) reasons.push("wrongTarget");
     if (post.forbiddenTasks) reasons.push("forbiddenTask");
     if (post.silenceViolations) reasons.push("silence");
-    if (post.quarantined || post.retries) reasons.push("ack");
+    if (post.quarantined || post.retries || post.ackIncomplete)
+      reasons.push("ack");
     if (after.length < w) reasons.push("windowIncomplete");
     const compaction = compactions.find((x) => x.afterRound === c) ?? null;
     return {
@@ -314,7 +340,18 @@ export function summarizeDrift(
       totals.finalRate >= DRIFT_CRITERIA.finalMinRate,
     noDegradation: windows.every((x) => !x.degraded),
     noQuarantine: totals.quarantined === 0,
+    ack100: totals.ackIncomplete === 0,
+    noRetry: totals.retries === 0,
+    turnHandle100: totals.turnHandleMissing === 0,
+    // Any other hard per-round failure (format is a reported statistic).
+    noHardRoundFailure: true,
   };
+  const hardFailures = [];
+  for (const e of evaluated)
+    for (const f of e.failures)
+      if (!SOFT_ROUND_FAILURES.has(f) && !EVIDENCE_GAP_FAILURES.includes(f))
+        hardFailures.push(`round${e.round}:${f}`);
+  criteria.noHardRoundFailure = hardFailures.length === 0;
   const evidenceGaps = [];
   for (const c of compactAt) {
     const x = compactions.find((y) => y.afterRound === c);
@@ -323,19 +360,14 @@ export function summarizeDrift(
       evidenceGaps.push(`compaction${c}NotObserved`);
   }
   for (const e of evaluated)
-    for (const f of [
-      "activationMissing",
-      "runFailed",
-      "roundTimeout",
-      "sessionChanged",
-    ])
+    for (const f of EVIDENCE_GAP_FAILURES)
       if (e.failures.includes(f)) evidenceGaps.push(`round${e.round}:${f}`);
   const status = evidenceGaps.length
     ? "missing-evidence"
     : Object.values(criteria).every(Boolean)
       ? "pass"
       : "violated";
-  return { totals, windows, criteria, evidenceGaps, status };
+  return { totals, windows, criteria, hardFailures, evidenceGaps, status };
 }
 
 export function exitCodeFor(status) {

@@ -100,7 +100,7 @@ function fixture() {
 }
 
 test("schema 67 carries the final-reply marker table", () => {
-  assert.equal(KERNEL_SCHEMA_VERSION, 67);
+  assert.equal(KERNEL_SCHEMA_VERSION, 68);
   const context = fixture();
   try {
     const columns = context.database
@@ -110,6 +110,40 @@ test("schema 67 carries the final-reply marker table", () => {
     assert.ok(columns.includes("run_attempt_id"));
     assert.ok(columns.includes("interrupt_sent"));
     assert.ok(columns.includes("preempted_follow_up"));
+    assert.ok(columns.includes("interrupt_requested"));
+    assert.ok(columns.includes("interrupt_accepted"));
+    assert.ok(columns.includes("interrupt_terminal"));
+  } finally {
+    context.close();
+  }
+});
+
+test("P2-1: an older Host's report keeps accepted and terminal unknown; requested follows sent", () => {
+  const context = fixture();
+  try {
+    context.post("please answer");
+    const run = context.activate();
+    const runAttemptId = run.run.runAttemptId;
+    context.kernel.postWorkerMessage(run.execution, {
+      body: "the answer",
+      final: true,
+    });
+    context.kernel.finalReplies.recordInterrupt(context.host, {
+      runAttemptId,
+      sent: true,
+      preemptedFollowUp: true,
+    });
+    assert.deepEqual(
+      context.kernel.finalReplies.read(context.host, { runAttemptId })
+        ?.interrupt,
+      {
+        requested: true,
+        accepted: "unknown",
+        terminal: "unknown",
+        sent: true,
+        preemptedFollowUp: true,
+      },
+    );
   } finally {
     context.close();
   }
@@ -267,6 +301,9 @@ test("only the owning Host reads the marker; the interrupt report is recorded on
     );
     context.kernel.finalReplies.recordInterrupt(context.host, {
       runAttemptId,
+      requested: true,
+      accepted: true,
+      terminal: false,
       sent: true,
       preemptedFollowUp: false,
     });
@@ -280,6 +317,9 @@ test("only the owning Host reads the marker; the interrupt report is recorded on
       runAttemptId,
     });
     assert.deepEqual(marker?.interrupt, {
+      requested: true,
+      accepted: true,
+      terminal: false,
       sent: true,
       preemptedFollowUp: false,
     });
@@ -304,5 +344,44 @@ test("an interrupt report without a committed final reply is refused", () => {
     );
   } finally {
     context.close();
+  }
+});
+
+test("P2-1: a schema 67 database without the interrupt fact columns gains them on upgrade", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-final-reply-upgrade-"));
+  const databasePath = join(directory, "room.db");
+  try {
+    const first = new RoomKernel({ databasePath });
+    first.initialize();
+    first.close();
+    const legacy = new DatabaseSync(databasePath);
+    for (const column of [
+      "interrupt_requested",
+      "interrupt_accepted",
+      "interrupt_terminal",
+    ])
+      legacy.exec(
+        `ALTER TABLE run_attempt_final_replies DROP COLUMN ${column}`,
+      );
+    // A schema 67 database (the facts arrive with schema 68).
+    legacy.exec("PRAGMA user_version = 67");
+    legacy.close();
+    const kernel = new RoomKernel({ databasePath });
+    kernel.initialize();
+    kernel.close();
+    const upgraded = new DatabaseSync(databasePath);
+    const columns = upgraded
+      .prepare("PRAGMA table_info(run_attempt_final_replies)")
+      .all()
+      .map((row) => row.name);
+    upgraded.close();
+    for (const column of [
+      "interrupt_requested",
+      "interrupt_accepted",
+      "interrupt_terminal",
+    ])
+      assert.ok(columns.includes(column), column);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });

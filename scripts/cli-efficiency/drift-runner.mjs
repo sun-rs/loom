@@ -380,7 +380,8 @@ export async function runDriftArm({
       }));
       const finalReplies = runIds.length
         ? query(
-            `SELECT run_attempt_id, event_id, room_seq, interrupt_sent, preempted_follow_up
+            `SELECT run_attempt_id, event_id, room_seq, interrupt_sent, preempted_follow_up,
+                    interrupt_requested, interrupt_accepted, interrupt_terminal
                FROM run_attempt_final_replies WHERE run_attempt_id IN (${inList(runIds)})`,
             ...runIds,
           ).map((f) => ({
@@ -388,6 +389,9 @@ export async function runDriftArm({
             eventId: f.event_id,
             roomSeq: f.room_seq,
             interruptSent: f.interrupt_sent,
+            interruptRequested: f.interrupt_requested ?? null,
+            interruptAccepted: f.interrupt_accepted ?? null,
+            interruptTerminal: f.interrupt_terminal ?? null,
             preemptedFollowUp: f.preempted_follow_up,
           }))
         : [];

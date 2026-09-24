@@ -10,6 +10,7 @@ import type { AuthenticatedWorkerExecutionContext } from "./auth.ts";
 import type { CollaborationService } from "./collaboration-service.ts";
 import type { RoomFiles } from "./room-files.ts";
 import { resolveWorkerReplyRoute } from "./worker-message-routing.ts";
+import { assertWorkerReplyTarget } from "./worker-reply-target-guard.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 import { NotFoundError } from "./errors.ts";
 import {
@@ -99,6 +100,15 @@ export function postWorkerMessageTransaction(context: {
     ...(heldDraftId === undefined ? {} : { heldDraftId }),
   };
   const route = resolveWorkerReplyRoute({ ...context, input });
+  // Judged on the normalized target, like the `--target` route; a saved draft
+  // already passed it when it was first posted.
+  if (heldDraftId === undefined)
+    assertWorkerReplyTarget(database, scope, {
+      roomId: scope.roomId,
+      threadId: route.threadId,
+      modelBasedOnRoomSeq: context.input.basedOnRoomSeq,
+      final: parsed.final,
+    });
   const attachmentComment = context.comments.workerMetadata(execution, input, {
     roomId: scope.roomId,
     ...(route.threadId === undefined ? {} : { threadId: route.threadId }),

@@ -157,10 +157,21 @@ export type {
   WorkerTurnReleaseOutcome,
 } from "./worker-turn-handle.ts";
 export { runWorkerCliCommand } from "./worker-cli.ts";
+export { WORKER_HELP_TOPIC_NAMES } from "./worker-help-topics.ts";
 export {
-  WORKER_HELP_TOPIC_NAMES,
+  STANDING_PROTOCOL_VERSION,
+  WORKER_CLI_HELP_TOPIC_NAMES,
+  authoritySection,
+  communicationStyleSection,
+  credentialHygieneSection,
+  formattingSection,
+  protocolUpdateNotice,
+  remindersSection,
+  renderStandingProtocolCard,
+  startupRulesSection,
+  workerCliSection,
   workerHelpTopic,
-} from "./worker-help-topics.ts";
+} from "./standing-protocol.ts";
 export type { WorkerHelpTopicName } from "./worker-help-topics.ts";
 export type { WorkerCliRuntime } from "./worker-cli.ts";
 export { createWorkerToolTransportEnvironment } from "./worker-tool-transport.ts";

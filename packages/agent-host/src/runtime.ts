@@ -109,6 +109,9 @@ export type RuntimeStartLifecycle = {
     preemptedFollowUp: boolean | "unknown";
     runAttemptId: string;
     sent: boolean;
+    requested?: boolean;
+    accepted?: boolean | "unknown";
+    terminal?: boolean | "unknown";
   }): Promise<void>;
   /** S2-b: the measured native session resume of this run's start. */
   recordSessionResume?(input: {
@@ -155,6 +158,16 @@ export interface RuntimeAdapter {
    * its lane here; per-turn runtimes do not implement it.
    */
   releaseTurn?(input: {
+    participantId: string;
+    runAttemptId: string;
+  }): Promise<void>;
+  /**
+   * P2-3: called once after a claimed RunAttempt's Activation completed (the
+   * model's delivery ACK reached the Activation head). A resumed session whose
+   * wake carried the protocol-update line records the current protocol version
+   * on its binding; any other run is a no-op.
+   */
+  acceptSessionProtocol?(input: {
     participantId: string;
     runAttemptId: string;
   }): Promise<void>;

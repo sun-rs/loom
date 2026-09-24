@@ -335,12 +335,13 @@ export class WorkerTargetContextService {
         target.roomId,
       );
       const threadId = workerReadThread(target, input.threadId) ?? undefined;
-      // A presented receipt or a saved draft already fixed its own target.
-      if (input.contextReceipt === undefined && input.sendDraft !== true)
+      // A saved draft already passed this guard when it was first posted.
+      if (input.sendDraft !== true)
         assertWorkerReplyTarget(this.#context.database, origin, {
           roomId: target.roomId,
           threadId,
           modelBasedOnRoomSeq: input.basedOnRoomSeq,
+          final: input.final,
         });
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);
       const window = this.#resolveSendWindow(

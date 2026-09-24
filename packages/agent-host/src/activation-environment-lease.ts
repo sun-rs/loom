@@ -29,7 +29,24 @@ export function combineActivationEnvironmentLeases(
       "activation environment carries conflicting compatible prompt digests",
     );
   }
+  const protocolVersions = [
+    ...new Set(
+      leases.flatMap((lease) =>
+        lease.standingProtocolVersion === undefined
+          ? []
+          : [lease.standingProtocolVersion],
+      ),
+    ),
+  ];
+  if (protocolVersions.length > 1) {
+    throw new Error(
+      "activation environment carries conflicting standing protocol versions",
+    );
+  }
   return Object.freeze({
+    ...(protocolVersions[0] === undefined
+      ? {}
+      : { standingProtocolVersion: protocolVersions[0] }),
     ...(compatibleDigests[0] === undefined
       ? {}
       : { compatibleStandingPromptDigest: compatibleDigests[0] }),

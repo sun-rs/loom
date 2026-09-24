@@ -31,6 +31,7 @@ import { integer, text, type Row } from "./sqlite-row.ts";
 export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "activation_cancellation_requests",
   "activation_delivery_windows",
+  "activation_task_reads",
   "activation_obligations",
   "activation_presented_windows",
   "activation_retry_fences",
@@ -350,6 +351,8 @@ export class RoomDeletionService {
       `DELETE FROM activation_presented_windows WHERE activation_id IN
          (SELECT activation_id FROM activations WHERE room_id=?)`,
       `DELETE FROM activation_delivery_windows WHERE activation_id IN
+         (SELECT activation_id FROM activations WHERE room_id=?)`,
+      `DELETE FROM activation_task_reads WHERE activation_id IN
          (SELECT activation_id FROM activations WHERE room_id=?)`,
       `DELETE FROM activations WHERE room_id=?`,
       `DELETE FROM inbox_items WHERE room_id=?`,

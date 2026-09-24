@@ -1,9 +1,10 @@
 import type { PromptDeliveryMode } from "./standing-prompt-delivery.ts";
 import { hostname } from "node:os";
 
-import type {
-  ActivationEnvelope,
-  ActivationEnvironmentLease,
+import {
+  STANDING_PROTOCOL_VERSION,
+  type ActivationEnvelope,
+  type ActivationEnvironmentLease,
 } from "@rah-os/agent-host";
 
 import {
@@ -102,5 +103,6 @@ export function standingPromptLease(
         agent.instanceChannelId === undefined ? "0" : "1",
     }),
     standingPromptDigest: compiled.deterministicDigest,
+    standingProtocolVersion: STANDING_PROTOCOL_VERSION,
   });
 }

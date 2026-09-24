@@ -232,3 +232,23 @@ test("channel and instance private box retain the same provider session prompt k
   assert.equal(channel.standingPromptDigest, privateBox.standingPromptDigest);
   assert.equal(privateBox.env?.RAH_REQUIRE_SESSION_CONTINUITY, "1");
 });
+
+test("the lease names the protocol version the compiled prompt carries, independent of role", async () => {
+  const { STANDING_PROTOCOL_VERSION, renderStandingProtocolCard } =
+    await import("@rah-os/agent-host");
+  const review = standingPromptLease(
+    envelope(agentContext({ role: "review" })),
+  )!;
+  const other = standingPromptLease(
+    envelope(agentContext({ role: "something else" })),
+    { deliveryMode: "direct" },
+  )!;
+  assert.equal(review.standingProtocolVersion, STANDING_PROTOCOL_VERSION);
+  assert.equal(other.standingProtocolVersion, STANDING_PROTOCOL_VERSION);
+  assert.notEqual(review.standingPromptDigest, other.standingPromptDigest);
+  // Every protocol section of the card is sent verbatim in the prompt, so the
+  // version names exactly the rules a new session receives.
+  const prompt = review.args!.join("\n");
+  for (const section of renderStandingProtocolCard().split("\n\n").slice(1))
+    assert.ok(prompt.includes(section), section.slice(0, 60));
+});

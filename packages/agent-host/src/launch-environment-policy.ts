@@ -56,6 +56,8 @@ export const MANAGED_CARRIER_ENVIRONMENT_KEYS: readonly string[] = [
   RAH_WORKER_SESSION_FILE_ENV,
   // S2-a: a warm runtime's non-listable turn root; only the Host sets it.
   "RAH_WORKER_TURN_ROOT",
+  // P2-3: the protocol-update wake line; only the Host's lease sets it.
+  "RAH_PROTOCOL_NOTICE",
   "RAH_AGENT_CONTEXT_JSON",
   "RAH_AGENT_INBOX_API_URL",
   "RAH_AGENT_INBOX_CLI",

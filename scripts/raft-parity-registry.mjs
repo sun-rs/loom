@@ -9,6 +9,9 @@ export const routePath =
 export const readRoutePath =
   "packages/application-service/src/worker-read-handler.ts";
 export const promptPath = "packages/daemon/src/standing-prompt-compiler.ts";
+/** The standing prompt's protocol sections, compiled into it verbatim. */
+export const promptProtocolPath =
+  "packages/agent-host/src/standing-protocol.ts";
 
 const KINDS = [
   "cli",
@@ -423,7 +426,13 @@ export function validateRegistry(registry, read, options = {}) {
       `non-deferred missing output and error surfaces rose to ${counts.outputSurfaceMissingNonDeferred}; port the Raft surface instead of raising the ${ratchet.outputSurfaceMissingNonDeferred} ratchet`,
     );
 
-  const promptSource = safeRead(promptPath, "prompt source");
+  const promptParts = [
+    safeRead(promptPath, "prompt source"),
+    safeRead(promptProtocolPath, "prompt protocol source"),
+  ];
+  const promptSource = promptParts.every((part) => part)
+    ? promptParts.join("\n")
+    : undefined;
   const judgment = registry.entries.filter(
     (entry) =>
       entry.kind === "prompt-paragraph" && entry.classification === "judgment",

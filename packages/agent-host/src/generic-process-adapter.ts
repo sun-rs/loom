@@ -48,6 +48,11 @@ import {
 import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
 
 export type GenericProcessAdapterOptions = {
+  /** P2-3: see `RuntimeAdapter.acceptSessionProtocol`. */
+  acceptSessionProtocol?: (input: {
+    participantId: string;
+    runAttemptId: string;
+  }) => Promise<void>;
   busyInputMode?: "direct" | "gated";
   guideRuntimeId?: string;
   nativeBusyInput?: boolean;
@@ -158,6 +163,13 @@ export type ActivationEnvironmentLease = {
   standingPromptDigest?: string;
   /** Host-compiled compatibility key for a source-backed delivery-mode upgrade. */
   compatibleStandingPromptDigest?: string;
+  /**
+   * P2-3: `STANDING_PROTOCOL_VERSION` of the protocol sections this lease's
+   * prompt carries. An instance binding records the version its native
+   * session actually received; a resumed session with an older (or unknown)
+   * version gets one wake line pointing at `worker help protocol`.
+   */
+  standingProtocolVersion?: string;
 };
 
 export type ProcessDiagnostics = {
@@ -429,9 +441,14 @@ export class RuntimeTrajectoryCollector {
     frame: Record<string, unknown>,
   ): Promise<void> {
     const preempted = frame.preemptedFollowUp;
+    const fact = (value: unknown) =>
+      value === undefined || typeof value === "boolean" || value === "unknown";
     if (
       typeof frame.sent !== "boolean" ||
-      (typeof preempted !== "boolean" && preempted !== "unknown")
+      (typeof preempted !== "boolean" && preempted !== "unknown") ||
+      (frame.requested !== undefined && typeof frame.requested !== "boolean") ||
+      !fact(frame.accepted) ||
+      !fact(frame.terminal)
     ) {
       this.#diagnostics.append(
         "[rah-os] ignored an invalid final-reply interrupt report\n",
@@ -443,6 +460,15 @@ export class RuntimeTrajectoryCollector {
         preemptedFollowUp: preempted,
         runAttemptId: this.#runAttemptId,
         sent: frame.sent,
+        ...(typeof frame.requested === "boolean"
+          ? { requested: frame.requested }
+          : {}),
+        ...(frame.accepted === undefined
+          ? {}
+          : { accepted: frame.accepted as boolean | "unknown" }),
+        ...(frame.terminal === undefined
+          ? {}
+          : { terminal: frame.terminal as boolean | "unknown" }),
       });
     } catch (error) {
       this.#diagnostics.append(
@@ -805,6 +831,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   readonly #args: readonly string[];
   readonly #beforeStart: (() => Promise<void> | void) | undefined;
   readonly #beforeLaunch: GenericProcessAdapterOptions["beforeLaunch"];
+  readonly #acceptSessionProtocol: GenericProcessAdapterOptions["acceptSessionProtocol"];
   readonly #command: string;
   readonly #completedRunIds: string[] = [];
   readonly #completedRunRetention: number;
@@ -871,6 +898,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     this.#args = [...(options.args ?? [])];
     this.#beforeStart = options.beforeStart;
     this.#beforeLaunch = options.beforeLaunch;
+    this.#acceptSessionProtocol = options.acceptSessionProtocol;
     this.#activationEnvironment = options.activationEnvironment;
     this.#command = options.command;
     this.#completedRunRetention = options.completedRunRetention ?? 100;
@@ -1135,6 +1163,13 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         }
       },
     );
+  }
+
+  async acceptSessionProtocol(input: {
+    participantId: string;
+    runAttemptId: string;
+  }): Promise<void> {
+    await this.#acceptSessionProtocol?.(input);
   }
 
   async interruptAfterFinalReply(handle: RunHandle): Promise<boolean> {

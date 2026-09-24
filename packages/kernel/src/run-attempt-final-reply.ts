@@ -40,19 +40,48 @@ CREATE TABLE IF NOT EXISTS run_attempt_final_replies (
   committed_at TEXT NOT NULL,
   interrupt_sent INTEGER CHECK (interrupt_sent IS NULL OR interrupt_sent IN (0, 1)),
   preempted_follow_up TEXT CHECK (preempted_follow_up IS NULL OR preempted_follow_up IN ('true', 'false', 'unknown')),
-  reported_at TEXT
+  reported_at TEXT,
+  interrupt_requested INTEGER CHECK (interrupt_requested IS NULL OR interrupt_requested IN (0, 1)),
+  interrupt_accepted TEXT CHECK (interrupt_accepted IS NULL OR interrupt_accepted IN ('true', 'false', 'unknown')),
+  interrupt_terminal TEXT CHECK (interrupt_terminal IS NULL OR interrupt_terminal IN ('true', 'false', 'unknown'))
 ) STRICT;
 `;
+
+/**
+ * P2-1: the separate interrupt facts (requested / accepted / terminal). Added
+ * in place, idempotently: rows reported before carry NULL, read as `unknown`
+ * (requested follows the recorded `sent`).
+ */
+export function migrateRunAttemptFinalReplyFacts(database: DatabaseSync): void {
+  const columns = new Set(
+    database
+      .prepare("PRAGMA table_info(run_attempt_final_replies)")
+      .all()
+      .map((row) => String(row.name)),
+  );
+  if (columns.size === 0) return;
+  if (!columns.has("interrupt_requested"))
+    database.exec(
+      "ALTER TABLE run_attempt_final_replies ADD COLUMN interrupt_requested INTEGER CHECK (interrupt_requested IS NULL OR interrupt_requested IN (0, 1))",
+    );
+  for (const column of ["interrupt_accepted", "interrupt_terminal"])
+    if (!columns.has(column))
+      database.exec(
+        `ALTER TABLE run_attempt_final_replies ADD COLUMN ${column} TEXT CHECK (${column} IS NULL OR ${column} IN ('true', 'false', 'unknown'))`,
+      );
+}
+
+const fact = (value: boolean | "unknown" | undefined): string | null =>
+  value === undefined ? null : String(value);
+const readFact = (value: string | null): boolean | "unknown" =>
+  value === null || value === "unknown" ? "unknown" : value === "true";
 
 export type FinalReplyMarker = {
   activationId: string;
   committedAt: string;
   eventId: string;
   /** `null` until the Host reports the native interrupt outcome. */
-  interrupt: Pick<
-    RunAttemptFinalInterrupt,
-    "preemptedFollowUp" | "sent"
-  > | null;
+  interrupt: Omit<RunAttemptFinalInterrupt, "committedRoomSeq"> | null;
   roomId: string;
   roomSeq: number;
   runAttemptId: string;
@@ -159,13 +188,17 @@ export class RunAttemptFinalReplyService {
     this.#database
       .prepare(
         `UPDATE run_attempt_final_replies
-         SET interrupt_sent = ?, preempted_follow_up = ?, reported_at = ?
+         SET interrupt_sent = ?, preempted_follow_up = ?, reported_at = ?,
+           interrupt_requested = ?, interrupt_accepted = ?, interrupt_terminal = ?
          WHERE run_attempt_id = ? AND reported_at IS NULL`,
       )
       .run(
         input.sent ? 1 : 0,
         String(input.preemptedFollowUp),
         this.#now().toISOString(),
+        input.requested === undefined ? null : input.requested ? 1 : 0,
+        fact(input.accepted),
+        fact(input.terminal),
         input.runAttemptId,
       );
   }
@@ -215,6 +248,9 @@ export function finalInterruptForRunAttempt(
   const marker = markerFromRow(row);
   return RunAttemptFinalInterruptSchema.parse({
     committedRoomSeq: marker.roomSeq,
+    requested: marker.interrupt?.requested ?? false,
+    accepted: marker.interrupt?.accepted ?? "unknown",
+    terminal: marker.interrupt?.terminal ?? "unknown",
     sent: marker.interrupt?.sent ?? false,
     preemptedFollowUp: marker.interrupt?.preemptedFollowUp ?? "unknown",
   });
@@ -231,6 +267,10 @@ function markerFromRow(row: Row): FinalReplyMarker {
       sent === null || preempted === null
         ? null
         : {
+            requested:
+              (nullableInteger(row, "interrupt_requested") ?? sent) === 1,
+            accepted: readFact(nullableText(row, "interrupt_accepted")),
+            terminal: readFact(nullableText(row, "interrupt_terminal")),
             sent: sent === 1,
             preemptedFollowUp:
               preempted === "unknown" ? "unknown" : preempted === "true",
