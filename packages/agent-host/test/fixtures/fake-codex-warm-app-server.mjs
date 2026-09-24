@@ -102,7 +102,17 @@ const server = createServer(async (socket) => {
         turnCounter += 1;
         const turnId = `turn-${process.pid}-${turnCounter}`;
         const text = frame.params.input?.[0]?.text ?? "";
-        activeTurn = { id: turnId, steers: [], interrupted: false, text };
+        let completed;
+        activeTurn = {
+          id: turnId,
+          steers: [],
+          interrupted: false,
+          text,
+          completed: new Promise((resolve) => {
+            completed = resolve;
+          }),
+        };
+        activeTurn.markCompleted = completed;
         reply({ turn: { id: turnId } });
         void runTurn(activeTurn);
         return;
@@ -113,8 +123,14 @@ const server = createServer(async (socket) => {
           frame.params.expectedTurnId !== activeTurn.id
         )
           return fail("expectedTurnId does not match the active turn");
-        activeTurn.steers.push(frame.params.input?.[0]?.text ?? "");
-        return reply({ turnId: activeTurn.id });
+        const steered = activeTurn;
+        steered.steers.push(frame.params.input?.[0]?.text ?? "");
+        if (steered.text.includes("[fake:steer-race]")) {
+          // Codex answers this steer only after the turn already completed.
+          await steered.completed;
+          await delay(150);
+        }
+        return reply({ turnId: steered.id });
       }
       case "turn/interrupt": {
         if (activeTurn?.id === frame.params.turnId) {
@@ -140,6 +156,18 @@ const server = createServer(async (socket) => {
       delta: "working",
     });
     if (has("leftover")) spawnLeftover(turn);
+    // Crash mid-turn once (input accepted, no completion); a retry proceeds.
+    const crashMarker = join(stateDirectory, "crashed-during");
+    if (has("crash-during") && !existsSync(crashMarker)) {
+      writeFileSync(crashMarker, "1");
+      await delay(100);
+      process.exit(4);
+    }
+    if (has("steer-race")) {
+      await runWorker(turn, handle, ["worker", "message-check"]);
+      const deadline = Date.now() + 5_000;
+      while (turn.steers.length === 0 && Date.now() < deadline) await delay(20);
+    }
     if (has("compact")) {
       const item = { id: `compact-${turn.id}`, type: "contextCompaction" };
       notify("item/started", { threadId, turnId: turn.id, item });
@@ -148,7 +176,16 @@ const server = createServer(async (socket) => {
       while (turn.steers.length === 0 && Date.now() < deadline) await delay(20);
     }
     if (has("background-tool")) spawnBackgroundTool(turn, handle);
-    if (has("hang") || has("hang-ignore-interrupt") || has("steer-wait")) {
+    // Hang only in the first turn that carries it (a retry proceeds).
+    const hangOnceMarker = join(stateDirectory, "hung-once");
+    const hangOnce = has("hang-once") && !existsSync(hangOnceMarker);
+    if (hangOnce) writeFileSync(hangOnceMarker, "1");
+    if (
+      hangOnce ||
+      has("hang") ||
+      has("hang-ignore-interrupt") ||
+      has("steer-wait")
+    ) {
       const deadline = has("steer-wait") ? 5_000 : 60_000;
       await new Promise((resolve) => {
         turn.wake = resolve;
@@ -179,6 +216,7 @@ const server = createServer(async (socket) => {
     });
     record({ event: "turn-completed", turnId: turn.id, steers: turn.steers });
     activeTurn = undefined;
+    turn.markCompleted();
     if (has("crash-after")) setTimeout(() => process.exit(3), 300);
     // Codex may unload an idle thread while the process lives on.
     if (has("unload-after")) threadUnloaded = true;

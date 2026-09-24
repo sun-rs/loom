@@ -121,9 +121,33 @@ function createConnectionObject(socket, isClient) {
   let fragments = [];
   let fragmentBytes = 0;
   let closed = false;
+  // Messages (and a close) that arrive before the caller installs its
+  // listener — e.g. coalesced with the upgrade response — are queued, never
+  // handed to a default no-op callback.
+  let messageListener;
+  let closeListener;
+  const queued = [];
+  let pendingClose;
   const connection = {
-    onMessage: () => {},
-    onClose: () => {},
+    get onMessage() {
+      return messageListener ?? (() => {});
+    },
+    set onMessage(listener) {
+      messageListener = listener;
+      while (messageListener !== undefined && queued.length > 0)
+        messageListener(queued.shift());
+    },
+    get onClose() {
+      return closeListener ?? (() => {});
+    },
+    set onClose(listener) {
+      closeListener = listener;
+      if (listener !== undefined && pendingClose !== undefined) {
+        const { error } = pendingClose;
+        pendingClose = undefined;
+        listener(error);
+      }
+    },
     get open() {
       return !closed && !socket.destroyed;
     },
@@ -149,7 +173,8 @@ function createConnectionObject(socket, isClient) {
   function finish(error) {
     if (closed) return;
     closed = true;
-    connection.onClose(error);
+    if (closeListener === undefined) pendingClose = { error };
+    else closeListener(error);
   }
   function drain() {
     for (;;) {
@@ -190,7 +215,8 @@ function createConnectionObject(socket, isClient) {
           const text = Buffer.concat(fragments).toString("utf8");
           fragments = [];
           fragmentBytes = 0;
-          connection.onMessage(text);
+          if (messageListener === undefined) queued.push(text);
+          else messageListener(text);
         }
       }
     }

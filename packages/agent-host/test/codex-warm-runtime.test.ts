@@ -44,6 +44,7 @@ type Harness = Awaited<ReturnType<typeof harness>>;
 
 async function harness(
   options: {
+    failBinding?: boolean;
     hostHygiene?: boolean;
     interruptQuiesceTimeoutMs?: number;
     idleTtlMs?: number;
@@ -83,6 +84,8 @@ async function harness(
     participantIds: [participantId],
   }).accessToken;
   const sessions = new Map<string, string>();
+  /** turn/start requests already sent when each binding was persisted. */
+  const turnStartsAtBinding: number[] = [];
   const diagnostics: string[] = [];
   let nowMs = Date.now();
   const hygiene = new RuntimeProcessHygiene({
@@ -142,6 +145,14 @@ async function harness(
       legacy,
       pool,
       recordProviderSessionEvidence: (input, evidence) => {
+        if (options.failBinding === true)
+          throw new Error("FAKE binding store unavailable");
+        turnStartsAtBinding.push(
+          readRecords().filter(
+            (record) =>
+              record.event === "request" && record.method === "turn/start",
+          ).length,
+        );
         sessions.set(input.participantId, evidence.providerSessionId);
       },
       renderWake: async (input) =>
@@ -173,6 +184,15 @@ async function harness(
     return { adapter, agentHost, control, host, pool };
   };
 
+  function readRecords(): Record<string, unknown>[] {
+    if (!existsSync(recordPath)) return [];
+    return readFileSync(recordPath, "utf8")
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+  }
+
   let host = kernel.authenticateHostAccessToken(hostToken);
   kernel.heartbeatHost(host);
   let current = makeHost(host);
@@ -199,14 +219,9 @@ async function harness(
         roomId: room.roomId,
       });
     },
-    records(): Record<string, unknown>[] {
-      if (!existsSync(recordPath)) return [];
-      return readFileSync(recordPath, "utf8")
-        .trim()
-        .split("\n")
-        .filter(Boolean)
-        .map((line) => JSON.parse(line) as Record<string, unknown>);
-    },
+    records: readRecords,
+    sessions,
+    turnStartsAtBinding,
     restartHost() {
       kernel.heartbeatHost(host, { state: "offline" });
       host = kernel.authenticateHostAccessToken(hostToken);
@@ -871,6 +886,150 @@ test("idle TTL evicts only an idle runtime, never mid-turn", async () => {
     assert.equal(row?.state, "terminated");
     assert.equal(row?.terminated_reason, "idle_ttl");
     assert.equal(alive(Number(row?.pid)), false);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+function threadIds(state: Harness) {
+  const records = state.records();
+  const of = (method: string) =>
+    records
+      .filter(
+        (record) => record.event === "request" && record.method === method,
+      )
+      .map((record) => (record.params as { threadId?: string }).threadId);
+  return {
+    resumes: of("thread/resume"),
+    starts: records.filter(
+      (record) =>
+        record.event === "request" && record.method === "thread/start",
+    ).length,
+    turns: of("turn/start"),
+  };
+}
+
+test("S2-a review P1-2: a first turn accepted then cancelled resumes the same thread after TTL eviction", async () => {
+  const state = await harness({ idleTtlMs: 1_000 });
+  try {
+    state.post("[fake:hang-once] [fake:ack] first turn, then cancelled");
+    const controller = new AbortController();
+    const running = state.current.agentHost.run({ signal: controller.signal });
+    await waitFor(
+      () => state.records().some((record) => record.event === "turn"),
+      "first turn start",
+    );
+    assert.deepEqual(
+      state.turnStartsAtBinding,
+      [0],
+      "the binding was durable before the first turn input",
+    );
+    controller.abort();
+    await running;
+    const [first] = state.kernel.listRunAttempts({ roomId: state.roomId });
+    assert.equal(first?.state, "cancelled");
+    // run() took the Host offline on abort; this generation serves again.
+    state.kernel.heartbeatHost(state.current.host);
+    state.advance(5_000);
+    await state.current.pool.sweepIdle();
+    assert.equal(
+      sql(state, "SELECT state FROM instance_runtimes")[0]?.state,
+      "terminated",
+    );
+    state.post("[fake:ack] second");
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const result = await state.current.agentHost.reconcileOnce();
+      if (result.state === "idle") break;
+    }
+    const ids = threadIds(state);
+    assert.equal(ids.starts, 1, "never a silent new thread");
+    assert.ok(ids.resumes.length >= 1);
+    assert.ok(ids.turns.length >= 2);
+    assert.ok(
+      ids.turns.every((threadId) => threadId === ids.turns[0]),
+      "every turn continues the first turn's thread",
+    );
+    assert.equal(ids.resumes[0], ids.turns[0]);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S2-a review P1-2: a first turn that crashes mid-turn resumes the same thread", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:crash-during] [fake:ack] crash in the first turn");
+    const first = await state.current.agentHost.reconcileOnce();
+    assert.equal(first.state, "failed", JSON.stringify(first));
+    await waitFor(
+      () =>
+        sql(state, "SELECT state FROM instance_runtimes")[0]?.state ===
+        "terminated",
+      "crash record",
+    );
+    let completed = false;
+    for (let attempt = 0; attempt < 4 && !completed; attempt += 1)
+      completed =
+        (await state.current.agentHost.reconcileOnce()).state === "completed";
+    assert.ok(completed, "the retry completed on a cold start");
+    const ids = threadIds(state);
+    assert.equal(ids.starts, 1, "never a silent new thread");
+    assert.equal(ids.resumes[0], ids.turns[0]);
+    assert.ok(ids.turns.every((threadId) => threadId === ids.turns[0]));
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S2-a review P1-2: a binding failure stops the turn before its input is sent", async () => {
+  const state = await harness({ failBinding: true });
+  try {
+    state.post("[fake:ack] must not reach Codex");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "failed");
+    assert.match(
+      result.state === "failed" ? result.error : "",
+      /RAH_SESSION_CONTINUITY_REQUIRED/u,
+    );
+    assert.equal(threadIds(state).turns.length, 0, "no turn input was sent");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S2-a review P2-1: a steer answered after the native turn end stays inside its turn", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:steer-race] steer while closing");
+    const running = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () => state.records().some((record) => record.event === "worker"),
+      "the turn's own ACK",
+    );
+    state.post("late human detail");
+    assert.equal((await running).state, "completed");
+    const completed = state
+      .records()
+      .find((record) => record.event === "turn-completed") as {
+      steers: string[];
+    };
+    assert.equal(completed.steers.length, 1, "Codex accepted the steer");
+    const [run] = state.kernel.listRunAttempts({ roomId: state.roomId });
+    const [row] = sql(
+      state,
+      "SELECT late_frame_count FROM runtime_processes WHERE run_attempt_id = ?",
+      run!.runAttemptId,
+    );
+    assert.equal(
+      Number(row?.late_frame_count),
+      0,
+      "the steer receipt precedes the drain; nothing of the turn is late",
+    );
+    assert.ok(
+      !state.diagnostics.some((line) =>
+        /late frame of closed turn/u.test(line),
+      ),
+    );
   } finally {
     await state.cleanup();
   }

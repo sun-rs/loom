@@ -83,6 +83,27 @@ node scripts/cli-efficiency/resume-probe.mjs --thread <thread-id> --repeat 3 [--
 它每次新起 `codex app-server`（stdio JSON-RPC），计时 `initialize` 与 `thread/resume`，报告 rollout 文件字节数、
 行数，并比较探测前后文件是否被修改。
 
+### S2-a 真实 Codex 冒烟须观察的项（需另行授权，未运行）
+
+依据 S2-a 独立审查（2026-09-24）的建议。冒烟只证明所列观察，不等于性能验收或正式启用；热模式仍默认关闭。
+
+1. **按轮句柄**：第一轮真实 Worker 命令是否带 `--turn`；模型是否沿用常驻提示词的旧命令而出现
+   `TURN_HANDLE_REQUIRED`。核对 scope 对应的频道/私聊、post 的因果 seq 与正文接受 SHA，不能只看有回复。
+2. **原生时序**：`turn/start` 请求字段、响应与早到通知的真实顺序；item/usage 是否带可归属的 turn id；
+   `turn/completed` 之后是否常规还有 usage 帧（若是，"每轮必完整"的门禁会失败，须按证据收尾，不静默忽略；
+   这类帧现记为该轮证据不完整）。握手与首帧同包的情况已排队交付，仍需实测。
+3. **首轮中断**：新实例首轮取消，以及首轮执行中崩溃后，均恢复同一原生 thread（绑定已在首轮输入前持久化）；
+   不得先成功一轮再测，以免掩盖首次绑定问题。
+4. **三轮同进程**：同 PID/thread 完成三轮，逐轮新句柄；旧后台脚本只能用旧句柄；频道→私聊→频道不自动换权。
+   记录显式 Worker 失败以及是否造成额外模型轮次。
+5. **终止证明**：取消超时必须"证明已死才恢复"，发送信号不算证据；进程 close、DB 记录、quiesce、finish、
+   complete 各故障点分别验证。杀不掉时运行时应保持 suspect 并阻止新执行。
+6. **会话连续**：同 id thread 卸载后恢复、冷重启续聊、模型/effort 变更确实进入实际 turn；
+   不把新 session 带来的收益记为热进程改善。
+7. **压缩重述**：观察真实 compaction 事件格式与句柄重述（`turn/steer`）成功率，不为测试强行灌大上下文。
+
+断线目前按致命错误回收，不做在线 `thread/turns/list` 对账；这是比规格更保守的本期范围。
+
 ## 证据与后续范围
 
 证据写入打印的隔离目录 `result.json`，包含失败轮次，不包含账户凭证或完整工具输出。

@@ -15,4 +15,6 @@ export function attachCodexBusyInput(options: {
 }): {
   observe(frame: { method: string; params?: Record<string, unknown> }): void;
   close(): void;
+  /** Resolves once no turn/steer request is awaiting its response. */
+  settled(): Promise<void>;
 };

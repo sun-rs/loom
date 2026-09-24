@@ -591,3 +591,155 @@ test("the usage read exposes warm/cold execution; late frames make usage partial
     state.cleanup();
   }
 });
+
+test("S2-a review P2-2: an idempotent quiesce replay first verifies runtime, run, native turn and Host generation", () => {
+  const state = fixture();
+  try {
+    state.startRuntime();
+    state.post();
+    const turn = state.openTurn("instrt_a", "cold-1");
+    state.kernel.instanceRuntimes.recordTurnAccepted(state.host, {
+      instanceRuntimeId: "instrt_a",
+      nativeTurnId: "native-turn:cold-1",
+      runAttemptId: turn.runAttemptId,
+    });
+    assert.equal(quiesce(state, turn).proofKind, "turn_quiesced");
+    assert.throws(
+      () => quiesce(state, turn, { runtimeRunId: "turn:someone-else" }),
+      ExecutionFencedError,
+      "a replay naming another runtime run is not the same proof",
+    );
+    assert.throws(
+      () => quiesce(state, turn, { instanceRuntimeId: "instrt_other" }),
+      "a replay naming another runtime is not the same proof",
+    );
+    assert.throws(
+      () => quiesce(state, turn, { nativeTurnId: "native-other" }),
+      ConflictError,
+      "a replay naming another native turn is not the same proof",
+    );
+    // The same Host generation may replay its own completed request.
+    assert.equal(quiesce(state, turn).quiesceResult, "success");
+    state.restartHost();
+    assert.throws(
+      () => quiesce(state, turn),
+      ExecutionFencedError,
+      "a later Host generation never receives the older generation's proof",
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-a review P1-3: the physical identity is recorded right after spawn, before native ready", () => {
+  const state = fixture();
+  try {
+    state.kernel.instanceRuntimes.register(state.host, {
+      driver: "codex-app-server-warm/v1",
+      instanceRuntimeId: "instrt_a",
+      participantId: state.participantId,
+    });
+    const spawned = state.kernel.instanceRuntimes.recordSpawned(state.host, {
+      instanceRuntimeId: "instrt_a",
+      pgid: 5151,
+      pid: 5151,
+      processStartedAt: "Thu Sep 24 01:00:00 2026",
+    });
+    assert.equal(spawned.state, "starting", "not ready: no native session yet");
+    assert.equal(spawned.pid, 5151);
+    assert.equal(spawned.processStartedAt, "Thu Sep 24 01:00:00 2026");
+    assert.equal(spawned.nativeSessionId, undefined);
+    // Replaying the same identity is idempotent; another identity is refused.
+    assert.equal(
+      state.kernel.instanceRuntimes.recordSpawned(state.host, {
+        instanceRuntimeId: "instrt_a",
+        pgid: 5151,
+        pid: 5151,
+        processStartedAt: "Thu Sep 24 01:00:00 2026",
+      }).pid,
+      5151,
+    );
+    assert.throws(
+      () =>
+        state.kernel.instanceRuntimes.recordSpawned(state.host, {
+          instanceRuntimeId: "instrt_a",
+          pgid: 6161,
+          pid: 6161,
+          processStartedAt: "Thu Sep 24 01:00:01 2026",
+        }),
+      ConflictError,
+    );
+    assert.throws(
+      () =>
+        state.kernel.instanceRuntimes.markReady(state.host, {
+          instanceRuntimeId: "instrt_a",
+          nativeSessionId: "thread-1",
+          pgid: 6161,
+          pid: 6161,
+          processStartedAt: "Thu Sep 24 01:00:01 2026",
+        }),
+      ConflictError,
+      "ready must name the process recorded at spawn",
+    );
+    const ready = state.kernel.instanceRuntimes.markReady(state.host, {
+      instanceRuntimeId: "instrt_a",
+      nativeSessionId: "thread-1",
+      pgid: 5151,
+      pid: 5151,
+      processStartedAt: "Thu Sep 24 01:00:00 2026",
+    });
+    assert.equal(ready.state, "idle");
+    assert.equal(ready.nativeSessionId, "thread-1");
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-a review P1-1: an unproven termination leaves the runtime suspect and blocking", () => {
+  const state = fixture();
+  try {
+    state.startRuntime();
+    const suspect = state.kernel.instanceRuntimes.markSuspect(state.host, {
+      instanceRuntimeId: "instrt_a",
+    });
+    assert.equal(suspect.state, "suspect");
+    state.post();
+    state.advance();
+    const activation = state.kernel.leaseNextActivation(state.host, {
+      leaseMs: 30_000,
+    });
+    assert.ok(activation);
+    const runAttempt = state.kernel.createRunAttempt(state.host, {
+      activationId: activation.activationId,
+    });
+    assert.throws(
+      () =>
+        state.kernel.instanceRuntimes.beginTurn(state.host, {
+          executionMode: "warm",
+          instanceRuntimeId: "instrt_a",
+          runAttemptId: runAttempt.runAttemptId,
+        }),
+      ConflictError,
+    );
+    assert.throws(
+      () =>
+        state.kernel.instanceRuntimes.register(state.host, {
+          driver: "codex-app-server-warm/v1",
+          instanceRuntimeId: "instrt_b",
+          participantId: state.participantId,
+        }),
+      ConflictError,
+    );
+    assert.equal(
+      state.kernel.instanceRuntimes.recordExit(state.host, {
+        exit: { code: 0 },
+        instanceRuntimeId: "instrt_a",
+        reason: "idle_ttl",
+      }).state,
+      "terminated",
+      "only a later real exit proof ends the suspicion",
+    );
+  } finally {
+    state.cleanup();
+  }
+});

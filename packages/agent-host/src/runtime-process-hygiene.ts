@@ -112,6 +112,11 @@ export type RunCleanupInput = {
   >;
 };
 
+/** What one ended-runtime sweep proved; a failed scan proves nothing. */
+export type RuntimeSweepEvidence =
+  | { complete: true; remaining: number; unknown: number }
+  | { complete: false; error: string };
+
 export class RuntimeProcessHygiene {
   readonly #capCheckIntervalMs: number;
   readonly #caps: RuntimeResourceCaps;
@@ -170,8 +175,8 @@ export class RuntimeProcessHygiene {
       runtimeId: string;
       trigger: RuntimeProcessCleanupTrigger;
     },
-  ) {
-    await this.#cleanupEndedRuntime(control, input);
+  ): Promise<RuntimeSweepEvidence> {
+    return await this.#cleanupEndedRuntime(control, input);
   }
 
   /** Runtime ids carried by live processes of this user (janitor input). */
@@ -416,7 +421,11 @@ export class RuntimeProcessHygiene {
       runtimeId: string;
       trigger: RuntimeProcessCleanupTrigger;
     },
-  ): Promise<void> {
+  ): Promise<RuntimeSweepEvidence> {
+    let evidence: RuntimeSweepEvidence = {
+      complete: false,
+      error: "sweep did not run",
+    };
     await this.#withRuntimeLock(input.runtimeId, async () => {
       const pending: PendingInput = {
         observedAt: this.#now().toISOString(),
@@ -435,8 +444,9 @@ export class RuntimeProcessHygiene {
           pending,
         });
       }
-      await this.#sweepAndRecord(control, input);
+      evidence = await this.#sweepAndRecord(control, input);
     });
+    return evidence;
   }
 
   async #sweepAndRecord(
@@ -447,7 +457,7 @@ export class RuntimeProcessHygiene {
       runtimeId: string;
       trigger: RuntimeProcessCleanupTrigger;
     },
-  ): Promise<void> {
+  ): Promise<RuntimeSweepEvidence> {
     let result: LeftoverSweepResult;
     let error: string | undefined;
     try {
@@ -471,6 +481,9 @@ export class RuntimeProcessHygiene {
           ? {}
           : { runAttemptId: input.runAttemptId }),
       });
+    return error === undefined
+      ? { complete: true, remaining: result.remaining, unknown: result.unknown }
+      : { complete: false, error };
   }
 
   #recordInput(input: {

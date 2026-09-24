@@ -16,6 +16,7 @@ export function attachCodexBusyInput({
   let turnReady = false;
   let toolBoundary = false;
   let terminal = false;
+  let inFlight = Promise.resolve();
   const decoder = new StringDecoder("utf8");
   const respond = (id, accepted) => {
     try {
@@ -63,6 +64,10 @@ export function attachCodexBusyInput({
     }
     busy = true;
     lastWritten = frame.fingerprint;
+    let done;
+    inFlight = new Promise((resolve) => {
+      done = resolve;
+    });
     try {
       await request(
         "turn/steer",
@@ -82,6 +87,7 @@ export function attachCodexBusyInput({
       respond(frame.id, error?.providerRejected !== true);
     } finally {
       busy = false;
+      done();
     }
   };
   const onData = (chunk) => {
@@ -151,6 +157,11 @@ export function attachCodexBusyInput({
       terminal = true;
       input.removeListener("data", onData);
       input.pause();
+    },
+    // A steer already sent is answered (accepted or not) before the caller
+    // closes its turn, so its receipt precedes any turn-end frame.
+    settled() {
+      return inFlight;
     },
   };
 }

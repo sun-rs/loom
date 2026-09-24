@@ -14,13 +14,16 @@
 //          unattributed | fatal
 //
 // Every business frame of a turn (trajectory, usage, delivery acceptance,
-// session evidence, busy-input receipts) travels as `frame` with that turn's
+// busy-input receipts) travels as `frame` with that turn's
 // runAttemptId and native turn id, assigned from the Codex notification's own
 // thread/turn identity, never from "the current turn". A notification whose
 // turn is unknown is reported as `unattributed` and dropped. `turn.drained`
 // follows the matching `turn/completed` and names the last frame sequence of
 // the turn; anything later for that turn is late (the Host records it as a
-// usage gap). The thread is started or resumed once, at process start.
+// usage gap). The thread is started or resumed once, at process start; the
+// Host persists that session binding from `ready`, before any turn input.
+// `turn.drained` waits for an in-flight `turn/steer` response, so an accepted
+// steer's receipt is always inside its turn.
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, writeSync } from "node:fs";
@@ -500,22 +503,19 @@ function handleNotification(frame) {
   )
     restateAfterCompaction(turn);
   if (frame.method === "turn/completed" && !turn.closing)
-    closeTurn(turn, params);
+    void closeTurn(turn, params);
 }
 
-function closeTurn(turn, params) {
+async function closeTurn(turn, params) {
   turn.closing = true;
   turn.busyInput.close();
+  // S2 spec §2 step 2: a steer sent before closing belongs to this turn only
+  // if Codex accepted it; wait for that answer so its receipt is a frame of
+  // this turn (accepted: covered by the proof; refused: stays in the Inbox).
+  await turn.busyInput.settled();
   turn.writer.flush();
   const status =
     typeof params.turn?.status === "string" ? params.turn.status : "failed";
-  if (status === "completed")
-    emitTurnFrame(turn, {
-      protocol: "rah-provider-session/v1",
-      provider: "codex-app-server/v1",
-      providerSessionId: threadId,
-      state: "ready",
-    });
   const errorText =
     typeof params.turn?.error?.message === "string"
       ? params.turn.error.message.slice(0, 2048)

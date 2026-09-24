@@ -85,6 +85,15 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 清理通知改为按 Run 预留 → 接受 → 释放，至少一次投递并带去重标识；Codex 接收摘要覆盖包含通知的完整输入。
 - 门禁：新增 `role-warm` 组（`RAH_EFFICIENCY_ORDER=native,role,role-warm`），逐轮记录执行模式、session 恢复耗时、迟到帧，输出冷热对比；无模型的 `scripts/cli-efficiency/resume-probe.mjs` 测量 thread 恢复耗时。
 
+### 十一、S2-a 审查修复（schema 66 不变）
+
+- 杀进程须有证明：只有真实退出事件或经身份核验的"已不存在"才算退出；超时或无法验证时运行时标记 suspect、隔离、保留 lane、不记退出、不冷启动。
+- 首次绑定前移：拿到并核实原生 thread id 后、首轮输入被接受前就持久化 session 绑定（失败即停止，不发送输入）；首轮取消或崩溃后恢复同一 thread。
+- 启动窗口：spawn 后立即记录 pid/pgid/出生时间；无身份的启动记录视为"不确定"而非"已不存在"；清扫失败上报而非吞掉。
+- 帧完整性：序号缺口、排空水位不符、无法归属的用量都标记为不完整；fd3 溢出使该轮不完整且不再复用运行时；收尾等待在途 `turn/steer` 响应。
+- quiesce 幂等返回前先核对 Host 代数、运行时、run、原生 turn。
+- 剩余局限：spawn 返回到记录落库之间仍有极小窗口（靠标签清扫兜底）；压缩后重述失败只记日志；连接断开仍视为致命，无在线对账；均未经真实 Codex 验证。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

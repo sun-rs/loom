@@ -219,6 +219,7 @@ export {
 } from "./instance-runtime-pool.ts";
 export type {
   InstanceRuntimePoolOptions,
+  WarmRuntime,
   WarmRuntimeLaunch,
   WarmRuntimeLayout,
 } from "./instance-runtime-pool.ts";

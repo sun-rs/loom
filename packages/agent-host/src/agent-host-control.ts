@@ -152,9 +152,15 @@ type ServiceResult<Name extends keyof InstanceRuntimeService> =
 
 export type InstanceRuntimeControl = {
   register(input: ServiceInput<"register">): Promise<ServiceResult<"register">>;
+  recordSpawned(
+    input: ServiceInput<"recordSpawned">,
+  ): Promise<ServiceResult<"recordSpawned">>;
   markReady(
     input: ServiceInput<"markReady">,
   ): Promise<ServiceResult<"markReady">>;
+  markSuspect(
+    input: ServiceInput<"markSuspect">,
+  ): Promise<ServiceResult<"markSuspect">>;
   beginTurn(
     input: ServiceInput<"beginTurn">,
   ): Promise<ServiceResult<"beginTurn">>;
@@ -181,7 +187,9 @@ export function createKernelInstanceRuntimeControl(
   const service = kernel.instanceRuntimes;
   return Object.freeze({
     register: async (input) => service.register(host, input),
+    recordSpawned: async (input) => service.recordSpawned(host, input),
     markReady: async (input) => service.markReady(host, input),
+    markSuspect: async (input) => service.markSuspect(host, input),
     beginTurn: async (input) => service.beginTurn(host, input),
     recordTurnAccepted: async (input) =>
       service.recordTurnAccepted(host, input),

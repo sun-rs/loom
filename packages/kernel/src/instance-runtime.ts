@@ -291,6 +291,84 @@ export class InstanceRuntimeService {
     });
   }
 
+  /**
+   * Right after spawn, before native ready (review P1-3): the physical
+   * identity (pid, pgid, birth time) is durable while the row is still
+   * `starting`, so a crash in the startup window leaves an identity a later
+   * janitor can verify instead of a row that looks like "never started".
+   */
+  recordSpawned(
+    host: AuthenticatedHostContext,
+    input: {
+      instanceRuntimeId: string;
+      pgid: number;
+      pid: number;
+      processStartedAt: string;
+    },
+  ): InstanceRuntimeRecord {
+    const authenticated = this.#options.requireHost(host);
+    requireProcessIdentity(input);
+    return this.#options.transaction(() => {
+      const row = this.#requireCurrent(input.instanceRuntimeId, authenticated);
+      const recorded = nullableInteger(row, "pid");
+      if (recorded !== null) {
+        if (
+          recorded === input.pid &&
+          nullableText(row, "process_started_at") === input.processStartedAt
+        )
+          return this.#record(row, authenticated);
+        throw new ConflictError(
+          `instance runtime ${input.instanceRuntimeId} already recorded another process`,
+        );
+      }
+      if (text(row, "state") !== "starting")
+        throw new ConflictError(
+          `instance runtime ${input.instanceRuntimeId} is not starting`,
+        );
+      this.#options.database
+        .prepare(
+          `UPDATE instance_runtimes SET pid = ?, pgid = ?, process_started_at = ?,
+             updated_at = ? WHERE instance_runtime_id = ?`,
+        )
+        .run(
+          input.pid,
+          input.pgid,
+          input.processStartedAt,
+          this.#timestamp(),
+          input.instanceRuntimeId,
+        );
+      return this.#record(
+        this.#require(input.instanceRuntimeId),
+        authenticated,
+      );
+    });
+  }
+
+  /**
+   * The Host could not prove this runtime's termination (review P1-1): it
+   * stays live and `suspect`, blocking new execution for its participant,
+   * until a real exit or identity-verified absence is recorded.
+   */
+  markSuspect(
+    host: AuthenticatedHostContext,
+    input: { instanceRuntimeId: string },
+  ): InstanceRuntimeRecord {
+    const authenticated = this.#options.requireHost(host);
+    return this.#options.transaction(() => {
+      const row = this.#requireCurrent(input.instanceRuntimeId, authenticated);
+      if (text(row, "state") !== "suspect")
+        this.#options.database
+          .prepare(
+            "UPDATE instance_runtimes SET state = 'suspect', updated_at = ? WHERE instance_runtime_id = ?",
+          )
+          .run(this.#timestamp(), input.instanceRuntimeId);
+      return this.#record(
+        this.#require(input.instanceRuntimeId),
+        authenticated,
+      );
+    });
+  }
+
   /** The process is up and the native session is loaded (resumed or new). */
   markReady(
     host: AuthenticatedHostContext,
@@ -304,12 +382,7 @@ export class InstanceRuntimeService {
     },
   ): InstanceRuntimeRecord {
     const authenticated = this.#options.requireHost(host);
-    for (const [name, value] of [
-      ["pid", input.pid],
-      ["pgid", input.pgid],
-    ] as const)
-      if (!Number.isInteger(value) || value <= 1)
-        throw new Error(`${name} must be an integer greater than 1`);
+    requireProcessIdentity(input);
     if (
       input.sessionResumeMs !== undefined &&
       (!Number.isInteger(input.sessionResumeMs) || input.sessionResumeMs < 0)
@@ -327,6 +400,15 @@ export class InstanceRuntimeService {
           `instance runtime ${input.instanceRuntimeId} is not starting`,
         );
       }
+      const spawned = nullableInteger(row, "pid");
+      if (
+        spawned !== null &&
+        (spawned !== input.pid ||
+          nullableText(row, "process_started_at") !== input.processStartedAt)
+      )
+        throw new ConflictError(
+          `instance runtime ${input.instanceRuntimeId} is ready under another process than the one recorded at spawn`,
+        );
       const now = this.#timestamp();
       this.#options.database
         .prepare(
@@ -480,6 +562,42 @@ export class InstanceRuntimeService {
         throw new NotFoundError(
           `runtime process for run attempt ${input.runAttemptId} was not found`,
         );
+      // Scope and full identity first (review P2-2): an idempotent replay is
+      // returned only to the same Host generation for the same runtime, run
+      // and native turn — never to an unrelated Host that knows the run id.
+      const owner = this.#require(input.instanceRuntimeId);
+      this.#options.requireHostParticipant(
+        authenticated,
+        text(owner, "participant_id"),
+      );
+      if (
+        text(owner, "host_id") !== authenticated.hostId ||
+        text(owner, "host_instance_id") !== authenticated.instanceId
+      )
+        throw new ExecutionFencedError(
+          `instance runtime ${input.instanceRuntimeId} belongs to another Host generation`,
+        );
+      const turnRun = this.#options.database
+        .prepare("SELECT * FROM run_attempts WHERE run_attempt_id = ?")
+        .get(input.runAttemptId);
+      if (
+        turnRun === undefined ||
+        nullableText(turnRun, "instance_runtime_id") !== input.instanceRuntimeId
+      )
+        throw new ExecutionFencedError(
+          `run attempt ${input.runAttemptId} does not belong to this runtime`,
+        );
+      if (
+        text(process, "launch_host_id") !== authenticated.hostId ||
+        text(process, "runtime_run_id") !== input.runtimeRunId
+      )
+        throw new ExecutionFencedError(
+          "turn quiescence does not match the launched execution",
+        );
+      if (nullableText(turnRun, "native_turn_id") !== input.nativeTurnId)
+        throw new ConflictError(
+          "turn quiescence names a different native turn than the accepted one",
+        );
       if (
         text(process, "state") === "terminated" &&
         nullableText(process, "proof_kind") === "turn_quiesced" &&
@@ -488,18 +606,10 @@ export class InstanceRuntimeService {
       )
         return turnProofFromRow(process);
       const row = this.#requireCurrent(input.instanceRuntimeId, authenticated);
-      const runAttempt = this.#requireTurn(row, input.runAttemptId);
-      if (
-        text(process, "launch_host_id") !== authenticated.hostId ||
-        text(process, "runtime_run_id") !== input.runtimeRunId ||
-        !["prepared", "active"].includes(text(process, "state"))
-      )
+      this.#requireTurn(row, input.runAttemptId);
+      if (!["prepared", "active"].includes(text(process, "state")))
         throw new ExecutionFencedError(
           "turn quiescence does not match the launched execution",
-        );
-      if (nullableText(runAttempt, "native_turn_id") !== input.nativeTurnId)
-        throw new ConflictError(
-          "turn quiescence names a different native turn than the accepted one",
         );
       if (input.nativeTurnId === null && input.result === "success")
         throw new ConflictError(
@@ -1018,6 +1128,25 @@ export function turnExecutionForRunAttempt(
     mode: mode === "cold" ? "cold" : "warm",
     sessionResumeMs: nullableInteger(row, "session_resume_ms"),
   };
+}
+
+function requireProcessIdentity(input: {
+  pgid: number;
+  pid: number;
+  processStartedAt: string;
+}): void {
+  for (const [name, value] of [
+    ["pid", input.pid],
+    ["pgid", input.pgid],
+  ] as const)
+    if (!Number.isInteger(value) || value <= 1)
+      throw new Error(`${name} must be an integer greater than 1`);
+  if (
+    typeof input.processStartedAt !== "string" ||
+    input.processStartedAt.trim() === "" ||
+    input.processStartedAt.length > 200
+  )
+    throw new Error("processStartedAt must be a non-empty process birth time");
 }
 
 function requireId(value: string, name: string): void {

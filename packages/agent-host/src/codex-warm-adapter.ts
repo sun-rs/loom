@@ -266,7 +266,14 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         pool.diagnostic(
           `[${runtime.instanceRuntimeId}] session binding failed; stopping the runtime`,
         );
-        void pool.abortRuntime(runtime, "crash");
+        // An unproven kill leaves the runtime suspect; the turn gets no exit.
+        void pool
+          .abortRuntime(runtime, "crash")
+          .catch((error: unknown) =>
+            pool.diagnostic(
+              `[${runtime.instanceRuntimeId}] ${error instanceof Error ? error.message : String(error)}`,
+            ),
+          );
       },
       ...(this.#options.recordProviderSessionEvidence === undefined
         ? {}
@@ -303,6 +310,10 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       runtimeRunId,
     });
     await lifecycle.registerPrepared(handle);
+    // Review P1-2: the native session exists since ready; its binding is
+    // durable before this turn's input can be accepted, so an interrupted or
+    // crashed first turn still resumes the same thread. Failure stops here.
+    await this.#bindSession(input, runtime, lifecycle, runtimeRunId);
     const wake = await this.#wakeText(input, runtime, turn);
     const fullDigest = createHash("sha256")
       .update(wake.text, "utf8")
@@ -454,6 +465,44 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     );
   }
 
+  async #bindSession(
+    input: ActivationEnvelope,
+    runtime: WarmRuntime,
+    lifecycle: RuntimeStartLifecycle,
+    runtimeRunId: string,
+  ): Promise<void> {
+    if (runtime.sessionBound) return;
+    const record = this.#options.recordProviderSessionEvidence;
+    if (record === undefined) return;
+    const providerSessionId = runtime.nativeSessionId;
+    try {
+      if (providerSessionId === undefined)
+        throw new Error("the warm runtime reported no native session");
+      await record(
+        input,
+        {
+          protocol: "rah-provider-session/v1",
+          provider: "codex-app-server/v1",
+          providerSessionId,
+          state: "ready",
+        },
+        runtime.standingPromptDigest,
+      );
+      // Only after the Host persisted the binding does the Kernel learn that
+      // this instance must resume it (fail closed if unrecorded).
+      if (input.agent?.instanceChannelId !== undefined)
+        await lifecycle.recordInstanceSessionBinding?.({
+          runAttemptId: input.runAttemptId,
+          runtimeRunId,
+        });
+    } catch (error) {
+      throw new Error(
+        `RAH_SESSION_CONTINUITY_REQUIRED: session binding failed before the turn input: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    runtime.sessionBound = true;
+  }
+
   async #wakeText(
     input: ActivationEnvelope,
     runtime: WarmRuntime,
@@ -511,6 +560,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     // Evidence of frames through lastFrameSeq is queued; drain it before
     // the handle goes away and the proof is written.
     await turn.collector?.finish();
+    await Promise.all(turn.integrityWrites);
     const release = await turn.handle?.release();
     if (release !== undefined && !release.revoked)
       pool.diagnostic(
@@ -521,6 +571,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         `[${runtime.instanceRuntimeId}] turn handle directory removal failed; the janitor removes it: ${release.removeError}`,
       );
     if (outcome.kind === "exit") return outcome.exit;
+    if (outcome.kind === "unproven") throw new Error(outcome.error);
     const failure =
       turn.collector?.terminalFailure ??
       (outcome.status === "failed" || outcome.status === "rejected"
@@ -532,9 +583,13 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const alive = await runtime.processGroupAlive(pool.processTable);
     if (!alive || outcome.inFlightToolCount > 0) {
       // Not provably quiet: end the runtime and prove a real exit instead.
-      const exit = alive
-        ? await pool.killRuntime(runtime)
-        : await runtime.exited;
+      // An unproven kill leaves no proof at all (the runtime stays suspect).
+      const proof = await pool.killRuntime(runtime, "crash");
+      if (!proof.proven)
+        throw new Error(
+          `warm turn was not provably quiet and its runtime termination was not proven: ${proof.reason}`,
+        );
+      const exit = proof.exit;
       await pool.runtimeEnded(runtime, exit, "crash");
       return {
         ...runExitFrom(exit),

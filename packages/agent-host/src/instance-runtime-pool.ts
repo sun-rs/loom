@@ -42,6 +42,9 @@ export const WARM_RUNTIME_RECOVERY_DRIVER = "loom-instance-runtime-v1";
 export const DEFAULT_WARM_IDLE_TTL_MS = 30 * 60_000;
 const DEFAULT_READY_TIMEOUT_MS = 30_000;
 const DEFAULT_STOP_TIMEOUT_MS = 5_000;
+const DEFAULT_KILL_GRACE_MS = 1_000;
+const DEFAULT_KILL_WAIT_MS = 5_000;
+const FD3_BUFFER_LIMIT = 4 * 1024 * 1024;
 const RECENT_TURN_LIMIT = 64;
 
 export type WarmRuntimeLaunch = {
@@ -68,7 +71,31 @@ export type WarmTurnOutcome =
       status: string;
       errorMessage?: string;
     }
-  | { kind: "exit"; exit: RunExit };
+  | { kind: "exit"; exit: RunExit }
+  /** The runtime was killed but its exit is not proven: no proof exists. */
+  | { kind: "unproven"; error: string };
+
+/**
+ * Review P1-1: sending SIGKILL is not an exit. Only a real `close` of the
+ * process, or identity-verified absence of its group, proves termination.
+ */
+export type WarmKillProof =
+  | { proven: true; exit: { code: number | null; signal: string | null } }
+  | { proven: false; reason: string };
+
+/** Review P1-3: what a leftover sweep proved (never assumed on failure). */
+export type WarmSweepEvidence =
+  | { complete: true; remaining: number; unknown: number }
+  | { complete: false; error: string };
+
+export type WarmRuntimeEndReason =
+  | "crash"
+  | "stall"
+  | "idle_ttl"
+  | "config_restart"
+  | "host_shutdown"
+  | "resource_failure"
+  | "start_failed";
 
 export type WarmTurnAdmission =
   | { kind: "accepted"; nativeTurnId: string }
@@ -88,6 +115,8 @@ export type WarmTurn = {
   collector?: RuntimeTrajectoryCollector;
   framesClosed: boolean;
   handle?: WorkerTurnHandle;
+  /** Durable incomplete-evidence marks; awaited before the turn's proof. */
+  integrityWrites: Promise<void>[];
   lastFrameSeq: number;
   nativeTurnId?: string;
   outcome: Deferred<WarmTurnOutcome>;
@@ -109,6 +138,11 @@ export type InstanceRuntimePoolOptions = {
   processTable?: ProcessTable;
   readyTimeoutMs?: number;
   stopTimeoutMs?: number;
+  /** SIGTERM grace, then the wait for a real close after SIGKILL. */
+  killGraceMs?: number;
+  killWaitMs?: number;
+  /** Signal delivery (`process.kill`); replaceable to simulate failures. */
+  signalProcess?: (pid: number, signal: NodeJS.Signals | 0) => void;
 };
 
 export class WarmRuntime {
@@ -116,7 +150,16 @@ export class WarmRuntime {
   readonly participantId: string;
   readonly key: string;
   readonly layout: WarmRuntimeLayout;
-  state: "starting" | "idle" | "busy" | "stopping" | "dead" = "starting";
+  state: "starting" | "idle" | "busy" | "stopping" | "suspect" | "dead" =
+    "starting";
+  /** Why the runtime was being ended when its termination went unproven. */
+  suspectReason: WarmRuntimeEndReason | undefined;
+  /** The native session (thread) id reported at ready. */
+  nativeSessionId: string | undefined;
+  /** The Host persisted this process's native session binding (P1-2). */
+  sessionBound = false;
+  /** Frames were lost on the fd3 channel: never reuse this process. */
+  frameIntegrityLost = false;
   lastActivityMs: number;
   /** Digest of the standing prompt this process was launched with. */
   standingPromptDigest: string | undefined;
@@ -126,6 +169,7 @@ export class WarmRuntime {
   unreleasedRunAttemptId: string | undefined;
   current: WarmTurn | undefined;
   readonly #recent = new Map<string, true>();
+  #lastClosedRunAttemptId: string | undefined;
   readonly #pool: InstanceRuntimePool;
   #child: ChildProcess | undefined;
   #pid: number | undefined;
@@ -186,23 +230,33 @@ export class WarmRuntime {
     );
     const decoder = new StringDecoder("utf8");
     let buffer = "";
+    let skipping = false;
     (child.stdio[3] as NodeJS.ReadableStream | null)?.on(
       "data",
       (chunk: Buffer) => {
         buffer += decoder.write(chunk);
-        if (buffer.length > 4 * 1024 * 1024) {
-          this.#pool.diagnostic(
-            `[${this.instanceRuntimeId}] fd3 frame buffer overflow`,
-          );
-          buffer = "";
-          return;
-        }
         for (;;) {
           const newline = buffer.indexOf("\n");
           if (newline < 0) break;
           const line = buffer.slice(0, newline);
           buffer = buffer.slice(newline + 1);
+          if (skipping) {
+            // The rest of the oversized line: dropped, already marked.
+            skipping = false;
+            continue;
+          }
+          if (line.length > FD3_BUFFER_LIMIT) {
+            this.#frameOverflow();
+            continue;
+          }
           if (line.trim() !== "") this.#route(line);
+        }
+        if (buffer.length > FD3_BUFFER_LIMIT) {
+          // Review P2-1: an oversized frame is lost evidence, never a silent
+          // drop — mark the attributable turn incomplete, retire the process.
+          buffer = "";
+          if (!skipping) this.#frameOverflow();
+          skipping = true;
         }
       },
     );
@@ -261,6 +315,7 @@ export class WarmRuntime {
       admission: deferred(),
       cancelRequested: false,
       framesClosed: false,
+      integrityWrites: [],
       lastFrameSeq: 0,
       outcome: deferred(),
       runAttemptId,
@@ -273,6 +328,7 @@ export class WarmRuntime {
   /** The turn's frames are closed; later frames of it are late. */
   closeTurnFrames(turn: WarmTurn): void {
     turn.framesClosed = true;
+    this.#lastClosedRunAttemptId = turn.runAttemptId;
     this.#recent.set(turn.runAttemptId, true);
     while (this.#recent.size > RECENT_TURN_LIMIT)
       this.#recent.delete(this.#recent.keys().next().value!);
@@ -283,7 +339,7 @@ export class WarmRuntime {
     const pid = this.#pid;
     if (pid === undefined || this.state === "dead") return false;
     try {
-      process.kill(-pid, 0);
+      this.#pool.signalProcess(-pid, 0);
     } catch {
       return false;
     }
@@ -295,13 +351,44 @@ export class WarmRuntime {
     );
   }
 
-  signalGroup(signal: NodeJS.Signals): void {
+  /**
+   * Signal the whole group. `gone` only for ESRCH; a refused or failed send
+   * (EPERM, anything else) is not evidence that the process ended.
+   */
+  signalGroup(signal: NodeJS.Signals): "sent" | "gone" | `failed:${string}` {
     const pid = this.#pid;
-    if (pid === undefined) return;
+    if (pid === undefined) return "gone";
     try {
-      process.kill(-pid, signal);
+      this.#pool.signalProcess(-pid, signal);
+      return "sent";
+    } catch (error) {
+      const code = errorCode(error);
+      return code === "ESRCH" ? "gone" : `failed:${code ?? "unknown"}`;
+    }
+  }
+
+  /**
+   * Identity-verified absence: no process is left in the group (ESRCH) and
+   * the leader pid is gone or now belongs to a different process.
+   */
+  async verifiedAbsent(table: ProcessTable): Promise<boolean> {
+    const pid = this.#pid;
+    if (pid === undefined) return true;
+    try {
+      this.#pool.signalProcess(-pid, 0);
+      return false;
+    } catch (error) {
+      if (errorCode(error) !== "ESRCH") return false;
+    }
+    try {
+      const identity = (await table.identities([pid])).get(pid);
+      return (
+        identity === undefined ||
+        (this.#processStartedAt !== undefined &&
+          identity.startedAt !== this.#processStartedAt)
+      );
     } catch {
-      // Already gone.
+      return false;
     }
   }
 
@@ -330,6 +417,7 @@ export class WarmRuntime {
       envelope.runtimeId !== this.instanceRuntimeId ||
       envelope.hostGeneration !== this.#pool.hostGeneration ||
       typeof envelope.seq !== "number" ||
+      !Number.isInteger(envelope.seq) ||
       envelope.seq <= this.#lastSeq
     ) {
       this.#pool.diagnostic(
@@ -337,6 +425,11 @@ export class WarmRuntime {
       );
       return;
     }
+    // Review P2-1: the driver numbers every envelope; a gap is lost evidence.
+    if (envelope.seq !== this.#lastSeq + 1)
+      this.#evidenceGap(
+        `envelope sequence gap ${String(this.#lastSeq + 1)}..${String(envelope.seq - 1)}`,
+      );
     this.#lastSeq = envelope.seq;
     const runAttemptId =
       typeof envelope.runAttemptId === "string"
@@ -382,6 +475,16 @@ export class WarmRuntime {
         return;
       case "frame":
         if (turn !== undefined && !turn.framesClosed) {
+          if (envelope.nativeTurnId !== turn.nativeTurnId) {
+            // Routed by RunAttempt AND native turn: a mismatch is evidence
+            // this turn cannot attribute, never evidence of the turn.
+            this.#pool.markIncomplete(
+              this,
+              turn,
+              `frame names native turn ${String(envelope.nativeTurnId)}`,
+            );
+            return;
+          }
           turn.lastFrameSeq = envelope.seq;
           turn.collector?.append(`${JSON.stringify(envelope.frame)}\n`);
           return;
@@ -398,6 +501,12 @@ export class WarmRuntime {
           typeof envelope.lastFrameSeq !== "number"
         )
           return this.#unattributable(envelope);
+        if (envelope.lastFrameSeq !== turn.lastFrameSeq)
+          this.#pool.markIncomplete(
+            this,
+            turn,
+            `drain names frame ${String(envelope.lastFrameSeq)} but the Host received this turn through ${String(turn.lastFrameSeq)}`,
+          );
         // Frames of this turn after its drain point are late, never current.
         this.closeTurnFrames(turn);
         settle(turn.outcome, {
@@ -415,6 +524,18 @@ export class WarmRuntime {
         this.#pool.diagnostic(
           `[${this.instanceRuntimeId}] unattributed native frame ${String(envelope.method)} (${String(envelope.reason)})`,
         );
+        // Required evidence (usage) the driver could not attribute: the open
+        // turn's usage can no longer be proven complete.
+        if (
+          /usage/iu.test(String(envelope.method)) &&
+          this.current !== undefined &&
+          !this.current.framesClosed
+        )
+          this.#pool.markIncomplete(
+            this,
+            this.current,
+            `unattributed ${String(envelope.method)}`,
+          );
         return;
       default:
         return this.#unattributable(envelope);
@@ -432,6 +553,32 @@ export class WarmRuntime {
     this.#pool.diagnostic(
       `[${this.instanceRuntimeId}] unattributable ${String(envelope.type)} frame for ${String(envelope.runAttemptId ?? "no turn")}`,
     );
+    const open = this.current;
+    if (open !== undefined && !open.framesClosed)
+      this.#pool.markIncomplete(
+        this,
+        open,
+        `unattributable ${String(envelope.type)} envelope`,
+      );
+  }
+
+  #frameOverflow(): void {
+    this.frameIntegrityLost = true;
+    this.#evidenceGap("fd3 frame exceeded the buffer limit and was dropped");
+  }
+
+  /** Lost envelopes: the attributable turn is the open one, else the last. */
+  #evidenceGap(reason: string): void {
+    const target = this.current ?? undefined;
+    if (target !== undefined) {
+      this.#pool.markIncomplete(this, target, reason);
+      return;
+    }
+    if (this.#lastClosedRunAttemptId !== undefined) {
+      this.#pool.markIncomplete(this, this.#lastClosedRunAttemptId, reason);
+      return;
+    }
+    this.#pool.diagnostic(`[${this.instanceRuntimeId}] ${reason} (no turn)`);
   }
 }
 
@@ -448,6 +595,9 @@ export class InstanceRuntimePool {
   readonly #onDiagnostic: (message: string) => void;
   readonly #readyTimeoutMs: number;
   readonly #stopTimeoutMs: number;
+  readonly #killGraceMs: number;
+  readonly #killWaitMs: number;
+  readonly signalProcess: (pid: number, signal: NodeJS.Signals | 0) => void;
   #processTable: ProcessTable | undefined;
   #timer: NodeJS.Timeout | undefined;
 
@@ -469,6 +619,13 @@ export class InstanceRuntimePool {
     this.#processTable = options.processTable;
     this.#readyTimeoutMs = options.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS;
     this.#stopTimeoutMs = options.stopTimeoutMs ?? DEFAULT_STOP_TIMEOUT_MS;
+    this.#killGraceMs = options.killGraceMs ?? DEFAULT_KILL_GRACE_MS;
+    this.#killWaitMs = options.killWaitMs ?? DEFAULT_KILL_WAIT_MS;
+    this.signalProcess =
+      options.signalProcess ??
+      ((pid, signal) => {
+        process.kill(pid, signal);
+      });
   }
 
   get idleTtlMs(): number {
@@ -523,17 +680,34 @@ export class InstanceRuntimePool {
         this.#runtimes.delete(input.participantId);
         runtime = undefined;
       }
+      if (runtime !== undefined && runtime.state === "suspect") {
+        // Review P1-1: retry the proof; without it nothing new may start.
+        const proof = await this.#kill(runtime);
+        if (!proof.proven)
+          throw new Error(
+            `warm runtime ${runtime.instanceRuntimeId} is suspect: its termination is not proven (${proof.reason}); new execution stays blocked`,
+          );
+        await this.#recordEnd(
+          runtime,
+          proof.exit,
+          runtime.suspectReason ?? "crash",
+        );
+        runtime = undefined;
+      }
       if (runtime !== undefined) {
         await this.#confirmRelease(runtime);
         if (runtime.state !== "idle")
           throw new Error(
             `warm runtime ${runtime.instanceRuntimeId} is ${runtime.state}; the lane is still held`,
           );
-        if (runtime.key === input.key) {
+        if (runtime.key === input.key && !runtime.frameIntegrityLost) {
           runtime.state = "busy";
           return { mode: "warm" as const, runtime };
         }
-        await this.#stop(runtime, "config_restart");
+        await this.#stop(
+          runtime,
+          runtime.frameIntegrityLost ? "resource_failure" : "config_restart",
+        );
       }
       return {
         mode: "cold" as const,
@@ -565,7 +739,7 @@ export class InstanceRuntimePool {
   async runtimeEnded(
     runtime: WarmRuntime,
     exit: { code: number | null; signal: string | null },
-    reason: "crash" | "stall",
+    reason: WarmRuntimeEndReason,
   ): Promise<void> {
     await this.#serialize(runtime.participantId, async () => {
       await this.#recordEnd(runtime, exit, reason);
@@ -581,7 +755,9 @@ export class InstanceRuntimePool {
           runtime.unreleasedRunAttemptId === undefined &&
           this.#now() - runtime.lastActivityMs >= this.#idleTtlMs
         )
-          await this.#stop(runtime, "idle_ttl");
+          await this.#stop(runtime, "idle_ttl").catch((error: unknown) =>
+            this.diagnostic(errorMessage(error)),
+          );
       });
     }
   }
@@ -593,7 +769,9 @@ export class InstanceRuntimePool {
     for (const runtime of [...this.#runtimes.values()])
       await this.#serialize(runtime.participantId, async () => {
         if (runtime.state !== "dead")
-          await this.#stop(runtime, "host_shutdown");
+          await this.#stop(runtime, "host_shutdown").catch((error: unknown) =>
+            this.diagnostic(errorMessage(error)),
+          );
       });
   }
 
@@ -663,14 +841,35 @@ export class InstanceRuntimePool {
   }
 
   lateFrame(runtime: WarmRuntime, runAttemptId: string): void {
-    this.diagnostic(
-      `[${runtime.instanceRuntimeId}] late frame of closed turn ${runAttemptId}; its usage is incomplete`,
+    this.markIncomplete(
+      runtime,
+      runAttemptId,
+      `late frame of closed turn ${runAttemptId}`,
     );
-    void this.#control
+  }
+
+  /**
+   * Review P2-1: a turn whose frame evidence cannot be proven complete
+   * (late, lost, unattributable) gets a durable mark, which makes its usage
+   * `partial`; an open turn awaits the write before its proof.
+   */
+  markIncomplete(
+    runtime: WarmRuntime,
+    turn: WarmTurn | string,
+    reason: string,
+  ): void {
+    const runAttemptId = typeof turn === "string" ? turn : turn.runAttemptId;
+    this.diagnostic(
+      `[${runtime.instanceRuntimeId}] ${reason}; usage of ${runAttemptId} is incomplete`,
+    );
+    const write = this.#control
       .instanceRuntimes!.recordLateTurnFrame({ runAttemptId })
       .catch((error: unknown) =>
-        this.diagnostic(`late frame record failed: ${errorMessage(error)}`),
+        this.diagnostic(
+          `incomplete-evidence record failed: ${errorMessage(error)}`,
+        ),
       );
+    if (typeof turn !== "string") turn.integrityWrites.push(write);
   }
 
   async #coldStart(input: {
@@ -730,14 +929,25 @@ export class InstanceRuntimePool {
       });
       const launch = await input.launch(layout);
       runtime.spawn(launch);
-      const ready = await runtime.waitReady(this.#readyTimeoutMs);
-      if (ready.kind === "failed") throw new Error(ready.error);
+      const spawned = runtime;
+      void spawned.exited.then((exit) => this.#onExit(spawned, exit));
       const pid = runtime.pid;
       if (pid === undefined) throw new Error("warm runtime has no pid");
+      // Review P1-3: the physical identity is durable before native ready,
+      // so a crash in the startup window never looks like "never started".
       const identity = (await this.processTable.identities([pid])).get(pid);
       if (identity === undefined)
         throw new Error("warm runtime identity could not be read");
       runtime.setProcessStartedAt(identity.startedAt);
+      await control.recordSpawned({
+        instanceRuntimeId,
+        pgid: pid,
+        pid,
+        processStartedAt: identity.startedAt,
+      });
+      const ready = await runtime.waitReady(this.#readyTimeoutMs);
+      if (ready.kind === "failed") throw new Error(ready.error);
+      runtime.nativeSessionId = ready.threadId;
       await control.markReady({
         instanceRuntimeId,
         nativeSessionId: ready.threadId,
@@ -750,20 +960,26 @@ export class InstanceRuntimePool {
       });
       runtime.state = "busy";
       this.#runtimes.set(input.participantId, runtime);
-      void runtime.exited.then((exit) => this.#onExit(runtime!, exit));
       return runtime;
     } catch (error) {
       if (runtime !== undefined) runtime.state = "stopping";
-      const exit =
+      const proof =
         runtime === undefined || runtime.pid === undefined
           ? undefined
           : await this.#kill(runtime);
+      if (runtime !== undefined && proof !== undefined && !proof.proven) {
+        // Review P1-1: the started process may live on. It stays recorded
+        // (with its spawn identity) and blocks the participant as suspect.
+        this.#runtimes.set(input.participantId, runtime);
+        await this.#markSuspect(runtime, "start_failed", proof.reason);
+        throw error;
+      }
       try {
         await control.recordExit({
           exit:
-            exit === undefined
+            proof === undefined || !proof.proven
               ? { code: null, signal: "RAH_NOT_STARTED" }
-              : normalizedExit(exit),
+              : normalizedExit(proof.exit),
           instanceRuntimeId,
           reason: "start_failed",
         });
@@ -799,7 +1015,24 @@ export class InstanceRuntimePool {
     runtime: WarmRuntime,
     exit: { code: number | null; signal: string | null },
   ): void {
-    if (runtime.state === "stopping" || runtime.state === "dead") return;
+    // The start and stop paths own their own exit; a suspect runtime's late
+    // real close is the proof it was missing.
+    if (
+      runtime.state === "starting" ||
+      runtime.state === "stopping" ||
+      runtime.state === "dead"
+    )
+      return;
+    if (runtime.state === "suspect") {
+      void this.runtimeEnded(
+        runtime,
+        exit,
+        runtime.suspectReason ?? "crash",
+      ).catch((error: unknown) =>
+        this.diagnostic(`runtime end record failed: ${errorMessage(error)}`),
+      );
+      return;
+    }
     const turn = runtime.current;
     if (turn !== undefined && !turn.outcome.settled) {
       // The turn owner (adapter + AgentHost) records its process_exit proof;
@@ -819,7 +1052,7 @@ export class InstanceRuntimePool {
   async #recordEnd(
     runtime: WarmRuntime,
     exit: { code: number | null; signal: string | null },
-    reason: "crash" | "stall" | "idle_ttl" | "config_restart" | "host_shutdown",
+    reason: WarmRuntimeEndReason,
   ): Promise<void> {
     if (runtime.state === "dead") return;
     runtime.state = "dead";
@@ -844,13 +1077,37 @@ export class InstanceRuntimePool {
     await this.#sweep(
       runtime.participantId,
       runtime.instanceRuntimeId,
-      reason === "crash" || reason === "stall" ? "runtime_crash" : "run_end",
+      reason === "crash" || reason === "stall" || reason === "start_failed"
+        ? "runtime_crash"
+        : "run_end",
     );
+  }
+
+  async #markSuspect(
+    runtime: WarmRuntime,
+    reason: WarmRuntimeEndReason,
+    why: string,
+  ): Promise<void> {
+    runtime.state = "suspect";
+    runtime.suspectReason = reason;
+    this.diagnostic(
+      `runtime ${runtime.instanceRuntimeId} of ${runtime.participantId} could not be proven terminated (${why}); it stays suspect and new execution is blocked`,
+    );
+    try {
+      await this.#control.instanceRuntimes!.markSuspect({
+        instanceRuntimeId: runtime.instanceRuntimeId,
+      });
+    } catch (error) {
+      this.diagnostic(
+        `runtime ${runtime.instanceRuntimeId} suspect state was not recorded: ${errorMessage(error)}`,
+      );
+    }
   }
 
   async #stop(
     runtime: WarmRuntime,
-    reason: "idle_ttl" | "config_restart" | "host_shutdown",
+    reason:
+      "idle_ttl" | "config_restart" | "host_shutdown" | "resource_failure",
   ): Promise<void> {
     if (runtime.state === "dead") return;
     runtime.state = "stopping";
@@ -860,47 +1117,76 @@ export class InstanceRuntimePool {
       // Control channel already closed; the group kill below still applies.
     }
     const exit = await this.#waitExit(runtime, this.#stopTimeoutMs);
-    const final = exit ?? (await this.#kill(runtime));
+    const proof: WarmKillProof =
+      exit === undefined ? await this.#kill(runtime) : { exit, proven: true };
+    if (!proof.proven) {
+      await this.#markSuspect(runtime, reason, proof.reason);
+      throw new Error(
+        `warm runtime ${runtime.instanceRuntimeId} termination was not proven (${proof.reason}); it stays suspect`,
+      );
+    }
     runtime.state = "stopping";
-    await this.#recordEnd(runtime, final, reason);
+    await this.#recordEnd(runtime, proof.exit, reason);
   }
 
-  /** SIGTERM, grace, SIGKILL to the runtime's whole process group. */
-  async #kill(
-    runtime: WarmRuntime,
-  ): Promise<{ code: number | null; signal: string | null }> {
-    runtime.signalGroup("SIGTERM");
-    const graceful = await this.#waitExit(runtime, 1_000);
+  /**
+   * SIGTERM, grace, SIGKILL to the runtime's whole process group. Proven
+   * only by a real close or identity-verified absence (review P1-1).
+   */
+  async #kill(runtime: WarmRuntime): Promise<WarmKillProof> {
+    const term = runtime.signalGroup("SIGTERM");
+    const graceful = await this.#waitExit(runtime, this.#killGraceMs);
     if (graceful !== undefined) {
       runtime.signalGroup("SIGKILL");
-      return graceful;
+      return { exit: graceful, proven: true };
     }
-    runtime.signalGroup("SIGKILL");
-    return (
-      (await this.#waitExit(runtime, 5_000)) ?? {
-        code: null,
-        signal: "SIGKILL",
-      }
-    );
+    const kill = runtime.signalGroup("SIGKILL");
+    const killed = await this.#waitExit(runtime, this.#killWaitMs);
+    if (killed !== undefined) return { exit: killed, proven: true };
+    if (await runtime.verifiedAbsent(this.processTable))
+      return { exit: { code: null, signal: "RAH_RUNTIME_GONE" }, proven: true };
+    return {
+      proven: false,
+      reason: `no close after SIGKILL (SIGTERM ${term}, SIGKILL ${kill})`,
+    };
   }
 
+  /** Kill with proof; an unproven kill leaves the runtime suspect. */
   async killRuntime(
     runtime: WarmRuntime,
-  ): Promise<{ code: number | null; signal: string | null }> {
+    reason: WarmRuntimeEndReason,
+  ): Promise<WarmKillProof> {
     runtime.state = "stopping";
-    return await this.#kill(runtime);
+    const proof = await this.#kill(runtime);
+    if (!proof.proven) await this.#markSuspect(runtime, reason, proof.reason);
+    return proof;
   }
 
   /**
    * Kill a runtime whose turn cannot be quiesced (cancel timeout, binding
-   * failure): the open turn's outcome becomes the real process exit.
+   * failure): the open turn's outcome becomes the real process exit. An
+   * unproven kill gives the turn no exit and throws: its execution record
+   * stays open (quarantine) and the lane stays held.
    */
   async abortRuntime(
     runtime: WarmRuntime,
     reason: "crash" | "stall",
   ): Promise<{ code: number | null; signal: string | null }> {
-    const exit = await this.killRuntime(runtime);
+    const proof = await this.killRuntime(runtime, reason);
     const turn = runtime.current;
+    if (!proof.proven) {
+      const error = `warm runtime termination was not proven: ${proof.reason}`;
+      if (turn !== undefined) {
+        turn.outcome.resolve({ error, kind: "unproven" });
+        turn.admission.resolve({
+          error: "warm runtime stopped",
+          kind: "failed",
+          rejected: false,
+        });
+      }
+      throw new Error(error);
+    }
+    const exit = proof.exit;
     if (turn !== undefined) {
       turn.outcome.resolve({ exit: normalizedExit(exit), kind: "exit" });
       turn.admission.resolve({
@@ -935,13 +1221,35 @@ export class InstanceRuntimePool {
     processStartedAt?: string;
   }): Promise<"killed" | "gone" | "uncertain"> {
     // Tagged descendants first (identity-verified by the sweeper).
-    await this.#sweep(row.participantId, row.instanceRuntimeId, "janitor");
-    if (row.pid === undefined) return "gone";
+    const sweep = await this.#sweep(
+      row.participantId,
+      row.instanceRuntimeId,
+      "janitor",
+    );
+    if (row.pid === undefined) {
+      // Review P1-3: no recorded identity is not "never started". Only a
+      // complete tagged sweep that left nothing proves the start window.
+      if (sweep.complete && sweep.remaining === 0 && sweep.unknown === 0)
+        return "gone";
+      this.diagnostic(
+        `runtime ${row.instanceRuntimeId} has no recorded process identity and its tagged sweep ${sweep.complete ? `left ${String(sweep.remaining)} remaining and ${String(sweep.unknown)} unknown` : `is unavailable: ${sweep.error}`}`,
+      );
+      return "uncertain";
+    }
     const table = this.processTable;
-    const identity = (await table.identities([row.pid])).get(row.pid);
+    let identity;
+    try {
+      identity = (await table.identities([row.pid])).get(row.pid);
+    } catch (error) {
+      this.diagnostic(
+        `runtime ${row.instanceRuntimeId} identity could not be read: ${errorMessage(error)}`,
+      );
+      return "uncertain";
+    }
     if (identity === undefined) return "gone";
+    // Without a recorded birth time a live pid cannot be told apart.
+    if (row.processStartedAt === undefined) return "uncertain";
     if (
-      row.processStartedAt === undefined ||
       identity.startedAt !== row.processStartedAt ||
       identity.uid !== process.getuid?.()
     )
@@ -949,9 +1257,9 @@ export class InstanceRuntimePool {
     const group = row.pgid ?? row.pid;
     for (const signal of ["SIGTERM", "SIGKILL"] as const) {
       try {
-        process.kill(-group, signal);
+        this.signalProcess(-group, signal);
       } catch {
-        // Gone in between.
+        // Gone in between, or refused: only the identity poll below decides.
       }
       const deadline = Date.now() + (signal === "SIGTERM" ? 1_000 : 5_000);
       while (Date.now() < deadline) {
@@ -968,18 +1276,25 @@ export class InstanceRuntimePool {
     participantId: string,
     runtimeId: string,
     trigger: "run_end" | "runtime_crash" | "janitor",
-  ): Promise<void> {
-    if (this.#hygiene === undefined) return;
+  ): Promise<WarmSweepEvidence> {
+    if (this.#hygiene === undefined)
+      return { complete: false, error: "no leftover-process sweeper" };
     try {
-      await this.#hygiene.afterRuntime(this.#control, {
+      const result = await this.#hygiene.afterRuntime(this.#control, {
         participantId,
         runtimeId,
         trigger,
       });
+      if (result !== undefined && !result.complete)
+        this.diagnostic(
+          `leftover sweep of runtime ${runtimeId} failed: ${result.error}`,
+        );
+      return result ?? { complete: false, error: "sweep gave no result" };
     } catch (error) {
       this.diagnostic(
         `leftover sweep of runtime ${runtimeId} failed: ${errorMessage(error)}`,
       );
+      return { complete: false, error: errorMessage(error) };
     }
   }
 
@@ -1040,6 +1355,14 @@ function settle<T>(state: Deferred<T>, value: T): void {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function errorCode(error: unknown): string | undefined {
+  return typeof error === "object" &&
+    error !== null &&
+    typeof (error as { code?: unknown }).code === "string"
+    ? (error as { code: string }).code
+    : undefined;
 }
 
 function errorMessage(error: unknown): string {
