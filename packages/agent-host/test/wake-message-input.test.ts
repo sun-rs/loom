@@ -67,7 +67,7 @@ test("golden: a complete window is one line per message plus one reply line", ()
     [
       "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
       "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
-      "Reply: message-post --based-on-room-seq 14 --final · no reply needed: message-check",
+      'Reply: message-post --target "#general" --based-on-room-seq 14 --final · no reply needed: message-check',
     ].join("\n"),
   );
 });
@@ -78,7 +78,7 @@ test("golden: a warm turn carries its handle on both commands", () => {
     [
       "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
       "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
-      `Reply: message-post --turn ${HANDLE} --based-on-room-seq 14 --final · no reply needed: message-check --turn ${HANDLE}`,
+      `Reply: message-post --target "#general" --turn ${HANDLE} --based-on-room-seq 14 --final · no reply needed: message-check --turn ${HANDLE}`,
     ].join("\n"),
   );
 });
@@ -135,7 +135,7 @@ test("golden: a business fact keeps a compact type and its payload", () => {
       "#general seq 12 msg=0c12aaaa @richard: one",
       '#general seq 13 task.cancelled @richard {"taskId":"task-7","number":7}',
       "#general seq 14 msg=0c14bbbb @richard: two",
-      "Reply: message-post --based-on-room-seq 14 --final · no reply needed: message-check",
+      'Reply: message-post --target "#general" --based-on-room-seq 14 --final · no reply needed: message-check',
     ].join("\n"),
   );
 });
@@ -148,7 +148,7 @@ test("golden: the Host cleanup notice rides as one bounded trailing line", () =>
     [
       "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
       "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
-      "Reply: message-post --based-on-room-seq 14 --final · no reply needed: message-check",
+      'Reply: message-post --target "#general" --based-on-room-seq 14 --final · no reply needed: message-check',
       notice,
     ].join("\n"),
   );
@@ -239,5 +239,92 @@ test("the memory index rides the wake only when supplied", () => {
   assert.match(changed, /## Complete original MEMORY\.md/u);
   assert.match(changed, /changed since this session's system snapshot/u);
   assert.ok(changed.includes("# Memory\n- prefers rebase\n"));
-  assert.match(changed, /Reply: message-post --based-on-room-seq 14/u);
+  assert.match(
+    changed,
+    /Reply: message-post --target "#general" --based-on-room-seq 14/u,
+  );
+});
+
+test("golden: a Thread window's reply command names that exact Thread", () => {
+  assert.equal(
+    formatBodiedWakeInput({
+      present: present({
+        toSeq: 12,
+        presentedThroughSeq: 12,
+        presentedSeqs: [12],
+        events: [
+          event(12, "message.posted", {
+            messageId: M12,
+            threadId: T9,
+            body: "in thread",
+          }),
+        ],
+      }),
+    }),
+    [
+      "#general:7e09cccc seq 12 msg=0c12aaaa @richard: in thread",
+      'Reply: message-post --target "#general:7e09cccc" --based-on-room-seq 12 --final · no reply needed: message-check',
+    ].join("\n"),
+  );
+});
+
+test("golden: a window spanning the channel and a Thread lists one reply command per target", () => {
+  assert.equal(
+    formatBodiedWakeInput({
+      present: present({
+        events: [
+          event(12, "message.posted", {
+            messageId: M12,
+            threadId: T9,
+            body: "in thread",
+          }),
+          event(14, "message.posted", { messageId: M14, body: "in channel" }),
+        ],
+      }),
+      turnHandle: HANDLE,
+    }),
+    [
+      "#general:7e09cccc seq 12 msg=0c12aaaa @richard: in thread",
+      "#general seq 14 msg=0c14bbbb @richard: in channel",
+      `Reply per target (--final on your last post only): message-post --target "#general:7e09cccc" --turn ${HANDLE} --based-on-room-seq 14 · message-post --target "#general" --turn ${HANDLE} --based-on-room-seq 14 · no reply needed: message-check --turn ${HANDLE}`,
+    ].join("\n"),
+  );
+});
+
+test("a Room without an addressable name keeps the explicit Thread id on the reply command", () => {
+  const text = formatBodiedWakeInput({
+    present: present({
+      toSeq: 12,
+      presentedThroughSeq: 12,
+      presentedSeqs: [12],
+      events: [
+        event(12, "message.posted", {
+          messageId: M12,
+          threadId: T9,
+          body: "x",
+        }),
+      ],
+      addressing: { targets: {}, handles: {} },
+    }),
+  })!;
+  assert.match(
+    text,
+    new RegExp(
+      `Reply: message-post --target "room-general" --thread-id ${T9} --based-on-room-seq 12 --final`,
+      "u",
+    ),
+  );
+});
+
+test("a retry after an attempt that neither replied nor checked says so once", () => {
+  const retried = formatBodiedWakeInput({
+    present: present({ previousAttemptUnconfirmed: true }),
+  })!;
+  assert.equal(
+    retried.split("\n").at(-1),
+    "Previous attempt ended without a reply or message-check.",
+  );
+  assert.equal(retried.match(/Previous attempt ended/gu)?.length, 1);
+  const first = formatBodiedWakeInput({ present: present() })!;
+  assert.doesNotMatch(first, /Previous attempt/u);
 });

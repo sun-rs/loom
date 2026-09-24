@@ -16,16 +16,48 @@
  *   Room seq, short message ref, author and body; a non-message business fact
  *   keeps a compact type and payload;
  * - a window whose contiguous `presentedThroughSeq` reaches the Activation
- *   head ends with one `Reply:` line naming the exact `--based-on-room-seq`
- *   (RAH's only implicit acknowledgement evidence) and the no-reply
- *   `message-check` exit;
+ *   head ends with one `Reply:` line: a complete command naming the exact
+ *   `--target` of the delivered messages (one command per target when the
+ *   window spans several) and `--based-on-room-seq` (RAH's only implicit
+ *   acknowledgement evidence), plus the no-reply `message-check` exit;
+ * - a retry after an attempt that neither posted nor confirmed delivery adds
+ *   one reminder line (Kernel-decided `previousAttemptUnconfirmed`);
  * - a truncated window or one with a notice tail instead ends with one line
  *   asking for `message-check` first.
  */
 import type { WorkerMessagePresentResponse } from "@rah-os/protocol";
 
 import { turnArgument } from "./provider-activation-input.js";
-import { renderCompactWakeEventLines } from "./worker-read-render.ts";
+import {
+  compactWakeReplyTargets,
+  renderCompactWakeEventLines,
+} from "./worker-read-render.ts";
+
+/** The one-line retry reminder; the Kernel decides when it applies. */
+export const PREVIOUS_ATTEMPT_UNCONFIRMED_LINE =
+  "Previous attempt ended without a reply or message-check.";
+
+/**
+ * The complete reply command(s). The model always copies an explicit target,
+ * so the target is stated rather than left to memory that compaction rewrites.
+ * Any one post citing the head confirms the whole window (the implicit ACK is
+ * per Room), so a multi-target window lists one command per target and
+ * `--final` moves to the model's last post.
+ */
+function replyInstruction(
+  targets: readonly string[],
+  turn: string,
+  through: number,
+): string {
+  const post = (target: string) =>
+    `message-post --target ${target}${turn} --based-on-room-seq ${through}`;
+  const check = `no reply needed: message-check${turn}`;
+  if (targets.length <= 1)
+    return `Reply: ${post(targets[0] ?? "")} --final · ${check}`;
+  return `Reply per target (--final on your last post only): ${targets
+    .map(post)
+    .join(" · ")} · ${check}`;
+}
 
 export type BodiedWakeMemory = {
   /** The complete current MEMORY.md, verbatim. */
@@ -78,10 +110,18 @@ export function formatBodiedWakeInput(input: {
             : ` (seq ${present.noticeFromSeq}-${present.noticeToSeq})`
         } not shown`;
   const instruction = complete
-    ? `Reply: message-post${turn} --based-on-room-seq ${through} --final · no reply needed: message-check${turn}`
+    ? replyInstruction(
+        compactWakeReplyTargets(present.events, present.addressing),
+        turn,
+        through,
+      )
     : `Shown through seq ${through} of ${present.toSeq}${notice}: run message-check${turn} first, then reply.`;
+  const retry =
+    present.previousAttemptUnconfirmed === true
+      ? `\n${PREVIOUS_ATTEMPT_UNCONFIRMED_LINE}`
+      : "";
   const sections = [
-    `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}`,
+    `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,
     ...memoryLines(input.memory),
   ];
   return sections.join("\n\n");

@@ -9,6 +9,7 @@ import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import { isExecutionAuditEvent } from "./worker-message-projection.ts";
 import { workerAddressing } from "./worker-addressing.ts";
+import { retryReminder } from "./activation-retry-reminder.ts";
 
 /**
  * A "presented" window records that the Kernel itself rendered a concrete range
@@ -157,6 +158,8 @@ export type RenderedPresentedWindow = PresentedWindow & {
   presentedThroughSeq: number;
   /** Canonical `#room`/`@handle` names, exactly as `message-check` renders. */
   addressing: WorkerAddressing;
+  /** See `activation-retry-reminder.ts`. */
+  previousAttemptUnconfirmed?: true;
 };
 
 const TERMINAL_RUN_ATTEMPT_STATES = new Set([
@@ -329,6 +332,7 @@ export function renderPresentedWindow(
       ...notice,
       presentedThroughSeq:
         presentedPrefix(database, scope, existing)?.throughSeq ?? 0,
+      ...retryReminder(database, scope),
     };
   }
   database
@@ -364,6 +368,7 @@ export function renderPresentedWindow(
     ...notice,
     presentedThroughSeq:
       presentedPrefix(database, scope, window)?.throughSeq ?? 0,
+    ...retryReminder(database, scope),
   };
 }
 

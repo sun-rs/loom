@@ -1,3 +1,4 @@
+import { assertWorkerReplyTarget } from "./worker-reply-target-guard.ts";
 import { requireInstanceReplyTarget } from "./instance-worker-scope.ts";
 import {
   workerAddressing,
@@ -334,6 +335,13 @@ export class WorkerTargetContextService {
         target.roomId,
       );
       const threadId = workerReadThread(target, input.threadId) ?? undefined;
+      // A presented receipt or a saved draft already fixed its own target.
+      if (input.contextReceipt === undefined && input.sendDraft !== true)
+        assertWorkerReplyTarget(this.#context.database, origin, {
+          roomId: target.roomId,
+          threadId,
+          modelBasedOnRoomSeq: input.basedOnRoomSeq,
+        });
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);
       const window = this.#resolveSendWindow(
         origin,

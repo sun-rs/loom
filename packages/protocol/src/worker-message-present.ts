@@ -52,6 +52,12 @@ export const WorkerMessagePresentResponseSchema = z
     noticeToSeq: z.number().int().positive().optional(),
     renderedAt: TimestampSchema,
     sentAt: TimestampSchema.optional(),
+    /**
+     * Present only on a retry whose previous RunAttempt ended with neither a
+     * committed post nor a delivery confirmation (`delivery_not_proven`).
+     * Read from the Activation's durable retry record; never client-supplied.
+     */
+    previousAttemptUnconfirmed: z.literal(true).optional(),
   })
   .strict()
   .refine((value) => value.toSeq >= value.fromSeq, {

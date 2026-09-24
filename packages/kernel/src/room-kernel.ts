@@ -5034,9 +5034,7 @@ export class RoomKernel {
       const acknowledgedThrough = cursor ? integer(cursor, "last_seq") : 0;
       const requiredThrough = integer(row, "to_seq");
       if (acknowledgedThrough < requiredThrough) {
-        throw new DeliveryProofError(
-          `activation delivery is not acknowledged through sequence ${requiredThrough}`,
-        );
+        throw DeliveryProofError.notAcknowledgedThrough(requiredThrough);
       }
       const unverifiedRuntime = this.#database
         .prepare(

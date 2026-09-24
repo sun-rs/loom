@@ -53,9 +53,36 @@ export class MessageForwardSourceError extends KernelError {
   }
 }
 
+/**
+ * The Activation completion refusal when no delivery confirmation reached the
+ * Activation head. A retry scheduled with this error is what the next wake's
+ * one-line reminder keys on (`activation-retry-reminder.ts`).
+ */
+export const ACTIVATION_DELIVERY_NOT_ACKNOWLEDGED =
+  "activation delivery is not acknowledged through sequence";
+
 export class DeliveryProofError extends KernelError {
   constructor(message: string) {
     super(message, "delivery_not_proven");
+  }
+
+  static notAcknowledgedThrough(seq: number): DeliveryProofError {
+    return new DeliveryProofError(
+      `${ACTIVATION_DELIVERY_NOT_ACKNOWLEDGED} ${seq}`,
+    );
+  }
+}
+
+/**
+ * A reply citing delivered messages (`basedOnRoomSeq`) aimed at a Thread that
+ * none of those messages came from. Definite and pre-commit: nothing was
+ * published; the next action names the target(s) the messages arrived in.
+ */
+export class ReplyTargetMismatchError extends KernelError {
+  readonly suggestedNextAction: string;
+  constructor(message: string, suggestedNextAction: string) {
+    super(message, "reply_target_mismatch");
+    this.suggestedNextAction = suggestedNextAction;
   }
 }
 

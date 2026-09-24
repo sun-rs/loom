@@ -20,6 +20,7 @@ import { createKimiRequestGuard } from "./drift-kimi-guard.mjs";
 import {
   codexToolCalls,
   countCodexCompactions,
+  countCodexTargetRejections,
   evaluateRound,
 } from "./drift-checks.mjs";
 import {
@@ -433,6 +434,7 @@ export async function runDriftArm({
       // compactions inside this round's window.
       let toolCalls = null;
       let rolloutCompactions = null;
+      let targetRejections = null;
       if (provider === "codex" && current) {
         try {
           const events = transcript(current).filter(
@@ -440,6 +442,7 @@ export async function runDriftArm({
           );
           toolCalls = codexToolCalls(events);
           rolloutCompactions = countCodexCompactions(events);
+          targetRejections = countCodexTargetRejections(events);
         } catch (error) {
           round.transcriptError = String(error.message).slice(0, 200);
         }
@@ -457,6 +460,7 @@ export async function runDriftArm({
           finalReplies,
           newTasks,
           toolCalls,
+          targetRejections,
           usage,
           compactionsInRound: trajectoryCompactions + (rolloutCompactions ?? 0),
         },

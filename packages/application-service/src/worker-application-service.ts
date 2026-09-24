@@ -20,7 +20,10 @@ import {
 } from "@rah-os/protocol";
 import { projectWorkerMessageCheck } from "@rah-os/kernel";
 import { StaleContextError } from "@rah-os/kernel";
-import { IdempotencyConflictError } from "@rah-os/kernel";
+import {
+  IdempotencyConflictError,
+  ReplyTargetMismatchError,
+} from "@rah-os/kernel";
 import { WorkerTaskHeldResponseSchema } from "@rah-os/protocol";
 import {
   WorkerTaskAmendRequestSchema,
@@ -830,6 +833,9 @@ export class WorkerApplicationService {
           ...(presented.sentAt === undefined
             ? {}
             : { sentAt: presented.sentAt }),
+          ...(presented.previousAttemptUnconfirmed === true
+            ? { previousAttemptUnconfirmed: true }
+            : {}),
         }),
       );
       return;
@@ -1816,7 +1822,9 @@ export class WorkerApplicationService {
           error: {
             code,
             message: error.message,
-            ...suggestedNextActionFor(route, error.code),
+            ...(error instanceof ReplyTargetMismatchError
+              ? { suggestedNextAction: error.suggestedNextAction }
+              : suggestedNextActionFor(route, error.code)),
           },
         }),
       );

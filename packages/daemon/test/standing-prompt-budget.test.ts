@@ -137,7 +137,7 @@ test("the final-reply rule is one sentence in the standing prompt and --final ri
   const [wake, warmWake] = wakeSamples();
   assert.match(
     wake!,
-    /^Reply: message-post --based-on-room-seq 14 --final · /mu,
+    /^Reply: message-post --target "#[a-z-]+" --based-on-room-seq 14 --final · /mu,
   );
   assert.match(warmWake!, /--based-on-room-seq 14 --final · /u);
 });

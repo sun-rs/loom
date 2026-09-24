@@ -547,6 +547,41 @@ function compactEventLines(rawEvent: Json, addressing?: unknown): string[] {
   return lines;
 }
 
+/**
+ * The exact `--target` argument of each distinct place the wake's messages
+ * arrived, in first-seen order: `"#room"`, `"#room:<thread ref>"`, or for a
+ * Room without an addressable name `"<roomId>" --thread-id <threadId>`. A
+ * window holding no message falls back to the first event's Room.
+ */
+export function compactWakeReplyTargets(
+  events: readonly unknown[],
+  addressing: unknown,
+): string[] {
+  const targets: string[] = [];
+  const add = (value: string) => {
+    if (!targets.includes(value)) targets.push(value);
+  };
+  for (const raw of events) {
+    const event = addressed(asRecord(raw), addressing);
+    if (event.type !== "message.posted") continue;
+    const target = asString(event.target) ?? asString(event.roomId) ?? "-";
+    const threadId = asString(asRecord(event.payload).threadId);
+    const addressable = target.startsWith("#") || target.startsWith("dm:@");
+    add(
+      threadId === undefined
+        ? `"${target}"`
+        : addressable
+          ? `"${target}:${shortWorkerRef(threadId)}"`
+          : `"${target}" --thread-id ${threadId}`,
+    );
+  }
+  if (targets.length === 0 && events.length > 0) {
+    const first = addressed(asRecord(events[0]), addressing);
+    add(`"${asString(first.target) ?? asString(first.roomId) ?? "-"}"`);
+  }
+  return targets;
+}
+
 export function renderCompactWakeEventLines(
   events: readonly unknown[],
   addressing: unknown,

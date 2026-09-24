@@ -101,6 +101,11 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 用量接口新增 `finalInterrupt`（是否发出、是否抢在下一次模型请求之前）；门禁报告该项。
 - 未经真实验证：中断能否稳定抢在 CLI 下一次请求之前；其他三家的原生中断（Claude `control_request interrupt`、Kimi `session/cancel`、OpenCode abort）待 S2-c。
 
+### 十三、长会话漂移修复（压缩后回复目标漂移）
+
+- 真实漂移测试（Codex gpt-6-luna/low、常驻、20 轮、第 8/15 轮强制压缩）发现：规则、Task 规则、沉默、`--final`、`--turn` 压缩后均保持；但模型总显式写 `--target`，压缩后把频道回复全部发进旧 thread（第 9/13/14/15/16/20 轮）。
+- 修复：唤醒回复行给出含精确目标的完整命令（多目标逐一列出）；Kernel 对带 `--based-on-room-seq` 的 `--target` 回帖做结构性检查，发往与本批送达消息无关的 thread 时以 `reply_target_mismatch`（409，明确拒绝，可修正重发）拒绝；上次尝试既未回复也未确认时，重试唤醒加一句提醒。显式 `threadId` 路由未加此守卫（保留 task-get 进入旧 Task thread 的既有契约）。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

@@ -10,6 +10,7 @@ export {
   LeaseConflictError,
   MessageForwardSourceError,
   NotFoundError,
+  ReplyTargetMismatchError,
   RuntimeTerminationProofError,
   StaleContextError,
   TaskSubmissionProofError,

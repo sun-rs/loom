@@ -278,7 +278,7 @@ const cli = (command, input) => new Promise((resolve) => {
   child.once("close", (status) => { record({ event: "command", command, status, stdout, stderr }); resolve(); });
 });
 async function act(wake_) {
-  const reply = /Reply: message-post --based-on-room-seq (\\d+)( --final)?/.exec(wake_);
+  const reply = /Reply: message-post --target "[^"]+"(?: --turn \\S+)? --based-on-room-seq (\\d+)( --final)?/.exec(wake_);
   if (!reply) throw new Error("FAKE model found no Reply line in the wake");
   const item = { id: "post-" + activationId, type: "commandExecution" };
   notify("item/started", { item });

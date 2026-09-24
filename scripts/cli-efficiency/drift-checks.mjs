@@ -62,6 +62,25 @@ export function codexToolCalls(events) {
     });
 }
 
+// Worker call outputs carrying the Kernel's definite reply-target refusal
+// (`reply_target_mismatch`, not sent). Diagnostic: a refused send never reaches
+// the ledger, so a corrected resend in the same round still counts as
+// delivered-correct; the refusals are reported, not failed.
+export function countCodexTargetRejections(events) {
+  const text = (output) =>
+    typeof output === "string"
+      ? output
+      : Array.isArray(output)
+        ? output.map((part) => String(part?.text ?? "")).join("\n")
+        : "";
+  return events.filter(
+    (e) =>
+      ["function_call_output", "custom_tool_call_output"].includes(
+        e.payload?.type,
+      ) && /\breply_target_mismatch\b/.test(text(e.payload.output)),
+  ).length;
+}
+
 export function countCodexCompactions(events) {
   return events.filter(
     (e) =>
@@ -77,6 +96,7 @@ export function countCodexCompactions(events) {
 //   finalReplies: [{runAttemptId, eventId, roomSeq}]
 //   newTasks: [{taskId, creatorId}]
 //   toolCalls: codex rollout calls (diagnostic) or null
+//   targetRejections: refused reply-target sends in the rollout (diagnostic)
 //   usage: {generations, input, cached, completeness} or null
 // context: {threadId, roomId, provider, mode}
 export function evaluateRound(spec, evidence, context) {
@@ -150,6 +170,10 @@ export function evaluateRound(spec, evidence, context) {
     checks.finalOnLastPost = null;
   }
 
+  // Reported only: the refused send committed nothing, and `delivered` /
+  // `wrongTarget` above already judge the committed replies.
+  checks.targetRejections = evidence.targetRejections ?? null;
+
   checks.forbiddenTasks = (evidence.newTasks ?? []).length;
   if (checks.forbiddenTasks) fail("forbiddenTask");
 
@@ -203,6 +227,10 @@ export function summarizeRounds(evaluated, extras = []) {
     expectedReplies: withReply.length,
     delivered: withReply.filter((e) => e.checks.delivered).length,
     wrongTarget: evaluated.reduce((a, e) => a + (e.checks.wrongTarget ?? 0), 0),
+    targetRejections: evaluated.reduce(
+      (a, e) => a + (e.checks.targetRejections ?? 0),
+      0,
+    ),
     silentRounds: silent.length,
     silenceViolations: silent.filter((e) => e.checks.silenceViolation).length,
     forbiddenTasks: evaluated.reduce((a, e) => a + e.checks.forbiddenTasks, 0),
@@ -332,6 +360,7 @@ export function formatDriftTable(evaluated, extras = []) {
     "cmp",
     "deliv",
     "target",
+    "rej",
     "silent",
     "final",
     "fmt",
@@ -353,6 +382,7 @@ export function formatDriftTable(evaluated, extras = []) {
       x.compactedBefore ? "C" : "",
       cell(c.delivered),
       c.wrongTarget ? `x${c.wrongTarget}` : "ok",
+      cell(c.targetRejections),
       c.silenceViolation === null ? "-" : c.silenceViolation ? "NO" : "ok",
       cell(c.finalOnLastPost),
       c.format ? cell(c.format.ok) : "-",

@@ -130,6 +130,7 @@ const SEND_NOT_SENT_CODES: ReadonlySet<string> = new Set([
   "conflict",
   "stale_context",
   "thread_context_target_mismatch",
+  "reply_target_mismatch",
   "body_too_large",
   "method_not_allowed",
 ]);

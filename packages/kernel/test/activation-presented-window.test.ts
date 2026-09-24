@@ -537,3 +537,112 @@ test("a late acceptance for a RunAttempt that already finished registers nothing
     context.close();
   }
 });
+
+test("a retry after an attempt that neither posted nor confirmed delivery is flagged on the next rendering only", () => {
+  const f = fixture();
+  try {
+    f.post("please look");
+    const first = f.activate();
+    const rendered = f.kernel.presentWorkerMessages(first.execution);
+    assert.equal(rendered.previousAttemptUnconfirmed, undefined);
+    const end = (attempt: { run: { runAttemptId: string } }) => {
+      f.kernel.recordRuntimeTermination(f.host, {
+        exit: { code: 0 },
+        runAttemptId: attempt.run.runAttemptId,
+        runtimeRunId: "runtime",
+      });
+      f.kernel.finishRunAttempt(f.host, {
+        runAttemptId: attempt.run.runAttemptId,
+        state: "exited",
+        exitCode: 0,
+      });
+    };
+    end(first);
+    let failure = "";
+    assert.throws(
+      () => {
+        try {
+          f.kernel.completeActivation(f.host, {
+            activationId: first.activation.activationId,
+            consumerId: "worker",
+          });
+        } catch (error) {
+          failure = (error as Error).message;
+          throw error;
+        }
+      },
+      (error: unknown) =>
+        (error as { code?: string }).code === "delivery_not_proven",
+    );
+    f.kernel.retryActivation(f.host, {
+      activationId: first.activation.activationId,
+      error: failure,
+      retryAfterMs: 0,
+    });
+    const second = f.activate();
+    assert.equal(second.activation.activationId, first.activation.activationId);
+    assert.equal(
+      f.kernel.presentWorkerMessages(second.execution)
+        .previousAttemptUnconfirmed,
+      true,
+    );
+    // A later retry for another reason carries no reminder.
+    end(second);
+    f.kernel.retryActivation(f.host, {
+      activationId: first.activation.activationId,
+      error: "runtime exited with code 1",
+      retryAfterMs: 0,
+    });
+    const third = f.activate();
+    assert.equal(
+      f.kernel.presentWorkerMessages(third.execution)
+        .previousAttemptUnconfirmed,
+      undefined,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("a delivery-unproven retry whose previous attempt did post carries no reminder", () => {
+  const f = fixture();
+  try {
+    f.post("please look");
+    const first = f.activate();
+    // A post without a causal marker commits but confirms nothing.
+    f.kernel.postWorkerMessage(first.execution, { body: "on it" });
+    f.kernel.recordRuntimeTermination(f.host, {
+      exit: { code: 0 },
+      runAttemptId: first.run.runAttemptId,
+      runtimeRunId: "runtime",
+    });
+    f.kernel.finishRunAttempt(f.host, {
+      runAttemptId: first.run.runAttemptId,
+      state: "exited",
+      exitCode: 0,
+    });
+    let failure = "";
+    try {
+      f.kernel.completeActivation(f.host, {
+        activationId: first.activation.activationId,
+        consumerId: "worker",
+      });
+    } catch (error) {
+      failure = (error as Error).message;
+    }
+    assert.match(failure, /not acknowledged/u);
+    f.kernel.retryActivation(f.host, {
+      activationId: first.activation.activationId,
+      error: failure,
+      retryAfterMs: 0,
+    });
+    const second = f.activate();
+    assert.equal(
+      f.kernel.presentWorkerMessages(second.execution)
+        .previousAttemptUnconfirmed,
+      undefined,
+    );
+  } finally {
+    f.close();
+  }
+});

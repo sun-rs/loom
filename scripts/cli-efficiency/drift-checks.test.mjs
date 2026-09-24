@@ -4,6 +4,7 @@ import {
   checkFormat,
   codexToolCalls,
   countCodexCompactions,
+  countCodexTargetRejections,
   evaluateRound,
   exitCodeFor,
   formatDriftTable,
@@ -297,4 +298,46 @@ test("session change and timeouts are evidence gaps; table renders every round",
   ]);
   assert.equal(table.split("\n").length, 21);
   assert.match(table.split("\n")[9], /^9\s+qa\s+C/);
+});
+
+test("a definite target rejection then a corrected post counts as delivered-correct, and the rejection is reported", () => {
+  const spec = specOf("qa") ?? scenario.find((r) => r.expect.reply);
+  const rejections = countCodexTargetRejections([
+    {
+      payload: {
+        type: "custom_tool_call_output",
+        output: [
+          {
+            type: "input_text",
+            text: "Error: Worker API HTTP 409\nCode: reply_target_mismatch\n",
+          },
+        ],
+      },
+    },
+    {
+      payload: {
+        type: "function_call_output",
+        output: "Code: reply_target_mismatch",
+      },
+    },
+    { payload: { type: "custom_tool_call_output", output: "posted seq 12" } },
+    { payload: { type: "function_call", arguments: "reply_target_mismatch" } },
+  ]);
+  assert.equal(rejections, 2);
+  const round = evaluateRound(
+    spec,
+    evidenceFor(spec, { targetRejections: rejections }),
+    ctx,
+  );
+  assert.equal(round.checks.delivered, true);
+  assert.equal(round.checks.wrongTarget, 0);
+  assert.equal(round.checks.targetRejections, 2);
+  assert.deepEqual(round.failures, []);
+  const rounds = passAll();
+  const index = rounds.findIndex((r) => r.round === spec.round);
+  rounds[index] = round;
+  const sum = summarizeDrift(rounds, { compactAt: [8, 15], compactions });
+  assert.equal(sum.totals.targetRejections, 2);
+  assert.equal(sum.status, "pass");
+  assert.match(formatDriftTable(rounds).split("\n")[0], /\brej\b/u);
 });

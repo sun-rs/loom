@@ -273,7 +273,7 @@ test("bodied wake: one reply with the stated seq completes the Activation withou
     assert.match(
       result.wake,
       new RegExp(
-        `^Reply: message-post --based-on-room-seq ${second.event.roomSeq} --final · no reply needed: message-check$`,
+        `^Reply: message-post --target "#main" --based-on-room-seq ${second.event.roomSeq} --final · no reply needed: message-check$`,
         "mu",
       ),
     );
@@ -560,7 +560,7 @@ const act = (wake) => {
     if (mode !== "check") cli(["worker", "message-post", "--target", "#main"], "FAKE CODEX reply after check");
     return;
   }
-  const bodied = /Reply: message-post --based-on-room-seq (\\d+)/.exec(wake);
+  const bodied = /Reply: message-post --target "[^"]+" --based-on-room-seq (\\d+)/.exec(wake);
   if (bodied) {
     cli(["worker", "message-post", ...(mode === "wrong-room" ? ["--target", "#away"] : []), "--based-on-room-seq", bodied[1]], "FAKE CODEX reply");
     return;
