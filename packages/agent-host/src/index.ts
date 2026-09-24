@@ -145,6 +145,11 @@ export {
   RAH_WORKER_SESSION_FILE_ENV,
 } from "./worker-credential-file.ts";
 export { runWorkerCliCommand } from "./worker-cli.ts";
+export {
+  WORKER_HELP_TOPIC_NAMES,
+  workerHelpTopic,
+} from "./worker-help-topics.ts";
+export type { WorkerHelpTopicName } from "./worker-help-topics.ts";
 export type { WorkerCliRuntime } from "./worker-cli.ts";
 export { createWorkerToolTransportEnvironment } from "./worker-tool-transport.ts";
 export {

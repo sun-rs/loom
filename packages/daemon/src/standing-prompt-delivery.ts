@@ -11,14 +11,12 @@ export function deliveryInstructions(
     mode === "direct"
       ? "While you are working, the daemon may write a batched, content-free inbox update into your current turn. Native acceptance is subject to the active turn and session checks."
       : mode === "gated"
-        ? "The daemon may deliver a target-scoped, content-free inbox notice at an allowed tool boundary. A fresh Claude session is not ready for live delivery until its first turn ends; a confirmed resumed session may be ready earlier. RAH closes this process after the turn results, so fresh-session pending work continues in a follow-up Activation rather than being written into a closing pipe."
+        ? "The daemon may deliver a target-scoped, content-free inbox notice at an allowed tool boundary. A fresh Claude session is not ready for live delivery until its first turn ends (a confirmed resumed session may be ready earlier); its pending work continues in a follow-up Activation."
         : "The daemon does not proactively inject new Room notices while this run is busy. Pending work is retained for a follow-up Activation after this execution ends. Already published Room messages remain readable through Worker tools.";
   return `## Message Notifications
 
 Delivery mode at launch: ${mode}.
 ${behavior}
 
-Runtime Guide settings may change while you work; the launch mode is not a promise that a notice will arrive. An actual inbox notice reports pending targets, not message bodies or a new Task authorization. It does not acknowledge Inbox, prove that you read a message, complete work, or expand this Activation's execution fence.
-Treat a content-free notice as a non-urgent signal; never derive "no work" from a content-free notice alone. At a natural breakpoint, use \`"$RAH_WORKER_CLI" worker message-read --target TARGET\` to inspect the exact Room/DM/Thread identified by the notice. Preserve the original request and its reply target; do not replace it with only the latest message. If you defer, report that honestly. Read higher-priority corrections before deciding whether to pivot; follow the existing Worker authority and freshness rules, and leave work outside your execution scope to durable follow-up.
-Do not keep the process alive polling for future messages. RAH manages the next Activation; it does not keep this CLI process resident between Activations.`;
+An inbox notice names pending targets only: it does not acknowledge Inbox, prove that you read a message, complete work, or expand this Activation's execution fence, and never derive "no work" from a content-free notice alone. At a natural breakpoint, read the named target with \`"$RAH_WORKER_CLI" worker message-read --target TARGET\`, keeping the original request and its reply target. Do not poll for future messages; RAH manages the next Activation.`;
 }

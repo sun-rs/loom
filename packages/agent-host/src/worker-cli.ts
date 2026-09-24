@@ -33,6 +33,10 @@ import {
   toWorkerCliError,
   workerServerFailureError,
 } from "./worker-cli-error.ts";
+import {
+  WORKER_HELP_TOPIC_NAMES,
+  workerHelpTopic,
+} from "./worker-help-topics.ts";
 import carrierPackage from "../package.json" with { type: "json" };
 import { parseWorkerChannelAttentionCommand } from "./worker-channel-attention-cli.ts";
 import {
@@ -292,6 +296,26 @@ export async function runWorkerCliCommand(
     (arguments_.length === 1 && arguments_[0] === "--help")
   ) {
     runtime.stdout.write(help());
+    return 0;
+  }
+  // S1-c: detail that no longer rides in the standing prompt is served here.
+  if (
+    arguments_.length === 3 &&
+    arguments_[0] === "worker" &&
+    arguments_[1] === "help"
+  ) {
+    const topic = workerHelpTopic(arguments_[2]!);
+    if (topic === undefined) {
+      renderWorkerCliError(
+        runtime.stderr,
+        cliError(
+          "INVALID_ARG",
+          `Unknown help topic '${arguments_[2]!}'. Topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.`,
+        ),
+      );
+      return 1;
+    }
+    runtime.stdout.write(`${topic}\n`);
     return 0;
   }
   const sendCommand =
@@ -1966,6 +1990,7 @@ rah worker task-update TASK --status todo|in_progress|in_review|done|closed [--s
 rah worker task-submit TASK --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
 rah worker task-review TASK --disposition approved|changes_requested --summary TEXT
 TASK addresses one Task as --target "#channel" --number N, or as --task-id ID.
+Guidance on demand: rah worker help <topic>, topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.
 `;
 }
 

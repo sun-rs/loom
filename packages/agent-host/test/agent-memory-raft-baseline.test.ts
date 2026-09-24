@@ -7,6 +7,7 @@ import {
   buildCompactionSafetySection,
 } from "../src/raft-memory/upstream-standing-prompt.ts";
 import { localWorkbenchWorkerPrompt } from "../../daemon/src/local-cli-runtime-spec.ts";
+import { workerHelpTopic } from "../src/worker-help-topics.ts";
 
 test("vendored Raft 1.0.18 memory source is byte-exact except the explicit export footer", () => {
   const file = readFileSync(
@@ -33,9 +34,13 @@ test("all upstream memory instructions after the cwd binding and compaction sect
   assert.ok(prompt.includes(buildCompactionSafetySection()));
   assert.match(prompt, /read the complete original MEMORY\.md/iu);
   assert.match(prompt, /RAH_AGENT_MEMORY_DIR/u);
-  assert.match(prompt, /agent inbox check/u);
-  assert.match(prompt, /ack --item-id ID --version N/u);
-  assert.match(prompt, /does not prove memory was cleaned/u);
+  // S1-c: the App Inbox command reference is served by `worker help memory`,
+  // which the standing prompt names; the Raft memory body above stays inline.
+  assert.match(prompt, /worker help memory/u);
+  const memoryHelp = workerHelpTopic("memory")!;
+  assert.match(memoryHelp, /agent inbox check/u);
+  assert.match(memoryHelp, /ack --item-id ID --version N/u);
+  assert.match(memoryHelp, /does not prove memory was cleaned/u);
   assert.doesNotMatch(
     prompt,
     /Your working directory \(cwd\) is your \*\*persistent, agent-owned workspace/u,

@@ -1,9 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { workerHelpTopic } from "@rah-os/agent-host";
+
 import { compileStandingPrompt } from "../src/standing-prompt-compiler.ts";
 
-test("standing prompt teaches source-backed read-before-answer and task-board deduplication without granting writes", () => {
+/**
+ * S1-c moved this situational guidance out of the standing prompt into
+ * `worker help <topic>`. The assertions are unchanged; they now read the topic
+ * the Agent is pointed at, and the prompt must still name that topic.
+ */
+function help(...topics: string[]): string {
   const prompt = compileStandingPrompt().prompt;
+  return topics
+    .map((topic) => {
+      assert.ok(prompt.includes(topic), `prompt names help topic ${topic}`);
+      const text = workerHelpTopic(topic);
+      assert.ok(text, topic);
+      return text;
+    })
+    .join("\n\n");
+}
+
+test("standing prompt teaches source-backed read-before-answer and task-board deduplication without granting writes", () => {
+  const prompt = help("history", "tasks");
   for (const command of [
     "message-read",
     "message-resolve",
@@ -19,7 +38,7 @@ test("standing prompt teaches source-backed read-before-answer and task-board de
 });
 
 test("standing prompt exposes ordinary attachments without requiring a Task", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("attachments");
   for (const command of [
     "attachment-publish",
     "attachment-download",
@@ -31,7 +50,7 @@ test("standing prompt exposes ordinary attachments without requiring a Task", ()
 });
 
 test("standing prompt distinguishes creating pending Tasks from claiming and limits assignment to idle creator work", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("tasks");
   assert.ok(prompt.includes("task-convert"));
   assert.ok(prompt.includes("task-assign"));
   assert.match(prompt, /Conversion does not claim the Task/u);
@@ -39,7 +58,7 @@ test("standing prompt distinguishes creating pending Tasks from claiming and lim
 });
 
 test("self-profile prompt requires read revision context and distinguishes profile changes from execution configuration", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("profile");
   assert.ok(prompt.includes("profile-self-get"));
   assert.ok(prompt.includes("profile-update"));
   assert.ok(prompt.includes("profile-avatar-publish"));
@@ -51,13 +70,13 @@ test("self-profile prompt requires read revision context and distinguishes profi
 });
 
 test("parent continuation waits for the next Activation after explicit unblock", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("tasks");
   assert.ok(prompt.includes("task-unblock"));
   assert.match(prompt, /next Activation delivers `task.unblocked`/u);
 });
 
 test("amendment prompt uses channel-member metadata authority without granting Task ownership", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("tasks");
   assert.match(prompt, /task-amend/u);
   assert.match(prompt, /current Room member/u);
   assert.match(prompt, /metadata does not claim/u);
@@ -65,7 +84,7 @@ test("amendment prompt uses channel-member metadata authority without granting T
 });
 
 test("channel mute guidance distinguishes ordinary Activity, direct obligations, followed Threads and execution cursors", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("mute");
   assert.ok(prompt.includes("channel-mute"));
   assert.ok(prompt.includes("channel-unmute"));
   assert.match(prompt, /personal @mentions and DMs still arrive/u);
@@ -74,7 +93,7 @@ test("channel mute guidance distinguishes ordinary Activity, direct obligations,
 });
 
 test("joined-target reads and search guidance never confer cross-Room write authority", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("history", "messages");
   for (const command of [
     "room-list",
     "room-resolve",
@@ -88,7 +107,7 @@ test("joined-target reads and search guidance never confer cross-Room write auth
 });
 
 test("Task deletion prompt distinguishes metadata removal from execution cancellation", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("tasks");
   // Raft addresses the Task by channel and number; the Room is implied.
   assert.match(prompt, /task-delete --target "#channel" --number N/u);
   assert.match(prompt, /Only delete Tasks you created/u);
@@ -100,7 +119,7 @@ test("Task deletion prompt distinguishes metadata removal from execution cancell
 });
 
 test("standing prompt explains target upload ownership and cross-Run held receipts", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("attachments");
   assert.match(
     prompt,
     /attachment-publish --target TARGET --context-receipt RECEIPT/u,
@@ -117,7 +136,7 @@ test("standing prompt explains target upload ownership and cross-Run held receip
  * taught the address a Human reads and the suffix that shows it.
  */
 test("the standing prompt teaches Raft's Task addressing and the [task #N ...] suffix", () => {
-  const prompt = compileStandingPrompt().prompt;
+  const prompt = help("tasks");
   assert.match(prompt, /\[task #3 status=in_progress\]/u);
   assert.match(
     prompt,

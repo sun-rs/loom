@@ -14,6 +14,7 @@ import { Readable } from "node:stream";
 import { WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION } from "@rah-os/protocol";
 
 import { runWorkerCliCommand } from "../src/index.ts";
+import { SEND_REJECTED_NEXT_ACTION } from "../src/worker-cli-error.ts";
 
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-worker-cli-"));
@@ -1448,6 +1449,182 @@ test("a send that fails after the draft was saved refuses to direct a resend", a
   }
 });
 
+// S1-b: a server response below 500 that carries the server's own error code
+// is a definite pre-commit rejection. The Kernel resolved the target, refused,
+// and rolled the transaction back, so nothing was delivered and no draft was
+// written. Describing it as UNKNOWN made a real Agent abandon its final answer.
+for (const rejection of [
+  {
+    name: "a 404 unavailable thread target",
+    status: 404,
+    code: "not_found",
+    cliCode: "NOT_FOUND",
+    message: "Thread is unavailable or ambiguous in this Room",
+  },
+  {
+    name: "a 409 conflict",
+    status: 409,
+    code: "conflict",
+    cliCode: "conflict",
+    message: "channel Thread conflicts with explicit threadId",
+  },
+  {
+    name: "a 422-style invalid request",
+    status: 422,
+    code: "invalid_request",
+    cliCode: "invalid_request",
+    message: "request body is invalid",
+  },
+]) {
+  test(`message-post rejected with ${rejection.name} is reported as not sent and correctable`, async () => {
+    const state = fixture();
+    try {
+      state.runtime.fetch = async () =>
+        new Response(
+          JSON.stringify({
+            error: { code: rejection.code, message: rejection.message },
+          }),
+          { status: rejection.status },
+        );
+      assert.equal(
+        await runWorkerCliCommand(
+          [
+            "worker",
+            "message-post",
+            "--target",
+            "#ops:deadbeef",
+            "--body",
+            "Final answer",
+          ],
+          state.runtime,
+        ),
+        1,
+      );
+      assert.equal(state.stdout(), "");
+      const stderr = state.stderr();
+      assert.equal(
+        stderr,
+        [
+          `Error: Worker API HTTP ${String(rejection.status)}: ${rejection.message}`,
+          `Code: ${rejection.cliCode}`,
+          "Retryable: no",
+          "Effect: not_sent",
+          "Draft saved: no",
+          `Next action: ${SEND_REJECTED_NEXT_ACTION}`,
+          "",
+        ].join("\n"),
+      );
+      assert.doesNotMatch(stderr, /UNKNOWN|CANNOT_CONFIRM|Do not resend/u);
+      assert.match(SEND_REJECTED_NEXT_ACTION, /rejected/u);
+      assert.match(SEND_REJECTED_NEXT_ACTION, /nothing was sent/u);
+      assert.match(SEND_REJECTED_NEXT_ACTION, /saved no new draft/u);
+      assert.match(SEND_REJECTED_NEXT_ACTION, /target/u);
+      assert.match(SEND_REJECTED_NEXT_ACTION, /send again/u);
+    } finally {
+      rmSync(state.directory, { force: true, recursive: true });
+    }
+  });
+}
+
+test("a rejected message-post under --json keeps the text block and states not_sent", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "not_found",
+            message: "Thread is unavailable or ambiguous in this Room",
+          },
+        }),
+        { status: 404 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--json", "--body", "Final answer"],
+        state.runtime,
+      ),
+      1,
+    );
+    // Server errors keep Raft's text renderError block even under --json.
+    assert.match(state.stderr(), /\nEffect: not_sent\nDraft saved: no\n/u);
+    assert.doesNotMatch(state.stderr(), /CANNOT_CONFIRM/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a rejected message-post keeps the server's own next action when it has one", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "forbidden",
+            message: "not a member",
+            suggestedNextAction: "Ask the Human to add you to this Room.",
+          },
+        }),
+        { status: 403 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Result"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.match(state.stderr(), /\nEffect: not_sent\n/u);
+    assert.match(state.stderr(), /\nDraft saved: no\n/u);
+    assert.match(
+      state.stderr(),
+      /\nNext action: Ask the Human to add you to this Room\.\n$/u,
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a transport failure during message-post stays UNKNOWN / CANNOT_CONFIRM", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () => {
+      throw new TypeError("fetch failed: ECONNRESET");
+    };
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Result"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.match(state.stderr(), /\nDraft saved: yes\n/u);
+    assert.match(state.stderr(), /so the honest state is CANNOT_CONFIRM/u);
+    assert.doesNotMatch(state.stderr(), /not_sent/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a 4xx without a server error code is not treated as a definite rejection", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response("<html>bad gateway-ish proxy page</html>", { status: 404 });
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Result"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.doesNotMatch(state.stderr(), /not_sent/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
 test("a failed --send-draft saves no new draft and carries no CANNOT_CONFIRM guidance", async () => {
   const state = fixture();
   try {
@@ -1467,7 +1644,9 @@ test("a failed --send-draft saves no new draft and carries no CANNOT_CONFIRM gui
     );
     assert.match(
       state.stderr(),
-      /^Error: Worker API HTTP 404: no draft for this target\nCode: NOT_FOUND\nDraft saved: no\n$/u,
+      // S1-b: a coded 404 is a definite rejection, so it now also states
+      // that nothing was sent and how to recover, instead of staying silent.
+      /^Error: Worker API HTTP 404: no draft for this target\nCode: NOT_FOUND\nRetryable: no\nEffect: not_sent\nDraft saved: no\nNext action: The server rejected this send before committing it/u,
       state.stderr(),
     );
     assert.doesNotMatch(state.stderr(), /CANNOT_CONFIRM/u);
