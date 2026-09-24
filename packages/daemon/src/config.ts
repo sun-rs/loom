@@ -71,8 +71,9 @@ const ProcessHygieneConfigSchema = z
 
 /**
  * S2-a warm instance runtimes. Off by default: the fake-driver gate cannot
- * prove the real Codex (or, S2-c1, Claude) multi-turn protocol, and the
- * owner-authorized real smoke gate (S2 spec §8) precedes default enablement.
+ * prove the real Codex (or, S2-c1, Claude; S2-c3, OpenCode) multi-turn
+ * protocol, and the owner-authorized real smoke gate (S2 spec §8) precedes
+ * default enablement.
  *
  * S2-b: the driver-neutral policy thresholds (see agent-host
  * `warm-runtime-policy.ts` for defaults and semantics). They configure a
@@ -103,6 +104,8 @@ const WarmRuntimesConfigSchema = z
     // S2-c1: a separate opt-in. It shares the pool's policy (and a
     // `codex.idleTtlMs` override) because the pool is one per Host.
     claude: z.object({ enabled: z.boolean().optional() }).strict().optional(),
+    // S2-c3: a separate opt-in, sharing the pool's policy like Claude.
+    opencode: z.object({ enabled: z.boolean().optional() }).strict().optional(),
   })
   .strict()
   .refine(

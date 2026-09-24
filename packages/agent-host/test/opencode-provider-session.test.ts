@@ -227,7 +227,19 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
       providerID: "deepseek",
     });
     assert.equal(prompt.body.variant, "max");
-    assert.equal(prompt.body.system, "canonical room worker prompt");
+    // S2-c3: the standing prompt is the server's `instructions` file (system
+    // layer of every model request, compaction included), never a
+    // per-message `system`.
+    assert.equal(prompt.body.system, undefined);
+    assert.match(prompt.body.messageID, /^msg_/u);
+    const spawned = forActivation("resumed-seed").find((record) =>
+      Array.isArray(record.args),
+    );
+    const [rulesPath] = JSON.parse(spawned.configContent).instructions;
+    assert.equal(
+      readFileSync(rulesPath, "utf8"),
+      "canonical room worker prompt",
+    );
     assert.equal(
       forActivation("resumed-seed").some(
         (record) =>
@@ -409,7 +421,7 @@ const activationId = process.env.RAH_ACTIVATION_ID;
 const record = (value) => appendFileSync(process.env.FAKE_OPENCODE_RECORD_PATH, JSON.stringify({activationId,...value}) + "\\n");
 const hostname = args[args.indexOf("--hostname") + 1];
 const port = Number(args[args.indexOf("--port") + 1]);
-record({args,permissionEnv:process.env.OPENCODE_PERMISSION});
+record({args,permissionEnv:process.env.OPENCODE_PERMISSION,configContent:process.env.OPENCODE_CONFIG_CONTENT});
 const streams = new Set();
 let pendingPrompt;
 let activeSessionId;
@@ -463,9 +475,10 @@ const server = createServer(async (req,res) => {
     pendingPrompt = res;
     event({type:"session.status",properties:{sessionID:activeSessionId,status:{type:"busy"}}});
     event({type:"session.status",properties:{sessionID:activeSessionId,status:{type:"busy"}}});
-    event({type:"message.updated",properties:{info:{id:"input-1",sessionID:activeSessionId,role:"user"}}});
-    event({type:"message.part.updated",properties:{sessionID:activeSessionId,part:{id:"input-part",messageID:"input-1",sessionID:activeSessionId,type:"text",text:"PRIVATE_ACTIVATION_INPUT"}}});
-    event({type:"message.updated",properties:{info:{id:"assistant-1",sessionID:activeSessionId,role:"assistant"}}});
+    const inputId = body.messageID ?? "input-1";
+    event({type:"message.updated",properties:{info:{id:inputId,sessionID:activeSessionId,role:"user"}}});
+    event({type:"message.part.updated",properties:{sessionID:activeSessionId,part:{id:"input-part",messageID:inputId,sessionID:activeSessionId,type:"text",text:"PRIVATE_ACTIVATION_INPUT"}}});
+    event({type:"message.updated",properties:{info:{id:"assistant-1",parentID:inputId,sessionID:activeSessionId,role:"assistant"}}});
     event({type:"message.part.updated",properties:{part:{id:"native-part",messageID:"assistant-1",sessionID:activeSessionId,type:"text",text:"native assistant result"}}});
     if (activationId.includes("cancel-seed")) return;
     event({type:"message.part.updated",properties:{sessionID:activeSessionId,part:{id:"reasoning-1",messageID:"assistant-1",type:"reasoning",text:"正在核对 Room 状态"}}});

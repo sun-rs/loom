@@ -24,6 +24,8 @@ import { fromRow as principalFromRow } from "./principal-profile.ts";
 import { ForbiddenError, NotFoundError, StaleContextError } from "./errors.ts";
 import {
   findActiveHeldMessageDraftForTarget,
+  heldDraftReplyIntent,
+  recordHeldDraftReplyIntent,
   saveHeldMessageDraft,
   SEND_DRAFT_NOT_FOUND_MESSAGE,
 } from "./held-message-drafts.ts";
@@ -336,7 +338,8 @@ export class WorkerTargetContextService {
       );
       const threadId = workerReadThread(target, input.threadId) ?? undefined;
       // A saved draft already passed this guard when it was first posted.
-      if (input.sendDraft !== true)
+      const judgedReply =
+        input.sendDraft !== true &&
         assertWorkerReplyTarget(this.#context.database, origin, {
           roomId: target.roomId,
           threadId,
@@ -344,6 +347,15 @@ export class WorkerTargetContextService {
           final: input.final,
         });
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);
+      // `--send-draft` resends the held send's own causal marker and `--final`
+      // (same Activation only), so it acknowledges delivery and records the
+      // final reply exactly as the original send would have. It never feeds
+      // the send window: the freshness fence stays the server's read position.
+      const intent = heldDraftReplyIntent(
+        draft?.row,
+        origin.activationId,
+        input,
+      );
       const window = this.#resolveSendWindow(
         origin,
         target,
@@ -380,16 +392,31 @@ export class WorkerTargetContextService {
             .files()
             .forWorkerMessage(execution, ids, undefined, target.roomId),
       });
-      const confirmation = this.#threadContextTargetConfirmation(
-        origin,
-        target,
-        threadId,
-        input,
-        { basedOnRoomSeq: window.basedOnRoomSeq, key: window.idempotencyKey },
-        attachments,
-        metadata,
-      );
-      if (confirmation !== undefined) return confirmation;
+      // A reply the Kernel reply-target guard judged is already proven to land
+      // where the delivered messages arrived; the thread-context heuristic
+      // only still applies to deliberate, uncited posts it does not judge.
+      const confirmation = judgedReply
+        ? undefined
+        : this.#threadContextTargetConfirmation(
+            origin,
+            target,
+            threadId,
+            input,
+            {
+              basedOnRoomSeq: window.basedOnRoomSeq,
+              key: window.idempotencyKey,
+            },
+            attachments,
+            metadata,
+          );
+      if (confirmation !== undefined) {
+        recordHeldDraftReplyIntent(
+          this.#context.database,
+          confirmation.heldDraftId,
+          intent,
+        );
+        return confirmation;
+      }
       const body =
         input.sendDraft === true
           ? draft === undefined
@@ -425,12 +452,18 @@ export class WorkerTargetContextService {
       if ("event" in result && !result.deduplicated)
         this.#context.files().consume(attachments, result.event.aggregateId);
       this.#context.attachmentComments().bindWorkerResult(metadata, result);
+      if ("state" in result && result.state === "held")
+        recordHeldDraftReplyIntent(
+          this.#context.database,
+          result.heldDraftId,
+          intent,
+        );
       if ("event" in result)
         this.#context.acknowledgePresentedDelivery(origin, {
           postedRoomId: result.event.roomId,
-          modelBasedOnRoomSeq: input.basedOnRoomSeq,
+          modelBasedOnRoomSeq: intent.basedOnRoomSeq,
         });
-      if ("event" in result && input.final === true)
+      if ("event" in result && intent.final)
         this.#context.recordFinalReply(origin, result.event);
       return P.WorkerMessagePostResponseSchema.parse(result);
     });

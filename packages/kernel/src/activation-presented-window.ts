@@ -160,6 +160,8 @@ export type RenderedPresentedWindow = PresentedWindow & {
   addressing: WorkerAddressing;
   /** See `activation-retry-reminder.ts`. */
   previousAttemptUnconfirmed?: true;
+  /** See `activation-retry-reminder.ts`. */
+  previousAttemptReplyMessageId?: string;
 };
 
 const TERMINAL_RUN_ATTEMPT_STATES = new Set([

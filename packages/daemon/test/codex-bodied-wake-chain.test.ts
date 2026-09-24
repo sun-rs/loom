@@ -510,8 +510,10 @@ test("only drivers with a reliable acceptance signal carry a bodied wake", () =>
   // S2-c2: Kimi's first turn-scoped model update of the only prompt in flight
   // (see the Kimi chain).
   assert.equal(runtimeSupportsBodiedWake("kimi-acp/v1"), true);
-  for (const kind of ["opencode-server/v1", "generic-process/v1"])
-    assert.equal(runtimeSupportsBodiedWake(kind), false, kind);
+  // S2-c3: OpenCode's first assistant whose parent is the caller-chosen user
+  // messageID (see the OpenCode chain).
+  assert.equal(runtimeSupportsBodiedWake("opencode-server/v1"), true);
+  assert.equal(runtimeSupportsBodiedWake("generic-process/v1"), false);
 });
 
 function manifest(executable: string): RuntimeProfileManifestV3 {

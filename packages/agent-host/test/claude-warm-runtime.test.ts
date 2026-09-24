@@ -797,7 +797,7 @@ test("the registry builds the warm Claude adapter for claude-stream-json/v1 and 
           undefined,
           "full_access",
         ),
-      /warm runtimes support codex-app-server\/v1 and claude-stream-json\/v1 only/u,
+      /warm runtimes support codex-app-server\/v1, claude-stream-json\/v1 and opencode-server\/v1 only/u,
     );
     profiles.close();
   } finally {

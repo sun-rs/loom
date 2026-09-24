@@ -21,11 +21,17 @@
  *   window spans several) and `--based-on-room-seq` (RAH's only implicit
  *   acknowledgement evidence), plus the no-reply `message-check` exit;
  * - a retry after an attempt that neither posted nor confirmed delivery adds
- *   one reminder line (Kernel-decided `previousAttemptUnconfirmed`);
+ *   one reminder line (Kernel-decided `previousAttemptUnconfirmed`); a retry
+ *   after an attempt that committed a post but never confirmed delivery
+ *   instead names that post (`previousAttemptReplyMessageId`), so the model
+ *   confirms rather than posting the same answer twice;
  * - a truncated window or one with a notice tail instead ends with one line
  *   asking for `message-check` first.
  */
-import type { WorkerMessagePresentResponse } from "@rah-os/protocol";
+import {
+  shortWorkerRef,
+  type WorkerMessagePresentResponse,
+} from "@rah-os/protocol";
 
 import { turnArgument } from "./provider-activation-input.js";
 import {
@@ -36,6 +42,11 @@ import {
 /** The one-line retry reminder; the Kernel decides when it applies. */
 export const PREVIOUS_ATTEMPT_UNCONFIRMED_LINE =
   "Previous attempt ended without a reply or message-check.";
+
+/** The one-line retry notice when the previous attempt's post already landed. */
+export function previousAttemptReplyLine(messageId: string, turn: string) {
+  return `Your reply (msg=${shortWorkerRef(messageId)}) was already posted; confirm delivery with message-check${turn} or post only if something is missing.`;
+}
 
 /**
  * The complete reply command(s). The model always copies an explicit target,
@@ -119,7 +130,9 @@ export function formatBodiedWakeInput(input: {
   const retry =
     present.previousAttemptUnconfirmed === true
       ? `\n${PREVIOUS_ATTEMPT_UNCONFIRMED_LINE}`
-      : "";
+      : present.previousAttemptReplyMessageId !== undefined
+        ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn)}`
+        : "";
   const sections = [
     `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,
     ...memoryLines(input.memory),

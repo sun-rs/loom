@@ -37,13 +37,16 @@ const PRESENT_TIMEOUT_MS = 10_000;
  * that prompt's turn) precedes any tool of the turn, so any post; a post that
  * still beats the Host's registration is parked (`pending_ack_seq`) and
  * replayed when `sent_at` lands, which the Host does before it records the
- * run's exit. OpenCode keeps the fixed startup wake until its own acceptance
- * evidence is verified; a stdin write is never faked into acceptance.
+ * run's exit. OpenCode (S2-c3, 1.18.32): the prompt carries a caller-chosen
+ * user `messageID` the server persists as the message id; the first assistant
+ * whose `parentID` is that id is created by the session loop before its model
+ * request, so before any tool. A stdin write is never faked into acceptance.
  */
 const BODIED_WAKE_ADAPTER_KINDS: ReadonlySet<string> = new Set([
   "claude-stream-json/v1",
   "codex-app-server/v1",
   "kimi-acp/v1",
+  "opencode-server/v1",
 ]);
 
 export function runtimeSupportsBodiedWake(adapterKind: string): boolean {

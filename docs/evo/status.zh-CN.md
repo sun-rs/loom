@@ -140,6 +140,14 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 门禁：效率门禁支持 `RAH_EFFICIENCY_PROVIDER=codex|claude|kimi`（各自与原生 CLI 对照；Kimi 从 `wire.jsonl` 读逐次用量，读不到则只判耗时与送达）；漂移门禁支持 Claude（冷：短暂 `claude -p /compact`；热：经守卫私有 socket 发 `/compact`）。
 - 待付费验证：Kimi 压缩文本匹配、第一个更新先于工具、`session/cancel` 时序、规则卡被接受；Claude 的 `/compact` 路径（依据二进制字符串与 SDK 文档）。
 
+### 十八、重复回复修复与 S2-c3 OpenCode 接入（schema 69）
+
+- 重复回复根因（Kimi 漂移第 9 轮）：Kernel 中移植自 Raft 的"thread 上下文→频道顶层"确认检查拦下了与唤醒命令完全一致的正确回复并存为草稿，`--send-draft` 重发时丢失 based-on 与 `--final`，送达未确认，重试后重复回答。修复：回复目标守卫判定为"本轮回复"并放行时跳过该确认（该确认仍覆盖确认后无依据的普通发帖）；草稿保存并在重发时沿用 based-on 与 `--final`（新列 `reply_based_on_room_seq`、`reply_final`），恢复命令带上 `--turn`；重试时若上一次已发出回复，唤醒明确说明"已发出，请 message-check 确认"。
+- OpenCode 1.18.32（源码只读核实）：每次模型请求都重建 system（agent prompt/默认 → env → instructions 文件 → 最后一条用户消息的 system）。常驻提示词改为内容寻址、0600 的 instructions 文件，经 `OPENCODE_CONFIG_CONTENT` 注入并合并已有配置；不再发送逐消息 system，因此压缩后自动插入的"Continue"步骤也带规则；`session.compacted` 只记诊断。
+- 带正文唤醒：驱动自选 user messageID，第一个 parentID 指向它的 assistant 作为接收证明；`--final`：发帖工具结束后 `POST /session/:id/abort`（先读取已持久化消息，避免截断发帖工具）。
+- 常驻 OpenCode（`warmRuntimes.opencode`，默认关闭）：每实例一个长驻 serve + 持久 SSE；轮次边界取我们同步 `POST /message` 的响应（自动续写后的后续步骤 parent 是合成的 Continue 消息，不能用 parent 判定）；SSE 重连后按消息列表对账、不重发；拒绝忙时输入。
+- 待付费验证：abort 与下一次模型请求的真实时序、真实 SSE 顺序、压缩后规则进入续写步骤。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

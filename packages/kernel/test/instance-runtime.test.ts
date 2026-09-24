@@ -254,7 +254,7 @@ function rawRow(databasePath: string, sql: string, ...args: string[]) {
 test("schema 65 owns one live instance runtime per participant", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 68);
+    assert.equal(KERNEL_SCHEMA_VERSION, 69);
     const ready = state.startRuntime();
     assert.equal(ready.state, "idle");
     assert.throws(

@@ -326,6 +326,13 @@ export async function runWorkerCliCommand(
   // other command renders text only, exactly as upstream does.
   const jsonOutput = arguments_.includes("--json");
   let failureDraftSaved = false;
+  // Recovery commands a refused or held send prints repeat this invocation's
+  // turn handle, so `--send-draft` resends through the same turn credential.
+  const turnIndex = arguments_.indexOf("--turn");
+  const turnSuffix =
+    turnIndex >= 0 && arguments_[turnIndex + 1] !== undefined
+      ? ` --turn ${arguments_[turnIndex + 1]}`
+      : "";
   try {
     // S2-a: a warm runtime names this turn's credential by `--turn <handle>`.
     if (arguments_[0] !== "agent" && arguments_[0] !== "app") {
@@ -572,7 +579,7 @@ export async function runWorkerCliCommand(
     // (`handleMessageSend`: `if (!opts.json) writeText(...)` then `throw`), so
     // its body is stdout and its envelope is stderr. The thread-target
     // confirmation renders nothing and only raises, so all of it is stderr.
-    const heldGuidance = workerHeldSendGuidance(result);
+    const heldGuidance = workerHeldSendGuidance(result, turnSuffix);
     if (heldGuidance !== undefined) {
       if (!jsonOutput) runtime.stdout.write(`${text}${heldGuidance}`);
       throw cliError("SEND_HELD_AS_DRAFT", SEND_HELD_AS_DRAFT_MESSAGE, {
@@ -584,13 +591,16 @@ export async function runWorkerCliCommand(
         suggestedNextAction: SEND_HELD_AS_DRAFT_NEXT_ACTION,
       });
     }
-    const confirmationBody = workerTargetConfirmationBody(result);
+    const confirmationBody = workerTargetConfirmationBody(result, turnSuffix);
     if (confirmationBody !== undefined) {
       throw cliError(
         "THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED",
         confirmationBody,
         {
-          suggestedNextAction: workerTargetConfirmationNextAction(result),
+          suggestedNextAction: workerTargetConfirmationNextAction(
+            result,
+            turnSuffix,
+          ),
         },
       );
     }

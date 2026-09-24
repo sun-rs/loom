@@ -248,7 +248,7 @@ test("comments survive a fresh Kernel owner and schema 55 migration preserves Ro
           ?.attachmentComment,
         { attachmentId: "file", filename: "file.txt" },
       );
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 68);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 69);
     } finally {
       reopened.close();
     }

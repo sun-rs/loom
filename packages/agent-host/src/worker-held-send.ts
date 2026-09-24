@@ -65,6 +65,8 @@ function confirmationTargets(
  */
 export function workerTargetConfirmationBody(
   result: unknown,
+  /** The invocation's ` --turn <handle>` (warm runtimes), else "". */
+  turn = "",
 ): string | undefined {
   const targets = confirmationTargets(result);
   if (targets === undefined) return undefined;
@@ -74,25 +76,30 @@ export function workerTargetConfirmationBody(
     "This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once.",
     "",
     "If this reply belongs in the thread, send the message to the thread target instead:",
-    `  rah worker message-post --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
+    `  rah worker message-post${turn} --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
     "  message body",
     `  ${MESSAGE_HEREDOC_DELIMITER}`,
     "",
     "If the top-level channel message is intentional, send the saved draft unchanged:",
-    `  rah worker message-post --send-draft --target ${parent}`,
+    `  rah worker message-post --send-draft${turn} --target ${parent}`,
   ].join("\n");
 }
 
 /** Raft's `suggestedNextAction` for the same refusal (`main.js@30174525`). */
 export function workerTargetConfirmationNextAction(
   result: unknown,
+  turn = "",
 ): string | undefined {
   const targets = confirmationTargets(result);
   if (targets === undefined) return undefined;
-  return `No message was sent. Send to ${targets.thread} if this belongs in the thread, or confirm the saved top-level draft with \`rah worker message-post --send-draft --target ${targets.parent}\`.`;
+  return `No message was sent. Send to ${targets.thread} if this belongs in the thread, or confirm the saved top-level draft with \`rah worker message-post --send-draft${turn} --target ${targets.parent}\`.`;
 }
 
-export function workerHeldSendGuidance(result: unknown): string | undefined {
+export function workerHeldSendGuidance(
+  result: unknown,
+  /** The invocation's ` --turn <handle>` (warm runtimes), else "". */
+  turn = "",
+): string | undefined {
   if (
     !result ||
     typeof result !== "object" ||
@@ -127,7 +134,7 @@ export function workerHeldSendGuidance(result: unknown): string | undefined {
   const continueAnyway =
     value.continueAnywaySuggested === true
       ? `If repeated updates keep blocking the same draft and this is still the right reply, you may use:
-  rah worker message-post --send-draft --anyway --target ${target}
+  rah worker message-post --send-draft --anyway${turn} --target ${target}
 `
       : "";
   return `SEND_HELD_AS_DRAFT: message was NOT sent; no target delivery occurred.
@@ -137,11 +144,11 @@ Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
 Your message has been saved as a draft. Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
 To update the draft, send revised content normally:
-  rah worker message-post --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
+  rah worker message-post${turn} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
   revised message
   ${MESSAGE_HEREDOC_DELIMITER}
 To send the current draft unchanged:
-  rah worker message-post --send-draft --target ${target}
+  rah worker message-post --send-draft${turn} --target ${target}
 You can also choose not to send anything.
 ${continueAnyway}`;
 }

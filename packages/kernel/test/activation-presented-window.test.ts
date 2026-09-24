@@ -610,7 +610,10 @@ test("a delivery-unproven retry whose previous attempt did post carries no remin
     f.post("please look");
     const first = f.activate();
     // A post without a causal marker commits but confirms nothing.
-    f.kernel.postWorkerMessage(first.execution, { body: "on it" });
+    const posted = f.kernel.postWorkerMessage(first.execution, {
+      body: "on it",
+    });
+    assert.ok("event" in posted);
     f.kernel.recordRuntimeTermination(f.host, {
       exit: { code: 0 },
       runAttemptId: first.run.runAttemptId,
@@ -637,10 +640,12 @@ test("a delivery-unproven retry whose previous attempt did post carries no remin
       retryAfterMs: 0,
     });
     const second = f.activate();
+    const rendered = f.kernel.presentWorkerMessages(second.execution);
+    assert.equal(rendered.previousAttemptUnconfirmed, undefined);
+    // The retry names the committed post so the wake asks for confirmation.
     assert.equal(
-      f.kernel.presentWorkerMessages(second.execution)
-        .previousAttemptUnconfirmed,
-      undefined,
+      rendered.previousAttemptReplyMessageId,
+      posted.event.aggregateId,
     );
   } finally {
     f.close();

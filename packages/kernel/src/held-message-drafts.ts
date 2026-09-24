@@ -43,6 +43,18 @@ export function migrateHeldMessageDraftLifecycle(database: DatabaseSync): void {
       "ALTER TABLE held_message_drafts ADD COLUMN resolved_at TEXT",
     );
   }
+  // Schema 69: the reply intent a held send carried, so `--send-draft`
+  // completes delivery and the final reply exactly like the original send.
+  if (!columns.some((row) => row.name === "reply_based_on_room_seq")) {
+    database.exec(
+      "ALTER TABLE held_message_drafts ADD COLUMN reply_based_on_room_seq INTEGER CHECK (reply_based_on_room_seq IS NULL OR reply_based_on_room_seq >= 0)",
+    );
+  }
+  if (!columns.some((row) => row.name === "reply_final")) {
+    database.exec(
+      "ALTER TABLE held_message_drafts ADD COLUMN reply_final INTEGER NOT NULL DEFAULT 0 CHECK (reply_final IN (0, 1))",
+    );
+  }
   database
     .prepare(
       `UPDATE held_message_drafts
@@ -201,6 +213,50 @@ export function saveHeldMessageDraft(
   return database
     .prepare("SELECT * FROM held_message_drafts WHERE held_draft_id = ?")
     .get(input.heldDraftId)!;
+}
+
+/** The reply intent of a held send: the model's own causal marker and
+ * `--final`. Never a cursor the server derived. */
+export type HeldDraftReplyIntent = {
+  basedOnRoomSeq: number | undefined;
+  final: boolean;
+};
+
+/** Stores the intent the held send carried on its draft row. */
+export function recordHeldDraftReplyIntent(
+  database: DatabaseSync,
+  heldDraftId: string,
+  intent: HeldDraftReplyIntent,
+): void {
+  database
+    .prepare(
+      "UPDATE held_message_drafts SET reply_based_on_room_seq = ?, reply_final = ? WHERE held_draft_id = ?",
+    )
+    .run(intent.basedOnRoomSeq ?? null, intent.final ? 1 : 0, heldDraftId);
+}
+
+/**
+ * The intent `--send-draft` resends: what the request carries, else what the
+ * held send carried. A draft saved by another Activation lends nothing — its
+ * causal marker and `--final` named that Activation's delivered messages.
+ */
+export function heldDraftReplyIntent(
+  draft: Row | undefined,
+  activationId: string,
+  input: { basedOnRoomSeq?: number | undefined; final?: boolean | undefined },
+): HeldDraftReplyIntent {
+  const own =
+    draft !== undefined && text(draft, "activation_id") === activationId;
+  const stored = own ? draft.reply_based_on_room_seq : null;
+  return {
+    basedOnRoomSeq:
+      input.basedOnRoomSeq ??
+      (typeof stored === "number" || typeof stored === "bigint"
+        ? Number(stored)
+        : undefined),
+    final:
+      input.final === true || (own && Number(draft.reply_final ?? 0) === 1),
+  };
 }
 
 /** Raft's `SEND_DRAFT_NOT_FOUND` text, minus the CLI's own command spelling. */

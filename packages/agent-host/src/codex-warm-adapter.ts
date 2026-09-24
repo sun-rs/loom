@@ -112,6 +112,8 @@ export type WarmDriverDescriptor = {
   bindSession: "ready" | "accepted";
   /** A native in-turn injection restates the handle after compaction. */
   restatesHandle: boolean;
+  /** The driver can admit busy Human input into the open turn (default true). */
+  busyInput?: boolean;
 };
 
 export const CODEX_WARM_DRIVER: WarmDriverDescriptor = {
@@ -133,6 +135,22 @@ export const CLAUDE_WARM_DRIVER: WarmDriverDescriptor = {
   provider: "claude-stream-json/v1",
   restatesHandle: false,
   seaEntry: "__claude-warm-driver",
+};
+
+/**
+ * S2-c3: long-lived `opencode serve` (`opencode-warm-driver.mjs`). The session
+ * exists before any input (created or resumed at ready); busy input is not
+ * admitted (a prompt while the loop runs would move its exit condition).
+ */
+export const OPENCODE_WARM_DRIVER: WarmDriverDescriptor = {
+  bindSession: "ready",
+  busyInput: false,
+  entry: fileURLToPath(new URL("./opencode-warm-driver.mjs", import.meta.url)),
+  guideRuntimeId: "opencode",
+  kind: "opencode-server-warm/v1",
+  provider: "opencode-server/v1",
+  restatesHandle: false,
+  seaEntry: "__opencode-warm-driver",
 };
 const DEFAULT_INTERRUPT_QUIESCE_TIMEOUT_MS = 10_000;
 const DEFAULT_ACCEPT_TIMEOUT_MS = 30_000;
@@ -203,7 +221,6 @@ type TurnBinding = {
 
 export class CodexWarmAdapter implements RuntimeAdapter {
   readonly busyInputMode = "direct" as const;
-  readonly busyInputSupported = true;
   readonly #options: CodexWarmAdapterOptions;
   readonly #driver: WarmDriverDescriptor;
   readonly #turns = new Map<string, TurnBinding>();
@@ -217,6 +234,10 @@ export class CodexWarmAdapter implements RuntimeAdapter {
 
   get guideRuntimeId(): string {
     return this.#driver.guideRuntimeId;
+  }
+
+  get busyInputSupported(): boolean {
+    return this.#driver.busyInput !== false;
   }
 
   get recoveryDrivers(): readonly string[] {

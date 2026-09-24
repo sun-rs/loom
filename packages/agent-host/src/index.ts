@@ -250,6 +250,7 @@ export {
   CODEX_WARM_DRIVER,
   CODEX_WARM_DRIVER_KIND,
   CodexWarmAdapter,
+  OPENCODE_WARM_DRIVER,
   withWorkerTurnHandle,
   workerTurnHandleLine,
 } from "./codex-warm-adapter.ts";

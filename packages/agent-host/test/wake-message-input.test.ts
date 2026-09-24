@@ -328,3 +328,17 @@ test("a retry after an attempt that neither replied nor checked says so once", (
   const first = formatBodiedWakeInput({ present: present() })!;
   assert.doesNotMatch(first, /Previous attempt/u);
 });
+
+test("a retry after a committed but unacknowledged reply names it instead of the generic reminder", () => {
+  const messageId = "message_1f2e3d4c-0000-4000-8000-000000000000";
+  const retried = formatBodiedWakeInput({
+    present: present({ previousAttemptReplyMessageId: messageId }),
+    turnHandle: "t1",
+  })!;
+  assert.equal(
+    retried.split("\n").at(-1),
+    "Your reply (msg=1f2e3d4c) was already posted; confirm delivery with message-check --turn t1 or post only if something is missing.",
+  );
+  assert.doesNotMatch(retried, /Previous attempt ended/u);
+  assert.equal(retried.match(/already posted/gu)?.length, 1);
+});

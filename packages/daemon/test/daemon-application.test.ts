@@ -2077,6 +2077,35 @@ test("S2-a warm Codex runtimes are opt-in with a configurable idle TTL", () => {
     assert.throws(() => DaemonConfigSchema.parse({ ...base, warmRuntimes }));
 });
 
+test("S2-c3 warm OpenCode runtimes are a separate opt-in, off by default", () => {
+  const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(
+      DaemonConfigSchema.parse({
+        ...base,
+        warmRuntimes: { codex: { enabled: true }, claude: { enabled: true } },
+      }).warmRuntimes,
+    ),
+    new Set(["codex-app-server/v1", "claude-stream-json/v1"]),
+    "enabling Codex or Claude never enables OpenCode",
+  );
+  const parsed = DaemonConfigSchema.parse({
+    ...base,
+    warmRuntimes: { opencode: { enabled: true } },
+  });
+  assert.deepEqual(parsed.warmRuntimes, { opencode: { enabled: true } });
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(parsed.warmRuntimes),
+    new Set(["opencode-server/v1"]),
+  );
+  assert.throws(() =>
+    DaemonConfigSchema.parse({
+      ...base,
+      warmRuntimes: { opencode: { idleTtlMs: 1_000 } },
+    }),
+  );
+});
+
 test("S2-c1 warm Claude runtimes are a separate opt-in, off by default", () => {
   const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
   assert.deepEqual(warmRuntimeAdapterKinds(undefined), new Set());

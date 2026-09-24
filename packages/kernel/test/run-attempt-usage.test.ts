@@ -343,7 +343,7 @@ test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reas
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 68);
+    assert.equal(KERNEL_SCHEMA_VERSION, 69);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -589,7 +589,7 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        68,
+        69,
       );
       assert.equal(
         database
@@ -644,7 +644,7 @@ function cleanup(
 test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 68);
+    assert.equal(KERNEL_SCHEMA_VERSION, 69);
     const recorded = state.kernel.runtimeProcessCleanup.record(
       state.host,
       cleanup(state, "cleanup-1"),

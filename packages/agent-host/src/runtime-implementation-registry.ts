@@ -56,6 +56,7 @@ import {
   CLAUDE_WARM_DRIVER,
   CODEX_WARM_DRIVER,
   CodexWarmAdapter,
+  OPENCODE_WARM_DRIVER,
   type WarmDriverDescriptor,
   type WarmWorkerCredential,
 } from "./codex-warm-adapter.ts";
@@ -90,10 +91,9 @@ export type RuntimeCreationOptions = Pick<
 > & {
   providerSessionStore?: ProviderSessionStore;
   /**
-   * Codex, Claude (S2-c1) and Kimi (S2-c2). Invoked when the driver reports
-   * that the runtime accepted the wake injection; the Host turns that into the
-   * Host-credential `markPresentedDeliverySent`. OpenCode drops it, so its
-   * Activations keep the explicit `message-check` path unchanged.
+   * Codex, Claude (S2-c1), Kimi (S2-c2) and OpenCode (S2-c3). Invoked when
+   * the driver reports that the runtime accepted the wake injection; the Host
+   * turns that into the Host-credential `markPresentedDeliverySent`.
    */
   recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
 };
@@ -403,9 +403,9 @@ export class RuntimeImplementationRegistry {
   }
 
   /**
-   * S2-a Codex / S2-c1 Claude warm process per Role instance. Legacy Agents
-   * (no instance channel) keep the per-turn adapter this wraps; other drivers
-   * are refused.
+   * S2-a Codex / S2-c1 Claude / S2-c3 OpenCode warm process per Role
+   * instance. Legacy Agents (no instance channel) keep the per-turn adapter
+   * this wraps; other drivers are refused.
    */
   createWarmRuntime(
     revision: RuntimeProfileRevision,
@@ -420,10 +420,12 @@ export class RuntimeImplementationRegistry {
         ? CODEX_WARM_DRIVER
         : revision.manifest.adapter.kind === "claude-stream-json/v1"
           ? CLAUDE_WARM_DRIVER
-          : undefined;
+          : revision.manifest.adapter.kind === "opencode-server/v1"
+            ? OPENCODE_WARM_DRIVER
+            : undefined;
     if (driver === undefined)
       throw new Error(
-        `warm runtimes support codex-app-server/v1 and claude-stream-json/v1 only; received ${revision.manifest.adapter.kind}`,
+        `warm runtimes support codex-app-server/v1, claude-stream-json/v1 and opencode-server/v1 only; received ${revision.manifest.adapter.kind}`,
       );
     const legacy = this.createRuntime(
       revision,
@@ -1430,10 +1432,7 @@ function createOpenCodeServerRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
-    // Codex-only in this batch: dropped here so this driver's path is
-    // behaviourally identical to before, with no acceptance signal and no
-    // `sent_at`, and its Activations keep the explicit `message-check`.
-    recordDeliveryAcceptance: _unusedDeliveryAcceptance,
+    recordDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [
@@ -1467,9 +1466,23 @@ function createOpenCodeServerRuntime(
   );
   const standingPromptDigests = createStandingPromptDigestLedger();
   const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
+  // S2-c3: the first assistant whose parent is the driver's caller-chosen
+  // user messageID is the acceptance. The standing rules ride in the server's
+  // `instructions` (system layer of every request), so compaction needs no
+  // rules card.
+  const wake = createHostBodiedWake({
+    provider: "opencode-server/v1",
+    recordDeliveryAcceptance,
+  });
   return new GenericProcessAdapter({
     ...processOptions,
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
+    // The driver ends the run with the native `POST /session/:id/abort`.
+    finalReplyInterrupt: true,
+    ...(wake.enabled ? { beforeLaunch: wake.beforeLaunch } : {}),
+    ...(wake.recordDeliveryAcceptance === undefined
+      ? {}
+      : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -1479,7 +1492,8 @@ function createOpenCodeServerRuntime(
         "opencode-server/v1",
         lease.standingPromptDigest,
       );
-      if (providerSessionStore === undefined || key === undefined) return lease;
+      if (providerSessionStore === undefined || key === undefined)
+        return await wake.withBodiedWake(input, lease);
       const previous = await providerSessionStore.load(key, {
         requireExisting: input.agent?.instanceSessionRequired === true,
         instance: input.agent?.instanceChannelId !== undefined,
@@ -1491,15 +1505,15 @@ function createOpenCodeServerRuntime(
         key,
         previous,
       );
-      if (previous === null) return lease;
-      return {
+      if (previous === null) return await wake.withBodiedWake(input, lease);
+      return await wake.withBodiedWake(input, {
         ...protocolUpgrade.withNotice(lease, protocolNotice),
         args: [
           ...(lease.args ?? []),
           "--resume-session",
           previous.providerSessionId,
         ],
-      };
+      });
     },
     args,
     beforeStart: async () => {

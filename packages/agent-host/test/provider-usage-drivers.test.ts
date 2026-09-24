@@ -181,7 +181,9 @@ const event = (value) => { for (const stream of streams) stream.write("data: " +
 const step = (id, messageID, tokens) => event({type:"message.part.updated",properties:{sessionID,part:{id,messageID,sessionID,type:"step-finish",reason:"stop",cost:0,tokens}}});
 const server = createServer(async (req,res) => {
   const url = new URL(req.url,"http://127.0.0.1");
-  for await (const _ of req) {}
+  let text = "";
+  for await (const chunk of req) text += chunk;
+  const body = text === "" ? {} : JSON.parse(text);
   if (req.method === "GET" && url.pathname === "/path") return send(res,200,{directory:process.cwd()});
   if (req.method === "GET" && url.pathname === "/event") {
     res.writeHead(200,{"content-type":"text/event-stream"});
@@ -190,12 +192,13 @@ const server = createServer(async (req,res) => {
   }
   if (req.method === "POST" && url.pathname === "/session") return send(res,200,{id:sessionID});
   if (req.method === "POST" && url.pathname.endsWith("/message")) {
-    event({type:"message.updated",properties:{info:{id:"msg_user",sessionID,role:"user"}}});
-    step("prt_user_step","msg_user",{total:1,input:1,output:0,reasoning:0,cache:{read:0,write:0}});
-    event({type:"message.updated",properties:{info:{id:"msg_a1",sessionID,role:"assistant"}}});
+    const user = body.messageID ?? "msg_user";
+    event({type:"message.updated",properties:{info:{id:user,sessionID,role:"user"}}});
+    step("prt_user_step",user,{total:1,input:1,output:0,reasoning:0,cache:{read:0,write:0}});
+    event({type:"message.updated",properties:{info:{id:"msg_a1",parentID:user,sessionID,role:"assistant"}}});
     step("prt_step_1","msg_a1",{total:15300,input:300,output:80,reasoning:20,cache:{read:14000,write:900}});
     step("prt_step_1","msg_a1",{total:15300,input:300,output:80,reasoning:20,cache:{read:14000,write:900}});
-    event({type:"message.updated",properties:{info:{id:"msg_a2",sessionID,role:"assistant"}}});
+    event({type:"message.updated",properties:{info:{id:"msg_a2",parentID:user,sessionID,role:"assistant"}}});
     step("prt_step_2","msg_a2",{total:15500,input:100,output:30,reasoning:0,cache:{read:15300,write:70}});
     event({type:"session.idle",properties:{sessionID}});
     return send(res,200,{info:{id:"msg_a2",sessionID,role:"assistant",finish:"stop",tokens:{input:100,output:30,reasoning:0,cache:{read:15300,write:70}}},parts:[]});

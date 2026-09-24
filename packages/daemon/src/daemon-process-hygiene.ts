@@ -58,10 +58,14 @@ export function warmRuntimeAdapterKinds(
   const kinds = new Set<string>();
   if (config?.codex?.enabled === true) kinds.add("codex-app-server/v1");
   if (config?.claude?.enabled === true) kinds.add("claude-stream-json/v1");
+  if (config?.opencode?.enabled === true) kinds.add("opencode-server/v1");
   return kinds;
 }
 
-/** S2-a: the Host's warm instance runtimes (Codex, S2-c1 Claude), when enabled. */
+/**
+ * S2-a: the Host's warm instance runtimes (Codex, S2-c1 Claude, S2-c3
+ * OpenCode), when enabled.
+ */
 export function createDaemonInstanceRuntimePool(input: {
   config: DaemonConfig["warmRuntimes"];
   host: AuthenticatedHostContext;
@@ -73,7 +77,12 @@ export function createDaemonInstanceRuntimePool(input: {
   if (warmRuntimeAdapterKinds(input.config).size === 0) return undefined;
   if (process.platform !== "darwin" && process.platform !== "linux")
     return undefined;
-  const { codex: _codex, claude: _claude, ...policy } = input.config ?? {};
+  const {
+    codex: _codex,
+    claude: _claude,
+    opencode: _opencode,
+    ...policy
+  } = input.config ?? {};
   return new InstanceRuntimePool({
     control: createKernelAgentHostControlPort(input.kernel, input.host),
     hostGeneration: input.host.instanceId,

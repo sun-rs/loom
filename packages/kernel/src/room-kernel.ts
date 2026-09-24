@@ -423,7 +423,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 68;
+export const KERNEL_SCHEMA_VERSION = 69;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;

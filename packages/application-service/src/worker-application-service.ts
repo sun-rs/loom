@@ -836,6 +836,12 @@ export class WorkerApplicationService {
           ...(presented.previousAttemptUnconfirmed === true
             ? { previousAttemptUnconfirmed: true }
             : {}),
+          ...(presented.previousAttemptReplyMessageId === undefined
+            ? {}
+            : {
+                previousAttemptReplyMessageId:
+                  presented.previousAttemptReplyMessageId,
+              }),
         }),
       );
       return;

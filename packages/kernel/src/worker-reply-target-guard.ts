@@ -73,6 +73,10 @@ function deliveryConfirmed(
  * Anything else is the drift failure where a compacted session re-uses an
  * earlier round's target; it is refused before any write, naming the
  * target(s) the delivered messages arrived in.
+ *
+ * Returns true when the post was judged as this turn's reply and accepted:
+ * its target is then proven, so a client-side target heuristic (Raft's
+ * thread-context confirmation) has nothing left to add.
  */
 export function assertWorkerReplyTarget(
   database: DatabaseSync,
@@ -83,12 +87,12 @@ export function assertWorkerReplyTarget(
     modelBasedOnRoomSeq: number | undefined;
     final: boolean | undefined;
   },
-): void {
+): boolean {
   const final = input.final === true;
   if (input.roomId !== scope.roomId) {
-    if (!final) return;
+    if (!final) return false;
     const fromSeq = deliveredFromSeq(database, scope);
-    if (fromSeq === undefined) return;
+    if (fromSeq === undefined) return false;
     refuse(database, scope, fromSeq, "a final reply in another Room");
   }
   if (
@@ -96,11 +100,11 @@ export function assertWorkerReplyTarget(
     input.modelBasedOnRoomSeq === undefined &&
     deliveryConfirmed(database, scope)
   )
-    return;
+    return false;
   const fromSeq = deliveredFromSeq(database, scope);
-  if (fromSeq === undefined) return;
+  if (fromSeq === undefined) return false;
   if (input.threadId === undefined) {
-    if (roomTopLevelDelivered(database, scope, fromSeq)) return;
+    if (roomTopLevelDelivered(database, scope, fromSeq)) return true;
     refuse(database, scope, fromSeq, "the Room top level");
   }
   const allowed = database
@@ -140,7 +144,7 @@ export function assertWorkerReplyTarget(
       scope.participantId,
       scope.activationId,
     );
-  if (allowed !== undefined) return;
+  if (allowed !== undefined) return true;
   refuse(database, scope, fromSeq, `Thread ${input.threadId}`);
 }
 

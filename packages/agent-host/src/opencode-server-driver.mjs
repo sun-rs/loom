@@ -4,9 +4,18 @@ import {
   providerActivationInput,
 } from "./provider-activation-input.js";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { writeSync } from "node:fs";
 import { createServer } from "node:net";
+import { createInterface } from "node:readline";
+import { createOpenCodeFinalInterrupt } from "./opencode-final-interrupt.js";
 import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
+import {
+  openCodeConfigContentWithInstructions,
+  openCodeMessageId,
+  prepareOpenCodeInstructionsFile,
+} from "./opencode-standing-instructions.js";
+import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
   OpenCodeEventIdentityFilter,
   scopedOpenCodeEvent,
@@ -29,6 +38,7 @@ const SERVER_TERM_TIMEOUT_MS = 300;
 const TERMINAL_EVENT_TIMEOUT_MS = 5_000;
 const MAX_SERVER_OUTPUT_BYTES = 64 * 1024;
 const MAX_SSE_BUFFER_BYTES = 1024 * 1024;
+const RECENT_MESSAGE_LIMIT = 64;
 
 class HttpError extends Error {
   constructor(path, status, body) {
@@ -40,7 +50,12 @@ class HttpError extends Error {
   }
 }
 
+const PROVIDER = "opencode-server/v1";
 const options = parseArguments(driverArguments(process.argv.slice(2)));
+// S2-c3: the Host-prepared wake file verbatim when present (the Host already
+// appended the notice lines, so the acceptance digest covers them); otherwise
+// the fixed startup wake plus the env notices.
+const TURN_INPUT = options.wakeInput ?? providerActivationInput();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 const usageWriter = new ProviderUsageWriter();
 const eventIdentity = new OpenCodeEventIdentityFilter();
@@ -58,6 +73,9 @@ let idleSettlement;
 let resolveIdle;
 let observedToolActivity = false;
 let serverOutputTail = Buffer.alloc(0);
+// Per prompt: our caller-chosen user messageID, whether this run's loop took
+// it (an assistant whose parent it is), and the final-reply abort.
+let activePrompt;
 
 const eventFailure = new Promise((_, reject) => {
   eventFailureReject = reject;
@@ -88,6 +106,19 @@ const terminate = async (signal) => {
 
 process.once("SIGTERM", () => void terminate("SIGTERM"));
 process.once("SIGINT", () => void terminate("SIGINT"));
+// S2-c3: the Host's final-reply signal (`rah-final-reply/v1`) on the private
+// input pipe. Absent (stdin ignored) the driver behaves as before.
+const hostInput = createInterface({ input: process.stdin });
+hostInput.on("line", (line) => {
+  let frame;
+  try {
+    frame = JSON.parse(line);
+  } catch {
+    return;
+  }
+  if (frame?.protocol === "rah-final-reply/v1") armFinalReply(frame);
+});
+process.stdin.on("error", () => undefined);
 
 try {
   trajectoryWriter.emit(
@@ -154,8 +185,29 @@ try {
       throw error;
     }
   }
-  assertCompletedAssistantResponse(response);
+  const { finalInterrupt } = activePrompt;
+  const aborted = abortedByInterrupt(response);
+  finalInterrupt.settle(aborted);
+  // Ended by the Host after the final reply committed: the reply is done, so
+  // the aborted run is this turn's success.
+  const endedAfterFinalReply =
+    !cancelRequested && finalInterrupt.issued && aborted;
+  if (!endedAfterFinalReply) assertCompletedAssistantResponse(response);
   await waitForIdleEvidence();
+  if (endedAfterFinalReply)
+    trajectoryWriter.emit(
+      runtimeStatusTrajectory(
+        "online",
+        "stopped",
+        "工作轮次已完成",
+        "opencode:prompt:final-reply-abort",
+      ),
+    );
+  if (finalInterrupt.armed)
+    writeHostFrame({
+      protocol: "rah-final-interrupt/v1",
+      ...finalInterrupt.report(),
+    });
   if (!stopping) {
     writeProviderSessionEvidence(activeSessionId);
   }
@@ -191,6 +243,10 @@ try {
     await terminate("SIGTERM");
     process.exitCode = 1;
   }
+} finally {
+  // The Host keeps the input pipe open; it must not keep this driver alive.
+  hostInput.close();
+  process.stdin.destroy();
 }
 
 async function startServer() {
@@ -206,7 +262,7 @@ async function startServer() {
     ],
     {
       cwd: process.cwd(),
-      env: process.env,
+      env: serverEnvironment(),
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -335,8 +391,10 @@ async function handleEvent(event) {
     if (requestId === undefined) {
       throw new Error("OpenCode permission event returned no request id");
     }
+    const turnCancelled =
+      cancelRequested || activePrompt?.finalInterrupt.issued === true;
     await requestJson(`/permission/${encodeURIComponent(requestId)}/reply`, {
-      body: JSON.stringify({ reply: cancelRequested ? "reject" : "always" }),
+      body: JSON.stringify({ reply: turnCancelled ? "reject" : "always" }),
       method: "POST",
     });
   } else if (event.type === "question.asked") {
@@ -349,16 +407,132 @@ async function handleEvent(event) {
     });
   } else if (event.type === "session.error") {
     const providerError = openCodeEventError(properties);
+    const abortError = providerError.includes("MessageAbortedError");
+    // The abort this driver sent after the final reply: expected, not an error.
+    if (abortError && activePrompt?.finalInterrupt.issued === true) return;
     trajectoryWriter.emit(
       normalizeOpenCodeTrajectoryEvent(event, activeSessionId),
     );
-    if (!(stopping && providerError.includes("MessageAbortedError"))) {
+    if (!(stopping && abortError)) {
       throw new Error(providerError);
     }
     return;
   }
+  if (event.type === "message.updated") observePromptMessage(properties.info);
   projectEvent(event);
-  if (event.type === "session.idle") resolveIdle?.();
+  // A bare idle proves nothing about this prompt: an old run's late idle on
+  // the live bus precedes our input. Only an idle after the loop took our
+  // message settles.
+  if (event.type === "session.idle" && activePrompt?.observed === true)
+    resolveIdle?.();
+}
+
+/**
+ * ACCEPTANCE SIGNAL: the first assistant message whose `parentID` is our
+ * caller-chosen user messageID. The session loop creates each step's
+ * assistant (parent = the current last user message) before that step's
+ * model request, so before any tool of the turn (any post). Only a
+ * Host-prepared wake is reported; its digest is what the Host prepared.
+ */
+function observePromptMessage(info) {
+  const prompt = activePrompt;
+  if (prompt === undefined || !isRecord(info)) return;
+  if (info.sessionID !== undefined && info.sessionID !== prompt.sessionId)
+    return;
+  if (info.role === "user" && info.id === prompt.messageId) {
+    prompt.observed = true;
+    return;
+  }
+  if (info.role !== "assistant" || info.parentID !== prompt.messageId) return;
+  prompt.observed = true;
+  if (prompt.deliveryReported) return;
+  prompt.deliveryReported = true;
+  if (options.wakeInput !== undefined)
+    writeHostFrame({
+      protocol: "rah-delivery-accepted/v1",
+      provider: PROVIDER,
+      signal: "opencode-assistant-parent",
+      threadId: prompt.sessionId,
+      turnId: prompt.messageId,
+      inputSha256: createHash("sha256")
+        .update(options.wakeInput, "utf8")
+        .digest("hex"),
+    });
+}
+
+/** The Host's signal: end THIS run at its next tool boundary. */
+function armFinalReply(frame) {
+  const prompt = activePrompt;
+  if (
+    prompt === undefined ||
+    stopping ||
+    cancelRequested ||
+    typeof frame.runAttemptId !== "string" ||
+    (process.env.RAH_RUN_ATTEMPT_ID !== undefined &&
+      frame.runAttemptId !== process.env.RAH_RUN_ATTEMPT_ID) ||
+    (frame.turnId !== undefined && frame.turnId !== prompt.messageId)
+  )
+    return;
+  prompt.finalInterrupt.arm();
+}
+
+/**
+ * The prompt's answer after an abort: the last assistant carries
+ * `MessageAbortedError`, or still ends in `tool-calls` (the loop exits on its
+ * own only with another finish, so a `tool-calls` answer means the run was
+ * cut between steps).
+ */
+function abortedByInterrupt(response) {
+  if (!isRecord(response) || !isRecord(response.info)) return false;
+  const error = record(response.info.error);
+  if (stringField(error, "name") === "MessageAbortedError") return true;
+  return (
+    response.info.error === undefined && response.info.finish === "tool-calls"
+  );
+}
+
+function serverEnvironment() {
+  const rules = prepareOpenCodeInstructionsFile(options.prompt);
+  return {
+    ...process.env,
+    OPENCODE_CONFIG_CONTENT: openCodeConfigContentWithInstructions(
+      process.env.OPENCODE_CONFIG_CONTENT,
+      rules,
+    ),
+  };
+}
+
+/**
+ * Tool parts of the run that `messageId` started, from the latest persisted
+ * messages (ascending). When our user message is older than the page, every
+ * listed message is newer, so of this run.
+ */
+function runToolParts(messages, messageId) {
+  if (!Array.isArray(messages)) return [];
+  let ours = !messages.some((message) => message?.info?.id === messageId);
+  const parts = [];
+  for (const message of messages) {
+    const info = record(message?.info);
+    if (info.role === "user" && info.id === messageId) ours = true;
+    if (!ours || info.role !== "assistant") continue;
+    for (const part of Array.isArray(message.parts) ? message.parts : [])
+      if (record(part).type === "tool") parts.push(part);
+  }
+  return parts;
+}
+
+function toolPartSettled(part) {
+  const status = record(record(part).state).status;
+  return status === "completed" || status === "error";
+}
+
+/** Host-private fd3 frame, intercepted before trajectory parsing. */
+function writeHostFrame(frame) {
+  try {
+    writeSync(3, `${JSON.stringify(frame)}\n`);
+  } catch {
+    // No Host listening: nothing is registered.
+  }
 }
 
 function projectEvent(event) {
@@ -369,6 +543,11 @@ function projectEvent(event) {
 
 function projectIdentifiedEvent(event) {
   const properties = record(event.properties);
+  // Assistant-owned only (the identity filter dropped user parts).
+  if (event.type === "message.part.updated")
+    activePrompt?.finalInterrupt.observePart(properties.part);
+  else if (event.type === "message.part.delta")
+    activePrompt?.finalInterrupt.observeDelta();
   if (event.type === "message.part.delta") {
     const partId = stringField(properties, "partID");
     const delta = stringField(properties, "delta");
@@ -465,14 +644,39 @@ async function submitPrompt(resumed) {
   if (activeSessionId === undefined) {
     throw new Error("OpenCode prompt has no active session");
   }
+  const sessionId = activeSessionId;
+  const messageId = openCodeMessageId();
+  activePrompt = {
+    deliveryReported: false,
+    finalInterrupt: createOpenCodeFinalInterrupt({
+      interrupt: async () =>
+        await requestJson(`/session/${encodeURIComponent(sessionId)}/abort`, {
+          body: "{}",
+          method: "POST",
+        }),
+      inFlightTools: async () =>
+        runToolParts(
+          await requestJson(
+            `/session/${encodeURIComponent(sessionId)}/message?limit=${RECENT_MESSAGE_LIMIT}`,
+          ),
+          messageId,
+        ).filter((part) => !toolPartSettled(part)),
+    }),
+    messageId,
+    observed: false,
+    sessionId,
+  };
+  // The standing rules are the server's `instructions` (system layer of
+  // every request); no per-message `system`, which compaction's synthetic
+  // continue step would drop.
   const body = {
+    messageID: messageId,
     parts: [
       {
-        text: providerActivationInput(),
+        text: TURN_INPUT,
         type: "text",
       },
     ],
-    system: options.prompt,
   };
   if (options.model !== undefined) body.model = parseModel(options.model);
   if (options.variant !== undefined) body.variant = options.variant;
@@ -706,6 +910,7 @@ function parseArguments(args) {
     resumeSession: undefined,
     toolAccessMode: undefined,
     variant: undefined,
+    wakeInput: undefined,
   };
   for (let index = 0; index < args.length; index += 2) {
     const flag = args[index];
@@ -717,6 +922,8 @@ function parseArguments(args) {
     else if (flag === "--resume-session") parsed.resumeSession = value;
     else if (flag === "--tool-access-mode") parsed.toolAccessMode = value;
     else if (flag === "--variant") parsed.variant = value;
+    else if (flag === "--wake-input-file")
+      parsed.wakeInput = readProviderPromptFile(value);
     else throw new Error(`unknown OpenCode driver argument: ${flag}`);
   }
   for (const field of ["executable", "prompt", "toolAccessMode"]) {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { TimestampSchema } from "./common.ts";
+import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
 import { WorkerAddressingSchema } from "./worker-addressing.ts";
 
@@ -58,6 +58,13 @@ export const WorkerMessagePresentResponseSchema = z
      * Read from the Activation's durable retry record; never client-supplied.
      */
     previousAttemptUnconfirmed: z.literal(true).optional(),
+    /**
+     * Present only on a retry whose previous RunAttempt committed a post in
+     * this Room for this Activation yet ended without acknowledging delivery:
+     * that post's message id, so the wake asks for confirmation rather than a
+     * duplicate reply. Kernel-derived; never client-supplied.
+     */
+    previousAttemptReplyMessageId: IdentifierSchema.optional(),
   })
   .strict()
   .refine((value) => value.toSeq >= value.fromSeq, {
