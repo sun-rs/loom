@@ -3,6 +3,9 @@ import { writeSync } from "node:fs";
 // Native per-generation token usage for the Host-private
 // `rah-provider-usage/v1` fd3 frame. Every value is copied from Provider data;
 // nothing here estimates, and a shape that cannot be proven yields no record.
+// A lost or unprovable generation instead yields a `rah-provider-usage-gap/v1`
+// frame, so the Kernel can report the RunAttempt's usage as partial rather
+// than silently undercounting it; a gap never becomes a generation.
 // Normalized semantics (see @rah-os/protocol runtime-usage.ts): inputTokens
 // includes cached reads and cache writes, outputTokens includes reasoning.
 
@@ -14,13 +17,18 @@ const MAX_OPEN_CLAUDE_MESSAGES = 64;
  * the latest model response, `tokenUsage.total` the thread cumulative. The
  * notification carries no response id and may repeat unchanged, so the
  * cumulative total is the generation fingerprint: a record is emitted only when
- * the total advances by exactly `last`. A jump that does not match `last`
- * (missed or recomputed usage) is dropped rather than guessed. A resumed thread
- * has no known baseline, so its first consistent `last` is accepted as is.
+ * the total advances by exactly `last`. An exact repeat is silent. A jump that
+ * does not match `last` (missed or recomputed usage) is an `inconsistent_total`
+ * gap, and a same-or-lower total that differs from the last one seen (a
+ * Provider revision of reported usage) is a `correction_frame` gap; in both
+ * cases the observed total becomes the next baseline and nothing is guessed. A
+ * resumed thread has no known baseline, so its first consistent `last` is
+ * accepted as is.
  */
 export class CodexTokenUsageTracker {
   #now;
   #previousTotal;
+  #previousLast;
 
   constructor({ freshThread, now = Date.now }) {
     this.#now = now;
@@ -45,33 +53,57 @@ export class CodexTokenUsageTracker {
     const last = codexBreakdown(tokenUsage.last);
     const total = codexBreakdown(tokenUsage.total);
     if (turnId === undefined || last === undefined || total === undefined) {
-      return undefined;
+      return this.#gap("parse_error");
     }
     const previous = this.#previousTotal;
-    if (previous !== undefined && total.totalTokens <= previous.totalTokens) {
-      return undefined;
-    }
+    const previousLast = this.#previousLast;
     this.#previousTotal = total;
-    if (last.totalTokens <= 0) return undefined;
-    const consistent = CODEX_FIELDS.every((field) =>
-      previous === undefined
-        ? total[field] >= last[field]
-        : total[field] - previous[field] === last[field],
-    );
-    if (!consistent) return undefined;
+    this.#previousLast = last;
+    if (previous !== undefined && total.totalTokens <= previous.totalTokens) {
+      const repeat =
+        sameBreakdown(total, previous) &&
+        (previousLast === undefined || sameBreakdown(last, previousLast));
+      return repeat ? undefined : this.#gap("correction_frame");
+    }
+    const consistent =
+      last.totalTokens > 0 &&
+      CODEX_FIELDS.every((field) =>
+        previous === undefined
+          ? total[field] >= last[field]
+          : total[field] - previous[field] === last[field],
+      );
+    if (!consistent) return this.#gap("inconsistent_total");
     const contextWindow = positiveInteger(tokenUsage.modelContextWindow);
-    return usageRecord({
-      provider: "codex-app-server/v1",
-      responseId: `${turnId}:${total.totalTokens}`,
-      inputTokens: last.inputTokens,
-      cachedInputTokens: last.cachedInputTokens,
-      outputTokens: last.outputTokens,
-      reasoningOutputTokens: last.reasoningOutputTokens,
-      contextWindow: contextWindow ?? null,
-      contextUsedTokens: contextWindow === undefined ? null : last.totalTokens,
-      observedAt: new Date(this.#now()).toISOString(),
-    });
+    return (
+      usageRecord({
+        provider: CODEX_PROVIDER,
+        responseId: `${turnId}:${total.totalTokens}`,
+        inputTokens: last.inputTokens,
+        cachedInputTokens: last.cachedInputTokens,
+        outputTokens: last.outputTokens,
+        reasoningOutputTokens: last.reasoningOutputTokens,
+        contextWindow: contextWindow ?? null,
+        contextUsedTokens:
+          contextWindow === undefined ? null : last.totalTokens,
+        observedAt: new Date(this.#now()).toISOString(),
+      }) ?? this.#gap("parse_error")
+    );
   }
+
+  #gap(reason) {
+    return providerUsageGap(CODEX_PROVIDER, reason, this.#now);
+  }
+}
+
+const CODEX_PROVIDER = "codex-app-server/v1";
+
+function sameBreakdown(left, right) {
+  return CODEX_FIELDS.every((field) => left[field] === right[field]);
+}
+
+/** A capture gap for one RunAttempt; see ProviderUsageGapReasonSchema. */
+export function providerUsageGap(provider, reason, now = Date.now) {
+  return { provider, reason, observedAt: new Date(now()).toISOString() };
 }
 
 const CODEX_FIELDS = [
@@ -121,7 +153,6 @@ export class ClaudeStreamUsageTracker {
       const message = record(event.message);
       const id = string(message.id);
       this.#open.delete(key);
-      if (id === undefined) return undefined;
       if (this.#open.size >= MAX_OPEN_CLAUDE_MESSAGES) {
         this.#open.delete(this.#open.keys().next().value);
       }
@@ -140,12 +171,16 @@ export class ClaudeStreamUsageTracker {
     this.#open.delete(key);
     if (open === undefined) return undefined;
     const usage = open.usage;
-    if (usage.input_tokens === undefined || usage.output_tokens === undefined) {
-      return undefined;
+    if (
+      open.id === undefined ||
+      usage.input_tokens === undefined ||
+      usage.output_tokens === undefined
+    ) {
+      return providerUsageGap(CLAUDE_PROVIDER, "parse_error", this.#now);
     }
     const cachedRead = usage.cache_read_input_tokens ?? 0;
-    return usageRecord({
-      provider: "claude-stream-json/v1",
+    const counted = usageRecord({
+      provider: CLAUDE_PROVIDER,
       responseId: open.id,
       inputTokens:
         usage.input_tokens +
@@ -158,8 +193,13 @@ export class ClaudeStreamUsageTracker {
       contextUsedTokens: null,
       observedAt: new Date(this.#now()).toISOString(),
     });
+    return (
+      counted ?? providerUsageGap(CLAUDE_PROVIDER, "parse_error", this.#now)
+    );
   }
 }
+
+const CLAUDE_PROVIDER = "claude-stream-json/v1";
 
 const CLAUDE_FIELDS = [
   "cache_creation_input_tokens",
@@ -200,10 +240,10 @@ export function openCodeStepFinishUsage(part, now = Date.now) {
     cacheRead === undefined ||
     cacheWrite === undefined
   ) {
-    return undefined;
+    return providerUsageGap(OPENCODE_PROVIDER, "parse_error", now);
   }
-  return usageRecord({
-    provider: "opencode-server/v1",
+  const usage = usageRecord({
+    provider: OPENCODE_PROVIDER,
     responseId: id,
     inputTokens: input + cacheRead + cacheWrite,
     cachedInputTokens: cacheRead,
@@ -213,9 +253,15 @@ export function openCodeStepFinishUsage(part, now = Date.now) {
     contextUsedTokens: null,
     observedAt: new Date(now()).toISOString(),
   });
+  return usage ?? providerUsageGap(OPENCODE_PROVIDER, "parse_error", now);
 }
 
-/** One frame per response id per driver process; fd3 failures stay silent. */
+const OPENCODE_PROVIDER = "opencode-server/v1";
+
+/**
+ * One usage frame per response id per driver process; every gap is written
+ * (the Kernel aggregates them per reason). fd3 failures stay silent.
+ */
 export class ProviderUsageWriter {
   #emitted = new Set();
   #write;
@@ -225,12 +271,17 @@ export class ProviderUsageWriter {
   }
 
   emit(usage) {
-    if (usage === undefined || this.#emitted.has(usage.responseId)) return;
-    this.#emitted.add(usage.responseId);
+    if (usage === undefined) return;
+    let frame;
+    if (usage.reason !== undefined) {
+      frame = { protocol: "rah-provider-usage-gap/v1", ...usage };
+    } else {
+      if (this.#emitted.has(usage.responseId)) return;
+      this.#emitted.add(usage.responseId);
+      frame = { protocol: "rah-provider-usage/v1", ...usage };
+    }
     try {
-      this.#write(
-        `${JSON.stringify({ protocol: "rah-provider-usage/v1", ...usage })}\n`,
-      );
+      this.#write(`${JSON.stringify(frame)}\n`);
     } catch {
       // Usage is diagnostics; a missing Host listener cannot fail the turn.
     }

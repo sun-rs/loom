@@ -119,6 +119,7 @@ function roleInstanceFixture() {
   };
   return {
     actor,
+    agentId: created.agent.definition.agentId,
     channel,
     close,
     controlRoomId,
@@ -528,6 +529,107 @@ test("a Human session reset is the explicit, visible exit for a blocked instance
     );
   } finally {
     await service.close();
+    f.close();
+  }
+});
+
+const resetSession = (f: ReturnType<typeof roleInstanceFixture>, key: string) =>
+  f.kernel.roles.resetInstanceSession(f.actor, {
+    instanceId: f.instance.instanceId,
+    basedOnRoomSeq: f.head(f.home.roomId),
+    idempotencyKey: key,
+  });
+
+test("reset while an Activation is leased without a live Run: the launch reads the new generation", () => {
+  const f = roleInstanceFixture();
+  try {
+    const bound = startInstanceRun(f);
+    f.kernel.instanceSessions.record(f.host, {
+      runAttemptId: bound.run.runAttemptId,
+      runtimeRunId: bound.runtime.runtimeRunId,
+    });
+    bound.finish(0);
+    assert.equal(launchContext(f).instanceSessionRequired, true);
+    f.kernel.postMessage(f.actor, {
+      roomId: f.home.roomId,
+      body: "next question",
+      idempotencyKey: "leased-before-reset",
+      recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
+    });
+    const placement = f.kernel.scheduleNextPlacement({ leaseMs: 600_000 });
+    assert.equal(placement?.participantId, f.instance.instanceId);
+    assert.equal(
+      f.db
+        .prepare("SELECT state FROM activations WHERE activation_id=?")
+        .get(placement!.activationId)!.state,
+      "leased",
+      "precondition: leased, but no RunAttempt exists yet",
+    );
+    // Allowed: the generation is read when the Run is created, not at lease.
+    assert.equal(resetSession(f, "reset-while-leased").sessionGeneration, 1);
+    const claim = f.kernel.claimNextPlacement(f.host, { leaseMs: 600_000 });
+    assert.equal(claim?.activation.activationId, placement!.activationId);
+    // The launch carries the new generation without a binding requirement,
+    // so the Host starts a fresh native session instead of the old one.
+    assert.equal(claim!.agentContext.instanceSessionGeneration, 1);
+    assert.equal(claim!.agentContext.instanceSessionRequired, false);
+    // Now a Run exists: a second reset is refused until it finishes.
+    assert.throws(
+      () => resetSession(f, "reset-while-starting"),
+      /running work/i,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("a late binding receipt from the previous generation cannot bind the new one", () => {
+  const f = roleInstanceFixture();
+  try {
+    const old = startInstanceRun(f);
+    // Reset is refused while the old-generation run is live, so its receipt
+    // can only arrive after it finished.
+    assert.throws(() => resetSession(f, "reset-too-early"), /running work/i);
+    old.finish(0);
+    assert.equal(resetSession(f, "reset").sessionGeneration, 1);
+    assert.throws(
+      () =>
+        f.kernel.instanceSessions.record(f.host, {
+          runAttemptId: old.run.runAttemptId,
+          runtimeRunId: old.runtime.runtimeRunId,
+        }),
+      /cannot record/i,
+    );
+    assert.equal(launchContext(f).instanceSessionGeneration, 1);
+    assert.equal(
+      launchContext(f).instanceSessionRequired,
+      false,
+      "the new generation stays unbound until its own run reports a binding",
+    );
+    assert.equal(
+      f.db
+        .prepare(
+          "SELECT bound_run_attempt_id FROM role_instance_sessions WHERE instance_id=?",
+        )
+        .get(f.instance.instanceId)!.bound_run_attempt_id,
+      null,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("a Role instance run without recorded usage reads as unavailable, not zero", () => {
+  const f = roleInstanceFixture();
+  try {
+    const work = startInstanceRun(f);
+    const usage = f.kernel.runAttemptUsage.get(f.actor, {
+      agentId: f.agentId,
+      runAttemptId: work.run.runAttemptId,
+    });
+    assert.equal(usage.completeness, "unavailable");
+    assert.equal(usage.totals.inputTokens, null);
+  } finally {
     f.close();
   }
 });

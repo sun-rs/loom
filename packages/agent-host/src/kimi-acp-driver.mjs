@@ -16,6 +16,7 @@ import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 
+import { providerUsageGap, ProviderUsageWriter } from "./provider-usage.js";
 import {
   kimiPromptCompletionTrajectory,
   normalizeKimiTrajectoryNotification,
@@ -58,6 +59,7 @@ const terminals = new Map();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 let terminalSequence = 0;
 let stopping = false;
+let usageGapReported = false;
 let activeSessionId;
 let acceptCurrentTurnUpdates = false;
 let observedToolActivity = false;
@@ -754,6 +756,14 @@ function redactProviderSessionIds(message) {
 }
 
 function writeProviderSessionEvidence(providerSessionId) {
+  // Kimi ACP exposes no native per-generation usage: say so once per run, so
+  // the Kernel reports this RunAttempt's usage as unavailable, never as zero.
+  if (!usageGapReported) {
+    usageGapReported = true;
+    new ProviderUsageWriter().emit(
+      providerUsageGap("kimi-acp/v1", "unsupported_provider"),
+    );
+  }
   try {
     writeSync(
       3,

@@ -35,12 +35,14 @@ Worker check/post 与其他工具调用的类别。原生原始轨迹只作诊�
 RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/start、resume、fork 在转发前必须显式指定许可模型和 effort；其他初始化 Agent 也不能绕过。原生组通过明确 CLI 参数指定许可模型，并事后核对原生轨迹。
 缺用量、换 session、模型不符、失败或额外 Run 均不算通过；不能靠少读代码降低成本。
 
-预算采用 owner 2026-09-24 签字的 [evo 目标合同](../evo/target-contract.zh-CN.md) 第 6 节：
+预算采用 owner 2026-09-24 修订后的 [evo 目标合同](../evo/target-contract.zh-CN.md) 第 6 节（数值集中在 `metrics.mjs` 的 `budgets`）：
 
-- 单轮总输入不超过原生同轮的 2 倍；未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
-- 首请求输入不超过原生同轮首请求加 3,000 token；任一侧缺首请求证据即 `firstInputMissing`，不判预算内。
-- 回复前模型生成次数不超过 2（口径对齐前，脚本暂按整轮总数 `maxGenerations.total` 检查，同时报告回复前/后；预算数值集中在 `budgets`）。
+- 协议额外生成（整轮）：RAH 整轮生成数 − 原生整轮生成数 ≤ 1；不设绝对总数上限，原生完成同一工作所需的工具轮次不算协议开销。
+- 回复前额外生成：RAH 回复前生成数 − 原生整轮生成数 ≤ 0；回复切分未知即 `generationsBeforeReplyMissing`。
+- 首请求输入不超过原生同轮首请求加 3,000 token；任一侧缺首请求证据即 `firstInputMissing`。
+- 单轮总输入不超过 2 × (原生同轮总输入 + 3,000)；未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
 - 额外回复耗时不超过 max(5 秒, 原生同轮耗时 × 15%)：短任务按秒计，长任务按百分比计。
+- 用量证据：RAH 组须有产品入库用量（`agent.run.usage.get`）且 `completeness` 为 `complete`；`partial`/`unavailable` 或缺失即 `usageEvidenceMissing`。两者都有时，将产品入库的生成数、输入、缓存、输出与原生轨迹推导的 RAH 用量交叉核对，不一致即 `usageEvidenceMismatch`。证据类失败判 `missing-evidence`，不能判预算内。
 
 超预算返回退出码 2，运行失败返回 1。所有指标在预算内也只是 `needs-quality-review`，
 还必须人工确认源文件范围、证据准确性、前后连续和输出质量；不自动冒称 parity。

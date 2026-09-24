@@ -5,6 +5,7 @@ import {
   ClientRunAttemptUsageGetRequestSchema,
   ClientRunAttemptUsageGetResponseSchema,
   ProviderUsageFrameSchema,
+  ProviderUsageGapFrameSchema,
   RunAttemptUsageRecordInputSchema,
 } from "../src/index.ts";
 
@@ -87,6 +88,8 @@ test("client run usage read is a strict per-RunAttempt summary", () => {
   );
   const response = ClientRunAttemptUsageGetResponseSchema.parse({
     runAttemptId: "run-1",
+    completeness: "complete",
+    gaps: [],
     generations: [
       {
         responseId: "turn-1:1200",
@@ -111,4 +114,42 @@ test("client run usage read is a strict per-RunAttempt summary", () => {
     truncated: false,
   });
   assert.equal(response.totals.generations, 1);
+  // Unknown is not zero: an unavailable read carries null totals and reasons.
+  const unavailable = ClientRunAttemptUsageGetResponseSchema.parse({
+    runAttemptId: "run-2",
+    completeness: "unavailable",
+    gaps: [
+      {
+        reason: "unsupported_provider",
+        provider: "kimi-acp/v1",
+        occurrences: 1,
+        firstObservedAt: "2026-09-24T01:00:00.000Z",
+        lastObservedAt: "2026-09-24T01:00:00.000Z",
+      },
+    ],
+    generations: [],
+    totals: {
+      generations: null,
+      inputTokens: null,
+      cachedInputTokens: null,
+      outputTokens: null,
+      reasoningOutputTokens: null,
+    },
+    truncated: false,
+  });
+  assert.equal(unavailable.totals.inputTokens, null);
+  assert.throws(() =>
+    ClientRunAttemptUsageGetResponseSchema.parse({
+      ...unavailable,
+      completeness: undefined,
+    }),
+  );
+  assert.throws(() =>
+    ProviderUsageGapFrameSchema.parse({
+      protocol: "rah-provider-usage-gap/v1",
+      provider: "codex-app-server/v1",
+      reason: "estimated",
+      observedAt: "2026-09-24T01:00:00.000Z",
+    }),
+  );
 });

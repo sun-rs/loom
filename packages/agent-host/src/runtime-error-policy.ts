@@ -17,6 +17,14 @@ const CONNECTION_PATTERN =
   /econnreset|econnrefused|enotfound|network error|connection (?:failed|closed|reset|refused)/iu;
 const STREAM_PATTERN = /provider stream|stream (?:failed|closed|error)/iu;
 
+/**
+ * A Role instance needs a Host that reports durable session binding evidence
+ * to the Kernel; without it a lost binding could silently start a new session.
+ * Placement on such a Host is refused (sticky: retrying cannot help).
+ */
+export const INSTANCE_HOST_UNSUPPORTED =
+  "RAH_INSTANCE_HOST_UNSUPPORTED: this Host cannot report Role instance session binding evidence; Role instances cannot run here";
+
 export function classifyRuntimeFailure(message: string): RuntimeFailure {
   const normalized = message.trim();
   if (normalized.length === 0) throw new Error("Runtime failure is required");
@@ -24,9 +32,9 @@ export function classifyRuntimeFailure(message: string): RuntimeFailure {
   const inputTooLarge = INPUT_TOO_LARGE_PATTERN.test(normalized);
   const modelConfig = MODEL_CONFIG_PATTERN.test(normalized);
   const zeroEvidence = /codex_zero_evidence_turn_completed/iu.test(normalized);
-  const continuityRequired = normalized.includes(
-    "RAH_SESSION_CONTINUITY_REQUIRED",
-  );
+  const continuityRequired =
+    normalized.includes("RAH_SESSION_CONTINUITY_REQUIRED") ||
+    normalized.includes("RAH_INSTANCE_HOST_UNSUPPORTED");
   const sticky =
     actionRequired ||
     inputTooLarge ||

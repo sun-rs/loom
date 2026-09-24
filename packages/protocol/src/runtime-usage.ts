@@ -68,6 +68,62 @@ export const ProviderUsageFrameSchema = z
   .superRefine(checkUsageBounds);
 export type ProviderUsageFrame = z.infer<typeof ProviderUsageFrameSchema>;
 
+/**
+ * Why a RunAttempt's usage capture is incomplete. A gap never invents a
+ * generation; it only marks the observed sums as partial (or, with no rows,
+ * the usage as unavailable).
+ * - `inconsistent_total`: a cumulative total moved by other than `last`;
+ * - `correction_frame`: the Provider revised an already reported total;
+ * - `parse_error`: a usage payload could not be proven;
+ * - `unsupported_provider`: the runtime exposes no native per-generation usage.
+ */
+export const ProviderUsageGapReasonSchema = z.enum([
+  "inconsistent_total",
+  "correction_frame",
+  "parse_error",
+  "unsupported_provider",
+]);
+export type ProviderUsageGapReason = z.infer<
+  typeof ProviderUsageGapReasonSchema
+>;
+
+const ProviderUsageGapShape = {
+  provider: z.string().trim().min(1).max(128),
+  reason: ProviderUsageGapReasonSchema,
+  observedAt: TimestampSchema,
+} as const;
+
+/** Host-private fd3 frame: the driver could not capture complete usage. */
+export const ProviderUsageGapFrameSchema = z
+  .object({
+    protocol: z.literal("rah-provider-usage-gap/v1"),
+    ...ProviderUsageGapShape,
+  })
+  .strict();
+export type ProviderUsageGapFrame = z.infer<typeof ProviderUsageGapFrameSchema>;
+
+export const RunAttemptUsageGapRecordInputSchema = z
+  .object({
+    ...ProviderUsageGapShape,
+    runAttemptId: IdentifierSchema,
+    runtimeRunId: IdentifierSchema,
+  })
+  .strict();
+export type RunAttemptUsageGapRecordInput = z.infer<
+  typeof RunAttemptUsageGapRecordInputSchema
+>;
+
+export const RunAttemptUsageGapSchema = z
+  .object({
+    reason: ProviderUsageGapReasonSchema,
+    provider: z.string().trim().min(1).max(128),
+    occurrences: z.number().int().positive(),
+    firstObservedAt: TimestampSchema,
+    lastObservedAt: TimestampSchema,
+  })
+  .strict();
+export type RunAttemptUsageGap = z.infer<typeof RunAttemptUsageGapSchema>;
+
 /** The Host's authenticated write, bound to one RunAttempt runtime. */
 export const RunAttemptUsageRecordInputSchema = z
   .object({
@@ -110,16 +166,26 @@ export type ClientRunAttemptUsageGetRequest = z.infer<
 export const ClientRunAttemptUsageGetResponseSchema = z
   .object({
     runAttemptId: IdentifierSchema,
+    /**
+     * `complete`: generations recorded and no capture gap; `partial`: some
+     * generations recorded but a gap exists, so `totals` are observed sums,
+     * not the full cost; `unavailable`: nothing recorded, `totals` unknown.
+     */
+    completeness: z.enum(["complete", "partial", "unavailable"]),
+    gaps: z
+      .array(RunAttemptUsageGapSchema)
+      .max(ProviderUsageGapReasonSchema.options.length),
     /** Oldest first; bounded. `totals` always cover every generation. */
     generations: z
       .array(RunAttemptUsageGenerationSchema)
       .max(RUN_ATTEMPT_USAGE_GENERATION_LIMIT),
+    /** All `null` (unknown, not zero) when completeness is `unavailable`. */
     totals: z
       .object({
-        generations: TokenCountSchema,
-        inputTokens: TokenCountSchema,
-        cachedInputTokens: TokenCountSchema,
-        outputTokens: TokenCountSchema,
+        generations: NullableTokenCountSchema,
+        inputTokens: NullableTokenCountSchema,
+        cachedInputTokens: NullableTokenCountSchema,
+        outputTokens: NullableTokenCountSchema,
         /** `null` when any generation lacks a native reasoning count. */
         reasoningOutputTokens: NullableTokenCountSchema,
       })

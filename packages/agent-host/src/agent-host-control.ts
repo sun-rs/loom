@@ -62,6 +62,9 @@ export type AgentHostControlPort = {
   recordRunAttemptUsage?(
     input: Parameters<RoomKernel["runAttemptUsage"]["record"]>[1],
   ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["record"]>>;
+  recordRunAttemptUsageGap?(
+    input: Parameters<RoomKernel["runAttemptUsage"]["recordGap"]>[1],
+  ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["recordGap"]>>;
   /** S1-f: durable evidence that the Host persisted an instance binding. */
   recordInstanceSessionBinding?(
     input: Parameters<RoomKernel["instanceSessions"]["record"]>[1],
@@ -130,6 +133,8 @@ export function createKernelAgentHostControlPort(
       kernel.recordRuntimeTermination(host, input),
     recordRunAttemptUsage: async (input) =>
       kernel.runAttemptUsage.record(host, input),
+    recordRunAttemptUsageGap: async (input) =>
+      kernel.runAttemptUsage.recordGap(host, input),
     recordInstanceSessionBinding: async (input) =>
       kernel.instanceSessions.record(host, input),
     readPendingRuntimeNotice: async (input) =>

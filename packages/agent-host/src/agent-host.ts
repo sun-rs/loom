@@ -28,6 +28,7 @@ import {
 } from "./agent-host-control.ts";
 import {
   classifyRuntimeFailure,
+  INSTANCE_HOST_UNSUPPORTED,
   RUNTIME_ERROR_RETRY_JITTER_RATIO,
   runtimeErrorRetryDelay,
   runtimeErrorJitterRandom,
@@ -394,6 +395,19 @@ export class AgentHost {
           `runtime placement resolution failed: ${errorMessage(error)}`,
         );
       }
+      // A Role instance needs durable binding evidence; a Host control that
+      // cannot report it (e.g. the remote control today) refuses the launch
+      // visibly instead of running without fail-closed continuity.
+      if (
+        agentContext?.instanceChannelId !== undefined &&
+        this.#control.recordInstanceSessionBinding === undefined
+      ) {
+        return this.#failClaimedActivation(
+          activation,
+          runAttempt.runAttemptId,
+          INSTANCE_HOST_UNSUPPORTED,
+        );
+      }
     }
 
     try {
@@ -503,6 +517,9 @@ export class AgentHost {
             },
             recordUsage: async (usage) => {
               await this.#control.recordRunAttemptUsage?.(usage);
+            },
+            recordUsageGap: async (gap) => {
+              await this.#control.recordRunAttemptUsageGap?.(gap);
             },
             ...(this.#control.recordInstanceSessionBinding === undefined
               ? {}
@@ -1030,7 +1047,8 @@ export class AgentHost {
     // Startup binding failures happen before a driver can emit a structured exit.
     if (
       runtimeFailure === undefined &&
-      failure.includes("RAH_SESSION_CONTINUITY_REQUIRED")
+      (failure.includes("RAH_SESSION_CONTINUITY_REQUIRED") ||
+        failure.includes("RAH_INSTANCE_HOST_UNSUPPORTED"))
     )
       runtimeFailure = classifyRuntimeFailure(failure);
     try {

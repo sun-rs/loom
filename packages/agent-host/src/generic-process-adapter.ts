@@ -21,6 +21,7 @@ import type {
 } from "@rah-os/protocol";
 import {
   ProviderUsageFrameSchema,
+  ProviderUsageGapFrameSchema,
   RuntimeTrajectoryAppendInputSchema,
 } from "@rah-os/protocol";
 
@@ -33,7 +34,10 @@ import type {
   RuntimeAvailability,
   RuntimeStartLifecycle,
 } from "./runtime.ts";
-import { classifyRuntimeFailure } from "./runtime-error-policy.ts";
+import {
+  classifyRuntimeFailure,
+  INSTANCE_HOST_UNSUPPORTED,
+} from "./runtime-error-policy.ts";
 import { resolveActivationEnvironment } from "./launch-environment-policy.ts";
 
 import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
@@ -335,6 +339,22 @@ class RuntimeTrajectoryCollector {
       this.#diagnostics.append(
         "[rah-os] ignored invalid Provider usage frame\n",
       );
+      // The generation happened but cannot be proven: a gap, never a guess.
+      const provider =
+        typeof frame.provider === "string" && frame.provider.trim() !== ""
+          ? frame.provider.slice(0, 128)
+          : "unknown";
+      const observedAt =
+        typeof frame.observedAt === "string" &&
+        !Number.isNaN(Date.parse(frame.observedAt))
+          ? new Date(Date.parse(frame.observedAt)).toISOString()
+          : new Date().toISOString();
+      await this.#recordUsageGap({
+        protocol: "rah-provider-usage-gap/v1",
+        provider,
+        reason: "parse_error",
+        observedAt,
+      });
       return;
     }
     const { protocol: _protocol, ...usage } = parsed.data;
@@ -347,6 +367,28 @@ class RuntimeTrajectoryCollector {
     } catch (error) {
       this.#diagnostics.append(
         `[rah-os] Provider usage was not recorded: ${errorMessage(error)}\n`,
+      );
+    }
+  }
+
+  async #recordUsageGap(frame: Record<string, unknown>): Promise<void> {
+    const parsed = ProviderUsageGapFrameSchema.safeParse(frame);
+    if (!parsed.success) {
+      this.#diagnostics.append(
+        "[rah-os] ignored invalid Provider usage gap frame\n",
+      );
+      return;
+    }
+    const { protocol: _protocol, ...gap } = parsed.data;
+    try {
+      await this.#lifecycle.recordUsageGap?.({
+        ...gap,
+        runAttemptId: this.#runAttemptId,
+        runtimeRunId: this.#runtimeRunId,
+      });
+    } catch (error) {
+      this.#diagnostics.append(
+        `[rah-os] Provider usage gap was not recorded: ${errorMessage(error)}\n`,
       );
     }
   }
@@ -398,6 +440,10 @@ class RuntimeTrajectoryCollector {
         }
         if (isRecord(frame) && frame.protocol === "rah-provider-usage/v1") {
           await this.#recordUsage(frame);
+          return;
+        }
+        if (isRecord(frame) && frame.protocol === "rah-provider-usage-gap/v1") {
+          await this.#recordUsageGap(frame);
           return;
         }
         const activity = RuntimeTrajectoryAppendInputSchema.parse({
@@ -782,6 +828,13 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     input: ActivationEnvelope,
     lifecycle: RuntimeStartLifecycle,
   ): Promise<RunHandle> {
+    // Refuse before any spawn: an instance whose binding cannot reach the
+    // Kernel would lose its fail-closed continuity if the Host file is lost.
+    if (
+      input.agent?.instanceChannelId !== undefined &&
+      lifecycle.recordInstanceSessionBinding === undefined
+    )
+      throw new Error(INSTANCE_HOST_UNSUPPORTED);
     await this.#beforeStart?.();
     if (process.platform !== "win32") {
       return await this.#startSupervised(input, lifecycle);

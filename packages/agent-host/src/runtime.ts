@@ -5,6 +5,7 @@ import type {
   RuntimeRecoveryDescriptor,
   RuntimeTrajectoryAppendInput,
   RuntimeFailure,
+  RunAttemptUsageGapRecordInput,
   RunAttemptUsageRecordInput,
 } from "@rah-os/protocol";
 
@@ -45,6 +46,8 @@ export type RuntimeStartLifecycle = {
   recordTrajectory?(activity: RuntimeTrajectoryAppendInput): Promise<void>;
   /** Native per-generation token usage; diagnostics, never trajectory. */
   recordUsage?(usage: RunAttemptUsageRecordInput): Promise<void>;
+  /** A usage capture gap: the RunAttempt's usage is partial or unavailable. */
+  recordUsageGap?(gap: RunAttemptUsageGapRecordInput): Promise<void>;
   /**
    * S1-f: a Role instance's native session binding was persisted by the Host.
    * Durable Kernel evidence; its absence means a later launch starts fresh.

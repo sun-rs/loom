@@ -4,10 +4,14 @@ import {
   ClientRunAttemptUsageGetRequestSchema,
   ClientRunAttemptUsageGetResponseSchema,
   RUN_ATTEMPT_USAGE_GENERATION_LIMIT,
+  RunAttemptUsageGapRecordInputSchema,
+  RunAttemptUsageGapSchema,
   RunAttemptUsageRecordInputSchema,
   RunAttemptUsageRecordSchema,
   type ClientRunAttemptUsageGetRequest,
   type ClientRunAttemptUsageGetResponse,
+  type RunAttemptUsageGap,
+  type RunAttemptUsageGapRecordInput,
   type RunAttemptUsageRecord,
   type RunAttemptUsageRecordInput,
 } from "@rah-os/protocol";
@@ -25,6 +29,11 @@ import { text, type Row } from "./sqlite-row.ts";
  * adjacent to the ledger: no Room event, Inbox, Task or trajectory effect.
  * The owning Host writes it under its own credential; a response id is
  * recorded once and replays must repeat the same immutable fact.
+ *
+ * Capture gaps (schema 63) record, per reason, that the driver saw usage it
+ * could not prove. They never become generations; they only downgrade the
+ * read completeness from `complete` to `partial` (or explain `unavailable`).
+ * `occurrences` is a diagnostic count of the gap frames the Host delivered.
  */
 export const RUN_ATTEMPT_USAGE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS run_attempt_usage (
@@ -40,6 +49,17 @@ CREATE TABLE IF NOT EXISTS run_attempt_usage (
   observed_at TEXT NOT NULL,
   recorded_at TEXT NOT NULL,
   PRIMARY KEY (run_attempt_id, response_id)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS run_attempt_usage_gaps (
+  run_attempt_id TEXT NOT NULL REFERENCES run_attempts(run_attempt_id),
+  reason TEXT NOT NULL CHECK (reason IN ('inconsistent_total', 'correction_frame', 'parse_error', 'unsupported_provider')),
+  provider TEXT NOT NULL,
+  occurrences INTEGER NOT NULL CHECK (occurrences > 0),
+  first_observed_at TEXT NOT NULL,
+  last_observed_at TEXT NOT NULL,
+  recorded_at TEXT NOT NULL,
+  PRIMARY KEY (run_attempt_id, reason)
 ) STRICT;
 `;
 
@@ -69,30 +89,9 @@ export class RunAttemptUsageService {
     host: AuthenticatedHostContext,
     untrustedInput: RunAttemptUsageRecordInput,
   ): RunAttemptUsageRecord {
-    const authenticatedHost = this.#options.requireHost(host);
     const input = RunAttemptUsageRecordInputSchema.parse(untrustedInput);
     return this.#transaction(() => {
-      const runAttempt = this.#database
-        .prepare("SELECT * FROM run_attempts WHERE run_attempt_id = ?")
-        .get(input.runAttemptId);
-      if (runAttempt === undefined) {
-        throw new NotFoundError(
-          `run attempt ${input.runAttemptId} was not found`,
-        );
-      }
-      this.#options.requireHostParticipant(
-        authenticatedHost,
-        text(runAttempt, "participant_id"),
-      );
-      if (text(runAttempt, "host_id") !== authenticatedHost.hostId) {
-        throw new ForbiddenError(
-          `host ${authenticatedHost.hostId} does not own run attempt ${input.runAttemptId}`,
-        );
-      }
-      this.#options.requireRunAttemptHostGeneration(
-        runAttempt,
-        authenticatedHost,
-      );
+      const runAttempt = this.#requireOwnedRunAttempt(host, input.runAttemptId);
       const existing = this.#database
         .prepare(
           "SELECT * FROM run_attempt_usage WHERE run_attempt_id = ? AND response_id = ?",
@@ -130,6 +129,44 @@ export class RunAttemptUsageService {
             "SELECT * FROM run_attempt_usage WHERE run_attempt_id = ? AND response_id = ?",
           )
           .get(input.runAttemptId, input.responseId)!,
+      );
+    });
+  }
+
+  /** One aggregated row per gap reason; the live runtime must still own it. */
+  recordGap(
+    host: AuthenticatedHostContext,
+    untrustedInput: RunAttemptUsageGapRecordInput,
+  ): RunAttemptUsageGap {
+    const input = RunAttemptUsageGapRecordInputSchema.parse(untrustedInput);
+    return this.#transaction(() => {
+      const runAttempt = this.#requireOwnedRunAttempt(host, input.runAttemptId);
+      this.#requireLiveRuntime(runAttempt, input);
+      this.#database
+        .prepare(
+          `INSERT INTO run_attempt_usage_gaps(
+             run_attempt_id, reason, provider, occurrences,
+             first_observed_at, last_observed_at, recorded_at
+           ) VALUES(?, ?, ?, 1, ?, ?, ?)
+           ON CONFLICT(run_attempt_id, reason) DO UPDATE SET
+             occurrences = occurrences + 1,
+             first_observed_at = min(first_observed_at, excluded.first_observed_at),
+             last_observed_at = max(last_observed_at, excluded.last_observed_at)`,
+        )
+        .run(
+          input.runAttemptId,
+          input.reason,
+          input.provider,
+          input.observedAt,
+          input.observedAt,
+          this.#now().toISOString(),
+        );
+      return gapFromRow(
+        this.#database
+          .prepare(
+            "SELECT * FROM run_attempt_usage_gaps WHERE run_attempt_id = ? AND reason = ?",
+          )
+          .get(input.runAttemptId, input.reason)!,
       );
     });
   }
@@ -188,20 +225,36 @@ export class RunAttemptUsageService {
       )
       .all(input.runAttemptId, RUN_ATTEMPT_USAGE_GENERATION_LIMIT);
     const generations = Number(totals.generations);
+    const gaps = this.#database
+      .prepare(
+        `SELECT * FROM run_attempt_usage_gaps WHERE run_attempt_id = ?
+         ORDER BY first_observed_at, reason`,
+      )
+      .all(input.runAttemptId)
+      .map(gapFromRow);
+    // No rows means unknown (unsupported runtime, missing wiring, lost frames
+    // or a run that never generated), never a free execution.
+    const known = generations > 0;
     return ClientRunAttemptUsageGetResponseSchema.parse({
       runAttemptId: input.runAttemptId,
+      completeness: !known
+        ? "unavailable"
+        : gaps.length > 0
+          ? "partial"
+          : "complete",
+      gaps,
       generations: rows.map((row) => {
         const { runAttemptId: _runAttemptId, ...generation } =
           usageFromRow(row);
         return generation;
       }),
       totals: {
-        generations,
-        inputTokens: Number(totals.input_tokens),
-        cachedInputTokens: Number(totals.cached_input_tokens),
-        outputTokens: Number(totals.output_tokens),
+        generations: known ? generations : null,
+        inputTokens: known ? Number(totals.input_tokens) : null,
+        cachedInputTokens: known ? Number(totals.cached_input_tokens) : null,
+        outputTokens: known ? Number(totals.output_tokens) : null,
         reasoningOutputTokens:
-          generations > 0 && Number(totals.reasoning_known) === generations
+          known && Number(totals.reasoning_known) === generations
             ? Number(totals.reasoning_output_tokens)
             : null,
       },
@@ -209,7 +262,37 @@ export class RunAttemptUsageService {
     });
   }
 
-  #requireLiveRuntime(runAttempt: Row, input: RunAttemptUsageRecordInput) {
+  #requireOwnedRunAttempt(
+    host: AuthenticatedHostContext,
+    runAttemptId: string,
+  ): Row {
+    const authenticatedHost = this.#options.requireHost(host);
+    const runAttempt = this.#database
+      .prepare("SELECT * FROM run_attempts WHERE run_attempt_id = ?")
+      .get(runAttemptId);
+    if (runAttempt === undefined) {
+      throw new NotFoundError(`run attempt ${runAttemptId} was not found`);
+    }
+    this.#options.requireHostParticipant(
+      authenticatedHost,
+      text(runAttempt, "participant_id"),
+    );
+    if (text(runAttempt, "host_id") !== authenticatedHost.hostId) {
+      throw new ForbiddenError(
+        `host ${authenticatedHost.hostId} does not own run attempt ${runAttemptId}`,
+      );
+    }
+    this.#options.requireRunAttemptHostGeneration(
+      runAttempt,
+      authenticatedHost,
+    );
+    return runAttempt;
+  }
+
+  #requireLiveRuntime(
+    runAttempt: Row,
+    input: { runAttemptId: string; runtimeRunId: string },
+  ) {
     const runState = text(runAttempt, "state");
     const runtimeProcess = this.#database
       .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
@@ -241,6 +324,16 @@ export class RunAttemptUsageService {
 
 function nullableCount(row: Row, column: string): number | null {
   return row[column] === null ? null : Number(row[column]);
+}
+
+function gapFromRow(row: Row): RunAttemptUsageGap {
+  return RunAttemptUsageGapSchema.parse({
+    reason: text(row, "reason"),
+    provider: text(row, "provider"),
+    occurrences: Number(row.occurrences),
+    firstObservedAt: text(row, "first_observed_at"),
+    lastObservedAt: text(row, "last_observed_at"),
+  });
 }
 
 function usageFromRow(row: Row): RunAttemptUsageRecord {

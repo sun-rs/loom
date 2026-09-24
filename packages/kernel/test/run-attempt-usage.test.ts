@@ -196,10 +196,152 @@ function usage(
   };
 }
 
+function gap(
+  state: ReturnType<typeof fixture>,
+  reason: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    provider: "codex-app-server/v1",
+    reason,
+    observedAt: "2026-09-24T01:00:06.000Z",
+    runAttemptId: state.runAttemptId,
+    runtimeRunId: state.runtimeRunId,
+    ...overrides,
+  } as Parameters<RoomKernel["runAttemptUsage"]["recordGap"]>[1];
+}
+
+const read = (state: ReturnType<typeof fixture>) =>
+  state.kernel.runAttemptUsage.get(state.ownerActor, {
+    agentId: state.agentId,
+    runAttemptId: state.runAttemptId,
+  });
+
+test("no recorded usage is unavailable with unknown totals, never zero", () => {
+  const state = fixture();
+  try {
+    const summary = read(state);
+    assert.equal(summary.completeness, "unavailable");
+    assert.deepEqual(summary.gaps, []);
+    assert.deepEqual(summary.totals, {
+      generations: null,
+      inputTokens: null,
+      cachedInputTokens: null,
+      outputTokens: null,
+      reasoningOutputTokens: null,
+    });
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("review sequence: a gap between recorded generations makes usage partial", () => {
+  const state = fixture();
+  try {
+    const { kernel, host } = state;
+    const frame = { inputTokens: 100, cachedInputTokens: 0, outputTokens: 10 };
+    kernel.runAttemptUsage.record(
+      host,
+      usage(state, "turn-1:110", { ...frame, reasoningOutputTokens: 0 }),
+    );
+    kernel.runAttemptUsage.recordGap(host, gap(state, "inconsistent_total"));
+    kernel.runAttemptUsage.record(
+      host,
+      usage(state, "turn-1:440", {
+        ...frame,
+        reasoningOutputTokens: 0,
+        observedAt: "2026-09-24T01:00:07.000Z",
+      }),
+    );
+    const summary = read(state);
+    assert.equal(summary.completeness, "partial");
+    // Observed sums only; the missing 200 input tokens are not invented.
+    assert.equal(summary.totals.generations, 2);
+    assert.equal(summary.totals.inputTokens, 200);
+    assert.deepEqual(summary.gaps, [
+      {
+        reason: "inconsistent_total",
+        provider: "codex-app-server/v1",
+        occurrences: 1,
+        firstObservedAt: "2026-09-24T01:00:06.000Z",
+        lastObservedAt: "2026-09-24T01:00:06.000Z",
+      },
+    ]);
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("repeated correction frames aggregate into one partial-usage gap", () => {
+  const state = fixture();
+  try {
+    const { kernel, host } = state;
+    kernel.runAttemptUsage.record(host, usage(state, "turn-1:1060"));
+    kernel.runAttemptUsage.recordGap(host, gap(state, "correction_frame"));
+    kernel.runAttemptUsage.recordGap(
+      host,
+      gap(state, "correction_frame", {
+        observedAt: "2026-09-24T01:00:09.000Z",
+      }),
+    );
+    const summary = read(state);
+    assert.equal(summary.completeness, "partial");
+    assert.deepEqual(
+      summary.gaps.map((item) => [
+        item.reason,
+        item.occurrences,
+        item.lastObservedAt,
+      ]),
+      [["correction_frame", 2, "2026-09-24T01:00:09.000Z"]],
+    );
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordGap(
+          state.otherHost,
+          gap(state, "parse_error"),
+        ),
+      ForbiddenError,
+    );
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordGap(
+          host,
+          gap(state, "parse_error", { runtimeRunId: "other-runtime" }),
+        ),
+      ConflictError,
+    );
+    assert.throws(
+      () => kernel.runAttemptUsage.recordGap(host, gap(state, "guessed")),
+      /reason/u,
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reason", () => {
+  const state = fixture();
+  try {
+    state.kernel.runAttemptUsage.recordGap(
+      state.host,
+      gap(state, "unsupported_provider", { provider: "kimi-acp/v1" }),
+    );
+    const summary = read(state);
+    assert.equal(summary.completeness, "unavailable");
+    assert.equal(summary.totals.inputTokens, null);
+    assert.deepEqual(
+      summary.gaps.map((item) => [item.reason, item.provider]),
+      [["unsupported_provider", "kimi-acp/v1"]],
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 62);
+    assert.equal(KERNEL_SCHEMA_VERSION, 63);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -219,6 +361,21 @@ test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => 
         ["observed_at", 0],
         ["recorded_at", 0],
       ]);
+      assert.deepEqual(
+        database
+          .prepare("PRAGMA table_info(run_attempt_usage_gaps)")
+          .all()
+          .map((row) => [row.name, row.pk]),
+        [
+          ["run_attempt_id", 1],
+          ["reason", 2],
+          ["provider", 0],
+          ["occurrences", 0],
+          ["first_observed_at", 0],
+          ["last_observed_at", 0],
+          ["recorded_at", 0],
+        ],
+      );
     } finally {
       database.close();
     }
@@ -299,6 +456,8 @@ test("the owning Host records native usage idempotently per response id", () => 
       outputTokens: 100,
       reasoningOutputTokens: 20,
     });
+    assert.equal(summary.completeness, "complete");
+    assert.deepEqual(summary.gaps, []);
     assert.equal(summary.truncated, false);
   } finally {
     state.cleanup();
@@ -352,6 +511,7 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
   try {
     const { kernel, host } = state;
     kernel.runAttemptUsage.record(host, usage(state, "kept-until-delete"));
+    kernel.runAttemptUsage.recordGap(host, gap(state, "correction_frame"));
     kernel.recordRuntimeTermination(host, {
       exit: { code: 0 },
       runAttemptId: state.runAttemptId,
@@ -365,6 +525,11 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
     assert.throws(
       () => kernel.runAttemptUsage.record(host, usage(state, "late")),
       ConflictError,
+    );
+    assert.throws(
+      () => kernel.runAttemptUsage.recordGap(host, gap(state, "parse_error")),
+      ConflictError,
+      "a finished RunAttempt accepts no late gap either",
     );
     // Settle the Activation directly: deletion only requires inactive work.
     const database = new DatabaseSync(state.databasePath);
@@ -386,6 +551,12 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
           .count,
         0,
       );
+      assert.equal(
+        audit
+          .prepare("SELECT COUNT(*) AS count FROM run_attempt_usage_gaps")
+          .get()!.count,
+        0,
+      );
     } finally {
       audit.close();
     }
@@ -400,7 +571,9 @@ test("a schema 60 database upgrades to the current schema without touching exist
   state.kernel.close();
   try {
     const legacy = new DatabaseSync(databasePath);
-    legacy.exec("DROP TABLE run_attempt_usage; PRAGMA user_version = 60;");
+    legacy.exec(
+      "DROP TABLE run_attempt_usage_gaps; DROP TABLE run_attempt_usage; PRAGMA user_version = 60;",
+    );
     legacy.close();
     assert.deepEqual(
       RoomKernel.inspectSchemaState(databasePath).databaseSchemaVersion,
@@ -414,7 +587,13 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        62,
+        63,
+      );
+      assert.equal(
+        database
+          .prepare("SELECT COUNT(*) AS count FROM run_attempt_usage_gaps")
+          .get()!.count,
+        0,
       );
       assert.equal(
         database

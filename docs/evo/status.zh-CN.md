@@ -50,13 +50,19 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - S1-f：创建频道拒绝已有实例；失效私聊的回帖/建线程/转发/提醒全部拦截，实例提醒计为活跃工作；`role_instance_sessions` 记录 Host 在会话文件写入成功后上报的绑定证据，"必须续聊"改为"本代已有绑定"，首启绑定前失败不再永久隔离；新命令 `instance.session.reset`（Human、无运行中工作、幂等）推进代数并在频道记录 `instance.session_reset`"上下文连续性被 Human 重置"；旧的记忆/执行重置对实例直接拒绝并指向该命令。
 - 门禁：分别记录回复前/回复后/整轮生成数与协议额外生成数；firstInput 缺失 fail closed；未缓存比例只报告。
 
+### 七、门禁前收口（schema 63）
+
+- 用量完整性：驱动对不一致/修正帧/解析失败/不支持的运行时发出缺口帧，`run_attempt_usage_gaps` 持久化；读取接口返回 `completeness`（complete/partial/unavailable），无数据时合计为 null；门禁对 partial/unavailable 判证据不足，并交叉核对产品入库与原生记录。
+- 不能上报绑定证据的 Host（当前远端 Computer）拒绝运行 Role 实例（`RAH_INSTANCE_HOST_UNSUPPORTED`，不重试循环）；旧 Agent 不受影响。
+- 门禁预算按合同 §6 修订版执行（协议额外生成 ≤1、回复前额外 0、首请求 ≤ 原生+3k、总输入 ≤ 2×(原生+3k)、耗时 max(5 s, 15%)）。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
 | P1   | 平台运行协议升级（常驻提示词变化）到不了已续聊的原生 session（Kimi 确认），启动上下文却报告新版本；须区分 Role 快照（按合同冻结）、平台协议版本、原生 session 实际生效的 system 快照 | `kimi-acp-driver.mjs:297`、`worker-startup-context.ts:31` |
 | P1   | 逐次 usage 已由 S1-a 记录（Kimi 无数据）；上下文窗口占用、压缩次数的记录与展示未做                                                                                                   | agent-host                                                |
-| P2   | 线程写入者占用被当成永久错误隔离；远端 Host 连续性开关、绑定证据、用量、带正文唤醒均未接                                                                                             | driver / remote composition                               |
+| P2   | 线程写入者占用被当成永久错误隔离；远端 Host 的绑定证据、用量、带正文唤醒未接（Role 实例在远端被明确拒绝）                                                                            | driver / remote composition                               |
 | P2   | 新实例首轮约 30 秒等待挂载发布（30 s 刷新周期）                                                                                                                                      | `runtime-offer-publisher.ts`                              |
 
 ## 效率基线（2026-09-23，Codex `gpt-5.6-luna / low`，S1 的对照基准）

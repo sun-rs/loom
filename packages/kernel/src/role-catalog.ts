@@ -360,8 +360,12 @@ export class RoleCatalog {
 
   /**
    * Human recovery exit (S1-f): the instance's next run starts a new native
-   * session. Refused while the instance has leased or running work. The reset
-   * is recorded in the instance's channel; it never deletes history.
+   * session. Refused while the instance has a live run: a RunAttempt that is
+   * starting/running or a runtime process that is prepared/active/orphaned.
+   * A leased Activation without such a run is allowed, because the session
+   * generation is read when its RunAttempt is created (the launch then uses
+   * the new generation). The reset is recorded in the instance's channel; it
+   * never deletes history.
    */
   resetInstanceSession(
     auth: AuthenticatedActorContext,

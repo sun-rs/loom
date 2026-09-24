@@ -356,12 +356,19 @@ test("GenericProcessAdapter routes Provider usage frames to the usage owner, nev
       usage,
       { ...usage, responseId: "response-bad", cachedInputTokens: 1001 },
       {
+        protocol: "rah-provider-usage-gap/v1",
+        provider: "fixture-provider/v1",
+        reason: "inconsistent_total",
+        observedAt: "2026-09-24T01:00:00.500Z",
+      },
+      {
         entry: { kind: "status", activity: "working", detailKind: "starting" },
         observedAt: "2026-09-24T01:00:01.000Z",
         producerSequence: 1,
       },
     ];
     const recorded: unknown[] = [];
+    const gaps: unknown[] = [];
     const trajectory: unknown[] = [];
     const adapter = new GenericProcessAdapter({
       args: [
@@ -378,12 +385,32 @@ test("GenericProcessAdapter routes Provider usage frames to the usage owner, nev
       recordUsage: async (input) => {
         recorded.push(input);
       },
+      recordUsageGap: async (input) => {
+        gaps.push(input);
+      },
       registerPrepared: async () => undefined,
     });
     assert.equal((await adapter.reap(run)).code, 0);
     const { protocol: _protocol, ...fields } = usage;
     assert.deepEqual(recorded, [
       { ...fields, runAttemptId: "run-process-test", runtimeRunId: run.runId },
+    ]);
+    // An invalid usage frame is a parse gap (never a generation); a driver gap
+    // is forwarded as is. Both only mark the RunAttempt's usage incomplete.
+    const scope = { runAttemptId: "run-process-test", runtimeRunId: run.runId };
+    assert.deepEqual(gaps, [
+      {
+        provider: "fixture-provider/v1",
+        reason: "parse_error",
+        observedAt: "2026-09-24T01:00:00.000Z",
+        ...scope,
+      },
+      {
+        provider: "fixture-provider/v1",
+        reason: "inconsistent_total",
+        observedAt: "2026-09-24T01:00:00.500Z",
+        ...scope,
+      },
     ]);
     assert.deepEqual(trajectory, [
       { kind: "status", activity: "working", detailKind: "starting" },

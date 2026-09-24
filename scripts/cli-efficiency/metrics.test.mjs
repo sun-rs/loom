@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeUsage, compareRounds } from "./metrics.mjs";
+import { budgets, summarizeUsage, compareRounds } from "./metrics.mjs";
 test("usage deduplicates response IDs, preserves uncached and rejects missing evidence", () => {
   const e = {
     type: "token_usage_record",
@@ -72,31 +72,6 @@ test("generations split at the effective Room reply: the posting generation is b
     /timestamp/,
   );
 });
-test("large per-round overhead fails even if all replies succeeded", () => {
-  const n = {
-    input: 100,
-    cached: 80,
-    uncached: 20,
-    generations: 1,
-    firstInput: 100,
-    replySeconds: 10,
-  };
-  assert.equal(
-    compareRounds(n, { ...n, input: 400, uncached: 60, replySeconds: 35 })
-      .status,
-    "over-budget",
-  );
-  assert.equal(
-    compareRounds(n, {
-      ...n,
-      input: 150,
-      uncached: 25,
-      generations: 2,
-      replySeconds: 15,
-    }).status,
-    "within-budget",
-  );
-});
 test("a receipt or progress message is not an effective final answer", async () => {
   const { isEffectiveAnswer } = await import("./metrics.mjs");
   assert.equal(isEffectiveAnswer("收到。我将只读审查两份脚本。"), false);
@@ -106,85 +81,184 @@ test("a receipt or progress message is not an effective final answer", async () 
     true,
   );
 });
-test("evo contract budgets: generations, first-request overhead, seconds-or-percent latency", () => {
-  const n = {
-    input: 20000,
-    cached: 16000,
-    uncached: 4000,
-    generations: 1,
-    firstInput: 20000,
-    replySeconds: 10,
-  };
-  const ok = { ...n, input: 40000, uncached: 8000, generations: 2 };
-  assert.deepEqual(compareRounds(n, ok).failures, []);
-  // Uncached ratio is a reported diagnostic, not a signed §6 budget.
-  const cold = compareRounds(n, { ...ok, uncached: 40000 });
+// Product-recorded RAH usage (agent.run.usage.get) mirroring the transcript.
+const recorded = (m, overrides = {}) => ({
+  ...m,
+  productUsage: {
+    completeness: "complete",
+    gaps: [],
+    totals: {
+      generations: m.generationsTotal ?? m.generations,
+      inputTokens: m.input,
+      cachedInputTokens: m.cached,
+      outputTokens: m.output,
+    },
+    ...overrides,
+  },
+});
+const nativeRound = {
+  input: 20000,
+  cached: 16000,
+  uncached: 4000,
+  output: 500,
+  generations: 1,
+  generationsTotal: 1,
+  generationsBeforeReply: 1,
+  generationsAfterReply: 0,
+  firstInput: 20000,
+  replySeconds: 10,
+};
+const rahRound = recorded({
+  ...nativeRound,
+  input: 46000,
+  uncached: 8000,
+  generations: 2,
+  generationsTotal: 2,
+  generationsBeforeReply: 1,
+  generationsAfterReply: 1,
+  firstInput: 23000,
+  replySeconds: 15,
+});
+test("contract §6: total input ≤ 2 × (native + 3k), first request ≤ native + 3k", () => {
+  assert.deepEqual(compareRounds(nativeRound, rahRound).failures, []);
+  assert.equal(compareRounds(nativeRound, rahRound).status, "within-budget");
+  const over = recorded({ ...rahRound, input: 46001 });
+  assert.deepEqual(compareRounds(nativeRound, over).failures, ["input"]);
+  assert.deepEqual(
+    compareRounds(nativeRound, recorded({ ...rahRound, firstInput: 23001 }))
+      .failures,
+    ["firstInput"],
+  );
+  // Uncached ratio is reported only; §6 signs no budget for it.
+  const cold = compareRounds(
+    nativeRound,
+    recorded({ ...rahRound, uncached: 40000 }),
+  );
   assert.deepEqual(cold.failures, []);
   assert.equal(cold.uncachedRatio, 10);
-  assert.deepEqual(compareRounds(n, { ...ok, generations: 3 }).failures, [
-    "generations",
-  ]);
-  assert.deepEqual(compareRounds(n, { ...ok, firstInput: 23000 }).failures, []);
-  assert.deepEqual(compareRounds(n, { ...ok, firstInput: 23001 }).failures, [
-    "firstInput",
-  ]);
-  // Short task: native 10 s allows +5 s.
-  assert.deepEqual(compareRounds(n, { ...ok, replySeconds: 15 }).failures, []);
-  assert.deepEqual(compareRounds(n, { ...ok, replySeconds: 15.1 }).failures, [
+  assert.equal(budgets.maxGenerations, undefined, "no absolute total cap");
+});
+test("contract §6 latency: short task +5 s, long task +15%", () => {
+  const short = recorded({ ...rahRound, replySeconds: 15.1 });
+  assert.deepEqual(compareRounds(nativeRound, short).failures, [
     "replySeconds",
   ]);
-  // Long task: native 100 s allows +15%.
-  const long = { ...n, replySeconds: 100 };
-  const longOk = { ...ok, replySeconds: 115 };
-  assert.deepEqual(compareRounds(long, longOk).failures, []);
+  const longNative = { ...nativeRound, replySeconds: 100 };
   assert.deepEqual(
-    compareRounds(long, { ...longOk, replySeconds: 115.1 }).failures,
+    compareRounds(longNative, recorded({ ...rahRound, replySeconds: 115 }))
+      .failures,
+    [],
+  );
+  assert.deepEqual(
+    compareRounds(longNative, recorded({ ...rahRound, replySeconds: 115.1 }))
+      .failures,
+    ["replySeconds"],
+  );
+  // Around the 33 s crossover the seconds rule still applies below it.
+  const mid = { ...nativeRound, replySeconds: 30 };
+  assert.deepEqual(
+    compareRounds(mid, recorded({ ...rahRound, replySeconds: 35 })).failures,
+    [],
+  );
+  assert.deepEqual(
+    compareRounds(mid, recorded({ ...rahRound, replySeconds: 35.1 })).failures,
     ["replySeconds"],
   );
 });
-test("missing first-request evidence on either side fails closed", () => {
+test("tool-heavy native work: RAH may add one protocol generation, none before the reply", () => {
   const n = {
-    input: 100,
-    cached: 0,
-    uncached: 100,
-    generations: 1,
-    firstInput: 100,
-    replySeconds: 10,
+    ...nativeRound,
+    generations: 6,
+    generationsTotal: 6,
+    generationsBeforeReply: 6,
   };
+  const gens = (total, beforeReply) =>
+    recorded({
+      ...rahRound,
+      generations: total,
+      generationsTotal: total,
+      generationsBeforeReply: beforeReply,
+      generationsAfterReply: total - beforeReply,
+    });
+  const ok = compareRounds(n, gens(7, 6));
+  assert.deepEqual(ok.failures, []);
+  assert.equal(ok.extraProtocolGenerations, 1);
+  assert.equal(ok.extraGenerationsBeforeReply, 0);
+  assert.deepEqual(compareRounds(n, gens(8, 6)).failures, ["generations"]);
+  assert.deepEqual(compareRounds(n, gens(7, 7)).failures, [
+    "generationsBeforeReply",
+  ]);
+  // An unknown before-reply split fails closed as missing evidence.
+  const unknown = compareRounds(
+    n,
+    recorded({ ...gens(7, 6), generationsBeforeReply: null }),
+  );
+  assert.deepEqual(unknown.failures, ["generationsBeforeReplyMissing"]);
+  assert.equal(unknown.status, "missing-evidence");
+});
+test("missing first-request evidence on either side fails closed", () => {
   for (const [a, b] of [
-    [{ ...n, firstInput: undefined }, n],
-    [n, { ...n, firstInput: null }],
+    [{ ...nativeRound, firstInput: undefined }, rahRound],
+    [nativeRound, { ...rahRound, firstInput: null }],
   ]) {
     const r = compareRounds(a, b);
     assert.deepEqual(r.failures, ["firstInputMissing"]);
-    assert.notEqual(r.status, "within-budget");
+    assert.equal(r.status, "missing-evidence");
   }
 });
-test("comparison reports before/after/total generations and extra protocol generations", () => {
-  const n = {
-    input: 100,
-    cached: 0,
-    uncached: 100,
-    generations: 1,
-    generationsTotal: 1,
-    generationsBeforeReply: 1,
-    generationsAfterReply: 0,
-    firstInput: 100,
-    replySeconds: 10,
-  };
-  const r = compareRounds(n, {
-    ...n,
-    input: 150,
-    generations: 3,
-    generationsTotal: 3,
-    generationsBeforeReply: 2,
-    generationsAfterReply: 1,
+test("partial or unavailable product usage is missing evidence, never within budget", () => {
+  for (const productUsage of [
+    undefined,
+    {
+      completeness: "partial",
+      gaps: [{ reason: "inconsistent_total" }],
+      totals: rahRound.productUsage.totals,
+    },
+    {
+      completeness: "unavailable",
+      gaps: [],
+      totals: {
+        generations: null,
+        inputTokens: null,
+        cachedInputTokens: null,
+        outputTokens: null,
+      },
+    },
+  ]) {
+    const r = compareRounds(nativeRound, { ...rahRound, productUsage });
+    assert.deepEqual(r.failures, ["usageEvidenceMissing"]);
+    assert.equal(r.status, "missing-evidence");
+  }
+});
+test("product-recorded RAH usage is cross-checked against the transcript", () => {
+  const r = compareRounds(nativeRound, rahRound);
+  assert.equal(r.usageEvidence.completeness, "complete");
+  assert.deepEqual(r.usageEvidence.mismatches, []);
+  const drift = compareRounds(nativeRound, {
+    ...rahRound,
+    productUsage: {
+      ...rahRound.productUsage,
+      totals: { ...rahRound.productUsage.totals, inputTokens: 45000 },
+    },
   });
+  assert.deepEqual(drift.failures, ["usageEvidenceMismatch"]);
+  assert.deepEqual(drift.usageEvidence.mismatches, [
+    { field: "inputTokens", product: 45000, transcript: 46000 },
+  ]);
+  assert.equal(drift.status, "missing-evidence");
+  // Evidence problems do not hide a real budget failure.
+  const both = compareRounds(nativeRound, {
+    ...rahRound,
+    replySeconds: 60,
+    productUsage: undefined,
+  });
+  assert.equal(both.status, "over-budget");
+});
+test("comparison reports before/after/total generations of both arms", () => {
+  const r = compareRounds(nativeRound, rahRound);
   assert.deepEqual(r.generations, {
     native: { total: 1, beforeReply: 1, afterReply: 0 },
-    rah: { total: 3, beforeReply: 2, afterReply: 1 },
+    rah: { total: 2, beforeReply: 1, afterReply: 1 },
   });
-  assert.equal(r.extraProtocolGenerations, 2);
-  // Current budget still applies to the total until the owner approves new numbers.
-  assert.deepEqual(r.failures, ["generations"]);
+  assert.equal(r.extraProtocolGenerations, 1);
 });

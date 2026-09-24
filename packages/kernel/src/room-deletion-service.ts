@@ -76,6 +76,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "room_files",
   "rooms",
   "run_attempt_usage",
+  "run_attempt_usage_gaps",
   "run_attempts",
   "run_trajectory_entries",
   "runtime_processes",
@@ -328,6 +329,8 @@ export class RoomDeletionService {
       `DELETE FROM context_manifests WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
       `DELETE FROM run_attempt_usage WHERE run_attempt_id IN
+         (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
+      `DELETE FROM run_attempt_usage_gaps WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
       `DELETE FROM run_trajectory_entries WHERE room_id=?`,
       `DELETE FROM runtime_processes WHERE room_id=?`,

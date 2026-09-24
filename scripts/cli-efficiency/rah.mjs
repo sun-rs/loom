@@ -47,7 +47,8 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
   });
   const configPath = join(root, "config.json");
   writeFileSync(configPath, JSON.stringify(prepared.config), { mode: 0o600 });
-  let child, exit, origin, observer, participantId, roomId, actor, sessionId;
+  let child, exit, origin, observer, participantId, agentId, roomId, actor;
+  let sessionId;
   async function start() {
     let out = "";
     child = spawn(
@@ -177,15 +178,14 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
           configuration,
         })
       ).role;
-      const instance = (
-        await post("/v3/client/roles/instantiate", {
-          roleId: role.roleId,
-          channelId: roomId,
-          basedOnRoomSeq: await head(roomId),
-          idempotencyKey: randomUUID(),
-        })
-      ).instance;
-      participantId = instance.instanceId;
+      const created = await post("/v3/client/roles/instantiate", {
+        roleId: role.roleId,
+        channelId: roomId,
+        basedOnRoomSeq: await head(roomId),
+        idempotencyKey: randomUUID(),
+      });
+      participantId = created.instance.instanceId;
+      agentId = created.agent.definition.agentId;
     } else {
       const agent = (
         await post("/v3/client/agents/list", { controlRoomId: control })
@@ -199,6 +199,7 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
         idempotencyKey: randomUUID(),
       });
       participantId = agent.definition.participantId;
+      agentId = agent.definition.agentId;
       const actualCwd = agentExecutionWorkspacePath(
         join(stateDirectory, "agent-workspaces"),
         participantId,
@@ -274,6 +275,7 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
         .listRunAttempts({ roomId })
         .filter((r) => !oldRuns.has(r.runAttemptId))
         .map((r) => ({
+          runAttemptId: r.runAttemptId,
           startedAt: r.startedAt,
           finishedAt: r.finishedAt,
           state: r.state,
@@ -297,6 +299,17 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       round.metrics = measure(sessionId, round, {
         replyAt: effective?.createdAt ?? null,
       });
+      // Product-recorded usage; compareRounds requires it complete and
+      // cross-checks it against the transcript-derived RAH usage.
+      const productUsage = await post("/v3/client/agents/run-usage/get", {
+        agentId,
+        runAttemptId: round.runs[0].runAttemptId,
+      });
+      round.metrics.productUsage = {
+        completeness: productUsage.completeness,
+        gaps: productUsage.gaps,
+        totals: productUsage.totals,
+      };
       round.answer = round.replies.map((m) => m.body).join("\n");
       delete round.replies;
       save();

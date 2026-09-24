@@ -193,6 +193,13 @@ test("AgentHost records runtime Provider usage through its own Host credential",
           runAttemptId: input.runAttemptId,
           runtimeRunId: run.runId,
         });
+        await lifecycle.recordUsageGap?.({
+          provider: "fixture-provider/v1",
+          reason: "correction_frame",
+          observedAt: "2026-09-24T01:00:01.000Z",
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: run.runId,
+        });
         const delivery = kernel.sync(agentActor, {
           consumerId: input.consumerId,
           roomId: input.roomId,
@@ -232,6 +239,21 @@ test("AgentHost records runtime Provider usage through its own Host credential",
             input_tokens: 500,
             output_tokens: 20,
             response_id: "response-1",
+            run_attempt_id: runAttemptId,
+          },
+        ],
+      );
+      assert.deepEqual(
+        audit
+          .prepare(
+            "SELECT run_attempt_id, reason, occurrences FROM run_attempt_usage_gaps",
+          )
+          .all()
+          .map((row) => ({ ...row })),
+        [
+          {
+            occurrences: 1,
+            reason: "correction_frame",
             run_attempt_id: runAttemptId,
           },
         ],

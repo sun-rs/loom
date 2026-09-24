@@ -1,19 +1,25 @@
 import assert from "node:assert/strict";
-// Owner-approved evo contract budgets (docs/evo/target-contract.zh-CN.md §6).
-// Budgets are data: a null generation limit is reported but not enforced.
-// The uncached ratio is a diagnostic only; §6 does not sign it as a budget.
+// Budgets of docs/evo/target-contract.zh-CN.md §6 as revised by the owner on
+// 2026-09-24 (the earlier "≤2 before reply, total input ≤2×" was unreachable).
+// Generation limits are relative to the native arm's whole-turn count, so
+// native tool rounds are business work, not protocol overhead. The uncached
+// ratio is reported only; §6 signs no budget for it.
 export const budgets = {
-  inputRatio: 2,
-  maxGenerations: { total: 2, beforeReply: null, afterReply: null },
-  firstInputOverheadTokens: 3000,
-  replyAllowanceSeconds: 5,
+  maxExtraGenerations: 1, // rah total − native total
+  maxExtraGenerationsBeforeReply: 0, // rah before-reply − native total
+  firstInputOverheadTokens: 3000, // rah first ≤ native first + 3k
+  inputRatio: 2, // rah total input ≤ 2 × (native total input + 3k)
+  inputAllowanceTokens: 3000,
+  replyAllowanceSeconds: 5, // extra latency ≤ max(5 s, 15% of native)
   replyAllowanceRatio: 0.15,
 };
-const generationFailure = {
-  total: "generations",
-  beforeReply: "generationsBeforeReply",
-  afterReply: "generationsAfterReply",
-};
+// Evidence failures make the comparison "missing-evidence", never a pass.
+const EVIDENCE_FAILURES = new Set([
+  "usageEvidenceMissing",
+  "usageEvidenceMismatch",
+]);
+const isEvidenceFailure = (f) =>
+  f.endsWith("Missing") || EVIDENCE_FAILURES.has(f);
 // replyAt: ISO time the effective Room reply landed. The generation whose tool
 // call posted it finished (and recorded usage) before that time, so it counts
 // as before-reply; later generations are after-reply. Omitted = native arm,
@@ -77,37 +83,79 @@ const generationCounts = (m) => ({
   beforeReply: m.generationsBeforeReply ?? null,
   afterReply: m.generationsAfterReply ?? null,
 });
+const finite = (v) => typeof v === "number" && Number.isFinite(v);
+// Product-recorded RAH usage (agent.run.usage.get) must be complete, and when
+// both exist it must agree with the transcript-derived RAH usage.
+function usageEvidence(rah) {
+  const product = rah.productUsage;
+  const completeness = product?.completeness ?? "unavailable";
+  const mismatches = [];
+  if (completeness === "complete")
+    for (const [field, transcript] of [
+      ["generations", rah.generationsTotal ?? rah.generations],
+      ["inputTokens", rah.input],
+      ["cachedInputTokens", rah.cached],
+      ["outputTokens", rah.output],
+    ]) {
+      const recorded = product.totals?.[field];
+      if (finite(transcript) && recorded !== transcript)
+        mismatches.push({ field, product: recorded ?? null, transcript });
+    }
+  return { completeness, gaps: product?.gaps ?? [], mismatches };
+}
 export function compareRounds(native, rah) {
   const failures = [];
-  if (rah.input > native.input * budgets.inputRatio) failures.push("input");
-  // Short tasks are judged in seconds, long tasks by percentage.
-  const replyAllowance = Math.max(
-    budgets.replyAllowanceSeconds,
-    native.replySeconds * budgets.replyAllowanceRatio,
-  );
-  if (rah.replySeconds > native.replySeconds + replyAllowance)
-    failures.push("replySeconds");
-  const generations = {
-    native: generationCounts(native),
-    rah: generationCounts(rah),
-  };
-  for (const [key, limit] of Object.entries(budgets.maxGenerations)) {
-    if (limit === null) continue;
-    const count = generations.rah[key];
-    // An enforced limit without evidence fails closed.
-    if (!Number.isFinite(count))
-      failures.push(generationFailure[key] + "Missing");
-    else if (count > limit) failures.push(generationFailure[key]);
-  }
-  if (!Number.isFinite(native.firstInput) || !Number.isFinite(rah.firstInput))
+  if (!finite(native.input) || !finite(rah.input))
+    failures.push("inputMissing");
+  else if (
+    rah.input >
+    budgets.inputRatio * (native.input + budgets.inputAllowanceTokens)
+  )
+    failures.push("input");
+  if (!finite(native.firstInput) || !finite(rah.firstInput))
     failures.push("firstInputMissing");
   else if (
     rah.firstInput >
     native.firstInput + budgets.firstInputOverheadTokens
   )
     failures.push("firstInput");
-  const evidenceOnly =
-    failures.length && failures.every((f) => f.endsWith("Missing"));
+  const generations = {
+    native: generationCounts(native),
+    rah: generationCounts(rah),
+  };
+  const nativeTotal = generations.native.total;
+  const extraProtocolGenerations =
+    finite(nativeTotal) && finite(generations.rah.total)
+      ? generations.rah.total - nativeTotal
+      : null;
+  const extraGenerationsBeforeReply =
+    finite(nativeTotal) && finite(generations.rah.beforeReply)
+      ? generations.rah.beforeReply - nativeTotal
+      : null;
+  if (extraProtocolGenerations === null) failures.push("generationsMissing");
+  else if (extraProtocolGenerations > budgets.maxExtraGenerations)
+    failures.push("generations");
+  if (extraGenerationsBeforeReply === null)
+    failures.push("generationsBeforeReplyMissing");
+  else if (extraGenerationsBeforeReply > budgets.maxExtraGenerationsBeforeReply)
+    failures.push("generationsBeforeReply");
+  // Short tasks are judged in seconds, long tasks by percentage.
+  if (!finite(native.replySeconds) || !finite(rah.replySeconds))
+    failures.push("replySecondsMissing");
+  else if (
+    rah.replySeconds >
+    native.replySeconds +
+      Math.max(
+        budgets.replyAllowanceSeconds,
+        native.replySeconds * budgets.replyAllowanceRatio,
+      )
+  )
+    failures.push("replySeconds");
+  const evidence = usageEvidence(rah);
+  if (evidence.completeness !== "complete")
+    failures.push("usageEvidenceMissing");
+  else if (evidence.mismatches.length) failures.push("usageEvidenceMismatch");
+  const evidenceOnly = failures.length && failures.every(isEvidenceFailure);
   return {
     status: evidenceOnly
       ? "missing-evidence"
@@ -116,11 +164,12 @@ export function compareRounds(native, rah) {
         : "within-budget",
     failures,
     generations,
-    extraProtocolGenerations: generations.rah.total - generations.native.total,
+    extraProtocolGenerations,
+    extraGenerationsBeforeReply,
+    usageEvidence: evidence,
     inputRatio: rah.input / native.input,
     uncachedRatio: native.uncached ? rah.uncached / native.uncached : null,
     replyRatio: rah.replySeconds / native.replySeconds,
-    extraGenerations: rah.generations - native.generations,
   };
 }
 // The shared workload explicitly requests this marker. Still needs human quality review.

@@ -90,6 +90,7 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
       supervisorDirectory: join(directory, "supervisors"),
     });
     const trajectory: unknown[] = [];
+    const usageGaps: Array<{ reason: string; runAttemptId: string }> = [];
     const runs = new Map<string, Awaited<ReturnType<typeof runtime.start>>>();
     const runActivation = async (
       scenario: string,
@@ -123,6 +124,9 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
         {
           recordTrajectory: async (activity) => {
             trajectory.push(activity);
+          },
+          recordUsageGap: async (gap) => {
+            usageGaps.push(gap);
           },
           registerPrepared: async () => undefined,
         },
@@ -161,6 +165,17 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
     assert.equal((await runActivation("tool-missing", "run")).code, 1);
     assert.equal((await runActivation("cancel", "seed", "cancel")).code, 0);
     assert.equal((await runActivation("cancel", "run")).code, 0);
+
+    // Kimi ACP exposes no native usage: each session-ready run says so, so the
+    // Kernel reports its usage as unavailable instead of zero.
+    const resumedSeedGaps = usageGaps.filter(
+      (gap) => gap.runAttemptId === "run-kimi-resumed-seed",
+    );
+    assert.deepEqual(
+      resumedSeedGaps.map((gap) => gap.reason),
+      ["unsupported_provider"],
+    );
+    assert.ok(usageGaps.every((gap) => gap.reason === "unsupported_provider"));
 
     const records = readFileSync(recordPath, "utf8")
       .trim()

@@ -163,6 +163,8 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
           recordTrajectory: async (activity) => {
             trajectory.push(activity);
           },
+          // The local Host reports instance binding evidence (required).
+          recordInstanceSessionBinding: async () => undefined,
           registerPrepared: async () => undefined,
         },
       );
