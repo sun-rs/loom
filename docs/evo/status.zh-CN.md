@@ -1,13 +1,13 @@
 # evo 分支现状（阶段 1 清理后）
 
 日期：2026-09-24。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`：5122795 加测试修复，全量检查通过）的唯一差异说明。
-`docs/architecture`、`docs/product` 中的 owner 文档描述的是 main 基线；与本页冲突时，以本页和代码为准。
+`docs/architecture`、`docs/product` 中的 owner 文档描述的是 main 基线；冲突时以目标合同为准，本页记录差异，代码只证明当前实际行为。
 evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-09-24 已签），效率门禁合同见 [cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)。
 
 ## 分支与环境
 
 - `main`：冻结的 UI 里程碑，只接受紧急修复。worktree `~/Code/repos/loom-main`，当前不运行。
-- `evo`：新后端开发线。前端（`apps/web`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 完全一致，本阶段不改前端。
+- `evo`：新后端开发线。前端产品代码（`apps/web/src`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 一致，本阶段不改前端；测试文件只在 main 先修正的范围内可能不同。
 - `ref/role-ui-draft`（= `789ffc6`）：Codex 9/21–9/23 的完整检查点，含 Role 前端草稿、全部审计文档与证据，仅作参考。
 - 本地 evo 服务：端口 4176，launchd `com.loom.evo`，数据 `~/.loom/evo`。数据目录与路径绑定（挂载回执存绝对路径），不要搬迁。
 - 旧正式环境（`~/.rah`、4173）已按 owner 决定退役，不再兼容旧数据。
@@ -44,17 +44,16 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 
 ## 已知缺陷（待阶段 3 修复）
 
-| 级别 | 问题                                                                                             | 位置                                                      |
-| ---- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| P1   | 首启在绑定前失败后被判为"已有历史但绑定丢失"，永久隔离                                           | `kernel/src/run-agent-context.ts:92`                      |
-| P1   | 隔离后无出口：重置不清历史判断、界面无重建入口                                                   | `workspace-agent-management.ts:634`                       |
-| P1   | 续聊实例收不到 Role 规则更新（Kimi 确认），启动上下文却报告新 revision                           | `kimi-acp-driver.mjs:297`、`worker-startup-context.ts:31` |
-| P1   | 创建频道时可把已有实例加入第二个频道                                                             | `collaboration-service.ts:390`                            |
-| P1   | 无 usage、上下文窗口、压缩次数观测                                                               | agent-host                                                |
-| P1   | 服务端明确 404 被 worker CLI 描述为"状态未知、不要重发"，最终结论丢在草稿（新旧 Agent 都受影响） | `agent-host/src/worker-cli-error.ts:89`                   |
-| P2   | 失效私聊的写入检查只挂在 postMessage，replyThread/转发/提醒未覆盖                                | `collaboration-service.ts:1556`                           |
-| P2   | 线程写入者占用被当成永久错误隔离；远端 Host 连续性开关不生效                                     | driver / remote composition                               |
-| P2   | 新实例首轮约 30 秒等待挂载发布（30 s 刷新周期）                                                  | `runtime-offer-publisher.ts`                              |
+| 级别 | 问题                                                                                                                                                                                 | 位置                                                      |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| P1   | 首启在绑定前失败后被判为"已有历史但绑定丢失"，永久隔离                                                                                                                               | `kernel/src/run-agent-context.ts:92`                      |
+| P1   | 隔离后无出口：重置不清历史判断、界面无重建入口                                                                                                                                       | `workspace-agent-management.ts:634`                       |
+| P1   | 平台运行协议升级（常驻提示词变化）到不了已续聊的原生 session（Kimi 确认），启动上下文却报告新版本；须区分 Role 快照（按合同冻结）、平台协议版本、原生 session 实际生效的 system 快照 | `kimi-acp-driver.mjs:297`、`worker-startup-context.ts:31` |
+| P1   | 创建频道时可把已有实例加入第二个频道                                                                                                                                                 | `collaboration-service.ts:390`                            |
+| P1   | 逐次 usage 已由 S1-a 记录（Kimi 无数据）；上下文窗口占用、压缩次数的记录与展示未做                                                                                                   | agent-host                                                |
+| P2   | 失效私聊的写入检查只挂在 postMessage，replyThread/转发/提醒未覆盖                                                                                                                    | `collaboration-service.ts:1556`                           |
+| P2   | 线程写入者占用被当成永久错误隔离；远端 Host 连续性开关不生效                                                                                                                         | driver / remote composition                               |
+| P2   | 新实例首轮约 30 秒等待挂载发布（30 s 刷新周期）                                                                                                                                      | `runtime-offer-publisher.ts`                              |
 
 ## 效率基线（2026-09-23，Codex `gpt-5.6-luna / low`，S1 的对照基准）
 
@@ -69,7 +68,7 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 
 - 总输入约为原生的 4.8–5.0 倍：单次上下文约 1.6 倍 × 3 次生成（check → post → final）。
 - 固定负担：RAH 常驻 developer 指令约 57,200 字符，原生约 8,500；其中 `agent-host/src/agent-memory-prompt.ts` 的 transport and safety bindings 段约 3.4 万字符。
-- Role P1 最终结论未送达（上表 404 问题）；旧 Agent P1 违反"不建任务"要求。
+- Role P1 最终结论未送达（404 被误报为 UNKNOWN，已由 S1-b 修复）；旧 Agent P1 违反"不建任务"要求。
 - 原始收据与报告在 `ref/role-ui-draft` 的 `docs/audits/2026-09-23-cli-efficiency-gate.zh-CN.md`、`docs/audits/evidence/2026-09-23-cli-efficiency/receipt.json`。
 
 ## 历史文档

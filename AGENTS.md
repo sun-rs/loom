@@ -6,13 +6,16 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
 
 - `main` is the frozen UI milestone (tag `milestone-ui-raft`) and accepts
   emergency fixes only.
-- `evo` is the backend rebuild. Its frontend (`apps/web`, `packages/ui-web`,
-  `packages/ui-tokens/specs`) stays identical to `main` until phase 4.
+- `evo` is the backend rebuild. Its frontend product code (`apps/web/src`,
+  `packages/ui-web`, `packages/ui-tokens/specs`) stays identical to `main` until
+  phase 4; test files may differ only where `main` is corrected first.
   Acceptance uses a throwaway `apps/console` (planned) plus API and tests.
-- `docs/evo/target-contract.zh-CN.md` is the single target contract;
-  `docs/evo/status.zh-CN.md` is the single evo-vs-main delta. Owner documents in
-  `docs/architecture` and `docs/product` describe the `main` baseline and are
-  superseded wherever they conflict with these two documents or the code.
+- `docs/evo/target-contract.zh-CN.md` is the single target contract and takes
+  precedence; `docs/evo/status.zh-CN.md` records the evo-vs-main delta; code
+  proves current behavior but never overrides owner goals or safety
+  constraints. Owner documents in `docs/architecture` and `docs/product`
+  describe the `main` baseline and are superseded where they conflict with the
+  evo documents.
 
 ## Reading map
 
