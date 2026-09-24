@@ -26,6 +26,43 @@ Role 显式选现有 mount；旧 Agent 将相同文件准备到实际私有 cwd�
 不丢弃失败样本、不为了好看重复跑。`RAH_EFFICIENCY_REF` 可指定固定源版本。
 用户其他应用仍可能使用同一账号，缓存冷热无法完全控制，单次时间不作统计显著性结论。
 
+## 多 Provider（`RAH_EFFICIENCY_PROVIDER`，合同 §6“各运行时对照自身原生 CLI”）
+
+```sh
+npm run test:cli:efficiency -- --paid                                   # codex（默认，行为与组序不变）
+RAH_EFFICIENCY_PROVIDER=claude npm run test:cli:efficiency -- --paid    # native,role,role-warm
+RAH_EFFICIENCY_PROVIDER=kimi npm run test:cli:efficiency -- --paid      # native,role
+```
+
+`RAH_EFFICIENCY_MODEL`（裸 id 或 `local:<kind>:<id>`，不得属于其他 CLI）/ `RAH_EFFICIENCY_EFFORT` 覆盖默认值；
+默认即 AGENTS.md 许可矩阵：Codex `gpt-5.6-luna/low`、Claude `sonnet/low`（effort 限 low..max）、Kimi
+`kimi-code/k3/high`。`RAH_EFFICIENCY_ORDER` 只接受该 provider 支持的组：Kimi 无 `role-warm`
+（`RAH_EFFICIENCY_WARM=1` 启动前即失败）。配置解析见 `efficiency-config.mjs`，单测覆盖。
+指令文件用各 CLI 原生读取的文件：Codex/Kimi 写 `AGENTS.md`，Claude 写 `CLAUDE.md`（两组都原生读取，RAH 组另有 Role 指令，
+与 Codex 口径相同）。
+
+| Provider | 原生组                                                                                                                                                                              | RAH 组                                                                         | 用量来源与可判定项                                                                                                                                                                                                                                                                                                                                                 |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Claude   | `claude -p <题> --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions --model --effort`，第 2 轮起 `--resume <id>`（不 fork），每轮新进程 | `role`（每轮）与 `role-warm`（隔离 daemon 打开 `warmRuntimes.claude.enabled`） | 两侧都用产品同一 `ClaudeStreamUsageTracker`（stream_event 按 message id，一次生成一条，输入 = 未缓存 + 缓存写 + 缓存读）：原生取自身 stdout，RAH 取产品入库生成记录（`observedAt` 切分回复前/后）。session transcript 按 message id 去重独立复核生成数/输入/缓存（RAH 不一致即 `usageEvidenceMismatch`；原生只报告）。全部 §6 预算照常判定                         |
+| Kimi     | `kimi -p <题> --output-format stream-json -m <model>`，第 2 轮起 `--session <id>`（id 取自 `session.resume_hint`），`KIMI_MODEL_THINKING_EFFORT=<effort>`，每轮新进程               | `role`（每轮 ACP）                                                             | print 模式与产品 ACP 驱动都不给用量；两侧同取 session wire `agents/main/wire.jsonl`：`step.end` 按 `messageId` 一次生成一条（输入 = inputOther + 缓存读 + 缓存写），`llm.request` 的 `modelAlias`/`thinkingEffort` 事后核对。产品用量恒为 `unavailable`，判 `unmeasured: productUsage`；wire 缺失时 tokens/生成数记为 `unmeasured`，只判回复耗时与送达，不编造数字 |
+
+模型围栏（fail closed）：
+
+- Claude RAH 组 shim（`claude-guard.mjs`）：可跑模型回合的启动必须恰好一个 `--model` 与一个 `--effort` 且等于许可值；
+  禁止 `--fallback-model`、`--fork-session`、`--continue`、`--settings`、`--agents`；stdin 只许 user、`interrupt`
+  控制请求与 control_response（`set_model`/`set_max_thinking_tokens`/`apply_flag_settings` 等一律拒绝并杀进程）。
+  产品模型目录探针（`--tools "" --no-session-persistence`、无模型参数）只许 `initialize`，不许 user 帧。
+  原生组参数经同一 `classifyClaudeLaunch` 校验；事后 transcript/stream 中每个模型须属于许可别名族
+  （`sonnet` 只匹配 `claude-sonnet-*`），transcript 记录的 `effort` 必须等于许可档位。
+- Kimi RAH 组沿用 `drift-kimi-guard.mjs` ACP 有状态围栏；原生组启动前 `checkKimiPrintLaunch`（仅 print 模式、恰好一个许可 `-m`、
+  思考环境变量等于许可档位、禁止 `--continue/--agent/--plan` 等），事后 wire 中每个 `llm.request` 的别名与思考档位须等于许可值；
+  wire 缺失时 `modelEvidence: launch-guard-only`。
+
+局限：均未付费运行。Kimi print 模式下 `llm.request.thinkingEffort` 是否反映环境变量覆盖未实测（若只反映 config 默认，
+不一致会使门禁失败而非放行）；Kimi 子 agent 的 wire 不计入。Claude 子 agent（sidechain）生成：产品按
+`parent_tool_use_id` 计入、transcript 复核不计入，若出现会表现为复核不一致。Claude warm 组仍套用
+`warmExecutionFailures`（含每个 box-post 带 `--turn`），真实 Claude 是否按轮带句柄待首跑确认。
+
 ## 指标和裁决
 
 每轮记录：发送到有效回复时间、RAH 进入 Run 前等待、实际 session ID、原生模型和 effort、
@@ -111,7 +148,7 @@ node scripts/cli-efficiency/resume-probe.mjs --thread <thread-id> --repeat 3 [--
 
 模型用 `message-post --final` 发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，
 不是 ACK），Host 读到后由驱动在下一个工具边界发原生 `turn/interrupt`，省掉工具结果回灌后只说"已发送"的整轮生成。
-Codex 每轮与热进程两条路径已接；Claude/Kimi/OpenCode 未接，行为不变。
+Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `interrupt` 控制请求）；Kimi/OpenCode 未接，行为不变。
 
 - 用量接口 `finalInterrupt`：`null` 表示本轮没有 `--final` 回复；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
   `sent` 为驱动确认已发出中断（被拒绝或未上报为 false，此时本轮按原行为多一次生成）；`preemptedFollowUp`
@@ -130,7 +167,7 @@ Codex 每轮与热进程两条路径已接；Claude/Kimi/OpenCode 未接，行�
 证据写入打印的隔离目录 `result.json`，包含失败轮次，不包含账户凭证或完整工具输出。
 原生 session 文件保留于 CLI 自己的目录，只提取用量和必要诊断摘要；正式频道与正式库不动。
 不同付费 Provider 必须各自和其原生 CLI 比，不能以 Codex 通过代替 Claude/Kimi/OpenCode。
-其他 Provider、长期压缩、忙时消息与多频道串行压力是后续场景，不在首版伪称覆盖。
+Claude/Kimi 已有各自原生对照臂（见上文“多 Provider”）；OpenCode、长期压缩、忙时消息与多频道串行压力是后续场景，不伪称覆盖。
 当前私聊排队业务验收继续使用独立纵向证据，不把有意排队时间混入本 gate 的纯续聊对照。
 
 门禁脚本与用量汇总由 `scripts/cli-efficiency/` 所有；不新增产品队列或上下文状态。

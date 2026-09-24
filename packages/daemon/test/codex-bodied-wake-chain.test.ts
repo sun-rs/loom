@@ -507,11 +507,10 @@ test("only drivers with a reliable acceptance signal carry a bodied wake", () =>
   assert.equal(runtimeSupportsBodiedWake("codex-app-server/v1"), true);
   // S2-c1: Claude's replay echo of the wake's own uuid (see the Claude chain).
   assert.equal(runtimeSupportsBodiedWake("claude-stream-json/v1"), true);
-  for (const kind of [
-    "kimi-acp/v1",
-    "opencode-server/v1",
-    "generic-process/v1",
-  ])
+  // S2-c2: Kimi's first turn-scoped model update of the only prompt in flight
+  // (see the Kimi chain).
+  assert.equal(runtimeSupportsBodiedWake("kimi-acp/v1"), true);
+  for (const kind of ["opencode-server/v1", "generic-process/v1"])
     assert.equal(runtimeSupportsBodiedWake(kind), false, kind);
 });
 

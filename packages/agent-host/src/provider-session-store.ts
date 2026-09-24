@@ -41,9 +41,40 @@ export type ProviderSessionRecord = ProviderSessionKey &
      * Absent on records written before tracking: unknown, treated as outdated.
      */
     standingProtocolVersion?: string;
+    /**
+     * S2-c2: native compactions this session reported (Kimi ACP), by the
+     * Host-assigned identity `<runAttemptId>#<ordinal>`: how many, the latest,
+     * and the latest one a delivered rules card answered. A card is due while
+     * `lastCompactionId` differs from `rulesCardCompactionId`.
+     */
+    compactionCount?: number;
+    lastCompactionId?: string;
+    rulesCardCompactionId?: string;
     recordedAt: string;
     schemaVersion: 1;
   }>;
+
+/** The per-session facts a rewrite of the same session carries forward. */
+type SessionFacts = {
+  systemMemorySha256?: string | undefined;
+  standingProtocolVersion?: string | undefined;
+  compactionCount?: number | undefined;
+  lastCompactionId?: string | undefined;
+  rulesCardCompactionId?: string | undefined;
+};
+
+function compactionFacts(
+  record: ProviderSessionRecord | null,
+  providerSessionId: string,
+): SessionFacts {
+  if (record === null || record.providerSessionId !== providerSessionId)
+    return {};
+  return {
+    compactionCount: record.compactionCount,
+    lastCompactionId: record.lastCompactionId,
+    rulesCardCompactionId: record.rulesCardCompactionId,
+  };
+}
 
 export type ProviderSessionParticipantQuarantine = Readonly<{
   operationId: string;
@@ -131,8 +162,9 @@ export class ProviderSessionStore {
     const validated = validateKey(uncheckedKey);
     const generation = instanceGenerationOf(metadata.instanceGeneration);
     let protocolVersion = metadata.standingProtocolVersion;
+    let previous: ProviderSessionRecord | null;
     if (metadata.instance) {
-      const previous = await this.#loadInstance(validated, generation);
+      previous = await this.#loadInstance(validated, generation);
       if (previous && previous.providerSessionId !== providerSessionId)
         throw new Error(
           "RAH_SESSION_CONTINUITY_REQUIRED: refusing instance session replacement",
@@ -141,12 +173,20 @@ export class ProviderSessionStore {
       // holds the standing prompt it was created with: keep that version
       // until `acceptStandingProtocol` proves a notice turn was accepted.
       if (previous) protocolVersion = previous.standingProtocolVersion;
+    } else {
+      // Only to carry this session's compaction facts: an unreadable old
+      // record is overwritten exactly as before.
+      previous = await this.load(validated).catch(() => null);
     }
     return await this.#write(
       metadata.instance ? instanceKey(validated, generation) : validated,
       providerSessionId,
-      metadata.systemMemorySha256,
-      protocolVersion,
+      {
+        // S2-c2: compaction facts belong to the session, not to one run.
+        ...compactionFacts(previous, providerSessionId),
+        systemMemorySha256: metadata.systemMemorySha256,
+        standingProtocolVersion: protocolVersion,
+      },
     );
   }
 
@@ -169,20 +209,92 @@ export class ProviderSessionStore {
     const bound = await this.load(stable);
     if (bound === null || bound.providerSessionId !== providerSessionId) return;
     if (bound.standingProtocolVersion === version) return;
-    await this.#write(
-      stable,
-      providerSessionId,
-      bound.systemMemorySha256,
-      requiredText(version, "standingProtocolVersion", MAX_IDENTIFIER_LENGTH),
+    await this.#write(stable, providerSessionId, {
+      ...bound,
+      standingProtocolVersion: requiredText(
+        version,
+        "standingProtocolVersion",
+        MAX_IDENTIFIER_LENGTH,
+      ),
+    });
+  }
+
+  /**
+   * S2-c2: the bound session reported a native compaction. Idempotent per
+   * identity. Returns false when no binding of this session exists yet (a
+   * new session binds at the end of its first run; the caller replays it).
+   */
+  async recordCompaction(
+    uncheckedKey: ProviderSessionKey,
+    options: { instance?: boolean; instanceGeneration?: number | undefined },
+    providerSessionId: string,
+    compactionId: string,
+  ): Promise<boolean> {
+    const stable = this.#sessionKey(uncheckedKey, options);
+    const id = requiredText(
+      compactionId,
+      "compactionId",
+      MAX_IDENTIFIER_LENGTH,
     );
+    const bound = await this.load(stable);
+    if (bound === null || bound.providerSessionId !== providerSessionId)
+      return false;
+    if (bound.lastCompactionId === id) return true;
+    await this.#write(stable, providerSessionId, {
+      ...bound,
+      compactionCount: (bound.compactionCount ?? 0) + 1,
+      lastCompactionId: id,
+    });
+    return true;
+  }
+
+  /**
+   * S2-c2: a turn that carried the rules card for `compactionId` was
+   * accepted. Only the same session advances.
+   */
+  async acceptRulesCard(
+    uncheckedKey: ProviderSessionKey,
+    options: { instance?: boolean; instanceGeneration?: number | undefined },
+    providerSessionId: string,
+    compactionId: string,
+  ): Promise<void> {
+    const stable = this.#sessionKey(uncheckedKey, options);
+    const id = requiredText(
+      compactionId,
+      "compactionId",
+      MAX_IDENTIFIER_LENGTH,
+    );
+    const bound = await this.load(stable);
+    if (bound === null || bound.providerSessionId !== providerSessionId) return;
+    if (bound.rulesCardCompactionId === id) return;
+    await this.#write(stable, providerSessionId, {
+      ...bound,
+      rulesCardCompactionId: id,
+    });
+  }
+
+  #sessionKey(
+    uncheckedKey: ProviderSessionKey,
+    options: { instance?: boolean; instanceGeneration?: number | undefined },
+  ): ProviderSessionKey {
+    const validated = validateKey(uncheckedKey);
+    return options.instance
+      ? instanceKey(validated, instanceGenerationOf(options.instanceGeneration))
+      : validated;
   }
 
   async #write(
     key: ProviderSessionKey,
     providerSessionId: string,
-    systemMemorySha256: string | undefined,
-    standingProtocolVersion: string | undefined,
+    facts: SessionFacts,
   ): Promise<ProviderSessionRecord> {
+    const {
+      systemMemorySha256,
+      standingProtocolVersion,
+      compactionCount,
+      lastCompactionId,
+      rulesCardCompactionId,
+    } = facts;
     const sessionId = requiredText(
       providerSessionId,
       "providerSessionId",
@@ -198,6 +310,11 @@ export class ProviderSessionStore {
       ...(standingProtocolVersion === undefined
         ? {}
         : { standingProtocolVersion }),
+      ...compactionMetadata({
+        compactionCount,
+        lastCompactionId,
+        rulesCardCompactionId,
+      }),
       providerSessionId: sessionId,
       recordedAt: now.toISOString(),
       schemaVersion: 1,
@@ -595,6 +712,7 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     ...(record.standingProtocolVersion === undefined
       ? []
       : ["standingProtocolVersion"]),
+    ...COMPACTION_FIELDS.filter((field) => record[field] !== undefined),
   ];
   if (
     Object.keys(record).sort().join("\0") !== expectedKeys.sort().join("\0") ||
@@ -627,6 +745,11 @@ function validateRecord(value: unknown): ProviderSessionRecord {
             MAX_IDENTIFIER_LENGTH,
           ),
         }),
+    ...compactionMetadata({
+      compactionCount: record.compactionCount,
+      lastCompactionId: record.lastCompactionId,
+      rulesCardCompactionId: record.rulesCardCompactionId,
+    }),
     providerSessionId: requiredText(
       record.providerSessionId,
       "providerSessionId",
@@ -635,6 +758,52 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     recordedAt,
     schemaVersion: 1,
   });
+}
+
+const COMPACTION_FIELDS = [
+  "compactionCount",
+  "lastCompactionId",
+  "rulesCardCompactionId",
+] as const;
+
+function compactionMetadata(value: {
+  compactionCount: unknown;
+  lastCompactionId: unknown;
+  rulesCardCompactionId: unknown;
+}): {
+  compactionCount?: number;
+  lastCompactionId?: string;
+  rulesCardCompactionId?: string;
+} {
+  if (
+    value.compactionCount !== undefined &&
+    (!Number.isSafeInteger(value.compactionCount) ||
+      (value.compactionCount as number) < 0)
+  )
+    throw new Error("Provider session compactionCount is invalid");
+  return {
+    ...(value.compactionCount === undefined
+      ? {}
+      : { compactionCount: value.compactionCount as number }),
+    ...(value.lastCompactionId === undefined
+      ? {}
+      : {
+          lastCompactionId: requiredText(
+            value.lastCompactionId,
+            "lastCompactionId",
+            MAX_IDENTIFIER_LENGTH,
+          ),
+        }),
+    ...(value.rulesCardCompactionId === undefined
+      ? {}
+      : {
+          rulesCardCompactionId: requiredText(
+            value.rulesCardCompactionId,
+            "rulesCardCompactionId",
+            MAX_IDENTIFIER_LENGTH,
+          ),
+        }),
+  };
 }
 
 function requiredText(value: unknown, name: string, limit: number): string {

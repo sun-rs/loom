@@ -141,3 +141,72 @@ test("kimi compaction evidence parsing", () => {
   assert.equal(bg.background, true);
   assert.equal(bg.completed, false);
 });
+
+test("claude per-turn compaction: /compact through a guarded resumed print run", async () => {
+  const { claudeCompactArgs } = await import("./drift-compaction.mjs");
+  const { classifyClaudeLaunch } = await import("./claude-guard.mjs");
+  const args = claudeCompactArgs({
+    model: "sonnet",
+    effort: "low",
+    sessionId: "s-1",
+  });
+  assert.deepEqual(args.slice(0, 2), ["-p", "/compact"]);
+  assert.equal(args[args.indexOf("--resume") + 1], "s-1");
+  assert.equal(args[args.indexOf("--output-format") + 1], "stream-json");
+  assert.ok(!args.includes("--fork-session"));
+  assert.equal(
+    classifyClaudeLaunch(args, { model: "sonnet", effort: "low" }),
+    "turn",
+  );
+  assert.throws(() =>
+    classifyClaudeLaunch(args, { model: "sonnet", effort: "high" }),
+  );
+});
+
+test("claude compaction evidence: compact_boundary or transcript growth, same session", async () => {
+  const { claudeCompactionOutcome } = await import("./drift-compaction.mjs");
+  const boundary = { trigger: "manual", preTokens: 50000 };
+  const ok = claudeCompactionOutcome({
+    sessionId: "s",
+    sessionIds: ["s"],
+    boundaries: [boundary],
+    before: 0,
+    after: 1,
+  });
+  assert.deepEqual(ok, {
+    observed: true,
+    boundary,
+    transcriptBefore: 0,
+    transcriptAfter: 1,
+    sessionChanged: false,
+  });
+  assert.equal(
+    claudeCompactionOutcome({
+      sessionId: "s",
+      sessionIds: ["s"],
+      boundaries: [],
+      before: 1,
+      after: 2,
+    }).observed,
+    true,
+  );
+  const none = claudeCompactionOutcome({
+    sessionId: "s",
+    sessionIds: ["s", "t"],
+    boundaries: [],
+    before: 1,
+    after: 1,
+  });
+  assert.equal(none.observed, false);
+  assert.equal(none.sessionChanged, true);
+  assert.equal(
+    claudeCompactionOutcome({
+      sessionId: "s",
+      sessionIds: [],
+      boundaries: [],
+      before: null,
+      after: null,
+    }).observed,
+    false,
+  );
+});

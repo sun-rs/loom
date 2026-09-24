@@ -24,10 +24,16 @@ import {
   evaluateRound,
 } from "./drift-checks.mjs";
 import {
+  compactClaudePerTurn,
+  compactClaudeWarm,
   compactCodexPerTurn,
   compactCodexWarm,
   compactKimi,
 } from "./drift-compaction.mjs";
+import { writeGuardedShim } from "./guarded-shim.mjs";
+import { claudeTranscriptRound } from "./claude-usage.mjs";
+import { assertClaudeTranscriptModel } from "./native-claude.mjs";
+import { readClaudeTranscript } from "./provider-files.mjs";
 import { DRIFT_ROLE_INSTRUCTIONS } from "./drift-scenario.mjs";
 
 const ROUND_TIMEOUT_MS = 360_000;
@@ -59,24 +65,28 @@ export async function runDriftArm({
     encoding: "utf8",
   }).trim();
   const socketRecordPath = join(root, "warm-sockets.jsonl");
-  const shim = join(root, `guarded-${provider}.mjs`);
-  const guardModule = new URL(
-    provider === "codex" ? "./model-guard.mjs" : "./drift-kimi-guard.mjs",
-    import.meta.url,
-  ).href;
-  const shimCall =
-    provider === "codex"
-      ? `runGuardedCodex(${JSON.stringify(realCli)}, ${JSON.stringify({ model, effort, socketRecordPath })})`
-      : `runGuardedKimi(${JSON.stringify(realCli)}, ${JSON.stringify({ model, effort })})`;
-  writeFileSync(
-    shim,
-    `#!/usr/bin/env node\nimport {${provider === "codex" ? "runGuardedCodex" : "runGuardedKimi"}} from ${JSON.stringify(guardModule)};\nawait ${shimCall};\n`,
-    { mode: 0o700 },
-  );
+  const shim = writeGuardedShim({
+    provider,
+    path: join(root, `guarded-${provider}.mjs`),
+    realCli,
+    model,
+    effort,
+    // Codex: the warm socket proxy record; Claude warm: the /compact
+    // injection socket record (both cross the same fence).
+    options:
+      provider === "codex"
+        ? { socketRecordPath }
+        : provider === "claude" && mode === "warm"
+          ? { injectRecordPath: socketRecordPath }
+          : {},
+  });
+  // Claude compaction launches are fenced by classifyClaudeLaunch instead.
   const validate =
     provider === "codex"
       ? createCodexRequestGuard({ model, effort })
-      : createKimiRequestGuard({ model, effort });
+      : provider === "kimi"
+        ? createKimiRequestGuard({ model, effort })
+        : undefined;
   const spec = {
     ...localCliRuntimeSpec(provider, cwd),
     reasoning: effort,
@@ -89,7 +99,7 @@ export async function runDriftArm({
   });
   const daemonConfig =
     mode === "warm"
-      ? { ...prepared.config, warmRuntimes: { codex: { enabled: true } } }
+      ? { ...prepared.config, warmRuntimes: { [provider]: { enabled: true } } }
       : prepared.config;
   const configPath = join(root, "config.json");
   writeFileSync(configPath, JSON.stringify(daemonConfig), { mode: 0o600 });
@@ -439,6 +449,21 @@ export async function runDriftArm({
       let toolCalls = null;
       let rolloutCompactions = null;
       let targetRejections = null;
+      if (provider === "claude" && current) {
+        try {
+          const t = claudeTranscriptRound(readClaudeTranscript(current), {
+            from: startedAt,
+            to: round.finishedAt,
+          });
+          assertClaudeTranscriptModel(t, config);
+          toolCalls = t.toolCalls;
+          rolloutCompactions = t.compactBoundaries;
+          targetRejections = t.targetRejections;
+        } catch (error) {
+          if (/Unapproved/.test(String(error.message))) throw error;
+          round.transcriptError = String(error.message).slice(0, 200);
+        }
+      }
       if (provider === "codex" && current) {
         try {
           const events = transcript(current).filter(
@@ -529,13 +554,36 @@ export async function runDriftArm({
           `drift compaction after round ${step.round} (${provider}/${mode})`,
         );
         let record;
-        if (provider === "codex" && mode === "warm") {
-          const lines = existsSync(socketRecordPath)
+        const socketLines = () =>
+          existsSync(socketRecordPath)
             ? readFileSync(socketRecordPath, "utf8")
                 .trim()
                 .split("\n")
                 .filter(Boolean)
             : [];
+        if (provider === "claude" && mode === "warm") {
+          // The newest guarded warm process of this session.
+          const lines = socketLines()
+            .map((l) => JSON.parse(l))
+            .filter((r) => r.sessionId === null || r.sessionId === current);
+          assert.ok(
+            lines.length,
+            "Warm runtime injection socket was not recorded by the guard",
+          );
+          record = await compactClaudeWarm({
+            socketPath: lines.at(-1).socketPath,
+            sessionId: current,
+          });
+        } else if (provider === "claude") {
+          record = await compactClaudePerTurn({
+            claude: realCli,
+            cwd,
+            sessionId: current,
+            model,
+            effort,
+          });
+        } else if (provider === "codex" && mode === "warm") {
+          const lines = socketLines();
           assert.ok(
             lines.length,
             "Warm runtime socket was not recorded by the guard",

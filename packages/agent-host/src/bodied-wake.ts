@@ -31,13 +31,19 @@ const PRESENT_TIMEOUT_MS = 10_000;
  * marked sent, the post never confirms delivery, and the model would need a
  * check anyway. Codex: the `turn/start` response to the request carrying the
  * wake. Claude (S2-c1): the `--replay-user-messages` echo of the wake's own
- * uuid with exactly its text. Kimi and OpenCode keep the fixed startup wake
- * until their own acceptance evidence is verified; a stdin write is never
- * faked into acceptance.
+ * uuid with exactly its text. Kimi (S2-c2): kimi-code 0.39.1 never echoes a
+ * live prompt; the first turn-scoped model update of the only prompt in
+ * flight (it runs one prompt at a time and dispatches model output only for
+ * that prompt's turn) precedes any tool of the turn, so any post; a post that
+ * still beats the Host's registration is parked (`pending_ack_seq`) and
+ * replayed when `sent_at` lands, which the Host does before it records the
+ * run's exit. OpenCode keeps the fixed startup wake until its own acceptance
+ * evidence is verified; a stdin write is never faked into acceptance.
  */
 const BODIED_WAKE_ADAPTER_KINDS: ReadonlySet<string> = new Set([
   "claude-stream-json/v1",
   "codex-app-server/v1",
+  "kimi-acp/v1",
 ]);
 
 export function runtimeSupportsBodiedWake(adapterKind: string): boolean {
@@ -162,11 +168,18 @@ export async function writeWakeInputFile(
  * `registerPrepared` and before launch, and the driver's acceptance is
  * registered only when its digest equals the text this Host prepared for the
  * same RunAttempt. Without `recordDeliveryAcceptance` (a Host that cannot
- * register sends) the lease and launch are unchanged.
+ * register sends) the lease and launch are unchanged, unless `wakePreface`
+ * has text for the RunAttempt: then the Host still composes the (fixed) wake
+ * file so the preface reaches the runtime verbatim.
  */
 export function createHostBodiedWake(input: {
   provider: string;
   recordDeliveryAcceptance: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
+  /**
+   * S2-c2: Host text this RunAttempt's wake starts with (the Kimi rules card
+   * after a compaction). Read once when the lease is prepared.
+   */
+  wakePreface?: (activation: ActivationEnvelope) => string | undefined;
 }): {
   enabled: boolean;
   withBodiedWake: (
@@ -187,6 +200,8 @@ export function createHostBodiedWake(input: {
   const preparedWakeDigests = new Map<string, string>();
   // Per RunAttempt: the digest of a wake file that carried the notice line.
   const noticeWakeDigests = new Map<string, string>();
+  // Per RunAttempt: the preface its wake file starts with.
+  const prefaces = new Map<string, string>();
   const remember = (map: Map<string, string>, key: string, value: string) => {
     if (map.size >= 64 && !map.has(key)) map.delete(map.keys().next().value!);
     map.set(key, value);
@@ -194,7 +209,13 @@ export function createHostBodiedWake(input: {
   return {
     enabled,
     withBodiedWake: async (activation, lease) => {
-      if (!enabled || lease.env[RAH_WORKER_API_URL_ENV] === undefined)
+      const preface = input.wakePreface?.(activation);
+      if (preface === undefined || preface === "")
+        prefaces.delete(activation.runAttemptId);
+      else remember(prefaces, activation.runAttemptId, preface);
+      const bodiedPossible =
+        enabled && lease.env[RAH_WORKER_API_URL_ENV] !== undefined;
+      if (!bodiedPossible && !prefaces.has(activation.runAttemptId))
         return lease;
       const allocated = await allocateWakeInputFile(lease);
       remember(wakeFiles, activation.runAttemptId, allocated.path);
@@ -205,16 +226,21 @@ export function createHostBodiedWake(input: {
     beforeLaunch: async (activation, lease) => {
       const path = wakeFiles.get(activation.runAttemptId);
       if (path === undefined || lease === undefined) return;
+      const preface = prefaces.get(activation.runAttemptId);
+      const withPreface = (text: string) =>
+        preface === undefined ? text : `${preface}\n\n${text}`;
       let bodied: string | undefined;
-      try {
-        bodied = await renderBodiedWake({
-          env: lease.env,
-          participantId: activation.participantId,
-        });
-      } catch (error) {
-        process.stderr.write(
-          `[rah-os] bodied wake unavailable for ${activation.runAttemptId}, using the startup wake: ${error instanceof Error ? error.message : String(error)}\n`,
-        );
+      if (enabled && lease.env[RAH_WORKER_API_URL_ENV] !== undefined) {
+        try {
+          bodied = await renderBodiedWake({
+            env: lease.env,
+            participantId: activation.participantId,
+          });
+        } catch (error) {
+          process.stderr.write(
+            `[rah-os] bodied wake unavailable for ${activation.runAttemptId}, using the startup wake: ${error instanceof Error ? error.message : String(error)}\n`,
+          );
+        }
       }
       // S2-0 review P2-2: the Host appends the notice line itself, so the
       // file is the whole input and the acceptance digest covers the notice.
@@ -227,7 +253,9 @@ export function createHostBodiedWake(input: {
         // message-check. It can still confirm the notice line.
         const digest = await writeWakeInputFile(
           path,
-          providerActivationInput(notice, undefined, protocolNotice),
+          withPreface(
+            providerActivationInput(notice, undefined, protocolNotice),
+          ),
         );
         if (notice !== "")
           remember(noticeWakeDigests, activation.runAttemptId, digest);
@@ -235,7 +263,7 @@ export function createHostBodiedWake(input: {
       }
       const digest = await writeWakeInputFile(
         path,
-        withRuntimeNotice(bodied, notice, protocolNotice),
+        withPreface(withRuntimeNotice(bodied, notice, protocolNotice)),
       );
       remember(preparedWakeDigests, activation.runAttemptId, digest);
       if (notice !== "")

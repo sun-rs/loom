@@ -5,16 +5,27 @@ const DEFAULT_ORDER = ["native", "legacy", "role"];
 
 // RAH_EFFICIENCY_ORDER wins; otherwise the historical order, with role-warm
 // appended only for RAH_EFFICIENCY_WARM=1 so earlier runs stay reproducible.
-export function parseArmOrder(env) {
-  if (env.RAH_EFFICIENCY_ORDER === undefined)
-    return env.RAH_EFFICIENCY_WARM === "1"
-      ? [...DEFAULT_ORDER, "role-warm"]
-      : [...DEFAULT_ORDER];
-  const order = env.RAH_EFFICIENCY_ORDER.split(",").map((s) => s.trim());
+// options (per provider, see efficiency-config.mjs): the supported arms, the
+// default order and whether RAH_EFFICIENCY_WARM=1 may append role-warm.
+export function parseArmOrder(
+  env,
+  { arms = ARMS, defaults = DEFAULT_ORDER, warmAppend = true } = {},
+) {
   const fail = (why) => {
     throw new Error(`Invalid RAH_EFFICIENCY_ORDER order (${why})`);
   };
+  if (env.RAH_EFFICIENCY_ORDER === undefined) {
+    if (env.RAH_EFFICIENCY_WARM !== "1") return [...defaults];
+    if (defaults.includes("role-warm")) return [...defaults];
+    if (!warmAppend || !arms.includes("role-warm"))
+      fail("role-warm is not supported for this provider");
+    return [...defaults, "role-warm"];
+  }
+  const order = env.RAH_EFFICIENCY_ORDER.split(",").map((s) => s.trim());
   for (const kind of order) if (!ARMS.includes(kind)) fail(`unknown ${kind}`);
+  for (const kind of order)
+    if (!arms.includes(kind))
+      fail(`${kind} is not supported for this provider`);
   if (new Set(order).size !== order.length) fail("duplicate arm");
   if (!order.includes("native")) fail("native arm required");
   if (order.length < 2) fail("at least one RAH arm required");

@@ -13,6 +13,14 @@
 //   kimi:           a short-lived `kimi acp` resumes the session and sends the
 //                   ACP builtin `/compact` (no LLM turn is started for the
 //                   command itself; the summarization does call the model).
+//   claude per-turn: a short-lived `claude -p /compact --resume <session>`
+//                   (the documented SDK/print-mode slash command) with the
+//                   approved --model/--effort, after the round's run exited;
+//                   observed by the `system/compact_boundary` frame and the
+//                   transcript's compact_boundary record.
+//   claude warm:    the guarded shim (claude-guard.mjs) injects `/compact` as
+//                   a stream-json user message into the idle warm process;
+//                   its frames never reach the product driver.
 import { spawn } from "node:child_process";
 import { globSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -21,6 +29,16 @@ import { connectUnixWebSocket } from "../../packages/agent-host/src/unix-websock
 import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
 import { countCodexCompactions } from "./drift-checks.mjs";
 import { sleep } from "./common.mjs";
+import {
+  classifyClaudeLaunch,
+  requestClaudeInjection,
+} from "./claude-guard.mjs";
+import {
+  claudeTranscriptRound,
+  parseClaudeStreamRound,
+} from "./claude-usage.mjs";
+import { nativeEnvironment, runLines } from "./cli-process.mjs";
+import { readClaudeTranscript } from "./provider-files.mjs";
 
 const COMPACTION_TIMEOUT_MS = 240_000;
 
@@ -444,5 +462,137 @@ export async function compactKimi({
       record.contextAfter !== null &&
       record.contextAfter < record.contextBefore),
   );
+  return record;
+}
+
+export function claudeCompactArgs({ model, effort, sessionId }) {
+  return [
+    "-p",
+    "/compact",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    model,
+    "--effort",
+    effort,
+    "--resume",
+    sessionId,
+  ];
+}
+
+// before/after: transcript compact_boundary counts (null = unreadable).
+export function claudeCompactionOutcome({
+  sessionId,
+  sessionIds,
+  boundaries,
+  before,
+  after,
+}) {
+  const grew = before !== null && after !== null && after > before;
+  return {
+    observed: boundaries.length > 0 || grew,
+    boundary: boundaries.at(-1) ?? null,
+    transcriptBefore: before,
+    transcriptAfter: after,
+    sessionChanged: sessionIds.some((id) => id !== sessionId),
+  };
+}
+
+function claudeTranscriptState(sessionId) {
+  try {
+    const t = claudeTranscriptRound(readClaudeTranscript(sessionId));
+    return { cwd: t.cwd, boundaries: t.compactBoundaries };
+  } catch {
+    return { cwd: undefined, boundaries: null };
+  }
+}
+
+export async function compactClaudePerTurn({
+  claude,
+  cwd,
+  sessionId,
+  model,
+  effort,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const before = claudeTranscriptState(sessionId);
+  const record = {
+    mechanism: "claude-per-turn:/compact via short-lived resumed print run",
+    forced: true,
+  };
+  try {
+    const args = claudeCompactArgs({ model, effort, sessionId });
+    classifyClaudeLaunch(args, { model, effort });
+    // The session belongs to the directory it was created in.
+    const run = await runLines({
+      executable: claude,
+      args,
+      cwd: before.cwd ?? cwd,
+      env: nativeEnvironment({ CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" }),
+      timeoutMs,
+    });
+    const parsed = parseClaudeStreamRound(run.entries);
+    Object.assign(record, {
+      exit: run.exit,
+      timedOut: run.timedOut || undefined,
+      result: parsed.result ?? null,
+      ...claudeCompactionOutcome({
+        sessionId,
+        sessionIds: parsed.sessionIds,
+        boundaries: parsed.compactBoundaries,
+        before: before.boundaries,
+        after: claudeTranscriptState(sessionId).boundaries,
+      }),
+    });
+    if (run.exit !== 0 && run.stderr)
+      record.stderrTail = run.stderr.slice(-300);
+  } catch (error) {
+    record.error = String(error.message ?? error).slice(0, 300);
+    record.observed = false;
+  }
+  record.durationMs = Date.now() - started;
+  return record;
+}
+
+export async function compactClaudeWarm({
+  socketPath,
+  sessionId,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const before = claudeTranscriptState(sessionId).boundaries;
+  const record = {
+    mechanism: "claude-warm:/compact injected into the idle warm runtime",
+    forced: true,
+  };
+  try {
+    let reply;
+    // The warm runtime may still be closing the round's turn.
+    for (let i = 0; i < 30; i++) {
+      reply = await requestClaudeInjection(socketPath, "compact", timeoutMs);
+      if (reply.refused !== "busy") break;
+      await sleep(1000);
+    }
+    if (reply.refused || reply.error)
+      throw new Error(reply.refused ?? reply.error);
+    Object.assign(record, {
+      result: reply.result,
+      timedOut: reply.timedOut,
+      framesDropped: reply.framesDropped,
+      ...claudeCompactionOutcome({
+        sessionId,
+        sessionIds: [],
+        boundaries: reply.compactBoundary ? [reply.compactBoundary] : [],
+        before,
+        after: claudeTranscriptState(sessionId).boundaries,
+      }),
+    });
+  } catch (error) {
+    record.error = String(error.message ?? error).slice(0, 300);
+    record.observed = false;
+  }
+  record.durationMs = Date.now() - started;
   return record;
 }

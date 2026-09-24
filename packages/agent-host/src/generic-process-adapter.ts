@@ -46,6 +46,10 @@ import {
 } from "./leftover-process-sweeper.ts";
 
 import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
+import {
+  parseProviderCompaction,
+  type RuntimeProviderCompaction,
+} from "./session-rules-card.ts";
 
 export type GenericProcessAdapterOptions = {
   /** P2-3: see `RuntimeAdapter.acceptSessionProtocol`. */
@@ -58,7 +62,8 @@ export type GenericProcessAdapterOptions = {
   nativeBusyInput?: boolean;
   /**
    * The driver understands `rah-final-reply/v1` on its native input pipe
-   * (Codex app-server). Requires `nativeBusyInput`.
+   * (Codex app-server, Claude stream-json, S2-c2 Kimi ACP). The pipe is
+   * opened for it even without `nativeBusyInput` (Kimi: busy input unsupported).
    */
   finalReplyInterrupt?: boolean;
   activationEnvironment?: (
@@ -100,6 +105,11 @@ export type GenericProcessAdapterOptions = {
     | Promise<void | RuntimeDeliveryAcceptanceOutcome>
     | void
     | RuntimeDeliveryAcceptanceOutcome;
+  /** S2-c2: a native compaction the driver observed (`rah-provider-compaction/v1`). */
+  recordProviderCompaction?: (
+    input: ActivationEnvelope,
+    compaction: RuntimeProviderCompaction,
+  ) => Promise<void> | void;
   supervisorControlTimeoutMs?: number;
   supervisorDirectory?: string;
   supervisorStartupTimeoutMs?: number;
@@ -269,6 +279,8 @@ export class RuntimeTrajectoryCollector {
     GenericProcessAdapterOptions["recordProviderSessionEvidence"] | undefined;
   readonly #recordDeliveryAcceptance:
     GenericProcessAdapterOptions["recordDeliveryAcceptance"] | undefined;
+  readonly #recordProviderCompaction:
+    GenericProcessAdapterOptions["recordProviderCompaction"] | undefined;
   #buffer = "";
   #finished = false;
   #queue = Promise.resolve();
@@ -297,6 +309,7 @@ export class RuntimeTrajectoryCollector {
     lifecycle: RuntimeStartLifecycle;
     recordProviderSessionEvidence?: GenericProcessAdapterOptions["recordProviderSessionEvidence"];
     recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
+    recordProviderCompaction?: GenericProcessAdapterOptions["recordProviderCompaction"];
     redactions?: readonly string[];
     runAttemptId: string;
     runtimeRunId: string;
@@ -310,6 +323,7 @@ export class RuntimeTrajectoryCollector {
     this.#runtimeRunId = input.runtimeRunId;
     this.#recordProviderSessionEvidence = input.recordProviderSessionEvidence;
     this.#recordDeliveryAcceptance = input.recordDeliveryAcceptance;
+    this.#recordProviderCompaction = input.recordProviderCompaction;
   }
 
   append(chunk: Buffer | string): void {
@@ -337,7 +351,8 @@ export class RuntimeTrajectoryCollector {
       this.#lifecycle.recordTrajectory !== undefined ||
       this.#lifecycle.recordUsage !== undefined ||
       this.#recordProviderSessionEvidence !== undefined ||
-      this.#recordDeliveryAcceptance !== undefined
+      this.#recordDeliveryAcceptance !== undefined ||
+      this.#recordProviderCompaction !== undefined
     ) {
       this.#buffer += this.#decoder.end();
       this.#drainLines();
@@ -551,6 +566,11 @@ export class RuntimeTrajectoryCollector {
           );
           if (outcome?.runtimeNoticeAccepted === true)
             await this.#lifecycle.recordRuntimeNoticeAccepted?.();
+          return;
+        }
+        const compaction = parseProviderCompaction(frame);
+        if (compaction !== null) {
+          await this.#recordProviderCompaction?.(this.#activation, compaction);
           return;
         }
         if (isRecord(frame) && frame.protocol === "rah-final-interrupt/v1") {
@@ -821,6 +841,10 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   get busyInputSupported(): boolean {
     return this.#nativeBusyInput;
   }
+  /** The runtime's private input pipe exists (busy input or final reply). */
+  get #runtimeInputPipe(): boolean {
+    return this.#nativeBusyInput || this.#finalReplyInterrupt;
+  }
   readonly recoveryDrivers: readonly string[] =
     process.platform === "win32" ? [] : [SUPERVISOR_DRIVER];
   readonly #activationEnvironment:
@@ -845,6 +869,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     GenericProcessAdapterOptions["recordProviderSessionEvidence"] | undefined;
   readonly #recordDeliveryAcceptance:
     GenericProcessAdapterOptions["recordDeliveryAcceptance"] | undefined;
+  readonly #recordProviderCompaction:
+    GenericProcessAdapterOptions["recordProviderCompaction"] | undefined;
   readonly #runs = new Map<string, ProcessRun>();
   readonly #supervisorControlTimeoutMs: number;
   readonly #supervisorDirectory: string;
@@ -854,8 +880,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
   constructor(options: GenericProcessAdapterOptions) {
     this.#nativeBusyInput = options.nativeBusyInput === true;
-    this.#finalReplyInterrupt =
-      this.#nativeBusyInput && options.finalReplyInterrupt === true;
+    this.#finalReplyInterrupt = options.finalReplyInterrupt === true;
     this.guideRuntimeId = options.guideRuntimeId;
     this.busyInputMode = options.busyInputMode;
     if (options.command.length === 0) {
@@ -915,6 +940,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         : structuredClone(options.recoveryProvenance);
     this.#recordProviderSessionEvidence = options.recordProviderSessionEvidence;
     this.#recordDeliveryAcceptance = options.recordDeliveryAcceptance;
+    this.#recordProviderCompaction = options.recordProviderCompaction;
     this.#supervisorControlTimeoutMs = supervisorControlTimeoutMs;
     this.#supervisorDirectory = resolve(
       options.supervisorDirectory ??
@@ -1038,7 +1064,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         ),
         shell: false,
         stdio: [
-          this.#nativeBusyInput ? "pipe" : "ignore",
+          this.#runtimeInputPipe ? "pipe" : "ignore",
           "pipe",
           "pipe",
           "pipe",
@@ -1068,6 +1094,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
       recordDeliveryAcceptance: this.#recordDeliveryAcceptance,
+      recordProviderCompaction: this.#recordProviderCompaction,
       redactions: environmentLease?.redactions ?? [],
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,
@@ -1392,7 +1419,9 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       }
     };
     const supervisorConfig = {
-      nativeBusyInput: this.#nativeBusyInput,
+      // The supervisor's input pipe and `notify` control: busy input, or the
+      // final-reply signal alone (S2-c2 Kimi).
+      nativeBusyInput: this.#runtimeInputPipe,
       args: launchArgs,
       command: this.#command,
       controlRequestTimeoutMs: this.#supervisorControlTimeoutMs,
@@ -1453,6 +1482,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
       recordDeliveryAcceptance: this.#recordDeliveryAcceptance,
+      recordProviderCompaction: this.#recordProviderCompaction,
       redactions: environmentLease?.redactions ?? [],
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,

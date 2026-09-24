@@ -5,24 +5,30 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  model,
-  effort,
-  bindingId,
-  instructions,
-  questions,
-} from "./cli-efficiency/common.mjs";
+import { instructions, questions } from "./cli-efficiency/common.mjs";
 import { nativeRound } from "./cli-efficiency/native.mjs";
+import { nativeClaudeRound } from "./cli-efficiency/native-claude.mjs";
+import { nativeKimiRound } from "./cli-efficiency/native-kimi.mjs";
+import { parseEfficiencyEnv } from "./cli-efficiency/efficiency-config.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
 import { budgets, compareArm } from "./cli-efficiency/metrics.mjs";
-import { parseArmOrder, compareWarmCold } from "./cli-efficiency/warm.mjs";
+import { compareWarmCold } from "./cli-efficiency/warm.mjs";
 assert.ok(
   process.argv.includes("--paid"),
   "Requires explicit --paid and user authorization",
 );
-// Default native,legacy,role; RAH_EFFICIENCY_WARM=1 appends role-warm.
-const order = parseArmOrder(process.env);
+// RAH_EFFICIENCY_PROVIDER=codex|claude|kimi (default codex): each runtime is
+// compared with its own native CLI. Codex default native,legacy,role
+// (RAH_EFFICIENCY_WARM=1 appends role-warm); Claude native,role,role-warm;
+// Kimi native,role. See efficiency-config.mjs.
+const config = parseEfficiencyEnv(process.env);
+const { provider, model, effort, bindingId, order } = config;
+const nativeRounds = {
+  codex: nativeRound,
+  claude: nativeClaudeRound,
+  kimi: nativeKimiRound,
+}[provider];
 const root = mkdtempSync(join(tmpdir(), "rah-cli-efficiency-"));
 const commit = execFileSync(
   "git",
@@ -41,10 +47,13 @@ const result = {
   schemaVersion: 1,
   root,
   startedAt: new Date().toISOString(),
+  provider,
   model,
   effort,
   bindingId,
-  cliVersion: execFileSync("codex", ["--version"], { encoding: "utf8" }).trim(),
+  cliVersion: execFileSync(provider, ["--version"], {
+    encoding: "utf8",
+  }).trim(),
   commit,
   workingTreeDiffSha256: hash(execFileSync("git", ["diff", "HEAD"])),
   order,
@@ -55,6 +64,21 @@ const result = {
   qualityReview: "required",
   status: "running",
 };
+// Kimi: the product records no usage, and the session wire may be absent;
+// what neither side can measure is reported as unmeasured, never invented.
+// Codex/Claude: nothing is exempt, missing evidence fails the gate.
+function unmeasuredFor({ productUsage }, metrics) {
+  if (productUsage === "required") return [];
+  const all = (key) =>
+    metrics.every((m) => typeof m[key] === "number" && Number.isFinite(m[key]));
+  return [
+    "productUsage",
+    ...(all("input") && all("firstInput") ? [] : ["tokens"]),
+    ...(all("generationsTotal") && all("generationsBeforeReply")
+      ? []
+      : ["generations"]),
+  ];
+}
 const save = () =>
   writeFileSync(
     join(root, "result.json"),
@@ -65,8 +89,8 @@ save();
 console.log("EVIDENCE " + join(root, "result.json"));
 try {
   const catalog = await probeLocalModelCatalog({
-    kind: "codex-cli/v1",
-    executablePath: execFileSync("which", ["codex"], {
+    kind: config.catalogKind,
+    executablePath: execFileSync("which", [provider], {
       encoding: "utf8",
     }).trim(),
     cwd: root,
@@ -81,7 +105,8 @@ try {
       cwd = join(armRoot, "workspace");
     mkdirSync(join(cwd, "scripts"), { recursive: true });
     for (const f of files) writeFileSync(join(cwd, f), snapshot[f]);
-    writeFileSync(join(cwd, "AGENTS.md"), instructions + "\n");
+    // The runtime's own instruction file (AGENTS.md; CLAUDE.md for Claude).
+    writeFileSync(join(cwd, config.instructionFile), instructions + "\n");
     const arm = { kind, rounds: [], processes: [], status: "running" };
     result.arms[kind] = arm;
     save();
@@ -91,17 +116,27 @@ try {
         for (let i = 0; i < questions.length; i++) {
           const round = { round: i + 1 };
           arm.rounds.push(round);
-          sessionId = await nativeRound({
+          sessionId = await nativeRounds({
             cwd,
             sessionId,
             prompt: questions[i],
             save,
             round,
+            config,
           });
           console.log(`native round ${i + 1}: ${round.replySeconds}s`);
         }
         arm.status = "complete";
-      } else await rahArm({ kind, root: armRoot, cwd, questions, arm, save });
+      } else
+        await rahArm({
+          kind,
+          root: armRoot,
+          cwd,
+          questions,
+          arm,
+          save,
+          config,
+        });
       for (const f of files)
         assert.equal(
           hash(readFileSync(join(cwd, f))),
@@ -129,7 +164,9 @@ try {
         return [
           kind,
           complete
-            ? compareArm(nat, rah)
+            ? compareArm(nat, rah, {
+                unmeasured: unmeasuredFor(config, [...nat, ...rah]),
+              })
             : { status: "missing-evidence", failures: ["metricsMissing"] },
         ];
       }),

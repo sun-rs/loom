@@ -34,15 +34,21 @@ export function transcript(sessionId) {
 }
 // usageOptions.replyAt splits generations at the effective Room reply (RAH arm);
 // omitted for native, whose final answer generation is the reply.
-export function measure(sessionId, round, usageOptions) {
+// approved: the exact model/effort of this gate run (default: the Codex pair).
+export function measure(
+  sessionId,
+  round,
+  usageOptions,
+  approved = { model, effort },
+) {
   const events = transcript(sessionId).filter(
     (e) => e.timestamp >= round.startedAt && e.timestamp <= round.finishedAt,
   );
   const contexts = events.filter((e) => e.type === "turn_context");
   assert.equal(contexts.length, 1, "One native turn per human question");
   for (const e of contexts) {
-    assert.equal(e.payload.model, model);
-    assert.equal(e.payload.effort, effort);
+    assert.equal(e.payload.model, approved.model);
+    assert.equal(e.payload.effort, approved.effort);
   }
   return {
     ...summarizeUsage(events, usageOptions),

@@ -1,0 +1,254 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  classifyClaudeLaunch,
+  createClaudeInjectionGate,
+  createClaudeStdinGuard,
+} from "./claude-guard.mjs";
+
+const approved = { model: "sonnet", effort: "low" };
+// The product's per-turn/warm launch (claude-stream-json-driver.mjs,
+// claude-warm-driver.mjs): transport defaults + model + effort + session.
+const product = [
+  "--print",
+  "--verbose",
+  "--allow-dangerously-skip-permissions",
+  "--dangerously-skip-permissions",
+  "--permission-mode",
+  "bypassPermissions",
+  "--output-format",
+  "stream-json",
+  "--input-format",
+  "stream-json",
+  "--include-partial-messages",
+  "--replay-user-messages",
+  "--disallowed-tools",
+  "EnterPlanMode,ExitPlanMode",
+  "--append-system-prompt-file",
+  "/tmp/p/room-worker.md",
+  "--model",
+  "sonnet",
+  "--effort",
+  "low",
+  "--resume",
+  "s-1",
+];
+// The product's catalog probe (model-catalog-probe.ts).
+const catalog = [
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--input-format",
+  "stream-json",
+  "--tools",
+  "",
+  "--setting-sources=",
+  "--no-session-persistence",
+  "--safe-mode",
+];
+
+test("launch: the product turn with the exact model and effort is a turn", () => {
+  assert.equal(classifyClaudeLaunch(product, approved), "turn");
+  assert.equal(classifyClaudeLaunch(["--version"], approved), "version");
+  assert.equal(classifyClaudeLaunch(catalog, approved), "catalog");
+  assert.equal(
+    classifyClaudeLaunch(
+      ["-p", "/compact", "--model=sonnet", "--effort=low", "--resume", "s"],
+      approved,
+    ),
+    "turn",
+  );
+});
+
+test("launch: missing, duplicate or other model/effort is denied", () => {
+  const without = (flag) => {
+    const i = product.indexOf(flag);
+    return [...product.slice(0, i), ...product.slice(i + 2)];
+  };
+  const swap = (flag, value) =>
+    product.map((a, i) => (product[i - 1] === flag ? value : a));
+  for (const args of [
+    without("--model"),
+    without("--effort"),
+    swap("--model", "opus"),
+    swap("--effort", "high"),
+    [...product, "--model", "sonnet"],
+    [...product, "--effort=high"],
+    [...product, "--fallback-model", "haiku"],
+    [...product, "--fork-session"],
+    product.filter((a) => a !== "--print"),
+    [...catalog, "--model", "opus"],
+  ])
+    assert.throws(
+      () => classifyClaudeLaunch(args, approved),
+      /Unapproved|Unsupported/,
+      JSON.stringify(args.slice(-3)),
+    );
+});
+
+test("stdin: turns accept user input and interrupts only", () => {
+  const guard = createClaudeStdinGuard("turn");
+  guard(
+    JSON.stringify({ type: "user", message: { role: "user", content: [] } }),
+  );
+  guard(
+    JSON.stringify({
+      type: "control_request",
+      request_id: "r",
+      request: { subtype: "interrupt", cancel_queued: true },
+    }),
+  );
+  guard(JSON.stringify({ type: "control_response", response: {} }));
+  for (const subtype of [
+    "set_model",
+    "set_max_thinking_tokens",
+    "apply_flag_settings",
+    "set_permission_mode",
+  ])
+    assert.throws(
+      () =>
+        guard(
+          JSON.stringify({
+            type: "control_request",
+            request_id: "r",
+            request: { subtype, model: "opus" },
+          }),
+        ),
+      /Unapproved control/,
+    );
+  assert.throws(() => guard("not json"), /JSON/);
+  assert.throws(
+    () => guard(JSON.stringify({ type: "mystery" })),
+    /Unsupported/,
+  );
+});
+
+test("stdin: the catalog probe may only initialize, never start a turn", () => {
+  const guard = createClaudeStdinGuard("catalog");
+  guard(
+    JSON.stringify({
+      type: "control_request",
+      request_id: "c",
+      request: { subtype: "initialize" },
+    }),
+  );
+  assert.throws(
+    () => guard(JSON.stringify({ type: "user", message: {} })),
+    /catalog/,
+  );
+});
+
+function harness() {
+  const child = [];
+  const driver = [];
+  let clock = 0;
+  const timers = [];
+  const gate = createClaudeInjectionGate({
+    toChild: (line) => child.push(JSON.parse(line)),
+    toDriver: (line) => driver.push(JSON.parse(line)),
+    validate: createClaudeStdinGuard("turn"),
+    now: () => clock,
+    setTimer: (fn, ms) => {
+      const t = { fn, at: clock + ms, done: false };
+      timers.push(t);
+      return t;
+    },
+    clearTimer: (t) => {
+      if (t) t.done = true;
+    },
+  });
+  const advance = (ms) => {
+    clock += ms;
+    for (const t of timers)
+      if (!t.done && t.at <= clock) {
+        t.done = true;
+        t.fn();
+      }
+  };
+  const fromDriver = (o) => gate.fromDriver(JSON.stringify(o));
+  const fromChild = (o) => gate.fromChild(JSON.stringify(o));
+  return { gate, child, driver, advance, fromDriver, fromChild };
+}
+
+test("injection: refused while the driver's turn is running", async () => {
+  const h = harness();
+  h.fromDriver({ type: "user", uuid: "u1", message: { content: [] } });
+  const r = await h.gate.inject("/compact", { sessionId: "s" });
+  assert.equal(r.refused, "busy");
+  h.fromChild({ type: "result", subtype: "success" });
+  assert.equal(h.driver.length, 1);
+});
+
+test("injection: compaction frames stay out of the driver, its input waits", async () => {
+  const h = harness();
+  h.fromDriver({ type: "user", uuid: "u1", message: { content: [] } });
+  h.fromChild({ type: "result", subtype: "success", session_id: "s" });
+  h.fromDriver({
+    type: "control_request",
+    request_id: "d1",
+    request: { subtype: "interrupt" },
+  });
+  const pending = h.gate.inject("/compact", {
+    sessionId: "s",
+    timeoutMs: 1000,
+  });
+  const injected = h.child.at(-1);
+  assert.equal(injected.type, "user");
+  assert.equal(injected.message.content, "/compact");
+  assert.equal(injected.session_id, "s");
+  // Driver input during compaction is held back, not lost.
+  h.fromDriver({ type: "user", uuid: "u2", message: { content: [] } });
+  assert.equal(h.child.at(-1), injected);
+  h.fromChild({ type: "user", uuid: injected.uuid, message: {} });
+  h.fromChild({ type: "control_response", response: { request_id: "d1" } });
+  h.fromChild({
+    type: "system",
+    subtype: "compact_boundary",
+    compact_metadata: { trigger: "manual", pre_tokens: 4321 },
+  });
+  h.fromChild({ type: "result", subtype: "success", is_error: false });
+  const r = await pending;
+  assert.deepEqual(r.compactBoundary, { trigger: "manual", preTokens: 4321 });
+  assert.equal(r.result.subtype, "success");
+  assert.equal(r.timedOut, false);
+  assert.equal(r.framesDropped, 3);
+  // The driver saw only its own frames (first result + its control reply).
+  assert.deepEqual(
+    h.driver.map((f) => f.type),
+    ["result", "control_response"],
+  );
+  // The held driver input was flushed after the compaction.
+  assert.equal(h.child.at(-1).uuid, "u2");
+});
+
+test("injection: a boundary without a result finishes after the quiet window", async () => {
+  const h = harness();
+  const pending = h.gate.inject("/compact", {
+    sessionId: "s",
+    timeoutMs: 60_000,
+    quietMs: 5_000,
+  });
+  h.fromChild({
+    type: "system",
+    subtype: "compact_boundary",
+    compact_metadata: { trigger: "manual", pre_tokens: 1 },
+  });
+  h.advance(5_000);
+  const r = await pending;
+  assert.equal(r.result, null);
+  assert.equal(r.timedOut, false);
+  assert.ok(r.compactBoundary);
+});
+
+test("injection: timeout without a boundary is reported, input flushed", async () => {
+  const h = harness();
+  const pending = h.gate.inject("/compact", { sessionId: "s", timeoutMs: 100 });
+  h.fromDriver({ type: "user", uuid: "u9", message: { content: [] } });
+  h.advance(100);
+  const r = await pending;
+  assert.equal(r.timedOut, true);
+  assert.equal(r.compactBoundary, null);
+  assert.equal(h.child.at(-1).uuid, "u9");
+  const again = await h.gate.inject("/compact", { sessionId: "s" });
+  assert.equal(again.refused, "busy");
+});

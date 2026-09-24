@@ -129,7 +129,7 @@ test("worker help protocol renders the current compact rules card", async () => 
   assert.equal(protocolUpdateNotice("x").includes("\n"), false);
 });
 
-test("a resumed Kimi instance session gets one protocol line until a carrying turn is accepted", async () => {
+test("S2-c2: a resumed Kimi instance session gets the protocol card (no system layer) until a carrying turn is accepted", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-kimi-protocol-"));
   chmodSync(directory, 0o700);
   try {
@@ -210,9 +210,17 @@ test("a resumed Kimi instance session gets one protocol line until a carrying tu
       assert.equal(prompts.length, 1);
       return { prompt: prompts[0]!, runAttemptId };
     };
-    const noticeCount = (prompt: string) =>
-      prompt.split("\n").filter((line) => line.startsWith("Protocol updated"))
-        .length;
+    // Kimi ACP has no system layer: the current rules card itself rides in
+    // the wake instead of the one-line notice.
+    const card = renderStandingProtocolCard();
+    const noticeCount = (prompt: string) => {
+      assert.equal(
+        prompt.includes("Protocol updated"),
+        false,
+        "the card replaces the notice line",
+      );
+      return prompt.split(card).length - 1;
+    };
 
     // Created under p1: the full prompt, no notice.
     protocolVersion = "p1";
@@ -222,11 +230,10 @@ test("a resumed Kimi instance session gets one protocol line until a carrying tu
     // Same protocol on resume: nothing extra.
     assert.equal(noticeCount((await run("instance-a", "same")).prompt), 0);
 
-    // The compiled protocol changed: exactly one compact line.
+    // The compiled protocol changed: exactly one rules card.
     protocolVersion = "p2";
     const first = await run("instance-a", "upgrade-1");
     assert.equal(noticeCount(first.prompt), 1);
-    assert.ok(first.prompt.includes(protocolUpdateNotice("p2")));
     assert.doesNotMatch(first.prompt, /canonical room worker prompt/u);
     // Not accepted (no completion evidence): the next turn repeats it.
     const second = await run("instance-a", "upgrade-2");

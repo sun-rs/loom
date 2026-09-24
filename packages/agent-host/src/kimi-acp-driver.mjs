@@ -4,6 +4,7 @@ import {
   providerActivationInput,
 } from "./provider-activation-input.js";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   chmodSync,
   mkdtempSync,
@@ -16,6 +17,12 @@ import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 
+import {
+  isKimiTurnModelUpdate,
+  kimiCompactionCompleted,
+} from "./kimi-acp-events.js";
+import { createKimiFinalInterrupt } from "./kimi-final-interrupt.js";
+import { readProviderPromptFile } from "./provider-prompt-file.js";
 import { providerUsageGap, ProviderUsageWriter } from "./provider-usage.js";
 import {
   kimiPromptCompletionTrajectory,
@@ -50,7 +57,13 @@ class AcpRpcError extends Error {
   }
 }
 
+const PROVIDER = "kimi-acp/v1";
+
 const options = parseArguments(driverArguments(process.argv.slice(2)));
+// S2-c2: the Host-prepared wake file verbatim when present (the Host already
+// appended the notice lines and any rules card, so the acceptance digest
+// covers them); otherwise the fixed startup wake plus the env notices.
+const TURN_INPUT = options.wakeInput ?? providerActivationInput();
 const promptDirectory = mkdtempSync(join(tmpdir(), "rah-os-kimi-prompt-"));
 chmodSync(promptDirectory, 0o700);
 const promptPath = join(promptDirectory, "standing-instructions.md");
@@ -65,6 +78,10 @@ let acceptCurrentTurnUpdates = false;
 let observedToolActivity = false;
 let cancelRequested = false;
 let activePromptSettlement;
+// Per prompt: its identity, whether its acceptance was reported, and the
+// final-reply cancel. Per process: the compaction ordinal.
+let activePrompt;
+let compactionOrdinal = 0;
 
 const kimi = spawn(options.executable, providerLaunchArguments("kimi"), {
   cwd: process.cwd(),
@@ -152,6 +169,19 @@ const terminate = async (signal) => {
 };
 process.once("SIGTERM", () => void terminate("SIGTERM"));
 process.once("SIGINT", () => void terminate("SIGINT"));
+// S2-c2: the Host's final-reply signal (`rah-final-reply/v1`) on the private
+// input pipe. Absent (stdin ignored) the driver behaves as before.
+const hostInput = createInterface({ input: process.stdin });
+hostInput.on("line", (line) => {
+  let frame;
+  try {
+    frame = JSON.parse(line);
+  } catch {
+    return;
+  }
+  if (frame?.protocol === "rah-final-reply/v1") armFinalReply(frame);
+});
+process.stdin.on("error", () => undefined);
 
 try {
   trajectoryWriter.emit(
@@ -211,15 +241,35 @@ try {
     );
     turn = await runTurn(undefined, mcpServers);
   }
-  const { promptResult, sessionId } = turn;
+  const { promptResult, sessionId, finalInterrupt } = turn;
+  const stopReason = stringField(promptResult, "stopReason");
+  // Ended by the Host after the final reply committed: the reply is done, so
+  // the cancelled prompt is this run's success.
+  const endedAfterFinalReply =
+    !cancelRequested && finalInterrupt.issued && stopReason === "cancelled";
   trajectoryWriter.emit(
-    kimiPromptCompletionTrajectory(stringField(promptResult, "stopReason")),
+    endedAfterFinalReply
+      ? runtimeStatusTrajectory(
+          "online",
+          "stopped",
+          "工作轮次已完成",
+          "kimi:prompt:final-reply-cancel",
+        )
+      : kimiPromptCompletionTrajectory(stopReason),
   );
-  if (
-    !cancelRequested &&
-    stringField(promptResult, "stopReason") === "end_turn"
-  ) {
+  if (finalInterrupt.armed)
+    writeHostFrame({
+      protocol: "rah-final-interrupt/v1",
+      ...finalInterrupt.report(),
+    });
+  if (!cancelRequested && (stopReason === "end_turn" || endedAfterFinalReply)) {
     writeProviderSessionEvidence(sessionId);
+  } else if (!cancelRequested) {
+    // A refusal, a length limit or a cancel nobody here asked for is not a
+    // completed turn: never report it as success.
+    throw new Error(
+      `Kimi turn ended with stopReason ${stopReason ?? "unknown"}`,
+    );
   }
   kimi.stdin.end();
   const graceful = await Promise.race([
@@ -253,6 +303,9 @@ try {
   }
 } finally {
   rmSync(promptDirectory, { recursive: true, force: true });
+  // The Host keeps the input pipe open; it must not keep this driver alive.
+  hostInput.close();
+  process.stdin.destroy();
 }
 
 async function runTurn(resumeSessionId, mcpServers) {
@@ -283,6 +336,15 @@ async function runTurn(resumeSessionId, mcpServers) {
       `kimi:prompt:started:${resumeSessionId === undefined ? "fresh" : "resumed"}`,
     ),
   );
+  const prompt = {
+    deliveryReported: false,
+    finalInterrupt: createKimiFinalInterrupt({
+      interrupt: () => notify("session/cancel", { sessionId }),
+    }),
+    requestId: undefined,
+    sessionId,
+  };
+  activePrompt = prompt;
   acceptCurrentTurnUpdates = true;
   let settlePrompt;
   const promptSettlement = new Promise((resolve) => {
@@ -298,7 +360,7 @@ async function runTurn(resumeSessionId, mcpServers) {
             text: [
               ...(resumeSessionId === undefined ? [options.prompt] : []),
               `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
-              providerActivationInput(),
+              TURN_INPUT,
             ].join("\n\n"),
             type: "text",
           },
@@ -306,14 +368,20 @@ async function runTurn(resumeSessionId, mcpServers) {
         sessionId,
       },
       0,
+      (id) => {
+        prompt.requestId = id;
+      },
     );
+    prompt.finalInterrupt.settle(stringField(promptResult, "stopReason"));
     settlePrompt(promptResult);
-    return { promptResult, sessionId };
+    return { finalInterrupt: prompt.finalInterrupt, promptResult, sessionId };
   } catch (error) {
+    prompt.finalInterrupt.settle(undefined);
     settlePrompt(undefined);
     throw error;
   } finally {
     acceptCurrentTurnUpdates = false;
+    if (activePrompt === prompt) activePrompt = undefined;
     if (activePromptSettlement === promptSettlement) {
       activePromptSettlement = undefined;
     }
@@ -355,6 +423,7 @@ async function handleFrame(frame) {
   if (!Object.hasOwn(frame, "id")) {
     if (!acceptCurrentTurnUpdates) return;
     if (isKimiToolActivity(frame)) observedToolActivity = true;
+    observePromptUpdate(frame);
     trajectoryWriter.emit(
       normalizeKimiTrajectoryNotification(frame, activeSessionId),
     );
@@ -396,8 +465,10 @@ async function handleAgentRequest(frame) {
       );
     }
     let result;
+    const turnCancelled =
+      cancelRequested || activePrompt?.finalInterrupt.issued === true;
     if (method === "session/request_permission") {
-      if (cancelRequested) {
+      if (turnCancelled) {
         result = { outcome: { outcome: "cancelled" } };
       } else {
         const optionId = selectPermissionOption(
@@ -413,7 +484,7 @@ async function handleAgentRequest(frame) {
         result = { outcome: { optionId, outcome: "selected" } };
       }
     } else if (method === "terminal/create") {
-      if (cancelRequested) {
+      if (turnCancelled) {
         throw new RpcError(-32800, "turn was cancelled");
       }
       observedToolActivity = true;
@@ -443,9 +514,10 @@ async function handleAgentRequest(frame) {
   }
 }
 
-function request(method, params, timeoutMs) {
+function request(method, params, timeoutMs, onId) {
   requestSequence += 1;
   const id = requestSequence;
+  onId?.(id);
   return new Promise((resolve, reject) => {
     const timer =
       timeoutMs > 0
@@ -463,6 +535,88 @@ function request(method, params, timeoutMs) {
       reject(error);
     }
   });
+}
+
+/**
+ * One `session/update` of the in-flight prompt's session (kimi-code runs one
+ * prompt at a time and dispatches model output only for that prompt's turn).
+ */
+function observePromptUpdate(frame) {
+  const prompt = activePrompt;
+  if (
+    prompt === undefined ||
+    frame.method !== "session/update" ||
+    !isRecord(frame.params) ||
+    frame.params.sessionId !== prompt.sessionId ||
+    !isRecord(frame.params.update)
+  )
+    return;
+  const update = frame.params.update;
+  const compaction = kimiCompactionCompleted(update);
+  if (compaction !== undefined) {
+    // No compaction id exists on the wire: the Host keys it by this run and
+    // the ordinal, and dedupes on that identity.
+    compactionOrdinal += 1;
+    writeHostFrame({
+      protocol: "rah-provider-compaction/v1",
+      provider: PROVIDER,
+      providerSessionId: prompt.sessionId,
+      ordinal: compactionOrdinal,
+      ...compaction,
+    });
+  }
+  if (
+    !prompt.deliveryReported &&
+    prompt.requestId !== undefined &&
+    isKimiTurnModelUpdate(update)
+  ) {
+    prompt.deliveryReported = true;
+    // ACCEPTANCE SIGNAL: the first model update of the only prompt in flight,
+    // which precedes any tool of this turn (so any post). Only a
+    // Host-prepared wake is reported; its digest is what the Host prepared.
+    if (options.wakeInput !== undefined)
+      writeHostFrame({
+        protocol: "rah-delivery-accepted/v1",
+        provider: PROVIDER,
+        signal: "acp-turn-update",
+        threadId: prompt.sessionId,
+        turnId: promptTurnId(prompt),
+        inputSha256: createHash("sha256")
+          .update(options.wakeInput, "utf8")
+          .digest("hex"),
+      });
+  }
+  prompt.finalInterrupt.observe(update);
+}
+
+function promptTurnId(prompt) {
+  return `session/prompt#${String(prompt.requestId)}`;
+}
+
+/** The Host's signal: end THIS prompt at its next tool boundary. */
+function armFinalReply(frame) {
+  const prompt = activePrompt;
+  if (
+    prompt === undefined ||
+    stopping ||
+    cancelRequested ||
+    typeof frame.runAttemptId !== "string" ||
+    (process.env.RAH_RUN_ATTEMPT_ID !== undefined &&
+      frame.runAttemptId !== process.env.RAH_RUN_ATTEMPT_ID) ||
+    (frame.turnId !== undefined &&
+      (prompt.requestId === undefined || frame.turnId !== promptTurnId(prompt)))
+  )
+    return;
+  prompt.finalInterrupt.arm();
+}
+
+/** Host-private fd3 frame, intercepted before trajectory parsing. */
+function writeHostFrame(frame) {
+  try {
+    writeSync(3, `${JSON.stringify(frame)}\n`);
+  } catch {
+    // No Host listening: nothing is registered.
+  }
 }
 
 function notify(method, params) {
@@ -822,6 +976,8 @@ function parseArguments(args) {
     else if (flag === "--resume-session") parsed.resumeSession = value;
     else if (flag === "--thinking-level") parsed.thinkingLevel = value;
     else if (flag === "--tool-access-mode") parsed.toolAccessMode = value;
+    else if (flag === "--wake-input-file")
+      parsed.wakeInput = readProviderPromptFile(value);
     else
       throw new Error(`unsupported Kimi ACP driver argument ${String(flag)}`);
   }

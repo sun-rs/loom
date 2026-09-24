@@ -80,6 +80,58 @@ export function summarizeUsage(events, { replyAt } = {}) {
   out.uncached = out.input - out.cached;
   return out;
 }
+// Per-generation records in the product's normalized shape
+// (`{responseId, observedAt, inputTokens, cachedInputTokens, outputTokens,
+// reasoningOutputTokens}`: input includes cache reads/writes, output includes
+// reasoning) → the summarizeUsage shape. Used for Claude (product tracker /
+// native stream-json / transcript) and Kimi (session wire). `replyAt` as in
+// summarizeUsage; reasoning is null unless every generation reports it.
+export function summarizeGenerations(records, { replyAt } = {}) {
+  const byResponse = new Map();
+  for (const r of records ?? [])
+    if (!byResponse.has(r.responseId)) byResponse.set(r.responseId, r);
+  const rows = [...byResponse.values()];
+  assert.ok(rows.length, "Missing per-generation usage evidence");
+  let before = rows.length;
+  if (replyAt === null) before = null;
+  else if (replyAt !== undefined) {
+    const cut = Date.parse(replyAt);
+    assert.ok(Number.isFinite(cut), "Invalid effective reply timestamp");
+    before = rows.filter((r) => {
+      const at = Date.parse(r.observedAt);
+      assert.ok(Number.isFinite(at), "Invalid usage timestamp");
+      return at <= cut;
+    }).length;
+  }
+  const out = {
+    generations: rows.length,
+    generationsTotal: rows.length,
+    generationsBeforeReply: before,
+    generationsAfterReply: before === null ? null : rows.length - before,
+    input: 0,
+    cached: 0,
+    uncached: 0,
+    output: 0,
+    reasoning: rows.every((r) => finite(r.reasoningOutputTokens)) ? 0 : null,
+    firstInput: rows[0].inputTokens,
+    peakInput: 0,
+  };
+  for (const r of rows) {
+    for (const k of ["inputTokens", "cachedInputTokens", "outputTokens"])
+      assert.ok(Number.isFinite(r[k]) && r[k] >= 0, "Invalid usage " + k);
+    assert.ok(
+      r.cachedInputTokens <= r.inputTokens,
+      "cached input exceeds input",
+    );
+    out.input += r.inputTokens;
+    out.cached += r.cachedInputTokens;
+    out.output += r.outputTokens;
+    if (out.reasoning !== null) out.reasoning += r.reasoningOutputTokens;
+    out.peakInput = Math.max(out.peakInput, r.inputTokens);
+  }
+  out.uncached = out.input - out.cached;
+  return out;
+}
 const generationCounts = (m) => ({
   total: m.generationsTotal ?? m.generations,
   beforeReply: m.generationsBeforeReply ?? null,
@@ -88,9 +140,15 @@ const generationCounts = (m) => ({
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 // Product-recorded RAH usage (agent.run.usage.get) must be complete, and when
 // both exist it must agree with the transcript-derived RAH usage.
-function usageEvidence(rah) {
+// `rah.transcriptUsage` (Claude): an independent transcript count checked
+// against the product record when the metrics themselves come from it.
+function usageEvidence(rah, productRequired = true) {
   const product = rah.productUsage;
-  const completeness = product?.completeness ?? "unavailable";
+  const recordedCompleteness = product?.completeness ?? "unavailable";
+  const completeness =
+    !productRequired && recordedCompleteness !== "complete"
+      ? "not-recorded"
+      : recordedCompleteness;
   const mismatches = [];
   if (completeness === "complete")
     for (const [field, transcript] of [
@@ -102,6 +160,19 @@ function usageEvidence(rah) {
       const recorded = product.totals?.[field];
       if (finite(transcript) && recorded !== transcript)
         mismatches.push({ field, product: recorded ?? null, transcript });
+    }
+  if (completeness === "complete")
+    for (const [field, transcript] of Object.entries(
+      rah.transcriptUsage ?? {},
+    )) {
+      const recorded = product.totals?.[field];
+      if (finite(transcript) && recorded !== transcript)
+        mismatches.push({
+          field,
+          product: recorded ?? null,
+          transcript,
+          source: "transcript",
+        });
     }
   return { completeness, gaps: product?.gaps ?? [], mismatches };
 }
@@ -188,7 +259,11 @@ const growth = (rounds, i) =>
 // Each round's total-input delta is split exactly into
 //   G_rah·(fixed + round1History + cumulative residue)
 //   + (G_rah − G_native)·native first request + intra-round growth delta.
-export function compareArm(nativeRounds, rahRounds) {
+// options.unmeasured: dimensions this runtime cannot measure on both sides
+// ("tokens", "generations", "productUsage"); they are reported in
+// `unmeasured` instead of failing. Default: none (Codex/Claude fail closed).
+export function compareArm(nativeRounds, rahRounds, options = {}) {
+  const unmeasured = [...(options.unmeasured ?? [])];
   const failures = [];
   const fixedTokens = diff(
     rahRounds[0]?.firstInput,
@@ -200,9 +275,11 @@ export function compareArm(nativeRounds, rahRounds) {
     tokens: fixedTokens,
     budget: budgets.fixedOverheadTokens,
   };
-  if (fixedTokens === null) failures.push("fixedOverheadMissing");
-  else if (fixedTokens > budgets.fixedOverheadTokens)
-    failures.push("fixedOverhead");
+  if (!unmeasured.includes("tokens")) {
+    if (fixedTokens === null) failures.push("fixedOverheadMissing");
+    else if (fixedTokens > budgets.fixedOverheadTokens)
+      failures.push("fixedOverhead");
+  }
   const n = Math.min(nativeRounds.length, rahRounds.length);
   const history1 =
     n >= 2
@@ -279,12 +356,13 @@ export function compareArm(nativeRounds, rahRounds) {
             (nat.input - gNat * nat.firstInput),
         }
       : null;
-    rounds.push({ ...compareRounds(nat, rah), inputDecomposition });
+    rounds.push({ ...compareRounds(nat, rah, options), inputDecomposition });
   }
   const all = [...failures, ...rounds.flatMap((x) => x.failures)];
   return {
     status: statusOf(all),
     failures,
+    unmeasured,
     finalInterrupt: summarizeFinalInterrupts(rahRounds.slice(0, n)),
     fixedOverhead,
     perRoundResidue,
@@ -292,18 +370,23 @@ export function compareArm(nativeRounds, rahRounds) {
     rounds,
   };
 }
-export function compareRounds(native, rah) {
+export function compareRounds(native, rah, options = {}) {
+  const unmeasured = [...(options.unmeasured ?? [])];
+  const tokens = !unmeasured.includes("tokens");
+  const counts = !unmeasured.includes("generations");
   const failures = [];
-  if (!finite(native.input) || !finite(rah.input))
-    failures.push("inputMissing");
-  else if (
-    rah.input >
-    budgets.inputRatio * (native.input + budgets.inputAllowanceTokens)
-  )
-    failures.push("input");
+  if (tokens) {
+    if (!finite(native.input) || !finite(rah.input))
+      failures.push("inputMissing");
+    else if (
+      rah.input >
+      budgets.inputRatio * (native.input + budgets.inputAllowanceTokens)
+    )
+      failures.push("input");
+  }
   // A follow-up's first request is reported (and decomposed by compareArm),
   // not budgeted; the decomposition still needs it on both sides.
-  if (!finite(native.firstInput) || !finite(rah.firstInput))
+  if (tokens && (!finite(native.firstInput) || !finite(rah.firstInput)))
     failures.push("firstInputMissing");
   const generations = {
     native: generationCounts(native),
@@ -318,13 +401,17 @@ export function compareRounds(native, rah) {
     finite(nativeTotal) && finite(generations.rah.beforeReply)
       ? generations.rah.beforeReply - nativeTotal
       : null;
-  if (extraProtocolGenerations === null) failures.push("generationsMissing");
-  else if (extraProtocolGenerations > budgets.maxExtraGenerations)
-    failures.push("generations");
-  if (extraGenerationsBeforeReply === null)
-    failures.push("generationsBeforeReplyMissing");
-  else if (extraGenerationsBeforeReply > budgets.maxExtraGenerationsBeforeReply)
-    failures.push("generationsBeforeReply");
+  if (counts) {
+    if (extraProtocolGenerations === null) failures.push("generationsMissing");
+    else if (extraProtocolGenerations > budgets.maxExtraGenerations)
+      failures.push("generations");
+    if (extraGenerationsBeforeReply === null)
+      failures.push("generationsBeforeReplyMissing");
+    else if (
+      extraGenerationsBeforeReply > budgets.maxExtraGenerationsBeforeReply
+    )
+      failures.push("generationsBeforeReply");
+  }
   // Short tasks are judged in seconds, long tasks by percentage.
   if (!finite(native.replySeconds) || !finite(rah.replySeconds))
     failures.push("replySecondsMissing");
@@ -337,13 +424,14 @@ export function compareRounds(native, rah) {
       )
   )
     failures.push("replySeconds");
-  const evidence = usageEvidence(rah);
-  if (evidence.completeness !== "complete")
+  const evidence = usageEvidence(rah, !unmeasured.includes("productUsage"));
+  if (!["complete", "not-recorded"].includes(evidence.completeness))
     failures.push("usageEvidenceMissing");
   else if (evidence.mismatches.length) failures.push("usageEvidenceMismatch");
   return {
     status: statusOf(failures),
     failures,
+    unmeasured,
     generations,
     extraProtocolGenerations,
     extraGenerationsBeforeReply,

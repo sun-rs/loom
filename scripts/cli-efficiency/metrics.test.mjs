@@ -560,3 +560,95 @@ test("final-reply interrupt is reported per round and summarized per arm, never 
   // Reported only: no failure names come from it.
   assert.ok(r.rounds.every((x) => !x.failures.some((f) => /final/i.test(f))));
 });
+
+test("per-provider generations (product/transcript records) summarize like Codex usage", async () => {
+  const { summarizeGenerations } = await import("./metrics.mjs");
+  const g = (id, at, input, cached, output, reasoning = null) => ({
+    responseId: id,
+    observedAt: at,
+    inputTokens: input,
+    cachedInputTokens: cached,
+    outputTokens: output,
+    reasoningOutputTokens: reasoning,
+  });
+  const records = [
+    g("a", "2026-01-01T00:00:01.000Z", 21005, 20000, 40),
+    g("b", "2026-01-01T00:00:04.000Z", 21307, 21000, 220),
+    g("a", "2026-01-01T00:00:01.000Z", 21005, 20000, 40),
+    g("c", "2026-01-01T00:00:07.000Z", 22000, 21300, 10),
+  ];
+  const m = summarizeGenerations(records, {
+    replyAt: "2026-01-01T00:00:05.000Z",
+  });
+  assert.deepEqual(m, {
+    generations: 3,
+    generationsTotal: 3,
+    generationsBeforeReply: 2,
+    generationsAfterReply: 1,
+    input: 64312,
+    cached: 62300,
+    uncached: 2012,
+    output: 270,
+    reasoning: null,
+    firstInput: 21005,
+    peakInput: 22000,
+  });
+  assert.equal(summarizeGenerations(records).generationsBeforeReply, 3);
+  assert.equal(
+    summarizeGenerations(records, { replyAt: null }).generationsBeforeReply,
+    null,
+  );
+  assert.throws(() => summarizeGenerations([]), /Missing/);
+  assert.throws(() => summarizeGenerations([g("x", "t", 1, 2, 0)]), /cached/);
+});
+
+test("an independent transcript cross-check mismatch is usage evidence mismatch", () => {
+  const ok = compareRounds(nativeRound, {
+    ...rahRound,
+    transcriptUsage: {
+      generations: 2,
+      inputTokens: 46000,
+      cachedInputTokens: rahRound.productUsage.totals.cachedInputTokens,
+    },
+  });
+  assert.deepEqual(ok.usageEvidence.mismatches, []);
+  const bad = compareRounds(nativeRound, {
+    ...rahRound,
+    transcriptUsage: { generations: 3 },
+  });
+  assert.deepEqual(bad.failures, ["usageEvidenceMismatch"]);
+  assert.deepEqual(bad.usageEvidence.mismatches, [
+    { field: "generations", product: 2, transcript: 3, source: "transcript" },
+  ]);
+});
+
+test("unmeasured dimensions are reported, not failed (Kimi: no product usage)", async () => {
+  const { compareArm } = await import("./metrics.mjs");
+  const noProduct = compareRounds(
+    nativeRound,
+    { ...rahRound, productUsage: undefined },
+    { unmeasured: ["productUsage"] },
+  );
+  assert.deepEqual(noProduct.failures, []);
+  assert.equal(noProduct.usageEvidence.completeness, "not-recorded");
+  assert.deepEqual(noProduct.unmeasured, ["productUsage"]);
+  // Latency only: tokens and generations unknown on both sides.
+  const bare = (r) => ({ replySeconds: r.replySeconds });
+  const latencyOnly = compareArm(
+    [bare(nativeRound), bare(nativeRound)],
+    [bare(rahRound), bare({ ...rahRound, replySeconds: 99 })],
+    { unmeasured: ["productUsage", "tokens", "generations"] },
+  );
+  assert.deepEqual(latencyOnly.failures, []);
+  assert.deepEqual(latencyOnly.rounds[0].failures, []);
+  assert.deepEqual(latencyOnly.rounds[1].failures, ["replySeconds"]);
+  assert.equal(latencyOnly.status, "over-budget");
+  assert.deepEqual(latencyOnly.unmeasured, [
+    "productUsage",
+    "tokens",
+    "generations",
+  ]);
+  // Default (Codex/Claude): nothing is exempt, missing evidence still fails.
+  const strict = compareArm([bare(nativeRound)], [bare(rahRound)]);
+  assert.equal(strict.status, "missing-evidence");
+});

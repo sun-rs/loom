@@ -3,7 +3,15 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { model, effort, measure } from "./common.mjs";
 // Installed CLI directly; no RAH worker, scheduler or runtime adapter in this arm.
-export async function nativeRound({ cwd, sessionId, prompt, save, round }) {
+// config: the gate's exact {model, effort} (default: the common.mjs pair).
+export async function nativeRound({
+  cwd,
+  sessionId,
+  prompt,
+  save,
+  round,
+  config = { model, effort },
+}) {
   round.startedAt = new Date().toISOString();
   let buf = "",
     finalAt,
@@ -16,9 +24,9 @@ export async function nativeRound({ cwd, sessionId, prompt, save, round }) {
     "--skip-git-repo-check",
     "--dangerously-bypass-approvals-and-sandbox",
     "-m",
-    model,
+    config.model,
     "-c",
-    `model_reasoning_effort="${effort}"`,
+    `model_reasoning_effort="${config.effort}"`,
     "-c",
     "features.memories=false",
     "-c",
@@ -82,7 +90,7 @@ export async function nativeRound({ cwd, sessionId, prompt, save, round }) {
   assert.equal(round.exit, 0, "Native CLI failed");
   assert.ok(answer && finalAt, "Missing final answer");
   round.replySeconds = (finalAt - Date.parse(round.startedAt)) / 1000;
-  round.metrics = measure(seenId, round);
+  round.metrics = measure(seenId, round, undefined, config);
   save();
   assert.ok(
     isEffectiveAnswer(answer),

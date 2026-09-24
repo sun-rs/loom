@@ -4,6 +4,11 @@
 const PROVIDERS = {
   codex: { catalogKind: "codex-cli/v1", modes: ["cold", "warm"] },
   kimi: { catalogKind: "kimi-cli/v1", modes: ["cold"] },
+  claude: {
+    catalogKind: "claude-cli/v1",
+    modes: ["cold", "warm"],
+    efforts: ["low", "medium", "high", "xhigh", "max"],
+  },
 };
 export const DRIFT_DEFAULTS = { rounds: 20, compactAt: "8,15", mode: "cold" };
 const MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/:-]{0,199}$/u;
@@ -15,8 +20,8 @@ export function parseDriftEnv(env) {
   };
   const provider = env.RAH_DRIFT_PROVIDER;
   if (!Object.hasOwn(PROVIDERS, provider ?? ""))
-    fail("RAH_DRIFT_PROVIDER must be codex or kimi");
-  const { catalogKind, modes } = PROVIDERS[provider];
+    fail("RAH_DRIFT_PROVIDER must be codex, claude or kimi");
+  const { catalogKind, modes, efforts } = PROVIDERS[provider];
   // RAH_DRIFT_MODEL is the catalog binding id: either the full
   // `local:<kind>:<modelId>` form or the bare model id the CLI publishes.
   const rawModel = env.RAH_DRIFT_MODEL;
@@ -31,7 +36,12 @@ export function parseDriftEnv(env) {
   }
   if (!model) fail("RAH_DRIFT_MODEL has an empty model id");
   const effort = env.RAH_DRIFT_EFFORT;
-  if (!effort || !EFFORT_PATTERN.test(effort) || effort === "default")
+  if (
+    !effort ||
+    !EFFORT_PATTERN.test(effort) ||
+    effort === "default" ||
+    (efforts !== undefined && !efforts.includes(effort))
+  )
     fail("RAH_DRIFT_EFFORT must name an explicit reasoning level");
   const mode = env.RAH_DRIFT_MODE ?? DRIFT_DEFAULTS.mode;
   if (!["cold", "warm"].includes(mode))

@@ -29,7 +29,17 @@ test("accepts the full binding id and derives the model id", () => {
 
 test("fails closed on missing or ambiguous parameters", () => {
   const bad = [
-    { ...base, RAH_DRIFT_PROVIDER: "claude" },
+    { ...base, RAH_DRIFT_PROVIDER: "opencode" },
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "sonnet",
+      RAH_DRIFT_EFFORT: "turbo",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "local:codex-cli/v1:gpt-5.6-luna",
+      RAH_DRIFT_EFFORT: "low",
+    },
     { ...base, RAH_DRIFT_MODEL: undefined },
     { ...base, RAH_DRIFT_EFFORT: undefined },
     { ...base, RAH_DRIFT_EFFORT: "default" },
@@ -52,4 +62,17 @@ test("fails closed on missing or ambiguous parameters", () => {
 
 test("warm is accepted for codex only", () => {
   assert.equal(parseDriftEnv({ ...base, RAH_DRIFT_MODE: "warm" }).mode, "warm");
+});
+
+test("claude: warm and cold, claude-cli binding, Claude effort levels", () => {
+  const env = {
+    RAH_DRIFT_PROVIDER: "claude",
+    RAH_DRIFT_MODEL: "sonnet",
+    RAH_DRIFT_EFFORT: "low",
+  };
+  const cold = parseDriftEnv(env);
+  assert.equal(cold.mode, "cold");
+  assert.equal(cold.catalogKind, "claude-cli/v1");
+  assert.equal(cold.bindingId, "local:claude-cli/v1:sonnet");
+  assert.equal(parseDriftEnv({ ...env, RAH_DRIFT_MODE: "warm" }).mode, "warm");
 });

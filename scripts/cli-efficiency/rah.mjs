@@ -1,4 +1,4 @@
-import { isEffectiveAnswer } from "./metrics.mjs";
+import { isEffectiveAnswer, summarizeGenerations } from "./metrics.mjs";
 import {
   runSucceeded,
   replyTurnHandle,
@@ -23,14 +23,40 @@ import {
   prepareLocalWorkbench,
 } from "../../packages/daemon/src/index.ts";
 import {
-  model,
-  effort,
-  bindingId,
+  model as codexModel,
+  effort as codexEffort,
   instructions,
   wait,
   measure,
 } from "./common.mjs";
-export async function rahArm({ kind, root, cwd, questions, arm, save }) {
+import { writeGuardedShim } from "./guarded-shim.mjs";
+import { claudeTranscriptRound } from "./claude-usage.mjs";
+import { assertClaudeTranscriptModel } from "./native-claude.mjs";
+import { measureKimiWire } from "./native-kimi.mjs";
+import { readClaudeTranscript } from "./provider-files.mjs";
+const CODEX = {
+  provider: "codex",
+  model: codexModel,
+  effort: codexEffort,
+  bindingId: `local:codex-cli/v1:${codexModel}`,
+  instructionFile: "AGENTS.md",
+};
+// config: parseEfficiencyEnv() result (default: the historical Codex arm).
+export async function rahArm({
+  kind,
+  root,
+  cwd,
+  questions,
+  arm,
+  save,
+  config = CODEX,
+}) {
+  const { provider, model, effort, bindingId } = config;
+  const workspaceFiles = [
+    config.instructionFile,
+    "scripts/workbench-launch-receipt.mjs",
+    "scripts/workbench-launch-receipt.test.mjs",
+  ];
   const stateDirectory = join(root, "state");
   // Every instance runtime of the participant owning `instanceRuntimeId`
   // (read-only; no secrets, handles or paths).
@@ -54,17 +80,18 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       db.close();
     }
   };
-  const realCodex = execFileSync("which", ["codex"], {
+  const realCli = execFileSync("which", [provider], {
     encoding: "utf8",
   }).trim();
-  const shim = join(root, "guarded-codex.mjs");
-  writeFileSync(
-    shim,
-    `#!/usr/bin/env node\nimport {runGuardedCodex} from ${JSON.stringify(new URL("./model-guard.mjs", import.meta.url).href)};\nawait runGuardedCodex(${JSON.stringify(realCodex)});\n`,
-    { mode: 0o700 },
-  );
+  const shim = writeGuardedShim({
+    provider,
+    path: join(root, `guarded-${provider}.mjs`),
+    realCli,
+    model,
+    effort,
+  });
   const spec = {
-    ...localCliRuntimeSpec("codex", cwd),
+    ...localCliRuntimeSpec(provider, cwd),
     reasoning: effort,
     executable: shim,
   };
@@ -73,19 +100,20 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
     stateDirectory,
     workspaceCwd: cwd,
   });
-  // role-warm: the S2-a warm Codex runtime (off by default in the product).
+  // role-warm: the S2-a warm Codex / S2-c1 warm Claude runtime (off by
+  // default in the product).
   // Its daemon restart before round 3 is skipped unless
   // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
   // resume at round 3; the per-turn arms keep the restart.
   const warm = kind === "role-warm";
-  const config = warm
-    ? { ...prepared.config, warmRuntimes: { codex: { enabled: true } } }
+  const daemonConfig = warm
+    ? { ...prepared.config, warmRuntimes: { [provider]: { enabled: true } } }
     : prepared.config;
   const restartBeforeRound =
     warm && process.env.RAH_EFFICIENCY_WARM_RESTART !== "1" ? undefined : 3;
   Object.assign(arm, { warmRuntimes: warm, restartBeforeRound });
   const configPath = join(root, "config.json");
-  writeFileSync(configPath, JSON.stringify(config), { mode: 0o600 });
+  writeFileSync(configPath, JSON.stringify(daemonConfig), { mode: 0o600 });
   let child, exit, origin, observer, participantId, agentId, roomId, actor;
   let sessionId;
   async function start() {
@@ -244,13 +272,8 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
         participantId,
       );
       mkdirSync(join(actualCwd, "scripts"), { recursive: true });
-      for (const file of [
-        "AGENTS.md",
-        "scripts/workbench-launch-receipt.mjs",
-        "scripts/workbench-launch-receipt.test.mjs",
-      ]) {
+      for (const file of workspaceFiles)
         copyFileSync(join(cwd, file), join(actualCwd, file));
-      }
       arm.actualCwd = actualCwd;
 
       await post("/v3/client/rooms/members/add", {
@@ -363,8 +386,12 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       if (sessionId) assert.equal(current, sessionId, "Session changed");
       sessionId = current;
       round.sessionId = sessionId;
-      round.metrics = measure(sessionId, round, {
+      round.metrics = measureRah({
+        config,
+        sessionId,
+        round,
         replyAt: effective?.createdAt ?? null,
+        productUsage,
       });
       round.replyTurnHandle = replyTurnHandle(round.metrics.toolCalls);
       round.metrics.productUsage = {
@@ -390,11 +417,7 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       console.log(`${kind} round ${i + 1}: ${round.replySeconds}s`);
     }
     if (arm.actualCwd)
-      for (const file of [
-        "AGENTS.md",
-        "scripts/workbench-launch-receipt.mjs",
-        "scripts/workbench-launch-receipt.test.mjs",
-      ])
+      for (const file of workspaceFiles)
         assert.deepEqual(
           readFileSync(join(arm.actualCwd, file)),
           readFileSync(join(cwd, file)),
@@ -416,4 +439,42 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
     observer?.close();
     save();
   }
+}
+
+// Per-provider RAH round metrics (same shape as common.mjs `measure`):
+// - codex: the rollout transcript (cross-checked against product usage);
+// - claude: the product-recorded generations (the same stream tracker as the
+//   native arm), cross-checked against the session transcript, which also
+//   proves the model family and effort;
+// - kimi: the session wire (the product records no Kimi usage).
+function measureRah({ config, sessionId, round, replyAt, productUsage }) {
+  if (config.provider === "codex")
+    return measure(sessionId, round, { replyAt }, config);
+  if (config.provider === "kimi")
+    return measureKimiWire(sessionId, round, config, { replyAt });
+  const transcript = claudeTranscriptRound(readClaudeTranscript(sessionId), {
+    from: round.startedAt,
+    to: round.finishedAt,
+  });
+  assertClaudeTranscriptModel(transcript, config);
+  const records = productUsage.generations ?? [];
+  const usable =
+    productUsage.completeness === "complete" &&
+    !productUsage.truncated &&
+    records.length > 0;
+  return {
+    // Product usage incomplete: report the transcript view, still failing
+    // the comparison as usageEvidenceMissing.
+    ...summarizeGenerations(usable ? records : transcript.generations, {
+      replyAt,
+    }),
+    replySeconds: round.replySeconds,
+    toolCalls: transcript.toolCalls,
+    transcriptUsage: {
+      generations: transcript.totals.generations,
+      inputTokens: transcript.totals.inputTokens,
+      cachedInputTokens: transcript.totals.cachedInputTokens,
+    },
+    usageSource: usable ? "product" : "transcript",
+  };
 }

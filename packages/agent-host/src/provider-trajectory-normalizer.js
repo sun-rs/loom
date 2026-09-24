@@ -1,3 +1,7 @@
+import {
+  isKimiCompactionStarted,
+  kimiCompactionCompleted,
+} from "./kimi-acp-events.js";
 import { writeSync } from "node:fs";
 
 const MAX_TEXT = 8_192;
@@ -161,6 +165,22 @@ export function normalizeKimiTrajectoryNotification(
     string(update.messageId) ?? string(update.toolCallId),
     kind,
   );
+  // S2-c2: kimi-code reports compaction only as whole local chunks.
+  if (kimiCompactionCompleted(update) !== undefined) {
+    return trajectory(
+      {
+        kind: "compaction_finished",
+        producerFactId: "kimi:compaction:completed",
+      },
+      observedAt,
+    );
+  }
+  if (isKimiCompactionStarted(update)) {
+    return trajectory(
+      { kind: "compaction_started", producerFactId: "kimi:compaction:started" },
+      observedAt,
+    );
+  }
   if (kind === "agent_message_chunk" && text !== "") {
     return trajectory({ kind: "text", producerFactId, text }, observedAt);
   }

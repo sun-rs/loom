@@ -131,6 +131,15 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 常驻 Claude（`warmRuntimes.claude`，默认关闭）：每实例一个长驻 stream-json 进程；本轮在唤醒与本轮接纳的忙时输入全部结束后才关闭；取消时清空排队输入；无生命周期能力则拒绝忙时输入；session 绑定在首条输入被接收后写入。
 - 未经付费验证：真实时序下中断能否抢在后续请求前、真实工具流顺序、压缩后行为（常驻 Claude 压缩后不重述句柄，丢失句柄的轮次会以新句柄重试）、后台 shell 清理。打包产品构建仍为每轮模式。
 
+### 十七、S2-c2 Kimi 接入与门禁扩展到 Claude/Kimi
+
+- 本机 Kimi 是 Node 版 kimi-code 0.39.1：`session/new` 无 system 位置、无 `--wire`、`--agent-file` 只能用于新 session 且不能与 `--session` 同用；压缩保留约 20k token 的真实用户消息（头 2k + 尾 18k）；压缩只以一段文本"Compaction completed…"出现，无结构化事件。
+- 压缩后规则卡：驱动上报每次压缩（`rah-provider-compaction/v1`），Host 记在 session 绑定上，下一轮唤醒开头附 `worker help protocol` 的规则卡（多次压缩合并为一张），携带规则卡的 Activation 完成后才推进；协议落后的续聊 session 也附规则卡（Kimi 无 system 层）。
+- 带正文唤醒：以唯一在途请求的第一个模型更新（思考、文本或工具调用）作为接收证明；`--final`：无工具在途时发 `session/cancel`，被取消的最终轮次记为成功。
+- 不做常驻 Kimi：kimi-code 会把我们的请求排在引擎自发轮次（后台任务、定时任务）之后并直接回 `end_turn`，无法证明本轮确实执行并结束，按 owner 选项 A 保持每轮冷回收。用量仍为 unavailable。
+- 门禁：效率门禁支持 `RAH_EFFICIENCY_PROVIDER=codex|claude|kimi`（各自与原生 CLI 对照；Kimi 从 `wire.jsonl` 读逐次用量，读不到则只判耗时与送达）；漂移门禁支持 Claude（冷：短暂 `claude -p /compact`；热：经守卫私有 socket 发 `/compact`）。
+- 待付费验证：Kimi 压缩文本匹配、第一个更新先于工具、`session/cancel` 时序、规则卡被接受；Claude 的 `/compact` 路径（依据二进制字符串与 SDK 文档）。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

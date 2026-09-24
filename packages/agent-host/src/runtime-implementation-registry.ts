@@ -1,5 +1,6 @@
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
 import { createHostBodiedWake, renderBodiedWake } from "./bodied-wake.ts";
+import { SessionRulesCard } from "./session-rules-card.ts";
 import { SessionProtocolUpgrade } from "./session-protocol-upgrade.ts";
 import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
@@ -89,10 +90,10 @@ export type RuntimeCreationOptions = Pick<
 > & {
   providerSessionStore?: ProviderSessionStore;
   /**
-   * Codex and Claude (S2-c1). Invoked when the driver reports that the runtime
-   * accepted the wake injection; the Host turns that into the Host-credential
-   * `markPresentedDeliverySent`. Kimi and OpenCode drop it, so
-   * their Activations keep the explicit `message-check` path unchanged.
+   * Codex, Claude (S2-c1) and Kimi (S2-c2). Invoked when the driver reports
+   * that the runtime accepted the wake injection; the Host turns that into the
+   * Host-credential `markPresentedDeliverySent`. OpenCode drops it, so its
+   * Activations keep the explicit `message-check` path unchanged.
    */
   recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
 };
@@ -1207,10 +1208,7 @@ function createKimiAcpRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
-    // Codex-only in this batch: dropped here so this driver's path is
-    // behaviourally identical to before, with no acceptance signal and no
-    // `sent_at`, and its Activations keep the explicit `message-check`.
-    recordDeliveryAcceptance: _unusedDeliveryAcceptance,
+    recordDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [
@@ -1240,19 +1238,39 @@ function createKimiAcpRuntime(
   }
   const standingPromptDigests = createStandingPromptDigestLedger();
   const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
+  // S2-c2: Kimi ACP has no system layer; the rules card follows compaction.
+  const rulesCard = new SessionRulesCard(providerSessionStore);
+  const preparedCards = new Map<string, string>();
+  // S2-c2: the driver's first turn-scoped model update is the acceptance.
+  const wake = createHostBodiedWake({
+    provider: "kimi-acp/v1",
+    recordDeliveryAcceptance,
+    wakePreface: (input) => preparedCards.get(input.runAttemptId),
+  });
   return new GenericProcessAdapter({
     ...processOptions,
-    acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
+    acceptSessionProtocol: async (input) => {
+      await protocolUpgrade.accept(input);
+      await rulesCard.accept(input);
+    },
+    // The driver ends the prompt with the native ACP `session/cancel`.
+    finalReplyInterrupt: true,
+    beforeLaunch: wake.beforeLaunch,
+    ...(wake.recordDeliveryAcceptance === undefined
+      ? {}
+      : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
+      preparedCards.delete(input.runAttemptId);
       const key = providerSessionKey(
         input,
         revision,
         "kimi-acp/v1",
         lease.standingPromptDigest,
       );
-      if (providerSessionStore === undefined || key === undefined) return lease;
+      if (providerSessionStore === undefined || key === undefined)
+        return await wake.withBodiedWake(input, lease);
       const previous = await providerSessionStore.load(key, {
         requireExisting: input.agent?.instanceSessionRequired === true,
         instance: input.agent?.instanceChannelId !== undefined,
@@ -1264,15 +1282,30 @@ function createKimiAcpRuntime(
         key,
         previous,
       );
-      if (previous === null) return lease;
-      return {
-        ...protocolUpgrade.withNotice(lease, protocolNotice),
+      const card = rulesCard.prepare(
+        input,
+        key,
+        previous,
+        protocolNotice !== undefined,
+      );
+      if (card !== undefined) {
+        if (preparedCards.size >= 64)
+          preparedCards.delete(preparedCards.keys().next().value!);
+        preparedCards.set(input.runAttemptId, card);
+      }
+      if (previous === null) return await wake.withBodiedWake(input, lease);
+      return await wake.withBodiedWake(input, {
+        // The card states the current rules itself; the notice line would
+        // only repeat that they changed.
+        ...(card === undefined
+          ? protocolUpgrade.withNotice(lease, protocolNotice)
+          : lease),
         args: [
           ...(lease.args ?? []),
           "--resume-session",
           previous.providerSessionId,
         ],
-      };
+      });
     },
     args,
     beforeStart: async () => {
@@ -1304,6 +1337,22 @@ function createKimiAcpRuntime(
     ...(providerSessionStore === undefined
       ? {}
       : {
+          recordProviderCompaction: async (input, compaction) => {
+            if (compaction.provider !== "kimi-acp/v1")
+              throw new Error(
+                `unexpected Provider compaction: ${compaction.provider}`,
+              );
+            await rulesCard.observe(
+              input,
+              providerSessionKey(
+                input,
+                revision,
+                "kimi-acp/v1",
+                standingPromptDigests.digestFor(input),
+              ),
+              compaction,
+            );
+          },
           recordProviderSessionEvidence: async (input, evidence) => {
             if (evidence.provider !== "kimi-acp/v1") {
               throw new Error(
@@ -1327,6 +1376,7 @@ function createKimiAcpRuntime(
                     protocolUpgrade.currentVersion(input),
                 },
               );
+              await rulesCard.afterBinding(input);
             }
           },
         }),
