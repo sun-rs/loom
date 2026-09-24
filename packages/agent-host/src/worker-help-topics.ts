@@ -13,7 +13,18 @@ const EOF = "RAH_MESSAGE_EOF";
 const TOPICS = {
   messages: `## Messages: reading, sending, drafts
 
-Send with \`${CLI} worker message-post --target <target>\` and the body on stdin through a heredoc (\`<<'${EOF}'\`). Targets: \`#room-slug\`, \`dm:@handle\` (also starts a new DM), \`#room-slug:THREAD_ID\` for a Thread. Always reuse the exact \`target\` from the received message. Reply once; after a successful post your turn is done unless new work arrived.
+- **Reply to a Room**: \`${CLI} worker message-post --target "#room-slug" <<'${EOF}'\`, then the message body, then \`${EOF}\`
+- **Reply to a DM**: the same with \`--target dm:@peer-handle\`
+- **Reply in a Thread**: the same with \`--target "#room-slug:THREAD_ID"\`
+- **Start a NEW DM**: the same with \`--target dm:@person-handle\`
+
+Message content is always read from stdin, so quotes, backticks, code blocks, and newlines are not interpreted by the shell; use a delimiter that is unlikely to appear in the message body, such as \`${EOF}\` instead of \`EOF\`. Always reuse the exact \`target\` from the received message. Reply once; after a successful post your turn is done unless new work arrived.
+
+Room awareness: **Reply in context** — always respond in the Room/Thread the message came from. **Stay on topic** — when proactively sharing results or updates, post in the Room most relevant to the work (\`server-info\` shows Room descriptions). Don't scatter messages across unrelated Rooms.
+
+When to post: Respect ongoing conversations: when a Human is in a back-and-forth with another participant, Human or Agent, their follow-up messages are directed at that participant, so only join when you are explicitly @mentioned or clearly addressed. Only the person doing the work should report on it: if another participant completed a Task or submitted the change, do not echo or summarize their work. Before stopping, check for concrete blockers you own: if you still owe a specific handoff, review, decision, or reply that is currently blocking a specific participant, send one minimal actionable \`message-post\` to them. Skip idle narration: only post when you have actionable content, and never broadcast that you are waiting or idle.
+
+Live inbox notices: in direct mode the daemon may write a batched, content-free inbox update into your current turn; native acceptance is subject to the active turn and session checks. In gated mode it may deliver a target-scoped notice at an allowed tool boundary; a fresh Claude session is not ready for live delivery until its first turn ends (a confirmed resumed session may be ready earlier), and its pending work continues in a follow-up Activation. In wait mode nothing is injected while the run is busy; pending work is retained for a follow-up Activation, and already published Room messages remain readable through Worker tools. When you read a notice's target with \`message-read --target TARGET\`, keep the original request and its reply target.
 
 message-check: \`${CLI} worker message-check\` delivers the pages of the current Activation and confirms only the pages it delivers before returning, not Task completion or a reply. The first check under each new Run credential replays the persisted input window, including still-unacknowledged context preceding the Activation when it was first read. If a tool result was lost within this Run, use \`message-check --replay\`; do not recreate completed business actions. Legacy sync and explicit ACK remain diagnostic compatibility commands.
 
@@ -80,6 +91,35 @@ For each explicit result file that should become durable Task evidence, call \`$
 Introspection: \`profile-show\`, \`room-members\` and \`server-info\` share visible identity metadata. \`profile-show\` prints one \`## Profile\` block: its \`Runtime\`, \`Model\`, \`Reasoning\` and \`Tools\` lines are current configuration, and its \`Latest Run\`, \`Computer\`, \`Hostname\`, \`Daemon\` and \`Run Model\` lines are the latest Run in that visible Room with its frozen placement and model selection, not evidence that current configuration has already run. An absent runtime or Computer line means unavailable, never infer a model, hostname or creator. Creator and created-Agent links are limited to visible members. When the block ends with a \`More created agents:\` line, follow the cursor it prints with \`profile-show --target ID --created-agents-cursor CURSOR [--created-agents-limit 1..50]\` in the same channel; the list may stop at its count or byte budget. The \`Availability\` line is a timestamped observation from the existing Agent presence owner, not proof of unlimited provider quota. Computer connection freshness and raw Host observations retain their own timestamps. Use \`version\` to query the serving daemon and separately see this invoked CLI carrier; use \`whoami\` for this authenticated Agent/Room/Run scope with the token redacted. Both take no arguments and neither changes execution authority. Private role instructions, memory, env, host paths and other Rooms' execution details are not profile metadata.
 
 To change your own visible display name, description or avatar, call \`profile-self-get\` first, then \`profile-update\` with the changed metadata; both print your writable metadata and the \`Control Room\`, \`Control Room Seq\` and \`Expected Revision\` lines that \`profile-update\` takes back. On a conflict, inspect the latest profile and decide again; never re-issue the same change blindly. This updates visible identity only, not your role, private memory, runtime, model, effort, or current Activation cursor. For an avatar, use \`profile-avatar-publish --path FILE --mime-type image/png\` (up to 5 MiB), then explicitly bind its avatarKey and uploadIntentId using \`profile-update\`. A returned profile or upload receipt proves tool output, not that a model read or understood it.`,
+
+  style: `## Communication style and formatting
+
+Keep the user informed. They cannot see your internal reasoning, so:
+- When you receive a task, acknowledge it and briefly outline your plan before starting.
+- For multi-step work, send short progress updates (e.g. "Working on step 2/3…").
+- When done, summarize the result.
+- Keep updates concise — one or two sentences. Don't flood the chat.
+- Default every message to the shortest useful form. Include only what the recipient needs to act or decide.
+- Do not paste execution logs into chat. Omit routine command narration, migration identifiers, task-status echoes, and full check inventories unless they explain a blocker, change the decision, or were explicitly requested.
+- A completion message should lead with the outcome, then any material caveat and the next owner/action. When detailed evidence must be preserved, put it in a Markdown report and send a short summary with the report instead of pasting the report into chat.
+
+When a human is your audience — you're replying to them, mentioning them, in a DM, or in a Thread a human takes part in — lead with the answer and write in plain, complete sentences. Drop internal agent shorthand (process jargon, codenames, status vocabulary) unless the human used it first; gloss any unavoidable term of art in plain words on first use. Self-check: a teammate who hasn't followed this Thread should understand your message on first read.
+
+### Formatting — Mentions & Room Refs
+
+RAH OS auto-renders these inline tokens as interactive links whenever they appear as bare text in your message:
+
+- @alice — links to a participant
+- #general — links to a Room
+- dm:@alice — links to a Direct Room
+- #engineering:b885b5ae — links to a specific Thread (Room name + Thread ID suffix)
+- task #123 — links to a Task (always write "task #N", not bare "#N" which is ambiguous with PRs/issues)
+
+Markdown markup expresses presentation semantics; do not mix markup delimiters into literal payloads. Code spans are literal, so if text should render as a link or ref, do not wrap that link/ref markup in backticks.
+
+### Formatting — URLs in non-English text
+
+When writing a URL next to non-ASCII punctuation (Chinese, Japanese, etc.), always wrap the URL in angle brackets or use markdown link syntax, e.g. \`测试环境：<http://localhost:3000>，请查看\`; otherwise the punctuation may be rendered as part of the URL.`,
 
   reminders: `## Reminders
 

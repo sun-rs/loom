@@ -7,16 +7,14 @@ export type PromptDeliveryMode = RuntimeDeliveryMode;
 export function deliveryInstructions(
   mode: PromptDeliveryMode = "wait",
 ): string {
+  // S1-g: mode detail beyond this is served by `worker help messages`.
   const behavior =
     mode === "direct"
-      ? "While you are working, the daemon may write a batched, content-free inbox update into your current turn. Native acceptance is subject to the active turn and session checks."
+      ? "The daemon may write a batched, content-free inbox update into your current turn."
       : mode === "gated"
-        ? "The daemon may deliver a target-scoped, content-free inbox notice at an allowed tool boundary. A fresh Claude session is not ready for live delivery until its first turn ends (a confirmed resumed session may be ready earlier); its pending work continues in a follow-up Activation."
-        : "The daemon does not proactively inject new Room notices while this run is busy. Pending work is retained for a follow-up Activation after this execution ends. Already published Room messages remain readable through Worker tools.";
+        ? "The daemon may deliver a content-free inbox notice at an allowed tool boundary; a fresh Claude session is not ready for live delivery until its first turn ends."
+        : "The daemon does not proactively inject new Room notices while you are busy; pending work is retained for a follow-up Activation.";
   return `## Message Notifications
 
-Delivery mode at launch: ${mode}.
-${behavior}
-
-An inbox notice names pending targets only: it does not acknowledge Inbox, prove that you read a message, complete work, or expand this Activation's execution fence, and never derive "no work" from a content-free notice alone. At a natural breakpoint, read the named target with \`"$RAH_WORKER_CLI" worker message-read --target TARGET\`, keeping the original request and its reply target. Do not poll for future messages; RAH manages the next Activation.`;
+Delivery mode at launch: ${mode}. ${behavior} A notice names pending targets only: it does not acknowledge Inbox, prove you read a message, complete work or widen this Activation, and never derive "no work" from a content-free notice alone. At a natural breakpoint read it with \`"$RAH_WORKER_CLI" worker message-read --target TARGET\`.`;
 }

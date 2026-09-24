@@ -72,6 +72,10 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   );
   assert.match(
     prompt,
+    /act as owner only when.*assigned to you or unassigned/isu,
+  );
+  assert.match(
+    onDemand,
     /assigned to process\.env\.RAH_PARTICIPANT_ID.*unassigned/isu,
   );
   assert.doesNotMatch(
@@ -84,8 +88,8 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     /A Task is reserved for long-running or multi-step execution/isu,
   );
   assert.match(
-    prompt,
-    // The claim acknowledges in Raft's text, so the prompt points at the
+    onDemand,
+    // The claim acknowledges in Raft's text, so the guidance points at the
     // printed claim line rather than at a JSON field.
     /After task-claim-message succeeds.*claimed` line it prints.*task-start.*task-progress.*task-submit/isu,
   );
@@ -94,7 +98,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     /must not duplicate the work or post a competing/isu,
   );
   assert.match(
-    prompt,
+    onDemand,
     /task-claim-message returns a conflict.*do not start conflicting execution or take over its scope without a redirect/isu,
   );
   assert.match(
@@ -124,7 +128,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   );
   assert.match(onDemand, /task\.reopened/u);
   assert.match(onDemand, /Reuse existing Tasks and Threads/iu);
-  assert.match(prompt, /collaboratorIds.*must not claim/isu);
+  assert.match(onDemand, /collaboratorIds.*must not claim/isu);
   assert.match(onDemand, /task\.submitted.*reviewerIds/isu);
   assert.match(
     onDemand,
@@ -133,22 +137,22 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /canonical Room/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-check/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
-  assert.match(prompt, /Respect ongoing conversations/iu);
-  assert.match(prompt, /Only the person doing the work should report/iu);
+  assert.match(onDemand, /Respect ongoing conversations/iu);
+  assert.match(onDemand, /Only the person doing the work should report/iu);
   assert.match(prompt, /Claim before you start.*concurrency lock/isu);
-  assert.match(prompt, /Before stopping.*blockers you own/isu);
-  assert.match(prompt, /Skip idle narration.*actionable content/isu);
+  assert.match(onDemand, /Before stopping.*blockers you own/isu);
+  assert.match(onDemand, /Skip idle narration.*actionable content/isu);
   assert.doesNotMatch(everything, /turn-taking/iu);
   assert.match(
     onDemand,
     /state.*held.*not published.*delivery confirmation.*follow-up Activation/isu,
   );
-  assert.match(prompt, /### Sending messages/u);
+  assert.match(prompt, /message-post --target <target> <<'RAH_MESSAGE_EOF'/u);
   assert.match(
-    prompt,
+    onDemand,
     /message-post --target "#room-slug" <<'RAH_MESSAGE_EOF'/u,
   );
-  assert.match(prompt, /Message content is always read from stdin/u);
+  assert.match(onDemand, /Message content is always read from stdin/u);
   assert.match(
     onDemand,
     /--send-draft --target <target>.*with no stdin.*Do not use `--send-draft` when changing content/isu,
@@ -162,7 +166,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(onDemand, /send-draft.*rechecks freshness/isu);
   assert.match(onDemand, /--anyway.*continueAnywaySuggested/isu);
   assert.doesNotMatch(everything, /goal.*already complete.*remain silent/isu);
-  assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
+  assert.match(onDemand, /RAH_WORKER_CLI.*worker task-submit/u);
   assert.match(onDemand, /task\.reassigned/u);
   // Raft has no such recipe, and the server now derives the key itself.
   assert.doesNotMatch(
@@ -182,15 +186,15 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.doesNotMatch(everything, /RAH_WORKER_TOKEN/u);
   assert.doesNotMatch(everything, /\/v1\/worker/u);
   assert.doesNotMatch(everything, /Authorization/u);
-  // The ported Raft sections reach the local workbench prompt too.
-  assert.match(prompt, /## Startup sequence/u);
+  // The ported Raft sections reach the local workbench prompt too; S1-g
+  // serves the verbatim room-awareness and formatting text on demand.
   assert.match(prompt, /### Credential handling/u);
   assert.match(prompt, /### Reminders/u);
-  assert.match(prompt, /### Room awareness/u);
   assert.match(prompt, /## Communication style/u);
+  assert.match(onDemand, /\*\*Reply in context\*\*/u);
   assert.match(onDemand, /## Live constraints and pull-request closure/u);
-  assert.match(prompt, /### Formatting — Mentions & Room Refs/u);
-  assert.match(prompt, /### Formatting — URLs in non-English text/u);
+  assert.match(onDemand, /### Formatting — Mentions & Room Refs/u);
+  assert.match(onDemand, /### Formatting — URLs in non-English text/u);
 
   for (const executable of ["codex", "kimi", "opencode", "claude"]) {
     const spec = localCliRuntimeSpec(executable, workspaceCwd);

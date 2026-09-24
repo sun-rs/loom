@@ -59,10 +59,8 @@ test("layer order is stable for a fully populated agent", () => {
       "platform",
       "credential-hygiene",
       "reminders",
-      "room-awareness",
       "communication-style",
-      "formatting-mentions",
-      "formatting-urls",
+      "formatting",
       "workspace-policy",
       "initial-role",
       "startup",
@@ -80,10 +78,8 @@ test("runtime-dependent layers are omitted without runtime context", () => {
     "platform",
     "credential-hygiene",
     "reminders",
-    "room-awareness",
     "communication-style",
-    "formatting-mentions",
-    "formatting-urls",
+    "formatting",
     "initial-role",
     "startup",
   ]);
@@ -109,10 +105,8 @@ test("no-agent compilation keeps the legacy header and drops the role layer", ()
       "platform",
       "credential-hygiene",
       "reminders",
-      "room-awareness",
       "communication-style",
-      "formatting-mentions",
-      "formatting-urls",
+      "formatting",
       "startup",
     ],
   );
@@ -261,8 +255,14 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     prompt,
     /before RAH_FROM_SEQ.*context only.*must not.*business action/isu,
   );
+  // S1-g: the prompt keeps the owner rule; the exact env-bound wording lives
+  // in `worker help tasks`.
   assert.match(
     prompt,
+    /act as owner only when.*assigned to you or unassigned/isu,
+  );
+  assert.match(
+    onDemand,
     /assigned to process\.env\.RAH_PARTICIPANT_ID.*unassigned/isu,
   );
   // prompt.standing.p: the self-invented "strict definition" contradicted the
@@ -278,7 +278,11 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
-    // The claim acknowledges in Raft's text, so the prompt points at the
+    /claim before you start.*task-claim-message.*task-start.*task-progress.*task-submit/isu,
+  );
+  assert.match(
+    onDemand,
+    // The claim acknowledges in Raft's text, so the guidance points at the
     // printed claim line rather than at a JSON field.
     /After task-claim-message succeeds.*claimed` line it prints.*task-start.*task-progress.*task-submit/isu,
   );
@@ -290,10 +294,14 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
+    /A failed claim is a concurrency lock: do not start conflicting execution\./u,
+  );
+  assert.match(
+    onDemand,
     /task-claim-message returns a conflict.*do not start conflicting execution or take over its scope without a redirect/isu,
   );
   assert.match(
-    prompt,
+    onDemand,
     /failed claim is a concurrency lock, not a ruling on lane ownership — if you are that lane's canonical owner, correct the routing in the original Thread/isu,
   );
   assert.match(
@@ -349,7 +357,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(onDemand, /task\.reopened/u);
   assert.match(onDemand, /Reuse existing Tasks and Threads/iu);
-  assert.match(prompt, /collaboratorIds.*must not claim/isu);
+  assert.match(onDemand, /collaboratorIds.*must not claim/isu);
   assert.match(onDemand, /task\.submitted.*reviewerIds/isu);
   assert.match(
     onDemand,
@@ -380,11 +388,12 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(prompt, /canonical Room/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-check/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
-  assert.match(prompt, /Respect ongoing conversations/iu);
-  assert.match(prompt, /Only the person doing the work should report/iu);
+  assert.match(onDemand, /Respect ongoing conversations/iu);
+  assert.match(onDemand, /Only the person doing the work should report/iu);
   assert.match(prompt, /Claim before you start.*concurrency lock/isu);
-  assert.match(prompt, /Before stopping.*blockers you own/isu);
-  assert.match(prompt, /Skip idle narration.*actionable content/isu);
+  assert.match(prompt, /Join others' back-and-forth only when addressed/u);
+  assert.match(onDemand, /Before stopping.*blockers you own/isu);
+  assert.match(onDemand, /Skip idle narration.*actionable content/isu);
   // prompt.standing.aa: the self-authored turn-taking script and its silence
   // order are gone.
   assert.doesNotMatch(withHelp(prompt), /turn-taking/iu);
@@ -397,17 +406,19 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     withHelp(prompt),
     /review newerMessages, acknowledge the original sync cursor, and exit successfully/u,
   );
-  // Raft's send contract: a target plus content on stdin, nothing else.
-  assert.match(prompt, /### Sending messages/u);
+  // Raft's send contract: a target plus content on stdin, nothing else. S1-g:
+  // the prompt keeps one heredoc form; Raft's variants live in `worker help
+  // messages`.
+  assert.match(prompt, /message-post --target <target> <<'RAH_MESSAGE_EOF'/u);
   assert.match(
-    prompt,
+    onDemand,
     /message-post --target "#room-slug" <<'RAH_MESSAGE_EOF'/u,
   );
-  assert.match(prompt, /--target dm:@peer-handle/u);
-  assert.match(prompt, /--target "#room-slug:THREAD_ID"/u);
-  assert.match(prompt, /Message content is always read from stdin/u);
+  assert.match(onDemand, /--target dm:@peer-handle/u);
+  assert.match(onDemand, /--target "#room-slug:THREAD_ID"/u);
+  assert.match(onDemand, /Message content is always read from stdin/u);
   assert.match(
-    prompt,
+    onDemand,
     /delimiter that is unlikely to appear in the message body/u,
   );
   assert.match(
@@ -481,7 +492,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   // facts, so the prompt names the fields and draws no conclusion from them.
   // The read family renders text, so the same facts are named as the lines the
   // Agent reads rather than as fields it would have to parse.
-  assert.match(prompt, /`Already presented:` lines/u);
+  assert.match(onDemand, /`Already presented:` lines/u);
   assert.match(
     onDemand,
     /a Presentation high-water target line is the highest observed sequence, not proof that every earlier message was shown/isu,
@@ -494,7 +505,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     onDemand,
     /how many of your own messages you posted at that same target afterwards/isu,
   );
-  assert.match(prompt, /canonical Kernel ledger facts.*before deciding/isu);
+  assert.match(onDemand, /canonical Kernel ledger facts.*before deciding/isu);
   // No judgment rule may ride along with the facts.
   assert.doesNotMatch(
     withHelp(prompt),
@@ -510,7 +521,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     withHelp(prompt),
     /goal.*already complete.*remain silent/isu,
   );
-  assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
+  assert.match(onDemand, /RAH_WORKER_CLI.*worker task-submit/u);
   assert.match(onDemand, /task\.reassigned/u);
   // The self-invented key rules are gone: no stable-key recipe, and no rework
   // round rule folding a triggering roomSeq into a key.
@@ -563,35 +574,22 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
 });
 
-test("ported Raft startup sequence keeps all five upstream steps", () => {
+test("S1-g: the startup sequence keeps only what no wake input already states", () => {
   const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
-  assert.match(prompt, /## Startup sequence/u);
+  assert.doesNotMatch(prompt, /## Startup sequence/u);
+  // Raft step 1 (early acknowledgment) survives in the communication summary.
   assert.match(
     prompt,
-    /1\. If this turn already includes a concrete incoming message, first decide whether that message needs a visible acknowledgment, blocker question, or ownership signal\./u,
+    /early, if it needs a visible acknowledgment, blocker question or ownership signal/u,
   );
+  // Step 2 is the memory binding's own startup read.
   assert.match(
     prompt,
-    /send it early with .*message-post` before deep context gathering/u,
+    /On startup and after context compression, read the complete original MEMORY\.md/u,
   );
-  assert.match(
-    prompt,
-    /2\. Read MEMORY\.md \(at process\.env\.RAH_AGENT_MEMORY_INDEX\)/u,
-  );
-  assert.match(
-    prompt,
-    /3\. If there is no concrete incoming message to handle, stop and wait\./u,
-  );
-  assert.match(
-    prompt,
-    /4\. When you receive a message, process it and reply with/u,
-  );
-  assert.match(prompt, /5\. \*\*Complete ALL your work before stopping\.\*\*/u);
-  assert.match(
-    prompt,
-    /finish everything, report results, then stop\. New messages arrive automatically — you do not need to poll or wait for them\./u,
-  );
-  assert.match(prompt, /6\. Delivery confirmation is automatic/u);
+  // Step 6: delivery confirmation, stated once.
+  assert.equal(prompt.split("Delivery confirmation is automatic").length, 2);
+  assert.match(prompt, /diagnostics only/u);
   assert.doesNotMatch(withHelp(prompt), /worker acknowledge --through-seq/);
 });
 
@@ -651,23 +649,35 @@ test("ported Raft reminders section names RAH's own reminder commands", () => {
 });
 
 test("ported Raft channel awareness becomes Room awareness", () => {
+  // S1-g: served verbatim by `worker help messages`; the prompt's
+  // exact-target rule already carries "reply in context".
   const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
-  assert.match(prompt, /### Room awareness/u);
   assert.match(
     prompt,
+    /always reuse the exact `target` from the received message/u,
+  );
+  assert.match(
+    onDemand,
     /\*\*Reply in context\*\* — always respond in the Room\/Thread the message came from\./u,
   );
-  // S1-c: the Room-description hint is folded into the stay-on-topic bullet.
   assert.match(
-    prompt,
+    onDemand,
     /\*\*Stay on topic\*\* — when proactively sharing results or updates, post in the Room most relevant to the work \(`server-info` shows Room descriptions\)\./u,
   );
-  assert.match(prompt, /Don't scatter messages across unrelated Rooms\./u);
+  assert.match(onDemand, /Don't scatter messages across unrelated Rooms\./u);
 });
 
 test("ported Raft communication style keeps every upstream bullet", () => {
-  const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
-  assert.match(prompt, /## Communication style/u);
+  // S1-g: the prompt carries a summary; `worker help style` the upstream text.
+  const { prompt: standing } = compileStandingPrompt({ agent: fixtureAgent });
+  assert.match(standing, /## Communication style/u);
+  assert.match(
+    standing,
+    /Default to the shortest useful form; do not paste execution logs\./u,
+  );
+  assert.match(standing, /plain, complete sentences/u);
+  assert.match(standing, /worker help <topic>.*style/u);
+  const prompt = workerHelpTopic("style")!;
   assert.match(
     prompt,
     /When you receive a task, acknowledge it and briefly outline your plan before starting\./u,
@@ -717,7 +727,16 @@ test("ported Raft live constraints keep all four seats and the closed gate set",
 });
 
 test("ported Raft formatting sections carry RAH's own inline tokens", () => {
-  const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
+  // S1-g: the prompt carries the token list in one line; the upstream
+  // sections are served verbatim by `worker help style`.
+  const { prompt: standing } = compileStandingPrompt({ agent: fixtureAgent });
+  assert.match(
+    standing,
+    /`task #N` render as links \(write "task #N", not bare "#N"\)/u,
+  );
+  assert.match(standing, /code spans are literal/u);
+  assert.match(standing, /Wrap a URL next to non-ASCII punctuation/u);
+  const prompt = workerHelpTopic("style")!;
   assert.match(prompt, /### Formatting — Mentions & Room Refs/u);
   assert.match(prompt, /- @alice — links to a participant/u);
   assert.match(prompt, /- dm:@alice — links to a Direct Room/u);
@@ -739,10 +758,11 @@ test("ported Raft formatting sections carry RAH's own inline tokens", () => {
 
 test("the prompt teaches DM targets, including starting a new DM", () => {
   const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
-  assert.match(prompt, /--target dm:@peer-handle/u);
+  assert.match(prompt, /`dm:@handle`/u);
+  assert.match(onDemand, /--target dm:@peer-handle/u);
   assert.match(onDemand, /room-resolve --target #CHANNEL\|dm:@HANDLE/u);
   // Raft's bullet, in upstream's words, now that an Agent can open a DM.
-  assert.match(prompt, /\*\*Start a NEW DM\*\*.*--target dm:@person-handle/u);
+  assert.match(onDemand, /\*\*Start a NEW DM\*\*.*--target dm:@person-handle/u);
 });
 
 test("delivery instructions distinguish Wait, direct and gated without treating a notice as read", () => {
@@ -765,6 +785,14 @@ test("delivery instructions distinguish Wait, direct and gated without treating 
     if (deliveryMode === "wait")
       assert.match(compiled.prompt, /does not proactively inject/);
   }
+  // S1-g: the per-mode detail is served by `worker help messages`.
+  assert.match(onDemand, /native acceptance is subject to the active turn/u);
+  assert.match(onDemand, /a confirmed resumed session may be ready earlier/u);
+  assert.match(
+    onDemand,
+    /already published Room messages remain readable through Worker tools/u,
+  );
+  assert.match(onDemand, /keep the original request and its reply target/u);
 });
 
 test("live-notice startup does not interpret a body-free notice as no work", () => {
@@ -809,7 +837,10 @@ test("configured Agent startup uses compact context without rereading audit mani
   )!;
   assert.doesNotMatch(text, /First parse process\.env\.RAH_AGENT_CONTEXT_JSON/);
   assert.match(text, /message-check --startup/);
-  assert.match(text, /already stated in this prompt/);
+  assert.match(
+    text,
+    /Your role is stated in this prompt; do not duplicate it\./,
+  );
   assert.match(
     standingPromptLayers().find((layer) => layer.id === "platform")!.text,
     /frozen AgentDefinition role and instructions/,

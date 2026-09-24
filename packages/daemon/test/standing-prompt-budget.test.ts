@@ -14,8 +14,11 @@ import {
  * turn for Kimi). Detail the model needs only occasionally is served on demand
  * by `worker help <topic>`; rules the code enforces are not restated as prose.
  */
-const STANDING_PROMPT_BUDGET_CHARS = 16_000;
-const PLATFORM_LAYER_BUDGET_CHARS = 10_000;
+// S1-g: tightened to the achieved size (max 9,832 total; platform 6,996 for
+// an Agent, 7,253 on the legacy path) plus a small margin. The platform layer
+// includes the byte-exact Raft memory body (3,221 chars) and its RAH bindings.
+const STANDING_PROMPT_BUDGET_CHARS = 10_000;
+const PLATFORM_LAYER_BUDGET_CHARS = 7_400;
 
 const minimalInputs: readonly StandingPromptInput[] = (
   ["direct", "gated", "wait"] as const
@@ -74,4 +77,15 @@ test("the prompt keeps the Human-decides-Tasks rule crisp", () => {
     prompt,
     /Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it\./u,
   );
+});
+
+test("S1-g: instructions every wake input already carries are not restated", () => {
+  for (const input of [...minimalInputs, {}]) {
+    const { prompt } = compileStandingPrompt(input);
+    // `WAKE_CLOSING_LINE` / `ACTIVATION_FINISH_RULES` carry these each turn.
+    assert.doesNotMatch(prompt, /Complete all your work before stopping/iu);
+    assert.doesNotMatch(prompt, /you do not need to poll/iu);
+    // The Raft memory binding already says when to read MEMORY.md.
+    assert.doesNotMatch(prompt, /Read MEMORY\.md \(at process\.env/u);
+  }
 });
