@@ -46,7 +46,7 @@ test("large per-round overhead fails even if all replies succeeded", () => {
       ...n,
       input: 150,
       uncached: 25,
-      generations: 3,
+      generations: 2,
       replySeconds: 15,
     }).status,
     "within-budget",
@@ -59,5 +59,37 @@ test("a receipt or progress message is not an effective final answer", async () 
   assert.equal(
     isEffectiveAnswer("审查结论：" + "有证据的限定范围审查结果。".repeat(8)),
     true,
+  );
+});
+test("evo contract budgets: generations, first-request overhead, seconds-or-percent latency", () => {
+  const n = {
+    input: 20000,
+    cached: 16000,
+    uncached: 4000,
+    generations: 1,
+    firstInput: 20000,
+    replySeconds: 10,
+  };
+  const ok = { ...n, input: 40000, uncached: 8000, generations: 2 };
+  assert.deepEqual(compareRounds(n, ok).failures, []);
+  assert.deepEqual(compareRounds(n, { ...ok, generations: 3 }).failures, [
+    "generations",
+  ]);
+  assert.deepEqual(compareRounds(n, { ...ok, firstInput: 23000 }).failures, []);
+  assert.deepEqual(compareRounds(n, { ...ok, firstInput: 23001 }).failures, [
+    "firstInput",
+  ]);
+  // Short task: native 10 s allows +5 s.
+  assert.deepEqual(compareRounds(n, { ...ok, replySeconds: 15 }).failures, []);
+  assert.deepEqual(compareRounds(n, { ...ok, replySeconds: 15.1 }).failures, [
+    "replySeconds",
+  ]);
+  // Long task: native 100 s allows +15%.
+  const long = { ...n, replySeconds: 100 };
+  const longOk = { ...ok, replySeconds: 115 };
+  assert.deepEqual(compareRounds(long, longOk).failures, []);
+  assert.deepEqual(
+    compareRounds(long, { ...longOk, replySeconds: 115.1 }).failures,
+    ["replySeconds"],
   );
 });

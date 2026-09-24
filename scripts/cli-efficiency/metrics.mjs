@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-// Initial engineering review budgets, not a claim of user-approved cost parity.
+// Owner-approved evo contract budgets (docs/evo/target-contract.zh-CN.md §6).
 export const budgets = {
   inputRatio: 2,
   uncachedRatio: 2,
-  replyRatio: 1.5,
+  maxGenerations: 2,
+  firstInputOverheadTokens: 3000,
   replyAllowanceSeconds: 5,
-  extraGenerations: 2,
+  replyAllowanceRatio: 0.15,
 };
 export function summarizeUsage(events) {
   const rows = [
@@ -49,13 +50,20 @@ export function compareRounds(native, rah) {
   if (rah.input > native.input * budgets.inputRatio) failures.push("input");
   if (rah.uncached > native.uncached * budgets.uncachedRatio)
     failures.push("uncached");
-  if (
-    rah.replySeconds >
-    native.replySeconds * budgets.replyRatio + budgets.replyAllowanceSeconds
-  )
+  // Short tasks are judged in seconds, long tasks by percentage.
+  const replyAllowance = Math.max(
+    budgets.replyAllowanceSeconds,
+    native.replySeconds * budgets.replyAllowanceRatio,
+  );
+  if (rah.replySeconds > native.replySeconds + replyAllowance)
     failures.push("replySeconds");
-  if (rah.generations > native.generations + budgets.extraGenerations)
-    failures.push("generations");
+  if (rah.generations > budgets.maxGenerations) failures.push("generations");
+  if (
+    Number.isFinite(native.firstInput) &&
+    Number.isFinite(rah.firstInput) &&
+    rah.firstInput > native.firstInput + budgets.firstInputOverheadTokens
+  )
+    failures.push("firstInput");
   return {
     status: failures.length ? "over-budget" : "within-budget",
     failures,
