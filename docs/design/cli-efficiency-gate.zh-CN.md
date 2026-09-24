@@ -104,6 +104,22 @@ node scripts/cli-efficiency/resume-probe.mjs --thread <thread-id> --repeat 3 [--
 
 断线目前按致命错误回收，不做在线 `thread/turns/list` 对账；这是比规格更保守的本期范围。
 
+## 最终回复收尾（`--final`，仅报告不设预算）
+
+模型用 `message-post --final` 发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，
+不是 ACK），Host 读到后由驱动在下一个工具边界发原生 `turn/interrupt`，省掉工具结果回灌后只说"已发送"的整轮生成。
+Codex 每轮与热进程两条路径已接；Claude/Kimi/OpenCode 未接，行为不变。
+
+- 用量接口 `finalInterrupt`：`null` 表示本轮没有 `--final` 回复；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
+  `sent` 为驱动确认已发出中断（被拒绝或未上报为 false，此时本轮按原行为多一次生成）；`preemptedFollowUp`
+  为 true 表示最终回复的工具结束后到轮次结束未观察到任何模型输出/工具调用/用量帧，false 表示后续生成已开始
+  （中断仍会截断它，但可能已计费），`unknown` 表示无法观察。
+- `compareRounds` 每轮输出 `finalInterrupt`（未采集为 `null`）；`compareArm` 汇总
+  `committed/sent/preempted/notPreempted/unknown/noFinalPost/evidenceMissing`。只报告，不进入失败判定；
+  生成数预算仍按 usage 计。
+- 局限：`preemptedFollowUp` 依赖 Codex 在工具结束后才发出上一次生成的用量帧这一假设，未经真实 Codex 验证；
+  中断落地与后续请求发出的先后在真实 CLI 上须用付费门禁实测。
+
 ## 证据与后续范围
 
 证据写入打印的隔离目录 `result.json`，包含失败轮次，不包含账户凭证或完整工具输出。

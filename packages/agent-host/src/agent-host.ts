@@ -1,5 +1,6 @@
 import { resolveRuntimeDeliveryMode } from "./runtime.ts";
 import { maintainRuntimeBusyNotices } from "./runtime-busy-notices.ts";
+import { maintainFinalReplyInterrupt } from "./runtime-final-reply.ts";
 import { watchRuntimeLiveness } from "./runtime-watchdog.ts";
 import {
   ActivationCancellationRequestedError,
@@ -682,6 +683,9 @@ export class AgentHost {
             recordUsageGap: async (gap) => {
               await this.#control.recordRunAttemptUsageGap?.(gap);
             },
+            recordFinalReplyInterrupt: async (report) => {
+              await this.#control.recordFinalReplyInterrupt?.(report);
+            },
             ...(this.#control.recordInstanceSessionBinding === undefined
               ? {}
               : {
@@ -855,6 +859,14 @@ export class AgentHost {
       signal: supervisor.signal,
       wait: waitForDelay,
     });
+    const finalReply = maintainFinalReplyInterrupt({
+      runAttemptId: runAttempt.runAttemptId,
+      run,
+      runtime,
+      control: this.#control,
+      signal: supervisor.signal,
+      wait: waitForDelay,
+    });
     const capMonitor =
       this.#processHygiene?.monitorCaps(this.#control, {
         participantId: activation.participantId,
@@ -879,6 +891,7 @@ export class AgentHost {
       maintenanceOutcome,
       drainOutcome,
       busyNotices,
+      finalReply,
       monitoredCaps,
     ]);
 

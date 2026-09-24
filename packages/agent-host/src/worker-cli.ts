@@ -920,7 +920,7 @@ function parseCommand(
   const options = parseOptions(
     arguments_.slice(2),
     command === "message-post"
-      ? ["anyway", "json", "send-draft", "top-level"]
+      ? ["anyway", "final", "json", "send-draft", "top-level"]
       : // Raft puts `--json` on 19 of its 80 commands; `version`
         // (`main.js@32534037`), `profile show` (`main.js@32682200`) and
         // `profile update` (`main.js@32599200`) are the three of those in this
@@ -1039,6 +1039,8 @@ function parseCommand(
         "comment-attachment-id",
         "based-on-room-seq",
         "body",
+        // The post completes the reply; the Host may then end the turn.
+        "final",
         "held-draft-id",
         "idempotency-key",
         // `--json` selects the output stream only; it never reaches the server.
@@ -1075,6 +1077,7 @@ function parseCommand(
           ? {}
           : { idempotencyKey: boundedText(options, "idempotency-key", 512) }),
       };
+      const finalReply = options.final === "true" ? { final: true } : {};
       const replyTarget =
         options["top-level"] === "true"
           ? { threadId: null }
@@ -1115,6 +1118,7 @@ function parseCommand(
               ? {}
               : { heldDraftId: boundedText(options, "held-draft-id", 512) }),
             sendDraft: true,
+            ...finalReply,
           },
           path: "/v1/worker/messages/post",
         };
@@ -1167,6 +1171,7 @@ function parseCommand(
               }),
           ...causalContext,
           ...(composedBody.length === 0 ? {} : { body: composedBody }),
+          ...finalReply,
         },
         path: "/v1/worker/messages/post",
       };
@@ -1970,7 +1975,7 @@ Routine Room and Task mutations resolve their read position and operation identi
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
 rah worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
 rah worker message-react --message-id ID --emoji EMOJI [--remove]
-rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level]
+rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level] [--final]
 rah worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
 Commands print human-readable text on stdout: read it. Only message-post, version, profile-show and profile-update accept --json, and only when you need the machine-readable object; whoami answers in JSON and takes no flag.

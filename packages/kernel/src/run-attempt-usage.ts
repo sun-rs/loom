@@ -27,6 +27,7 @@ import {
   RuntimeProcessCleanupService,
 } from "./runtime-process-cleanup.ts";
 import { turnExecutionForRunAttempt } from "./instance-runtime.ts";
+import { finalInterruptForRunAttempt } from "./run-attempt-final-reply.ts";
 import { text, type Row } from "./sqlite-row.ts";
 
 /**
@@ -279,6 +280,10 @@ export class RunAttemptUsageService {
       truncated: generations > rows.length,
       processCleanups: this.cleanups.listForRunAttempt(input.runAttemptId),
       execution,
+      finalInterrupt: finalInterruptForRunAttempt(
+        this.#database,
+        input.runAttemptId,
+      ),
     });
   }
 

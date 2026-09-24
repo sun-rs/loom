@@ -94,6 +94,13 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - quiesce 幂等返回前先核对 Host 代数、运行时、run、原生 turn。
 - 剩余局限：spawn 返回到记录落库之间仍有极小窗口（靠标签清扫兜底）；压缩后重述失败只记日志；连接断开仍视为致命，无在线对账；均未经真实 Codex 验证。
 
+### 十二、精简唤醒与 `--final` 立即结束本轮（schema 67）
+
+- 唤醒只保留消息正文与一行回复指令，每轮固定说明从约 1,417 字符降到 116（常驻 176）；常量规则只在常驻提示词里出现一次（提示词预算 10,500）；8 位短消息引用在 Worker API 一次性展开，歧义返回 409。
+- `message-post --final`：最终回复提交时在同一事务记录 `run_attempt_final_replies`，Host 随即请求原生结束本轮（冷路径经驱动 stdin 帧，常驻路径经 `turn.final`，均核对 RunAttempt 与原生 turn id，且等发帖工具结束后再中断）；被中断的轮次记为成功；中断被拒绝时照旧多一次生成，回复不受影响。标记本身不是 ACK，Activation 完成仍要求覆盖到 toSeq。
+- 用量接口新增 `finalInterrupt`（是否发出、是否抢在下一次模型请求之前）；门禁报告该项。
+- 未经真实验证：中断能否稳定抢在 CLI 下一次请求之前；其他三家的原生中断（Claude `control_request interrupt`、Kimi `session/cancel`、OpenCode abort）待 S2-c。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

@@ -14,6 +14,12 @@ export const WorkerMessagePostRequestSchema = z
     commentAttachmentId: IdentifierSchema.optional(),
     basedOnRoomSeq: z.number().int().nonnegative().optional(),
     body: z.string().trim().min(1).optional(),
+    /**
+     * The post completes the reply to the delivered messages. It lets the
+     * Host end the native turn once the post commits; it never acknowledges
+     * delivery or changes a Task. Omitted on progress posts.
+     */
+    final: z.literal(true).optional(),
     heldDraftId: IdentifierSchema.optional(),
     idempotencyKey: IdentifierSchema.optional(),
     sendDraft: z.literal(true).optional(),

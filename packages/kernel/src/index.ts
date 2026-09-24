@@ -26,6 +26,7 @@ export {
 } from "./auth.ts";
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
 export { RUNTIME_CLEANUP_BLOCKED } from "./runtime-process-cleanup.ts";
+export type { FinalReplyMarker } from "./run-attempt-final-reply.ts";
 export type {
   InstanceRuntimeRecord,
   InstanceRuntimeTerminationReason,

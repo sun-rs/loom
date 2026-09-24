@@ -890,6 +890,7 @@ function createCodexAppServerRuntime(
   return new GenericProcessAdapter({
     ...processOptions,
     nativeBusyInput: true,
+    finalReplyInterrupt: true,
     guideRuntimeId: "codex",
     busyInputMode: "direct",
     ...(bodiedWake ? { beforeLaunch } : {}),

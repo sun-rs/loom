@@ -157,8 +157,10 @@ function fixture() {
     runtimeRunId,
   });
   return {
+    activation,
     advance,
     agentId: definition.definition.agentId,
+    participantId: agent.principal.principalId,
     cleanup() {
       kernel.close();
       rmSync(directory, { force: true, recursive: true });
@@ -341,7 +343,7 @@ test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reas
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 66);
+    assert.equal(KERNEL_SCHEMA_VERSION, 67);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -587,7 +589,7 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        66,
+        67,
       );
       assert.equal(
         database
@@ -642,7 +644,7 @@ function cleanup(
 test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 66);
+    assert.equal(KERNEL_SCHEMA_VERSION, 67);
     const recorded = state.kernel.runtimeProcessCleanup.record(
       state.host,
       cleanup(state, "cleanup-1"),
@@ -1116,5 +1118,52 @@ test("S2-0 review: a schema 65 database backfills per-runtime cleanup state and 
     }
   } finally {
     rmSync(join(databasePath, ".."), { force: true, recursive: true });
+  }
+});
+
+test("final-reply interrupt evidence: null without a final post, unknown until the Host reports, then the report", () => {
+  const state = fixture();
+  try {
+    assert.equal(read(state).finalInterrupt, null);
+    state.kernel.markRunAttemptRunning(state.host, {
+      recoveryDescriptor: {
+        driver: "test-runtime",
+        metadata: {},
+        recoveryKey: state.runtimeRunId,
+      },
+      runAttemptId: state.runAttemptId,
+      runtimeRunId: state.runtimeRunId,
+    });
+    const execution = state.kernel.authorizeWorkerExecution(state.host, {
+      activationId: state.activation.activationId,
+      consumerId: "worker",
+      hostId: "usage-host",
+      participantId: state.participantId,
+      roomId: state.roomId,
+      runAttemptId: state.runAttemptId,
+      toSeq: state.activation.toSeq,
+    });
+    const posted = state.kernel.postWorkerMessage(execution, {
+      body: "final answer",
+      final: true,
+    });
+    assert.ok("event" in posted);
+    assert.deepEqual(read(state).finalInterrupt, {
+      committedRoomSeq: posted.event.roomSeq,
+      sent: false,
+      preemptedFollowUp: "unknown",
+    });
+    state.kernel.finalReplies.recordInterrupt(state.host, {
+      runAttemptId: state.runAttemptId,
+      sent: true,
+      preemptedFollowUp: true,
+    });
+    assert.deepEqual(read(state).finalInterrupt, {
+      committedRoomSeq: posted.event.roomSeq,
+      sent: true,
+      preemptedFollowUp: true,
+    });
+  } finally {
+    state.cleanup();
   }
 });

@@ -7,6 +7,8 @@
 //     {op:"turn.begin", runAttemptId, runtimeRunId, text, model?, effort?}
 //     {op:"turn.notice", runAttemptId, line}   busy Human input -> turn/steer
 //     {op:"turn.interrupt", runAttemptId}
+//     {op:"turn.final", runAttemptId, nativeTurnId}   final reply committed:
+//                                              interrupt at the tool boundary
 //     {op:"shutdown"}                          (stdin EOF means the same)
 //   driver -> Host (fd3, one envelope per line)
 //     {loom:"warm-runtime/v1", seq, runtimeId, hostGeneration, type, ...}
@@ -32,6 +34,7 @@ import { createInterface } from "node:readline";
 import { PassThrough } from "node:stream";
 
 import { attachCodexBusyInput } from "./codex-busy-input.js";
+import { createCodexFinalInterrupt } from "./codex-final-interrupt.js";
 import {
   CodexApprovalPolicyError,
   CodexUnattendedApprovalPolicy,
@@ -57,6 +60,7 @@ const HANDSHAKE_TIMEOUT_MS = 30_000;
 const SOCKET_WAIT_MS = 30_000;
 const PROVIDER_TERM_TIMEOUT_MS = 1_000;
 const RECENT_TURN_LIMIT = 32;
+const FINAL_INTERRUPT_TIMEOUT_MS = 5_000;
 const TOOL_ITEM_TYPES = new Set([
   "commandExecution",
   "fileChange",
@@ -229,6 +233,7 @@ async function handleCommand(command) {
   if (command?.op === "turn.begin") return await beginTurn(command);
   if (command?.op === "turn.notice") return steerTurn(command);
   if (command?.op === "turn.interrupt") return interruptTurn(command);
+  if (command?.op === "turn.final") return finalTurn(command);
 }
 
 async function beginTurn(command) {
@@ -335,12 +340,25 @@ function createTurn(runAttemptId, nativeTurnId) {
   turn.writer = new RuntimeTrajectoryWriter(writeFrame);
   turn.usageWriter = new ProviderUsageWriter(writeFrame);
   turn.noticeInput = new PassThrough();
+  // Final-reply turn end: this native turn only, never "the current turn".
+  turn.finalInterrupt = createCodexFinalInterrupt({
+    interrupt: () =>
+      request(
+        "turn/interrupt",
+        { threadId, turnId: nativeTurnId },
+        FINAL_INTERRUPT_TIMEOUT_MS,
+      ),
+  });
   turn.busyInput = attachCodexBusyInput({
     input: turn.noticeInput,
     receipt: (frame) => emitTurnFrame(turn, frame),
     request,
     state: () => ({
-      stopping: turn.closing || turn.stopRequested || shuttingDown,
+      stopping:
+        turn.closing ||
+        turn.stopRequested ||
+        turn.finalInterrupt.armed ||
+        shuttingDown,
       threadId,
       turnId: turn.nativeTurnId,
     }),
@@ -426,6 +444,21 @@ function interruptTurn(command) {
   ).catch(() => undefined);
 }
 
+// The Host read a committed `final` post of this RunAttempt. Only the named
+// native turn, and only while it is the active, unclosed turn, is ended.
+function finalTurn(command) {
+  const turn = active;
+  if (
+    turn === undefined ||
+    turn.runAttemptId !== command.runAttemptId ||
+    turn.nativeTurnId !== command.nativeTurnId ||
+    turn.closing ||
+    turn.stopRequested
+  )
+    return;
+  turn.finalInterrupt.arm();
+}
+
 function handleFrame(frame) {
   if (typeof frame !== "object" || frame === null) return;
   if (Object.hasOwn(frame, "id") && Object.hasOwn(frame, "method")) {
@@ -486,6 +519,7 @@ function handleNotification(frame) {
     return;
   }
   turn.busyInput.observe(frame);
+  turn.finalInterrupt.observe(frame);
   const item = params.item;
   if (item && typeof item === "object" && TOOL_ITEM_TYPES.has(item.type)) {
     const itemId = typeof item.id === "string" ? item.id : JSON.stringify(item);
@@ -516,6 +550,15 @@ async function closeTurn(turn, params) {
   turn.writer.flush();
   const status =
     typeof params.turn?.status === "string" ? params.turn.status : "failed";
+  let endedAfterFinalReply = false;
+  if (turn.finalInterrupt.armed) {
+    const report = await turn.finalInterrupt.report();
+    endedAfterFinalReply =
+      !turn.stopRequested &&
+      turn.finalInterrupt.issued &&
+      status === "interrupted";
+    emitTurnFrame(turn, { protocol: "rah-final-interrupt/v1", ...report });
+  }
   const errorText =
     typeof params.turn?.error?.message === "string"
       ? params.turn.error.message.slice(0, 2048)
@@ -528,6 +571,7 @@ async function closeTurn(turn, params) {
     status,
     stopRequested: turn.stopRequested,
     ...(errorText === undefined ? {} : { errorMessage: errorText }),
+    ...(endedAfterFinalReply ? { endedAfterFinalReply: true } : {}),
   });
   turn.closed = true;
   if (active === turn) active = undefined;

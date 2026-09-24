@@ -273,7 +273,7 @@ test("bodied wake: one reply with the stated seq completes the Activation withou
     assert.match(
       result.wake,
       new RegExp(
-        `^Reply: message-post --based-on-room-seq ${second.event.roomSeq} · no reply needed: message-check$`,
+        `^Reply: message-post --based-on-room-seq ${second.event.roomSeq} --final · no reply needed: message-check$`,
         "mu",
       ),
     );

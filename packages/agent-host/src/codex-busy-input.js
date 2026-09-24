@@ -9,6 +9,8 @@ export function attachCodexBusyInput({
   state,
   request,
   receipt = (frame) => writeSync(3, `${JSON.stringify(frame)}\n`),
+  // Host control frames on the same private pipe (final-reply turn end).
+  control,
 }) {
   let buffer = "";
   let busy = false;
@@ -30,6 +32,10 @@ export function attachCodexBusyInput({
     try {
       frame = JSON.parse(line);
     } catch {
+      return;
+    }
+    if (frame?.protocol === "rah-final-reply/v1") {
+      control?.(frame);
       return;
     }
     if (

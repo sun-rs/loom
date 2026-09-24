@@ -78,7 +78,7 @@ export function formatBodiedWakeInput(input: {
             : ` (seq ${present.noticeFromSeq}-${present.noticeToSeq})`
         } not shown`;
   const instruction = complete
-    ? `Reply: message-post${turn} --based-on-room-seq ${through} · no reply needed: message-check${turn}`
+    ? `Reply: message-post${turn} --based-on-room-seq ${through} --final · no reply needed: message-check${turn}`
     : `Shown through seq ${through} of ${present.toSeq}${notice}: run message-check${turn} first, then reply.`;
   const sections = [
     `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}`,

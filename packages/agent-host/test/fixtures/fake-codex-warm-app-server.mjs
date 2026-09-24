@@ -133,6 +133,8 @@ const server = createServer(async (socket) => {
         return reply({ turnId: steered.id });
       }
       case "turn/interrupt": {
+        if (activeTurn?.text.includes("[fake:final-reject]"))
+          return fail("turn/interrupt is not supported");
         if (activeTurn?.id === frame.params.turnId) {
           activeTurn.interrupted = true;
           activeTurn.wake?.();
@@ -176,6 +178,64 @@ const server = createServer(async (socket) => {
       while (turn.steers.length === 0 && Date.now() < deadline) await delay(20);
     }
     if (has("background-tool")) spawnBackgroundTool(turn, handle);
+    // Final-reply turn end: the reply is posted by a tool item; afterwards the
+    // real tool loop requests one more full-context generation ("sent"),
+    // unless the turn was interrupted first.
+    const finalReply =
+      has("final") ||
+      has("final-reject") ||
+      has("final-noack") ||
+      has("final-late") ||
+      has("post-nofinal") ||
+      has("final-wait");
+    if (finalReply) {
+      usage(turn); // the generation that decided to post
+      if (!has("final-noack"))
+        await toolItem(turn, handle, "check", ["worker", "message-check"]);
+      const flag = has("post-nofinal") || has("final-wait") ? [] : ["--final"];
+      await toolItem(turn, handle, "post", [
+        "worker",
+        "message-post",
+        ...flag,
+        "--body",
+        `FAKE final answer for ${turn.id}`,
+      ]);
+      if (has("final-late")) {
+        notify("item/agentMessage/delta", {
+          threadId,
+          turnId: turn.id,
+          itemId: `late-${turn.id}`,
+          delta: "se",
+        });
+        record({ event: "follow-up-started", turnId: turn.id });
+      }
+      record({ event: "final-window", turnId: turn.id });
+      await new Promise((resolve) => {
+        turn.wake = resolve;
+        setTimeout(resolve, has("final-wait") ? 1_500 : 1_000);
+      });
+      if (!turn.interrupted) {
+        notify("item/agentMessage/delta", {
+          threadId,
+          turnId: turn.id,
+          itemId: `sent-${turn.id}`,
+          delta: "sent",
+        });
+        usage(turn);
+        record({ event: "follow-up-generation", turnId: turn.id });
+      }
+      notify("turn/completed", {
+        threadId,
+        turn: {
+          id: turn.id,
+          status: turn.interrupted ? "interrupted" : "completed",
+        },
+      });
+      record({ event: "turn-completed", turnId: turn.id, steers: turn.steers });
+      activeTurn = undefined;
+      turn.markCompleted();
+      return;
+    }
     // Hang only in the first turn that carries it (a retry proceeds).
     const hangOnceMarker = join(stateDirectory, "hung-once");
     const hangOnce = has("hang-once") && !existsSync(hangOnceMarker);
@@ -220,6 +280,17 @@ const server = createServer(async (socket) => {
     if (has("crash-after")) setTimeout(() => process.exit(3), 300);
     // Codex may unload an idle thread while the process lives on.
     if (has("unload-after")) threadUnloaded = true;
+  }
+
+  async function toolItem(turn, handle, name, command) {
+    const item = { id: `${name}-${turn.id}`, type: "commandExecution" };
+    notify("item/started", { threadId, turnId: turn.id, item });
+    await runWorker(turn, handle, command);
+    notify("item/completed", {
+      threadId,
+      turnId: turn.id,
+      item: { ...item, status: "completed" },
+    });
   }
 
   function usagePayload(turn, total) {

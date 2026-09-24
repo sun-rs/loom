@@ -5,6 +5,7 @@ import {
   providerMemoryConfig as memoryConfig,
 } from "./provider-launch-arguments.js";
 import { attachCodexBusyInput } from "./codex-busy-input.js";
+import { createCodexFinalInterrupt } from "./codex-final-interrupt.js";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { writeSync } from "node:fs";
@@ -28,6 +29,7 @@ const HANDSHAKE_TIMEOUT_MS = 30_000;
 const INTERRUPT_CONFIRM_TIMEOUT_MS = 600;
 const INTERRUPT_EXIT_TIMEOUT_MS = 150;
 const PROVIDER_TERM_TIMEOUT_MS = 150;
+const FINAL_INTERRUPT_TIMEOUT_MS = 5_000;
 
 // RAH policy; Multica uses the same three switches. No user config writes.
 const providerMemoryConfig = memoryConfig("codex");
@@ -64,14 +66,25 @@ let earlyStartedTurnId;
 let driverCompleted = false;
 let stopping = false;
 let terminationPromise;
+// Final-reply turn end: the Host's signal that a `final` post committed.
+const finalInterrupt = createCodexFinalInterrupt({
+  interrupt: () =>
+    request(
+      "turn/interrupt",
+      { threadId: activeThreadId, turnId: activeTurnId },
+      FINAL_INTERRUPT_TIMEOUT_MS,
+    ),
+});
 const busyInput = attachCodexBusyInput({
   input: process.stdin,
   state: () => ({
     threadId: activeThreadId,
     turnId: activeTurnId,
-    stopping: stopping || driverCompleted,
+    // An armed turn is ending: busy input waits for the follow-up Activation.
+    stopping: stopping || driverCompleted || finalInterrupt.armed,
   }),
   request,
+  control: armFinalInterrupt,
 });
 let resolveProcessExit;
 const processExited = new Promise((resolve) => {
@@ -262,12 +275,26 @@ try {
     throw new Error("turn/completed identity did not match the started turn");
   }
   const interruptedByHost = stopping && completedTurn.status === "interrupted";
-  if (completedTurn.status !== "completed" && !interruptedByHost) {
+  const finalReport = finalInterrupt.armed
+    ? await finalInterrupt.report()
+    : undefined;
+  // The Host ended this turn after the final reply committed: the reply is
+  // done, so the interrupted turn is a success (never a cancellation).
+  const endedAfterFinalReply =
+    !stopping &&
+    finalInterrupt.issued &&
+    completedTurn.status === "interrupted";
+  if (
+    completedTurn.status !== "completed" &&
+    !interruptedByHost &&
+    !endedAfterFinalReply
+  ) {
     throw new Error(
       `Codex turn ended with status ${completedTurn.status}${completedTurn.errorMessage ? `: ${completedTurn.errorMessage}` : ""}`,
     );
   }
   if (!stopping) writeProviderSessionEvidence(activeThreadId);
+  if (finalReport !== undefined) writeFinalInterruptReport(finalReport);
 
   driverCompleted = true;
   busyInput.close();
@@ -363,6 +390,7 @@ function handleNotification(frame) {
   }
   if (!isRecord(frame.params) || !belongsToActiveCodexTurn(frame)) return;
   busyInput.observe(frame);
+  finalInterrupt.observe(frame);
   trajectoryWriter.emit(normalizeCodexTrajectoryNotification(frame));
   usageWriter.emit(usageTracker?.observe(frame));
   if (frame.method !== "turn/completed") return;
@@ -383,6 +411,26 @@ function handleNotification(frame) {
     turnId,
     errorMessage: errorMessage?.slice(0, 2048),
   });
+}
+
+/**
+ * Host frame `{protocol:"rah-final-reply/v1", runAttemptId, turnId?}`: a
+ * `final` post of this RunAttempt committed. Only this process's own
+ * RunAttempt and its own active turn are ever interrupted.
+ */
+function armFinalInterrupt(frame) {
+  if (
+    stopping ||
+    driverCompleted ||
+    activeThreadId === undefined ||
+    activeTurnId === undefined ||
+    typeof frame.runAttemptId !== "string" ||
+    (process.env.RAH_RUN_ATTEMPT_ID !== undefined &&
+      frame.runAttemptId !== process.env.RAH_RUN_ATTEMPT_ID) ||
+    (frame.turnId !== undefined && frame.turnId !== activeTurnId)
+  )
+    return;
+  finalInterrupt.arm();
 }
 
 function belongsToActiveCodexTurn(frame) {
@@ -599,6 +647,18 @@ function writeDeliveryAcceptance(threadId, turnId, inputSha256) {
   } catch {
     // A missing fd3 means no Host is listening; the Activation then simply
     // never registers a send and falls back to the explicit message-check.
+  }
+}
+
+/** Host-private: whether the final-reply interrupt landed and beat the follow-up. */
+function writeFinalInterruptReport(report) {
+  try {
+    writeSync(
+      3,
+      `${JSON.stringify({ protocol: "rah-final-interrupt/v1", ...report })}\n`,
+    );
+  } catch {
+    // No Host listening: the usage read shows the interrupt as unreported.
   }
 }
 

@@ -254,6 +254,39 @@ export const RunAttemptExecutionSchema = z
   .strict();
 export type RunAttemptExecution = z.infer<typeof RunAttemptExecutionSchema>;
 
+/**
+ * Final-reply turn end: a `final` Worker post committed in this RunAttempt,
+ * and whether the Host's native interrupt landed. `sent` is false until the
+ * runtime reports an interrupt it issued (unsupported, failed or lost report:
+ * the turn ran on as before). `preemptedFollowUp` is true when no model
+ * output or usage was observed after the final post's tool call finished,
+ * false when some was, `unknown` when it could not be observed.
+ */
+export const FinalInterruptPreemptionSchema = z.union([
+  z.boolean(),
+  z.literal("unknown"),
+]);
+export const RunAttemptFinalInterruptSchema = z
+  .object({
+    committedRoomSeq: z.number().int().positive(),
+    sent: z.boolean(),
+    preemptedFollowUp: FinalInterruptPreemptionSchema,
+  })
+  .strict();
+export type RunAttemptFinalInterrupt = z.infer<
+  typeof RunAttemptFinalInterruptSchema
+>;
+export const RunAttemptFinalInterruptRecordInputSchema = z
+  .object({
+    runAttemptId: IdentifierSchema,
+    sent: z.boolean(),
+    preemptedFollowUp: FinalInterruptPreemptionSchema,
+  })
+  .strict();
+export type RunAttemptFinalInterruptRecordInput = z.infer<
+  typeof RunAttemptFinalInterruptRecordInputSchema
+>;
+
 export const ClientRunAttemptUsageGetResponseSchema = z
   .object({
     runAttemptId: IdentifierSchema,
@@ -288,6 +321,8 @@ export const ClientRunAttemptUsageGetResponseSchema = z
       .max(RUNTIME_PROCESS_CLEANUP_READ_LIMIT),
     /** S2-a: warm/cold execution evidence; absent before schema 65 readers. */
     execution: RunAttemptExecutionSchema.nullable().optional(),
+    /** Final-reply turn end; `null` when no `final` post committed. */
+    finalInterrupt: RunAttemptFinalInterruptSchema.nullable().optional(),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

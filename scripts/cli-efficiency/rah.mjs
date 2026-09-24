@@ -370,6 +370,8 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
         gaps: productUsage.gaps,
         totals: productUsage.totals,
       };
+      // Final-reply turn end: null when no `final` post committed.
+      round.metrics.finalInterrupt = productUsage.finalInterrupt ?? null;
       round.answer = round.replies.map((m) => m.body).join("\n");
       delete round.replies;
       save();

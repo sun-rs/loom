@@ -451,3 +451,77 @@ test("a total-input failure carries the exact fixed/residue/work-path decomposit
   assert.equal(r.rounds[0].inputDecomposition.residue, 0);
   assert.equal(r.status, "over-budget");
 });
+test("final-reply interrupt is reported per round and summarized per arm, never budgeted", async () => {
+  const { compareArm } = await import("./metrics.mjs");
+  const rah = [
+    rahArmRound({
+      generations: 1,
+      firstInput: 13000,
+      input: 13000,
+      toolCalls: [post],
+      finalInterrupt: {
+        committedRoomSeq: 4,
+        sent: true,
+        preemptedFollowUp: true,
+      },
+    }),
+    rahArmRound({
+      generations: 2,
+      firstInput: 18000,
+      input: 36000,
+      toolCalls: [post],
+      finalInterrupt: {
+        committedRoomSeq: 7,
+        sent: true,
+        preemptedFollowUp: false,
+      },
+    }),
+    rahArmRound({
+      generations: 2,
+      firstInput: 19000,
+      input: 38000,
+      toolCalls: [post],
+      finalInterrupt: {
+        committedRoomSeq: 9,
+        sent: false,
+        preemptedFollowUp: "unknown",
+      },
+    }),
+    rahArmRound({
+      generations: 2,
+      firstInput: 20000,
+      input: 40000,
+      toolCalls: [post],
+      finalInterrupt: null,
+    }),
+    rahArmRound({
+      generations: 2,
+      firstInput: 21000,
+      input: 42000,
+      toolCalls: [post],
+    }),
+  ];
+  const r = compareArm([...nativeArm, ...nativeArm.slice(0, 2)], rah);
+  assert.deepEqual(
+    r.rounds.map((x) => x.finalInterrupt),
+    [
+      { committed: true, sent: true, preemptedFollowUp: true },
+      { committed: true, sent: true, preemptedFollowUp: false },
+      { committed: true, sent: false, preemptedFollowUp: "unknown" },
+      { committed: false, sent: false, preemptedFollowUp: null },
+      null,
+    ],
+  );
+  assert.deepEqual(r.finalInterrupt, {
+    rounds: 5,
+    committed: 3,
+    sent: 2,
+    preempted: 1,
+    notPreempted: 1,
+    unknown: 1,
+    noFinalPost: 1,
+    evidenceMissing: 1,
+  });
+  // Reported only: no failure names come from it.
+  assert.ok(r.rounds.every((x) => !x.failures.some((f) => /final/i.test(f))));
+});

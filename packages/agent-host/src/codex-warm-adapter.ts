@@ -440,6 +440,32 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     );
   }
 
+  async interruptAfterFinalReply(run: RunHandle): Promise<boolean> {
+    const binding = this.#turns.get(run.runId);
+    if (binding === undefined)
+      return (
+        (await this.#options.legacy.interruptAfterFinalReply?.(run)) ?? false
+      );
+    const { runtime, turn } = binding;
+    if (
+      turn.nativeTurnId === undefined ||
+      turn.framesClosed ||
+      turn.outcome.settled ||
+      turn.cancelRequested === true
+    )
+      return false;
+    try {
+      runtime.command({
+        nativeTurnId: turn.nativeTurnId,
+        op: "turn.final",
+        runAttemptId: turn.runAttemptId,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async recover(
     input: Parameters<NonNullable<RuntimeAdapter["recover"]>>[0],
   ): Promise<RunExit> {
@@ -607,7 +633,13 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         ? "success"
         : outcome.status === "interrupted" && turn.cancelRequested
           ? "cancelled"
-          : "error";
+          : // Ended by the Host after the final reply committed: the reply
+            // is done, so the native interrupt is this turn's success.
+            outcome.status === "interrupted" &&
+              outcome.endedAfterFinalReply === true &&
+              failure === undefined
+            ? "success"
+            : "error";
     return {
       code: null,
       ...(failure === undefined ? {} : { failure }),

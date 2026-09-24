@@ -1,6 +1,7 @@
 import { ROLE_CATALOG_SCHEMA } from "./role-catalog-schema.ts";
 import { RUN_ATTEMPT_USAGE_SCHEMA } from "./run-attempt-usage.ts";
 import { RUNTIME_PROCESS_CLEANUP_SCHEMA } from "./runtime-process-cleanup.ts";
+import { RUN_ATTEMPT_FINAL_REPLY_SCHEMA } from "./run-attempt-final-reply.ts";
 import { INSTANCE_RUNTIME_SCHEMA } from "./instance-runtime.ts";
 import { INSTANCE_SESSION_SCHEMA } from "./instance-session.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -18,6 +19,7 @@ PRAGMA foreign_keys = ON;
 export const SCHEMA_OBJECT_SQL = `${ROLE_CATALOG_SCHEMA}
 ${RUN_ATTEMPT_USAGE_SCHEMA}
 ${RUNTIME_PROCESS_CLEANUP_SCHEMA}
+${RUN_ATTEMPT_FINAL_REPLY_SCHEMA}
 ${INSTANCE_RUNTIME_SCHEMA}
 ${INSTANCE_SESSION_SCHEMA}
 

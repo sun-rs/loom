@@ -93,6 +93,16 @@ export type RuntimeStartLifecycle = {
    * acceptance). Transport acceptance only, never "read" or "understood".
    */
   recordRuntimeNoticeAccepted?(): Promise<void>;
+  /**
+   * Final-reply turn end: the runtime's report of the native interrupt it
+   * issued after the Host's final-reply signal. Diagnostics for the usage
+   * read; never ACK, Task or completion evidence.
+   */
+  recordFinalReplyInterrupt?(input: {
+    preemptedFollowUp: boolean | "unknown";
+    runAttemptId: string;
+    sent: boolean;
+  }): Promise<void>;
 };
 
 export type RuntimeBusyNotice = {
@@ -108,6 +118,14 @@ export interface RuntimeAdapter {
   /** Transport acceptance only; never acknowledges canonical Inbox or work. */
   notifyBusy?(run: RunHandle, notice: RuntimeBusyNotice): Promise<boolean>;
   readonly recoveryDrivers?: readonly string[];
+  /**
+   * Final-reply turn end: a `final` post of this run committed (the Host read
+   * the Kernel marker). End the native turn at the next tool boundary instead
+   * of letting the tool loop spend a full-context generation on "sent".
+   * Returns false when unsupported or unavailable; the turn then runs on
+   * unchanged. Never completes the Activation or acknowledges delivery.
+   */
+  interruptAfterFinalReply?(run: RunHandle): Promise<boolean>;
   probe(): Promise<RuntimeAvailability>;
   /** Liveness only, never delivery/completion or process-group terminal proof. */
   isAlive?(run: RunHandle): Promise<boolean>;

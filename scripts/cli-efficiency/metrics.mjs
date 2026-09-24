@@ -105,6 +105,45 @@ function usageEvidence(rah) {
     }
   return { completeness, gaps: product?.gaps ?? [], mismatches };
 }
+// Final-reply turn end (product usage `finalInterrupt`), reported per round
+// and never budgeted. `null` from the product means no `final` post
+// committed; an absent field means the evidence was not collected.
+function finalInterruptOf(rah) {
+  if (rah.finalInterrupt === undefined) return null;
+  const f = rah.finalInterrupt;
+  if (f === null)
+    return { committed: false, sent: false, preemptedFollowUp: null };
+  return {
+    committed: true,
+    sent: f.sent === true,
+    preemptedFollowUp: f.preemptedFollowUp,
+  };
+}
+function summarizeFinalInterrupts(rahRounds) {
+  const out = {
+    rounds: rahRounds.length,
+    committed: 0,
+    sent: 0,
+    preempted: 0,
+    notPreempted: 0,
+    unknown: 0,
+    noFinalPost: 0,
+    evidenceMissing: 0,
+  };
+  for (const r of rahRounds) {
+    const f = finalInterruptOf(r);
+    if (f === null) out.evidenceMissing += 1;
+    else if (!f.committed) out.noFinalPost += 1;
+    else {
+      out.committed += 1;
+      if (f.sent) out.sent += 1;
+      if (f.preemptedFollowUp === true) out.preempted += 1;
+      else if (f.preemptedFollowUp === false) out.notPreempted += 1;
+      else out.unknown += 1;
+    }
+  }
+  return out;
+}
 const statusOf = (failures) =>
   failures.length && failures.every(isEvidenceFailure)
     ? "missing-evidence"
@@ -226,6 +265,7 @@ export function compareArm(nativeRounds, rahRounds) {
   return {
     status: statusOf(all),
     failures,
+    finalInterrupt: summarizeFinalInterrupts(rahRounds.slice(0, n)),
     fixedOverhead,
     perRoundResidue,
     workPathVariance: { round1HistoryDelta: history1, rounds: workRounds },
@@ -288,6 +328,7 @@ export function compareRounds(native, rah) {
     extraProtocolGenerations,
     extraGenerationsBeforeReply,
     usageEvidence: evidence,
+    finalInterrupt: finalInterruptOf(rah),
     inputRatio: rah.input / native.input,
     uncachedRatio: native.uncached ? rah.uncached / native.uncached : null,
     replyRatio: rah.replySeconds / native.replySeconds,

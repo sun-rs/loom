@@ -1033,6 +1033,45 @@ test("Worker message CLI exposes explicit Thread and top-level targets without a
   }
 });
 
+test("message-post --final marks the committing reply; the default post stays non-final", async () => {
+  const state = fixture();
+  try {
+    const base = ["worker", "message-post", "--body", "answer"];
+    assert.equal(await runWorkerCliCommand(base, state.runtime), 0);
+    assert.equal(
+      Object.hasOwn(state.requests[0]?.body as object, "final"),
+      false,
+      "a progress post never ends the turn",
+    );
+    assert.equal(
+      await runWorkerCliCommand([...base, "--final"], state.runtime),
+      0,
+    );
+    assert.equal(
+      (state.requests[1]?.body as Record<string, unknown>).final,
+      true,
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--send-draft", "--final"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      (state.requests[2]?.body as Record<string, unknown>).final,
+      true,
+    );
+    // A flag, never a value: `--final false` is rejected, not silently final.
+    assert.notEqual(
+      await runWorkerCliCommand([...base, "--final", "false"], state.runtime),
+      0,
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
 test("Freshness hold is an unsuccessful send with executable review and resend guidance", async () => {
   const state = fixture();
   try {

@@ -26,7 +26,9 @@ import {
 // constant rules every wake used to repeat (~1,300 chars per turn, kept in
 // native history forever) are stated here once instead, compressed to ~620
 // chars. One session-start copy replaces a copy per turn.
-const STANDING_PROMPT_BUDGET_CHARS = 10_400;
+// Final-reply turn end (2026-09-24) raised it by 100 (max now 10,497): one
+// sentence naming `--final`, which saves a full-context generation per turn.
+const STANDING_PROMPT_BUDGET_CHARS = 10_500;
 const PLATFORM_LAYER_BUDGET_CHARS = 7_400;
 
 const minimalInputs: readonly StandingPromptInput[] = (
@@ -117,6 +119,27 @@ test("each rule moved out of the wake is stated exactly once in the standing pro
         `${rule.source} in ${JSON.stringify(input)}`,
       );
   }
+});
+
+test("the final-reply rule is one sentence in the standing prompt and --final rides the wake's Reply line", () => {
+  for (const input of [...minimalInputs, {}]) {
+    const { prompt } = compileStandingPrompt(input);
+    assert.equal(
+      [
+        ...prompt.matchAll(
+          /Use `--final` on the post completing your reply to delivered messages; omit it on progress posts\./gu,
+        ),
+      ].length,
+      1,
+    );
+    assert.equal([...prompt.matchAll(/--final/gu)].length, 1);
+  }
+  const [wake, warmWake] = wakeSamples();
+  assert.match(
+    wake!,
+    /^Reply: message-post --based-on-room-seq 14 --final · /mu,
+  );
+  assert.match(warmWake!, /--based-on-room-seq 14 --final · /u);
 });
 
 const HANDLE = "AbCdEfGhIjKlMnOpQrStUv";

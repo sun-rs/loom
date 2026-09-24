@@ -41,6 +41,7 @@ import { WorkerTargetContextService } from "./worker-target-context.ts";
 import { AttachmentCommentsService } from "./attachment-comments.ts";
 import { AgentChannelAttentionService } from "./agent-channel-attention.ts";
 import { postWorkerMessageTransaction } from "./worker-message-command.ts";
+import { RunAttemptFinalReplyService } from "./run-attempt-final-reply.ts";
 import { WorkerReadService } from "./worker-read-tools.ts";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -419,7 +420,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 66;
+export const KERNEL_SCHEMA_VERSION = 67;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -474,6 +475,7 @@ export class RoomKernel {
   readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
   readonly runAttemptUsage: RunAttemptUsageService;
+  readonly finalReplies: RunAttemptFinalReplyService;
   readonly runtimeProcessCleanup;
   readonly instanceRuntimes: InstanceRuntime.InstanceRuntimeService;
   readonly instanceSessions: InstanceSessionService;
@@ -575,6 +577,7 @@ export class RoomKernel {
       files: () => this.files,
       acknowledgePresentedDelivery: (scope, input) =>
         this.acknowledgePresentedDeliveryInTransaction(scope, input),
+      recordFinalReply: (s, e) => this.finalReplies.recordInTransaction(s, e),
       presentedFreshnessFloor: (scope, roomId) =>
         presentedFreshnessFloor(this.#database, scope, roomId),
     });
@@ -776,6 +779,7 @@ export class RoomKernel {
     };
     this.#runtimeTrajectory = new RuntimeTrajectoryService(runtimeObservation);
     this.runAttemptUsage = new RunAttemptUsageService(runtimeObservation);
+    this.finalReplies = new RunAttemptFinalReplyService(runtimeObservation);
     this.runtimeProcessCleanup = this.runAttemptUsage.cleanups;
     this.instanceSessions = new InstanceSessionService(runtimeObservation);
     this.instanceRuntimes = new InstanceRuntime.InstanceRuntimeService({
@@ -1806,36 +1810,29 @@ export class RoomKernel {
     execution: AuthenticatedWorkerExecutionContext,
     input: WorkerMessagePostRequest,
   ) {
-    if (input.channel !== undefined)
-      return this.workerTargetContext.post(execution, input);
-    return this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      const result = postWorkerMessageTransaction({
-        comments: this.attachmentComments,
-        database: this.#database,
-        collaboration: this.#collaboration,
-        files: this.files,
-        principal: principalProfile.fromRow(
-          this.#requirePrincipal(scope.participantId),
-        ),
-        scope,
-        execution,
-        input,
-        now: this.#now,
-        eventFromRow: (row) => this.#eventFromRow(row),
-      });
-      // Raft hides the ACK inside `raft message check` (main.js@729502). RAH's
-      // ACK stays credential-bound and model-side, but a post that the model
-      // based on content the Host already presented in this RunAttempt carries
-      // the same evidence, so it no longer needs a separate check turn. Only
-      // the presented prefix is acknowledged; a notice-degraded sequence stops
-      // the cursor and still requires an explicit `message-check`.
-      if ("event" in result)
-        this.acknowledgePresentedDeliveryInTransaction(scope, {
-          postedRoomId: result.event.roomId,
-          modelBasedOnRoomSeq: input.basedOnRoomSeq,
+    return this.finalReplies.hinting(() => {
+      if (input.channel !== undefined)
+        return this.workerTargetContext.post(execution, input);
+      return this.#transaction(() => {
+        const scope = this.#requireAuthenticatedWorkerExecution(execution);
+        return postWorkerMessageTransaction({
+          comments: this.attachmentComments,
+          database: this.#database,
+          collaboration: this.#collaboration,
+          files: this.files,
+          principal: principalProfile.fromRow(
+            this.#requirePrincipal(scope.participantId),
+          ),
+          scope,
+          execution,
+          input,
+          now: this.#now,
+          eventFromRow: (row) => this.#eventFromRow(row),
+          acknowledge: (s, i) =>
+            this.acknowledgePresentedDeliveryInTransaction(s, i),
+          recordFinal: (s, e) => this.finalReplies.recordInTransaction(s, e),
         });
-      return result;
+      });
     });
   }
 

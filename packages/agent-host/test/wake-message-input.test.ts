@@ -67,7 +67,7 @@ test("golden: a complete window is one line per message plus one reply line", ()
     [
       "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
       "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
-      "Reply: message-post --based-on-room-seq 14 · no reply needed: message-check",
+      "Reply: message-post --based-on-room-seq 14 --final · no reply needed: message-check",
     ].join("\n"),
   );
 });
@@ -78,7 +78,7 @@ test("golden: a warm turn carries its handle on both commands", () => {
     [
       "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
       "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
-      `Reply: message-post --turn ${HANDLE} --based-on-room-seq 14 · no reply needed: message-check --turn ${HANDLE}`,
+      `Reply: message-post --turn ${HANDLE} --based-on-room-seq 14 --final · no reply needed: message-check --turn ${HANDLE}`,
     ].join("\n"),
   );
 });
@@ -135,7 +135,7 @@ test("golden: a business fact keeps a compact type and its payload", () => {
       "#general seq 12 msg=0c12aaaa @richard: one",
       '#general seq 13 task.cancelled @richard {"taskId":"task-7","number":7}',
       "#general seq 14 msg=0c14bbbb @richard: two",
-      "Reply: message-post --based-on-room-seq 14 · no reply needed: message-check",
+      "Reply: message-post --based-on-room-seq 14 --final · no reply needed: message-check",
     ].join("\n"),
   );
 });
@@ -148,7 +148,7 @@ test("golden: the Host cleanup notice rides as one bounded trailing line", () =>
     [
       "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
       "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
-      "Reply: message-post --based-on-room-seq 14 · no reply needed: message-check",
+      "Reply: message-post --based-on-room-seq 14 --final · no reply needed: message-check",
       notice,
     ].join("\n"),
   );

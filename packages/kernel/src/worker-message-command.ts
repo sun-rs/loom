@@ -33,6 +33,11 @@ export function postWorkerMessageTransaction(context: {
   input: WorkerMessagePostRequest;
   now: () => Date;
   eventFromRow: (row: Row) => RoomEvent;
+  acknowledge: (
+    scope: ActivationCredentialScope,
+    input: { postedRoomId: string; modelBasedOnRoomSeq: number | undefined },
+  ) => void;
+  recordFinal: (scope: ActivationCredentialScope, event: RoomEvent) => void;
 }) {
   const { database, scope, files, execution } = context;
   const parsed = WorkerMessagePostRequestSchema.parse(context.input);
@@ -136,6 +141,21 @@ export function postWorkerMessageTransaction(context: {
   if ("event" in result && !result.deduplicated)
     files.consume(attachments, result.event.aggregateId);
   context.comments.bindWorkerResult(attachmentComment, result);
+  // Raft hides the ACK inside `raft message check` (main.js@729502). RAH's
+  // ACK stays credential-bound and model-side, but a post that the model
+  // based on content the Host already presented in this RunAttempt carries
+  // the same evidence, so it no longer needs a separate check turn. Only the
+  // presented prefix is acknowledged; a notice-degraded sequence stops the
+  // cursor and still requires an explicit `message-check`.
+  if ("event" in result)
+    context.acknowledge(scope, {
+      postedRoomId: result.event.roomId,
+      modelBasedOnRoomSeq: context.input.basedOnRoomSeq,
+    });
+  // Final-reply marker: independent of the ACK (`final` alone never
+  // acknowledges); only a committed post, never a held draft.
+  if ("event" in result && parsed.final === true)
+    context.recordFinal(scope, result.event);
   // A token that woke nobody rides back on the successful post, exactly as
   // Raft returns unresolvedMentionHandles alongside a queued message. A
   // deduplicated post reports nothing: the first one already did.

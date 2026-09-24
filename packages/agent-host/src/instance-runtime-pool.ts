@@ -70,6 +70,8 @@ export type WarmTurnOutcome =
       nativeTurnId: string;
       status: string;
       errorMessage?: string;
+      /** The driver issued the final-reply interrupt for this native turn. */
+      endedAfterFinalReply?: boolean;
     }
   | { kind: "exit"; exit: RunExit }
   /** The runtime was killed but its exit is not proven: no proof exists. */
@@ -517,6 +519,9 @@ export class WarmRuntime {
           status: String(envelope.status),
           ...(typeof envelope.errorMessage === "string"
             ? { errorMessage: envelope.errorMessage }
+            : {}),
+          ...(envelope.endedAfterFinalReply === true
+            ? { endedAfterFinalReply: true }
             : {}),
         });
         return;

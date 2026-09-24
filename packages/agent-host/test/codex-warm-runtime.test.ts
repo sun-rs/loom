@@ -1035,3 +1035,193 @@ test("S2-a review P2-1: a steer answered after the native turn end stays inside 
     await state.cleanup();
   }
 });
+
+// Final-reply turn end (warm). The FAKE app-server posts the reply from a tool
+// item and then, like the real tool loop, would run one more full-context
+// generation that only says "sent" unless the turn is interrupted first.
+const followUps = (state: Harness) =>
+  state.records().filter((record) => record.event === "follow-up-generation");
+const interruptRequests = (state: Harness) =>
+  state
+    .records()
+    .filter(
+      (record) =>
+        record.event === "request" && record.method === "turn/interrupt",
+    );
+
+function orderedRuns(state: Harness) {
+  return state.kernel
+    .listRunAttempts({ roomId: state.roomId })
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+}
+
+function finalInterruptOf(state: Harness, runAttemptId: string) {
+  const [row] = sql(
+    state,
+    "SELECT interrupt_sent, preempted_follow_up FROM run_attempt_final_replies WHERE run_attempt_id = ?",
+    runAttemptId,
+  );
+  return row === undefined ? undefined : { ...row };
+}
+
+test("final reply (warm): the turn ends after the committed post, quiesces as success, and the next turn continues the thread", async () => {
+  const state = await harness();
+  try {
+    for (let turn = 1; turn <= 2; turn += 1) {
+      state.post(`[fake:final] question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+    }
+    assert.deepEqual(followUps(state), [], "no post-reply generation ran");
+    const interrupts = interruptRequests(state);
+    const turnIds = state
+      .records()
+      .filter((record) => record.event === "turn")
+      .map((record) => record.turnId);
+    assert.deepEqual(
+      interrupts.map((record) => (record.params as { turnId: string }).turnId),
+      turnIds,
+      "each interrupt names its own native turn",
+    );
+    const runs = orderedRuns(state);
+    assert.equal(runs.length, 2);
+    for (const run of runs) {
+      assert.equal(run.state, "exited");
+      assert.deepEqual(finalInterruptOf(state, run.runAttemptId), {
+        interrupt_sent: 1,
+        preempted_follow_up: "true",
+      });
+    }
+    for (const process of state.kernel.listRuntimeProcesses({
+      roomId: state.roomId,
+    })) {
+      assert.equal(process.proofKind, "turn_quiesced");
+      assert.equal(process.quiesceResult, "success");
+    }
+    assert.ok(
+      state.kernel
+        .listActivations({ roomId: state.roomId })
+        .every((activation) => activation.state === "completed"),
+    );
+    const threads = new Set(
+      state
+        .records()
+        .filter(
+          (record) =>
+            record.event === "request" && record.method === "turn/start",
+        )
+        .map((record) => (record.params as { threadId: string }).threadId),
+    );
+    assert.equal(threads.size, 1, "the session continues on the same thread");
+    assert.equal(
+      state.records().filter((record) => record.event === "start").length,
+      1,
+      "the warm process survives the interrupt",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("final reply (warm): a post without --final is unchanged — the follow-up generation runs and nothing is interrupted", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:post-nofinal] question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(followUps(state).length, 1);
+    assert.deepEqual(interruptRequests(state), []);
+    const [run] = orderedRuns(state);
+    assert.equal(finalInterruptOf(state, run!.runAttemptId), undefined);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("final reply (warm): a rejected interrupt falls back to the unchanged turn and the reply still completes", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:final-reject] question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(interruptRequests(state).length, 1);
+    assert.equal(followUps(state).length, 1);
+    const [run] = orderedRuns(state);
+    assert.equal(run!.state, "exited");
+    assert.deepEqual(finalInterruptOf(state, run!.runAttemptId), {
+      interrupt_sent: 0,
+      preempted_follow_up: "unknown",
+    });
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("final reply (warm): --final never acknowledges — without ACK the Activation does not complete", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:final-noack] question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "failed", JSON.stringify(result));
+    assert.match(
+      result.state === "failed" ? result.error : "",
+      /not acknowledged through sequence/u,
+    );
+    assert.deepEqual(followUps(state), []);
+    const [process] = state.kernel.listRuntimeProcesses({
+      roomId: state.roomId,
+    });
+    assert.equal(process?.quiesceResult, "success");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("final reply (warm): a signal that lands after the follow-up began still ends the turn and records it was not preempted", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:final-late] question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.deepEqual(followUps(state), []);
+    const [run] = orderedRuns(state);
+    assert.deepEqual(finalInterruptOf(state, run!.runAttemptId), {
+      interrupt_sent: 1,
+      preempted_follow_up: "false",
+    });
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("final reply (warm): the driver ignores a final command naming another native turn or RunAttempt", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:final-wait] question");
+    const cycle = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () => state.records().some((record) => record.event === "final-window"),
+      "the post-reply window",
+    );
+    const runtime = state.current.pool.runtimeFor(state.participantId)!;
+    const [run] = orderedRuns(state);
+    runtime.command({
+      nativeTurnId: "turn-not-this-one",
+      op: "turn.final",
+      runAttemptId: run!.runAttemptId,
+    });
+    const turnId = state.records().find((record) => record.event === "turn")!
+      .turnId as string;
+    runtime.command({
+      nativeTurnId: turnId,
+      op: "turn.final",
+      runAttemptId: "run-attempt-of-someone-else",
+    });
+    const result = await cycle;
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.deepEqual(interruptRequests(state), []);
+    assert.equal(followUps(state).length, 1);
+  } finally {
+    await state.cleanup();
+  }
+});

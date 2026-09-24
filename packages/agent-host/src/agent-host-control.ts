@@ -108,6 +108,19 @@ export type AgentHostControlPort = {
   readPendingRuntimeNotice?(
     input: HostInput<RoomKernel["readPendingRuntimeNotice"]>,
   ): Promise<HostResult<RoomKernel["readPendingRuntimeNotice"]>>;
+  /** Final-reply turn end: the durable marker of a committed `final` post. */
+  readFinalReply?(
+    input: Parameters<RoomKernel["finalReplies"]["read"]>[1],
+  ): Promise<ReturnType<RoomKernel["finalReplies"]["read"]>>;
+  /** The runtime's native interrupt outcome (diagnostics for the usage read). */
+  recordFinalReplyInterrupt?(
+    input: Parameters<RoomKernel["finalReplies"]["recordInterrupt"]>[1],
+  ): Promise<void>;
+  /**
+   * In-process commit hint (co-located Kernel only). Lossy by design: the
+   * Host re-reads `readFinalReply` before acting.
+   */
+  onFinalReplyCommitted?(listener: (runAttemptId: string) => void): () => void;
   renewActivationLease(
     input: HostInput<RoomKernel["renewActivationLease"]>,
   ): Promise<HostResult<RoomKernel["renewActivationLease"]>>;
@@ -259,6 +272,11 @@ export function createKernelAgentHostControlPort(
     instanceRuntimes: createKernelInstanceRuntimeControl(kernel, host),
     readPendingRuntimeNotice: async (input) =>
       kernel.readPendingRuntimeNotice(host, input),
+    readFinalReply: async (input) => kernel.finalReplies.read(host, input),
+    recordFinalReplyInterrupt: async (input) =>
+      kernel.finalReplies.recordInterrupt(host, input),
+    onFinalReplyCommitted: (listener) =>
+      kernel.finalReplies.subscribe(listener),
     renewActivationLease: async (input) =>
       kernel.renewActivationLease(host, input),
     renewAgentExclusiveOperationLease: async (input) =>

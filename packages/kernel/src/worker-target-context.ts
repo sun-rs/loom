@@ -86,6 +86,11 @@ type Context = {
     scope: P.ActivationCredentialScope,
     input: { postedRoomId: string; modelBasedOnRoomSeq: number | undefined },
   ) => void;
+  /** Final-reply marker for a committed `final` post (never an ACK). */
+  recordFinalReply: (
+    scope: P.ActivationCredentialScope,
+    event: P.RoomEvent,
+  ) => void;
   /**
    * The freshness floor a *sent* presented rendering justifies on one target:
    * the presented prefix, or 0. A hold exists to stop an Agent answering past
@@ -416,6 +421,8 @@ export class WorkerTargetContextService {
           postedRoomId: result.event.roomId,
           modelBasedOnRoomSeq: input.basedOnRoomSeq,
         });
+      if ("event" in result && input.final === true)
+        this.#context.recordFinalReply(origin, result.event);
       return P.WorkerMessagePostResponseSchema.parse(result);
     });
   }

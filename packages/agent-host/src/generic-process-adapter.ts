@@ -51,6 +51,11 @@ export type GenericProcessAdapterOptions = {
   busyInputMode?: "direct" | "gated";
   guideRuntimeId?: string;
   nativeBusyInput?: boolean;
+  /**
+   * The driver understands `rah-final-reply/v1` on its native input pipe
+   * (Codex app-server). Requires `nativeBusyInput`.
+   */
+  finalReplyInterrupt?: boolean;
   activationEnvironment?: (
     input: ActivationEnvelope,
   ) => ActivationEnvironmentLease | Promise<ActivationEnvironmentLease>;
@@ -257,10 +262,20 @@ export class RuntimeTrajectoryCollector {
   #queue = Promise.resolve();
   #terminalFailure: RuntimeFailure | undefined;
   #bindingFailure: RuntimeFailure | undefined;
+  #nativeTurnId: string | undefined;
   readonly #onBindingFailure: () => void;
 
   get terminalFailure(): RuntimeFailure | undefined {
     return this.#bindingFailure ?? this.#terminalFailure;
+  }
+
+  get runAttemptId(): string {
+    return this.#runAttemptId;
+  }
+
+  /** The native turn id from the driver's delivery acceptance, if any. */
+  get nativeTurnId(): string | undefined {
+    return this.#nativeTurnId;
   }
 
   constructor(input: {
@@ -410,6 +425,32 @@ export class RuntimeTrajectoryCollector {
     }
   }
 
+  async #recordFinalReplyInterrupt(
+    frame: Record<string, unknown>,
+  ): Promise<void> {
+    const preempted = frame.preemptedFollowUp;
+    if (
+      typeof frame.sent !== "boolean" ||
+      (typeof preempted !== "boolean" && preempted !== "unknown")
+    ) {
+      this.#diagnostics.append(
+        "[rah-os] ignored an invalid final-reply interrupt report\n",
+      );
+      return;
+    }
+    try {
+      await this.#lifecycle.recordFinalReplyInterrupt?.({
+        preemptedFollowUp: preempted,
+        runAttemptId: this.#runAttemptId,
+        sent: frame.sent,
+      });
+    } catch (error) {
+      this.#diagnostics.append(
+        `[rah-os] final-reply interrupt report was not recorded: ${errorMessage(error)}\n`,
+      );
+    }
+  }
+
   #enqueue(line: string): void {
     if (Buffer.byteLength(line) > MAX_ACTIVITY_LINE_BYTES) {
       this.#diagnostics.append(
@@ -452,12 +493,17 @@ export class RuntimeTrajectoryCollector {
         }
         const acceptance = parseDeliveryAcceptance(frame);
         if (acceptance !== null) {
+          this.#nativeTurnId = acceptance.turnId;
           const outcome = await this.#recordDeliveryAcceptance?.(
             this.#activation,
             acceptance,
           );
           if (outcome?.runtimeNoticeAccepted === true)
             await this.#lifecycle.recordRuntimeNoticeAccepted?.();
+          return;
+        }
+        if (isRecord(frame) && frame.protocol === "rah-final-interrupt/v1") {
+          await this.#recordFinalReplyInterrupt(frame);
           return;
         }
         if (isRecord(frame) && frame.protocol === "rah-provider-usage/v1") {
@@ -716,6 +762,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   readonly busyInputMode: "direct" | "gated" | undefined;
   readonly guideRuntimeId: string | undefined;
   readonly #nativeBusyInput: boolean;
+  readonly #finalReplyInterrupt: boolean;
   get busyInputSupported(): boolean {
     return this.#nativeBusyInput;
   }
@@ -751,6 +798,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
   constructor(options: GenericProcessAdapterOptions) {
     this.#nativeBusyInput = options.nativeBusyInput === true;
+    this.#finalReplyInterrupt =
+      this.#nativeBusyInput && options.finalReplyInterrupt === true;
     this.guideRuntimeId = options.guideRuntimeId;
     this.busyInputMode = options.busyInputMode;
     if (options.command.length === 0) {
@@ -1057,6 +1106,35 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         }
       },
     );
+  }
+
+  async interruptAfterFinalReply(handle: RunHandle): Promise<boolean> {
+    const run = this.#runs.get(handle.runId);
+    if (!this.#finalReplyInterrupt || !run || run.exited) return false;
+    const turnId = run.activity.nativeTurnId;
+    const line = `${JSON.stringify({
+      protocol: "rah-final-reply/v1",
+      runAttemptId: run.activity.runAttemptId,
+      ...(turnId === undefined ? {} : { turnId }),
+    })}\n`;
+    try {
+      if (run.supervisorDescriptor) {
+        await this.#requestSupervisorControl(
+          run.supervisorDescriptor,
+          "notify",
+          line,
+        );
+      } else {
+        const stdin = run.child.stdin;
+        if (!stdin?.writable || stdin.writableLength > 8192) return false;
+        await new Promise<void>((resolve, reject) =>
+          stdin.write(line, (error) => (error ? reject(error) : resolve())),
+        );
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async cancel(handle: RunHandle): Promise<RunExit> {
