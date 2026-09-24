@@ -64,6 +64,19 @@ export class AgentExclusiveOperationService {
       const authenticatedHost = this.#requireHost(host);
       this.#requireHostParticipant(authenticatedHost, command.participantId);
       assertAgentParticipant(this.#database, command.participantId);
+      // S1-f: these resets quarantine provider session files, which would
+      // leave a bound Role instance permanently unable to launch. Instances
+      // use the explicit, recorded instance.session.reset instead.
+      if (
+        (command.kind === "memory_reset" ||
+          command.kind === "execution_restart") &&
+        this.#database
+          .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
+          .get(command.participantId)
+      )
+        throw new ConflictError(
+          "Role instance cannot use Agent memory or execution reset; use instance.session.reset to start a new session",
+        );
       if (
         command.kind === "memory_reset" ||
         command.kind === "memory_maintenance"

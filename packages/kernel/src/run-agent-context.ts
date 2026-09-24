@@ -11,6 +11,7 @@ import { ConflictError, LeaseConflictError, NotFoundError } from "./errors.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 import type { AuthenticatedHostContext } from "./auth.ts";
 import { bindManagedAgentMemoryHome } from "./agent-memory-home.ts";
+import { instanceSessionState } from "./instance-session.ts";
 
 /** Called inside RunAttempt's existing Kernel transaction, after lease checks. */
 export function prepareRunPlacement(
@@ -87,14 +88,17 @@ export function agentRuntimeContextFromPlacement(
     ...(typeof definition.channel_id === "string"
       ? {
           instanceChannelId: definition.channel_id,
-          // A prior prepared process may have created native context even if it
-          // crashed before reporting its ID. Missing Host evidence must fail closed.
-          instanceSessionRequired:
-            database
-              .prepare(
-                "SELECT 1 FROM run_attempts r WHERE participant_id=? AND (runtime_run_id IS NOT NULL OR EXISTS (SELECT 1 FROM runtime_processes p WHERE p.run_attempt_id=r.run_attempt_id)) LIMIT 1",
-              )
-              .get(participantId) !== undefined,
+          // Only durable evidence that the Host persisted a session binding in
+          // this generation requires resuming it. A launch that failed before
+          // any binding (auth, model, early crash) starts fresh; a recorded
+          // binding whose Host file is lost fails closed.
+          ...(() => {
+            const session = instanceSessionState(database, participantId);
+            return {
+              instanceSessionRequired: session.required,
+              instanceSessionGeneration: session.generation,
+            };
+          })(),
         }
       : {}),
     handle: text(definition, "handle"),

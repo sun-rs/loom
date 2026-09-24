@@ -1,36 +1,33 @@
 /**
- * The wake turn's text: the Activation range's actual bodies, instead of the
- * fixed literal `providerActivationInput()` returns.
+ * S1-d bodied wake: the Activation's new Room events, already rendered by the
+ * Kernel (`/v1/worker/message-present`), become the wake turn's text instead of
+ * the fixed `providerActivationInput()` literal that mandates a startup check.
  *
- * Structural port of Raft Computer 1.0.32. `RAFT_CHUNK` =
- * `slices/packages/daemon/dist/chunk-TEGPBMW7.js`, offset to `main.js` is
- * +811783.
+ * Shape follows Raft Computer 1.0.32 `formatConcreteMessagesRuntimeInput`
+ * (`slices/packages/daemon/dist/chunk-TEGPBMW7.js:24366-24379`): header, the
+ * rendered bodies, an optional notice for what was not rendered, Raft's closing
+ * line and response-target hint verbatim. RAH differences, each deliberate:
  *
- * | RAH                        | Raft                                | Source                                  |
- * | -------------------------- | ----------------------------------- | --------------------------------------- |
- * | `formatWakeMessagesInput`  | `formatConcreteMessagesRuntimeInput` | `RAFT_CHUNK:24366-24379` (`main.js:836149`) |
- * | `formatWakeIncomingMessage`| `formatIncomingMessage`             | `RAFT_CHUNK:2763-2795`                  |
- * | `formatWakeInboxNotice`    | `formatInboxUpdateRuntimeInput`     | `RAFT_CHUNK:24381-24393` (`main.js:836164`) |
- * | `RESPONSE_TARGET_HINT`     | same                                | `RAFT_CHUNK:24350`                      |
- *
- * Addressing is rewritten for RAH (same convention as `worker-read-render.ts`):
- * `#room` for a Channel, `@handle` for a DM, `#room:threadId` for a Thread.
- * Message ids are the full canonical id — Raft's `getMessageShortId2` has no
- * RAH equivalent (`worker-read-render.ts:50-57`).
- *
- * Not ported, each with its reason: `thread_follow_reactivation` prefix (RAH
- * has no follow/unfollow re-subscription event), `third_party_event` payload
- * block, `producerFactId` lineage bracket, the `slock_cli` attachment hint
- * branch (`incomingMessageFormatOptionsForDriver`, `RAFT_CHUNK:2796-2801`,
- * switches on a chat transport RAH does not have).
- *
- * RAH additions, declared as such: non-message Room events are rendered too,
- * because the presented window covers every event type the existing
- * `message-check` page already shows (`room-sync.ts:123-127`,
- * `worker-read-render.ts:465-497`); and the notice is a bounded summary, since
- * the Kernel reports the degraded tail as a count and a range rather than a
- * list.
+ * - every event line is rendered by the same function `message-check` uses
+ *   (`renderWorkerEventLines`), so it carries the real Room `seq`, the author
+ *   handle and the canonical target, and a non-message business fact (a Task
+ *   change, a membership change) is shown rather than skipped; execution-audit
+ *   events were already covered-but-omitted by the Kernel's projection;
+ * - RAH keeps the model-submitted causal marker as the only implicit
+ *   acknowledgement evidence, so the text states the contiguous
+ *   `presentedThroughSeq` and, when that prefix reaches the Activation head,
+ *   the exact `--based-on-room-seq` value to reply with. A truncated window
+ *   instead asks for `message-check` first;
+ * - an Activation handled without a reply still needs the explicit
+ *   `message-check` acknowledgement; the text says so in one line.
  */
+import type { WorkerMessagePresentResponse } from "@rah-os/protocol";
+
+import {
+  ACTIVATION_ENVIRONMENT_LINE,
+  ACTIVATION_FINISH_RULES,
+} from "./provider-activation-input.js";
+import { renderWorkerEventLines } from "./worker-read-render.ts";
 
 /** `RAFT_CHUNK:24350`, verbatim. */
 export const RESPONSE_TARGET_HINT =
@@ -40,160 +37,79 @@ export const RESPONSE_TARGET_HINT =
 export const WAKE_CLOSING_LINE =
   "Respond as appropriate. Complete all your work before stopping.";
 
-export type WakeEvent = {
-  roomSeq: number;
-  type: string;
-  createdAt: string;
-  /** Already resolved to `#room`, `@handle` or `#room:threadId`. */
-  target: string;
-  /** Sender handle without `@`, or the raw actor id when unresolved. */
-  actor: string;
-  /** Canonical message id; absent for a non-message event. */
-  messageId?: string;
-  senderType?: "human" | "agent" | "system" | "service";
-  body?: string;
-  attachments?: readonly { filename: string; sizeBytes?: number }[];
-  task?: { number: number; status: string; assignee?: string };
-  threadContext?: {
-    parentTarget: string;
-    threadTarget: string;
-    parentMessage: string;
-    recentMessages: readonly string[];
-    historyTruncated: boolean;
-  };
-  /** Payload for a non-message event, rendered as one JSON line. */
-  payload?: unknown;
+export type BodiedWakeMemory = {
+  /** The complete current MEMORY.md, verbatim. */
+  content: string;
+  /**
+   * `changed`: the native session's system snapshot differs from the current
+   * file. `not_in_system`: this launch carries no system snapshot (tool mode).
+   */
+  reason: "changed" | "not_in_system";
 };
 
-export type WakeNoticeSummary = {
-  count: number;
-  fromSeq?: number | undefined;
-  toSeq?: number | undefined;
-};
-
-/** `formatVisibleActorType`: the type rides inside the header bracket. */
-function senderTypeSuffix(event: WakeEvent): string {
-  return event.senderType === undefined ? "" : `<${event.senderType}>`;
-}
-
-/** `formatAttachmentSuffix2`, without the `slock_cli` hint branch. */
-function attachmentSuffix(event: WakeEvent): string {
-  if (event.attachments === undefined || event.attachments.length === 0)
-    return "";
-  const listed = event.attachments
-    .map((attachment) =>
-      attachment.sizeBytes === undefined
-        ? attachment.filename
-        : `${attachment.filename} (${attachment.sizeBytes} bytes)`,
-    )
-    .join(", ");
-  return ` [attachments: ${listed}]`;
-}
-
-/** `RAFT_CHUNK:2787`, with RAH's assignee shape. */
-function taskSuffix(event: WakeEvent): string {
-  if (event.task === undefined) return "";
-  const assignee =
-    event.task.assignee === undefined ? "" : ` assignee=${event.task.assignee}`;
-  return ` [task #${event.task.number} status=${event.task.status}${assignee}]`;
-}
-
-/** `RAFT_CHUNK:2764-2776`, `thread_join_context` prefix. */
-function threadContextPrefix(event: WakeEvent): string {
-  const context = event.threadContext;
-  if (context === undefined) return "";
-  return [
-    "[RAH thread context: you were mentioned in a thread without model-visible context.]",
-    `parent: ${context.parentTarget}`,
-    `thread: ${context.threadTarget}`,
-    `suggested next step: message-read --target "${context.threadTarget}"`,
-    "",
-    "Parent message:",
-    context.parentMessage,
-    "",
-    `Recent thread context${context.historyTruncated ? " (truncated)" : ""}:`,
-    context.recentMessages.length > 0
-      ? context.recentMessages.join("\n")
-      : "- (no earlier thread replies)",
-    "",
-  ].join("\n");
-}
-
-/**
- * `formatIncomingMessage` (`RAFT_CHUNK:2763-2795`) for `message.posted`. Every
- * other Room event takes the shape the Worker read renderer already uses for
- * it (`worker-read-render.ts:493-497`), so the wake text and a later
- * `message-check` describe the same fact the same way.
- */
-export function formatWakeIncomingMessage(event: WakeEvent): string {
-  if (event.type !== "message.posted") {
-    return `seq=${event.roomSeq} time=${event.createdAt} actor=@${event.actor} type=${event.type}\n  ${JSON.stringify(event.payload ?? {})}`;
-  }
-  const header = `[target=${event.target} msg=${event.messageId ?? "-"} time=${event.createdAt}${senderTypeSuffix(event)}]`;
-  const body = `${header} @${event.actor}: ${event.body ?? ""}${attachmentSuffix(event)}${taskSuffix(event)}`;
-  const prefix = threadContextPrefix(event);
-  return prefix === "" ? body : `${prefix}\n${body}`;
-}
-
-/**
- * `formatInboxUpdateRuntimeInput` (`RAFT_CHUNK:24381-24393`): content-free, and
- * it says outright that deferring the messages does not establish that there is
- * no work. RAH states a bounded range instead of Raft's per-target rows,
- * because the Kernel deliberately does not enumerate the degraded tail.
- */
-export function formatWakeInboxNotice(notice: WakeNoticeSummary): string {
-  if (notice.count <= 0) return "";
+function noticeLines(present: WorkerMessagePresentResponse): string[] {
+  if (present.noticeCount <= 0) return [];
   const range =
-    notice.fromSeq === undefined || notice.toSeq === undefined
+    present.noticeFromSeq === undefined || present.noticeToSeq === undefined
       ? ""
-      : ` in sequence range ${notice.fromSeq}-${notice.toSeq}`;
-  const plural = notice.count === 1 ? "event" : "events";
+      : ` in sequence range ${present.noticeFromSeq}-${present.noticeToSeq}`;
+  const plural = present.noticeCount === 1 ? "event" : "events";
   return [
-    "[RAH inbox notice:",
-    `${notice.count} further Room ${plural}${range} were not rendered into this turn.`,
-    "]",
-    "These have not been read, and they are not acknowledged by replying. Read them with `message-check` when you choose to; deferring them does not establish that there is no work.",
-  ].join("\n");
+    `[RAH inbox notice: ${present.noticeCount} further Room ${plural}${range} were not rendered into this turn.]`,
+    'They are not confirmed by replying. Run `"$RAH_WORKER_CLI" worker message-check` to read them before you finish; deferring them does not establish that there is no work.',
+  ];
+}
+
+function memoryLines(memory: BodiedWakeMemory | undefined): string[] {
+  if (memory === undefined) return [];
+  return [
+    "## Complete original MEMORY.md",
+    memory.reason === "changed"
+      ? "Your memory index changed since this session's system snapshot; this is the current complete index. Read it completely."
+      : "This launch carries no system copy of your memory index; this is the current complete index. Read it completely.",
+    memory.content,
+  ];
 }
 
 /**
- * `formatConcreteMessagesRuntimeInput` (`RAFT_CHUNK:24366-24379`): singular or
- * plural header, the rendered bodies, the optional pending notice, the closing
- * line verbatim, and the response-target hint.
+ * Returns undefined when nothing is confirmable (the very first event in the
+ * range degraded to notice): the caller then keeps the fixed startup wake.
  */
-export function formatWakeMessagesInput(input: {
-  events: readonly WakeEvent[];
-  notice?: WakeNoticeSummary | undefined;
-  /** Appended after the hint; RAH's standing Activation contract. */
-  activationInput?: string | undefined;
-}): string {
-  const messageCount = input.events.filter(
+export function formatBodiedWakeInput(input: {
+  present: WorkerMessagePresentResponse;
+  memory?: BodiedWakeMemory | undefined;
+}): string | undefined {
+  const { present } = input;
+  const through = present.presentedThroughSeq;
+  if (through <= 0 || present.events.length === 0) return undefined;
+  // Only a window that reaches the Activation head can be confirmed by a
+  // reply: the originating post route requires `basedOnRoomSeq === toSeq`,
+  // and a `--target` post citing a shorter prefix is held as stale.
+  const complete = through === present.toSeq && present.noticeCount === 0;
+  const messageCount = present.events.filter(
     (event) => event.type === "message.posted",
   ).length;
-  const header =
-    messageCount === 1 ? "New message received:" : "New messages received:";
-  const rendered = input.events.map(formatWakeIncomingMessage).join("\n");
-  const notice =
-    input.notice === undefined ? "" : formatWakeInboxNotice(input.notice);
-  const tail =
-    input.activationInput === undefined || input.activationInput === ""
-      ? ""
-      : `\n\n${input.activationInput}`;
-  return `${header}\n\n${rendered}${notice === "" ? "" : `\n\n${notice}`}\n\n${WAKE_CLOSING_LINE}\n${RESPONSE_TARGET_HINT}${tail}`;
-}
-
-/**
- * The whole range degraded, so there is no body to render. Raft's startup wake
- * does the same thing when a message carries no renderable context
- * (`RAFT_CHUNK:32431-32440`).
- */
-export function formatWakeNoticeOnlyInput(input: {
-  notice: WakeNoticeSummary;
-  activationInput?: string | undefined;
-}): string {
-  const tail =
-    input.activationInput === undefined || input.activationInput === ""
-      ? ""
-      : `\n\n${input.activationInput}`;
-  return `${formatWakeInboxNotice(input.notice)}${tail}`;
+  const sections: string[][] = [
+    [ACTIVATION_ENVIRONMENT_LINE],
+    [
+      messageCount === 1 ? "New message received:" : "New messages received:",
+      "",
+      renderWorkerEventLines(present.events, present.addressing),
+    ],
+    noticeLines(present),
+    complete
+      ? [
+          `Delivery: the events above are contiguous through seq ${through}, the end of this Activation. Reply once with \`"$RAH_WORKER_CLI" worker message-post --based-on-room-seq ${through}\` (body on stdin as usual; with no \`--target\` it replies where these messages arrived — add \`--target\` only to address a different Room, Thread or DM). A successful post with that flag confirms delivery through seq ${through}; no message-check is needed first.`,
+          'If no reply is needed, run `"$RAH_WORKER_CLI" worker message-check` once instead; that confirms delivery. Delivery confirmation is not a reply or Task completion.',
+        ]
+      : [
+          `Delivery: the events above are contiguous only through seq ${through}; this Activation continues through seq ${present.toSeq}. Run \`"$RAH_WORKER_CLI" worker message-check\` first to read the rest; it confirms delivery. Then reply with \`message-post\` as usual.`,
+        ],
+    memoryLines(input.memory),
+    [WAKE_CLOSING_LINE, RESPONSE_TARGET_HINT, ACTIVATION_FINISH_RULES],
+  ];
+  return sections
+    .filter((section) => section.length > 0)
+    .map((section) => section.join("\n"))
+    .join("\n\n");
 }

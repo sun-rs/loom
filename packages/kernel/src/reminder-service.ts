@@ -32,6 +32,7 @@ import type {
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 import { requireRoomMember } from "./collaboration-policy.ts";
+import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -486,6 +487,16 @@ export class ReminderService {
         const anchorRoomId = text(reminderRow, "room_id");
         const targetRoomId = text(reminderRow, "target_room_id");
         requireRoomMember(this.#database, targetRoomId, ownerParticipantId);
+        // An inactive instance private box accepts no new work, and waiting
+        // cannot reactivate it: the occurrence is obsolete, not retryable.
+        if (
+          !this.#database
+            .prepare(`SELECT 1 WHERE ${activeInstancePrivateBoxPredicate("?")}`)
+            .get(targetRoomId)
+        ) {
+          this.#markReceipt(occurrenceId, "obsolete");
+          return "obsolete" as const;
+        }
         const firedAt = this.#now().toISOString();
         const repeat = nullableText(reminderRow, "repeat_rule");
         const timezone = nullableText(reminderRow, "timezone");

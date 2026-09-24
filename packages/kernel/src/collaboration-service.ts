@@ -391,6 +391,13 @@ export class CollaborationService {
       ...new Set(input.initialAgentParticipantIds ?? []),
     ].sort();
     for (const principalId of initialAgentParticipantIds) {
+      // A new channel is always another channel for an existing instance.
+      if (
+        this.#database
+          .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
+          .get(principalId)
+      )
+        throw new ForbiddenError("Role instance cannot join another channel");
       const principal = this.#requirePrincipalRow(principalId);
       if (ParticipantKindSchema.parse(principal.kind) !== "agent") {
         throw new ForbiddenError(
@@ -1487,6 +1494,7 @@ export class CollaborationService {
         thread: this.#threadFromId(event.aggregateId),
       };
     }
+    requireActiveInstancePrivateBox(this.#database, input.roomId);
     this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
     const root = this.#database
       .prepare("SELECT * FROM messages WHERE message_id = ? AND room_id = ?")
@@ -1596,6 +1604,7 @@ export class CollaborationService {
       }
       return { activationIds: [], deduplicated: true, event };
     }
+    requireActiveInstancePrivateBox(this.#database, input.roomId);
     this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
     this.#threadFromRoom(input.threadId, input.roomId);
     const messageId = this.#createId("message");
@@ -2371,6 +2380,21 @@ export class CollaborationService {
   }
 
   #assertNoActiveMembershipWork(roomId: string, principalId: string): void {
+    // A Role instance's scheduled reminder is future private work: it would
+    // fire into a box the removal is about to deactivate.
+    const activeReminder = this.#database
+      .prepare(
+        `SELECT 1 FROM reminders rm
+         JOIN role_instances ri ON ri.instance_id = rm.owner_participant_id
+         WHERE rm.owner_participant_id = ? AND rm.status = 'scheduled'
+           AND (rm.target_room_id = ? OR rm.room_id = ?)
+         LIMIT 1`,
+      )
+      .get(principalId, roomId, roomId);
+    if (activeReminder !== undefined)
+      throw new ConflictError(
+        `principal ${principalId} has active collaboration work in Room ${roomId}: scheduled reminder`,
+      );
     const privateBoxes = this.#database
       .prepare(
         `

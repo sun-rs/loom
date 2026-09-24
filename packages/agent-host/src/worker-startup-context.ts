@@ -38,32 +38,45 @@ export async function workerStartupContext(
   if (env.RAH_AGENT_APP_INBOX_JSON)
     context.appInbox = JSON.parse(env.RAH_AGENT_APP_INBOX_JSON);
 
-  let memory =
+  const index = await readMemoryIndexAgainstSystemSnapshot(env);
+  if (index?.matchesSystem === true)
+    return `## Current Activation context\n${JSON.stringify(context)}\n\nThe complete original MEMORY.md is supplied in the current system prompt; the current file still matches that launch snapshot. Read that data completely.\n\n## Canonical Room delivery\n`;
+  const memory =
+    index?.content ??
     "Memory path unavailable; read the original index when configured.";
-  const directory = env.RAH_AGENT_MEMORY_DIR;
-  if (directory !== undefined) {
-    const participantId = env.RAH_PARTICIPANT_ID;
-    if (
-      !participantId ||
-      agentMemoryWorkspacePath(dirname(directory), participantId) !==
-        directory ||
-      env.RAH_AGENT_MEMORY_INDEX !== join(directory, "MEMORY.md")
-    )
-      throw new Error("Startup memory path does not match the Agent owner");
-    const read = await readAgentMemoryWorkspaceFile({
-      rootDirectory: dirname(directory),
-      ownerParticipantId: participantId,
-      relativePath: "MEMORY.md",
-    });
-    memory = read.content;
-    // This is only a transport optimization: always read and validate the full
-    // current index. A mismatch (including an edit during this Run) returns it
-    // verbatim. No model-read, delivery, or Task receipt is inferred here.
-    if (
-      env.RAH_AGENT_MEMORY_SYSTEM_SHA256 ===
-      createHash("sha256").update(memory).digest("hex")
-    )
-      return `## Current Activation context\n${JSON.stringify(context)}\n\nThe complete original MEMORY.md is supplied in the current system prompt; the current file still matches that launch snapshot. Read that data completely.\n\n## Canonical Room delivery\n`;
-  }
   return `## Current Activation context\n${JSON.stringify(context)}\n\n## Complete original MEMORY.md\n${memory}\n\n## Canonical Room delivery\n`;
+}
+
+/**
+ * The startup memory fallback, shared by `message-check --startup` and the
+ * S1-d bodied wake: always read and validate the full current index, and
+ * compare it with RAH_AGENT_MEMORY_SYSTEM_SHA256 — the native session's FIRST
+ * system snapshot on resume (`ProviderSystemMemory`), never the current file's
+ * own digest. Only an exact match lets the caller omit the index. This is a
+ * transport optimization, not a model-read, delivery or Task receipt.
+ * Undefined when the launch has no memory workspace.
+ */
+export async function readMemoryIndexAgainstSystemSnapshot(
+  env: Readonly<Record<string, string | undefined>>,
+): Promise<{ content: string; matchesSystem: boolean } | undefined> {
+  const directory = env.RAH_AGENT_MEMORY_DIR;
+  if (directory === undefined) return undefined;
+  const participantId = env.RAH_PARTICIPANT_ID;
+  if (
+    !participantId ||
+    agentMemoryWorkspacePath(dirname(directory), participantId) !== directory ||
+    env.RAH_AGENT_MEMORY_INDEX !== join(directory, "MEMORY.md")
+  )
+    throw new Error("Startup memory path does not match the Agent owner");
+  const read = await readAgentMemoryWorkspaceFile({
+    rootDirectory: dirname(directory),
+    ownerParticipantId: participantId,
+    relativePath: "MEMORY.md",
+  });
+  return {
+    content: read.content,
+    matchesSystem:
+      env.RAH_AGENT_MEMORY_SYSTEM_SHA256 ===
+      createHash("sha256").update(read.content).digest("hex"),
+  };
 }

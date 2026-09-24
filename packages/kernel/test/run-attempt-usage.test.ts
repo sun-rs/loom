@@ -199,7 +199,7 @@ function usage(
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 61);
+    assert.equal(KERNEL_SCHEMA_VERSION, 62);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -394,7 +394,7 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
   }
 });
 
-test("a schema 60 database upgrades to 61 without touching existing RunAttempts", () => {
+test("a schema 60 database upgrades to the current schema without touching existing RunAttempts", () => {
   const state = fixture();
   const { databasePath, runAttemptId } = state;
   state.kernel.close();
@@ -414,7 +414,7 @@ test("a schema 60 database upgrades to 61 without touching existing RunAttempts"
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        61,
+        62,
       );
       assert.equal(
         database

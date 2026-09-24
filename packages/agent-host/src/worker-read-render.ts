@@ -496,6 +496,20 @@ function eventLines(rawEvent: Json, addressing?: unknown): string[] {
   ];
 }
 
+/**
+ * S1-d: the bodied wake renders the Kernel's presented events with the exact
+ * line shape `message-check` uses, so the wake and a later check state the
+ * same fact the same way (real Room seq, author handle, canonical target).
+ */
+export function renderWorkerEventLines(
+  events: readonly unknown[],
+  addressing: unknown,
+): string {
+  return events
+    .flatMap((event) => eventLines(asRecord(event), addressing))
+    .join("\n");
+}
+
 /** The already-presented ledger facts, stated rather than left to be parsed. */
 function presentedContextLines(presentedContext: unknown): string[] {
   const context = asRecord(presentedContext);

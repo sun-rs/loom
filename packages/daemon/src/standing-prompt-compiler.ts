@@ -134,7 +134,7 @@ const HELP_POINTER = `Details: \`"$RAH_WORKER_CLI" worker help <topic>\` — top
 
 function platformLayer(agent: StandingPromptAgentLayer | undefined): string {
   const bootstrap = agent
-    ? 'Use `"$RAH_WORKER_CLI" worker message-check --startup` for your current Agent identity, execution scope, original memory index and delivered messages; it validates the frozen RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON. Your role and instructions are already stated in this prompt; do not dump its audit record or duplicate the AgentDefinition into the conversation.'
+    ? 'If the wake lacks your messages, use `"$RAH_WORKER_CLI" worker message-check --startup` for identity, scope, memory index and messages; it validates the frozen RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON. Your role and instructions are already stated in this prompt; do not dump its audit record or duplicate the AgentDefinition into the conversation.'
     : "First parse process.env.RAH_AGENT_CONTEXT_JSON and process.env.RAH_CONTEXT_MANIFEST_JSON. The first contains the frozen AgentDefinition role and instructions; the second is the Kernel-owned audit record of the exact Room range, instruction/skill/memory content references, RuntimeProfile and Workspace revision selected for this RunAttempt. Follow those instructions unless they conflict with the canonical Worker protocol or system safety. Do not substitute mutable latest files for the manifest references.";
   return `${bootstrap}
 ${buildAgentMemoryInstructions()}
@@ -281,7 +281,7 @@ function startupLayer(mode?: PromptDeliveryMode): string {
   }
 4. When you receive a message, process it and reply with \`"$RAH_WORKER_CLI" worker message-post\`.
 5. **Complete ALL your work before stopping.** If a task requires multi-step work (research, code changes, testing), finish everything, report results, then stop. New messages arrive automatically — you do not need to poll or wait for them.
-6. Delivery confirmation is automatic in \`message-check\`; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only.
+6. Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only.
 
 ${deliveryInstructions(mode)}`;
 }

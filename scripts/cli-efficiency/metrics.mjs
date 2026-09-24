@@ -1,24 +1,51 @@
 import assert from "node:assert/strict";
 // Owner-approved evo contract budgets (docs/evo/target-contract.zh-CN.md §6).
+// Budgets are data: a null generation limit is reported but not enforced.
+// The uncached ratio is a diagnostic only; §6 does not sign it as a budget.
 export const budgets = {
   inputRatio: 2,
-  uncachedRatio: 2,
-  maxGenerations: 2,
+  maxGenerations: { total: 2, beforeReply: null, afterReply: null },
   firstInputOverheadTokens: 3000,
   replyAllowanceSeconds: 5,
   replyAllowanceRatio: 0.15,
 };
-export function summarizeUsage(events) {
-  const rows = [
-    ...new Map(
-      events
-        .filter((e) => e.type === "token_usage_record")
-        .map((e) => [e.payload.response_id, e.payload.usage]),
-    ).values(),
-  ];
+const generationFailure = {
+  total: "generations",
+  beforeReply: "generationsBeforeReply",
+  afterReply: "generationsAfterReply",
+};
+// replyAt: ISO time the effective Room reply landed. The generation whose tool
+// call posted it finished (and recorded usage) before that time, so it counts
+// as before-reply; later generations are after-reply. Omitted = native arm,
+// where the final answer generation is the reply. null = no effective reply,
+// so the split is unknown.
+export function summarizeUsage(events, { replyAt } = {}) {
+  const byResponse = new Map();
+  for (const e of events)
+    if (
+      e.type === "token_usage_record" &&
+      !byResponse.has(e.payload.response_id)
+    )
+      byResponse.set(e.payload.response_id, e);
+  const records = [...byResponse.values()];
+  const rows = records.map((e) => e.payload.usage);
   assert.ok(rows.length, "Missing native per-response usage evidence");
+  let before = rows.length;
+  if (replyAt === null) before = null;
+  else if (replyAt !== undefined) {
+    const cut = Date.parse(replyAt);
+    assert.ok(Number.isFinite(cut), "Invalid effective reply timestamp");
+    before = records.filter((e) => {
+      const at = Date.parse(e.timestamp);
+      assert.ok(Number.isFinite(at), "Invalid usage timestamp");
+      return at <= cut;
+    }).length;
+  }
   const out = {
     generations: rows.length,
+    generationsTotal: rows.length,
+    generationsBeforeReply: before,
+    generationsAfterReply: before === null ? null : rows.length - before,
     input: 0,
     cached: 0,
     uncached: 0,
@@ -45,11 +72,14 @@ export function summarizeUsage(events) {
   out.uncached = out.input - out.cached;
   return out;
 }
+const generationCounts = (m) => ({
+  total: m.generationsTotal ?? m.generations,
+  beforeReply: m.generationsBeforeReply ?? null,
+  afterReply: m.generationsAfterReply ?? null,
+});
 export function compareRounds(native, rah) {
   const failures = [];
   if (rah.input > native.input * budgets.inputRatio) failures.push("input");
-  if (rah.uncached > native.uncached * budgets.uncachedRatio)
-    failures.push("uncached");
   // Short tasks are judged in seconds, long tasks by percentage.
   const replyAllowance = Math.max(
     budgets.replyAllowanceSeconds,
@@ -57,16 +87,36 @@ export function compareRounds(native, rah) {
   );
   if (rah.replySeconds > native.replySeconds + replyAllowance)
     failures.push("replySeconds");
-  if (rah.generations > budgets.maxGenerations) failures.push("generations");
-  if (
-    Number.isFinite(native.firstInput) &&
-    Number.isFinite(rah.firstInput) &&
-    rah.firstInput > native.firstInput + budgets.firstInputOverheadTokens
+  const generations = {
+    native: generationCounts(native),
+    rah: generationCounts(rah),
+  };
+  for (const [key, limit] of Object.entries(budgets.maxGenerations)) {
+    if (limit === null) continue;
+    const count = generations.rah[key];
+    // An enforced limit without evidence fails closed.
+    if (!Number.isFinite(count))
+      failures.push(generationFailure[key] + "Missing");
+    else if (count > limit) failures.push(generationFailure[key]);
+  }
+  if (!Number.isFinite(native.firstInput) || !Number.isFinite(rah.firstInput))
+    failures.push("firstInputMissing");
+  else if (
+    rah.firstInput >
+    native.firstInput + budgets.firstInputOverheadTokens
   )
     failures.push("firstInput");
+  const evidenceOnly =
+    failures.length && failures.every((f) => f.endsWith("Missing"));
   return {
-    status: failures.length ? "over-budget" : "within-budget",
+    status: evidenceOnly
+      ? "missing-evidence"
+      : failures.length
+        ? "over-budget"
+        : "within-budget",
     failures,
+    generations,
+    extraProtocolGenerations: generations.rah.total - generations.native.total,
     inputRatio: rah.input / native.input,
     uncachedRatio: native.uncached ? rah.uncached / native.uncached : null,
     replyRatio: rah.replySeconds / native.replySeconds,

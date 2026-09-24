@@ -12,6 +12,8 @@
  * exist here.
  */
 
+export type WorkerServerRejection = "not_sent" | "may_already_exist";
+
 export type WorkerCliErrorOptions = {
   cause?: unknown;
   correlationId?: string | undefined;
@@ -23,8 +25,13 @@ export type WorkerCliErrorOptions = {
   layer?: string | undefined;
   outputMode?: "json" | "text" | undefined;
   retryable?: boolean | null | undefined;
-  /** The server answered below 500 with its own code: nothing was committed. */
-  serverRejection?: boolean | undefined;
+  /**
+   * The server answered below 500 with its own code. `not_sent`: a definite
+   * pre-commit rejection (target, validation, permission, not found).
+   * `may_already_exist`: an idempotency/identity conflict, where a mutation
+   * under that identity may already be committed.
+   */
+  serverRejection?: WorkerServerRejection | undefined;
   suggestedNextAction?: string | undefined;
 };
 
@@ -39,7 +46,7 @@ export class WorkerCliError extends Error {
   readonly layer: string | undefined;
   readonly outputMode: "json" | "text" | undefined;
   readonly retryable: boolean | null | undefined;
-  readonly serverRejection: boolean | undefined;
+  readonly serverRejection: WorkerServerRejection | undefined;
   readonly suggestedNextAction: string | undefined;
 
   constructor(
@@ -93,15 +100,54 @@ export const SEND_FAILURE_DRAFT_SAVED_NEXT_ACTION =
   "Delivery state is UNKNOWN: the send failed after the draft was saved, so the message may or may not have been committed. Reading CANNOT settle this. Only an authoritative identity reconciliation can — an idempotency/request/correlation identity bound by the failed request or by a server receipt, confirmed committed by an authoritative record. This CLI does not currently expose such a lookup for message send, so the honest state is CANNOT_CONFIRM. Reading is still worth doing, but it settles nothing on its own: `rah worker message-read --target <target>` can only show that A message matching what you looked for is present, which is not the same as YOUR send having been committed unless you identified it by an authoritative identity — and this CLI does not expose that here. Wait about 90s before looking, because delivery to readable lags; that is a hint against looking too early, not a bound on visibility and not a safety gate. Not seeing it proves nothing: absence is equally consistent with committed-but-not-yet-visible, however many times and however far apart you read, and however wide the window. Matching your own text is not identity either: a hit can be someone else quoting the same string, and a miss can be a committed message you cannot see yet. So the outcome stays unknown and not retryable. Do not resend on this evidence. You may keep waiting, or reconcile out of band. Sending the draft again is a decision by a person to accept a duplicate, not a finding that the original failed, so this guidance does not direct you to it.";
 
 /**
- * S1-b: a Worker API response below 500 that carries the server's own error
- * code is a definite pre-commit rejection. The Kernel refuses inside the send
- * transaction (target resolution, membership, validation, conflict) and rolls
- * it back, so no message and no draft were committed. Unlike the CANNOT_CONFIRM
- * case, resending once the cause is corrected is the right action and cannot
- * duplicate anything.
+ * S1-b: a Worker API response below 500 whose server code belongs to a
+ * definite pre-commit family (target/not found, validation, permission, state
+ * conflict) is a rejection. The Kernel refuses inside the send transaction and
+ * rolls it back, so no message and no draft were committed. Unlike the
+ * CANNOT_CONFIRM case, resending once the cause is corrected is the right
+ * action and cannot duplicate anything.
  */
 export const SEND_REJECTED_NEXT_ACTION =
   "The server rejected this send before committing it: nothing was sent and this request saved no new draft. Correct the cause named in the error (for a wrong, unavailable or ambiguous target, use the Room or thread target shown in your wake or `rah worker message-check` output), then send again; resending after correcting it is correct and cannot duplicate this message.";
+
+/**
+ * P2-2: an idempotency/identity conflict is not a clean rejection. The request
+ * itself was rolled back, but the identity it carried was already used, so the
+ * original message may already be committed. A resend under a new key is how
+ * one send becomes two delivered messages.
+ */
+export const SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION =
+  "The server refused this send because its idempotency identity was already used: this request committed nothing and saved no new draft, but the original message under that identity may already be committed. Read the target (`rah worker message-read --target <target>`) and look for it by that idempotency identity before doing anything else. Do not resend with a new key or reworded content to force it through; that is a decision to accept a duplicate, not a finding that the original failed.";
+
+/**
+ * Server codes whose meaning is fixed by the Kernel/Worker API. Anything not
+ * listed keeps the conservative CANNOT_CONFIRM path.
+ */
+const SEND_NOT_SENT_CODES: ReadonlySet<string> = new Set([
+  "not_found",
+  "forbidden",
+  "unauthenticated",
+  "conflict",
+  "stale_context",
+  "thread_context_target_mismatch",
+  "body_too_large",
+  "method_not_allowed",
+]);
+const SEND_MAY_ALREADY_EXIST_CODES: ReadonlySet<string> = new Set([
+  "idempotency_conflict",
+]);
+
+export function classifyWorkerServerRejection(
+  serverCode: string,
+): WorkerServerRejection | undefined {
+  if (SEND_MAY_ALREADY_EXIST_CODES.has(serverCode)) return "may_already_exist";
+  if (
+    SEND_NOT_SENT_CODES.has(serverCode) ||
+    /^(invalid|unexpected)_[a-z_]+$/u.test(serverCode)
+  )
+    return "not_sent";
+  return undefined;
+}
 
 export function markSendFailureDraftSaved(
   error: unknown,
@@ -113,21 +159,24 @@ export function markSendFailureDraftSaved(
   if (error instanceof WorkerCliError) {
     // S1-b: a definite server rejection is not an uncertain send. Only
     // transport failures, timeouts and 5xx keep the CANNOT_CONFIRM guidance.
-    if (error.serverRejection === true)
+    if (error.serverRejection !== undefined)
       return new WorkerCliError(error.code, error.message, {
         cause: error.cause,
         correlationId: error.correlationId,
         details: error.details,
+        // Either way the refused request rolled back, so it saved no draft.
         draftSaved: false,
-        effect: "not_sent",
+        effect: error.serverRejection,
         effectState: error.effectState,
         faultDomain: error.faultDomain,
         layer: error.layer,
         outputMode: error.outputMode,
         retryable: false,
-        serverRejection: true,
+        serverRejection: error.serverRejection,
         suggestedNextAction:
-          error.suggestedNextAction ?? SEND_REJECTED_NEXT_ACTION,
+          error.serverRejection === "may_already_exist"
+            ? SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION
+            : (error.suggestedNextAction ?? SEND_REJECTED_NEXT_ACTION),
       });
     // A refusal that already answered "is my content saved?" keeps its answer.
     if (error.draftSaved !== undefined) return error;
@@ -276,7 +325,10 @@ export function workerServerFailureError(
       serverMessage === undefined ? "" : `: ${serverMessage}`
     }`,
     {
-      serverRejection: status < 500 && serverCode !== undefined,
+      serverRejection:
+        status < 500 && serverCode !== undefined
+          ? classifyWorkerServerRejection(serverCode)
+          : undefined,
       suggestedNextAction: nextAction,
     },
   );

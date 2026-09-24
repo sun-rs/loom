@@ -6,6 +6,8 @@ import {
   type RoleListResponse,
   type RoleInstantiateRequest,
   type RoleInstantiateResponse,
+  type InstanceSessionResetRequest,
+  type InstanceSessionResetResponse,
 } from "@rah-os/protocol";
 import {
   RoleCreateRequestSchema,
@@ -15,6 +17,8 @@ import {
   RoleListResponseSchema,
   RoleInstantiateRequestSchema,
   RoleInstantiateResponseSchema,
+  InstanceSessionResetRequestSchema,
+  InstanceSessionResetResponseSchema,
 } from "@rah-os/protocol";
 import {
   SystemChannelVisibilityReadSchema,
@@ -406,6 +410,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     "role.instantiate": {
       input: RoleInstantiateRequest;
       output: RoleInstantiateResponse;
+    };
+    "instance.session.reset": {
+      input: InstanceSessionResetRequest;
+      output: InstanceSessionResetResponse;
     };
     "agent.provision": {
       input: ClientAgentProvisionRequest;
@@ -831,6 +839,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: RoleInstantiateResponseSchema,
     method: "POST",
     path: "/v3/client/roles/instantiate",
+  },
+  "instance.session.reset": {
+    authenticated: true,
+    input: InstanceSessionResetRequestSchema,
+    output: InstanceSessionResetResponseSchema,
+    method: "POST",
+    path: "/v3/client/instances/session/reset",
   },
   "agent.provision": {
     authenticated: true,

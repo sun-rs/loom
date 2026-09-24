@@ -1,8 +1,14 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { ActivationCredentialScope, RoomEvent } from "@rah-os/protocol";
+import type {
+  ActivationCredentialScope,
+  RoomEvent,
+  WorkerAddressing,
+} from "@rah-os/protocol";
 import { canonicalDigest } from "./canonical-digest.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
+import { isExecutionAuditEvent } from "./worker-message-projection.ts";
+import { workerAddressing } from "./worker-addressing.ts";
 
 /**
  * A "presented" window records that the Kernel itself rendered a concrete range
@@ -94,16 +100,31 @@ export function migrateActivationPresentedWindows(
  * `seq= time= actor= type=` line plus its payload
  * (`packages/agent-host/src/worker-read-render.ts:465-497`). A Task
  * cancellation, assignment or status change is therefore a fact the Agent is
- * shown today, and the presented window must not silently cross it.
+ * shown today, and the presented window must not silently cross it. (S1-d:
+ * `message-check` now omits enumerated execution-audit events; see below.)
  */
 export const WAKE_BODY_MAX_MESSAGES = 20;
 export const WAKE_BODY_MAX_BYTES = 64 * 1024;
+/**
+ * S1-d: `message-check` omits the enumerated execution-audit events
+ * (`worker-message-projection.ts`) while its acknowledgement still crosses
+ * them, because they need no model action. The wake rendering applies the same
+ * projection: such an event is covered by the window (it joins
+ * `presentedSeqs`, so the prefix may pass it) but is neither rendered nor
+ * charged to the message/byte budget. Every other type — Task, membership,
+ * unknown — is still rendered or stops the prefix. The scan itself stays
+ * bounded by this row cap; anything past it is reported as notice.
+ */
+export const WAKE_SCAN_MAX_ROWS = 256;
 
 export type PresentedWindow = {
   runAttemptId: string;
   fromSeq: number;
   toSeq: number;
-  /** Every Room event sequence whose content was rendered, any type. */
+  /**
+   * Every Room event sequence the rendering covers: each rendered event, plus
+   * each execution-audit event the projection omits (see WAKE_SCAN_MAX_ROWS).
+   */
   presentedSeqs: readonly number[];
   contentDigest: string;
   renderedAt: string;
@@ -134,6 +155,8 @@ export type RenderedPresentedWindow = PresentedWindow & {
    * or freshness floor may be built on.
    */
   presentedThroughSeq: number;
+  /** Canonical `#room`/`@handle` names, exactly as `message-check` renders. */
+  addressing: WorkerAddressing;
 };
 
 const TERMINAL_RUN_ATTEMPT_STATES = new Set([
@@ -236,7 +259,7 @@ export function renderPresentedWindow(
         ORDER BY room_seq
         LIMIT ?`,
     )
-    .all(scope.roomId, fromSeq, toSeq, WAKE_BODY_MAX_MESSAGES + 1) as Row[];
+    .all(scope.roomId, fromSeq, toSeq, WAKE_SCAN_MAX_ROWS) as Row[];
   const total = database
     .prepare(
       `SELECT COUNT(*) AS n, MAX(room_seq) AS last_seq FROM room_events
@@ -248,11 +271,17 @@ export function renderPresentedWindow(
   const presentedSeqs: number[] = [];
   let usedBytes = 0;
   let firstNoticeSeq: number | undefined;
+  let lastScannedSeq = fromSeq - 1;
   for (const row of rows) {
     const roomSeq = integer(row, "room_seq");
+    lastScannedSeq = roomSeq;
+    if (isExecutionAuditEvent(text(row, "type"))) {
+      presentedSeqs.push(roomSeq);
+      continue;
+    }
     const size = Buffer.byteLength(text(row, "payload_json"), "utf8");
     if (
-      presentedSeqs.length >= WAKE_BODY_MAX_MESSAGES ||
+      events.length >= WAKE_BODY_MAX_MESSAGES ||
       usedBytes + size > WAKE_BODY_MAX_BYTES
     ) {
       if (firstNoticeSeq === undefined) firstNoticeSeq = roomSeq;
@@ -265,8 +294,7 @@ export function renderPresentedWindow(
   const noticeCount = totalCount - presentedSeqs.length;
   if (noticeCount > 0 && firstNoticeSeq === undefined) {
     // Everything read fit, but the range holds more rows than were read.
-    firstNoticeSeq =
-      (presentedSeqs[presentedSeqs.length - 1] ?? fromSeq - 1) + 1;
+    firstNoticeSeq = lastScannedSeq + 1;
   }
   const contentDigest = canonicalDigest({
     fromSeq,
@@ -297,6 +325,7 @@ export function renderPresentedWindow(
     return {
       ...existing,
       events,
+      addressing: workerAddressing(database, scope, events),
       ...notice,
       presentedThroughSeq:
         presentedPrefix(database, scope, existing)?.throughSeq ?? 0,
@@ -331,6 +360,7 @@ export function renderPresentedWindow(
   return {
     ...window,
     events,
+    addressing: workerAddressing(database, scope, events),
     ...notice,
     presentedThroughSeq:
       presentedPrefix(database, scope, window)?.throughSeq ?? 0,
@@ -424,6 +454,18 @@ export function markPresentedWindowSent(
     .get(key.activationId, key.consumerId, key.runAttemptId);
   if (row === undefined)
     throw new NotFoundError("no presented rendering to register as sent");
+  // S1-d: the Host registers a live run's acceptance before it reports the
+  // run's exit. A receipt arriving once the RunAttempt is terminal is a late
+  // frame from an old run: evidence of nothing current, so it neither marks
+  // the rendering sent nor replays a parked marker into the cursor.
+  const attempt = database
+    .prepare("SELECT state FROM run_attempts WHERE run_attempt_id=?")
+    .get(key.runAttemptId);
+  if (
+    attempt === undefined ||
+    TERMINAL_RUN_ATTEMPT_STATES.has(text(attempt as Row, "state"))
+  )
+    return { pendingAckSeq: undefined };
   const already = nullableText(row as Row, "sent_at");
   if (already !== null && already !== undefined) {
     if (nullableText(row as Row, "sent_by_host_id") !== hostId)

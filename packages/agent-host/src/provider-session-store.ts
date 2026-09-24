@@ -60,11 +60,19 @@ export class ProviderSessionStore {
 
   async load(
     uncheckedKey: ProviderSessionKey,
-    options: { instance?: boolean; requireExisting?: boolean } = {},
+    options: {
+      instance?: boolean;
+      /** Advanced by a Human session reset; 0 keeps the historical key. */
+      instanceGeneration?: number | undefined;
+      requireExisting?: boolean;
+    } = {},
   ): Promise<ProviderSessionRecord | null> {
     const key = validateKey(uncheckedKey);
     if (options.instance) {
-      const record = await this.#loadInstance(key);
+      const record = await this.#loadInstance(
+        key,
+        instanceGenerationOf(options.instanceGeneration),
+      );
       if (record === null && options.requireExisting)
         throw new Error(
           "RAH_SESSION_CONTINUITY_REQUIRED: previously launched instance has no session binding",
@@ -109,17 +117,21 @@ export class ProviderSessionStore {
     metadata: {
       systemMemorySha256?: string | undefined;
       instance?: boolean;
+      instanceGeneration?: number | undefined;
     } = {},
   ): Promise<ProviderSessionRecord> {
     const validated = validateKey(uncheckedKey);
+    const generation = instanceGenerationOf(metadata.instanceGeneration);
     if (metadata.instance) {
-      const previous = await this.#loadInstance(validated);
+      const previous = await this.#loadInstance(validated, generation);
       if (previous && previous.providerSessionId !== providerSessionId)
         throw new Error(
           "RAH_SESSION_CONTINUITY_REQUIRED: refusing instance session replacement",
         );
     }
-    const key = metadata.instance ? instanceKey(validated) : validated;
+    const key = metadata.instance
+      ? instanceKey(validated, generation)
+      : validated;
     const sessionId = requiredText(
       providerSessionId,
       "providerSessionId",
@@ -168,10 +180,13 @@ export class ProviderSessionStore {
    * This remains Host session metadata, not a second Room execution queue. */
   async #loadInstance(
     key: ProviderSessionKey,
+    generation: number,
   ): Promise<ProviderSessionRecord | null> {
-    const stable = instanceKey(key);
+    const stable = instanceKey(key, generation);
     const bound = await this.load(stable);
     if (bound) return bound;
+    // Adoption predates resets: a reset generation always starts fresh.
+    if (generation > 0) return null;
     const candidates: ProviderSessionRecord[] = [];
     // One-time adoption of pre-binding MVP records. Never choose by mtime.
     for (const entry of await readdir(this.#rootDirectory, {
@@ -615,11 +630,26 @@ function systemMemoryMetadata(value: unknown): { systemMemorySha256?: string } {
   return { systemMemorySha256: value };
 }
 
-function instanceKey(key: ProviderSessionKey): ProviderSessionKey {
+function instanceKey(
+  key: ProviderSessionKey,
+  generation = 0,
+): ProviderSessionKey {
+  // Generation 0 keeps the historical key so existing bindings still resume.
+  const scope =
+    generation === 0
+      ? "instance-session/v1"
+      : `instance-session/v1:generation:${String(generation)}`;
   return {
     participantId: key.participantId,
     provider: key.provider,
-    runtimeProfileRevisionId: "instance-session/v1",
-    workspaceMountRevisionId: "instance-session/v1",
+    runtimeProfileRevisionId: scope,
+    workspaceMountRevisionId: scope,
   };
+}
+
+function instanceGenerationOf(value: number | undefined): number {
+  if (value === undefined) return 0;
+  if (!Number.isSafeInteger(value) || value < 0)
+    throw new Error("Instance session generation is invalid");
+  return value;
 }

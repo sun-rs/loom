@@ -114,6 +114,21 @@ test("a Worker failure carries a recovery instruction only where Raft has one", 
     assert.equal(forged.status, 409);
     const forgedBody = WorkerErrorResponseSchema.parse(await forged.json());
     assert.equal(forgedBody.error.suggestedNextAction, undefined);
+    // An idempotency conflict means a message under that identity may already
+    // exist, so it must not share the generic `conflict` code the CLI reports
+    // as a definite not-sent rejection.
+    const first = await call("messages/post", {
+      body: "original answer",
+      idempotencyKey: "reused-send-key",
+    });
+    assert.equal(first.status, 200);
+    const reused = await call("messages/post", {
+      body: "different answer under the same key",
+      idempotencyKey: "reused-send-key",
+    });
+    assert.equal(reused.status, 409);
+    const reusedBody = WorkerErrorResponseSchema.parse(await reused.json());
+    assert.equal(reusedBody.error.code, "idempotency_conflict");
   } finally {
     await service.close();
     kernel.close();

@@ -91,3 +91,41 @@ export type RoleListResponse = z.infer<typeof RoleListResponseSchema>;
 export type RoleInstantiateResponse = z.infer<
   typeof RoleInstantiateResponseSchema
 >;
+
+/** Host-authenticated: the Host persisted this instance's native session binding. */
+export const InstanceSessionBindingRecordInputSchema = z
+  .object({
+    runAttemptId: IdentifierSchema,
+    runtimeRunId: IdentifierSchema,
+  })
+  .strict();
+export type InstanceSessionBindingRecordInput = z.infer<
+  typeof InstanceSessionBindingRecordInputSchema
+>;
+
+/**
+ * Human recovery exit: the next run of this instance starts a new native
+ * session. The reset is explicit and recorded in the instance's channel.
+ */
+export const InstanceSessionResetRequestSchema = z
+  .object({
+    instanceId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict();
+export const InstanceSessionResetResponseSchema = z
+  .object({
+    instanceId: IdentifierSchema,
+    channelId: IdentifierSchema,
+    sessionGeneration: z.number().int().positive(),
+    event: RoomEventSchema,
+    deduplicated: z.boolean(),
+  })
+  .strict();
+export type InstanceSessionResetRequest = z.infer<
+  typeof InstanceSessionResetRequestSchema
+>;
+export type InstanceSessionResetResponse = z.infer<
+  typeof InstanceSessionResetResponseSchema
+>;

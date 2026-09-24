@@ -26,13 +26,19 @@ const EXECUTION_AUDIT_EVENTS = new Set([
   "activation.retry_resumed",
 ]);
 
+/** Shared with the wake rendering (`activation-presented-window.ts`), so a
+ * bodied wake and `message-check` omit exactly the same diagnostics. */
+export function isExecutionAuditEvent(type: string): boolean {
+  return EXECUTION_AUDIT_EVENTS.has(type);
+}
+
 export function projectWorkerMessageCheck(
   delivery: WorkerSyncResult,
 ): WorkerSyncResult {
   return {
     ...delivery,
     events: delivery.events.filter(
-      (event) => !EXECUTION_AUDIT_EVENTS.has(event.type),
+      (event) => !isExecutionAuditEvent(event.type),
     ),
   };
 }

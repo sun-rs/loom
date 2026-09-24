@@ -1,4 +1,12 @@
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
+import {
+  allocateWakeInputFile,
+  renderBodiedWake,
+  runtimeSupportsBodiedWake,
+  writeWakeInputFile,
+} from "./bodied-wake.ts";
+import { providerActivationInput } from "./provider-activation-input.js";
+import { RAH_WORKER_API_URL_ENV } from "./worker-credential-file.ts";
 import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
@@ -589,6 +597,7 @@ function createClaudeStreamJsonRuntime(
         (await providerSessionStore.load(key, {
           requireExisting: input.agent?.instanceSessionRequired === true,
           instance: input.agent?.instanceChannelId !== undefined,
+          instanceGeneration: input.agent?.instanceSessionGeneration,
         })) ??
         (lease.compatibleStandingPromptDigest === undefined
           ? null
@@ -659,6 +668,7 @@ function createClaudeStreamJsonRuntime(
                 evidence.providerSessionId,
                 {
                   instance: input.agent?.instanceChannelId !== undefined,
+                  instanceGeneration: input.agent?.instanceSessionGeneration,
                   systemMemorySha256: systemMemory.evidence(
                     input.runAttemptId,
                     evidence.providerSessionId,
@@ -751,11 +761,68 @@ function createCodexAppServerRuntime(
   }
   const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
+  // S1-d: the bodied wake needs the Host to register the driver's acceptance;
+  // without that registration a presented window can never confirm delivery.
+  const bodiedWake =
+    recordDeliveryAcceptance !== undefined &&
+    runtimeSupportsBodiedWake(revision.manifest.adapter.kind);
+  // Per RunAttempt: the allocated wake file, then the digest of the bodied
+  // text written into it. Bounded, and not cleared on lease release: the
+  // adapter releases the lease before it drains the last fd3 frames, and the
+  // acceptance must still match then.
+  const wakeFiles = new Map<string, string>();
+  const preparedWakeDigests = new Map<string, string>();
+  const remember = (map: Map<string, string>, key: string, value: string) => {
+    if (map.size >= 64 && !map.has(key)) map.delete(map.keys().next().value!);
+    map.set(key, value);
+  };
+  const withBodiedWake = async (
+    input: ActivationEnvelope,
+    lease: ActivationEnvironmentLease,
+  ): Promise<ActivationEnvironmentLease> => {
+    if (!bodiedWake || lease.env[RAH_WORKER_API_URL_ENV] === undefined)
+      return lease;
+    const allocated = await allocateWakeInputFile(lease);
+    remember(wakeFiles, input.runAttemptId, allocated.path);
+    return allocated.lease;
+  };
+  // After registerPrepared, before launch: the Kernel renders the window first,
+  // so no acceptance can ever precede the record it registers.
+  const beforeLaunch = async (
+    input: ActivationEnvelope,
+    lease: ActivationEnvironmentLease | undefined,
+  ): Promise<void> => {
+    const path = wakeFiles.get(input.runAttemptId);
+    if (path === undefined || lease === undefined) return;
+    let bodied: string | undefined;
+    try {
+      bodied = await renderBodiedWake({
+        env: lease.env,
+        participantId: input.participantId,
+      });
+    } catch (error) {
+      process.stderr.write(
+        `[rah-os] bodied wake unavailable for ${input.runAttemptId}, using the startup wake: ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+    }
+    if (bodied === undefined) {
+      // The fixed startup wake; no digest is remembered, so its acceptance
+      // registers nothing and the model confirms delivery with message-check.
+      await writeWakeInputFile(path, providerActivationInput());
+      return;
+    }
+    remember(
+      preparedWakeDigests,
+      input.runAttemptId,
+      await writeWakeInputFile(path, bodied),
+    );
+  };
   return new GenericProcessAdapter({
     ...processOptions,
     nativeBusyInput: true,
     guideRuntimeId: "codex",
     busyInputMode: "direct",
+    ...(bodiedWake ? { beforeLaunch } : {}),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -765,25 +832,27 @@ function createCodexAppServerRuntime(
         "codex-app-server/v1",
         lease.standingPromptDigest,
       );
-      if (providerSessionStore === undefined || key === undefined) return lease;
+      if (providerSessionStore === undefined || key === undefined)
+        return await withBodiedWake(input, lease);
       const previous = await providerSessionStore.load(key, {
         requireExisting: input.agent?.instanceSessionRequired === true,
         instance: input.agent?.instanceChannelId !== undefined,
+        instanceGeneration: input.agent?.instanceSessionGeneration,
       });
       const preparedLease = systemMemory.prepare(
         input.runAttemptId,
         lease,
         previous,
       );
-      if (previous === null) return preparedLease;
-      return {
+      if (previous === null) return await withBodiedWake(input, preparedLease);
+      return await withBodiedWake(input, {
         ...preparedLease,
         args: [
           ...(lease.args ?? []),
           "--resume-session",
           previous.providerSessionId,
         ],
-      };
+      });
     },
     args,
     beforeStart: async () => {
@@ -821,6 +890,16 @@ function createCodexAppServerRuntime(
                 `unexpected runtime delivery acceptance: ${acceptance.provider}`,
               );
             }
+            // Only the exact text this Host prepared for this RunAttempt may be
+            // registered as sent; the driver cannot vouch for any other input.
+            const prepared = preparedWakeDigests.get(input.runAttemptId);
+            // The fixed startup wake has no presented window behind it.
+            if (prepared === undefined) return;
+            if (acceptance.inputSha256 !== prepared) {
+              throw new Error(
+                "runtime delivery acceptance does not match the prepared wake input",
+              );
+            }
             await recordDeliveryAcceptance(input, acceptance);
           },
         }),
@@ -845,6 +924,7 @@ function createCodexAppServerRuntime(
                 evidence.providerSessionId,
                 {
                   instance: input.agent?.instanceChannelId !== undefined,
+                  instanceGeneration: input.agent?.instanceSessionGeneration,
                   systemMemorySha256: systemMemory.evidence(
                     input.runAttemptId,
                     evidence.providerSessionId,
@@ -1017,6 +1097,7 @@ function createKimiAcpRuntime(
       const previous = await providerSessionStore.load(key, {
         requireExisting: input.agent?.instanceSessionRequired === true,
         instance: input.agent?.instanceChannelId !== undefined,
+        instanceGeneration: input.agent?.instanceSessionGeneration,
       });
       if (previous === null) return lease;
       return {
@@ -1074,7 +1155,10 @@ function createKimiAcpRuntime(
               await providerSessionStore.record(
                 key,
                 evidence.providerSessionId,
-                { instance: input.agent?.instanceChannelId !== undefined },
+                {
+                  instance: input.agent?.instanceChannelId !== undefined,
+                  instanceGeneration: input.agent?.instanceSessionGeneration,
+                },
               );
             }
           },
@@ -1180,6 +1264,7 @@ function createOpenCodeServerRuntime(
       const previous = await providerSessionStore.load(key, {
         requireExisting: input.agent?.instanceSessionRequired === true,
         instance: input.agent?.instanceChannelId !== undefined,
+        instanceGeneration: input.agent?.instanceSessionGeneration,
       });
       if (previous === null) return lease;
       return {
@@ -1240,7 +1325,10 @@ function createOpenCodeServerRuntime(
               await providerSessionStore.record(
                 key,
                 evidence.providerSessionId,
-                { instance: input.agent?.instanceChannelId !== undefined },
+                {
+                  instance: input.agent?.instanceChannelId !== undefined,
+                  instanceGeneration: input.agent?.instanceSessionGeneration,
+                },
               );
             }
           },

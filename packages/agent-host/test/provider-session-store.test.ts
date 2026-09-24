@@ -322,3 +322,47 @@ test("previously launched instance cannot silently restart after binding record 
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("a Human session reset generation never resumes or adopts an older instance binding", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-instance-generation-"));
+  try {
+    const store = new ProviderSessionStore({ rootDirectory: directory });
+    await store.record(key, "generation-0-session", { instance: true });
+    // Generation 0 keeps the historical key, so existing bindings still resume.
+    assert.equal(
+      (await store.load(key, { instance: true, instanceGeneration: 0 }))
+        ?.providerSessionId,
+      "generation-0-session",
+    );
+    assert.equal(
+      await store.load(key, { instance: true, instanceGeneration: 1 }),
+      null,
+      "reset generation starts a new native session",
+    );
+    await store.record(key, "generation-1-session", {
+      instance: true,
+      instanceGeneration: 1,
+    });
+    assert.equal(
+      (await store.load(key, { instance: true, instanceGeneration: 1 }))
+        ?.providerSessionId,
+      "generation-1-session",
+    );
+    assert.equal(
+      (await store.load(key, { instance: true }))?.providerSessionId,
+      "generation-0-session",
+    );
+    // A bound generation whose file is lost still fails closed.
+    for (const file of readdirSync(directory)) rmSync(join(directory, file));
+    await assert.rejects(
+      store.load(key, {
+        instance: true,
+        instanceGeneration: 1,
+        requireExisting: true,
+      }),
+      /RAH_SESSION_CONTINUITY_REQUIRED/,
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

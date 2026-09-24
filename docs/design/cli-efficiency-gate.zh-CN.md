@@ -29,7 +29,7 @@ Role 显式选现有 mount；旧 Agent 将相同文件准备到实际私有 cwd�
 ## 指标和裁决
 
 每轮记录：发送到有效回复时间、RAH 进入 Run 前等待、实际 session ID、原生模型和 effort、
-模型生成次数、首次请求/最大请求输入、累计输入、缓存/未缓存输入、输出和推理子集、
+模型生成次数（`generationsBeforeReply`/`generationsAfterReply`/`generationsTotal`；`generations` 兼容保留为总数。RAH 以有效 Room 回复落库时刻切分：发出该 message-post 的那次生成计入回复前，之后的生成计入回复后；原生组最终答案那次生成即回复，全部计入回复前；比较结果另报 `extraProtocolGenerations` = RAH 总数 − 原生总数）、首次请求/最大请求输入、累计输入、缓存/未缓存输入、输出和推理子集、
 Worker check/post 与其他工具调用的类别。原生原始轨迹只作诊断，RAH 成功以持久 Room 最终答案为准。共享题目要求“审查结论：”前缀且正文至少 80 字符；只收到进度确认不算成功，仍需人工核对实质质量。
 按唯一 `response_id` 汇总原生 usage，禁止把累计会话 usage 相加；推理已含在输出中。
 RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/start、resume、fork 在转发前必须显式指定许可模型和 effort；其他初始化 Agent 也不能绕过。原生组通过明确 CLI 参数指定许可模型，并事后核对原生轨迹。
@@ -37,9 +37,9 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/s
 
 预算采用 owner 2026-09-24 签字的 [evo 目标合同](../evo/target-contract.zh-CN.md) 第 6 节：
 
-- 单轮总输入和未缓存输入分别不超过原生同轮的 2 倍。
-- 首请求输入不超过原生同轮首请求加 3,000 token。
-- 回复前模型生成次数不超过 2。
+- 单轮总输入不超过原生同轮的 2 倍；未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
+- 首请求输入不超过原生同轮首请求加 3,000 token；任一侧缺首请求证据即 `firstInputMissing`，不判预算内。
+- 回复前模型生成次数不超过 2（口径对齐前，脚本暂按整轮总数 `maxGenerations.total` 检查，同时报告回复前/后；预算数值集中在 `budgets`）。
 - 额外回复耗时不超过 max(5 秒, 原生同轮耗时 × 15%)：短任务按秒计，长任务按百分比计。
 
 超预算返回退出码 2，运行失败返回 1。所有指标在预算内也只是 `needs-quality-review`，

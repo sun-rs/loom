@@ -152,6 +152,7 @@ export {
 export type { WorkerHelpTopicName } from "./worker-help-topics.ts";
 export type { WorkerCliRuntime } from "./worker-cli.ts";
 export { createWorkerToolTransportEnvironment } from "./worker-tool-transport.ts";
+export { runtimeSupportsBodiedWake } from "./bodied-wake.ts";
 export {
   resolveRuntimeToolAccessLaunch,
   supportedRuntimeToolAccessModes,

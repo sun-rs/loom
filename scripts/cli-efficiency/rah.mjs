@@ -294,7 +294,9 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       if (sessionId) assert.equal(current, sessionId, "Session changed");
       sessionId = current;
       round.sessionId = sessionId;
-      round.metrics = measure(sessionId, round);
+      round.metrics = measure(sessionId, round, {
+        replyAt: effective?.createdAt ?? null,
+      });
       round.answer = round.replies.map((m) => m.body).join("\n");
       delete round.replies;
       save();

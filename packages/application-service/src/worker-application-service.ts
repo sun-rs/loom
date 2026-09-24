@@ -20,6 +20,7 @@ import {
 } from "@rah-os/protocol";
 import { projectWorkerMessageCheck } from "@rah-os/kernel";
 import { StaleContextError } from "@rah-os/kernel";
+import { IdempotencyConflictError } from "@rah-os/kernel";
 import { WorkerTaskHeldResponseSchema } from "@rah-os/protocol";
 import {
   WorkerTaskAmendRequestSchema,
@@ -815,6 +816,7 @@ export class WorkerApplicationService {
           contentDigest: presented.contentDigest,
           events: presented.events,
           presentedSeqs: presented.presentedSeqs,
+          addressing: presented.addressing,
           presentedThroughSeq: presented.presentedThroughSeq,
           noticeCount: presented.noticeCount,
           ...(presented.noticeFromSeq === undefined
@@ -1781,12 +1783,19 @@ export class WorkerApplicationService {
             : error.code === "not_found"
               ? 404
               : 409;
+      // S1-b: an idempotency conflict means a mutation under that identity may
+      // already be committed, so it must not share the generic `conflict` code
+      // that the Worker CLI reports as a definite not-sent rejection.
+      const code =
+        error instanceof IdempotencyConflictError
+          ? "idempotency_conflict"
+          : error.code;
       writeJson(
         response,
         status,
         WorkerErrorResponseSchema.parse({
           error: {
-            code: error.code,
+            code,
             message: error.message,
             ...suggestedNextActionFor(route, error.code),
           },

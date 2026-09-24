@@ -126,15 +126,17 @@ try {
       ),
     ]),
   );
-  result.status = Object.values(result.arms).some(
-    (a) => a.status !== "complete",
-  )
-    ? "failed"
-    : Object.values(result.comparisons)
-          .flat()
-          .some((x) => x.status === "over-budget")
-      ? "over-budget"
-      : "needs-quality-review";
+  result.status =
+    Object.values(result.arms).some((a) => a.status !== "complete") ||
+    Object.values(result.comparisons)
+      .flat()
+      .some((x) => x.status === "missing-evidence")
+      ? "failed"
+      : Object.values(result.comparisons)
+            .flat()
+            .some((x) => x.status === "over-budget")
+        ? "over-budget"
+        : "needs-quality-review";
   if (result.status === "over-budget") process.exitCode = 2;
   if (result.status === "failed") process.exitCode = 1;
 } catch (e) {

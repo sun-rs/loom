@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { TimestampSchema } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
+import { WorkerAddressingSchema } from "./worker-addressing.ts";
 
 /**
  * PRESENT-ONLY body fetch for the wake input. It takes no range: the range is
@@ -27,7 +28,14 @@ export const WorkerMessagePresentResponseSchema = z
     contentDigest: z.string().regex(/^sha256:[0-9a-f]{64}$/u),
     /** Every Room event whose content was rendered, any type, in seq order. */
     events: z.array(RoomEventSchema).max(20),
-    presentedSeqs: z.array(z.number().int().positive()).max(20),
+    /**
+     * Every sequence the rendering covers: the rendered events plus the
+     * execution-audit events `message-check` also omits. Bounded by the
+     * Kernel's scan cap.
+     */
+    presentedSeqs: z.array(z.number().int().positive()).max(256),
+    /** Canonical `#room` / `@handle` names, as `message-check` renders them. */
+    addressing: WorkerAddressingSchema.optional(),
     /**
      * The sequence through which this rendering is continuous evidence. A
      * causal marker or freshness floor may be built on this number and on no
@@ -50,11 +58,15 @@ export const WorkerMessagePresentResponseSchema = z
     message: "presented range is inverted",
   })
   .refine(
-    (value) =>
-      value.events.length === value.presentedSeqs.length &&
-      value.events.every(
-        (event, index) => event.roomSeq === value.presentedSeqs[index],
-      ),
+    (value) => {
+      const covered = new Set(value.presentedSeqs);
+      return (
+        value.events.every((event) => covered.has(event.roomSeq)) &&
+        value.presentedSeqs.every(
+          (seq, index) => index === 0 || seq > value.presentedSeqs[index - 1]!,
+        )
+      );
+    },
     { message: "presented events and presented sequences must agree" },
   )
   .refine(

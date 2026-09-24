@@ -504,6 +504,13 @@ export class AgentHost {
             recordUsage: async (usage) => {
               await this.#control.recordRunAttemptUsage?.(usage);
             },
+            ...(this.#control.recordInstanceSessionBinding === undefined
+              ? {}
+              : {
+                  recordInstanceSessionBinding: async (binding) => {
+                    await this.#control.recordInstanceSessionBinding!(binding);
+                  },
+                }),
             registerPrepared: async (candidate) => {
               if (preparedRun !== undefined) {
                 throw new Error(

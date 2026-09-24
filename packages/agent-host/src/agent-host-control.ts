@@ -62,6 +62,10 @@ export type AgentHostControlPort = {
   recordRunAttemptUsage?(
     input: Parameters<RoomKernel["runAttemptUsage"]["record"]>[1],
   ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["record"]>>;
+  /** S1-f: durable evidence that the Host persisted an instance binding. */
+  recordInstanceSessionBinding?(
+    input: Parameters<RoomKernel["instanceSessions"]["record"]>[1],
+  ): Promise<ReturnType<RoomKernel["instanceSessions"]["record"]>>;
   readPendingRuntimeNotice?(
     input: HostInput<RoomKernel["readPendingRuntimeNotice"]>,
   ): Promise<HostResult<RoomKernel["readPendingRuntimeNotice"]>>;
@@ -126,6 +130,8 @@ export function createKernelAgentHostControlPort(
       kernel.recordRuntimeTermination(host, input),
     recordRunAttemptUsage: async (input) =>
       kernel.runAttemptUsage.record(host, input),
+    recordInstanceSessionBinding: async (input) =>
+      kernel.instanceSessions.record(host, input),
     readPendingRuntimeNotice: async (input) =>
       kernel.readPendingRuntimeNotice(host, input),
     renewActivationLease: async (input) =>

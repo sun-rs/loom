@@ -47,6 +47,16 @@ export type GenericProcessAdapterOptions = {
   ) => ActivationEnvironmentLease | Promise<ActivationEnvironmentLease>;
   args?: readonly string[];
   beforeStart?: () => Promise<void> | void;
+  /**
+   * Runs after `registerPrepared` — the RunAttempt is `starting` with a
+   * prepared runtime process, so its Worker credential is current — and before
+   * the runtime process is launched. S1-d uses it to have the Kernel render the
+   * wake window before any input can reach the runtime.
+   */
+  beforeLaunch?: (
+    input: ActivationEnvelope,
+    lease: ActivationEnvironmentLease | undefined,
+  ) => Promise<void> | void;
   command: string;
   completedRunRetention?: number;
   cwd: string;
@@ -94,6 +104,11 @@ export type RuntimeDeliveryAcceptance = Readonly<{
   signal: string;
   threadId: string;
   turnId: string;
+  /**
+   * S1-d: SHA-256 of the exact wake text the driver injected. The Host
+   * registers the send only when it equals the text it prepared.
+   */
+  inputSha256?: string;
 }>;
 
 export type RuntimeRecoveryProvenance = Pick<
@@ -355,6 +370,16 @@ class RuntimeTrajectoryCollector {
               this.#activation,
               providerSession,
             );
+            // Only after the Host persisted the binding does the Kernel learn
+            // that this instance must resume it (fail closed if unrecorded).
+            if (
+              this.#recordProviderSessionEvidence !== undefined &&
+              this.#activation.agent?.instanceChannelId !== undefined
+            )
+              await this.#lifecycle.recordInstanceSessionBinding?.({
+                runAttemptId: this.#runAttemptId,
+                runtimeRunId: this.#runtimeRunId,
+              });
           } catch (error) {
             this.#bindingFailure = classifyRuntimeFailure(
               `RAH_SESSION_CONTINUITY_REQUIRED: session binding failed: ${errorMessage(error)}`,
@@ -635,6 +660,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     | undefined;
   readonly #args: readonly string[];
   readonly #beforeStart: (() => Promise<void> | void) | undefined;
+  readonly #beforeLaunch: GenericProcessAdapterOptions["beforeLaunch"];
   readonly #command: string;
   readonly #completedRunIds: string[] = [];
   readonly #completedRunRetention: number;
@@ -698,6 +724,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
     this.#args = [...(options.args ?? [])];
     this.#beforeStart = options.beforeStart;
+    this.#beforeLaunch = options.beforeLaunch;
     this.#activationEnvironment = options.activationEnvironment;
     this.#command = options.command;
     this.#completedRunRetention = options.completedRunRetention ?? 100;
@@ -812,6 +839,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     };
     try {
       await lifecycle.registerPrepared(runHandle);
+      await this.#beforeLaunch?.(input, environmentLease);
     } catch (error) {
       await releaseEnvironment();
       throw error;
@@ -1202,6 +1230,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       diagnostics: stderr,
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
+      recordDeliveryAcceptance: this.#recordDeliveryAcceptance,
       redactions: environmentLease?.redactions ?? [],
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,
@@ -1264,6 +1293,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       const runHandle = { recoveryDescriptor, runId };
       await lifecycle.registerPrepared(runHandle);
       durablePrepared = true;
+      await this.#beforeLaunch?.(input, environmentLease);
       await this.#requestSupervisorControl(descriptor, "launch");
       return runHandle;
     } catch (error) {
@@ -1684,15 +1714,17 @@ function parseDeliveryAcceptance(
   if (!isRecord(value) || value.protocol !== "rah-delivery-accepted/v1") {
     return null;
   }
+  const keys = ["protocol", "provider", "signal", "threadId", "turnId"];
+  if (value.inputSha256 !== undefined) keys.push("inputSha256");
   if (
-    Object.keys(value).sort().join("\0") !==
-      ["protocol", "provider", "signal", "threadId", "turnId"]
-        .sort()
-        .join("\0") ||
+    Object.keys(value).sort().join("\0") !== keys.sort().join("\0") ||
     !isSafeProviderSessionText(value.provider, 512) ||
     !isSafeProviderSessionText(value.signal, 512) ||
     !isSafeProviderSessionText(value.threadId, 4_096) ||
-    !isSafeProviderSessionText(value.turnId, 4_096)
+    !isSafeProviderSessionText(value.turnId, 4_096) ||
+    (value.inputSha256 !== undefined &&
+      (typeof value.inputSha256 !== "string" ||
+        !/^[0-9a-f]{64}$/u.test(value.inputSha256)))
   ) {
     throw new Error("invalid runtime delivery acceptance frame");
   }
@@ -1702,6 +1734,9 @@ function parseDeliveryAcceptance(
     signal: value.signal,
     threadId: value.threadId,
     turnId: value.turnId,
+    ...(value.inputSha256 === undefined
+      ? {}
+      : { inputSha256: value.inputSha256 as string }),
   };
 }
 

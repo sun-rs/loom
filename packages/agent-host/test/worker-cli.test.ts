@@ -14,7 +14,10 @@ import { Readable } from "node:stream";
 import { WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION } from "@rah-os/protocol";
 
 import { runWorkerCliCommand } from "../src/index.ts";
-import { SEND_REJECTED_NEXT_ACTION } from "../src/worker-cli-error.ts";
+import {
+  SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION,
+  SEND_REJECTED_NEXT_ACTION,
+} from "../src/worker-cli-error.ts";
 
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-worker-cli-"));
@@ -1475,6 +1478,27 @@ for (const rejection of [
     cliCode: "invalid_request",
     message: "request body is invalid",
   },
+  {
+    name: "a 400 invalid field",
+    status: 400,
+    code: "invalid_field",
+    cliCode: "invalid_field",
+    message: "body is invalid",
+  },
+  {
+    name: "a 403 permission refusal",
+    status: 403,
+    code: "forbidden",
+    cliCode: "forbidden",
+    message: "not a member of this Room",
+  },
+  {
+    name: "a 409 thread target mismatch",
+    status: 409,
+    code: "thread_context_target_mismatch",
+    cliCode: "thread_context_target_mismatch",
+    message: "receipt names another thread",
+  },
 ]) {
   test(`message-post rejected with ${rejection.name} is reported as not sent and correctable`, async () => {
     const state = fixture();
@@ -1525,6 +1549,77 @@ for (const rejection of [
     }
   });
 }
+
+// P2-2: an idempotency conflict is not a clean rejection. A message under
+// that identity may already be committed, so the CLI must neither claim
+// not_sent nor invite a resend under a new key.
+test("message-post refused for an idempotency conflict does not claim not_sent", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "idempotency_conflict",
+            message: "idempotency key k was already used for another mutation",
+          },
+        }),
+        { status: 409 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Result"],
+        state.runtime,
+      ),
+      1,
+    );
+    const stderr = state.stderr();
+    assert.equal(
+      stderr,
+      [
+        "Error: Worker API HTTP 409: idempotency key k was already used for another mutation",
+        "Code: idempotency_conflict",
+        "Retryable: no",
+        "Effect: may_already_exist",
+        "Draft saved: no",
+        `Next action: ${SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION}`,
+        "",
+      ].join("\n"),
+    );
+    assert.doesNotMatch(stderr, /not_sent|cannot duplicate|send again/u);
+    assert.match(SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION, /may already/u);
+    assert.match(SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION, /idempotency/u);
+    assert.match(SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION, /message-read/u);
+    assert.match(SEND_IDEMPOTENCY_CONFLICT_NEXT_ACTION, /new key/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a coded rejection outside the definite families keeps CANNOT_CONFIRM", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: { code: "execution_fenced", message: "not current" },
+        }),
+        { status: 409 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Result"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.doesNotMatch(state.stderr(), /not_sent/u);
+    assert.match(state.stderr(), /\nDraft saved: yes\n/u);
+    assert.match(state.stderr(), /CANNOT_CONFIRM/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
 
 test("a rejected message-post under --json keeps the text block and states not_sent", async () => {
   const state = fixture();

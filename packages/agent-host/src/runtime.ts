@@ -45,6 +45,14 @@ export type RuntimeStartLifecycle = {
   recordTrajectory?(activity: RuntimeTrajectoryAppendInput): Promise<void>;
   /** Native per-generation token usage; diagnostics, never trajectory. */
   recordUsage?(usage: RunAttemptUsageRecordInput): Promise<void>;
+  /**
+   * S1-f: a Role instance's native session binding was persisted by the Host.
+   * Durable Kernel evidence; its absence means a later launch starts fresh.
+   */
+  recordInstanceSessionBinding?(input: {
+    runAttemptId: string;
+    runtimeRunId: string;
+  }): Promise<void>;
   registerPrepared(run: RunHandle): Promise<void>;
 };
 

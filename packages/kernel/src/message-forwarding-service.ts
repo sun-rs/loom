@@ -14,6 +14,7 @@ import {
 } from "@rah-os/protocol";
 
 import { requireRoomMember } from "./collaboration-policy.ts";
+import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
 import { roomProjectionFromRow } from "./collaboration-projection.ts";
 import {
   ForbiddenError,
@@ -333,6 +334,15 @@ export class MessageForwardingService {
       }
       return { deduplicated: true, messageId: event.aggregateId };
     }
+    if (
+      !this.#database
+        .prepare(`SELECT 1 WHERE ${activeInstancePrivateBoxPredicate("?")}`)
+        .get(destinationRoomId)
+    )
+      throw new MessageForwardDestinationError(
+        "destination_not_available",
+        "Instance private box is inactive: source channel membership removed",
+      );
     const messageId = this.#createId("message");
     const createdAt = this.#now().toISOString();
     let projectedAttachmentIds: string[] = [];

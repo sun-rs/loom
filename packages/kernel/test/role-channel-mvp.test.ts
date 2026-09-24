@@ -259,6 +259,11 @@ test("Role is inert configuration; two channel instances receive independent con
         };
         kernel.prepareRunAttemptRuntime(host, runtime);
         kernel.markRunAttemptRunning(host, runtime);
+        // The fake Host persisted the native session binding for this run.
+        kernel.instanceSessions.record(host, {
+          runAttemptId: run.runAttemptId,
+          runtimeRunId: runtime.runtimeRunId,
+        });
         const scope = {
           activationId: activation.activationId,
           consumerId: "worker",

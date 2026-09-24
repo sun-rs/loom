@@ -47,7 +47,7 @@ for (const previousVersion of [54, 57])
       try {
         assert.equal(
           upgraded.prepare("PRAGMA user_version").get()!.user_version,
-          61,
+          62,
         );
         assert.deepEqual(
           upgraded

@@ -69,6 +69,7 @@ export type HumanApplicationPort = Pick<
   createRole: RoomKernel["roles"]["create"];
   listRoles: RoomKernel["roles"]["list"];
   instantiateRole: RoomKernel["roles"]["instantiate"];
+  resetInstanceSession: RoomKernel["roles"]["resetInstanceSession"];
   listMessageSocial: RoomKernel["messageSocial"]["list"];
   reactMessage: RoomKernel["messageSocial"]["react"];
   saveMessage: RoomKernel["messageSocial"]["save"];
@@ -117,6 +118,8 @@ export function createHumanApplicationPort(
     createRole: (actor, input) => kernel.roles.create(actor, input),
     listRoles: (actor, input) => kernel.roles.list(actor, input),
     instantiateRole: (actor, input) => kernel.roles.instantiate(actor, input),
+    resetInstanceSession: (actor, input) =>
+      kernel.roles.resetInstanceSession(actor, input),
     previewChannel: (actor, input) =>
       kernel.publicChannels.preview(actor, input),
     discoverPublicChannels: (actor, input) =>

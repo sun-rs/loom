@@ -816,3 +816,18 @@ test("configured Agent startup uses compact context without rereading audit mani
     "legacy invocations must still obtain their role instructions",
   );
 });
+
+test("S1-d: the prompt fits both the bodied wake and the fixed startup wake", () => {
+  const prompt = compileStandingPrompt({ agent: fixtureAgent }).prompt;
+  // Fallback path: the startup check stays available and is conditional.
+  assert.match(
+    prompt,
+    /If the wake lacks your messages[^\n]*message-check --startup/u,
+  );
+  // Bodied path: reply with the stated causal marker, no check first.
+  assert.match(prompt, /--based-on-room-seq/u);
+  assert.match(
+    prompt,
+    /Delivery confirmation is automatic in `message-check` or a `--based-on-room-seq` reply/u,
+  );
+});

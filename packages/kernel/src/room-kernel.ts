@@ -283,6 +283,7 @@ import {
   type RuntimeTrajectoryServiceOptions,
 } from "./runtime-trajectory.ts";
 import { RunAttemptUsageService } from "./run-attempt-usage.ts";
+import { InstanceSessionService } from "./instance-session.ts";
 import {
   runtimeOfferIsAvailable,
   runtimeOfferObservationFromId,
@@ -417,7 +418,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 61;
+export const KERNEL_SCHEMA_VERSION = 62;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -472,6 +473,7 @@ export class RoomKernel {
   readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
   readonly runAttemptUsage: RunAttemptUsageService;
+  readonly instanceSessions: InstanceSessionService;
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
     this.#now = options.now ?? (() => new Date());
@@ -771,6 +773,7 @@ export class RoomKernel {
     };
     this.#runtimeTrajectory = new RuntimeTrajectoryService(runtimeObservation);
     this.runAttemptUsage = new RunAttemptUsageService(runtimeObservation);
+    this.instanceSessions = new InstanceSessionService(runtimeObservation);
   }
 
   get taskReviews(): TaskReviewService {
@@ -1048,6 +1051,9 @@ export class RoomKernel {
     let compactedRuntimeOfferObservationCount = 0;
     unit("identity-accounts-v57", "external", () =>
       migrateIdentityAccounts(this.#database),
+    );
+    unit("instance-session-v62", "transactional", () =>
+      this.instanceSessions.backfill(schemaVersion),
     );
     unit("placement-columns-and-version", "transactional", () => {
       const placementColumns = this.#database

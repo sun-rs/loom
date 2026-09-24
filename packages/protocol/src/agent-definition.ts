@@ -112,6 +112,10 @@ export type AgentDefinitionRevision = z.infer<
 export const AgentRuntimeContextSchema = z
   .object({
     instanceSessionRequired: z.boolean().optional(),
+    // Incremented by an explicit Human session reset; the Host keys the
+    // instance's native session binding by it, so a new generation never
+    // resumes a session bound under an older one.
+    instanceSessionGeneration: z.number().int().nonnegative().optional(),
     instanceChannelId: IdentifierSchema.optional(),
     agentDefinitionRevision: AgentDefinitionRevisionSchema,
     // Added to v1 as a backward-compatible field: newly issued launch claims

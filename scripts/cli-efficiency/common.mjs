@@ -32,7 +32,9 @@ export function transcript(sessionId) {
   assert.equal(paths.length, 1, "Exactly one native transcript");
   return readFileSync(paths[0], "utf8").trim().split("\n").map(JSON.parse);
 }
-export function measure(sessionId, round) {
+// usageOptions.replyAt splits generations at the effective Room reply (RAH arm);
+// omitted for native, whose final answer generation is the reply.
+export function measure(sessionId, round, usageOptions) {
   const events = transcript(sessionId).filter(
     (e) => e.timestamp >= round.startedAt && e.timestamp <= round.finishedAt,
   );
@@ -43,7 +45,7 @@ export function measure(sessionId, round) {
     assert.equal(e.payload.effort, effort);
   }
   return {
-    ...summarizeUsage(events),
+    ...summarizeUsage(events, usageOptions),
     replySeconds: round.replySeconds,
     toolCalls: events
       .filter((e) =>

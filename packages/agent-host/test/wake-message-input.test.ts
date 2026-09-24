@@ -1,144 +1,148 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { WorkerMessagePresentResponse } from "@rah-os/protocol";
+
 import {
-  formatWakeIncomingMessage,
-  formatWakeInboxNotice,
-  formatWakeMessagesInput,
-  formatWakeNoticeOnlyInput,
+  formatBodiedWakeInput,
   RESPONSE_TARGET_HINT,
   WAKE_CLOSING_LINE,
-  type WakeEvent,
 } from "../src/wake-message-input.ts";
 
-const message: WakeEvent = {
-  roomSeq: 12,
-  type: "message.posted",
-  createdAt: "2026-09-18T09:30:00Z",
-  target: "#general",
-  actor: "richard",
-  messageId: "message_11111111-2222-3333-4444-555555555555",
-  senderType: "human",
-  body: "can you take the migration?",
-};
+function event(
+  roomSeq: number,
+  type: string,
+  payload: Record<string, unknown>,
+  actorId = "principal-richard",
+) {
+  return {
+    eventId: `event-${roomSeq}`,
+    roomId: "room-general",
+    roomSeq,
+    type,
+    actorId,
+    aggregateType: type.split(".")[0]!,
+    aggregateId: `aggregate-${roomSeq}`,
+    payload,
+    idempotencyKey: `key-${roomSeq}`,
+    schemaVersion: 1,
+    createdAt: "2026-09-18T09:30:00.000Z",
+  };
+}
 
-test("the closing line is Raft's, verbatim", () => {
-  assert.equal(
-    WAKE_CLOSING_LINE,
-    "Respond as appropriate. Complete all your work before stopping.",
-  );
-});
-
-test("one message renders the singular header and the Raft line shape", () => {
-  assert.equal(
-    formatWakeMessagesInput({ events: [message] }),
-    [
-      "New message received:",
-      "",
-      "[target=#general msg=message_11111111-2222-3333-4444-555555555555 time=2026-09-18T09:30:00Z<human>] @richard: can you take the migration?",
-      "",
-      WAKE_CLOSING_LINE,
-      RESPONSE_TARGET_HINT,
-    ].join("\n"),
-  );
-});
-
-test("several messages render the plural header", () => {
-  const rendered = formatWakeMessagesInput({
+function present(
+  overrides: Partial<WorkerMessagePresentResponse> = {},
+): WorkerMessagePresentResponse {
+  return {
+    fromSeq: 12,
+    toSeq: 14,
+    contentDigest: `sha256:${"a".repeat(64)}`,
     events: [
-      message,
-      { ...message, roomSeq: 13, messageId: "message_b", body: "and this one" },
+      event(12, "message.posted", {
+        messageId: "message-12",
+        body: "can you take the migration?",
+      }),
+      event(14, "message.posted", {
+        messageId: "message-14",
+        body: "and the rollback plan",
+      }),
     ],
-  });
-  assert.ok(rendered.startsWith("New messages received:\n\n"));
-  assert.ok(rendered.includes("@richard: and this one"));
-  assert.ok(rendered.endsWith(RESPONSE_TARGET_HINT));
-});
-
-test("the three RAH target shapes render as written", () => {
-  const dm = formatWakeIncomingMessage({ ...message, target: "@richard" });
-  const thread = formatWakeIncomingMessage({
-    ...message,
-    target: "#general:thread_9999",
-  });
-  assert.ok(dm.startsWith("[target=@richard msg="));
-  assert.ok(thread.startsWith("[target=#general:thread_9999 msg="));
-  assert.ok(
-    formatWakeIncomingMessage(message).startsWith("[target=#general msg="),
-  );
-});
-
-test("attachment, task and thread-context affordances ride the Raft suffixes", () => {
-  const rendered = formatWakeIncomingMessage({
-    ...message,
-    attachments: [{ filename: "spec.md", sizeBytes: 12_345 }],
-    task: { number: 42, status: "in_progress", assignee: "agent:agent-1" },
-    threadContext: {
-      parentTarget: "#general",
-      threadTarget: "#general:thread_9999",
-      parentMessage: "- richard: let's discuss the rollout plan",
-      recentMessages: [],
-      historyTruncated: true,
+    presentedSeqs: [12, 13, 14],
+    presentedThroughSeq: 14,
+    noticeCount: 0,
+    addressing: {
+      targets: { "room-general": "#general" },
+      handles: { "principal-richard": "richard" },
     },
-  });
-  assert.ok(
-    rendered.startsWith(
-      "[RAH thread context: you were mentioned in a thread without model-visible context.]",
-    ),
+    renderedAt: "2026-09-18T09:30:01.000Z",
+    ...overrides,
+  };
+}
+
+test("the wake carries each body with its real Room seq, author and target", () => {
+  const text = formatBodiedWakeInput({ present: present() })!;
+  assert.match(
+    text,
+    /\[target=#general seq=12 msg=message-12 [^\]]*\] @richard: can you take the migration\?/u,
   );
-  assert.ok(rendered.includes("- (no earlier thread replies)"));
-  assert.ok(rendered.includes("Recent thread context (truncated):"));
-  assert.ok(rendered.includes("[attachments: spec.md (12345 bytes)]"));
-  assert.ok(
-    rendered.includes("[task #42 status=in_progress assignee=agent:agent-1]"),
+  assert.match(
+    text,
+    /seq=14 msg=message-14 [^\]]*\] @richard: and the rollback plan/u,
   );
+  // An execution-audit sequence (13) is covered but never rendered.
+  assert.doesNotMatch(text, /seq=13/u);
+  assert.ok(text.includes(WAKE_CLOSING_LINE));
+  assert.ok(text.includes(RESPONSE_TARGET_HINT));
 });
 
-test("a non-message event renders in the Worker read renderer's own shape", () => {
-  assert.equal(
-    formatWakeIncomingMessage({
-      roomSeq: 14,
-      type: "task.updated",
-      createdAt: "2026-09-18T09:31:00Z",
-      target: "#general",
-      actor: "richard",
-      payload: { taskId: "task_1", assigneeId: null },
+test("the confirm-through value is the presented prefix and the reply command carries it", () => {
+  const text = formatBodiedWakeInput({ present: present() })!;
+  assert.match(text, /through seq 14\b/u);
+  assert.match(text, /worker message-post --based-on-room-seq 14`/u);
+  // The bodied path drops the startup mandate but keeps the no-reply exit.
+  assert.doesNotMatch(text, /--startup/u);
+  assert.match(text, /no reply is needed[^\n]*worker message-check/iu);
+});
+
+test("a truncated window says more exists and asks for message-check before replying", () => {
+  const text = formatBodiedWakeInput({
+    present: present({
+      toSeq: 40,
+      presentedThroughSeq: 12,
+      presentedSeqs: [12],
+      events: [
+        event(12, "message.posted", { messageId: "message-12", body: "one" }),
+      ],
+      noticeCount: 28,
+      noticeFromSeq: 13,
+      noticeToSeq: 40,
     }),
-    'seq=14 time=2026-09-18T09:31:00Z actor=@richard type=task.updated\n  {"taskId":"task_1","assigneeId":null}',
+  })!;
+  assert.match(text, /contiguous only through seq 12\b/u);
+  assert.doesNotMatch(text, /--based-on-room-seq/u);
+  assert.match(text, /28 further Room events in sequence range 13-40/u);
+  assert.match(text, /not confirmed by replying/u);
+  assert.match(text, /worker message-check` first to read the rest/u);
+});
+
+test("a business fact between messages is shown, not skipped", () => {
+  const text = formatBodiedWakeInput({
+    present: present({
+      events: [
+        event(12, "message.posted", { messageId: "message-12", body: "one" }),
+        event(13, "task.cancelled", { taskId: "task-7", number: 7 }),
+        event(14, "message.posted", { messageId: "message-14", body: "two" }),
+      ],
+    }),
+  })!;
+  assert.match(text, /seq=13 [^\n]*type=task\.cancelled/u);
+  assert.match(text, /"taskId":"task-7"/u);
+});
+
+test("nothing is confirmable when the first event degraded, so no bodied wake exists", () => {
+  assert.equal(
+    formatBodiedWakeInput({
+      present: present({
+        events: [],
+        presentedSeqs: [],
+        presentedThroughSeq: 0,
+        noticeCount: 3,
+        noticeFromSeq: 12,
+        noticeToSeq: 14,
+      }),
+    }),
+    undefined,
   );
 });
 
-test("the notice is a bounded summary and never a list", () => {
-  const notice = formatWakeInboxNotice({ count: 40, fromSeq: 30, toSeq: 90 });
-  assert.ok(notice.startsWith("[RAH inbox notice:"));
-  assert.ok(notice.includes("40 further Room events in sequence range 30-90"));
-  assert.ok(
-    notice.includes("deferring them does not establish that there is no work"),
-  );
-  assert.ok(!/\b31\b/u.test(notice), "sequences are summarised, not listed");
-  assert.equal(formatWakeInboxNotice({ count: 0 }), "");
-});
-
-test("a wake with bodies carries the notice between the bodies and the closing line", () => {
-  const rendered = formatWakeMessagesInput({
-    events: [message],
-    notice: { count: 2, fromSeq: 13, toSeq: 15 },
-    activationInput: "STANDING",
-  });
-  const bodyIndex = rendered.indexOf("@richard:");
-  const noticeIndex = rendered.indexOf("[RAH inbox notice:");
-  const closingIndex = rendered.indexOf(WAKE_CLOSING_LINE);
-  assert.ok(bodyIndex < noticeIndex);
-  assert.ok(noticeIndex < closingIndex);
-  assert.ok(rendered.endsWith("STANDING"));
-});
-
-test("a fully degraded range renders the notice alone", () => {
-  const rendered = formatWakeNoticeOnlyInput({
-    notice: { count: 3, fromSeq: 10, toSeq: 12 },
-    activationInput: "STANDING",
-  });
-  assert.ok(rendered.startsWith("[RAH inbox notice:"));
-  assert.ok(!rendered.includes(WAKE_CLOSING_LINE));
-  assert.ok(rendered.endsWith("STANDING"));
+test("the memory index rides the wake only when supplied", () => {
+  const without = formatBodiedWakeInput({ present: present() })!;
+  assert.doesNotMatch(without, /MEMORY\.md/u);
+  const changed = formatBodiedWakeInput({
+    present: present(),
+    memory: { content: "# Memory\n- prefers rebase\n", reason: "changed" },
+  })!;
+  assert.match(changed, /## Complete original MEMORY\.md/u);
+  assert.match(changed, /changed since this session's system snapshot/u);
+  assert.ok(changed.includes("# Memory\n- prefers rebase\n"));
 });

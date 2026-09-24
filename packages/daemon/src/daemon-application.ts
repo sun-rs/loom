@@ -519,6 +519,11 @@ export class DaemonApplication {
               host,
               implementations,
               probeReport: placementProbeReport,
+              // S1-d: the v4 placement path registers the Codex acceptance
+              // too, which is what enables the bodied wake for instances.
+              ...(kernel === undefined
+                ? {}
+                : { deliveryAcceptanceKernel: kernel }),
               ...(placement?.resolvedModel === undefined
                 ? {}
                 : { resolvedModel: placement.resolvedModel }),

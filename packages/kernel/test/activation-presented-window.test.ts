@@ -435,3 +435,105 @@ test("the phase table's fields are readable without any new measurement", () => 
     context.close();
   }
 });
+
+test("execution-audit events are covered by the window without being rendered or spending its budget", () => {
+  const context = fixture();
+  try {
+    // A second Host serves the bystander, so its lease/run audit events land in
+    // this Room between two messages that both belong to the worker's range.
+    const bystanderId = context.database
+      .prepare("SELECT principal_id AS id FROM principals WHERE handle=?")
+      .get("bystander")!.id as string;
+    const otherHost = context.kernel.authenticateHostAccessToken(
+      context.kernel.provisionHostCredential({
+        hostId: "other-host",
+        participantIds: [bystanderId],
+      }).accessToken,
+    );
+    context.kernel.heartbeatHost(otherHost);
+    const first = context.kernel.postMessage(context.actor, {
+      body: "both of you",
+      roomId: context.room.roomId,
+      recipients: [
+        { participantId: context.agentId, reason: "mention" },
+        { participantId: bystanderId, reason: "mention" },
+      ],
+      idempotencyKey: "audit-first",
+    });
+    const leased = context.kernel.leaseNextActivation(otherHost, {
+      leaseMs: 600_000,
+    });
+    assert.ok(leased);
+    context.kernel.createRunAttempt(otherHost, {
+      activationId: leased.activationId,
+    });
+    const second = context.post("only you");
+    const run = context.activate();
+    const auditSeqs = (
+      context.database
+        .prepare(
+          "SELECT room_seq, type FROM room_events WHERE room_id=? AND room_seq>? AND room_seq<?",
+        )
+        .all(
+          context.room.roomId,
+          first.event.roomSeq,
+          second.event.roomSeq,
+        ) as { room_seq: number; type: string }[]
+    ).map((row) => row.room_seq);
+    assert.ok(auditSeqs.length > 0, "the fixture must interleave audit events");
+    const rendered = context.kernel.presentWorkerMessages(run.execution);
+    assert.deepEqual(
+      rendered.events.map((event) => event.roomSeq),
+      [first.event.roomSeq, second.event.roomSeq],
+      "message-check projection semantics: audit events are not rendered",
+    );
+    for (const seq of auditSeqs)
+      assert.ok(rendered.presentedSeqs.includes(seq));
+    assert.equal(rendered.noticeCount, 0);
+    assert.equal(rendered.presentedThroughSeq, run.scope.toSeq);
+    sent(context, run);
+    context.kernel.postWorkerMessage(run.execution, {
+      body: "answering both messages",
+      basedOnRoomSeq: rendered.presentedThroughSeq,
+      idempotencyKey: "audit-reply",
+    });
+    assert.equal(context.cursor(), run.scope.toSeq);
+  } finally {
+    context.close();
+  }
+});
+
+test("a late acceptance for a RunAttempt that already finished registers nothing", () => {
+  const context = fixture();
+  try {
+    context.post("asked once");
+    const run = context.activate();
+    const rendered = context.kernel.presentWorkerMessages(run.execution);
+    // The model posted before the acceptance signal: the marker is parked.
+    context.kernel.postWorkerMessage(run.execution, {
+      body: "an answer",
+      basedOnRoomSeq: rendered.presentedThroughSeq,
+      idempotencyKey: "late-reply",
+    });
+    assert.equal(context.cursor(), 0);
+    context.kernel.recordRuntimeTermination(context.host, {
+      runAttemptId: run.scope.runAttemptId,
+      runtimeRunId: "runtime",
+      exit: { code: 1 },
+    });
+    context.kernel.finishRunAttempt(context.host, {
+      runAttemptId: run.scope.runAttemptId,
+      state: "failed",
+      exitCode: 1,
+    });
+    // The receipt arrives after the RunAttempt reached a terminal state.
+    sent(context, run);
+    assert.equal(context.cursor(), 0);
+    assert.equal(
+      readPresentedWindow(context.database, run.scope)?.sentAt,
+      undefined,
+    );
+  } finally {
+    context.close();
+  }
+});

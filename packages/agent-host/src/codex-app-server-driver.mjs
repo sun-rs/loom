@@ -6,6 +6,7 @@ import {
 } from "./provider-launch-arguments.js";
 import { attachCodexBusyInput } from "./codex-busy-input.js";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { writeSync } from "node:fs";
 import { createInterface } from "node:readline";
 
@@ -210,7 +211,9 @@ try {
           (resumeRecovery === undefined
             ? ""
             : "The previous Provider thread was not recovered. Use canonical Room history and workspace memory as the recovery point.\n") +
-          providerActivationInput(),
+          // S1-d: the Host-prepared bodied wake when present; otherwise the
+          // fixed startup wake. The driver never composes Room content itself.
+          (options.wakeInput ?? providerActivationInput()),
         type: "text",
       },
     ],
@@ -235,7 +238,15 @@ try {
   // input now belongs to, so this is an acknowledgement of THIS injection and
   // not merely "the process is alive". It is emitted only here: a stdin write
   // returning, or the process starting, never reaches this line.
-  writeDeliveryAcceptance(activeThreadId, activeTurnId);
+  // Only a Host-prepared bodied wake has a presented window behind it; the
+  // fixed wake reports nothing, so no rendering is ever marked sent for text
+  // the runtime did not receive.
+  if (options.wakeInput !== undefined)
+    writeDeliveryAcceptance(
+      activeThreadId,
+      activeTurnId,
+      createHash("sha256").update(options.wakeInput, "utf8").digest("hex"),
+    );
 
   const completedTurn = await turnCompleted;
   if (
@@ -513,6 +524,8 @@ function parseArguments(args) {
     else if (name === "--model") parsed.model = value;
     else if (name === "--reasoning") parsed.reasoning = value;
     else if (name === "--resume-session") parsed.resumeSession = value;
+    else if (name === "--wake-input-file")
+      parsed.wakeInput = readProviderPromptFile(value);
     else if (name === "-c") parsed.codexConfigArgs.push(name, value);
     else throw new Error(`unsupported codex app-server driver option: ${name}`);
     index += 1;
@@ -564,7 +577,7 @@ function classifyCodexResumeError(message) {
  * id never becomes Room or UI truth. The Host turns it into a Host-credential
  * `delivery.presented.sent`; the driver itself has no Kernel authority.
  */
-function writeDeliveryAcceptance(threadId, turnId) {
+function writeDeliveryAcceptance(threadId, turnId, inputSha256) {
   try {
     writeSync(
       3,
@@ -574,6 +587,7 @@ function writeDeliveryAcceptance(threadId, turnId) {
         signal: "turn/start.response",
         threadId,
         turnId,
+        inputSha256,
       })}\n`,
     );
   } catch {

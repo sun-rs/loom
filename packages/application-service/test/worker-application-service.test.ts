@@ -1317,7 +1317,11 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       summary: "A different result cannot reuse an accepted command identity",
     });
     assert.equal(conflictingReplay.status, 409);
-    assert.equal(await responseErrorCode(conflictingReplay), "conflict");
+    // A reused command identity may already be committed: distinct code.
+    assert.equal(
+      await responseErrorCode(conflictingReplay),
+      "idempotency_conflict",
+    );
     assert.equal(deliveryEvidenceCaptureCount, 1);
 
     const reopenedKernel = new RoomKernel({

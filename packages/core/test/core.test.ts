@@ -197,6 +197,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "replyThread",
       "requestRoomAgentSos",
       "requestTaskReassignment",
+      "resetInstanceSession",
       "resolveInputRequest",
       "resolveNavigationTarget",
       "restoreHumanThreadAgentFollower",

@@ -69,6 +69,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "room_agent_sos_operations",
   "room_agent_sos_targets",
   "room_events",
+  "role_instance_sessions",
   "role_instances",
   "role_revisions",
   "role_templates",

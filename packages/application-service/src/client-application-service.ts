@@ -6,6 +6,8 @@ import {
   RoleListResponseSchema,
   RoleInstantiateRequestSchema,
   RoleInstantiateResponseSchema,
+  InstanceSessionResetRequestSchema,
+  InstanceSessionResetResponseSchema,
 } from "@rah-os/protocol";
 import { canonicalAgentIdField } from "@rah-os/protocol";
 import {
@@ -404,6 +406,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/roles/revise",
   "/roles/list",
   "/roles/instantiate",
+  "/instances/session/reset",
   "/messages/forward",
   "/messages/forward/targets",
   "/messages/reference-read-states",
@@ -1240,6 +1243,20 @@ export class ClientApplicationService {
         200,
         RoleInstantiateResponseSchema.parse(
           this.#human.instantiateRole(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/instances/session/reset") {
+      const command = parseClientRequest(
+        InstanceSessionResetRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        InstanceSessionResetResponseSchema.parse(
+          this.#human.resetInstanceSession(actor, command),
         ),
       );
       return;

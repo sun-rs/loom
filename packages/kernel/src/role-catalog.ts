@@ -15,6 +15,7 @@ import {
   NotFoundError,
   StaleContextError,
 } from "./errors.ts";
+import { advanceInstanceSessionGeneration } from "./instance-session.ts";
 import {
   provisionWorkspaceAgentTransaction,
   workspaceAgentProvisionResult,
@@ -351,6 +352,93 @@ export class RoleCatalog {
       return P.RoleInstantiateResponseSchema.parse({
         instance,
         agent: created.agent,
+        event,
+        deduplicated: false,
+      });
+    });
+  }
+
+  /**
+   * Human recovery exit (S1-f): the instance's next run starts a new native
+   * session. Refused while the instance has leased or running work. The reset
+   * is recorded in the instance's channel; it never deletes history.
+   */
+  resetInstanceSession(
+    auth: AuthenticatedActorContext,
+    raw: P.InstanceSessionResetRequest,
+  ) {
+    const input = P.InstanceSessionResetRequestSchema.parse(raw),
+      c = this.context;
+    return c.transaction(() => {
+      const actorId = c.requireActor(auth);
+      const instance = c.database
+        .prepare(
+          "SELECT ri.channel_id, rt.control_room_id FROM role_instances ri JOIN role_templates rt ON rt.role_id=ri.role_id WHERE ri.instance_id=?",
+        )
+        .get(input.instanceId);
+      if (!instance) throw new NotFoundError("Role instance not found");
+      const channelId = text(instance, "channel_id");
+      requireHumanControlRoomManager(
+        c.database,
+        text(instance, "control_room_id"),
+        actorId,
+      );
+      requireRoomManager(c.database, channelId, actorId);
+      const requestDigest = canonicalDigest({
+        instanceId: input.instanceId,
+      });
+      const prior = this.replay(
+        actorId,
+        channelId,
+        input.idempotencyKey,
+        "instance.session_reset",
+        requestDigest,
+      );
+      if (prior)
+        return P.InstanceSessionResetResponseSchema.parse({
+          instanceId: input.instanceId,
+          channelId,
+          sessionGeneration: prior.payload.sessionGeneration,
+          event: prior,
+          deduplicated: true,
+        });
+      this.fresh(channelId, input.basedOnRoomSeq);
+      const running = c.database
+        .prepare(
+          // A run computes its session generation when it starts; a leased
+          // Activation without a live run still launches under the new one.
+          `SELECT 1 FROM run_attempts WHERE participant_id=? AND state IN ('starting','running')
+           UNION ALL SELECT 1 FROM runtime_processes WHERE participant_id=? AND state IN ('prepared','active','orphaned')
+           LIMIT 1`,
+        )
+        .get(input.instanceId, input.instanceId);
+      if (running)
+        throw new ConflictError(
+          "Role instance has running work; wait for it to finish before resetting its session",
+        );
+      const sessionGeneration = advanceInstanceSessionGeneration(
+        c.database,
+        input.instanceId,
+        c.now().toISOString(),
+      );
+      const event = c.events.append({
+        actorId,
+        aggregateId: input.instanceId,
+        aggregateType: "instance",
+        roomId: channelId,
+        idempotencyKey: input.idempotencyKey,
+        type: "instance.session_reset",
+        payload: {
+          instanceId: input.instanceId,
+          notice: "context continuity interrupted by Human reset",
+          requestDigest,
+          sessionGeneration,
+        },
+      });
+      return P.InstanceSessionResetResponseSchema.parse({
+        instanceId: input.instanceId,
+        channelId,
+        sessionGeneration,
         event,
         deduplicated: false,
       });
