@@ -113,7 +113,6 @@ export type MobileNavigationDestination =
   "home" | "members" | "settings" | "tasks";
 
 export type WorkspaceAgentView = {
-  instanceChannelId?: string;
   modelBindingId?: string;
   presence?: import("@rah-os/protocol").AgentPresence;
   agentId: string;
@@ -219,9 +218,6 @@ export function workspaceAgentDirectory(input: {
       return Object.freeze({
         ...(agent.modelBindingId
           ? { modelBindingId: agent.modelBindingId }
-          : {}),
-        ...(agent.instanceChannelId
-          ? { instanceChannelId: agent.instanceChannelId }
           : {}),
         agentId: agent.definition.agentId,
         agentDefinitionRevisionId:

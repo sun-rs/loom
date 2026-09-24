@@ -1,7 +1,5 @@
 # Inbox、Activation 与 AgentHost
 
-2026-09-23 实例私聊 MVP：canonical direct Room 承载私有 box，与所属频道共用实例 participant lane 和原生 session key。私聊排队不 steer 频道工作；Role 实例忙时通知仅包含本次执行目标中的 Human 消息。Worker 不能提前读取未执行的私有目标，公开频道历史仍按 membership 可读；实例发帖固定在当前执行目标。复用既有凭据撤销、Inbox/Activation 和运行收尾，不增加第二套队列。见 [私聊实施与验收](../audits/2026-09-23-instance-private-box.zh-CN.md)。
-
 ## Composer 停止与重发
 
 Composer 的 Stop 复用 Room Agent SOS 与 Runtime terminal proof，作用域为当前
@@ -306,26 +304,3 @@ Workspace `agentAllChannelGreetingEnabled` 默认开启，设置只影响随后�
 无 #all 的 headless Workspace 不调度，也不回退到 control Room。
 来源、一次性条件、异步能力发布限制及测试见
 [首次报到审计](../audits/2026-09-20-agent-first-run-greeting.zh-CN.md)。
-
-## 2026-09-21 模型投影与精确展示记录
-
-普通 `message-check` 使用 Kernel 的 `projectWorkerMessageCheck`：仅省略明确列出的
-execution audit 事件，保留全部业务及未知事件；原始 Room ledger、显式 sync/history
-不裁剪。分页 cursor 仍是完整扫描窗口，纯内部事件无需模型动作但必须正常前进；
-正文输出失败不 ACK，输出后的 ACK 丢失仍沿既有重放恢复。
-
-schema 58 的 `worker_message_presentations` 按 participant、Room、Thread、具体
-message sequence 记录已返回的消息，不从最高序号推测中间记录。check 的记录在
-页确认事务内生成；history、room-read、held 从实际返回集合记录。它仅证明曾经呈现，
-不证明模型理解、Human 请求已回应、Task 完成或 Provider 新会话已恢复上下文。
-旧数据库不从 read-position 回填推断记录。忙时 notice 和 already-presented 注释使用
-精确集合，freshness position 的既有语义不变。此表不取消 queued Activation，也不
-扩大当前执行授权；崩溃后保留业务重放。删除 Room 同时清理该投影。
-
-## 实例私聊与来源频道撤销
-
-实例私聊新发言和执行必须要求私聊双方仍属于实例来源频道；打开窗口时校验不能代替发送时校验。
-移除成员前将对应私聊纳入现有 active-work 检查，有排队或运行工作时拒绝移除，先按原流程处理工作。
-历史遗留的不合法私聊待办不得进入新执行，但不自动改成已处理；历史消息仍保留。
-这由 Kernel 的消息、调度及执行围栏统一执行，前端窗口是否关闭不影响权限。
-见[主线修复](../audits/2026-09-23-instance-continuity-mainline.zh-CN.md)。

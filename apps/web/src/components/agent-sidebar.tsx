@@ -28,14 +28,12 @@ export function AgentSidebar({
   onSelectHuman,
   selectedHumanId,
   onCreate,
-  onOpenRoles,
   onRelationship,
   onSelect,
   onOpenDirectRoom,
   relationshipSelected,
   selectedAgentDefinitionId,
 }: {
-  onOpenRoles?: (() => void) | undefined;
   agents: readonly WorkspaceAgentView[];
   contextControl: MemberContextControl;
   canCreate: boolean;
@@ -88,11 +86,6 @@ export function AgentSidebar({
 
   return (
     <aside className="rah-agent-directory-list" aria-label="Agent 列表">
-      {onOpenRoles && (
-        <button className="btn" onClick={onOpenRoles}>
-          Role 管理
-        </button>
-      )}
       <PanelHeader
         kind="sidebar"
         className="rah-agent-sidebar-head rah-mobile-root-header"

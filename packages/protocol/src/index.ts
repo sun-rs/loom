@@ -4,7 +4,6 @@ export * from "./role-catalog.ts";
 import { customModelAllowsEffort } from "./custom-model-effort.ts";
 export * from "./custom-model-effort.ts";
 export * from "./runtime-guide-settings.ts";
-export * from "./instance-session-binding.ts";
 import { z } from "zod";
 import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
 export * from "./client-agent-profile.ts";

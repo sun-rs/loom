@@ -166,11 +166,3 @@ Agent 删除仍使用 tombstoned 意图，由 Kernel `agent-deletion.ts` 将一�
 事件在一个事务内更改，读取/发现/发送路径统一执行该策略；恢复需要 control Room
 管理权限，不依赖隐藏频道访问。隐藏不删除 Room 成员、历史或私有记忆，且需无活动工作。
 具体边界见[系统频道可见性审计](../audits/2026-09-13-channel-settings-and-system-visibility.zh-CN.md)。
-
-## 2026-09-23 Role 纵向 MVP 增量
-
-新增不可执行的 Role 配置和频道实例来源表，由 Kernel RoleCatalog 拥有事务。实例暂复用 AgentDefinition/Principal 执行身份；每个实例独立 lane，禁止跨频道追加和自动加入 all。持久 Room 账本仍是事实来源，provider session 不替代它。旧 Agent 不转换。详见 [纵向 MVP](../design/role-instance-vertical-mvp.zh-CN.md) 的范围与验收限制。
-
-## Role 模板修订（2026-09-23 纵向 MVP）
-
-RoleCatalog 是模板 create/revise/list/instantiate 的单一事务 owner。role_templates 持有当前版本，role_revisions 持有不可变配置快照，role_instances 固定创建时的 roleRevisionId；同一 roleId 不因改名、指令或运行时修改改变。修订只写控制 Room 的模板投影与 role.revised 事件，不热更新实例。创建/修订的幂等重放读取对应旧快照，而非当前最新版；具体权限、乐观并发与迁移证据见 [Role 修订验收](../audits/2026-09-23-role-revisions.zh-CN.md)。

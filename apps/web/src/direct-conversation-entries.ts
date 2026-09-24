@@ -31,18 +31,10 @@ export function directConversationEntries(
   humanId: string | undefined,
 ): DirectConversationEntry[] {
   const directRooms = rooms.filter(
-    (room) =>
-      room.kind === "direct" &&
-      room.archivedAt === undefined &&
-      !agents.some(
-        (agent) =>
-          agent.instanceChannelId !== undefined &&
-          room.directParticipantIds?.includes(agent.participantId),
-      ),
+    (room) => room.kind === "direct" && room.archivedAt === undefined,
   );
   const matchedRooms = new Set<string>();
   const rows: DirectConversationEntry[] = agents
-    .filter((agent) => agent.instanceChannelId === undefined)
     .filter(
       (agent) =>
         agent.state !== "tombstoned" ||

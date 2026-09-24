@@ -1389,16 +1389,3 @@ test("Inbox transient failure recovers without reload and clears only read-model
     cleanup();
   }
 });
-
-test("instance private box returns its canonical target without replacing the channel or inspector", async () => {
-  const f = mutationScope();
-  f.scope.agentDirectory = [
-    { participantId: "instance", instanceChannelId: "original-room" },
-  ];
-  f.nav.state.peek = "instance-profile";
-  const opened = callback("openDirectRoom", f.scope)("instance");
-  f.response.resolve({ room: { roomId: "private-box" } });
-  assert.deepEqual(await opened, { roomId: "private-box" });
-  assert.equal(f.nav.state.selected, "original-room");
-  assert.equal(f.nav.state.peek, "instance-profile");
-});

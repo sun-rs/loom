@@ -1,6 +1,0 @@
-
-> rah-os@0.0.0 test:web:role-mvp
-> node scripts/test-role-mvp-browser.mjs
-
-PASS: Role revision persists; old instance unchanged; new instance uses current revision.
-PASS: UI Role creation, instance provisioning, two Fake CLI box replies, reload, desktop/mobile.

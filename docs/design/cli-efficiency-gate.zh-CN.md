@@ -57,4 +57,4 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/s
 门禁脚本与用量汇总由 `scripts/cli-efficiency/` 所有；不新增产品队列或上下文状态。
 确定性汇总/预算测试可免费随批执行：`npm run test:cli:efficiency:unit`。
 
-首次执行结果：[2026-09-23 失败报告](../audits/2026-09-23-cli-efficiency-gate.zh-CN.md)。
+首次执行结果与基线数字见 [evo 现状](../evo/status.zh-CN.md)的"效率基线"一节。

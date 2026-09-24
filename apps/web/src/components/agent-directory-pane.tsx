@@ -1,4 +1,3 @@
-import { InstancePrivateChat } from "./instance-private-chat.tsx";
 import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import {
   DirectoryWidthLayout,
@@ -137,7 +136,6 @@ export function AgentDirectoryPane({
   onRetryHumans,
   fullResetEnabled,
   onCreate,
-  onOpenRoles,
   onManage,
   onChangeState,
   onEditRuntime,
@@ -150,7 +148,6 @@ export function AgentDirectoryPane({
   onRouteChange,
   workspaceId,
 }: {
-  onOpenRoles?: (() => void) | undefined;
   activityRequest?: number;
   panelActive?: boolean;
   panelResizer?: ReactNode;
@@ -200,7 +197,7 @@ export function AgentDirectoryPane({
     principalId: string,
     role: MembershipRole,
   ) => Promise<void>;
-  onOpenDirectRoom: (peerPrincipalId: string) => Promise<void | Room>;
+  onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onOpenMessage: (
     target: Extract<NavigationTarget, { kind: "message" }>,
   ) => void;
@@ -569,19 +566,13 @@ export function AgentDirectoryPane({
     }
   }
 
-  const [privateRoom, setPrivateRoom] = useState<{
-    participantId: string;
-    room: Room;
-  }>();
   async function openSelectedDirectRoom(): Promise<void> {
     if (selectedAgent === undefined || directRoomOpening || !canMessage) return;
     setTab("chat");
     setDirectRoomError(undefined);
     setDirectRoomOpening(true);
     try {
-      const room = await onOpenDirectRoom(selectedAgent.participantId);
-      if (room && selectedAgent.instanceChannelId)
-        setPrivateRoom({ participantId: selectedAgent.participantId, room });
+      await onOpenDirectRoom(selectedAgent.participantId);
     } catch (error) {
       setDirectRoomError(errorMessage(error));
     } finally {
@@ -626,13 +617,10 @@ export function AgentDirectoryPane({
         : null}
       <section className="rah-agent-directory-body">
         <AgentSidebar
-          onOpenRoles={onOpenRoles}
           contextControl={{
             canManage,
             fullResetEnabled,
-            onMessage: async (id) => {
-              await onOpenDirectRoom(id);
-            },
+            onMessage: onOpenDirectRoom,
             onChangeState,
             onResetExecution,
           }}
@@ -653,13 +641,7 @@ export function AgentDirectoryPane({
           onCreate={onCreate}
           onRelationship={selectRelationship}
           onSelect={selectAgent}
-          onOpenDirectRoom={
-            canMessage
-              ? async (id) => {
-                  await onOpenDirectRoom(id);
-                }
-              : undefined
-          }
+          onOpenDirectRoom={canMessage ? onOpenDirectRoom : undefined}
           relationshipSelected={!mobile && memberView === "relationship"}
           selectedAgentDefinitionId={
             !mobile && memberView === "agent"
@@ -813,15 +795,6 @@ export function AgentDirectoryPane({
                 onSaveProfile={onSaveProfile}
                 onSelectAgent={selectAgent}
                 runtimes={selectedRuntimes}
-              />
-            ) : tab === "chat" &&
-              privateRoom?.participantId === selectedAgent.participantId ? (
-              <InstancePrivateChat
-                key={privateRoom.room.roomId}
-                client={client}
-                room={privateRoom.room}
-                agent={selectedAgent}
-                human={currentHuman}
               />
             ) : tab === "chat" ? (
               <AgentChatPane

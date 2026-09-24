@@ -84,7 +84,7 @@ these explicitly with triggers and limitations; do not build disabled APIs or
 large frameworks in anticipation. Authentication, channel/instance isolation,
 idempotency and preservation of existing data remain necessary MVP behavior.
 Tests should establish the vertical workflow and these critical invariants,
-not chase hypothetical completeness. See the current vertical MVP plan.
+not chase hypothetical completeness. Current evo state: `docs/evo/status.zh-CN.md`.
 
 ## TDD is mandatory
 

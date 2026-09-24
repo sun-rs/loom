@@ -1,2 +1,0 @@
-Verified backup: /Users/sun/.rah/backups/pre-restart-20017987-beae-4a58-b051-0f23bfc431f1
-Workbench logs: /Users/sun/.rah/logs/core.{stdout,stderr}.log

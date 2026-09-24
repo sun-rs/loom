@@ -130,14 +130,3 @@ test("all authored Agent danger colors resolve through the imported coral token"
   );
   assert.doesNotMatch(css, /var\(--red\)/u);
 });
-
-test("instance private box stays out of the legacy left DM list after creation/reload", () => {
-  assert.deepEqual(
-    directConversationEntries(
-      [{ ...alice, instanceChannelId: "channel" }],
-      [direct],
-      "human",
-    ),
-    [],
-  );
-});

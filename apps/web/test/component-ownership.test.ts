@@ -213,11 +213,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     "textarea baseline cannot add hidden space; real browser gate verifies the 18.5px footer gap",
   );
   assert.match(agentDialogs, /useDialogProtocol/u);
-  assert.match(agentDialogs, /purpose = "agent"/u);
-  assert.match(
-    agentDialogs,
-    /purpose === "role"\s*\? initialConfiguration\s*\? "编辑 ROLE"\s*: "创建 ROLE"\s*: "创建 AGENT"/u,
-  );
+  assert.match(agentDialogs, />创建 AGENT</u);
   assert.match(agentDialogs, /计算机 <em>/u);
   assert.match(
     agentDialogs,

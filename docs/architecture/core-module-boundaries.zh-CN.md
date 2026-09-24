@@ -1,7 +1,5 @@
 # Core 模块边界与源码规模 Ratchet
 
-2026-09-23：`placement-planner-projection.ts` 只读组合调度候选、Offer、容量、workspace 与 memory-home 限制，复用既有投影与围栏读取。RoomKernel 保留调度事务、信任校验、reservation 写入和执行权限；没有新增状态、队列或放宽行数门禁。
-
 2026-09-11：`daemon-execution-workspace-composition.ts` 组合本地目录 Catalog、冻结启动 cwd、mount 与 reset-replay/Offer lifecycle；不增加持久状态或改变 reset owner。
 
 2026-09-11：`placement-candidate-projection.ts` 只读投影到期的 queued Activation 与 Agent revision/policy，保留原排序及 optional workspace 意图；RoomKernel 保留事务与调度 owner，不新增状态或放宽源码行数门禁。

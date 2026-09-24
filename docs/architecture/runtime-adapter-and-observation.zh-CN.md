@@ -1,9 +1,5 @@
 # Runtime Adapter 与观察平面
 
-2026-09-22 新架构合同基础：[ADR 0032](../adr/0032-instance-session-binding-contract.md)新增实例 Session 绑定协议和 Kernel 纯规则，尚未接入运行路径，不改变下述现行 Agent/ProviderSessionStore 行为。
-
-2026-09-23 Role 本机 MVP 增补：Kernel 在 AgentRuntimeContext 中携带可选 instanceChannelId；本机 daemon 据此要求实例原生会话连续性。四家驱动在已绑定 native session 恢复失败时禁止自动新建，沿既有 sticky_terminal 失败路径停止，保留原记录。旧 Agent 的 resume-or-fresh 保持兼容。后续稳定键修复已覆盖配置 key 变化（见本文末）；完整 Kernel 持久绑定和记录丢失处理仍未接入，不据此宣称严格连续性全面完成。参见 [续聊保护证据](../audits/2026-09-23-role-session-continuity-guard.zh-CN.md)。
-
 Claude 具体版本自定义模型的显式 effort 由 Protocol 提交许可表校验，Kernel 冻结到 ResolvedModel，AgentHost 二次校验并原样传入 CLI。文档许可不等于本机/账户已验证；未知组合禁止静默降级。见 [闭环修复与证据](../audits/2026-09-21-claude-custom-effort.zh-CN.md)。
 
 状态：最小 AgentHost、Fake/Generic Runtime、Host generation fencing、deadline、Outbox wake、持久 `prepared -> active` RunAttempt/RuntimeProcess 和 scoped Worker API 已实现；Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 已通过 opt-in 本机完整 Task gate，fake process 已通过 InputRequest 无 listening 恢复 gate。主动逃离 process group 的 descendant、完整 Artifact/Review workflow 和 Windows tree recovery 尚未实现或验证。
@@ -287,37 +283,3 @@ RuntimeGuideSettings 是 Host 本地启动配置的唯一所有者。可编辑�
 ## 显式自定义模型
 
 ModelIntent.customModel 由 Protocol 定义原生 runtime/modelId，不能与 exactBindingIds 或 capabilityClass 混用，fallback 必须关闭。Kernel 只允许匹配 customModelRuntime 的 Offer；AgentHost 再检查原生 Claude/Codex adapter 并原样传参。未探测的自定义模型不获得虚构的 binding 或 effort/tier 能力，Placement/RunAttempt 以 custom_model 保留来源。目录候选与运行可用性分离，详见[候选与自定义 ID 审计](../audits/2026-09-20-claude-catalog-custom-models.zh-CN.md)。
-
-2026-09-21 startup 输入精简：`message-check --startup` 继续完整读取原始 MEMORY.md，
-验证 Agent/context manifest 的合法性，但只呈现 Agent 身份/修订、当前 Room 与范围，
-不再重复序列化完整 AgentDefinition、placement digest 和运行 manifest。原始冻结材料
-仍由原 owner 保存，appInbox 保留。角色指令仍来自既有 standing-prompt compiler，
-此变更不以跨会话缓存替代记忆读取，不改变 Provider session key 或 cwd。
-
-2026-09-21 正式续聊与 Raft 同题实测补充：普通轮次两侧均有 check → post/send →
-final；RAH 重复 startup 仍增加完整 MEMORY 输入，忙时两题答完后还观察到只读
-follow-up。跨 Activation 运行器复用和可靠已处理义务闭合尚未实现，不能据此跳过
-完整记忆或用展示收据取消执行。见[后续验证与设计边界](../audits/2026-09-21-scheduling-followthrough.zh-CN.md)。
-
-2026-09-21 启动记忆传输增量：支持的 Claude/Codex 默认使用 daemon 编排的完整
-原始 system 记忆与私有 prompt 文件；`startupMemoryTransport: "tool"` 回退旧路径。
-ProviderSessionStore 仅记录首次原生会话 system snapshot digest，恢复不得把新准备的
-prompt 当成已经应用；Worker 每次完整读取当前索引，只有与已记录首次快照一致时才
-不重复输出。变化或旧记录缺少 digest 时完整输出。此元数据不推进任何 Kernel 义务，
-模式切换使用不同 prompt key，记忆编辑不改 key。见[实现与真实刷新反例](../audits/2026-09-21-startup-memory-transport.zh-CN.md)。
-
-## Role 实例的配置无关 session 查找
-
-2026-09-23 后端续批：四家 runtime 的 `activationEnvironment` 和 session evidence 保存均将实例标志交给既有 ProviderSessionStore。实例采用 participant/provider 稳定键；Kernel 的冻结 Placement 和上下文身份校验仍先执行，模型/effort/工作区或 prompt 配置不再用于选择另一条实例历史。旧 Agent 保留精确配置键。
-
-首次接入旧 MVP 记录时只接受同 participant、同 provider、唯一原生 session ID；不按修改时间挑选。多个不同 session 或 CLI 不一致拒绝启动。旧 system-memory receipt 只有全部候选记录一致才继承，否则沿现有工具回退。后续 evidence 不得覆写为不同原生 ID；显式恢复替代/fork 尚未接入本路径。原生 session 无法 resume 继续使用已实现的严格停止规则。
-
-这是 Host 原有 session 元数据 owner 的扩展，没有新增队列、任务状态或从 provider 历史还原 Room。仍未解决整个 Host session 记录被删除时如何通过 Kernel 判定“从未启动”和“绑定丢失”；未宣称完整持久绑定合同已完成。
-
-## 实例连续性失败围栏
-
-实例绑定保存失败必须触发既有 cancel/reap，并作为不可被普通 activity 清除的 sticky failure；
-进程退出码为 0 也不覆盖该失败。Kernel 从已持久化的 prepared/运行历史派生
-`instanceSessionRequired`，Host 查不到记录时在 spawn 前阻断。该标志只表示不能安全假定首次启动，
-不证明模型已经读过消息或完成工作。原生 ID 仍由 Host store 持久化，未新增业务队列。
-prepared 后中断且没有 ID 的情形停止等待人工处理，不自动重建。见[主线修复](../audits/2026-09-23-instance-continuity-mainline.zh-CN.md)。
