@@ -1,11 +1,3 @@
-/** Shared by the fixed wake and the S1-d bodied wake (`wake-message-input.ts`). */
-export const ACTIVATION_ENVIRONMENT_LINE =
-  "Start this RAH OS Activation now. Use the current process environment, not a previous turn's Room, range, or Worker path.";
-
-/** Shared by the fixed wake and the S1-d bodied wake (`wake-message-input.ts`). */
-export const ACTIVATION_FINISH_RULES =
-  "Handle this input using the standing instructions and publish explicit Room actions. Once the assigned work and required delivery are handled, finish this turn. Do not poll for or consume future peer replies just to keep the lane busy; RAH retains later work for follow-up. Never stop unfinished authorized work merely because you posted a progress message.";
-
 /**
  * Raft's bounded inbox wake, with RAH's finite Activation and read/ACK
  * contract. S1-d: this fixed wake remains the path for every driver without a
@@ -33,13 +25,24 @@ export function withRuntimeNotice(
   return notice === "" ? text : `${text}\n${notice}`;
 }
 
+/** ` --turn <handle>` on a warm runtime, empty otherwise. */
+export function turnArgument(turnHandle) {
+  return turnHandle === undefined || turnHandle === ""
+    ? ""
+    : ` --turn ${turnHandle}`;
+}
+
+/**
+ * The fallback wake carries no messages, so it names the one first command.
+ * What `--startup` returns, and every constant Activation rule, is stated
+ * once in the standing prompt rather than repeated in each turn's history.
+ */
 export function providerActivationInput(
   runtimeNotice = process.env.RAH_RUNTIME_NOTICE,
+  turnHandle,
 ) {
   return withRuntimeNotice(
-    `${ACTIVATION_ENVIRONMENT_LINE}
-Your first Worker call is \`"$RAH_WORKER_CLI" worker message-check --startup\`. It returns the current Agent identity and execution scope, the complete original MEMORY.md, and the current Activation's canonical messages together. This fulfills those startup reads; read additional notes only when needed. Inspect the returned content before acting. If the command fails, correct that failure; never infer missing memory or no work from an error. Delivery acknowledgement is not a reply or Task completion.
-${ACTIVATION_FINISH_RULES}`,
+    `Run message-check --startup${turnArgument(turnHandle)} first.`,
     runtimeNotice,
   );
 }

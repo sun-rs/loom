@@ -1,6 +1,9 @@
 import { instanceWorkerRoomPredicate } from "./instance-worker-scope.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import type { ActivationCredentialScope } from "@rah-os/protocol";
+import {
+  isWorkerShortRef,
+  type ActivationCredentialScope,
+} from "@rah-os/protocol";
 import { roomProjectionFromRow } from "./collaboration-projection.ts";
 import { ConflictError, NotFoundError } from "./errors.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
@@ -202,6 +205,12 @@ export function resolveWorkerReadTarget(
   };
   requireWorkerRoomVisibility(database, scope);
   if (threadRef === undefined) return scope;
+  // A short ref (the wake's `:<8 hex>`) is the first UUID block of the
+  // canonical `thread_<uuid>` or root `message_<uuid>` id; it matches the same
+  // way as a literal prefix, and two candidates still refuse.
+  const short = isWorkerShortRef(threadRef);
+  const threadPrefix = short ? `thread_${threadRef}` : threadRef;
+  const rootPrefix = short ? `message_${threadRef}` : threadRef;
   const threads = database
     .prepare(
       `SELECT thread_id FROM threads WHERE room_id=? AND
@@ -212,10 +221,10 @@ export function resolveWorkerReadTarget(
       threadRef,
       threadRef,
       threadRef,
-      threadRef,
-      threadRef,
-      threadRef,
-      threadRef,
+      threadPrefix,
+      threadPrefix,
+      rootPrefix,
+      rootPrefix,
     );
   if (threads.length !== 1)
     throw new NotFoundError("Thread is unavailable or ambiguous in this Room");
@@ -233,6 +242,32 @@ export function workerReadThread(
   )
     throw new ConflictError("channel Thread conflicts with explicit threadId");
   return target.threadId ?? explicit;
+}
+
+/**
+ * Expands the wake's short message ref (`msg=<8 hex>`, the first UUID block of
+ * `message_<uuid>`) to the canonical id, looking only in the caller's joined
+ * Rooms. An ambiguous ref is refused rather than resolved to either candidate;
+ * a ref with no match, or any other value, is returned unchanged so the route's
+ * own lookup reports it.
+ */
+export function expandWorkerMessageRef(
+  database: DatabaseSync,
+  origin: WorkerVisibleRoomScope,
+  ref: string,
+): string {
+  if (!isWorkerShortRef(ref)) return ref;
+  const rows = database
+    .prepare(
+      `SELECT m.message_id FROM messages m JOIN memberships membership ON membership.room_id=m.room_id
+    JOIN rooms r ON r.room_id=m.room_id WHERE m.message_id GLOB ? AND membership.principal_id=? AND r.kind IN ('channel','direct') AND r.system_hidden=0 LIMIT 2`,
+    )
+    .all(`message_${ref}*`, origin.participantId);
+  if (rows.length > 1)
+    throw new ConflictError(
+      `message ref ${ref} is ambiguous in joined Rooms; use the full message id`,
+    );
+  return rows.length === 1 ? text(rows[0]!, "message_id") : ref;
 }
 
 export function resolveWorkerMessageRoom(

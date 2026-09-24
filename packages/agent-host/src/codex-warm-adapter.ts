@@ -23,10 +23,7 @@ import {
   LOOM_RUN_ID_ENV,
   LOOM_RUNTIME_ID_ENV,
 } from "./leftover-process-sweeper.ts";
-import {
-  ACTIVATION_ENVIRONMENT_LINE,
-  providerActivationInput,
-} from "./provider-activation-input.js";
+import { providerActivationInput } from "./provider-activation-input.js";
 import { classifyRuntimeFailure } from "./runtime-error-policy.ts";
 import type {
   ActivationEnvelope,
@@ -110,6 +107,8 @@ export type CodexWarmAdapterOptions = {
   renderWake?: (input: {
     env: Readonly<Record<string, string | undefined>>;
     participantId: string;
+    /** This turn's handle, carried on every command the wake names. */
+    turnHandle: string;
   }) => Promise<string | undefined>;
   recordProviderSessionEvidence?: (
     input: ActivationEnvelope,
@@ -520,6 +519,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
             [RAH_WORKER_SESSION_FILE_ENV]: turn.handle!.tokenPath,
           },
           participantId: input.participantId,
+          turnHandle: handle,
         });
       } catch (error) {
         this.#options.pool.diagnostic(
@@ -528,7 +528,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       }
     }
     // Never the Host process's own environment: the notice is appended below.
-    const base = bodied ?? providerActivationInput("");
+    const base = bodied ?? providerActivationInput("", handle);
     const notice = (input.runtimeNotice ?? "")
       .split("\n")[0]!
       .trim()
@@ -623,16 +623,21 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   }
 }
 
-/** The warm wake line: this turn's handle, used on every Worker command. */
+/**
+ * The warm wake names this turn's handle on each command it gives
+ * (`--turn <handle>`); the rule that every Worker command carries it is stated
+ * once in the standing prompt. A wake that somehow lacks the handle gets the
+ * one-line handle statement prepended, so no turn can run without it.
+ */
 export function withWorkerTurnHandle(text: string, handle: string): string {
-  const line = `Start this RAH OS Activation now. ${workerTurnHandleLine(handle)}`;
-  return text.includes(ACTIVATION_ENVIRONMENT_LINE)
-    ? text.replace(ACTIVATION_ENVIRONMENT_LINE, line)
-    : `${line}\n${text}`;
+  return text.includes(`--turn ${handle}`)
+    ? text
+    : `${workerTurnHandleLine(handle)}\n${text}`;
 }
 
-function workerTurnHandleLine(handle: string): string {
-  return `Worker turn handle: ${handle}. Pass \`--turn ${handle}\` to every "$RAH_WORKER_CLI" command for this Activation; handles from earlier turns are revoked.`;
+/** Also the compaction restatement, steered inside the same native turn. */
+export function workerTurnHandleLine(handle: string): string {
+  return `Turn handle: --turn ${handle}`;
 }
 
 function turnScope(input: ActivationEnvelope): Record<string, string> {

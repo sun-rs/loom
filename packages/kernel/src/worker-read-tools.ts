@@ -3,6 +3,7 @@ import { freshnessHoldContext } from "./freshness-hold-context.ts";
 import type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";
 import { visibleWorkerProfile } from "./worker-visible-profile.ts";
 import {
+  expandWorkerMessageRef,
   resolveWorkerReadTarget,
   resolveWorkerMessageRoom,
   workerReadThread,
@@ -341,6 +342,17 @@ export class WorkerReadService {
         ...(nextCursor ? { nextCursor } : {}),
       });
     });
+  }
+
+  /** The canonical id for a short message ref (see `expandWorkerMessageRef`). */
+  expandMessageRef(
+    execution: AuthenticatedWorkerExecutionContext,
+    ref: string,
+  ): string {
+    if (!P.isWorkerShortRef(ref)) return ref;
+    return this.#read(execution, (origin) =>
+      expandWorkerMessageRef(this.#db, origin, ref),
+    );
   }
 
   resolve(

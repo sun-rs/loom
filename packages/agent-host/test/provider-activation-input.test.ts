@@ -5,14 +5,16 @@ import {
   withRuntimeNotice,
 } from "../src/provider-activation-input.js";
 
-test("wake batches startup reads without bypassing canonical delivery or retaining a busy lane", () => {
-  const input = providerActivationInput();
-  assert.match(input, /message-check --startup/);
-  assert.match(input, /complete original MEMORY.md/);
-  assert.match(input, /not.*Task completion/i);
-  assert.match(input, /finish this turn/);
-  assert.match(input, /do not poll/i);
-  assert.ok(input.length < 2000);
+test("golden: the fallback wake is one compact line that asks for the startup check first", () => {
+  assert.equal(
+    providerActivationInput(""),
+    "Run message-check --startup first.",
+  );
+  const handle = "AbCdEfGhIjKlMnOpQrStUv";
+  assert.equal(
+    providerActivationInput("", handle),
+    `Run message-check --startup --turn ${handle} first.`,
+  );
 });
 
 test("S2-0 the Host cleanup line rides the wake once, bounded, only when present", () => {

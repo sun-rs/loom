@@ -656,6 +656,7 @@ export class WorkerApplicationService {
         : MAX_BODY_BYTES,
     );
     const grant = this.#authenticate(request);
+    this.#expandShortMessageRefs(body, grant);
     if (route.startsWith("/v1/worker/tasks/"))
       this.#resolveTaskAddressing(route, body, grant);
     if (route === "/v1/worker/version") {
@@ -1224,6 +1225,24 @@ export class WorkerApplicationService {
    * in a Room this credential cannot act in therefore fails in the same place,
    * and with the same error, as the equivalent `--task-id` does today.
    */
+  /**
+   * The compact wake names messages by a short ref (`msg=<8 hex>`). It is
+   * expanded to the canonical id here, before any route (and before derived
+   * idempotency keys), so a short ref and the full id are the same command.
+   */
+  #expandShortMessageRefs(
+    body: Record<string, unknown>,
+    grant: WorkerGrant,
+  ): void {
+    const expand = (value: unknown) =>
+      typeof value === "string"
+        ? this.#kernel.workerReads.expandMessageRef(grant.execution, value)
+        : value;
+    if (body.messageId !== undefined) body.messageId = expand(body.messageId);
+    if (Array.isArray(body.messageIds))
+      body.messageIds = body.messageIds.map(expand);
+  }
+
   #resolveTaskAddressing(
     route: string,
     body: Record<string, unknown>,

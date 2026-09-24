@@ -265,16 +265,16 @@ test("bodied wake: one reply with the stated seq completes the Activation withou
     assert.match(
       result.wake,
       new RegExp(
-        `seq=${first.event.roomSeq} msg=\\S+ [^\\]]*\\] @human: what is the build status\\?`,
-        "u",
+        `^#main seq ${first.event.roomSeq} msg=[0-9a-f]{8} @human: what is the build status\\?$`,
+        "mu",
       ),
     );
     assert.match(result.wake, /@human: and the release date\?/u);
     assert.match(
       result.wake,
       new RegExp(
-        `worker message-post --based-on-room-seq ${second.event.roomSeq}\\b`,
-        "u",
+        `^Reply: message-post --based-on-room-seq ${second.event.roomSeq} · no reply needed: message-check$`,
+        "mu",
       ),
     );
     assert.doesNotMatch(result.wake, /--startup/u);
@@ -317,10 +317,7 @@ test("bodied wake: a turn that needs no reply completes through message-check", 
     context.post("FYI, no answer needed");
     context.setMode("check");
     const result = await context.runActivation();
-    assert.match(
-      result.wake,
-      /If no reply is needed, run `[^`]*message-check`/u,
-    );
+    assert.match(result.wake, /no reply needed: message-check$/mu);
     assert.equal(checkCommands(result.commands).length, 1);
     assert.equal(context.cursor(), result.activation.toSeq);
     assert.doesNotThrow(() => result.complete());
@@ -351,11 +348,11 @@ test("bodied wake: a truncated window asks for message-check first and a prematu
       seqs.push(context.post(`message ${index}`).event.roomSeq);
     context.setMode("reply-no-check");
     const premature = await context.runActivation();
-    assert.match(premature.wake, /further Room events? in sequence range/u);
-    assert.match(premature.wake, /not confirmed by replying/u);
+    assert.match(premature.wake, /more events? \(seq \d+-\d+\) not shown/u);
+    assert.match(premature.wake, /run message-check first, then reply\.$/mu);
     assert.match(
       premature.wake,
-      new RegExp(`contiguous only through seq ${seqs[19]}\\b`, "u"),
+      new RegExp(`Shown through seq ${seqs[19]} of \\d+\\b`, "u"),
     );
     assert.doesNotMatch(premature.wake, /--based-on-room-seq/u);
     assert.ok(
@@ -469,8 +466,8 @@ test("bodied wake: a business fact between messages is shown and confirmed with 
     assert.match(
       result.wake,
       new RegExp(
-        `seq=${joined.seq} [^\\n]*type=${joined.type.replace(".", "\\.")}`,
-        "u",
+        `^#main seq ${joined.seq} ${joined.type.replace(".", "\\.")} @`,
+        "mu",
       ),
     );
     assert.equal(context.cursor(), result.activation.toSeq);
@@ -563,12 +560,12 @@ const act = (wake) => {
     if (mode !== "check") cli(["worker", "message-post", "--target", "#main"], "FAKE CODEX reply after check");
     return;
   }
-  const bodied = /worker message-post --based-on-room-seq (\\d+)/.exec(wake);
+  const bodied = /Reply: message-post --based-on-room-seq (\\d+)/.exec(wake);
   if (bodied) {
     cli(["worker", "message-post", ...(mode === "wrong-room" ? ["--target", "#away"] : []), "--based-on-room-seq", bodied[1]], "FAKE CODEX reply");
     return;
   }
-  const prefix = /contiguous only through seq (\\d+)/.exec(wake);
+  const prefix = /Shown through seq (\\d+)/.exec(wake);
   if (!prefix) throw new Error("FAKE model found no reply instruction in the wake");
   if (mode === "reply-no-check") {
     // Ignores the instruction and cites the shorter prefix anyway.

@@ -1,6 +1,7 @@
 import {
   WorkerTaskBatchResponseSchema,
   TaskStateSchema,
+  shortWorkerRef,
   taskWorkflowStatus,
 } from "@rah-os/protocol";
 /**
@@ -497,16 +498,61 @@ function eventLines(rawEvent: Json, addressing?: unknown): string[] {
 }
 
 /**
- * S1-d: the bodied wake renders the Kernel's presented events with the exact
- * line shape `message-check` uses, so the wake and a later check state the
- * same fact the same way (real Room seq, author handle, canonical target).
+ * The bodied wake's compact event line. It carries the same ledger facts as
+ * `message-check` (canonical target, real Room seq, author, body) without the
+ * per-line header noise that accumulates in native history every turn:
+ *
+ * - `message.posted`: `<target> seq <N> msg=<ref> @<author>: <body>`, where a
+ *   Thread message's target is `<target>:<thread ref>` (the resolver accepts a
+ *   colon suffix only on `#channel` / `dm:@handle`; a Room UUID keeps the
+ *   explicit `threadId=`), and `<ref>` is the short ref the Worker API accepts
+ *   wherever a message id goes (`shortWorkerRef`);
+ * - any other business fact keeps its compact type and payload:
+ *   `<target> seq <N> <type> @<actor> <payload JSON>`.
+ *
+ * Time and the redundant `type=message.posted` field are omitted.
  */
-export function renderWorkerEventLines(
+function compactEventLines(rawEvent: Json, addressing?: unknown): string[] {
+  const event = addressed(rawEvent, addressing);
+  const payload = asRecord(event.payload);
+  const actor =
+    asString(event.senderHandle) ?? asString(event.actorId) ?? "unknown";
+  const target = asString(event.target) ?? asString(event.roomId) ?? "-";
+  const seq = `seq ${asNumber(event.roomSeq) ?? "-"}`;
+  if (event.type !== "message.posted")
+    return [
+      `${target} ${seq} ${asString(event.type) ?? "-"} @${actor} ${JSON.stringify(payload)}`,
+    ];
+  const threadId = asString(payload.threadId);
+  const addressable = target.startsWith("#") || target.startsWith("dm:@");
+  const where =
+    threadId === undefined
+      ? target
+      : addressable
+        ? `${target}:${shortWorkerRef(threadId)}`
+        : `${target} threadId=${threadId}`;
+  const lines = [
+    `${where} ${seq} msg=${shortWorkerRef(asString(payload.messageId) ?? "-")} @${actor}: ${
+      asString(payload.body) ?? ""
+    }${attachmentCommentSuffix(payload)}${formatAttachmentSuffix(payload.attachments)}`,
+  ];
+  const mentions = asArray(payload.recipients)
+    .map(asRecord)
+    .filter((recipient) => recipient.reason === "mention")
+    .map(
+      (recipient) =>
+        `@${asString(asRecord(asRecord(addressing).handles)[asString(recipient.participantId) ?? ""]) ?? asString(recipient.participantId) ?? "unknown"}`,
+    );
+  if (mentions.length > 0) lines.push(`  mentions: ${mentions.join(", ")}`);
+  return lines;
+}
+
+export function renderCompactWakeEventLines(
   events: readonly unknown[],
   addressing: unknown,
 ): string {
   return events
-    .flatMap((event) => eventLines(asRecord(event), addressing))
+    .flatMap((event) => compactEventLines(asRecord(event), addressing))
     .join("\n");
 }
 

@@ -227,7 +227,10 @@ export {
   CODEX_WARM_DRIVER_KIND,
   CodexWarmAdapter,
   withWorkerTurnHandle,
+  workerTurnHandleLine,
 } from "./codex-warm-adapter.ts";
+export { formatBodiedWakeInput } from "./wake-message-input.ts";
+export { providerActivationInput } from "./provider-activation-input.js";
 export type { WarmRuntimeCreation } from "./runtime-implementation-registry.ts";
 export type {
   CodexWarmAdapterOptions,

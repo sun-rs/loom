@@ -159,6 +159,7 @@ async function harness(
         await renderBodiedWake({
           env: input.env,
           participantId: input.participantId,
+          turnHandle: input.turnHandle,
         }),
       runtimeEnvironment: async (input) => {
         const previous = sessions.get(input.participantId);

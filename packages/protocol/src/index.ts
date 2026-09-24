@@ -1673,3 +1673,4 @@ export {
 } from "./collaboration.ts";
 
 export { canonicalAgentIdField } from "./agent-id-compat.ts";
+export { isWorkerShortRef, shortWorkerRef } from "./worker-short-ref.ts";

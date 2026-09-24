@@ -3,11 +3,13 @@ import test from "node:test";
 
 import type { WorkerMessagePresentResponse } from "@rah-os/protocol";
 
-import {
-  formatBodiedWakeInput,
-  RESPONSE_TARGET_HINT,
-  WAKE_CLOSING_LINE,
-} from "../src/wake-message-input.ts";
+import { withRuntimeNotice } from "../src/provider-activation-input.js";
+import { formatBodiedWakeInput } from "../src/wake-message-input.ts";
+
+const M12 = "message_0c12aaaa-1111-4222-8333-444455556666";
+const M14 = "message_0c14bbbb-1111-4222-8333-444455556666";
+const T9 = "thread_7e09cccc-1111-4222-8333-444455556666";
+const HANDLE = "AbCdEfGhIjKlMnOpQrStUv";
 
 function event(
   roomSeq: number,
@@ -39,11 +41,11 @@ function present(
     contentDigest: `sha256:${"a".repeat(64)}`,
     events: [
       event(12, "message.posted", {
-        messageId: "message-12",
+        messageId: M12,
         body: "can you take the migration?",
       }),
       event(14, "message.posted", {
-        messageId: "message-14",
+        messageId: M14,
         body: "and the rollback plan",
       }),
     ],
@@ -59,64 +61,156 @@ function present(
   };
 }
 
-test("the wake carries each body with its real Room seq, author and target", () => {
-  const text = formatBodiedWakeInput({ present: present() })!;
-  assert.match(
-    text,
-    /\[target=#general seq=12 msg=message-12 [^\]]*\] @richard: can you take the migration\?/u,
+test("golden: a complete window is one line per message plus one reply line", () => {
+  assert.equal(
+    formatBodiedWakeInput({ present: present() }),
+    [
+      "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
+      "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
+      "Reply: message-post --based-on-room-seq 14 · no reply needed: message-check",
+    ].join("\n"),
   );
-  assert.match(
-    text,
-    /seq=14 msg=message-14 [^\]]*\] @richard: and the rollback plan/u,
-  );
-  // An execution-audit sequence (13) is covered but never rendered.
-  assert.doesNotMatch(text, /seq=13/u);
-  assert.ok(text.includes(WAKE_CLOSING_LINE));
-  assert.ok(text.includes(RESPONSE_TARGET_HINT));
 });
 
-test("the confirm-through value is the presented prefix and the reply command carries it", () => {
-  const text = formatBodiedWakeInput({ present: present() })!;
-  assert.match(text, /through seq 14\b/u);
-  assert.match(text, /worker message-post --based-on-room-seq 14`/u);
-  // The bodied path drops the startup mandate but keeps the no-reply exit.
-  assert.doesNotMatch(text, /--startup/u);
-  assert.match(text, /no reply is needed[^\n]*worker message-check/iu);
+test("golden: a warm turn carries its handle on both commands", () => {
+  assert.equal(
+    formatBodiedWakeInput({ present: present(), turnHandle: HANDLE }),
+    [
+      "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
+      "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
+      `Reply: message-post --turn ${HANDLE} --based-on-room-seq 14 · no reply needed: message-check --turn ${HANDLE}`,
+    ].join("\n"),
+  );
 });
 
-test("a truncated window says more exists and asks for message-check before replying", () => {
+test("golden: a truncated window with a notice tail asks for message-check first", () => {
+  assert.equal(
+    formatBodiedWakeInput({
+      present: present({
+        toSeq: 40,
+        presentedThroughSeq: 12,
+        presentedSeqs: [12],
+        events: [event(12, "message.posted", { messageId: M12, body: "one" })],
+        noticeCount: 28,
+        noticeFromSeq: 13,
+        noticeToSeq: 40,
+      }),
+    }),
+    [
+      "#general seq 12 msg=0c12aaaa @richard: one",
+      "Shown through seq 12 of 40; 28 more events (seq 13-40) not shown: run message-check first, then reply.",
+    ].join("\n"),
+  );
+});
+
+test("golden: a truncated window without a notice still asks for message-check first", () => {
+  assert.equal(
+    formatBodiedWakeInput({
+      present: present({
+        presentedThroughSeq: 12,
+        presentedSeqs: [12],
+        events: [event(12, "message.posted", { messageId: M12, body: "one" })],
+      }),
+      turnHandle: HANDLE,
+    }),
+    [
+      "#general seq 12 msg=0c12aaaa @richard: one",
+      `Shown through seq 12 of 14: run message-check --turn ${HANDLE} first, then reply.`,
+    ].join("\n"),
+  );
+});
+
+test("golden: a business fact keeps a compact type and its payload", () => {
+  assert.equal(
+    formatBodiedWakeInput({
+      present: present({
+        events: [
+          event(12, "message.posted", { messageId: M12, body: "one" }),
+          event(13, "task.cancelled", { taskId: "task-7", number: 7 }),
+          event(14, "message.posted", { messageId: M14, body: "two" }),
+        ],
+      }),
+    }),
+    [
+      "#general seq 12 msg=0c12aaaa @richard: one",
+      '#general seq 13 task.cancelled @richard {"taskId":"task-7","number":7}',
+      "#general seq 14 msg=0c14bbbb @richard: two",
+      "Reply: message-post --based-on-room-seq 14 · no reply needed: message-check",
+    ].join("\n"),
+  );
+});
+
+test("golden: the Host cleanup notice rides as one bounded trailing line", () => {
+  const notice =
+    "Host cleanup after your previous run: 1 leftover background process was stopped.";
+  assert.equal(
+    withRuntimeNotice(formatBodiedWakeInput({ present: present() })!, notice),
+    [
+      "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
+      "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
+      "Reply: message-post --based-on-room-seq 14 · no reply needed: message-check",
+      notice,
+    ].join("\n"),
+  );
+});
+
+test("a Thread message addresses its Thread with the short Thread ref", () => {
   const text = formatBodiedWakeInput({
     present: present({
-      toSeq: 40,
+      toSeq: 12,
       presentedThroughSeq: 12,
       presentedSeqs: [12],
       events: [
-        event(12, "message.posted", { messageId: "message-12", body: "one" }),
+        event(12, "message.posted", {
+          messageId: M12,
+          threadId: T9,
+          body: "in thread",
+        }),
       ],
-      noticeCount: 28,
-      noticeFromSeq: 13,
-      noticeToSeq: 40,
     }),
   })!;
-  assert.match(text, /contiguous only through seq 12\b/u);
-  assert.doesNotMatch(text, /--based-on-room-seq/u);
-  assert.match(text, /28 further Room events in sequence range 13-40/u);
-  assert.match(text, /not confirmed by replying/u);
-  assert.match(text, /worker message-check` first to read the rest/u);
+  assert.match(
+    text,
+    /^#general:7e09cccc seq 12 msg=0c12aaaa @richard: in thread$/mu,
+  );
 });
 
-test("a business fact between messages is shown, not skipped", () => {
+test("a non-canonical id is rendered whole, never truncated into a wrong ref", () => {
   const text = formatBodiedWakeInput({
     present: present({
+      toSeq: 12,
+      presentedThroughSeq: 12,
+      presentedSeqs: [12],
       events: [
-        event(12, "message.posted", { messageId: "message-12", body: "one" }),
-        event(13, "task.cancelled", { taskId: "task-7", number: 7 }),
-        event(14, "message.posted", { messageId: "message-14", body: "two" }),
+        event(12, "message.posted", { messageId: "message-12", body: "x" }),
       ],
     }),
   })!;
-  assert.match(text, /seq=13 [^\n]*type=task\.cancelled/u);
-  assert.match(text, /"taskId":"task-7"/u);
+  assert.match(text, /seq 12 msg=message-12 @richard: x/u);
+});
+
+test("per-turn overhead beyond the bodies stays within 250 chars, cold and warm", () => {
+  const body = "b".repeat(250);
+  const single = present({
+    toSeq: 13,
+    presentedThroughSeq: 13,
+    presentedSeqs: [13],
+    events: [event(13, "message.posted", { messageId: M12, body })],
+    addressing: {
+      targets: { "room-general": "#efficiency" },
+      handles: { "principal-richard": "owner" },
+    },
+  });
+  for (const turnHandle of [undefined, HANDLE]) {
+    const text = formatBodiedWakeInput({
+      present: single,
+      ...(turnHandle === undefined ? {} : { turnHandle }),
+    })!;
+    assert.ok(
+      text.length - body.length <= 250,
+      `overhead ${String(text.length - body.length)}`,
+    );
+  }
 });
 
 test("nothing is confirmable when the first event degraded, so no bodied wake exists", () => {
@@ -145,4 +239,5 @@ test("the memory index rides the wake only when supplied", () => {
   assert.match(changed, /## Complete original MEMORY\.md/u);
   assert.match(changed, /changed since this session's system snapshot/u);
   assert.ok(changed.includes("# Memory\n- prefers rebase\n"));
+  assert.match(changed, /Reply: message-post --based-on-room-seq 14/u);
 });

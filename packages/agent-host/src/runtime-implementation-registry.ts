@@ -1111,6 +1111,7 @@ function createCodexWarmRuntime(
           renderWake: async (input: {
             env: Readonly<Record<string, string | undefined>>;
             participantId: string;
+            turnHandle: string;
           }) => await renderBodiedWake(input),
         }),
     ...(store === undefined

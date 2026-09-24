@@ -54,6 +54,8 @@ export function runtimeSupportsBodiedWake(adapterKind: string): boolean {
 export async function renderBodiedWake(input: {
   env: Readonly<Record<string, string | undefined>>;
   participantId: string;
+  /** Warm runtimes: the turn handle each named command must carry. */
+  turnHandle?: string | undefined;
   fetch?: typeof globalThis.fetch;
 }): Promise<string | undefined> {
   const env = input.env;
@@ -85,6 +87,7 @@ export async function renderBodiedWake(input: {
   });
   return formatBodiedWakeInput({
     present,
+    turnHandle: input.turnHandle,
     ...(index === undefined || index.matchesSystem
       ? {}
       : {

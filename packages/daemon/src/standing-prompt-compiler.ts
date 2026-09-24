@@ -118,9 +118,9 @@ Do not obstruct a human-directed use of a credential: use or send it on the requ
  * ordinary turn. Reference detail — send variants, held drafts, when to post,
  * Task sub-commands, reviews, notices — is served on demand by
  * `worker help <topic>` (`@rah-os/agent-host` `worker-help-topics.ts`),
- * moved there verbatim. Each instruction appears once; what every wake input
- * already says (`provider-activation-input.js`, `wake-message-input.ts`) is
- * not restated.
+ * moved there verbatim. Each instruction appears once; the constant per-turn
+ * rules live in the startup layer, and the wake inputs
+ * (`provider-activation-input.js`, `wake-message-input.ts`) do not repeat them.
  */
 const HELP_POINTER = `Details: \`"$RAH_WORKER_CLI" worker help <topic>\` — topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.`;
 
@@ -137,7 +137,7 @@ The RAH Worker service is the only collaboration truth: use the absolute \`"$RAH
 
 Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action. \`"$RAH_WORKER_CLI" worker message-check\` delivers your messages (\`--replay\` after a lost tool result). Reads never acknowledge Inbox, and never grant Room membership, Task ownership or execution authority.
 
-Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`"$RAH_WORKER_CLI" worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`) and pass \`--based-on-room-seq\` when the wake gives one. A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
+Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`"$RAH_WORKER_CLI" worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
 
 ### Tasks
 
@@ -202,15 +202,21 @@ function initialRoleLayer(
 }
 
 /**
- * Raft `buildPrompt` §Startup sequence, reduced to what the wake inputs do not
- * already carry: reading MEMORY.md is stated by the memory binding, and
- * "complete all your work", "do not poll" and the finish rules arrive in every
- * wake. Delivery confirmation is stated here once.
+ * Raft `buildPrompt` §Startup sequence plus every constant per-turn rule the
+ * wake used to repeat (wake compaction, 2026-09-24). A wake stays in native
+ * history for the whole session, so it now carries only the bodies, the reply
+ * seq and (warm) the turn handle (`wake-message-input.ts`,
+ * `provider-activation-input.js`); the rules below are stated once. Raft's
+ * closing line and response-target hint (`formatConcreteMessagesRuntimeInput`,
+ * `chunk-TEGPBMW7.js:24350/24377`) are folded in here, not repeated per turn.
+ * Reading MEMORY.md is stated by the memory binding.
  */
 function startupLayer(mode?: PromptDeliveryMode): string {
   return `${deliveryInstructions(mode)}
 
-Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only.`;
+Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`, no \`message-check\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
+
+Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
 }
 
 export function standingPromptLayers(
