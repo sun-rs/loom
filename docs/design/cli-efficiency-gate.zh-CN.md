@@ -62,6 +62,9 @@ RAH_EFFICIENCY_ORDER=native,role,role-warm npm run test:cli:efficiency -- --paid
 
 - 每轮从产品用量接口记录 `execution`（`mode`、`sessionResumeMs`、`lateFrameCount`、`instanceRuntimeId`）；
   每轮模式的 `role` 组为 `null`。热进程轮次以 `turn_quiesced` 证明结束、无退出码，按 `exited` 判成功。
+- S2-b：用量接口另有顶层 `sessionResumeMs`（冷热两条路径都记：`thread/resume` 请求发出到响应的耗时，
+  与热驱动 ready 时的口径一致；未恢复 session 或未测到为 `null`）。门禁每轮记入 `round.sessionResumeMs`，
+  `warmVsCold` 的冷组恢复耗时取自它，因此每轮模式的大 session 冷恢复成本不再只能靠探针单测。
 - `role-warm` 断言：第 1 轮 `cold`，第 2–3 轮 `warm` 且同一 `instanceRuntimeId`、该参与者只有 1 条
   `instance_runtimes` 记录、原生 thread 不变；Room 有效回复落库，且轨迹中每个 box-post 都带 `--turn`
   （只记布尔值，不记句柄）。违反即 `arm.warmFailures` 非空、该组失败。
@@ -112,12 +115,14 @@ Codex 每轮与热进程两条路径已接；Claude/Kimi/OpenCode 未接，行�
 
 - 用量接口 `finalInterrupt`：`null` 表示本轮没有 `--final` 回复；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
   `sent` 为驱动确认已发出中断（被拒绝或未上报为 false，此时本轮按原行为多一次生成）；`preemptedFollowUp`
-  为 true 表示最终回复的工具结束后到轮次结束未观察到任何模型输出/工具调用/用量帧，false 表示后续生成已开始
-  （中断仍会截断它，但可能已计费），`unknown` 表示无法观察。
+  按证据判定（S2-b 修正，此前真实运行即使回复后生成数为 0 也总报 false）：最终回复的工具结束后观察到模型输出、
+  新的工具调用，或用量帧使线程累计用量超过已观察到的全部生成 → false；原样重复的用量帧不是生成，
+  工具结束后到达的第一个前进用量帧若对应尚未结算的上一次生成（发帖那次调用）也不算后续生成；
+  窗口内用量帧无法解析 → `unknown`；中断未发出 → `unknown`；其余 → true。
 - `compareRounds` 每轮输出 `finalInterrupt`（未采集为 `null`）；`compareArm` 汇总
   `committed/sent/preempted/notPreempted/unknown/noFinalPost/evidenceMissing`。只报告，不进入失败判定；
   生成数预算仍按 usage 计。
-- 局限：`preemptedFollowUp` 依赖 Codex 在工具结束后才发出上一次生成的用量帧这一假设，未经真实 Codex 验证；
+- 局限：`preemptedFollowUp` 的用量归属按"每次生成恰好一条前进用量帧"推断，未经真实 Codex 帧序验证；
   中断落地与后续请求发出的先后在真实 CLI 上须用付费门禁实测。
 
 ## 证据与后续范围

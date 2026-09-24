@@ -224,6 +224,17 @@ export type {
   WarmRuntimeLayout,
 } from "./instance-runtime-pool.ts";
 export {
+  cliBinaryFingerprint,
+  DEFAULT_WARM_RUNTIME_POLICY,
+  resolveWarmRuntimePolicy,
+} from "./warm-runtime-policy.ts";
+export type {
+  WarmRuntimePolicy,
+  WarmRuntimePolicyOverrides,
+} from "./warm-runtime-policy.ts";
+export { superviseWarmTurn } from "./warm-turn-supervisor.ts";
+export type { WarmTurnSupervision } from "./warm-turn-supervisor.ts";
+export {
   CODEX_WARM_DRIVER_KIND,
   CodexWarmAdapter,
   withWorkerTurnHandle,

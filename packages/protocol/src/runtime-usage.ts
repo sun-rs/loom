@@ -113,6 +113,23 @@ export type RunAttemptUsageGapRecordInput = z.infer<
   typeof RunAttemptUsageGapRecordInputSchema
 >;
 
+/**
+ * S2-b measurement: how long the native session resume took when this
+ * RunAttempt's runtime resumed a recorded session (Codex: the `thread/resume`
+ * request until its response). Recorded once by the owning Host while the
+ * run is live; per-turn (cold) runs record it too.
+ */
+export const RunAttemptSessionResumeRecordInputSchema = z
+  .object({
+    runAttemptId: IdentifierSchema,
+    runtimeRunId: IdentifierSchema,
+    sessionResumeMs: z.number().int().nonnegative().max(86_400_000),
+  })
+  .strict();
+export type RunAttemptSessionResumeRecordInput = z.infer<
+  typeof RunAttemptSessionResumeRecordInputSchema
+>;
+
 export const RunAttemptUsageGapSchema = z
   .object({
     reason: ProviderUsageGapReasonSchema,
@@ -258,9 +275,12 @@ export type RunAttemptExecution = z.infer<typeof RunAttemptExecutionSchema>;
  * Final-reply turn end: a `final` Worker post committed in this RunAttempt,
  * and whether the Host's native interrupt landed. `sent` is false until the
  * runtime reports an interrupt it issued (unsupported, failed or lost report:
- * the turn ran on as before). `preemptedFollowUp` is true when no model
- * output or usage was observed after the final post's tool call finished,
- * false when some was, `unknown` when it could not be observed.
+ * the turn ran on as before). `preemptedFollowUp` is true when no follow-up
+ * generation was observed after the final post's tool call finished (model
+ * output, a new tool call, or a usage report advancing the thread total
+ * beyond the generations already seen; an unchanged repeat is not one),
+ * false when one was, `unknown` when the interrupt was not sent or the
+ * usage evidence could not be read.
  */
 export const FinalInterruptPreemptionSchema = z.union([
   z.boolean(),
@@ -323,6 +343,12 @@ export const ClientRunAttemptUsageGetResponseSchema = z
     execution: RunAttemptExecutionSchema.nullable().optional(),
     /** Final-reply turn end; `null` when no `final` post committed. */
     finalInterrupt: RunAttemptFinalInterruptSchema.nullable().optional(),
+    /**
+     * S2-b: measured native session resume of this RunAttempt's start, warm
+     * (cold start of an instance runtime) or per-turn; `null` when the start
+     * did not resume a session or nothing was measured.
+     */
+    sessionResumeMs: z.number().int().nonnegative().nullable().optional(),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

@@ -181,12 +181,16 @@ try {
       HANDSHAKE_TIMEOUT_MS,
     );
   } else {
+    // S2-b: the same measurement the warm driver reports at ready (request
+    // until response), so cold and warm resume costs are comparable.
+    const resumeStarted = Date.now();
     try {
       startedThread = await request(
         "thread/resume",
         { threadId: options.resumeSession, ...threadStart },
         HANDSHAKE_TIMEOUT_MS,
       );
+      writeSessionResumeMeasurement(Date.now() - resumeStarted);
     } catch (error) {
       resumeRecovery = classifyCodexResumeError(errorMessage(error));
       if (resumeRecovery === undefined) throw error;
@@ -659,6 +663,18 @@ function writeFinalInterruptReport(report) {
     );
   } catch {
     // No Host listening: the usage read shows the interrupt as unreported.
+  }
+}
+
+/** Host-private diagnostics: the measured native session resume duration. */
+function writeSessionResumeMeasurement(sessionResumeMs) {
+  try {
+    writeSync(
+      3,
+      `${JSON.stringify({ protocol: "rah-session-resume/v1", sessionResumeMs })}\n`,
+    );
+  } catch {
+    // No Host listening: the usage read shows the resume as unmeasured.
   }
 }
 

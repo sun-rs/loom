@@ -104,9 +104,11 @@ export function compareWarmCold(coldRounds, warmRounds) {
         c.metrics?.generationsTotal ?? c.metrics?.generations,
         w.metrics?.generationsTotal ?? w.metrics?.generations,
       ),
+      // Per-turn rounds have no execution record; S2-b records their
+      // measured thread/resume on the product usage read instead.
       sessionResumeMs: {
-        cold: c.execution?.sessionResumeMs ?? null,
-        warm: w.execution?.sessionResumeMs ?? null,
+        cold: c.sessionResumeMs ?? c.execution?.sessionResumeMs ?? null,
+        warm: w.sessionResumeMs ?? w.execution?.sessionResumeMs ?? null,
       },
       lateFrameCount: w.execution?.lateFrameCount ?? null,
     });

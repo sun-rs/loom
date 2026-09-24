@@ -8,12 +8,14 @@ import {
   RunAttemptUsageGapSchema,
   RunAttemptUsageRecordInputSchema,
   RunAttemptUsageRecordSchema,
+  RunAttemptSessionResumeRecordInputSchema,
   type ClientRunAttemptUsageGetRequest,
   type ClientRunAttemptUsageGetResponse,
   type RunAttemptUsageGap,
   type RunAttemptUsageGapRecordInput,
   type RunAttemptUsageRecord,
   type RunAttemptUsageRecordInput,
+  type RunAttemptSessionResumeRecordInput,
 } from "@rah-os/protocol";
 
 import type {
@@ -28,7 +30,7 @@ import {
 } from "./runtime-process-cleanup.ts";
 import { turnExecutionForRunAttempt } from "./instance-runtime.ts";
 import { finalInterruptForRunAttempt } from "./run-attempt-final-reply.ts";
-import { text, type Row } from "./sqlite-row.ts";
+import { nullableInteger, text, type Row } from "./sqlite-row.ts";
 
 /**
  * Native per-generation Provider token usage for one RunAttempt. Diagnostics
@@ -185,6 +187,34 @@ export class RunAttemptUsageService {
     });
   }
 
+  /**
+   * S2-b: the measured native session resume of this live run (per-turn
+   * runs; a warm cold start copies its runtime's measurement at turn begin).
+   * Recorded once: a replay must repeat the same immutable value.
+   */
+  recordSessionResume(
+    host: AuthenticatedHostContext,
+    untrustedInput: RunAttemptSessionResumeRecordInput,
+  ): void {
+    const input =
+      RunAttemptSessionResumeRecordInputSchema.parse(untrustedInput);
+    this.#transaction(() => {
+      const runAttempt = this.#requireOwnedRunAttempt(host, input.runAttemptId);
+      const recorded = nullableInteger(runAttempt, "session_resume_ms");
+      if (recorded === input.sessionResumeMs) return;
+      if (recorded !== null)
+        throw new ConflictError(
+          `run attempt ${input.runAttemptId} already recorded another session resume measurement`,
+        );
+      this.#requireLiveRuntime(runAttempt, input);
+      this.#database
+        .prepare(
+          "UPDATE run_attempts SET session_resume_ms = ? WHERE run_attempt_id = ?",
+        )
+        .run(input.sessionResumeMs, input.runAttemptId);
+    });
+  }
+
   /** Same visibility as Agent trajectory: control-Room Human and work-Room member. */
   get(
     actor: AuthenticatedActorContext,
@@ -283,6 +313,14 @@ export class RunAttemptUsageService {
       finalInterrupt: finalInterruptForRunAttempt(
         this.#database,
         input.runAttemptId,
+      ),
+      sessionResumeMs: nullableInteger(
+        this.#database
+          .prepare(
+            "SELECT session_resume_ms FROM run_attempts WHERE run_attempt_id = ?",
+          )
+          .get(input.runAttemptId)!,
+        "session_resume_ms",
       ),
     });
   }

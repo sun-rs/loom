@@ -686,6 +686,9 @@ export class AgentHost {
             recordFinalReplyInterrupt: async (report) => {
               await this.#control.recordFinalReplyInterrupt?.(report);
             },
+            recordSessionResume: async (measurement) => {
+              await this.#control.recordRunAttemptSessionResume?.(measurement);
+            },
             ...(this.#control.recordInstanceSessionBinding === undefined
               ? {}
               : {
@@ -1112,11 +1115,14 @@ export class AgentHost {
               ? "cancelled"
               : "failed",
       });
+      // S2-b: a run the Host ended after its `final` reply committed is not
+      // re-executed; completion below still requires ACK through `toSeq`.
       if (
-        (quiesced === undefined
+        exit.finalReplyCommitted !== true &&
+        ((quiesced === undefined
           ? exit.code !== 0
           : quiesced.result !== "success") ||
-        exit.failure !== undefined
+          exit.failure !== undefined)
       ) {
         return this.#retryFailedActivation(
           activation,

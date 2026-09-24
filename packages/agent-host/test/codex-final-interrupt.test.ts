@@ -60,13 +60,83 @@ test("output after the interrupt was issued still means the follow-up was not pr
   tracker.observe(tool("item/started"));
   tracker.arm();
   tracker.observe(tool("item/completed"));
+  tracker.observe(delta);
+  assert.deepEqual(await tracker.report(), {
+    sent: true,
+    preemptedFollowUp: false,
+  });
+});
+
+/**
+ * Usage evidence (the measured gap: every real round reported `false` while
+ * zero generations followed the reply). `thread/tokenUsage/updated` carries
+ * no response id and may repeat unchanged, and the usage of the generation
+ * that called the posting tool may land after that tool finished. Only a
+ * usage report that advances the thread total beyond every generation
+ * already observed is a new (follow-up) generation.
+ */
+const usage = (total: number, last = 110) => ({
+  method: "thread/tokenUsage/updated",
+  params: {
+    tokenUsage: {
+      last: { totalTokens: last },
+      total: { totalTokens: total },
+    },
+  },
+});
+
+test("an unchanged usage repeat after the interrupt is not a follow-up generation", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(delta);
+  tracker.observe(tool("item/started"));
+  tracker.observe(usage(1_110));
+  tracker.arm();
+  tracker.observe(tool("item/completed"));
+  tracker.observe(usage(1_110));
+  assert.deepEqual(await tracker.report(), {
+    sent: true,
+    preemptedFollowUp: true,
+  });
+});
+
+test("the posting generation's own usage arriving after the tool finished is not a follow-up", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(usage(1_000));
+  tracker.observe(tool("item/started"));
+  tracker.arm();
+  tracker.observe(tool("item/completed"));
+  tracker.observe(usage(1_110));
+  assert.deepEqual(await tracker.report(), {
+    sent: true,
+    preemptedFollowUp: true,
+  });
+});
+
+test("an advancing usage report after the posting generation settled is a follow-up generation", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(tool("item/started"));
+  tracker.observe(usage(1_110));
+  tracker.arm();
+  tracker.observe(tool("item/completed"));
+  tracker.observe(usage(1_300, 190));
+  assert.deepEqual(await tracker.report(), {
+    sent: true,
+    preemptedFollowUp: false,
+  });
+});
+
+test("an unreadable usage report after the tool finished makes preemption unknown", async () => {
+  const tracker = createCodexFinalInterrupt({ interrupt: async () => {} });
+  tracker.observe(tool("item/started"));
+  tracker.arm();
+  tracker.observe(tool("item/completed"));
   tracker.observe({
     method: "thread/tokenUsage/updated",
     params: { tokenUsage: {} },
   });
   assert.deepEqual(await tracker.report(), {
     sent: true,
-    preemptedFollowUp: false,
+    preemptedFollowUp: "unknown",
   });
 });
 

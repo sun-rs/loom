@@ -329,6 +329,8 @@ export async function rahArm({ kind, root, cwd, questions, arm, save }) {
       });
       // S2-a execution record: null for per-turn runs.
       round.execution = productUsage.execution ?? null;
+      // S2-b: measured native session resume, per-turn runs included.
+      round.sessionResumeMs = productUsage.sessionResumeMs ?? null;
       save();
       assert.ok(
         runSucceeded(round.runs[0], round.execution),

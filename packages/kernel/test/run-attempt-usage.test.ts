@@ -1167,3 +1167,41 @@ test("final-reply interrupt evidence: null without a final post, unknown until t
     state.cleanup();
   }
 });
+
+test("S2-b: a per-turn (cold) run records its measured session resume once and the usage read shows it", () => {
+  const state = fixture();
+  try {
+    const { kernel, host, otherHost } = state;
+    assert.equal(read(state).sessionResumeMs, null, "unknown until measured");
+    assert.equal(read(state).execution, null, "still a per-turn run");
+    const input = {
+      runAttemptId: state.runAttemptId,
+      runtimeRunId: state.runtimeRunId,
+      sessionResumeMs: 1_234,
+    };
+    kernel.runAttemptUsage.recordSessionResume(host, input);
+    kernel.runAttemptUsage.recordSessionResume(host, input);
+    assert.equal(read(state).sessionResumeMs, 1_234);
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordSessionResume(host, {
+          ...input,
+          sessionResumeMs: 99,
+        }),
+      ConflictError,
+      "a measurement is an immutable fact",
+    );
+    assert.throws(
+      () => kernel.runAttemptUsage.recordSessionResume(otherHost, input),
+      ForbiddenError,
+    );
+    assert.throws(() =>
+      kernel.runAttemptUsage.recordSessionResume(host, {
+        ...input,
+        sessionResumeMs: -1,
+      }),
+    );
+  } finally {
+    state.cleanup();
+  }
+});

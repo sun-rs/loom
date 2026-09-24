@@ -65,6 +65,10 @@ export type AgentHostControlPort = {
   recordRunAttemptUsageGap?(
     input: Parameters<RoomKernel["runAttemptUsage"]["recordGap"]>[1],
   ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["recordGap"]>>;
+  /** S2-b: the measured native session resume of the Host's own live run. */
+  recordRunAttemptSessionResume?(
+    input: Parameters<RoomKernel["runAttemptUsage"]["recordSessionResume"]>[1],
+  ): Promise<void>;
   /** S2-0: one leftover-process sweep for one of this Host's participants. */
   recordRuntimeProcessCleanup?(
     input: Parameters<RoomKernel["runtimeProcessCleanup"]["record"]>[1],
@@ -249,6 +253,8 @@ export function createKernelAgentHostControlPort(
       kernel.runAttemptUsage.record(host, input),
     recordRunAttemptUsageGap: async (input) =>
       kernel.runAttemptUsage.recordGap(host, input),
+    recordRunAttemptSessionResume: async (input) =>
+      kernel.runAttemptUsage.recordSessionResume(host, input),
     recordInstanceSessionBinding: async (input) =>
       kernel.instanceSessions.record(host, input),
     recordRuntimeProcessCleanup: async (input) =>

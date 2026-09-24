@@ -26,6 +26,7 @@ import {
   renderBodiedWake,
   RuntimeProcessHygiene,
   type RuntimeAdapter,
+  type WarmRuntimePolicyOverrides,
 } from "../src/index.ts";
 
 /**
@@ -48,6 +49,7 @@ async function harness(
     hostHygiene?: boolean;
     interruptQuiesceTimeoutMs?: number;
     idleTtlMs?: number;
+    policy?: WarmRuntimePolicyOverrides;
   } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-codex-"));
@@ -103,6 +105,7 @@ async function harness(
       hostGeneration: host.instanceId,
       hygiene,
       idleTtlMs: options.idleTtlMs ?? 60_000,
+      ...(options.policy === undefined ? {} : { policy: options.policy }),
       now: () => nowMs,
       onDiagnostic: (message) => diagnostics.push(message),
       socketRoot,
@@ -1221,6 +1224,194 @@ test("final reply (warm): the driver ignores a final command naming another nati
     assert.equal(result.state, "completed", JSON.stringify(result));
     assert.deepEqual(interruptRequests(state), []);
     assert.equal(followUps(state).length, 1);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+/**
+ * Advance the fake clock by one stall window at a time until the run
+ * settles (a progress envelope racing a single advance would restart the
+ * business clock at the advanced time).
+ */
+async function advanceUntilSettled<T>(
+  state: Harness,
+  running: Promise<T>,
+): Promise<T> {
+  let settled = false;
+  const result = running.finally(() => {
+    settled = true;
+  });
+  for (let step = 0; step < 20 && !settled; step += 1) {
+    state.advance(15 * 60_000);
+    await Promise.race([
+      result,
+      new Promise((resolve) => setTimeout(resolve, 250)),
+    ]);
+  }
+  return await result;
+}
+
+const STALL_POLICY: WarmRuntimePolicyOverrides = {
+  stallMs: 15 * 60_000,
+  supervisionIntervalMs: 20,
+};
+
+test("S2-b stall: no native progress interrupts the turn, fails it (stalled) with its process alive, and the retry completes on the same runtime", async () => {
+  const state = await harness({ policy: STALL_POLICY });
+  try {
+    state.post("[fake:hang-once] [fake:ack] please answer");
+    const running = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () => state.records().find((record) => record.event === "turn"),
+      "the hanging turn",
+    );
+    const first = await advanceUntilSettled(state, running);
+    assert.equal(first.state, "failed", JSON.stringify(first));
+    assert.match(String(first.error), /RAH_RUNTIME_STALLED/u);
+    const retried = await state.current.agentHost.reconcileOnce();
+    assert.equal(retried.state, "completed", JSON.stringify(retried));
+    const runs = sql(
+      state,
+      `SELECT run.state, run.error, run.instance_runtime_id, process.proof_kind
+         FROM run_attempts AS run
+         JOIN runtime_processes AS process USING (run_attempt_id)
+        ORDER BY run.attempt_number`,
+    );
+    assert.equal(runs.length, 2);
+    assert.equal(runs[0]!.state, "failed");
+    assert.match(String(runs[0]!.error), /RAH_RUNTIME_STALLED/u);
+    assert.equal(runs[0]!.proof_kind, "turn_quiesced", "closure proven first");
+    assert.equal(runs[1]!.state, "exited");
+    assert.equal(runs[0]!.instance_runtime_id, runs[1]!.instance_runtime_id);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S2-b stall: past the retry budget the Activation is held for the Human instead of retried again", async () => {
+  const state = await harness({ policy: STALL_POLICY });
+  try {
+    state.post("[fake:hang] please answer");
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      const running = state.current.agentHost.reconcileOnce();
+      await waitFor(
+        () =>
+          state.records().filter((record) => record.event === "turn").length ===
+          attempt,
+        `hanging turn ${String(attempt)}`,
+      );
+      assert.equal((await advanceUntilSettled(state, running)).state, "failed");
+    }
+    const [activation] = sql(
+      state,
+      "SELECT state, last_error FROM activations",
+    );
+    assert.equal(activation!.state, "quarantined");
+    assert.match(String(activation!.last_error), /retry budget is exhausted/u);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S2-b stall after the final reply committed: the wedged runtime is killed with proof and the turn is not re-executed", async () => {
+  const state = await harness({
+    interruptQuiesceTimeoutMs: 300,
+    policy: STALL_POLICY,
+  });
+  try {
+    state.post("[fake:final-hang] please answer");
+    const running = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () =>
+        state
+          .records()
+          .find(
+            (record) =>
+              record.event === "request" && record.method === "turn/interrupt",
+          ),
+      "the final-reply interrupt the wedged CLI ignores",
+    );
+    const result = await advanceUntilSettled(state, running);
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const runs = sql(
+      state,
+      `SELECT run.run_attempt_id, process.proof_kind, process.exit_signal
+         FROM run_attempts AS run
+         JOIN runtime_processes AS process USING (run_attempt_id)`,
+    );
+    assert.equal(runs.length, 1, "no second RunAttempt");
+    assert.equal(runs[0]!.proof_kind, "process_exit");
+    assert.equal(
+      state.records().filter((record) => record.event === "turn").length,
+      1,
+      "the obligation is never executed again",
+    );
+    const [runtime] = sql(
+      state,
+      "SELECT state, terminated_reason FROM instance_runtimes",
+    );
+    assert.deepEqual(
+      { ...runtime },
+      {
+        state: "terminated",
+        terminated_reason: "stall",
+      },
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S2-b boundary recycling: an aged idle runtime is stopped with proof before the next turn, which cold-starts and resumes the same thread", async () => {
+  const state = await harness({ policy: { maxAgeMs: 60 * 60_000 } });
+  try {
+    state.post("[fake:ack] first");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    state.advance(30 * 60_000);
+    state.post("[fake:ack] second");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    state.advance(30 * 60_000);
+    state.post("[fake:ack] third");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const runtimes = sql(
+      state,
+      "SELECT state, terminated_reason FROM instance_runtimes ORDER BY started_at",
+    );
+    assert.equal(runtimes.length, 2);
+    assert.deepEqual(
+      { ...runtimes[0] },
+      { state: "terminated", terminated_reason: "recycle_age" },
+    );
+    assert.equal(runtimes[1]!.terminated_reason, null);
+    const modes = sql(
+      state,
+      "SELECT execution_mode FROM run_attempts ORDER BY started_at",
+    ).map((row) => row.execution_mode);
+    assert.deepEqual(modes, ["cold", "warm", "cold"]);
+    const records = state.records();
+    const turns = records.filter(
+      (record) => record.event === "request" && record.method === "turn/start",
+    );
+    const threads = new Set(
+      turns.map((turn) => (turn.params as { threadId: string }).threadId),
+    );
+    assert.equal(threads.size, 1, "the binding is preserved across recycling");
+    assert.ok(
+      records.some(
+        (record) =>
+          record.event === "request" && record.method === "thread/resume",
+      ),
+    );
   } finally {
     await state.cleanup();
   }

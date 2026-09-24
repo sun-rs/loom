@@ -3,7 +3,11 @@ import { createHash } from "node:crypto";
 import { isSea } from "node:sea";
 import { fileURLToPath } from "node:url";
 
-import type { ResolvedModel } from "@rah-os/protocol";
+import {
+  RuntimeFailureSchema,
+  type ResolvedModel,
+  type RuntimeFailure,
+} from "@rah-os/protocol";
 
 import {
   BoundedOutput,
@@ -35,6 +39,11 @@ import type {
   RuntimeStartLifecycle,
 } from "./runtime.ts";
 import { validBusyNotice } from "./runtime-busy-input.ts";
+import { cliBinaryFingerprint } from "./warm-runtime-policy.ts";
+import {
+  superviseWarmTurn,
+  type WarmTurnSupervision,
+} from "./warm-turn-supervisor.ts";
 import {
   issueWorkerTurnHandle,
   RAH_WORKER_TURN_ROOT_ENV,
@@ -67,6 +76,12 @@ import {
  *   8. the lane is released only after the Activation left `leased`.
  * Cancel: native interrupt, quiesce on the interrupted completion within
  * `interruptQuiesceTimeoutMs`, else kill the runtime group (process_exit).
+ * S2-b supervision while the turn runs (`warm-turn-supervisor.ts`): a stall
+ * (no native progress) is interrupted the same way and ends failed with a
+ * bounded retry budget per Activation; a busy RSS above the emergency
+ * ceiling is a resource failure (proven kill). A turn whose `final` reply
+ * already committed is never re-executed: it completes (still subject to
+ * delivery ACK through `toSeq`).
  * Legacy Agents (no instance channel) keep the per-turn adapter unchanged.
  */
 export const CODEX_WARM_DRIVER_KIND = "codex-app-server-warm/v1";
@@ -120,9 +135,14 @@ export type CodexWarmAdapterOptions = {
   recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
   acceptTimeoutMs?: number;
   interruptQuiesceTimeoutMs?: number;
+  /** The CLI binary; its fingerprint change recycles an idle runtime. */
+  cliExecutable?: string;
 };
 
 type TurnBinding = {
+  activationId: string;
+  /** Why the Host ended the turn (S2-b supervision), if it did. */
+  supervision?: WarmTurnSupervision;
   runtime: WarmRuntime;
   turn: WarmTurn;
   instanceRuntimeId: string;
@@ -135,6 +155,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   readonly busyInputSupported = true;
   readonly #options: CodexWarmAdapterOptions;
   readonly #turns = new Map<string, TurnBinding>();
+  /** Stalls and resource failures per Activation (bounded retry budget). */
+  readonly #supervisionFailures = new Map<string, number>();
 
   constructor(options: CodexWarmAdapterOptions) {
     this.#options = options;
@@ -166,7 +188,14 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const control = pool.control.instanceRuntimes!;
     let standingPromptDigest: string | undefined;
     let launchEnvironment: Readonly<Record<string, string>> = {};
+    const executable = this.#options.cliExecutable;
     const acquired = await pool.acquire({
+      ...(executable === undefined
+        ? {}
+        : {
+            cliFingerprint: async () => await cliBinaryFingerprint(executable),
+          }),
+      runAttemptId: input.runAttemptId,
       driver: CODEX_WARM_DRIVER_KIND,
       key: this.#options.runtimeKey(input),
       launch: async (layout) => {
@@ -228,6 +257,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const runtimeRunId = `turn:${randomUUID()}`;
     const turn = runtime.openTurn(input.runAttemptId, runtimeRunId);
     const binding: TurnBinding = {
+      activationId: input.activationId,
       instanceRuntimeId: runtime.instanceRuntimeId,
       runtime,
       turn,
@@ -353,7 +383,86 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   async reap(run: RunHandle): Promise<RunExit> {
     const binding = this.#turns.get(run.runId);
     if (binding === undefined) return await this.#options.legacy.reap(run);
-    return await this.#settle(binding, await binding.turn.outcome.promise);
+    return await this.#settle(binding, await this.#supervised(binding));
+  }
+
+  /**
+   * The turn's own outcome, unless supervision ends it first: a stall gets
+   * the native interrupt and, without quiescence in the bound, a proven kill;
+   * a resource failure is a proven kill. An unproven kill throws (no proof,
+   * no retry: the Host quarantines).
+   */
+  async #supervised(binding: TurnBinding): Promise<WarmTurnOutcome> {
+    const { runtime, turn } = binding;
+    const pool = this.#options.pool;
+    const stop = new AbortController();
+    const supervision = superviseWarmTurn({
+      pool,
+      runtime,
+      signal: stop.signal,
+      turn,
+    });
+    const first = await Promise.race([
+      turn.outcome.promise.then((outcome) => ({ outcome })),
+      supervision.then((verdict) =>
+        verdict === undefined
+          ? new Promise<never>(() => undefined)
+          : { verdict },
+      ),
+    ]);
+    stop.abort();
+    if ("outcome" in first) return first.outcome;
+    binding.supervision = first.verdict;
+    pool.diagnostic(
+      `[${runtime.instanceRuntimeId}] ${first.verdict.kind === "stalled" ? `turn ${turn.runAttemptId} stalled: no native progress for ${String(first.verdict.idleMs)} ms` : `resource failure: process-group RSS ${String(first.verdict.rssKb)} KiB above the emergency ceiling`}`,
+    );
+    if (first.verdict.kind === "stalled" && turn.nativeTurnId !== undefined) {
+      try {
+        runtime.command({
+          op: "turn.interrupt",
+          runAttemptId: turn.runAttemptId,
+        });
+      } catch {
+        // Channel closed: the kill below proves termination.
+      }
+      const outcome = await withTimeout(
+        turn.outcome.promise,
+        this.#options.interruptQuiesceTimeoutMs ??
+          DEFAULT_INTERRUPT_QUIESCE_TIMEOUT_MS,
+        undefined,
+      );
+      if (outcome !== undefined) return outcome;
+    }
+    if (turn.outcome.settled) return await turn.outcome.promise;
+    const exit = await pool.abortRuntime(
+      runtime,
+      first.verdict.kind === "stalled" ? "stall" : "resource_failure",
+    );
+    return { exit: runExitFrom(exit), kind: "exit" };
+  }
+
+  /** The failure a supervised end carries; the budget makes it sticky. */
+  #supervisionFailure(binding: TurnBinding): RuntimeFailure | undefined {
+    const verdict = binding.supervision;
+    if (verdict === undefined) return undefined;
+    const count =
+      (this.#supervisionFailures.get(binding.activationId) ?? 0) + 1;
+    this.#supervisionFailures.set(binding.activationId, count);
+    while (this.#supervisionFailures.size > 1_000)
+      this.#supervisionFailures.delete(
+        this.#supervisionFailures.keys().next().value!,
+      );
+    const exhausted = count > this.#options.pool.policy.stallRetryBudget;
+    return RuntimeFailureSchema.parse({
+      actionRequired: false,
+      errorClass: verdict.kind === "stalled" ? "TimeoutError" : "RuntimeError",
+      message:
+        verdict.kind === "stalled"
+          ? `RAH_RUNTIME_STALLED: no native turn progress for ${String(verdict.idleMs)} ms (tools in flight: ${String(verdict.toolsInFlight)}); the turn was interrupted${exhausted ? "; the retry budget is exhausted" : ""}`
+          : `RAH_RUNTIME_RESOURCE_FAILURE: process-group RSS ${String(verdict.rssKb)} KiB exceeded the emergency ceiling; the runtime was killed${exhausted ? "; the retry budget is exhausted" : ""}`,
+      retryDisposition: exhausted ? "sticky_terminal" : "recoverable",
+      sticky: exhausted,
+    });
   }
 
   async cancel(run: RunHandle): Promise<RunExit> {
@@ -447,6 +556,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         (await this.#options.legacy.interruptAfterFinalReply?.(run)) ?? false
       );
     const { runtime, turn } = binding;
+    // The Host read the durable marker: this turn's reply is committed.
+    turn.finalReplyCommitted = true;
     if (
       turn.nativeTurnId === undefined ||
       turn.framesClosed ||
@@ -596,9 +707,24 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       pool.diagnostic(
         `[${runtime.instanceRuntimeId}] turn handle directory removal failed; the janitor removes it: ${release.removeError}`,
       );
-    if (outcome.kind === "exit") return outcome.exit;
     if (outcome.kind === "unproven") throw new Error(outcome.error);
+    // S2-b: a turn the Host ended after its `final` reply committed is not
+    // re-executed; otherwise a supervised end fails within its budget.
+    const finalCommitted = turn.finalReplyCommitted === true;
+    const supervised =
+      binding.supervision !== undefined && !finalCommitted
+        ? this.#supervisionFailure(binding)
+        : undefined;
+    if (outcome.kind === "exit")
+      return {
+        ...outcome.exit,
+        ...(supervised === undefined ? {} : { failure: supervised }),
+        ...(binding.supervision !== undefined && finalCommitted
+          ? { finalReplyCommitted: true }
+          : {}),
+      };
     const failure =
+      supervised ??
       turn.collector?.terminalFailure ??
       (outcome.status === "failed" || outcome.status === "rejected"
         ? classifyRuntimeFailure(
@@ -619,6 +745,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       await pool.runtimeEnded(runtime, exit, "crash");
       return {
         ...runExitFrom(exit),
+        ...(binding.supervision !== undefined && finalCommitted
+          ? { finalReplyCommitted: true }
+          : {}),
         failure:
           failure ??
           classifyRuntimeFailure(
@@ -631,15 +760,21 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const result =
       outcome.status === "completed" && failure === undefined
         ? "success"
-        : outcome.status === "interrupted" && turn.cancelRequested
-          ? "cancelled"
-          : // Ended by the Host after the final reply committed: the reply
-            // is done, so the native interrupt is this turn's success.
-            outcome.status === "interrupted" &&
-              outcome.endedAfterFinalReply === true &&
-              failure === undefined
+        : // S2-b: the Host interrupted a stall; after a committed `final`
+          // reply that interrupt ends a finished obligation.
+          binding.supervision !== undefined && outcome.status === "interrupted"
+          ? finalCommitted && failure === undefined
             ? "success"
-            : "error";
+            : "error"
+          : outcome.status === "interrupted" && turn.cancelRequested
+            ? "cancelled"
+            : // Ended by the Host after the final reply committed: the reply
+              // is done, so the native interrupt is this turn's success.
+              outcome.status === "interrupted" &&
+                outcome.endedAfterFinalReply === true &&
+                failure === undefined
+              ? "success"
+              : "error";
     return {
       code: null,
       ...(failure === undefined ? {} : { failure }),

@@ -1400,3 +1400,73 @@ test("missing session binding at startup quarantines without a retry loop", asyn
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+for (const [label, finalReplyCommitted, expected] of [
+  ["completes without re-executing", true, "completed"],
+  ["is retried as a failure", false, "failed"],
+] as const) {
+  test(`S2-b: a run the Host killed after a stall ${finalReplyCommitted ? "with" : "without"} a committed final reply ${label}`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-final-"));
+    try {
+      const kernel = new RoomKernel({
+        databasePath: join(directory, "room.db"),
+      });
+      kernel.initialize();
+      const human = kernel.provisionPrincipal({ handle: "h", kind: "human" });
+      const agent = kernel.provisionPrincipal({ handle: "a", kind: "agent" });
+      const humanActor = kernel.authenticateAccessToken(human.accessToken);
+      const agentActor = kernel.authenticateAccessToken(agent.accessToken);
+      const room = kernel.createRoom(humanActor, { name: "F", slug: "f" });
+      kernel.addMember(humanActor, {
+        principalId: agent.principal.principalId,
+        roomId: room.roomId,
+      });
+      kernel.postMessage(humanActor, {
+        body: "answer",
+        idempotencyKey: "final-stall",
+        recipients: [
+          { participantId: agent.principal.principalId, reason: "mention" },
+        ],
+        roomId: room.roomId,
+      });
+      const runtime = new FakeRuntimeAdapter({
+        onStart: (input) => {
+          const delivery = kernel.sync(agentActor, {
+            consumerId: input.consumerId,
+            roomId: input.roomId,
+          });
+          kernel.acknowledgeCursor(agentActor, {
+            consumerId: input.consumerId,
+            roomId: input.roomId,
+            throughSeq: delivery.cursorAfter,
+          });
+        },
+      });
+      // A proven SIGKILL of a wedged runtime: a real exit, never success.
+      runtime.enqueueExit({
+        code: null,
+        signal: "SIGKILL",
+        ...(finalReplyCommitted ? { finalReplyCommitted: true } : {}),
+      });
+      const host = new AgentHost({
+        host: authenticateHost(kernel, "final-host", [
+          agent.principal.principalId,
+        ]),
+        kernel,
+        leaseMs: 30_000,
+        runtime,
+      });
+      const result = await host.reconcileOnce();
+      assert.equal(result.state, expected, JSON.stringify(result));
+      assert.equal(runtime.starts.length, 1);
+      const [run] = kernel.listRunAttempts({ roomId: room.roomId });
+      assert.equal(run?.exitSignal, "SIGKILL", "the real exit is kept");
+      assert.equal(
+        kernel.listActivations({ roomId: room.roomId })[0]?.state,
+        finalReplyCommitted ? "completed" : "queued",
+      );
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
+}

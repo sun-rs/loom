@@ -72,6 +72,7 @@ async function fixture() {
     runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
   });
   let mode: Mode = "final";
+  let resume = false;
   const runtime = implementations.createRuntime(active, report, {
     activationEnvironment: async (scope) => {
       const credential = worker.issueActivationCredential(host, scope);
@@ -83,7 +84,11 @@ async function fixture() {
       });
       return {
         ...lease,
-        args: ["--prompt", "FAKE standing prompt"],
+        args: [
+          "--prompt",
+          "FAKE standing prompt",
+          ...(resume ? ["--resume-session", "fake-thread"] : []),
+        ],
         env: {
           ...lease.env,
           FAKE_CODEX_RECORD_PATH: recordPath,
@@ -120,6 +125,16 @@ async function fixture() {
     room,
     setMode(next: Mode) {
       mode = next;
+    },
+    setResume(next: boolean) {
+      resume = next;
+    },
+    sessionResumeMs(runAttemptId: string) {
+      return database
+        .prepare(
+          "SELECT session_resume_ms FROM run_attempts WHERE run_attempt_id = ?",
+        )
+        .get(runAttemptId)?.session_resume_ms;
     },
     post(body: string) {
       return kernel.postMessage(actor, {
@@ -229,6 +244,30 @@ test("final reply (per-turn): a reply without --final keeps today's behaviour â€
   }
 });
 
+test("S2-b: a per-turn (cold) run that resumes its thread records the measured resume duration", async () => {
+  const context = await fixture();
+  try {
+    context.post("fresh question");
+    assert.equal((await context.agentHost.reconcileOnce()).state, "completed");
+    context.setResume(true);
+    context.post("resumed question");
+    assert.equal((await context.agentHost.reconcileOnce()).state, "completed");
+    const [fresh, resumed] = context.kernel.listRunAttempts({
+      roomId: context.room.roomId,
+    });
+    assert.equal(
+      context.sessionResumeMs(fresh!.runAttemptId),
+      null,
+      "a fresh thread measured no resume",
+    );
+    const measured = context.sessionResumeMs(resumed!.runAttemptId);
+    assert.equal(typeof measured, "number");
+    assert.ok((measured as number) >= 60, String(measured));
+  } finally {
+    await context.close();
+  }
+});
+
 function manifest(executable: string): RuntimeProfileManifestV3 {
   return {
     adapter: {
@@ -296,6 +335,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   const frame = JSON.parse(line);
   if (frame.method === "initialize") send({jsonrpc:"2.0",id:frame.id,result:{userAgent:"fake-codex/1"}});
   else if (frame.method === "thread/start") send({jsonrpc:"2.0",id:frame.id,result:{thread:{id:threadId}}});
+  else if (frame.method === "thread/resume") setTimeout(() => send({jsonrpc:"2.0",id:frame.id,result:{thread:{id:frame.params.threadId}}}), 60);
   else if (frame.method === "turn/start") {
     const text = frame.params.input[0].text;
     send({jsonrpc:"2.0",id:frame.id,result:{turn:{id:turn,status:"inProgress"}}});

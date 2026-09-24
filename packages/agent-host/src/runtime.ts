@@ -63,6 +63,13 @@ export type RunExit = {
   failure?: RuntimeFailure;
   /** Present instead of a physical exit when a warm turn quiesced. */
   quiesced?: TurnQuiescence;
+  /**
+   * S2-b: the Host ended this run (stall supervision) after its `final`
+   * reply had committed. The obligation is not re-executed: the exit is
+   * recorded as it was and the Activation completes if delivery is
+   * acknowledged through `toSeq` (otherwise the normal retry applies).
+   */
+  finalReplyCommitted?: boolean;
   signal?: string;
 };
 
@@ -102,6 +109,12 @@ export type RuntimeStartLifecycle = {
     preemptedFollowUp: boolean | "unknown";
     runAttemptId: string;
     sent: boolean;
+  }): Promise<void>;
+  /** S2-b: the measured native session resume of this run's start. */
+  recordSessionResume?(input: {
+    runAttemptId: string;
+    runtimeRunId: string;
+    sessionResumeMs: number;
   }): Promise<void>;
 };
 

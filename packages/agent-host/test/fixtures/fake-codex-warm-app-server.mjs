@@ -135,6 +135,8 @@ const server = createServer(async (socket) => {
       case "turn/interrupt": {
         if (activeTurn?.text.includes("[fake:final-reject]"))
           return fail("turn/interrupt is not supported");
+        // Accepts the interrupt but never ends the turn (a wedged CLI).
+        if (activeTurn?.text.includes("[fake:final-hang]")) return reply({});
         if (activeTurn?.id === frame.params.turnId) {
           activeTurn.interrupted = true;
           activeTurn.wake?.();
@@ -187,7 +189,8 @@ const server = createServer(async (socket) => {
       has("final-noack") ||
       has("final-late") ||
       has("post-nofinal") ||
-      has("final-wait");
+      has("final-wait") ||
+      has("final-hang");
     if (finalReply) {
       usage(turn); // the generation that decided to post
       if (!has("final-noack"))
@@ -208,6 +211,10 @@ const server = createServer(async (socket) => {
           delta: "se",
         });
         record({ event: "follow-up-started", turnId: turn.id });
+      }
+      if (has("final-hang")) {
+        record({ event: "final-hang", turnId: turn.id });
+        await new Promise(() => {});
       }
       record({ event: "final-window", turnId: turn.id });
       await new Promise((resolve) => {

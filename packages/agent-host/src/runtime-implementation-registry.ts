@@ -1039,6 +1039,10 @@ function createCodexWarmRuntime(
   const provider = "codex-app-server/v1";
   const recordDeliveryAcceptance = options.recordDeliveryAcceptance;
   return new CodexWarmAdapter({
+    // S2-b: an idle runtime restarts when the probed binary changes.
+    ...(executableIdentity?.resolvedExecutablePath === undefined
+      ? {}
+      : { cliExecutable: executableIdentity.resolvedExecutablePath }),
     cwd: options.cwd,
     driverArgs: [
       "--executable",

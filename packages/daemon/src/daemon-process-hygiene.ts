@@ -59,11 +59,15 @@ export function createDaemonInstanceRuntimePool(input: {
   if (codex?.enabled !== true) return undefined;
   if (process.platform !== "darwin" && process.platform !== "linux")
     return undefined;
+  const { codex: _codex, ...policy } = input.config ?? {};
   return new InstanceRuntimePool({
     control: createKernelAgentHostControlPort(input.kernel, input.host),
     hostGeneration: input.host.instanceId,
     ...(input.hygiene === undefined ? {} : { hygiene: input.hygiene }),
-    ...(codex.idleTtlMs === undefined ? {} : { idleTtlMs: codex.idleTtlMs }),
+    policy: {
+      ...policy,
+      ...(codex.idleTtlMs === undefined ? {} : { idleTtlMs: codex.idleTtlMs }),
+    },
     stateDirectory: join(input.stateDirectory, "warm-runtimes"),
   });
 }

@@ -2075,6 +2075,48 @@ test("S2-a warm Codex runtimes are opt-in with a configurable idle TTL", () => {
     assert.throws(() => DaemonConfigSchema.parse({ ...base, warmRuntimes }));
 });
 
+test("S2-b warm runtime policies are configurable; Codex warm stays off by default", () => {
+  const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
+  const policy = {
+    admissionWaitMs: 30_000,
+    emergencyRssKb: 6 * 1024 * 1024,
+    expensiveResumeMs: 10_000,
+    expensiveResumeTtlMultiplier: 2,
+    idleTtlMs: 900_000,
+    maxAgeMs: 3_600_000,
+    maxBusyTurns: 4,
+    maxWarm: 3,
+    recycleRssKb: 1024 * 1024,
+    stallMs: 600_000,
+    stallRetryBudget: 0,
+    toolStallMs: 1_200_000,
+  };
+  const parsed = DaemonConfigSchema.parse({
+    ...base,
+    warmRuntimes: { ...policy, codex: { enabled: false } },
+  });
+  assert.deepEqual(parsed.warmRuntimes, {
+    ...policy,
+    codex: { enabled: false },
+  });
+  assert.equal(
+    DaemonConfigSchema.parse({ ...base, warmRuntimes: policy }).warmRuntimes
+      ?.codex,
+    undefined,
+    "policies alone never enable warm runtimes",
+  );
+  for (const bad of [
+    { maxWarm: 0 },
+    { stallMs: -1 },
+    { stallRetryBudget: 1.5 },
+    { recycleRssKb: 4, emergencyRssKb: 2 },
+  ])
+    assert.throws(
+      () => DaemonConfigSchema.parse({ ...base, warmRuntimes: bad }),
+      JSON.stringify(bad),
+    );
+});
+
 function validConfig(stateDirectory: string, secretPath: string) {
   return {
     client: {

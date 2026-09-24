@@ -174,6 +174,20 @@ test("warm-vs-cold block reports per-round deltas and the avoided cold resume co
   assert.equal(missing.coldResumeCostAvoided.replySeconds, null);
 });
 
+test("S2-b: per-turn (cold arm) rounds report their product-measured session resume", () => {
+  const cold = [
+    { ...round(20, 30000, 3, null), sessionResumeMs: null },
+    { ...round(18, 40000, 3, null), sessionResumeMs: 1_850 },
+  ];
+  const warm = [
+    round(21, 31000, 3, exec("cold", "rt1", 700)),
+    round(12, 38000, 2, exec("warm")),
+  ];
+  const c = compareWarmCold(cold, warm);
+  assert.deepEqual(c.rounds[0].sessionResumeMs, { cold: null, warm: 700 });
+  assert.deepEqual(c.rounds[1].sessionResumeMs, { cold: 1_850, warm: null });
+});
+
 test("reply turn-handle evidence: every box-post carries --turn, unknown without one", () => {
   const post = (turnHandle) => ({ kind: "box-post", turnHandle });
   assert.equal(replyTurnHandle([post(true), { kind: "other" }]), true);

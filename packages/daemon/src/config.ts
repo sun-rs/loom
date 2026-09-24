@@ -73,9 +73,26 @@ const ProcessHygieneConfigSchema = z
  * S2-a warm instance runtimes. Off by default: the fake-driver gate cannot
  * prove the real Codex multi-turn protocol, and the owner-authorized real
  * Codex smoke gate (S2 spec §8) precedes default enablement.
+ *
+ * S2-b: the driver-neutral policy thresholds (see agent-host
+ * `warm-runtime-policy.ts` for defaults and semantics). They configure a
+ * pool; they never enable one. `codex.idleTtlMs` overrides `idleTtlMs`.
  */
+const positive = () => z.number().int().positive().optional();
 const WarmRuntimesConfigSchema = z
   .object({
+    idleTtlMs: positive(),
+    expensiveResumeMs: positive(),
+    expensiveResumeTtlMultiplier: positive(),
+    recycleRssKb: positive(),
+    maxAgeMs: positive(),
+    maxWarm: positive(),
+    maxBusyTurns: positive(),
+    admissionWaitMs: positive(),
+    stallMs: positive(),
+    toolStallMs: positive(),
+    stallRetryBudget: z.number().int().nonnegative().optional(),
+    emergencyRssKb: positive(),
     codex: z
       .object({
         enabled: z.boolean().optional(),
@@ -84,7 +101,14 @@ const WarmRuntimesConfigSchema = z
       .strict()
       .optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (value) =>
+      value.recycleRssKb === undefined ||
+      value.emergencyRssKb === undefined ||
+      value.emergencyRssKb >= value.recycleRssKb,
+    { message: "emergencyRssKb must not be below recycleRssKb" },
+  );
 
 const CommonDaemonConfigFields = {
   startupMemoryTransport: z.enum(["tool", "system"]).optional(),

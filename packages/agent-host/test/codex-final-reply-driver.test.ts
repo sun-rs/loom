@@ -26,6 +26,8 @@ type Scenario = {
   /** Send the signal only after the follow-up generation began. */
   signalAfterFollowUp?: boolean;
   rejectInterrupt?: boolean;
+  /** Resume this recorded thread; the fake answers after the delay. */
+  resume?: { threadId: string; delayMs: number };
 };
 
 async function runTurn(scenario: Scenario) {
@@ -48,6 +50,9 @@ async function runTurn(scenario: Scenario) {
         "full_access",
         "--prompt",
         "FAKE standing prompt",
+        ...(scenario.resume === undefined
+          ? []
+          : ["--resume-session", scenario.resume.threadId]),
       ],
       {
         cwd: directory,
@@ -57,6 +62,7 @@ async function runTurn(scenario: Scenario) {
           FAKE_RELEASE: release,
           FAKE_REJECT_INTERRUPT: scenario.rejectInterrupt ? "1" : "",
           FAKE_FOLLOW_UP_FIRST: scenario.signalAfterFollowUp ? "1" : "",
+          FAKE_RESUME_DELAY_MS: String(scenario.resume?.delayMs ?? 0),
           RAH_RUN_ATTEMPT_ID: "run-1",
         },
         stdio: ["pipe", "pipe", "pipe", "pipe"],
@@ -203,6 +209,30 @@ test("a signal that arrives after the follow-up began still ends the turn and re
   });
 });
 
+const resumeFrame = (frames: Record<string, unknown>[]) =>
+  frames.filter((frame) => frame.protocol === "rah-session-resume/v1");
+
+test("S2-b: the per-turn (cold) path reports its measured thread/resume duration", async () => {
+  const result = await runTurn({
+    resume: { delayMs: 120, threadId: "thread-1" },
+    signal: { runAttemptId: "run-1", turnId: "turn-1" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const frames = resumeFrame(result.frames);
+  assert.equal(frames.length, 1, "one measurement per run");
+  const measured = frames[0]!.sessionResumeMs as number;
+  assert.ok(Number.isInteger(measured) && measured >= 120, String(measured));
+  assert.ok(measured < 5_000);
+});
+
+test("S2-b: a fresh thread (no resume) reports no session resume measurement", async () => {
+  const result = await runTurn({
+    signal: { runAttemptId: "run-1", turnId: "turn-1" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.deepEqual(resumeFrame(result.frames), []);
+});
+
 /**
  * FAKE Codex app-server over stdio. One turn: a `commandExecution` item (the
  * final post) that runs until the test's release file exists, then — like the
@@ -247,6 +277,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   record({ method: frame.method, params: frame.params });
   if (frame.method === "initialize") send({ jsonrpc: "2.0", id: frame.id, result: { userAgent: "fake-codex/1" } });
   else if (frame.method === "thread/start") send({ jsonrpc: "2.0", id: frame.id, result: { thread: { id: "thread-1" } } });
+  else if (frame.method === "thread/resume") setTimeout(() => send({ jsonrpc: "2.0", id: frame.id, result: { thread: { id: frame.params.threadId } } }), Number(process.env.FAKE_RESUME_DELAY_MS));
   else if (frame.method === "turn/start") {
     send({ jsonrpc: "2.0", id: frame.id, result: { turn: { id: "turn-1", status: "inProgress" } } });
     void runTurn();

@@ -12,8 +12,14 @@
 //     {op:"shutdown"}                          (stdin EOF means the same)
 //   driver -> Host (fd3, one envelope per line)
 //     {loom:"warm-runtime/v1", seq, runtimeId, hostGeneration, type, ...}
-//     type ready | turn.accepted | turn.failed | frame | turn.drained |
-//          unattributed | fatal
+//     type ready | turn.accepted | turn.failed | frame | progress |
+//          turn.drained | unattributed | fatal
+//
+// S2-b `progress` (turn identity, `toolsInFlight`, `awaitingApproval`) is
+// native turn progress that yields no frame: item deltas (throttled) and
+// every tool item start/completion. The Host's stall clock counts only
+// frames and progress, never transport liveness. Approvals are decided
+// unattended here, so `awaitingApproval` is always false for Codex.
 //
 // Every business frame of a turn (trajectory, usage, delivery acceptance,
 // busy-input receipts) travels as `frame` with that turn's
@@ -61,6 +67,7 @@ const SOCKET_WAIT_MS = 30_000;
 const PROVIDER_TERM_TIMEOUT_MS = 1_000;
 const RECENT_TURN_LIMIT = 32;
 const FINAL_INTERRUPT_TIMEOUT_MS = 5_000;
+const PROGRESS_THROTTLE_MS = 5_000;
 const TOOL_ITEM_TYPES = new Set([
   "commandExecution",
   "fileChange",
@@ -526,8 +533,17 @@ function handleNotification(frame) {
     if (frame.method === "item/started") turn.tools.add(itemId);
     if (frame.method === "item/completed") turn.tools.delete(itemId);
   }
+  const framesBefore = turn.lastFrameSeq;
   turn.writer.emit(normalizeCodexTrajectoryNotification(frame));
   turn.usageWriter.emit(usageTracker?.observe(frame));
+  if (item && typeof item === "object" && TOOL_ITEM_TYPES.has(item.type))
+    reportProgress(turn, true);
+  else if (
+    turn.lastFrameSeq === framesBefore &&
+    typeof frame.method === "string" &&
+    frame.method.startsWith("item/")
+  )
+    reportProgress(turn, false);
   if (
     frame.method === "item/completed" &&
     item?.type === "contextCompaction" &&
@@ -604,6 +620,18 @@ function unattributed(frame, turnId, reason) {
     method: typeof frame.method === "string" ? frame.method.slice(0, 200) : "",
     reason,
     ...(turnId === undefined ? {} : { nativeTurnId: turnId }),
+  });
+}
+
+function reportProgress(turn, force) {
+  const now = Date.now();
+  if (!force && now - (turn.progressAt ?? 0) < PROGRESS_THROTTLE_MS) return;
+  turn.progressAt = now;
+  emit("progress", {
+    awaitingApproval: false,
+    nativeTurnId: turn.nativeTurnId,
+    runAttemptId: turn.runAttemptId,
+    toolsInFlight: turn.tools.size,
   });
 }
 

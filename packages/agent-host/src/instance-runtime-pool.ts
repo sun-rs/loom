@@ -14,6 +14,12 @@ import type { RuntimeProcessHygiene } from "./runtime-process-hygiene.ts";
 import type { RunExit } from "./runtime.ts";
 import { writeWorkerCliWrapper } from "./worker-tool-transport.ts";
 import {
+  resolveWarmRuntimePolicy,
+  warmIdleTtl,
+  type WarmRuntimePolicy,
+  type WarmRuntimePolicyOverrides,
+} from "./warm-runtime-policy.ts";
+import {
   createWorkerTurnRoot,
   removeWorkerTurnRoot,
   type WorkerTurnHandle,
@@ -31,10 +37,11 @@ import {
  * the next turn, recorded as a usage gap of their own turn.
  *
  * Lifecycle: cold start on the first turn (resuming the recorded native
- * session), idle after the lane is released, evicted after an idle TTL
- * (never mid-turn), restarted at an idle boundary when its launch key
- * changes, and a crash while idle leaves the next turn to cold start and
- * resume. A Host start first proves every live runtime row of an older
+ * session), idle after the lane is released, evicted after an idle TTL or
+ * by the global warm cap (never mid-turn, never pinned), restarted at an
+ * idle boundary when its launch key, CLI binary, age or RSS calls for it
+ * (S2-b, `warm-runtime-policy.ts`), and a crash while idle leaves the next
+ * turn to cold start and resume. Turn admission is capped globally. A Host start first proves every live runtime row of an older
  * generation gone (identity-verified kill) before this Host may run that
  * participant again. When a runtime ends, all tagged descendants are swept.
  */
@@ -94,10 +101,27 @@ export type WarmRuntimeEndReason =
   | "crash"
   | "stall"
   | "idle_ttl"
+  | "lru"
+  | "recycle_rss"
+  | "recycle_age"
+  | "cli_changed"
   | "config_restart"
   | "host_shutdown"
   | "resource_failure"
   | "start_failed";
+
+/** Ends of an idle runtime chosen by policy (proven exit, then recorded). */
+type WarmStopReason = Extract<
+  WarmRuntimeEndReason,
+  | "idle_ttl"
+  | "lru"
+  | "recycle_rss"
+  | "recycle_age"
+  | "cli_changed"
+  | "config_restart"
+  | "host_shutdown"
+  | "resource_failure"
+>;
 
 export type WarmTurnAdmission =
   | { kind: "accepted"; nativeTurnId: string }
@@ -124,6 +148,17 @@ export type WarmTurn = {
   outcome: Deferred<WarmTurnOutcome>;
   runAttemptId: string;
   runtimeRunId: string;
+  /**
+   * S2-b business-progress clock (policy time): native turn progress only.
+   * Transport liveness (`WarmRuntime.lastTransportMs`) never moves it.
+   */
+  lastProgressMs: number;
+  /** Tools the driver reports in flight (their own stall window). */
+  toolsInFlight: number;
+  /** The driver reports the turn waits for an approval (never a stall). */
+  awaitingApproval: boolean;
+  /** The Host signalled that this turn's `final` reply committed. */
+  finalReplyCommitted?: boolean;
 };
 
 export type InstanceRuntimePoolOptions = {
@@ -134,7 +169,17 @@ export type InstanceRuntimePoolOptions = {
   /** Short socket directory root (Unix socket paths are length-limited). */
   socketRoot?: string;
   hygiene?: RuntimeProcessHygiene;
+  /** Shorthand for `policy.idleTtlMs` (S2-a option). */
   idleTtlMs?: number;
+  /** S2-b policy overrides (`warm-runtime-policy.ts` defaults). */
+  policy?: WarmRuntimePolicyOverrides;
+  /** Per-instance idle TTL override; `undefined` keeps the policy TTL. */
+  idleTtlOverride?: (input: {
+    participantId: string;
+    lastColdResumeMs: number | undefined;
+  }) => number | undefined;
+  /** Process-group RSS in KiB; defaults to the process table. */
+  measureGroupRssKb?: (pgid: number) => Promise<number>;
   now?: () => number;
   onDiagnostic?: (message: string) => void;
   processTable?: ProcessTable;
@@ -163,6 +208,17 @@ export class WarmRuntime {
   /** Frames were lost on the fd3 channel: never reuse this process. */
   frameIntegrityLost = false;
   lastActivityMs: number;
+  /** Birth in policy time (boundary recycling by age). */
+  readonly startedMs: number;
+  /** Last envelope of any kind (transport liveness; diagnostics only). */
+  lastTransportMs: number;
+  /** CLI binary fingerprint at launch (boundary recycling on change). */
+  cliFingerprint: string | undefined;
+  /** Measured native session resume at this process's start. */
+  sessionResumeMs: number | null = null;
+  /** Why no further turn may be admitted (restart at the idle boundary). */
+  admissionClosed: string | undefined;
+  readonly #pins = new Map<string, number>();
   /** Digest of the standing prompt this process was launched with. */
   standingPromptDigest: string | undefined;
   /** The runtime-level lease environment (memory paths, system snapshot). */
@@ -198,6 +254,29 @@ export class WarmRuntime {
     this.participantId = input.participantId;
     this.#pool = input.pool;
     this.lastActivityMs = input.nowMs;
+    this.startedMs = input.nowMs;
+    this.lastTransportMs = input.nowMs;
+  }
+
+  /**
+   * Keep this runtime from idle eviction, the warm cap and policy recycling
+   * (an attached TUI). The release restarts the idle TTL at detach.
+   */
+  pin(reason: string): () => void {
+    this.#pins.set(reason, (this.#pins.get(reason) ?? 0) + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const count = (this.#pins.get(reason) ?? 1) - 1;
+      if (count <= 0) this.#pins.delete(reason);
+      else this.#pins.set(reason, count);
+      this.lastActivityMs = this.#pool.now();
+    };
+  }
+
+  get pinned(): boolean {
+    return this.#pins.size > 0;
   }
 
   get pid(): number | undefined {
@@ -322,6 +401,9 @@ export class WarmRuntime {
       outcome: deferred(),
       runAttemptId,
       runtimeRunId,
+      awaitingApproval: false,
+      lastProgressMs: this.#pool.now(),
+      toolsInFlight: 0,
     };
     this.current = turn;
     return turn;
@@ -433,6 +515,7 @@ export class WarmRuntime {
         `envelope sequence gap ${String(this.#lastSeq + 1)}..${String(envelope.seq - 1)}`,
       );
     this.#lastSeq = envelope.seq;
+    this.lastTransportMs = this.#pool.now();
     const runAttemptId =
       typeof envelope.runAttemptId === "string"
         ? envelope.runAttemptId
@@ -462,6 +545,7 @@ export class WarmRuntime {
         if (turn === undefined || typeof envelope.nativeTurnId !== "string")
           return this.#unattributable(envelope);
         turn.nativeTurnId = envelope.nativeTurnId;
+        turn.lastProgressMs = this.#pool.now();
         settle(turn.admission, {
           kind: "accepted",
           nativeTurnId: envelope.nativeTurnId,
@@ -488,6 +572,7 @@ export class WarmRuntime {
             return;
           }
           turn.lastFrameSeq = envelope.seq;
+          turn.lastProgressMs = this.#pool.now();
           turn.collector?.append(`${JSON.stringify(envelope.frame)}\n`);
           return;
         }
@@ -524,6 +609,28 @@ export class WarmRuntime {
             ? { endedAfterFinalReply: true }
             : {}),
         });
+        return;
+      case "progress":
+        // S2-b: native progress that produced no frame (deltas, tool state).
+        // Never evidence of a turn it does not name; never a usage gap.
+        if (
+          turn === undefined ||
+          turn.framesClosed ||
+          envelope.nativeTurnId !== turn.nativeTurnId
+        )
+          return;
+        turn.lastProgressMs = this.#pool.now();
+        if (
+          typeof envelope.toolsInFlight === "number" &&
+          Number.isInteger(envelope.toolsInFlight) &&
+          envelope.toolsInFlight >= 0
+        )
+          turn.toolsInFlight = envelope.toolsInFlight;
+        if (typeof envelope.awaitingApproval === "boolean")
+          turn.awaitingApproval = envelope.awaitingApproval;
+        return;
+      case "keepalive":
+        // Transport liveness only: never business progress.
         return;
       case "unattributed":
         this.#pool.diagnostic(
@@ -595,7 +702,14 @@ export class InstanceRuntimePool {
   readonly #stateDirectory: string;
   readonly #socketRoot: string;
   readonly #hygiene: RuntimeProcessHygiene | undefined;
-  readonly #idleTtlMs: number;
+  readonly policy: WarmRuntimePolicy;
+  readonly #idleTtlOverride: InstanceRuntimePoolOptions["idleTtlOverride"];
+  readonly #measureGroupRssKb: ((pgid: number) => Promise<number>) | undefined;
+  /** Last measured cold resume per instance (TTL extension evidence). */
+  readonly #lastColdResumeMs = new Map<string, number>();
+  /** Admitted busy turns (hard cap) and the turns waiting for a slot. */
+  readonly #busySlots = new Set<string>();
+  readonly #admissionWaiters: (() => void)[] = [];
   readonly #now: () => number;
   readonly #onDiagnostic: (message: string) => void;
   readonly #readyTimeoutMs: number;
@@ -616,7 +730,12 @@ export class InstanceRuntimePool {
       options.socketRoot ??
       `/tmp/loom-warm-${String(process.getuid?.() ?? "user")}`;
     this.#hygiene = options.hygiene;
-    this.#idleTtlMs = options.idleTtlMs ?? DEFAULT_WARM_IDLE_TTL_MS;
+    this.policy = resolveWarmRuntimePolicy({
+      idleTtlMs: options.idleTtlMs ?? DEFAULT_WARM_IDLE_TTL_MS,
+      ...options.policy,
+    });
+    this.#idleTtlOverride = options.idleTtlOverride;
+    this.#measureGroupRssKb = options.measureGroupRssKb;
     this.#now = options.now ?? Date.now;
     this.#onDiagnostic =
       options.onDiagnostic ??
@@ -634,7 +753,37 @@ export class InstanceRuntimePool {
   }
 
   get idleTtlMs(): number {
-    return this.#idleTtlMs;
+    return this.policy.idleTtlMs;
+  }
+
+  /** Policy time (injectable clock). */
+  now(): number {
+    return this.#now();
+  }
+
+  /** The idle TTL of this runtime's instance (S2-b, see the policy note). */
+  idleTtlFor(runtime: WarmRuntime): number {
+    const lastColdResumeMs = this.#lastColdResumeMs.get(runtime.participantId);
+    let override: number | undefined;
+    try {
+      override = this.#idleTtlOverride?.({
+        lastColdResumeMs,
+        participantId: runtime.participantId,
+      });
+    } catch (error) {
+      this.diagnostic(`idle TTL override failed: ${errorMessage(error)}`);
+    }
+    return warmIdleTtl(this.policy, lastColdResumeMs, override);
+  }
+
+  /** Total RSS (KiB) of the processes in one process group. */
+  async measureGroupRssKb(pgid: number): Promise<number> {
+    if (this.#measureGroupRssKb !== undefined)
+      return await this.#measureGroupRssKb(pgid);
+    const processes = await this.processTable.list();
+    return processes
+      .filter((entry) => entry.pgid === pgid)
+      .reduce((total, entry) => total + entry.rssKb, 0);
   }
 
   get processTable(): ProcessTable {
@@ -663,66 +812,90 @@ export class InstanceRuntimePool {
     if (this.#timer !== undefined) return;
     this.#timer = setInterval(
       () => void this.sweepIdle().catch(() => undefined),
-      Math.max(1_000, Math.min(this.#idleTtlMs, 60_000)),
+      Math.max(1_000, Math.min(this.policy.idleTtlMs, 60_000)),
     );
     this.#timer.unref();
   }
 
   /**
    * One warm runtime for this participant and launch key: reuse the idle
-   * one, restart it at this idle boundary when the key changed, or cold
-   * start (resuming the recorded native session through `launch`).
+   * one, restart it at this idle boundary when its launch key, CLI binary,
+   * age or RSS calls for it, or cold start (resuming the recorded native
+   * session through `launch`). The turn first takes one of the global busy
+   * slots (S2-b hard cap), waiting at most `admissionWaitMs`.
    */
   async acquire(input: {
     driver: string;
     key: string;
     launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
     participantId: string;
+    /** Busy-slot identity; released by `releaseTurn` of this RunAttempt. */
+    runAttemptId?: string;
+    /** Current CLI binary fingerprint (boundary recycling on change). */
+    cliFingerprint?: () => Promise<string | undefined>;
   }): Promise<{ mode: "warm" | "cold"; runtime: WarmRuntime }> {
-    return await this.#serialize(input.participantId, async () => {
-      let runtime = this.#runtimes.get(input.participantId);
-      if (runtime !== undefined && runtime.state === "dead") {
-        this.#runtimes.delete(input.participantId);
-        runtime = undefined;
-      }
-      if (runtime !== undefined && runtime.state === "suspect") {
-        // Review P1-1: retry the proof; without it nothing new may start.
-        const proof = await this.#kill(runtime);
-        if (!proof.proven)
-          throw new Error(
-            `warm runtime ${runtime.instanceRuntimeId} is suspect: its termination is not proven (${proof.reason}); new execution stays blocked`,
-          );
-        await this.#recordEnd(
-          runtime,
-          proof.exit,
-          runtime.suspectReason ?? "crash",
-        );
-        runtime = undefined;
-      }
-      if (runtime !== undefined) {
-        await this.#confirmRelease(runtime);
-        if (runtime.state !== "idle")
-          throw new Error(
-            `warm runtime ${runtime.instanceRuntimeId} is ${runtime.state}; the lane is still held`,
-          );
-        if (runtime.key === input.key && !runtime.frameIntegrityLost) {
-          runtime.state = "busy";
-          return { mode: "warm" as const, runtime };
+    const slot = input.runAttemptId ?? input.participantId;
+    await this.#admit(slot);
+    let acquired: { mode: "warm" | "cold"; runtime: WarmRuntime };
+    try {
+      acquired = await this.#serialize(input.participantId, async () => {
+        let runtime = this.#runtimes.get(input.participantId);
+        if (runtime !== undefined && runtime.state === "dead") {
+          this.#runtimes.delete(input.participantId);
+          runtime = undefined;
         }
-        await this.#stop(
-          runtime,
-          runtime.frameIntegrityLost ? "resource_failure" : "config_restart",
-        );
-      }
-      return {
-        mode: "cold" as const,
-        runtime: await this.#coldStart(input),
-      };
-    });
+        if (runtime !== undefined && runtime.state === "suspect") {
+          // Review P1-1: retry the proof; without it nothing new may start.
+          const proof = await this.#kill(runtime);
+          if (!proof.proven)
+            throw new Error(
+              `warm runtime ${runtime.instanceRuntimeId} is suspect: its termination is not proven (${proof.reason}); new execution stays blocked`,
+            );
+          await this.#recordEnd(
+            runtime,
+            proof.exit,
+            runtime.suspectReason ?? "crash",
+          );
+          runtime = undefined;
+        }
+        if (runtime !== undefined) {
+          await this.#confirmRelease(runtime);
+          if (runtime.state !== "idle")
+            throw new Error(
+              `warm runtime ${runtime.instanceRuntimeId} is ${runtime.state}; the lane is still held`,
+            );
+          const restart =
+            runtime.key !== input.key
+              ? "config_restart"
+              : runtime.frameIntegrityLost
+                ? "resource_failure"
+                : runtime.pinned
+                  ? undefined
+                  : await this.#recycleReason(runtime, input.cliFingerprint);
+          if (restart === undefined) {
+            runtime.state = "busy";
+            return { mode: "warm" as const, runtime };
+          }
+          await this.#stop(runtime, restart);
+        }
+        return {
+          mode: "cold" as const,
+          runtime: await this.#coldStart(input),
+        };
+      });
+    } catch (error) {
+      this.#releaseSlot(slot);
+      throw error;
+    }
+    // Outside the participant lock: evicting another instance takes its lock.
+    await this.enforceWarmCap();
+    return acquired;
   }
 
   /** After the Activation left `leased`: the Kernel releases the lane. */
   async releaseTurn(participantId: string, runAttemptId: string) {
+    this.#releaseSlot(runAttemptId);
+    this.#releaseSlot(participantId);
     await this.#serialize(participantId, async () => {
       const runtime = this.#runtimes.get(participantId);
       if (runtime === undefined) return;
@@ -738,6 +911,7 @@ export class InstanceRuntimePool {
       if (runtime.state === "dead") return;
       await this.#confirmRelease(runtime);
     });
+    await this.enforceWarmCap();
   }
 
   /** Called by the adapter when a turn's process died. */
@@ -751,20 +925,117 @@ export class InstanceRuntimePool {
     });
   }
 
-  /** Evict idle runtimes whose last activity is older than the idle TTL. */
+  /** Evict idle runtimes whose last activity is older than their TTL. */
   async sweepIdle(): Promise<void> {
     for (const runtime of [...this.#runtimes.values()]) {
       await this.#serialize(runtime.participantId, async () => {
         if (
-          runtime.state === "idle" &&
-          runtime.unreleasedRunAttemptId === undefined &&
-          this.#now() - runtime.lastActivityMs >= this.#idleTtlMs
+          this.#evictable(runtime) &&
+          this.#now() - runtime.lastActivityMs >= this.idleTtlFor(runtime)
         )
           await this.#stop(runtime, "idle_ttl").catch((error: unknown) =>
             this.diagnostic(errorMessage(error)),
           );
       });
     }
+    await this.enforceWarmCap();
+  }
+
+  /**
+   * S2-b soft cap: above `maxWarm` live runtimes, stop the least recently
+   * used evictable (idle, released, unpinned) ones. Busy runtimes are never
+   * evicted, so the cap can be exceeded while they are busy.
+   */
+  async enforceWarmCap(): Promise<void> {
+    const live = () =>
+      [...this.#runtimes.values()].filter(
+        (runtime) => runtime.state !== "dead",
+      );
+    const victims = live()
+      .filter((runtime) => this.#evictable(runtime))
+      .sort((left, right) => left.lastActivityMs - right.lastActivityMs);
+    for (const victim of victims) {
+      if (live().length <= this.policy.maxWarm) return;
+      await this.#serialize(victim.participantId, async () => {
+        if (this.#evictable(victim))
+          await this.#stop(victim, "lru").catch((error: unknown) =>
+            this.diagnostic(errorMessage(error)),
+          );
+      });
+    }
+  }
+
+  #evictable(runtime: WarmRuntime): boolean {
+    return (
+      runtime.state === "idle" &&
+      runtime.current === undefined &&
+      runtime.unreleasedRunAttemptId === undefined &&
+      !runtime.pinned
+    );
+  }
+
+  /**
+   * S2-b boundary recycling of an idle runtime before its next turn. A
+   * measurement that cannot be read is not a change (diagnostic only).
+   */
+  async #recycleReason(
+    runtime: WarmRuntime,
+    cliFingerprint: (() => Promise<string | undefined>) | undefined,
+  ): Promise<WarmStopReason | undefined> {
+    if (cliFingerprint !== undefined && runtime.cliFingerprint !== undefined) {
+      try {
+        const current = await cliFingerprint();
+        if (current !== undefined && current !== runtime.cliFingerprint)
+          return "cli_changed";
+      } catch (error) {
+        this.diagnostic(
+          `[${runtime.instanceRuntimeId}] CLI fingerprint unavailable: ${errorMessage(error)}`,
+        );
+      }
+    }
+    if (this.#now() - runtime.startedMs >= this.policy.maxAgeMs)
+      return "recycle_age";
+    if (runtime.admissionClosed !== undefined) return "recycle_rss";
+    if (runtime.pid === undefined) return undefined;
+    try {
+      const rssKb = await this.measureGroupRssKb(runtime.pid);
+      if (rssKb > this.policy.recycleRssKb) return "recycle_rss";
+    } catch (error) {
+      this.diagnostic(
+        `[${runtime.instanceRuntimeId}] RSS measurement unavailable: ${errorMessage(error)}`,
+      );
+    }
+    return undefined;
+  }
+
+  /** Take a busy slot (hard cap), waiting at most `admissionWaitMs`. */
+  async #admit(slot: string): Promise<void> {
+    if (this.#busySlots.has(slot)) return;
+    const deadline = Date.now() + this.policy.admissionWaitMs;
+    while (this.#busySlots.size >= this.policy.maxBusyTurns) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0)
+        throw new Error(
+          `RAH_WARM_ADMISSION_FULL: ${String(this.#busySlots.size)} warm turns are busy (cap ${String(this.policy.maxBusyTurns)}); the Activation is retried later instead of holding its lease`,
+        );
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(done, remaining);
+        const waiters = this.#admissionWaiters;
+        function done() {
+          clearTimeout(timer);
+          const index = waiters.indexOf(done);
+          if (index >= 0) waiters.splice(index, 1);
+          resolve();
+        }
+        waiters.push(done);
+      });
+    }
+    this.#busySlots.add(slot);
+  }
+
+  #releaseSlot(slot: string): void {
+    if (!this.#busySlots.delete(slot)) return;
+    this.#admissionWaiters[0]?.();
   }
 
   /** Host shutdown: stop every warm runtime (never takes over later). */
@@ -882,24 +1153,31 @@ export class InstanceRuntimePool {
     key: string;
     launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
     participantId: string;
+    cliFingerprint?: () => Promise<string | undefined>;
   }): Promise<WarmRuntime> {
     const control = this.#control.instanceRuntimes!;
     const instanceRuntimeId = `instrt_${randomUUID()}`;
+    let cliFingerprint: string | undefined;
     try {
-      await control.register({
-        driver: input.driver,
-        instanceRuntimeId,
-        participantId: input.participantId,
-      });
+      cliFingerprint = await input.cliFingerprint?.();
+    } catch (error) {
+      this.diagnostic(
+        `CLI fingerprint unavailable at cold start: ${errorMessage(error)}`,
+      );
+    }
+    const registration = {
+      ...(cliFingerprint === undefined ? {} : { cliFingerprint }),
+      driver: input.driver,
+      instanceRuntimeId,
+      participantId: input.participantId,
+    };
+    try {
+      await control.register(registration);
     } catch (error) {
       // An older runtime row (another generation, or a crash) blocks: prove
       // it gone first, then try once more.
       await this.janitor(input.participantId);
-      await control.register({
-        driver: input.driver,
-        instanceRuntimeId,
-        participantId: input.participantId,
-      });
+      await control.register(registration);
       this.diagnostic(
         `cold start for ${input.participantId} waited for an older runtime: ${errorMessage(error)}`,
       );
@@ -932,6 +1210,7 @@ export class InstanceRuntimePool {
         participantId: input.participantId,
         pool: this,
       });
+      runtime.cliFingerprint = cliFingerprint;
       const launch = await input.launch(layout);
       runtime.spawn(launch);
       const spawned = runtime;
@@ -953,6 +1232,9 @@ export class InstanceRuntimePool {
       const ready = await runtime.waitReady(this.#readyTimeoutMs);
       if (ready.kind === "failed") throw new Error(ready.error);
       runtime.nativeSessionId = ready.threadId;
+      runtime.sessionResumeMs = ready.sessionResumeMs;
+      if (ready.sessionResumeMs !== null)
+        this.#lastColdResumeMs.set(input.participantId, ready.sessionResumeMs);
       await control.markReady({
         instanceRuntimeId,
         nativeSessionId: ready.threadId,
@@ -1082,7 +1364,10 @@ export class InstanceRuntimePool {
     await this.#sweep(
       runtime.participantId,
       runtime.instanceRuntimeId,
-      reason === "crash" || reason === "stall" || reason === "start_failed"
+      reason === "crash" ||
+        reason === "stall" ||
+        reason === "resource_failure" ||
+        reason === "start_failed"
         ? "runtime_crash"
         : "run_end",
     );
@@ -1109,11 +1394,7 @@ export class InstanceRuntimePool {
     }
   }
 
-  async #stop(
-    runtime: WarmRuntime,
-    reason:
-      "idle_ttl" | "config_restart" | "host_shutdown" | "resource_failure",
-  ): Promise<void> {
+  async #stop(runtime: WarmRuntime, reason: WarmStopReason): Promise<void> {
     if (runtime.state === "dead") return;
     runtime.state = "stopping";
     try {
@@ -1175,7 +1456,7 @@ export class InstanceRuntimePool {
    */
   async abortRuntime(
     runtime: WarmRuntime,
-    reason: "crash" | "stall",
+    reason: "crash" | "stall" | "resource_failure",
   ): Promise<{ code: number | null; signal: string | null }> {
     const proof = await this.killRuntime(runtime, reason);
     const turn = runtime.current;

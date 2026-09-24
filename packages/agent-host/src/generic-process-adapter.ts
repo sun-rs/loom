@@ -451,6 +451,31 @@ export class RuntimeTrajectoryCollector {
     }
   }
 
+  async #recordSessionResume(frame: Record<string, unknown>): Promise<void> {
+    const measured = frame.sessionResumeMs;
+    if (
+      typeof measured !== "number" ||
+      !Number.isInteger(measured) ||
+      measured < 0
+    ) {
+      this.#diagnostics.append(
+        "[rah-os] ignored an invalid session resume measurement\n",
+      );
+      return;
+    }
+    try {
+      await this.#lifecycle.recordSessionResume?.({
+        runAttemptId: this.#runAttemptId,
+        runtimeRunId: this.#runtimeRunId,
+        sessionResumeMs: measured,
+      });
+    } catch (error) {
+      this.#diagnostics.append(
+        `[rah-os] session resume measurement was not recorded: ${errorMessage(error)}\n`,
+      );
+    }
+  }
+
   #enqueue(line: string): void {
     if (Buffer.byteLength(line) > MAX_ACTIVITY_LINE_BYTES) {
       this.#diagnostics.append(
@@ -504,6 +529,10 @@ export class RuntimeTrajectoryCollector {
         }
         if (isRecord(frame) && frame.protocol === "rah-final-interrupt/v1") {
           await this.#recordFinalReplyInterrupt(frame);
+          return;
+        }
+        if (isRecord(frame) && frame.protocol === "rah-session-resume/v1") {
+          await this.#recordSessionResume(frame);
           return;
         }
         if (isRecord(frame) && frame.protocol === "rah-provider-usage/v1") {
