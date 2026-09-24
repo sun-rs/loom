@@ -69,6 +69,23 @@ const ProcessHygieneConfigSchema = z
   })
   .strict();
 
+/**
+ * S2-a warm instance runtimes. Off by default: the fake-driver gate cannot
+ * prove the real Codex multi-turn protocol, and the owner-authorized real
+ * Codex smoke gate (S2 spec §8) precedes default enablement.
+ */
+const WarmRuntimesConfigSchema = z
+  .object({
+    codex: z
+      .object({
+        enabled: z.boolean().optional(),
+        idleTtlMs: z.number().int().positive().optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
 const CommonDaemonConfigFields = {
   startupMemoryTransport: z.enum(["tool", "system"]).optional(),
   fileReferenceRoots: z.array(AbsolutePathSchema).min(1).max(32).optional(),
@@ -87,6 +104,7 @@ const CommonDaemonConfigFields = {
   leaseRenewIntervalMs: z.number().int().positive().optional(),
   lockDirectory: AbsolutePathSchema.optional(),
   processHygiene: ProcessHygieneConfigSchema.optional(),
+  warmRuntimes: WarmRuntimesConfigSchema.optional(),
 
   outboxLeaseMs: z.number().int().positive(),
   outboxPollIntervalMs: z.number().int().positive(),

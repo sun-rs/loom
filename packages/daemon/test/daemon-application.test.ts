@@ -2057,6 +2057,24 @@ test("S2-0 daemon config accepts leftover-process hygiene caps per instance", ()
     assert.throws(() => DaemonConfigSchema.parse({ ...base, processHygiene }));
 });
 
+test("S2-a warm Codex runtimes are opt-in with a configurable idle TTL", () => {
+  const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
+  assert.equal(DaemonConfigSchema.parse(base).warmRuntimes, undefined);
+  const parsed = DaemonConfigSchema.parse({
+    ...base,
+    warmRuntimes: { codex: { enabled: true, idleTtlMs: 600_000 } },
+  });
+  assert.deepEqual(parsed.warmRuntimes, {
+    codex: { enabled: true, idleTtlMs: 600_000 },
+  });
+  for (const warmRuntimes of [
+    { codex: { idleTtlMs: 0 } },
+    { claude: { enabled: true } },
+    { codex: { enabled: true, lru: 3 } },
+  ])
+    assert.throws(() => DaemonConfigSchema.parse({ ...base, warmRuntimes }));
+});
+
 function validConfig(stateDirectory: string, secretPath: string) {
   return {
     client: {

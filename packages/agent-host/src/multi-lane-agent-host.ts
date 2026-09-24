@@ -3,7 +3,12 @@ import {
   type AuthenticatedHostContext,
 } from "@rah-os/kernel";
 
-import { AgentHost, type AgentHostOptions } from "./agent-host.ts";
+import {
+  AgentHost,
+  startInstanceRuntimes,
+  stopInstanceRuntimes,
+  type AgentHostOptions,
+} from "./agent-host.ts";
 import { createKernelAgentHostControlPort } from "./agent-host-control.ts";
 import {
   AgentStartGate,
@@ -35,6 +40,7 @@ export class MultiLaneAgentHost {
   readonly #workers: AgentHost[];
   readonly #startGate: AgentStartGate;
   readonly #processHygiene: AgentHostOptions["processHygiene"];
+  readonly #instanceRuntimePool: AgentHostOptions["instanceRuntimePool"];
   #running = false;
 
   constructor(options: MultiLaneAgentHostOptions) {
@@ -46,6 +52,7 @@ export class MultiLaneAgentHost {
     this.#kernel = options.kernel;
     this.#startGate = new AgentStartGate(options.runtimeStartScheduler ?? {});
     this.#processHygiene = options.processHygiene;
+    this.#instanceRuntimePool = options.instanceRuntimePool;
     this.#workers = Array.from(
       { length: options.capacity },
       () =>
@@ -90,6 +97,8 @@ export class MultiLaneAgentHost {
           janitorStop.signal,
         );
       }
+      if (this.#instanceRuntimePool !== undefined)
+        await startInstanceRuntimes(this.#instanceRuntimePool);
       const outcomes = await Promise.allSettled(
         this.#workers.map(async (worker) => {
           try {
@@ -106,6 +115,7 @@ export class MultiLaneAgentHost {
     } finally {
       janitorStop.abort();
       await janitorLoop;
+      await stopInstanceRuntimes(this.#instanceRuntimePool);
       input.signal.removeEventListener("abort", beginDrain);
       this.#startGate.cancelAll("MultiLaneAgentHost stopped");
       try {

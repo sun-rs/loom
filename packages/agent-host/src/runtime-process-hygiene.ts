@@ -126,6 +126,39 @@ export class RuntimeProcessHygiene {
   }
 
   /**
+   * S2-a: after a warm instance runtime's process ended (eviction, crash,
+   * janitor), sweep every process still carrying its tag and record it.
+   */
+  async afterRuntime(
+    control: CleanupControl,
+    input: {
+      participantId: string;
+      runAttemptId?: string;
+      runtimeId: string;
+      trigger: RuntimeProcessCleanupTrigger;
+    },
+  ) {
+    await this.#sweepAndRecord(control, {
+      participantId: input.participantId,
+      ...(input.runAttemptId === undefined
+        ? {}
+        : { runAttemptId: input.runAttemptId }),
+      runtimeRunIds: [input.runtimeId],
+      trigger: input.trigger,
+    });
+  }
+
+  /** Runtime ids carried by live processes of this user (janitor input). */
+  async taggedRuntimeIds(): Promise<Set<string>> {
+    return await this.#sweeper.taggedRuntimeIds();
+  }
+
+  /** Live footprint of one warm runtime's tree; never signals. */
+  async measureRuntime(runtimeId: string): Promise<LeftoverFootprint> {
+    return await this.#sweeper.measure(new Set([runtimeId]));
+  }
+
+  /**
    * Admission for new work. When blocked, first re-sweep the participant's
    * dead runtimes; a clean result unblocks immediately.
    */

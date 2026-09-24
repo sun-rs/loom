@@ -25,6 +25,8 @@ export function runAttemptProjectionFromRow(
   const error = nullableText(row, "error");
   const finishedAt = nullableText(row, "finished_at");
   const contextManifest = contextManifestForRunAttempt(database, runAttemptId);
+  const instanceRuntimeId = nullableText(row, "instance_runtime_id");
+  const nativeTurnId = nullableText(row, "native_turn_id");
   const state = text(row, "state");
   if (
     state !== "starting" &&
@@ -46,6 +48,8 @@ export function runAttemptProjectionFromRow(
     ...(exitSignal === null ? {} : { exitSignal }),
     ...(finishedAt === null ? {} : { finishedAt }),
     hostId: text(row, "host_id"),
+    ...(instanceRuntimeId === null ? {} : { instanceRuntimeId }),
+    ...(nativeTurnId === null ? {} : { nativeTurnId }),
     participantId: text(row, "participant_id"),
     ...(placementId === null
       ? {}

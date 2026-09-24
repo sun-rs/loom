@@ -110,6 +110,11 @@ export type AgentHostOptions = {
   placementRuntimeResolver?: (placement: PlacementDecision) => RuntimeAdapter;
   /** S2-0 leftover-process sweeps, admission and the one-time wake notice. */
   processHygiene?: RuntimeProcessHygiene;
+  /**
+   * S2-a warm instance runtimes: proven-gone janitor before any lane runs,
+   * idle eviction while the Host runs, and a full stop when it stops.
+   */
+  instanceRuntimePool?: InstanceRuntimeLifecycle | undefined;
   runtimeCancelTimeoutMs?: number;
   runtimeRecoveryDrivers?: readonly string[];
   runtimeRecoveryResolver?: (
@@ -129,6 +134,12 @@ export type AgentHostOptions = {
  */
 type GatedRuntimeStart =
   { error: unknown; kind: "lease-lost" } | { kind: "started"; run: RunHandle };
+
+export type InstanceRuntimeLifecycle = {
+  janitor(): Promise<void>;
+  shutdown(): Promise<void>;
+  start(): void;
+};
 
 export class AgentHost {
   readonly #guideEnabled: (runtimeId: string | undefined) => boolean;
@@ -167,6 +178,7 @@ export class AgentHost {
   readonly #wait: (delayMs: number, signal: AbortSignal) => Promise<void>;
   readonly #startGate: AgentStartGate | undefined;
   readonly #processHygiene: RuntimeProcessHygiene | undefined;
+  readonly #instanceRuntimePool: InstanceRuntimeLifecycle | undefined;
   #draining = false;
   #drainDeadlineAtMs: number | undefined;
   #runSignal: AbortSignal | undefined;
@@ -222,6 +234,7 @@ export class AgentHost {
     this.#drainTimeoutMs = drainTimeoutMs;
     this.#startGate = options.startGate;
     this.#processHygiene = options.processHygiene;
+    this.#instanceRuntimePool = options.instanceRuntimePool;
     this.#host = options.host;
     this.#hostId = options.host.hostId;
     this.#consumerId = `${options.host.hostId}:runtime`;
@@ -530,6 +543,47 @@ export class AgentHost {
     runAttempt ??= await this.#control.createRunAttempt({
       activationId: activation.activationId,
     });
+    try {
+      return await this.#runClaimedAttempt(
+        runtime,
+        activation,
+        runAttempt,
+        agentContext,
+      );
+    } finally {
+      await this.#releaseRuntimeTurn(runtime, activation, runAttempt);
+    }
+  }
+
+  /**
+   * S2-a: a warm runtime holds its lane from turn begin until the Activation
+   * left `leased`. Every outcome of a claimed attempt ends here, after the
+   * durable completion, retry, quarantine or cancellation was written.
+   */
+  async #releaseRuntimeTurn(
+    runtime: RuntimeAdapter,
+    activation: Activation,
+    runAttempt: RunAttempt,
+  ): Promise<void> {
+    if (runtime.releaseTurn === undefined) return;
+    try {
+      await runtime.releaseTurn({
+        participantId: activation.participantId,
+        runAttemptId: runAttempt.runAttemptId,
+      });
+    } catch (error) {
+      process.stderr.write(
+        `[rah-os] warm runtime lane release for ${runAttempt.runAttemptId} failed: ${errorMessage(error)}\n`,
+      );
+    }
+  }
+
+  async #runClaimedAttempt(
+    runtime: RuntimeAdapter,
+    activation: Activation,
+    runAttempt: RunAttempt,
+    agentContext: ActivationEnvelope["agent"],
+  ): Promise<HostCycleResult> {
     let runtimeNotice: string | undefined;
     try {
       runtimeNotice = await this.#processHygiene?.claimNotice(this.#control, {
@@ -748,7 +802,7 @@ export class AgentHost {
       this.#processHygiene?.monitorCaps(this.#control, {
         participantId: activation.participantId,
         runAttemptId: runAttempt.runAttemptId,
-        runtimeRunId: run.runId,
+        runtimeRunId: run.processTag ?? run.runId,
         signal: supervisor.signal,
       }) ?? Promise.resolve();
     const monitoredCaps = capMonitor.catch((error: unknown) => {
@@ -971,18 +1025,35 @@ export class AgentHost {
       runState: "failed",
     });
     if (proofFailure !== null) return proofFailure;
+    // S2-a: a quiesced turn carries its native result, never an exit code.
+    const quiesced = exit.quiesced;
     try {
       await this.#control.finishRunAttempt({
         ...(exit.code === null ? {} : { exitCode: exit.code }),
         ...(exit.signal === undefined ? {} : { exitSignal: exit.signal }),
+        ...(quiesced === undefined || quiesced.result === "success"
+          ? {}
+          : { error: exit.failure?.message ?? `turn ${quiesced.result}` }),
         runAttemptId: runAttempt.runAttemptId,
-        state: "exited",
+        state:
+          quiesced === undefined || quiesced.result === "success"
+            ? "exited"
+            : quiesced.result === "cancelled"
+              ? "cancelled"
+              : "failed",
       });
-      if (exit.code !== 0 || exit.failure !== undefined) {
+      if (
+        (quiesced === undefined
+          ? exit.code !== 0
+          : quiesced.result !== "success") ||
+        exit.failure !== undefined
+      ) {
         return this.#retryFailedActivation(
           activation,
           exit.failure?.message ??
-            `runtime exited with code ${String(exit.code)}`,
+            (quiesced === undefined
+              ? `runtime exited with code ${String(exit.code)}`
+              : `runtime turn ended ${quiesced.result}`),
           exit.failure,
         );
       }
@@ -1043,6 +1114,8 @@ export class AgentHost {
         janitorStop.signal,
       );
     }
+    if (this.#manageHostLifecycle && this.#instanceRuntimePool !== undefined)
+      await startInstanceRuntimes(this.#instanceRuntimePool);
     try {
       while (!input.signal.aborted) {
         const recovery = await this.reconcileOrphanOnce();
@@ -1061,6 +1134,8 @@ export class AgentHost {
     } finally {
       janitorStop.abort();
       await janitorLoop;
+      if (this.#manageHostLifecycle)
+        await stopInstanceRuntimes(this.#instanceRuntimePool);
       input.signal.removeEventListener("abort", beginDrain);
       if (this.#manageHostLifecycle) {
         try {
@@ -1218,11 +1293,22 @@ export class AgentHost {
     runState: "exited" | "failed" | "cancelled" | "timed_out";
   }): Promise<HostCycleResult | null> {
     try {
-      await this.#control.recordRuntimeTermination({
-        exit: input.exit,
-        runAttemptId: input.runAttemptId,
-        runtimeRunId: input.run.runId,
-      });
+      const quiesced = input.exit.quiesced;
+      if (quiesced === undefined) {
+        await this.#control.recordRuntimeTermination({
+          exit: input.exit,
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: input.run.runId,
+        });
+      } else {
+        if (this.#control.recordTurnQuiesced === undefined)
+          throw new Error("Host control cannot record turn quiescence");
+        await this.#control.recordTurnQuiesced({
+          ...quiesced,
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: input.run.runId,
+        });
+      }
     } catch (error) {
       const quarantineFailure = `${input.failure}; durable runtime termination proof failed: ${errorMessage(error)}`;
       return await this.#quarantineFailedActivation(
@@ -1231,7 +1317,9 @@ export class AgentHost {
       );
     }
     // Only after the termination proof is durable: the runtime is dead, so
-    // every process still carrying its tag is a leftover.
+    // every process still carrying its tag is a leftover. A warm runtime's
+    // tree outlives its turns; its adapter sweeps when the process ends.
+    if (input.run.leftoverSweep === "adapter") return null;
     await this.#sweepAfterRun({
       participantId: input.participantId,
       runAttemptId: input.runAttemptId,
@@ -1378,6 +1466,32 @@ type TerminationOutcome =
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** Old-generation warm runtimes must be proven gone before any lane runs. */
+export async function startInstanceRuntimes(
+  pool: InstanceRuntimeLifecycle,
+): Promise<void> {
+  try {
+    await pool.janitor();
+  } catch (error) {
+    process.stderr.write(
+      `[rah-os] warm runtime janitor failed: ${errorMessage(error)}\n`,
+    );
+  }
+  pool.start();
+}
+
+export async function stopInstanceRuntimes(
+  pool: InstanceRuntimeLifecycle | undefined,
+): Promise<void> {
+  try {
+    await pool?.shutdown();
+  } catch (error) {
+    process.stderr.write(
+      `[rah-os] warm runtime shutdown failed: ${errorMessage(error)}\n`,
+    );
+  }
 }
 
 async function withDeadline<T>(

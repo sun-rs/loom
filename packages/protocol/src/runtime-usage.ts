@@ -225,6 +225,23 @@ export type ClientRunAttemptUsageGetRequest = z.infer<
   typeof ClientRunAttemptUsageGetRequestSchema
 >;
 
+/**
+ * S2-a measurement hook: how this turn executed. `warm` reused a live
+ * instance runtime; `cold` started one (and `sessionResumeMs` is the native
+ * session resume duration when the start resumed a session). `lateFrameCount`
+ * counts this turn's frames that arrived after it quiesced: they were not
+ * recorded, so usage is at most `partial`. `null` for per-turn (legacy) runs.
+ */
+export const RunAttemptExecutionSchema = z
+  .object({
+    instanceRuntimeId: IdentifierSchema,
+    mode: z.enum(["warm", "cold"]),
+    sessionResumeMs: z.number().int().nonnegative().nullable(),
+    lateFrameCount: z.number().int().nonnegative(),
+  })
+  .strict();
+export type RunAttemptExecution = z.infer<typeof RunAttemptExecutionSchema>;
+
 export const ClientRunAttemptUsageGetResponseSchema = z
   .object({
     runAttemptId: IdentifierSchema,
@@ -257,6 +274,8 @@ export const ClientRunAttemptUsageGetResponseSchema = z
     processCleanups: z
       .array(RuntimeProcessCleanupSchema)
       .max(RUNTIME_PROCESS_CLEANUP_READ_LIMIT),
+    /** S2-a: warm/cold execution evidence; absent before schema 65 readers. */
+    execution: RunAttemptExecutionSchema.nullable().optional(),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

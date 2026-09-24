@@ -12,6 +12,7 @@ const EXECUTION_AUDIT_EVENTS = new Set([
   "run.runtime_prepared",
   "run.started",
   "run.termination_proven",
+  "run.turn_quiesced",
   "run.finished",
   "run.orphaned",
   "activation.leased",

@@ -32,6 +32,9 @@ export function runtimeProcessProjectionFromRow(
   );
   const recoveryLeaseUntil = nullableText(row, "recovery_lease_until");
   const recoveryLastError = nullableText(row, "recovery_last_error");
+  const proofKind = nullableText(row, "proof_kind");
+  const quiesceResult = nullableText(row, "quiesce_result");
+  const closeSeq = nullableInteger(row, "close_seq");
   return {
     runtimeProcessId: text(row, "runtime_process_id"),
     runAttemptId: text(row, "run_attempt_id"),
@@ -56,5 +59,14 @@ export function runtimeProcessProjectionFromRow(
     ...(exitCode === null ? {} : { exitCode }),
     ...(exitSignal === null ? {} : { exitSignal }),
     ...(terminatedAt === null ? {} : { terminatedAt }),
+    ...(proofKind === "process_exit" || proofKind === "turn_quiesced"
+      ? { proofKind }
+      : {}),
+    ...(quiesceResult === "success" ||
+    quiesceResult === "error" ||
+    quiesceResult === "cancelled"
+      ? { quiesceResult }
+      : {}),
+    ...(closeSeq === null ? {} : { closeSeq }),
   };
 }

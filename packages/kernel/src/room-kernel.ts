@@ -275,6 +275,7 @@ import {
   syncRoomEventWindow,
 } from "./room-sync.ts";
 import { finishProvenOrphanedRuns } from "./recovered-run-attempt.ts";
+import * as InstanceRuntime from "./instance-runtime.ts";
 import { listMessageReferenceReadStates as projectMessageReferenceReadStates } from "./message-reference-read-state.ts";
 import * as ar from "./room-agent-service.ts";
 import {
@@ -418,7 +419,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 64;
+export const KERNEL_SCHEMA_VERSION = 65;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -474,6 +475,7 @@ export class RoomKernel {
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
   readonly runAttemptUsage: RunAttemptUsageService;
   readonly runtimeProcessCleanup;
+  readonly instanceRuntimes: InstanceRuntime.InstanceRuntimeService;
   readonly instanceSessions: InstanceSessionService;
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
@@ -776,6 +778,13 @@ export class RoomKernel {
     this.runAttemptUsage = new RunAttemptUsageService(runtimeObservation);
     this.runtimeProcessCleanup = this.runAttemptUsage.cleanups;
     this.instanceSessions = new InstanceSessionService(runtimeObservation);
+    this.instanceRuntimes = new InstanceRuntime.InstanceRuntimeService({
+      ...runtimeObservation,
+      events: this.#roomEvents,
+      persistProcessExit: (row, exit, authority) =>
+        this.#persistRuntimeTermination(row, exit, authority),
+      transaction: (operation) => this.#transaction(operation),
+    });
   }
 
   get taskReviews(): TaskReviewService {
@@ -1098,6 +1107,7 @@ export class RoomKernel {
         );
       // The version stamp commits with the last schema unit: an interrupted
       // upgrade can never advertise a version its objects do not have.
+      InstanceRuntime.migrateInstanceRuntimeColumnsV65(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
       this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
     });
@@ -4184,17 +4194,11 @@ export class RoomKernel {
           input.runAttemptId,
         );
       const placementId = nullableText(row, "placement_id");
-      if (placementId !== null) {
-        const placement = this.#requirePlacementRow(placementId);
-        if (text(placement, "state") !== "released") {
-          this.#setPlacementState(
-            placement,
-            "released",
-            `RunAttempt finished ${input.state}`,
-          );
-          this.#releasePlacementResources(placementId);
-        }
-      }
+      if (placementId !== null)
+        this.#releasePlacementOnce(
+          placementId,
+          `RunAttempt finished ${input.state}`,
+        );
       this.#appendEvent({
         actorId: SYSTEM_PRINCIPAL_ID,
         aggregateId: input.runAttemptId,
@@ -4537,6 +4541,11 @@ export class RoomKernel {
     this.#transaction(() => {
       const { runAttempt } = this.#assertWorkerGrantScope(scope);
       this.#requireRunAttemptHostGeneration(runAttempt, authenticatedHost);
+      InstanceRuntime.assertInstanceRuntimeHostGeneration(
+        this.#database,
+        runAttempt,
+        authenticatedHost,
+      );
     });
     return issueAuthenticatedWorkerExecutionContext(
       authenticatedHost.credentialId,
@@ -5650,6 +5659,13 @@ export class RoomKernel {
     });
   }
 
+  #releasePlacementOnce(placementId: string, reason: string): void {
+    const placement = this.#requirePlacementRow(placementId);
+    if (text(placement, "state") === "released") return;
+    this.#setPlacementState(placement, "released", reason);
+    this.#releasePlacementResources(placementId);
+  }
+
   #setPlacementState(
     row: Row,
     state: "consumed" | "released",
@@ -5985,7 +6001,8 @@ export class RoomKernel {
       text(runAttempt, "host_id") !== scope.hostId ||
       integer(runAttempt, "attempt_number") !==
         integer(activation, "attempt_count") ||
-      (runState !== "starting" && runState !== "running")
+      (runState !== "starting" && runState !== "running") ||
+      !InstanceRuntime.instanceRuntimeGrantIsCurrent(this.#database, runAttempt)
     ) {
       throw new ExecutionFencedError();
     }
@@ -6253,7 +6270,7 @@ export class RoomKernel {
     const terminatedAt = this.#timestamp();
     this.#database
       .prepare(
-        "UPDATE runtime_processes SET state = 'terminated', exit_code = ?, exit_signal = ?, recovery_lease_owner = NULL, recovery_lease_owner_instance_id = NULL, recovery_lease_until = NULL, recovery_lease_until_ms = NULL, terminated_at = ?, updated_at = ? WHERE runtime_process_id = ?",
+        "UPDATE runtime_processes SET state = 'terminated', proof_kind = 'process_exit', exit_code = ?, exit_signal = ?, recovery_lease_owner = NULL, recovery_lease_owner_instance_id = NULL, recovery_lease_until = NULL, recovery_lease_until_ms = NULL, terminated_at = ?, updated_at = ? WHERE runtime_process_id = ?",
       )
       .run(
         exit.code,
@@ -6262,17 +6279,11 @@ export class RoomKernel {
         terminatedAt,
         runtimeProcessId,
       );
-    if (placementId !== null) {
-      const placement = this.#requirePlacementRow(placementId);
-      if (text(placement, "state") !== "released") {
-        this.#setPlacementState(
-          placement,
-          "released",
-          "orphaned RuntimeProcess termination proven",
-        );
-        this.#releasePlacementResources(placementId);
-      }
-    }
+    if (placementId !== null)
+      this.#releasePlacementOnce(
+        placementId,
+        "orphaned RuntimeProcess termination proven",
+      );
     this.#appendEvent({
       actorId: SYSTEM_PRINCIPAL_ID,
       aggregateId: runAttemptId,
@@ -6667,7 +6678,7 @@ export class RoomKernel {
       const runAttemptId = text(runAttempt, "run_attempt_id");
       const exitCode = nullableInteger(runtimeProcess, "exit_code");
       const exitSignal = nullableText(runtimeProcess, "exit_signal");
-      const state = exitCode === 0 ? "exited" : "failed";
+      const state = InstanceRuntime.runStateFromTerminalProof(runtimeProcess);
       this.#database
         .prepare(
           "UPDATE run_attempts SET state = ?, exit_code = ?, exit_signal = ?, error = ?, finished_at = ? WHERE run_attempt_id = ? AND state IN ('starting', 'running')",
@@ -6681,13 +6692,7 @@ export class RoomKernel {
           runAttemptId,
         );
       const placementId = nullableText(runAttempt, "placement_id");
-      if (placementId !== null) {
-        const placement = this.#requirePlacementRow(placementId);
-        if (text(placement, "state") !== "released") {
-          this.#setPlacementState(placement, "released", error);
-          this.#releasePlacementResources(placementId);
-        }
-      }
+      if (placementId !== null) this.#releasePlacementOnce(placementId, error);
       this.#appendEvent({
         actorId: SYSTEM_PRINCIPAL_ID,
         aggregateId: runAttemptId,
@@ -6728,13 +6733,7 @@ export class RoomKernel {
         )
         .run(error, now.toISOString(), runAttemptId);
       const placementId = nullableText(runAttempt, "placement_id");
-      if (placementId !== null) {
-        const placement = this.#requirePlacementRow(placementId);
-        if (text(placement, "state") !== "released") {
-          this.#setPlacementState(placement, "released", error);
-          this.#releasePlacementResources(placementId);
-        }
-      }
+      if (placementId !== null) this.#releasePlacementOnce(placementId, error);
       this.#appendEvent({
         actorId: SYSTEM_PRINCIPAL_ID,
         aggregateId: runAttemptId,

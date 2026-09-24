@@ -27,6 +27,13 @@ export {
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
 export { RUNTIME_CLEANUP_BLOCKED } from "./runtime-process-cleanup.ts";
 export type {
+  InstanceRuntimeRecord,
+  InstanceRuntimeTerminationReason,
+  TurnExecutionRecord,
+  TurnProofRecord,
+  TurnQuiesceResult,
+} from "./instance-runtime.ts";
+export type {
   RuntimeCleanupAdmission,
   RuntimeCleanupTarget,
 } from "./runtime-process-cleanup.ts";

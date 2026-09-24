@@ -35,7 +35,7 @@ import {
   type RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
 import type { DaemonConfig } from "./config.ts";
-import { createDaemonProcessHygiene } from "./daemon-process-hygiene.ts";
+import { createDaemonRuntimeHygiene } from "./daemon-process-hygiene.ts";
 import {
   DAEMON_BUILD_VERSION,
   DAEMON_PROTOCOL_VERSION,
@@ -243,6 +243,8 @@ export class DaemonApplication {
         });
       const activeAgentExecutionResetCoordinator =
         agentExecutionResetCoordinator;
+      const { processHygiene, instanceRuntimePool } =
+        createDaemonRuntimeHygiene(this.#config, host, kernel);
       let runtime: RuntimeAdapter;
       const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
       let placementRuntimeResolver:
@@ -531,6 +533,7 @@ export class DaemonApplication {
               ...(placement?.toolAccessMode === undefined
                 ? {}
                 : { toolAccessMode: placement.toolAccessMode }),
+              warmRuntimePool: instanceRuntimePool,
               runtimeProfileRegistry,
               runtimeProfileRevision: activeRevision,
               supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),
@@ -609,9 +612,6 @@ export class DaemonApplication {
         throw new Error(availability.detail ?? "runtime is unavailable");
       }
       const wakeSignal = new LocalWakeSignal();
-      const processHygiene = createDaemonProcessHygiene(
-        this.#config.processHygiene,
-      );
       const discoveredLocalClis = await discoverKnownLocalClis();
       const runnerOptions = {
         guideEnabled: (runtimeId: string | undefined) =>
@@ -647,6 +647,7 @@ export class DaemonApplication {
         runtimeRecoveryTimeoutMs: this.#config.runtimeRecoveryTimeoutMs,
         runtimeStartTimeoutMs: this.#config.runtimeStartTimeoutMs,
         ...(processHygiene === undefined ? {} : { processHygiene }),
+        instanceRuntimePool,
         wait: async (delayMs, signal) => await wakeSignal.wait(delayMs, signal),
       } satisfies AgentHostOptions;
       const runner =

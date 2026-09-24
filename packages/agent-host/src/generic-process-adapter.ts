@@ -227,7 +227,8 @@ const REDACTED_TRAJECTORY_FIELDS = new Set([
   "toolInput",
 ]);
 
-class RuntimeTrajectoryCollector {
+/** Also used per turn by the S2-a warm runtime frame router. */
+export class RuntimeTrajectoryCollector {
   readonly busyInput = new RuntimeBusyInput();
   readonly #activation: ActivationEnvelope;
   readonly #decoder = new StringDecoder("utf8");
@@ -481,7 +482,7 @@ class RuntimeTrajectoryCollector {
   }
 }
 
-class BoundedOutput {
+export class BoundedOutput {
   readonly #byteLimit: number;
   readonly #chunks: Buffer[] = [];
   readonly #decoder = new StringDecoder("utf8");

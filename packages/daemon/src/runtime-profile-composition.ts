@@ -13,6 +13,10 @@ import {
   ProviderSessionStore,
   RuntimeProfileRegistry,
   assertRuntimeProfileRevisionStillActive,
+  type ActivationEnvelope,
+  type ActivationEnvironmentLease,
+  type InstanceRuntimePool,
+  type RuntimeCreationOptions,
   type RuntimeAdapter,
 } from "@rah-os/agent-host";
 import type { WorkerApplicationService } from "@rah-os/application-service";
@@ -68,153 +72,199 @@ export function createConfiguredRuntime(input: {
   runtimeProfileRegistry: RuntimeProfileRegistry;
   runtimeProfileRevision: RuntimeProfileRevision;
   supervisorDirectory: string;
+  /** S2-a: when set, Codex Role instances run on warm processes. */
+  warmRuntimePool?: InstanceRuntimePool | undefined;
   workerService: RuntimeWorkerService;
 }): RuntimeAdapter {
-  const runtime = input.implementations.createRuntime(
-    input.runtimeProfileRevision,
-    input.probeReport,
-    {
-      activationEnvironment: async (scope) => {
-        const runtimeId = (
-          {
-            "codex-app-server/v1": "codex",
-            "claude-stream-json/v1": "claude",
-            "kimi-acp/v1": "kimi",
-            "opencode-server/v1": "opencode",
-          } as Record<string, string>
-        )[input.runtimeProfileRevision.manifest.adapter.kind];
-        const launchEnv =
-          input.launchEnvironment?.(
-            runtimeId ?? "unknown",
-            scope.agent?.agentDefinitionRevision.agentId,
-          ) ?? {};
-        const secretLease = await input.credentialEnvironment.resolve();
-        const leases = [secretLease, { env: launchEnv }];
-        try {
-          if (scope.agent !== undefined) {
-            const deliveryMode = resolveRuntimeDeliveryMode(
-              runtime,
-              input.guideEnabled?.(runtime.guideRuntimeId) === true,
-            );
-            const promptLease = standingPromptLease(scope, {
-              deliveryMode,
-              ...(runtimeId === "claude" && deliveryMode === "direct"
-                ? { previousDeliveryMode: "gated" }
-                : {}),
-              ...(input.toolAccessMode === undefined
-                ? {}
-                : { toolAccessMode: input.toolAccessMode }),
-              workspacePath: input.cwd,
-            });
-            const activation = {
-              activationId: scope.activationId,
-              computerHostId: scope.hostId,
-              roomId: scope.roomId,
-              runAttemptId: scope.runAttemptId,
-            };
-            const memoryLease =
-              input.agentMemoryCoordinator === undefined
-                ? await prepareAgentMemoryRun({
-                    activation,
-                    agent: scope.agent,
-                    executionCwd: input.cwd,
-                    rootDirectory: join(
-                      input.supervisorDirectory,
-                      "agent-memory",
-                    ),
-                  })
-                : await input.agentMemoryCoordinator.prepareRuntimeActivation(
-                    scope.agent,
-                    activation,
-                    { cwd: input.cwd },
-                  );
-            leases.push(memoryLease);
-            if (promptLease !== undefined) {
-              leases.push(
-                useSystemMemoryTransport(
-                  input.startupMemoryTransport,
-                  runtimeId,
-                ) && memoryLease.env.RAH_AGENT_MEMORY_DIR !== undefined
-                  ? await startupMemorySystemLease({
-                      participantId: scope.agent.participantId,
-                      memoryDirectory: memoryLease.env.RAH_AGENT_MEMORY_DIR,
-                      promptLease,
-                    })
-                  : promptLease,
+  let runtime: RuntimeAdapter;
+  /**
+   * The runtime-level lease (secrets, launch env, memory, standing prompt).
+   * The per-Activation path appends the Worker credential to it; a warm
+   * runtime keeps it for the process lifetime and issues credentials per turn.
+   */
+  const runtimeLeases = async (
+    scope: ActivationEnvelope,
+  ): Promise<ActivationEnvironmentLease[]> => {
+    const runtimeId = (
+      {
+        "codex-app-server/v1": "codex",
+        "claude-stream-json/v1": "claude",
+        "kimi-acp/v1": "kimi",
+        "opencode-server/v1": "opencode",
+      } as Record<string, string>
+    )[input.runtimeProfileRevision.manifest.adapter.kind];
+    const launchEnv =
+      input.launchEnvironment?.(
+        runtimeId ?? "unknown",
+        scope.agent?.agentDefinitionRevision.agentId,
+      ) ?? {};
+    const secretLease = await input.credentialEnvironment.resolve();
+    const leases: ActivationEnvironmentLease[] = [
+      secretLease,
+      { env: launchEnv },
+    ];
+    try {
+      if (scope.agent !== undefined) {
+        const deliveryMode = resolveRuntimeDeliveryMode(
+          runtime,
+          input.guideEnabled?.(runtime.guideRuntimeId) === true,
+        );
+        const promptLease = standingPromptLease(scope, {
+          deliveryMode,
+          ...(runtimeId === "claude" && deliveryMode === "direct"
+            ? { previousDeliveryMode: "gated" }
+            : {}),
+          ...(input.toolAccessMode === undefined
+            ? {}
+            : { toolAccessMode: input.toolAccessMode }),
+          workspacePath: input.cwd,
+        });
+        const activation = {
+          activationId: scope.activationId,
+          computerHostId: scope.hostId,
+          roomId: scope.roomId,
+          runAttemptId: scope.runAttemptId,
+        };
+        const memoryLease =
+          input.agentMemoryCoordinator === undefined
+            ? await prepareAgentMemoryRun({
+                activation,
+                agent: scope.agent,
+                executionCwd: input.cwd,
+                rootDirectory: join(input.supervisorDirectory, "agent-memory"),
+              })
+            : await input.agentMemoryCoordinator.prepareRuntimeActivation(
+                scope.agent,
+                activation,
+                { cwd: input.cwd },
               );
-            }
-          }
-          const credential =
-            typeof input.workerService.issueActivationCredentialForWorkspace ===
-            "function"
-              ? await input.workerService.issueActivationCredentialForWorkspace(
-                  input.host,
-                  scope,
-                  { workspaceRoot: input.cwd },
-                )
-              : input.workerService.issueActivationCredential(
-                  input.host,
-                  scope,
-                );
-          const workerLease = await createWorkerToolTransportEnvironment({
-            credentialDirectory: join(
-              input.supervisorDirectory,
-              "worker-credentials",
-            ),
-            revokeCredential: credential.revoke,
-            workerAccessToken: credential.accessToken,
-            workerApiOrigin: input.workerService.origin,
-          });
-          leases.push(workerLease);
-          return combineActivationEnvironmentLeases(
-            leases,
-            "local Runtime activation environment release failed",
+        leases.push(memoryLease);
+        if (promptLease !== undefined) {
+          leases.push(
+            useSystemMemoryTransport(input.startupMemoryTransport, runtimeId) &&
+              memoryLease.env.RAH_AGENT_MEMORY_DIR !== undefined
+              ? await startupMemorySystemLease({
+                  participantId: scope.agent.participantId,
+                  memoryDirectory: memoryLease.env.RAH_AGENT_MEMORY_DIR,
+                  promptLease,
+                })
+              : promptLease,
           );
-        } catch (error) {
-          try {
-            await combineActivationEnvironmentLeases(
-              leases,
-              "local Runtime activation setup cleanup failed",
-            ).release?.();
-          } catch (cleanupError) {
-            throw new AggregateError(
-              [error, cleanupError],
-              "local Runtime activation setup and cleanup failed",
-            );
-          }
-          throw error;
         }
-      },
-      beforeStart: () =>
-        assertRuntimeProfileRevisionStillActive(
-          input.runtimeProfileRegistry,
-          input.runtimeProfileRevision,
-        ),
-      cwd: input.cwd,
-      providerSessionStore: new ProviderSessionStore({
-        rootDirectory: join(input.supervisorDirectory, "provider-sessions"),
-      }),
-      ...(input.deliveryAcceptanceKernel === undefined
-        ? {}
-        : {
-            recordDeliveryAcceptance: ((register) => (scope) => {
-              register({
-                activationId: scope.activationId,
-                consumerId: scope.consumerId,
-                runAttemptId: scope.runAttemptId,
-              });
-            })(
-              deliveryAcceptanceRegistration(
-                input.deliveryAcceptanceKernel,
-                input.host,
-              ),
-            ),
-          }),
-      supervisorDirectory: input.supervisorDirectory,
+      }
+      return leases;
+    } catch (error) {
+      try {
+        await combineActivationEnvironmentLeases(
+          leases,
+          "local Runtime activation setup cleanup failed",
+        ).release?.();
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [error, cleanupError],
+          "local Runtime activation setup and cleanup failed",
+        );
+      }
+      throw error;
+    }
+  };
+  const issueWorkerCredential = async (scope: ActivationEnvelope) =>
+    typeof input.workerService.issueActivationCredentialForWorkspace ===
+    "function"
+      ? await input.workerService.issueActivationCredentialForWorkspace(
+          input.host,
+          scope,
+          { workspaceRoot: input.cwd },
+        )
+      : input.workerService.issueActivationCredential(input.host, scope);
+  const creationOptions = {
+    activationEnvironment: async (scope: ActivationEnvelope) => {
+      const leases = await runtimeLeases(scope);
+      try {
+        const credential = await issueWorkerCredential(scope);
+        const workerLease = await createWorkerToolTransportEnvironment({
+          credentialDirectory: join(
+            input.supervisorDirectory,
+            "worker-credentials",
+          ),
+          revokeCredential: credential.revoke,
+          workerAccessToken: credential.accessToken,
+          workerApiOrigin: input.workerService.origin,
+        });
+        leases.push(workerLease);
+        return combineActivationEnvironmentLeases(
+          leases,
+          "local Runtime activation environment release failed",
+        );
+      } catch (error) {
+        try {
+          await combineActivationEnvironmentLeases(
+            leases,
+            "local Runtime activation setup cleanup failed",
+          ).release?.();
+        } catch (cleanupError) {
+          throw new AggregateError(
+            [error, cleanupError],
+            "local Runtime activation setup and cleanup failed",
+          );
+        }
+        throw error;
+      }
     },
-    input.resolvedModel,
-    input.toolAccessMode,
-  );
+    beforeStart: () =>
+      assertRuntimeProfileRevisionStillActive(
+        input.runtimeProfileRegistry,
+        input.runtimeProfileRevision,
+      ),
+    cwd: input.cwd,
+    providerSessionStore: new ProviderSessionStore({
+      rootDirectory: join(input.supervisorDirectory, "provider-sessions"),
+    }),
+    ...(input.deliveryAcceptanceKernel === undefined
+      ? {}
+      : {
+          recordDeliveryAcceptance: ((register) => (scope) => {
+            register({
+              activationId: scope.activationId,
+              consumerId: scope.consumerId,
+              runAttemptId: scope.runAttemptId,
+            });
+          })(
+            deliveryAcceptanceRegistration(
+              input.deliveryAcceptanceKernel,
+              input.host,
+            ),
+          ),
+        }),
+    supervisorDirectory: input.supervisorDirectory,
+  } satisfies RuntimeCreationOptions;
+  runtime =
+    input.warmRuntimePool !== undefined &&
+    input.runtimeProfileRevision.manifest.adapter.kind === "codex-app-server/v1"
+      ? input.implementations.createWarmRuntime(
+          input.runtimeProfileRevision,
+          input.probeReport,
+          creationOptions,
+          {
+            issueWorkerCredential,
+            pool: input.warmRuntimePool,
+            runtimeEnvironment: async (scope) =>
+              combineActivationEnvironmentLeases(
+                await runtimeLeases(scope),
+                "warm Runtime environment release failed",
+              ),
+            workerApiOrigin: input.workerService.origin,
+          },
+          input.resolvedModel,
+          input.toolAccessMode,
+        )
+      : input.implementations.createRuntime(
+          input.runtimeProfileRevision,
+          input.probeReport,
+          creationOptions,
+          input.resolvedModel,
+          input.toolAccessMode,
+        );
   return input.executionWorkspace
     ? withRuntimeExecutionWorkspace(runtime, input.executionWorkspace)
     : runtime;

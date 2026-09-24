@@ -23,6 +23,7 @@ import type {
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import type { RuntimeTrajectoryServiceOptions } from "./runtime-trajectory.ts";
 import { RuntimeProcessCleanupService } from "./runtime-process-cleanup.ts";
+import { turnExecutionForRunAttempt } from "./instance-runtime.ts";
 import { text, type Row } from "./sqlite-row.ts";
 
 /**
@@ -239,11 +240,16 @@ export class RunAttemptUsageService {
     // No rows means unknown (unsupported runtime, missing wiring, lost frames
     // or a run that never generated), never a free execution.
     const known = generations > 0;
+    const execution = turnExecutionForRunAttempt(
+      this.#database,
+      input.runAttemptId,
+    );
+    const lateFrames = (execution?.lateFrameCount ?? 0) > 0;
     return ClientRunAttemptUsageGetResponseSchema.parse({
       runAttemptId: input.runAttemptId,
       completeness: !known
         ? "unavailable"
-        : gaps.length > 0
+        : gaps.length > 0 || lateFrames
           ? "partial"
           : "complete",
       gaps,
@@ -264,6 +270,7 @@ export class RunAttemptUsageService {
       },
       truncated: generations > rows.length,
       processCleanups: this.cleanups.listForRunAttempt(input.runAttemptId),
+      execution,
     });
   }
 

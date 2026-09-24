@@ -85,6 +85,12 @@ export type AgentHostControlPort = {
   listRuntimeCleanupBlockedParticipants?(): Promise<
     ReturnType<RoomKernel["runtimeProcessCleanup"]["blockedParticipants"]>
   >;
+  /** S2-a: the `turn_quiesced` proof of one warm turn. */
+  recordTurnQuiesced?(
+    input: Parameters<RoomKernel["instanceRuntimes"]["recordTurnQuiesced"]>[1],
+  ): Promise<ReturnType<RoomKernel["instanceRuntimes"]["recordTurnQuiesced"]>>;
+  /** S2-a: warm instance runtime lifetime facts (one owner: the Kernel). */
+  instanceRuntimes?: InstanceRuntimeControl;
   /** S1-f: durable evidence that the Host persisted an instance binding. */
   recordInstanceSessionBinding?(
     input: Parameters<RoomKernel["instanceSessions"]["record"]>[1],
@@ -120,6 +126,63 @@ export type AgentHostControlPort = {
     input: Parameters<RoomKernel["scheduleNextPlacement"]>[0],
   ): Promise<ReturnType<RoomKernel["scheduleNextPlacement"]>>;
 };
+
+type InstanceRuntimeService = RoomKernel["instanceRuntimes"];
+type ServiceInput<Name extends keyof InstanceRuntimeService> =
+  InstanceRuntimeService[Name] extends (
+    host: never,
+    input: infer Input,
+  ) => unknown
+    ? Input
+    : never;
+type ServiceResult<Name extends keyof InstanceRuntimeService> =
+  InstanceRuntimeService[Name] extends (...args: never[]) => infer Result
+    ? Result
+    : never;
+
+export type InstanceRuntimeControl = {
+  register(input: ServiceInput<"register">): Promise<ServiceResult<"register">>;
+  markReady(
+    input: ServiceInput<"markReady">,
+  ): Promise<ServiceResult<"markReady">>;
+  beginTurn(
+    input: ServiceInput<"beginTurn">,
+  ): Promise<ServiceResult<"beginTurn">>;
+  recordTurnAccepted(input: ServiceInput<"recordTurnAccepted">): Promise<void>;
+  recordLateTurnFrame(
+    input: ServiceInput<"recordLateTurnFrame">,
+  ): Promise<void>;
+  releaseTurn(
+    input: ServiceInput<"releaseTurn">,
+  ): Promise<ServiceResult<"releaseTurn">>;
+  recordExit(
+    input: ServiceInput<"recordExit">,
+  ): Promise<ServiceResult<"recordExit">>;
+  list(): Promise<ServiceResult<"list">>;
+  terminatedAmong(
+    ids: readonly string[],
+  ): Promise<ServiceResult<"terminatedAmong">>;
+};
+
+export function createKernelInstanceRuntimeControl(
+  kernel: RoomKernel,
+  host: AuthenticatedHostContext,
+): InstanceRuntimeControl {
+  const service = kernel.instanceRuntimes;
+  return Object.freeze({
+    register: async (input) => service.register(host, input),
+    markReady: async (input) => service.markReady(host, input),
+    beginTurn: async (input) => service.beginTurn(host, input),
+    recordTurnAccepted: async (input) =>
+      service.recordTurnAccepted(host, input),
+    recordLateTurnFrame: async (input) =>
+      service.recordLateTurnFrame(host, input),
+    releaseTurn: async (input) => service.releaseTurn(host, input),
+    recordExit: async (input) => service.recordExit(host, input),
+    list: async () => service.list(host),
+    terminatedAmong: async (ids) => service.terminatedAmong(host, ids),
+  });
+}
 
 export function createKernelAgentHostControlPort(
   kernel: RoomKernel,
@@ -167,6 +230,9 @@ export function createKernelAgentHostControlPort(
       kernel.runtimeProcessCleanup.resolveRuntimes(host, input),
     listRuntimeCleanupBlockedParticipants: async () =>
       kernel.runtimeProcessCleanup.blockedParticipants(host),
+    recordTurnQuiesced: async (input) =>
+      kernel.instanceRuntimes.recordTurnQuiesced(host, input),
+    instanceRuntimes: createKernelInstanceRuntimeControl(kernel, host),
     readPendingRuntimeNotice: async (input) =>
       kernel.readPendingRuntimeNotice(host, input),
     renewActivationLease: async (input) =>

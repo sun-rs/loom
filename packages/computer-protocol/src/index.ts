@@ -202,6 +202,9 @@ export const ComputerRunAttemptSchema = z
     finishedAt: TimestampSchema.optional(),
     contextManifest: ContextManifestSchema.optional(),
     hostId: IdentifierSchema,
+    /** S2-a warm turn identity (local Hosts only today). */
+    instanceRuntimeId: IdentifierSchema.optional(),
+    nativeTurnId: IdentifierSchema.optional(),
     participantId: IdentifierSchema,
     placement: PlacementDecisionSchema.optional(),
     roomId: IdentifierSchema,
@@ -375,6 +378,10 @@ export const ComputerRuntimeProcessSchema = z
     exitSignal: IdentifierSchema.optional(),
     launchHostId: IdentifierSchema,
     participantId: IdentifierSchema,
+    /** S2-a: which terminal proof closed this execution record. */
+    proofKind: z.enum(["process_exit", "turn_quiesced"]).optional(),
+    quiesceResult: z.enum(["success", "error", "cancelled"]).optional(),
+    closeSeq: z.number().int().nonnegative().optional(),
     recoveryAttemptCount: z.number().int().nonnegative(),
     recoveryDescriptor: RuntimeRecoveryDescriptorSchema,
     recoveryLastError: z.string().min(1).optional(),

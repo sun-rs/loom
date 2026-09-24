@@ -54,6 +54,8 @@ export const MANAGED_CARRIER_ENVIRONMENT_KEYS: readonly string[] = [
   RAH_WORKER_API_URL_ENV,
   RAH_WORKER_CLI_ENV,
   RAH_WORKER_SESSION_FILE_ENV,
+  // S2-a: a warm runtime's non-listable turn root; only the Host sets it.
+  "RAH_WORKER_TURN_ROOT",
   "RAH_AGENT_CONTEXT_JSON",
   "RAH_AGENT_INBOX_API_URL",
   "RAH_AGENT_INBOX_CLI",

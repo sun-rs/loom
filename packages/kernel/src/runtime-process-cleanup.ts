@@ -200,10 +200,13 @@ export class RuntimeProcessCleanupService {
            AND c.rowid = (SELECT latest.rowid FROM runtime_process_cleanups latest
                           WHERE latest.participant_id = c.participant_id
                           ORDER BY latest.recorded_at DESC, latest.rowid DESC LIMIT 1)
-           AND NOT (c.trigger = 'resource_cap' AND EXISTS (
+           AND NOT (c.trigger = 'resource_cap' AND (EXISTS (
              SELECT 1 FROM runtime_processes live
              WHERE live.runtime_run_id = c.runtime_run_id
-               AND live.state <> 'terminated'))
+               AND live.state <> 'terminated') OR EXISTS (
+             SELECT 1 FROM instance_runtimes warm
+             WHERE warm.instance_runtime_id = c.runtime_run_id
+               AND warm.state <> 'terminated')))
          ORDER BY c.participant_id`,
       )
       .all(authenticatedHost.hostId)
@@ -229,7 +232,17 @@ export class RuntimeProcessCleanupService {
         participantId: text(row, "participant_id"),
         runAttemptId: text(row, "run_attempt_id"),
         runtimeRunId: text(row, "runtime_run_id"),
-        terminated: text(row, "state") === "terminated",
+        // A quiesced warm turn record is terminated while its process lives;
+        // only the physical runtime lifecycle decides (S2-0 review).
+        terminated:
+          text(row, "state") === "terminated" &&
+          this.#database
+            .prepare(
+              `SELECT 1 FROM run_attempts run JOIN instance_runtimes warm
+                 ON warm.instance_runtime_id = run.instance_runtime_id
+               WHERE run.run_attempt_id = ? AND warm.state <> 'terminated'`,
+            )
+            .get(text(row, "run_attempt_id")) === undefined,
       }));
   }
 

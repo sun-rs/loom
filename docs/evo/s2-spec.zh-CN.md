@@ -156,3 +156,10 @@ owner 决定：证明不了轮次隔离的驱动每轮冷回收（选项 A）。
 2. Claude/Kimi/OpenCode 若证明不了 §3 规则（尤其是压缩后重述与工具关闭），是否接受该驱动逐轮冷回收（失去 §6a 常驻收益，但保持同 session）？
 3. Kimi/OpenCode 轮中压缩丢 handle 时"本轮无法发帖→重试"的额外成本是否可接受？
 4. Codex 真实冒烟关口的授权时机。
+
+## 10. S2-a 实施记录
+
+- Codex `--listen unix://` 实为 unix socket 上的 WebSocket（本机 0.156.1 探针确认）。
+- `turn/start` 被拒绝时以 `nativeTurnId: null` 的 quiesce 记录收尾。
+- 轮次成孤儿时由 Kernel 触发器把忙碌运行时标记为 suspect。
+- 热模式默认关闭，待 Codex 真实冒烟与冷热对比。

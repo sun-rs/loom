@@ -144,6 +144,18 @@ export {
   RAH_WORKER_CLI_ENV,
   RAH_WORKER_SESSION_FILE_ENV,
 } from "./worker-credential-file.ts";
+export {
+  createWorkerTurnRoot,
+  issueWorkerTurnHandle,
+  RAH_WORKER_TURN_ROOT_ENV,
+  removeWorkerTurnRoot,
+  resolveWorkerTurnInvocation,
+  WORKER_TURN_SCOPE_KEYS,
+} from "./worker-turn-handle.ts";
+export type {
+  WorkerTurnHandle,
+  WorkerTurnReleaseOutcome,
+} from "./worker-turn-handle.ts";
 export { runWorkerCliCommand } from "./worker-cli.ts";
 export {
   WORKER_HELP_TOPIC_NAMES,
@@ -200,6 +212,31 @@ export type {
 } from "./agent-host.ts";
 export { FakeRuntimeAdapter } from "./fake-runtime.ts";
 export { GenericProcessAdapter } from "./generic-process-adapter.ts";
+export {
+  DEFAULT_WARM_IDLE_TTL_MS,
+  InstanceRuntimePool,
+  WARM_RUNTIME_RECOVERY_DRIVER,
+} from "./instance-runtime-pool.ts";
+export type {
+  InstanceRuntimePoolOptions,
+  WarmRuntimeLaunch,
+  WarmRuntimeLayout,
+} from "./instance-runtime-pool.ts";
+export {
+  CODEX_WARM_DRIVER_KIND,
+  CodexWarmAdapter,
+  withWorkerTurnHandle,
+} from "./codex-warm-adapter.ts";
+export type { WarmRuntimeCreation } from "./runtime-implementation-registry.ts";
+export type {
+  CodexWarmAdapterOptions,
+  WarmWorkerCredential,
+} from "./codex-warm-adapter.ts";
+export {
+  createKernelInstanceRuntimeControl,
+  type InstanceRuntimeControl,
+} from "./agent-host-control.ts";
+export { renderBodiedWake } from "./bodied-wake.ts";
 export {
   ACTIVATION_IDENTITY_FENCE_KEYS,
   filterUserLaunchEnvironment,
@@ -277,6 +314,7 @@ export type {
 export type {
   ActivationEnvelope,
   RunExit,
+  TurnQuiescence,
   RunHandle,
   RuntimeAdapter,
   RuntimeAvailability,

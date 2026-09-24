@@ -56,7 +56,12 @@ import {
   ProviderSessionStore,
   type ProviderSessionKey,
 } from "./provider-session-store.ts";
-import type { ActivationEnvelope } from "./runtime.ts";
+import type { ActivationEnvelope, RuntimeAdapter } from "./runtime.ts";
+import {
+  CodexWarmAdapter,
+  type WarmWorkerCredential,
+} from "./codex-warm-adapter.ts";
+import type { InstanceRuntimePool } from "./instance-runtime-pool.ts";
 
 const GENERIC_PROCESS_IMPLEMENTATION_VERSION = "generic-process-adapter/v1";
 const CLAUDE_STREAM_JSON_IMPLEMENTATION_VERSION =
@@ -93,6 +98,23 @@ export type RuntimeCreationOptions = Pick<
    * their Activations keep the explicit `message-check` path unchanged.
    */
   recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
+};
+
+/**
+ * S2-a: what the Host composition supplies for a warm Codex runtime. The
+ * runtime-level lease carries prompt, memory, provider configuration and
+ * secrets but NO Worker credential; each turn's credential is issued
+ * separately and delivered only through that turn's handle.
+ */
+export type WarmRuntimeCreation = {
+  issueWorkerCredential: (
+    input: ActivationEnvelope,
+  ) => Promise<WarmWorkerCredential>;
+  pool: InstanceRuntimePool;
+  runtimeEnvironment: (
+    input: ActivationEnvelope,
+  ) => Promise<ActivationEnvironmentLease>;
+  workerApiOrigin: string;
 };
 
 type RuntimeAdapterImplementation = {
@@ -379,6 +401,39 @@ export class RuntimeImplementationRegistry {
       probeReport,
       resolvedModel,
       toolAccessMode,
+    );
+  }
+
+  /**
+   * S2-a Codex warm process per Role instance. Legacy Agents (no instance
+   * channel) keep the per-turn adapter this wraps; other drivers are refused.
+   */
+  createWarmRuntime(
+    revision: RuntimeProfileRevision,
+    probeReport: RuntimeProfileProbeReport,
+    options: RuntimeCreationOptions,
+    warm: WarmRuntimeCreation,
+    resolvedModel?: ResolvedModel,
+    toolAccessMode?: ToolAccessMode,
+  ): RuntimeAdapter {
+    if (revision.manifest.adapter.kind !== "codex-app-server/v1")
+      throw new Error(
+        `warm runtimes support codex-app-server/v1 only; received ${revision.manifest.adapter.kind}`,
+      );
+    const legacy = this.createRuntime(
+      revision,
+      probeReport,
+      options,
+      resolvedModel,
+      toolAccessMode,
+    );
+    return createCodexWarmRuntime(
+      validateRuntimeProfileRevision(revision),
+      probeReport,
+      options,
+      warm,
+      legacy,
+      resolvedModel,
     );
   }
 
@@ -943,6 +998,129 @@ function createCodexAppServerRuntime(
     ...(config.terminationGraceMs === undefined
       ? {}
       : { terminationGraceMs: config.terminationGraceMs }),
+  });
+}
+
+function createCodexWarmRuntime(
+  revision: RuntimeProfileRevision,
+  probeReport: RuntimeProfileProbeReport,
+  options: RuntimeCreationOptions,
+  warm: WarmRuntimeCreation,
+  legacy: GenericProcessAdapter,
+  resolvedModel?: ResolvedModel,
+): CodexWarmAdapter {
+  const executableIdentity = probeReport.executableIdentity;
+  const store = options.providerSessionStore;
+  const systemMemory = new ProviderSystemMemory();
+  // The system-memory snapshot is prepared once per process (its cold start).
+  const coldStartRun = new Map<string, string>();
+  const provider = "codex-app-server/v1";
+  const recordDeliveryAcceptance = options.recordDeliveryAcceptance;
+  return new CodexWarmAdapter({
+    cwd: options.cwd,
+    driverArgs: [
+      "--executable",
+      executableIdentity?.resolvedExecutablePath ??
+        revision.manifest.adapter.executable,
+      "--tool-access-mode",
+      "full_access",
+      ...(revision.manifest.adapter.fixedArgs[0] === undefined
+        ? []
+        : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
+    ],
+    env:
+      revision.manifest.manifestVersion === 1
+        ? {}
+        : { ...revision.manifest.staticEnv },
+    issueWorkerCredential: warm.issueWorkerCredential,
+    legacy,
+    pool: warm.pool,
+    ...(resolvedModel === undefined ? {} : { resolvedModel }),
+    runtimeEnvironment: async (input) => {
+      await options.beforeStart?.();
+      if (executableIdentity !== undefined)
+        await assertExecutableIdentityCurrent(executableIdentity);
+      const lease = await warm.runtimeEnvironment(input);
+      const key = providerSessionKey(
+        input,
+        revision,
+        provider,
+        lease.standingPromptDigest,
+      );
+      if (store === undefined || key === undefined) return lease;
+      const previous = await store.load(key, {
+        requireExisting: input.agent?.instanceSessionRequired === true,
+        instance: input.agent?.instanceChannelId !== undefined,
+        instanceGeneration: input.agent?.instanceSessionGeneration,
+      });
+      coldStartRun.set(input.participantId, input.runAttemptId);
+      const prepared = systemMemory.prepare(
+        input.runAttemptId,
+        lease,
+        previous,
+      );
+      return previous === null
+        ? prepared
+        : {
+            ...prepared,
+            args: [
+              ...(lease.args ?? []),
+              "--resume-session",
+              previous.providerSessionId,
+            ],
+          };
+    },
+    // Anything that changes what the process was launched with restarts it
+    // at an idle boundary; model and effort are sent per turn instead.
+    runtimeKey: (input) =>
+      JSON.stringify([
+        input.participantId,
+        revision.runtimeProfileRevisionId,
+        revision.contentDigest,
+        input.agent?.agentDefinitionRevision.contentDigest ?? null,
+        input.agent?.instanceSessionGeneration ?? null,
+        input.contextManifest?.placement?.workspaceMountRevisionId ?? null,
+        options.cwd,
+      ]),
+    workerApiOrigin: warm.workerApiOrigin,
+    ...(recordDeliveryAcceptance === undefined
+      ? {}
+      : {
+          recordDeliveryAcceptance,
+          renderWake: async (input: {
+            env: Readonly<Record<string, string | undefined>>;
+            participantId: string;
+          }) => await renderBodiedWake(input),
+        }),
+    ...(store === undefined
+      ? {}
+      : {
+          recordProviderSessionEvidence: async (
+            input: ActivationEnvelope,
+            evidence: { provider: string; providerSessionId: string },
+            standingPromptDigest: string | undefined,
+          ) => {
+            if (evidence.provider !== provider)
+              throw new Error(
+                `unexpected Provider session evidence: ${evidence.provider}`,
+              );
+            const key = providerSessionKey(
+              input,
+              revision,
+              provider,
+              standingPromptDigest,
+            );
+            if (key === undefined) return;
+            await store.record(key, evidence.providerSessionId, {
+              instance: input.agent?.instanceChannelId !== undefined,
+              instanceGeneration: input.agent?.instanceSessionGeneration,
+              systemMemorySha256: systemMemory.evidence(
+                coldStartRun.get(input.participantId) ?? input.runAttemptId,
+                evidence.providerSessionId,
+              ),
+            });
+          },
+        }),
   });
 }
 

@@ -1,6 +1,7 @@
 import { ROLE_CATALOG_SCHEMA } from "./role-catalog-schema.ts";
 import { RUN_ATTEMPT_USAGE_SCHEMA } from "./run-attempt-usage.ts";
 import { RUNTIME_PROCESS_CLEANUP_SCHEMA } from "./runtime-process-cleanup.ts";
+import { INSTANCE_RUNTIME_SCHEMA } from "./instance-runtime.ts";
 import { INSTANCE_SESSION_SCHEMA } from "./instance-session.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { ACTIVATION_PRESENTED_WINDOW_SCHEMA } from "./activation-presented-window.ts";
@@ -17,6 +18,7 @@ PRAGMA foreign_keys = ON;
 export const SCHEMA_OBJECT_SQL = `${ROLE_CATALOG_SCHEMA}
 ${RUN_ATTEMPT_USAGE_SCHEMA}
 ${RUNTIME_PROCESS_CLEANUP_SCHEMA}
+${INSTANCE_RUNTIME_SCHEMA}
 ${INSTANCE_SESSION_SCHEMA}
 
 CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
@@ -1012,6 +1014,10 @@ CREATE TABLE IF NOT EXISTS run_attempts (
   error TEXT,
   started_at TEXT NOT NULL,
   finished_at TEXT,
+  instance_runtime_id TEXT,
+  native_turn_id TEXT,
+  execution_mode TEXT CHECK (execution_mode IS NULL OR execution_mode IN ('warm', 'cold')),
+  session_resume_ms INTEGER CHECK (session_resume_ms IS NULL OR session_resume_ms >= 0),
   UNIQUE (activation_id, attempt_number)
 ) STRICT;
 
@@ -1080,7 +1086,12 @@ CREATE TABLE IF NOT EXISTS runtime_processes (
   exit_signal TEXT,
   registered_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  terminated_at TEXT
+  terminated_at TEXT,
+  proof_kind TEXT CHECK (proof_kind IS NULL OR proof_kind IN ('process_exit', 'turn_quiesced')),
+  quiesce_result TEXT CHECK (quiesce_result IS NULL OR quiesce_result IN ('success', 'error', 'cancelled')),
+  close_seq INTEGER CHECK (close_seq IS NULL OR close_seq >= 0),
+  closed_at TEXT,
+  late_frame_count INTEGER NOT NULL DEFAULT 0 CHECK (late_frame_count >= 0)
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_runtime_processes_recovery

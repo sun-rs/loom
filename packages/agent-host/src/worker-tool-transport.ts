@@ -31,18 +31,7 @@ export async function createWorkerToolTransportEnvironment(input: {
       throw new Error("Worker credential lease did not expose its token file");
     }
     const toolDirectory = dirname(tokenPath);
-    const wrapperPath = join(toolDirectory, "rah");
-    const invocation = isSea()
-      ? [process.execPath, "__worker-cli"]
-      : [process.execPath, WORKER_CLI_ENTRY_PATH];
-    const wrapper = `#!/bin/sh\nexec ${invocation.map(shellQuote).join(" ")} "$@"\n`;
-    const file = await open(wrapperPath, "wx", 0o700);
-    try {
-      await file.writeFile(wrapper, "utf8");
-      await file.sync();
-    } finally {
-      await file.close();
-    }
+    const wrapperPath = await writeWorkerCliWrapper(toolDirectory);
     return Object.freeze({
       env: Object.freeze({
         ...credentialLease.env,
@@ -67,6 +56,25 @@ export async function createWorkerToolTransportEnvironment(input: {
     }
     throw error;
   }
+}
+
+/** The `rah` Worker CLI wrapper the Provider finds on PATH / RAH_WORKER_CLI. */
+export async function writeWorkerCliWrapper(
+  directory: string,
+): Promise<string> {
+  const wrapperPath = join(directory, "rah");
+  const invocation = isSea()
+    ? [process.execPath, "__worker-cli"]
+    : [process.execPath, WORKER_CLI_ENTRY_PATH];
+  const wrapper = `#!/bin/sh\nexec ${invocation.map(shellQuote).join(" ")} "$@"\n`;
+  const file = await open(wrapperPath, "wx", 0o700);
+  try {
+    await file.writeFile(wrapper, "utf8");
+    await file.sync();
+  } finally {
+    await file.close();
+  }
+  return wrapperPath;
 }
 
 function shellQuote(value: string): string {

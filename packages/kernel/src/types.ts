@@ -84,6 +84,10 @@ export type RunAttempt = {
   finishedAt?: string;
   contextManifest?: ContextManifest;
   placement?: PlacementDecision;
+  /** S2-a: the warm process lifetime this turn ran on. */
+  instanceRuntimeId?: string;
+  /** S2-a: the native turn id the runtime accepted this turn's input under. */
+  nativeTurnId?: string;
 };
 
 export type PlacementLaunchClaim = {
@@ -192,6 +196,10 @@ export type RuntimeProcessRecord = {
   exitCode?: number;
   exitSignal?: string;
   terminatedAt?: string;
+  /** S2-a: absent on records written before schema 65 (process exit). */
+  proofKind?: "process_exit" | "turn_quiesced";
+  quiesceResult?: "success" | "error" | "cancelled";
+  closeSeq?: number;
 };
 
 export type InboxItem = {

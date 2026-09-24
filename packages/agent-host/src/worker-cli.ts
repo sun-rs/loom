@@ -86,6 +86,7 @@ import {
   WorkerTaskSubmitRequestSchema,
 } from "@rah-os/protocol";
 import { parseAgentAppConfig } from "./agent-app-config-cli.ts";
+import { resolveWorkerTurnInvocation } from "./worker-turn-handle.ts";
 
 const MAX_TOKEN_BYTES = 65_536;
 const MAX_RESPONSE_BYTES = 512 * 1_024;
@@ -326,6 +327,13 @@ export async function runWorkerCliCommand(
   const jsonOutput = arguments_.includes("--json");
   let failureDraftSaved = false;
   try {
+    // S2-a: a warm runtime names this turn's credential by `--turn <handle>`.
+    if (arguments_[0] !== "agent" && arguments_[0] !== "app") {
+      const turn = await resolveWorkerTurnInvocation(arguments_, runtime.env);
+      if ("error" in turn) throw cliError(turn.error.code, turn.error.message);
+      arguments_ = turn.arguments_;
+      runtime = { ...runtime, env: turn.env };
+    }
     const config = arguments_[0] === "app";
     const mutation = config ? parseAgentAppConfig(arguments_) : undefined;
     const inbox = arguments_[0] === "agent" || config;
