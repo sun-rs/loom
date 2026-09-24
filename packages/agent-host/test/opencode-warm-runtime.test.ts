@@ -389,6 +389,113 @@ test("warm OpenCode final reply: the committed --final post ends the run with PO
   }
 });
 
+test("warm OpenCode final reply: a non-abort session error before the final abort is kept; the turn is not quiesced as success", async () => {
+  const state = await harness({ env: { FAKE_SCENARIO: "reply+sideerror" } });
+  try {
+    state.post("question");
+    await state.current.agentHost.reconcileOnce();
+    assert.equal(events(state, "abort").length, 1, "the final abort ran");
+    const [run] = orderedRuns(state);
+    const [marker] = sql(
+      state,
+      "SELECT interrupt_sent FROM run_attempt_final_replies WHERE run_attempt_id = ?",
+      run!.runAttemptId,
+    );
+    assert.equal(marker?.interrupt_sent, 1);
+    const [process] = state.kernel.listRuntimeProcesses({
+      roomId: state.roomId,
+    });
+    assert.notEqual(
+      process?.quiesceResult,
+      "success",
+      "an independent error is never hidden by the final end",
+    );
+    assert.match(
+      JSON.stringify(state.kernel.listRunAttempts({ roomId: state.roomId })),
+      /FAKE independent session failure/u,
+      "the Host keeps the failure text",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode P2-2: a final abort still in flight when the prompt answers holds the next turn until it is answered", async () => {
+  const state = await harness({
+    env: { FAKE_SCRIPT: "reply,nofinal", FAKE_ABORT_DELAY_MS: "800" },
+  });
+  try {
+    state.post("question 1");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    state.post("question 2");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const records = state.records();
+    const answered = records.findIndex((r) => r.event === "abort-answered");
+    const secondPrompt = records.findIndex(
+      (r, index) =>
+        r.event === "prompt" &&
+        records.slice(0, index).some((p) => p.event === "prompt"),
+    );
+    assert.ok(answered >= 0, "the abort was answered");
+    assert.ok(
+      secondPrompt > answered,
+      "the next prompt starts only after the abort's answer",
+    );
+    assert.equal(spawns(state).length, 1, "a known outcome keeps the server");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode P2-2: an abort with an unknown outcome retires the server before the drain; the next turn continues the same session without resending", async () => {
+  const state = await harness({
+    env: { FAKE_SCRIPT: "reply,nofinal", FAKE_ABORT_DROP: "1" },
+  });
+  try {
+    state.post("question 1");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const firstSession = state.sessions.get(state.participantId);
+    assert.equal(spawns(state).length, 2, "the old server was replaced");
+    state.post("question 2");
+    for (let i = 0; i < 4; i += 1) {
+      const next = await state.current.agentHost.reconcileOnce();
+      if (next.state === "idle") break;
+    }
+    // The fake restarts its script per server, so the second turn is a final
+    // reply again: one fresh server per dropped abort, never more.
+    assert.equal(
+      spawns(state).length,
+      1 + events(state, "abort-dropped").length,
+    );
+    assert.ok(
+      orderedRuns(state).every((run) => run.state === "exited"),
+      "both turns completed",
+    );
+    assert.equal(prompts(state).length, 2, "no prompt was resent");
+    assert.equal(state.sessions.get(state.participantId), firstSession);
+    assert.equal(
+      requests(state, "POST", "/session").length,
+      1,
+      "no replacement session",
+    );
+    assert.ok(
+      requests(state, "GET", `/session/${String(firstSession)}`).length >= 1,
+      "the fresh server resumed the recorded session",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("warm OpenCode: cancel aborts the running loop, the server survives, and the retry runs on it", async () => {
   const state = await harness({
     env: { FAKE_SCRIPT: "nofinal,hang,nofinal,nofinal" },

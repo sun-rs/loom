@@ -331,3 +331,217 @@ test("a retry after a committed but unacknowledged reply names that reply in the
     await f.close();
   }
 });
+
+/**
+ * Seventh review P1-1: the held draft's reply intent (causal marker and
+ * `--final`) is saved and restored by one shared in-transaction step, so a
+ * held reply resent through either entry — the originating route (no
+ * `channel`) or the target route — commits once, acknowledges delivery through
+ * the Activation's head and records the final marker. The freshness fences
+ * are unchanged: the target route sends after the newer message was read; the
+ * originating route re-holds and needs its existing continue-anyway send.
+ */
+for (const [holdVia, resendVia] of [
+  ["originating", "target"],
+  ["target", "originating"],
+  ["originating", "originating"],
+] as const) {
+  test(`a held reply saved via the ${holdVia} route and resent via the ${resendVia} route commits once with its ACK and final marker`, async () => {
+    const f = await fixture();
+    try {
+      f.post("channel question");
+      const run = f.activate();
+      await run.present();
+      f.post("one more thing", false);
+      const held = await run.call("messages/post", {
+        ...(holdVia === "target" ? { channel: "#drift" } : {}),
+        body: "the answer",
+        basedOnRoomSeq: run.activation.toSeq,
+        final: true,
+      });
+      assert.equal(held.status, 200, JSON.stringify(held.body));
+      assert.equal(held.body.state, "held");
+      const saved = f.database
+        .prepare(
+          "SELECT reply_based_on_room_seq AS seq, reply_final AS final FROM held_message_drafts WHERE held_draft_id=?",
+        )
+        .get(held.body.heldDraftId)!;
+      assert.equal(Number(saved.seq), run.activation.toSeq);
+      assert.equal(Number(saved.final), 1);
+      assert.equal(f.cursor() < run.activation.toSeq, true);
+      assert.equal(
+        (await run.call("rooms/read", { channel: "#drift" })).status,
+        200,
+      );
+      let sent = await run.call("messages/post", {
+        ...(resendVia === "target" ? { channel: "#drift" } : {}),
+        sendDraft: true,
+      });
+      if (resendVia === "originating") {
+        // The originating route's freshness gate is unchanged: its causal
+        // marker is the Activation head, so a newer message re-holds the
+        // draft (a read does not lower that gate). The rehold keeps the
+        // intent, and the explicit continue-anyway send carries it.
+        assert.equal(sent.body.state, "held", JSON.stringify(sent.body));
+        assert.equal(f.agentPosts().length, 0);
+        sent = await run.call("messages/post", {
+          sendDraft: true,
+          anyway: true,
+        });
+      }
+      assert.equal(sent.status, 200, JSON.stringify(sent.body));
+      assert.equal(sent.body.state, undefined, JSON.stringify(sent.body));
+      assert.equal(sent.body.event.payload.body, "the answer");
+      assert.ok(f.cursor() >= run.activation.toSeq, "delivery acknowledged");
+      assert.equal(run.finalMarker()?.eventId, sent.body.event.eventId);
+      assert.equal(run.end(), undefined, "the Activation completes, no retry");
+      assert.equal(f.agentPosts().length, 1);
+    } finally {
+      await f.close();
+    }
+  });
+}
+
+test("a held draft from an earlier Activation does not lend its reply intent to a later one", async () => {
+  const f = await fixture();
+  try {
+    f.post("channel question");
+    const first = f.activate();
+    await first.present();
+    f.post("one more thing", false);
+    const held = await first.call("messages/post", {
+      body: "the answer",
+      basedOnRoomSeq: first.activation.toSeq,
+      final: true,
+    });
+    assert.equal(held.body.state, "held");
+    // The first Activation acknowledges explicitly and ends without sending.
+    const check = await first.call("message-check");
+    assert.equal(check.status, 200);
+    assert.equal(
+      (
+        await first.call("acknowledge", {
+          throughSeq: check.body.delivery.cursorAfter,
+        })
+      ).status,
+      200,
+    );
+    assert.equal(first.end(), undefined);
+    f.post("a new question");
+    const second = f.activate();
+    assert.notEqual(
+      second.activation.activationId,
+      first.activation.activationId,
+    );
+    await second.present();
+    assert.equal(
+      (await second.call("rooms/read", { channel: "#drift" })).status,
+      200,
+    );
+    const sent = await second.call("messages/post", { sendDraft: true });
+    assert.equal(sent.status, 200, JSON.stringify(sent.body));
+    assert.equal(sent.body.event.payload.body, "the answer");
+    assert.equal(
+      second.finalMarker(),
+      null,
+      "the earlier Activation's --final is not borrowed",
+    );
+    assert.ok(
+      f.cursor() < second.activation.toSeq,
+      "the earlier Activation's causal marker does not acknowledge this one",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+/**
+ * Seventh review P2-3: the retry fact is neutral. A previous attempt's post is
+ * named, but only a post that carried the final-reply marker is reported as
+ * the final reply; a progress post or a partial answer is not.
+ */
+async function retriedAfter(
+  f: Awaited<ReturnType<typeof fixture>>,
+  post: (run: ReturnType<typeof f.activate>) => Promise<Record<string, any>>,
+) {
+  const first = f.activate();
+  await first.present();
+  const posted = await post(first);
+  assert.equal(posted.status, 200, JSON.stringify(posted.body));
+  const failure = first.end();
+  assert.match(failure ?? "", /not acknowledged/u);
+  f.kernel.retryActivation(f.host, {
+    activationId: first.activation.activationId,
+    error: failure!,
+    retryAfterMs: 0,
+  });
+  const second = f.activate();
+  const presented = await second.present();
+  assert.equal(presented.status, 200, JSON.stringify(presented.body));
+  return { posted, presented: presented.body };
+}
+
+test("a retry after a progress post names it without calling it the final reply", async () => {
+  const f = await fixture();
+  try {
+    f.post("channel question");
+    const { posted, presented } = await retriedAfter(f, (run) =>
+      run.call("messages/post", { channel: "#drift", body: "working on it" }),
+    );
+    assert.equal(
+      presented.previousAttemptReplyMessageId,
+      posted.body.event.aggregateId,
+    );
+    assert.equal(presented.previousAttemptReplyFinal, undefined);
+  } finally {
+    await f.close();
+  }
+});
+
+test("a retry after a partial answer to one of several targets is not reported as final", async () => {
+  const f = await fixture();
+  try {
+    const root = f.post("thread root", false);
+    const created = f.thread(root.event.aggregateId);
+    f.reply(created.thread.threadId, "question in the thread");
+    f.post("question in the channel");
+    const threadTarget = `#drift:${shortWorkerRef(created.thread.threadId)}`;
+    const { presented } = await retriedAfter(f, async (run) => {
+      assert.equal(
+        (await run.call("rooms/read", { channel: threadTarget })).status,
+        200,
+      );
+      return await run.call("messages/post", {
+        channel: threadTarget,
+        body: "thread answer only",
+      });
+    });
+    assert.ok(presented.previousAttemptReplyMessageId !== undefined);
+    assert.equal(presented.previousAttemptReplyFinal, undefined);
+  } finally {
+    await f.close();
+  }
+});
+
+test("a retry after a committed --final post that was not acknowledged reports it as the final reply", async () => {
+  const f = await fixture();
+  try {
+    f.post("channel question");
+    const { posted, presented } = await retriedAfter(f, (run) =>
+      // `--final` without a causal marker: the marker is recorded, the
+      // delivery is not acknowledged (final alone never acknowledges).
+      run.call("messages/post", {
+        channel: "#drift",
+        body: "the answer",
+        final: true,
+      }),
+    );
+    assert.equal(
+      presented.previousAttemptReplyMessageId,
+      posted.body.event.aggregateId,
+    );
+    assert.equal(presented.previousAttemptReplyFinal, true);
+  } finally {
+    await f.close();
+  }
+});

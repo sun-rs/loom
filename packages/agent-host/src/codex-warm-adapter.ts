@@ -834,12 +834,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const failure =
       supervised ??
       turn.collector?.terminalFailure ??
-      (outcome.status === "failed" || outcome.status === "rejected"
-        ? classifyRuntimeFailure(
-            outcome.errorMessage ??
-              `Codex turn ended with status ${outcome.status}`,
-          )
-        : undefined);
+      warmTurnDriverFailure(outcome);
     const alive = await runtime.processGroupAlive(pool.processTable);
     if (!alive || outcome.inFlightToolCount > 0) {
       // Not provably quiet: end the runtime and prove a real exit instead.
@@ -896,6 +891,27 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       },
     };
   }
+}
+
+/**
+ * The failure a drained warm turn reports itself: a failed or rejected
+ * status, or — whatever the status — an error text the driver kept. A driver
+ * names an error beside `interrupted` only when it is independent of the
+ * interrupt it asked for (seventh review P1-3), so a final-reply end never
+ * hides it.
+ */
+export function warmTurnDriverFailure(
+  outcome: Extract<WarmTurnOutcome, { kind: "drained" }>,
+): ReturnType<typeof classifyRuntimeFailure> | undefined {
+  if (
+    outcome.status !== "failed" &&
+    outcome.status !== "rejected" &&
+    outcome.errorMessage === undefined
+  )
+    return undefined;
+  return classifyRuntimeFailure(
+    outcome.errorMessage ?? `Codex turn ended with status ${outcome.status}`,
+  );
 }
 
 /**

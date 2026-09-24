@@ -19,7 +19,10 @@
 // mismatch|absent, FAKE_HISTORY_REPLAY=1 (a resumed session first re-emits an
 // earlier user message with the same text and its own uuid), FAKE_SESSION,
 // FAKE_TURN_DELAY_MS, FAKE_IGNORE_CANCEL_QUEUED=1 (receipt lists survivors),
-// FAKE_NO_LIFECYCLE=1 (an older CLI without `msg_lifecycle_v1`).
+// FAKE_NO_LIFECYCLE=1 (an older CLI without `msg_lifecycle_v1`),
+// FAKE_NO_TERMINAL_REASON=1 (an older CLI: an interrupted result carries no
+// `terminal_reason`), FAKE_SILENT_INTERRUPT=1 (the interrupt ends the turn but
+// its control_response never arrives).
 //
 // Verified against the real 2.1.282 binary without any model call (API base
 // URL pointed at a local server that never answers): `command_lifecycle`
@@ -215,10 +218,14 @@ async function runTurn(turn) {
       is_error: true,
       num_turns: 1,
       errors: [],
-      terminal_reason:
-        env.FAKE_FOLLOW_UP_FIRST === "1"
-          ? "aborted_streaming"
-          : "aborted_tools",
+      ...(env.FAKE_NO_TERMINAL_REASON === "1"
+        ? {}
+        : {
+            terminal_reason:
+              env.FAKE_FOLLOW_UP_FIRST === "1"
+                ? "aborted_streaming"
+                : "aborted_tools",
+          }),
       usage: { input_tokens: 10, output_tokens: 1 },
       user_message_uuid: input.uuid,
       result_index: resultIndex++,
@@ -312,14 +319,15 @@ function control(frame) {
       response = { still_queued: [], cancelled: survivors.map((i) => i.uuid) };
     } else response = { still_queued: survivors.map((i) => i.uuid) };
   }
-  send({
-    type: "control_response",
-    response: {
-      subtype: "success",
-      request_id: frame.request_id,
-      response,
-    },
-  });
+  if (env.FAKE_SILENT_INTERRUPT !== "1")
+    send({
+      type: "control_response",
+      response: {
+        subtype: "success",
+        request_id: frame.request_id,
+        response,
+      },
+    });
   if (running !== undefined) {
     running.interrupted = true;
     running.wake();

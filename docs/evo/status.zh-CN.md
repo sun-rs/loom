@@ -127,8 +127,8 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 
 - 本机 Claude Code 2.1.282 无模型核实：`--replay-user-messages` 回显带我们注入的输入 uuid（续聊时也是）；每条输入有 queued/started/completed|cancelled 生命周期；每个原生轮次恰好一个 `result` 并以 `user_message_uuid` 指明对应输入；`control_request interrupt`（`cancel_queued`）返回 cancelled/still_queued 回执；`--system-prompt-snapshot` 使 system prompt 固定到压缩为止。
 - 带正文唤醒：只有带本轮 uuid 且正文一致的回显才算接收；Claude 加入带正文唤醒能力集；与 Codex 共用 `createHostBodiedWake`。
-- `--final`：在首个工具边界发原生中断，被中断的最终轮次记为成功，记录 requested/accepted/terminal/preemptedFollowUp。
-- 常驻 Claude（`warmRuntimes.claude`，默认关闭）：每实例一个长驻 stream-json 进程；本轮在唤醒与本轮接纳的忙时输入全部结束后才关闭；取消时清空排队输入；无生命周期能力则拒绝忙时输入；session 绑定在首条输入被接收后写入。
+- `--final`：在首个工具边界发原生中断，被中断的最终轮次记为成功，记录 requested/accepted/terminal/preemptedFollowUp。（第七轮审查更正：Run 成功不等于业务全部成功；同一 Activation 内另有独立错误时不再判成功，旧版 CLI 无 `terminal_reason` 的 `error_during_execution` 也不再一律视为中断，见第十九节。）
+- 常驻 Claude（`warmRuntimes.claude`，默认关闭）：每实例一个长驻 stream-json 进程；本轮在唤醒与本轮接纳的忙时输入都结算后才关闭（第七轮审查更正：原实现中终态生命周期可先于 `result` 结算已开始的输入，并非"全部结束"的强证明，见第十九节）；取消时清空排队输入；无生命周期能力则拒绝忙时输入；忙时输入回执只表示已写入 stdin、等待原生确认，不是原生已接收；session 绑定在首条输入被接收后写入。
 - 未经付费验证：真实时序下中断能否抢在后续请求前、真实工具流顺序、压缩后行为（常驻 Claude 压缩后不重述句柄，丢失句柄的轮次会以新句柄重试）、后台 shell 清理。打包产品构建仍为每轮模式。
 
 ### 十七、S2-c2 Kimi 接入与门禁扩展到 Claude/Kimi
@@ -137,17 +137,32 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 压缩后规则卡：驱动上报每次压缩（`rah-provider-compaction/v1`），Host 记在 session 绑定上，下一轮唤醒开头附 `worker help protocol` 的规则卡（多次压缩合并为一张），携带规则卡的 Activation 完成后才推进；协议落后的续聊 session 也附规则卡（Kimi 无 system 层）。
 - 带正文唤醒：以唯一在途请求的第一个模型更新（思考、文本或工具调用）作为接收证明；`--final`：无工具在途时发 `session/cancel`，被取消的最终轮次记为成功。
 - 不做常驻 Kimi：kimi-code 会把我们的请求排在引擎自发轮次（后台任务、定时任务）之后并直接回 `end_turn`，无法证明本轮确实执行并结束，按 owner 选项 A 保持每轮冷回收。用量仍为 unavailable。
-- 门禁：效率门禁支持 `RAH_EFFICIENCY_PROVIDER=codex|claude|kimi`（各自与原生 CLI 对照；Kimi 从 `wire.jsonl` 读逐次用量，读不到则只判耗时与送达）；漂移门禁支持 Claude（冷：短暂 `claude -p /compact`；热：经守卫私有 socket 发 `/compact`）。
+- 门禁：效率门禁支持 `RAH_EFFICIENCY_PROVIDER=codex|claude|kimi`（各自与原生 CLI 对照；Kimi 从 `wire.jsonl` 读逐次用量；第七轮审查更正：产品用量或 wire 缺失时总结论为 `missing-evidence`，耗时与送达只作为子项展示，见第十九节）；漂移门禁支持 Claude（冷：短暂 `claude -p /compact`；热：经守卫私有 socket 发 `/compact`）。
 - 待付费验证：Kimi 压缩文本匹配、第一个更新先于工具、`session/cancel` 时序、规则卡被接受；Claude 的 `/compact` 路径（依据二进制字符串与 SDK 文档）。
 
 ### 十八、重复回复修复与 S2-c3 OpenCode 接入（schema 69）
 
-- 重复回复根因（Kimi 漂移第 9 轮）：Kernel 中移植自 Raft 的"thread 上下文→频道顶层"确认检查拦下了与唤醒命令完全一致的正确回复并存为草稿，`--send-draft` 重发时丢失 based-on 与 `--final`，送达未确认，重试后重复回答。修复：回复目标守卫判定为"本轮回复"并放行时跳过该确认（该确认仍覆盖确认后无依据的普通发帖）；草稿保存并在重发时沿用 based-on 与 `--final`（新列 `reply_based_on_room_seq`、`reply_final`），恢复命令带上 `--turn`；重试时若上一次已发出回复，唤醒明确说明"已发出，请 message-check 确认"。
+- 重复回复根因（Kimi 漂移第 9 轮）：Kernel 中移植自 Raft 的"thread 上下文→频道顶层"确认检查拦下了与唤醒命令完全一致的正确回复并存为草稿，`--send-draft` 重发时丢失 based-on 与 `--final`，送达未确认，重试后重复回答。修复：回复目标守卫判定为"本轮回复"并放行时跳过该确认（该确认仍覆盖确认后无依据的普通发帖）；草稿保存并在重发时沿用 based-on 与 `--final`（新列 `reply_based_on_room_seq`、`reply_final`），恢复命令带上 `--turn`（第七轮审查更正：当时只修了 `--target` 路由，不带 target 的原始发帖路由保存的草稿仍丢 ACK/final，见第十九节）；重试时若上一次已发出回复，唤醒点名该消息（第十九节改为中性事实，只有带 final 标记时才称最终回复）。
 - OpenCode 1.18.32（源码只读核实）：每次模型请求都重建 system（agent prompt/默认 → env → instructions 文件 → 最后一条用户消息的 system）。常驻提示词改为内容寻址、0600 的 instructions 文件，经 `OPENCODE_CONFIG_CONTENT` 注入并合并已有配置；不再发送逐消息 system，因此压缩后自动插入的"Continue"步骤也带规则；`session.compacted` 只记诊断。
-- 带正文唤醒：驱动自选 user messageID，第一个 parentID 指向它的 assistant 作为接收证明；`--final`：发帖工具结束后 `POST /session/:id/abort`（先读取已持久化消息，避免截断发帖工具）。
+- 带正文唤醒：驱动自选 user messageID，第一个 parentID 指向它的 assistant 作为接收证明；`--final`：发帖工具结束后 `POST /session/:id/abort`（先读取已持久化消息，避免截断发帖工具；第七轮审查更正：读取失败时原实现仍会 abort，不能覆盖该场景，第十九节改为 fail-closed）。
 - 常驻 OpenCode（`warmRuntimes.opencode`，默认关闭）：每实例一个长驻 serve + 持久 SSE；轮次边界取我们同步 `POST /message` 的响应（自动续写后的后续步骤 parent 是合成的 Continue 消息，不能用 parent 判定）；SSE 重连后按消息列表对账、不重发；拒绝忙时输入。
 - Kimi 漂移复测（k3-256k/low 冷模式，96e1dd0，`docs/evo/evidence/2026-09-25-drift-kimi-cold-r2.json`）：20 轮送达 100%，每轮恰好一条回复、0 重试（第 9 轮不再重复），目标错投 0，无越权建任务，未出现应沉默时发言，`--final` 100%，ACK 100%；两次强制压缩后规则卡仍生效。门禁因格式率判为退化而失败：5 轮超出"≤40 字"，全部是答案本身含长标识符（第 1 轮在压缩前就已超长），属模型遵守度，不是规则遗忘。
 - 待付费验证：abort 与下一次模型请求的真实时序、真实 SSE 顺序、压缩后规则进入续写步骤。
+
+### 十九、第七轮审查修复
+
+依据 Codex 第七轮独立审查（`~/.loom/reviews/2026-09-25-s2-c-review.md`），负责人裁定全部 P1、P2 采纳。每项先写复现测试并确认失败，再做最小实现；热模式默认值不变（仍关闭），未跑付费 CLI，未重启服务。
+
+- P1-1 草稿回复意图两入口共用：`settleHeldDraftReplyIntent`（`held-message-drafts.ts`）成为 `--target` 路由与原始发帖路由共同调用的事务内步骤：被存为草稿（新鲜度 hold、再次 hold 或 thread 确认）时保存模型自己的 based-on 与 `--final`；提交时用该意图做 ACK 并记 final 标记。不同 Activation 的草稿不借出意图。两条路由的新鲜度围栏均未改：`--target` 重发以本 Agent 在该目标的已读位置为底线；原始路由的因果标记固定为 Activation head，出现更新消息时重发仍会再次 hold，须走既有的 `--anyway`（至少两次 hold 后）才提交，意图随再次 hold 保留。测试（`worker-reply-drift-duplicate.test.ts`）：originating→target（按恢复指导重发）、target→originating、originating→originating 各恰好一次提交、ACK 到 toSeq、final 标记记录（后两者经再次 hold + `--anyway`）；跨 Activation 不借用。
+- P1-2 OpenCode 中断 fail-closed：`opencode-final-interrupt.js` 持久工具状态查询失败或返回非列表时有界重查一次，仍失败则放弃本次 abort 优化、等本轮自然结束（冷热共用）。测试：`opencode-final-interrupt.test.ts`（查询失败/格式不可信不 abort、重查成功才 abort）与 `opencode-server-driver.test.ts`（SSE 滞后 + GET 失败 + 发帖工具执行中 → 不发 abort）。
+- P1-3 独立错误优先：Claude 与 OpenCode 热驱动收尾时 Host 停止优先，其次任何独立错误判 `failed` 并保留 `errorMessage`，最后才是 final 结束；只豁免本驱动自己的中断造成的取消结果（按输入记录中断请求）。Host 侧 `warmTurnDriverFailure`（`codex-warm-adapter.ts`）对任何状态下带错误文本的轮次都记失败，不判 success。测试：`claude-warm-driver-close.test.ts`（唤醒 final 成功但已接纳 notice 独立失败 → failed 且保留错误）、`opencode-warm-runtime.test.ts`（非 abort `session.error` 先到、随后 final abort → 不以 success 静默）、`warm-turn-classification.test.ts`。
+- P1-4 效率门禁：`compareRounds`/`compareArm` 有任一 `unmeasured` 维度（productUsage/tokens/generations）时 `status` 为 `missing-evidence`，可测子项结论另见 `measuredStatus`；顶层 `gateStatus` 在此情况下给 `missing-evidence`（退出码 1），不再可能 `needs-quality-review`。`docs/design/cli-efficiency-gate.zh-CN.md` 第 47 与 84 行的矛盾按合同 §6 统一（用量缺口不判达标；wire.jsonl 替代产品用量无合同决定）。测试：`metrics.test.mjs`。
+- P2-1 Claude 结束证明：已开始（lifecycle started 或回放）的输入只由自身 `result` 结算，终态生命周期先到不关闭本轮；未启动输入被 CLI 取消/丢弃/拒绝且非本驱动请求时记错误（本驱动中断取消的排队输入不算错）；有 `msg_lifecycle_v1` 时无 `user_message_uuid` 的 result 不猜归属，记错误。测试：`claude-warm-driver-close.test.ts`（顺序颠倒、顺序颠倒后失败、无 uuid、refused、回执取消）。
+- P2-2 OpenCode abort 准入屏障：热驱动记录本轮每个 abort 请求，排空前等待全部得到 HTTP 应答（各自受 5 秒请求超时约束），下一轮因此不会在 abort 在途时开始；结果未知（超时、连接丢失）时，排空前在本运行时内停掉旧 `opencode serve`、启动新 serve 并按原 session 继续（session 不存在则 fatal，不静默替换），不重发 prompt；替换失败才 fatal。测试（fake 延迟/丢弃 abort）：`opencode-warm-runtime.test.ts` 两例。
+- P2-3 重试提示中性化：Kernel 在重试窗口给出上一次尝试的消息 id，只有该消息带本 Activation 的 final 标记时才另给 `previousAttemptReplyFinal`；唤醒行默认为"Previous attempt posted msg=X; inspect it and finish any remaining work (it does not show every target was answered), or message-check if nothing remains."，带 final 标记时才说"posted its final reply"。测试：`wake-message-input.test.ts`、`worker-reply-drift-duplicate.test.ts`（进度贴、多目标部分答复、未 ACK 的 `--final` 帖）。
+- P2-4 旧版中断形状：无 `terminal_reason` 的 `error_during_execution` 只有在本次中断的 control_response 成功（关联回执）已到时才算中断；否则 terminal 为 unknown、Run 按失败处理（冷热两条路径，`claude-final-interrupt.js` 的 `endedByInterrupt`）。测试：`claude-final-interrupt.test.ts`、`claude-final-reply-driver.test.ts`（有/无回执）、`claude-warm-driver-close.test.ts`（结果先于回执）。
+- Claude 忙时输入：final 已 armed 后仍启动的幸存 notice 也会被再次中断，其中断结果归属 final 结束、不记错误；notice 回执文字改为"已写入、等待原生确认"。测试：`claude-warm-driver-close.test.ts`。
+- 仍未验证（需付费冒烟）：真实 Claude 的 result/lifecycle 先后顺序与旧版 CLI 形状、真实 OpenCode abort 与下一次模型请求的时序及 abort 超时频率、SSE 顺序、压缩后规则；以上修复只由 fake 确定性测试证明。审查指出的 `opencode-event-identity.js` 只按 session+role 过滤（非当前轮 ancestry）未在本批修改。
 
 ## 已知缺陷（待阶段 3 修复）
 

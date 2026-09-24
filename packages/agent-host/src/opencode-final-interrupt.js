@@ -74,24 +74,38 @@ export function createOpenCodeFinalInterrupt({ interrupt, inFlightTools }) {
   // aborting with no tool seen in flight, the persisted run is read. OpenCode
   // persists a tool part as running before it executes, and the Host signals
   // only after the post committed inside that tool, so the listing at signal
-  // time already shows it.
+  // time already shows it. The check fails closed: a listing that cannot be
+  // read, or is not a list of parts, is no evidence that the posting tool
+  // ended. After one bounded recheck the abort optimization is dropped for this
+  // run and the turn ends on its own (seventh review P1-2).
+  const LISTING_ATTEMPTS = 2;
+  let abandoned = false;
+  const trustedParts = (parts) =>
+    Array.isArray(parts) && parts.every((part) => isRecord(part));
   const fire = () => {
-    if (requested || ended || confirming) return;
+    if (requested || ended || confirming || abandoned) return;
     if (inFlightTools === undefined) return abort();
     confirming = true;
-    Promise.resolve()
-      .then(() => inFlightTools())
-      .then(
-        (parts) => {
-          confirming = false;
-          for (const part of Array.isArray(parts) ? parts : []) register(part);
-          if (tools.size === 0) abort();
-        },
-        () => {
-          confirming = false;
-          if (tools.size === 0) abort();
-        },
-      );
+    const attempt = (remaining) =>
+      Promise.resolve()
+        .then(() => inFlightTools())
+        .then((parts) => {
+          if (!trustedParts(parts)) throw new Error("untrusted tool listing");
+          return parts;
+        })
+        .then(
+          (parts) => {
+            confirming = false;
+            for (const part of parts) register(part);
+            if (tools.size === 0) abort();
+          },
+          () => {
+            if (remaining > 1 && !ended) return attempt(remaining - 1);
+            confirming = false;
+            abandoned = true;
+          },
+        );
+    void attempt(LISTING_ATTEMPTS);
   };
   const abort = () => {
     if (requested || ended) return;

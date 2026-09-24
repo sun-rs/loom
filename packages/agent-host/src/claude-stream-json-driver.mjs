@@ -28,10 +28,7 @@ import {
   isMissingClaudeSessionError as isMissingSessionError,
   withoutNestedClaudeCode,
 } from "./claude-stream-launch.js";
-import {
-  createClaudeFinalInterrupt,
-  isAbortedClaudeResult,
-} from "./claude-final-interrupt.js";
+import { createClaudeFinalInterrupt } from "./claude-final-interrupt.js";
 import {
   ClaudeStreamUsageTracker,
   ProviderUsageWriter,
@@ -308,11 +305,7 @@ async function runTurn(resumeSession) {
       }
       // Ended by the Host after the final reply committed: the reply is
       // done, so the aborted turn is this run's success.
-      if (
-        resultCount === 1 &&
-        finalInterrupt.issued &&
-        isAbortedClaudeResult(frame)
-      )
+      if (resultCount === 1 && finalInterrupt.endedByInterrupt(frame))
         endedAfterFinalReply = true;
       else if (frame.subtype !== "success" || frame.is_error === true)
         failedResult = frame;

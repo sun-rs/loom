@@ -37,13 +37,14 @@ export function previousAttemptUnconfirmed(
  * The message a previous RunAttempt of this Activation already committed in
  * this Room when that attempt ended without acknowledging delivery: the same
  * durable retry record, plus this participant's latest post carrying this
- * Activation. The retry wake names it so the model confirms delivery instead
- * of posting the same answer again. Read-only.
+ * Activation. A neutral fact: it may be a progress post or one of several
+ * targets' answers. `final` only when that post carries this Activation's
+ * final-reply marker. Read-only.
  */
-export function previousAttemptReplyMessageId(
+export function previousAttemptReply(
   database: DatabaseSync,
   scope: ActivationCredentialScope,
-): string | undefined {
+): { messageId: string; final: boolean } | undefined {
   const row = database
     .prepare(
       "SELECT last_error FROM activations WHERE activation_id=? AND participant_id=?",
@@ -54,29 +55,43 @@ export function previousAttemptReplyMessageId(
     return undefined;
   const posted = database
     .prepare(
-      `SELECT aggregate_id FROM room_events WHERE type='message.posted'
+      `SELECT aggregate_id, event_id FROM room_events WHERE type='message.posted'
         AND room_id=? AND actor_id=?
         AND json_extract(payload_json, '$.activationId')=?
         ORDER BY room_seq DESC LIMIT 1`,
     )
     .get(scope.roomId, scope.participantId, scope.activationId);
-  return posted === undefined ? undefined : text(posted, "aggregate_id");
+  if (posted === undefined) return undefined;
+  const final = database
+    .prepare(
+      "SELECT 1 FROM run_attempt_final_replies WHERE activation_id=? AND event_id=? LIMIT 1",
+    )
+    .get(scope.activationId, text(posted, "event_id"));
+  return {
+    messageId: text(posted, "aggregate_id"),
+    final: final !== undefined,
+  };
 }
 
 /** The rendered window's optional retry facts: either the previous attempt
  * posted nothing (`previousAttemptUnconfirmed`) or it already committed a
- * reply that was never acknowledged (`previousAttemptReplyMessageId`). */
+ * post that was never acknowledged (`previousAttemptReplyMessageId`, plus
+ * `previousAttemptReplyFinal` only when that post was the final reply). */
 export function retryReminder(
   database: DatabaseSync,
   scope: ActivationCredentialScope,
 ): {
   previousAttemptUnconfirmed?: true;
   previousAttemptReplyMessageId?: string;
+  previousAttemptReplyFinal?: true;
 } {
   if (previousAttemptUnconfirmed(database, scope))
     return { previousAttemptUnconfirmed: true };
-  const messageId = previousAttemptReplyMessageId(database, scope);
-  return messageId === undefined
+  const reply = previousAttemptReply(database, scope);
+  return reply === undefined
     ? {}
-    : { previousAttemptReplyMessageId: messageId };
+    : {
+        previousAttemptReplyMessageId: reply.messageId,
+        ...(reply.final ? { previousAttemptReplyFinal: true as const } : {}),
+      };
 }

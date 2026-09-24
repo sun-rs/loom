@@ -502,6 +502,13 @@ function serverEnvironment() {
   };
 }
 
+/** The final-abort check fails closed on a listing that is not a list. */
+function trustedMessageList(messages) {
+  if (!Array.isArray(messages))
+    throw new Error("OpenCode message listing is not a list");
+  return messages;
+}
+
 /**
  * Tool parts of the run that `messageId` started, from the latest persisted
  * messages (ascending). When our user message is older than the page, every
@@ -656,8 +663,10 @@ async function submitPrompt(resumed) {
         }),
       inFlightTools: async () =>
         runToolParts(
-          await requestJson(
-            `/session/${encodeURIComponent(sessionId)}/message?limit=${RECENT_MESSAGE_LIMIT}`,
+          trustedMessageList(
+            await requestJson(
+              `/session/${encodeURIComponent(sessionId)}/message?limit=${RECENT_MESSAGE_LIMIT}`,
+            ),
           ),
           messageId,
         ).filter((part) => !toolPartSettled(part)),

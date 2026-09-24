@@ -30,10 +30,15 @@
 // before the first assistant, so a client misses it and must reconcile from
 // `GET /session/:id/message`), lagtool (the bus delivers everything from the
 // tool start on only after FAKE_LAG_MS, in order, while the persisted
-// messages are already current). FAKE_SCRIPT (comma separated) gives one scenario
+// messages are already current), listfail (`GET /session/:id/message`
+// answers 500 while the prompt runs), sideerror (a non-abort `session.error`
+// is published during the run, which then goes on). FAKE_SCRIPT (comma separated) gives one scenario
 // per prompt. FAKE_RECORD (jsonl) records requests and model steps.
 // FAKE_TOOL_COMMAND replaces the derived Worker command. FAKE_FOLLOW_UP_MS
 // bounds the wait for an abort before the post-reply generation (default 300).
+// FAKE_ABORT_DELAY_MS delays the abort's HTTP answer (the run is cancelled at
+// once); FAKE_ABORT_DROP=1 cancels the run and drops the connection without
+// any answer (an abort whose outcome the client cannot know).
 import { spawn } from "node:child_process";
 import { appendFileSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -251,7 +256,12 @@ async function runPrompt(s, body, res) {
     type: "text",
     text,
   });
-  const run = { cancelled: false, wake: undefined, current: undefined };
+  const run = {
+    cancelled: false,
+    current: undefined,
+    listFail: tokens.has("listfail"),
+    wake: undefined,
+  };
   s.run = run;
   status(s, "busy");
   const finish = (info) => {
@@ -284,6 +294,14 @@ async function runPrompt(s, body, res) {
     publish("session.error", { sessionID: s.id, error: first.error });
     return finish(first);
   }
+  if (tokens.has("sideerror"))
+    publish("session.error", {
+      sessionID: s.id,
+      error: {
+        name: "UnknownError",
+        data: { message: "FAKE independent session failure" },
+      },
+    });
   updatePart(s, {
     id: nextId("prt"),
     messageID: first.id,
@@ -473,6 +491,11 @@ const server = createServer(async (req, res) => {
         title: "existing",
       });
     if (req.method === "GET" && tail === "/message") {
+      if (s.run?.listFail === true)
+        return send(res, 500, {
+          name: "UnknownError",
+          data: { message: "FAKE listing failure" },
+        });
       // `limit`: the latest N messages, ascending (`Session.messages`).
       const limit = Number(url.searchParams.get("limit") ?? 0);
       return send(res, 200, limit > 0 ? s.messages.slice(-limit) : s.messages);
@@ -494,6 +517,15 @@ const server = createServer(async (req, res) => {
         s.run.shell?.kill("SIGTERM");
         s.run.wake?.();
       }
+      if (env.FAKE_ABORT_DROP === "1") {
+        record({ event: "abort-dropped" });
+        return req.socket.destroy();
+      }
+      if (env.FAKE_ABORT_DELAY_MS)
+        await new Promise((resolve) =>
+          setTimeout(resolve, Number(env.FAKE_ABORT_DELAY_MS)),
+        );
+      record({ event: "abort-answered" });
       return send(res, 200, true);
     }
   }

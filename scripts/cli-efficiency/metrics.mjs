@@ -241,6 +241,45 @@ const statusOf = (failures) =>
     : failures.length
       ? "over-budget"
       : "within-budget";
+// Contract §6: a dimension neither side can measure is a gap in the evidence,
+// so the verdict is missing-evidence however the measured sub-items fared
+// (`measuredStatus` keeps latency/delivery visible on their own). Seventh
+// review P1-4.
+const verdictOf = (measuredStatus, unmeasured) =>
+  unmeasured.length > 0 ? "missing-evidence" : measuredStatus;
+/**
+ * The gate's overall result: `failed` when an arm is incomplete or a measured
+ * dimension lacks evidence; `missing-evidence` when every measured dimension
+ * has evidence but some dimension is unmeasured; else `over-budget` or
+ * `needs-quality-review`. `measuredStatus` summarizes the measured sub-items
+ * only (reported, never the verdict).
+ */
+export function gateStatus({ arms, comparisons }) {
+  const list = Object.values(comparisons);
+  const measured = list.flatMap((c) => [
+    c.measuredStatus ?? c.status,
+    ...(c.rounds ?? []).map((r) => r.measuredStatus ?? r.status),
+    ...((c.failures ?? []).some((f) => f.endsWith("Missing"))
+      ? ["missing-evidence"]
+      : []),
+  ]);
+  const unmeasured = list.some((c) => (c.unmeasured ?? []).length > 0);
+  const measuredStatus = measured.includes("missing-evidence")
+    ? "missing-evidence"
+    : measured.includes("over-budget")
+      ? "over-budget"
+      : "within-budget";
+  const status =
+    Object.values(arms).some((a) => a.status !== "complete") ||
+    measuredStatus === "missing-evidence"
+      ? "failed"
+      : unmeasured
+        ? "missing-evidence"
+        : measuredStatus === "over-budget"
+          ? "over-budget"
+          : "needs-quality-review";
+  return { status, measuredStatus };
+}
 const diff = (a, b) => (finite(a) && finite(b) ? a - b : null);
 const businessToolCalls = (m) =>
   Array.isArray(m.toolCalls)
@@ -359,8 +398,10 @@ export function compareArm(nativeRounds, rahRounds, options = {}) {
     rounds.push({ ...compareRounds(nat, rah, options), inputDecomposition });
   }
   const all = [...failures, ...rounds.flatMap((x) => x.failures)];
+  const measuredStatus = statusOf(all);
   return {
-    status: statusOf(all),
+    status: verdictOf(measuredStatus, unmeasured),
+    measuredStatus,
     failures,
     unmeasured,
     finalInterrupt: summarizeFinalInterrupts(rahRounds.slice(0, n)),
@@ -428,8 +469,10 @@ export function compareRounds(native, rah, options = {}) {
   if (!["complete", "not-recorded"].includes(evidence.completeness))
     failures.push("usageEvidenceMissing");
   else if (evidence.mismatches.length) failures.push("usageEvidenceMismatch");
+  const measuredStatus = statusOf(failures);
   return {
-    status: statusOf(failures),
+    status: verdictOf(measuredStatus, unmeasured),
+    measuredStatus,
     failures,
     unmeasured,
     generations,

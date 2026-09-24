@@ -61,10 +61,15 @@ export const WorkerMessagePresentResponseSchema = z
     /**
      * Present only on a retry whose previous RunAttempt committed a post in
      * this Room for this Activation yet ended without acknowledging delivery:
-     * that post's message id, so the wake asks for confirmation rather than a
-     * duplicate reply. Kernel-derived; never client-supplied.
+     * that post's message id, a neutral fact (it may be progress or one
+     * target's answer). Kernel-derived; never client-supplied.
      */
     previousAttemptReplyMessageId: IdentifierSchema.optional(),
+    /**
+     * Present only beside `previousAttemptReplyMessageId` when that post
+     * carries this Activation's final-reply marker. Kernel-derived.
+     */
+    previousAttemptReplyFinal: z.literal(true).optional(),
   })
   .strict()
   .refine((value) => value.toSeq >= value.fromSeq, {

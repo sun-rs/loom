@@ -622,7 +622,7 @@ test("an independent transcript cross-check mismatch is usage evidence mismatch"
   ]);
 });
 
-test("unmeasured dimensions are reported, not failed (Kimi: no product usage)", async () => {
+test("unmeasured dimensions are reported as sub-items and make the verdict missing-evidence (Kimi: no product usage)", async () => {
   const { compareArm } = await import("./metrics.mjs");
   const noProduct = compareRounds(
     nativeRound,
@@ -632,6 +632,10 @@ test("unmeasured dimensions are reported, not failed (Kimi: no product usage)", 
   assert.deepEqual(noProduct.failures, []);
   assert.equal(noProduct.usageEvidence.completeness, "not-recorded");
   assert.deepEqual(noProduct.unmeasured, ["productUsage"]);
+  // Contract §6: a usage gap is never within budget (seventh review P1-4);
+  // the measured sub-items keep their own verdict.
+  assert.equal(noProduct.status, "missing-evidence");
+  assert.equal(noProduct.measuredStatus, "within-budget");
   // Latency only: tokens and generations unknown on both sides.
   const bare = (r) => ({ replySeconds: r.replySeconds });
   const latencyOnly = compareArm(
@@ -642,7 +646,10 @@ test("unmeasured dimensions are reported, not failed (Kimi: no product usage)", 
   assert.deepEqual(latencyOnly.failures, []);
   assert.deepEqual(latencyOnly.rounds[0].failures, []);
   assert.deepEqual(latencyOnly.rounds[1].failures, ["replySeconds"]);
-  assert.equal(latencyOnly.status, "over-budget");
+  assert.equal(latencyOnly.status, "missing-evidence");
+  assert.equal(latencyOnly.measuredStatus, "over-budget");
+  assert.equal(latencyOnly.rounds[0].status, "missing-evidence");
+  assert.equal(latencyOnly.rounds[0].measuredStatus, "within-budget");
   assert.deepEqual(latencyOnly.unmeasured, [
     "productUsage",
     "tokens",
@@ -651,4 +658,47 @@ test("unmeasured dimensions are reported, not failed (Kimi: no product usage)", 
   // Default (Codex/Claude): nothing is exempt, missing evidence still fails.
   const strict = compareArm([bare(nativeRound)], [bare(rahRound)]);
   assert.equal(strict.status, "missing-evidence");
+});
+
+test("seventh review P1-4: latency-only evidence is never within budget or quality-review ready", async () => {
+  const { compareArm, gateStatus } = await import("./metrics.mjs");
+  const bare = (seconds) => ({ replySeconds: seconds });
+  const latencyOnly = compareRounds(bare(1), bare(1), {
+    unmeasured: ["tokens", "generations", "productUsage"],
+  });
+  assert.equal(latencyOnly.status, "missing-evidence");
+  assert.equal(latencyOnly.measuredStatus, "within-budget");
+  const arm = compareArm([bare(1)], [bare(1)], {
+    unmeasured: ["tokens", "generations", "productUsage"],
+  });
+  const complete = {
+    native: { status: "complete" },
+    role: { status: "complete" },
+  };
+  const gate = gateStatus({ arms: complete, comparisons: { role: arm } });
+  assert.equal(gate.status, "missing-evidence");
+  assert.equal(gate.measuredStatus, "within-budget");
+  // Fully measured and within budget: quality review, as before.
+  const measured = compareArm([nativeRound], [rahRound]);
+  assert.equal(
+    gateStatus({ arms: complete, comparisons: { role: measured } }).status,
+    measured.status === "within-budget"
+      ? "needs-quality-review"
+      : measured.status === "over-budget"
+        ? "over-budget"
+        : "failed",
+  );
+  // Real missing evidence (a measured dimension absent) still fails.
+  const strict = compareArm([bare(1)], [bare(1)]);
+  assert.equal(
+    gateStatus({ arms: complete, comparisons: { role: strict } }).status,
+    "failed",
+  );
+  assert.equal(
+    gateStatus({
+      arms: { ...complete, role: { status: "failed" } },
+      comparisons: { role: arm },
+    }).status,
+    "failed",
+  );
 });

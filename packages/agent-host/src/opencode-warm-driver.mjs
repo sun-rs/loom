@@ -40,6 +40,18 @@
 // our id) and terminal tool states for the final-reply boundary. The prompt
 // is never resent. A gap makes `preemptedFollowUp` unknown.
 //
+// Abort barrier (seventh review P2-2): `POST /session/:id/abort` names only
+// the session, so an abort still in flight when the prompt answers could land
+// on the NEXT turn. The drain waits for every abort request of this turn to
+// be answered (each bounded by the request timeout); an abort whose outcome
+// stays unknown (timeout, lost connection) retires that `opencode serve`
+// before the drain, and the same session continues on a fresh server inside
+// this runtime. The prompt is never resent.
+//
+// Turn status: a Host stop is `interrupted`; otherwise any independent error
+// (a non-abort `session.error`, a failed answer) makes it `failed` with the
+// text kept for the Host, even after the final abort (seventh review P1-3).
+//
 // Busy input is refused in this slice (a prompt while the loop runs is
 // appended to the running loop, which would move its exit condition; not
 // verified). An unprompted run while idle (for example a background task) is
@@ -199,6 +211,7 @@ function beginTurn(command) {
 
 function createTurn(runAttemptId, text) {
   const turn = {
+    aborts: [],
     accepted: false,
     deliveryReported: false,
     errors: [],
@@ -229,11 +242,12 @@ function createTurn(runAttemptId, text) {
   turn.writer = new RuntimeTrajectoryWriter(writeFrame);
   turn.usageWriter = new ProviderUsageWriter(writeFrame);
   turn.finalInterrupt = createOpenCodeFinalInterrupt({
-    interrupt: async () => await abortSession(),
+    interrupt: async () => await turnAbort(turn),
     inFlightTools: async () =>
-      runToolParts(await recentMessages(), turn.messageId).filter(
-        (part) => !toolPartSettled(part),
-      ),
+      runToolParts(
+        trustedMessageList(await recentMessages()),
+        turn.messageId,
+      ).filter((part) => !toolPartSettled(part)),
   });
   return turn;
 }
@@ -266,7 +280,23 @@ function interruptTurn(command) {
   const turn = active;
   if (turn === undefined || turn.runAttemptId !== command.runAttemptId) return;
   turn.stopRequested = true;
-  void abortSession().catch(() => undefined);
+  void turnAbort(turn).catch(() => undefined);
+}
+
+/**
+ * An abort of this turn's run, remembered until answered: an HTTP answer
+ * (even an error status) is a known outcome; a timeout or a lost connection
+ * is not.
+ */
+function turnAbort(turn) {
+  const request = abortSession();
+  turn.aborts.push(
+    request.then(
+      () => "answered",
+      (error) => (error instanceof HttpError ? "answered" : "unknown"),
+    ),
+  );
+  return request;
 }
 
 function finalTurn(command) {
@@ -355,6 +385,13 @@ async function recentMessages() {
   return await requestJson(
     `/session/${encodeURIComponent(sessionId)}/message?limit=${RECENT_MESSAGE_LIMIT}`,
   );
+}
+
+/** The final-abort check fails closed on a listing that is not a list. */
+function trustedMessageList(messages) {
+  if (!Array.isArray(messages))
+    throw new Error("OpenCode message listing is not a list");
+  return messages;
 }
 
 /**
@@ -665,6 +702,14 @@ async function settleTurn(turn, response, error) {
     ]);
   if (!turn.idle)
     emit("unattributed", { method: "session.idle", reason: "missing_idle" });
+  // The next turn is admitted only after this turn's aborts are answered;
+  // an unknown outcome retires the server before the drain.
+  const abortOutcomes = await Promise.all(turn.aborts);
+  let replaceError;
+  if (abortOutcomes.includes("unknown"))
+    await replaceServer().catch((error) => {
+      replaceError = error;
+    });
   turn.settled = true;
   if (turn.finalEnded)
     turn.writer.emit(
@@ -690,11 +735,14 @@ async function settleTurn(turn, response, error) {
       protocol: "rah-final-interrupt/v1",
       ...turn.finalInterrupt.report(),
     });
-  const status =
-    turn.stopRequested || turn.finalEnded
-      ? "interrupted"
-      : turn.errors.length > 0
-        ? "failed"
+  // A Host stop wins; then any independent error; only then the final end.
+  const failed = turn.errors.length > 0;
+  const status = turn.stopRequested
+    ? "interrupted"
+    : failed
+      ? "failed"
+      : turn.finalEnded
+        ? "interrupted"
         : "completed";
   emit("turn.drained", {
     inFlightToolCount: turn.finalInterrupt.toolsInFlight,
@@ -703,12 +751,16 @@ async function settleTurn(turn, response, error) {
     runAttemptId: turn.runAttemptId,
     status,
     stopRequested: turn.stopRequested,
-    ...(status === "failed"
+    ...(failed
       ? { errorMessage: redact(turn.errors.join("; ")).slice(0, 2048) }
       : {}),
-    ...(turn.finalEnded ? { endedAfterFinalReply: true } : {}),
+    ...(turn.finalEnded && !failed ? { endedAfterFinalReply: true } : {}),
   });
   if (active === turn) active = undefined;
+  if (replaceError !== undefined)
+    fatal(
+      `an abort of the last turn has an unknown outcome and the server could not be replaced: ${redact(errorMessage(replaceError))}`,
+    );
 }
 
 /**
@@ -775,12 +827,13 @@ async function startServer() {
   });
   child.once("error", (error) => fatal(`opencode failed: ${error.message}`));
   void exited.then(({ code, signal }) => {
-    if (!shuttingDown)
+    if (!shuttingDown && handle.retired !== true)
       fatal(
         `opencode serve exited (code=${String(code)}, signal=${String(signal)})${serverDiagnostics()}`,
       );
   });
   const handle = {
+    retired: false,
     authHeader: serverAuthHeader(),
     baseUrl: `http://127.0.0.1:${port}`,
     child,
@@ -957,27 +1010,46 @@ async function shutdown(exitCode) {
   if (active !== undefined && sessionId !== undefined && server !== undefined)
     await Promise.race([abortSession().catch(() => undefined), delay(500)]);
   eventController?.abort();
-  const handle = server;
+  await stopServer(server);
+  process.exit(exitCode);
+}
+
+async function stopServer(handle) {
   if (
-    handle !== undefined &&
+    handle === undefined ||
+    handle.child.exitCode !== null ||
+    handle.child.signalCode !== null
+  )
+    return;
+  handle.child.kill("SIGTERM");
+  const terminated = await Promise.race([
+    handle.exited.then(() => true),
+    delay(SERVER_TERM_TIMEOUT_MS).then(() => false),
+  ]);
+  if (
+    !terminated &&
     handle.child.exitCode === null &&
     handle.child.signalCode === null
   ) {
-    handle.child.kill("SIGTERM");
-    const terminated = await Promise.race([
-      handle.exited.then(() => true),
-      delay(SERVER_TERM_TIMEOUT_MS).then(() => false),
-    ]);
-    if (
-      !terminated &&
-      handle.child.exitCode === null &&
-      handle.child.signalCode === null
-    ) {
-      handle.child.kill("SIGKILL");
-      await Promise.race([handle.exited, delay(SERVER_TERM_TIMEOUT_MS)]);
-    }
+    handle.child.kill("SIGKILL");
+    await Promise.race([handle.exited, delay(SERVER_TERM_TIMEOUT_MS)]);
   }
-  process.exit(exitCode);
+}
+
+/**
+ * P2-2: an abort whose outcome is unknown may still land on the old server.
+ * Retire that server (and its live bus) and continue the same session on a
+ * fresh one before the next turn can be admitted; a missing session is never
+ * replaced silently.
+ */
+async function replaceServer() {
+  const old = server;
+  if (old !== undefined) old.retired = true;
+  eventController?.abort();
+  await stopServer(old);
+  server = await startServer();
+  await subscribeEvents();
+  await requestJson(`/session/${encodeURIComponent(sessionId)}`);
 }
 
 // ---------------------------------------------------------------- helpers

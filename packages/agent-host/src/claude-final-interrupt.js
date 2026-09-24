@@ -10,9 +10,13 @@
 // Reported as three separate facts: `requested` (the request was written),
 // `accepted` (the control_response was `success`: true; `error`: false;
 // timeout or lost answer: "unknown") and `terminal` (this turn's `result`
-// ended aborted — `terminal_reason` aborted_tools/aborted_streaming, or an
-// `error_during_execution` result without a reason from an older CLI: true;
-// any other result: false; none seen: "unknown"). `sent` = requested and not
+// ended aborted — `terminal_reason` aborted_tools/aborted_streaming: true;
+// any other reason: false; none seen: "unknown"). An older CLI's
+// `error_during_execution` result without `terminal_reason` cannot tell a
+// platform interrupt from a provider failure: it counts as aborted only when
+// this interrupt's own control_response was a success (the correlated cancel
+// receipt), otherwise `terminal` is "unknown" and the run does not read as an
+// intended final end (seventh review P2-4). `sent` = requested and not
 // refused.
 //
 // `preemptedFollowUp` is observed, never assumed. The follow-up window opens
@@ -43,12 +47,28 @@ function isFinalPost(block) {
   );
 }
 
-/** A `result` frame that ended because the running turn was aborted. */
-export function isAbortedClaudeResult(frame) {
+/**
+ * A `result` frame that ended because the running turn was aborted. Without
+ * `terminal_reason` (older CLI) only a correlated interrupt receipt makes an
+ * `error_during_execution` an abort; without one it is not proof.
+ */
+export function isAbortedClaudeResult(
+  frame,
+  { interruptAcknowledged = false } = {},
+) {
   if (frame?.type !== "result") return false;
   if (typeof frame.terminal_reason === "string")
     return ABORTED_REASONS.has(frame.terminal_reason);
-  return frame.subtype === "error_during_execution";
+  return interruptAcknowledged && frame.subtype === "error_during_execution";
+}
+
+/** An older CLI's result shape that needs the interrupt receipt to decide. */
+function isLegacyErrorResult(frame) {
+  return (
+    frame?.type === "result" &&
+    typeof frame.terminal_reason !== "string" &&
+    frame.subtype === "error_during_execution"
+  );
 }
 
 export function createClaudeFinalInterrupt({ interrupt }) {
@@ -132,10 +152,31 @@ export function createClaudeFinalInterrupt({ interrupt }) {
         }
       } else if (frame?.type === "result") {
         ended = true;
-        terminal = requested ? isAbortedClaudeResult(frame) : terminal;
+        // Decided when the result arrives, exactly as the driver decides it
+        // (`endedByInterrupt`): a later receipt does not rewrite it.
+        if (requested)
+          terminal = isLegacyErrorResult(frame)
+            ? accepted === true
+              ? true
+              : "unknown"
+            : isAbortedClaudeResult(frame);
         return;
       }
       if (armed && !requested && tools.size === 0) fire();
+    },
+    /**
+     * Whether `frame` (this turn's result) is the end this interrupt caused:
+     * requested, not refused, and aborted — a reason-less older result only
+     * with this interrupt's success receipt already in hand.
+     */
+    endedByInterrupt(frame) {
+      return (
+        requested &&
+        accepted !== false &&
+        isAbortedClaudeResult(frame, {
+          interruptAcknowledged: accepted === true,
+        })
+      );
     },
     /** The Host's signal; false when already armed or the turn ended. */
     arm() {

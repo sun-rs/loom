@@ -15,7 +15,9 @@ import { integer, text, type Row } from "./sqlite-row.ts";
 import { NotFoundError } from "./errors.ts";
 import {
   findActiveHeldMessageDraftForTarget,
+  heldDraftReplyIntent,
   SEND_DRAFT_NOT_FOUND_MESSAGE,
+  settleHeldDraftReplyIntent,
 } from "./held-message-drafts.ts";
 import { deriveWorkerMessageIdempotencyKey } from "./worker-message-identity.ts";
 import type { Principal } from "./types.ts";
@@ -120,6 +122,13 @@ export function postWorkerMessageTransaction(context: {
     eventFromRow: context.eventFromRow,
     resolveLive: (ids) => files.forWorkerMessage(execution, ids),
   });
+  // `--send-draft` restores the held send's own causal marker and `--final`
+  // (same Activation only) through the step the target route shares.
+  const intent = heldDraftReplyIntent(
+    draftRow,
+    scope.activationId,
+    context.input,
+  );
   const result = context.collaboration.postActivationMessage(
     context.principal,
     {
@@ -156,16 +165,16 @@ export function postWorkerMessageTransaction(context: {
   // based on content the Host already presented in this RunAttempt carries
   // the same evidence, so it no longer needs a separate check turn. Only the
   // presented prefix is acknowledged; a notice-degraded sequence stops the
-  // cursor and still requires an explicit `message-check`.
-  if ("event" in result)
-    context.acknowledge(scope, {
-      postedRoomId: result.event.roomId,
-      modelBasedOnRoomSeq: context.input.basedOnRoomSeq,
-    });
-  // Final-reply marker: independent of the ACK (`final` alone never
-  // acknowledges); only a committed post, never a held draft.
-  if ("event" in result && parsed.final === true)
-    context.recordFinal(scope, result.event);
+  // cursor and still requires an explicit `message-check`. A held send keeps
+  // its intent on the draft for `--send-draft`.
+  settleHeldDraftReplyIntent({
+    database,
+    scope,
+    intent,
+    result,
+    acknowledge: context.acknowledge,
+    recordFinal: context.recordFinal,
+  });
   // A token that woke nobody rides back on the successful post, exactly as
   // Raft returns unresolvedMentionHandles alongside a queued message. A
   // deduplicated post reports nothing: the first one already did.

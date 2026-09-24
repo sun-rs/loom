@@ -259,6 +259,48 @@ export function heldDraftReplyIntent(
   };
 }
 
+/**
+ * The one in-transaction step both Worker post entries (the originating route
+ * and the explicit-target route) run after the send decision: a send the
+ * Kernel saved as a draft (freshness hold or target confirmation) keeps the
+ * reply intent, and a committed send acknowledges delivery with the intent's
+ * causal marker and records the final reply. The marker is the model's own,
+ * never the server-derived send window, so this step cannot move the
+ * freshness fence.
+ */
+export function settleHeldDraftReplyIntent<
+  Scope extends { activationId: string },
+  Event extends { roomId: string },
+>(context: {
+  database: DatabaseSync;
+  scope: Scope;
+  intent: HeldDraftReplyIntent;
+  result: { heldDraftId?: unknown; state?: unknown } | { event: Event };
+  acknowledge: (
+    scope: Scope,
+    input: { postedRoomId: string; modelBasedOnRoomSeq: number | undefined },
+  ) => void;
+  recordFinal: (scope: Scope, event: Event) => void;
+}): void {
+  const { result, intent, scope } = context;
+  if ("event" in result) {
+    context.acknowledge(scope, {
+      postedRoomId: result.event.roomId,
+      modelBasedOnRoomSeq: intent.basedOnRoomSeq,
+    });
+    // Independent of the ACK (`final` alone never acknowledges); only a
+    // committed post, never a held draft.
+    if (intent.final) context.recordFinal(scope, result.event);
+    return;
+  }
+  if (
+    (result.state === "held" ||
+      result.state === "target_confirmation_required") &&
+    typeof result.heldDraftId === "string"
+  )
+    recordHeldDraftReplyIntent(context.database, result.heldDraftId, intent);
+}
+
 /** Raft's `SEND_DRAFT_NOT_FOUND` text, minus the CLI's own command spelling. */
 export const SEND_DRAFT_NOT_FOUND_MESSAGE = [
   "No saved draft exists for this target.",

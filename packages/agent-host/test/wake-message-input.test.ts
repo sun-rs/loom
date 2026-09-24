@@ -329,7 +329,7 @@ test("a retry after an attempt that neither replied nor checked says so once", (
   assert.doesNotMatch(first, /Previous attempt/u);
 });
 
-test("a retry after a committed but unacknowledged reply names it instead of the generic reminder", () => {
+test("a retry after a committed but unacknowledged post names it neutrally, never as a completed reply", () => {
   const messageId = "message_1f2e3d4c-0000-4000-8000-000000000000";
   const retried = formatBodiedWakeInput({
     present: present({ previousAttemptReplyMessageId: messageId }),
@@ -337,8 +337,23 @@ test("a retry after a committed but unacknowledged reply names it instead of the
   })!;
   assert.equal(
     retried.split("\n").at(-1),
-    "Your reply (msg=1f2e3d4c) was already posted; confirm delivery with message-check --turn t1 or post only if something is missing.",
+    "Previous attempt posted msg=1f2e3d4c; inspect it and finish any remaining work (it does not show every target was answered), or message-check --turn t1 if nothing remains.",
   );
   assert.doesNotMatch(retried, /Previous attempt ended/u);
-  assert.equal(retried.match(/already posted/gu)?.length, 1);
+  assert.doesNotMatch(retried, /already posted|Your reply|final reply/u);
+});
+
+test("only a previous post carrying the final-reply marker is named as the final reply", () => {
+  const messageId = "message_1f2e3d4c-0000-4000-8000-000000000000";
+  const retried = formatBodiedWakeInput({
+    present: present({
+      previousAttemptReplyMessageId: messageId,
+      previousAttemptReplyFinal: true,
+    }),
+    turnHandle: "t1",
+  })!;
+  assert.equal(
+    retried.split("\n").at(-1),
+    "Previous attempt posted its final reply msg=1f2e3d4c; confirm delivery with message-check --turn t1.",
+  );
 });

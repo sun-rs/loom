@@ -162,6 +162,8 @@ export type RenderedPresentedWindow = PresentedWindow & {
   previousAttemptUnconfirmed?: true;
   /** See `activation-retry-reminder.ts`. */
   previousAttemptReplyMessageId?: string;
+  /** See `activation-retry-reminder.ts`. */
+  previousAttemptReplyFinal?: true;
 };
 
 const TERMINAL_RUN_ATTEMPT_STATES = new Set([

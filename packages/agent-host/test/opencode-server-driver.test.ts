@@ -366,6 +366,34 @@ test("final reply: a Host signal that outruns the stream never cuts the posting 
   );
 });
 
+test("final reply: an unreadable persisted run while the stream lags never aborts the posting tool (fail closed)", async () => {
+  const result = await runTurn({
+    scenario: "hang+lagtool+listfail",
+    wake: WAKE,
+    signal: { runAttemptId: "run-1", turnId: "accepted" },
+    env: { FAKE_LAG_MS: "400" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.ok(
+    result.records.some(
+      (r) =>
+        r.event === "request" &&
+        r.method === "GET" &&
+        r.path === "/session/ses_fakenew/message",
+    ),
+    "the persisted run was queried",
+  );
+  assert.deepEqual(
+    requests(result.records, "/abort"),
+    [],
+    "no abort without proof the posting tool ended",
+  );
+  assert.ok(
+    result.records.some((r) => r.event === "follow-up-generation"),
+    "the turn ends on its own",
+  );
+});
+
 test("final reply: without the signal the turn is unchanged", async () => {
   const result = await runTurn({ scenario: "reply", wake: WAKE });
   assert.equal(result.code, 0, result.stderr);

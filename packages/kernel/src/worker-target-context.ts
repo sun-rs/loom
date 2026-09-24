@@ -25,7 +25,8 @@ import { ForbiddenError, NotFoundError, StaleContextError } from "./errors.ts";
 import {
   findActiveHeldMessageDraftForTarget,
   heldDraftReplyIntent,
-  recordHeldDraftReplyIntent,
+  settleHeldDraftReplyIntent,
+  type HeldDraftReplyIntent,
   saveHeldMessageDraft,
   SEND_DRAFT_NOT_FOUND_MESSAGE,
 } from "./held-message-drafts.ts";
@@ -410,11 +411,7 @@ export class WorkerTargetContextService {
             metadata,
           );
       if (confirmation !== undefined) {
-        recordHeldDraftReplyIntent(
-          this.#context.database,
-          confirmation.heldDraftId,
-          intent,
-        );
+        this.#settleReplyIntent(origin, intent, confirmation);
         return confirmation;
       }
       const body =
@@ -452,20 +449,25 @@ export class WorkerTargetContextService {
       if ("event" in result && !result.deduplicated)
         this.#context.files().consume(attachments, result.event.aggregateId);
       this.#context.attachmentComments().bindWorkerResult(metadata, result);
-      if ("state" in result && result.state === "held")
-        recordHeldDraftReplyIntent(
-          this.#context.database,
-          result.heldDraftId,
-          intent,
-        );
-      if ("event" in result)
-        this.#context.acknowledgePresentedDelivery(origin, {
-          postedRoomId: result.event.roomId,
-          modelBasedOnRoomSeq: intent.basedOnRoomSeq,
-        });
-      if ("event" in result && intent.final)
-        this.#context.recordFinalReply(origin, result.event);
+      this.#settleReplyIntent(origin, intent, result);
       return P.WorkerMessagePostResponseSchema.parse(result);
+    });
+  }
+
+  #settleReplyIntent(
+    origin: P.ActivationCredentialScope,
+    intent: HeldDraftReplyIntent,
+    result: { heldDraftId?: unknown; state?: unknown } | { event: P.RoomEvent },
+  ) {
+    settleHeldDraftReplyIntent({
+      database: this.#context.database,
+      scope: origin,
+      intent,
+      result,
+      acknowledge: (scope, input) =>
+        this.#context.acknowledgePresentedDelivery(scope, input),
+      recordFinal: (scope, event) =>
+        this.#context.recordFinalReply(scope, event),
     });
   }
 

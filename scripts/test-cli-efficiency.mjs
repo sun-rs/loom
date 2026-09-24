@@ -12,7 +12,7 @@ import { nativeKimiRound } from "./cli-efficiency/native-kimi.mjs";
 import { parseEfficiencyEnv } from "./cli-efficiency/efficiency-config.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
-import { budgets, compareArm } from "./cli-efficiency/metrics.mjs";
+import { budgets, compareArm, gateStatus } from "./cli-efficiency/metrics.mjs";
 import { compareWarmCold } from "./cli-efficiency/warm.mjs";
 assert.ok(
   process.argv.includes("--paid"),
@@ -199,21 +199,21 @@ try {
           `${kind} round ${i + 1} input over budget: ` +
             JSON.stringify(r.inputDecomposition),
         );
-  // Any missing evidence (arm or round) fails the gate, as before.
-  const statuses = Object.values(result.comparisons).flatMap((c) => [
-    c.status,
-    ...(c.rounds ?? []).map((r) => r.status),
-    ...(c.failures.some((f) => f.endsWith("Missing"))
-      ? ["missing-evidence"]
-      : []),
-  ]);
-  result.status =
-    Object.values(result.arms).some((a) => a.status !== "complete") ||
-    statuses.includes("missing-evidence")
-      ? "failed"
-      : statuses.includes("over-budget")
-        ? "over-budget"
-        : "needs-quality-review";
+  // Any missing evidence (arm or round) fails the gate, as before; an
+  // unmeasured dimension (Kimi usage) makes the verdict missing-evidence, with
+  // the measured sub-items reported separately (contract §6).
+  const gate = gateStatus({
+    arms: result.arms,
+    comparisons: result.comparisons,
+  });
+  result.status = gate.status;
+  result.measuredStatus = gate.measuredStatus;
+  if (result.status === "missing-evidence") {
+    console.log(
+      `unmeasured dimensions: verdict missing-evidence; measured sub-items ${gate.measuredStatus}`,
+    );
+    process.exitCode = 1;
+  }
   if (result.status === "over-budget") process.exitCode = 2;
   if (result.status === "failed") process.exitCode = 1;
 } catch (e) {

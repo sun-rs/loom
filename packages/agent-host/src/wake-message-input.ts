@@ -23,8 +23,10 @@
  * - a retry after an attempt that neither posted nor confirmed delivery adds
  *   one reminder line (Kernel-decided `previousAttemptUnconfirmed`); a retry
  *   after an attempt that committed a post but never confirmed delivery
- *   instead names that post (`previousAttemptReplyMessageId`), so the model
- *   confirms rather than posting the same answer twice;
+ *   instead names that post (`previousAttemptReplyMessageId`) as a neutral
+ *   fact — inspect it, finish what remains — and calls it the final reply
+ *   only when the Kernel says it carried the final marker
+ *   (`previousAttemptReplyFinal`; seventh review P2-3);
  * - a truncated window or one with a notice tail instead ends with one line
  *   asking for `message-check` first.
  */
@@ -43,9 +45,20 @@ import {
 export const PREVIOUS_ATTEMPT_UNCONFIRMED_LINE =
   "Previous attempt ended without a reply or message-check.";
 
-/** The one-line retry notice when the previous attempt's post already landed. */
-export function previousAttemptReplyLine(messageId: string, turn: string) {
-  return `Your reply (msg=${shortWorkerRef(messageId)}) was already posted; confirm delivery with message-check${turn} or post only if something is missing.`;
+/**
+ * The one-line retry notice when the previous attempt's post already landed.
+ * Neutral unless that post carried the final-reply marker: a progress post or
+ * one target's answer is not a completed reply.
+ */
+export function previousAttemptReplyLine(
+  messageId: string,
+  turn: string,
+  final = false,
+) {
+  const ref = shortWorkerRef(messageId);
+  return final
+    ? `Previous attempt posted its final reply msg=${ref}; confirm delivery with message-check${turn}.`
+    : `Previous attempt posted msg=${ref}; inspect it and finish any remaining work (it does not show every target was answered), or message-check${turn} if nothing remains.`;
 }
 
 /**
@@ -131,7 +144,7 @@ export function formatBodiedWakeInput(input: {
     present.previousAttemptUnconfirmed === true
       ? `\n${PREVIOUS_ATTEMPT_UNCONFIRMED_LINE}`
       : present.previousAttemptReplyMessageId !== undefined
-        ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn)}`
+        ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true)}`
         : "";
   const sections = [
     `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,

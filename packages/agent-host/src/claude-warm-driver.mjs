@@ -29,11 +29,22 @@
 // CLI starts the wake (`started`, or its exact replay). Admission for busy
 // input closes at the first result (or an interrupt / final arm), atomically
 // in this single-threaded handler. The turn is drained only when EVERY input
-// it wrote is settled — its own `result`, or a terminal lifecycle, or a
-// `cancelled` receipt entry — so no queued input of this Activation can run
-// in the next one. After a Host interrupt, any of its inputs that still
-// starts is interrupted again. Without `msg_lifecycle_v1` no busy input is
-// written and the wake's own result is the boundary.
+// it wrote is settled, so no queued input of this Activation can run in the
+// next one. An input that started (lifecycle `started` or its replay) settles
+// only through its own `result` — a terminal lifecycle that outruns the
+// result does not end it (seventh review P2-1). An input that never started
+// settles through a terminal lifecycle or a `cancelled` receipt entry; one the
+// CLI cancelled, discarded or refused without this driver asking is an error.
+// With `msg_lifecycle_v1` a `result` without `user_message_uuid` is never
+// guessed onto an input. After a Host interrupt or a final-reply arm, any of
+// its inputs that still starts is interrupted again. Without
+// `msg_lifecycle_v1` no busy input is written and the wake's own result is
+// the boundary.
+//
+// Turn status: a Host stop is `interrupted`; otherwise any independent error
+// (another input's failure, an unrequested cancel) makes it `failed` with the
+// text kept for the Host, even after the final reply ended the wake. Only an
+// abort this driver's own interrupt caused is exempt (seventh review P1-3).
 //
 // Frames are attributed to the open turn only between its acceptance and its
 // drain (the CLI runs one native turn at a time and, by the rule above, only
@@ -247,7 +258,14 @@ function createTurn(runAttemptId, text) {
 
 function writeInput(turn, uuid, text, kind, done) {
   if (!claude.stdin.writable) return false;
-  turn.inputs.set(uuid, { kind, settled: false, started: false });
+  turn.inputs.set(uuid, {
+    cancelRequested: false,
+    interruptAcknowledged: false,
+    interruptRequested: false,
+    kind,
+    settled: false,
+    started: false,
+  });
   turn.order.push(uuid);
   claude.stdin.write(
     `${JSON.stringify({
@@ -261,8 +279,10 @@ function writeInput(turn, uuid, text, kind, done) {
   return true;
 }
 
-// Busy Human input (a `rah-runtime-notice/v1` line). The receipt is a
-// transport acknowledgement only; the Kernel keeps delivery/ACK ownership.
+// Busy Human input (a `rah-runtime-notice/v1` line). The receipt answers the
+// stdin write only (written, awaiting the CLI's own lifecycle/replay); it is
+// not proof the CLI took the input, and the Kernel keeps delivery/ACK
+// ownership.
 function noticeTurn(command) {
   let notice;
   try {
@@ -346,14 +366,32 @@ function finalTurn(command) {
  * stay open and are interrupted again when they start.
  */
 async function interruptRequest(turn) {
+  // The inputs running now: an abort result of theirs is this interrupt's.
+  const running = [];
+  for (const [uuid, input] of turn.inputs)
+    if (
+      !input.settled &&
+      (input.started ||
+        input.replayed ||
+        (uuid === turn.wakeUuid && turn.accepted))
+    ) {
+      input.interruptRequested = true;
+      running.push(input);
+    }
   const response = await controlRequest(
     { subtype: "interrupt", cancel_queued: true },
     CONTROL_TIMEOUT_MS,
   );
+  for (const input of running) input.interruptAcknowledged = true;
   for (const uuid of Array.isArray(response?.cancelled)
     ? response.cancelled
-    : [])
+    : []) {
+    const input = turn.inputs.get(uuid);
+    // A receipt cancels queued inputs; a started one still owes its result.
+    if (input === undefined || input.started || input.replayed) continue;
+    input.cancelRequested = true;
     settleInput(turn, uuid);
+  }
   maybeClose(turn);
   return response;
 }
@@ -420,14 +458,31 @@ function lifecycle(turn, frame) {
     // A closing turn's own lifecycle tail (it settled through its result).
     if (turn.closing) return;
     const input = turn.inputs.get(uuid);
+    if (input.settled) return;
     if (frame.state === "started") {
       input.started = true;
       if (uuid === turn.wakeUuid && !turn.accepted) accept(turn);
-      // A Host interrupt ends every input of this turn, however late it runs.
-      if (turn.stopRequested && uuid !== turn.wakeUuid)
+      // A Host interrupt or an armed final reply ends every input of this
+      // turn, however late it runs.
+      if (
+        (turn.stopRequested || turn.finalInterrupt.armed) &&
+        uuid !== turn.wakeUuid
+      )
         void interruptRequest(turn).catch(() => undefined);
     }
     if (TERMINAL_LIFECYCLE.has(frame.state)) {
+      // A started input (or one that reports completion) settles only
+      // through its own result: the lifecycle can outrun it.
+      if (input.started || input.replayed || frame.state === "completed")
+        return;
+      const requested =
+        input.cancelRequested ||
+        (frame.state !== "refused" &&
+          (turn.stopRequested || turn.finalInterrupt.issued));
+      if (!requested)
+        turn.errors.push(
+          `Claude ${String(frame.state)} an admitted ${input.kind} input before it ran`,
+        );
       settleInput(turn, uuid);
       maybeClose(turn);
     }
@@ -515,8 +570,13 @@ function trackTools(turn, frame) {
 }
 
 function observeResult(turn, frame) {
-  // Without lifecycle (older CLI) and without the uuid on the result, the
-  // single wake input is the only one this turn wrote.
+  // Without the uuid on the result, only an older CLI without lifecycle may
+  // fall back to its single wake input (the only one such a turn writes).
+  if (typeof frame.user_message_uuid !== "string" && turn.lifecycle === true) {
+    turn.errors.push("a result without user_message_uuid was not attributed");
+    emit("unattributed", { method: "result", reason: "missing_input_uuid" });
+    return;
+  }
   const uuid =
     typeof frame.user_message_uuid === "string"
       ? frame.user_message_uuid
@@ -529,13 +589,18 @@ function observeResult(turn, frame) {
   }
   // Busy admission closes at the first result of the Activation.
   turn.admissionOpen = false;
-  const aborted = isAbortedClaudeResult(frame);
+  // An abort this driver's own interrupt caused while the input ran.
+  const ownAbort =
+    input.interruptRequested &&
+    isAbortedClaudeResult(frame, {
+      interruptAcknowledged: input.interruptAcknowledged,
+    });
   const finalEnd =
-    uuid === turn.wakeUuid && turn.finalInterrupt.issued && aborted;
+    uuid === turn.wakeUuid && turn.finalInterrupt.endedByInterrupt(frame);
   if (finalEnd) turn.finalEnded = true;
   const failed = frame.subtype !== "success" || frame.is_error === true;
-  if (failed && !finalEnd && !(turn.stopRequested && aborted))
-    turn.errors.push(resultError(frame));
+  if (failed && !finalEnd && !ownAbort) turn.errors.push(resultError(frame));
+  const aborted = ownAbort;
   turn.writer.emit(
     finalEnd
       ? runtimeStatusTrajectory(
@@ -600,12 +665,14 @@ async function closeTurn(turn) {
     const report = await turn.finalInterrupt.report();
     emitTurnFrame(turn, { protocol: "rah-final-interrupt/v1", ...report });
   }
+  // A Host stop wins; then any independent error; only then the final end.
+  const failed = turn.errors.length > 0;
   const status = turn.stopRequested
     ? "interrupted"
-    : turn.finalEnded
-      ? "interrupted"
-      : turn.errors.length > 0
-        ? "failed"
+    : failed
+      ? "failed"
+      : turn.finalEnded
+        ? "interrupted"
         : "completed";
   emit("turn.drained", {
     inFlightToolCount: turn.tools.size,
@@ -614,10 +681,8 @@ async function closeTurn(turn) {
     runAttemptId: turn.runAttemptId,
     status,
     stopRequested: turn.stopRequested,
-    ...(status === "failed"
-      ? { errorMessage: turn.errors.join("; ").slice(0, 2048) }
-      : {}),
-    ...(turn.finalEnded && !turn.stopRequested
+    ...(failed ? { errorMessage: turn.errors.join("; ").slice(0, 2048) } : {}),
+    ...(turn.finalEnded && !turn.stopRequested && !failed
       ? { endedAfterFinalReply: true }
       : {}),
   });

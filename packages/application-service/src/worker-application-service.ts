@@ -842,6 +842,9 @@ export class WorkerApplicationService {
                 previousAttemptReplyMessageId:
                   presented.previousAttemptReplyMessageId,
               }),
+          ...(presented.previousAttemptReplyFinal === true
+            ? { previousAttemptReplyFinal: true }
+            : {}),
         }),
       );
       return;

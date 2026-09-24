@@ -318,6 +318,39 @@ test("final reply: a signal after the follow-up began still ends the turn and re
   ]);
 });
 
+test("final reply (older CLI): a reason-less error_during_execution with the interrupt's success receipt is the final end", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    signal: { runAttemptId: "run-1", turnId: "accepted" },
+    env: { FAKE_NO_TERMINAL_REASON: "1" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.deepEqual(byProtocol(result.frames, "rah-final-interrupt/v1"), [
+    {
+      protocol: "rah-final-interrupt/v1",
+      requested: true,
+      accepted: true,
+      terminal: true,
+      sent: true,
+      preemptedFollowUp: true,
+    },
+  ]);
+});
+
+test("final reply (older CLI): a reason-less error_during_execution without a correlated receipt is not taken as the abort", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    signal: { runAttemptId: "run-1", turnId: "accepted" },
+    env: { FAKE_NO_TERMINAL_REASON: "1", FAKE_SILENT_INTERRUPT: "1" },
+  });
+  assert.notEqual(
+    result.code,
+    0,
+    "an unproven abort ends the run as a failure, never a final success",
+  );
+  assert.match(result.stderr, /error_during_execution/u);
+});
+
 test("Host termination (not a final reply) still ends the run as interrupted", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-claude-final-stop-"));
   const record = join(directory, "record.jsonl");
