@@ -1,97 +1,144 @@
-# S2 施工规格（草案，待 Codex 审查与 owner 签字）：每实例一个热进程（合同 §6a）
+# S2 施工规格（修订稿 r2，待 owner 签字）：每实例一个热进程（合同 §6a）
 
-日期 2026-09-24。依据：target-contract §6a、AGENTS.md 不变量、`loom-cli-process-lifecycle` / `loom-sync-tui-attach` 调研、`789ffc6` 的 09-17 生命周期审计（per-turn 的根因是 Run 与进程寿命耦合：`agent-host.ts` 等 `reap`、`room-kernel.ts:4905/5034` 要求终止证明、凭据与身份放在进程环境里）。本页只是设计，未改代码。
+日期 2026-09-24。依据：target-contract §6a、AGENTS.md 不变量、独立审查 `~/.loom/reviews/2026-09-24-s2-spec-review.md`（本稿逐条吸收其 P1/P2 与建议）。本页只是设计，未改代码。行号以 `evo@92db2fb` 为准。
 
-## 1. 生命周期与记录归属
+## 1. 记录归属与两种证明
 
-每个实例的进程状态：`cold → starting → idle ⇄ busy → draining → terminated`（回收/淘汰/崩溃都进入 terminated，并记下原因 `idle_ttl | lru | recycle_rss | recycle_age | cli_changed | crash | stall | removed | host_shutdown`）。
+实例进程状态：`cold → starting → idle ⇄ busy → draining → terminated`，terminated 带原因 `idle_ttl | lru | recycle_rss | recycle_age | cli_changed | config_restart | crash | stall | resource_failure | removed | host_shutdown`。
 
-| 记录                                   | 归属                                       | 语义                                                                                                                                                                                                                             |
-| -------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **新表 `instance_runtimes`**（Kernel） | 一行对应一个热进程的完整寿命               | participant、host 及其代数、driver、pid/pgid、argv 标签、CLI 指纹、状态、`current_run_attempt_id`、`last_activity_at`、TUI 租约、退出码与信号。部分唯一索引保证每个 participant 最多一行非 terminated 记录（单 lane 的物理保证） |
-| RunAttempt                             | 不变，一轮一条                             | 新增 `instance_runtime_id` 和 `native_turn_id` 两列。一轮真实执行对应一条 RunAttempt，结束后不改写                                                                                                                               |
-| `runtime_processes`                    | 仍与 RunAttempt 一对一，改称"本轮执行记录" | 新增 `proof_kind ∈ {process_exit, turn_quiesced}`。state 仍用 `terminated`，所以现有 6 处围栏（4165/4905/5034/5713/6312、完成/重试）一行都不用改                                                                                 |
-| Activation                             | 不变                                       | 完成仍要求 ACK 覆盖到 toSeq，且本轮执行记录已终止                                                                                                                                                                                |
+| 记录                                   | 归属与语义                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **新表 `instance_runtimes`**（Kernel） | 一行 = 一个热进程的完整寿命：participant、host 及 host 代数（`agent_hosts.instance_id`）、driver、pid/pgid 与**出生时间**、runtimeId、CLI 指纹、状态、`current_run_attempt_id`、资源快照、退出码/信号。部分唯一索引：每 participant 至多一行非 terminated。**它独占**：Host 换代、崩溃、物理退出、资源统计与 janitor 职责 |
+| RunAttempt                             | 一轮一条，新增 `instance_runtime_id`、`native_turn_ref`；结束后不改写                                                                                                                                                                                                                                                     |
+| `runtime_processes`                    | 仍与 RunAttempt 一对一，语义改为"本轮执行记录"。新增 `proof_kind`、`quiesce_result`、`close_seq`、`closed_at`。state 仍写 `terminated`，但**所有读退出码或物理死亡的读者必须按 proof_kind 分支**（下表）                                                                                                                  |
 
-**本轮结束的证明（新 API `recordTurnQuiesced`）**。Kernel 在一个事务里核对以下四条：
+**证明定义**：
 
-1. `instance_runtimes` 处于 busy，且 `current_run_attempt_id` 就是本轮。
-2. Host 代数匹配。
-3. 驱动上报的原生结束事件带回的 turn id 等于本轮 `native_turn_id`，且没有在途工具或审批。
-4. Host 刚检查过进程组还活着（`kill(-pgid,0)`，并且 argv 标签吻合）。
+- `process_exit`：物理进程结束，带真实 exit_code/signal。
+- `turn_quiesced`：该轮已不能再执行任何授权操作；带原生/适配器轮次身份、`quiesce_result ∈ {success, error, cancelled}`、封闭帧序号与时间；**进程仍活，exit_code/signal 为 NULL，不填 0**。quiesced 本身不 ACK、不完成 Task、不证明答复成功；完成 Activation 仍要求 delivery ACK ≥ toSeq 及既有 obligation/first-run 条件。
 
-四条都成立就写入 `runtime_processes.terminated(proof_kind=turn_quiesced)`，同时把实例置为 idle。如果进程已经死了，就走原来的 `process_exit` 证明，实例进入 terminated。之后照旧依次 `finishRunAttempt` → `completeActivation`。
+**依赖退出/物理死亡的读者与分支**：
 
-Kernel 的 `#assertWorkerGrantScope` 已要求 RunAttempt 为 running、RuntimeProcess 为 active。所以 quiesce 一提交，本轮的 Worker 授权在 Kernel 层就自然失效了。
+| 读者                                                                                    | 现依赖                                          | S2 分支                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `#recoverExpiredTerminalProofActivation` room-kernel.ts:6654–6678                       | `exit_code===0 ? exited : failed`               | quiesced 按 `quiesce_result` 映射 exited/failed/cancelled，退出列保持 NULL                                                                                                   |
+| `finishRunAttempt` 4137–4170、`retryActivation` 4905、`completeActivation` 5034         | 本轮记录 terminated                             | 两种证明都满足；finish 的 state 由 Host 按 quiesce_result 给出，不再由退出码推断                                                                                             |
+| `#releasePlacementResources` 5710–5720                                                  | 无非 terminated 记录才释放                      | 只释放轮次级 placement；进程槽与 RSS 统计改由 `instance_runtimes` 在 runtime terminated 时释放                                                                               |
+| `#quarantineExpiredActiveRuns` 6515–6650、`#reconcileUnownedRuntimeProcesses` 6305–6395 | 租约过期 + 非 terminated → quarantine、orphaned | busy 轮沿用；同时把 runtime 行置 `suspect`，该 participant 禁止新执行，直至 Host 杀掉经身份核验的进程组并记 process_exit。idle 热进程不在这些扫描中，由 runtime janitor 负责 |
+| `#reconcileProvenActivationQuarantines` 6396–6428                                       | 全部本轮记录 terminated 即解除                  | 解除 quarantine 不等于允许新执行；新执行另需 runtime 行非 suspect                                                                                                            |
+| `leaseNextRuntimeRecovery` 4252–4300                                                    | 按本轮记录的 recovery 描述恢复孤儿              | 热进程孤儿的恢复对象改为 runtime 行：核验身份→杀组→本轮记 process_exit、runtime terminated(crash)                                                                            |
+| AgentHost agent-host.ts:664（reap）、889–927（退出→proof→finish；非 0 重试）、1118–1138 | 等 RunExit                                      | 热路径等 `TurnOutcome = quiesced{result} \| runtimeExit`；重试决策按 result，不按退出码；proof 失败仍走 `#recordTerminationOrQuarantine` 的隔离语义                          |
+| generic-process-adapter.ts:962–975（close→释放环境、finish 采集）、1064–1065、1127–1130 | child close                                     | 拆为轮次级（quiesce 时释放轮次环境、关闭本轮采集，允许 release 轮次句柄）与 runtime 级（close 时）                                                                           |
 
-**取消**：先发原生 interrupt。10 s 内收到"已中断"的结束事件，按 quiesced 处理，进程保留。超时就对进程组发 SIGTERM，3 s 后 SIGKILL，记 `process_exit`，实例 terminated。
+**Worker 授权入口更正**：签发走 `authorizeWorkerExecution` 4523–4545 → `#assertWorkerGrantScope` 5939–5991（Activation leased 且租约有效、RunAttempt 为 starting/running，**不查进程**）+ host 代数；每次请求走 `#requireAuthenticatedWorkerExecution` 5903–5936 → `#assertWorkerExecutionScope` 5993–6011（starting+prepared 或 running+active 且 runtime_run_id 吻合）。所以 quiesce 提交后，本轮每个 Worker 请求都在执行检查处被拒（即使撤销失败）。签发处新增一条：runtime 行 busy 且 `current_run_attempt_id` 为本轮。
 
-## 2. 每轮凭据：不再放在环境变量里
+## 2. 常驻通道上的轮次协议
 
-现状：`worker-credential-file.ts` 每轮新建一个 `activation-<uuid>/token`，路径通过 `RAH_WORKER_SESSION_FILE` 传入环境。`RAH_ACTIVATION_ID/RUN_ATTEMPT_ID/FROM_SEQ/TO_SEQ` 也作为环境变量围栏（`launch-environment-policy.ts:70`）。常驻进程的环境在启动时就冻结了，这两种做法都失效。
+**帧信封**：每个业务相关帧（接收回执、usage、session 证据、工具/审批、结束）带 `runtimeId + hostGeneration + runAttemptId + 原生 sessionId + 原生 turn/RPC/input id + 驱动帧序号`。无法归属唯一一轮的帧记为 unknown 诊断，绝不归到"当前轮"。
 
-**方案 A（推荐，S2-a 用）：固定路径，内容按轮次轮换。**
+**轮次状态**：`started`（Host 下发 turn.begin，lane 已持有）→ `accepted`（原生确认，拿到原生 id）→ `closing`（观察到与本轮 id 匹配的原生结束，或 interrupt 已发）→ `quiesced`。
 
-- 进程启动时固定路径 `<cred>/instance-<runtimeId>/turn.json`（目录 0700）。环境里只保留这个路径、API origin，以及稳定身份 `RAH_PARTICIPANT_ID/HOST_ID`。每轮的身份围栏从子进程环境中删除。
-- 轮次开始：Host 签发本轮凭据，把 `{token, runAttemptId, activationId, toSeq}` 以 `O_EXCL` 写入临时文件，再 `rename` 原子替换（Worker CLI 每次调用都会用 `O_NOFOLLOW` 重新读取，已核实 `worker-cli.ts:1800`），然后才发送 turn/start。
-- 轮次结束：先撤销凭据、删除文件，再调 `recordTurnQuiesced`。idle 期间进程不持有任何有效凭据。
-- Worker CLI 中 `RAH_RUN_ATTEMPT_ID` 的用途（制品幂等键，`worker-cli.ts:703`）和 `worker-startup-context.ts` 的读取改为读 turn.json。
+**收尾顺序**（一步失败按下面的恢复表处理，不跳步）：
 
-**攻击与竞态分析**
+1. 进入 closing 时原子关闭 admission：此后 Human 新消息进入 Inbox 形成后续 Activation，不再写原生通道。
+2. 边界 steer：closing 前已获原生接受（Codex steer 响应成功、Claude 回放出该输入）的属于本轮并由证明覆盖；未获接受或被原生拒绝（Codex `expectedTurnId` 不符）的留在 Inbox，不悬空。
+3. 工具/审批：按驱动检查无在途项（§4）。
+4. 证据排空：驱动发 `turn.drained{id,lastFrameSeq}`，Host 把 ≤lastFrameSeq 的帧入账本轮后关闭采集；此后到达的本轮帧只进诊断，并把本轮 usage 标为不完整，不计入下一轮。
+5. 撤销本轮凭据，删除本轮目录（§3）。
+6. 事务提交 `recordTurnQuiesced`：runtime busy 且当前轮吻合、host 代数吻合、结束帧 id 吻合、进程组经 pid+出生时间核验仍在。`kill(-pgid,0)` 只说明组存在，不证明工具完成，第 3–4 步才是。
+7. `finishRunAttempt` → `completeActivation`，或按既有规则重试/停放。
+8. Activation 离开 leased 后，runtime 置 idle、清空当前轮，lane 才释放。
 
-- 轮次结束后才到的旧工具调用：文件已删，报 MISSING_TOKEN。若旧调用已读到 token，也会遇到撤销和 Kernel scope 两道拒绝。撤销与授权都在事务里，是线性化的。
-- 并发两轮：lane 和唯一索引排除了这种可能。
-- **残留风险**：第 N 轮的后台子进程（如 Claude `run_in_background`、Codex 的常驻 exec 会话）在第 N+1 轮再调 Worker CLI，会读到新 token，以同一实例身份在新 Activation 范围内行事。身份不跨实例，`basedOnRoomSeq` 的陈旧保护依然有效，但提交会被归到错误的轮次。
-- **方案 B（更严，待 owner 决定）：本地凭据代理 socket。** Worker CLI 连 unix socket，代理用 `LOCAL_PEERPID` 取调用方 pid，沿 ppid 链上溯到 CLI 根进程。链上除 CLI 根进程和登记过的常驻 helper 外，任何祖先的启动时间早于本轮开始，就拒绝。macOS 可行性待验证。
+**崩溃落点恢复**：
 
-**Raft 对照**：Raft 按每次启动签发凭据，常驻期间一直有效，idle 也能用。我们必须更严：合同要求凭据按轮签发与撤销，且 Activation 的 toSeq/ACK 语义要求授权绑定到具体轮次。
+| 落点                            | 恢复                                                                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 撤销失败                        | 记诊断并后台重试撤销；继续 quiesce，执行检查已封住本轮。重试耗尽则杀组、记 process_exit                                    |
+| 删除失败                        | token 已撤销、执行已封；记诊断，janitor 按 runtimeId 清目录，不阻塞                                                        |
+| quiesce 已持久化、finish 前崩溃 | 租约过期走 6654 的 quiesced 分支补记 RunAttempt；ACK 已覆盖 toSeq 的完成、不重跑；旧代数 runtime 行交 janitor 杀组，不接管 |
+| finish 后、complete 前崩溃      | 沿用租约过期路径：ACK 覆盖 toSeq 的完成，否则按预算重试。S2-0 须用测试确认现有路径确实如此                                 |
+| busy 中 Host 换代               | 本轮记录 orphaned（现有），runtime 行 suspect；新 Host 先杀经核验的组，再允许该 participant 新执行                         |
+| quiesce 后进程死亡              | 只在 runtime 行追加 terminated(crash) 与退出信息，已封闭的 RunAttempt 与证明不改写                                         |
 
-## 3. 各驱动方案
+## 3. 轮次授权：方案 C（主选）
 
-统一结构：Host → 驱动进程（热进程的监督者，进程组组长，argv 带 `--loom-runtime-id=<id>`）→ CLI 子进程 → 工具子进程。驱动从"一轮后退出"改为循环，Host 通过 stdin 下发 `turn.begin / turn.steer / turn.interrupt / drain`，驱动经 fd3 回报 `ready{sessionId} / turn.started{id} / turn.quiesced{id,status} / progress / rss`。原有的 usage、session 证据、接收帧不变。驱动在 stdin EOF 或父进程消失时自行退出。
+不变量：**旧工具不因新一轮开始而自动获得新能力。**
 
-| CLI              | 进程与传输                                                                                                                                                                                  | 轮次边界                                                                                          | 忙时 Human                       | 已验证 / 待验证                                                                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Codex 0.156.1    | 每实例一个 `codex app-server --listen unix://<0700目录>/sock`，不用共享 daemon，这样每实例的 env/cwd/凭据路径各自隔离。启动时 `thread/resume` 一次，之后每个 Activation 发一次 `turn/start` | `turn/completed`，turn id 与本轮一致                                                              | `turn/steer`（`expectedTurnId`） | 已验证：`--listen unix://`、TUI `--remote unix://PATH`（help 文本）、steer、turn 身份核对。待验证：unix 传输的实际表现；长连接期间 30 min 线程卸载不触发 |
-| OpenCode 1.18.32 | 每实例一个 `opencode serve`（沿用已有 basic auth），持久 SSE `/event`；每轮 `prompt_async`                                                                                                  | 本 session 的 `session.idle`，且没有 running 的工具部件；SSE 断线后用 `/session/:id/message` 对账 | 等待（无已验证的 steer）         | 已验证：serve、SSE、idle、abort。待验证：长连 SSE 的稳定性、prompt_async 在忙时的行为                                                                    |
-| Claude 2.1.281   | 常驻 `claude -p --input-format stream-json --output-format stream-json --resume <id>`，收到 result 后不关 stdin                                                                             | `result` 帧，且已写入的输入数等于 result 数                                                       | direct：写入原生队列             | 已验证：stream-json、result 帧、中断的 result。待验证：多轮 stdin 的长驻表现、忙时写入与 result 的计数、运行中切换模型。没有 TUI                         |
-| Kimi 0.39.1      | 常驻 `kimi acp`，启动时 `session/resume` 一次，每轮发 `session/prompt`                                                                                                                      | `session/prompt` 响应中的 stopReason                                                              | 等待                             | 已验证：ACP 的 resume、prompt、cancel。待验证：长驻内存；system 层是否在 resume 后生效（已知 P1）                                                        |
+- **每轮唯一路径**：沿用 `worker-credential-file.ts:22` 起的每 Activation 唯一目录，改放在 `<cred>/turns/<handle>/`，`handle` 为 128 位随机 base64url。父目录 `turns/` 设为 **0300**（可进入、不可列出），token 文件 0600。子进程环境只保留稳定项：API origin、`RAH_WORKER_TURN_ROOT`、`RAH_PARTICIPANT_ID/HOST_ID`；`RAH_ACTIVATION_ID/RUN_ATTEMPT_ID/FROM_SEQ/TO_SEQ` 等每轮围栏（`launch-environment-policy.ts:31–61`）从子进程环境移除。
+- **显式传递**：handle 写入本轮输入文本，Worker CLI 要求 `--turn <handle>`，缺省即报 `TURN_HANDLE_REQUIRED`。有带正文唤醒的驱动（目前仅 Codex，`bodied-wake.ts:27`）写在唤醒正文里；Claude/Kimi/OpenCode 在各自 S2-c 前仍用固定唤醒，但它们每轮的输入文本同样由 Host 组装，handle 附在其中，不依赖带正文唤醒。
+- **幂等键**：`worker-cli.ts:703` 读的 `RAH_RUN_ATTEMPT_ID` 改为读同目录的 `scope.json`；`worker-startup-context.ts:17` 同步修改。
+- **效果**：第 N 轮后台进程只知道 N 的 handle，N 结束时已撤销删除；N+1 的 handle 只出现在 N+1 的模型输入里，不可列目录，也猜不到。模型把旧 handle 写进脚本，也只拿到已失效的 N。
+- **模型沿用历史中的旧 handle**：文件不存在 → `TURN_HANDLE_INACTIVE`，提示"使用最新唤醒中的 handle"。只在出错时给提示，不写进常驻提示词。
+- **成本**：唤醒约 +15 token，每次 Worker 调用约 +12 token；handle 会进入原生 transcript，但轮后失效，暴露窗口限于本轮。
+- **轮中压缩丢失 handle**：不提供 `whoami --current`。调用方无法证明自己属于当前轮，除非出示 handle 本身，这是循环论证，任何能查到当前 handle 的接口都会把新权限交给旧进程。改为 Host 观察到本轮原生压缩事件（Codex compaction item、Claude `compact_boundary`）后，经原生轮内输入重述 handle（Codex `turn/steer`+expectedTurnId；Claude 带 uuid 的 stream 输入）。Kimi/OpenCode 未验证轮内注入：丢失时模型无法发帖，Activation 未 ACK，按预算以新 handle 重试。
+- **诚实边界**：C 防的是遗留工具、helper 与模型混淆造成的**无意**跨轮授权；同 UID 恶意代码可以 chmod 或读 Host 凭据，不在此保证内，与现有威胁模型一致。
+- **方案 A** 只保留为文件传输细节：O_EXCL/O_NOFOLLOW、0600、owner/大小/类型校验（`worker-cli.ts:1801–1840`）、日志脱敏。它不是授权来源。
+- **方案 B**（peer-pid 代理）作为可选纵深防御。SDK `sys/un.h:89,93` 有 `LOCAL_PEERPID/LOCAL_PEERTOKEN`，但存在 ppid 重挂、PID 复用、helper 例外绕过、合法调用误拒、fd 传递等问题，须先做无模型原型，不作为强授权。
+- **按轮注入环境（2026-09-24 本机核实）**：Codex 0.156.1 `generate-json-schema` 的 `TurnStartParams` **没有 env 字段**，`environments` 指 exec-server 环境（id/cwd），`config/value/write` 写的是 config.toml（持久且全局），均不可用 → **Codex 不支持**。Kimi 驱动自己执行 ACP `terminal/create`（`kimi-acp-driver.mjs:415,528–550`），可按轮注入 env，但 Kimi 的 shell 是否全走 ACP terminal **未验证**。Claude、OpenCode **未验证**。C 不依赖按轮 env。
+- **规则**：某驱动若不能证明"handle 经本轮输入送达 + 压缩后重述或安全失败 + 本轮工具在边界关闭或已知"，该驱动在每轮边界**冷回收**并按 session resume。
 
-## 4. 策略与默认值
+## 4. 各驱动边界
 
-- **空闲回收**：TTL 30 min，从最后一轮结束或 TUI 分离时起算。busy、draining、TUI 挂载期间不计时。
-- **边界重启**：只在 idle 且下一轮开始前检查。条件是进程组 RSS 合计 > 2 GiB、存活 > 12 h、CLI 指纹变化（realpath+size+mtime）或 Role 快照需要重启的变更。先 drain，再冷启动并 resume。
-- **全局上限**：软上限 12 个热进程，超出时按 LRU 淘汰 idle 的；busy 不淘汰。硬上限 20 个同时 busy，超出则排队。
-- **启动闸门**：沿用 `AgentStartGate`（5 并发 / 500 ms），只作用于 cold→starting；idle→busy 不经过闸门。
-- **卡死判定**：连续 15 min 无进展（无 provider 帧、trajectory 或工具输出）判为卡死，依次 interrupt → 杀进程组，RunAttempt 记为 failed(stalled)，Activation 重试。`runTimeoutMs` 从总时长改为按无进展计。
-- **清理**：只按进程组清理。启动时的 janitor 扫描本 host 旧代数中非 terminated 的记录，argv 标签吻合才杀，然后记录证明；再扫描 `ps` 中带标签但未知的孤儿。
-- **崩溃恢复**：idle 时崩溃，记 terminated(crash)，不报警，下条消息到来时冷启动并按 session id resume。busy 时崩溃，本轮 failed，Activation 按既有策略重试。resume 失败时走合同 §3 的故障恢复，永不静默换新 session。
-- **实例移除或 session 重置**：先 drain，再终止进程，之后才推进 session 代数。
+统一结构：Host → 驱动进程（进程组组长，argv 带 `--loom-runtime-id`）→ CLI → 工具。Host 经 stdin 下发 `turn.begin/steer/interrupt/drain`，驱动经 fd3 回报 `ready / turn.accepted / turn.closing / turn.drained / turn.quiesced / progress / rss`，均带 §2 信封。
 
-## 5. 可选 TUI 挂载（Codex / OpenCode）
+| CLI              | 路线                                                              | 必须证明的边界                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex 0.156.1    | 每实例 `app-server --listen unix://`，同 thread 每轮 `turn/start` | 当前驱动用 stdin JSON 帧（`codex-app-server-driver.mjs:350–390,444–447`），unix 传输要新写分帧并验证；每轮重置单轮变量、拒绝旧回执。`turn/start` 带 `clientUserMessageId`（schema 已核实）用于关联。断连不代表未执行：重连后用 `thread/turns/list` 对账，**禁止盲重发**。thread 卸载（schema 有 `thread/closed`、`thread/loaded/list`）：进程活而 thread 不在内存时先 `thread/resume` 同 id；长连接不防卸载，属待验证。`thread/backgroundTerminals/list/clean` 存在于 schema，行为未验证，是边界关闭工具的候选 |
+| Claude 2.1.281   | 常驻 stream-json，不关 stdin                                      | 当前在首个 result 关闭 stdin（`claude-stream-json-driver.mjs:230–259`），不关后必须用别的方式提供输入封闭。每个输入带 uuid，配合 `--replay-user-messages`（help 已核实，回放是否带 uuid 未验证）关联输入与 result；result 计数相等只是必要条件。关闭 admission 与接受忙时输入要原子。取消后若原生队列仍有未消费输入，**回收 runtime**，这些消息经 Inbox 重投，不流入下一 Activation                                                                                                                            |
+| Kimi 0.39.1      | 常驻 `kimi acp`，每轮 `session/prompt`                            | 不假设通用 turn id：用 session + JSON-RPC request id + Loom runAttemptId。stopReason 区分 success/cancelled/error。本轮创建的 ACP terminal 在 quiesce 前退出或被杀（现为轮后退出时清理，`kimi-acp-driver.mjs:213–234,550–608`）                                                                                                                                                                                                                                                                                |
+| OpenCode 1.18.32 | 每实例 `serve` + 持久 SSE，每轮 `prompt_async`                    | 按输入 message ID 关联完成；`session.idle` 只有 session 级身份，旧 idle 或重连重播不能结束新 prompt，完成信号要经本轮范围核验（现 `opencode-server-driver.mjs:325–365` 的完成判定与投影不是同一检查）。HTTP 接受只证明已接受。SSE 断线后用 `/session/:id/message` 对账，**禁止盲重发**                                                                                                                                                                                                                         |
 
-- **Kernel 单写者租约**：`instance_runtimes.tui_lease_{owner,until}`，只能由 Human 发起，靠心跳续期。租约持有期间，频道投递暂停（Activation 保持 queued、不启动），同时暂停空闲回收和边界重启；私聊仍排队。
-- **不跨写**：挂载只允许在 idle 时开始。如果 TUI 正在进行一轮，Loom 不向实例投递。
-- **启动命令**：Codex 为 `codex --remote unix://<sock> resume <threadId>`，OpenCode 为 `opencode attach <url> --session <id> -p <pw>`。
-- **TUI 轮次的定位**：TUI 中发起的轮次没有 Worker 凭据，属于诊断，不记为 RunAttempt，也不能向频道发帖（待 owner 确认）。
-- **herdr 作为可选桌面层**：Loom 通过 `pane.run` 打开 TUI，用 `pane.report_agent` 推送权威状态。herdr 不是依赖。
+## 5. 跨驱动
 
-## 6. 纵向切片
+- **模型/effort**：每轮接受时冻结到 RunAttempt。原生支持就按轮下发（Codex `turn/start` 的 model/effort 是粘性的，每轮显式传）；不支持就在 idle 时重启并 resume 同 session。Role 新 revision 不自动替换实例冻结快照。
+- **环境租约拆分**：runtime 级（记忆物化快照、provider 配置、cwd、稳定脱敏项、CLI 指纹）在启动时建立；轮次级（handle 目录、本轮脱敏项、唤醒正文、幂等范围）每轮建立。
+- **用量**：从 S2-a 起按轮归属并带完整性标记（依 §2 第 4 步）；缺数据显示"未知"。
+- **压缩计数**：按原生 session 以原生事件 id 去重；热进程重启或 `thread/resume` 回放不清零，也不重复计数。
 
-| 子项     | 内容                                                                                                                                          | 关键验收（fake CLI、fake 时钟、临时 DB）                                                                                                                                                                                                                                                                                           | 付费门禁                                                     |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| **S2-a** | Codex 热进程、`instance_runtimes`、turn.json 凭据、`recordTurnQuiesced`、最简 30 min TTL、进程组清理、控制台显示进程状态                      | 连续 3 个 Activation 只启动 1 次，thread 相同；每轮一条 RunAttempt，proof=turn_quiesced；ACK 不到 toSeq 不完成；idle 期间凭据文件不存在、旧 token 被拒；轮次结束后旧工具调用被拒；取消→interrupt→进程存活；interrupt 超时→杀组+process_exit；busy 时崩溃→下次 resume 同一 thread；Human steer 与私聊不 steer；daemon 退出→驱动自退 | 可选：Codex 小冒烟（1 session 3 轮，看续聊延迟），需单独授权 |
-| **S2-b** | LRU 上限、边界重启、无进展卡死、janitor、闸门复用                                                                                             | 各阈值触发只发生在边界；busy 与 TUI 期间不回收；PID 复用时标签不符则不杀；上限满时排队                                                                                                                                                                                                                                             | 无                                                           |
-| **S2-c** | OpenCode、Claude、Kimi 热驱动                                                                                                                 | 同 S2-a 的矩阵，外加各家边界事件与 SSE 断线对账                                                                                                                                                                                                                                                                                    | 无                                                           |
-| **S2-d** | 上下文窗口占用与压缩次数的采集和展示（Codex token-usage/compaction item、Claude compact_boundary、OpenCode tokens/compaction，Kimi 显示未知） | 缺数据时显示"未知"，不做推算                                                                                                                                                                                                                                                                                                       | **S2 正式效率门禁**：四个运行时，按合同 §6，含首轮延迟       |
-| **S2-e** | TUI 挂载与租约、herdr（可选）                                                                                                                 | 租约期间不投递、不回收；租约过期可恢复                                                                                                                                                                                                                                                                                             | 可选人工验收                                                 |
+## 6. 策略（默认值均可配置，是初始值，不是性能保证）
 
-## 7. 风险与待 owner 决定
+- **空闲回收**：TTL 30 min，busy/draining/TUI 期间不计时。
+- **边界重启**：只在 idle 时，条件为 RSS > 2 GiB、存活 > 12 h、CLI 指纹变化、配置需要重启。
+- **上限**：软上限 12 个热进程（idle 按 LRU 淘汰）；硬上限 20 个 busy（admission 上限，超出排队），等待容量时不无限期占着 Activation 租约。启动闸门 `AgentStartGate` 只管 cold→starting。
+- **卡死**：四类信号分开计：传输活性（心跳/keepalive，只用于重连诊断）、原生轮次进展（仅业务 item/delta）、工具运行（单独超时）、等待审批（不计入卡死，展示给 Human）。keepalive、状态重播、RSS 心跳都不算进展。无进展默认 15 min，属操作策略，不是模型故障证据。重试预算默认 1 次。旧轮封闭（quiesced 或 process_exit）前不得重试。已 ACK/发帖的，不重新执行已完成义务。
+- **忙时 RSS**：超限只告警并停止向该 runtime admission，边界再重启，不做例行回收。OOM 等紧急情况走显式 `resource_failure`：杀组、process_exit、RunAttempt failed(resource)、计入重试预算。
+- **清理**：只按进程组清理；脱离进程组的后代不承诺清理。CLI 根进程退出但组内仍有进程时，仍完成组清理。
+- **daemon 重启**：不接管，全部冷启动。新执行前必须先确认旧 runtime 已终止。未知的带标签进程要核对 UID、Host 范围、DB 中的 runtimeId、PID 出生时间；不确定就隔离并报告，禁止该 participant 新执行。argv 标签不是身份凭证。
+- **崩溃**：idle 崩溃记 terminated(crash)，下条消息到来时冷启动并 resume。resume 失败走合同 §3，永不静默换新 session。实例移除或 session 重置：先 drain，再终止，之后才推进代数。
+- **协议升级**：记录实例已生效的协议版本。兼容变化在下一轮用带版本的更新传达并留接收证据；不兼容变化阻止新工作，给 Human 重置/恢复选择。另行小设计，不在 S2 内做。
 
-1. 凭据方案：先 A 后 B，还是 S2-a 直接做 B？A 的残留风险是后台子进程跨轮次。
-2. 默认值：软 12 / 硬 20、RSS 2 GiB、12 h 是否合适（取决于机器内存）。
-3. TUI 轮次是否允许发帖。若允许，需要新增"Human 挂载凭据"类型。
-4. OpenCode 冷启动约 480 ms，常驻带来的收益主要是 TUI 与 SSE 连续性。Raft 保持按轮启动。是否仍常驻？
-5. 已知泄漏（Claude idle RSS、Codex MCP helper）靠边界重启兜底。两次轮次之间若长时间 busy 无法回收，只能依赖卡死判定。
-6. 平台协议升级不会进入已续聊 session（P1），常驻进程也修不了。是否在协议版本变化时要求 Human 显式重置？
-7. daemon 重启后不重新接管热进程，全部冷启动。unix socket 以后可以支持重新接管，本期延后。
+## 7. TUI 挂载（S2-e，延后、独立验收）
+
+- Kernel 租约只约束 Loom 调度，约束不了直连 socket/HTTP 的 TUI。租约过期 ≠ 原生写者失效。恢复投递前必须二选一：证明已撤销客户端写入口；或确认原生轮次已结束，并断开/回收该 runtime 后再 resume。须覆盖挂载建立中、附着失败与新 Activation 同时到达的竞争。
+- S2 中 TUI 轮次**不能发帖**。它们仍是工作，不是诊断：会改 session 和文件、产生费用，须记录挂载审计、成本、session 与文件变更归属。以后若要发帖，须设计显式的工作范围，不签无限期的 Human 万能 token。
+- 命令：Codex `codex --remote unix://<sock> resume <threadId>`，OpenCode `opencode attach … --session <id>`。herdr 仅作可选桌面层。
+
+## 8. 纵向切片
+
+| 子项     | 内容                                                                                                                                                                                          | 门禁                              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **S2-0** | 短设计收口：证明类型与读者分支（§1）、方案 C 与目录权限、采集排空、Host 换代/崩溃表（§2）；每条落为失败测试                                                                                   | 无                                |
+| **S2-a** | 只做 Codex：3 轮、取消、同 session 重启、最小孤儿/Host 换代围栏、逐轮用量与完整性、控制台显示状态                                                                                             | fake 驱动（不能证明原生多轮协议） |
+| 证据关口 | Codex 小型真实冒烟（1 session 3 轮 + 取消 + 重启 resume），扩展 S2-c 前必须通过                                                                                                               | **需另行授权**，本次不运行        |
+| **S2-b** | LRU、边界重启、卡死四信号与重试预算、janitor、resource_failure                                                                                                                                | 无                                |
+| **S2-c** | 逐家接入 OpenCode、Claude、Kimi，各自验证 ID、取消、工具残留、断连；证明不了 §3 规则的走冷回收                                                                                                | 无                                |
+| **S2-d** | 上下文占用与压缩的展示；S2 正式效率门禁（四运行时，按合同 §6）：比较冷首轮/热续聊/TTL 后 resume，锁定模型/effort/材料/历史，报告业务与协议生成次数、完整 tokens、首回复与整轮延迟、语义连续性 | 付费门禁                          |
+| **S2-e** | TUI（§7）                                                                                                                                                                                     | 可选人工验收                      |
+
+**必须覆盖的交错场景**（fake 时钟、临时 DB）：
+
+1. 第 N 轮的后台工具在 N+1 切换频道/私聊后调用 Worker：拿不到新授权（不能只测 idle 时文件不存在）。
+2. 撤销失败、删除失败、quiesce 后 finish 前崩溃、finish 后 complete 前崩溃：各自可恢复，不重复执行已完成义务。
+3. 结束帧、usage、接收回执乱序/重复/迟到：N 的帧在 N+1 时到达不污染新轮。
+4. Human steer 恰与结束帧同时到达：要么归 N 且由证明覆盖，要么排队，不悬空。
+5. quiesced 但 ACK/obligation 未满足：不完成 Activation；下一工作不越过旧 lane 的停放/恢复。
+6. idle 崩溃、Host 换代、PID 复用、组长退出但工具仍活、旧 runtime 清理不确定：禁止新执行。
+7. Codex thread 卸载、OpenCode 重连后的旧 idle、Claude 多输入多 result、Kimi prompt 返回时 terminal 仍活。
+8. 旧 handle 重用 → `TURN_HANDLE_INACTIVE`；轮中压缩后重述 handle，或安全失败并重试。
+
+## 9. 待 owner 决定
+
+1. 默认值：TTL 30 min、软 12/硬 20、RSS 2 GiB、12 h、无进展 15 min、重试预算 1。作为可配置初始值是否接受？
+2. Claude/Kimi/OpenCode 若证明不了 §3 规则（尤其是压缩后重述与工具关闭），是否接受该驱动逐轮冷回收（失去 §6a 常驻收益，但保持同 session）？
+3. Kimi/OpenCode 轮中压缩丢 handle 时"本轮无法发帖→重试"的额外成本是否可接受？
+4. Codex 真实冒烟关口的授权时机。
