@@ -2,7 +2,7 @@
 
 日期：2026-09-24。本页是 evo 相对 `main`（`milestone-ui-raft` = `5122795`）的唯一差异说明。
 `docs/architecture`、`docs/product` 中的 owner 文档描述的是 main 基线；与本页冲突时，以本页和代码为准。
-evo 的目标合同见阶段 2 文档（待写），效率门禁合同见 [cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)。
+evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-09-24 已签），效率门禁合同见 [cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)。
 
 ## 分支与环境
 
@@ -27,7 +27,7 @@ evo 的目标合同见阶段 2 文档（待写），效率门禁合同见 [cli-e
 - 每个频道实例是独立 principal，拥有独立执行 lane 和 provider session；复用 Inbox/Activation/AgentHost。
 - 实例私聊（私有 box）：与频道共用 session，忙时排队，频道运行读不到。
 - 实例 session 连续性：稳定 session key（不含配置版本和提示词摘要）；四家驱动对实例禁止恢复失败后静默新建；绑定失败终止并隔离。
-- 旧 Agent 路径仍然保留（阶段 2 决定是否移除）。
+- 旧 Agent 路径仍然保留；按已签合同将在 evo 后端移除。
 
 ### 三、效率门禁脚本
 
