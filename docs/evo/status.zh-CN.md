@@ -123,6 +123,14 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 协议版本记在 Host 的 session 绑定上；已续聊 session 协议落后时，下一轮唤醒加一行"Protocol updated"，并提供 `worker help protocol`（Activation 完成后才标记已更新）。
 - 未修：`maintainFinalReplyInterrupt` 单次读取失败即停止监视；8 位 thread 短引用歧义返回 NotFound 而非 Conflict；常驻进程启动键未包含协议版本；审查建议的若干免费交错场景未补。
 
+### 十六、S2-c1 Claude 接入（热模式默认关闭）
+
+- 本机 Claude Code 2.1.282 无模型核实：`--replay-user-messages` 回显带我们注入的输入 uuid（续聊时也是）；每条输入有 queued/started/completed|cancelled 生命周期；每个原生轮次恰好一个 `result` 并以 `user_message_uuid` 指明对应输入；`control_request interrupt`（`cancel_queued`）返回 cancelled/still_queued 回执；`--system-prompt-snapshot` 使 system prompt 固定到压缩为止。
+- 带正文唤醒：只有带本轮 uuid 且正文一致的回显才算接收；Claude 加入带正文唤醒能力集；与 Codex 共用 `createHostBodiedWake`。
+- `--final`：在首个工具边界发原生中断，被中断的最终轮次记为成功，记录 requested/accepted/terminal/preemptedFollowUp。
+- 常驻 Claude（`warmRuntimes.claude`，默认关闭）：每实例一个长驻 stream-json 进程；本轮在唤醒与本轮接纳的忙时输入全部结束后才关闭；取消时清空排队输入；无生命周期能力则拒绝忙时输入；session 绑定在首条输入被接收后写入。
+- 未经付费验证：真实时序下中断能否抢在后续请求前、真实工具流顺序、压缩后行为（常驻 Claude 压缩后不重述句柄，丢失句柄的轮次会以新句柄重试）、后台 shell 清理。打包产品构建仍为每轮模式。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

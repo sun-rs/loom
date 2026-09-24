@@ -44,10 +44,24 @@ export function createDaemonRuntimeHygiene(
     kernel,
     stateDirectory: config.stateDirectory,
   });
-  return { instanceRuntimePool, processHygiene };
+  return {
+    instanceRuntimePool,
+    processHygiene,
+    warmRuntimeKinds: warmRuntimeAdapterKinds(config.warmRuntimes),
+  };
 }
 
-/** S2-a: the Host's warm Codex instance runtimes, when enabled. */
+/** The runtime adapter kinds whose Role instances run warm (each opt-in). */
+export function warmRuntimeAdapterKinds(
+  config: DaemonConfig["warmRuntimes"],
+): ReadonlySet<string> {
+  const kinds = new Set<string>();
+  if (config?.codex?.enabled === true) kinds.add("codex-app-server/v1");
+  if (config?.claude?.enabled === true) kinds.add("claude-stream-json/v1");
+  return kinds;
+}
+
+/** S2-a: the Host's warm instance runtimes (Codex, S2-c1 Claude), when enabled. */
 export function createDaemonInstanceRuntimePool(input: {
   config: DaemonConfig["warmRuntimes"];
   host: AuthenticatedHostContext;
@@ -56,17 +70,17 @@ export function createDaemonInstanceRuntimePool(input: {
   stateDirectory: string;
 }): InstanceRuntimePool | undefined {
   const codex = input.config?.codex;
-  if (codex?.enabled !== true) return undefined;
+  if (warmRuntimeAdapterKinds(input.config).size === 0) return undefined;
   if (process.platform !== "darwin" && process.platform !== "linux")
     return undefined;
-  const { codex: _codex, ...policy } = input.config ?? {};
+  const { codex: _codex, claude: _claude, ...policy } = input.config ?? {};
   return new InstanceRuntimePool({
     control: createKernelAgentHostControlPort(input.kernel, input.host),
     hostGeneration: input.host.instanceId,
     ...(input.hygiene === undefined ? {} : { hygiene: input.hygiene }),
     policy: {
       ...policy,
-      ...(codex.idleTtlMs === undefined ? {} : { idleTtlMs: codex.idleTtlMs }),
+      ...(codex?.idleTtlMs === undefined ? {} : { idleTtlMs: codex.idleTtlMs }),
     },
     stateDirectory: join(input.stateDirectory, "warm-runtimes"),
   });

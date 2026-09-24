@@ -1,0 +1,842 @@
+// S2-c1 warm Claude driver (S2 spec §2/§4, contract §6a): one long-lived
+// `claude -p --input-format stream-json --output-format stream-json
+// --replay-user-messages` per Role instance, `--resume <id>` or, for a fresh
+// session, `--session-id <uuid>` chosen here. The driver is the process-group
+// leader and speaks the same Host protocol as the warm Codex driver:
+//
+//   Host -> driver (stdin, one JSON object per line)
+//     {op:"turn.begin", runAttemptId, runtimeRunId, text, model?, effort?}
+//     {op:"turn.notice", runAttemptId, line}   busy Human input
+//     {op:"turn.interrupt", runAttemptId}
+//     {op:"turn.final", runAttemptId, nativeTurnId}
+//     {op:"shutdown"}                          (stdin EOF means the same)
+//   driver -> Host (fd3)
+//     {loom:"warm-runtime/v1", seq, runtimeId, hostGeneration, type, ...}
+//     type ready | turn.accepted | turn.failed | frame | progress |
+//          turn.drained | unattributed | fatal
+//
+// Correlation (verified on the installed Claude Code 2.1.282 without a model
+// call): every stdin `user` message carries a uuid chosen here; the CLI
+// reports `command_lifecycle` queued/started/completed|cancelled|discarded|
+// refused per uuid (capability `msg_lifecycle_v1`), echoes the message as a
+// replay carrying the same uuid, and ends each native turn with exactly one
+// `result` whose `user_message_uuid` names the input it ran. A message written
+// while a turn runs stays queued; the interrupt receipt lists `still_queued`
+// (and, with `cancel_queued:true`, `cancelled`) uuids.
+//
+// One Activation is one Host turn whose native work is the wake input plus
+// the busy inputs admitted before admission closed. It is admitted when the
+// CLI starts the wake (`started`, or its exact replay). Admission for busy
+// input closes at the first result (or an interrupt / final arm), atomically
+// in this single-threaded handler. The turn is drained only when EVERY input
+// it wrote is settled — its own `result`, or a terminal lifecycle, or a
+// `cancelled` receipt entry — so no queued input of this Activation can run
+// in the next one. After a Host interrupt, any of its inputs that still
+// starts is interrupted again. Without `msg_lifecycle_v1` no busy input is
+// written and the wake's own result is the boundary.
+//
+// Frames are attributed to the open turn only between its acceptance and its
+// drain (the CLI runs one native turn at a time and, by the rule above, only
+// this Activation's inputs in that window). Anything else is `unattributed`;
+// an unprompted native turn while idle (for example a background task
+// notification) is interrupted at once.
+//
+// Not done here (unverified in-turn injection): the per-turn handle is not
+// restated after a native compaction; a turn that lost it cannot post, stays
+// unacknowledged and is retried with a new handle (S2 spec §3).
+import { spawn } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  chmodSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  writeSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createInterface } from "node:readline";
+
+import {
+  createClaudeFinalInterrupt,
+  isAbortedClaudeResult,
+} from "./claude-final-interrupt.js";
+import {
+  CLAUDE_DISALLOWED_TOOLS,
+  isMissingClaudeSessionError,
+  withoutNestedClaudeCode,
+} from "./claude-stream-launch.js";
+import { assertSessionReplacementAllowed } from "./provider-activation-input.js";
+import {
+  providerLaunchArguments,
+  providerLaunchPolicy,
+} from "./provider-launch-arguments.js";
+import { readProviderPromptFile } from "./provider-prompt-file.js";
+import {
+  normalizeClaudeTrajectoryEvent,
+  RuntimeTrajectoryWriter,
+  runtimeStatusTrajectory,
+} from "./provider-trajectory-normalizer.js";
+import {
+  ClaudeStreamUsageTracker,
+  ProviderUsageWriter,
+} from "./provider-usage.js";
+
+const PROVIDER = "claude-stream-json/v1";
+const CONTROL_TIMEOUT_MS = 5_000;
+const PROVIDER_TERM_TIMEOUT_MS = 1_000;
+const PROGRESS_THROTTLE_MS = 5_000;
+const MAX_FRAME_BYTES = 1024 * 1024;
+const RECENT_INPUT_LIMIT = 256;
+const TERMINAL_LIFECYCLE = new Set([
+  "completed",
+  "cancelled",
+  "discarded",
+  "refused",
+]);
+
+const options = parseArguments(
+  process.argv[2] === "__claude-warm-driver"
+    ? process.argv.slice(3)
+    : process.argv.slice(2),
+);
+const promptDirectory = mkdtempSync(join(tmpdir(), "loom-claude-warm-"));
+chmodSync(promptDirectory, 0o700);
+const promptPath = join(promptDirectory, "room-worker.md");
+writeFileSync(promptPath, options.prompt, { mode: 0o600 });
+
+const resumed = options.resumeSession !== undefined;
+const sessionId = options.resumeSession ?? randomUUID();
+const usageTracker = new ClaudeStreamUsageTracker();
+const controlRequests = new Map();
+/** Inputs of closed turns: their late lifecycle frames are expected noise. */
+const recentInputs = new Set();
+let frameSequence = 0;
+let active;
+let autonomous;
+let shuttingDown = false;
+
+const args = [
+  ...providerLaunchArguments("claude"),
+  "--disallowed-tools",
+  CLAUDE_DISALLOWED_TOOLS,
+  "--append-system-prompt-file",
+  promptPath,
+  ...(options.model === undefined ? [] : ["--model", options.model]),
+  ...(options.effort === undefined ? [] : ["--effort", options.effort]),
+  ...(resumed ? ["--resume", sessionId] : ["--session-id", sessionId]),
+  ...options.providerArgs,
+];
+const claude = spawn(options.executable, args, {
+  cwd: process.cwd(),
+  env: {
+    ...withoutNestedClaudeCode(process.env),
+    ...providerLaunchPolicy("claude").environment,
+  },
+  shell: false,
+  stdio: ["pipe", "pipe", "pipe"],
+});
+claude.stderr.pipe(process.stderr);
+claude.stdin.on("error", () => undefined);
+const claudeExited = new Promise((resolve) => {
+  claude.once("close", (code, signal) => resolve({ code, signal }));
+});
+claude.once("error", (error) => fatal(`claude failed: ${error.message}`));
+void claudeExited.then(({ code, signal }) => {
+  if (!shuttingDown)
+    fatal(`claude exited (code=${String(code)}, signal=${String(signal)})`);
+});
+createInterface({ input: claude.stdout }).on("line", handleLine);
+
+createInterface({ input: process.stdin }).on("line", (line) => {
+  let command;
+  try {
+    command = JSON.parse(line);
+  } catch {
+    return;
+  }
+  try {
+    handleCommand(command);
+  } catch (error) {
+    process.stderr.write(`[loom claude-warm] ${errorMessage(error)}\n`);
+  }
+});
+process.stdin.once("end", () => void shutdown(0));
+process.once("SIGTERM", () => void shutdown(0));
+process.once("SIGINT", () => void shutdown(0));
+
+// The session id is known before any input (chosen here or resumed); Claude
+// writes a fresh session when it takes the first input, so the Host binds it
+// after this runtime's first accepted turn (adapter `bindSession: accepted`).
+emit("ready", { resumed, sessionResumeMs: null, threadId: sessionId });
+
+function handleCommand(command) {
+  if (command?.op === "shutdown") return void shutdown(0);
+  if (command?.op === "turn.begin") return beginTurn(command);
+  if (command?.op === "turn.notice") return noticeTurn(command);
+  if (command?.op === "turn.interrupt") return interruptTurn(command);
+  if (command?.op === "turn.final") return finalTurn(command);
+}
+
+function beginTurn(command) {
+  const runAttemptId = command.runAttemptId;
+  if (typeof runAttemptId !== "string" || typeof command.text !== "string")
+    return;
+  const refuse = (error) =>
+    emit("turn.failed", { error, rejected: true, runAttemptId });
+  if (active !== undefined || shuttingDown)
+    return refuse("warm runtime is not idle");
+  if (autonomous !== undefined)
+    return refuse("warm runtime is ending an unattributed native turn");
+  // Model and effort are launch arguments for Claude: a different frozen
+  // choice needs a new process (the Host restarts it at an idle boundary).
+  if (
+    (command.model !== undefined && command.model !== options.model) ||
+    (command.effort !== undefined && command.effort !== options.effort)
+  )
+    return refuse("the turn's model or effort differs from this process");
+  const turn = createTurn(runAttemptId, command.text);
+  active = turn;
+  if (!writeInput(turn, turn.wakeUuid, command.text, "wake")) {
+    active = undefined;
+    emit("turn.failed", {
+      error: "claude stdin is closed",
+      rejected: true,
+      runAttemptId,
+    });
+  }
+}
+
+function createTurn(runAttemptId, text) {
+  const turn = {
+    accepted: false,
+    admissionOpen: true,
+    closing: false,
+    deliveryReported: false,
+    errors: [],
+    finalEnded: false,
+    inputs: new Map(),
+    lastFrameSeq: 0,
+    lifecycle: undefined,
+    noticeInFlight: false,
+    noticeFingerprints: new Set(),
+    order: [],
+    runAttemptId,
+    stopRequested: false,
+    text,
+    tools: new Set(),
+    wakeUuid: randomUUID(),
+  };
+  const writeFrame = (line) => {
+    for (const part of String(line).split("\n")) {
+      if (part.trim() === "") continue;
+      try {
+        emitTurnFrame(turn, JSON.parse(part));
+      } catch {
+        // Writers only produce JSON lines.
+      }
+    }
+  };
+  turn.writer = new RuntimeTrajectoryWriter(writeFrame);
+  turn.usageWriter = new ProviderUsageWriter(writeFrame);
+  turn.finalInterrupt = createClaudeFinalInterrupt({
+    interrupt: () => interruptRequest(turn),
+  });
+  return turn;
+}
+
+function writeInput(turn, uuid, text, kind, done) {
+  if (!claude.stdin.writable) return false;
+  turn.inputs.set(uuid, { kind, settled: false, started: false });
+  turn.order.push(uuid);
+  claude.stdin.write(
+    `${JSON.stringify({
+      type: "user",
+      uuid,
+      session_id: sessionId,
+      message: { role: "user", content: [{ type: "text", text }] },
+    })}\n`,
+    done,
+  );
+  return true;
+}
+
+// Busy Human input (a `rah-runtime-notice/v1` line). The receipt is a
+// transport acknowledgement only; the Kernel keeps delivery/ACK ownership.
+function noticeTurn(command) {
+  let notice;
+  try {
+    notice = JSON.parse(command.line);
+  } catch {
+    return;
+  }
+  if (typeof notice?.id !== "string" || notice.id.length > 64) return;
+  const turn = active;
+  const owner = turn?.runAttemptId === command.runAttemptId ? turn : undefined;
+  const receipt = (accepted) => {
+    const frame = {
+      accepted,
+      id: notice.id,
+      protocol: "rah-runtime-notice-result/v1",
+    };
+    if (owner !== undefined) emitTurnFrame(owner, frame);
+  };
+  if (
+    owner === undefined ||
+    !owner.accepted ||
+    !owner.admissionOpen ||
+    owner.closing ||
+    owner.stopRequested ||
+    owner.finalInterrupt.armed ||
+    owner.lifecycle !== true ||
+    owner.noticeInFlight ||
+    notice.protocol !== "rah-runtime-notice/v1" ||
+    typeof notice.text !== "string" ||
+    notice.text === "" ||
+    typeof notice.fingerprint !== "string" ||
+    !/^[a-f0-9]{64}$/u.test(notice.fingerprint) ||
+    Buffer.byteLength(notice.text) > 5_000
+  )
+    return receipt(false);
+  if (owner.noticeFingerprints.has(notice.fingerprint)) return receipt(true);
+  owner.noticeInFlight = true;
+  const written = writeInput(
+    owner,
+    randomUUID(),
+    notice.text,
+    "notice",
+    (error) => {
+      owner.noticeInFlight = false;
+      if (!error) owner.noticeFingerprints.add(notice.fingerprint);
+      receipt(!error);
+    },
+  );
+  if (!written) {
+    owner.noticeInFlight = false;
+    receipt(false);
+  }
+}
+
+function interruptTurn(command) {
+  const turn = active;
+  if (turn === undefined || turn.runAttemptId !== command.runAttemptId) return;
+  turn.stopRequested = true;
+  turn.admissionOpen = false;
+  void interruptRequest(turn).catch(() => undefined);
+}
+
+function finalTurn(command) {
+  const turn = active;
+  if (
+    turn === undefined ||
+    turn.runAttemptId !== command.runAttemptId ||
+    turn.wakeUuid !== command.nativeTurnId ||
+    turn.closing ||
+    turn.stopRequested
+  )
+    return;
+  // Arming closes busy admission: later input waits for the next Activation.
+  turn.admissionOpen = false;
+  turn.finalInterrupt.arm();
+}
+
+/**
+ * The native interrupt of the running native turn, cancelling this turn's
+ * queued inputs. Receipt uuids listed as cancelled are settled; survivors
+ * stay open and are interrupted again when they start.
+ */
+async function interruptRequest(turn) {
+  const response = await controlRequest(
+    { subtype: "interrupt", cancel_queued: true },
+    CONTROL_TIMEOUT_MS,
+  );
+  for (const uuid of Array.isArray(response?.cancelled)
+    ? response.cancelled
+    : [])
+    settleInput(turn, uuid);
+  maybeClose(turn);
+  return response;
+}
+
+function controlRequest(request, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const requestId = `loom-${randomUUID()}`;
+    const timer = setTimeout(() => {
+      controlRequests.delete(requestId);
+      reject(new Error(`control_request ${request.subtype} timed out`));
+    }, timeoutMs);
+    controlRequests.set(requestId, { reject, resolve, timer });
+    if (!claude.stdin.writable) {
+      clearTimeout(timer);
+      controlRequests.delete(requestId);
+      reject(new Error("claude stdin is closed"));
+      return;
+    }
+    claude.stdin.write(
+      `${JSON.stringify({ type: "control_request", request_id: requestId, request })}\n`,
+    );
+  });
+}
+
+function handleLine(line) {
+  if (Buffer.byteLength(line, "utf8") > MAX_FRAME_BYTES) {
+    const turn = active;
+    if (turn !== undefined) turn.errors.push("oversized Claude frame dropped");
+    emit("unattributed", { method: "oversized", reason: "frame_limit" });
+    return;
+  }
+  const trimmed = line.trim();
+  if (trimmed === "") return;
+  let frame;
+  try {
+    frame = JSON.parse(trimmed);
+  } catch {
+    return;
+  }
+  if (typeof frame !== "object" || frame === null) return;
+  if (frame.type === "control_response") return settleControl(frame);
+  if (frame.type === "keep_alive") return;
+  if (typeof frame.session_id === "string" && frame.session_id !== sessionId) {
+    fatal("Claude stream-json changed its session identity");
+    return;
+  }
+  const turn = active;
+  if (frame.type === "command_lifecycle") return lifecycle(turn, frame);
+  if (turn === undefined || turn.closing) return idleFrame(frame);
+  if (!turn.accepted) {
+    if (frame.type === "system" && frame.subtype === "init")
+      observeCapabilities(turn, frame);
+    if (isExactReplay(turn, frame)) accept(turn);
+    else if (frame.type === "result")
+      return resultBeforeAcceptance(turn, frame);
+    else return idleFrame(frame);
+  }
+  observe(turn, frame);
+}
+
+function lifecycle(turn, frame) {
+  const uuid = frame.command_uuid;
+  if (turn !== undefined && turn.inputs.has(uuid)) {
+    // A closing turn's own lifecycle tail (it settled through its result).
+    if (turn.closing) return;
+    const input = turn.inputs.get(uuid);
+    if (frame.state === "started") {
+      input.started = true;
+      if (uuid === turn.wakeUuid && !turn.accepted) accept(turn);
+      // A Host interrupt ends every input of this turn, however late it runs.
+      if (turn.stopRequested && uuid !== turn.wakeUuid)
+        void interruptRequest(turn).catch(() => undefined);
+    }
+    if (TERMINAL_LIFECYCLE.has(frame.state)) {
+      settleInput(turn, uuid);
+      maybeClose(turn);
+    }
+    return;
+  }
+  if (recentInputs.has(uuid)) return;
+  if (frame.state === "started") startAutonomous(`lifecycle ${String(uuid)}`);
+  emit("unattributed", {
+    method: "command_lifecycle",
+    reason: "unknown_input",
+  });
+}
+
+function accept(turn) {
+  if (turn.accepted) return;
+  turn.accepted = true;
+  emit("turn.accepted", {
+    nativeTurnId: turn.wakeUuid,
+    runAttemptId: turn.runAttemptId,
+  });
+}
+
+function isExactReplay(turn, frame) {
+  return (
+    frame.type === "user" &&
+    frame.uuid === turn.wakeUuid &&
+    textOf(frame.message) === turn.text
+  );
+}
+
+function observe(turn, frame) {
+  if (frame.type === "system" && frame.subtype === "init")
+    observeCapabilities(turn, frame);
+  // ACCEPTANCE SIGNAL: the replay echo of THIS wake's uuid with exactly its
+  // text; the digest covers the whole Host-composed turn text.
+  if (!turn.deliveryReported && isExactReplay(turn, frame)) {
+    turn.deliveryReported = true;
+    turn.inputs.get(turn.wakeUuid).replayed = true;
+    emitTurnFrame(turn, {
+      inputSha256: createHash("sha256").update(turn.text, "utf8").digest("hex"),
+      protocol: "rah-delivery-accepted/v1",
+      provider: PROVIDER,
+      signal: "replay-user-message",
+      threadId: sessionId,
+      turnId: turn.wakeUuid,
+    });
+  }
+  turn.finalInterrupt.observe(frame);
+  const toolsBefore = turn.tools.size;
+  trackTools(turn, frame);
+  const framesBefore = turn.lastFrameSeq;
+  if (frame.type === "result") {
+    observeResult(turn, frame);
+  } else {
+    turn.writer.emit(normalizeClaudeTrajectoryEvent(frame));
+  }
+  turn.usageWriter.emit(usageTracker.observe(frame));
+  if (turn.tools.size !== toolsBefore) reportProgress(turn, true);
+  else if (
+    turn.lastFrameSeq === framesBefore &&
+    (frame.type === "stream_event" || frame.type === "assistant")
+  )
+    reportProgress(turn, false);
+  maybeClose(turn);
+}
+
+function observeCapabilities(turn, frame) {
+  if (!Array.isArray(frame.capabilities)) {
+    turn.lifecycle ??= false;
+    return;
+  }
+  turn.lifecycle = frame.capabilities.includes("msg_lifecycle_v1");
+}
+
+function trackTools(turn, frame) {
+  const content = Array.isArray(frame.message?.content)
+    ? frame.message.content
+    : [];
+  for (const block of content) {
+    if (frame.type === "assistant" && block?.type === "tool_use")
+      turn.tools.add(String(block.id));
+    if (frame.type === "user" && block?.type === "tool_result")
+      turn.tools.delete(String(block.tool_use_id));
+  }
+}
+
+function observeResult(turn, frame) {
+  // Without lifecycle (older CLI) and without the uuid on the result, the
+  // single wake input is the only one this turn wrote.
+  const uuid =
+    typeof frame.user_message_uuid === "string"
+      ? frame.user_message_uuid
+      : turn.order.find((candidate) => !turn.inputs.get(candidate)?.settled);
+  const input = uuid === undefined ? undefined : turn.inputs.get(uuid);
+  if (input === undefined) {
+    turn.errors.push("a result named an input of no open turn");
+    emit("unattributed", { method: "result", reason: "unknown_input" });
+    return;
+  }
+  // Busy admission closes at the first result of the Activation.
+  turn.admissionOpen = false;
+  const aborted = isAbortedClaudeResult(frame);
+  const finalEnd =
+    uuid === turn.wakeUuid && turn.finalInterrupt.issued && aborted;
+  if (finalEnd) turn.finalEnded = true;
+  const failed = frame.subtype !== "success" || frame.is_error === true;
+  if (failed && !finalEnd && !(turn.stopRequested && aborted))
+    turn.errors.push(resultError(frame));
+  turn.writer.emit(
+    finalEnd
+      ? runtimeStatusTrajectory(
+          "online",
+          "stopped",
+          "工作轮次已完成",
+          "claude:result:final-reply-interrupt",
+        )
+      : turn.stopRequested && aborted
+        ? runtimeStatusTrajectory(
+            "offline",
+            "stopped",
+            "工作轮次结束：interrupted",
+            "claude:result:interrupted",
+          )
+        : normalizeClaudeTrajectoryEvent(frame),
+  );
+  settleInput(turn, uuid);
+}
+
+function resultBeforeAcceptance(turn, frame) {
+  const error = resultError(frame);
+  // Nothing of this wake ran. A resumed session that cannot be found is a
+  // continuity failure: never replaced silently.
+  emit("turn.failed", {
+    error,
+    rejected: false,
+    runAttemptId: turn.runAttemptId,
+  });
+  active = undefined;
+  rememberInputs(turn);
+  if (resumed && isMissingClaudeSessionError(error)) {
+    try {
+      assertSessionReplacementAllowed();
+    } catch (continuity) {
+      fatal(errorMessage(continuity));
+      return;
+    }
+    fatal(`the resumed Claude session was not found: ${error}`);
+  }
+}
+
+function settleInput(turn, uuid) {
+  const input = turn.inputs.get(uuid);
+  if (input !== undefined) input.settled = true;
+}
+
+function maybeClose(turn) {
+  if (turn !== active || turn.closing || !turn.accepted) return;
+  const wake = turn.inputs.get(turn.wakeUuid);
+  if (!wake.settled) return;
+  turn.admissionOpen = false;
+  if (turn.noticeInFlight) return;
+  for (const input of turn.inputs.values()) if (!input.settled) return;
+  void closeTurn(turn);
+}
+
+async function closeTurn(turn) {
+  turn.closing = true;
+  turn.writer.flush();
+  if (turn.finalInterrupt.armed) {
+    const report = await turn.finalInterrupt.report();
+    emitTurnFrame(turn, { protocol: "rah-final-interrupt/v1", ...report });
+  }
+  const status = turn.stopRequested
+    ? "interrupted"
+    : turn.finalEnded
+      ? "interrupted"
+      : turn.errors.length > 0
+        ? "failed"
+        : "completed";
+  emit("turn.drained", {
+    inFlightToolCount: turn.tools.size,
+    lastFrameSeq: turn.lastFrameSeq,
+    nativeTurnId: turn.wakeUuid,
+    runAttemptId: turn.runAttemptId,
+    status,
+    stopRequested: turn.stopRequested,
+    ...(status === "failed"
+      ? { errorMessage: turn.errors.join("; ").slice(0, 2048) }
+      : {}),
+    ...(turn.finalEnded && !turn.stopRequested
+      ? { endedAfterFinalReply: true }
+      : {}),
+  });
+  rememberInputs(turn);
+  if (active === turn) active = undefined;
+}
+
+function rememberInputs(turn) {
+  for (const uuid of turn.inputs.keys()) recentInputs.add(uuid);
+  while (recentInputs.size > RECENT_INPUT_LIMIT)
+    recentInputs.delete(recentInputs.values().next().value);
+}
+
+function idleFrame(frame) {
+  if (frame.type === "result") {
+    if (autonomous !== undefined) {
+      emit("unattributed", { method: "result", reason: "autonomous_turn" });
+      autonomous = undefined;
+      return;
+    }
+  } else if (
+    active === undefined &&
+    (frame.type === "assistant" ||
+      frame.type === "stream_event" ||
+      (frame.type === "system" && frame.subtype === "init"))
+  )
+    startAutonomous(String(frame.type));
+  emit("unattributed", {
+    method: String(frame.type ?? "unknown").slice(0, 200),
+    reason: active === undefined ? "no_turn" : "before_acceptance",
+  });
+}
+
+// A native turn no Activation asked for: end it, never attribute it.
+function startAutonomous(reason) {
+  if (autonomous !== undefined || active !== undefined) return;
+  autonomous = { reason };
+  emit("unattributed", { method: reason, reason: "autonomous_turn" });
+  void controlRequest(
+    { subtype: "interrupt", cancel_queued: true },
+    CONTROL_TIMEOUT_MS,
+  ).catch(() => undefined);
+}
+
+function settleControl(frame) {
+  const response =
+    typeof frame.response === "object" && frame.response !== null
+      ? frame.response
+      : {};
+  const pending = controlRequests.get(response.request_id);
+  if (pending === undefined) return;
+  controlRequests.delete(response.request_id);
+  clearTimeout(pending.timer);
+  if (response.subtype === "success") pending.resolve(response.response ?? {});
+  else
+    pending.reject(
+      Object.assign(
+        new Error(String(response.error ?? "control_request failed")),
+        { providerRejected: true },
+      ),
+    );
+}
+
+function reportProgress(turn, force) {
+  const now = Date.now();
+  if (!force && now - (turn.progressAt ?? 0) < PROGRESS_THROTTLE_MS) return;
+  turn.progressAt = now;
+  emit("progress", {
+    awaitingApproval: false,
+    nativeTurnId: turn.wakeUuid,
+    runAttemptId: turn.runAttemptId,
+    toolsInFlight: turn.tools.size,
+  });
+}
+
+function emitTurnFrame(turn, frame) {
+  turn.lastFrameSeq = emit("frame", {
+    frame,
+    nativeTurnId: turn.wakeUuid,
+    runAttemptId: turn.runAttemptId,
+  });
+}
+
+function emit(type, fields) {
+  frameSequence += 1;
+  try {
+    writeSync(
+      3,
+      `${JSON.stringify({
+        loom: "warm-runtime/v1",
+        seq: frameSequence,
+        runtimeId: options.runtimeId,
+        hostGeneration: options.hostGeneration,
+        type,
+        ...fields,
+      })}\n`,
+    );
+  } catch {
+    // The Host is gone; stdin EOF shuts the runtime down.
+  }
+  return frameSequence;
+}
+
+function fatal(message) {
+  if (shuttingDown) return;
+  emit("fatal", { error: String(message).slice(0, 2048) });
+  process.stderr.write(`[loom claude-warm] ${message}\n`);
+  void shutdown(1);
+}
+
+async function shutdown(exitCode) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  if (active !== undefined && claude.stdin.writable) {
+    void controlRequest(
+      { subtype: "interrupt", cancel_queued: true },
+      200,
+    ).catch(() => undefined);
+    await delay(200);
+  }
+  try {
+    claude.stdin.end();
+  } catch {
+    // Already closed.
+  }
+  if (claude.exitCode === null && claude.signalCode === null) {
+    const exited = await Promise.race([
+      claudeExited.then(() => true),
+      delay(PROVIDER_TERM_TIMEOUT_MS).then(() => false),
+    ]);
+    if (!exited && claude.exitCode === null && claude.signalCode === null) {
+      claude.kill("SIGTERM");
+      const terminated = await Promise.race([
+        claudeExited.then(() => true),
+        delay(PROVIDER_TERM_TIMEOUT_MS).then(() => false),
+      ]);
+      if (
+        !terminated &&
+        claude.exitCode === null &&
+        claude.signalCode === null
+      ) {
+        claude.kill("SIGKILL");
+        await Promise.race([claudeExited, delay(PROVIDER_TERM_TIMEOUT_MS)]);
+      }
+    }
+  }
+  rmSync(promptDirectory, { force: true, recursive: true });
+  process.exit(exitCode);
+}
+
+function resultError(frame) {
+  const errors = Array.isArray(frame.errors) ? frame.errors.join("; ") : "";
+  return String(
+    (typeof frame.result === "string" && frame.result !== ""
+      ? frame.result
+      : errors) ||
+      `Claude turn ended with ${String(frame.subtype ?? "unknown")}`,
+  ).slice(0, 2048);
+}
+
+function textOf(message) {
+  return Array.isArray(message?.content)
+    ? message.content
+        .filter((part) => part?.type === "text")
+        .map((part) => part.text)
+        .join("")
+    : undefined;
+}
+
+function parseArguments(argv) {
+  const parsed = { providerArgs: [] };
+  for (let index = 0; index < argv.length; index += 1) {
+    const name = argv[index];
+    const value = argv[index + 1];
+    if (value === undefined) throw new Error(`missing value for ${name}`);
+    if (name === "--executable") parsed.executable = value;
+    else if (name === "--tool-access-mode") parsed.toolAccessMode = value;
+    else if (name === "--prompt") parsed.prompt = value;
+    else if (name === "--prompt-file")
+      parsed.prompt = readProviderPromptFile(value);
+    else if (name === "--model") parsed.model = value;
+    else if (name === "--effort" || name === "--reasoning")
+      parsed.effort = value;
+    else if (name === "--resume-session") parsed.resumeSession = value;
+    else if (name === "--runtime-id") parsed.runtimeId = value;
+    else if (name === "--host-generation") parsed.hostGeneration = value;
+    // The Codex transport's socket directory; Claude speaks over stdio.
+    else if (name === "--socket-dir") parsed.socketDirectory = value;
+    else if (name === "--mcp-config") parsed.providerArgs.push(name, value);
+    else throw new Error(`unsupported claude warm driver option: ${name}`);
+    index += 1;
+  }
+  for (const required of [
+    "executable",
+    "prompt",
+    "runtimeId",
+    "hostGeneration",
+  ])
+    if (typeof parsed[required] !== "string" || parsed[required] === "")
+      throw new Error(`--${required} is required`);
+  if (parsed.toolAccessMode !== "full_access")
+    throw new Error("--tool-access-mode must be full_access");
+  for (const field of ["resumeSession", "model", "effort"]) {
+    const value = parsed[field];
+    if (
+      value !== undefined &&
+      (value.trim() === "" ||
+        value.length > 4_096 ||
+        /[\u0000-\u001f\u007f]/u.test(value))
+    )
+      throw new Error(`--${field} is invalid`);
+  }
+  return parsed;
+}
+
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}

@@ -243,7 +243,7 @@ export class DaemonApplication {
         });
       const activeAgentExecutionResetCoordinator =
         agentExecutionResetCoordinator;
-      const { processHygiene, instanceRuntimePool } =
+      const { processHygiene, instanceRuntimePool, warmRuntimeKinds } =
         createDaemonRuntimeHygiene(this.#config, host, kernel);
       let runtime: RuntimeAdapter;
       const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
@@ -534,6 +534,7 @@ export class DaemonApplication {
                 ? {}
                 : { toolAccessMode: placement.toolAccessMode }),
               warmRuntimePool: instanceRuntimePool,
+              warmRuntimeKinds,
               runtimeProfileRegistry,
               runtimeProfileRevision: activeRevision,
               supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),

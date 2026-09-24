@@ -5,7 +5,16 @@ import { isAbsolute, join } from "node:path";
 
 import { WorkerMessagePresentResponseSchema } from "@rah-os/protocol";
 
-import type { ActivationEnvironmentLease } from "./generic-process-adapter.ts";
+import type {
+  ActivationEnvironmentLease,
+  GenericProcessAdapterOptions,
+} from "./generic-process-adapter.ts";
+import {
+  providerActivationInput,
+  withRuntimeNotice,
+} from "./provider-activation-input.js";
+import type { ActivationEnvelope } from "./runtime.ts";
+import { RAH_PROTOCOL_NOTICE_ENV } from "./session-protocol-upgrade.ts";
 import {
   RAH_WORKER_API_URL_ENV,
   RAH_WORKER_SESSION_FILE_ENV,
@@ -20,11 +29,14 @@ const PRESENT_TIMEOUT_MS = 10_000;
  * acceptance of the injected wake turn (`rah-delivery-accepted/v1`). Only these
  * may carry a bodied wake: without an acceptance the presented window is never
  * marked sent, the post never confirms delivery, and the model would need a
- * check anyway. Claude, Kimi and OpenCode keep the fixed startup wake until
- * their own acceptance evidence is verified; a stdin write is never faked into
- * acceptance.
+ * check anyway. Codex: the `turn/start` response to the request carrying the
+ * wake. Claude (S2-c1): the `--replay-user-messages` echo of the wake's own
+ * uuid with exactly its text. Kimi and OpenCode keep the fixed startup wake
+ * until their own acceptance evidence is verified; a stdin write is never
+ * faked into acceptance.
  */
 const BODIED_WAKE_ADAPTER_KINDS: ReadonlySet<string> = new Set([
+  "claude-stream-json/v1",
   "codex-app-server/v1",
 ]);
 
@@ -142,4 +154,120 @@ export async function writeWakeInputFile(
 ): Promise<string> {
   await writeFile(path, text, { mode: 0o600, flag: "wx" });
   return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+/**
+ * The per-turn Host side of a bodied wake for one driver (`provider`): the
+ * lease gains `--wake-input-file`, the Kernel renders the window after
+ * `registerPrepared` and before launch, and the driver's acceptance is
+ * registered only when its digest equals the text this Host prepared for the
+ * same RunAttempt. Without `recordDeliveryAcceptance` (a Host that cannot
+ * register sends) the lease and launch are unchanged.
+ */
+export function createHostBodiedWake(input: {
+  provider: string;
+  recordDeliveryAcceptance: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
+}): {
+  enabled: boolean;
+  withBodiedWake: (
+    activation: ActivationEnvelope,
+    lease: ActivationEnvironmentLease,
+  ) => Promise<ActivationEnvironmentLease>;
+  beforeLaunch: NonNullable<GenericProcessAdapterOptions["beforeLaunch"]>;
+  recordDeliveryAcceptance: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
+} {
+  const record = input.recordDeliveryAcceptance;
+  const enabled =
+    record !== undefined && runtimeSupportsBodiedWake(input.provider);
+  // Per RunAttempt: the allocated wake file, then the digest of the bodied
+  // text written into it. Bounded, and not cleared on lease release: the
+  // adapter releases the lease before it drains the last fd3 frames, and the
+  // acceptance must still match then.
+  const wakeFiles = new Map<string, string>();
+  const preparedWakeDigests = new Map<string, string>();
+  // Per RunAttempt: the digest of a wake file that carried the notice line.
+  const noticeWakeDigests = new Map<string, string>();
+  const remember = (map: Map<string, string>, key: string, value: string) => {
+    if (map.size >= 64 && !map.has(key)) map.delete(map.keys().next().value!);
+    map.set(key, value);
+  };
+  return {
+    enabled,
+    withBodiedWake: async (activation, lease) => {
+      if (!enabled || lease.env[RAH_WORKER_API_URL_ENV] === undefined)
+        return lease;
+      const allocated = await allocateWakeInputFile(lease);
+      remember(wakeFiles, activation.runAttemptId, allocated.path);
+      return allocated.lease;
+    },
+    // After registerPrepared, before launch: the Kernel renders the window
+    // first, so no acceptance can ever precede the record it registers.
+    beforeLaunch: async (activation, lease) => {
+      const path = wakeFiles.get(activation.runAttemptId);
+      if (path === undefined || lease === undefined) return;
+      let bodied: string | undefined;
+      try {
+        bodied = await renderBodiedWake({
+          env: lease.env,
+          participantId: activation.participantId,
+        });
+      } catch (error) {
+        process.stderr.write(
+          `[rah-os] bodied wake unavailable for ${activation.runAttemptId}, using the startup wake: ${error instanceof Error ? error.message : String(error)}\n`,
+        );
+      }
+      // S2-0 review P2-2: the Host appends the notice line itself, so the
+      // file is the whole input and the acceptance digest covers the notice.
+      const notice = activation.runtimeNotice ?? "";
+      // P2-3: the protocol line rides in the same Host-composed file.
+      const protocolNotice = lease.env[RAH_PROTOCOL_NOTICE_ENV] ?? "";
+      if (bodied === undefined) {
+        // The fixed startup wake; no window digest is remembered, so its
+        // acceptance registers no send and the model confirms delivery with
+        // message-check. It can still confirm the notice line.
+        const digest = await writeWakeInputFile(
+          path,
+          providerActivationInput(notice, undefined, protocolNotice),
+        );
+        if (notice !== "")
+          remember(noticeWakeDigests, activation.runAttemptId, digest);
+        return;
+      }
+      const digest = await writeWakeInputFile(
+        path,
+        withRuntimeNotice(bodied, notice, protocolNotice),
+      );
+      remember(preparedWakeDigests, activation.runAttemptId, digest);
+      if (notice !== "")
+        remember(noticeWakeDigests, activation.runAttemptId, digest);
+    },
+    recordDeliveryAcceptance:
+      record === undefined
+        ? undefined
+        : async (activation, acceptance) => {
+            if (acceptance.provider !== input.provider) {
+              throw new Error(
+                `unexpected runtime delivery acceptance: ${acceptance.provider}`,
+              );
+            }
+            // Only the exact text this Host prepared for this RunAttempt may
+            // be registered as sent; the driver cannot vouch for any other
+            // input.
+            const prepared = preparedWakeDigests.get(activation.runAttemptId);
+            const noticed = noticeWakeDigests.get(activation.runAttemptId);
+            // The fixed startup wake has no presented window behind it.
+            if (prepared !== undefined) {
+              if (acceptance.inputSha256 !== prepared) {
+                throw new Error(
+                  "runtime delivery acceptance does not match the prepared wake input",
+                );
+              }
+              await record(activation, acceptance);
+            }
+            return {
+              runtimeNoticeAccepted:
+                noticed !== undefined && acceptance.inputSha256 === noticed,
+            };
+          },
+  };
 }

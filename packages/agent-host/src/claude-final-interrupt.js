@@ -1,0 +1,176 @@
+// Final-reply turn end for Claude Code stream-json (per-turn and warm
+// drivers), the Claude counterpart of `codex-final-interrupt.js`. The Host
+// alone decides that a final reply committed (a Kernel marker); the driver
+// only chooses the moment: the first point where no tool call is in flight
+// (every `tool_use` of an `assistant` frame has its `tool_result`), so the CLI
+// that posted the reply is never cut off. The interrupt is the native
+// `control_request` `{subtype:"interrupt"}` (Claude Code SDK
+// `SDKControlInterruptRequest`), answered by a `control_response`.
+//
+// Reported as three separate facts: `requested` (the request was written),
+// `accepted` (the control_response was `success`: true; `error`: false;
+// timeout or lost answer: "unknown") and `terminal` (this turn's `result`
+// ended aborted — `terminal_reason` aborted_tools/aborted_streaming, or an
+// `error_during_execution` result without a reason from an older CLI: true;
+// any other result: false; none seen: "unknown"). `sent` = requested and not
+// refused.
+//
+// `preemptedFollowUp` is observed, never assumed. The follow-up window opens
+// when the posting call completes: the `tool_result` of the Bash `tool_use`
+// whose command's first line is a `message-post ... --final`. With no
+// identifiable posting call it opens when the interrupt fires, and an arm
+// while a tool runs after model text that followed an earlier tool round is
+// unattributable (`unknown`). In the window, any model output — a partial
+// `stream_event` (the follow-up request's stream began) or an `assistant`
+// frame — is a follow-up generation (`false`, irreversible); otherwise the
+// interrupt preempted it (`true`). This is stream evidence, not a
+// server-side request audit: a request sent but not yet streaming when the
+// interrupt landed is not observable here.
+const FINAL_POST_COMMAND = /message-post\b.*\s--final\b/u;
+const ABORTED_REASONS = new Set(["aborted_tools", "aborted_streaming"]);
+
+function contentOf(frame) {
+  const content = frame?.message?.content;
+  return Array.isArray(content) ? content : [];
+}
+
+function isFinalPost(block) {
+  if (block?.type !== "tool_use" || block.name !== "Bash") return false;
+  const command = block.input?.command;
+  return (
+    typeof command === "string" &&
+    FINAL_POST_COMMAND.test(command.split("\n", 1)[0])
+  );
+}
+
+/** A `result` frame that ended because the running turn was aborted. */
+export function isAbortedClaudeResult(frame) {
+  if (frame?.type !== "result") return false;
+  if (typeof frame.terminal_reason === "string")
+    return ABORTED_REASONS.has(frame.terminal_reason);
+  return frame.subtype === "error_during_execution";
+}
+
+export function createClaudeFinalInterrupt({ interrupt }) {
+  const tools = new Map();
+  let armed = false;
+  let requested = false;
+  /** @type {boolean | "unknown"} */
+  let accepted = "unknown";
+  /** @type {boolean | "unknown"} */
+  let terminal = "unknown";
+  let ended = false;
+  let pending = Promise.resolve();
+  let postIdentified = false;
+  let window = false;
+  let followUp = false;
+  let ambiguous = false;
+  let toolRoundEnded = false;
+  let outputSinceIdle = false;
+  const fire = () => {
+    if (requested || ended) return;
+    requested = true;
+    if (!postIdentified) {
+      window = true;
+      if (outputSinceIdle && toolRoundEnded) followUp = true;
+    }
+    pending = (async () => {
+      try {
+        await interrupt();
+        accepted = true;
+      } catch (error) {
+        if (error?.providerRejected === true) accepted = false;
+      }
+    })();
+  };
+  const output = (modelText) => {
+    if (modelText) outputSinceIdle = true;
+    if (window) followUp = true;
+  };
+  return {
+    get armed() {
+      return armed;
+    },
+    get issued() {
+      return requested && accepted !== false;
+    },
+    /** The number of tool calls started and not yet answered. */
+    get toolsInFlight() {
+      return tools.size;
+    },
+    observe(frame) {
+      if (ended) return;
+      if (frame?.type === "assistant") {
+        let text = false;
+        let started = false;
+        for (const block of contentOf(frame)) {
+          if (block?.type === "tool_use") {
+            const id =
+              typeof block.id === "string" ? block.id : JSON.stringify(block);
+            const posting = isFinalPost(block);
+            if (posting) postIdentified = true;
+            tools.set(id, posting);
+            started = true;
+          } else if (block?.type === "text" || block?.type === "thinking")
+            text = true;
+        }
+        if (text || started) output(text);
+      } else if (frame?.type === "stream_event") {
+        output(true);
+      } else if (frame?.type === "user") {
+        for (const block of contentOf(frame)) {
+          if (block?.type !== "tool_result") continue;
+          const id = block.tool_use_id;
+          if (!tools.has(id)) continue;
+          const posting = tools.get(id) === true;
+          tools.delete(id);
+          if (posting && !window) window = true;
+          if (tools.size === 0) {
+            toolRoundEnded = true;
+            outputSinceIdle = false;
+          }
+        }
+      } else if (frame?.type === "result") {
+        ended = true;
+        terminal = requested ? isAbortedClaudeResult(frame) : terminal;
+        return;
+      }
+      if (armed && !requested && tools.size === 0) fire();
+    },
+    /** The Host's signal; false when already armed or the turn ended. */
+    arm() {
+      if (armed || ended) return false;
+      armed = true;
+      if (
+        !postIdentified &&
+        tools.size > 0 &&
+        toolRoundEnded &&
+        outputSinceIdle
+      )
+        ambiguous = true;
+      if (tools.size === 0) fire();
+      return true;
+    },
+    async report() {
+      await pending;
+      const sent = requested && accepted !== false;
+      return {
+        requested,
+        accepted: requested ? accepted : "unknown",
+        terminal: requested
+          ? accepted === false
+            ? false
+            : terminal
+          : "unknown",
+        sent,
+        preemptedFollowUp: !sent
+          ? "unknown"
+          : followUp
+            ? false
+            : ambiguous || !window
+              ? "unknown"
+              : true,
+      };
+    },
+  };
+}

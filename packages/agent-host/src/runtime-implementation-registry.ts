@@ -1,19 +1,6 @@
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
-import {
-  allocateWakeInputFile,
-  renderBodiedWake,
-  runtimeSupportsBodiedWake,
-  writeWakeInputFile,
-} from "./bodied-wake.ts";
-import {
-  RAH_PROTOCOL_NOTICE_ENV,
-  SessionProtocolUpgrade,
-} from "./session-protocol-upgrade.ts";
-import {
-  providerActivationInput,
-  withRuntimeNotice,
-} from "./provider-activation-input.js";
-import { RAH_WORKER_API_URL_ENV } from "./worker-credential-file.ts";
+import { createHostBodiedWake, renderBodiedWake } from "./bodied-wake.ts";
+import { SessionProtocolUpgrade } from "./session-protocol-upgrade.ts";
 import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
@@ -65,7 +52,10 @@ import {
 } from "./provider-session-store.ts";
 import type { ActivationEnvelope, RuntimeAdapter } from "./runtime.ts";
 import {
+  CLAUDE_WARM_DRIVER,
+  CODEX_WARM_DRIVER,
   CodexWarmAdapter,
+  type WarmDriverDescriptor,
   type WarmWorkerCredential,
 } from "./codex-warm-adapter.ts";
 import type { InstanceRuntimePool } from "./instance-runtime-pool.ts";
@@ -99,9 +89,9 @@ export type RuntimeCreationOptions = Pick<
 > & {
   providerSessionStore?: ProviderSessionStore;
   /**
-   * Codex only in this batch. Invoked when the driver reports that the runtime
+   * Codex and Claude (S2-c1). Invoked when the driver reports that the runtime
    * accepted the wake injection; the Host turns that into the Host-credential
-   * `markPresentedDeliverySent`. The other three drivers do not pass it, so
+   * `markPresentedDeliverySent`. Kimi and OpenCode drop it, so
    * their Activations keep the explicit `message-check` path unchanged.
    */
   recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
@@ -412,8 +402,9 @@ export class RuntimeImplementationRegistry {
   }
 
   /**
-   * S2-a Codex warm process per Role instance. Legacy Agents (no instance
-   * channel) keep the per-turn adapter this wraps; other drivers are refused.
+   * S2-a Codex / S2-c1 Claude warm process per Role instance. Legacy Agents
+   * (no instance channel) keep the per-turn adapter this wraps; other drivers
+   * are refused.
    */
   createWarmRuntime(
     revision: RuntimeProfileRevision,
@@ -423,9 +414,15 @@ export class RuntimeImplementationRegistry {
     resolvedModel?: ResolvedModel,
     toolAccessMode?: ToolAccessMode,
   ): RuntimeAdapter {
-    if (revision.manifest.adapter.kind !== "codex-app-server/v1")
+    const driver =
+      revision.manifest.adapter.kind === "codex-app-server/v1"
+        ? CODEX_WARM_DRIVER
+        : revision.manifest.adapter.kind === "claude-stream-json/v1"
+          ? CLAUDE_WARM_DRIVER
+          : undefined;
+    if (driver === undefined)
       throw new Error(
-        `warm runtimes support codex-app-server/v1 only; received ${revision.manifest.adapter.kind}`,
+        `warm runtimes support codex-app-server/v1 and claude-stream-json/v1 only; received ${revision.manifest.adapter.kind}`,
       );
     const legacy = this.createRuntime(
       revision,
@@ -434,7 +431,8 @@ export class RuntimeImplementationRegistry {
       resolvedModel,
       toolAccessMode,
     );
-    return createCodexWarmRuntime(
+    return createWarmInstanceRuntime(
+      driver,
       validateRuntimeProfileRevision(revision),
       probeReport,
       options,
@@ -603,10 +601,7 @@ function createClaudeStreamJsonRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
-    // Codex-only in this batch: dropped here so this driver's path is
-    // behaviourally identical to before, with no acceptance signal and no
-    // `sent_at`, and its Activations keep the explicit `message-check`.
-    recordDeliveryAcceptance: _unusedDeliveryAcceptance,
+    recordDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [
@@ -641,12 +636,23 @@ function createClaudeStreamJsonRuntime(
   const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
   const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
+  // S2-c1: the driver's replay echo of the wake's own uuid is the acceptance.
+  const wake = createHostBodiedWake({
+    provider: "claude-stream-json/v1",
+    recordDeliveryAcceptance,
+  });
   return new GenericProcessAdapter({
     ...processOptions,
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     nativeBusyInput: true,
+    // The driver ends the turn with the native stream-json interrupt.
+    finalReplyInterrupt: true,
     guideRuntimeId: "claude",
     busyInputMode: "direct",
+    ...(wake.enabled ? { beforeLaunch: wake.beforeLaunch } : {}),
+    ...(wake.recordDeliveryAcceptance === undefined
+      ? {}
+      : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -656,7 +662,8 @@ function createClaudeStreamJsonRuntime(
         "claude-stream-json/v1",
         lease.standingPromptDigest,
       );
-      if (providerSessionStore === undefined || key === undefined) return lease;
+      if (providerSessionStore === undefined || key === undefined)
+        return await wake.withBodiedWake(input, lease);
       const previous =
         (await providerSessionStore.load(key, {
           requireExisting: input.agent?.instanceSessionRequired === true,
@@ -680,15 +687,16 @@ function createClaudeStreamJsonRuntime(
         key,
         previous,
       );
-      if (previous === null) return preparedLease;
-      return {
+      if (previous === null)
+        return await wake.withBodiedWake(input, preparedLease);
+      return await wake.withBodiedWake(input, {
         ...protocolUpgrade.withNotice(preparedLease, protocolNotice),
         args: [
           ...(lease.args ?? []),
           "--resume-session",
           previous.providerSessionId,
         ],
-      };
+      });
     },
     args,
     beforeStart: async () => {
@@ -836,74 +844,11 @@ function createCodexAppServerRuntime(
   const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
   // S1-d: the bodied wake needs the Host to register the driver's acceptance;
   // without that registration a presented window can never confirm delivery.
-  const bodiedWake =
-    recordDeliveryAcceptance !== undefined &&
-    runtimeSupportsBodiedWake(revision.manifest.adapter.kind);
-  // Per RunAttempt: the allocated wake file, then the digest of the bodied
-  // text written into it. Bounded, and not cleared on lease release: the
-  // adapter releases the lease before it drains the last fd3 frames, and the
-  // acceptance must still match then.
-  const wakeFiles = new Map<string, string>();
-  const preparedWakeDigests = new Map<string, string>();
-  // Per RunAttempt: the digest of a wake file that carried the notice line.
-  const noticeWakeDigests = new Map<string, string>();
-  const remember = (map: Map<string, string>, key: string, value: string) => {
-    if (map.size >= 64 && !map.has(key)) map.delete(map.keys().next().value!);
-    map.set(key, value);
-  };
-  const withBodiedWake = async (
-    input: ActivationEnvelope,
-    lease: ActivationEnvironmentLease,
-  ): Promise<ActivationEnvironmentLease> => {
-    if (!bodiedWake || lease.env[RAH_WORKER_API_URL_ENV] === undefined)
-      return lease;
-    const allocated = await allocateWakeInputFile(lease);
-    remember(wakeFiles, input.runAttemptId, allocated.path);
-    return allocated.lease;
-  };
-  // After registerPrepared, before launch: the Kernel renders the window first,
-  // so no acceptance can ever precede the record it registers.
-  const beforeLaunch = async (
-    input: ActivationEnvelope,
-    lease: ActivationEnvironmentLease | undefined,
-  ): Promise<void> => {
-    const path = wakeFiles.get(input.runAttemptId);
-    if (path === undefined || lease === undefined) return;
-    let bodied: string | undefined;
-    try {
-      bodied = await renderBodiedWake({
-        env: lease.env,
-        participantId: input.participantId,
-      });
-    } catch (error) {
-      process.stderr.write(
-        `[rah-os] bodied wake unavailable for ${input.runAttemptId}, using the startup wake: ${error instanceof Error ? error.message : String(error)}\n`,
-      );
-    }
-    // S2-0 review P2-2: the Host appends the notice line itself, so the
-    // file is the whole input and the acceptance digest covers the notice.
-    const notice = input.runtimeNotice ?? "";
-    // P2-3: the protocol line rides in the same Host-composed file.
-    const protocolNotice = lease.env[RAH_PROTOCOL_NOTICE_ENV] ?? "";
-    if (bodied === undefined) {
-      // The fixed startup wake; no window digest is remembered, so its
-      // acceptance registers no send and the model confirms delivery with
-      // message-check. It can still confirm the notice line.
-      const digest = await writeWakeInputFile(
-        path,
-        providerActivationInput(notice, undefined, protocolNotice),
-      );
-      if (notice !== "")
-        remember(noticeWakeDigests, input.runAttemptId, digest);
-      return;
-    }
-    const digest = await writeWakeInputFile(
-      path,
-      withRuntimeNotice(bodied, notice, protocolNotice),
-    );
-    remember(preparedWakeDigests, input.runAttemptId, digest);
-    if (notice !== "") remember(noticeWakeDigests, input.runAttemptId, digest);
-  };
+  const wake = createHostBodiedWake({
+    provider: "codex-app-server/v1",
+    recordDeliveryAcceptance,
+  });
+  const withBodiedWake = wake.withBodiedWake;
   return new GenericProcessAdapter({
     ...processOptions,
     nativeBusyInput: true,
@@ -911,7 +856,7 @@ function createCodexAppServerRuntime(
     guideRuntimeId: "codex",
     busyInputMode: "direct",
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
-    ...(bodiedWake ? { beforeLaunch } : {}),
+    ...(wake.enabled ? { beforeLaunch: wake.beforeLaunch } : {}),
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -969,34 +914,9 @@ function createCodexAppServerRuntime(
       runtimeProfileDigest: revision.contentDigest,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     },
-    ...(recordDeliveryAcceptance === undefined
+    ...(wake.recordDeliveryAcceptance === undefined
       ? {}
-      : {
-          recordDeliveryAcceptance: async (input, acceptance) => {
-            if (acceptance.provider !== "codex-app-server/v1") {
-              throw new Error(
-                `unexpected runtime delivery acceptance: ${acceptance.provider}`,
-              );
-            }
-            // Only the exact text this Host prepared for this RunAttempt may be
-            // registered as sent; the driver cannot vouch for any other input.
-            const prepared = preparedWakeDigests.get(input.runAttemptId);
-            const noticed = noticeWakeDigests.get(input.runAttemptId);
-            // The fixed startup wake has no presented window behind it.
-            if (prepared !== undefined) {
-              if (acceptance.inputSha256 !== prepared) {
-                throw new Error(
-                  "runtime delivery acceptance does not match the prepared wake input",
-                );
-              }
-              await recordDeliveryAcceptance(input, acceptance);
-            }
-            return {
-              runtimeNoticeAccepted:
-                noticed !== undefined && acceptance.inputSha256 === noticed,
-            };
-          },
-        }),
+      : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
     ...(providerSessionStore === undefined
       ? {}
       : {
@@ -1042,7 +962,8 @@ function createCodexAppServerRuntime(
   });
 }
 
-function createCodexWarmRuntime(
+function createWarmInstanceRuntime(
+  driver: WarmDriverDescriptor,
   revision: RuntimeProfileRevision,
   probeReport: RuntimeProfileProbeReport,
   options: RuntimeCreationOptions,
@@ -1055,12 +976,13 @@ function createCodexWarmRuntime(
   const systemMemory = new ProviderSystemMemory();
   // The system-memory snapshot is prepared once per process (its cold start).
   const coldStartRun = new Map<string, string>();
-  const provider = "codex-app-server/v1";
+  const provider = driver.provider;
   const recordDeliveryAcceptance = options.recordDeliveryAcceptance;
   // P2-3: the warm turn text is Host-composed, so the line is appended per
   // turn (`protocolNotice`) rather than through the process environment.
   const protocolUpgrade = new SessionProtocolUpgrade(store);
   return new CodexWarmAdapter({
+    driver,
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     protocolNotice: (input) => protocolUpgrade.noticeFor(input),
     // S2-b: an idle runtime restarts when the probed binary changes.
@@ -1122,7 +1044,8 @@ function createCodexWarmRuntime(
           };
     },
     // Anything that changes what the process was launched with restarts it
-    // at an idle boundary; model and effort are sent per turn instead.
+    // at an idle boundary. Codex sends model and effort per turn; for Claude
+    // they are launch arguments and part of the key.
     runtimeKey: (input) =>
       JSON.stringify([
         input.participantId,
@@ -1132,6 +1055,9 @@ function createCodexWarmRuntime(
         input.agent?.instanceSessionGeneration ?? null,
         input.contextManifest?.placement?.workspaceMountRevisionId ?? null,
         options.cwd,
+        ...(driver === CLAUDE_WARM_DRIVER
+          ? [driver.kind, resolvedModel === undefined ? null : resolvedModel]
+          : []),
       ]),
     workerApiOrigin: warm.workerApiOrigin,
     ...(recordDeliveryAcceptance === undefined

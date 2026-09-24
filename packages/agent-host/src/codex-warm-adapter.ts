@@ -88,6 +88,52 @@ export const CODEX_WARM_DRIVER_KIND = "codex-app-server-warm/v1";
 const CODEX_WARM_DRIVER_PATH = fileURLToPath(
   new URL("./codex-warm-driver.mjs", import.meta.url),
 );
+
+/**
+ * The warm driver process behind this adapter. Every driver speaks the same
+ * `warm-runtime/v1` Host protocol (turn.begin/notice/interrupt/final; ready,
+ * turn.accepted, frame, turn.drained, ...); what differs is recorded here.
+ */
+export type WarmDriverDescriptor = {
+  /** `instance_runtimes.driver`. */
+  kind: string;
+  entry: string;
+  seaEntry: string;
+  /** Provider session evidence and delivery acceptance provider. */
+  provider: string;
+  guideRuntimeId: string;
+  /**
+   * When the Host persists the native session binding: at `ready` (Codex:
+   * the thread exists before any input) or after the runtime's first turn
+   * was accepted (Claude: the CLI writes a fresh session when it takes the
+   * first input, so a binding before it could name a session that never
+   * existed).
+   */
+  bindSession: "ready" | "accepted";
+  /** A native in-turn injection restates the handle after compaction. */
+  restatesHandle: boolean;
+};
+
+export const CODEX_WARM_DRIVER: WarmDriverDescriptor = {
+  bindSession: "ready",
+  entry: CODEX_WARM_DRIVER_PATH,
+  guideRuntimeId: "codex",
+  kind: CODEX_WARM_DRIVER_KIND,
+  provider: "codex-app-server/v1",
+  restatesHandle: true,
+  seaEntry: "__codex-warm-driver",
+};
+
+/** S2-c1: long-lived Claude stream-json (`claude-warm-driver.mjs`). */
+export const CLAUDE_WARM_DRIVER: WarmDriverDescriptor = {
+  bindSession: "accepted",
+  entry: fileURLToPath(new URL("./claude-warm-driver.mjs", import.meta.url)),
+  guideRuntimeId: "claude",
+  kind: "claude-stream-json-warm/v1",
+  provider: "claude-stream-json/v1",
+  restatesHandle: false,
+  seaEntry: "__claude-warm-driver",
+};
 const DEFAULT_INTERRUPT_QUIESCE_TIMEOUT_MS = 10_000;
 const DEFAULT_ACCEPT_TIMEOUT_MS = 30_000;
 const RUNTIME_NOTICE_LIMIT = 300;
@@ -98,6 +144,8 @@ export type WarmWorkerCredential = {
 };
 
 export type CodexWarmAdapterOptions = {
+  /** The warm driver; Codex when omitted. */
+  driver?: WarmDriverDescriptor;
   pool: InstanceRuntimePool;
   /** The per-turn adapter used for everything that is not a warm turn. */
   legacy: RuntimeAdapter & {
@@ -154,16 +202,21 @@ type TurnBinding = {
 };
 
 export class CodexWarmAdapter implements RuntimeAdapter {
-  readonly guideRuntimeId = "codex";
   readonly busyInputMode = "direct" as const;
   readonly busyInputSupported = true;
   readonly #options: CodexWarmAdapterOptions;
+  readonly #driver: WarmDriverDescriptor;
   readonly #turns = new Map<string, TurnBinding>();
   /** Stalls and resource failures per Activation (bounded retry budget). */
   readonly #supervisionFailures = new Map<string, number>();
 
   constructor(options: CodexWarmAdapterOptions) {
     this.#options = options;
+    this.#driver = options.driver ?? CODEX_WARM_DRIVER;
+  }
+
+  get guideRuntimeId(): string {
+    return this.#driver.guideRuntimeId;
   }
 
   get recoveryDrivers(): readonly string[] {
@@ -200,7 +253,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
             cliFingerprint: async () => await cliBinaryFingerprint(executable),
           }),
       runAttemptId: input.runAttemptId,
-      driver: CODEX_WARM_DRIVER_KIND,
+      driver: this.#driver.kind,
       key: this.#options.runtimeKey(input),
       launch: async (layout) => {
         const lease = await this.#options.runtimeEnvironment(input);
@@ -209,7 +262,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         const model = this.#options.resolvedModel;
         return {
           args: [
-            isSea() ? "__codex-warm-driver" : CODEX_WARM_DRIVER_PATH,
+            isSea() ? this.#driver.seaEntry : this.#driver.entry,
             ...this.#options.driverArgs,
             ...(model?.source === "custom_model" ||
             model?.source === "explicit_binding"
@@ -346,7 +399,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     // Review P1-2: the native session exists since ready; its binding is
     // durable before this turn's input can be accepted, so an interrupted or
     // crashed first turn still resumes the same thread. Failure stops here.
-    await this.#bindSession(input, runtime, lifecycle, runtimeRunId);
+    if (this.#driver.bindSession === "ready")
+      await this.#bindSession(input, runtime, lifecycle, runtimeRunId);
     const wake = await this.#wakeText(input, runtime, turn);
     const fullDigest = createHash("sha256")
       .update(wake.text, "utf8")
@@ -357,7 +411,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     runtime.command({
       op: "turn.begin",
       // Restated only inside this native turn after a native compaction.
-      restate: workerTurnHandleLine(turn.handle.handle),
+      ...(this.#driver.restatesHandle
+        ? { restate: workerTurnHandleLine(turn.handle.handle) }
+        : {}),
       runAttemptId: input.runAttemptId,
       runtimeRunId,
       text: wake.text,
@@ -374,8 +430,24 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     );
     if (admission.kind === "failed")
       throw new Error(
-        `warm turn was not admitted${admission.rejected ? " (rejected by Codex)" : " (ambiguous)"}: ${admission.error}`,
+        `warm turn was not admitted${admission.rejected ? " (rejected by the CLI)" : " (ambiguous)"}: ${admission.error}`,
       );
+    if (this.#driver.bindSession === "accepted") {
+      // The CLI took this runtime's first input: the session now exists.
+      // A binding failure ends the runtime (the turn gets no quiet proof).
+      try {
+        await this.#bindSession(input, runtime, lifecycle, runtimeRunId);
+      } catch (error) {
+        await pool
+          .abortRuntime(runtime, "crash")
+          .catch((abortError: unknown) =>
+            pool.diagnostic(
+              `[${runtime.instanceRuntimeId}] ${abortError instanceof Error ? abortError.message : String(abortError)}`,
+            ),
+          );
+        throw error;
+      }
+    }
     await control.recordTurnAccepted({
       instanceRuntimeId: runtime.instanceRuntimeId,
       nativeTurnId: admission.nativeTurnId,
@@ -631,7 +703,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         input,
         {
           protocol: "rah-provider-session/v1",
-          provider: "codex-app-server/v1",
+          provider: this.#driver.provider,
           providerSessionId,
           state: "ready",
         },
@@ -646,7 +718,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         });
     } catch (error) {
       throw new Error(
-        `RAH_SESSION_CONTINUITY_REQUIRED: session binding failed before the turn input: ${error instanceof Error ? error.message : String(error)}`,
+        `RAH_SESSION_CONTINUITY_REQUIRED: session binding failed ${this.#driver.bindSession === "ready" ? "before the turn input" : "after the first accepted input"}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
     runtime.sessionBound = true;

@@ -11,6 +11,8 @@ export function attachClaudeBusyInput({
   session,
   write,
   receipt = (frame) => writeSync(3, `${JSON.stringify(frame)}\n`),
+  // Host control frames on the same private pipe (final-reply turn end).
+  control,
 }) {
   const decoder = new StringDecoder("utf8");
   let buffer = "";
@@ -31,6 +33,10 @@ export function attachClaudeBusyInput({
     try {
       frame = JSON.parse(line);
     } catch {
+      return;
+    }
+    if (frame?.protocol === "rah-final-reply/v1") {
+      if (!terminal) control?.(frame);
       return;
     }
     if (

@@ -29,6 +29,7 @@ import {
   createRegistryBackedRuntimeRecovery,
   type SecretProvider,
 } from "../src/index.ts";
+import { warmRuntimeAdapterKinds } from "../src/daemon-process-hygiene.ts";
 
 const fakeCliPath = fileURLToPath(
   new URL("../../agent-host/test/fixtures/fake-cli.mjs", import.meta.url),
@@ -2069,10 +2070,44 @@ test("S2-a warm Codex runtimes are opt-in with a configurable idle TTL", () => {
   });
   for (const warmRuntimes of [
     { codex: { idleTtlMs: 0 } },
-    { claude: { enabled: true } },
+    { claude: { idleTtlMs: 600_000 } },
+    { kimi: { enabled: true } },
     { codex: { enabled: true, lru: 3 } },
   ])
     assert.throws(() => DaemonConfigSchema.parse({ ...base, warmRuntimes }));
+});
+
+test("S2-c1 warm Claude runtimes are a separate opt-in, off by default", () => {
+  const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
+  assert.deepEqual(warmRuntimeAdapterKinds(undefined), new Set());
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(
+      DaemonConfigSchema.parse({
+        ...base,
+        warmRuntimes: { codex: { enabled: true } },
+      }).warmRuntimes,
+    ),
+    new Set(["codex-app-server/v1"]),
+    "enabling Codex never enables Claude",
+  );
+  const parsed = DaemonConfigSchema.parse({
+    ...base,
+    warmRuntimes: { claude: { enabled: true } },
+  });
+  assert.deepEqual(parsed.warmRuntimes, { claude: { enabled: true } });
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(parsed.warmRuntimes),
+    new Set(["claude-stream-json/v1"]),
+  );
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(
+      DaemonConfigSchema.parse({
+        ...base,
+        warmRuntimes: { claude: { enabled: false }, idleTtlMs: 900_000 },
+      }).warmRuntimes,
+    ),
+    new Set(),
+  );
 });
 
 test("S2-b warm runtime policies are configurable; Codex warm stays off by default", () => {

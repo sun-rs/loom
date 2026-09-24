@@ -4,6 +4,7 @@ import {
   providerLaunchPolicy,
 } from "./provider-launch-arguments.js";
 import { spawn } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
 import {
   chmodSync,
   mkdtempSync,
@@ -23,6 +24,15 @@ import {
 
 import { attachClaudeBusyInput } from "./claude-busy-input.js";
 import {
+  CLAUDE_DISALLOWED_TOOLS,
+  isMissingClaudeSessionError as isMissingSessionError,
+  withoutNestedClaudeCode,
+} from "./claude-stream-launch.js";
+import {
+  createClaudeFinalInterrupt,
+  isAbortedClaudeResult,
+} from "./claude-final-interrupt.js";
+import {
   ClaudeStreamUsageTracker,
   ProviderUsageWriter,
 } from "./provider-usage.js";
@@ -35,17 +45,14 @@ const INTERRUPT_TIMEOUT_MS = 750;
 const TERM_TIMEOUT_MS = 300;
 const MAX_STDERR_BYTES = 64 * 1024;
 const MAX_FRAME_BYTES = 1024 * 1024;
-const ACTIVATION_PROMPT = providerActivationInput();
-const DISALLOWED_TOOLS = [
-  "EnterPlanMode",
-  "ExitPlanMode",
-  "ScheduleWakeup",
-  "CronCreate",
-  "CronList",
-  "CronDelete",
-].join(",");
+const FINAL_INTERRUPT_TIMEOUT_MS = 5_000;
+const DISALLOWED_TOOLS = CLAUDE_DISALLOWED_TOOLS;
 
 const options = parseArguments(driverArguments(process.argv.slice(2)));
+// S1-d/S2-c1: the Host-prepared wake file verbatim when present (the Host
+// already appended the notice lines, so the acceptance digest covers them);
+// otherwise the fixed startup wake plus the env notices.
+const TURN_INPUT = options.wakeInput ?? providerActivationInput();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 const usageTracker = new ClaudeStreamUsageTracker();
 const usageWriter = new ProviderUsageWriter();
@@ -55,6 +62,7 @@ const promptPath = join(promptDirectory, "room-worker.md");
 writeFileSync(promptPath, options.prompt, { mode: 0o600 });
 
 let activeChild;
+let finalReportForRun;
 let stopping = false;
 let terminationPromise;
 const providerSessionIds = new Set(
@@ -110,6 +118,8 @@ try {
       throw new Error("Claude completed without a Provider session id");
     }
     writeProviderSessionEvidence(turn.sessionId);
+    if (finalReportForRun !== undefined)
+      writeFinalInterruptReport(finalReportForRun);
   }
 } catch (error) {
   if (stopping) {
@@ -172,13 +182,57 @@ async function runTurn(resumeSession) {
   let resultCount = 0;
   let failedResult;
   let protocolError;
+  let endedAfterFinalReply = false;
   const toolNames = new Map();
+  // A fresh uuid per turn input: the replay echo of exactly this uuid and
+  // text is the only acceptance of this turn (never a resumed session's
+  // earlier message, which carries its own uuid, never a stdin write).
+  const inputUuid = randomUUID();
+  const controlRequests = new Map();
+  const controlRequest = (request, timeoutMs) =>
+    new Promise((resolve, reject) => {
+      const requestId = `rah-${randomUUID()}`;
+      const timer = setTimeout(() => {
+        controlRequests.delete(requestId);
+        reject(new Error(`control_request ${request.subtype} timed out`));
+      }, timeoutMs);
+      controlRequests.set(requestId, { reject, resolve, timer });
+      try {
+        child.stdin.write(
+          `${JSON.stringify({ type: "control_request", request_id: requestId, request })}\n`,
+        );
+      } catch (error) {
+        clearTimeout(timer);
+        controlRequests.delete(requestId);
+        reject(error);
+      }
+    });
+  // Final-reply turn end: this turn only, at the first tool boundary.
+  const finalInterrupt = createClaudeFinalInterrupt({
+    interrupt: () =>
+      controlRequest({ subtype: "interrupt" }, FINAL_INTERRUPT_TIMEOUT_MS),
+  });
   const busyInput = attachClaudeBusyInput({
     input: process.stdin,
     resumedSession: resumeSession !== undefined,
     session: () =>
-      inputAccepted && !protocolError && !stopping ? sessionId : undefined,
+      inputAccepted && !protocolError && !stopping && !finalInterrupt.armed
+        ? sessionId
+        : undefined,
     write: (text, done) => child.stdin.write(text, done),
+    control: (frame) => {
+      if (
+        stopping ||
+        !inputAccepted ||
+        resultFrame !== undefined ||
+        typeof frame.runAttemptId !== "string" ||
+        (process.env.RAH_RUN_ATTEMPT_ID !== undefined &&
+          frame.runAttemptId !== process.env.RAH_RUN_ATTEMPT_ID) ||
+        (frame.turnId !== undefined && frame.turnId !== inputUuid)
+      )
+        return;
+      finalInterrupt.arm();
+    },
   });
   child.stdin.on("error", () => busyInput.close());
   let stderrTail = Buffer.alloc(0);
@@ -207,6 +261,10 @@ async function runTurn(resumeSession) {
       return;
     }
     if (!isRecord(frame)) return;
+    if (frame.type === "control_response") {
+      settleControlResponse(frame, controlRequests);
+      return;
+    }
     const observedSessionId = stringField(frame, "session_id");
     if (observedSessionId !== undefined) {
       if (
@@ -219,7 +277,22 @@ async function runTurn(resumeSession) {
       }
       providerSessionIds.add(observedSessionId);
     }
-    if (isActivationReplay(frame)) inputAccepted = true;
+    if (!inputAccepted) {
+      const replay = activationReplay(frame, inputUuid);
+      if (replay !== undefined) {
+        inputAccepted = true;
+        const threadId = observedSessionId ?? sessionId ?? resumeSession;
+        // ACCEPTANCE SIGNAL: the replay echo of THIS turn's uuid with exactly
+        // this text (`--replay-user-messages`). Only a Host-prepared wake is
+        // reported; its digest is what the Host prepared.
+        if (
+          replay === "exact" &&
+          options.wakeInput !== undefined &&
+          threadId !== undefined
+        )
+          writeDeliveryAcceptance(threadId, inputUuid, options.wakeInput);
+      }
+    } else finalInterrupt.observe(frame);
     if (hasToolActivity(frame)) {
       toolActivity = true;
       if (!inputAccepted) toolActivityBeforeInput = true;
@@ -233,7 +306,15 @@ async function runTurn(resumeSession) {
         protocolError =
           "Claude stream-json returned unexpected terminal results";
       }
-      if (frame.subtype !== "success" || frame.is_error === true)
+      // Ended by the Host after the final reply committed: the reply is
+      // done, so the aborted turn is this run's success.
+      if (
+        resultCount === 1 &&
+        finalInterrupt.issued &&
+        isAbortedClaudeResult(frame)
+      )
+        endedAfterFinalReply = true;
+      else if (frame.subtype !== "success" || frame.is_error === true)
         failedResult = frame;
       resultFrame = frame;
       // Close admission at the first result; already written user inputs remain
@@ -249,9 +330,10 @@ async function runTurn(resumeSession) {
 
   const input = {
     type: "user",
+    uuid: inputUuid,
     message: {
       role: "user",
-      content: [{ type: "text", text: ACTIVATION_PROMPT }],
+      content: [{ type: "text", text: TURN_INPUT }],
     },
     ...(resumeSession === undefined ? {} : { session_id: resumeSession }),
   };
@@ -259,6 +341,14 @@ async function runTurn(resumeSession) {
   const terminal = await exited.finally(() => busyInput.close());
   if (activeChild === child) activeChild = undefined;
   lines.close();
+  for (const pending of controlRequests.values()) {
+    clearTimeout(pending.timer);
+    pending.reject(new Error("Claude exited"));
+  }
+  controlRequests.clear();
+  finalReportForRun = finalInterrupt.armed
+    ? await finalInterrupt.report()
+    : undefined;
   if (stopping) {
     return {
       error: "interrupted",
@@ -289,11 +379,21 @@ async function runTurn(resumeSession) {
       toolActivity,
     };
   }
-  trajectoryWriter.emit(normalizeClaudeTrajectoryEvent(resultFrame));
+  trajectoryWriter.emit(
+    endedAfterFinalReply
+      ? // The aborted result is this run's success, never a runtime error.
+        runtimeStatusTrajectory(
+          "online",
+          "stopped",
+          "工作轮次已完成",
+          "claude:result:final-reply-interrupt",
+        )
+      : normalizeClaudeTrajectoryEvent(resultFrame),
+  );
   const succeeded =
     failedResult === undefined &&
-    resultFrame.subtype === "success" &&
-    resultFrame.is_error !== true &&
+    ((resultFrame.subtype === "success" && resultFrame.is_error !== true) ||
+      endedAfterFinalReply) &&
     terminal.code === 0 &&
     terminal.signal === null &&
     !toolActivityBeforeInput;
@@ -370,16 +470,80 @@ async function terminate() {
   return terminationPromise;
 }
 
-function isActivationReplay(frame) {
-  if (frame.type !== "user") return false;
+/**
+ * This turn's replay echo (`--replay-user-messages`): a `user` frame carrying
+ * exactly the submitted text. "exact" when it also carries the submitted
+ * uuid — the Claude Code replay echo carries the host-supplied uuid of the
+ * inbound message — and "legacy" when an older CLI echoes no uuid at all
+ * (liveness only, never a delivery acceptance). A frame with any other uuid
+ * is a different message (for example a resumed session's earlier one).
+ */
+function activationReplay(frame, inputUuid) {
+  if (frame.type !== "user") return undefined;
   const message = record(frame.message);
-  if (message.role !== "user" || !Array.isArray(message.content)) return false;
-  return message.content.some(
-    (candidate) =>
-      isRecord(candidate) &&
-      candidate.type === "text" &&
-      candidate.text === ACTIVATION_PROMPT,
-  );
+  if (message.role !== "user" || !Array.isArray(message.content))
+    return undefined;
+  const text = message.content
+    .filter((candidate) => isRecord(candidate) && candidate.type === "text")
+    .map((candidate) => candidate.text)
+    .join("");
+  if (text !== TURN_INPUT) return undefined;
+  if (frame.uuid === inputUuid) return "exact";
+  return frame.uuid === undefined ? "legacy" : undefined;
+}
+
+function settleControlResponse(frame, requests) {
+  const response = record(frame.response);
+  const requestId = stringField(response, "request_id");
+  const pending = requestId === undefined ? undefined : requests.get(requestId);
+  if (pending === undefined) return;
+  requests.delete(requestId);
+  clearTimeout(pending.timer);
+  if (response.subtype === "success") pending.resolve(response.response ?? {});
+  else
+    pending.reject(
+      Object.assign(
+        new Error(
+          stringField(response, "error") ?? "Claude control_request failed",
+        ),
+        { providerRejected: true },
+      ),
+    );
+}
+
+/**
+ * Host-private frame on fd3, intercepted before trajectory parsing. The
+ * digest covers the Host-prepared wake file verbatim, which is the whole
+ * turn input. `turnId` is this input's uuid.
+ */
+function writeDeliveryAcceptance(threadId, inputUuid, text) {
+  try {
+    writeSync(
+      3,
+      `${JSON.stringify({
+        protocol: "rah-delivery-accepted/v1",
+        provider: "claude-stream-json/v1",
+        signal: "replay-user-message",
+        threadId,
+        turnId: inputUuid,
+        inputSha256: createHash("sha256").update(text, "utf8").digest("hex"),
+      })}\n`,
+    );
+  } catch {
+    // No Host listening: nothing is registered as sent.
+  }
+}
+
+/** Host-private: whether the final-reply interrupt landed and beat the follow-up. */
+function writeFinalInterruptReport(report) {
+  try {
+    writeSync(
+      3,
+      `${JSON.stringify({ protocol: "rah-final-interrupt/v1", ...report })}\n`,
+    );
+  } catch {
+    // No Host listening: the usage read shows the interrupt as unreported.
+  }
 }
 
 function hasToolActivity(frame) {
@@ -391,12 +555,6 @@ function hasToolActivity(frame) {
         isRecord(candidate) &&
         (candidate.type === "tool_use" || candidate.type === "tool_result"),
     )
-  );
-}
-
-function isMissingSessionError(message) {
-  return /(?:no (?:conversation|session) found|(?:session|conversation).*(?:not found|does not exist|missing)|(?:not found|missing).*(?:session|conversation))/iu.test(
-    message ?? "",
   );
 }
 
@@ -464,6 +622,8 @@ function parseArguments(args) {
     else if (flag === "--prompt-file")
       parsed.prompt = readProviderPromptFile(value);
     else if (flag === "--resume-session") parsed.resumeSession = value;
+    else if (flag === "--wake-input-file")
+      parsed.wakeInput = readProviderPromptFile(value);
     else if (flag === "--tool-access-mode") parsed.toolAccessMode = value;
     else if (flag === "--mcp-config") {
       parsed.providerArgs.push(flag, value);
@@ -497,12 +657,6 @@ function parseArguments(args) {
 
 function driverArguments(args) {
   return args[0] === "__claude-stream-json-driver" ? args.slice(1) : args;
-}
-
-function withoutNestedClaudeCode(environment) {
-  const next = { ...environment };
-  delete next.CLAUDECODE;
-  return next;
 }
 
 function appendBounded(existing, chunk, maximum) {

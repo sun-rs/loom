@@ -505,8 +505,9 @@ test("bodied wake: the memory index rides the wake only when it differs from the
 
 test("only drivers with a reliable acceptance signal carry a bodied wake", () => {
   assert.equal(runtimeSupportsBodiedWake("codex-app-server/v1"), true);
+  // S2-c1: Claude's replay echo of the wake's own uuid (see the Claude chain).
+  assert.equal(runtimeSupportsBodiedWake("claude-stream-json/v1"), true);
   for (const kind of [
-    "claude-stream-json/v1",
     "kimi-acp/v1",
     "opencode-server/v1",
     "generic-process/v1",

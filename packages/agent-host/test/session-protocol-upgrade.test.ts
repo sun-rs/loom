@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import type {
@@ -253,6 +254,144 @@ test("a resumed Kimi instance session gets one protocol line until a carrying tu
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("S2-c1: a resumed Claude instance session gets one protocol line in its stdin input until accepted", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-claude-protocol-"));
+  chmodSync(directory, 0o700);
+  try {
+    const executable = join(directory, "fake-claude.mjs");
+    const recordPath = join(directory, "record.jsonl");
+    writeFileSync(
+      executable,
+      readFileSync(
+        fileURLToPath(
+          new URL("./fixtures/fake-claude-stream.mjs", import.meta.url),
+        ),
+      ),
+      { mode: 0o700 },
+    );
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-protocol",
+    });
+    profileRegistry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const revision = profileRegistry.importManifest({
+      ...manifest(executable),
+      adapter: {
+        ...manifest(executable).adapter,
+        kind: "claude-stream-json/v1",
+      },
+      modelCatalogProbe: { kind: "claude-cli/v1" },
+      runtimeProfileId: "fake-claude-protocol",
+    });
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    const active = profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    let protocolVersion = "p1";
+    const runtime = implementations.createRuntime(
+      active,
+      report,
+      {
+        activationEnvironment: () => ({
+          args: ["--prompt", "canonical room worker prompt"],
+          env: { FAKE_RECORD: recordPath, FAKE_TOOL: "none" },
+          standingPromptDigest: "sha256-standing-prompt-digest",
+          standingProtocolVersion: protocolVersion,
+        }),
+        cwd: directory,
+        providerSessionStore: new ProviderSessionStore({
+          rootDirectory: join(directory, "provider-sessions"),
+        }),
+        supervisorDirectory: join(directory, "supervisors"),
+      },
+      undefined,
+      "full_access",
+    );
+    const run = async (suffix: string) => {
+      const participantId = "instance-claude";
+      const activationId = `activation-claude-${suffix}`;
+      const runAttemptId = `run-claude-${suffix}`;
+      const before = readRecords(recordPath).length;
+      const handle = await runtime.start(
+        {
+          activationId,
+          agent: instanceAgent(participantId),
+          consumerId: `consumer-${suffix}`,
+          contextManifest: contextManifest({
+            activationId,
+            contentDigest: active.contentDigest,
+            participantId,
+            runAttemptId,
+            runtimeProfileRevisionId: active.runtimeProfileRevisionId,
+          }),
+          fromSeq: 1,
+          hostId: "host-protocol",
+          participantId,
+          reason: "manual",
+          roomId: "room-protocol",
+          runAttemptId,
+          toSeq: 1,
+        },
+        {
+          recordInstanceSessionBinding: async () => undefined,
+          recordTrajectory: async () => undefined,
+          registerPrepared: async () => undefined,
+        },
+      );
+      const exit = await runtime.reap(handle);
+      assert.equal(exit.code, 0, JSON.stringify(runtime.diagnostics?.(handle)));
+      const records = readRecords(recordPath).slice(before);
+      const inputs = records.filter((r) => r.kind === "input");
+      assert.equal(inputs.length, 1);
+      const spawn = records.find((r) => r.kind === "spawn")!;
+      return {
+        input: inputs[0]!.text as string,
+        resumed: (spawn.args as string[]).includes("--resume"),
+      };
+    };
+    const noticeCount = (text: string) =>
+      text.split("\n").filter((line) => line.startsWith("Protocol updated"))
+        .length;
+    const created = await run("seed");
+    assert.equal(created.resumed, false);
+    assert.equal(noticeCount(created.input), 0);
+    const same = await run("same");
+    assert.equal(same.resumed, true, "the recorded session is resumed");
+    assert.equal(noticeCount(same.input), 0);
+    // The standing prompt Claude recorded at the session's first request
+    // stays until compaction: a newer protocol reaches it as one wake line.
+    protocolVersion = "p2";
+    const first = await run("upgrade-1");
+    assert.equal(noticeCount(first.input), 1);
+    assert.ok(first.input.includes(protocolUpdateNotice("p2")));
+    assert.equal(noticeCount((await run("upgrade-2")).input), 1);
+    await runtime.acceptSessionProtocol!({
+      participantId: "instance-claude",
+      runAttemptId: "run-claude-upgrade-2",
+    });
+    assert.equal(noticeCount((await run("after")).input), 0);
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+function readRecords(path: string): Record<string, unknown>[] {
+  try {
+    return readFileSync(path, "utf8")
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+  } catch {
+    return [];
+  }
+}
 
 function instanceAgent(participantId: string): AgentRuntimeContext {
   return {

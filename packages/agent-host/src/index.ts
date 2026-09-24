@@ -246,6 +246,8 @@ export type {
 export { superviseWarmTurn } from "./warm-turn-supervisor.ts";
 export type { WarmTurnSupervision } from "./warm-turn-supervisor.ts";
 export {
+  CLAUDE_WARM_DRIVER,
+  CODEX_WARM_DRIVER,
   CODEX_WARM_DRIVER_KIND,
   CodexWarmAdapter,
   withWorkerTurnHandle,
@@ -256,6 +258,7 @@ export { providerActivationInput } from "./provider-activation-input.js";
 export type { WarmRuntimeCreation } from "./runtime-implementation-registry.ts";
 export type {
   CodexWarmAdapterOptions,
+  WarmDriverDescriptor,
   WarmWorkerCredential,
 } from "./codex-warm-adapter.ts";
 export {

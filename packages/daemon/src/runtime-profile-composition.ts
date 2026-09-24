@@ -61,7 +61,7 @@ export function createConfiguredRuntime(input: {
 
   probeReport: RuntimeProfileProbeReport;
   /**
-   * Codex only in this batch. Present when the deployment can register a send
+   * Codex and Claude (S2-c1). Present when the deployment can register a send
    * under `input.host`'s own credential once the driver reports that the
    * runtime accepted the injected wake turn. Absent for every other driver,
    * whose Activations keep the explicit `message-check` path unchanged.
@@ -74,6 +74,11 @@ export function createConfiguredRuntime(input: {
   supervisorDirectory: string;
   /** S2-a: when set, Codex Role instances run on warm processes. */
   warmRuntimePool?: InstanceRuntimePool | undefined;
+  /**
+   * Adapter kinds whose Role instances use `warmRuntimePool` (each an
+   * explicit opt-in); Codex only when omitted.
+   */
+  warmRuntimeKinds?: ReadonlySet<string> | undefined;
   workerService: RuntimeWorkerService;
 }): RuntimeAdapter {
   let runtime: RuntimeAdapter;
@@ -240,7 +245,9 @@ export function createConfiguredRuntime(input: {
   } satisfies RuntimeCreationOptions;
   runtime =
     input.warmRuntimePool !== undefined &&
-    input.runtimeProfileRevision.manifest.adapter.kind === "codex-app-server/v1"
+    (input.warmRuntimeKinds ?? new Set(["codex-app-server/v1"])).has(
+      input.runtimeProfileRevision.manifest.adapter.kind,
+    )
       ? input.implementations.createWarmRuntime(
           input.runtimeProfileRevision,
           input.probeReport,
