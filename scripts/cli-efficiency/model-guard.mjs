@@ -1,24 +1,41 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
+import { appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { model, effort } from "./common.mjs";
 import { startGuardedUnixProxy } from "./ws-guard.mjs";
-export function assertAuthorizedRequest(message) {
-  const p = message.params ?? {};
-  if (
-    ["thread/start", "thread/resume", "thread/fork"].includes(message.method)
-  ) {
-    assert.equal(p.model, model, "Unapproved model");
-    assert.equal(p.config?.model_reasoning_effort, effort, "Unapproved effort");
-  }
-  if (message.method === "turn/start" || message.method === "turn/steer") {
-    if (p.model !== undefined)
-      assert.equal(p.model, model, "Unapproved turn model");
-    if (p.effort !== undefined)
-      assert.equal(p.effort, effort, "Unapproved turn effort");
-  }
+// Validator for one exact model/effort pair (the drift gate passes its own;
+// the efficiency gate keeps the common.mjs pair below).
+export function createCodexRequestGuard(approved) {
+  assert.ok(
+    approved?.model && approved?.effort,
+    "Guard needs model and effort",
+  );
+  return (message) => {
+    const p = message.params ?? {};
+    if (
+      ["thread/start", "thread/resume", "thread/fork"].includes(message.method)
+    ) {
+      assert.equal(p.model, approved.model, "Unapproved model");
+      assert.equal(
+        p.config?.model_reasoning_effort,
+        approved.effort,
+        "Unapproved effort",
+      );
+    }
+    if (message.method === "turn/start" || message.method === "turn/steer") {
+      if (p.model !== undefined)
+        assert.equal(p.model, approved.model, "Unapproved turn model");
+      if (p.effort !== undefined)
+        assert.equal(p.effort, approved.effort, "Unapproved turn effort");
+    }
+  };
 }
+export const assertAuthorizedRequest = createCodexRequestGuard({
+  model,
+  effort,
+});
 // S2-a warm driver: `--listen unix://PATH`. The real CLI moves to a short
 // sibling socket (macOS caps socket paths at 104 bytes) and the shim's proxy
 // takes PATH, so every request still crosses this fence. Any other listen
@@ -40,7 +57,14 @@ export function listenPlan(args) {
   return { args: rewritten, listenPath, upstreamPath };
 }
 // Test-only stdio fence: unsupported model requests never reach the provider CLI.
-export async function runGuardedCodex(executable) {
+// options.model/effort select the approved pair (default: common.mjs);
+// options.socketRecordPath appends each guarded warm socket path (JSON line)
+// so a gate harness can reach the runtime only through this same fence.
+export async function runGuardedCodex(executable, options = {}) {
+  const validateRequest =
+    options.model === undefined
+      ? assertAuthorizedRequest
+      : createCodexRequestGuard(options);
   const args = process.argv.slice(2);
   assert.ok(
     ["app-server", "debug", "--version"].includes(args[0]),
@@ -64,17 +88,31 @@ export async function runGuardedCodex(executable) {
     proxy = await startGuardedUnixProxy({
       listenPath: plan.listenPath,
       upstreamPath: plan.upstreamPath,
-      validate: (text) => assertAuthorizedRequest(JSON.parse(text)),
+      validate: (text) => validateRequest(JSON.parse(text)),
       onDenied: deny,
     });
     proxy.ready.catch((e) => deny(e));
+    if (options.socketRecordPath)
+      void proxy.ready.then(
+        () =>
+          appendFileSync(
+            options.socketRecordPath,
+            JSON.stringify({
+              listenPath: plan.listenPath,
+              pid: process.pid,
+              at: new Date().toISOString(),
+            }) + "\n",
+            { mode: 0o600 },
+          ),
+        () => {},
+      );
   }
   if (args[0] === "app-server") {
     const lines = createInterface({ input: process.stdin });
     lines.on("line", (line) => {
       if (rejected) return;
       try {
-        assertAuthorizedRequest(JSON.parse(line));
+        validateRequest(JSON.parse(line));
         child.stdin.write(line + "\n");
       } catch (e) {
         rejected = true;

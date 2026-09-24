@@ -1,0 +1,448 @@
+// Forced native compaction for the paid drift gate (test-only hooks; the
+// product never forces compaction). Every request is validated by the same
+// exact-model guard as the runtime before it leaves this process.
+//
+//   codex warm:     a second WebSocket client on the warm runtime's socket,
+//                   which the guarded shim's proxy serves (so the fence sees
+//                   it), sends `thread/compact/start` while the runtime idles.
+//   codex per-turn: after the round's run exited, a short-lived
+//                   `codex app-server` (stdio) resumes the same thread with
+//                   the approved model/effort, compacts, and exits before the
+//                   next round (a lingering writer would make the product
+//                   start a new session).
+//   kimi:           a short-lived `kimi acp` resumes the session and sends the
+//                   ACP builtin `/compact` (no LLM turn is started for the
+//                   command itself; the summarization does call the model).
+import { spawn } from "node:child_process";
+import { globSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { connectUnixWebSocket } from "../../packages/agent-host/src/unix-websocket.mjs";
+import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import { countCodexCompactions } from "./drift-checks.mjs";
+import { sleep } from "./common.mjs";
+
+const COMPACTION_TIMEOUT_MS = 240_000;
+
+const cleanEnv = () =>
+  Object.fromEntries(
+    Object.entries(process.env).filter(
+      ([k]) => !k.startsWith("RAH_") && !k.startsWith("LOOM_"),
+    ),
+  );
+
+// Count of rollout compaction records (types only; no content is read out).
+export function codexRolloutCompactions(threadId) {
+  const home = process.env.CODEX_HOME ?? join(homedir(), ".codex");
+  const paths = globSync(join(home, "sessions/**/*" + threadId + "*.jsonl"));
+  if (paths.length !== 1) return null;
+  const events = readFileSync(paths[0], "utf8")
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return {};
+      }
+    });
+  return countCodexCompactions(events);
+}
+
+// JSON-RPC client over either transport; `validate` runs before each send.
+function rpcClient({ write, validate }) {
+  let id = 0;
+  const pending = new Map();
+  const listeners = new Set();
+  return {
+    request(method, params, timeoutMs = 60_000) {
+      const message = { jsonrpc: "2.0", id: ++id, method, params };
+      validate(message);
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          pending.delete(message.id);
+          reject(new Error(`${method} timed out`));
+        }, timeoutMs);
+        pending.set(message.id, { resolve, reject, timer, method });
+        write(JSON.stringify(message));
+      });
+    },
+    notify(method, params) {
+      const message = { jsonrpc: "2.0", method, params };
+      validate(message);
+      write(JSON.stringify(message));
+    },
+    respond(id, error) {
+      write(JSON.stringify({ jsonrpc: "2.0", id, error }));
+    },
+    onNotification(fn) {
+      listeners.add(fn);
+    },
+    handle(text) {
+      let m;
+      try {
+        m = JSON.parse(text);
+      } catch {
+        return;
+      }
+      if (m.id !== undefined && m.method === undefined) {
+        const p = pending.get(m.id);
+        if (!p) return;
+        pending.delete(m.id);
+        clearTimeout(p.timer);
+        if (m.error)
+          p.reject(
+            new Error(`${p.method}: ${String(m.error.message ?? "error")}`),
+          );
+        else p.resolve(m.result);
+        return;
+      }
+      for (const fn of listeners) fn(m);
+    },
+    failAll(error) {
+      for (const p of pending.values()) {
+        clearTimeout(p.timer);
+        p.reject(error);
+      }
+      pending.clear();
+    },
+  };
+}
+
+function codexCompactionWatcher(client, threadId) {
+  const seen = {
+    itemCompleted: false,
+    threadCompacted: false,
+    turnStarted: false,
+    turnCompleted: false,
+  };
+  client.onNotification((m) => {
+    const p = m.params ?? {};
+    if (p.threadId !== undefined && p.threadId !== threadId) return;
+    if (m.method === "thread/compacted") seen.threadCompacted = true;
+    if (m.method === "item/completed" && p.item?.type === "contextCompaction")
+      seen.itemCompleted = true;
+    if (m.method === "turn/started") seen.turnStarted = true;
+    if (m.method === "turn/completed") seen.turnCompleted = true;
+  });
+  return seen;
+}
+
+async function awaitCodexCompaction(seen, threadId, before, timeoutMs) {
+  const end = Date.now() + timeoutMs;
+  for (;;) {
+    const notified = seen.itemCompleted || seen.threadCompacted;
+    const rollout = codexRolloutCompactions(threadId);
+    const grew = rollout !== null && before !== null && rollout > before;
+    if ((notified || grew) && (!seen.turnStarted || seen.turnCompleted))
+      return { notified, rolloutAfter: rollout };
+    if (Date.now() > end)
+      return { notified, rolloutAfter: rollout, timedOut: true };
+    await sleep(250);
+  }
+}
+
+const INIT = {
+  clientInfo: {
+    name: "loom-drift-gate",
+    title: "Loom drift gate",
+    version: "1",
+  },
+  capabilities: { experimentalApi: true },
+};
+const resumeParams = ({ threadId, model, effort, cwd }) => ({
+  threadId,
+  model,
+  config: {
+    ...Object.fromEntries(
+      providerLaunchPolicy("codex")
+        .args.filter((a) => a !== "-c")
+        .map((a) => [a.split("=")[0], false]),
+    ),
+    model_reasoning_effort: effort,
+  },
+  approvalPolicy: "never",
+  sandbox: "read-only",
+  excludeTurns: true,
+  ...(cwd ? { cwd } : {}),
+});
+
+export async function compactCodexWarm({
+  socketPath,
+  threadId,
+  model,
+  effort,
+  validate,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const before = codexRolloutCompactions(threadId);
+  const connection = await connectUnixWebSocket(socketPath);
+  const client = rpcClient({ write: (t) => connection.send(t), validate });
+  connection.onMessage = (text) => client.handle(text);
+  connection.onClose = () => client.failAll(new Error("warm socket closed"));
+  const seen = codexCompactionWatcher(client, threadId);
+  const record = {
+    mechanism: "codex-warm:thread/compact/start via guarded socket",
+    forced: true,
+    rolloutBefore: before,
+  };
+  try {
+    await client.request("initialize", INIT);
+    client.notify("initialized", {});
+    try {
+      await client.request("thread/compact/start", { threadId });
+    } catch (error) {
+      // The runtime owns the loaded thread; subscribe this connection with
+      // the exact approved model/effort and retry once.
+      record.resumedFirst = String(error.message).slice(0, 200);
+      await client.request(
+        "thread/resume",
+        resumeParams({ threadId, model, effort }),
+      );
+      await client.request("thread/compact/start", { threadId });
+    }
+    const outcome = await awaitCodexCompaction(
+      seen,
+      threadId,
+      before,
+      timeoutMs,
+    );
+    Object.assign(record, outcome, {
+      turn: { started: seen.turnStarted, completed: seen.turnCompleted },
+    });
+  } catch (error) {
+    record.error = String(error.message ?? error).slice(0, 300);
+  } finally {
+    connection.close();
+  }
+  record.durationMs = Date.now() - started;
+  record.observed = Boolean(
+    record.notified || (record.rolloutAfter ?? 0) > (before ?? Infinity),
+  );
+  return record;
+}
+
+function spawnStdio(executable, args, cwd) {
+  const child = spawn(executable, args, {
+    cwd,
+    env: cleanEnv(),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  let buffer = "";
+  let stderr = "";
+  const exited = new Promise((resolve) =>
+    child.once("close", (code, signal) => resolve({ code, signal })),
+  );
+  child.stdin.on("error", () => {});
+  child.stderr.on("data", (b) => (stderr = (stderr + b).slice(-2000)));
+  return {
+    child,
+    exited,
+    stderr: () => stderr,
+    lines(fn) {
+      child.stdout.on("data", (chunk) => {
+        buffer += chunk;
+        let n;
+        while ((n = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, n);
+          buffer = buffer.slice(n + 1);
+          fn(line);
+        }
+      });
+    },
+    async stop() {
+      child.stdin.end();
+      const kill = setTimeout(() => child.kill("SIGTERM"), 3000);
+      const hard = setTimeout(() => child.kill("SIGKILL"), 8000);
+      const status = await exited;
+      clearTimeout(kill);
+      clearTimeout(hard);
+      return status;
+    },
+  };
+}
+
+export async function compactCodexPerTurn({
+  codex,
+  cwd,
+  threadId,
+  model,
+  effort,
+  validate,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const before = codexRolloutCompactions(threadId);
+  const proc = spawnStdio(
+    codex,
+    ["app-server", ...providerLaunchPolicy("codex").args],
+    cwd,
+  );
+  const client = rpcClient({
+    write: (t) => proc.child.stdin.write(t + "\n"),
+    validate,
+  });
+  proc.lines((line) => client.handle(line));
+  void proc.exited.then(() =>
+    client.failAll(new Error("codex app-server exited")),
+  );
+  const seen = codexCompactionWatcher(client, threadId);
+  const record = {
+    mechanism: "codex-per-turn:thread/compact/start via short-lived app-server",
+    forced: true,
+    rolloutBefore: before,
+  };
+  try {
+    await client.request("initialize", INIT);
+    client.notify("initialized", {});
+    const resumed = await client.request(
+      "thread/resume",
+      resumeParams({ threadId, model, effort, cwd }),
+    );
+    if (resumed?.thread?.id !== threadId)
+      throw new Error("thread/resume returned a different thread");
+    await client.request("thread/compact/start", { threadId });
+    Object.assign(
+      record,
+      await awaitCodexCompaction(seen, threadId, before, timeoutMs),
+      {
+        turn: { started: seen.turnStarted, completed: seen.turnCompleted },
+      },
+    );
+  } catch (error) {
+    record.error = String(error.message ?? error).slice(0, 300);
+    if (proc.stderr()) record.stderrTail = proc.stderr().slice(-300);
+  } finally {
+    record.exit = await proc.stop();
+  }
+  // The writer is gone; the rollout now holds the final compaction record.
+  record.rolloutAfter = codexRolloutCompactions(threadId);
+  record.durationMs = Date.now() - started;
+  record.observed = Boolean(
+    record.notified || (record.rolloutAfter ?? 0) > (before ?? Infinity),
+  );
+  return record;
+}
+
+// Kimi `/usage` text: "Context: N / M tokens (x%)" or "Context: N tokens".
+export function parseKimiContextTokens(text) {
+  const m = /Context:\s*([\d,]+)/u.exec(String(text));
+  return m ? Number(m[1].replace(/,/gu, "")) : null;
+}
+export function parseKimiCompaction(text) {
+  const s = String(text);
+  const num = (label) => {
+    const m = new RegExp(`${label}:\\s*([\\d,]+)`, "u").exec(s);
+    return m ? Number(m[1].replace(/,/gu, "")) : null;
+  };
+  return {
+    completed: /Compaction completed/u.test(s),
+    background: /runs in the background/u.test(s),
+    alreadyRunning: /already running/u.test(s),
+    blocked: /blocked|not started|failed|cancelled/iu.test(s),
+    tokensBefore: num("Tokens before"),
+    tokensAfter: num("Tokens after"),
+  };
+}
+
+export async function compactKimi({
+  kimi,
+  cwd,
+  sessionId,
+  model,
+  effort,
+  validate,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const proc = spawnStdio(kimi, ["acp"], cwd);
+  const client = rpcClient({
+    write: (t) => proc.child.stdin.write(t + "\n"),
+    validate,
+  });
+  proc.lines((line) => client.handle(line));
+  void proc.exited.then(() => client.failAll(new Error("kimi acp exited")));
+  let text = "";
+  client.onNotification((m) => {
+    if (m.id !== undefined && m.method) {
+      // Agent → client requests (permissions, fs, terminal) are refused.
+      client.respond(m.id, {
+        code: -32601,
+        message: "drift compaction client",
+      });
+      return;
+    }
+    const u = m.params?.update;
+    if (
+      m.method === "session/update" &&
+      u?.sessionUpdate === "agent_message_chunk" &&
+      u.content?.type === "text"
+    )
+      text += u.content.text;
+  });
+  const say = async (command) => {
+    text = "";
+    await client.request(
+      "session/prompt",
+      { sessionId, prompt: [{ type: "text", text: command }] },
+      timeoutMs,
+    );
+    return text;
+  };
+  const record = {
+    mechanism: "kimi-acp:/compact builtin via short-lived acp",
+    forced: true,
+  };
+  try {
+    const init = await client.request("initialize", {
+      clientCapabilities: { terminal: false },
+      clientInfo: { name: "loom-drift-gate", version: "1" },
+      protocolVersion: 1,
+    });
+    const caps = init?.agentCapabilities?.sessionCapabilities;
+    const canResume = Boolean(caps) && Object.hasOwn(caps, "resume");
+    await client.request(canResume ? "session/resume" : "session/load", {
+      sessionId,
+      cwd,
+      mcpServers: [],
+    });
+    await client.request("session/set_model", { modelId: model, sessionId });
+    await client.request("session/set_config_option", {
+      configId: "thinking",
+      sessionId,
+      value: effort,
+    });
+    record.contextBefore = parseKimiContextTokens(await say("/usage"));
+    const reply = await say("/compact");
+    record.reply = parseKimiCompaction(reply);
+    record.contextAfter = null;
+    const end = Date.now() + timeoutMs;
+    // Background variant: poll `/usage` (local, no LLM turn) until it drops.
+    while (!record.reply.completed && Date.now() < end) {
+      await sleep(3000);
+      record.contextAfter = parseKimiContextTokens(await say("/usage"));
+      if (
+        record.contextBefore !== null &&
+        record.contextAfter !== null &&
+        record.contextAfter < record.contextBefore
+      )
+        break;
+    }
+    if (record.reply.completed)
+      record.contextAfter = parseKimiContextTokens(await say("/usage"));
+  } catch (error) {
+    record.error = String(error.message ?? error).slice(0, 300);
+    if (proc.stderr()) record.stderrTail = proc.stderr().slice(-300);
+  } finally {
+    record.exit = await proc.stop();
+  }
+  record.durationMs = Date.now() - started;
+  record.observed = Boolean(
+    record.reply?.completed ||
+    (record.contextBefore !== null &&
+      record.contextAfter !== null &&
+      record.contextAfter < record.contextBefore),
+  );
+  return record;
+}

@@ -1,5 +1,7 @@
 [evo 分支现状](./evo/status.zh-CN.md)：evo 相对 main 里程碑的唯一差异说明、已知缺陷与效率基线。
 
+[长会话漂移测试](./design/long-session-drift-gate.zh-CN.md)：多轮与强制压缩后是否仍遵守规则、正确回复（opt-in 付费）。
+
 [移除操作完成占行提示](./audits/2026-09-21-completed-feedback.zh-CN.md)：取消拖动、设置保存、测试推送和服务重启完成后不再占行；保留失败提示。
 
 [移除任务成功占行提示](./audits/2026-09-21-task-success-notice.zh-CN.md)：保留失败与保存状态，更新成功后不再显示额外文字行。

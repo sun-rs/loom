@@ -131,7 +131,9 @@
     "test:ci-workflow": "node --test scripts/ci-workflow-order.test.mjs",
     "test:workbench-launch": "node --test scripts/workbench-launch-mode.test.mjs scripts/workbench-launch-receipt.test.mjs",
     "test:cli:efficiency": "node scripts/test-cli-efficiency.mjs",
-    "test:cli:efficiency:unit": "node --test scripts/cli-efficiency/*.test.mjs"
+    "test:cli:efficiency:unit": "node --test scripts/cli-efficiency/*.test.mjs",
+    "test:cli:drift": "node scripts/test-long-session-drift.mjs",
+    "test:cli:drift:unit": "node --test scripts/cli-efficiency/drift-*.test.mjs scripts/cli-efficiency/model-guard.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
