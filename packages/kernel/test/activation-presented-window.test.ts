@@ -28,7 +28,10 @@ function fixture() {
   const database = new DatabaseSync(databasePath);
   const human = kernel.provisionPrincipal({ handle: "human", kind: "human" });
   const agent = kernel.provisionPrincipal({ handle: "worker", kind: "agent" });
-  const other = kernel.provisionPrincipal({ handle: "bystander", kind: "agent" });
+  const other = kernel.provisionPrincipal({
+    handle: "bystander",
+    kind: "agent",
+  });
   const agentId = agent.principal.principalId;
   const actor = kernel.authenticateAccessToken(human.accessToken);
   const room = kernel.createRoom(actor, { name: "Main", slug: "main" });
@@ -50,7 +53,10 @@ function fixture() {
         .prepare("SELECT next_seq - 1 AS n FROM rooms WHERE room_id = ?")
         .get(roomId)!.n,
     );
-  const post = (body: string, options: { mention?: boolean; roomId?: string } = {}) =>
+  const post = (
+    body: string,
+    options: { mention?: boolean; roomId?: string } = {},
+  ) =>
     kernel.postMessage(actor, {
       body,
       roomId: options.roomId ?? room.roomId,
@@ -134,7 +140,9 @@ function fixture() {
 
 function sent(
   context: ReturnType<typeof fixture>,
-  run: { scope: { activationId: string; consumerId: string; runAttemptId: string } },
+  run: {
+    scope: { activationId: string; consumerId: string; runAttemptId: string };
+  },
 ): void {
   context.kernel.markPresentedDeliverySent(context.host, {
     activationId: run.scope.activationId,

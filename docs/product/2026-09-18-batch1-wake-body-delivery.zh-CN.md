@@ -36,11 +36,11 @@ Raft 的退化判据是**结构性的，不是数量性的**：
 
 **预算口径（2026-09-18 第三轮评审后补，本批只记口径不实现）**：`WAKE_BODY_MAX_MESSAGES` / `WAKE_BODY_MAX_BYTES` 目前**只覆盖 Room 事件正文**（`room_events.payload_json` 的字节数）。完整唤醒输入还包含三块尚未计入的内容：
 
-| 成分                                     | 属主        | 当前归属                                       |
-| ---------------------------------------- | ----------- | ---------------------------------------------- |
-| Room 事件正文（含非消息事件）            | Kernel      | **已计入** 20 条 / 64 KiB                      |
-| 冻结清单 + MEMORY.md（`workerStartupContext()`） | Host    | **未计入**；并入 present 响应时须从同一预算扣减 |
-| 包装文本（表头、notice 行、末段提示）    | Host        | **未计入**；排版模块落地时须计入                |
+| 成分                                             | 属主   | 当前归属                                        |
+| ------------------------------------------------ | ------ | ----------------------------------------------- |
+| Room 事件正文（含非消息事件）                    | Kernel | **已计入** 20 条 / 64 KiB                       |
+| 冻结清单 + MEMORY.md（`workerStartupContext()`） | Host   | **未计入**；并入 present 响应时须从同一预算扣减 |
+| 包装文本（表头、notice 行、末段提示）            | Host   | **未计入**；排版模块落地时须计入                |
 
 接线时的口径是**单一预算**：Host 先用清单、MEMORY.md 与包装文本的实际字节数向 Kernel 声明开销，Kernel 从 64 KiB 里扣掉后再选页——不是各自独立的三个预算。本批次不实现，见 §6。
 
@@ -59,14 +59,14 @@ RAH 新增的 "presented" 是一个**比 ACK 弱的标记**：它不推进 `subs
 
 ## 1. 三方权责
 
-| 事实                     | 单一属主                       | 存储                                                           |
-| ------------------------ | ------------------------------ | -------------------------------------------------------------- |
-| 唤醒输入文本（正文排版） | `packages/agent-host`（Host）  | 无持久化，进程环境/文件传递                                    |
+| 事实                     | 单一属主                       | 存储                                                              |
+| ------------------------ | ------------------------------ | ----------------------------------------------------------------- |
+| 唤醒输入文本（正文排版） | `packages/agent-host`（Host）  | 无持久化，进程环境/文件传递                                       |
 | 「已渲染」窗口与 digest  | `packages/kernel`（服务端）    | `activation_presented_windows`（`rendered_at`、`content_digest`） |
-| 「已送达运行时」事实     | `packages/kernel`（Host 身份） | 同表 `sent_at`、`sent_by_host_id`                              |
-| 投递 ACK 游标            | `packages/kernel`              | `subscription_cursors.last_seq`（不变）                        |
-| 已读位置                 | `packages/kernel`              | `worker_target_read_positions`（不变）                         |
-| 认证与路由               | `packages/application-service` | `/v1/worker/message-present`（worker 凭证，只读+记录）         |
+| 「已送达运行时」事实     | `packages/kernel`（Host 身份） | 同表 `sent_at`、`sent_by_host_id`                                 |
+| 投递 ACK 游标            | `packages/kernel`              | `subscription_cursors.last_seq`（不变）                           |
+| 已读位置                 | `packages/kernel`              | `worker_target_read_positions`（不变）                            |
+| 认证与路由               | `packages/application-service` | `/v1/worker/message-present`（worker 凭证，只读+记录）            |
 
 ## 2. 设计
 
@@ -74,11 +74,11 @@ RAH 新增的 "presented" 是一个**比 ACK 弱的标记**：它不推进 `subs
 
 上一版让 Host 用**与模型同一份 worker 凭证**提交 `{范围, messageSeqs, contentDigest}`，服务端只存不核。凭证既然相同，服务端就无法区分「Host 真的呈现了」与「Worker 自报呈现了」。现在拆成三段，每段的属主不同：
 
-| 段  | 谁写                                 | 内核入口                                              | 能写什么                                            |
-| --- | ------------------------------------ | ----------------------------------------------------- | --------------------------------------------------- |
-| (a) | **服务端自己**（在渲染同一事务内）   | `renderPresentedWindow`（`activation-presented-window.ts`） | 范围、`messageSeqs`、`contentDigest`、`rendered_at` |
-| (b) | **Host 身份**（`AuthenticatedHostContext`） | `RoomKernel.markPresentedDeliverySent`                | 只有 `sent_at` / `sent_by_host_id`                  |
-| (c) | 模型（worker 凭证）                  | `presentedWindowAcknowledgement`（只读判定）          | 什么都写不了；只有 `sent_at` 非空的记录才生效       |
+| 段  | 谁写                                        | 内核入口                                                    | 能写什么                                            |
+| --- | ------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
+| (a) | **服务端自己**（在渲染同一事务内）          | `renderPresentedWindow`（`activation-presented-window.ts`） | 范围、`messageSeqs`、`contentDigest`、`rendered_at` |
+| (b) | **Host 身份**（`AuthenticatedHostContext`） | `RoomKernel.markPresentedDeliverySent`                      | 只有 `sent_at` / `sent_by_host_id`                  |
+| (c) | 模型（worker 凭证）                         | `presentedWindowAcknowledgement`（只读判定）                | 什么都写不了；只有 `sent_at` 非空的记录才生效       |
 
 **结论**：没有任何入口能让 worker 凭证写 presented 记录。上一版的 `RoomKernel.recordPresentedDelivery(execution: AuthenticatedWorkerExecutionContext, input)` **已删除**（`room-kernel.ts`），请求体里的 `runAttemptId / fromSeq / toSeq / messageSeqs / contentDigest` 全部不再存在。
 
@@ -140,12 +140,12 @@ RAH 寻址替换（与 `worker-read-render.ts` 头注释同一约定）：Raft �
 
 **调用时机**：只在驱动给出**接受信号**之后。四个驱动的接受信号强度，按「有 / 无 / 待核」重列（上一版把「Claude 初始化帧」「Kimi 无 error」直接写成「接受」，过强）：
 
-| Driver             | 接受信号强度 | 现状                                                                                                           |
-| ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------- |
+| Driver             | 接受信号强度     | 现状                                                                                                                                                                                                                                                                                                                                          |
+| ------------------ | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Codex app-server   | **有（已接线）** | `turn/start` 请求的 JSON-RPC **应答**：`codex-app-server-driver.mjs` 在 `activeTurnId = nestedStringField(startedTurn, "turn", "id")` 之后发信号。两重关联——请求 id 由 `pending` 表在 `requestState.resolve` 前匹配，`turnStart.threadId === activeThreadId` 已由 `thread/start`/`thread/resume` 校验；`result.turn.id` 即该输入所属的 turn。 |
-| Claude stream-json | **待核**     | 首个 `system`/`init` 帧只证明进程起来了，不证明这次输入被接收；协议无逐输入回执。需在批次 0 矩阵上补一次实测。 |
-| Kimi ACP           | **待核**     | `session/prompt` 只有**否定**信号（error 应答）可靠；「无 error」不等于已接收。                                |
-| OpenCode server    | **待核**     | prompt HTTP 2xx 是服务端受理，不是模型侧接收；需确认 2xx 与 turn 的对应关系。                                  |
+| Claude stream-json | **待核**         | 首个 `system`/`init` 帧只证明进程起来了，不证明这次输入被接收；协议无逐输入回执。需在批次 0 矩阵上补一次实测。                                                                                                                                                                                                                                |
+| Kimi ACP           | **待核**         | `session/prompt` 只有**否定**信号（error 应答）可靠；「无 error」不等于已接收。                                                                                                                                                                                                                                                               |
+| OpenCode server    | **待核**         | prompt HTTP 2xx 是服务端受理，不是模型侧接收；需确认 2xx 与 turn 的对应关系。                                                                                                                                                                                                                                                                 |
 
 **绝不**以 stdin 写成功单独登记 `sent_at`。「待核」的三个驱动在核实前**不应调用** `markPresentedDeliverySent`，其 Activation 继续走显式 `message-check`。四驱动接线本批次不做，见 §6。
 
@@ -200,6 +200,7 @@ turn/start 应答
 - 传给 `recordCheckedWorkerMessages` 的 `messageSeqs` 只取该前缀内 `type='message.posted'` 的那些（读位置只对消息有意义）。
 
 两次收窄：
+
 1. 上一版只要 `messageSeqs` 非空就 `throughSeq = window.toSeq`，会越过退化为 notice 的消息。
 2. 再上一版的前缀扫描只看 `message.posted`，任务取消/指派/状态变化被一概越过——而这些事件 `message-check` 今天就会渲染给 Agent（§0.1 事件类型范围）。现在任何类型的未呈现事件都会让游标停下。
 
@@ -239,14 +240,14 @@ freshnessFloorSeq = max(basedOnRoomSeq, 自己最后一帖 seq, presentedFreshne
 
 ## 3. 不变量核对
 
-| `AGENTS.md` 不变量                                                                    | 本批次                                                                                             |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| wake hint / spawn / PTY write / RPC response / exit code 不证明已读                   | presented ≠ ACK；ACK 仍需模型侧凭证发起的、带模型自己因果游标的 mutation（§2.4）                      |
-| Completing an Activation requires the runtime consumer to acknowledge through `toSeq` | 不变；隐式 ACK 只覆盖 presented **前缀**，前缀 `< toSeq` 时 Activation 仍未满足                       |
-| Actor identity from authenticated context                                             | 记录内容由服务端生成；`sent_at` 绑定 `AuthenticatedHostContext`；请求体不含任何身份或范围（§2.0）      |
-| Idempotency keys prevent duplicate effects                                            | 记录按 `(activation, consumer, runAttempt)` 幂等；重复 render 与重复 mark-sent 都是 no-op              |
-| Every accepted mutation appends one Room event                                        | present 与 mark-sent **不是** business mutation，与 `acknowledgeWorkerCursor` 同级，不追加事件        |
-| Provider adapters must not own business status                                        | Host 只提供「已送达运行时」这一事实，页选择、digest 与 ACK 判定全在 Kernel                            |
+| `AGENTS.md` 不变量                                                                    | 本批次                                                                                            |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| wake hint / spawn / PTY write / RPC response / exit code 不证明已读                   | presented ≠ ACK；ACK 仍需模型侧凭证发起的、带模型自己因果游标的 mutation（§2.4）                  |
+| Completing an Activation requires the runtime consumer to acknowledge through `toSeq` | 不变；隐式 ACK 只覆盖 presented **前缀**，前缀 `< toSeq` 时 Activation 仍未满足                   |
+| Actor identity from authenticated context                                             | 记录内容由服务端生成；`sent_at` 绑定 `AuthenticatedHostContext`；请求体不含任何身份或范围（§2.0） |
+| Idempotency keys prevent duplicate effects                                            | 记录按 `(activation, consumer, runAttempt)` 幂等；重复 render 与重复 mark-sent 都是 no-op         |
+| Every accepted mutation appends one Room event                                        | present 与 mark-sent **不是** business mutation，与 `acknowledgeWorkerCursor` 同级，不追加事件    |
+| Provider adapters must not own business status                                        | Host 只提供「已送达运行时」这一事实，页选择、digest 与 ACK 判定全在 Kernel                        |
 
 **冲突项：无。**
 
@@ -284,16 +285,16 @@ freshnessFloorSeq = max(basedOnRoomSeq, 自己最后一帖 seq, presentedFreshne
 
 变异验证（注掉守卫，确认恰好对应测试变红；基数 24 项）：
 
-| 变异                                                      | 变红                                                     |
-| --------------------------------------------------------- | ---------------------------------------------------------- |
-| 前缀扫描只看 `message.posted`（非消息事件重新被越过）     | 内核 4、链 12（fail 2 / 24）                              |
-| `knownRoomSeqs.add(toSeq)` 取代前缀                       | 链 9（fail 1 / 24）                                       |
-| 已呈现前缀不再抬新鲜度地板                                | 链 4、链 10（fail 2 / 24）                                |
-| 取数 `LIMIT` 放开且去掉条数预算                           | 链 14、内核 4、链 12（fail 3 / 24）                       |
-| （上一轮）去掉前缀截断                                    | 内核 2、链 10                                             |
-| （上一轮）去掉跨 Room 闸门                                | 链 5                                                      |
-| （上一轮）恢复 `basedOnRoomSeq ?? scope.toSeq`            | 内核 6、链 3                                              |
-| （上一轮）去掉 `sent_at` 闸门                             | 内核 5                                                    |
+| 变异                                                  | 变红                                |
+| ----------------------------------------------------- | ----------------------------------- |
+| 前缀扫描只看 `message.posted`（非消息事件重新被越过） | 内核 4、链 12（fail 2 / 24）        |
+| `knownRoomSeqs.add(toSeq)` 取代前缀                   | 链 9（fail 1 / 24）                 |
+| 已呈现前缀不再抬新鲜度地板                            | 链 4、链 10（fail 2 / 24）          |
+| 取数 `LIMIT` 放开且去掉条数预算                       | 链 14、内核 4、链 12（fail 3 / 24） |
+| （上一轮）去掉前缀截断                                | 内核 2、链 10                       |
+| （上一轮）去掉跨 Room 闸门                            | 链 5                                |
+| （上一轮）恢复 `basedOnRoomSeq ?? scope.toSeq`        | 内核 6、链 3                        |
+| （上一轮）去掉 `sent_at` 闸门                         | 内核 5                              |
 
 **诚实说明**：SQL `LIMIT` 本身不可观测——单独放开它而保留条数预算，输出不变、没有测试会红。能被测试钉住的是**响应形状的上界**（`events` ≤ 20、notice 只给计数与范围、protocol schema 的 `.max(20)`），上表第四行正是同时破坏这两者才变红的。
 
@@ -326,11 +327,11 @@ Codex 接受信号（`packages/daemon/test/codex-delivery-acceptance-chain.test.
 
 第 2 步变异验证（基数 32）：
 
-| 变异                                             | 变红                                                 |
-| ------------------------------------------------ | ----------------------------------------------------- |
-| 去掉 `deferPresentedAcknowledgement` 的记录       | 链「a post that beat the Host's mark-sent…」（fail 1/32） |
-| `markPresentedWindowSent` 不返回 pending 游标     | 同上（fail 1/32）                                      |
-| 原生路径不再取已呈现前缀作为新鲜度地板            | **fail 0/32** —— 见 §2.5：该改动可证为死代码，已回退    |
+| 变异                                          | 变红                                                      |
+| --------------------------------------------- | --------------------------------------------------------- |
+| 去掉 `deferPresentedAcknowledgement` 的记录   | 链「a post that beat the Host's mark-sent…」（fail 1/32） |
+| `markPresentedWindowSent` 不返回 pending 游标 | 同上（fail 1/32）                                         |
+| 原生路径不再取已呈现前缀作为新鲜度地板        | **fail 0/32** —— 见 §2.5：该改动可证为死代码，已回退      |
 
 ## 4b. 已覆盖 / 未覆盖
 

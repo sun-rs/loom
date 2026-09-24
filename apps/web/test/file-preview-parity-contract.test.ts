@@ -50,7 +50,7 @@ test("Raft Files actions and the rich attachment preview share one bounded frame
 test("attachment preview escapes the message containment through the shared document overlay root", () => {
   const preview = source.slice(source.indexOf("function FilePreview("));
   assert.match(preview, /return createPortal\(/u);
-  assert.match(preview, /<div className="rah-dialog-layer">/u);
+  assert.match(preview, /<DialogLayer className="rah-dialog-layer">/u);
   assert.match(preview, /document\.body,/u);
   assert.match(preview, /useDialogProtocol/u);
   const interactions = readFileSync(

@@ -15,7 +15,10 @@ test("Direct Room and Message avatars share the Agent inspector and profile pick
   assert.match(navigation, /onOpenDirectPeer\(directPeer\.agentId\)/u);
 
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
-  assert.match(app, /onOpenDirectPeer=\{\(id\) => openAgentPeek\(id\)\}/u);
+  assert.match(
+    app,
+    /onOpenDirectPeer=\{\(id\) => \{[\s\S]*?activeDirectPeer\?\.state === "tombstoned"[\s\S]*?setPeekAgentId\(id\)[\s\S]*?else void openAgentPeek\(id\)/u,
+  );
   assert.match(app, /field: "avatarKey"|action: "update_profile"/u);
 
   const profile = readFileSync(

@@ -71,6 +71,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     join(sourceDirectory, "dialog-protocol.ts"),
     "utf8",
   );
+  const layout = readFileSync(
+    join(sourceDirectory, "components", "conversation-layout-shell.tsx"),
+    "utf8",
+  );
   const productCss = readFileSync(join(sourceDirectory, "product.css"), "utf8");
 
   assert.doesNotMatch(app, /function RoomCreateDialog/u);
@@ -92,8 +96,9 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(app, /client\.request\("room\.direct\.open"/u);
   assert.match(app, /from "\.\/components\/workspace-catalog-panes\.tsx"/u);
   assert.match(app, /from "\.\/components\/workspace-navigation\.tsx"/u);
-  assert.match(app, /from "\.\/components\/room-sidebar-resizer\.tsx"/u);
-  assert.match(app, /--rah-room-sidebar-width/u);
+  assert.match(layout, /from "\.\/room-sidebar-resizer\.tsx"/u);
+  assert.match(app, /<ConversationLayoutResizer kind="room"/u);
+  assert.match(layout, /--rah-room-sidebar-width/u);
   assert.match(app, /from "\.\/components\/settings-surface\.tsx"/u);
   assert.match(app, /from "\.\/components\/conversation-panes\.tsx"/u);
 
@@ -210,8 +215,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentDialogs, /useDialogProtocol/u);
   assert.match(agentDialogs, />创建 AGENT</u);
   assert.match(agentDialogs, /计算机 <em>/u);
-  assert.match(agentDialogs, /showMore/u);
-  assert.match(agentDialogs, /showAdvanced/u);
+  assert.match(
+    agentDialogs,
+    /<details className="rah-agent-launch-settings">\s*<summary>更多<\/summary>\s*<RuntimeEnvironmentEditor/u,
+  );
   assert.match(agentDialogs, /通用 Agent/u);
   assert.match(agentDialogs, /runtimeOfferId/u);
   assert.match(agentDialogs, /instructions/u);
@@ -236,7 +243,14 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     catalog,
     /className=\{`rah-computer-directory\$\{selected \? " is-detail" : " is-list"\}`\}/u,
   );
-  assert.match(catalog, /style=\{rootStyle\}/u);
+  assert.match(catalog, /<DirectoryWidthLayout\s+kind="computers"/u);
+  assert.match(
+    readFileSync(
+      join(sourceDirectory, "components", "directory-width-layout.tsx"),
+      "utf8",
+    ),
+    /style=\{\{ \.\.\.style, \.\.\.widthStyles\[kind\] \} as CSSProperties\}/u,
+  );
   assert.match(catalog, /className="rah-computer-sidebar"/u);
   assert.match(catalog, /className="rah-computer-detail"/u);
   assert.match(catalog, /选择一台计算机/u);
@@ -333,11 +347,15 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     readFileSync("apps/web/src/components/agent-sidebar.tsx", "utf8"),
     /className="rah-agent-sidebar-head rah-mobile-root-header"/u,
   );
-  assert.match(agentSurface, /rah-agent-sidebar-resizer/u);
-  assert.match(agentSurface, /const MIN_SIDEBAR_WIDTH = 180/u);
-  // Raft index-BoAC7nSE.js slock:sidebarWidth: min180/max320/default240.
-  assert.match(agentSurface, /const MAX_SIDEBAR_WIDTH = 320/u);
-  assert.match(agentSurface, /const DEFAULT_SIDEBAR_WIDTH = 240/u);
+  const directoryLayout = readFileSync(
+    join(sourceDirectory, "components", "directory-width-layout.tsx"),
+    "utf8",
+  );
+  assert.match(agentSurface, /<DirectoryWidthLayout\s+kind="agents"/u);
+  assert.match(
+    directoryLayout,
+    /agents: \{\s*initial: 240,\s*min: 180,\s*max: 320,[\s\S]*?className: "rah-agent-sidebar-resizer"/u,
+  );
   assert.match(agentSurface, /reconcileAgentRouteIdentity/u);
   assert.match(agentSurface, /agents\.map\(\(\{ agentId \}\)/u);
   assert.match(agentSurface, /选择一个 Agent/u);

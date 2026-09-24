@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
-import { RoomKernel } from "@rah-os/kernel";
+import { KERNEL_SCHEMA_VERSION, RoomKernel } from "@rah-os/kernel";
 
 import {
   prepareLocalWorkbench,
@@ -205,7 +205,7 @@ test("a pending schema change is snapshotted and verified before the Kernel migr
       ),
     ) as StateSnapshotReceipt;
     assert.equal(receipt.fromSchemaVersion, 49);
-    assert.equal(receipt.toSchemaVersion, 56);
+    assert.equal(receipt.toSchemaVersion, KERNEL_SCHEMA_VERSION);
     assert.ok(receipt.pendingChanges.length > 0);
     assert.deepEqual(receipt.writeEvidence, evidence);
     assert.match(

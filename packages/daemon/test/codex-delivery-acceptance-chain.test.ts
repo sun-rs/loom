@@ -7,10 +7,7 @@ import test from "node:test";
 
 import { RoomKernel } from "@rah-os/kernel";
 import { WorkerApplicationService } from "@rah-os/application-service";
-import {
-  createComputerApplicationPort,
-  NotFoundError,
-} from "@rah-os/kernel";
+import { createComputerApplicationPort, NotFoundError } from "@rah-os/kernel";
 import { ComputerApplicationService } from "@rah-os/application-service";
 import { ComputerExecutionCommandRequestSchema } from "@rah-os/computer-protocol";
 

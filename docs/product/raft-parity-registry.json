@@ -7192,6 +7192,22 @@
       "note": "2026-09-11: tool facade over existing sync/ack owners, preserves frozen Activation and durable original replay lower bound. See worker-message-check-implementation audit."
     },
     {
+      "id": "route.message-present",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/message-present"
+      },
+      "raft": {
+        "anchor": "formatConcreteMessagesRuntimeInput / wake_thread_context",
+        "location": "main.js@765204"
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "activation-fence",
+      "note": "2026-09-21 inventory closure for the existing 2026-09-18 optional wake-body surface. RAH renders an immutable credential-bound prefix without delivery ACK; Host acceptance and explicit model-side confirmation remain separate. Raft source supports concrete thread-context and resume-catchup inputs, not this HTTP route. The current ordinary production wake still uses message-check --startup; registration does not claim this optional route is wired into every Driver."
+    },
+    {
       "id": "route.tasks.claim-batch",
       "kind": "route",
       "rah": {

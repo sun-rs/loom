@@ -97,7 +97,11 @@ test("chat sidebar does not promote persona prompt to description or force every
   );
   assert.match(
     css,
-    /\.rah-room-sidebar \.channel-row\.is-selected\s*\{\s*font-weight: 500;/u,
+    /\.rah-room-sidebar \.channel-row\s*\{[^}]*font-weight: 500;/u,
+  );
+  assert.match(
+    css,
+    /\.rah-room-sidebar \.channel-row\.is-selected,\s*\.rah-room-sidebar \.channel-row\[data-unread="true"\]\s*\{\s*font-weight: 700;/u,
   );
   const s = readFileSync(
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),
@@ -123,7 +127,10 @@ test("Direct Room and profile avatars share the Agent detail and canonical avata
   assert.match(navigation, /onOpenDirectPeer\(directPeer\.agentId\)/u);
 
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
-  assert.match(app, /onOpenDirectPeer=\{\(id\) => openAgentPeek\(id\)\}/u);
+  assert.match(
+    app,
+    /onOpenDirectPeer=\{\(id\) => \{[\s\S]*?activeDirectPeer\?\.state === "tombstoned"[\s\S]*?setPeekAgentId\(id\)[\s\S]*?else void openAgentPeek\(id\)/u,
+  );
 
   const profile = readFileSync(
     new URL("../src/components/agent-directory-pane.tsx", import.meta.url),
@@ -197,7 +204,10 @@ test("the Workspace sidebar exposes Raft's transient Agent activity footer", () 
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navigation, /WorkspaceActivityFooter agents=\{agents\}/u);
+  assert.match(
+    navigation,
+    /WorkspaceActivityFooter\s+agents=\{agents\.filter\(\(agent\) => agent\.state !== "tombstoned"\)\}/u,
+  );
   const footer = readFileSync(
     new URL("../src/components/workspace-activity-footer.tsx", import.meta.url),
     "utf8",
