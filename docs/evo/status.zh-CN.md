@@ -1,6 +1,6 @@
 # evo 分支现状（阶段 1 清理后）
 
-日期：2026-09-24。本页是 evo 相对 `main`（`milestone-ui-raft` = `5122795`）的唯一差异说明。
+日期：2026-09-24。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`：5122795 加测试修复，全量检查通过）的唯一差异说明。
 `docs/architecture`、`docs/product` 中的 owner 文档描述的是 main 基线；与本页冲突时，以本页和代码为准。
 evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-09-24 已签），效率门禁合同见 [cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)。
 
@@ -32,6 +32,10 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 ### 三、效率门禁脚本
 
 `scripts/cli-efficiency/`、`scripts/test-cli-efficiency.mjs`、`scripts/scheduling-phase-audit.mjs`。
+
+### 四、S1-a 用量观测（schema 61）
+
+- `run_attempt_usage`：驱动经 fd3 `rah-provider-usage/v1` 帧逐次生成上报原生 token 用量（Codex/Claude/OpenCode；Kimi ACP 不提供逐次用量），Host 以自身凭据按 (RunAttempt, response) 幂等写入，不进 trajectory；`agent.run.usage.get` 按 RunAttempt 读取。
 
 ## 已知缺陷（待阶段 3 修复）
 

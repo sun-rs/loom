@@ -66,6 +66,8 @@ import {
   ClientAgentActivityListRequestSchema,
   ClientAgentActivityListResponseSchema,
   ClientAgentTrajectoryListRequestSchema,
+  ClientRunAttemptUsageGetRequestSchema,
+  ClientRunAttemptUsageGetResponseSchema,
   ClientAgentDeletionDiagnosticsRequestSchema,
   ClientAgentDeletionDiagnosticsResponseSchema,
   ClientAgentPresenceListRequestSchema,
@@ -383,6 +385,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   ...CLIENT_V2_DATA_PATHS,
   "/agents/activity/list",
   "/agents/trajectory/list",
+  "/agents/run-usage/get",
   "/agents/presence/list",
   "/agents/reminders/list",
   "/agents/list",
@@ -1118,6 +1121,20 @@ export class ClientApplicationService {
               : { beforeActivityId: command.beforeActivityId }),
             ...(command.limit === undefined ? {} : { limit: command.limit }),
           }),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/run-usage/get") {
+      const command = parseClientRequest(
+        ClientRunAttemptUsageGetRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRunAttemptUsageGetResponseSchema.parse(
+          this.#human.getRunAttemptUsage(actor, command),
         ),
       );
       return;

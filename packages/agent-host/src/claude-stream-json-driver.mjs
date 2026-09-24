@@ -23,6 +23,10 @@ import {
 
 import { attachClaudeBusyInput } from "./claude-busy-input.js";
 import {
+  ClaudeStreamUsageTracker,
+  ProviderUsageWriter,
+} from "./provider-usage.js";
+import {
   assertSessionReplacementAllowed,
   providerActivationInput,
 } from "./provider-activation-input.js";
@@ -43,6 +47,8 @@ const DISALLOWED_TOOLS = [
 
 const options = parseArguments(driverArguments(process.argv.slice(2)));
 const trajectoryWriter = new RuntimeTrajectoryWriter();
+const usageTracker = new ClaudeStreamUsageTracker();
+const usageWriter = new ProviderUsageWriter();
 const promptDirectory = mkdtempSync(join(tmpdir(), "rah-os-claude-prompt-"));
 chmodSync(promptDirectory, 0o700);
 const promptPath = join(promptDirectory, "room-worker.md");
@@ -219,6 +225,7 @@ async function runTurn(resumeSession) {
       if (!inputAccepted) toolActivityBeforeInput = true;
     }
     busyInput.observe(frame);
+    usageWriter.emit(usageTracker.observe(frame));
     rememberToolNames(frame, toolNames);
     if (frame.type === "result") {
       resultCount += 1;

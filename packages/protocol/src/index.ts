@@ -113,6 +113,7 @@ export * from "./context-manifest.ts";
 export * from "./execution-policy.ts";
 export * from "./workspace-instruction-pack.ts";
 export * from "./runtime-activity.ts";
+export * from "./runtime-usage.ts";
 export * from "./agent-presence.ts";
 export * from "./review.ts";
 export * from "./reminder.ts";

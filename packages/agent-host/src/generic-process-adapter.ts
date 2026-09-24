@@ -19,7 +19,10 @@ import type {
   RuntimeProfileProbeReport,
   RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
-import { RuntimeTrajectoryAppendInputSchema } from "@rah-os/protocol";
+import {
+  ProviderUsageFrameSchema,
+  RuntimeTrajectoryAppendInputSchema,
+} from "@rah-os/protocol";
 
 import type {
   ActivationEnvelope,
@@ -269,6 +272,7 @@ class RuntimeTrajectoryCollector {
     this.#finished = true;
     if (
       this.#lifecycle.recordTrajectory !== undefined ||
+      this.#lifecycle.recordUsage !== undefined ||
       this.#recordProviderSessionEvidence !== undefined ||
       this.#recordDeliveryAcceptance !== undefined
     ) {
@@ -309,6 +313,29 @@ class RuntimeTrajectoryCollector {
     };
   }
 
+  /** Host-private usage evidence: validated, then handed to its owner. */
+  async #recordUsage(frame: Record<string, unknown>): Promise<void> {
+    const parsed = ProviderUsageFrameSchema.safeParse(frame);
+    if (!parsed.success) {
+      this.#diagnostics.append(
+        "[rah-os] ignored invalid Provider usage frame\n",
+      );
+      return;
+    }
+    const { protocol: _protocol, ...usage } = parsed.data;
+    try {
+      await this.#lifecycle.recordUsage?.({
+        ...usage,
+        runAttemptId: this.#runAttemptId,
+        runtimeRunId: this.#runtimeRunId,
+      });
+    } catch (error) {
+      this.#diagnostics.append(
+        `[rah-os] Provider usage was not recorded: ${errorMessage(error)}\n`,
+      );
+    }
+  }
+
   #enqueue(line: string): void {
     if (Buffer.byteLength(line) > MAX_ACTIVITY_LINE_BYTES) {
       this.#diagnostics.append(
@@ -342,6 +369,10 @@ class RuntimeTrajectoryCollector {
         const acceptance = parseDeliveryAcceptance(frame);
         if (acceptance !== null) {
           await this.#recordDeliveryAcceptance?.(this.#activation, acceptance);
+          return;
+        }
+        if (isRecord(frame) && frame.protocol === "rah-provider-usage/v1") {
+          await this.#recordUsage(frame);
           return;
         }
         const activity = RuntimeTrajectoryAppendInputSchema.parse({

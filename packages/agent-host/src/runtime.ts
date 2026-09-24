@@ -5,6 +5,7 @@ import type {
   RuntimeRecoveryDescriptor,
   RuntimeTrajectoryAppendInput,
   RuntimeFailure,
+  RunAttemptUsageRecordInput,
 } from "@rah-os/protocol";
 
 export type RuntimeAvailability = {
@@ -42,6 +43,8 @@ export type RuntimeRecoveryInput = {
 
 export type RuntimeStartLifecycle = {
   recordTrajectory?(activity: RuntimeTrajectoryAppendInput): Promise<void>;
+  /** Native per-generation token usage; diagnostics, never trajectory. */
+  recordUsage?(usage: RunAttemptUsageRecordInput): Promise<void>;
   registerPrepared(run: RunHandle): Promise<void>;
 };
 

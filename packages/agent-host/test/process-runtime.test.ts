@@ -337,6 +337,66 @@ test("GenericProcessAdapter keeps Provider session evidence out of canonical tra
   }
 });
 
+test("GenericProcessAdapter routes Provider usage frames to the usage owner, never to trajectory", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-provider-usage-frame-"));
+  try {
+    const usage = {
+      protocol: "rah-provider-usage/v1",
+      provider: "fixture-provider/v1",
+      responseId: "response-1",
+      inputTokens: 1000,
+      cachedInputTokens: 900,
+      outputTokens: 40,
+      reasoningOutputTokens: null,
+      contextWindow: null,
+      contextUsedTokens: null,
+      observedAt: "2026-09-24T01:00:00.000Z",
+    };
+    const frames = [
+      usage,
+      { ...usage, responseId: "response-bad", cachedInputTokens: 1001 },
+      {
+        entry: { kind: "status", activity: "working", detailKind: "starting" },
+        observedAt: "2026-09-24T01:00:01.000Z",
+        producerSequence: 1,
+      },
+    ];
+    const recorded: unknown[] = [];
+    const trajectory: unknown[] = [];
+    const adapter = new GenericProcessAdapter({
+      args: [
+        "-e",
+        `for (const frame of ${JSON.stringify(frames)}) require('node:fs').writeSync(3, JSON.stringify(frame)+'\\n');`,
+      ],
+      command: process.execPath,
+      cwd: directory,
+    });
+    const run = await adapter.start(activationEnvelope(), {
+      recordTrajectory: async (activity) => {
+        trajectory.push(activity.entry);
+      },
+      recordUsage: async (input) => {
+        recorded.push(input);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+    const { protocol: _protocol, ...fields } = usage;
+    assert.deepEqual(recorded, [
+      { ...fields, runAttemptId: "run-process-test", runtimeRunId: run.runId },
+    ]);
+    assert.deepEqual(trajectory, [
+      { kind: "status", activity: "working", detailKind: "starting" },
+    ]);
+    assert.match(
+      adapter.diagnostics(run).stderr,
+      /ignored invalid Provider usage frame/u,
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter applies activation-scoped arguments and sanitized setup diagnostics", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-process-launch-lease-"));
   try {

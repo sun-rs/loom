@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import { RoomKernel } from "@rah-os/kernel";
@@ -118,6 +119,126 @@ test("AgentHost leases a durable Activation and executes it through a Fake Runti
       "terminated",
     );
 
+    kernel.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("AgentHost records runtime Provider usage through its own Host credential", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-usage-"));
+  try {
+    const databasePath = join(directory, "room.db");
+    const kernel = new RoomKernel({ databasePath });
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "usage-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "usage-agent",
+      kind: "agent",
+    });
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const agentActor = kernel.authenticateAccessToken(agent.accessToken);
+    const room = kernel.createRoom(humanActor, {
+      name: "Usage host",
+      slug: "usage-host",
+    });
+    kernel.addMember(humanActor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    kernel.postMessage(humanActor, {
+      body: "Count my tokens",
+      idempotencyKey: "usage-host-message",
+      recipients: [
+        { participantId: agent.principal.principalId, reason: "mention" },
+      ],
+      roomId: room.roomId,
+    });
+    const usageFrame = {
+      provider: "fixture-provider/v1",
+      responseId: "response-1",
+      inputTokens: 500,
+      cachedInputTokens: 400,
+      outputTokens: 20,
+      reasoningOutputTokens: null,
+      contextWindow: null,
+      contextUsedTokens: null,
+      observedAt: "2026-09-24T01:00:00.000Z",
+    };
+    const runtime: RuntimeAdapter = {
+      async cancel() {
+        return { code: null, signal: "SIGTERM" };
+      },
+      async probe() {
+        return { available: true };
+      },
+      async reap() {
+        return { code: 0 };
+      },
+      async start(input, lifecycle) {
+        const run = {
+          recoveryDescriptor: {
+            driver: "usage-runtime",
+            metadata: {},
+            recoveryKey: "usage-run",
+          },
+          runId: "usage-run",
+        };
+        await lifecycle.registerPrepared(run);
+        await lifecycle.recordUsage?.({
+          ...usageFrame,
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: run.runId,
+        });
+        const delivery = kernel.sync(agentActor, {
+          consumerId: input.consumerId,
+          roomId: input.roomId,
+        });
+        kernel.acknowledgeCursor(agentActor, {
+          consumerId: input.consumerId,
+          roomId: input.roomId,
+          throughSeq: delivery.cursorAfter,
+        });
+        return run;
+      },
+    };
+    const host = new AgentHost({
+      host: authenticateHost(kernel, "usage-host", [
+        agent.principal.principalId,
+      ]),
+      kernel,
+      leaseMs: 30_000,
+      runtime,
+    });
+    const result = await host.reconcileOnce();
+    assert.equal(result.state, "completed");
+    const runAttemptId = kernel.listRunAttempts({ roomId: room.roomId })[0]
+      ?.runAttemptId;
+    const audit = new DatabaseSync(databasePath, { readOnly: true });
+    try {
+      assert.deepEqual(
+        audit
+          .prepare(
+            "SELECT run_attempt_id, response_id, input_tokens, cached_input_tokens, output_tokens FROM run_attempt_usage",
+          )
+          .all()
+          .map((row) => ({ ...row })),
+        [
+          {
+            cached_input_tokens: 400,
+            input_tokens: 500,
+            output_tokens: 20,
+            response_id: "response-1",
+            run_attempt_id: runAttemptId,
+          },
+        ],
+      );
+    } finally {
+      audit.close();
+    }
     kernel.close();
   } finally {
     rmSync(directory, { force: true, recursive: true });

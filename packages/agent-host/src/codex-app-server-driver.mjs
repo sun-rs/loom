@@ -18,6 +18,10 @@ import {
   RuntimeTrajectoryWriter,
   runtimeStatusTrajectory,
 } from "./provider-trajectory-normalizer.js";
+import {
+  CodexTokenUsageTracker,
+  ProviderUsageWriter,
+} from "./provider-usage.js";
 
 const HANDSHAKE_TIMEOUT_MS = 30_000;
 const INTERRUPT_CONFIRM_TIMEOUT_MS = 600;
@@ -49,6 +53,8 @@ codex.stderr.pipe(process.stderr);
 const pending = new Map();
 const approvalPolicy = new CodexUnattendedApprovalPolicy();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
+const usageWriter = new ProviderUsageWriter();
+let usageTracker;
 let requestSequence = 0;
 let activeThreadId;
 let activeTurnId;
@@ -192,6 +198,10 @@ try {
   if (activeThreadId === undefined) {
     throw new Error("Codex thread request returned no thread.id");
   }
+  usageTracker = new CodexTokenUsageTracker({
+    freshThread:
+      options.resumeSession === undefined || resumeRecovery !== undefined,
+  });
 
   const turnStart = {
     input: [
@@ -337,6 +347,7 @@ function handleNotification(frame) {
   if (!isRecord(frame.params) || !belongsToActiveCodexTurn(frame)) return;
   busyInput.observe(frame);
   trajectoryWriter.emit(normalizeCodexTrajectoryNotification(frame));
+  usageWriter.emit(usageTracker?.observe(frame));
   if (frame.method !== "turn/completed") return;
   const threadId = stringField(frame.params, "threadId");
   const turn = recordField(frame.params, "turn");

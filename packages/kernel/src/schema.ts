@@ -1,4 +1,5 @@
 import { ROLE_CATALOG_SCHEMA } from "./role-catalog-schema.ts";
+import { RUN_ATTEMPT_USAGE_SCHEMA } from "./run-attempt-usage.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { ACTIVATION_PRESENTED_WINDOW_SCHEMA } from "./activation-presented-window.ts";
 
@@ -12,6 +13,7 @@ PRAGMA foreign_keys = ON;
 `;
 
 export const SCHEMA_OBJECT_SQL = `${ROLE_CATALOG_SCHEMA}
+${RUN_ATTEMPT_USAGE_SCHEMA}
 
 CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
   secret_name TEXT PRIMARY KEY,

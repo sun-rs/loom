@@ -101,6 +101,7 @@ export type HumanApplicationPort = Pick<
 
   createRoom: RoomKernel["createWorkspaceRoom"];
 
+  getRunAttemptUsage: RoomKernel["runAttemptUsage"]["get"];
   listTaskReviews: RoomKernel["taskReviews"]["listRoomReviews"];
   listTaskSubmissions: RoomKernel["taskReviews"]["listRoomSubmissions"];
   requestTaskReassignment: RoomKernel["taskReassignment"]["request"];
@@ -197,6 +198,8 @@ export function createHumanApplicationPort(
     listAgentActivity: (actor, input) => kernel.listAgentActivity(actor, input),
     listAgentTrajectory: (actor, input) =>
       kernel.listAgentTrajectory(actor, input),
+    getRunAttemptUsage: (actor, input) =>
+      kernel.runAttemptUsage.get(actor, input),
     listAgentPresence: (actor, input) => kernel.listAgentPresence(actor, input),
     listAgentCatalog: (actor, input) => kernel.listAgentCatalog(actor, input),
     listInputRequests: (actor, input) => kernel.listInputRequests(actor, input),

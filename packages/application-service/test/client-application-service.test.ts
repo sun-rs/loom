@@ -1596,6 +1596,61 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       otherHuman.accessToken,
     );
     assert.equal(hiddenAgentTrajectoryResponse.status, 404);
+    kernel.runAttemptUsage.record(host, {
+      provider: "codex-app-server/v1",
+      responseId: "turn-client:1100",
+      inputTokens: 1000,
+      cachedInputTokens: 900,
+      outputTokens: 100,
+      reasoningOutputTokens: 30,
+      contextWindow: 258400,
+      contextUsedTokens: 1100,
+      observedAt: "2026-09-24T01:00:00.000Z",
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId: "client-runtime",
+    });
+    const runUsageResponse = await request(
+      "/v3/client/agents/run-usage/get",
+      {
+        agentId: agentDefinition.definition.agentId,
+        runAttemptId: runAttempt.runAttemptId,
+      },
+      human.accessToken,
+    );
+    assert.equal(runUsageResponse.status, 200);
+    const runUsage = await jsonObject(runUsageResponse);
+    assert.equal(runUsage.runAttemptId, runAttempt.runAttemptId);
+    assert.deepEqual(runUsage.totals, {
+      generations: 1,
+      inputTokens: 1000,
+      cachedInputTokens: 900,
+      outputTokens: 100,
+      reasoningOutputTokens: 30,
+    });
+    assert.equal(runUsage.generations[0].responseId, "turn-client:1100");
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/run-usage/get",
+          {
+            agentId: agentDefinition.definition.agentId,
+            runAttemptId: runAttempt.runAttemptId,
+          },
+          otherHuman.accessToken,
+        )
+      ).status,
+      404,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/run-usage/get",
+          { agentId: agentDefinition.definition.agentId },
+          human.accessToken,
+        )
+      ).status,
+      400,
+    );
     assert.equal(
       (
         await request(

@@ -280,7 +280,9 @@ import * as ar from "./room-agent-service.ts";
 import {
   RuntimeTrajectoryService,
   type AgentTrajectoryListInput,
+  type RuntimeTrajectoryServiceOptions,
 } from "./runtime-trajectory.ts";
+import { RunAttemptUsageService } from "./run-attempt-usage.ts";
 import {
   runtimeOfferIsAvailable,
   runtimeOfferObservationFromId,
@@ -415,7 +417,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 60;
+export const KERNEL_SCHEMA_VERSION = 61;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -469,6 +471,7 @@ export class RoomKernel {
   readonly #taskLifecycle: TaskLifecycleService;
   readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
+  readonly runAttemptUsage: RunAttemptUsageService;
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
     this.#now = options.now ?? (() => new Date());
@@ -755,7 +758,7 @@ export class RoomKernel {
       requireActor: (actor) => this.#requireAuthenticatedActor(actor),
       transaction: (operation) => this.#transaction(operation),
     });
-    this.#runtimeTrajectory = new RuntimeTrajectoryService({
+    const runtimeObservation: RuntimeTrajectoryServiceOptions = {
       createId: this.#createId,
       database: this.#database,
       now: this.#now,
@@ -765,7 +768,9 @@ export class RoomKernel {
         this.#requireHostParticipant(host, participantId),
       requireRunAttemptHostGeneration: (runAttempt, host) =>
         this.#requireRunAttemptHostGeneration(runAttempt, host),
-    });
+    };
+    this.#runtimeTrajectory = new RuntimeTrajectoryService(runtimeObservation);
+    this.runAttemptUsage = new RunAttemptUsageService(runtimeObservation);
   }
 
   get taskReviews(): TaskReviewService {

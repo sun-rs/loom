@@ -501,6 +501,9 @@ export class AgentHost {
             recordTrajectory: async (activity) => {
               await this.#control.appendRunTrajectory(activity);
             },
+            recordUsage: async (usage) => {
+              await this.#control.recordRunAttemptUsage?.(usage);
+            },
             registerPrepared: async (candidate) => {
               if (preparedRun !== undefined) {
                 throw new Error(

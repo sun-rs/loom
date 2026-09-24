@@ -17,6 +17,10 @@ import {
   RuntimeTrajectoryWriter,
   runtimeStatusTrajectory,
 } from "./provider-trajectory-normalizer.js";
+import {
+  openCodeStepFinishUsage,
+  ProviderUsageWriter,
+} from "./provider-usage.js";
 
 const STARTUP_TIMEOUT_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 2_000;
@@ -38,6 +42,7 @@ class HttpError extends Error {
 
 const options = parseArguments(driverArguments(process.argv.slice(2)));
 const trajectoryWriter = new RuntimeTrajectoryWriter();
+const usageWriter = new ProviderUsageWriter();
 const eventIdentity = new OpenCodeEventIdentityFilter();
 const partTypes = new Map();
 const partTexts = new Map();
@@ -396,6 +401,8 @@ function projectIdentifiedEvent(event) {
     const part = record(properties.part);
     const partId = stringField(part, "id");
     const partType = stringField(part, "type");
+    // Assistant-owned only: the identity filter has already dropped user parts.
+    usageWriter.emit(openCodeStepFinishUsage(part));
     if (partId !== undefined && partType !== undefined) {
       partTypes.set(partId, partType);
     }
