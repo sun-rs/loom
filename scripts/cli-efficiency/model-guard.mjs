@@ -29,6 +29,8 @@ export function listenPlan(args) {
   );
   if (i < 0) return null;
   const value = args[i] === "--listen" ? args[i + 1] : undefined;
+  // The per-turn driver speaks stdio; the stdin line guard below covers it.
+  if (value === "stdio://") return null;
   if (typeof value !== "string" || !value.startsWith("unix:///"))
     throw new Error("Unsupported gate --listen transport");
   const listenPath = value.slice("unix://".length);

@@ -58,3 +58,11 @@ test("warm --listen unix:// is fenced by a proxy on the driver's socket path", (
   ])
     assert.throws(() => listenPlan(bad), /listen/);
 });
+test("stdio listen (the per-turn Codex driver) passes through without a proxy", async () => {
+  const { listenPlan } = await import("./model-guard.mjs");
+  assert.equal(listenPlan(["app-server", "--listen", "stdio://"]), null);
+  assert.equal(listenPlan(["app-server"]), null);
+  assert.throws(() =>
+    listenPlan(["app-server", "--listen", "ws://127.0.0.1:1"]),
+  );
+});
