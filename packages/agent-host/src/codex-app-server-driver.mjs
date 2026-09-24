@@ -213,7 +213,9 @@ try {
             : "The previous Provider thread was not recovered. Use canonical Room history and workspace memory as the recovery point.\n") +
           // S1-d: the Host-prepared bodied wake when present; otherwise the
           // fixed startup wake. The driver never composes Room content itself.
-          (options.wakeInput ?? providerActivationInput()),
+          (options.wakeInput === undefined
+            ? providerActivationInput()
+            : withRuntimeNotice(options.wakeInput)),
         type: "text",
       },
     ],
@@ -653,4 +655,5 @@ class RpcError extends Error {
 import {
   assertSessionReplacementAllowed,
   providerActivationInput,
+  withRuntimeNotice,
 } from "./provider-activation-input.js";

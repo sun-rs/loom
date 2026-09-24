@@ -79,6 +79,11 @@ export const ACTIVATION_IDENTITY_FENCE_KEYS: readonly string[] = [
   "RAH_ROOM_ID",
   "RAH_RUN_ATTEMPT_ID",
   "RAH_TO_SEQ",
+  // S2-0 leftover-process tags. Every descendant inherits them, so the Host
+  // can find processes that escaped the run's process group after it ends.
+  "LOOM_RUNTIME_ID",
+  "LOOM_RUN_ID",
+  "RAH_RUNTIME_NOTICE",
 ];
 
 /**
@@ -100,6 +105,7 @@ export const USER_OVERRIDE_PROTECTED_KEYS: readonly string[] = [
 export const USER_OVERRIDE_PROTECTED_PREFIXES: readonly string[] = [
   "DYLD_",
   "LD_",
+  "LOOM_",
   "RAH_",
 ];
 
@@ -179,8 +185,11 @@ export function resolveActivationEnvironment(
   const environment: NodeJS.ProcessEnv = {
     ...untrusted,
     ...input.leased,
-    ...input.fences,
   };
+  // A fence absent from this Activation (e.g. no cleanup notice) must not
+  // survive from an untrusted layer either.
+  for (const key of ACTIVATION_IDENTITY_FENCE_KEYS) delete environment[key];
+  Object.assign(environment, input.fences);
   delete environment[LEGACY_RAH_WORKER_TOKEN_ENV];
 
   const toolDirectory = environment[RAH_AGENT_TOOL_BIN_ENV];

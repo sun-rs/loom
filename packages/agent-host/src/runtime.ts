@@ -23,6 +23,11 @@ export type ActivationEnvelope = Pick<
   consumerId: string;
   hostId: string;
   runAttemptId: string;
+  /**
+   * S2-0: one short Host line for the next wake (what leftover-process
+   * cleanup killed or released). Delivered once; never Room content.
+   */
+  runtimeNotice?: string;
 };
 
 export type RunHandle = {

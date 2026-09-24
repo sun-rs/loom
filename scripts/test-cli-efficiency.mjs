@@ -15,7 +15,7 @@ import {
 import { nativeRound } from "./cli-efficiency/native.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
-import { budgets, compareRounds } from "./cli-efficiency/metrics.mjs";
+import { budgets, compareArm } from "./cli-efficiency/metrics.mjs";
 assert.ok(
   process.argv.includes("--paid"),
   "Requires explicit --paid and user authorization",
@@ -116,25 +116,43 @@ try {
     }
     save();
   }
+  // Contract §6: fixed overhead is judged once per arm; residue and
+  // work-path variance are reported, and every round carries the exact
+  // total-input decomposition (printed below when that budget fails).
   result.comparisons = Object.fromEntries(
-    ["legacy", "role"].map((kind) => [
-      kind,
-      result.arms[kind].rounds.map((r, i) =>
-        r.metrics && result.arms.native.rounds[i]?.metrics
-          ? compareRounds(result.arms.native.rounds[i].metrics, r.metrics)
-          : { status: "missing-evidence" },
-      ),
-    ]),
+    ["legacy", "role"].map((kind) => {
+      const nat = result.arms.native.rounds.map((r) => r.metrics);
+      const rah = result.arms[kind].rounds.map((r) => r.metrics);
+      const complete =
+        rah.length === nat.length && [...nat, ...rah].every(Boolean);
+      return [
+        kind,
+        complete
+          ? compareArm(nat, rah)
+          : { status: "missing-evidence", failures: ["metricsMissing"] },
+      ];
+    }),
   );
+  for (const [kind, c] of Object.entries(result.comparisons))
+    for (const [i, r] of (c.rounds ?? []).entries())
+      if (r.failures.includes("input"))
+        console.log(
+          `${kind} round ${i + 1} input over budget: ` +
+            JSON.stringify(r.inputDecomposition),
+        );
+  // Any missing evidence (arm or round) fails the gate, as before.
+  const statuses = Object.values(result.comparisons).flatMap((c) => [
+    c.status,
+    ...(c.rounds ?? []).map((r) => r.status),
+    ...(c.failures.some((f) => f.endsWith("Missing"))
+      ? ["missing-evidence"]
+      : []),
+  ]);
   result.status =
     Object.values(result.arms).some((a) => a.status !== "complete") ||
-    Object.values(result.comparisons)
-      .flat()
-      .some((x) => x.status === "missing-evidence")
+    statuses.includes("missing-evidence")
       ? "failed"
-      : Object.values(result.comparisons)
-            .flat()
-            .some((x) => x.status === "over-budget")
+      : statuses.includes("over-budget")
         ? "over-budget"
         : "needs-quality-review";
   if (result.status === "over-budget") process.exitCode = 2;

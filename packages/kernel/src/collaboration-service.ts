@@ -1,3 +1,4 @@
+import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import { requireActiveInstancePrivateBox } from "./instance-worker-scope.ts";
 import { agentGreetingEnabled, firstRunReplay } from "./agent-first-run.ts";
 import {
@@ -2454,6 +2455,7 @@ export class CollaborationService {
         `principal ${principalId} has active collaboration work in Room ${roomId}`,
       );
     }
+    assertNoUnresolvedRuntimeCleanup(this.#database, principalId);
   }
 
   #normalizeRecipients(

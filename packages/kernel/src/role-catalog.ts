@@ -1,3 +1,4 @@
+import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
 import type { AuthenticatedActorContext } from "./auth.ts";
@@ -420,6 +421,7 @@ export class RoleCatalog {
         throw new ConflictError(
           "Role instance has running work; wait for it to finish before resetting its session",
         );
+      assertNoUnresolvedRuntimeCleanup(c.database, input.instanceId);
       const sessionGeneration = advanceInstanceSessionGeneration(
         c.database,
         input.instanceId,

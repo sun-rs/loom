@@ -205,7 +205,7 @@ test("a pending schema change is snapshotted and verified before the Kernel migr
       ),
     ) as StateSnapshotReceipt;
     assert.equal(receipt.fromSchemaVersion, 49);
-    assert.equal(receipt.toSchemaVersion, 63);
+    assert.equal(receipt.toSchemaVersion, 64);
     assert.ok(receipt.pendingChanges.length > 0);
     assert.deepEqual(receipt.writeEvidence, evidence);
     assert.match(

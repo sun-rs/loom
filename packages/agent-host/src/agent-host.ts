@@ -34,6 +34,10 @@ import {
   runtimeErrorJitterRandom,
 } from "./runtime-error-policy.ts";
 import type { AgentStartGate } from "./agent-start-coordinator.ts";
+import type {
+  RunCleanupInput,
+  RuntimeProcessHygiene,
+} from "./runtime-process-hygiene.ts";
 
 const DEFAULT_ACTIVATION_RETRY_DELAY_MS = 10_000;
 
@@ -104,6 +108,8 @@ export type AgentHostOptions = {
   runTimeoutMs?: number;
   runtime: RuntimeAdapter;
   placementRuntimeResolver?: (placement: PlacementDecision) => RuntimeAdapter;
+  /** S2-0 leftover-process sweeps, admission and the one-time wake notice. */
+  processHygiene?: RuntimeProcessHygiene;
   runtimeCancelTimeoutMs?: number;
   runtimeRecoveryDrivers?: readonly string[];
   runtimeRecoveryResolver?: (
@@ -160,6 +166,7 @@ export class AgentHost {
   ) => Promise<void>;
   readonly #wait: (delayMs: number, signal: AbortSignal) => Promise<void>;
   readonly #startGate: AgentStartGate | undefined;
+  readonly #processHygiene: RuntimeProcessHygiene | undefined;
   #draining = false;
   #drainDeadlineAtMs: number | undefined;
   #runSignal: AbortSignal | undefined;
@@ -214,6 +221,7 @@ export class AgentHost {
     }
     this.#drainTimeoutMs = drainTimeoutMs;
     this.#startGate = options.startGate;
+    this.#processHygiene = options.processHygiene;
     this.#host = options.host;
     this.#hostId = options.host.hostId;
     this.#consumerId = `${options.host.hostId}:runtime`;
@@ -345,6 +353,12 @@ export class AgentHost {
         exit,
         recoveryAttemptCount: runtimeProcess.recoveryAttemptCount,
         runtimeProcessId: runtimeProcess.runtimeProcessId,
+      });
+      await this.#sweepAfterRun({
+        participantId: runtimeProcess.participantId,
+        runAttemptId: runtimeProcess.runAttemptId,
+        runtimeRunId: runtimeProcess.runtimeRunId,
+        trigger: "runtime_crash",
       });
       await this.#control.resolveActivationQuarantine({
         activationId: runtimeProcess.activationId,
@@ -478,6 +492,32 @@ export class AgentHost {
           );
     }
 
+    // S2-0: an unresolved leftover cleanup (processes that could not be
+    // stopped, a failed sweep, a resource-cap alert) refuses new execution.
+    if (this.#processHygiene !== undefined) {
+      let admission: Awaited<ReturnType<RuntimeProcessHygiene["admit"]>>;
+      try {
+        admission = await this.#processHygiene.admit(
+          this.#control,
+          activation.participantId,
+        );
+      } catch (error) {
+        admission = {
+          blocked: true,
+          reason: `RAH_RUNTIME_CLEANUP_BLOCKED: admission check failed: ${errorMessage(error)}`,
+        };
+      }
+      if (admission.blocked) {
+        return runAttempt === undefined
+          ? this.#retryFailedActivation(activation, admission.reason)
+          : this.#failClaimedActivation(
+              activation,
+              runAttempt.runAttemptId,
+              admission.reason,
+            );
+      }
+    }
+
     try {
       await this.#control.renewActivationLease({
         activationId: activation.activationId,
@@ -490,6 +530,15 @@ export class AgentHost {
     runAttempt ??= await this.#control.createRunAttempt({
       activationId: activation.activationId,
     });
+    let runtimeNotice: string | undefined;
+    try {
+      runtimeNotice = await this.#processHygiene?.claimNotice(this.#control, {
+        participantId: activation.participantId,
+        runAttemptId: runAttempt.runAttemptId,
+      });
+    } catch {
+      // The notice is informational; its loss never blocks the run.
+    }
     const envelope: ActivationEnvelope = {
       activationId: activation.activationId,
       ...(agentContext === undefined ? {} : { agent: agentContext }),
@@ -503,6 +552,7 @@ export class AgentHost {
       reason: activation.reason,
       roomId: activation.roomId,
       runAttemptId: runAttempt.runAttemptId,
+      ...(runtimeNotice === undefined ? {} : { runtimeNotice }),
       toSeq: activation.toSeq,
     };
 
@@ -617,6 +667,7 @@ export class AgentHost {
         }
         const proofFailure = await this.#recordTerminationOrQuarantine({
           activationId: activation.activationId,
+          participantId: activation.participantId,
           exit: termination.exit,
           failure,
           run: preparedRun,
@@ -693,6 +744,18 @@ export class AgentHost {
       signal: supervisor.signal,
       wait: waitForDelay,
     });
+    const capMonitor =
+      this.#processHygiene?.monitorCaps(this.#control, {
+        participantId: activation.participantId,
+        runAttemptId: runAttempt.runAttemptId,
+        runtimeRunId: run.runId,
+        signal: supervisor.signal,
+      }) ?? Promise.resolve();
+    const monitoredCaps = capMonitor.catch((error: unknown) => {
+      process.stderr.write(
+        `[rah-os] resource cap monitor failed: ${errorMessage(error)}\n`,
+      );
+    });
     const drainOutcome = this.#waitForDrainDeadline(supervisor.signal);
     const outcome = await Promise.race([
       reapOutcome,
@@ -701,7 +764,12 @@ export class AgentHost {
       drainOutcome,
     ]);
     supervisor.abort();
-    await Promise.all([maintenanceOutcome, drainOutcome, busyNotices]);
+    await Promise.all([
+      maintenanceOutcome,
+      drainOutcome,
+      busyNotices,
+      monitoredCaps,
+    ]);
 
     if (outcome.kind === "activation_cancelled") {
       const termination = await this.#cancelRuntime(runtime, run);
@@ -713,6 +781,7 @@ export class AgentHost {
       }
       const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
+        participantId: activation.participantId,
         exit: termination.exit,
         failure: outcome.error,
         run,
@@ -756,6 +825,7 @@ export class AgentHost {
       }
       const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
+        participantId: activation.participantId,
         exit: termination.exit,
         failure,
         run,
@@ -789,6 +859,7 @@ export class AgentHost {
       }
       const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
+        participantId: activation.participantId,
         exit: termination.exit,
         failure,
         run,
@@ -820,6 +891,7 @@ export class AgentHost {
       }
       const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
+        participantId: activation.participantId,
         exit: termination.exit,
         failure: outcome.error,
         run,
@@ -845,6 +917,7 @@ export class AgentHost {
       }
       const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
+        participantId: activation.participantId,
         exit: termination.exit,
         failure: outcome.error,
         run,
@@ -871,6 +944,7 @@ export class AgentHost {
       }
       const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
+        participantId: activation.participantId,
         exit: termination.exit,
         failure,
         run,
@@ -889,6 +963,7 @@ export class AgentHost {
     const exit = outcome.exit;
     const proofFailure = await this.#recordTerminationOrQuarantine({
       activationId: activation.activationId,
+      participantId: activation.participantId,
       exit,
       failure: "runtime exited but its termination proof was not persisted",
       run,
@@ -953,6 +1028,21 @@ export class AgentHost {
     };
     input.signal.addEventListener("abort", beginDrain, { once: true });
     if (input.signal.aborted) beginDrain();
+    const janitorStop = new AbortController();
+    let janitorLoop: Promise<void> = Promise.resolve();
+    if (this.#manageHostLifecycle && this.#processHygiene !== undefined) {
+      await this.#processHygiene
+        .janitor(this.#control, "host_start")
+        .catch((error: unknown) => {
+          process.stderr.write(
+            `[rah-os] host-start leftover-process janitor failed: ${errorMessage(error)}\n`,
+          );
+        });
+      janitorLoop = this.#processHygiene.runPeriodic(
+        this.#control,
+        janitorStop.signal,
+      );
+    }
     try {
       while (!input.signal.aborted) {
         const recovery = await this.reconcileOrphanOnce();
@@ -969,6 +1059,8 @@ export class AgentHost {
         }
       }
     } finally {
+      janitorStop.abort();
+      await janitorLoop;
       input.signal.removeEventListener("abort", beginDrain);
       if (this.#manageHostLifecycle) {
         try {
@@ -1120,6 +1212,7 @@ export class AgentHost {
     activationId: string;
     exit: RunExit;
     failure: string;
+    participantId: string;
     run: RunHandle;
     runAttemptId: string;
     runState: "exited" | "failed" | "cancelled" | "timed_out";
@@ -1130,12 +1223,39 @@ export class AgentHost {
         runAttemptId: input.runAttemptId,
         runtimeRunId: input.run.runId,
       });
-      return null;
     } catch (error) {
       const quarantineFailure = `${input.failure}; durable runtime termination proof failed: ${errorMessage(error)}`;
       return await this.#quarantineFailedActivation(
         input.activationId,
         quarantineFailure,
+      );
+    }
+    // Only after the termination proof is durable: the runtime is dead, so
+    // every process still carrying its tag is a leftover.
+    await this.#sweepAfterRun({
+      participantId: input.participantId,
+      runAttemptId: input.runAttemptId,
+      runtimeRunId: input.run.runId,
+      trigger:
+        input.runState === "cancelled"
+          ? "run_cancelled"
+          : input.runState !== "timed_out" &&
+              input.exit.code === 0 &&
+              input.exit.failure === undefined
+            ? "run_end"
+            : "runtime_crash",
+    });
+    return null;
+  }
+
+  async #sweepAfterRun(input: RunCleanupInput): Promise<void> {
+    if (this.#processHygiene === undefined) return;
+    try {
+      await this.#processHygiene.afterRun(this.#control, input);
+    } catch (error) {
+      // Recording failed: the next admission re-sweeps; never fail the run.
+      process.stderr.write(
+        `[rah-os] leftover-process cleanup for ${input.runAttemptId} failed: ${errorMessage(error)}\n`,
       );
     }
   }

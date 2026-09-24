@@ -22,6 +22,7 @@ import type {
 } from "./auth.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import type { RuntimeTrajectoryServiceOptions } from "./runtime-trajectory.ts";
+import { RuntimeProcessCleanupService } from "./runtime-process-cleanup.ts";
 import { text, type Row } from "./sqlite-row.ts";
 
 /**
@@ -78,11 +79,14 @@ export class RunAttemptUsageService {
   readonly #database: DatabaseSync;
   readonly #now: () => Date;
   readonly #options: RuntimeTrajectoryServiceOptions;
+  /** S2-0 leftover-process cleanups; shown on this service's read. */
+  readonly cleanups: RuntimeProcessCleanupService;
 
   constructor(options: RuntimeTrajectoryServiceOptions) {
     this.#database = options.database;
     this.#now = options.now;
     this.#options = options;
+    this.cleanups = new RuntimeProcessCleanupService(options);
   }
 
   record(
@@ -259,6 +263,7 @@ export class RunAttemptUsageService {
             : null,
       },
       truncated: generations > rows.length,
+      processCleanups: this.cleanups.listForRunAttempt(input.runAttemptId),
     });
   }
 

@@ -2036,6 +2036,27 @@ test("the daemon executable handles a Room Activation and SIGTERM in a separate 
   }
 });
 
+test("S2-0 daemon config accepts leftover-process hygiene caps per instance", () => {
+  const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
+  const parsed = DaemonConfigSchema.parse({
+    ...base,
+    processHygiene: {
+      caps: { maxListeningPorts: 4 },
+      capsByParticipant: { "instance-1": { maxProcesses: 8, maxRssKb: 1024 } },
+    },
+  });
+  assert.deepEqual(parsed.processHygiene?.capsByParticipant?.["instance-1"], {
+    maxProcesses: 8,
+    maxRssKb: 1024,
+  });
+  for (const processHygiene of [
+    { caps: { maxProcesses: 0 } },
+    { caps: { maxCpu: 1 } },
+    { unknown: true },
+  ])
+    assert.throws(() => DaemonConfigSchema.parse({ ...base, processHygiene }));
+});
+
 function validConfig(stateDirectory: string, secretPath: string) {
   return {
     client: {

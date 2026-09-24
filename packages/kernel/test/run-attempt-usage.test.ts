@@ -341,7 +341,7 @@ test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reas
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 63);
+    assert.equal(KERNEL_SCHEMA_VERSION, 64);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -587,7 +587,7 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        63,
+        64,
       );
       assert.equal(
         database
@@ -611,5 +611,202 @@ test("a schema 60 database upgrades to the current schema without touching exist
     }
   } finally {
     rmSync(join(databasePath, ".."), { force: true, recursive: true });
+  }
+});
+
+// S2-0 leftover-process cleanup records (schema 64).
+
+function cleanup(
+  state: ReturnType<typeof fixture>,
+  cleanupId: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    cleanupId,
+    participantId: state.kernel.listRunAttempts({ roomId: state.roomId })[0]!
+      .participantId,
+    runAttemptId: state.runAttemptId,
+    runtimeRunId: state.runtimeRunId,
+    trigger: "run_end",
+    foundCount: 2,
+    killedCount: 2,
+    remainingCount: 0,
+    releasedPorts: [3000],
+    remainingPorts: [],
+    capExceeded: [],
+    observedAt: "2026-09-24T01:00:07.000Z",
+    ...overrides,
+  } as Parameters<RoomKernel["runtimeProcessCleanup"]["record"]>[1];
+}
+
+test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read", () => {
+  const state = fixture();
+  try {
+    assert.equal(KERNEL_SCHEMA_VERSION, 64);
+    const recorded = state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-1"),
+    );
+    assert.equal(recorded.blocking, false);
+    // Replay of the same id is idempotent; a different fact conflicts.
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-1"),
+    );
+    assert.throws(
+      () =>
+        state.kernel.runtimeProcessCleanup.record(
+          state.host,
+          cleanup(state, "cleanup-1", { killedCount: 1 }),
+        ),
+      ConflictError,
+    );
+    assert.throws(
+      () =>
+        state.kernel.runtimeProcessCleanup.record(
+          state.otherHost,
+          cleanup(state, "cleanup-foreign"),
+        ),
+      ForbiddenError,
+    );
+    const summary = read(state);
+    assert.deepEqual(
+      summary.processCleanups.map((entry) => ({
+        found: entry.foundCount,
+        killed: entry.killedCount,
+        ports: entry.releasedPorts,
+        remaining: entry.remainingCount,
+        trigger: entry.trigger,
+      })),
+      [
+        {
+          found: 2,
+          killed: 2,
+          ports: [3000],
+          remaining: 0,
+          trigger: "run_end",
+        },
+      ],
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-0 an unresolved cleanup blocks admission until a later clean sweep", () => {
+  const state = fixture();
+  try {
+    const participantId = state.kernel.listRunAttempts({
+      roomId: state.roomId,
+    })[0]!.participantId;
+    const admission = () =>
+      state.kernel.runtimeProcessCleanup.admission(state.host, {
+        participantId,
+      });
+    assert.deepEqual(admission(), { blocked: false });
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-stuck", {
+        killedCount: 1,
+        remainingCount: 1,
+        remainingPorts: [5173],
+      }),
+    );
+    const blocked = admission();
+    assert.equal(blocked.blocked, true);
+    assert.match(blocked.blocked ? blocked.reason : "", /1 leftover process/u);
+    assert.deepEqual(
+      state.kernel.runtimeProcessCleanup.blockedParticipants(state.host),
+      [participantId],
+    );
+    state.advance();
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-janitor", {
+        foundCount: 1,
+        killedCount: 1,
+        releasedPorts: [5173],
+        runAttemptId: undefined,
+        runtimeRunId: undefined,
+        trigger: "janitor",
+      }),
+    );
+    assert.deepEqual(admission(), { blocked: false });
+    // A resource-cap alert blocks new work but never touches the busy run.
+    state.advance();
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-cap", {
+        capExceeded: ["listening_ports"],
+        foundCount: 0,
+        killedCount: 0,
+        releasedPorts: [],
+        trigger: "resource_cap",
+      }),
+    );
+    const capped = admission();
+    assert.match(capped.blocked ? capped.reason : "", /listening_ports/u);
+    // The janitor never clears a cap alert of a runtime that is still live.
+    assert.deepEqual(
+      state.kernel.runtimeProcessCleanup.blockedParticipants(state.host),
+      [],
+    );
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-0 the cleanup notice is claimed by exactly one next run", () => {
+  const state = fixture();
+  try {
+    const participantId = state.kernel.listRunAttempts({
+      roomId: state.roomId,
+    })[0]!.participantId;
+    const claim = () =>
+      state.kernel.runtimeProcessCleanup.claimNotice(state.host, {
+        participantId,
+        runAttemptId: state.runAttemptId,
+      });
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-quiet", {
+        foundCount: 0,
+        killedCount: 0,
+        releasedPorts: [],
+      }),
+    );
+    assert.equal(claim(), null);
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-loud"),
+    );
+    const line = claim();
+    assert.ok(line !== null);
+    assert.match(line, /2 leftover background process/u);
+    assert.match(line, /port 3000/u);
+    assert.ok(line.length <= 240);
+    assert.equal(claim(), null);
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("S2-0 room removal waits for an unresolved leftover cleanup", () => {
+  const state = fixture();
+  try {
+    const participantId = state.kernel.listRunAttempts({
+      roomId: state.roomId,
+    })[0]!.participantId;
+    state.kernel.runtimeProcessCleanup.record(
+      state.host,
+      cleanup(state, "cleanup-stuck", { killedCount: 1, remainingCount: 1 }),
+    );
+    assert.throws(
+      () =>
+        state.kernel.runtimeProcessCleanup.assertNoUnresolved(participantId),
+      /leftover processes/u,
+    );
+  } finally {
+    state.cleanup();
   }
 });

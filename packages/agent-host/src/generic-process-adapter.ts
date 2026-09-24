@@ -39,6 +39,11 @@ import {
   INSTANCE_HOST_UNSUPPORTED,
 } from "./runtime-error-policy.ts";
 import { resolveActivationEnvironment } from "./launch-environment-policy.ts";
+import {
+  LOOM_RUN_ID_ENV,
+  LOOM_RUNTIME_ID_ENV,
+  RAH_RUNTIME_NOTICE_ENV,
+} from "./leftover-process-sweeper.ts";
 
 import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
 
@@ -903,7 +908,11 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       child = spawn(this.#command, launchArgs, {
         cwd: this.#cwd,
         detached: process.platform !== "win32",
-        env: this.#createActivationProcessEnvironment(input, environmentLease),
+        env: this.#createActivationProcessEnvironment(
+          input,
+          environmentLease,
+          runId,
+        ),
         shell: false,
         stdio: [
           this.#nativeBusyInput ? "pipe" : "ignore",
@@ -1251,6 +1260,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
             ...this.#createActivationProcessEnvironment(
               input,
               environmentLease,
+              runId,
             ),
             RAH_PROCESS_SUPERVISOR_CONFIG: JSON.stringify(supervisorConfig),
             RAH_PROCESS_SUPERVISOR_TOKEN: descriptor.controlToken,
@@ -1373,10 +1383,18 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   #createActivationProcessEnvironment(
     input: ActivationEnvelope,
     environmentLease: ActivationEnvironmentLease | undefined,
+    runtimeRunId: string,
   ): NodeJS.ProcessEnv {
     return resolveActivationEnvironment({
       configured: this.#env,
       fences: {
+        // S2-0: one process lifetime per run today, so the runtime id is the
+        // run's runtime run id. Every descendant inherits both tags.
+        [LOOM_RUNTIME_ID_ENV]: runtimeRunId,
+        [LOOM_RUN_ID_ENV]: input.runAttemptId,
+        ...(input.runtimeNotice === undefined
+          ? {}
+          : { [RAH_RUNTIME_NOTICE_ENV]: input.runtimeNotice }),
         ...(input.agent === undefined
           ? {}
           : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),

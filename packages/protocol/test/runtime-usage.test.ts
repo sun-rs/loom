@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   ClientRunAttemptUsageGetRequestSchema,
   ClientRunAttemptUsageGetResponseSchema,
+  RuntimeProcessCleanupRecordInputSchema,
   ProviderUsageFrameSchema,
   ProviderUsageGapFrameSchema,
   RunAttemptUsageRecordInputSchema,
@@ -112,6 +113,7 @@ test("client run usage read is a strict per-RunAttempt summary", () => {
       reasoningOutputTokens: 50,
     },
     truncated: false,
+    processCleanups: [],
   });
   assert.equal(response.totals.generations, 1);
   // Unknown is not zero: an unavailable read carries null totals and reasons.
@@ -136,6 +138,7 @@ test("client run usage read is a strict per-RunAttempt summary", () => {
       reasoningOutputTokens: null,
     },
     truncated: false,
+    processCleanups: [],
   });
   assert.equal(unavailable.totals.inputTokens, null);
   assert.throws(() =>
@@ -152,4 +155,30 @@ test("client run usage read is a strict per-RunAttempt summary", () => {
       observedAt: "2026-09-24T01:00:00.000Z",
     }),
   );
+});
+
+test("S2-0 cleanup record input is bounded and strict", () => {
+  const valid = {
+    cleanupId: "cleanup-1",
+    participantId: "agent-1",
+    trigger: "janitor",
+    foundCount: 1,
+    killedCount: 1,
+    remainingCount: 0,
+    releasedPorts: [3000],
+    remainingPorts: [],
+    capExceeded: [],
+    observedAt: "2026-09-24T01:00:00.000Z",
+  };
+  assert.equal(
+    RuntimeProcessCleanupRecordInputSchema.parse(valid).trigger,
+    "janitor",
+  );
+  for (const invalid of [
+    { ...valid, trigger: "guess" },
+    { ...valid, releasedPorts: [70_000] },
+    { ...valid, capExceeded: ["cpu"] },
+    { ...valid, extra: true },
+  ])
+    assert.throws(() => RuntimeProcessCleanupRecordInputSchema.parse(invalid));
 });

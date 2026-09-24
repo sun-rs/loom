@@ -25,7 +25,7 @@ export const RuntimeLaunchEnvironmentSchema = z
       });
     for (const key of Object.keys(env))
       if (
-        /^(?:RAH_|NODE_OPTIONS$|NODE_PATH$|PATH$|HOME$|USER$|SHELL$|LD_|DYLD_|KIMI_MODEL_THINKING_EFFORT$|CLAUDE_CODE_DISABLE_AUTO_MEMORY$)/u.test(
+        /^(?:RAH_|LOOM_|NODE_OPTIONS$|NODE_PATH$|PATH$|HOME$|USER$|SHELL$|LD_|DYLD_|KIMI_MODEL_THINKING_EFFORT$|CLAUDE_CODE_DISABLE_AUTO_MEMORY$)/u.test(
           key,
         )
       )

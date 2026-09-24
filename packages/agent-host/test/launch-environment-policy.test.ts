@@ -207,6 +207,31 @@ test("resolveActivationEnvironment refuses lease and configured overrides of the
   }
 });
 
+test("S2-0: the leftover-process tags are Host fences no other layer can forge", () => {
+  const environment = resolveActivationEnvironment({
+    configured: { LOOM_RUNTIME_ID: "configured-forged", LOOM_RUN_ID: "x" },
+    fences: {
+      ...expectedFenceEnvironment(),
+      LOOM_RUNTIME_ID: "process:host-runtime",
+      LOOM_RUN_ID: "run-host",
+    },
+    inherited: {
+      ...PRESERVED_ENVIRONMENT,
+      LOOM_RUNTIME_ID: "process:outer-runtime",
+      LOOM_RUN_ID: "run-outer",
+    },
+    leased: { LOOM_RUNTIME_ID: "leased-forged" },
+  });
+  assert.equal(environment.LOOM_RUNTIME_ID, "process:host-runtime");
+  assert.equal(environment.LOOM_RUN_ID, "run-host");
+  assert.ok(ACTIVATION_IDENTITY_FENCE_KEYS.includes("LOOM_RUNTIME_ID"));
+  assert.ok(ACTIVATION_IDENTITY_FENCE_KEYS.includes("LOOM_RUN_ID"));
+  assert.deepEqual(
+    filterUserLaunchEnvironment({ LOOM_RUNTIME_ID: "user" }).rejected,
+    ["LOOM_RUNTIME_ID"],
+  );
+});
+
 test("filterUserLaunchEnvironment rejects platform fences and keeps explicit Provider configuration", () => {
   const filtered = filterUserLaunchEnvironment({
     CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
@@ -244,6 +269,8 @@ test("filterUserLaunchEnvironment agrees with the per-Agent override schema at t
     "NODE_OPTIONS",
     "DYLD_INSERT_LIBRARIES",
     "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "LOOM_RUNTIME_ID",
+    "LOOM_RUN_ID",
   ]) {
     assert.equal(
       RuntimeLaunchEnvironmentSchema.safeParse({ [key]: "x" }).success,

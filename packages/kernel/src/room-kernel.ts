@@ -418,7 +418,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 63;
+export const KERNEL_SCHEMA_VERSION = 64;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -473,6 +473,7 @@ export class RoomKernel {
   readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
   readonly runAttemptUsage: RunAttemptUsageService;
+  readonly runtimeProcessCleanup;
   readonly instanceSessions: InstanceSessionService;
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
@@ -773,6 +774,7 @@ export class RoomKernel {
     };
     this.#runtimeTrajectory = new RuntimeTrajectoryService(runtimeObservation);
     this.runAttemptUsage = new RunAttemptUsageService(runtimeObservation);
+    this.runtimeProcessCleanup = this.runAttemptUsage.cleanups;
     this.instanceSessions = new InstanceSessionService(runtimeObservation);
   }
 

@@ -39,8 +39,10 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/s
 
 - 协议额外生成（整轮）：RAH 整轮生成数 − 原生整轮生成数 ≤ 1；不设绝对总数上限，原生完成同一工作所需的工具轮次不算协议开销。
 - 回复前额外生成：RAH 回复前生成数 − 原生整轮生成数 ≤ 0；回复切分未知即 `generationsBeforeReplyMissing`。
-- 首请求输入不超过原生同轮首请求加 3,000 token；任一侧缺首请求证据即 `firstInputMissing`。
-- 单轮总输入不超过 2 × (原生同轮总输入 + 3,000)；未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
+- 固定开销（`fixedOverhead`，按组判一次）：新 session 第 1 轮第 1 次生成的输入，RAH − 原生 ≤ 3,000 token；任一侧缺数据即 `fixedOverheadMissing`。续聊轮的首请求只报告、不设预算，但仍须两侧都有（缺即 `firstInputMissing`），供分解使用。
+- 每轮残留（`perRoundResidue`，只报告）：相邻两个续聊轮之间的上下文增长（后一轮首请求 − 前一轮首请求）之差，RAH − 原生。
+- 业务差异（`workPathVariance`，只报告）：逐轮业务工具调用数（除 box-post 外）与生成数之差；第 1→2 轮上下文增长之差单列为 `round1HistoryDelta`，它同时含第 1 轮工作路径与第 1 轮协议历史，仅凭用量无法再拆，不计入固定开销，也不据此放宽固定开销上限。
+- 单轮总输入不超过 2 × (原生同轮总输入 + 3,000)。每轮附 `inputDecomposition`，把总输入差精确分解为 G_rah × 固定开销 + G_rah × `round1HistoryDelta` + G_rah × 累计残留 + (G_rah − G_原生) × 原生首请求 + 轮内增长之差（G 为整轮生成数）；超预算时 runner 打印该分解。未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
 - 额外回复耗时不超过 max(5 秒, 原生同轮耗时 × 15%)：短任务按秒计，长任务按百分比计。
 - 用量证据：RAH 组须有产品入库用量（`agent.run.usage.get`）且 `completeness` 为 `complete`；`partial`/`unavailable` 或缺失即 `usageEvidenceMissing`。两者都有时，将产品入库的生成数、输入、缓存、输出与原生轨迹推导的 RAH 用量交叉核对，不一致即 `usageEvidenceMismatch`。证据类失败判 `missing-evidence`，不能判预算内。
 

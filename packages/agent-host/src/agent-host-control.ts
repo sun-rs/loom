@@ -65,6 +65,26 @@ export type AgentHostControlPort = {
   recordRunAttemptUsageGap?(
     input: Parameters<RoomKernel["runAttemptUsage"]["recordGap"]>[1],
   ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["recordGap"]>>;
+  /** S2-0: one leftover-process sweep for one of this Host's participants. */
+  recordRuntimeProcessCleanup?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["record"]>[1],
+  ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["record"]>>;
+  readRuntimeCleanupAdmission?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["admission"]>[1],
+  ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["admission"]>>;
+  claimRuntimeCleanupNotice?(
+    input: Parameters<RoomKernel["runtimeProcessCleanup"]["claimNotice"]>[1],
+  ): Promise<ReturnType<RoomKernel["runtimeProcessCleanup"]["claimNotice"]>>;
+  resolveRuntimeCleanupTargets?(
+    input: Parameters<
+      RoomKernel["runtimeProcessCleanup"]["resolveRuntimes"]
+    >[1],
+  ): Promise<
+    ReturnType<RoomKernel["runtimeProcessCleanup"]["resolveRuntimes"]>
+  >;
+  listRuntimeCleanupBlockedParticipants?(): Promise<
+    ReturnType<RoomKernel["runtimeProcessCleanup"]["blockedParticipants"]>
+  >;
   /** S1-f: durable evidence that the Host persisted an instance binding. */
   recordInstanceSessionBinding?(
     input: Parameters<RoomKernel["instanceSessions"]["record"]>[1],
@@ -137,6 +157,16 @@ export function createKernelAgentHostControlPort(
       kernel.runAttemptUsage.recordGap(host, input),
     recordInstanceSessionBinding: async (input) =>
       kernel.instanceSessions.record(host, input),
+    recordRuntimeProcessCleanup: async (input) =>
+      kernel.runtimeProcessCleanup.record(host, input),
+    readRuntimeCleanupAdmission: async (input) =>
+      kernel.runtimeProcessCleanup.admission(host, input),
+    claimRuntimeCleanupNotice: async (input) =>
+      kernel.runtimeProcessCleanup.claimNotice(host, input),
+    resolveRuntimeCleanupTargets: async (input) =>
+      kernel.runtimeProcessCleanup.resolveRuntimes(host, input),
+    listRuntimeCleanupBlockedParticipants: async () =>
+      kernel.runtimeProcessCleanup.blockedParticipants(host),
     readPendingRuntimeNotice: async (input) =>
       kernel.readPendingRuntimeNotice(host, input),
     renewActivationLease: async (input) =>

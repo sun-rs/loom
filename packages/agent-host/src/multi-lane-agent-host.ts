@@ -4,6 +4,7 @@ import {
 } from "@rah-os/kernel";
 
 import { AgentHost, type AgentHostOptions } from "./agent-host.ts";
+import { createKernelAgentHostControlPort } from "./agent-host-control.ts";
 import {
   AgentStartGate,
   type AgentStartSchedulerSettings,
@@ -33,6 +34,7 @@ export class MultiLaneAgentHost {
   readonly #kernel: NonNullable<AgentHostOptions["kernel"]>;
   readonly #workers: AgentHost[];
   readonly #startGate: AgentStartGate;
+  readonly #processHygiene: AgentHostOptions["processHygiene"];
   #running = false;
 
   constructor(options: MultiLaneAgentHostOptions) {
@@ -43,6 +45,7 @@ export class MultiLaneAgentHost {
     this.#host = options.host;
     this.#kernel = options.kernel;
     this.#startGate = new AgentStartGate(options.runtimeStartScheduler ?? {});
+    this.#processHygiene = options.processHygiene;
     this.#workers = Array.from(
       { length: options.capacity },
       () =>
@@ -65,8 +68,28 @@ export class MultiLaneAgentHost {
     input.signal.addEventListener("abort", beginDrain, { once: true });
     if (input.signal.aborted) beginDrain();
     let failures: unknown[] = [];
+    // S2-0: one janitor for all lanes, before any lane can launch.
+    const janitorStop = new AbortController();
+    let janitorLoop: Promise<void> = Promise.resolve();
     try {
       this.#kernel.heartbeatHost(this.#host, { state: "online" });
+      if (this.#processHygiene !== undefined) {
+        const control = createKernelAgentHostControlPort(
+          this.#kernel,
+          this.#host,
+        );
+        await this.#processHygiene
+          .janitor(control, "host_start")
+          .catch((error: unknown) => {
+            process.stderr.write(
+              `[rah-os] host-start leftover-process janitor failed: ${error instanceof Error ? error.message : String(error)}\n`,
+            );
+          });
+        janitorLoop = this.#processHygiene.runPeriodic(
+          control,
+          janitorStop.signal,
+        );
+      }
       const outcomes = await Promise.allSettled(
         this.#workers.map(async (worker) => {
           try {
@@ -81,6 +104,8 @@ export class MultiLaneAgentHost {
         outcome.status === "rejected" ? [outcome.reason] : [],
       );
     } finally {
+      janitorStop.abort();
+      await janitorLoop;
       input.signal.removeEventListener("abort", beginDrain);
       this.#startGate.cancelAll("MultiLaneAgentHost stopped");
       try {

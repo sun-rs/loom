@@ -407,7 +407,7 @@ rl.on("line", (line) => {
     send({jsonrpc:"2.0",method:"session/update",params:{sessionId,update:{sessionUpdate:"agent_message_chunk",messageId:"message-1",content:{type:"text",text:"Kimi canonical reply"}}}});
     send({jsonrpc:"2.0",id:"permission-1",method:"session/request_permission",params:{sessionId,options:[{optionId:"persist",kind:"allow_always"},{optionId:"once",kind:"allow_once"},{optionId:"reject",kind:"reject_once"}]}});
   }
-  else if (frame.id === "permission-1") send({jsonrpc:"2.0",id:"terminal-create-1",method:"terminal/create",params:{sessionId,command:process.execPath,args:["-e","process.stdout.write(process.env.RAH_ACTIVATION_ID ?? '')"]}});
+  else if (frame.id === "permission-1") send({jsonrpc:"2.0",id:"terminal-create-1",method:"terminal/create",params:{sessionId,command:process.execPath,args:["-e","const e=process.env;process.stdout.write([e.RAH_ACTIVATION_ID,e.LOOM_RUN_ID,String(e.LOOM_RUNTIME_ID).startsWith('process:')?'tagged':e.LOOM_RUNTIME_ID].join('|'))"],env:[{name:"LOOM_RUNTIME_ID",value:"forged"}]}});
   else if (frame.id === "terminal-create-1") send({jsonrpc:"2.0",id:"terminal-wait-1",method:"terminal/wait_for_exit",params:{sessionId,terminalId:frame.result.terminalId}});
   else if (frame.id === "terminal-wait-1") send({jsonrpc:"2.0",id:"terminal-output-1",method:"terminal/output",params:{sessionId,terminalId:"rah-acp-terminal-1"}});
   else if (frame.id === "terminal-output-1") { record({terminalOutput:frame.result.output}); send({jsonrpc:"2.0",id:promptRequestId,result:{stopReason:"end_turn"}}); }
@@ -527,7 +527,8 @@ rl.on("line", (line) => {
     );
     assert.equal(
       frames.find((frame) => frame.terminalOutput !== undefined).terminalOutput,
-      "activation-kimi-acp",
+      // S2-0: ACP terminals keep the Host tags; a provider env cannot forge them.
+      "activation-kimi-acp|run-kimi-acp|tagged",
     );
     assert.match(JSON.stringify(trajectory), /分析任务/u);
     assert.match(JSON.stringify(trajectory), /运行测试/u);

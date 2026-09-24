@@ -35,6 +35,7 @@ import {
   type RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
 import type { DaemonConfig } from "./config.ts";
+import { createDaemonProcessHygiene } from "./daemon-process-hygiene.ts";
 import {
   DAEMON_BUILD_VERSION,
   DAEMON_PROTOCOL_VERSION,
@@ -608,6 +609,9 @@ export class DaemonApplication {
         throw new Error(availability.detail ?? "runtime is unavailable");
       }
       const wakeSignal = new LocalWakeSignal();
+      const processHygiene = createDaemonProcessHygiene(
+        this.#config.processHygiene,
+      );
       const discoveredLocalClis = await discoverKnownLocalClis();
       const runnerOptions = {
         guideEnabled: (runtimeId: string | undefined) =>
@@ -642,6 +646,7 @@ export class DaemonApplication {
           : { runtimeRecoveryResolver }),
         runtimeRecoveryTimeoutMs: this.#config.runtimeRecoveryTimeoutMs,
         runtimeStartTimeoutMs: this.#config.runtimeStartTimeoutMs,
+        ...(processHygiene === undefined ? {} : { processHygiene }),
         wait: async (delayMs, signal) => await wakeSignal.wait(delayMs, signal),
       } satisfies AgentHostOptions;
       const runner =

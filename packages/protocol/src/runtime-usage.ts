@@ -154,6 +154,68 @@ export const RunAttemptUsageRecordSchema = z
   .strict();
 export type RunAttemptUsageRecord = z.infer<typeof RunAttemptUsageRecordSchema>;
 
+/**
+ * S2-0 leftover-process cleanup (S2 spec §6a). The Host sweeps processes that
+ * carry a dead runtime's `LOOM_RUNTIME_ID` tag (plus their descendants and
+ * tagged-led process groups) and records the counts here. Diagnostics next to
+ * the ledger: no Room event, Inbox, Task or trajectory effect. An unresolved
+ * record (processes remaining, a sweep error, or a resource-cap alert) stops
+ * new work for the participant until a later clean sweep.
+ */
+export const RuntimeProcessCleanupTriggerSchema = z.enum([
+  "run_end",
+  "runtime_crash",
+  "run_cancelled",
+  "host_start",
+  "janitor",
+  "resource_cap",
+]);
+export type RuntimeProcessCleanupTrigger = z.infer<
+  typeof RuntimeProcessCleanupTriggerSchema
+>;
+export const RuntimeResourceCapSchema = z.enum([
+  "process_count",
+  "rss",
+  "listening_ports",
+]);
+export type RuntimeResourceCap = z.infer<typeof RuntimeResourceCapSchema>;
+const PortListSchema = z.array(z.number().int().min(1).max(65_535)).max(256);
+const CleanupCountSchema = z.number().int().nonnegative().max(1_000_000);
+
+const RuntimeProcessCleanupShape = {
+  cleanupId: IdentifierSchema,
+  runAttemptId: IdentifierSchema.optional(),
+  runtimeRunId: IdentifierSchema.optional(),
+  trigger: RuntimeProcessCleanupTriggerSchema,
+  foundCount: CleanupCountSchema,
+  killedCount: CleanupCountSchema,
+  remainingCount: CleanupCountSchema,
+  releasedPorts: PortListSchema,
+  remainingPorts: PortListSchema,
+  capExceeded: z.array(RuntimeResourceCapSchema).max(3),
+  error: z.string().trim().min(1).max(2_000).optional(),
+  observedAt: TimestampSchema,
+} as const;
+
+/** The Host's authenticated write for one of its participants. */
+export const RuntimeProcessCleanupRecordInputSchema = z
+  .object({ ...RuntimeProcessCleanupShape, participantId: IdentifierSchema })
+  .strict();
+export type RuntimeProcessCleanupRecordInput = z.infer<
+  typeof RuntimeProcessCleanupRecordInputSchema
+>;
+
+export const RuntimeProcessCleanupSchema = z
+  .object({
+    ...RuntimeProcessCleanupShape,
+    blocking: z.boolean(),
+    recordedAt: TimestampSchema,
+  })
+  .strict();
+export type RuntimeProcessCleanup = z.infer<typeof RuntimeProcessCleanupSchema>;
+
+export const RUNTIME_PROCESS_CLEANUP_READ_LIMIT = 32;
+
 export const RUN_ATTEMPT_USAGE_GENERATION_LIMIT = 1000;
 
 export const ClientRunAttemptUsageGetRequestSchema = z
@@ -191,6 +253,10 @@ export const ClientRunAttemptUsageGetResponseSchema = z
       })
       .strict(),
     truncated: z.boolean(),
+    /** S2-0: leftover-process cleanups recorded for this RunAttempt. */
+    processCleanups: z
+      .array(RuntimeProcessCleanupSchema)
+      .max(RUNTIME_PROCESS_CLEANUP_READ_LIMIT),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

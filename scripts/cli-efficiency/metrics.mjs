@@ -7,7 +7,9 @@ import assert from "node:assert/strict";
 export const budgets = {
   maxExtraGenerations: 1, // rah total − native total
   maxExtraGenerationsBeforeReply: 0, // rah before-reply − native total
-  firstInputOverheadTokens: 3000, // rah first ≤ native first + 3k
+  // Fixed overhead: first generation input of the fresh session (round 1,
+  // generation 1), rah − native. Judged once per arm, never per follow-up.
+  fixedOverheadTokens: 3000,
   inputRatio: 2, // rah total input ≤ 2 × (native total input + 3k)
   inputAllowanceTokens: 3000,
   replyAllowanceSeconds: 5, // extra latency ≤ max(5 s, 15% of native)
@@ -103,6 +105,133 @@ function usageEvidence(rah) {
     }
   return { completeness, gaps: product?.gaps ?? [], mismatches };
 }
+const statusOf = (failures) =>
+  failures.length && failures.every(isEvidenceFailure)
+    ? "missing-evidence"
+    : failures.length
+      ? "over-budget"
+      : "within-budget";
+const diff = (a, b) => (finite(a) && finite(b) ? a - b : null);
+const businessToolCalls = (m) =>
+  Array.isArray(m.toolCalls)
+    ? m.toolCalls.filter((c) => c.kind !== "box-post").length
+    : null;
+// Context growth of round i = first request of i − first request of i−1.
+const growth = (rounds, i) =>
+  diff(rounds[i]?.firstInput, rounds[i - 1]?.firstInput);
+// Contract §6 decomposition over both arms of one gate run.
+// - fixedOverhead: fresh session, round 1 generation 1 (budgeted).
+// - perRoundResidue: RAH growth − native growth between consecutive
+//   follow-up rounds (reported).
+// - workPathVariance: business tool calls/generations per round and the
+//   round 1 → 2 history difference (reported; it holds round 1's work path
+//   and round 1's protocol history, which usage alone cannot separate).
+// Each round's total-input delta is split exactly into
+//   G_rah·(fixed + round1History + cumulative residue)
+//   + (G_rah − G_native)·native first request + intra-round growth delta.
+export function compareArm(nativeRounds, rahRounds) {
+  const failures = [];
+  const fixedTokens = diff(
+    rahRounds[0]?.firstInput,
+    nativeRounds[0]?.firstInput,
+  );
+  const fixedOverhead = {
+    rah: rahRounds[0]?.firstInput ?? null,
+    native: nativeRounds[0]?.firstInput ?? null,
+    tokens: fixedTokens,
+    budget: budgets.fixedOverheadTokens,
+  };
+  if (fixedTokens === null) failures.push("fixedOverheadMissing");
+  else if (fixedTokens > budgets.fixedOverheadTokens)
+    failures.push("fixedOverhead");
+  const n = Math.min(nativeRounds.length, rahRounds.length);
+  const history1 =
+    n >= 2
+      ? {
+          rahGrowth: growth(rahRounds, 1),
+          nativeGrowth: growth(nativeRounds, 1),
+          tokens: diff(growth(rahRounds, 1), growth(nativeRounds, 1)),
+        }
+      : null;
+  const perRoundResidue = [];
+  for (let i = 2; i < n; i++) {
+    const rahGrowth = growth(rahRounds, i);
+    const nativeGrowth = growth(nativeRounds, i);
+    perRoundResidue.push({
+      fromRound: i,
+      toRound: i + 1,
+      rahGrowth,
+      nativeGrowth,
+      tokens: diff(rahGrowth, nativeGrowth),
+    });
+  }
+  const workRounds = [];
+  const rounds = [];
+  let residueSum = 0;
+  for (let i = 0; i < n; i++) {
+    const nat = nativeRounds[i];
+    const rah = rahRounds[i];
+    const gRah = generationCounts(rah).total;
+    const gNat = generationCounts(nat).total;
+    const nb = businessToolCalls(nat);
+    const rb = businessToolCalls(rah);
+    workRounds.push({
+      round: i + 1,
+      businessToolCalls: { rah: rb, native: nb, delta: diff(rb, nb) },
+      generations: {
+        rah: gRah ?? null,
+        native: gNat ?? null,
+        delta: diff(gRah, gNat),
+      },
+    });
+    // Residue accumulates: round i's context carries every earlier residue.
+    if (i >= 2) {
+      const step = perRoundResidue[i - 2].tokens;
+      residueSum =
+        finite(residueSum) && finite(step) ? residueSum + step : null;
+    }
+    const h = i >= 1 ? (history1?.tokens ?? null) : 0;
+    const r = i >= 2 ? residueSum : 0;
+    const parts = [
+      fixedTokens,
+      h,
+      r,
+      gRah,
+      gNat,
+      nat.firstInput,
+      nat.input,
+      rah.input,
+      rah.firstInput,
+    ];
+    const inputDecomposition = parts.every(finite)
+      ? {
+          rah: rah.input,
+          native: nat.input,
+          budget:
+            budgets.inputRatio * (nat.input + budgets.inputAllowanceTokens),
+          delta: rah.input - nat.input,
+          fixedOverhead: gRah * fixedTokens,
+          round1History: gRah * h,
+          residue: gRah * r,
+          extraGenerations: (gRah - gNat) * nat.firstInput,
+          intraRound:
+            rah.input -
+            gRah * rah.firstInput -
+            (nat.input - gNat * nat.firstInput),
+        }
+      : null;
+    rounds.push({ ...compareRounds(nat, rah), inputDecomposition });
+  }
+  const all = [...failures, ...rounds.flatMap((x) => x.failures)];
+  return {
+    status: statusOf(all),
+    failures,
+    fixedOverhead,
+    perRoundResidue,
+    workPathVariance: { round1HistoryDelta: history1, rounds: workRounds },
+    rounds,
+  };
+}
 export function compareRounds(native, rah) {
   const failures = [];
   if (!finite(native.input) || !finite(rah.input))
@@ -112,13 +241,10 @@ export function compareRounds(native, rah) {
     budgets.inputRatio * (native.input + budgets.inputAllowanceTokens)
   )
     failures.push("input");
+  // A follow-up's first request is reported (and decomposed by compareArm),
+  // not budgeted; the decomposition still needs it on both sides.
   if (!finite(native.firstInput) || !finite(rah.firstInput))
     failures.push("firstInputMissing");
-  else if (
-    rah.firstInput >
-    native.firstInput + budgets.firstInputOverheadTokens
-  )
-    failures.push("firstInput");
   const generations = {
     native: generationCounts(native),
     rah: generationCounts(rah),
@@ -155,13 +281,8 @@ export function compareRounds(native, rah) {
   if (evidence.completeness !== "complete")
     failures.push("usageEvidenceMissing");
   else if (evidence.mismatches.length) failures.push("usageEvidenceMismatch");
-  const evidenceOnly = failures.length && failures.every(isEvidenceFailure);
   return {
-    status: evidenceOnly
-      ? "missing-evidence"
-      : failures.length
-        ? "over-budget"
-        : "within-budget",
+    status: statusOf(failures),
     failures,
     generations,
     extraProtocolGenerations,

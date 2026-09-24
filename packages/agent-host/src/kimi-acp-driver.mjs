@@ -536,6 +536,8 @@ function createTerminal(params) {
         continue;
       if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(entry.name))
         throw new Error("terminal env name is invalid");
+      // S2-0: the Host's leftover-process tags cannot be replaced.
+      if (entry.name.startsWith("LOOM_")) continue;
       env[entry.name] = entry.value;
     }
   }

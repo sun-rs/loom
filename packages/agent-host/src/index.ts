@@ -207,6 +207,31 @@ export {
   sanitizeInheritedEnvironment,
 } from "./launch-environment-policy.ts";
 export type { ActivationEnvironmentPolicyInput } from "./launch-environment-policy.ts";
+export {
+  DEFAULT_RUNTIME_RESOURCE_CAPS,
+  exceededCaps,
+  RuntimeProcessHygiene,
+} from "./runtime-process-hygiene.ts";
+export type {
+  RuntimeHygieneAlert,
+  RuntimeProcessHygieneOptions,
+  RuntimeResourceCaps,
+} from "./runtime-process-hygiene.ts";
+export {
+  createSystemProcessTable,
+  LeftoverProcessSweeper,
+  LOOM_RUN_ID_ENV,
+  LOOM_RUNTIME_ID_ENV,
+  RAH_RUNTIME_NOTICE_ENV,
+} from "./leftover-process-sweeper.ts";
+export type {
+  LeftoverFootprint,
+  LeftoverProcessSweeperOptions,
+  LeftoverSweepResult,
+  ProcessIdentity,
+  ProcessRecord,
+  ProcessTable,
+} from "./leftover-process-sweeper.ts";
 export type { RuntimeProviderSessionEvidence } from "./generic-process-adapter.ts";
 export { ProviderSessionStore } from "./provider-session-store.ts";
 export type {

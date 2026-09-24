@@ -56,6 +56,15 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 不能上报绑定证据的 Host（当前远端 Computer）拒绝运行 Role 实例（`RAH_INSTANCE_HOST_UNSUPPORTED`，不重试循环）；旧 Agent 不受影响。
 - 门禁预算按合同 §6 修订版执行（协议额外生成 ≤1、回复前额外 0、首请求 ≤ 原生+3k、总输入 ≤ 2×(原生+3k)、耗时 max(5 s, 15%)）。
 
+### 八、S2-0 遗留进程与端口清扫（schema 64）
+
+- 进程树标签 `LOOM_RUNTIME_ID`/`LOOM_RUN_ID` 由 Host 强制注入（用户与租约配置不可覆盖），已验证可传到 `setsid` 脱组的孙进程。
+- `leftover-process-sweeper`：macOS 用 `ps -A` + `ps -A -E` 读环境，Linux 用 `/proc/<pid>/environ`；覆盖带标签进程、其子孙与其带领的进程组；发信号前复核 UID 与启动时间（防 PID 复用）；`lsof` 查监听端口。约 1,000 进程扫描 ~70 ms。
+- 清扫点：每次终止证明后（结束、崩溃、取消、孤儿恢复）、Host 启动与每 60 s 的 janitor（只杀本 Host 已终止运行时的标签）、被阻塞实例准入前复扫。实例移除与 session 重置在清扫未解决时拒绝。
+- `runtime_process_cleanups` 记录每次清扫；超过进程数/内存/端口上限时告警并拒绝新准入（`RAH_RUNTIME_CLEANUP_BLOCKED`），不取消忙碌工作；清理结果通过下一轮唤醒一句话告知（≤300 字符，只发一次）。配置项 `processHygiene`。
+- 已知局限：macOS 隐藏 Apple 平台二进制（`/bin/sh`、`/bin/sleep` 等）的环境变量；清空环境且已无带标签祖先、又不在带标签进程组内的脱组进程会漏扫；Linux 路径无自动化测试。
+- 门禁按新口径输出固定开销、每轮残留、工作路径差异与逐轮输入分解。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

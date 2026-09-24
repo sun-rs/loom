@@ -25,6 +25,11 @@ export {
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
+export { RUNTIME_CLEANUP_BLOCKED } from "./runtime-process-cleanup.ts";
+export type {
+  RuntimeCleanupAdmission,
+  RuntimeCleanupTarget,
+} from "./runtime-process-cleanup.ts";
 export type {
   KernelInitializeOptions,
   KernelSchemaChange,

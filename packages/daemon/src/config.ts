@@ -50,6 +50,25 @@ const DaemonConcurrencySchema = z
   .positive()
   .max(64, "daemon concurrency must not exceed 64");
 
+const RuntimeResourceCapsSchema = z
+  .object({
+    maxListeningPorts: z.number().int().positive().optional(),
+    maxProcesses: z.number().int().positive().optional(),
+    maxRssKb: z.number().int().positive().optional(),
+  })
+  .strict();
+
+/** S2-0 leftover-process hygiene (S2 spec §6a); enabled by default on POSIX. */
+const ProcessHygieneConfigSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    caps: RuntimeResourceCapsSchema.optional(),
+    capsByParticipant: z
+      .record(z.string().min(1), RuntimeResourceCapsSchema)
+      .optional(),
+  })
+  .strict();
+
 const CommonDaemonConfigFields = {
   startupMemoryTransport: z.enum(["tool", "system"]).optional(),
   fileReferenceRoots: z.array(AbsolutePathSchema).min(1).max(32).optional(),
@@ -67,6 +86,7 @@ const CommonDaemonConfigFields = {
   leaseMs: z.number().int().positive(),
   leaseRenewIntervalMs: z.number().int().positive().optional(),
   lockDirectory: AbsolutePathSchema.optional(),
+  processHygiene: ProcessHygieneConfigSchema.optional(),
 
   outboxLeaseMs: z.number().int().positive(),
   outboxPollIntervalMs: z.number().int().positive(),
