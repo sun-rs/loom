@@ -19,7 +19,14 @@ import { fileURLToPath } from "node:url";
  *   `result` without `user_message_uuid` is never guessed onto an input; an
  *   input the CLI refused or cancelled without being asked is an error;
  * - Claude busy input: a surviving notice that starts after the final reply
- *   armed is interrupted too.
+ *   armed is interrupted too;
+ * - full review batch 3 P1-5: the real 2.1.282 CLI folds a busy input into
+ *   the running turn at the next tool boundary and ends that turn with ONE
+ *   `result` whose `user_message_uuids` lists every input it ran (order
+ *   captured from the real binary against a local fake Messages API);
+ * - batch 3 P2-3: a background-task native turn (no lifecycle, a uuid-less
+ *   result) that runs before the queued wake starts is not the wake's
+ *   failure.
  */
 const DRIVER = fileURLToPath(
   new URL("../src/claude-warm-driver.mjs", import.meta.url),
@@ -477,5 +484,225 @@ test("real 2.1.282 shape (warm): receipt before the aborted_tools is_error resul
     );
   } finally {
     if (!closed) await h.close();
+  }
+});
+
+test("batch 3 P1-5 (real 2.1.282 order): a busy notice folded into the wake's turn settles through the one result naming both", async () => {
+  const h = await startDriver();
+  try {
+    const wake = await acceptedWake(h);
+    h.claude({
+      type: "assistant",
+      message: {
+        role: "assistant",
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "Bash",
+            input: { command: "sleep 3" },
+          },
+        ],
+      },
+    });
+    const busy = await notice(h);
+    h.claude({
+      type: "user",
+      message: {
+        role: "user",
+        content: [{ type: "tool_result", tool_use_id: "t1", content: "hi" }],
+      },
+    });
+    h.claude({
+      type: "user",
+      isReplay: true,
+      uuid: busy,
+      message: {
+        role: "user",
+        content: [{ type: "text", text: "FAKE busy human input n1" }],
+      },
+    });
+    h.claude(lifecycle(busy, "started"));
+    h.claude({
+      type: "assistant",
+      message: { role: "assistant", content: [{ type: "text", text: "done" }] },
+    });
+    h.claude(lifecycle(busy, "completed"));
+    h.claude({
+      ...result(wake, success),
+      user_message_uuids: [wake, busy],
+      num_turns: 2,
+    });
+    h.claude(lifecycle(wake, "completed"));
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    assert.equal(end.status, "completed");
+    assert.equal(end.errorMessage, undefined);
+  } finally {
+    await h.close();
+  }
+});
+
+test("batch 3 P1-5 (real 2.1.282 order): an interrupt after the fold ends both inputs with one aborted result", async () => {
+  const h = await startDriver();
+  try {
+    const wake = await acceptedWake(h);
+    h.claude({
+      type: "assistant",
+      message: {
+        role: "assistant",
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "Bash",
+            input: { command: "sleep 3" },
+          },
+        ],
+      },
+    });
+    const busy = await notice(h);
+    h.claude({
+      type: "user",
+      message: {
+        role: "user",
+        content: [{ type: "tool_result", tool_use_id: "t1", content: "hi" }],
+      },
+    });
+    h.claude({
+      type: "user",
+      isReplay: true,
+      uuid: busy,
+      message: {
+        role: "user",
+        content: [{ type: "text", text: "FAKE busy human input n1" }],
+      },
+    });
+    h.claude(lifecycle(busy, "started"));
+    h.host({ op: "turn.interrupt", runAttemptId: "run-1" });
+    const interrupt = await h.input(
+      (line) =>
+        line.type === "control_request" &&
+        line.request?.subtype === "interrupt",
+      "host interrupt",
+    );
+    h.claude(answer(interrupt, { still_queued: [], cancelled: [] }));
+    await h.settle(30);
+    h.claude(lifecycle(busy, "cancelled"));
+    h.claude({
+      ...result(wake, {
+        ...aborted,
+        errors: [
+          "[ede_diagnostic] result_type=user last_content_type=n/a stop_reason=tool_use",
+        ],
+      }),
+      user_message_uuids: [wake, busy],
+      num_turns: 4,
+    });
+    h.claude(lifecycle(wake, "cancelled"));
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    assert.equal(end.status, "interrupted");
+    assert.equal(end.errorMessage, undefined);
+  } finally {
+    await h.close();
+  }
+});
+
+test("batch 3 P2-3: a background-task turn's uuid-less result before the queued wake starts is not the wake's failure", async () => {
+  const h = await startDriver();
+  try {
+    h.host({
+      op: "turn.begin",
+      runAttemptId: "run-1",
+      runtimeRunId: "rr-1",
+      text: "FAKE wake",
+    });
+    const wake = await h.input((line) => line.type === "user", "wake input");
+    h.claude(lifecycle(wake.uuid, "queued"));
+    // Real 2.1.282 background-task turn: no lifecycle, a fresh init, the
+    // assistant frames, and a result naming no input.
+    h.claude({
+      type: "system",
+      subtype: "task_notification",
+      task_id: "b1",
+      status: "completed",
+    });
+    h.claude({
+      type: "system",
+      subtype: "init",
+      capabilities: ["msg_lifecycle_v1", "interrupt_receipt_v1"],
+    });
+    h.claude({
+      type: "assistant",
+      message: {
+        role: "assistant",
+        content: [{ type: "text", text: "done2" }],
+      },
+    });
+    h.claude(result(undefined, success));
+    await h.settle();
+    assert.equal(
+      h.frames.some((f) => f.type === "turn.failed"),
+      false,
+      "the autonomous result is not the wake's",
+    );
+    h.claude(lifecycle(wake.uuid, "started"));
+    h.claude({
+      type: "system",
+      subtype: "init",
+      capabilities: ["msg_lifecycle_v1", "interrupt_receipt_v1"],
+    });
+    h.claude({
+      type: "user",
+      isReplay: true,
+      uuid: wake.uuid,
+      message: { role: "user", content: [{ type: "text", text: "FAKE wake" }] },
+    });
+    await h.frame((f) => f.type === "turn.accepted", "accepted");
+    h.claude({
+      type: "assistant",
+      message: {
+        role: "assistant",
+        content: [{ type: "text", text: "reply" }],
+      },
+    });
+    h.claude(result(wake.uuid, success));
+    h.claude(lifecycle(wake.uuid, "completed"));
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    assert.equal(end.status, "completed");
+    assert.equal(
+      h.inbound.some(
+        (line) =>
+          line.type === "control_request" &&
+          line.request?.subtype === "interrupt",
+      ),
+      false,
+      "neither the autonomous turn nor the wake was interrupted",
+    );
+  } finally {
+    await h.close();
+  }
+});
+
+test("batch 3 P2-3: a missing-session result (no init, num_turns 0) before acceptance still fails the wake", async () => {
+  const h = await startDriver();
+  try {
+    h.host({
+      op: "turn.begin",
+      runAttemptId: "run-1",
+      runtimeRunId: "rr-1",
+      text: "FAKE wake",
+    });
+    await h.input((line) => line.type === "user", "wake input");
+    h.claude({
+      type: "result",
+      subtype: "error_during_execution",
+      is_error: true,
+      num_turns: 0,
+      errors: ["FAKE provider refused the turn"],
+    });
+    const failed = await h.frame((f) => f.type === "turn.failed", "failed");
+    assert.match(String(failed.error), /FAKE provider refused the turn/u);
+  } finally {
+    await h.close();
   }
 });

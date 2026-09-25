@@ -358,3 +358,41 @@ test("usage stays unavailable: a session-ready run reports the provider gap, nev
   );
   assert.deepEqual(byProtocol(result.frames, "rah-provider-usage/v1"), []);
 });
+
+test("batch 3 P1-6: the Kimi launch carries KIMI_DISABLE_CRON=1 (no persisted cron turn can fire)", async () => {
+  const result = await runTurn({ scenario: "reply", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const spawn = result.records.find((r) => r.event === "spawn");
+  assert.equal(spawn?.disableCron, "1");
+});
+
+test("batch 3 P1-6: a native CreateGoal permission is rejected even under full_access, and the turn still runs", async () => {
+  const result = await runTurn({ scenario: "goal+reply", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const [goal, ...more] = result.records.filter(
+    (r) => r.event === "goal-permission",
+  );
+  assert.deepEqual(more, []);
+  assert.deepEqual(goal?.outcome, { optionId: "reject", outcome: "selected" });
+  assert.ok(result.records.some((r) => r.event === "tool-completed"));
+});
+
+test("batch 3 P2-7: a resumed session's wake carries no per-turn standing-file line; a fresh session's first prompt does", async () => {
+  const resumed = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    resume: "kimi-session-old",
+  });
+  assert.equal(resumed.code, 0, resumed.stderr);
+  const resumedPrompt = resumed.records.find((r) => r.event === "prompt");
+  assert.equal(resumedPrompt?.text, WAKE, "the resumed wake is the body only");
+  assert.doesNotMatch(
+    String(resumedPrompt?.text),
+    /standing instructions file/iu,
+  );
+  const fresh = await runTurn({ scenario: "reply", wake: WAKE });
+  assert.equal(fresh.code, 0, fresh.stderr);
+  const freshPrompt = fresh.records.find((r) => r.event === "prompt");
+  assert.match(String(freshPrompt?.text), /FAKE standing prompt/u);
+  assert.match(String(freshPrompt?.text), /standing instructions file/iu);
+});

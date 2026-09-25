@@ -101,5 +101,14 @@ test("memory policy displayed in settings is the same launch contract consumed b
     "memories.generate_memories=false",
     "-c",
     "memories.use_memories=false",
+    "-c",
+    "features.multi_agent=false",
+    "-c",
+    "features.goals=false",
   ]);
+  // Full review batch 3 P1-6 (kimi-code 0.39.1 source: both agent cores stop
+  // the cron scheduler and CronCreate refuses under KIMI_DISABLE_CRON=1).
+  assert.deepEqual(providerLaunchPolicy("kimi").environment, {
+    KIMI_DISABLE_CRON: "1",
+  });
 });

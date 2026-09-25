@@ -382,6 +382,59 @@ test("final reply: a provider failure (terminal_reason model_error) while the in
   assert.match(result.stderr, /error_during_execution/u);
 });
 
+test("background task (real 2.1.282 order, batch 3 P1-4): the uuid-less native turn after the wake's result is diagnostic, never a protocol error", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    env: { FAKE_BACKGROUND_TASK: "success" },
+  });
+  assert.ok(
+    result.records.some((r) => r.kind === "background-turn"),
+    "the fake ran the background native turn",
+  );
+  assert.equal(result.code, 0, result.stderr);
+  assert.doesNotMatch(result.stderr, /unexpected terminal results/u);
+  assert.equal(
+    byProtocol(result.frames, "rah-provider-session/v1")[0]?.providerSessionId,
+    "claude-session-1",
+  );
+  assert.equal(byProtocol(result.frames, "rah-delivery-accepted/v1").length, 1);
+  assert.ok(
+    JSON.stringify(result.frames).includes("claude:result:unattributed"),
+    "the extra result is kept as a diagnostic",
+  );
+});
+
+test("background task (batch 3 P1-4): a failing uuid-less native turn and the CLI's exit 1 never fail the wake's run", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    env: { FAKE_BACKGROUND_TASK: "error" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.doesNotMatch(result.stderr, /FAKE background turn failure/u);
+});
+
+test("background task: an older CLI without msg_lifecycle_v1 keeps the strict result count", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    env: { FAKE_BACKGROUND_TASK: "success", FAKE_NO_LIFECYCLE: "1" },
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.stderr, /unexpected terminal results/u);
+});
+
+test("error text (batch 3 P2-5): a real error result's errors[] is the run's diagnostic", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    signal: { runAttemptId: "run-1", turnId: "accepted" },
+    env: {
+      FAKE_INTERRUPT_TERMINAL_REASON: "model_error",
+      FAKE_RESULT_ERRORS: JSON.stringify(["FAKE provider overloaded detail"]),
+    },
+  });
+  assert.notEqual(result.code, 0);
+  assert.match(result.stderr, /FAKE provider overloaded detail/u);
+});
+
 test("Host termination (not a final reply) still ends the run as interrupted", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-claude-final-stop-"));
   const record = join(directory, "record.jsonl");

@@ -43,7 +43,19 @@
 // `session.created` of a child session whose `parentID` is this session,
 // then that child's `permission.asked`; the tool waits up to
 // FAKE_PERMISSION_WAIT_MS, default 2000, for the reply and fails the step
-// with an error when none arrives). FAKE_SCRIPT (comma separated) gives one scenario
+// with an error when none arrives; once answered, the child reports one
+// `step-finish` usage part under its own session id), childnocreated (as
+// childperm, but the child's `session.created` is never published, so a
+// client learns the child only from `GET /session/:id` — its `parentID`),
+// childpermdrop (as childperm, but every `/event` stream is closed first, so
+// both the child's `session.created` and its `permission.asked` are lost and
+// the request is only visible in `GET /permission` — the installed 1.18.32
+// "List pending permissions … across all sessions"), overflowfatal (as
+// overflow, but auto-compaction is off: the next assistant carries the
+// ContextOverflowError and the run ends failed). FAKE_EXISTING_CHILD=1: a
+// resumed (`GET /session/:id`) session already has one child session,
+// listed by `GET /session/:id/children`; oldchildperm (that existing child,
+// never announced on this bus, asks a permission). FAKE_SCRIPT (comma separated) gives one scenario
 // per prompt. FAKE_RECORD (jsonl) records requests and model steps.
 // FAKE_TOOL_COMMAND replaces the derived Worker command. FAKE_FOLLOW_UP_MS
 // bounds the wait for an abort before the post-reply generation (default 300).
@@ -103,6 +115,10 @@ let idSequence = 0;
 const streams = new Set();
 const sessions = new Map();
 const permissionReplies = new Map();
+/** Pending requests (`GET /permission`, `GET /question`) until answered. */
+const pendingPermissions = new Map();
+/** Child session id -> parent session id (`Session.Info.parentID`). */
+const childParents = new Map();
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const nextId = (prefix) =>
   `${prefix}_fake${String((idSequence += 1)).padStart(6, "0")}`;
@@ -360,21 +376,44 @@ async function runPrompt(s, body, res) {
   };
   if (tokens.has("lagtool")) lagBus(Number(env.FAKE_LAG_MS ?? 400));
   updatePart(s, toolPart);
-  if (tokens.has("childperm")) {
-    const child = `ses_fakechild${String((idSequence += 1)).padStart(4, "0")}`;
-    publish("session.created", {
-      sessionID: child,
-      info: { id: child, parentID: s.id, title: "FAKE subagent" },
-    });
+  const childScenario = [
+    "childperm",
+    "childnocreated",
+    "childpermdrop",
+    "oldchildperm",
+  ].find((token) => tokens.has(token));
+  if (childScenario !== undefined) {
+    if (childScenario === "childpermdrop") {
+      for (const stream of streams) stream.end();
+      streams.clear();
+      record({ event: "sse-dropped" });
+    }
+    const existing = [...childParents].find(([, parent]) => parent === s.id);
+    const child =
+      childScenario === "oldchildperm" && existing !== undefined
+        ? existing[0]
+        : `ses_fakechild${String((idSequence += 1)).padStart(4, "0")}`;
+    // FAKE_FOREIGN_PARENT=1: the asking session belongs to another tree.
+    childParents.set(
+      child,
+      env.FAKE_FOREIGN_PARENT === "1" ? "ses_fakeforeign" : s.id,
+    );
+    if (childScenario !== "childnocreated" && childScenario !== "oldchildperm")
+      publish("session.created", {
+        sessionID: child,
+        info: { id: child, parentID: s.id, title: "FAKE subagent" },
+      });
     const requestId = nextId("per");
-    publish("permission.asked", {
+    const request = {
       id: requestId,
       sessionID: child,
       permission: "external_directory",
       patterns: ["/fake/outside/*"],
       metadata: {},
       always: ["/fake/outside/*"],
-    });
+    };
+    pendingPermissions.set(requestId, request);
+    publish("permission.asked", request);
     const deadline = Date.now() + Number(env.FAKE_PERMISSION_WAIT_MS ?? 2000);
     while (!permissionReplies.has(requestId) && Date.now() < deadline)
       await delay(10);
@@ -389,6 +428,26 @@ async function runPrompt(s, body, res) {
       publish("session.error", { sessionID: s.id, error: first.error });
       return finish(first);
     }
+    // The subagent's own model step: usage under the child session id.
+    const childStep = nextId("prt");
+    publish("message.part.updated", {
+      sessionID: child,
+      part: {
+        id: childStep,
+        messageID: nextId("msg"),
+        sessionID: child,
+        type: "step-finish",
+        reason: "stop",
+        cost: 0,
+        tokens: {
+          input: 40,
+          output: 5,
+          reasoning: 0,
+          cache: { read: 10, write: 0 },
+        },
+      },
+    });
+    record({ event: "child-usage", child, partId: childStep });
   }
   updatePart(s, {
     ...toolPart,
@@ -441,7 +500,7 @@ async function runPrompt(s, body, res) {
   first.finish = "tool-calls";
   first.time = { ...first.time, completed: Date.now() };
   updateMessage(s, first);
-  if (tokens.has("overflow")) {
+  if (tokens.has("overflow") || tokens.has("overflowfatal")) {
     publish("session.error", {
       sessionID: s.id,
       error: {
@@ -450,6 +509,18 @@ async function runPrompt(s, body, res) {
       },
     });
     record({ event: "context-overflow" });
+  }
+  if (tokens.has("overflowfatal")) {
+    // `compaction.auto === false`: the halted step's assistant keeps the error.
+    const failed = newAssistant(s, lastUser);
+    failed.error = {
+      name: "ContextOverflowError",
+      data: { message: "FAKE prompt is too long for the context window" },
+    };
+    failed.time = { ...failed.time, completed: Date.now() };
+    updateMessage(s, failed);
+    record({ event: "overflow-unrecovered" });
+    return finish(failed);
   }
   if (tokens.has("compact") || tokens.has("overflow")) {
     const compactionUser = {
@@ -567,12 +638,33 @@ const server = createServer(async (req, res) => {
       return send(res, 404, { name: "NotFoundError" });
     const s = session(id);
     const tail = match[2];
-    if (req.method === "GET" && tail === undefined)
+    if (req.method === "GET" && tail === undefined) {
+      if (
+        env.FAKE_EXISTING_CHILD === "1" &&
+        !childParents.has(id) &&
+        ![...childParents.values()].includes(id)
+      )
+        childParents.set(`ses_fakeoldchild${id.length}`, id);
       return send(res, 200, {
         id,
         directory: process.cwd(),
         title: "existing",
+        ...(childParents.has(id) ? { parentID: childParents.get(id) } : {}),
       });
+    }
+    if (req.method === "GET" && tail === "/children")
+      return send(
+        res,
+        200,
+        [...childParents]
+          .filter(([, parent]) => parent === id)
+          .map(([child]) => ({
+            id: child,
+            parentID: id,
+            directory: process.cwd(),
+            title: "FAKE subagent",
+          })),
+      );
     if (req.method === "GET" && tail === "/message") {
       if (s.run?.listFail === true)
         return send(res, 500, {
@@ -612,8 +704,20 @@ const server = createServer(async (req, res) => {
       return send(res, 200, true);
     }
   }
+  if (req.method === "GET" && url.pathname === "/permission")
+    return send(res, 200, [...pendingPermissions.values()]);
+  if (req.method === "GET" && url.pathname === "/question")
+    return send(res, 200, []);
   if (req.method === "POST" && url.pathname.startsWith("/permission/")) {
     const requestId = decodeURIComponent(url.pathname.split("/")[2] ?? "");
+    // 1.18.32 answers an unknown (already answered) request with 404
+    // PermissionNotFoundError.
+    if (!pendingPermissions.delete(requestId))
+      return send(res, 404, {
+        _tag: "PermissionNotFoundError",
+        requestID: requestId,
+        message: `Permission request not found: ${requestId}`,
+      });
     permissionReplies.set(requestId, body?.reply);
     return send(res, 200, true);
   }

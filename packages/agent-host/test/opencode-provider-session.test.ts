@@ -469,6 +469,8 @@ const server = createServer(async (req,res) => {
     res.write("data: " + JSON.stringify({type:"server.connected",properties:{}}) + "\\n\\n");
     streams.add(res); req.once("close",()=>streams.delete(res)); return;
   }
+  // 1.18.32 lists a session's subagent sessions (none here).
+  if (req.method === "GET" && url.pathname.startsWith("/session/") && url.pathname.endsWith("/children")) return send(res,200,[]);
   if (req.method === "GET" && url.pathname.startsWith("/session/")) {
     if (activationId.includes("missing-run")) return send(res,404,{name:"NotFoundError"});
     activeSessionId = decodeURIComponent(url.pathname.slice("/session/".length));

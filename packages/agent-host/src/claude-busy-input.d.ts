@@ -13,6 +13,7 @@ export function attachClaudeBusyInput(options: {
   control?: (frame: Record<string, unknown>) => void;
 }): {
   readonly writtenCount: number;
+  readonly writtenUuids: ReadonlySet<string>;
   observe(frame: Record<string, unknown>): void;
   close(): void;
 };

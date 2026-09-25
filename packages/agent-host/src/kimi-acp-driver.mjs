@@ -1,4 +1,7 @@
-import { providerLaunchArguments } from "./provider-launch-arguments.js";
+import {
+  providerLaunchArguments,
+  providerLaunchPolicy,
+} from "./provider-launch-arguments.js";
 import {
   assertSessionReplacementAllowed,
   providerActivationInput,
@@ -87,7 +90,8 @@ let compactionOrdinal = 0;
 
 const kimi = spawn(options.executable, providerLaunchArguments("kimi"), {
   cwd: process.cwd(),
-  env: process.env,
+  // Process-only: no native cron turn outside this instance's lane.
+  env: { ...process.env, ...providerLaunchPolicy("kimi").environment },
   shell: false,
   stdio: ["pipe", "pipe", "pipe"],
 });
@@ -359,9 +363,17 @@ async function runTurn(resumeSessionId, mcpServers) {
       {
         prompt: [
           {
+            // Full review batch 3 P2-7: only a fresh session's first prompt
+            // carries the rules and the Run-scoped file pointer; a resumed
+            // wake is the body alone — after a compaction the Host's rules
+            // card restates the rules (session-rules-card).
             text: [
-              ...(resumeSessionId === undefined ? [options.prompt] : []),
-              `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
+              ...(resumeSessionId === undefined
+                ? [
+                    options.prompt,
+                    `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
+                  ]
+                : []),
               TURN_INPUT,
             ].join("\n\n"),
             type: "text",
@@ -473,9 +485,12 @@ async function handleAgentRequest(frame) {
       if (turnCancelled) {
         result = { outcome: { outcome: "cancelled" } };
       } else {
+        // Full review batch 3 P1-6: a native goal drives continuation turns
+        // while idle, outside this instance's lane; kimi-code asks for every
+        // CreateGoal outside its `auto` permission mode.
         const optionId = selectPermissionOption(
           frame.params,
-          options.toolAccessMode,
+          isNativeGoalStart(frame.params) ? "reject" : options.toolAccessMode,
         );
         if (optionId === undefined) {
           throw new RpcError(
@@ -640,6 +655,13 @@ function failPending(error) {
     state.reject(error);
   }
   pending.clear();
+}
+
+/** kimi-code 0.39.1 ACP: a permission's `toolCall.title` is the tool name. */
+function isNativeGoalStart(params) {
+  return isRecord(params) && isRecord(params.toolCall)
+    ? params.toolCall.title === "CreateGoal"
+    : false;
 }
 
 function selectPermissionOption(params, mode) {

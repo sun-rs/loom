@@ -25,7 +25,10 @@ import {
 import { attachClaudeBusyInput } from "./claude-busy-input.js";
 import {
   CLAUDE_DISALLOWED_TOOLS,
+  claudeResultError as resultError,
+  claudeResultInputUuids,
   isMissingClaudeSessionError as isMissingSessionError,
+  settleClaudeControlResponse as settleControlResponse,
   withoutNestedClaudeCode,
 } from "./claude-stream-launch.js";
 import { createClaudeFinalInterrupt } from "./claude-final-interrupt.js";
@@ -178,6 +181,9 @@ async function runTurn(resumeSession) {
   let toolActivity = false;
   let toolActivityBeforeInput = false;
   let initObserved = false;
+  // `msg_lifecycle_v1` (announced on `system/init`): every result names the
+  // stdin inputs it ran, so one naming none of this run's is not this run's.
+  let lifecycleCapability = false;
   /**
    * Contract §3: once the session holds this input (its replay echo) and its
    * identity is confirmed (`system/init` agrees with it), it is bound, so a
@@ -198,6 +204,9 @@ async function runTurn(resumeSession) {
   };
   let resultFrame;
   let resultCount = 0;
+  // The last result the CLI wrote, attributed or not: its `is_error` decides
+  // the headless exit code.
+  let lastResult;
   let failedResult;
   let protocolError;
   let endedAfterFinalReply = false;
@@ -254,6 +263,11 @@ async function runTurn(resumeSession) {
     },
   });
   child.stdin.on("error", () => busyInput.close());
+  // Whether a result ran this run's wake or a busy input it wrote.
+  const isOwnResult = (frame) =>
+    claudeResultInputUuids(frame).some(
+      (uuid) => uuid === inputUuid || busyInput.writtenUuids.has(uuid),
+    );
   let stderrTail = Buffer.alloc(0);
   child.stderr.on("data", (chunk) => {
     stderrTail = appendBounded(stderrTail, chunk, MAX_STDERR_BYTES);
@@ -298,6 +312,11 @@ async function runTurn(resumeSession) {
     }
     if (frame.type === "system" && frame.subtype === "init") {
       initObserved = true;
+      if (
+        Array.isArray(frame.capabilities) &&
+        frame.capabilities.includes("msg_lifecycle_v1")
+      )
+        lifecycleCapability = true;
       bindAcceptedSession();
     }
     if (!inputAccepted) {
@@ -325,6 +344,22 @@ async function runTurn(resumeSession) {
     usageWriter.emit(usageTracker.observe(frame));
     rememberToolNames(frame, toolNames);
     if (frame.type === "result") {
+      lastResult = frame;
+      // Full review batch 3 P1-4 (real 2.1.282): a background task this
+      // turn started that finishes after admission closed makes the CLI run
+      // one more native turn whose result names no stdin input. It is not
+      // this run's: a diagnostic only, never counted, never its failure.
+      if (lifecycleCapability && !isOwnResult(frame)) {
+        trajectoryWriter.emit(
+          runtimeStatusTrajectory(
+            "online",
+            "other",
+            "Claude 自发轮次已结束（不属于本次输入）",
+            "claude:result:unattributed",
+          ),
+        );
+        return;
+      }
       resultCount += 1;
       if (resultCount > 1 + busyInput.writtenCount) {
         protocolError =
@@ -419,9 +454,12 @@ async function runTurn(resumeSession) {
     terminal.signal === null &&
     (terminal.code === 0 ||
       (terminal.code === 1 &&
-        endedAfterFinalReply &&
-        resultFrame === finalInterruptResult &&
-        resultFrame.is_error === true));
+        lastResult?.is_error === true &&
+        ((endedAfterFinalReply &&
+          lastResult === resultFrame &&
+          resultFrame === finalInterruptResult) ||
+          // The unattributed native turn after this run's result failed.
+          lastResult !== resultFrame)));
   const succeeded =
     failedResult === undefined &&
     ((resultFrame.subtype === "success" && resultFrame.is_error !== true) ||
@@ -523,25 +561,6 @@ function activationReplay(frame, inputUuid) {
   return frame.uuid === undefined ? "legacy" : undefined;
 }
 
-function settleControlResponse(frame, requests) {
-  const response = record(frame.response);
-  const requestId = stringField(response, "request_id");
-  const pending = requestId === undefined ? undefined : requests.get(requestId);
-  if (pending === undefined) return;
-  requests.delete(requestId);
-  clearTimeout(pending.timer);
-  if (response.subtype === "success") pending.resolve(response.response ?? {});
-  else
-    pending.reject(
-      Object.assign(
-        new Error(
-          stringField(response, "error") ?? "Claude control_request failed",
-        ),
-        { providerRejected: true },
-      ),
-    );
-}
-
 /**
  * Host-private frame on fd3, intercepted before trajectory parsing. The
  * digest covers the Host-prepared wake file verbatim, which is the whole
@@ -586,14 +605,6 @@ function hasToolActivity(frame) {
         isRecord(candidate) &&
         (candidate.type === "tool_use" || candidate.type === "tool_result"),
     )
-  );
-}
-
-function resultError(frame) {
-  return (
-    stringField(frame, "result") ??
-    stringField(frame, "error") ??
-    `Claude turn ended with ${String(frame.subtype ?? "unknown")}`
   );
 }
 

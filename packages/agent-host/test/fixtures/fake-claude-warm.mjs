@@ -8,8 +8,15 @@
 // - each stdin `user` message gets `command_lifecycle` `queued`; one message
 //   at a time drains into a native turn: `started`, `system/init` (with
 //   `capabilities`), the replay echo `{isReplay:true, uuid:<inbound uuid>}`;
-// - a message written while a turn runs stays queued until that turn ends;
-// - exactly one `result` per native turn, carrying `user_message_uuid` and
+// - a message written while a turn runs is folded into it at the next tool
+//   boundary (after the tool_result: its replay, then `started`), and its
+//   `completed`/`cancelled` comes BEFORE that turn's result (full review
+//   batch 3 P1-5, real 2.1.282 against a local fake Messages API; the
+//   binary's schema: "a command folded into an already-in-flight turn emits
+//   'completed' BEFORE that turn's result frame"). One written with no tool
+//   boundary left stays queued for its own turn;
+// - exactly one `result` per native turn, carrying `user_message_uuid` (its
+//   first input), `user_message_uuids` (every input it ran) and
 //   `result_index`, then `command_lifecycle` `completed`/`cancelled`;
 // - `control_request` `interrupt` aborts the running turn (`result`
 //   `error_during_execution`, `terminal_reason` aborted_*); with
@@ -127,6 +134,7 @@ async function drain() {
     uuid: next.uuid,
     text: textOf(next.message),
     interrupted: false,
+    folded: [],
     wake: () => undefined,
   };
   running = turn;
@@ -139,14 +147,37 @@ async function drain() {
 }
 
 function result(turn, fields) {
+  const folded = turn.folded ?? [];
+  // Folded inputs end before the turn's result.
+  for (const uuid of folded)
+    lifecycle(uuid, turn.interrupted ? "cancelled" : "completed");
   send({
     type: "result",
     num_turns: 1,
     usage: { input_tokens: 100, output_tokens: 10 },
     user_message_uuid: turn.uuid,
+    user_message_uuids: [turn.uuid, ...folded],
     result_index: resultIndex++,
     ...fields,
   });
+}
+
+// The real CLI takes every queued input into the running turn at a tool
+// boundary.
+function foldQueued(turn) {
+  while (queue.length > 0 && !turn.interrupted) {
+    const input = queue.shift();
+    send({
+      type: "user",
+      isReplay: true,
+      parent_tool_use_id: null,
+      uuid: input.uuid,
+      message: { role: "user", content: input.message.content },
+    });
+    lifecycle(input.uuid, "started");
+    turn.folded.push(input.uuid);
+    record({ event: "folded", uuid: input.uuid, into: turn.uuid });
+  }
 }
 
 async function runTurn(turn) {
@@ -258,19 +289,44 @@ async function runTurn(turn) {
   if (has("autonomous-after")) setTimeout(() => void autonomous(), 200);
 }
 
-// A native turn nobody asked for (for example a background task notification).
+// A native turn nobody asked for: real 2.1.282 (local fake Messages API) runs
+// it when a background task finishes — `system/task_notification`, a fresh
+// `system/init`, the model frames and a result naming no input, and no
+// `command_lifecycle` at all.
 async function autonomous() {
   const uuid = `auto-${process.pid}`;
-  const turn = { uuid, text: "", interrupted: false, wake: () => undefined };
+  const turn = {
+    uuid,
+    text: "",
+    interrupted: false,
+    folded: [],
+    wake: () => undefined,
+  };
   running = turn;
   record({ event: "autonomous-started", uuid });
-  lifecycle(uuid, "started");
-  send({ type: "system", subtype: "init", capabilities: [] });
+  send({
+    type: "system",
+    subtype: "task_notification",
+    task_id: "bfake0001",
+    status: "completed",
+  });
+  send({
+    type: "system",
+    subtype: "init",
+    capabilities: [
+      "interrupt_receipt_v1",
+      "interrupt_cancel_queued_v1",
+      ...(lifecycleOn ? ["msg_lifecycle_v1"] : []),
+    ],
+  });
   send({ type: "stream_event", event: { type: "message_start" } });
   await wait(turn, 5_000);
-  result(
-    turn,
-    turn.interrupted
+  send({
+    type: "result",
+    num_turns: 1,
+    usage: { input_tokens: 100, output_tokens: 10 },
+    result_index: resultIndex++,
+    ...(turn.interrupted
       ? {
           subtype: "error_during_execution",
           is_error: true,
@@ -282,9 +338,8 @@ async function autonomous() {
           is_error: false,
           result: "",
           terminal_reason: "completed",
-        },
-  );
-  lifecycle(uuid, turn.interrupted ? "cancelled" : "completed");
+        }),
+  });
   record({ event: "autonomous-ended", uuid, interrupted: turn.interrupted });
   running = undefined;
   void drain();
@@ -328,6 +383,7 @@ async function tool(turn, handle, command) {
       content: [{ type: "tool_result", tool_use_id: id, content: "ok" }],
     },
   });
+  foldQueued(turn);
 }
 
 function control(frame) {

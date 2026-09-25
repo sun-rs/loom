@@ -270,6 +270,10 @@ rl.on("line", (line) => {
       "memories.generate_memories=false",
       "-c",
       "memories.use_memories=false",
+      "-c",
+      "features.multi_agent=false",
+      "-c",
+      "features.goals=false",
       "--listen",
       "stdio://",
     ]);

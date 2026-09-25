@@ -24,7 +24,19 @@
 // `terminal_reason`), FAKE_SILENT_INTERRUPT=1 (the interrupt ends the turn but
 // its control_response never arrives), FAKE_INTERRUPT_TERMINAL_REASON (the
 // interrupted turn's result carries this `terminal_reason` instead, e.g. a
-// provider failure that lands while the interrupt is in flight).
+// provider failure that lands while the interrupt is in flight),
+// FAKE_RESULT_ERRORS (JSON array: the interrupted result's `errors[]`, the
+// only error text a real error result carries), FAKE_BACKGROUND_TASK=
+// success|error (a background task the wake started finishes after stdin
+// closed: the CLI runs one more native turn nobody asked for, see below).
+//
+// Background task (real 2.1.282 against a local fake Messages API, no model;
+// full review batch 3 P1-4): after the wake's result and its `completed`
+// lifecycle, stdin EOF does not exit while a `run_in_background` Bash task
+// runs. When it finishes the CLI writes `system/task_notification`, a new
+// `system/init`, the assistant frames and a `result` WITHOUT
+// `user_message_uuid`/`user_message_uuids` and no lifecycle, then exits (1
+// only when that last result had `is_error`).
 //
 // Exit code (real 2.1.282 `runHeadless`, read from the installed binary's
 // embedded source: `go(en?.type==="result"&&en?.is_error||io?1:0)`): when
@@ -83,6 +95,7 @@ let inputClosed = false;
 let turnIndex = 0;
 let resultIndex = 0;
 let lastResultIsError = false;
+let backgroundRan = false;
 const lifecycle = (uuid, state) => {
   if (env.FAKE_NO_LIFECYCLE === "1" || typeof uuid !== "string") return;
   send({
@@ -126,7 +139,15 @@ async function drain() {
   if (running !== undefined) return;
   const next = queue.shift();
   if (next === undefined) {
-    if (inputClosed) process.exit(lastResultIsError ? 1 : 0);
+    if (inputClosed) {
+      if (env.FAKE_BACKGROUND_TASK && !backgroundRan) {
+        backgroundRan = true;
+        running = { background: true };
+        await backgroundTurn();
+        running = undefined;
+      }
+      process.exit(lastResultIsError ? 1 : 0);
+    }
     return;
   }
   running = { input: next, interrupted: false, wake: () => undefined };
@@ -226,7 +247,7 @@ async function runTurn(turn) {
       subtype: "error_during_execution",
       is_error: true,
       num_turns: 1,
-      errors: [],
+      errors: JSON.parse(env.FAKE_RESULT_ERRORS || "[]"),
       ...(env.FAKE_NO_TERMINAL_REASON === "1"
         ? {}
         : {
@@ -238,6 +259,7 @@ async function runTurn(turn) {
           }),
       usage: { input_tokens: 10, output_tokens: 1 },
       user_message_uuid: input.uuid,
+      user_message_uuids: [input.uuid],
       result_index: resultIndex++,
     });
     lastResultIsError = true;
@@ -265,11 +287,58 @@ async function runTurn(turn) {
     terminal_reason: "completed",
     usage: { input_tokens: 100, output_tokens: 2 },
     user_message_uuid: input.uuid,
+    user_message_uuids: [input.uuid],
     result_index: resultIndex++,
   });
   lastResultIsError = false;
   lifecycle(input.uuid, "completed");
   record({ kind: "turn-completed", turn: turnIndex });
+}
+
+// The uuid-less native turn a finished background task starts (order above).
+async function backgroundTurn() {
+  await delay(50);
+  record({ kind: "background-turn" });
+  send({
+    type: "system",
+    subtype: "task_notification",
+    task_id: "bfake0001",
+    tool_use_id: "tool-1",
+    status: "completed",
+    summary: 'Background command "FAKE" completed (exit code 0)',
+  });
+  send({
+    type: "system",
+    subtype: "init",
+    capabilities: [
+      "interrupt_receipt_v1",
+      "interrupt_cancel_queued_v1",
+      ...(env.FAKE_NO_LIFECYCLE === "1" ? [] : ["msg_lifecycle_v1"]),
+    ],
+  });
+  send({
+    type: "assistant",
+    message: {
+      id: "msg-background",
+      role: "assistant",
+      content: [{ type: "text", text: "FAKE background follow-up" }],
+      usage: { input_tokens: 50, output_tokens: 3 },
+    },
+  });
+  const failed = env.FAKE_BACKGROUND_TASK === "error";
+  send({
+    type: "result",
+    subtype: failed ? "error_during_execution" : "success",
+    is_error: failed,
+    num_turns: 1,
+    ...(failed
+      ? { errors: ["FAKE background turn failure"] }
+      : { result: "FAKE background follow-up" }),
+    terminal_reason: failed ? "model_error" : "completed",
+    usage: { input_tokens: 50, output_tokens: 3 },
+    result_index: resultIndex++,
+  });
+  lastResultIsError = failed;
 }
 
 function control(frame) {

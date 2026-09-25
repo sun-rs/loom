@@ -217,7 +217,12 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
       "a confirmed same-digest resume must not append the entire standing prompt again",
     );
     assert.match(promptsFor("resumed-run")[0]!, /message-check --startup/);
-    assert.match(promptsFor("resumed-run")[0]!, /standing instructions file/i);
+    // Full review batch 3 P2-7: a resumed wake carries no per-turn
+    // standing-file line (the rules card restates rules after compaction).
+    assert.doesNotMatch(
+      promptsFor("resumed-run")[0]!,
+      /standing instructions file/i,
+    );
     assert.match(
       promptsFor("missing-run")[0]!,
       /canonical room worker prompt/,

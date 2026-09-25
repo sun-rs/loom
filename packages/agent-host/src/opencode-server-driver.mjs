@@ -22,6 +22,20 @@ import {
   OpenCodeEventIdentityFilter,
   scopedOpenCodeEvent,
 } from "./opencode-event-identity.js";
+import {
+  abortedByInterrupt,
+  boundedServerOutput,
+  extractSseData,
+  isRecord,
+  openCodeEventError,
+  openCodeStepFinishPart,
+  preloadOpenCodeChildSessions,
+  record,
+  safeResponseText,
+  serverAuthHeader,
+  stringField,
+  verifyOpenCodeChildSession,
+} from "./opencode-server-client.js";
 
 import {
   normalizeOpenCodeTrajectoryEvent,
@@ -144,6 +158,13 @@ try {
       );
       activeSessionId = options.resumeSession;
       resumed = true;
+      // Its existing subagent sessions, so their requests need no live
+      // announcement (full review batch 3).
+      await preloadOpenCodeChildSessions({
+        childSessions,
+        parentSessionId: activeSessionId,
+        requestJson,
+      });
     } catch (error) {
       if (!(error instanceof HttpError) || error.status !== 404) throw error;
       assertSessionReplacementAllowed();
@@ -383,17 +404,32 @@ async function handleEvent(event) {
     throw new Error("OpenCode SSE returned an invalid event envelope");
   }
   childSessions.observe(event, activeSessionId);
-  const child = childSessions.has(record(event.properties).sessionID);
+  const askingSession = record(event.properties).sessionID;
+  let child = childSessions.has(askingSession);
+  // A request of a session never announced here (its `session.created`
+  // lost): answered only once the native lineage proves it is ours.
+  if (
+    !child &&
+    (event.type === "permission.asked" || event.type === "question.asked") &&
+    askingSession !== activeSessionId
+  )
+    child = await verifyOpenCodeChildSession({
+      childSessions,
+      parentSessionId: activeSessionId,
+      requestJson,
+      sessionId: askingSession,
+    });
   if (!child) event = scopedOpenCodeEvent(event, activeSessionId);
   if (!event) return;
   // A subagent's (child session's) event matters only as a request, which
-  // is answered by the parent session's rule below.
-  if (
-    child &&
-    event.type !== "permission.asked" &&
-    event.type !== "question.asked"
-  )
-    return;
+  // is answered by the parent session's rule below, and as its model steps'
+  // usage, which is this run's cost (drivers P2-4).
+  if (child) {
+    const step = openCodeStepFinishPart(event);
+    if (step !== undefined) usageWriter.emit(openCodeStepFinishUsage(step));
+    if (event.type !== "permission.asked" && event.type !== "question.asked")
+      return;
+  }
   const properties = record(event.properties);
   // Retry safety is independent of lossy telemetry/role arrival order.
   if (
@@ -496,21 +532,6 @@ function armFinalReply(frame) {
   )
     return;
   prompt.finalInterrupt.arm();
-}
-
-/**
- * The prompt's answer after an abort: the last assistant carries
- * `MessageAbortedError`, or still ends in `tool-calls` (the loop exits on its
- * own only with another finish, so a `tool-calls` answer means the run was
- * cut between steps).
- */
-function abortedByInterrupt(response) {
-  if (!isRecord(response) || !isRecord(response.info)) return false;
-  const error = record(response.info.error);
-  if (stringField(error, "name") === "MessageAbortedError") return true;
-  return (
-    response.info.error === undefined && response.info.finish === "tool-calls"
-  );
 }
 
 function serverEnvironment() {
@@ -802,18 +823,12 @@ async function allocatePort() {
   });
 }
 
-function serverAuthHeader() {
-  const password = process.env.OPENCODE_SERVER_PASSWORD;
-  if (password === undefined || password === "") return undefined;
-  return `Basic ${Buffer.from(`opencode:${password}`).toString("base64")}`;
-}
-
 function rememberServerOutput(chunk) {
-  const next = Buffer.concat([serverOutputTail, Buffer.from(chunk)]);
-  serverOutputTail =
-    next.byteLength <= MAX_SERVER_OUTPUT_BYTES
-      ? next
-      : next.subarray(next.byteLength - MAX_SERVER_OUTPUT_BYTES);
+  serverOutputTail = boundedServerOutput(
+    serverOutputTail,
+    chunk,
+    MAX_SERVER_OUTPUT_BYTES,
+  );
 }
 
 function resetTurnProjection() {
@@ -848,23 +863,6 @@ async function waitForIdleEvidence() {
   }
 }
 
-function extractSseData(buffer) {
-  const normalized = buffer.replaceAll("\r\n", "\n");
-  const blocks = normalized.split("\n\n");
-  const remainder = blocks.pop() ?? "";
-  const items = blocks
-    .map((block) =>
-      block
-        .split("\n")
-        .filter((line) => line.startsWith("data:"))
-        .map((line) => line.slice(5).trimStart())
-        .join("\n")
-        .trim(),
-    )
-    .filter((value) => value !== "");
-  return { items, remainder };
-}
-
 function parseModel(value) {
   const separator = value.indexOf("/");
   if (separator <= 0 || separator === value.length - 1) {
@@ -876,20 +874,6 @@ function parseModel(value) {
   };
 }
 
-function openCodeEventError(properties) {
-  const error = record(properties.error);
-  const data = record(error.data);
-  return (
-    [
-      stringField(error, "name"),
-      stringField(data, "message"),
-      stringField(error, "message"),
-    ]
-      .filter((value) => value !== undefined)
-      .join(": ") || "OpenCode session error"
-  );
-}
-
 function openCodeMessageError(value) {
   const error = record(value);
   const data = record(error.data);
@@ -899,10 +883,6 @@ function openCodeMessageError(value) {
     stringField(error, "name") ??
     "OpenCode assistant response failed"
   );
-}
-
-async function safeResponseText(response) {
-  return (await response.text().catch(() => "")).slice(0, 2_048);
 }
 
 function redactProviderSessionIds(message) {
@@ -987,22 +967,6 @@ function parseArguments(args) {
 
 function driverArguments(args) {
   return args[0] === "__opencode-server-driver" ? args.slice(1) : args;
-}
-
-function stringField(value, name) {
-  return isRecord(value) &&
-    typeof value[name] === "string" &&
-    value[name] !== ""
-    ? value[name]
-    : undefined;
-}
-
-function record(value) {
-  return isRecord(value) ? value : {};
-}
-
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function errorMessage(error) {

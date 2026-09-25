@@ -108,7 +108,13 @@ export class OpenCodeChildSessions {
       (info.parentID !== parentSessionId && !this.#ids.has(info.parentID))
     )
       return;
-    this.#ids.add(info.id);
+    this.add(info.id);
+  }
+
+  /** A child proven another way (native lineage or children listing). */
+  add(sessionId) {
+    if (typeof sessionId !== "string" || sessionId === "") return;
+    this.#ids.add(sessionId);
     if (this.#ids.size > 1024)
       this.#ids.delete(this.#ids.values().next().value);
   }

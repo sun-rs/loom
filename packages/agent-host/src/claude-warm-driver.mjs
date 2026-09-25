@@ -21,8 +21,13 @@
 // refused per uuid (capability `msg_lifecycle_v1`), echoes the message as a
 // replay carrying the same uuid, and ends each native turn with exactly one
 // `result` whose `user_message_uuid` names the input it ran. A message written
-// while a turn runs stays queued; the interrupt receipt lists `still_queued`
-// (and, with `cancel_queued:true`, `cancelled`) uuids.
+// while a turn runs is folded into it at the next tool boundary (its replay,
+// `started`, and `completed`/`cancelled` all BEFORE that turn's result), and
+// the one result lists every input it ran in `user_message_uuids` (full
+// review batch 3 P1-5, real 2.1.282 against a local fake Messages API). One
+// written with no tool boundary left stays queued for its own turn. The
+// interrupt receipt lists `still_queued` (and, with `cancel_queued:true`,
+// `cancelled`) uuids.
 //
 // One Activation is one Host turn whose native work is the wake input plus
 // the busy inputs admitted before admission closed. It is admitted when the
@@ -31,8 +36,9 @@
 // in this single-threaded handler. The turn is drained only when EVERY input
 // it wrote is settled, so no queued input of this Activation can run in the
 // next one. An input that started (lifecycle `started` or its replay) settles
-// only through its own `result` — a terminal lifecycle that outruns the
-// result does not end it (seventh review P2-1). An input that never started
+// only through a `result` that names it — a terminal lifecycle that outruns
+// the result does not end it (seventh review P2-1), and a folded input
+// settles through the result of the turn it joined. An input that never started
 // settles through a terminal lifecycle or a `cancelled` receipt entry; one the
 // CLI cancelled, discarded or refused without this driver asking is an error.
 // With `msg_lifecycle_v1` a `result` without `user_message_uuid` is never
@@ -74,7 +80,10 @@ import {
 } from "./claude-final-interrupt.js";
 import {
   CLAUDE_DISALLOWED_TOOLS,
+  claudeResultError as resultError,
+  claudeResultInputUuids,
   isMissingClaudeSessionError,
+  settleClaudeControlResponse,
   withoutNestedClaudeCode,
 } from "./claude-stream-launch.js";
 import { assertSessionReplacementAllowed } from "./provider-activation-input.js";
@@ -442,8 +451,10 @@ function handleLine(line) {
   if (frame.type === "command_lifecycle") return lifecycle(turn, frame);
   if (turn === undefined || turn.closing) return idleFrame(frame);
   if (!turn.accepted) {
-    if (frame.type === "system" && frame.subtype === "init")
+    if (frame.type === "system" && frame.subtype === "init") {
       observeCapabilities(turn, frame);
+      turn.initBeforeAcceptance = true;
+    }
     if (isExactReplay(turn, frame)) accept(turn);
     else if (frame.type === "result")
       return resultBeforeAcceptance(turn, frame);
@@ -570,17 +581,17 @@ function trackTools(turn, frame) {
 }
 
 function observeResult(turn, frame) {
+  const named = claudeResultInputUuids(frame);
   // Without the uuid on the result, only an older CLI without lifecycle may
   // fall back to its single wake input (the only one such a turn writes).
-  if (typeof frame.user_message_uuid !== "string" && turn.lifecycle === true) {
+  if (named.length === 0 && turn.lifecycle === true) {
     turn.errors.push("a result without user_message_uuid was not attributed");
     emit("unattributed", { method: "result", reason: "missing_input_uuid" });
     return;
   }
   const uuid =
-    typeof frame.user_message_uuid === "string"
-      ? frame.user_message_uuid
-      : turn.order.find((candidate) => !turn.inputs.get(candidate)?.settled);
+    named[0] ??
+    turn.order.find((candidate) => !turn.inputs.get(candidate)?.settled);
   const input = uuid === undefined ? undefined : turn.inputs.get(uuid);
   if (input === undefined) {
     turn.errors.push("a result named an input of no open turn");
@@ -619,9 +630,27 @@ function observeResult(turn, frame) {
         : normalizeClaudeTrajectoryEvent(frame),
   );
   settleInput(turn, uuid);
+  // Batch 3 P1-5: every input folded into this native turn ends with it.
+  for (const folded of named.slice(1))
+    if (turn.inputs.has(folded)) settleInput(turn, folded);
 }
 
 function resultBeforeAcceptance(turn, frame) {
+  // Batch 3 P2-3 (real 2.1.282): a background-task native turn can run
+  // while the wake is still queued — a fresh `system/init`, the assistant
+  // frames and a result naming no stdin input, no lifecycle. That result is
+  // not the wake's; the wake still starts after it. A result is the wake's
+  // failure when it names the wake, or when no native turn started at all
+  // (a missing session answers with a bare `num_turns: 0` result).
+  const named = claudeResultInputUuids(frame);
+  if (
+    !named.includes(turn.wakeUuid) &&
+    turn.initBeforeAcceptance === true &&
+    turn.lifecycle === true
+  ) {
+    emit("unattributed", { method: "result", reason: "autonomous_turn" });
+    return;
+  }
   const error = resultError(frame);
   // Nothing of this wake ran. A resumed session that cannot be found is a
   // continuity failure: never replaced silently.
@@ -728,22 +757,7 @@ function startAutonomous(reason) {
 }
 
 function settleControl(frame) {
-  const response =
-    typeof frame.response === "object" && frame.response !== null
-      ? frame.response
-      : {};
-  const pending = controlRequests.get(response.request_id);
-  if (pending === undefined) return;
-  controlRequests.delete(response.request_id);
-  clearTimeout(pending.timer);
-  if (response.subtype === "success") pending.resolve(response.response ?? {});
-  else
-    pending.reject(
-      Object.assign(
-        new Error(String(response.error ?? "control_request failed")),
-        { providerRejected: true },
-      ),
-    );
+  settleClaudeControlResponse(frame, controlRequests);
 }
 
 function reportProgress(turn, force) {
@@ -831,16 +845,6 @@ async function shutdown(exitCode) {
   }
   rmSync(promptDirectory, { force: true, recursive: true });
   process.exit(exitCode);
-}
-
-function resultError(frame) {
-  const errors = Array.isArray(frame.errors) ? frame.errors.join("; ") : "";
-  return String(
-    (typeof frame.result === "string" && frame.result !== ""
-      ? frame.result
-      : errors) ||
-      `Claude turn ended with ${String(frame.subtype ?? "unknown")}`,
-  ).slice(0, 2048);
 }
 
 function textOf(message) {

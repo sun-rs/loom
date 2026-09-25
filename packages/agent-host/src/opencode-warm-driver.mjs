@@ -75,6 +75,20 @@ import {
   OpenCodeChildSessions,
   OpenCodeEventIdentityFilter,
 } from "./opencode-event-identity.js";
+import {
+  abortedByInterrupt,
+  boundedServerOutput,
+  extractSseData,
+  isRecord,
+  openCodeEventError,
+  openCodeStepFinishPart,
+  pendingOpenCodeRequests,
+  record,
+  safeResponseText,
+  serverAuthHeader,
+  stringField,
+  verifyOpenCodeChildSession,
+} from "./opencode-server-client.js";
 import { stopOpenCodeServer } from "./opencode-server-process.js";
 import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
 import {
@@ -125,6 +139,7 @@ let frameSequence = 0;
 let server;
 let sessionId;
 const childSessions = new OpenCodeChildSessions();
+const answeredRequests = new Set();
 let active;
 let autonomous = false;
 /** One turn.begin held while the abort barrier is closed. */
@@ -412,6 +427,7 @@ async function eventsEnded(controller, reason) {
       await subscribeEvents();
       emit("unattributed", { method: "event", reason: "sse_reconnected" });
       await reconcileFromMessages();
+      await reconcilePendingRequests();
       return;
     } catch {
       // Try again.
@@ -440,6 +456,53 @@ async function reconcileFromMessages() {
   if (!turn.accepted) return;
   for (const part of runToolParts(messages, turn.messageId))
     turn.finalInterrupt.observePart(part);
+}
+
+/**
+ * Full review batch 3 (Codex re-review P2-1): a request asked during the gap
+ * is lost with the bus, while the server still waits for it. The pending
+ * requests are re-read and answered with the same rule, only for this
+ * session's tree. A listing failure is a diagnostic; the stall supervisor
+ * still bounds a request that stays unanswered.
+ */
+async function reconcilePendingRequests() {
+  let pending;
+  try {
+    pending = await pendingOpenCodeRequests(requestJson);
+  } catch {
+    emit("unattributed", { method: "request", reason: "pending_unreadable" });
+    return;
+  }
+  for (const event of pending) {
+    try {
+      await handleRequest(event);
+    } catch (error) {
+      const turn = active;
+      if (turn !== undefined) turn.errors.push(errorMessage(error));
+    }
+  }
+}
+
+/**
+ * A permission or question of this session or of its (proven) subagent
+ * tree, answered by the turn's rule; any other session's is not ours.
+ * Returns whether the request was this session's tree.
+ */
+async function handleRequest(event) {
+  const asking = record(event.properties).sessionID;
+  if (
+    asking !== sessionId &&
+    !childSessions.has(asking) &&
+    !(await verifyOpenCodeChildSession({
+      childSessions,
+      parentSessionId: sessionId,
+      requestJson,
+      sessionId: asking,
+    }))
+  )
+    return false;
+  await answerRequest(event, active);
+  return true;
 }
 
 async function recentMessages() {
@@ -514,12 +577,19 @@ async function handleEvent(event) {
   if (!isRecord(event) || typeof event.type !== "string") return;
   const properties = record(event.properties);
   childSessions.observe(event, sessionId);
-  // A subagent's request is answered by the parent session's rule.
-  if (
-    (event.type === "permission.asked" || event.type === "question.asked") &&
-    childSessions.has(properties.sessionID)
-  )
-    return await answerRequest(event, active);
+  // A request is answered by the parent session's rule, for the parent and
+  // its subagent (child session) tree only — a child never announced here
+  // is first proven by its native lineage.
+  if (event.type === "permission.asked" || event.type === "question.asked")
+    return void (await handleRequest(event));
+  // A subagent's model step is this turn's cost (drivers P2-4).
+  if (childSessions.has(properties.sessionID)) {
+    const step = openCodeStepFinishPart(event);
+    const turn = active;
+    if (step !== undefined && turn?.accepted === true && !turn.settled)
+      turn.usageWriter.emit(openCodeStepFinishUsage(step));
+    return;
+  }
   const ids = [
     properties.sessionID,
     record(properties.info).sessionID,
@@ -527,8 +597,6 @@ async function handleEvent(event) {
   ].filter((id) => id !== undefined);
   if (ids.length === 0 || ids.some((id) => id !== sessionId)) return;
   const turn = active;
-  if (event.type === "permission.asked" || event.type === "question.asked")
-    return await answerRequest(event, turn);
   if (turn === undefined || turn.settled) return idleEvent(event);
   if (event.type === "message.updated") {
     const info = record(properties.info);
@@ -576,7 +644,11 @@ async function handleEvent(event) {
 async function answerRequest(event, turn) {
   const properties = record(event.properties);
   const requestId = stringField(properties, "id");
-  if (requestId === undefined) return;
+  // Answered once: a reconnect may list a request the bus also delivered.
+  if (requestId === undefined || answeredRequests.has(requestId)) return;
+  answeredRequests.add(requestId);
+  if (answeredRequests.size > 1024)
+    answeredRequests.delete(answeredRequests.values().next().value);
   if (event.type === "question.asked") {
     await requestJson(`/question/${encodeURIComponent(requestId)}/reject`, {
       method: "POST",
@@ -841,20 +913,6 @@ async function settleTurn(turn, response, error) {
     );
 }
 
-/**
- * The answer after an abort: the last assistant carries
- * `MessageAbortedError`, or still ends in `tool-calls` (the loop exits on its
- * own only with another finish).
- */
-function abortedByInterrupt(response) {
-  if (!isRecord(response) || !isRecord(response.info)) return false;
-  const error = record(response.info.error);
-  if (stringField(error, "name") === "MessageAbortedError") return true;
-  return (
-    response.info.error === undefined && response.info.finish === "tool-calls"
-  );
-}
-
 function responseError(response) {
   if (!isRecord(response) || !isRecord(response.info))
     return "OpenCode prompt returned no assistant response";
@@ -1014,18 +1072,12 @@ async function allocatePort() {
   });
 }
 
-function serverAuthHeader() {
-  const password = process.env.OPENCODE_SERVER_PASSWORD;
-  if (password === undefined || password === "") return undefined;
-  return `Basic ${Buffer.from(`opencode:${password}`).toString("base64")}`;
-}
-
 function rememberServerOutput(chunk) {
-  const next = Buffer.concat([serverOutputTail, Buffer.from(chunk)]);
-  serverOutputTail =
-    next.byteLength <= MAX_SERVER_OUTPUT_BYTES
-      ? next
-      : next.subarray(next.byteLength - MAX_SERVER_OUTPUT_BYTES);
+  serverOutputTail = boundedServerOutput(
+    serverOutputTail,
+    chunk,
+    MAX_SERVER_OUTPUT_BYTES,
+  );
 }
 
 function serverDiagnostics() {
@@ -1120,23 +1172,6 @@ async function replaceServer() {
 
 // ---------------------------------------------------------------- helpers
 
-function extractSseData(buffer) {
-  const normalized = buffer.replaceAll("\r\n", "\n");
-  const blocks = normalized.split("\n\n");
-  const remainder = blocks.pop() ?? "";
-  const items = blocks
-    .map((block) =>
-      block
-        .split("\n")
-        .filter((line) => line.startsWith("data:"))
-        .map((line) => line.slice(5).trimStart())
-        .join("\n")
-        .trim(),
-    )
-    .filter((value) => value !== "");
-  return { items, remainder };
-}
-
 function parseModel(value) {
   if (value === undefined) return undefined;
   const separator = value.indexOf("/");
@@ -1146,24 +1181,6 @@ function parseModel(value) {
     modelID: value.slice(separator + 1),
     providerID: value.slice(0, separator),
   };
-}
-
-function openCodeEventError(properties) {
-  const error = record(properties.error);
-  const data = record(error.data);
-  return (
-    [
-      stringField(error, "name"),
-      stringField(data, "message"),
-      stringField(error, "message"),
-    ]
-      .filter((value) => value !== undefined)
-      .join(": ") || "OpenCode session error"
-  );
-}
-
-async function safeResponseText(response) {
-  return (await response.text().catch(() => "")).slice(0, 2_048);
 }
 
 function redact(message) {
@@ -1216,22 +1233,6 @@ function parseArguments(argv) {
       throw new Error(`--${field} is invalid`);
   }
   return parsed;
-}
-
-function stringField(value, name) {
-  return isRecord(value) &&
-    typeof value[name] === "string" &&
-    value[name] !== ""
-    ? value[name]
-    : undefined;
-}
-
-function record(value) {
-  return isRecord(value) ? value : {};
-}
-
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function errorMessage(error) {

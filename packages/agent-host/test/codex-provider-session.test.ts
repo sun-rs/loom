@@ -276,6 +276,10 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
         "features.memories",
         "memories.generate_memories",
         "memories.use_memories",
+        // Full review batch 3 P2-2: no native sub-agents or goals that start
+        // turns outside this instance's lane (codex-cli 0.156.1 feature keys).
+        "features.multi_agent",
+        "features.goals",
       ]) {
         assert.ok(
           record.args.includes(`${key}=false`),

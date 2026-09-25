@@ -399,7 +399,7 @@ test("warm Claude: a binding without effort levels (Haiku) runs with --model and
   }
 });
 
-test("warm Claude: accepted busy input rides its own native turn inside the Activation, never the next one", async () => {
+test("warm Claude: accepted busy input is folded into the Activation's native turn (real 2.1.282), never the next one", async () => {
   const state = await harness();
   try {
     state.post("[fake:busy-wait] wait for more");
@@ -411,10 +411,18 @@ test("warm Claude: accepted busy input rides its own native turn inside the Acti
     assert.ok(notice, "the busy notice was written with its own uuid");
     assert.notEqual(notice.uuid, wake!.uuid);
     assert.match(String(notice.text), /latest sender @warm-human/u);
-    const noticeDone = events(state, "turn-completed").find(
-      (record) => record.uuid === notice.uuid,
+    // Batch 3 P1-5: the real CLI folds it into the running turn at the next
+    // tool boundary; that turn's one result names both inputs.
+    assert.ok(
+      events(state, "folded").some(
+        (record) => record.uuid === notice.uuid && record.into === wake!.uuid,
+      ),
+      "the notice was folded into the wake's native turn",
     );
-    assert.ok(noticeDone, "the notice ran as its own native turn");
+    const noticeDone = events(state, "turn-completed").find(
+      (record) => record.uuid === wake!.uuid,
+    );
+    assert.ok(noticeDone, "the native turn carrying the notice completed");
     const [first] = orderedRuns(state);
     const [closed] = sql(
       state,

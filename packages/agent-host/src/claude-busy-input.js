@@ -2,6 +2,7 @@
 // SHA256: 531f41e2ee626d729c92933fbc753008af42380c5745c54b5d0af9901e43d170.
 // Native stream-json owns ordering, including tools and compaction. Receipts
 // below acknowledge transport only; the Kernel retains delivery/ACK ownership.
+import { randomUUID } from "node:crypto";
 import { writeSync } from "node:fs";
 import { StringDecoder } from "node:string_decoder";
 
@@ -21,6 +22,9 @@ export function attachClaudeBusyInput({
   let lastWritten;
   let inFlight;
   let writtenCount = 0;
+  // Each written input carries a uuid chosen here, so a result that ran it
+  // (alone or folded into the running turn) is attributable.
+  const writtenUuids = new Set();
   const respond = (id, accepted) => {
     try {
       receipt({ protocol: "rah-runtime-notice-result/v1", id, accepted });
@@ -70,6 +74,7 @@ export function attachClaudeBusyInput({
       return;
     }
     let settled = false;
+    const uuid = randomUUID();
     const written = (error) => {
       if (settled) return;
       settled = true;
@@ -78,6 +83,7 @@ export function attachClaudeBusyInput({
       if (accepted) {
         lastWritten = frame.fingerprint;
         writtenCount++;
+        writtenUuids.add(uuid);
       }
       respond(frame.id, accepted);
     };
@@ -86,6 +92,7 @@ export function attachClaudeBusyInput({
       write(
         JSON.stringify({
           type: "user",
+          uuid,
           message: {
             role: "user",
             content: [{ type: "text", text: frame.text }],
@@ -124,6 +131,9 @@ export function attachClaudeBusyInput({
   return {
     get writtenCount() {
       return writtenCount;
+    },
+    get writtenUuids() {
+      return writtenUuids;
     },
     observe(frame) {
       if (frame.type === "result" || frame.type === "error") close();

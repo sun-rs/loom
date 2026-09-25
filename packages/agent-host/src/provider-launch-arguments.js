@@ -146,13 +146,30 @@ export function providerMemoryConfig(runtimeId) {
       }
     : {};
 }
+// Process-only switches for native features that start turns outside the
+// instance's single lane (full review batch 3). Codex 0.156.1 `codex features
+// list`: `multi_agent` and `goals` are stable and on by default; `-c
+// features.<key>=false` turns each off. kimi-code 0.39.1 source: both agent
+// cores stop the cron scheduler and `CronCreate` refuses under
+// `KIMI_DISABLE_CRON=1`, so a cron persisted in a resumed session never fires.
+// Kimi goals have no process switch (only the user's config.toml `[tools]
+// disabled`); the Kimi driver rejects the `CreateGoal` approval instead.
+function providerAutonomyConfig(runtimeId) {
+  return runtimeId === "codex"
+    ? { "features.multi_agent": false, "features.goals": false }
+    : {};
+}
 export function providerLaunchPolicy(runtimeId) {
   return {
-    args: Object.keys(providerMemoryConfig(runtimeId)).flatMap((key) => [
-      "-c",
-      `${key}=false`,
-    ]),
+    args: Object.keys({
+      ...providerMemoryConfig(runtimeId),
+      ...providerAutonomyConfig(runtimeId),
+    }).flatMap((key) => ["-c", `${key}=false`]),
     environment:
-      runtimeId === "claude" ? { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" } : {},
+      runtimeId === "claude"
+        ? { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" }
+        : runtimeId === "kimi"
+          ? { KIMI_DISABLE_CRON: "1" }
+          : {},
   };
 }

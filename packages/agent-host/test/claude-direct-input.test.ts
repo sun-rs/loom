@@ -47,8 +47,14 @@ for (const activity of ["thinking", "parallel-tools", "compaction"]) {
         }) + "\n",
       );
       assert.equal(writes.length, 1, "must not wait for a tool boundary");
-      assert.deepEqual(JSON.parse(writes[0]!), {
+      const written = JSON.parse(writes[0]!);
+      // Batch 3 P1-4: the input carries a driver-chosen uuid so a result
+      // that ran it is attributable to this run.
+      assert.match(String(written.uuid), /^[0-9a-f-]{36}$/u);
+      assert.deepEqual([...delivery.writtenUuids], [written.uuid]);
+      assert.deepEqual(written, {
         type: "user",
+        uuid: written.uuid,
         session_id: "resumable-session",
         message: {
           role: "user",

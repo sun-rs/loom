@@ -447,6 +447,106 @@ test("review batch 1 #5: a subagent's (child session) permission request is answ
 });
 
 /**
+ * Full review batch 3 (Codex re-review P2-1): a child session this driver
+ * never saw announced (its `session.created` lost, or created before this
+ * run) is verified through the installed 1.18.32 native API — `GET
+ * /session/:id` `parentID`, `GET /session/:id/children` — before its request
+ * is answered with the parent session's rule; never a global allow.
+ */
+test("batch 3: a child permission whose session.created was lost is answered after GET /session/:child proves the parent", async () => {
+  const result = await runTurn({ scenario: "childnocreated", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const [asked] = result.records.filter((r) => r.event === "child-permission");
+  assert.equal(asked?.reply, "always");
+  assert.ok(
+    result.records.some(
+      (r) =>
+        r.event === "request" &&
+        r.method === "GET" &&
+        r.path === `/session/${String(asked?.child)}`,
+    ),
+    "the lineage was verified natively",
+  );
+});
+
+test("batch 3: a resumed session preloads its existing children, so an old child's request needs no announcement", async () => {
+  const result = await runTurn({
+    scenario: "oldchildperm",
+    wake: WAKE,
+    resume: "ses_fakeresumed",
+    env: { FAKE_EXISTING_CHILD: "1" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const [asked] = result.records.filter((r) => r.event === "child-permission");
+  assert.equal(asked?.reply, "always");
+  const index = (predicate: (r: Record<string, unknown>) => boolean) =>
+    result.records.findIndex(predicate);
+  const preload = index(
+    (r) =>
+      r.event === "request" &&
+      r.method === "GET" &&
+      r.path === "/session/ses_fakeresumed/children",
+  );
+  assert.ok(preload >= 0, "children listed on resume");
+  assert.ok(preload < index((r) => r.event === "prompt"), "before the prompt");
+});
+
+test("batch 3: a permission of a session outside this parent's tree is never answered", async () => {
+  const result = await runTurn({
+    scenario: "childnocreated",
+    wake: WAKE,
+    env: { FAKE_FOREIGN_PARENT: "1", FAKE_PERMISSION_WAIT_MS: "400" },
+  });
+  const [asked] = result.records.filter((r) => r.event === "child-permission");
+  assert.equal(asked?.reply, null, "no reply to a foreign session");
+  assert.equal(result.code, 1, "the fake failed the step for lack of a reply");
+});
+
+/**
+ * Drivers P2-4: a subagent's (child session's) model steps are this run's
+ * cost; their `step-finish` usage is recorded, never silently dropped.
+ */
+test("batch 3: a child session's step-finish usage is recorded for the run", async () => {
+  const result = await runTurn({ scenario: "childperm", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const [usage] = result.records.filter((r) => r.event === "child-usage");
+  assert.ok(usage);
+  const recorded = byProtocol(result.frames, "rah-provider-usage/v1");
+  assert.deepEqual(
+    recorded.map((frame) => [
+      frame.responseId,
+      frame.inputTokens,
+      frame.outputTokens,
+    ]),
+    [[usage.partId, 50, 5]],
+  );
+});
+
+/**
+ * Codex re-review P2-2: the negative pair of the recoverable overflow. With
+ * auto-compaction off the assistant keeps the ContextOverflowError: the run
+ * fails, and the session the loop already accepted stays bound.
+ */
+test("batch 3: a context overflow OpenCode did not recover from fails the run and keeps the accepted session bound", async () => {
+  const result = await runTurn({ scenario: "overflowfatal", wake: WAKE });
+  assert.ok(result.records.some((r) => r.event === "overflow-unrecovered"));
+  assert.equal(result.code, 1, result.stderr);
+  assert.match(result.stderr, /too long for the context window/u);
+  const accepted = byProtocol(result.frames, "rah-delivery-accepted/v1");
+  assert.equal(accepted.length, 1);
+  assert.deepEqual(
+    byProtocol(result.frames, "rah-provider-session/v1").map(
+      (frame) => frame.providerSessionId,
+    ),
+    [accepted[0]!.threadId],
+  );
+  assert.equal(
+    result.records.some((r) => r.event === "follow-up-generation"),
+    false,
+  );
+});
+
+/**
  * Full review batch 2 (drivers P2-1, contract §3): once the session loop took
  * this turn's input (the first assistant parented on our message), the session
  * is bound even when the run then ends without success, so the next Activation

@@ -451,6 +451,97 @@ test("review batch 1 #5: warm OpenCode: a subagent's (child session) permission 
   }
 });
 
+/**
+ * Full review batch 3 (Codex re-review P2-1): after an SSE gap the warm
+ * driver re-reads the installed 1.18.32 pending requests (`GET /permission`,
+ * `GET /question`) and verifies an unknown asking session's lineage (`GET
+ * /session/:id` `parentID`) before answering it with the turn's rule.
+ */
+test("batch 3: warm OpenCode: a child permission whose session.created was lost is answered after its lineage is verified", async () => {
+  const state = await harness({
+    env: { FAKE_SCENARIO: "nofinal+childnocreated" },
+  });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const [asked] = events(state, "child-permission");
+    assert.equal(asked?.reply, "always");
+    assert.ok(
+      requests(state, "GET", `/session/${String(asked?.child)}`).length >= 1,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("batch 3: warm OpenCode: a child permission lost in an SSE gap is found in GET /permission after the reconnect and answered", async () => {
+  const state = await harness({
+    env: { FAKE_SCENARIO: "nofinal+childpermdrop" },
+  });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(events(state, "sse-dropped").length, 1);
+    const [asked] = events(state, "child-permission");
+    assert.equal(asked?.reply, "always");
+    assert.ok(requests(state, "GET", "/permission").length >= 1);
+    assert.equal(prompts(state).length, 1, "never resent");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("batch 3: warm OpenCode: a child session's step-finish usage is recorded for the run", async () => {
+  const state = await harness({ env: { FAKE_SCENARIO: "nofinal+childperm" } });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const [usage] = events(state, "child-usage");
+    const [run] = orderedRuns(state);
+    assert.deepEqual(
+      sql(
+        state,
+        "SELECT response_id, input_tokens, output_tokens FROM run_attempt_usage WHERE run_attempt_id = ?",
+        run!.runAttemptId,
+      ).map((row) => [row.response_id, row.input_tokens, row.output_tokens]),
+      [[usage!.partId, 50, 5]],
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("batch 3: warm OpenCode: a context overflow OpenCode did not recover from fails the turn and keeps the accepted session bound", async () => {
+  const state = await harness({
+    env: { FAKE_SCENARIO: "nofinal+overflowfatal" },
+  });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(events(state, "overflow-unrecovered").length, 1);
+    assert.notEqual(result.state, "completed", JSON.stringify(result));
+    const [process] = state.kernel.listRuntimeProcesses({
+      roomId: state.roomId,
+    });
+    assert.notEqual(process?.quiesceResult, "success");
+    assert.match(
+      JSON.stringify(state.kernel.listRunAttempts({ roomId: state.roomId })),
+      /too long for the context window/u,
+    );
+    assert.equal(state.acceptances.length, 1, "the loop took the input");
+    assert.equal(
+      state.sessions.get(state.participantId),
+      "ses_fakenew",
+      "the accepted session stays bound",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("warm OpenCode P2-2: a final abort still in flight when the prompt answers holds the next turn until it is answered", async () => {
   const state = await harness({
     env: { FAKE_SCRIPT: "reply,nofinal", FAKE_ABORT_DELAY_MS: "800" },

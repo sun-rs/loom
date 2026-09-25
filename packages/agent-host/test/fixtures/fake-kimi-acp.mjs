@@ -19,7 +19,11 @@
 // Per-prompt scenario: the next entry of FAKE_SCRIPT (comma separated) or
 // FAKE_SCENARIO, tokens joined by "+": compactN, silent, refusal, reply,
 // hang (the posting tool waits for FAKE_RELEASE), bgterm (a terminal is left
-// running when the turn ends), check (message-check only), nofinal.
+// running when the turn ends), check (message-check only), nofinal, goal
+// (before its tool the model calls CreateGoal: the real ACP server asks the
+// client with `session/request_permission` whose `toolCall.title` is the tool
+// name and the canonical approve_once / approve_always / reject options —
+// kimi-code 0.39.1 `acp-server/src/approval.ts`; the answer is recorded).
 // FAKE_RECORD (jsonl) records every frame and event. FAKE_TOOL_COMMAND
 // replaces the derived Worker command. FAKE_FOLLOW_UP_MS bounds the wait for
 // a cancel before the post-reply generation (default 300).
@@ -61,7 +65,12 @@ let turn;
 let turnSequence = 0;
 let requestSequence = 0;
 const pending = new Map();
-record({ event: "spawn", args });
+record({
+  event: "spawn",
+  args,
+  // Full review batch 3 P1-6: the launch policy's cron switch.
+  disableCron: env.KIMI_DISABLE_CRON ?? null,
+});
 process.on("SIGTERM", () => {
   record({ event: "signal", signal: "SIGTERM" });
   process.exit(0);
@@ -203,6 +212,47 @@ async function runPrompt(frame) {
     content: { type: "text", text: "FAKE KIMI thinking" },
   });
   await delay(Number(env.FAKE_ACCEPT_GAP_MS ?? 0));
+  if (tokens.has("goal")) {
+    const goalCallId = `${turnId}:call-goal`;
+    update({
+      sessionUpdate: "tool_call",
+      toolCallId: goalCallId,
+      title: "Creating a goal",
+      kind: "other",
+      status: "pending",
+    });
+    const answer = await request("session/request_permission", {
+      sessionId,
+      toolCall: {
+        toolCallId: goalCallId,
+        title: "CreateGoal",
+        content: [
+          {
+            type: "content",
+            content: {
+              type: "text",
+              text: "Requesting approval to Creating a goal",
+            },
+          },
+        ],
+      },
+      options: [
+        { optionId: "approve_once", name: "Approve once", kind: "allow_once" },
+        {
+          optionId: "approve_always",
+          name: "Approve for this session",
+          kind: "allow_always",
+        },
+        { optionId: "reject", name: "Reject", kind: "reject_once" },
+      ],
+    });
+    record({ event: "goal-permission", outcome: answer?.outcome ?? null });
+    update({
+      sessionUpdate: "tool_call_update",
+      toolCallId: goalCallId,
+      status: answer?.outcome?.optionId === "reject" ? "failed" : "completed",
+    });
+  }
   const command = tokens.has("hang")
     ? `: message-post --based-on-room-seq 7 --final; while [ ! -f "$FAKE_RELEASE" ]; do sleep 0.02; done`
     : workerCommand(text, tokens);

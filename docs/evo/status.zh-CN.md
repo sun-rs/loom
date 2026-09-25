@@ -261,6 +261,42 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 - 冷驱动首轮绑定（`claude-stream-json-driver.mjs`、`codex-app-server-driver.mjs`、`kimi-acp-driver.mjs`、`opencode-server-driver.mjs`，只改绑定发出点）：四家冷驱动在原生 session 证明已接收本轮输入时立即发出 `rah-provider-session/v1`（每次运行只发一次，成功收尾时的原有发出变为幂等）：Codex 在 `turn/start` 响应后；Kimi 在本 prompt 第一条模型更新；OpenCode 在第一条 parent 为本轮 messageID 的 assistant；Claude 在输入回放已到且 `system/init` 的身份一致时（身份漂移、输入前工具活动不绑定）。Host 原有路径随即写 session 文件并向 Kernel 记录绑定，之后取消、崩溃、provider 报错都不再让下一次静默新建；续聊失败沿既有 `RAH_SESSION_CONTINUITY_REQUIRED` 显式报错（sticky，可由上一项 reset 恢复）。未到接收证明（纯启动失败、无 assistant、refusal 无模型输出）仍不绑定、可新建。Kernel 侧无需改代码：绑定在运行中即可记录，`instanceSessionRequired` 只看绑定证据、不看运行结果；新增测试“运行中记录的绑定在运行失败后仍要求续聊”作为守护。测试：Codex/Kimi/OpenCode 驱动各新增“接收后被 Host 取消仍报告绑定”（旧实现均无绑定帧，Kimi/OpenCode 还要求绑定帧早于接收帧）；原先把旧行为写成断言的用例改为新不变量：Codex/OpenCode/Claude provider-session 集成测试的取消轮下一次改为续聊原 session，Claude 异常退出码的成功轮下一次续聊，OpenCode 失败 assistant 与 Claude 忙时首轮失败仍报告绑定。
 - 仍未验证：真实 CLI 下的新绑定时机（尤其 Claude 真实流中 `system/init` 与输入回放的先后、Codex 首轮被中断后 `thread/resume` 的可用性）未跑付费门禁；reset 恢复只按错误标记识别 session 连续性隔离，Host 若以其他文案报告同类失败不会被恢复（需 Human 走其他恢复出口）。
 
+### 二十七、全面审查批次 3：Claude / Kimi / 驱动细节
+
+依据 2026-09-25 全面审查汇总的批次 3（drivers P1-4/P1-5/P1-6、P2-2..P2-7）与 Codex 复审批次 1、2 的 P2-1/P2-2，负责人批准修复。每项先写失败测试再最小实现（ContextOverflow 负例除外，见下）；未跑付费 CLI，未重启服务，前端未改，Claude 常驻默认仍关闭。
+
+真实帧形状证据：本地假 Anthropic Messages API 驱动真实 Claude Code 2.1.282 二进制（不调用模型，探针在审查 scratchpad `claude/probe/`）：后台任务轮（`bgcold`/`bg`）、忙时输入并入（`fold`）、并入后中断（`foldint`）、续聊不存在的 session（`resume404`）。Kimi 以已安装 kimi-code 0.39.1 的 bundle 源码为准；Codex 以 `codex features list`（0.156.1）为准；OpenCode 以临时 HOME 下真实 `opencode serve --pure`（1.18.32）的无模型接口为准。
+
+#### Claude
+
+- 冷路径后台任务轮（P1-4）：真实顺序为唤醒的 result 与 `completed` 之后，stdin 已关闭，但后台 Bash 任务结束时 CLI 自发多跑一轮：`task_notification` → 新 `system/init` → assistant → 不带 `user_message_uuid`/`user_message_uuids` 的 result，没有 lifecycle，然后 exit 0（该 result `is_error` 时 exit 1）。冷驱动在 CLI 声明 `msg_lifecycle_v1` 时，只把点名本次唤醒或本次写入的忙时输入的 result 计入；其余只记诊断（`claude:result:unattributed`），不计数、不判失败，由它造成的 exit 1 也不判失败。旧 CLI（无该能力）仍按严格计数。为使忙时输入可归属，冷路径忙时输入现在带驱动生成的 uuid（`claude-busy-input.js` 的 `writtenUuids`）。fake 新增 `FAKE_BACKGROUND_TASK=success|error`，按真实顺序回放。
+- 热路径忙时输入并入（P1-5，闭合第七轮 P2-1）：真实 CLI 在下一个工具边界把忙时输入并入当前轮：先回放，再 `started`，其 `completed`（中断时为 `cancelled`）先于该轮 result 到达；唯一的 result 带 `user_message_uuids:[W,N]`。热驱动按该数组结算全部被并入的输入（缺字段时回退 `user_message_uuid`）。`fake-claude-warm.mjs` 改为在工具边界并入排队输入，与真实行为一致；原集成测试“忙时输入单独成轮”改为“并入 Activation 的原生轮、不进入下一 Activation”。旧驱动在新 fake 下该轮永不 drain（测试超时）。
+- 热路径自发轮与唤醒撞车（P2-3）：唤醒尚未开始（仍排队）时，后台任务轮的无 uuid result 不再判为唤醒失败，只记 `unattributed`；唤醒随后照常开始并完成，且两者都不被中断。只有 result 点名唤醒，或本轮从未出现 `system/init`（真实缺 session 只回一条 `num_turns:0` 的 result），才判唤醒失败。热 fake 的自发轮也改为真实形状（无 lifecycle、无 uuid 的 result）。
+- 错误文本（P2-5）：冷热共用 `claude-stream-launch.js` 中的 `claudeResultError`，读取真实错误 result 唯一携带的 `errors[]`；同时抽出 `claudeResultInputUuids` 和 `settleClaudeControlResponse`，两个驱动删去各自副本。
+
+#### Kimi
+
+- Cron/Goal 自发轮（P1-6）：源码确认两套 agent core 在 `KIMI_DISABLE_CRON=1` 时都会停掉 cron 调度（持久化到 session 目录的 cron 在续聊后也不触发），`CronCreate` 返回错误。该环境变量已加入 `providerLaunchPolicy("kimi").environment`，Kimi 驱动启动时带上。Goal 没有进程级开关（只有用户 `config.toml` 的 `[tools] disabled`，Loom 不改用户配置），ACP 也不接受禁用工具列表；改为在驱动中拒绝 `CreateGoal` 的 `session/request_permission`。ACP 权限请求的 `toolCall.title` 就是工具名；在非 `auto` 权限模式下，kimi-code 对每次 CreateGoal 都会发起询问。因此没有做 resume 后检测持久 cron 的兜底：cron 已从源头禁用。
+- 每轮 standing 文件行（P2-7）：只在新 session 的首个 prompt 中出现（与完整规则一起）；续聊的唤醒只剩正文，压缩后的规则由 Host 的规则卡负责。原集成测试的“续聊 prompt 含该行”断言改为“不含”。
+
+#### Codex
+
+- multi_agent/goals（P2-2）：启动策略追加 `-c features.multi_agent=false -c features.goals=false`，冷热 app-server 都带上，Settings 的 `managedLaunch` 同步显示。`codex features list` 确认这两个键生效，都解析为 false。
+
+#### OpenCode
+
+- 子 session 请求恢复（复审 P2-1）：遇到未知 session 的 permission/question 时，先沿原生 `GET /session/:id` 的 `parentID`（最多 8 层）证实它属于本父 session 树，才按本轮原规则应答；读取失败则不应答，不做全局 allow。冷路径恢复已有 session 时，先用 `GET /session/:id/children` 预加载子关系；热路径 SSE 重连后，读 `GET /permission` 和 `GET /question` 补答缺口内丢失的请求，按 request id 只答一次。以上接口已在安装版上免费核实。fake 新增“created 丢失后 permission 到达”“SSE 缺口内 permission 丢失后重连”等场景，冷热都有测试。
+- 子代理用量（P2-4）：已知子 session 的 `step-finish` 按 part id 去重后计入本 Run 用量：冷路径全程计入，热路径只在本轮已接受期间计入。没有新增缺口原因，因为 Kernel 的缺口原因有 CHECK 约束，新增需要迁移。
+- ContextOverflow 不可恢复负例（复审 P2-2）：新增冷热测试，场景为 auto-compaction 关闭、最终 assistant 仍带该错误。断言 Run 失败、已接受的 session 保持绑定、没有后续生成。现有实现已满足，测试首跑即通过，本项只补证据。
+- 冷热共享（P2-6）：8 个逐字相同的函数和本批新增的恢复逻辑合并到 `opencode-server-client.js`。`requestJson`、`startServer` 只是近似重复，没有合并。
+
+#### 仍未解决
+
+- Kimi：用户把默认权限模式设为 `auto` 时，CreateGoal 不询问，驱动拦不住；本批之前已创建的 goal 仍可能在空闲时触发续跑轮；接收证明尚未按工具调用 id 里的 turnId 排除非本 prompt 的更新。以上都没有真实触发验证。
+- Codex：`codex debug prompt-input` 在关闭两个特性后仍渲染 `<multi_agent_role>` 开发者指令块（疑由模型目录的 `multi_agent_version` 驱动）。工具列表是否真的去掉了 spawn_agent，需要一次真实请求确认；本地假 Responses API 的探针被本机代理拦截，未拿到请求体。
+- Claude：真实后台任务轮在冷路径仍会多花一次付费生成（CLI 行为，驱动只是不再误判），其用量计入本 Run；热路径自发轮与唤醒撞车的真实竞态未实测。
+- OpenCode：热路径空闲期的子 session 用量，以及 SSE 缺口内丢失的 step-finish，仍不补回、不标缺口；冷路径 SSE 断开仍直接让本轮失败；真实子代理触发频率未测。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |
