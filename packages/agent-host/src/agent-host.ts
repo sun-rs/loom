@@ -1188,11 +1188,15 @@ export class AgentHost {
         state: "completed",
       };
     } catch (error) {
+      // Eighth review P2-2: the retry reason is the Kernel's completion
+      // refusal (for example delivery not acknowledged, which the next wake
+      // turns into the "previous attempt posted" fact); the run failure is
+      // kept after it for diagnosis and still decides the retry disposition.
       return runFailure === undefined
         ? this.#retryFailedActivation(activation, errorMessage(error))
         : this.#retryFailedActivation(
             activation,
-            runFailure.message,
+            `${errorMessage(error)}; run failure: ${runFailure.message}`,
             runFailure.failure,
           );
     }

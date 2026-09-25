@@ -661,6 +661,7 @@ export async function compactOpenCodePerTurn({
           OPENCODE_CONFIG_CONTENT: withCompactionOptions(
             process.env.OPENCODE_CONFIG_CONTENT,
             compactionOptions,
+            model,
           ),
         },
         stdio: ["ignore", "ignore", "pipe"],

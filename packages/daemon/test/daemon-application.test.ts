@@ -16,6 +16,7 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import {
+  InstanceRuntimePool,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
@@ -29,7 +30,10 @@ import {
   createRegistryBackedRuntimeRecovery,
   type SecretProvider,
 } from "../src/index.ts";
-import { warmRuntimeAdapterKinds } from "../src/daemon-process-hygiene.ts";
+import {
+  createDaemonRuntimeHygiene,
+  warmRuntimeAdapterKinds,
+} from "../src/daemon-process-hygiene.ts";
 
 const fakeCliPath = fileURLToPath(
   new URL("../../agent-host/test/fixtures/fake-cli.mjs", import.meta.url),
@@ -2058,9 +2062,23 @@ test("S2-0 daemon config accepts leftover-process hygiene caps per instance", ()
     assert.throws(() => DaemonConfigSchema.parse({ ...base, processHygiene }));
 });
 
-test("S2-a warm Codex runtimes are opt-in with a configurable idle TTL", () => {
+test("S2-a warm Codex runtimes are on by default (eighth review), with an explicit opt-out and a configurable idle TTL", () => {
   const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
   assert.equal(DaemonConfigSchema.parse(base).warmRuntimes, undefined);
+  assert.ok(
+    warmRuntimeAdapterKinds(undefined).has("codex-app-server/v1"),
+    "an absent warmRuntimes block runs Codex warm",
+  );
+  assert.equal(
+    warmRuntimeAdapterKinds(
+      DaemonConfigSchema.parse({
+        ...base,
+        warmRuntimes: { codex: { enabled: false } },
+      }).warmRuntimes,
+    ).has("codex-app-server/v1"),
+    false,
+    "codex.enabled: false opts out",
+  );
   const parsed = DaemonConfigSchema.parse({
     ...base,
     warmRuntimes: { codex: { enabled: true, idleTtlMs: 600_000 } },
@@ -2077,17 +2095,28 @@ test("S2-a warm Codex runtimes are opt-in with a configurable idle TTL", () => {
     assert.throws(() => DaemonConfigSchema.parse({ ...base, warmRuntimes }));
 });
 
-test("S2-c3 warm OpenCode runtimes are a separate opt-in, off by default", () => {
+test("S2-c3 warm OpenCode runtimes are on by default (eighth review), with a separate explicit opt-out", () => {
   const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
+  assert.ok(warmRuntimeAdapterKinds(undefined).has("opencode-server/v1"));
   assert.deepEqual(
     warmRuntimeAdapterKinds(
       DaemonConfigSchema.parse({
         ...base,
-        warmRuntimes: { codex: { enabled: true }, claude: { enabled: true } },
+        warmRuntimes: { opencode: { enabled: false } },
       }).warmRuntimes,
     ),
-    new Set(["codex-app-server/v1", "claude-stream-json/v1"]),
-    "enabling Codex or Claude never enables OpenCode",
+    new Set(["codex-app-server/v1"]),
+    "opencode.enabled: false opts out of OpenCode only",
+  );
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(
+      DaemonConfigSchema.parse({
+        ...base,
+        warmRuntimes: { codex: { enabled: false } },
+      }).warmRuntimes,
+    ),
+    new Set(["opencode-server/v1"]),
+    "opting out of Codex never disables OpenCode",
   );
   const parsed = DaemonConfigSchema.parse({
     ...base,
@@ -2096,7 +2125,7 @@ test("S2-c3 warm OpenCode runtimes are a separate opt-in, off by default", () =>
   assert.deepEqual(parsed.warmRuntimes, { opencode: { enabled: true } });
   assert.deepEqual(
     warmRuntimeAdapterKinds(parsed.warmRuntimes),
-    new Set(["opencode-server/v1"]),
+    new Set(["codex-app-server/v1", "opencode-server/v1"]),
   );
   assert.throws(() =>
     DaemonConfigSchema.parse({
@@ -2106,24 +2135,31 @@ test("S2-c3 warm OpenCode runtimes are a separate opt-in, off by default", () =>
   );
 });
 
-test("S2-c1 warm Claude runtimes are a separate opt-in, off by default", () => {
+test("S2-c1 warm Claude runtimes stay a separate opt-in, off by default", () => {
   const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
-  assert.deepEqual(warmRuntimeAdapterKinds(undefined), new Set());
   assert.deepEqual(
+    warmRuntimeAdapterKinds(undefined),
+    new Set(["codex-app-server/v1", "opencode-server/v1"]),
+    "the defaults never run Claude warm",
+  );
+  assert.equal(
     warmRuntimeAdapterKinds(
       DaemonConfigSchema.parse({
         ...base,
         warmRuntimes: { codex: { enabled: true } },
       }).warmRuntimes,
-    ),
-    new Set(["codex-app-server/v1"]),
+    ).has("claude-stream-json/v1"),
+    false,
     "enabling Codex never enables Claude",
   );
   const parsed = DaemonConfigSchema.parse({
     ...base,
-    warmRuntimes: { claude: { enabled: true } },
+    warmRuntimes: {
+      claude: { enabled: true },
+      codex: { enabled: false },
+      opencode: { enabled: false },
+    },
   });
-  assert.deepEqual(parsed.warmRuntimes, { claude: { enabled: true } });
   assert.deepEqual(
     warmRuntimeAdapterKinds(parsed.warmRuntimes),
     new Set(["claude-stream-json/v1"]),
@@ -2132,14 +2168,62 @@ test("S2-c1 warm Claude runtimes are a separate opt-in, off by default", () => {
     warmRuntimeAdapterKinds(
       DaemonConfigSchema.parse({
         ...base,
-        warmRuntimes: { claude: { enabled: false }, idleTtlMs: 900_000 },
+        warmRuntimes: {
+          claude: { enabled: false },
+          codex: { enabled: false },
+          opencode: { enabled: false },
+          idleTtlMs: 900_000,
+        },
       }).warmRuntimes,
     ),
     new Set(),
+    "every warm runtime can be switched off explicitly",
   );
 });
 
-test("S2-b warm runtime policies are configurable; Codex warm stays off by default", () => {
+test("the daemon composes the warm pool and leftover-process hygiene by default; switching Codex and OpenCode off removes the pool", () => {
+  if (process.platform !== "darwin" && process.platform !== "linux") return;
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-warm-default-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  kernel.initialize();
+  try {
+    const agent = kernel.provisionPrincipal({ handle: "w", kind: "agent" });
+    const host = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: "warm-default-host",
+        participantIds: [agent.principal.principalId],
+      }).accessToken,
+    );
+    const base = DaemonConfigSchema.parse(
+      validConfig(directory, join(directory, "secret")),
+    );
+    const composed = createDaemonRuntimeHygiene(base, host, kernel);
+    assert.ok(composed.instanceRuntimePool instanceof InstanceRuntimePool);
+    assert.ok(composed.processHygiene !== undefined, "leftover sweeps stay on");
+    assert.deepEqual(
+      composed.warmRuntimeKinds,
+      new Set(["codex-app-server/v1", "opencode-server/v1"]),
+    );
+    const off = createDaemonRuntimeHygiene(
+      DaemonConfigSchema.parse({
+        ...validConfig(directory, join(directory, "secret")),
+        warmRuntimes: {
+          codex: { enabled: false },
+          opencode: { enabled: false },
+        },
+      }),
+      host,
+      kernel,
+    );
+    assert.equal(off.instanceRuntimePool, undefined);
+    assert.deepEqual(off.warmRuntimeKinds, new Set());
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("S2-b warm runtime policies are configurable; policies alone keep the warm defaults", () => {
   const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
   const policy = {
     admissionWaitMs: 30_000,
@@ -2167,7 +2251,13 @@ test("S2-b warm runtime policies are configurable; Codex warm stays off by defau
     DaemonConfigSchema.parse({ ...base, warmRuntimes: policy }).warmRuntimes
       ?.codex,
     undefined,
-    "policies alone never enable warm runtimes",
+  );
+  assert.deepEqual(
+    warmRuntimeAdapterKinds(
+      DaemonConfigSchema.parse({ ...base, warmRuntimes: policy }).warmRuntimes,
+    ),
+    new Set(["codex-app-server/v1", "opencode-server/v1"]),
+    "policies alone neither disable Codex/OpenCode nor enable Claude",
   );
   for (const bad of [
     { maxWarm: 0 },

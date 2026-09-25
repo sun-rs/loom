@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
+import { WorkerApplicationService } from "@rah-os/application-service";
 import { RoomKernel } from "@rah-os/kernel";
 
 import {
@@ -1579,3 +1580,114 @@ for (const [label, marker, acknowledged, expected] of [
     }
   });
 }
+
+/**
+ * Eighth review P2-2: a run that committed its `--final` reply but did not
+ * acknowledge delivery and then exited 1 is retried; the retry reason is the
+ * Kernel's completion refusal (delivery not acknowledged) with the run
+ * failure kept for diagnosis, so the next wake names the already committed
+ * reply. After the retry only checks and acknowledges, the Room holds one
+ * reply.
+ */
+test("a run that exits 1 after a committed but unacknowledged --final reply is retried with a wake that names that reply; the retry's check leaves one reply", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-agent-host-final-noack-"),
+  );
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  kernel.initialize();
+  const worker = new WorkerApplicationService({ kernel });
+  await worker.start();
+  try {
+    const human = kernel.provisionPrincipal({ handle: "h", kind: "human" });
+    const agent = kernel.provisionPrincipal({ handle: "a", kind: "agent" });
+    const agentId = agent.principal.principalId;
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(humanActor, { name: "F", slug: "f" });
+    kernel.addMember(humanActor, { principalId: agentId, roomId: room.roomId });
+    kernel.postMessage(humanActor, {
+      body: "answer",
+      idempotencyKey: "final-noack",
+      recipients: [{ participantId: agentId, reason: "mention" }],
+      roomId: room.roomId,
+    });
+    const host = authenticateHost(kernel, "final-noack-host", [agentId]);
+    let firstReplyId: string | undefined;
+    let presentedRetry: Record<string, unknown> | undefined;
+    const call = async (token: string, path: string, body: unknown = {}) => {
+      const response = await fetch(`${worker.origin}/v1/worker/${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const parsed = (await response.json()) as Record<string, any>;
+      assert.equal(response.status, 200, JSON.stringify(parsed));
+      return parsed;
+    };
+    const runtime = new FakeRuntimeAdapter({
+      onStart: async (input) => {
+        const { accessToken } = worker.issueActivationCredential(host, input);
+        if (firstReplyId === undefined) {
+          await call(accessToken, "message-present");
+          kernel.markPresentedDeliverySent(host, {
+            activationId: input.activationId,
+            consumerId: input.consumerId,
+            runAttemptId: input.runAttemptId,
+          });
+          // `--final` without a causal marker: marker recorded, no ACK.
+          const posted = await call(accessToken, "messages/post", {
+            body: "FAKE final reply",
+            channel: "#f",
+            final: true,
+          });
+          firstReplyId = posted.event.aggregateId;
+          return;
+        }
+        presentedRetry = await call(accessToken, "message-present");
+        const check = await call(accessToken, "message-check");
+        await call(accessToken, "acknowledge", {
+          throughSeq: check.delivery.cursorAfter,
+        });
+      },
+    });
+    runtime.enqueueExit({ code: 1 });
+    runtime.enqueueExit({ code: 0 });
+    const agentHost = new AgentHost({
+      host,
+      kernel,
+      leaseMs: 30_000,
+      retryAfterMs: 0,
+      runtime,
+    });
+    const first = await agentHost.reconcileOnce();
+    assert.equal(first.state, "failed", JSON.stringify(first));
+    const [activation] = kernel.listActivations({ roomId: room.roomId });
+    assert.equal(activation?.state, "queued");
+    assert.match(
+      String(activation?.lastError),
+      /not acknowledged/u,
+      "the retry reason is the Kernel's completion refusal",
+    );
+    assert.match(
+      String(activation?.lastError),
+      /exited with code 1/u,
+      "the run failure is kept for diagnosis",
+    );
+    const second = await agentHost.reconcileOnce();
+    assert.equal(second.state, "completed", JSON.stringify(second));
+    assert.equal(presentedRetry?.previousAttemptReplyMessageId, firstReplyId);
+    assert.equal(presentedRetry?.previousAttemptReplyFinal, true);
+    const replies = kernel
+      .sync(humanActor, { consumerId: "audit", roomId: room.roomId })
+      .events.filter(
+        (event) => event.type === "message.posted" && event.actorId === agentId,
+      );
+    assert.equal(replies.length, 1, "one reply in the Room");
+  } finally {
+    await worker.close();
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

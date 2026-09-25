@@ -162,7 +162,7 @@ owner 决定：证明不了轮次隔离的驱动每轮冷回收（选项 A）。
 - Codex `--listen unix://` 实为 unix socket 上的 WebSocket（本机 0.156.1 探针确认）。
 - `turn/start` 被拒绝时以 `nativeTurnId: null` 的 quiesce 记录收尾。
 - 轮次成孤儿时由 Kernel 触发器把忙碌运行时标记为 suspect。
-- 热模式默认关闭，待 Codex 真实冒烟与冷热对比。
+- 热模式原默认关闭；2026-09-25 第八轮审查修复后负责人同意 Codex 与 OpenCode 常驻默认开启（`warmRuntimes.codex.enabled` / `warmRuntimes.opencode.enabled` 缺省为开，显式 `false` 关闭），Claude 常驻仍需显式 `warmRuntimes.claude.enabled: true`，Kimi 不做常驻。
 
 ## 11. S2-c 逐家接入计划（2026-09-25）
 

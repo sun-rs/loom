@@ -142,7 +142,15 @@ export async function runDriftArm({
   const daemonConfig =
     mode === "warm"
       ? { ...prepared.config, warmRuntimes: { [provider]: { enabled: true } } }
-      : prepared.config;
+      : {
+          ...prepared.config,
+          // Codex and OpenCode run warm by default in the product; the
+          // per-turn arm opts out explicitly.
+          warmRuntimes: {
+            codex: { enabled: false },
+            opencode: { enabled: false },
+          },
+        };
   const configPath = join(root, "config.json");
   writeFileSync(configPath, JSON.stringify(daemonConfig), { mode: 0o600 });
 

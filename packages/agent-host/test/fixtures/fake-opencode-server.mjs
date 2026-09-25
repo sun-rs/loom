@@ -32,15 +32,24 @@
 // tool start on only after FAKE_LAG_MS, in order, while the persisted
 // messages are already current), listfail (`GET /session/:id/message`
 // answers 500 while the prompt runs), sideerror (a non-abort `session.error`
-// is published during the run, which then goes on). FAKE_SCRIPT (comma separated) gives one scenario
+// is published during the run, which then goes on), autonomous (after the
+// prompt answered, the session goes busy on its own once per FAKE_RECORD
+// directory, as a background task would, after FAKE_AUTONOMOUS_MS, default
+// 300). FAKE_SCRIPT (comma separated) gives one scenario
 // per prompt. FAKE_RECORD (jsonl) records requests and model steps.
 // FAKE_TOOL_COMMAND replaces the derived Worker command. FAKE_FOLLOW_UP_MS
 // bounds the wait for an abort before the post-reply generation (default 300).
 // FAKE_ABORT_DELAY_MS delays the abort's HTTP answer (the run is cancelled at
 // once); FAKE_ABORT_DROP=1 cancels the run and drops the connection without
 // any answer (an abort whose outcome the client cannot know).
+// FAKE_TERM_DELAY_MS delays the exit after SIGTERM (default 0).
 import { spawn } from "node:child_process";
-import { appendFileSync, readFileSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { createServer } from "node:http";
 
 const args = process.argv.slice(2);
@@ -56,7 +65,7 @@ const record = (value) =>
   env.FAKE_RECORD &&
   appendFileSync(
     env.FAKE_RECORD,
-    `${JSON.stringify({ pid: process.pid, activationId: env.RAH_ACTIVATION_ID, ...value })}\n`,
+    `${JSON.stringify({ pid: process.pid, activationId: env.RAH_ACTIVATION_ID, at: Date.now(), ...value })}\n`,
   );
 const DEFAULT_PROMPT = "FAKE OPENCODE PROVIDER DEFAULT PROMPT";
 const config = (() => {
@@ -70,6 +79,16 @@ const config = (() => {
   }
 })();
 record({ event: "spawn", args, config });
+// FAKE_FAIL_RESPAWN=1: every server after the first (per FAKE_RECORD) fails
+// at startup.
+if (env.FAKE_FAIL_RESPAWN === "1") {
+  const mark = `${env.FAKE_RECORD ?? ""}.spawned`;
+  if (existsSync(mark)) {
+    record({ event: "respawn-failed" });
+    process.exit(1);
+  }
+  writeFileSync(mark, "");
+}
 const script = (env.FAKE_SCRIPT ?? "").split(",").filter(Boolean);
 let promptIndex = 0;
 let idSequence = 0;
@@ -268,6 +287,17 @@ async function runPrompt(s, body, res) {
     if (s.run === run) s.run = undefined;
     status(s, "idle");
     send(res, 200, { info, parts: [] });
+    const mark = `${env.FAKE_RECORD ?? ""}.autonomous`;
+    if (tokens.has("autonomous") && !existsSync(mark)) {
+      writeFileSync(mark, "");
+      setTimeout(
+        () => {
+          record({ event: "autonomous-run" });
+          status(s, "busy");
+        },
+        Number(env.FAKE_AUTONOMOUS_MS ?? 300),
+      );
+    }
   };
   if (tokens.has("noassistant")) {
     if (s.run === run) s.run = undefined;
@@ -537,9 +567,12 @@ const server = createServer(async (req, res) => {
 });
 process.on("SIGTERM", () => {
   record({ event: "signal", signal: "SIGTERM" });
-  for (const stream of streams) stream.end();
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(0), 200).unref();
+  const termDelay = Number(env.FAKE_TERM_DELAY_MS ?? 0);
+  setTimeout(() => {
+    for (const stream of streams) stream.end();
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 200).unref();
+  }, termDelay);
 });
 server.listen(
   Number(args[args.indexOf("--port") + 1]),

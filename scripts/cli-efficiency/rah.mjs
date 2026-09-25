@@ -100,15 +100,24 @@ export async function rahArm({
     stateDirectory,
     workspaceCwd: cwd,
   });
-  // role-warm: the S2-a warm Codex / S2-c1 warm Claude runtime (off by
-  // default in the product).
+  // role-warm: the S2-a warm Codex / S2-c1 warm Claude / S2-c3 warm OpenCode
+  // runtime (Codex and OpenCode are warm by default in the product, Claude
+  // is opt-in); the per-turn arms switch warm runtimes off explicitly.
   // Its daemon restart before round 3 is skipped unless
   // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
   // resume at round 3; the per-turn arms keep the restart.
   const warm = kind === "role-warm";
   const daemonConfig = warm
     ? { ...prepared.config, warmRuntimes: { [provider]: { enabled: true } } }
-    : prepared.config;
+    : {
+        ...prepared.config,
+        // Codex and OpenCode run warm by default in the product; the
+        // per-turn arm opts out explicitly.
+        warmRuntimes: {
+          codex: { enabled: false },
+          opencode: { enabled: false },
+        },
+      };
   const restartBeforeRound =
     warm && process.env.RAH_EFFICIENCY_WARM_RESTART !== "1" ? undefined : 3;
   Object.assign(arm, { warmRuntimes: warm, restartBeforeRound });

@@ -158,7 +158,7 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - P1-3 独立错误优先：Claude 与 OpenCode 热驱动收尾时 Host 停止优先，其次任何独立错误判 `failed` 并保留 `errorMessage`，最后才是 final 结束；只豁免本驱动自己的中断造成的取消结果（按输入记录中断请求）。Host 侧 `warmTurnDriverFailure`（`codex-warm-adapter.ts`）对任何状态下带错误文本的轮次都记失败，不判 success。测试：`claude-warm-driver-close.test.ts`（唤醒 final 成功但已接纳 notice 独立失败 → failed 且保留错误）、`opencode-warm-runtime.test.ts`（非 abort `session.error` 先到、随后 final abort → 不以 success 静默）、`warm-turn-classification.test.ts`。
 - P1-4 效率门禁：`compareRounds`/`compareArm` 有任一 `unmeasured` 维度（productUsage/tokens/generations）时 `status` 为 `missing-evidence`，可测子项结论另见 `measuredStatus`；顶层 `gateStatus` 在此情况下给 `missing-evidence`（退出码 1），不再可能 `needs-quality-review`。`docs/design/cli-efficiency-gate.zh-CN.md` 第 47 与 84 行的矛盾按合同 §6 统一（用量缺口不判达标；wire.jsonl 替代产品用量无合同决定）。测试：`metrics.test.mjs`。
 - P2-1 Claude 结束证明：已开始（lifecycle started 或回放）的输入只由自身 `result` 结算，终态生命周期先到不关闭本轮；未启动输入被 CLI 取消/丢弃/拒绝且非本驱动请求时记错误（本驱动中断取消的排队输入不算错）；有 `msg_lifecycle_v1` 时无 `user_message_uuid` 的 result 不猜归属，记错误。测试：`claude-warm-driver-close.test.ts`（顺序颠倒、顺序颠倒后失败、无 uuid、refused、回执取消）。
-- P2-2 OpenCode abort 准入屏障：热驱动记录本轮每个 abort 请求，排空前等待全部得到 HTTP 应答（各自受 5 秒请求超时约束），下一轮因此不会在 abort 在途时开始；结果未知（超时、连接丢失）时，排空前在本运行时内停掉旧 `opencode serve`、启动新 serve 并按原 session 继续（session 不存在则 fatal，不静默替换），不重发 prompt；替换失败才 fatal。测试（fake 延迟/丢弃 abort）：`opencode-warm-runtime.test.ts` 两例。
+- P2-2 OpenCode abort 准入屏障：热驱动记录本轮每个 abort 请求，排空前等待全部得到 HTTP 应答（各自受 5 秒请求超时约束），下一轮因此不会在 abort 在途时开始；结果未知（超时、连接丢失）时，排空前在本运行时内停掉旧 `opencode serve`、启动新 serve 并按原 session 继续（session 不存在则 fatal，不静默替换），不重发 prompt；替换失败才 fatal。测试（fake 延迟/丢弃 abort）：`opencode-warm-runtime.test.ts` 两例。（第八轮审查更正：本条当时只覆盖普通 turn 的 abort；空闲时对自主运行发出的 abort 结果未知后仍会恢复准入，停旧 serve 也未要求退出证明。两处已在第二十四节修复。）
 - P2-3 重试提示中性化：Kernel 在重试窗口给出上一次尝试的消息 id，只有该消息带本 Activation 的 final 标记时才另给 `previousAttemptReplyFinal`；唤醒行默认为"Previous attempt posted msg=X; inspect it and finish any remaining work (it does not show every target was answered), or message-check if nothing remains."，带 final 标记时才说"posted its final reply"。测试：`wake-message-input.test.ts`、`worker-reply-drift-duplicate.test.ts`（进度贴、多目标部分答复、未 ACK 的 `--final` 帖）。
 - P2-4 旧版中断形状：无 `terminal_reason` 的 `error_during_execution` 只有在本次中断的 control_response 成功（关联回执）已到时才算中断；否则 terminal 为 unknown、Run 按失败处理（冷热两条路径，`claude-final-interrupt.js` 的 `endedByInterrupt`）。测试：`claude-final-interrupt.test.ts`、`claude-final-reply-driver.test.ts`（有/无回执）、`claude-warm-driver-close.test.ts`（结果先于回执）。
 - Claude 忙时输入：final 已 armed 后仍启动的幸存 notice 也会被再次中断，其中断结果归属 final 结束、不记错误；notice 回执文字改为"已写入、等待原生确认"。测试：`claude-warm-driver-close.test.ts`。
@@ -180,7 +180,10 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - OpenCode：`drift-config` 增加 `opencode`（`opencode-cli/v1`，cold/warm，warm 经既有 `warmRuntimes.opencode`）。新
   `drift-opencode-guard.mjs`：守卫 shim 把真实 `opencode serve` 移到另一回环端口，自己在产品指定端口做 fail-closed
   HTTP 代理，逐个校验冷驱动与热 serve 的每次 `POST /message`（许可 model + variant）、summarize 与其余请求白名单，
-  并在监听前核对合并配置中无 agent 固定到其他模型；每轮再读 `opencode.db` 做事后模型/variant 围栏。
+  并在监听前核对合并配置中无 agent 固定到其他模型；每轮再读 `opencode.db` 做事后模型/variant 围栏。（第八轮审查更正：
+  fail-closed 只限产品驱动经 HTTP 发出的请求；当时未约束 `small_model`，默认标题 session 的首条消息会经 small model
+  生成标题而不经代理；事后围栏只检出、不阻止。第二十四节补上 small_model/默认模型固定、agent variant/options 核对与
+  非默认标题要求，内部调用范围的限制仍在。）
 - OpenCode 强制压缩：原生入口 `POST /session/:id/summarize {providerID, modelID}`（1.18.32 `/doc` 核实，无 variant
   字段；源码 `SessionCompaction.process` 选项合并含 `agent.options`），gate 把许可 variant 的选项注入为
   `agent.compaction.options` 并核对生效。冷：短生命周期 serve；热：经 shim 私有 socket，压缩期间隐藏该 session 的
@@ -204,22 +207,34 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 修法一（冷驱动 `claude-stream-json-driver.mjs`）：只在以下条件同时成立时接受退出码 1：本驱动的 final 中断造成了首个 result（`endedByInterrupt`）、该 result 是最后一条且 `is_error`、无信号。其余非零退出仍判失败。P2-4 的判定没有改：与本次中断无关的 `error_during_execution`（例如 `terminal_reason:model_error`，或旧版无 reason 且无回执）仍判失败。热驱动 shutdown 本来就忽略 Claude 退出码，逻辑没有改。
 - 修法二（Host `agent-host.ts`，堵住重复回复）：运行失败、按原逻辑会重试时，先读 Kernel 中本 RunAttempt 的 final 标记；标记存在就走 `completeActivation`，由 Kernel 证明 ACK 已到 toSeq、运行时终止证明与 obligations 满足；Kernel 拒绝时按原失败信息重试。RunAttempt 的退出码与错误照原样保留，不改写。没有标记，或有标记但未 ACK，都按原规则重试。
 - 测试：`fixtures/fake-claude-stream.mjs` 按真实规则设置退出码（最后一条 result 为 `is_error` 时退出 1），新增 `FAKE_INTERRUPT_TERMINAL_REASON`。改后既有三条中断用例与新增的“真实退出码”用例在旧实现下都失败（exit 1，报错与真实证据相同），修复后通过。`claude-final-reply-driver.test.ts` 新增“中断在途时出现 model_error 仍判失败”。`agent-host.test.ts` 新增三例：退出码 1 + final 标记 + ACK → completed，不再启动；有标记无 ACK → 重试；有 ACK 无标记 → 重试。其中第一例在旧实现下失败（重试）。`claude-warm-driver-close.test.ts` 新增真实顺序用例：先回执，再 aborted_tools is_error result，Claude 退出 1 时 shutdown 仍退出 0。这一例写完即通过，属于特征测试。
-- 未解决：真实付费复测未跑。热模式首轮为何走 cold 执行未查。有标记但未 ACK 的重试仍按运行失败信息记录 `last_error`，不会触发“上次已发 final”的重试提醒（行为与之前相同）。
+- 未解决：真实付费复测未跑。热模式首轮为何走 cold 执行未查。有标记但未 ACK 的重试仍按运行失败信息记录 `last_error`，不会触发“上次已发 final”的重试提醒（行为与之前相同；第二十四节已修）。
 
 ### 二十二、Claude Haiku 真实冒烟复测（8491489）
 
 负责人授权 Claude Code 2.1.282 `haiku`（Haiku 4.5，无 effort），漂移门禁 10 轮、第 5 轮后强制压缩。
 
-- 冷模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-cold.json`）：门禁通过。送达 100%、每轮一条回复、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%；压缩前后无退化。第 1 轮格式超长（模型遵守度）。第二十一节修复前同一场景第 1 轮三次重复回复并隔离，修复后消失。
+- 冷模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-cold.json`）：门禁通过。送达 100%（分母为应答轮 6/6，10 轮中 4 轮应沉默；“每轮一条回复”同指应答轮）、每轮一条回复、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%；压缩前后无退化。第 1 轮格式超长（模型遵守度）。第二十一节修复前同一场景第 1 轮三次重复回复并隔离，修复后消失。
 - 热模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-warm.json`）：第 2–10 轮全部正确，续聊平均约 5–7 s；压缩后无退化。第 1 轮首次尝试（新会话首轮走冷执行）模型只输出正文未调用 `message-post`，无 ACK，按规则重试一次后正确回复，全轮仅一条回复。两次热模式复测都出现，属于 Haiku 首轮协议遵守问题，门禁记为 retried（violated）。是否需要在首轮给出更强的工具调用约束待后续对比 Sonnet 再定；不以提示词补丁处理。
 
 ### 二十三、OpenCode 真实冒烟（b1971f3）
 
 OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 2026-09-25 批准以 `deepseek/deepseek-flash`（DeepSeek V4.1 Flash）/ low 替代。漂移门禁 10 轮、第 5 轮后原生 `POST /session/:id/summarize` 强制压缩。
 
-- 热模式（`docs/evo/evidence/2026-09-25-drift-opencode-warm.json`）：门禁通过。送达 100%、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%，压缩后无退化；续聊约 2–5 s。
+- 热模式（`docs/evo/evidence/2026-09-25-drift-opencode-warm.json`）：门禁通过。送达 100%（应答轮 6/6，10 轮中 4 轮应沉默）、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%，压缩后无退化；续聊约 2–5 s。
 - 冷模式（`docs/evo/evidence/2026-09-25-drift-opencode-cold.json`）：第 5 轮（应沉默）模型正确未发言，但没有执行唤醒指示的 `message-check`，无 ACK，按规则重试一次后补齐；其余全部正确，续聊约 4–6 s。门禁记为 retried（violated）。属于模型协议遵守度；沉默轮仍需显式读取确认，不以"已展示+未发帖"推断 ACK（守 AGENTS 不变量）。
 - 第 1 轮两种模式格式超长（模型遵守度）。
+- 四份样本的送达分母均为应答轮 6/6（冷 Haiku、热 Haiku、冷/热 OpenCode 相同）；格式是软项（冷 Haiku、两份 OpenCode 为 5/6）。这些样本不是原生 CLI 对照，不证明效率合同。
+
+### 二十四、第八轮审查修复与 Codex/OpenCode 常驻默认开启
+
+依据 Codex 第八轮独立审查（`~/.loom/reviews/2026-09-25-review-8.md`），负责人裁定全部采纳，并同意修复后把 Codex 与 OpenCode 常驻改为默认开启（Claude 常驻仍默认关闭）。每项先写失败测试再最小实现；未跑付费 CLI，未重启服务。
+
+- P1-1 OpenCode abort 统一准入屏障（`opencode-warm-driver.mjs`）：普通 turn 的取消与 final abort、空闲时对自主运行的 abort 都经同一屏障（`barrierAbort` / `passAbortBarrier`）：任一 abort 未应答时不准入；结果未知（超时、连接丢失）时保持不可准入，直到旧 `opencode serve` 以退出证明退役、新 serve 按原 session 恢复后才解除，不重发 prompt；退役或重启失败则整个 warm runtime fatal 退出，由 Host/janitor 的终止证明与清扫接管。屏障关闭期间到达的 `turn.begin` 暂存一条、不发出，屏障通过后再发（原来是直接拒绝，拒绝会消耗 Activation 重试预算）；Host 的 30 s 准入超时与取消路径（杀进程组有证明）仍兜底。测试（fake，新增 `autonomous` 场景、`FAKE_TERM_DELAY_MS`、`FAKE_FAIL_RESPAWN`）：`opencode-warm-runtime.test.ts`“idle abort 超时 → 下一轮在旧 serve 退出窗口内开始，也只进入新 serve，同 session、不重发 prompt”与“替换失败 → runtime 终止，暂存轮次从未发出”。第一例在旧实现下失败（第二轮进入旧 serve）。
+- P2-3 退出证明：新 `opencode-server-process.js` 的 `stopOpenCodeServer` 依次 SIGTERM、SIGKILL（各 1 s），返回 `{code, signal}` 退出证明，无证明则抛错；`replaceServer` 在无证明时不启动新 serve（异常沿 P1-1 路径使 runtime 退出）；shutdown 无证明时以非零码退出，进程组留给 Host/janitor。测试：`opencode-server-process.test.ts`（永不退出的假句柄 → 抛错且发过 TERM/KILL；忽略 SIGTERM 的真实子进程 → SIGKILL 证明；已退出 → 不发信号）。
+- P2-2 重试原因：final 已提交、未 ACK 且运行失败时，`completeActivation` 被拒后以 Kernel 拒绝（`delivery-not-acknowledged`）作为重试原因，后接 `; run failure: <原运行错误>` 供诊断，重试处置仍按原运行失败分类。下一次唤醒因此带“Previous attempt posted msg=X … final reply”。测试（`agent-host.test.ts`，真实 Kernel + Worker HTTP）：final+未ACK+exit 1 → `last_error` 同时含两者；重试的 message-present 给出旧消息 id 且标 final；重试只 check+ACK 后完成，Room 中只有一条回复。旧实现下失败（`last_error` 只有运行错误）。
+- P2-1 漂移门禁 OpenCode 守卫（`drift-opencode-guard.mjs`）：真实 serve 的配置内容把 `model` 与 `small_model` 覆盖为许可模型；启动核对拒绝 `model`/`small_model` 不等于许可值、任何 agent 的 `variant` 不等于许可档位、除 compaction 覆盖外任何 agent 带 `options`；`POST /session` 必须带非空、非默认（`New/Child session - …`）标题，否则 403（默认标题会让 OpenCode 首条用户消息经 small model 生成标题，该调用不经代理）。两个产品驱动建 session 的标题由源码合同测试确认可通过。文档（漂移 gate）注明：fail-closed 只覆盖产品驱动的 HTTP 请求；内部 small model 调用在固定配置下用许可模型但不带 variant；事后 transcript 围栏只检出、不阻止，标题调用不留 assistant 记录。测试：`drift-opencode-guard.test.mjs`（默认/缺失标题、small_model/默认模型/agent variant/options 被拒、配置覆盖）。
+- 默认开启：`warmRuntimeAdapterKinds`（`daemon-process-hygiene.ts`）改为 `warmRuntimes.codex.enabled` 与 `warmRuntimes.opencode.enabled` 缺省为开，显式 `false` 关闭；`warmRuntimes.claude.enabled` 仍须显式 `true`；Kimi 不做常驻。关闭方式：daemon 配置写 `"warmRuntimes": {"codex": {"enabled": false}, "opencode": {"enabled": false}}`（可只关其一），不新增环境变量。打包（SEA）产品构建仍回退为每轮模式（`codex-warm-adapter.ts` `isSea()`）。效率门禁（`rah.mjs`）与漂移门禁（`drift-runner.mjs`）的每轮组改为显式写两项 `enabled: false`，热组仍只打开被测 CLI，冷热对照口径不变。失败隔离、空闲回收、LRU/忙时上限、清扫路径的测试直接构造 pool 或 hygiene（`warm-runtime-policy.test.ts`、`instance-runtime-pool.test.ts`、`runtime-process-hygiene.test.ts`、`leftover-process-sweeper.test.ts`、`codex-warm-runtime.test.ts`、`opencode-warm-runtime.test.ts`），不依赖 daemon 默认值，默认开启后仍覆盖；daemon 配置测试改为断言新默认与逐项关闭。
+- 仍未验证：真实 OpenCode 的 abort 超时频率与服务端迟到执行、真实 serve 退役时长（新 serve 冷启动会让屏障期间的下一轮多等数秒）；Codex/OpenCode 默认常驻在本地服务上的实际表现（未重启服务、未跑付费门禁）；累计调度改动后的原生效率 gate 未执行。OpenCode 其他内部 agent/插件的模型调用未逐一证明。
 
 ## 已知缺陷（待阶段 3 修复）
 

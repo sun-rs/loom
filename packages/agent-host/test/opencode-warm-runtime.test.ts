@@ -496,6 +496,132 @@ test("warm OpenCode P2-2: an abort with an unknown outcome retires the server be
   }
 });
 
+test("warm OpenCode eighth review P1-1: an idle (unprompted-run) abort with an unknown outcome keeps admission closed until the old server is proven gone; the next turn runs on a fresh server in the same session without resending", async () => {
+  const state = await harness({
+    env: {
+      FAKE_SCRIPT: "nofinal+autonomous,nofinal",
+      FAKE_ABORT_DROP: "1",
+      FAKE_TERM_DELAY_MS: "600",
+    },
+  });
+  try {
+    state.post("question 1");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const oldPid = Number(spawns(state)[0]!.pid);
+    await waitFor(
+      () => events(state, "abort-dropped").length === 1,
+      "the idle abort was dropped",
+    );
+    // The next message arrives while the old server may still receive the
+    // unknown abort (it takes 600 ms to exit after SIGTERM).
+    state.post("question 2");
+    for (let i = 0; i < 20; i += 1) {
+      await state.current.agentHost.reconcileOnce();
+      if (
+        orderedRuns(state).some(
+          (run, index) => index > 0 && run.state === "exited",
+        )
+      )
+        break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    const records = state.records();
+    const dropped = records.findIndex((r) => r.event === "abort-dropped");
+    const oldExit = records.findIndex(
+      (r) => r.event === "signal" && Number(r.pid) === oldPid,
+    );
+    const sent = prompts(state);
+    assert.equal(sent.length, 2, "no prompt was resent");
+    assert.equal(Number(sent[0]!.pid), oldPid);
+    assert.notEqual(
+      Number(sent[1]!.pid),
+      oldPid,
+      "the next turn never entered the old server",
+    );
+    const secondPrompt = records.findIndex(
+      (r) => r.event === "prompt" && Number(r.pid) !== oldPid,
+    );
+    assert.ok(dropped >= 0 && oldExit > dropped && secondPrompt > oldExit);
+    // The second turn was begun while the old server was still alive (it
+    // exits 600 ms after SIGTERM): the barrier held it, not the timing.
+    const secondRun = orderedRuns(state)[1]!;
+    assert.ok(
+      Date.parse(secondRun.startedAt) < Number(records[oldExit]!.at) + 600,
+      "the second turn started inside the retirement window",
+    );
+    assert.equal(spawns(state).length, 2, "one replacement server");
+    assert.ok(
+      orderedRuns(state).some(
+        (run, index) => index > 0 && run.state === "exited",
+      ),
+      "the second question completed",
+    );
+    assert.equal(
+      requests(state, "POST", "/session").length,
+      1,
+      "no replacement session",
+    );
+    const session = state.sessions.get(state.participantId);
+    assert.ok(
+      events(state, "request").some(
+        (r) =>
+          r.method === "GET" &&
+          r.path === `/session/${String(session)}` &&
+          Number(r.pid) !== oldPid,
+      ),
+      "the fresh server resumed the recorded session",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode eighth review P1-1: when the server cannot be replaced after an unknown idle abort, the whole runtime ends and the held turn is never sent", async () => {
+  const state = await harness({
+    env: {
+      FAKE_SCRIPT: "nofinal+autonomous,nofinal",
+      FAKE_ABORT_DROP: "1",
+      FAKE_FAIL_RESPAWN: "1",
+      FAKE_TERM_DELAY_MS: "300",
+    },
+  });
+  try {
+    state.post("question 1");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const oldPid = Number(spawns(state)[0]!.pid);
+    await waitFor(
+      () => events(state, "abort-dropped").length === 1,
+      "the idle abort was dropped",
+    );
+    state.post("question 2");
+    await state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () => events(state, "respawn-failed").length >= 1,
+      "the replacement failed",
+    );
+    await waitFor(
+      () =>
+        sql(state, "SELECT state FROM instance_runtimes")[0]?.state ===
+        "terminated",
+      "the warm runtime ended",
+    );
+    assert.deepEqual(
+      prompts(state).map((record) => Number(record.pid)),
+      [oldPid],
+      "the held turn never reached any server",
+    );
+    assert.notEqual(orderedRuns(state)[1]?.state, "exited");
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("warm OpenCode: cancel aborts the running loop, the server survives, and the retry runs on it", async () => {
   const state = await harness({
     env: { FAKE_SCRIPT: "nofinal,hang,nofinal,nofinal" },

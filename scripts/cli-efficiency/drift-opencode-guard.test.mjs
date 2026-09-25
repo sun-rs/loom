@@ -85,7 +85,7 @@ test("request guard: native compaction only with the exact model; other model ro
   post(guard, "/permission/per_1/reply", { reply: "always" });
   post(guard, "/question/que_1/reject", {});
   assert.throws(
-    () => post(guard, "/session", { model }),
+    () => post(guard, "/session", { model, title: "RAH OS Agent Activation" }),
     /Unapproved model field/,
   );
   for (const [method, path] of [
@@ -111,6 +111,46 @@ test("request guard: native compaction only with the exact model; other model ro
     () => createOpenCodeRequestGuard({ model: approved.model, effort: null }),
     /Guard needs/,
   );
+});
+
+/**
+ * Eighth review P2-1: OpenCode titles a session with a default title on its
+ * first user message through the small model (`SessionPrompt.ensureTitle` ->
+ * `Provider.getSmallModel`, an internal call that never crosses the guarded
+ * prompt route). The gate only lets sessions be created with an explicit,
+ * non-default title, and both product drivers create them that way.
+ */
+test("request guard: session create needs an explicit non-default title (no internal title generation)", () => {
+  const guard = createOpenCodeRequestGuard(approved);
+  for (const body of [
+    undefined,
+    {},
+    { permission: [] },
+    { title: "" },
+    { title: "   " },
+    { title: "New session - 2026-09-25T10:00:00.000Z" },
+    { title: "Child session - 2026-09-25T10:00:00.000Z" },
+    { title: 42 },
+  ])
+    assert.throws(
+      () => post(guard, "/session", body),
+      /Unsupported session title/,
+      JSON.stringify(body),
+    );
+  const here = new URL(".", import.meta.url);
+  for (const driver of [
+    "../../packages/agent-host/src/opencode-server-driver.mjs",
+    "../../packages/agent-host/src/opencode-warm-driver.mjs",
+  ]) {
+    const source = readFileSync(new URL(driver, here), "utf8");
+    const titles = [
+      ...source.matchAll(
+        /requestJson\("\/session", \{[\s\S]*?title: ("[^"]+")/gu,
+      ),
+    ].map((match) => JSON.parse(match[1]));
+    assert.equal(titles.length, 1, driver);
+    post(guard, "/session", { permission: [], title: titles[0] });
+  }
 });
 
 test("launch: product serve, catalog and version only", () => {
@@ -156,12 +196,46 @@ test("launch: product serve, catalog and version only", () => {
 test("server config: no agent may pin another model; the compaction override must be present", () => {
   const options = { reasoningEffort: "low" };
   const good = {
+    model: "deepseek/deepseek-v4-flash",
+    small_model: "deepseek/deepseek-v4-flash",
     agent: {
       compaction: { options: { reasoningEffort: "low" } },
-      build: { model: "deepseek/deepseek-v4-flash" },
+      build: { model: "deepseek/deepseek-v4-flash", variant: "low" },
     },
   };
   assertOpenCodeServerConfig(good, { ...approved, compactionOptions: options });
+  // Eighth review P2-1: internal small-model calls, the default model and
+  // agent reasoning are pinned to the approval too.
+  for (const [config, pattern] of [
+    [
+      { ...good, small_model: "unapproved/expensive" },
+      /Unapproved small_model/,
+    ],
+    [{ ...good, small_model: undefined }, /Unapproved small_model/],
+    [{ ...good, model: "unapproved/expensive" }, /Unapproved default model/],
+    [
+      { ...good, agent: { ...good.agent, title: { variant: "high" } } },
+      /Unapproved agent variant \(title\)/,
+    ],
+    [
+      {
+        ...good,
+        agent: {
+          ...good.agent,
+          summary: { options: { reasoningEffort: "high" } },
+        },
+      },
+      /Unapproved agent options \(summary\)/,
+    ],
+  ])
+    assert.throws(
+      () =>
+        assertOpenCodeServerConfig(config, {
+          ...approved,
+          compactionOptions: options,
+        }),
+      pattern,
+    );
   assert.throws(
     () =>
       assertOpenCodeServerConfig(
@@ -170,6 +244,8 @@ test("server config: no agent may pin another model; the compaction override mus
             ...good.agent,
             compaction: { ...good.agent.compaction, model: "x/y" },
           },
+          model: good.model,
+          small_model: good.small_model,
         },
         { ...approved, compactionOptions: options },
       ),
@@ -178,7 +254,7 @@ test("server config: no agent may pin another model; the compaction override mus
   assert.throws(
     () =>
       assertOpenCodeServerConfig(
-        { agent: { general: { model: "anthropic/claude" } } },
+        { ...good, agent: { general: { model: "anthropic/claude" } } },
         { ...approved, compactionOptions: options },
       ),
     /Unapproved agent model/,
@@ -186,7 +262,7 @@ test("server config: no agent may pin another model; the compaction override mus
   assert.throws(
     () =>
       assertOpenCodeServerConfig(
-        { agent: {} },
+        { ...good, agent: {} },
         { ...approved, compactionOptions: options },
       ),
     /compaction reasoning/,
@@ -225,23 +301,46 @@ test("compaction reasoning: the approved variant's options, merged into the conf
     withCompactionOptions(
       JSON.stringify({
         instructions: ["/r.md"],
+        small_model: "unapproved/expensive",
+        model: "unapproved/other",
         agent: { build: { steps: 3 } },
       }),
       { reasoningEffort: "low" },
+      approved.model,
     ),
   );
+  // The approved model replaces any configured default and small model.
   assert.deepEqual(merged, {
     instructions: ["/r.md"],
+    small_model: approved.model,
+    model: approved.model,
     agent: {
       build: { steps: 3 },
       compaction: { options: { reasoningEffort: "low" } },
     },
   });
   assert.deepEqual(
-    JSON.parse(withCompactionOptions(undefined, { reasoningEffort: "low" })),
-    { agent: { compaction: { options: { reasoningEffort: "low" } } } },
+    JSON.parse(
+      withCompactionOptions(
+        undefined,
+        { reasoningEffort: "low" },
+        approved.model,
+      ),
+    ),
+    {
+      model: approved.model,
+      small_model: approved.model,
+      agent: { compaction: { options: { reasoningEffort: "low" } } },
+    },
   );
-  assert.throws(() => withCompactionOptions(undefined, {}), /options/);
+  assert.throws(
+    () => withCompactionOptions(undefined, {}, approved.model),
+    /options/,
+  );
+  assert.throws(
+    () => withCompactionOptions(undefined, { reasoningEffort: "low" }),
+    /approved model/,
+  );
 });
 
 const assistant = (fields) => ({

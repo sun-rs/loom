@@ -17,9 +17,24 @@
 //     `agent.compaction.options` into the real serve's config content.
 //   - Session create, abort, permission/question replies pass without model
 //     fields; every other mutation (command, shell, init, fork, config,
-//     tui, ...) is refused.
-//   - Before the proxy listens, the merged `GET /config` must show no agent
-//     pinned to another model and the compaction override in place.
+//     tui, ...) is refused. Session create must carry an explicit,
+//     non-default title: with a default title OpenCode 1.18.32 titles the
+//     session on its first user message through the small model
+//     (`SessionPrompt.ensureTitle` -> `Provider.getSmallModel`), an internal
+//     model call that never crosses this proxy (eighth review P2-1).
+//   - The real serve's config content pins `model` and `small_model` to the
+//     approved binding (overriding any configured value), and before the
+//     proxy listens the merged `GET /config` must show exactly those, no
+//     agent pinned to another model or variant, no reasoning options on any
+//     agent but the compaction override, and that override in place.
+//
+// Scope of "fail-closed": only the HTTP requests the product drivers send
+// pass through this proxy. Internal model calls OpenCode makes by itself
+// (title, summaries, subagents, plugins) are constrained only through the
+// pinned config above; small-model calls then use the approved model without
+// a variant. The post-hoc transcript fence (`assertOpenCodeAssistants`) only
+// DETECTS an unapproved model after the paid call happened; it never
+// prevents one, and title calls leave no stored assistant to audit.
 //
 // Warm drift runs also get a compaction gate: the drift runner asks the shim
 // (private Unix socket) to summarize the idle warm session; events of that
@@ -53,6 +68,8 @@ const PLAIN_POSTS = [
   /^\/question\/[^/]+\/reject$/u,
 ];
 const MODEL_FIELDS = ["model", "modelID", "providerID", "variant", "agent"];
+// OpenCode's generated default titles (`Session.isDefaultTitle`).
+const DEFAULT_TITLE = /^(?:New|Child) session - /u;
 const PROMPT_PARTS = new Set(["text", "file"]);
 
 const isRecord = (v) =>
@@ -115,6 +132,15 @@ export function createOpenCodeRequestGuard(approved) {
       for (const key of MODEL_FIELDS)
         if (body[key] !== undefined)
           throw new Error(`Unapproved model field ${key} on ${pathname}`);
+      if (
+        pathname === "/session" &&
+        (typeof body.title !== "string" ||
+          body.title.trim() === "" ||
+          DEFAULT_TITLE.test(body.title))
+      )
+        throw new Error(
+          "Unsupported session title (an explicit non-default title is required; a default title triggers an internal small-model call)",
+        );
       return;
     }
     throw new Error(`Unsupported gate request POST ${pathname}`);
@@ -156,16 +182,32 @@ export function classifyOpenCodeLaunch(args) {
 }
 
 export function assertOpenCodeServerConfig(config, approved) {
+  if (config?.small_model !== approved.model)
+    throw new Error(
+      `Unapproved small_model: ${String(config?.small_model ?? "unset")}`,
+    );
+  if (config?.model !== approved.model)
+    throw new Error(
+      `Unapproved default model: ${String(config?.model ?? "unset")}`,
+    );
   const agents = isRecord(config?.agent) ? config.agent : {};
-  for (const [name, agent] of Object.entries(agents))
-    if (
-      isRecord(agent) &&
-      agent.model !== undefined &&
-      agent.model !== approved.model
-    )
+  for (const [name, agent] of Object.entries(agents)) {
+    if (!isRecord(agent)) continue;
+    if (agent.model !== undefined && agent.model !== approved.model)
       throw new Error(
         `Unapproved agent model (${name}): ${String(agent.model)}`,
       );
+    if (agent.variant !== undefined && agent.variant !== approved.effort)
+      throw new Error(
+        `Unapproved agent variant (${name}): ${String(agent.variant)}`,
+      );
+    if (
+      name !== "compaction" &&
+      isRecord(agent.options) &&
+      Object.keys(agent.options).length
+    )
+      throw new Error(`Unapproved agent options (${name})`);
+  }
   const options = agents.compaction?.options;
   for (const [key, value] of Object.entries(approved.compactionOptions ?? {}))
     if (
@@ -204,9 +246,15 @@ export function openCodeVariantOptions(text, model, effort) {
   return options;
 }
 
-export function withCompactionOptions(content, options) {
+// The gate's served config: the approved model as the default and the small
+// model (eighth review P2-1), and the approved variant's options for the
+// compaction agent.
+export function withCompactionOptions(content, options, model) {
   if (!isRecord(options) || !Object.keys(options).length)
     throw new Error("Compaction reasoning options are required");
+  if (typeof model !== "string" || model === "")
+    throw new Error("The approved model is required for the served config");
+  parseOpenCodeBinding(model);
   const config = content ? JSON.parse(content) : {};
   if (!isRecord(config))
     throw new Error("OPENCODE_CONFIG_CONTENT is not an object");
@@ -214,6 +262,8 @@ export function withCompactionOptions(content, options) {
   const compaction = isRecord(agent.compaction) ? agent.compaction : {};
   return JSON.stringify({
     ...config,
+    model,
+    small_model: model,
     agent: {
       ...agent,
       compaction: {
@@ -491,6 +541,7 @@ export async function runGuardedOpenCode(executable, approved, options = {}) {
       OPENCODE_CONFIG_CONTENT: withCompactionOptions(
         process.env.OPENCODE_CONFIG_CONTENT,
         options.compactionOptions,
+        approved.model,
       ),
     };
   } catch (e) {

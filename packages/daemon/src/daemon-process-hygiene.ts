@@ -51,20 +51,24 @@ export function createDaemonRuntimeHygiene(
   };
 }
 
-/** The runtime adapter kinds whose Role instances run warm (each opt-in). */
+/**
+ * The runtime adapter kinds whose Role instances run warm. Codex and OpenCode
+ * are on by default since the eighth review (`enabled: false` opts out);
+ * Claude stays opt-in (`enabled: true`).
+ */
 export function warmRuntimeAdapterKinds(
   config: DaemonConfig["warmRuntimes"],
 ): ReadonlySet<string> {
   const kinds = new Set<string>();
-  if (config?.codex?.enabled === true) kinds.add("codex-app-server/v1");
+  if (config?.codex?.enabled !== false) kinds.add("codex-app-server/v1");
   if (config?.claude?.enabled === true) kinds.add("claude-stream-json/v1");
-  if (config?.opencode?.enabled === true) kinds.add("opencode-server/v1");
+  if (config?.opencode?.enabled !== false) kinds.add("opencode-server/v1");
   return kinds;
 }
 
 /**
- * S2-a: the Host's warm instance runtimes (Codex, S2-c1 Claude, S2-c3
- * OpenCode), when enabled.
+ * S2-a: the Host's warm instance runtimes (Codex and S2-c3 OpenCode by
+ * default, S2-c1 Claude when enabled).
  */
 export function createDaemonInstanceRuntimePool(input: {
   config: DaemonConfig["warmRuntimes"];

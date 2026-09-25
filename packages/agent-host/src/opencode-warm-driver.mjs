@@ -40,13 +40,17 @@
 // our id) and terminal tool states for the final-reply boundary. The prompt
 // is never resent. A gap makes `preemptedFollowUp` unknown.
 //
-// Abort barrier (seventh review P2-2): `POST /session/:id/abort` names only
-// the session, so an abort still in flight when the prompt answers could land
-// on the NEXT turn. The drain waits for every abort request of this turn to
-// be answered (each bounded by the request timeout); an abort whose outcome
-// stays unknown (timeout, lost connection) retires that `opencode serve`
-// before the drain, and the same session continues on a fresh server inside
-// this runtime. The prompt is never resent.
+// Abort barrier (seventh review P2-2, eighth review P1-1/P2-3):
+// `POST /session/:id/abort` names only the session, so an abort still in
+// flight could land on the NEXT turn. Every abort of this server/session
+// (a turn's cancel or final abort, and the idle abort of an unprompted run)
+// goes through one admission barrier: no turn is admitted while any abort is
+// unanswered (each bounded by the request timeout); an abort whose outcome
+// stays unknown (timeout, lost connection) keeps admission closed until that
+// `opencode serve` is retired with an exit proof, and the same session
+// continues on a fresh server inside this runtime. The prompt is never
+// resent. A retirement without an exit proof (or a failed restart) ends the
+// whole warm runtime; the Host/janitor termination proof takes over.
 //
 // Turn status: a Host stop is `interrupted`; otherwise any independent error
 // (a non-abort `session.error`, a failed answer) makes it `failed` with the
@@ -55,7 +59,8 @@
 // Busy input is refused in this slice (a prompt while the loop runs is
 // appended to the running loop, which would move its exit condition; not
 // verified). An unprompted run while idle (for example a background task) is
-// aborted and never attributed. Not done: the per-turn handle is not restated
+// aborted and never attributed; a turn.begin arriving meanwhile is held (not
+// sent) until that abort passes the barrier. Not done: the per-turn handle is not restated
 // after a native compaction; a turn that lost it cannot post, stays
 // unacknowledged and is retried with a new handle (S2 spec §3).
 import { spawn } from "node:child_process";
@@ -66,6 +71,7 @@ import { createInterface } from "node:readline";
 
 import { createOpenCodeFinalInterrupt } from "./opencode-final-interrupt.js";
 import { OpenCodeEventIdentityFilter } from "./opencode-event-identity.js";
+import { stopOpenCodeServer } from "./opencode-server-process.js";
 import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
 import {
   openCodeConfigContentWithInstructions,
@@ -116,6 +122,14 @@ let server;
 let sessionId;
 let active;
 let autonomous = false;
+/** One turn.begin held while the abort barrier is closed. */
+let deferredBegin;
+/** The one abort admission barrier (see the header). */
+const abortBarrier = {
+  pending: new Set(),
+  retiring: undefined,
+  unknown: false,
+};
 let shuttingDown = false;
 let eventController;
 let serverOutputTail = Buffer.alloc(0);
@@ -182,8 +196,15 @@ function beginTurn(command) {
   if (sessionId === undefined) return refuse("warm runtime is not ready");
   if (active !== undefined || shuttingDown)
     return refuse("warm runtime is not idle");
-  if (autonomous)
-    return refuse("warm runtime is ending an unattributed native run");
+  if (autonomous || abortBarrierClosed()) {
+    // Eighth review P1-1: held, never sent to a server that may still
+    // receive an unknown abort. The barrier passing sends it; a failed
+    // retirement ends the runtime (the Host's admission timeout and cancel
+    // prove termination either way).
+    if (deferredBegin !== undefined) return refuse("warm runtime is not idle");
+    deferredBegin = command;
+    return;
+  }
   let model;
   try {
     model = parseModel(command.model ?? options.model);
@@ -211,7 +232,6 @@ function beginTurn(command) {
 
 function createTurn(runAttemptId, text) {
   const turn = {
-    aborts: [],
     accepted: false,
     deliveryReported: false,
     errors: [],
@@ -242,7 +262,7 @@ function createTurn(runAttemptId, text) {
   turn.writer = new RuntimeTrajectoryWriter(writeFrame);
   turn.usageWriter = new ProviderUsageWriter(writeFrame);
   turn.finalInterrupt = createOpenCodeFinalInterrupt({
-    interrupt: async () => await turnAbort(turn),
+    interrupt: async () => await barrierAbort(),
     inFlightTools: async () =>
       runToolParts(
         trustedMessageList(await recentMessages()),
@@ -280,23 +300,59 @@ function interruptTurn(command) {
   const turn = active;
   if (turn === undefined || turn.runAttemptId !== command.runAttemptId) return;
   turn.stopRequested = true;
-  void turnAbort(turn).catch(() => undefined);
+  void barrierAbort().catch(() => undefined);
 }
 
 /**
- * An abort of this turn's run, remembered until answered: an HTTP answer
- * (even an error status) is a known outcome; a timeout or a lost connection
- * is not.
+ * An abort of the session's run, held by the admission barrier until
+ * answered: an HTTP answer (even an error status) is a known outcome; a
+ * timeout or a lost connection is not, and keeps the barrier closed until
+ * the server is retired.
  */
-function turnAbort(turn) {
+function barrierAbort() {
   const request = abortSession();
-  turn.aborts.push(
-    request.then(
-      () => "answered",
-      (error) => (error instanceof HttpError ? "answered" : "unknown"),
-    ),
+  const tracked = request.then(
+    () => "answered",
+    (error) => {
+      if (error instanceof HttpError) return "answered";
+      abortBarrier.unknown = true;
+      return "unknown";
+    },
   );
+  abortBarrier.pending.add(tracked);
+  void tracked.then(() => abortBarrier.pending.delete(tracked));
   return request;
+}
+
+function abortBarrierClosed() {
+  return (
+    abortBarrier.pending.size > 0 ||
+    abortBarrier.unknown ||
+    abortBarrier.retiring !== undefined
+  );
+}
+
+/**
+ * Waits until every abort is answered; after an unknown outcome retires the
+ * old server (exit proof) and resumes the session on a fresh one. Throws when
+ * that is impossible: the barrier then stays closed and the caller ends the
+ * runtime.
+ */
+async function passAbortBarrier() {
+  while (abortBarrier.pending.size > 0)
+    await Promise.all([...abortBarrier.pending]);
+  if (!abortBarrier.unknown) return;
+  abortBarrier.retiring ??= replaceServer().then(
+    () => {
+      abortBarrier.unknown = false;
+      abortBarrier.retiring = undefined;
+    },
+    (error) => {
+      abortBarrier.retiring = undefined;
+      throw error;
+    },
+  );
+  await abortBarrier.retiring;
 }
 
 function finalTurn(command) {
@@ -637,11 +693,21 @@ function idleEvent(event) {
       method: event.type.slice(0, 200),
       reason: "autonomous_turn",
     });
-    void abortSession()
-      .catch(() => undefined)
-      .finally(() => {
+    // Eighth review P1-1: the same barrier as a turn's aborts; admission
+    // stays closed until the outcome is known or the server is retired.
+    void barrierAbort().catch(() => undefined);
+    void passAbortBarrier().then(
+      () => {
         autonomous = false;
-      });
+        const held = deferredBegin;
+        deferredBegin = undefined;
+        if (held !== undefined) beginTurn(held);
+      },
+      (error) =>
+        fatal(
+          `an abort of an unprompted run has an unknown outcome and the server could not be retired: ${redact(errorMessage(error))}`,
+        ),
+    );
     return;
   }
   emit("unattributed", {
@@ -702,14 +768,12 @@ async function settleTurn(turn, response, error) {
     ]);
   if (!turn.idle)
     emit("unattributed", { method: "session.idle", reason: "missing_idle" });
-  // The next turn is admitted only after this turn's aborts are answered;
-  // an unknown outcome retires the server before the drain.
-  const abortOutcomes = await Promise.all(turn.aborts);
+  // The next turn is admitted only after every abort is answered; an
+  // unknown outcome retires the server (with an exit proof) before the drain.
   let replaceError;
-  if (abortOutcomes.includes("unknown"))
-    await replaceServer().catch((error) => {
-      replaceError = error;
-    });
+  await passAbortBarrier().catch((error) => {
+    replaceError = error;
+  });
   turn.settled = true;
   if (turn.finalEnded)
     turn.writer.emit(
@@ -1010,43 +1074,31 @@ async function shutdown(exitCode) {
   if (active !== undefined && sessionId !== undefined && server !== undefined)
     await Promise.race([abortSession().catch(() => undefined), delay(500)]);
   eventController?.abort();
-  await stopServer(server);
-  process.exit(exitCode);
-}
-
-async function stopServer(handle) {
-  if (
-    handle === undefined ||
-    handle.child.exitCode !== null ||
-    handle.child.signalCode !== null
-  )
-    return;
-  handle.child.kill("SIGTERM");
-  const terminated = await Promise.race([
-    handle.exited.then(() => true),
-    delay(SERVER_TERM_TIMEOUT_MS).then(() => false),
-  ]);
-  if (
-    !terminated &&
-    handle.child.exitCode === null &&
-    handle.child.signalCode === null
-  ) {
-    handle.child.kill("SIGKILL");
-    await Promise.race([handle.exited, delay(SERVER_TERM_TIMEOUT_MS)]);
-  }
+  let code = exitCode;
+  if (server !== undefined)
+    await stopOpenCodeServer(server, {
+      termTimeoutMs: SERVER_TERM_TIMEOUT_MS,
+    }).catch((error) => {
+      // The process group stays for the Host/janitor termination proof.
+      process.stderr.write(`[loom opencode-warm] ${errorMessage(error)}\n`);
+      code = 1;
+    });
+  process.exit(code);
 }
 
 /**
  * P2-2: an abort whose outcome is unknown may still land on the old server.
  * Retire that server (and its live bus) and continue the same session on a
  * fresh one before the next turn can be admitted; a missing session is never
- * replaced silently.
+ * replaced silently. Eighth review P2-3: no fresh server without the old
+ * one's exit proof (`stopOpenCodeServer` throws instead).
  */
 async function replaceServer() {
   const old = server;
   if (old !== undefined) old.retired = true;
   eventController?.abort();
-  await stopServer(old);
+  if (old !== undefined)
+    await stopOpenCodeServer(old, { termTimeoutMs: SERVER_TERM_TIMEOUT_MS });
   server = await startServer();
   await subscribeEvents();
   await requestJson(`/session/${encodeURIComponent(sessionId)}`);

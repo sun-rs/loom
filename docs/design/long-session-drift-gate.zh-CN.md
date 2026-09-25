@@ -60,11 +60,16 @@ OpenCode 用 `deepseek/deepseek-v4-flash` + `low`，只用于本 gate 的冒烟�
 - OpenCode：`drift-opencode-guard.mjs`。两个产品驱动都启动 `serve --pure --hostname 127.0.0.1 --port N`；守卫 shim
   把真实 serve 放到另一回环端口，自己监听 N 做 fail-closed 代理：`POST /session/:id/message|prompt_async` 必须
   恰好带许可 `model`（providerID/modelID）与 `variant`，禁止 agent 覆盖和 subtask/agent 部件；`POST
-/session/:id/summarize` 只许许可模型；建 session、abort、permission/question 回复不得带模型字段；其余一切
-  非 GET 请求（command、shell、init、fork、config、tui 等）拒绝。违规回 403 并关闭 CLI。代理开始监听前读合并后的
-  `GET /config`：任何 agent 固定到其他模型即拒绝启动。每轮结束后读 OpenCode 自己的 `opencode.db`（本 session 及其
-  子 session 本轮窗口内的 assistant 消息）做事后围栏：模型与 `variant` 必须等于许可值。CLI 只允许 `--version`、
-  `models [--verbose] [--pure]`（目录探针）与上述 serve。
+/session/:id/summarize` 只许许可模型；建 session、abort、permission/question 回复不得带模型字段；建 session
+  必须带非空、非默认（`New/Child session - …`）标题，避免 OpenCode 首条用户消息时经 small model 自动生成标题；其余一切
+  非 GET 请求（command、shell、init、fork、config、tui 等）拒绝。违规回 403 并关闭 CLI。真实 serve 的配置内容把
+  `model` 与 `small_model` 覆盖为许可模型；代理开始监听前读合并后的 `GET /config`：`model`/`small_model` 不等于许可值、
+  任何 agent 固定到其他模型或 variant、除 compaction 覆盖外任何 agent 带 reasoning `options`，即拒绝启动。每轮结束后读
+  OpenCode 自己的 `opencode.db`（本 session 及其子 session 本轮窗口内的 assistant 消息）做事后围栏：模型与 `variant`
+  必须等于许可值。CLI 只允许 `--version`、`models [--verbose] [--pure]`（目录探针）与上述 serve。
+- fail-closed 的范围（第八轮审查 P2-1）：只覆盖产品驱动经 HTTP 发出的请求。OpenCode 自己发起的内部模型调用（标题、
+  摘要、子 agent、插件）只能靠上面的固定配置约束，small model 调用因此使用许可模型但不带 variant；其他内部路径未逐一
+  证明。事后 transcript 围栏只能在付费调用发生后检出越权，不能阻止；标题调用不产生 assistant 消息，事后围栏看不到。
 - 压缩客户端发出的每条请求也先过同一校验器（Claude 压缩进程参数过 `classifyClaudeLaunch`）。
 
 ## 场景

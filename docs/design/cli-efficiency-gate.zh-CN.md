@@ -90,7 +90,7 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：所有 thread/s
 ## S2-a 热进程对照（Role 实例，Codex）
 
 `role-warm` 组与 `role`（每轮冷启动）组使用同一 Role 配置，只在隔离 gate daemon 的配置中打开
-`warmRuntimes.codex.enabled`（产品默认仍关闭）。默认组序不变；`RAH_EFFICIENCY_WARM=1` 时在末尾追加
+`warmRuntimes.codex.enabled`（2026-09-25 起产品默认开启 Codex 与 OpenCode 常驻，gate 的每轮组显式写 `codex/opencode.enabled: false`，热组只打开被测 CLI）。默认组序不变；`RAH_EFFICIENCY_WARM=1` 时在末尾追加
 `role-warm`，也可显式指定 `RAH_EFFICIENCY_ORDER=native,role,role-warm`（必须含 `native`、不得重复）。
 
 ```sh
@@ -125,7 +125,7 @@ node scripts/cli-efficiency/resume-probe.mjs --thread <thread-id> --repeat 3 [--
 
 ### S2-a 真实 Codex 冒烟须观察的项（需另行授权，未运行）
 
-依据 S2-a 独立审查（2026-09-24）的建议。冒烟只证明所列观察，不等于性能验收或正式启用；热模式仍默认关闭。
+依据 S2-a 独立审查（2026-09-24）的建议。冒烟只证明所列观察，不等于性能验收或正式启用；当时热模式默认关闭（2026-09-25 起 Codex/OpenCode 默认开启，见 status 第二十四节，效率验收仍未通过）。
 
 1. **按轮句柄**：第一轮真实 Worker 命令是否带 `--turn`；模型是否沿用常驻提示词的旧命令而出现
    `TURN_HANDLE_REQUIRED`。核对 scope 对应的频道/私聊、post 的因果 seq 与正文接受 SHA，不能只看有回复。
