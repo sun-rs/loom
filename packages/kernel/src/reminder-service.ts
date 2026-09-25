@@ -34,6 +34,7 @@ import type {
 import { requireRoomMember } from "./collaboration-policy.ts";
 import {
   activeInstancePrivateBoxPredicate,
+  isRoleInstance,
   requireInstanceReplyTarget,
 } from "./instance-worker-scope.ts";
 import {
@@ -125,7 +126,7 @@ export class ReminderService {
         ...presented,
         basedOnRoomSeq: presented.basedOnRoomSeq ?? scope.toSeq,
       };
-      const replay = this.#commandReplay(scope.participantId, input);
+      const replay = this.#commandReplay(scope, input);
       if (replay !== undefined) return replay;
       const anchor = this.#requireAnchor(
         scope,
@@ -194,7 +195,12 @@ export class ReminderService {
     const input = WorkerReminderListRequestSchema.parse(untrustedInput);
     const scope = this.#requireWorker(worker);
     const owner = this.#requireOwnerAgent(scope.participantId);
-    return this.#list(owner.agentId, input);
+    // A Role instance sees only the reminders of the room its turn runs in;
+    // legacy Agents keep their owner-wide list.
+    const roomId = isRoleInstance(this.#database, scope.participantId)
+      ? scope.roomId
+      : undefined;
+    return this.#list(owner.agentId, input, roomId);
   }
 
   cancel(
@@ -402,7 +408,7 @@ export class ReminderService {
   ): WorkerReminderMutationResponse {
     return this.#transaction(() => {
       const scope = this.#requireWorker(worker);
-      const replay = this.#commandReplay(scope.participantId, input);
+      const replay = this.#commandReplay(scope, input);
       if (replay !== undefined) return replay;
       const row = this.#requireOwnedReminder(scope, input.reminderId);
       const occurredAt = this.#now().toISOString();
@@ -489,6 +495,30 @@ export class ReminderService {
         const ownerParticipantId = text(reminderRow, "owner_participant_id");
         const anchorRoomId = text(reminderRow, "room_id");
         const targetRoomId = text(reminderRow, "target_room_id");
+        // Creation keeps a Role instance's reminder in its anchor room, but a
+        // reminder stored before that guard may still target another room.
+        // Firing it would publish private context there; it is a terminal
+        // refusal, and a repeating one must not be staged again.
+        if (
+          anchorRoomId !== targetRoomId &&
+          isRoleInstance(this.#database, ownerParticipantId)
+        ) {
+          const occurredAt = this.#now().toISOString();
+          this.#markReceipt(occurrenceId, "obsolete");
+          this.#database
+            .prepare(
+              "UPDATE reminders SET status = 'canceled', version = version + 1, updated_at = ? WHERE reminder_id = ?",
+            )
+            .run(occurredAt, reminderId);
+          this.#appendReminderEvent({
+            actorType: "system",
+            eventType: "canceled",
+            metadata: { reason: "instance_cross_room_target" },
+            occurredAt,
+            reminderId,
+          });
+          return "obsolete" as const;
+        }
         requireRoomMember(this.#database, targetRoomId, ownerParticipantId);
         // An inactive instance private box accepts no new work, and waiting
         // cannot reactivate it: the occurrence is obsolete, not retryable.
@@ -686,9 +716,10 @@ export class ReminderService {
   }
 
   #commandReplay(
-    ownerParticipantId: string,
+    scope: ActivationCredentialScope,
     input: unknown,
   ): WorkerReminderMutationResponse | undefined {
+    const ownerParticipantId = scope.participantId;
     const key = commandKey(input);
     const requestJson = JSON.stringify(input);
     const row = this.#database
@@ -712,10 +743,18 @@ export class ReminderService {
         "Reminder command receipt is missing its reminder identity",
       );
     }
-    return {
-      deduplicated: true,
-      reminder: this.#reminder(reminderId),
-    };
+    const reminder = this.#reminder(reminderId);
+    // A replay is still a read by the current caller: a Role instance's
+    // channel turn must not recover a private-turn reminder by its old key.
+    if (
+      reminder.roomId !== scope.roomId &&
+      isRoleInstance(this.#database, ownerParticipantId)
+    ) {
+      throw new ForbiddenError(
+        `Reminder ${reminderId} is outside this Worker execution scope`,
+      );
+    }
+    return { deduplicated: true, reminder };
   }
 
   #recordCommand(
@@ -926,6 +965,7 @@ export class ReminderService {
       status?: "scheduled" | "fired" | "canceled" | undefined;
       statuses?: ("scheduled" | "fired" | "canceled")[] | undefined;
     },
+    roomId?: string,
   ): Reminder[] {
     const statuses =
       input.status !== undefined
@@ -935,21 +975,22 @@ export class ReminderService {
           : input.all === true
             ? undefined
             : ["scheduled", "fired"];
-    const rows =
-      statuses === undefined
-        ? this.#database
-            .prepare(
-              `SELECT * FROM reminders WHERE owner_agent_id = ?
-               ORDER BY fire_at_ms, reminder_id`,
-            )
-            .all(agentId)
-        : this.#database
-            .prepare(
-              `SELECT * FROM reminders
-               WHERE owner_agent_id = ? AND status IN (${statuses.map(() => "?").join(", ")})
-               ORDER BY fire_at_ms, reminder_id`,
-            )
-            .all(agentId, ...statuses);
+    const filters = ["owner_agent_id = ?"];
+    const values: string[] = [agentId];
+    if (roomId !== undefined) {
+      filters.push("room_id = ?");
+      values.push(roomId);
+    }
+    if (statuses !== undefined) {
+      filters.push(`status IN (${statuses.map(() => "?").join(", ")})`);
+      values.push(...statuses);
+    }
+    const rows = this.#database
+      .prepare(
+        `SELECT * FROM reminders WHERE ${filters.join(" AND ")}
+         ORDER BY fire_at_ms, reminder_id`,
+      )
+      .all(...values);
     return rows.map((row) => reminderFromRow(row));
   }
 }

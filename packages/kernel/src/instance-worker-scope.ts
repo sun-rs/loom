@@ -28,18 +28,24 @@ export function requireInstanceWorkerRoom(
     );
 }
 
+export function isRoleInstance(
+  database: DatabaseSync,
+  participantId: string,
+): boolean {
+  return (
+    database
+      .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
+      .get(participantId) !== undefined
+  );
+}
+
 export function requireInstanceReplyTarget(
   database: DatabaseSync,
   participantId: string,
   originRoomId: string,
   targetRoomId: string,
 ) {
-  if (
-    originRoomId !== targetRoomId &&
-    database
-      .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
-      .get(participantId)
-  )
+  if (originRoomId !== targetRoomId && isRoleInstance(database, participantId))
     throw new ForbiddenError(
       "Instance reply must stay in its active execution target",
     );

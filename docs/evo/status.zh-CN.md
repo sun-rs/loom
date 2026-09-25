@@ -440,6 +440,28 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 
 检查：`npm run check`、`npm run format:check`、`git diff --check` 通过。
 
+6. 审查修复（依据 Codex S3 审查 `~/.loom/reviews/2026-09-26-s3-review.md` 的 P1-1、P1-2、P2-1，负责人批准）。先写失败测试并确认失败，再最小实现；没有运行付费 CLI，没有重启服务，没有改前端。上面第 1 条“私聊提醒不进频道”只修了创建入口，列表、幂等重放和升级前的存量在本条补上。
+   - P1-1 提醒列表与幂等重放：原先频道轮 `reminders/list`（默认、`all`、`canceled`）会返回同实例私聊轮建的提醒，用私聊轮原来的幂等键重放 cancel/update/snooze/schedule 会返回 `deduplicated:true` 和整条私聊提醒。现在 Role 实例的 Worker 列表只返回本 Activation 房间（提醒的锚点房间）的提醒；四种修改的 receipt 重放在返回前按当前执行房间重新校验，跨房间一律报 `outside this Worker execution scope`，且不改提醒。旧式 Agent 的列表和重放不变。测试 `packages/kernel/test/instance-reminder-scope.test.ts`，schedule 重放显式带原 `basedOnRoomSeq`，确保被拒是因为执行范围，而不是幂等冲突。
+   - P1-2 升级前的跨房间提醒：`#deliverOccurrence` 在投递事务里再检查一次 Role 实例提醒的锚点房间是否等于目标房间。不相等时这次 occurrence 标为 `obsolete`（终态，不重试），提醒改为 `canceled`，重复提醒因此不会再排期；只在提醒自己的日志里记一条 `canceled`（`reason: instance_cross_room_target`），不写 Room 事件，不派生 Inbox/Activation。旧式 Agent 的合法跨房间提醒照常触发（`reminder-service.test.ts` 原有测试仍通过）。测试用临时库重建父版本允许的存量（单次与 `every:15m` 两种），断言没有 `reminder.fired`、两房间序号不变、Inbox 和 Activation 数量不变，后续 reconcile 也不再排期。
+   - 存量检查（只读，不改正式库）：`sqlite3 -readonly "file:$HOME/.loom/evo/state/room.db?mode=ro"` 执行以下两条。第一条列出还会被新守卫取消的存量，第二条列出升级前已经泄漏过的历史触发：
+     ```sql
+     SELECT r.reminder_id, r.status, r.room_id, r.target_room_id, r.repeat_rule, r.fire_at
+     FROM reminders r JOIN role_instances i ON i.instance_id = r.owner_participant_id
+     WHERE r.room_id <> r.target_room_id;
+     SELECT e.room_id, e.room_seq, e.aggregate_id
+     FROM room_events e JOIN reminders r ON r.reminder_id = e.aggregate_id
+     JOIN role_instances i ON i.instance_id = r.owner_participant_id
+     WHERE e.type = 'reminder.fired' AND e.room_id <> r.room_id;
+     ```
+     2026-09-26 在正式 evo 库只读执行了一次：两条都没有返回行，`reminders` 和 `role_instances` 当前都是 0 行，所以正式库没有存量要处理。这是当时的结果，不代表以后。
+   - P2-1 Role 热路径组合验收：新增 `packages/agent-host/test/role-warm-hot-path.test.ts`（fake Codex 热进程，免费）。流程从真实的 `roles.instantiate` 开始，经过 AgentHost 的 Kernel placement 认领路径；适配器由生产注册表 `createWarmRuntime` 按每次认领新建，用生产的 ProviderSessionStore 和运行时键，Worker HTTP API 也是真实的。验证内容：
+     - 频道轮进行中私聊排队：只有一个运行中的 RunAttempt，Kernel 不再发出第二个 placement，私聊也不 steer 频道轮。
+     - 频道、私聊、频道三轮共用一个进程、一个原生线程和同一 `instance_runtime_id`，执行模式依次为 cold/warm/warm。
+     - 每轮 scope 是自己 Activation 的房间与区间，turn 凭据互不相同，Worker CLI 调用都被接受。
+     - Human reset 后，旧运行时被终止、不再复用，下一轮冷启动新进程和新会话，没有 resume。
+       该测试首次运行即通过（这是验收，不是行为修复）。为确认断言有效，临时去掉生产运行时键里的会话代数：reset 断言按预期失败，改动随后已还原。
+   - 验收边界更新：第 2 条所说“热路径 harness 仍用旧式 Agent”的缺口，现在由 Codex 的 Role 热路径组合测试补上。仍然不证明真实 Codex 协议，也不证明 Claude/Kimi/OpenCode 的 Role 热路径。同一 session 会记得私聊内容，这不是内容防泄漏沙箱；现在能承诺的只有工具与 API 的权限和投递范围。“忙时移除实例被拒”仍是暂时限制，不算生命周期验收通过：控制台提供移除操作之前，必须补上安全停止/取消，或者明确展示拒绝原因和清理路径。控制台仍不存在。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
