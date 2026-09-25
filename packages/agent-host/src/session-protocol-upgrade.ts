@@ -11,7 +11,7 @@ export const RAH_PROTOCOL_NOTICE_ENV = "RAH_PROTOCOL_NOTICE";
 
 const LIMIT = 64;
 
-type Pending = {
+export type SessionProtocolPending = {
   /** RunAttempts whose wake carried the notice line. */
   carried: Set<string>;
   generation: number | undefined;
@@ -19,6 +19,21 @@ type Pending = {
   sessionId: string;
   version: string;
 };
+
+/**
+ * The pending update per participant and the version its latest launch
+ * received. Review batch 1 #6: a warm runtime outlives the per-claim adapter,
+ * so the warm composition keeps this with the pool that keeps the runtime
+ * (`InstanceRuntimePool.shared`); each cold start's `prepare` resets it.
+ */
+export type SessionProtocolState = {
+  pending: Map<string, SessionProtocolPending>;
+  versions: Map<string, string>;
+};
+
+export function createSessionProtocolState(): SessionProtocolState {
+  return { pending: new Map(), versions: new Map() };
+}
 
 /**
  * P2-3 (2026-09-25 review): a resumed Role-instance session keeps the standing
@@ -36,11 +51,16 @@ type Pending = {
  */
 export class SessionProtocolUpgrade {
   readonly #store: ProviderSessionStore | undefined;
-  readonly #pending = new Map<string, Pending>();
-  readonly #versions = new Map<string, string>();
+  readonly #pending: Map<string, SessionProtocolPending>;
+  readonly #versions: Map<string, string>;
 
-  constructor(store: ProviderSessionStore | undefined) {
+  constructor(
+    store: ProviderSessionStore | undefined,
+    state: SessionProtocolState = createSessionProtocolState(),
+  ) {
     this.#store = store;
+    this.#pending = state.pending;
+    this.#versions = state.versions;
   }
 
   /**

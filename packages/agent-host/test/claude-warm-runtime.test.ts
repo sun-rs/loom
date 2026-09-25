@@ -824,6 +824,26 @@ test("the registry builds the warm Claude adapter for claude-stream-json/v1 and 
     );
     assert.equal(adapter.guideRuntimeId, "claude");
     assert.equal(adapter.busyInputMode, "direct");
+    // Review batch 1 #6: a second claim's adapter over the same pool reuses
+    // the launch state the pool keeps (one object per driver, not per claim).
+    const shared: unknown[] = [];
+    const share = pool.shared.bind(pool);
+    pool.shared = <T>(key: string, create: () => T): T => {
+      const value = share(key, create);
+      shared.push(value);
+      return value;
+    };
+    for (let claim = 0; claim < 2; claim += 1)
+      implementations.createWarmRuntime(
+        active,
+        report,
+        { cwd: directory },
+        warm,
+        undefined,
+        "full_access",
+      );
+    assert.equal(shared.length, 2);
+    assert.equal(shared[0], shared[1]);
     const kimi = profiles.importManifest(manifest("kimi-acp/v1"));
     assert.throws(
       () =>

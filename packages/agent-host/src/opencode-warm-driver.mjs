@@ -70,7 +70,11 @@ import { createServer } from "node:net";
 import { createInterface } from "node:readline";
 
 import { createOpenCodeFinalInterrupt } from "./opencode-final-interrupt.js";
-import { OpenCodeEventIdentityFilter } from "./opencode-event-identity.js";
+import {
+  isContextOverflowEvent,
+  OpenCodeChildSessions,
+  OpenCodeEventIdentityFilter,
+} from "./opencode-event-identity.js";
 import { stopOpenCodeServer } from "./opencode-server-process.js";
 import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
 import {
@@ -120,6 +124,7 @@ const options = parseArguments(
 let frameSequence = 0;
 let server;
 let sessionId;
+const childSessions = new OpenCodeChildSessions();
 let active;
 let autonomous = false;
 /** One turn.begin held while the abort barrier is closed. */
@@ -508,6 +513,13 @@ async function consumeSse(body, controller) {
 async function handleEvent(event) {
   if (!isRecord(event) || typeof event.type !== "string") return;
   const properties = record(event.properties);
+  childSessions.observe(event, sessionId);
+  // A subagent's request is answered by the parent session's rule.
+  if (
+    (event.type === "permission.asked" || event.type === "question.asked") &&
+    childSessions.has(properties.sessionID)
+  )
+    return await answerRequest(event, active);
   const ids = [
     properties.sessionID,
     record(properties.info).sessionID,
@@ -540,6 +552,8 @@ async function handleEvent(event) {
     if (abortError && (turn.stopRequested || turn.finalInterrupt.issued))
       return;
     turn.writer.emit(normalizeOpenCodeTrajectoryEvent(event, sessionId));
+    // Recovered by auto-compaction; a real failure reaches the answer.
+    if (isContextOverflowEvent(properties)) return;
     turn.errors.push(message);
     return;
   }

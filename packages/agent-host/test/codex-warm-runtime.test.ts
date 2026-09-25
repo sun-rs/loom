@@ -21,10 +21,15 @@ import {
   CodexWarmAdapter,
   createKernelAgentHostControlPort,
   createSystemProcessTable,
+  createSessionProtocolState,
   InstanceRuntimePool,
   LeftoverProcessSweeper,
+  protocolUpdateNotice,
+  ProviderSessionStore,
   renderBodiedWake,
+  SessionProtocolUpgrade,
   RuntimeProcessHygiene,
+  type ActivationEnvelope,
   type RuntimeAdapter,
   type WarmRuntimePolicyOverrides,
   type CodexWarmAdapterOptions,
@@ -53,6 +58,20 @@ async function harness(
     policy?: WarmRuntimePolicyOverrides;
     protocolNotice?: CodexWarmAdapterOptions["protocolNotice"];
     acceptSessionProtocol?: CodexWarmAdapterOptions["acceptSessionProtocol"];
+    /**
+     * Review batch 1 #6: like the production placement resolver, a new
+     * adapter for every claim over the one shared pool. `perAdapter` adds
+     * options built for each adapter (e.g. its own SessionProtocolUpgrade).
+     */
+    adapterPerClaim?: boolean;
+    runtimeStartTimeoutMs?: number;
+    /** Every turn takes the per-turn path (warm runtimes switched off). */
+    coldOnly?: () => boolean;
+    /** AgentHost receives the pool as its instance runtime lifecycle. */
+    hostPool?: boolean;
+    perAdapter?: (
+      pool: InstanceRuntimePool,
+    ) => Partial<CodexWarmAdapterOptions>;
   } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-codex-"));
@@ -128,61 +147,67 @@ async function harness(
         throw new Error("unused");
       },
     };
-    const adapter = new CodexWarmAdapter({
-      cwd: directory,
-      driverArgs: [
-        "--executable",
-        executable,
-        "--tool-access-mode",
-        "full_access",
-        "--prompt",
-        "FAKE standing prompt for the warm runtime test",
-      ],
-      env: {
-        FAKE_CODEX_RECORD_PATH: recordPath,
-        FAKE_CODEX_STATE_DIR: stateDirectory,
-      },
-      ...(options.interruptQuiesceTimeoutMs === undefined
-        ? {}
-        : { interruptQuiesceTimeoutMs: options.interruptQuiesceTimeoutMs }),
-      isWarm: () => true,
-      ...(options.protocolNotice === undefined
-        ? {}
-        : { protocolNotice: options.protocolNotice }),
-      ...(options.acceptSessionProtocol === undefined
-        ? {}
-        : { acceptSessionProtocol: options.acceptSessionProtocol }),
-      issueWorkerCredential: async (input) =>
-        worker.issueActivationCredential(host, input),
-      legacy,
-      pool,
-      recordProviderSessionEvidence: (input, evidence) => {
-        if (options.failBinding === true)
-          throw new Error("FAKE binding store unavailable");
-        turnStartsAtBinding.push(
-          readRecords().filter(
-            (record) =>
-              record.event === "request" && record.method === "turn/start",
-          ).length,
-        );
-        sessions.set(input.participantId, evidence.providerSessionId);
-      },
-      renderWake: async (input) =>
-        await renderBodiedWake({
-          env: input.env,
-          participantId: input.participantId,
-          turnHandle: input.turnHandle,
-        }),
-      runtimeEnvironment: async (input) => {
-        const previous = sessions.get(input.participantId);
-        return {
-          args: previous === undefined ? [] : ["--resume-session", previous],
-          env: {},
-        };
-      },
-      runtimeKey: () => "fake-key",
-      workerApiOrigin: worker.origin,
-    });
+    const createAdapter = () =>
+      new CodexWarmAdapter({
+        cwd: directory,
+        driverArgs: [
+          "--executable",
+          executable,
+          "--tool-access-mode",
+          "full_access",
+          "--prompt",
+          "FAKE standing prompt for the warm runtime test",
+        ],
+        env: {
+          FAKE_CODEX_RECORD_PATH: recordPath,
+          FAKE_CODEX_STATE_DIR: stateDirectory,
+        },
+        ...(options.interruptQuiesceTimeoutMs === undefined
+          ? {}
+          : { interruptQuiesceTimeoutMs: options.interruptQuiesceTimeoutMs }),
+        isWarm: () => options.coldOnly?.() !== true,
+        ...(options.protocolNotice === undefined
+          ? {}
+          : { protocolNotice: options.protocolNotice }),
+        ...(options.acceptSessionProtocol === undefined
+          ? {}
+          : { acceptSessionProtocol: options.acceptSessionProtocol }),
+        issueWorkerCredential: async (input) =>
+          worker.issueActivationCredential(host, input),
+        legacy,
+        pool,
+        recordProviderSessionEvidence: (input, evidence) => {
+          if (options.failBinding === true)
+            throw new Error("FAKE binding store unavailable");
+          turnStartsAtBinding.push(
+            readRecords().filter(
+              (record) =>
+                record.event === "request" && record.method === "turn/start",
+            ).length,
+          );
+          sessions.set(input.participantId, evidence.providerSessionId);
+        },
+        renderWake: async (input) =>
+          await renderBodiedWake({
+            env: input.env,
+            participantId: input.participantId,
+            turnHandle: input.turnHandle,
+          }),
+        runtimeEnvironment: async (input) => {
+          const previous = sessions.get(input.participantId);
+          return {
+            args: previous === undefined ? [] : ["--resume-session", previous],
+            env: {},
+          };
+        },
+        runtimeKey: () => "fake-key",
+        workerApiOrigin: worker.origin,
+        ...options.perAdapter?.(pool),
+      });
+    const adapter: RuntimeAdapter =
+      options.adapterPerClaim === true
+        ? perClaimAdapter(createAdapter)
+        : createAdapter();
     const agentHost = new AgentHost({
       drainTimeoutMs: 300,
       guideEnabled: () => true,
@@ -191,8 +216,12 @@ async function harness(
       leaseMs: 30_000,
       pollIntervalMs: 20,
       ...(options.hostHygiene === true ? { processHygiene: hygiene } : {}),
+      ...(options.hostPool === true ? { instanceRuntimePool: pool } : {}),
       retryAfterMs: 0,
       runtime: adapter,
+      ...(options.runtimeStartTimeoutMs === undefined
+        ? {}
+        : { runtimeStartTimeoutMs: options.runtimeStartTimeoutMs }),
     });
     return { adapter, agentHost, control, host, pool };
   };
@@ -261,6 +290,44 @@ async function harness(
       rmSync(socketRoot, { force: true, recursive: true });
       rmSync(directory, { force: true, recursive: true });
     },
+  };
+}
+
+/**
+ * The production placement path's adapter lifetime: every claim resolves a
+ * fresh adapter; later calls for that RunAttempt reach the one that started it.
+ */
+function perClaimAdapter(create: () => CodexWarmAdapter): RuntimeAdapter {
+  const byRun = new Map<string, CodexWarmAdapter>();
+  const byAttempt = new Map<string, CodexWarmAdapter>();
+  const first = create();
+  const of = (runId: string) => byRun.get(runId) ?? first;
+  return {
+    busyInputMode: first.busyInputMode,
+    busyInputSupported: first.busyInputSupported,
+    guideRuntimeId: first.guideRuntimeId,
+    recoveryDrivers: first.recoveryDrivers,
+    probe: async () => await first.probe(),
+    async start(input, lifecycle) {
+      const adapter = create();
+      byAttempt.set(input.runAttemptId, adapter);
+      const handle = await adapter.start(input, lifecycle);
+      byRun.set(handle.runId, adapter);
+      return handle;
+    },
+    reap: async (run) => await of(run.runId).reap(run),
+    cancel: async (run) => await of(run.runId).cancel(run),
+    isAlive: async (run) => await of(run.runId).isAlive(run),
+    notifyBusy: async (run, notice) =>
+      await of(run.runId).notifyBusy(run, notice),
+    interruptAfterFinalReply: async (run) =>
+      await of(run.runId).interruptAfterFinalReply(run),
+    acceptSessionProtocol: async (input) =>
+      await (byAttempt.get(input.runAttemptId) ?? first).acceptSessionProtocol(
+        input,
+      ),
+    releaseTurn: async (input) =>
+      await (byAttempt.get(input.runAttemptId) ?? first).releaseTurn(input),
   };
 }
 
@@ -647,6 +714,12 @@ test("an unloaded thread is resumed by id in the same process, never replaced", 
       (resume!.params as { threadId: string }).threadId,
       (turns[0]!.params as { threadId: string }).threadId,
     );
+    // Review batch 1 #1: a never-rotated session only grows; full turn
+    // hydration of a long thread exceeds the 16 MiB frame limit.
+    assert.equal(
+      (resume!.params as { excludeTurns?: unknown }).excludeTurns,
+      true,
+    );
   } finally {
     await state.cleanup();
   }
@@ -763,6 +836,11 @@ test("a crash while idle is recorded; the next message cold-starts and resumes t
         record.event === "request" && record.method === "thread/resume",
     );
     assert.ok(resume, "the cold start resumed the recorded thread");
+    assert.equal(
+      (resume.params as { excludeTurns?: unknown }).excludeTurns,
+      true,
+      "the warm cold-start resume never hydrates the whole thread",
+    );
     const turns = records.filter(
       (record) => record.event === "request" && record.method === "turn/start",
     );
@@ -1355,6 +1433,323 @@ test("S2-b stall: past the retry budget the Activation is held for the Human ins
     assert.match(String(activation!.last_error), /retry budget is exhausted/u);
   } finally {
     await state.cleanup();
+  }
+});
+
+test("review batch 1 #2: a start that outlives the Host deadline during cold start leaves the lane usable; the retry runs warm", async () => {
+  let slowLaunches = 1;
+  const state = await harness({
+    runtimeStartTimeoutMs: 300,
+    perAdapter: () => ({
+      runtimeEnvironment: async () => {
+        if (slowLaunches > 0) {
+          slowLaunches -= 1;
+          await new Promise((resolve) => setTimeout(resolve, 900));
+        }
+        return { env: {} };
+      },
+    }),
+  });
+  try {
+    state.post("[fake:ack] please answer");
+    const first = await state.current.agentHost.reconcileOnce();
+    assert.equal(first.state, "failed", JSON.stringify(first));
+    assert.match(String(first.error), /timed out/u);
+    // The abandoned cold start finishes in the background.
+    await waitFor(
+      () => state.records().some((record) => record.event === "start"),
+      "the late cold start",
+    );
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    const retried = await state.current.agentHost.reconcileOnce();
+    assert.equal(retried.state, "completed", JSON.stringify(retried));
+    const records = state.records();
+    assert.equal(
+      records.filter((record) => record.event === "start").length,
+      1,
+      "the retry reused the process the abandoned start left idle",
+    );
+    assert.equal(
+      records.filter(
+        (record) =>
+          record.event === "request" && record.method === "turn/start",
+      ).length,
+      1,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #2: a start abandoned by the Host after its turn was prepared never sends the turn input", async () => {
+  let slowWakes = 1;
+  const state = await harness({
+    runtimeStartTimeoutMs: 1_500,
+    perAdapter: () => ({
+      renderWake: async (input) => {
+        if (slowWakes > 0) {
+          slowWakes -= 1;
+          await new Promise((resolve) => setTimeout(resolve, 2_000));
+        }
+        return await renderBodiedWake({
+          env: input.env,
+          participantId: input.participantId,
+          turnHandle: input.turnHandle,
+        });
+      },
+    }),
+  });
+  try {
+    state.post("[fake:ack] please answer");
+    const first = await state.current.agentHost.reconcileOnce();
+    assert.notEqual(first.state, "completed", JSON.stringify(first));
+    // The abandoned start resumes after its slow wake: it must not send.
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    assert.equal(
+      state
+        .records()
+        .filter(
+          (record) =>
+            record.event === "request" && record.method === "turn/start",
+        ).length,
+      0,
+      "no native turn for an attempt the Host already ended",
+    );
+    const retried = await state.current.agentHost.reconcileOnce();
+    assert.equal(retried.state, "completed", JSON.stringify(retried));
+    assert.equal(
+      state.records().filter((record) => record.event === "start").length,
+      1,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #3: a runtime the Kernel turned suspect mid-turn is ended with proof; the next message cold starts and resumes the same thread", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:steer-wait] please answer");
+    const running = state.current.agentHost.reconcileOnce();
+    const turn = await waitFor(
+      () => state.records().find((record) => record.event === "turn"),
+      "the running turn",
+    );
+    // Kernel: the turn's execution record is orphaned (lease expiry while
+    // the Mac slept); its trigger turns the busy runtime row suspect.
+    const database = new DatabaseSync(state.databasePath);
+    try {
+      database
+        .prepare(
+          "UPDATE runtime_processes SET state = 'orphaned', updated_at = ? WHERE state <> 'terminated'",
+        )
+        .run(new Date().toISOString());
+    } finally {
+      database.close();
+    }
+    assert.equal(
+      sql(state, "SELECT state FROM instance_runtimes")[0]!.state,
+      "suspect",
+    );
+    await running;
+    const firstPid = turn.pid as number;
+    await waitFor(() => !alive(firstPid), "the suspect runtime to be killed");
+    const [ended] = sql(
+      state,
+      "SELECT state, terminated_reason FROM instance_runtimes ORDER BY started_at LIMIT 1",
+    );
+    assert.equal(ended!.state, "terminated");
+    // The orphaned first attempt is resolved by the Kernel (its quarantine
+    // may absorb this message); whichever Activation runs next must start a
+    // new process that resumes the recorded thread.
+    state.post("[fake:ack] next question");
+    let next = await state.current.agentHost.reconcileOnce();
+    for (let poll = 0; poll < 40 && next.state === "idle"; poll += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      next = await state.current.agentHost.reconcileOnce();
+    }
+    assert.equal(next.state, "completed", JSON.stringify(next));
+    const records = state.records();
+    const starts = records.filter((record) => record.event === "start");
+    assert.equal(starts.length, 2, "a new process after the proven exit");
+    const threadStart = records.find(
+      (record) =>
+        record.event === "request" && record.method === "thread/start",
+    );
+    const resume = records.find(
+      (record) =>
+        record.event === "request" && record.method === "thread/resume",
+    );
+    assert.ok(resume, "the cold start resumed the recorded thread");
+    const turnStarts = records.filter(
+      (record) => record.event === "request" && record.method === "turn/start",
+    );
+    assert.equal(
+      (turnStarts.at(-1)!.params as { threadId: string }).threadId,
+      (turnStarts[0]!.params as { threadId: string }).threadId,
+      "never a replacement session",
+    );
+    assert.ok(threadStart);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #7: with warm runtimes switched off, a per-turn start is refused while an older runtime row cannot be proven gone", async () => {
+  let coldOnly = false;
+  const state = await harness({ coldOnly: () => coldOnly, hostPool: true });
+  try {
+    state.post("[fake:ack] warm up");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    await state.current.pool.shutdown();
+    // A crashed Host's live runtime row whose process cannot be told apart
+    // from a reused pid (a live pid, no recorded birth time); the owner then
+    // switched warm runtimes off.
+    const database = new DatabaseSync(state.databasePath);
+    try {
+      database
+        .prepare(
+          `UPDATE instance_runtimes SET state = 'idle', pid = ?, pgid = ?,
+             process_started_at = NULL, terminated_reason = NULL,
+             terminated_at = NULL, exit_code = NULL, exit_signal = NULL`,
+        )
+        .run(process.pid, process.pid);
+    } finally {
+      database.close();
+    }
+    coldOnly = true;
+    state.restartHost();
+    state.post("[fake:ack] cold question");
+    const refused = await state.current.agentHost.reconcileOnce();
+    assert.equal(refused.state, "failed", JSON.stringify(refused));
+    assert.match(String(refused.error), /not proven terminated/u);
+    assert.doesNotMatch(
+      String(refused.error),
+      /per-turn path/u,
+      "the per-turn runtime never started beside the unproven one",
+    );
+    assert.equal(
+      sql(state, "SELECT state FROM instance_runtimes")[0]!.state,
+      "idle",
+      "an unproven row is never recorded ended",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #6: with a new adapter per claim (production resolver) the stall retry budget still holds across attempts", async () => {
+  const state = await harness({ adapterPerClaim: true, policy: STALL_POLICY });
+  try {
+    state.post("[fake:hang] please answer");
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      const running = state.current.agentHost.reconcileOnce();
+      await waitFor(
+        () =>
+          state.records().filter((record) => record.event === "turn").length ===
+          attempt,
+        `hanging turn ${String(attempt)}`,
+      );
+      assert.equal((await advanceUntilSettled(state, running)).state, "failed");
+    }
+    const [activation] = sql(
+      state,
+      "SELECT state, last_error FROM activations",
+    );
+    assert.equal(activation!.state, "quarantined");
+    assert.match(String(activation!.last_error), /retry budget is exhausted/u);
+    assert.equal(
+      state.records().filter((record) => record.event === "start").length,
+      1,
+      "both attempts ran on the one pooled process",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #6: with a new adapter per claim the pending protocol line is carried by the warm retry and accepted by it", async () => {
+  const storeDirectory = mkdtempSync(join(tmpdir(), "rah-warm-protocol-"));
+  chmodSync(storeDirectory, 0o700);
+  const store = new ProviderSessionStore({ rootDirectory: storeDirectory });
+  const key = {
+    participantId: "instance-protocol",
+    provider: "codex-app-server/v1",
+    runtimeProfileRevisionId: "runtime-profile-revision",
+    workspaceMountRevisionId: "workspace-mount-revision",
+  };
+  const binding = { instance: true, instanceGeneration: 0 };
+  await store.record(key, "session-protocol", {
+    ...binding,
+    standingProtocolVersion: "p1",
+  });
+  // The registry's composition: one SessionProtocolUpgrade per adapter over
+  // the state the pool shares.
+  const asInstance = (input: ActivationEnvelope) =>
+    ({
+      ...input,
+      agent: {
+        ...input.agent,
+        instanceChannelId: "channel-protocol",
+        instanceSessionGeneration: 0,
+      },
+    }) as ActivationEnvelope;
+  const state = await harness({
+    adapterPerClaim: true,
+    policy: STALL_POLICY,
+    perAdapter: (pool) => {
+      const upgrade = new SessionProtocolUpgrade(
+        store,
+        pool.shared("session-protocol:test", createSessionProtocolState),
+      );
+      return {
+        acceptSessionProtocol: async (input) => await upgrade.accept(input),
+        protocolNotice: (input) => upgrade.noticeFor(input),
+        runtimeEnvironment: async (input) => {
+          const lease = { env: {}, standingProtocolVersion: "p2" };
+          upgrade.prepare(
+            asInstance(input),
+            lease,
+            key,
+            await store.load(key, binding),
+          );
+          return lease;
+        },
+      };
+    },
+  });
+  try {
+    state.post("[fake:hang-once] [fake:ack] please answer");
+    const running = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () => state.records().find((record) => record.event === "turn"),
+      "the hanging turn",
+    );
+    assert.equal((await advanceUntilSettled(state, running)).state, "failed");
+    const retried = await state.current.agentHost.reconcileOnce();
+    assert.equal(retried.state, "completed", JSON.stringify(retried));
+    const texts = state
+      .records()
+      .filter(
+        (record) =>
+          record.event === "request" && record.method === "turn/start",
+      )
+      .map((record) => JSON.stringify(record.params));
+    assert.equal(texts.length, 2);
+    const line = JSON.stringify(protocolUpdateNotice("p2")).slice(1, -1);
+    assert.ok(texts[0]!.includes(line), "the first attempt carried the line");
+    assert.ok(texts[1]!.includes(line), "the warm retry still carries it");
+    assert.equal(
+      (await store.load(key, binding))?.standingProtocolVersion,
+      "p2",
+      "the completed retry accepted the update",
+    );
+  } finally {
+    await state.cleanup();
+    rmSync(storeDirectory, { force: true, recursive: true });
   }
 });
 

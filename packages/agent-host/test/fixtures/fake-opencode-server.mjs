@@ -35,7 +35,15 @@
 // is published during the run, which then goes on), autonomous (after the
 // prompt answered, the session goes busy on its own once per FAKE_RECORD
 // directory, as a background task would, after FAKE_AUTONOMOUS_MS, default
-// 300). FAKE_SCRIPT (comma separated) gives one scenario
+// 300), overflow (after the tool step the provider reports a context
+// overflow: `session.error` ContextOverflowError is published, then — as
+// 1.18.32 `SessionProcessor.halt` does with auto-compaction on — the session
+// compacts and the run goes on; only `compaction.auto === false` would put
+// the error on the assistant), childperm (the tool step starts a subagent:
+// `session.created` of a child session whose `parentID` is this session,
+// then that child's `permission.asked`; the tool waits up to
+// FAKE_PERMISSION_WAIT_MS, default 2000, for the reply and fails the step
+// with an error when none arrives). FAKE_SCRIPT (comma separated) gives one scenario
 // per prompt. FAKE_RECORD (jsonl) records requests and model steps.
 // FAKE_TOOL_COMMAND replaces the derived Worker command. FAKE_FOLLOW_UP_MS
 // bounds the wait for an abort before the post-reply generation (default 300).
@@ -94,6 +102,7 @@ let promptIndex = 0;
 let idSequence = 0;
 const streams = new Set();
 const sessions = new Map();
+const permissionReplies = new Map();
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const nextId = (prefix) =>
   `${prefix}_fake${String((idSequence += 1)).padStart(6, "0")}`;
@@ -351,6 +360,36 @@ async function runPrompt(s, body, res) {
   };
   if (tokens.has("lagtool")) lagBus(Number(env.FAKE_LAG_MS ?? 400));
   updatePart(s, toolPart);
+  if (tokens.has("childperm")) {
+    const child = `ses_fakechild${String((idSequence += 1)).padStart(4, "0")}`;
+    publish("session.created", {
+      sessionID: child,
+      info: { id: child, parentID: s.id, title: "FAKE subagent" },
+    });
+    const requestId = nextId("per");
+    publish("permission.asked", {
+      id: requestId,
+      sessionID: child,
+      permission: "external_directory",
+      patterns: ["/fake/outside/*"],
+      metadata: {},
+      always: ["/fake/outside/*"],
+    });
+    const deadline = Date.now() + Number(env.FAKE_PERMISSION_WAIT_MS ?? 2000);
+    while (!permissionReplies.has(requestId) && Date.now() < deadline)
+      await delay(10);
+    const reply = permissionReplies.get(requestId);
+    record({ event: "child-permission", child, reply: reply ?? null });
+    if (reply === undefined || reply === "reject") {
+      first.error = {
+        name: "UnknownError",
+        data: { message: `FAKE subagent permission ${reply ?? "unanswered"}` },
+      };
+      updateMessage(s, first);
+      publish("session.error", { sessionID: s.id, error: first.error });
+      return finish(first);
+    }
+  }
   updatePart(s, {
     ...toolPart,
     state: { status: "running", input: { command }, time: { start: 1 } },
@@ -402,7 +441,17 @@ async function runPrompt(s, body, res) {
   first.finish = "tool-calls";
   first.time = { ...first.time, completed: Date.now() };
   updateMessage(s, first);
-  if (tokens.has("compact")) {
+  if (tokens.has("overflow")) {
+    publish("session.error", {
+      sessionID: s.id,
+      error: {
+        name: "ContextOverflowError",
+        data: { message: "FAKE prompt is too long for the context window" },
+      },
+    });
+    record({ event: "context-overflow" });
+  }
+  if (tokens.has("compact") || tokens.has("overflow")) {
     const compactionUser = {
       id: nextId("msg"),
       role: "user",
@@ -465,7 +514,11 @@ async function runPrompt(s, body, res) {
     setTimeout(resolve, Number(env.FAKE_FOLLOW_UP_MS ?? 300));
   });
   if (run.cancelled) return aborted();
-  modelRequest(s, lastUser, tokens.has("compact") ? "autocontinue" : "step");
+  modelRequest(
+    s,
+    lastUser,
+    tokens.has("compact") || tokens.has("overflow") ? "autocontinue" : "step",
+  );
   updatePart(s, {
     id: nextId("prt"),
     messageID: follow.id,
@@ -559,8 +612,11 @@ const server = createServer(async (req, res) => {
       return send(res, 200, true);
     }
   }
-  if (req.method === "POST" && url.pathname.startsWith("/permission/"))
+  if (req.method === "POST" && url.pathname.startsWith("/permission/")) {
+    const requestId = decodeURIComponent(url.pathname.split("/")[2] ?? "");
+    permissionReplies.set(requestId, body?.reply);
     return send(res, 200, true);
+  }
   if (req.method === "POST" && url.pathname.startsWith("/question/"))
     return send(res, 200, true);
   send(res, 404, { name: "NotFoundError" });

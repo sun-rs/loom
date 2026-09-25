@@ -413,6 +413,29 @@ for (const [label, signal] of [
     assert.ok(result.records.some((r) => r.event === "follow-up-generation"));
   });
 
+test("review batch 1 #4: a context overflow OpenCode recovers from by auto-compaction is a diagnostic, never a failed run", async () => {
+  const result = await runTurn({ scenario: "overflow", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  assert.ok(result.records.some((r) => r.event === "context-overflow"));
+  assert.ok(result.records.some((r) => r.event === "compacted"));
+  assert.ok(
+    result.records.some((r) => r.event === "follow-up-generation"),
+    "the run went on after the compaction; the server was not stopped",
+  );
+  assert.equal(
+    byProtocol(result.frames, "rah-provider-session/v1").length,
+    1,
+    "the run completed and bound its session",
+  );
+});
+
+test("review batch 1 #5: a subagent's (child session) permission request is answered with the parent session's rule", async () => {
+  const result = await runTurn({ scenario: "childperm", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const [asked] = result.records.filter((r) => r.event === "child-permission");
+  assert.equal(asked?.reply, "always");
+});
+
 test("errors: a failed assistant fails the run instead of reading as success", async () => {
   const result = await runTurn({ scenario: "error", wake: WAKE });
   assert.equal(result.code, 1);

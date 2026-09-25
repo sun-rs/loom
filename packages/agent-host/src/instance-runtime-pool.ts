@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { StringDecoder } from "node:string_decoder";
 
@@ -53,6 +53,8 @@ const DEFAULT_KILL_GRACE_MS = 1_000;
 const DEFAULT_KILL_WAIT_MS = 5_000;
 const FD3_BUFFER_LIMIT = 4 * 1024 * 1024;
 const RECENT_TURN_LIMIT = 64;
+const RELEASED_TURN_LIMIT = 256;
+const SUPERVISION_FAILURE_LIMIT = 1_000;
 
 export type WarmRuntimeLaunch = {
   args: readonly string[];
@@ -171,6 +173,12 @@ export type InstanceRuntimePoolOptions = {
   hygiene?: RuntimeProcessHygiene;
   /** Shorthand for `policy.idleTtlMs` (S2-a option). */
   idleTtlMs?: number;
+  /**
+   * The Host's runtime start deadline (`AgentHost.runtimeStartTimeoutMs`).
+   * A turn waits for a busy slot at most half of it, so a full pool fails
+   * the turn with `RAH_WARM_ADMISSION_FULL` before the Host gives up on it.
+   */
+  hostStartTimeoutMs?: number;
   /** S2-b policy overrides (`warm-runtime-policy.ts` defaults). */
   policy?: WarmRuntimePolicyOverrides;
   /** Per-instance idle TTL override; `undefined` keeps the policy TTL. */
@@ -710,6 +718,25 @@ export class InstanceRuntimePool {
   /** Admitted busy turns (hard cap) and the turns waiting for a slot. */
   readonly #busySlots = new Set<string>();
   readonly #admissionWaiters: (() => void)[] = [];
+  readonly #admissionWaitMs: number;
+  /**
+   * Review batch 1 #2: RunAttempts whose lane the Host already released. A
+   * start that outlived the Host's start deadline sees this and gives back
+   * what it took (busy slot, busy state) instead of holding them forever.
+   */
+  readonly #releasedTurns = new Set<string>();
+  /**
+   * Review batch 1 #6 (Codex P2-1): stalls and resource failures per
+   * Activation. The production resolver builds a new adapter for every
+   * claim, so the bounded retry budget lives with the pool it shares.
+   */
+  readonly #supervisionFailures = new Map<string, number>();
+  /**
+   * Review batch 1 #6: Host transport state that must outlive one claim's
+   * adapter while the same pool keeps the runtime (e.g. the pending
+   * session-protocol line). Created once per key; never business state.
+   */
+  readonly #shared = new Map<string, unknown>();
   readonly #now: () => number;
   readonly #onDiagnostic: (message: string) => void;
   readonly #readyTimeoutMs: number;
@@ -735,6 +762,16 @@ export class InstanceRuntimePool {
       ...options.policy,
     });
     this.#idleTtlOverride = options.idleTtlOverride;
+    this.#admissionWaitMs =
+      options.hostStartTimeoutMs === undefined
+        ? this.policy.admissionWaitMs
+        : Math.max(
+            1,
+            Math.min(
+              this.policy.admissionWaitMs,
+              Math.floor(options.hostStartTimeoutMs / 2),
+            ),
+          );
     this.#measureGroupRssKb = options.measureGroupRssKb;
     this.#now = options.now ?? Date.now;
     this.#onDiagnostic =
@@ -807,6 +844,52 @@ export class InstanceRuntimePool {
     return this.#runtimes.get(participantId);
   }
 
+  /** Host transport state shared by every adapter of this pool (per key). */
+  shared<T>(key: string, create: () => T): T {
+    if (!this.#shared.has(key)) this.#shared.set(key, create());
+    return this.#shared.get(key) as T;
+  }
+
+  /** Counts one supervised failure of an Activation; returns the total. */
+  recordSupervisionFailure(activationId: string): number {
+    const count = (this.#supervisionFailures.get(activationId) ?? 0) + 1;
+    this.#supervisionFailures.delete(activationId);
+    this.#supervisionFailures.set(activationId, count);
+    while (this.#supervisionFailures.size > SUPERVISION_FAILURE_LIMIT)
+      this.#supervisionFailures.delete(
+        this.#supervisionFailures.keys().next().value!,
+      );
+    return count;
+  }
+
+  /** The Host released this RunAttempt's lane (its turn is over). */
+  turnReleased(runAttemptId: string): boolean {
+    return this.#releasedTurns.has(runAttemptId);
+  }
+
+  /**
+   * Review batch 1 #7 (lifecycle P2-1): before a run of this participant
+   * starts on any path (warm or per-turn), no live runtime row this pool
+   * does not hold may remain — an older generation, a crash, or a suspect
+   * row. They are proven gone first; one that cannot be blocks the start.
+   */
+  async fenceStart(participantId: string): Promise<void> {
+    const foreign = async () =>
+      (await this.#control.instanceRuntimes!.list()).filter(
+        (row) =>
+          row.participantId === participantId &&
+          this.#runtimes.get(participantId)?.instanceRuntimeId !==
+            row.instanceRuntimeId,
+      );
+    if ((await foreign()).length === 0) return;
+    await this.janitor(participantId);
+    const remaining = await foreign();
+    if (remaining.length > 0)
+      throw new Error(
+        `instance runtime ${remaining.map((row) => row.instanceRuntimeId).join(", ")} of ${participantId} is not proven terminated; new execution stays blocked`,
+      );
+  }
+
   /** Periodic idle eviction; resolves nothing and never blocks shutdown. */
   start(): void {
     if (this.#timer !== undefined) return;
@@ -835,10 +918,19 @@ export class InstanceRuntimePool {
     cliFingerprint?: () => Promise<string | undefined>;
   }): Promise<{ mode: "warm" | "cold"; runtime: WarmRuntime }> {
     const slot = input.runAttemptId ?? input.participantId;
-    await this.#admit(slot);
+    const runAttemptId = input.runAttemptId;
+    const abandoned = () =>
+      runAttemptId !== undefined && this.#releasedTurns.has(runAttemptId);
+    const abandonedError = () =>
+      new Error(
+        `warm turn ${String(runAttemptId)} was released by the Host before its runtime was acquired; nothing was started for it`,
+      );
+    if (abandoned()) throw abandonedError();
+    await this.#admit(slot, abandoned);
     let acquired: { mode: "warm" | "cold"; runtime: WarmRuntime };
     try {
       acquired = await this.#serialize(input.participantId, async () => {
+        if (abandoned()) throw abandonedError();
         let runtime = this.#runtimes.get(input.participantId);
         if (runtime !== undefined && runtime.state === "dead") {
           this.#runtimes.delete(input.participantId);
@@ -860,6 +952,10 @@ export class InstanceRuntimePool {
         }
         if (runtime !== undefined) {
           await this.#confirmRelease(runtime);
+          // A release the Kernel fenced ended the runtime (proven kill).
+          if (runtime.state === "dead") runtime = undefined;
+        }
+        if (runtime !== undefined) {
           if (runtime.state !== "idle")
             throw new Error(
               `warm runtime ${runtime.instanceRuntimeId} is ${runtime.state}; the lane is still held`,
@@ -878,10 +974,13 @@ export class InstanceRuntimePool {
           }
           await this.#stop(runtime, restart);
         }
-        return {
-          mode: "cold" as const,
-          runtime: await this.#coldStart(input),
-        };
+        const cold = await this.#coldStart(input);
+        if (abandoned()) {
+          // Ready and registered: kept idle for the next turn.
+          this.#abandonAcquired(cold);
+          throw abandonedError();
+        }
+        return { mode: "cold" as const, runtime: cold };
       });
     } catch (error) {
       this.#releaseSlot(slot);
@@ -889,13 +988,34 @@ export class InstanceRuntimePool {
     }
     // Outside the participant lock: evicting another instance takes its lock.
     await this.enforceWarmCap();
+    // Review batch 1 #2: the Host may have given up on this start meanwhile;
+    // its release already ran and will not run again.
+    if (abandoned()) {
+      this.#abandonAcquired(acquired.runtime);
+      this.#releaseSlot(slot);
+      throw abandonedError();
+    }
     return acquired;
+  }
+
+  /** An acquired runtime whose turn was abandoned before it was opened. */
+  #abandonAcquired(runtime: WarmRuntime): void {
+    if (runtime.state !== "busy" || runtime.current !== undefined) return;
+    runtime.state = "idle";
+    runtime.lastActivityMs = this.#now();
   }
 
   /** After the Activation left `leased`: the Kernel releases the lane. */
   async releaseTurn(participantId: string, runAttemptId: string) {
+    // Review batch 1 #2: a start still in flight for this RunAttempt (past
+    // the Host's start deadline) gives back what it takes when it sees this.
+    this.#releasedTurns.add(runAttemptId);
+    while (this.#releasedTurns.size > RELEASED_TURN_LIMIT)
+      this.#releasedTurns.delete(this.#releasedTurns.keys().next().value!);
     this.#releaseSlot(runAttemptId);
     this.#releaseSlot(participantId);
+    // A waiter for a busy slot may be the abandoned turn: let it notice.
+    for (const waiter of [...this.#admissionWaiters]) waiter();
     await this.#serialize(participantId, async () => {
       const runtime = this.#runtimes.get(participantId);
       if (runtime === undefined) return;
@@ -1008,11 +1128,18 @@ export class InstanceRuntimePool {
     return undefined;
   }
 
-  /** Take a busy slot (hard cap), waiting at most `admissionWaitMs`. */
-  async #admit(slot: string): Promise<void> {
+  /**
+   * Take a busy slot (hard cap), waiting at most `admissionWaitMs` (bounded
+   * below the Host's start deadline); an abandoned turn stops waiting.
+   */
+  async #admit(slot: string, abandoned: () => boolean): Promise<void> {
     if (this.#busySlots.has(slot)) return;
-    const deadline = Date.now() + this.policy.admissionWaitMs;
+    const deadline = Date.now() + this.#admissionWaitMs;
     while (this.#busySlots.size >= this.policy.maxBusyTurns) {
+      if (abandoned())
+        throw new Error(
+          `warm turn ${slot} was released by the Host while it waited for a busy slot`,
+        );
       const remaining = deadline - Date.now();
       if (remaining <= 0)
         throw new Error(
@@ -1096,7 +1223,12 @@ export class InstanceRuntimePool {
         continue;
       }
       await this.#sweep(row.participantId, row.instanceRuntimeId, "janitor");
+      // Review batch 1 #7 (lifecycle P2-3): a crashed Host left its turn
+      // root and socket directory behind; the recorded exit releases them.
+      await this.#removeRuntimeDirectories(row.instanceRuntimeId);
     }
+    if (onlyParticipantId === undefined)
+      await this.#removeTerminatedLeftovers();
     if (this.#hygiene === undefined) return;
     const tagged = [...(await this.#hygiene.taggedRuntimeIds())].filter((id) =>
       id.startsWith("instrt_"),
@@ -1183,10 +1315,7 @@ export class InstanceRuntimePool {
       );
     }
     const directory = join(this.#stateDirectory, instanceRuntimeId);
-    const socketDirectory = join(
-      this.#socketRoot,
-      instanceRuntimeId.slice("instrt_".length, "instrt_".length + 12),
-    );
+    const socketDirectory = this.#socketDirectoryFor(instanceRuntimeId);
     let runtime: WarmRuntime | undefined;
     try {
       await mkdir(this.#socketRoot, { mode: 0o700, recursive: true });
@@ -1289,10 +1418,30 @@ export class InstanceRuntimePool {
   async #confirmRelease(runtime: WarmRuntime): Promise<void> {
     const runAttemptId = runtime.unreleasedRunAttemptId;
     if (runAttemptId === undefined) return;
-    await this.#control.instanceRuntimes!.releaseTurn({
-      instanceRuntimeId: runtime.instanceRuntimeId,
-      runAttemptId,
-    });
+    try {
+      await this.#control.instanceRuntimes!.releaseTurn({
+        instanceRuntimeId: runtime.instanceRuntimeId,
+        runAttemptId,
+      });
+    } catch (error) {
+      if (!isExecutionFenced(error)) throw error;
+      // Review batch 1 #3 (lifecycle P1-2): the Kernel no longer lets this
+      // runtime hold the lane (its row turned suspect when the turn was
+      // orphaned by lease expiry or quarantine). The Kernel row is the only
+      // state source: end the process with proof, record its exit, sweep;
+      // the next turn cold starts and resumes the recorded native session.
+      this.diagnostic(
+        `[${runtime.instanceRuntimeId}] the Kernel fenced the lane release of ${runAttemptId} (${errorMessage(error)}); stopping the runtime with proof`,
+      );
+      const proof = await this.killRuntime(runtime, "crash");
+      if (!proof.proven)
+        throw new Error(
+          `warm runtime ${runtime.instanceRuntimeId} is suspect: its termination is not proven (${proof.reason}); new execution stays blocked`,
+        );
+      runtime.unreleasedRunAttemptId = undefined;
+      await this.#recordEnd(runtime, proof.exit, "crash");
+      return;
+    }
     runtime.unreleasedRunAttemptId = undefined;
     if (runtime.state === "busy") runtime.state = "idle";
     runtime.lastActivityMs = this.#now();
@@ -1403,8 +1552,12 @@ export class InstanceRuntimePool {
       // Control channel already closed; the group kill below still applies.
     }
     const exit = await this.#waitExit(runtime, this.#stopTimeoutMs);
+    // Review batch 1 #7 (lifecycle P2-2): the driver's own exit is not the
+    // group's; the same proof standard as a kill applies.
     const proof: WarmKillProof =
-      exit === undefined ? await this.#kill(runtime) : { exit, proven: true };
+      exit === undefined
+        ? await this.#kill(runtime)
+        : await this.#reapGroup(runtime, exit);
     if (!proof.proven) {
       await this.#markSuspect(runtime, reason, proof.reason);
       throw new Error(
@@ -1422,19 +1575,38 @@ export class InstanceRuntimePool {
   async #kill(runtime: WarmRuntime): Promise<WarmKillProof> {
     const term = runtime.signalGroup("SIGTERM");
     const graceful = await this.#waitExit(runtime, this.#killGraceMs);
-    if (graceful !== undefined) {
-      runtime.signalGroup("SIGKILL");
-      return { exit: graceful, proven: true };
-    }
+    if (graceful !== undefined) return await this.#reapGroup(runtime, graceful);
     const kill = runtime.signalGroup("SIGKILL");
     const killed = await this.#waitExit(runtime, this.#killWaitMs);
-    if (killed !== undefined) return { exit: killed, proven: true };
+    if (killed !== undefined) return await this.#reapGroup(runtime, killed);
     if (await runtime.verifiedAbsent(this.processTable))
       return { exit: { code: null, signal: "RAH_RUNTIME_GONE" }, proven: true };
     return {
       proven: false,
       reason: `no close after SIGKILL (SIGTERM ${term}, SIGKILL ${kill})`,
     };
+  }
+
+  /**
+   * The group leader closed: SIGKILL whatever is left in its group and
+   * require identity-verified absence of the whole group as the proof.
+   */
+  async #reapGroup(
+    runtime: WarmRuntime,
+    exit: { code: number | null; signal: string | null },
+  ): Promise<WarmKillProof> {
+    const kill = runtime.signalGroup("SIGKILL");
+    const deadline = Date.now() + this.#killWaitMs;
+    for (;;) {
+      if (await runtime.verifiedAbsent(this.processTable))
+        return { exit, proven: true };
+      if (Date.now() >= deadline)
+        return {
+          proven: false,
+          reason: `the runtime's leader exited but its process group is still present after SIGKILL (${kill})`,
+        };
+      await delay(25);
+    }
   }
 
   /** Kill with proof; an unproven kill leaves the runtime suspect. */
@@ -1591,9 +1763,54 @@ export class InstanceRuntimePool {
       await rm(socketDirectory, { force: true, recursive: true });
     } catch (error) {
       this.diagnostic(
-        `runtime directory cleanup failed (janitor retries): ${errorMessage(error)}`,
+        `runtime directory cleanup failed (the next Host-start janitor retries it once the runtime is recorded terminated): ${errorMessage(error)}`,
       );
     }
+  }
+
+  async #removeRuntimeDirectories(instanceRuntimeId: string): Promise<void> {
+    await this.#removeDirectories(
+      join(this.#stateDirectory, instanceRuntimeId),
+      this.#socketDirectoryFor(instanceRuntimeId),
+    );
+  }
+
+  /** Directories of runtimes the Kernel records terminated (earlier Hosts). */
+  async #removeTerminatedLeftovers(): Promise<void> {
+    let entries: string[];
+    try {
+      entries = await readdir(this.#stateDirectory);
+    } catch {
+      return; // No runtime was ever started here.
+    }
+    const held = new Set(
+      [...this.#runtimes.values()].map((runtime) => runtime.instanceRuntimeId),
+    );
+    const candidates = entries.filter(
+      (entry) => entry.startsWith("instrt_") && !held.has(entry),
+    );
+    for (let index = 0; index < candidates.length; index += 500) {
+      let terminated;
+      try {
+        terminated = await this.#control.instanceRuntimes!.terminatedAmong(
+          candidates.slice(index, index + 500),
+        );
+      } catch (error) {
+        this.diagnostic(
+          `terminated runtime lookup failed: ${errorMessage(error)}`,
+        );
+        return;
+      }
+      for (const target of terminated)
+        await this.#removeRuntimeDirectories(target.instanceRuntimeId);
+    }
+  }
+
+  #socketDirectoryFor(instanceRuntimeId: string): string {
+    return join(
+      this.#socketRoot,
+      instanceRuntimeId.slice("instrt_".length, "instrt_".length + 12),
+    );
   }
 
   async #serialize<T>(participantId: string, operation: () => Promise<T>) {
@@ -1641,6 +1858,14 @@ function settle<T>(state: Deferred<T>, value: T): void {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** The Kernel's execution fence (`ExecutionFencedError`, any transport). */
+function isExecutionFenced(error: unknown): boolean {
+  return (
+    errorCode(error) === "execution_fenced" ||
+    (error instanceof Error && error.name === "ExecutionFencedError")
+  );
 }
 
 function errorCode(error: unknown): string | undefined {

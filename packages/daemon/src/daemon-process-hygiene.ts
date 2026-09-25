@@ -41,6 +41,7 @@ export function createDaemonRuntimeHygiene(
     config: config.warmRuntimes,
     host,
     hygiene: processHygiene,
+    hostStartTimeoutMs: config.runtimeStartTimeoutMs,
     kernel,
     stateDirectory: config.stateDirectory,
   });
@@ -68,17 +69,23 @@ export function warmRuntimeAdapterKinds(
 
 /**
  * S2-a: the Host's warm instance runtimes (Codex and S2-c3 OpenCode by
- * default, S2-c1 Claude when enabled).
+ * default, S2-c1 Claude when enabled). Review batch 1 #7: with every warm
+ * runtime switched off the pool still exists — no adapter runs warm — so
+ * live runtime rows an earlier Host left (a crash while warm was on) still
+ * get its Host-start janitor, and its start fence keeps a suspect row
+ * blocking the per-turn path. (Whether such rows exist cannot be read here:
+ * the Host instance is not active before the host starts.)
  */
 export function createDaemonInstanceRuntimePool(input: {
   config: DaemonConfig["warmRuntimes"];
   host: AuthenticatedHostContext;
   hygiene: RuntimeProcessHygiene | undefined;
+  /** The Host's runtime start deadline (bounds the busy-slot wait). */
+  hostStartTimeoutMs?: number;
   kernel: RoomKernel;
   stateDirectory: string;
 }): InstanceRuntimePool | undefined {
   const codex = input.config?.codex;
-  if (warmRuntimeAdapterKinds(input.config).size === 0) return undefined;
   if (process.platform !== "darwin" && process.platform !== "linux")
     return undefined;
   const {
@@ -91,6 +98,9 @@ export function createDaemonInstanceRuntimePool(input: {
     control: createKernelAgentHostControlPort(input.kernel, input.host),
     hostGeneration: input.host.instanceId,
     ...(input.hygiene === undefined ? {} : { hygiene: input.hygiene }),
+    ...(input.hostStartTimeoutMs === undefined
+      ? {}
+      : { hostStartTimeoutMs: input.hostStartTimeoutMs }),
     policy: {
       ...policy,
       ...(codex?.idleTtlMs === undefined ? {} : { idleTtlMs: codex.idleTtlMs }),

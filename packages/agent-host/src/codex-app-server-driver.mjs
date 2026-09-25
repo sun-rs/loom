@@ -187,7 +187,9 @@ try {
     try {
       startedThread = await request(
         "thread/resume",
-        { threadId: options.resumeSession, ...threadStart },
+        // Metadata only (only thread.id is read): full turn hydration of a
+        // long session outlasts the handshake timeout.
+        { threadId: options.resumeSession, ...threadStart, excludeTurns: true },
         HANDSHAKE_TIMEOUT_MS,
       );
       writeSessionResumeMeasurement(Date.now() - resumeStarted);

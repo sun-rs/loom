@@ -12,3 +12,8 @@ export class OpenCodeEventIdentityFilter {
     activeSessionId: string | undefined,
   ): ScopedOpenCodeEvent[];
 }
+export class OpenCodeChildSessions {
+  observe(event: unknown, parentSessionId: string | undefined): void;
+  has(sessionId: unknown): boolean;
+}
+export function isContextOverflowEvent(properties: unknown): boolean;

@@ -292,6 +292,8 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
         false,
       );
       assert.equal(record.frame.params.config["features.memories"], false);
+      if (record.frame.method === "thread/resume")
+        assert.equal(record.frame.params.excludeTurns, true);
     }
     const methodsFor = (suffix: string): string[] =>
       records

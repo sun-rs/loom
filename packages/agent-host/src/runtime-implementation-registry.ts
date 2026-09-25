@@ -1,7 +1,10 @@
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
 import { createHostBodiedWake, renderBodiedWake } from "./bodied-wake.ts";
 import { SessionRulesCard } from "./session-rules-card.ts";
-import { SessionProtocolUpgrade } from "./session-protocol-upgrade.ts";
+import {
+  createSessionProtocolState,
+  SessionProtocolUpgrade,
+} from "./session-protocol-upgrade.ts";
 import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
@@ -976,14 +979,24 @@ function createWarmInstanceRuntime(
 ): CodexWarmAdapter {
   const executableIdentity = probeReport.executableIdentity;
   const store = options.providerSessionStore;
-  const systemMemory = new ProviderSystemMemory();
-  // The system-memory snapshot is prepared once per process (its cold start).
-  const coldStartRun = new Map<string, string>();
+  // Review batch 1 #6: the production resolver builds this adapter for every
+  // claim while the pool keeps the runtime, so what a cold start prepares
+  // for the runtime's later turns lives with the pool (per driver).
+  const launchState = warm.pool.shared(`warm-launch:${driver.kind}`, () => ({
+    // The system-memory snapshot is prepared once per process (cold start).
+    coldStartRun: new Map<string, string>(),
+    protocol: createSessionProtocolState(),
+    systemMemory: new ProviderSystemMemory(),
+  }));
+  const { coldStartRun, systemMemory } = launchState;
   const provider = driver.provider;
   const recordDeliveryAcceptance = options.recordDeliveryAcceptance;
   // P2-3: the warm turn text is Host-composed, so the line is appended per
   // turn (`protocolNotice`) rather than through the process environment.
-  const protocolUpgrade = new SessionProtocolUpgrade(store);
+  const protocolUpgrade = new SessionProtocolUpgrade(
+    store,
+    launchState.protocol,
+  );
   return new CodexWarmAdapter({
     driver,
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),

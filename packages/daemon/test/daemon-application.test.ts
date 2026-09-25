@@ -2181,7 +2181,7 @@ test("S2-c1 warm Claude runtimes stay a separate opt-in, off by default", () => 
   );
 });
 
-test("the daemon composes the warm pool and leftover-process hygiene by default; switching Codex and OpenCode off removes the pool", () => {
+test("the daemon composes the warm pool and leftover-process hygiene by default; switching Codex and OpenCode off keeps only the janitor pool", () => {
   if (process.platform !== "darwin" && process.platform !== "linux") return;
   const directory = mkdtempSync(join(tmpdir(), "rah-os-warm-default-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -2215,7 +2215,9 @@ test("the daemon composes the warm pool and leftover-process hygiene by default;
       host,
       kernel,
     );
-    assert.equal(off.instanceRuntimePool, undefined);
+    // Review batch 1 #7: nothing runs warm, but the pool stays for the
+    // janitor and start fence over live rows an earlier Host left behind.
+    assert.ok(off.instanceRuntimePool instanceof InstanceRuntimePool);
     assert.deepEqual(off.warmRuntimeKinds, new Set());
   } finally {
     kernel.close();

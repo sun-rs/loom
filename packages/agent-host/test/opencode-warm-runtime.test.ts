@@ -420,6 +420,37 @@ test("warm OpenCode final reply: a non-abort session error before the final abor
   }
 });
 
+test("review batch 1 #4: warm OpenCode: a context overflow recovered by auto-compaction is a diagnostic; the turn completes and is not retried", async () => {
+  const state = await harness({ env: { FAKE_SCENARIO: "nofinal+overflow" } });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(events(state, "context-overflow").length, 1);
+    assert.equal(prompts(state).length, 1, "never re-executed");
+    const [process] = state.kernel.listRuntimeProcesses({
+      roomId: state.roomId,
+    });
+    assert.equal(process?.quiesceResult, "success");
+    assert.equal(spawns(state).length, 1, "the server was kept");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #5: warm OpenCode: a subagent's (child session) permission request is answered like the parent session's", async () => {
+  const state = await harness({ env: { FAKE_SCENARIO: "nofinal+childperm" } });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const [asked] = events(state, "child-permission");
+    assert.equal(asked?.reply, "always");
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("warm OpenCode P2-2: a final abort still in flight when the prompt answers holds the next turn until it is answered", async () => {
   const state = await harness({
     env: { FAKE_SCRIPT: "reply,nofinal", FAKE_ABORT_DELAY_MS: "800" },

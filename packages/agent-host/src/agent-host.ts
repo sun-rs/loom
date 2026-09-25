@@ -140,6 +140,12 @@ export type InstanceRuntimeLifecycle = {
   janitor(): Promise<void>;
   shutdown(): Promise<void>;
   start(): void;
+  /**
+   * Review batch 1 #7: proves every live runtime row of this participant
+   * that the pool does not hold gone (or refuses) before any start, warm or
+   * per-turn, so a suspect row fences the per-turn path too.
+   */
+  fenceStart?(participantId: string): Promise<void>;
 };
 
 export class AgentHost {
@@ -680,8 +686,9 @@ export class AgentHost {
     let preparedRun: RunHandle | undefined;
     let run: RunHandle | undefined;
     try {
-      const startRuntime = () =>
-        withDeadline(
+      const startRuntime = async () => {
+        await this.#instanceRuntimePool?.fenceStart?.(activation.participantId);
+        return await withDeadline(
           runtime.start(envelope, {
             recordTrajectory: async (activity) => {
               await this.#control.appendRunTrajectory(activity);
@@ -738,6 +745,7 @@ export class AgentHost {
           this.#runtimeStartTimeoutMs,
           "runtime start",
         );
+      };
       // Upstream Raft bounds how many Agents may be *starting* at once — never
       // how many may be running — with AgentStartCoordinator. The gate is the
       // port of that queue-and-pump; without one, every lane starts at once.

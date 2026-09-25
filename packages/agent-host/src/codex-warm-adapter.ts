@@ -224,8 +224,6 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   readonly #options: CodexWarmAdapterOptions;
   readonly #driver: WarmDriverDescriptor;
   readonly #turns = new Map<string, TurnBinding>();
-  /** Stalls and resource failures per Activation (bounded retry budget). */
-  readonly #supervisionFailures = new Map<string, number>();
 
   constructor(options: CodexWarmAdapterOptions) {
     this.#options = options;
@@ -428,6 +426,17 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       .digest("hex");
     preparedDigest = wake.bodied ? fullDigest : undefined;
     noticeDigest = wake.noticed ? fullDigest : undefined;
+    // Review batch 1 #2: the Host may have given up on this start (deadline,
+    // cancel) while it was being prepared; its input is then never sent.
+    if (
+      turn.cancelRequested ||
+      turn.outcome.settled ||
+      runtime.current !== turn ||
+      pool.turnReleased(input.runAttemptId)
+    )
+      throw new Error(
+        `warm turn ${input.runAttemptId} was abandoned by the Host before its input was sent`,
+      );
     turn.beginSent = true;
     runtime.command({
       op: "turn.begin",
@@ -542,13 +551,11 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   #supervisionFailure(binding: TurnBinding): RuntimeFailure | undefined {
     const verdict = binding.supervision;
     if (verdict === undefined) return undefined;
-    const count =
-      (this.#supervisionFailures.get(binding.activationId) ?? 0) + 1;
-    this.#supervisionFailures.set(binding.activationId, count);
-    while (this.#supervisionFailures.size > 1_000)
-      this.#supervisionFailures.delete(
-        this.#supervisionFailures.keys().next().value!,
-      );
+    // Review batch 1 #6: counted by the shared pool, not this adapter (the
+    // production resolver builds a new adapter for every claim).
+    const count = this.#options.pool.recordSupervisionFailure(
+      binding.activationId,
+    );
     const exhausted = count > this.#options.pool.policy.stallRetryBudget;
     return RuntimeFailureSchema.parse({
       actionRequired: false,
@@ -813,7 +820,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       );
     if (release !== undefined && !release.removed)
       pool.diagnostic(
-        `[${runtime.instanceRuntimeId}] turn handle directory removal failed; the janitor removes it: ${release.removeError}`,
+        `[${runtime.instanceRuntimeId}] turn handle directory removal failed; it is removed with the runtime directory when the runtime ends: ${release.removeError}`,
       );
     if (outcome.kind === "unproven") throw new Error(outcome.error);
     // S2-b: a turn the Host ended after its `final` reply committed is not

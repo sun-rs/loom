@@ -203,7 +203,9 @@ try {
     try {
       started = await request(
         "thread/resume",
-        { threadId: options.resumeSession, ...threadStart },
+        // Metadata only: only thread.id is read, and full turn hydration of
+        // a never-rotated session outgrows the 16 MiB frame limit.
+        { threadId: options.resumeSession, ...threadStart, excludeTurns: true },
         HANDSHAKE_TIMEOUT_MS,
       );
       resumed = true;
@@ -223,7 +225,7 @@ try {
   if (typeof threadId !== "string" || threadId === "")
     throw new Error("Codex thread request returned no thread.id");
   threadLoaded = true;
-  threadResumeParams = { ...threadStart };
+  threadResumeParams = { ...threadStart, excludeTurns: true };
   usageTracker = new CodexTokenUsageTracker({ freshThread: !resumed });
   emit("ready", {
     resumed,

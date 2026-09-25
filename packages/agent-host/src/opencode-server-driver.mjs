@@ -17,6 +17,8 @@ import {
 } from "./opencode-standing-instructions.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
+  isContextOverflowEvent,
+  OpenCodeChildSessions,
   OpenCodeEventIdentityFilter,
   scopedOpenCodeEvent,
 } from "./opencode-event-identity.js";
@@ -59,6 +61,7 @@ const TURN_INPUT = options.wakeInput ?? providerActivationInput();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 const usageWriter = new ProviderUsageWriter();
 const eventIdentity = new OpenCodeEventIdentityFilter();
+const childSessions = new OpenCodeChildSessions();
 const partTypes = new Map();
 const partTexts = new Map();
 const toolStates = new Map();
@@ -377,8 +380,18 @@ async function handleEvent(event) {
   if (!isRecord(event) || typeof event.type !== "string") {
     throw new Error("OpenCode SSE returned an invalid event envelope");
   }
-  event = scopedOpenCodeEvent(event, activeSessionId);
+  childSessions.observe(event, activeSessionId);
+  const child = childSessions.has(record(event.properties).sessionID);
+  if (!child) event = scopedOpenCodeEvent(event, activeSessionId);
   if (!event) return;
+  // A subagent's (child session's) event matters only as a request, which
+  // is answered by the parent session's rule below.
+  if (
+    child &&
+    event.type !== "permission.asked" &&
+    event.type !== "question.asked"
+  )
+    return;
   const properties = record(event.properties);
   // Retry safety is independent of lossy telemetry/role arrival order.
   if (
@@ -413,6 +426,8 @@ async function handleEvent(event) {
     trajectoryWriter.emit(
       normalizeOpenCodeTrajectoryEvent(event, activeSessionId),
     );
+    // Recovered by auto-compaction; a real failure reaches the answer.
+    if (isContextOverflowEvent(properties)) return;
     if (!(stopping && abortError)) {
       throw new Error(providerError);
     }

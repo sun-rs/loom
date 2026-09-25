@@ -17,8 +17,11 @@
 //   tool-silent          accepts, reports one tool in flight, then silence
 //   approval-wait        accepts, reports awaiting approval, then silence
 //   interrupt-drains     `turn.interrupt` drains the held turn as interrupted
+//   group-child          starts a child in its own process group that
+//                        outlives the driver (pid written to --child-pid-file)
 // `--resume-ms N` reports N as the ready's measured session resume.
-import { writeSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { writeFileSync, writeSync } from "node:fs";
 import { createInterface } from "node:readline";
 
 const args = process.argv.slice(2);
@@ -38,6 +41,15 @@ function emit(type, fields = {}, skip = 0) {
 }
 
 if (modes.has("ignore-term")) process.on("SIGTERM", () => undefined);
+if (modes.has("group-child")) {
+  const child = spawn(
+    process.execPath,
+    ["-e", "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000)"],
+    { stdio: "ignore" },
+  );
+  child.unref();
+  writeFileSync(value("--child-pid-file"), String(child.pid));
+}
 setInterval(() => undefined, 1_000);
 if (!modes.has("never-ready"))
   emit("ready", {

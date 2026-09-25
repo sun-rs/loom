@@ -302,6 +302,11 @@ export type {
 } from "./leftover-process-sweeper.ts";
 export type { RuntimeProviderSessionEvidence } from "./generic-process-adapter.ts";
 export { ProviderSessionStore } from "./provider-session-store.ts";
+export {
+  createSessionProtocolState,
+  SessionProtocolUpgrade,
+  type SessionProtocolState,
+} from "./session-protocol-upgrade.ts";
 export type {
   ProviderSessionParticipantQuarantine,
   ProviderSessionKey,

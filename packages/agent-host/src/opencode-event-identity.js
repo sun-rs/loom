@@ -83,6 +83,56 @@ export class OpenCodeEventIdentityFilter {
   }
 }
 
+/**
+ * Review batch 1 #5: sessions a subagent (the `task` tool) created under a
+ * parent session, transitively. Their events carry the child's own session
+ * id, so a parent-scoped filter drops them — including the child's
+ * `permission.asked`, which then waits forever. The installed OpenCode's own
+ * `opencode run` tracks children the same way (`session.created` whose
+ * `info.parentID` is a tracked session). Host-private observation only.
+ */
+export class OpenCodeChildSessions {
+  #ids = new Set();
+
+  observe(event, parentSessionId) {
+    if (
+      !record(event) ||
+      (event.type !== "session.created" && event.type !== "session.updated")
+    )
+      return;
+    const info = record(event.properties) ? event.properties.info : undefined;
+    if (
+      !record(info) ||
+      typeof info.id !== "string" ||
+      typeof info.parentID !== "string" ||
+      (info.parentID !== parentSessionId && !this.#ids.has(info.parentID))
+    )
+      return;
+    this.#ids.add(info.id);
+    if (this.#ids.size > 1024)
+      this.#ids.delete(this.#ids.values().next().value);
+  }
+
+  has(sessionId) {
+    return typeof sessionId === "string" && this.#ids.has(sessionId);
+  }
+}
+
+/**
+ * Review batch 1 #4: 1.18.32 `SessionProcessor.halt` publishes
+ * `session.error` ContextOverflowError and then, with auto-compaction on (the
+ * default), compacts and finishes the turn. Only `compaction.auto === false`
+ * also writes the error on the assistant — which is what the prompt answer
+ * reports. The event alone is a diagnostic, never a failed turn.
+ */
+export function isContextOverflowEvent(properties) {
+  return (
+    record(properties) &&
+    record(properties.error) &&
+    properties.error.name === "ContextOverflowError"
+  );
+}
+
 function record(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }

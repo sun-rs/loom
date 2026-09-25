@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   chmodSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -16,6 +19,7 @@ import {
   type AgentHostControlPort,
   type RuntimeProcessHygiene,
   type WarmRuntime,
+  type WarmRuntimePolicyOverrides,
 } from "../src/index.ts";
 
 /**
@@ -78,10 +82,28 @@ function fakeControl(foreign: Row[] = []) {
       rows.set(input.instanceRuntimeId, row);
       return row;
     }),
-    releaseTurn: log("releaseTurn", (input) =>
-      update(input.instanceRuntimeId, { state: "idle" }),
-    ),
-    terminatedAmong: async () => [],
+    // Like the Kernel's #requireTurn: a row the Kernel turned suspect (its
+    // turn orphaned by lease expiry or quarantine) refuses the release.
+    releaseTurn: log("releaseTurn", (input) => {
+      if (rows.get(input.instanceRuntimeId)?.state === "suspect")
+        throw Object.assign(
+          new Error(
+            `instance runtime ${String(input.instanceRuntimeId)} is not running run attempt ${String(input.runAttemptId)}`,
+          ),
+          { code: "execution_fenced", name: "ExecutionFencedError" },
+        );
+      return update(input.instanceRuntimeId, { state: "idle" });
+    }),
+    terminatedAmong: async (ids: string[]) =>
+      [...rows.values()]
+        .filter(
+          (row) =>
+            row.state === "terminated" && ids.includes(row.instanceRuntimeId),
+        )
+        .map((row) => ({
+          instanceRuntimeId: row.instanceRuntimeId,
+          participantId: row.participantId,
+        })),
   };
   return {
     calls,
@@ -95,6 +117,8 @@ function setup(
   options: {
     foreign?: Row[];
     hygiene?: Partial<RuntimeProcessHygiene>;
+    hostStartTimeoutMs?: number;
+    policy?: WarmRuntimePolicyOverrides;
     readyTimeoutMs?: number;
     signalProcess?: (pid: number, signal: NodeJS.Signals | 0) => void;
   } = {},
@@ -111,7 +135,11 @@ function setup(
     ...(options.hygiene === undefined
       ? {}
       : { hygiene: options.hygiene as RuntimeProcessHygiene }),
+    ...(options.hostStartTimeoutMs === undefined
+      ? {}
+      : { hostStartTimeoutMs: options.hostStartTimeoutMs }),
     idleTtlMs: 1_000,
+    ...(options.policy === undefined ? {} : { policy: options.policy }),
     killGraceMs: 100,
     killWaitMs: 400,
     now: () => nowMs,
@@ -125,24 +153,44 @@ function setup(
     stopTimeoutMs: 200,
   });
   const pids: number[] = [];
-  const acquire = async (mode = "") => {
+  const launches: string[] = [];
+  const acquire = async (
+    mode = "",
+    input: {
+      extraArgs?: string[];
+      launchDelayMs?: number;
+      participantId?: string;
+      runAttemptId?: string;
+    } = {},
+  ) => {
     const acquired = await pool.acquire({
       driver: "scripted-warm/v1",
       key: "key",
-      launch: async (layout) => ({
-        args: [
-          driverPath,
-          "--runtime-id",
-          layout.instanceRuntimeId,
-          "--host-generation",
-          "gen-1",
-          "--mode",
-          mode,
-        ],
-        cwd: directory,
-        env: { ...process.env },
-      }),
-      participantId: "participant-1",
+      launch: async (layout) => {
+        launches.push(layout.instanceRuntimeId);
+        if (input.launchDelayMs !== undefined)
+          await new Promise((resolve) =>
+            setTimeout(resolve, input.launchDelayMs),
+          );
+        return {
+          args: [
+            driverPath,
+            "--runtime-id",
+            layout.instanceRuntimeId,
+            "--host-generation",
+            "gen-1",
+            "--mode",
+            mode,
+            ...(input.extraArgs ?? []),
+          ],
+          cwd: directory,
+          env: { ...process.env },
+        };
+      },
+      participantId: input.participantId ?? "participant-1",
+      ...(input.runAttemptId === undefined
+        ? {}
+        : { runAttemptId: input.runAttemptId }),
     });
     if (acquired.runtime.pid !== undefined) pids.push(acquired.runtime.pid);
     return acquired;
@@ -153,8 +201,11 @@ function setup(
       nowMs += ms;
     },
     diagnostics,
+    directory,
     fake,
+    launches,
     pids,
+    socketRoot,
     pool,
     async cleanup() {
       for (const pid of pids)
@@ -435,6 +486,275 @@ test("S2-a review P2-1: after an fd3 overflow the runtime is not reused", async 
     assert.equal(alive(runtime.pid!), false);
   } finally {
     await state.pool.shutdown();
+    await state.cleanup();
+  }
+});
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test("review batch 1 #2: a turn the Host released while its runtime cold-started leaves the runtime idle and its busy slot free", async () => {
+  const state = setup({ policy: { maxBusyTurns: 1 } });
+  try {
+    // AgentHost: the start deadline fires while acquire still cold-starts;
+    // its finally releases the turn before the adapter ever opened it.
+    const late = state.acquire("", {
+      launchDelayMs: 400,
+      runAttemptId: "run-1",
+    });
+    late.catch(() => undefined);
+    await pause(100);
+    await state.pool.releaseTurn("participant-1", "run-1");
+    await assert.rejects(late, /released by the Host/u);
+    const runtime = state.pool.runtimeFor("participant-1");
+    if (runtime?.pid !== undefined) state.pids.push(runtime.pid);
+    assert.equal(
+      runtime?.state,
+      "idle",
+      "the cold-started runtime is not stranded busy",
+    );
+    assert.equal(runtime?.current, undefined);
+    // Cap 1: the next turn takes the only slot and reuses the runtime.
+    const next = await state.acquire("", { runAttemptId: "run-2" });
+    assert.equal(next.mode, "warm");
+    assert.equal(next.runtime, runtime);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #2: a turn released while it waited for a busy slot never takes the slot", async () => {
+  const state = setup({ policy: { admissionWaitMs: 5_000, maxBusyTurns: 1 } });
+  try {
+    await state.acquire("", {
+      participantId: "participant-2",
+      runAttemptId: "run-a",
+    });
+    const waiting = state.acquire("", { runAttemptId: "run-1" });
+    waiting.catch(() => undefined);
+    await pause(50);
+    await state.pool.releaseTurn("participant-1", "run-1");
+    await assert.rejects(waiting, /released by the Host/u);
+    await state.pool.releaseTurn("participant-2", "run-a");
+    // The slot of the abandoned turn was never taken: a third turn is admitted.
+    const third = await state.acquire("", {
+      participantId: "participant-3",
+      runAttemptId: "run-3",
+    });
+    assert.equal(third.mode, "cold");
+    assert.equal(
+      state.pool.runtimeFor("participant-1"),
+      undefined,
+      "nothing was started for the abandoned turn",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #2: a full pool fails the turn before the Host start deadline", async () => {
+  const state = setup({
+    hostStartTimeoutMs: 400,
+    policy: { admissionWaitMs: 60_000, maxBusyTurns: 1 },
+  });
+  try {
+    await state.acquire("", {
+      participantId: "participant-2",
+      runAttemptId: "run-a",
+    });
+    const started = Date.now();
+    await assert.rejects(
+      state.acquire("", { runAttemptId: "run-1" }),
+      /RAH_WARM_ADMISSION_FULL/u,
+    );
+    assert.ok(
+      Date.now() - started < 400,
+      "the admission wait stays below the Host start deadline",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #3: a lane release the Kernel fences (suspect row) ends the runtime with proof; the next turn cold starts", async () => {
+  const state = setup();
+  try {
+    const { runtime } = await state.acquire("", { runAttemptId: "run-1" });
+    const { turn } = await runTurn(runtime);
+    runtime.closeTurnFrames(turn);
+    // Kernel: the turn was orphaned (lease expiry / quarantine) -> suspect.
+    const row = state.fake.rows.get(runtime.instanceRuntimeId)!;
+    state.fake.rows.set(runtime.instanceRuntimeId, {
+      ...row,
+      state: "suspect",
+    });
+    await state.pool.releaseTurn("participant-1", "run-1");
+    assert.equal(alive(runtime.pid!), false, "the process was killed");
+    assert.equal(runtime.state, "dead");
+    const methods = state.fake.methods();
+    const exitIndex = state.fake.calls.findIndex(
+      (call) =>
+        call.method === "recordExit" &&
+        (call.input as { instanceRuntimeId: string }).instanceRuntimeId ===
+          runtime.instanceRuntimeId,
+    );
+    assert.ok(
+      exitIndex >= 0,
+      `the proven exit is recorded: ${methods.join(",")}`,
+    );
+    const next = await state.acquire("", { runAttemptId: "run-2" });
+    assert.equal(next.mode, "cold");
+    assert.notEqual(next.runtime.instanceRuntimeId, runtime.instanceRuntimeId);
+    const registers = state.fake.calls
+      .map((call, index) => ({ call, index }))
+      .filter(({ call }) => call.method === "register");
+    assert.equal(registers.length, 2);
+    assert.ok(
+      registers[1]!.index > exitIndex,
+      "no new process before the old one's exit proof",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #3: an unproven kill after a fenced release keeps the participant blocked as suspect", async () => {
+  const state = setup({ signalProcess: ignoreSignals });
+  try {
+    const { runtime } = await state.acquire("ignore-term", {
+      runAttemptId: "run-1",
+    });
+    const { turn } = await runTurn(runtime);
+    runtime.closeTurnFrames(turn);
+    const row = state.fake.rows.get(runtime.instanceRuntimeId)!;
+    state.fake.rows.set(runtime.instanceRuntimeId, {
+      ...row,
+      state: "suspect",
+    });
+    await assert.rejects(
+      state.pool.releaseTurn("participant-1", "run-1"),
+      /suspect/u,
+    );
+    assert.equal(runtime.state, "suspect");
+    assert.ok(!state.fake.methods().includes("recordExit"));
+    await assert.rejects(
+      state.acquire("", { runAttemptId: "run-2" }),
+      /suspect/u,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #7: a normal stop kills what is left in the runtime's process group and requires its absence", async () => {
+  const state = setup();
+  let childPid: number | undefined;
+  try {
+    const childPidFile = join(state.directory, "child.pid");
+    await state.acquire("group-child", {
+      extraArgs: ["--child-pid-file", childPidFile],
+    });
+    childPid = Number(
+      await waitFor(
+        () => existsSync(childPidFile) && readFileSync(childPidFile, "utf8"),
+        "the group child",
+      ),
+    );
+    assert.ok(alive(childPid));
+    await state.pool.shutdown();
+    await waitFor(
+      () => !alive(childPid!),
+      "the group child to be killed",
+      2_000,
+    );
+    assert.ok(state.fake.methods().includes("recordExit"));
+  } finally {
+    if (childPid !== undefined)
+      try {
+        process.kill(childPid, "SIGKILL");
+      } catch {
+        // Already gone.
+      }
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #7: a stop whose process group cannot be proven gone leaves the runtime suspect", async () => {
+  // Signals to the group are refused; liveness probes still work.
+  const refuseKill = (pid: number, signal: NodeJS.Signals | 0) => {
+    if (signal === 0) {
+      process.kill(pid, 0);
+      return;
+    }
+    throw Object.assign(new Error("operation not permitted"), {
+      code: "EPERM",
+    });
+  };
+  const state = setup({ signalProcess: refuseKill });
+  let childPid: number | undefined;
+  try {
+    const childPidFile = join(state.directory, "child.pid");
+    const { runtime } = await state.acquire("group-child", {
+      extraArgs: ["--child-pid-file", childPidFile],
+    });
+    childPid = Number(
+      await waitFor(
+        () => existsSync(childPidFile) && readFileSync(childPidFile, "utf8"),
+        "the group child",
+      ),
+    );
+    await state.pool.shutdown();
+    assert.ok(alive(childPid), "the group really is still present");
+    assert.equal(runtime.state, "suspect");
+    assert.ok(!state.fake.methods().includes("recordExit"));
+    assert.ok(state.fake.methods().includes("markSuspect"));
+  } finally {
+    if (childPid !== undefined)
+      try {
+        process.kill(childPid, "SIGKILL");
+      } catch {
+        // Already gone.
+      }
+    await state.cleanup();
+  }
+});
+
+test("review batch 1 #7: the janitor removes the runtime and socket directories of runtimes it records ended", async () => {
+  const dead = spawnSync(process.execPath, ["-e", ""]).pid;
+  const crashed = "instrt_crashed00000aaaa";
+  const earlier = "instrt_earlier00000bbbb";
+  const state = setup({
+    foreign: [
+      foreignStarting({
+        instanceRuntimeId: crashed,
+        pgid: dead,
+        pid: dead,
+        processStartedAt: "Thu Sep 24 10:00:00 2026",
+        state: "idle",
+      }),
+      foreignStarting({ instanceRuntimeId: earlier, state: "terminated" }),
+    ],
+  });
+  try {
+    const stateDirectory = join(state.directory, "state");
+    for (const id of [crashed, earlier]) {
+      mkdirSync(join(stateDirectory, id, "turns"), { recursive: true });
+      mkdirSync(join(state.socketRoot, id.slice(7, 19)), { recursive: true });
+    }
+    await state.pool.janitor();
+    assert.ok(state.fake.methods().includes("recordExit"));
+    for (const id of [crashed, earlier]) {
+      assert.equal(
+        existsSync(join(stateDirectory, id)),
+        false,
+        `${id} runtime directory`,
+      );
+      assert.equal(
+        existsSync(join(state.socketRoot, id.slice(7, 19))),
+        false,
+        `${id} socket directory`,
+      );
+    }
+  } finally {
     await state.cleanup();
   }
 });
