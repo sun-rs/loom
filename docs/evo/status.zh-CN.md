@@ -67,7 +67,7 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 
 ### 九、S2-a Codex 热进程（schema 65，默认关闭）
 
-- `warmRuntimes.codex` 配置项，**默认关闭**，待真实冒烟与冷热对比通过后再决定是否默认开启。
+- `warmRuntimes.codex` 配置项，**默认关闭**，待真实冒烟与冷热对比通过后再决定是否默认开启。（更正注：Codex 与 OpenCode 常驻自第二十四节起默认开启，本节“默认关闭”是当时状态；Claude 常驻仍默认关闭。）
 - 每实例一个 `codex app-server --listen unix://…`（实测该传输是 unix socket 上的 WebSocket，已自写客户端并用无模型的 initialize 探针验证）；驱动为进程组组长，经 stdin 收命令、fd3 回帧，帧带 runtime id、Host 代数、RunAttempt、原生 turn id 与序号。
 - 按轮句柄（方案 C）：128 位随机句柄，位于权限 0300 的 `turns/` 目录（可进入不可列举），只出现在本轮唤醒正文（原生压缩后经 `turn/steer` 重述）；Worker CLI 必须带 `--turn`，缺失报 `TURN_HANDLE_REQUIRED`，已撤销报 `TURN_HANDLE_INACTIVE`；按轮身份移入句柄的 `scope.json`，不再放进程环境。旧的每轮路径不变。
 - Kernel：`instance_runtimes`（部分唯一索引，每参与者最多一条存活记录；轮次成孤儿时触发器标记 suspect）；`run_attempts` 增 `instance_runtime_id/native_turn_id/execution_mode/session_resume_ms`；`runtime_processes` 增 `proof_kind/quiesce_result/close_seq/closed_at/late_frame_count`；`recordTurnQuiesced` 不伪造退出码；授权与执行检查增加"当前轮次 + Host 代数"。
@@ -108,6 +108,8 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 
 ### 十四、S2-b 常驻进程策略（Codex 热模式仍默认关闭）
 
+（更正注：Codex 与 OpenCode 常驻自第二十四节起默认开启，本节“默认关闭”是当时状态；Claude 常驻仍默认关闭。）
+
 - 空闲回收默认 30 min（从 lane 释放或 TUI 分离起算）；忙碌、等待释放、被固定（TUI）时不回收；上次冷恢复 >20 s 的实例 TTL ×4；可按实例覆盖。
 - 边界重启只在空闲实例被取用前进行：进程组 RSS >2 GiB、存活 >12 h、CLI 指纹（realpath+大小+mtime）变化、运行时键变化；先证明旧进程退出，新进程恢复同一 thread。
 - 热进程软上限 12（LRU 淘汰空闲者），并发忙碌轮次硬上限 20（超出等待 60 s 后以 `RAH_WARM_ADMISSION_FULL` 重试，不长期占用 Activation 租约）。
@@ -145,13 +147,13 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 重复回复根因（Kimi 漂移第 9 轮）：Kernel 中移植自 Raft 的"thread 上下文→频道顶层"确认检查拦下了与唤醒命令完全一致的正确回复并存为草稿，`--send-draft` 重发时丢失 based-on 与 `--final`，送达未确认，重试后重复回答。修复：回复目标守卫判定为"本轮回复"并放行时跳过该确认（该确认仍覆盖确认后无依据的普通发帖）；草稿保存并在重发时沿用 based-on 与 `--final`（新列 `reply_based_on_room_seq`、`reply_final`），恢复命令带上 `--turn`（第七轮审查更正：当时只修了 `--target` 路由，不带 target 的原始发帖路由保存的草稿仍丢 ACK/final，见第十九节）；重试时若上一次已发出回复，唤醒点名该消息（第十九节改为中性事实，只有带 final 标记时才称最终回复）。
 - OpenCode 1.18.32（源码只读核实）：每次模型请求都重建 system（agent prompt/默认 → env → instructions 文件 → 最后一条用户消息的 system）。常驻提示词改为内容寻址、0600 的 instructions 文件，经 `OPENCODE_CONFIG_CONTENT` 注入并合并已有配置；不再发送逐消息 system，因此压缩后自动插入的"Continue"步骤也带规则；`session.compacted` 只记诊断。
 - 带正文唤醒：驱动自选 user messageID，第一个 parentID 指向它的 assistant 作为接收证明；`--final`：发帖工具结束后 `POST /session/:id/abort`（先读取已持久化消息，避免截断发帖工具；第七轮审查更正：读取失败时原实现仍会 abort，不能覆盖该场景，第十九节改为 fail-closed）。
-- 常驻 OpenCode（`warmRuntimes.opencode`，默认关闭）：每实例一个长驻 serve + 持久 SSE；轮次边界取我们同步 `POST /message` 的响应（自动续写后的后续步骤 parent 是合成的 Continue 消息，不能用 parent 判定）；SSE 重连后按消息列表对账、不重发；拒绝忙时输入。
+- 常驻 OpenCode（`warmRuntimes.opencode`，默认关闭（更正注：Codex 与 OpenCode 常驻自第二十四节起默认开启，本节“默认关闭”是当时状态；Claude 常驻仍默认关闭。）：每实例一个长驻 serve + 持久 SSE；轮次边界取我们同步 `POST /message` 的响应（自动续写后的后续步骤 parent 是合成的 Continue 消息，不能用 parent 判定）；SSE 重连后按消息列表对账、不重发；拒绝忙时输入。
 - Kimi 漂移复测（k3-256k/low 冷模式，96e1dd0，`docs/evo/evidence/2026-09-25-drift-kimi-cold-r2.json`）：20 轮送达 100%，每轮恰好一条回复、0 重试（第 9 轮不再重复），目标错投 0，无越权建任务，未出现应沉默时发言，`--final` 100%，ACK 100%；两次强制压缩后规则卡仍生效。门禁因格式率判为退化而失败：5 轮超出"≤40 字"，全部是答案本身含长标识符（第 1 轮在压缩前就已超长），属模型遵守度，不是规则遗忘。
 - 待付费验证：abort 与下一次模型请求的真实时序、真实 SSE 顺序、压缩后规则进入续写步骤。
 
 ### 十九、第七轮审查修复
 
-依据 Codex 第七轮独立审查（`~/.loom/reviews/2026-09-25-s2-c-review.md`），负责人裁定全部 P1、P2 采纳。每项先写复现测试并确认失败，再做最小实现；热模式默认值不变（仍关闭），未跑付费 CLI，未重启服务。
+依据 Codex 第七轮独立审查（`~/.loom/reviews/2026-09-25-s2-c-review.md`），负责人裁定全部 P1、P2 采纳。每项先写复现测试并确认失败，再做最小实现；热模式默认值不变（仍关闭），未跑付费 CLI，未重启服务。（更正注：Codex 与 OpenCode 常驻自第二十四节起默认开启，本节“默认关闭”是当时状态；Claude 常驻仍默认关闭。）
 
 - P1-1 草稿回复意图两入口共用：`settleHeldDraftReplyIntent`（`held-message-drafts.ts`）成为 `--target` 路由与原始发帖路由共同调用的事务内步骤：被存为草稿（新鲜度 hold、再次 hold 或 thread 确认）时保存模型自己的 based-on 与 `--final`；提交时用该意图做 ACK 并记 final 标记。不同 Activation 的草稿不借出意图。两条路由的新鲜度围栏均未改：`--target` 重发以本 Agent 在该目标的已读位置为底线；原始路由的因果标记固定为 Activation head，出现更新消息时重发仍会再次 hold，须走既有的 `--anyway`（至少两次 hold 后）才提交，意图随再次 hold 保留。测试（`worker-reply-drift-duplicate.test.ts`）：originating→target（按恢复指导重发）、target→originating、originating→originating 各恰好一次提交、ACK 到 toSeq、final 标记记录（后两者经再次 hold + `--anyway`）；跨 Activation 不借用。
 - P1-2 OpenCode 中断 fail-closed：`opencode-final-interrupt.js` 持久工具状态查询失败或返回非列表时有界重查一次，仍失败则放弃本次 abort 优化、等本轮自然结束（冷热共用）。测试：`opencode-final-interrupt.test.ts`（查询失败/格式不可信不 abort、重查成功才 abort）与 `opencode-server-driver.test.ts`（SSE 滞后 + GET 失败 + 发帖工具执行中 → 不发 abort）。
@@ -297,14 +299,45 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 - Claude：真实后台任务轮在冷路径仍会多花一次付费生成（CLI 行为，驱动只是不再误判），其用量计入本 Run；热路径自发轮与唤醒撞车的真实竞态未实测。
 - OpenCode：热路径空闲期的子 session 用量，以及 SSE 缺口内丢失的 step-finish，仍不补回、不标缺口；冷路径 SSE 断开仍直接让本轮失败；真实子代理触发频率未测。
 
-## 已知缺陷（待阶段 3 修复）
+### 二十八、全面审查批次 4：门禁与文档
 
-| 级别 | 问题                                                                                                                                                                                 | 位置                                                      |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| P1   | 平台运行协议升级（常驻提示词变化）到不了已续聊的原生 session（Kimi 确认），启动上下文却报告新版本；须区分 Role 快照（按合同冻结）、平台协议版本、原生 session 实际生效的 system 快照 | `kimi-acp-driver.mjs:297`、`worker-startup-context.ts:31` |
-| P1   | 逐次 usage 已由 S1-a 记录（Kimi 无数据）；上下文窗口占用、压缩次数的记录与展示未做                                                                                                   | agent-host                                                |
-| P2   | 线程写入者占用被当成永久错误隔离；远端 Host 的绑定证据、用量、带正文唤醒未接（Role 实例在远端被明确拒绝）                                                                            | driver / remote composition                               |
-| P2   | 新实例首轮约 30 秒等待挂载发布（30 s 刷新周期）                                                                                                                                      | `runtime-offer-publisher.ts`                              |
+依据 2026-09-25 全面审查汇总的批次 4（`~/.loom/reviews/2026-09-25-claude-full-review-gates-docs.md` P1-1、P1-2、P2-1..P2-8，`2026-09-25-codex-full-review.md` P2-2、P2-3），负责人批准修复。只改 `scripts/cli-efficiency/`、两个门禁入口、`package.json`、AGENTS.md 与文档；产品代码与前端未改。未跑付费 CLI，未重启服务。
+
+- 单一批准表（P1-1）：新增 `approved-models.mjs`，列出负责人批准的全部 provider/模型/effort 组合（2026-09-09 矩阵四项与 2026-09-25 批准四项，`deepseek/deepseek-v4-flash` 目录已不发布但保留）。效率与漂移两个配置解析器、shim 生成器都查这张表，表外组合在任何进程启动前失败；Fable、GPT-5.6 Ultra、`max`/`ultra`/`xhigh` 另有兜底拒绝。测试：`approved-models.test.mjs`、两个 config 测试、`guarded-shim.test.mjs` 覆盖 `gpt-6-sol`、`ultra`、`opus/max`、`k3/max`、`fable` 等被拒（shim 文件不落盘）。
+- AGENTS.md 授权表（P1-2）：改为按 CLI 分行、带批准日期的八项表，删去已不成立的“没有 4.1 版本”说明，注明 `deepseek-flash`（V4.1 Flash）替代 `v4-flash`、`haiku` 无 effort，保留“每批付费运行仍需负责人明确授权”。效率门禁默认值改为当前批准模型（Codex `gpt-6-luna/low`、Claude `haiku`/无 effort、Kimi `k3-256k/low`、OpenCode `deepseek-flash/low`），漂移门禁文档示例同步。`common.mjs`/`rah.mjs`/`native.mjs` 隐式的 `gpt-5.6-luna` 默认值删除，调用方必须传入已批准配置。
+- Codex 围栏白名单（P2-1，`model-guard.mjs`）：只放行产品驱动与漂移压缩客户端实际发送的方法（`initialize`、`initialized`、`thread/start|resume`、`thread/compact/start`、`turn/start|steer|interrupt`、对服务端请求的响应）与逐键限定的参数（`config` 只许产品的 5 个 `false` 开关与许可 effort，`approvalPolicy` 只许 `never`，输入只许文本）；`review/start`、`config/value/write`、`thread/fork`、`approvalsReviewer`、`serviceTier` 等被拒。argv 由 `classifyCodexLaunch` 限定为 `--version`、`debug models [--bundled]` 与带产品 `-c <开关>=false`、单个 `--listen` 的 `app-server`；`debug app-server send-message-v2`、`app-server daemon|proxy|generate-json-schema`、`exec`、`--enable` 等被拒。测试：`model-guard.test.mjs`。
+- Claude 门禁（P2-2）：stdin user 帧的文本以 `/` 开头即拒绝（`/model`、`/effort`、`/fast`、前导空白、内容块形式），只有注入门自己的 `/compact` 放行。shim 转发后检查 assistant 帧（含 `parent_tool_use_id` 子 agent 帧）与 result `modelUsage` 的全部键，越权写 `<shim>.violations.jsonl` 并杀进程，两个门禁每轮检查。原生组核对主链、子 agent 与 `modelUsage`；transcript 读取纳入 `<session>/subagents/*.jsonl`，sidechain 模型也须属许可族；transcript 窗口无模型记录即失败。测试：`claude-guard.test.mjs`、`claude-usage.test.mjs`、`drift-guard.test.mjs`、`provider-files.test.mjs`。
+- 漂移事后核对（P2-3）：新增 `checkRoundModels`，每轮每家读取模型记录（Claude transcript 含子 agent，OpenCode `opencode.db`，Codex rollout `turn_context` 的模型与 effort，Kimi wire `llm.request` 的别名与思考档位）；越权仍整轮失败，读取失败、无 native session、窗口内零记录判 `modelEvidenceMissing`（证据缺口，状态 `missing-evidence`），`evaluateRound` 缺该字段也判缺失。测试：`drift-checks.test.mjs`。
+- 证据来源字段（P2-4，`gate-evidence.mjs`）：两个门禁记录 `codeCommit`（HEAD）、`workingTree`（`git status --porcelain --untracked-files=all` 摘要、`git diff HEAD` 摘要、变更与未跟踪数）与另存的 `sourceRef`（题目快照）；同目录写 `result.redacted.json`（临时根换 `<tmp>`、home 换 `~`），其中 `rawResultSha256` 为原始文件摘要，结束时打印。已提交的旧证据不改写：其 `commit` 字段在效率门禁是题目快照（`5122795`），在漂移门禁是 HEAD。
+- 单测纳入 check（P2-5）：`npm run check` 末尾加 `test:cli:efficiency:unit`（`scripts/cli-efficiency/*.test.mjs`，约 5 s）。
+- 引导去重（P2-8）：`gate-daemon.mjs` 负责 shim、隔离工作台、每轮/常驻开关、daemon 启停与 API，`rah.mjs` 与 `drift-runner.mjs` 共用（stop 记录退出状态，效率组仍断言退出码 0）；`drift-config.mjs` 复用 `efficiency-config.mjs` 的 binding/effort 解析与 Claude 档位表。
+- 默认效率门禁（Codex P2-2）：Codex 默认组加入 `role-warm`（产品默认常驻路径）；新增 OpenCode provider 与原生对照臂 `native-opencode.mjs`（`opencode run --pure --format json --auto -m --variant`，首轮 `--title`，`OPENCODE_CONFIG_CONTENT` 固定 `model`/`small_model`；用量用产品同一 step-finish 归一化，事后读 `opencode.db` 核对模型与 variant），RAH 组复用产品用量并读 db 做模型核对与工具调用类别。Claude 效率组支持 `haiku` 无 effort。测试：`efficiency-config.test.mjs`、`opencode-usage.test.mjs`。只有代码与免费测试，未付费运行。
+- 文档（P2-6、P2-7、Codex P2-3）：本页“已知缺陷”改为“当前状态”表并删去过时的协议升级 P1；第九、十四、十八、十九节的“默认关闭”加更正注；漂移门禁文档局限段按 7 份证据重写；`s2-spec` §8 后记录证据关口未满足及原因（无豁免）。目标合同 §6“当前基线”列未改（需负责人批准），当前状态表下注明其为 9/23 数据。
+- 偏离与局限：OpenCode 原生臂的 `--format json` 事件格式依据 1.18.32 二进制内嵌源码，未付费实测；OpenCode RAH 组没有独立于产品记录的 token 复核。Claude `modelUsage` 核对若遇到 CLI 后台其他模型族的调用会判越权（是否出现未知，出现时由负责人决定，门禁不自行放宽）。Codex/Kimi 事后核对依赖 CLI 私有文件字段，缺字段判证据缺失。本批新门禁代码未付费运行。
+
+## 当前状态（2026-09-25，批次 4 后）
+
+本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
+“已实现”不代表已验证，“已 fake 验证”不代表真实 CLI 验证，“已真实 CLI 验证”只指所列样本，不等于效率验收或部署验收。
+原表中“平台协议升级到不了已续聊 session”一项已删除：第十五节“Protocol updated”行与协议版本、第十七节压缩后规则卡、
+第二十五节第 6 项池持有的待确认状态已覆盖，其真实 CLI 验证情况见下表“会话协议与压缩”行。
+
+| 能力                           | 已实现                                                                                                        | 已 fake 验证                           | 已真实 CLI 验证                                                                                                        | 未覆盖                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Role / Instance / 频道成员     | Role 修订、实例冻结快照、移除后不复活（第二、二十六节）                                                       | Kernel/Worker 测试                     | 漂移门禁四家均以 Role 实例运行（见漂移结论与第二十二、二十三节）                                                       | 控制台可见（`apps/console` 不存在）；远端 Host 明确拒绝运行 Role 实例（`RAH_INSTANCE_HOST_UNSUPPORTED`）                                   |
+| 每轮效率（S1）                 | 用量入库、四家带正文唤醒、提示词减重、`--final` 收尾                                                          | 是                                     | 仅 Codex `gpt-5.6-luna/low`：S1-e、S1-g、精简唤醒三次效率门禁，全组仍 over-budget（第一轮工作路径差异），续聊轮达标    | Claude/Kimi/OpenCode 效率门禁从未付费运行；`gpt-6-luna` 无效率证据；Kimi 用量 CLI 不提供（`unmeasured`）；合同 §6 分项预算口径待负责人决定 |
+| Codex 常驻（默认开启）         | S2-a/S2-b 与批次 1 修复                                                                                       | 是                                     | 冷热对比（`gpt-5.6-luna`，常驻组不重启）；漂移 20 轮常驻（`gpt-6-luna`）                                               | 热模式取消、首轮中断、热模式 daemon 重启续聊均无真实证据（s2-spec §8 冒烟未满足）；默认开启后本地服务未验收                                |
+| OpenCode 冷 / 常驻（默认开启） | S2-c3 与批次 1、3 修复                                                                                        | 是                                     | 漂移 10 轮冷、热各一次（`deepseek-flash/low`）                                                                         | 原生效率对照未跑（批次 4 只补代码）；真实 abort 超时、子代理与溢出事件；默认开启后本地服务未验收                                           |
+| Claude 冷 / 常驻（默认关闭）   | S2-c1、第二十一节与批次 3 修复                                                                                | 是                                     | 仅 Haiku（无 effort）漂移 10 轮冷、热各一次                                                                            | Sonnet 无任何真实证据；效率门禁未跑；后台任务轮与唤醒真实竞态                                                                              |
+| Kimi 冷                        | S2-c2 与批次 3 修复                                                                                           | 是                                     | 漂移 20 轮冷两次（`k3-256k/low`，第二次修复后送达与 ACK 100%）                                                         | 效率门禁未跑；用量不可得；Goal 在 `auto` 权限模式下拦不住（第二十七节）                                                                    |
+| 会话协议与压缩                 | 协议版本与“Protocol updated”行、压缩后规则卡、池持有待确认状态                                                | 是                                     | Kimi 第二次漂移两次强制压缩后规则卡仍生效；Haiku 冷热、OpenCode 热压缩后无退化；Codex 压缩后格式率下降（见漂移结论表） | 协议升级行本身无真实触发样本                                                                                                               |
+| 用量 / 上下文 / 压缩可见性     | 逐次用量入库；Codex 记上下文窗口与占用（其他 CLI 为空，不估算）；压缩次数记在 Host session 绑定               | 是                                     | 效率/漂移证据中的产品用量（Kimi 除外）                                                                                 | 每实例展示（控制台不存在）                                                                                                                 |
+| 会话连续性                     | 不静默换 session：要求连续时停止并隔离，reset 后重新排队（第二十六节）；冷驱动接收即绑定                      | 是                                     | 漂移样本中 session 不变                                                                                                | 真实首轮中断后的恢复；线程写入者占用仍按连续性失败隔离，需 Human reset                                                                     |
+| 新实例首轮等待                 | 挂载发布按 30 s 刷新周期                                                                                      | —                                      | —                                                                                                                      | 首轮约 30 s 等待未修                                                                                                                       |
+| 付费门禁自身                   | 单一批准表、Codex 白名单围栏、Claude 斜杠命令与事后核对、漂移事后核对 fail-closed、证据来源字段（第二十八节） | 门禁免费单测（已纳入 `npm run check`） | 批次 4 之后的门禁代码未付费运行                                                                                        | Claude result `modelUsage` 若含 CLI 后台其他模型族会判越权，是否出现未知                                                                   |
+| S3–S6                          | 未开始                                                                                                        | —                                      | —                                                                                                                      | 私聊缺口、fork、side、平台记忆                                                                                                             |
+
+目标合同 §6 表的“当前基线”一列是 2026-09-23 的数据（首轮失败、用量未采集），之后的实测见本页效率各节；修改合同列名需负责人批准，本页不改合同。
 
 ## 长会话漂移测试结论（2026-09-25，20 轮，第 8/15 轮强制压缩）
 

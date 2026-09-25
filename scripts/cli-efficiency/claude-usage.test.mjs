@@ -318,6 +318,8 @@ test("transcript round: unique main-chain generations inside the window", () => 
   assert.deepEqual(r.models, ["claude-sonnet-5"]);
   assert.deepEqual(r.efforts, ["low"]);
   assert.equal(r.sidechainGenerations, 1);
+  // Sub-agent (sidechain) generations are model-checked too.
+  assert.deepEqual(r.sidechainModels, ["claude-haiku-4"]);
   assert.equal(r.compactBoundaries, 1);
   assert.deepEqual(
     r.toolCalls.map((c) => [c.kind, c.turnHandle]),
@@ -360,6 +362,39 @@ test("native args pin model and effort, resume only after round 1", () => {
   assert.equal(next[next.indexOf("--resume") + 1], S);
   assert.ok(!next.includes("--fork-session"));
   assert.throws(() => claudeNativeArgs({ model: "sonnet", prompt: "q" }));
+  // Effortless (haiku) approval: exactly no --effort.
+  const haiku = claudeNativeArgs({ model: "haiku", effort: null, prompt: "q" });
+  assert.ok(!haiku.includes("--effort"));
+  assert.equal(haiku[haiku.indexOf("--model") + 1], "haiku");
+});
+
+test("stream-json round: sub-agent models and result modelUsage are collected", () => {
+  const at = 1;
+  const r = parseClaudeStreamRound(
+    [
+      {
+        type: "assistant",
+        session_id: S,
+        message: { model: "claude-sonnet-5", content: [] },
+      },
+      {
+        type: "assistant",
+        session_id: S,
+        parent_tool_use_id: "toolu_1",
+        message: { model: "claude-haiku-4", content: [] },
+      },
+      {
+        type: "result",
+        session_id: S,
+        subtype: "success",
+        result: "ok",
+        modelUsage: { "claude-sonnet-5": {}, "claude-haiku-4": {} },
+      },
+    ].map((o) => ({ line: JSON.stringify(o), at })),
+  );
+  assert.deepEqual(r.models, ["claude-sonnet-5"]);
+  assert.deepEqual(r.subagentModels, ["claude-haiku-4"]);
+  assert.deepEqual(r.resultModels, ["claude-sonnet-5", "claude-haiku-4"]);
 });
 
 test("drift diagnostics: task commands and refused reply-target sends", () => {

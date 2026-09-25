@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   classifyClaudeLaunch,
   createClaudeInjectionGate,
+  createClaudeOutputWatcher,
   createClaudeStdinGuard,
 } from "./claude-guard.mjs";
 
@@ -305,5 +306,101 @@ test("launch: an approval must state its effort; only null means none", () => {
         approved,
       ),
     /Unapproved effort/,
+  );
+});
+
+test("stdin: user input that starts with a slash command is refused", () => {
+  const guard = createClaudeStdinGuard("turn");
+  const user = (content) =>
+    JSON.stringify({ type: "user", message: { role: "user", content } });
+  for (const content of [
+    "/model opus",
+    "/effort max",
+    "/fast",
+    "  /model opus",
+    "\n/compact",
+    [{ type: "text", text: "/model opus" }],
+    [
+      { type: "text", text: "hello" },
+      { type: "text", text: " /effort max" },
+    ],
+  ])
+    assert.throws(
+      () => guard(user(content)),
+      /slash command/,
+      JSON.stringify(content),
+    );
+  // Ordinary text, including a slash later in the text, passes.
+  guard(user("read scripts/a.mjs and /tmp is fine"));
+  guard(user([{ type: "text", text: "path a/b" }]));
+  guard(user([{ type: "tool_result", tool_use_id: "t", content: "/x" }]));
+});
+
+test("injection: the gate's own /compact passes; the driver's /compact does not", async () => {
+  const h = harness();
+  assert.throws(
+    () =>
+      h.fromDriver({
+        type: "user",
+        message: { role: "user", content: "/compact" },
+      }),
+    /slash command/,
+  );
+  const pending = h.gate.inject("/compact", { sessionId: "s" });
+  assert.equal(h.child.at(-1).message.content, "/compact");
+  h.fromChild({ type: "result", subtype: "success" });
+  assert.equal((await pending).result.subtype, "success");
+});
+
+test("output watcher: any model outside the approved family is a violation", () => {
+  const watch = createClaudeOutputWatcher({ model: "haiku", effort: null });
+  const line = (o) => JSON.stringify(o);
+  assert.equal(
+    watch(
+      line({
+        type: "assistant",
+        message: { model: "claude-haiku-4-5-20251001", content: [] },
+      }),
+    ),
+    undefined,
+  );
+  assert.equal(
+    watch(
+      line({
+        type: "result",
+        modelUsage: { "claude-haiku-4-5-20251001": { inputTokens: 1 } },
+      }),
+    ),
+    undefined,
+  );
+  assert.equal(watch("not json"), undefined);
+  // A sub-agent generation (parent_tool_use_id) is checked like the main one.
+  assert.match(
+    watch(
+      line({
+        type: "assistant",
+        parent_tool_use_id: "toolu_1",
+        message: { model: "claude-sonnet-5", content: [] },
+      }),
+    ),
+    /Unapproved model claude-sonnet-5/,
+  );
+  // result.modelUsage covers background and sub-agent calls.
+  assert.match(
+    watch(
+      line({
+        type: "result",
+        modelUsage: {
+          "claude-haiku-4-5-20251001": {},
+          "claude-opus-5-5": {},
+        },
+      }),
+    ),
+    /Unapproved model claude-opus-5-5/,
+  );
+  // <synthetic> assistant frames carry no generation.
+  assert.equal(
+    watch(line({ type: "assistant", message: { model: "<synthetic>" } })),
+    undefined,
   );
 });

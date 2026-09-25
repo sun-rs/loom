@@ -16,24 +16,33 @@ import {
   summarizeDrift,
 } from "./cli-efficiency/drift-checks.mjs";
 import { runDriftArm } from "./cli-efficiency/drift-runner.mjs";
+import {
+  codeProvenance,
+  writeEvidence,
+} from "./cli-efficiency/gate-evidence.mjs";
 
 assert.ok(
   process.argv.includes("--paid"),
   "Requires explicit --paid and user authorization",
 );
+// The model/effort must be in approved-models.mjs, checked here before any
+// process starts.
 const config = parseDriftEnv(process.env);
 const scenario = buildDriftScenario(config);
 const root = mkdtempSync(join(tmpdir(), "rah-cli-drift-"));
-const commit = execFileSync("git", ["rev-parse", "HEAD"], {
-  encoding: "utf8",
-}).trim();
+// codeCommit/workingTree: the code under test; sourceRef: the snapshot of
+// the scenario's source files (HEAD).
+const provenance = codeProvenance();
 const files = [
   "scripts/workbench-launch-receipt.mjs",
   "scripts/workbench-launch-receipt.test.mjs",
 ];
 const hash = (b) => createHash("sha256").update(b).digest("hex");
 const snapshot = Object.fromEntries(
-  files.map((f) => [f, execFileSync("git", ["show", `${commit}:${f}`])]),
+  files.map((f) => [
+    f,
+    execFileSync("git", ["show", `${provenance.sourceRef}:${f}`]),
+  ]),
 );
 const cliVersion = execFileSync(config.provider, ["--version"], {
   encoding: "utf8",
@@ -45,8 +54,7 @@ const result = {
   startedAt: new Date().toISOString(),
   config,
   cliVersion,
-  commit,
-  workingTreeDiffSha256: hash(execFileSync("git", ["diff", "HEAD"])),
+  ...provenance,
   sourceHashes: Object.fromEntries(files.map((f) => [f, hash(snapshot[f])])),
   criteria: DRIFT_CRITERIA,
   scenario: scenario.map((r) => ({
@@ -62,12 +70,10 @@ const result = {
   compactions: [],
   status: "running",
 };
-const save = () =>
-  writeFileSync(
-    join(root, "result.json"),
-    JSON.stringify(result, null, 2) + "\n",
-    { mode: 0o600 },
-  );
+let written;
+const save = () => {
+  written = writeEvidence(root, result);
+};
 save();
 console.log("EVIDENCE " + join(root, "result.json"));
 try {
@@ -141,5 +147,8 @@ try {
 } finally {
   result.finishedAt = new Date().toISOString();
   save();
-  console.log("GATE " + result.status + " " + join(root, "result.json"));
+  console.log("GATE " + result.status + " " + written.rawPath);
+  console.log(
+    `EVIDENCE_REDACTED ${written.redactedPath} raw sha256 ${written.rawSha256}`,
+  );
 }

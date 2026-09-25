@@ -1,44 +1,70 @@
 // Native CLI efficiency gate configuration (opt-in, paid). Pure: parses the
-// RAH_EFFICIENCY_* environment and fails closed on anything ambiguous. Each
-// runtime is compared with its own native CLI (contract §6); the model guard
-// later enforces exactly the returned model/effort.
+// RAH_EFFICIENCY_* environment and fails closed on anything ambiguous or
+// outside the owner approval table (approved-models.mjs). Each runtime is
+// compared with its own native CLI (contract §6); the model guard later
+// enforces exactly the returned model/effort.
+import { assertApprovedGateModel } from "./approved-models.mjs";
 import { parseArmOrder } from "./warm.mjs";
 
-// Defaults are the AGENTS.md authorized paid-gate matrix. `productUsage`:
-// whether the product records per-generation usage for this runtime (Kimi ACP
-// reports a capture gap, so its product usage is `unavailable` by design).
+// The explicit "no effort" value (an effortless binding such as Claude
+// `haiku`, whose catalog entry publishes no effort levels).
+export const NO_EFFORT = "none";
+// Claude Code effort levels (the approval table narrows them further).
+export const CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"];
+
+// Defaults are the current owner-approved gate models (approved-models.mjs).
+// `productUsage`: whether the product records per-generation usage for this
+// runtime (Kimi ACP reports a capture gap, so its product usage is
+// `not-recorded` by design).
 export const EFFICIENCY_PROVIDERS = {
   codex: {
     catalogKind: "codex-cli/v1",
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     effort: "low",
     arms: ["native", "legacy", "role", "role-warm"],
-    defaults: ["native", "legacy", "role"],
+    // The product runs Codex warm by default; role-warm measures that path.
+    defaults: ["native", "legacy", "role", "role-warm"],
     warmAppend: true,
     instructionFile: "AGENTS.md",
     productUsage: "required",
   },
   claude: {
     catalogKind: "claude-cli/v1",
-    model: "sonnet",
-    effort: "low",
-    efforts: ["low", "medium", "high", "xhigh", "max"],
+    model: "haiku",
+    effort: null,
+    efforts: CLAUDE_EFFORTS,
+    // Bindings the installed Claude Code catalog publishes without effort
+    // levels (probed 2026-09-25: `haiku`, supportsEffort false).
+    effortless: ["haiku"],
     arms: ["native", "legacy", "role", "role-warm"],
     defaults: ["native", "role", "role-warm"],
     warmAppend: true,
-    // Claude Code reads CLAUDE.md natively (Codex and Kimi read AGENTS.md).
+    // Claude Code reads CLAUDE.md natively (the others read AGENTS.md).
     instructionFile: "CLAUDE.md",
     productUsage: "required",
   },
   kimi: {
     catalogKind: "kimi-cli/v1",
-    model: "kimi-code/k3",
-    effort: "high",
+    model: "kimi-code/k3-256k",
+    effort: "low",
     arms: ["native", "legacy", "role"],
     defaults: ["native", "role"],
     warmAppend: false,
     instructionFile: "AGENTS.md",
     productUsage: "not-recorded",
+  },
+  // OpenCode binding ids are `provider/model`; the reasoning level is the
+  // catalog variant. The product runs OpenCode warm by default.
+  opencode: {
+    catalogKind: "opencode-cli/v1",
+    model: "deepseek/deepseek-flash",
+    effort: "low",
+    modelPattern: /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._/:-]*$/u,
+    arms: ["native", "role", "role-warm"],
+    defaults: ["native", "role", "role-warm"],
+    warmAppend: false,
+    instructionFile: "AGENTS.md",
+    productUsage: "required",
   },
 };
 
@@ -70,22 +96,58 @@ export function validEffort(effort, allowed) {
   );
 }
 
+// Shared by both gates: an effortless binding requires the explicit "none"
+// and yields null; every other binding requires an explicit valid level.
+export function resolveEffort(
+  rawEffort,
+  { model, provider, efforts, effortless = [] },
+  fail,
+  name,
+) {
+  const noEffort = effortless.includes(model);
+  if (noEffort && rawEffort !== NO_EFFORT)
+    fail(`${name} must be ${NO_EFFORT}: ${model} publishes no effort levels`);
+  if (!noEffort && rawEffort === NO_EFFORT)
+    fail(
+      `${name}=${NO_EFFORT} is allowed only for an effortless binding (${provider}: ${effortless.join(", ") || "none"})`,
+    );
+  if (noEffort) return null;
+  if (!validEffort(rawEffort, efforts))
+    fail(`${name} must name an explicit ${provider} reasoning level`);
+  return rawEffort;
+}
+
 export function parseEfficiencyEnv(env) {
   const fail = (why) => {
     throw new Error(`Invalid efficiency gate configuration: ${why}`);
   };
   const provider = env.RAH_EFFICIENCY_PROVIDER ?? "codex";
   if (!Object.hasOwn(EFFICIENCY_PROVIDERS, provider))
-    fail("RAH_EFFICIENCY_PROVIDER must be codex, claude or kimi");
+    fail("RAH_EFFICIENCY_PROVIDER must be codex, claude, kimi or opencode");
   const profile = EFFICIENCY_PROVIDERS[provider];
   const model = resolveBindingModel(
     env.RAH_EFFICIENCY_MODEL ?? profile.model,
     profile.catalogKind,
     fail,
   );
-  const effort = env.RAH_EFFICIENCY_EFFORT ?? profile.effort;
-  if (!validEffort(effort, profile.efforts))
-    fail(`RAH_EFFICIENCY_EFFORT must name an explicit ${provider} level`);
+  if (profile.modelPattern !== undefined && !profile.modelPattern.test(model))
+    fail(`model must be a provider/model binding for ${provider}`);
+  const effort = resolveEffort(
+    env.RAH_EFFICIENCY_EFFORT ?? profile.effort ?? NO_EFFORT,
+    {
+      model,
+      provider,
+      efforts: profile.efforts,
+      effortless: profile.effortless,
+    },
+    fail,
+    "RAH_EFFICIENCY_EFFORT",
+  );
+  try {
+    assertApprovedGateModel({ provider, model, effort });
+  } catch (error) {
+    fail(error.message);
+  }
   const order = parseArmOrder(env, profile);
   return {
     provider,

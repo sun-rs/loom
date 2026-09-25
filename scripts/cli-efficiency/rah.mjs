@@ -6,42 +6,24 @@ import {
 } from "./warm.mjs";
 import { DatabaseSync } from "node:sqlite";
 import assert from "node:assert/strict";
-import { spawn, execFileSync } from "node:child_process";
-import {
-  writeFileSync,
-  readFileSync,
-  globSync,
-  mkdirSync,
-  copyFileSync,
-} from "node:fs";
+import { readFileSync, globSync, mkdirSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { agentExecutionWorkspacePath } from "../../packages/agent-host/src/agent-execution-workspace.ts";
 import { RoomKernel } from "@rah-os/kernel";
-import {
-  localCliRuntimeSpec,
-  prepareLocalWorkbench,
-} from "../../packages/daemon/src/index.ts";
-import {
-  model as codexModel,
-  effort as codexEffort,
-  instructions,
-  wait,
-  measure,
-} from "./common.mjs";
-import { writeGuardedShim } from "./guarded-shim.mjs";
+import { instructions, wait, measure } from "./common.mjs";
+import { prepareGateDaemon } from "./gate-daemon.mjs";
 import { claudeTranscriptRound } from "./claude-usage.mjs";
 import { assertClaudeTranscriptModel } from "./native-claude.mjs";
 import { measureKimiWire } from "./native-kimi.mjs";
-import { readClaudeTranscript } from "./provider-files.mjs";
-const CODEX = {
-  provider: "codex",
-  model: codexModel,
-  effort: codexEffort,
-  bindingId: `local:codex-cli/v1:${codexModel}`,
-  instructionFile: "AGENTS.md",
-};
-// config: parseEfficiencyEnv() result (default: the historical Codex arm).
+import {
+  assertOpenCodeAssistants,
+  readOpenCodeRound,
+} from "./drift-opencode-guard.mjs";
+import { readOpenCodeToolCalls } from "./opencode-usage.mjs";
+import { readClaudeTranscriptWithSubagents } from "./provider-files.mjs";
+// config: parseEfficiencyEnv() result (required: the approval table admitted
+// its model/effort before any paid call).
 export async function rahArm({
   kind,
   root,
@@ -49,15 +31,34 @@ export async function rahArm({
   questions,
   arm,
   save,
-  config = CODEX,
+  config,
 }) {
+  assert.ok(config?.provider && config.model, "rahArm needs the gate config");
   const { provider, model, effort, bindingId } = config;
   const workspaceFiles = [
     config.instructionFile,
     "scripts/workbench-launch-receipt.mjs",
     "scripts/workbench-launch-receipt.test.mjs",
   ];
-  const stateDirectory = join(root, "state");
+  // role-warm: the S2-a warm Codex / S2-c1 warm Claude / S2-c3 warm OpenCode
+  // runtime (Codex and OpenCode are warm by default in the product, Claude
+  // is opt-in); the per-turn arms switch warm runtimes off explicitly.
+  // Its daemon restart before round 3 is skipped unless
+  // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
+  // resume at round 3; the per-turn arms keep the restart.
+  const warm = kind === "role-warm";
+  const gate = await prepareGateDaemon({
+    provider,
+    model,
+    effort,
+    root,
+    cwd,
+    warm,
+    processes: arm.processes,
+    save,
+    consumerId: "efficiency-gate",
+  });
+  const { spec, prepared, stateDirectory, post, head } = gate;
   // Every instance runtime of the participant owning `instanceRuntimeId`
   // (read-only; no secrets, handles or paths).
   const runtimeRows = (instanceRuntimeId) => {
@@ -80,119 +81,16 @@ export async function rahArm({
       db.close();
     }
   };
-  const realCli = execFileSync("which", [provider], {
-    encoding: "utf8",
-  }).trim();
-  const shim = writeGuardedShim({
-    provider,
-    path: join(root, `guarded-${provider}.mjs`),
-    realCli,
-    model,
-    effort,
-  });
-  const spec = {
-    ...localCliRuntimeSpec(provider, cwd),
-    reasoning: effort,
-    executable: shim,
-  };
-  const prepared = await prepareLocalWorkbench({
-    runtimeSpecs: [spec],
-    stateDirectory,
-    workspaceCwd: cwd,
-  });
-  // role-warm: the S2-a warm Codex / S2-c1 warm Claude / S2-c3 warm OpenCode
-  // runtime (Codex and OpenCode are warm by default in the product, Claude
-  // is opt-in); the per-turn arms switch warm runtimes off explicitly.
-  // Its daemon restart before round 3 is skipped unless
-  // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
-  // resume at round 3; the per-turn arms keep the restart.
-  const warm = kind === "role-warm";
-  const daemonConfig = warm
-    ? { ...prepared.config, warmRuntimes: { [provider]: { enabled: true } } }
-    : {
-        ...prepared.config,
-        // Codex and OpenCode run warm by default in the product; the
-        // per-turn arm opts out explicitly.
-        warmRuntimes: {
-          codex: { enabled: false },
-          opencode: { enabled: false },
-        },
-      };
   const restartBeforeRound =
     warm && process.env.RAH_EFFICIENCY_WARM_RESTART !== "1" ? undefined : 3;
   Object.assign(arm, { warmRuntimes: warm, restartBeforeRound });
-  const configPath = join(root, "config.json");
-  writeFileSync(configPath, JSON.stringify(daemonConfig), { mode: 0o600 });
-  let child, exit, origin, observer, participantId, agentId, roomId, actor;
+  let observer, participantId, agentId, roomId, actor;
   let sessionId;
-  async function start() {
-    let out = "";
-    child = spawn(
-      process.execPath,
-      [new URL("./daemon.mjs", import.meta.url).pathname, configPath],
-      { stdio: ["ignore", "pipe", "pipe"] },
-    );
-    exit = new Promise((r) =>
-      child.once("close", (code, signal) => r({ code, signal })),
-    );
-    child.stdout.on("data", (b) => {
-      out = (out + b).slice(-10000);
-      const m = out.match(/GATE_READY (.*)\n/);
-      if (m) origin = JSON.parse(m[1]).origin;
-    });
-    child.stderr.on("data", (b) =>
-      writeFileSync(join(root, "daemon.log"), b, { flag: "a", mode: 0o600 }),
-    );
-    await wait(() => {
-      assert.equal(child.exitCode, null, "Daemon startup failed");
-      return origin;
-    }, 60000);
-    arm.processes.push({ pid: child.pid, startedAt: new Date().toISOString() });
-    save();
-  }
+  const start = gate.start;
   async function stop() {
-    if (!child) return;
-    child.kill("SIGTERM");
-    let timer;
-    try {
-      const s = await Promise.race([
-        exit,
-        new Promise((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error("Graceful drain timed out")),
-            45000,
-          );
-        }),
-      ]);
-      assert.equal(s.code, 0);
-      arm.processes.at(-1).finishedAt = new Date().toISOString();
-      child = undefined;
-      origin = undefined;
-      save();
-    } finally {
-      clearTimeout(timer);
-    }
+    const status = await gate.stop();
+    if (status !== undefined) assert.equal(status.code, 0);
   }
-  async function post(path, body) {
-    const r = await fetch(origin + path, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${prepared.humanAccessToken}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await r.json();
-    assert.equal(r.status, 200, JSON.stringify(data));
-    return data;
-  }
-  const head = async (id) =>
-    (
-      await post("/v3/client/rooms/sync", {
-        roomId: id,
-        consumerId: "efficiency-gate",
-      })
-    ).latestRoomSeq;
   try {
     await start();
     observer = new RoomKernel({
@@ -213,7 +111,13 @@ export async function rahArm({
       (b) => b.modelBindingId === bindingId,
     );
     assert.equal(binding?.modelId, model);
-    assert.ok(binding.supportedReasoning.includes(effort));
+    if (effort === null)
+      assert.deepEqual(
+        binding.supportedReasoning,
+        [],
+        "Effortless binding offers effort levels",
+      );
+    else assert.ok(binding.supportedReasoning.includes(effort));
     arm.binding = bindingId;
     const control = prepared.metadata.controlRoomId;
     const mount = prepared.config.workspace.workspaceMountRevisionId;
@@ -230,7 +134,7 @@ export async function rahArm({
       modelIntent: {
         exactBindingIds: [bindingId],
         fallback: "disabled",
-        reasoning: effort,
+        reasoning: spec.reasoning,
         serviceTier: "default",
       },
       toolAccessMode: "full_access",
@@ -419,8 +323,10 @@ export async function rahArm({
       );
       for (const p of observer.listPlacements({ roomId })) {
         assert.equal(p.resolvedModel.modelId, model);
-        assert.equal(p.resolvedModel.reasoning, effort);
+        assert.equal(p.resolvedModel.reasoning, effort ?? undefined);
       }
+      // A guard that saw another model after forwarding fails the arm.
+      gate.assertNoGuardViolations();
       assert.deepEqual(observer.listTasks(actor, { roomId }), []);
       save();
       console.log(`${kind} round ${i + 1}: ${round.replySeconds}s`);
@@ -453,24 +359,57 @@ export async function rahArm({
 // Per-provider RAH round metrics (same shape as common.mjs `measure`):
 // - codex: the rollout transcript (cross-checked against product usage);
 // - claude: the product-recorded generations (the same stream tracker as the
-//   native arm), cross-checked against the session transcript, which also
-//   proves the model family and effort;
+//   native arm), cross-checked against the session transcript (sub-agent
+//   files included), which also proves the model family and effort;
+// - opencode: the product-recorded generations (the same step-finish
+//   accounting as the native arm); the CLI database proves model and variant;
 // - kimi: the session wire (the product records no Kimi usage).
 function measureRah({ config, sessionId, round, replyAt, productUsage }) {
   if (config.provider === "codex")
     return measure(sessionId, round, { replyAt }, config);
   if (config.provider === "kimi")
     return measureKimiWire(sessionId, round, config, { replyAt });
-  const transcript = claudeTranscriptRound(readClaudeTranscript(sessionId), {
-    from: round.startedAt,
-    to: round.finishedAt,
-  });
-  assertClaudeTranscriptModel(transcript, config);
   const records = productUsage.generations ?? [];
   const usable =
     productUsage.completeness === "complete" &&
     !productUsage.truncated &&
     records.length > 0;
+  if (config.provider === "opencode") {
+    const from = Date.parse(round.startedAt);
+    const to = Date.parse(round.finishedAt);
+    const stored = assertOpenCodeAssistants(
+      readOpenCodeRound(sessionId, from, to),
+      config,
+    );
+    assert.ok(stored.assistants > 0, "No stored OpenCode model evidence");
+    round.openCodeAssistants = stored.assistants;
+    const toolCalls = readOpenCodeToolCalls(sessionId, from, to);
+    // Product usage incomplete: no substitute token source, so the round
+    // carries no token counts and the comparison fails usageEvidenceMissing.
+    if (!usable)
+      return {
+        replySeconds: round.replySeconds,
+        toolCalls,
+        usageSource: "unavailable",
+      };
+    return {
+      ...summarizeGenerations(records, { replyAt }),
+      replySeconds: round.replySeconds,
+      toolCalls,
+      usageSource: "product",
+    };
+  }
+  const transcript = claudeTranscriptRound(
+    readClaudeTranscriptWithSubagents(sessionId),
+    {
+      from: round.startedAt,
+      to: round.finishedAt,
+    },
+  );
+  assert.ok(
+    assertClaudeTranscriptModel(transcript, config) > 0,
+    "No transcript model evidence",
+  );
   return {
     // Product usage incomplete: report the transcript view, still failing
     // the comparison as usageEvidenceMissing.

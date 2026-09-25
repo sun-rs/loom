@@ -59,6 +59,10 @@ export function parseClaudeStreamRound(entries) {
     sessionIds: [],
     initModel: undefined,
     models: [],
+    // Sub-agent generations (parent_tool_use_id) and result modelUsage keys:
+    // model-checked like the main chain, never counted as its usage.
+    subagentModels: [],
+    resultModels: [],
     answer: undefined,
     lastText: undefined,
     finalAt: undefined,
@@ -92,6 +96,19 @@ export function parseClaudeStreamRound(entries) {
         trigger: frame.compact_metadata?.trigger ?? null,
         preTokens: frame.compact_metadata?.pre_tokens ?? null,
       });
+    if (
+      frame.type === "assistant" &&
+      frame.parent_tool_use_id != null &&
+      frame.message?.model !== "<synthetic>"
+    )
+      addUnique(out.subagentModels, frame.message?.model);
+    if (
+      frame.type === "result" &&
+      frame.modelUsage !== null &&
+      typeof frame.modelUsage === "object"
+    )
+      for (const m of Object.keys(frame.modelUsage))
+        addUnique(out.resultModels, m);
     if (frame.type === "assistant" && frame.parent_tool_use_id == null) {
       const message = frame.message ?? {};
       addUnique(out.models, message.model);
@@ -132,6 +149,7 @@ export function claudeTranscriptRound(text, { from, to } = {}) {
   const models = [];
   const efforts = [];
   const sidechain = new Set();
+  const sidechainModels = [];
   const toolCalls = [];
   let compactBoundaries = 0;
   let targetRejections = 0;
@@ -165,6 +183,7 @@ export function claudeTranscriptRound(text, { from, to } = {}) {
     if (m.model === "<synthetic>" || typeof m.id !== "string") continue;
     if (e.isSidechain === true) {
       sidechain.add(m.id);
+      if (!sidechainModels.includes(m.model)) sidechainModels.push(m.model);
       continue;
     }
     if (!models.includes(m.model)) models.push(m.model);
@@ -200,6 +219,7 @@ export function claudeTranscriptRound(text, { from, to } = {}) {
     models,
     efforts,
     sidechainGenerations: sidechain.size,
+    sidechainModels,
     compactBoundaries,
     targetRejections,
     toolCalls,
@@ -217,8 +237,9 @@ export function claudeModelMatches(approved, actual) {
 
 // Native arm: the installed CLI directly, one process per round, the same
 // session resumed (never forked) after round 1.
+// effort null: the effortless (haiku) approval, launched without --effort.
 export function claudeNativeArgs({ model, effort, prompt, sessionId }) {
-  if (!model || !effort || typeof prompt !== "string")
+  if (!model || (effort !== null && !effort) || typeof prompt !== "string")
     throw new Error("Native Claude args need model, effort and prompt");
   return [
     "-p",
@@ -230,8 +251,7 @@ export function claudeNativeArgs({ model, effort, prompt, sessionId }) {
     "--dangerously-skip-permissions",
     "--model",
     model,
-    "--effort",
-    effort,
+    ...(effort === null ? [] : ["--effort", effort]),
     ...(sessionId ? ["--resume", sessionId] : []),
   ];
 }

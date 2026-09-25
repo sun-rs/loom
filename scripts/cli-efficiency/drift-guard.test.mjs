@@ -111,6 +111,7 @@ test("codex guard is parametrized by the drift model/effort", () => {
   guard({
     method: "thread/resume",
     params: {
+      threadId: "t",
       model: "gpt-5.6-luna",
       config: { model_reasoning_effort: "medium" },
     },
@@ -253,5 +254,39 @@ test("claude transcript fence: an effortless approval admits no recorded effort"
         haiku,
       ),
     /Unapproved model/,
+  );
+});
+
+test("claude transcript fence: sub-agent (sidechain) models must match too", async () => {
+  const { assertClaudeTranscriptModel } = await import("./native-claude.mjs");
+  const sonnet = { model: "sonnet", effort: "low" };
+  assert.equal(
+    assertClaudeTranscriptModel(
+      {
+        models: ["claude-sonnet-5"],
+        sidechainModels: ["claude-sonnet-5"],
+        efforts: [],
+      },
+      sonnet,
+    ),
+    2,
+  );
+  assert.throws(
+    () =>
+      assertClaudeTranscriptModel(
+        {
+          models: ["claude-sonnet-5"],
+          sidechainModels: ["claude-opus-5-5"],
+          efforts: [],
+        },
+        sonnet,
+      ),
+    /Unapproved model claude-opus-5-5/,
+  );
+  // No model record at all: zero observed models (the caller judges it as
+  // missing evidence, never as a pass).
+  assert.equal(
+    assertClaudeTranscriptModel({ models: [], efforts: [] }, sonnet),
+    0,
   );
 });

@@ -9,6 +9,11 @@ import { instructions, questions } from "./cli-efficiency/common.mjs";
 import { nativeRound } from "./cli-efficiency/native.mjs";
 import { nativeClaudeRound } from "./cli-efficiency/native-claude.mjs";
 import { nativeKimiRound } from "./cli-efficiency/native-kimi.mjs";
+import { nativeOpenCodeRound } from "./cli-efficiency/native-opencode.mjs";
+import {
+  codeProvenance,
+  writeEvidence,
+} from "./cli-efficiency/gate-evidence.mjs";
 import { parseEfficiencyEnv } from "./cli-efficiency/efficiency-config.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
@@ -18,29 +23,34 @@ assert.ok(
   process.argv.includes("--paid"),
   "Requires explicit --paid and user authorization",
 );
-// RAH_EFFICIENCY_PROVIDER=codex|claude|kimi (default codex): each runtime is
-// compared with its own native CLI. Codex default native,legacy,role
-// (RAH_EFFICIENCY_WARM=1 appends role-warm); Claude native,role,role-warm;
-// Kimi native,role. See efficiency-config.mjs.
+// RAH_EFFICIENCY_PROVIDER=codex|claude|kimi|opencode (default codex): each
+// runtime is compared with its own native CLI. Codex default
+// native,legacy,role,role-warm; Claude and OpenCode native,role,role-warm;
+// Kimi native,role. The model/effort must be in approved-models.mjs, checked
+// here before any process starts. See efficiency-config.mjs.
 const config = parseEfficiencyEnv(process.env);
 const { provider, model, effort, bindingId, order } = config;
 const nativeRounds = {
   codex: nativeRound,
   claude: nativeClaudeRound,
   kimi: nativeKimiRound,
+  opencode: nativeOpenCodeRound,
 }[provider];
 const root = mkdtempSync(join(tmpdir(), "rah-cli-efficiency-"));
-const commit = execFileSync(
-  "git",
-  ["rev-parse", process.env.RAH_EFFICIENCY_REF ?? "HEAD"],
-  { encoding: "utf8" },
-).trim();
+// codeCommit/workingTree: the code under test; sourceRef: the question
+// snapshot (RAH_EFFICIENCY_REF, default HEAD) copied into each workspace.
+const provenance = codeProvenance({
+  sourceRef: process.env.RAH_EFFICIENCY_REF ?? "HEAD",
+});
 const files = [
   "scripts/workbench-launch-receipt.mjs",
   "scripts/workbench-launch-receipt.test.mjs",
 ];
 const snapshot = Object.fromEntries(
-  files.map((f) => [f, execFileSync("git", ["show", `${commit}:${f}`])]),
+  files.map((f) => [
+    f,
+    execFileSync("git", ["show", `${provenance.sourceRef}:${f}`]),
+  ]),
 );
 const hash = (b) => createHash("sha256").update(b).digest("hex");
 const result = {
@@ -54,8 +64,7 @@ const result = {
   cliVersion: execFileSync(provider, ["--version"], {
     encoding: "utf8",
   }).trim(),
-  commit,
-  workingTreeDiffSha256: hash(execFileSync("git", ["diff", "HEAD"])),
+  ...provenance,
   order,
   questions,
   budgets,
@@ -79,12 +88,10 @@ function unmeasuredFor({ productUsage }, metrics) {
       : ["generations"]),
   ];
 }
-const save = () =>
-  writeFileSync(
-    join(root, "result.json"),
-    JSON.stringify(result, null, 2) + "\n",
-    { mode: 0o600 },
-  );
+let written;
+const save = () => {
+  written = writeEvidence(root, result);
+};
 save();
 console.log("EVIDENCE " + join(root, "result.json"));
 try {
@@ -96,8 +103,19 @@ try {
     cwd: root,
   });
   const binding = catalog.find((b) => b.modelBindingId === bindingId);
-  assert.equal(binding?.modelId, model);
-  assert.ok(binding.supportedReasoning.includes(effort));
+  assert.equal(binding?.modelId, model, "Binding not in CLI catalog");
+  if (effort === null)
+    // Effortless approval (Claude haiku): the binding publishes no levels.
+    assert.deepEqual(
+      binding.supportedReasoning,
+      [],
+      "Binding publishes effort levels; an explicit effort is required",
+    );
+  else
+    assert.ok(
+      binding.supportedReasoning.includes(effort),
+      "Effort not supported by binding",
+    );
   result.catalogVerifiedAt = new Date().toISOString();
   save();
   for (const kind of order) {
@@ -224,5 +242,8 @@ try {
 } finally {
   result.finishedAt = new Date().toISOString();
   save();
-  console.log("GATE " + result.status + " " + join(root, "result.json"));
+  console.log("GATE " + result.status + " " + written.rawPath);
+  console.log(
+    `EVIDENCE_REDACTED ${written.redactedPath} raw sha256 ${written.rawSha256}`,
+  );
 }

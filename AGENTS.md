@@ -120,27 +120,38 @@ For every behavior change:
 4. Refactor only while the complete suite stays green.
 
 Bug fixes require a reproducing test. Do not weaken assertions to accept the implementation.
-Unit and integration tests use fake clocks, temporary databases, and fake runtime adapters. Real paid CLIs are opt-in release gates, never the default test suite. Claude gates use Sonnet unless the user explicitly approves another model.
+Unit and integration tests use fake clocks, temporary databases, and fake runtime adapters. Real paid CLIs are opt-in release gates, never the default test suite. Gates use only the approved models below.
 
-### Authorized paid CLI gate models (2026-09-09)
+### Authorized paid CLI gate models
 
-The user authorized exactly this matrix for opt-in real-CLI gates. Every gate that
-spawns a real provider must assert these exact catalog binding ids and reasoning
-levels, and must fail rather than silently substitute another model.
+The owner authorized exactly these combinations for the opt-in real-CLI gates
+(efficiency and drift). `scripts/cli-efficiency/approved-models.mjs` is the
+single machine-checked copy: both gates refuse any other combination at
+configuration time, before any provider process starts, and every guard then
+asserts the exact catalog binding id and reasoning level and fails rather than
+silently substituting another model. Change the table and that module together,
+and only with owner approval.
 
-| CLI         | Model binding id             | Reasoning |
-| ----------- | ---------------------------- | --------- |
-| Claude Code | `sonnet`                     | `low`     |
-| Codex       | `gpt-5.6-luna`               | `low`     |
-| OpenCode    | `deepseek/deepseek-v4-flash` | `low`     |
-| Kimi CLI    | `kimi-code/k3`               | `high`    |
+| CLI         | Model binding id             | Reasoning | Approved   |
+| ----------- | ---------------------------- | --------- | ---------- |
+| Claude Code | `sonnet`                     | `low`     | 2026-09-09 |
+| Claude Code | `haiku`                      | none      | 2026-09-25 |
+| Codex       | `gpt-5.6-luna`               | `low`     | 2026-09-09 |
+| Codex       | `gpt-6-luna`                 | `low`     | 2026-09-25 |
+| OpenCode    | `deepseek/deepseek-v4-flash` | `low`     | 2026-09-09 |
+| OpenCode    | `deepseek/deepseek-flash`    | `low`     | 2026-09-25 |
+| Kimi CLI    | `kimi-code/k3`               | `high`    | 2026-09-09 |
+| Kimi CLI    | `kimi-code/k3-256k`          | `low`     | 2026-09-25 |
 
-Binding ids are the ones the installed CLIs actually publish, verified with
-`probeLocalModelCatalog` on 2026-09-09; do not invent version-suffixed ids.
-The Claude Code catalog publishes a single unversioned `sonnet` binding, so the
-concrete Sonnet release is whatever that install resolves. The installed OpenCode
-publishes no `4.1` DeepSeek build; `deepseek/deepseek-v4-flash` is the authorized
-flash model. Never run Fable in a gate.
+Binding ids are the ones the installed CLIs actually publish (verified with
+`probeLocalModelCatalog`); do not invent version-suffixed ids. The Claude Code
+catalog publishes unversioned `sonnet` and `haiku` bindings, so the concrete
+release is whatever that install resolves; `haiku` publishes no effort levels
+and runs with none. The installed OpenCode catalog no longer publishes
+`deepseek/deepseek-v4-flash`; `deepseek/deepseek-flash` (DeepSeek V4.1 Flash)
+replaces it, and the old row stays approved but fails the catalog check before
+any paid call. Never run Fable, GPT-5.6 Ultra or any `max`/`ultra` level in a
+gate.
 
 This authorization covers the model matrix for gates only; each paid run batch
 still needs explicit owner authorization. Commit/push rules are in "Verification

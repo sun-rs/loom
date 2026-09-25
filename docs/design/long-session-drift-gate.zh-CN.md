@@ -3,42 +3,43 @@
 目的：验证一个 Role 实例在同一 session 中经过多轮对话与强制压缩后，是否仍遵守常驻规则、仍通过 box
 正确回复（owner 担心长对话会忘记原则、命令甚至如何发帖）。它与
 [原生 CLI 效率 Gate](cli-efficiency-gate.zh-CN.md) 共用隔离 daemon、模型围栏与用量采集，不加入
-`npm run check`，每次付费运行都需要用户当次授权并遵守 AGENTS.md 的精确模型许可。
+`npm run check`（其免费单测在 check 内），每次付费运行都需要用户当次授权。模型许可只有一份机器核对来源
+`scripts/cli-efficiency/approved-models.mjs`（与 AGENTS.md 授权表同步）：表外 provider/模型/effort 组合在配置解析时、
+任何进程启动前失败；Fable、GPT-5.6 Ultra 与任何 `max`/`ultra` 档永不放行。
 
 ## 运行
 
 ```sh
-RAH_DRIFT_PROVIDER=codex RAH_DRIFT_MODEL=gpt-5.6-luna RAH_DRIFT_EFFORT=low \
+# 当前批准模型（2026-09-25，示例与已提交证据一致）
+RAH_DRIFT_PROVIDER=codex RAH_DRIFT_MODEL=gpt-6-luna RAH_DRIFT_EFFORT=low \
 RAH_DRIFT_MODE=warm npm run test:cli:drift -- --paid
 
-RAH_DRIFT_PROVIDER=kimi RAH_DRIFT_MODEL=kimi-code/k3 RAH_DRIFT_EFFORT=high \
+RAH_DRIFT_PROVIDER=kimi RAH_DRIFT_MODEL=kimi-code/k3-256k RAH_DRIFT_EFFORT=low \
 npm run test:cli:drift -- --paid
 
-RAH_DRIFT_PROVIDER=claude RAH_DRIFT_MODEL=sonnet RAH_DRIFT_EFFORT=low \
-RAH_DRIFT_MODE=warm npm run test:cli:drift -- --paid   # 或 RAH_DRIFT_MODE=cold
-
-# 冒烟（负责人 2026-09-25 授权）：Claude Haiku 4.5 无 effort、OpenCode DeepSeek flash low
 RAH_DRIFT_PROVIDER=claude RAH_DRIFT_MODEL=haiku RAH_DRIFT_EFFORT=none \
-RAH_DRIFT_MODE=cold RAH_DRIFT_ROUNDS=8 RAH_DRIFT_COMPACT_AT=4 npm run test:cli:drift -- --paid
+RAH_DRIFT_MODE=cold RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:drift -- --paid   # 或 warm
 
-RAH_DRIFT_PROVIDER=opencode RAH_DRIFT_MODEL=deepseek/deepseek-v4-flash RAH_DRIFT_EFFORT=low \
-RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=8 RAH_DRIFT_COMPACT_AT=4 npm run test:cli:drift -- --paid
+RAH_DRIFT_PROVIDER=opencode RAH_DRIFT_MODEL=deepseek/deepseek-flash RAH_DRIFT_EFFORT=low \
+RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:drift -- --paid
 ```
 
-冒烟模型授权（负责人 2026-09-25）：Claude Code 用 Haiku 4.5（目录 binding `haiku`，无 effort 参数）、
-OpenCode 用 `deepseek/deepseek-v4-flash` + `low`，只用于本 gate 的冒烟运行，每批付费运行仍需当次授权。
+批准组合见 AGENTS.md 授权表（2026-09-09 矩阵：Claude `sonnet/low`、Codex `gpt-5.6-luna/low`、OpenCode
+`deepseek/deepseek-v4-flash/low`、Kimi `kimi-code/k3/high`；2026-09-25 追加：Codex `gpt-6-luna/low`、Kimi
+`kimi-code/k3-256k/low`、Claude `haiku`/无 effort、OpenCode `deepseek/deepseek-flash/low`）。OpenCode 目录已不再发布
+`deepseek/deepseek-v4-flash`，该行仍在表内但会在目录核对处（付费调用前）失败。
 
-| 变量                   | 说明                                                                      |
-| ---------------------- | ------------------------------------------------------------------------- |
-| `RAH_DRIFT_PROVIDER`   | `codex`、`claude`、`kimi` 或 `opencode`                                   |
-| `RAH_DRIFT_MODEL`      | 目录 binding id：裸模型 id 或 `local:<kind>:<modelId>`；必须在 CLI 目录中 |
-| `RAH_DRIFT_EFFORT`     | 明确推理档位（不接受 `default`）；`none` 只许且必须用于 Claude `haiku`    |
-| `RAH_DRIFT_MODE`       | `cold`（每轮进程，默认）或 `warm`（Codex/Claude/OpenCode 热进程）         |
-| `RAH_DRIFT_ROUNDS`     | 默认 20（6..60）                                                          |
-| `RAH_DRIFT_COMPACT_AT` | 默认 `8,15`：第 N 轮结束后、第 N+1 轮前强制压缩；空串表示不压缩           |
+| 变量                   | 说明                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `RAH_DRIFT_PROVIDER`   | `codex`、`claude`、`kimi` 或 `opencode`                                         |
+| `RAH_DRIFT_MODEL`      | 目录 binding id：裸模型 id 或 `local:<kind>:<modelId>`；须在批准表与 CLI 目录中 |
+| `RAH_DRIFT_EFFORT`     | 明确推理档位（不接受 `default`）；`none` 只许且必须用于 Claude `haiku`          |
+| `RAH_DRIFT_MODE`       | `cold`（每轮进程，默认）或 `warm`（Codex/Claude/OpenCode 热进程）               |
+| `RAH_DRIFT_ROUNDS`     | 默认 20（6..60）                                                                |
+| `RAH_DRIFT_COMPACT_AT` | 默认 `8,15`：第 N 轮结束后、第 N+1 轮前强制压缩；空串表示不压缩                 |
 
-缺参数、未知 provider、Kimi 用 warm、压缩轮越界或乱序、Haiku 带 effort 或非 Haiku 用 `none`、OpenCode
-模型不是 `provider/model` 均在启动前失败。`none` 时目录探针还须确认该 binding 不发布任何 effort 档位。免费单测：
+缺参数、未知 provider、表外组合、Kimi 用 warm、压缩轮越界或乱序、Haiku 带 effort 或非 Haiku 用 `none`、OpenCode
+模型不是 `provider/model` 均在启动前失败（binding 与 effort 解析与效率 Gate 共用 `efficiency-config.mjs`）。`none` 时目录探针还须确认该 binding 不发布任何 effort 档位。免费单测：
 `npm run test:cli:drift:unit`（场景生成器、判定器、Kimi/Codex/Claude/OpenCode 围栏、压缩证据解析、OpenCode
 守卫代理端到端假 CLI 测试）。
 
@@ -46,13 +47,21 @@ OpenCode 用 `deepseek/deepseek-v4-flash` + `low`，只用于本 gate 的冒烟�
 
 - 先用 `probeLocalModelCatalog` 核对 binding 与 effort；Role 用 `exactBindingIds` 且 `fallback: disabled`；结束时核对所有 placement。
 - Codex：沿用 `model-guard.mjs` 的 stdio 与 Unix socket 代理围栏，按本次 model/effort 参数化
-  （`createCodexRequestGuard`）；thread/start|resume|fork 必须带许可值，turn 级覆盖不得偏离。
+  （`createCodexRequestGuard`）。围栏是白名单：只放行产品驱动与压缩客户端实际发送的 `initialize`/`initialized`、
+  `thread/start|resume`、`thread/compact/start`、`turn/start|steer|interrupt` 及对服务端请求的响应，参数逐键限定
+  （`config` 只许产品的 memory/multi_agent/goals 开关为 false 与许可 effort；`approvalPolicy` 只许 `never`；
+  `approvalsReviewer`、`serviceTier`、非文本输入等一律拒绝）；thread/start|resume 必须带许可值，turn 级覆盖不得偏离。
+  启动参数只许 `--version`、`debug models [--bundled]` 与带产品 `-c <开关>=false`、单个 `--listen` 的 `app-server`
+  （`debug app-server send-message-v2`、`app-server daemon|proxy`、`exec` 等一律拒绝）。
 - Kimi：`drift-kimi-guard.mjs` 有状态校验 ACP：`session/set_model` 只许许可模型、只许 `thinking`
   配置且值为许可档位；某 session 未先设定二者时 `session/prompt` 被拒；`KIMI_MODEL_THINKING_EFFORT`
   若存在必须等于许可档位。违规即杀掉 CLI。
 - Claude：`claude-guard.mjs` 校验启动参数（恰好一个许可 `--model` 与 `--effort`，禁止 fallback/fork/continue/settings）
-  与 stream-json stdin（只许 user、`interrupt`、control_response）；目录探针只许 `initialize`。每轮 transcript 中的模型须属许可别名族、
-  记录的 `effort` 须等于许可档位，否则整轮失败。
+  与 stream-json stdin（只许 user、`interrupt`、control_response；user 正文以 `/` 开头的斜杠命令如 `/model`、`/effort`、
+  `/fast` 一律拒绝，只有 gate 自己注入的 `/compact` 放行）；目录探针只许 `initialize`。转发后，shim 检查每个 assistant 帧
+  （含子 agent 的 `parent_tool_use_id` 帧）与每个 result 帧 `modelUsage` 的全部模型键，任一不属许可别名族即记违规
+  （`<shim>.violations.jsonl`，每轮检查，存在即整轮失败）并关闭 CLI。每轮 transcript（含 `<session>/subagents/*.jsonl`
+  子 agent 记录）中的模型须属许可别名族、记录的 `effort` 须等于许可档位，否则整轮失败。
 - Claude Haiku（`RAH_DRIFT_EFFORT=none`）：批准值为 `effort: null`，启动须恰好一个 `--model haiku` 且零个
   `--effort`（含 `--effort=`）；Role 以 `reasoning: default` 创建，产品按 binding 不传 effort（冷
   `runtime-implementation-registry.ts`、热 `codex-warm-adapter.ts` + `claude-warm-driver.mjs` 均已如此，新增
@@ -71,6 +80,10 @@ OpenCode 用 `deepseek/deepseek-v4-flash` + `low`，只用于本 gate 的冒烟�
   摘要、子 agent、插件）只能靠上面的固定配置约束，small model 调用因此使用许可模型但不带 variant；其他内部路径未逐一
   证明。事后 transcript 围栏只能在付费调用发生后检出越权，不能阻止；标题调用不产生 assistant 消息，事后围栏看不到。
 - 压缩客户端发出的每条请求也先过同一校验器（Claude 压缩进程参数过 `classifyClaudeLaunch`）。
+- 事后模型核对（每轮、每家）：Claude 读 transcript（含子 agent 文件），OpenCode 读 `opencode.db`，Codex 读 rollout
+  窗口内 `turn_context`（模型与 effort 逐条等于许可值），Kimi 读 session wire 窗口内 `llm.request`（`modelAlias` 与
+  `thinkingEffort`）。越权即整轮失败；数据源读取失败、无 native session 或窗口内没有任何模型记录一律判
+  `modelEvidenceMissing`（证据缺失，gate 状态 `missing-evidence`），不再静默通过。
 
 ## 场景
 
@@ -137,21 +150,27 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
 需回复处送达 100%；错目标 0；违规 Task 0；沉默违规 0；`--final` ≥95% 的最终帖；无 quarantined；
 每次压缩后三轮不退化：格式、`--final`、`--turn` 比率不低于压缩前全部轮次，且窗口内无任何绝对违规。
 全部通过也只是指标通过，仍须人工看回复质量。结果写入打印的隔离目录 `result.json`（无令牌、句柄；
-回复正文截断 400 字）并打印逐轮表格与压缩前后摘要。
+回复正文截断 400 字）并打印逐轮表格与压缩前后摘要。证据记录被测代码 `codeCommit`（HEAD）与 `workingTree`
+（`git status --porcelain` 含未跟踪文件的摘要与 `git diff HEAD` 摘要），题目源文件快照另记 `sourceRef`；同目录另写
+`result.redacted.json`（临时根目录换成 `<tmp>`、home 换成 `~`），其 `rawResultSha256` 为原始 `result.json` 的 sha256，
+提交证据时用脱敏文件并可据此对照原始输出。2026-09-25 之前提交的证据只有旧字段 `commit`（漂移为 HEAD）与
+`workingTreeDiffSha256`（不含未跟踪文件）。
 
 ## 局限
 
-- 未运行过付费验证；`thread/compact/start` 在热连接上无需先 resume、通知是否广播给非订阅连接均未实测，
-  因此以 rollout 记录数兜底。
+- 已有 7 份付费证据（`docs/evo/evidence/2026-09-25-drift-*.json`，结论见 status 漂移结论表与第十三、十八、二十二、
+  二十三节）：Codex warm（`gpt-6-luna/low`，20 轮）、Kimi cold 两次（`k3-256k/low`，20 轮）、Claude Haiku cold/warm
+  与 OpenCode cold/warm（10 轮，第 5 轮后压缩）。这些证据由批次 4 之前的代码产生：当时没有 Codex/Kimi 事后模型核对，
+  也没有“无模型记录判证据缺失”，但提交证据中无读取错误、工具调用与 OpenCode assistant 记录非空，说明当次核对确实执行。
+  Claude Sonnet、Codex 每轮模式与 OpenCode/Claude 20 轮尚无漂移证据。
+- `thread/compact/start` 在热连接上无需先 resume、通知是否广播给非订阅连接未单独实测，因此仍以 rollout 记录数兜底。
 - Kimi 的 `--final` 仅由 Kernel 记录标记，Host 不中断回合；Kimi 无工具调用轨迹，不检查 `--turn`。
-- 引导代码参照 `rah.mjs` 另写一份；守卫 shim 生成已与效率 Gate 共用 `guarded-shim.mjs`。
-- Claude：`/compact` 经 print 模式与 stream-json user 消息两条路径均依据 Claude Code 2.1.282 二进制字符串与 SDK 文档，
-  未付费实测；warm 注入以“上一 user 帧后已见 result”判空闲，自主后台回合可能使注入被拒（重试 30 次后记错误）。
-  热 Claude 不检查 `--turn`（判定仍只对热 Codex）。
-- Claude Haiku / OpenCode 冒烟支持未经付费验证。Haiku 的 transcript 是否记录 effort 字段未知（本机无 Haiku
-  transcript 样本）；若记录，围栏会在第一轮判越权，需负责人决定是否放宽。
-- 2026-09-25 本机 OpenCode 1.18.32 目录已不含 `deepseek/deepseek-v4-flash`（DeepSeek 目录现为
-  `deepseek/deepseek-flash`＝“DeepSeek V4.1 Flash”与 `deepseek/deepseek-v4-pro`），按授权 id 运行会在目录核对处
-  （付费调用之前）失败；gate 不做替换，需负责人确认改用哪个 binding。
+- 引导代码（隔离 daemon、shim、每轮/热开关、API）与效率 Gate 共用 `gate-daemon.mjs`。
+- Claude：warm 注入以“上一 user 帧后已见 result”判空闲，自主后台回合可能使注入被拒（重试 30 次后记错误）。
+  热 Claude 不检查 `--turn`（判定仍只对热 Codex）。Haiku 冷/热冒烟的 effort 围栏均未触发（status 第二十二节，Claude Code 2.1.282），即该版本 transcript 窗口内没有 effort 记录，围栏无需放宽。
+  result `modelUsage` 核对若遇到 Claude Code 自己的后台小模型调用（其他模型族）会判违规；目前的 Haiku 证据未出现，
+  Sonnet 运行是否出现未知，出现时需负责人决定是否批准该后台模型，gate 不自行放宽。
+- Codex 事后核对依赖 rollout `turn_context` 的 `model`/`effort` 字段；Kimi 依赖 wire `llm.request` 记录。二者均为
+  CLI 私有格式，版本变化导致缺字段时判证据缺失，而不是通过。
 - OpenCode 热压缩的 SSE 隐藏按 session id 过滤；OpenCode 手动压缩不带 variant，gate 靠注入 compaction agent 选项
   保持许可档位，压缩 assistant 的 `variant` 字段因此仍为空（证据如实记录）。

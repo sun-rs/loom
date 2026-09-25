@@ -4,7 +4,12 @@
 // (an approval with `effort: null`, the effortless Haiku binding, requires
 // exactly one `--model` and zero `--effort`),
 // and the stream-json stdin may carry only user input, interrupts and
-// control responses (no set_model / thinking / flag-settings requests).
+// control responses (no set_model / thinking / flag-settings requests). User
+// input starting with a slash command (`/model`, `/effort`, `/fast`, ...) is
+// refused; only the gate's own injected `/compact` passes. After forwarding,
+// every assistant frame (sub-agents included) and every result frame's
+// `modelUsage` must name the approved model family; a mismatch is recorded
+// as a violation (failing the arm) and closes the CLI.
 //
 // Warm drift runs additionally get an injection gate: the drift runner asks
 // the shim (over a private Unix socket) to send `/compact` as a user message
@@ -20,6 +25,7 @@ import { createServer, createConnection } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
+import { claudeModelMatches } from "./claude-usage.mjs";
 
 const FORBIDDEN = new Set([
   "--fallback-model",
@@ -85,8 +91,17 @@ export function classifyClaudeLaunch(args, approved) {
 const TURN_CONTROLS = new Set(["interrupt"]);
 const CATALOG_CONTROLS = new Set(["initialize"]);
 
+// Text blocks of a user message (string content or text content blocks).
+function userTexts(content) {
+  if (typeof content === "string") return [content];
+  return (Array.isArray(content) ? content : [])
+    .filter((block) => block?.type === "text" && typeof block.text === "string")
+    .map((block) => block.text);
+}
+
+// gate.compaction: the injection gate's own `/compact`, never driver input.
 export function createClaudeStdinGuard(mode) {
-  return (line) => {
+  return (line, gate = {}) => {
     let frame;
     try {
       frame = JSON.parse(line);
@@ -105,19 +120,48 @@ export function createClaudeStdinGuard(mode) {
     if (type === "user") {
       if (mode === "catalog")
         throw new Error("Unapproved user input to the catalog probe");
+      const texts = userTexts(frame.message?.content);
+      const ownCompaction =
+        gate.compaction === true &&
+        texts.length === 1 &&
+        texts[0] === "/compact";
+      if (!ownCompaction && texts.some((t) => t.trimStart().startsWith("/")))
+        throw new Error("Unapproved slash command in user input");
       return frame;
     }
     throw new Error(`Unsupported gate stdin frame ${type}`);
   };
 }
 
-const parse = (line) => {
+// Post-hoc output check: returns a violation reason, or undefined.
+export function createClaudeOutputWatcher(approved) {
+  return (line) => {
+    const frame = parse(line);
+    if (frame?.type === "assistant") {
+      const m = frame.message?.model;
+      if (m === undefined || m === "<synthetic>") return undefined;
+      if (!claudeModelMatches(approved.model, m))
+        return `Unapproved model ${m}${frame.parent_tool_use_id ? " (sub-agent)" : ""}`;
+    }
+    if (
+      frame?.type === "result" &&
+      frame.modelUsage !== null &&
+      typeof frame.modelUsage === "object"
+    )
+      for (const m of Object.keys(frame.modelUsage))
+        if (!claudeModelMatches(approved.model, m))
+          return `Unapproved model ${m} (result modelUsage)`;
+    return undefined;
+  };
+}
+
+function parse(line) {
   try {
     return JSON.parse(line);
   } catch {
     return undefined;
   }
-};
+}
 
 export function createClaudeInjectionGate({
   toChild,
@@ -203,7 +247,7 @@ export function createClaudeInjectionGate({
         message: { role: "user", content: text },
       };
       const line = JSON.stringify(frame);
-      validate(line);
+      validate(line, { compaction: true });
       return new Promise((resolve) => {
         injection = {
           resolve,
@@ -266,9 +310,24 @@ export async function runGuardedClaude(executable, approved, options = {}) {
       }
     });
     process.stdin.on("end", () => child.stdin.end());
-    createInterface({ input: child.stdout }).on("line", (line) =>
-      gate.fromChild(line),
-    );
+    const watch = createClaudeOutputWatcher(approved);
+    createInterface({ input: child.stdout }).on("line", (line) => {
+      const violation = watch(line);
+      if (violation) {
+        if (options.violationRecordPath)
+          appendFileSync(
+            options.violationRecordPath,
+            JSON.stringify({
+              reason: violation,
+              pid: process.pid,
+              at: new Date().toISOString(),
+            }) + "\n",
+            { mode: 0o600 },
+          );
+        deny(new Error(violation));
+      }
+      gate.fromChild(line);
+    });
     const sessionId =
       flagValues(args, "--resume")[0] ?? flagValues(args, "--session-id")[0];
     if (

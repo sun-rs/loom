@@ -1,16 +1,16 @@
 import { isEffectiveAnswer } from "./metrics.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { model, effort, measure } from "./common.mjs";
+import { measure } from "./common.mjs";
 // Installed CLI directly; no RAH worker, scheduler or runtime adapter in this arm.
-// config: the gate's exact {model, effort} (default: the common.mjs pair).
+// config: the gate's exact {model, effort} (required).
 export async function nativeRound({
   cwd,
   sessionId,
   prompt,
   save,
   round,
-  config = { model, effort },
+  config,
 }) {
   round.startedAt = new Date().toISOString();
   let buf = "",

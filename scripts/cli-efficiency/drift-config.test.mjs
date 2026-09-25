@@ -4,7 +4,7 @@ import { parseDriftEnv } from "./drift-config.mjs";
 
 const base = {
   RAH_DRIFT_PROVIDER: "codex",
-  RAH_DRIFT_MODEL: "gpt-5.6-luna",
+  RAH_DRIFT_MODEL: "gpt-6-luna",
   RAH_DRIFT_EFFORT: "low",
 };
 
@@ -13,18 +13,18 @@ test("defaults: cold, 20 rounds, compaction after 8 and 15", () => {
   assert.equal(c.mode, "cold");
   assert.equal(c.rounds, 20);
   assert.deepEqual(c.compactAt, [8, 15]);
-  assert.equal(c.bindingId, "local:codex-cli/v1:gpt-5.6-luna");
+  assert.equal(c.bindingId, "local:codex-cli/v1:gpt-6-luna");
   assert.equal(c.catalogKind, "codex-cli/v1");
 });
 
 test("accepts the full binding id and derives the model id", () => {
   const c = parseDriftEnv({
     RAH_DRIFT_PROVIDER: "kimi",
-    RAH_DRIFT_MODEL: "local:kimi-cli/v1:kimi-code/k3",
-    RAH_DRIFT_EFFORT: "high",
+    RAH_DRIFT_MODEL: "local:kimi-cli/v1:kimi-code/k3-256k",
+    RAH_DRIFT_EFFORT: "low",
   });
-  assert.equal(c.model, "kimi-code/k3");
-  assert.equal(c.bindingId, "local:kimi-cli/v1:kimi-code/k3");
+  assert.equal(c.model, "kimi-code/k3-256k");
+  assert.equal(c.bindingId, "local:kimi-cli/v1:kimi-code/k3-256k");
 });
 
 test("fails closed on missing or ambiguous parameters", () => {
@@ -120,7 +120,7 @@ test("effort none is fail-closed: only for the effortless Claude binding, which 
     { ...base, RAH_DRIFT_EFFORT: "none" },
     {
       RAH_DRIFT_PROVIDER: "opencode",
-      RAH_DRIFT_MODEL: "deepseek/deepseek-v4-flash",
+      RAH_DRIFT_MODEL: "deepseek/deepseek-flash",
       RAH_DRIFT_EFFORT: "none",
     },
   ];
@@ -135,28 +135,25 @@ test("effort none is fail-closed: only for the effortless Claude binding, which 
 test("opencode: cold and warm, opencode-cli binding, provider/model ids", () => {
   const env = {
     RAH_DRIFT_PROVIDER: "opencode",
-    RAH_DRIFT_MODEL: "deepseek/deepseek-v4-flash",
+    RAH_DRIFT_MODEL: "deepseek/deepseek-flash",
     RAH_DRIFT_EFFORT: "low",
   };
   const cold = parseDriftEnv(env);
   assert.equal(cold.mode, "cold");
   assert.equal(cold.catalogKind, "opencode-cli/v1");
-  assert.equal(cold.model, "deepseek/deepseek-v4-flash");
+  assert.equal(cold.model, "deepseek/deepseek-flash");
   assert.equal(cold.effort, "low");
-  assert.equal(
-    cold.bindingId,
-    "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
-  );
+  assert.equal(cold.bindingId, "local:opencode-cli/v1:deepseek/deepseek-flash");
   assert.equal(parseDriftEnv({ ...env, RAH_DRIFT_MODE: "warm" }).mode, "warm");
   assert.equal(
     parseDriftEnv({
       ...env,
-      RAH_DRIFT_MODEL: "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+      RAH_DRIFT_MODEL: "local:opencode-cli/v1:deepseek/deepseek-flash",
     }).model,
-    "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-flash",
   );
   const bad = [
-    { ...env, RAH_DRIFT_MODEL: "deepseek-v4-flash" },
+    { ...env, RAH_DRIFT_MODEL: "deepseek-flash" },
     { ...env, RAH_DRIFT_MODEL: "local:claude-cli/v1:haiku" },
     { ...env, RAH_DRIFT_EFFORT: undefined },
     { ...env, RAH_DRIFT_EFFORT: "default" },
@@ -168,4 +165,64 @@ test("opencode: cold and warm, opencode-cli binding, provider/model ids", () => 
       /Invalid drift gate/,
       JSON.stringify(b),
     );
+});
+
+test("fails closed on combinations outside the approval table", () => {
+  const bad = [
+    { ...base, RAH_DRIFT_MODEL: "gpt-6-sol" },
+    { ...base, RAH_DRIFT_MODEL: "gpt-5.6-sol", RAH_DRIFT_EFFORT: "ultra" },
+    { ...base, RAH_DRIFT_EFFORT: "ultra" },
+    { ...base, RAH_DRIFT_EFFORT: "high" },
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "opus",
+      RAH_DRIFT_EFFORT: "max",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "sonnet",
+      RAH_DRIFT_EFFORT: "max",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "fable",
+      RAH_DRIFT_EFFORT: "low",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "kimi",
+      RAH_DRIFT_MODEL: "kimi-code/k3",
+      RAH_DRIFT_EFFORT: "max",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "kimi",
+      RAH_DRIFT_MODEL: "kimi-code/k3-256k",
+      RAH_DRIFT_EFFORT: "high",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "opencode",
+      RAH_DRIFT_MODEL: "deepseek/deepseek-v4-pro",
+      RAH_DRIFT_EFFORT: "low",
+    },
+  ];
+  for (const env of bad)
+    assert.throws(
+      () => parseDriftEnv(env),
+      /Invalid drift gate configuration: .*Unapproved paid gate model/,
+      JSON.stringify(env),
+    );
+  // Both 2026-09-09 and 2026-09-25 approvals parse.
+  for (const env of [
+    { ...base, RAH_DRIFT_MODEL: "gpt-5.6-luna" },
+    {
+      RAH_DRIFT_PROVIDER: "kimi",
+      RAH_DRIFT_MODEL: "kimi-code/k3",
+      RAH_DRIFT_EFFORT: "high",
+    },
+    {
+      RAH_DRIFT_PROVIDER: "opencode",
+      RAH_DRIFT_MODEL: "deepseek/deepseek-v4-flash",
+      RAH_DRIFT_EFFORT: "low",
+    },
+  ])
+    assert.doesNotThrow(() => parseDriftEnv(env), JSON.stringify(env));
 });

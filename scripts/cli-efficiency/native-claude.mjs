@@ -67,7 +67,12 @@ export async function nativeClaudeRound({
   assert.ok(parsed.result && !parsed.result.isError, "Native turn failed");
   assert.equal(parsed.sessionIds.length, 1, "Native session id changed");
   if (sessionId) assert.equal(parsed.sessionId, sessionId, "Session changed");
-  for (const m of parsed.models)
+  // Main chain, sub-agents and the result's modelUsage (background calls).
+  for (const m of [
+    ...parsed.models,
+    ...parsed.subagentModels,
+    ...parsed.resultModels,
+  ])
     assert.ok(claudeModelMatches(config.model, m), `Unapproved model ${m}`);
   assert.ok(parsed.models.length, "No native model evidence");
   assert.ok(parsed.answer && parsed.finalAt, "Missing final answer");
@@ -87,7 +92,10 @@ export async function nativeClaudeRound({
     },
   );
   round.transcriptCheck = transcriptCheck(transcript, parsed.generations);
-  assertClaudeTranscriptModel(transcript, config);
+  assert.ok(
+    assertClaudeTranscriptModel(transcript, config) > 0,
+    "No transcript model evidence",
+  );
   save();
   assert.ok(
     isEffectiveAnswer(parsed.answer),
@@ -115,11 +123,14 @@ export function transcriptCheck(transcript, generations) {
   };
 }
 
-// Post-hoc fence: the transcript's models match the approved binding and any
-// recorded effort equals the approved one (absent effort stays visible). An
-// effortless approval (effort null) admits no recorded effort at all.
+// Post-hoc fence: the transcript's models (main chain and sub-agent
+// sidechains) match the approved binding and any recorded effort equals the
+// approved one (absent effort stays visible). An effortless approval (effort
+// null) admits no recorded effort at all. Returns the number of observed
+// model records; zero is missing evidence for the caller, never a pass.
 export function assertClaudeTranscriptModel(transcript, config) {
-  for (const m of transcript.models)
+  const models = [...transcript.models, ...(transcript.sidechainModels ?? [])];
+  for (const m of models)
     assert.ok(claudeModelMatches(config.model, m), `Unapproved model ${m}`);
   for (const e of transcript.efforts)
     assert.equal(
@@ -129,4 +140,5 @@ export function assertClaudeTranscriptModel(transcript, config) {
         ? `Unapproved effort in transcript (${e}; the binding admits none)`
         : "Unapproved effort in transcript",
     );
+  return models.length;
 }

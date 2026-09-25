@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  assertCodexTurnContexts,
   checkFormat,
+  checkRoundModels,
   codexToolCalls,
   countCodexCompactions,
   countCodexTargetRejections,
@@ -70,6 +72,7 @@ function evidenceFor(spec, overrides = {}) {
       completeness: "complete",
     },
     compactionsInRound: 0,
+    modelEvidence: { status: "verified", records: 1 },
     ...overrides,
   };
 }
@@ -450,5 +453,88 @@ test("unobservable target rejections stay unknown, never summed as zero", () => 
   assert.equal(
     partial.totals.targetRejectionsUnobservedRounds,
     scenario.length - 1,
+  );
+});
+
+test("post-hoc model evidence: missing or absent evidence is an evidence gap", () => {
+  const spec = specOf("qa");
+  for (const modelEvidence of [
+    { status: "missing", reason: "transcript unreadable" },
+    undefined,
+  ]) {
+    const e = evaluateRound(spec, evidenceFor(spec, { modelEvidence }), ctx);
+    assert.ok(
+      e.failures.includes("modelEvidenceMissing"),
+      String(modelEvidence),
+    );
+    assert.deepEqual(e.checks.modelEvidence, modelEvidence ?? null);
+  }
+  const evaluated = scenario.map((s) =>
+    evaluateRound(
+      s,
+      evidenceFor(
+        s,
+        s.round === 3
+          ? { modelEvidence: { status: "missing", reason: "no model record" } }
+          : {},
+      ),
+      ctx,
+    ),
+  );
+  const sum = summarizeDrift(evaluated, { compactAt: [8, 15], compactions });
+  assert.equal(sum.status, "missing-evidence");
+  assert.deepEqual(sum.evidenceGaps, ["round3:modelEvidenceMissing"]);
+  assert.deepEqual(sum.hardFailures, []);
+});
+
+test("checkRoundModels: verified only with at least one approved record", () => {
+  assert.deepEqual(
+    checkRoundModels(() => 2),
+    { status: "verified", records: 2 },
+  );
+  assert.deepEqual(
+    checkRoundModels(() => 0),
+    {
+      status: "missing",
+      reason: "no model record in the round window",
+    },
+  );
+  const read = checkRoundModels(() => {
+    throw new Error("Exactly one native transcript");
+  });
+  assert.equal(read.status, "missing");
+  assert.match(read.reason, /Exactly one native transcript/);
+  assert.equal(checkRoundModels(null).status, "missing");
+  // An unapproved model is a violation, never downgraded to a gap.
+  assert.throws(
+    () =>
+      checkRoundModels(() => {
+        throw new Error("Unapproved model gpt-6-sol");
+      }),
+    /Unapproved model gpt-6-sol/,
+  );
+});
+
+test("codex rollout turn contexts: exact model and effort, counted", () => {
+  const approved = { model: "gpt-6-luna", effort: "low" };
+  const ctxEvent = (model, effort) => ({
+    type: "turn_context",
+    payload: { model, effort },
+  });
+  assert.equal(
+    assertCodexTurnContexts(
+      [ctxEvent("gpt-6-luna", "low"), { type: "event_msg" }],
+      approved,
+    ),
+    1,
+  );
+  assert.equal(assertCodexTurnContexts([{ type: "event_msg" }], approved), 0);
+  assert.throws(
+    () => assertCodexTurnContexts([ctxEvent("gpt-6-sol", "low")], approved),
+    /Unapproved model gpt-6-sol/,
+  );
+  assert.throws(
+    () => assertCodexTurnContexts([ctxEvent("gpt-6-luna", "ultra")], approved),
+    /Unapproved effort ultra/,
   );
 });

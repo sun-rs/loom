@@ -1,31 +1,30 @@
 // Long-session drift gate configuration (opt-in, paid). Pure: parses the
-// RAH_DRIFT_* environment and fails closed on anything ambiguous. The model
-// guard later enforces exactly the returned model/effort.
+// RAH_DRIFT_* environment and fails closed on anything ambiguous or outside
+// the owner approval table (approved-models.mjs). The model guard later
+// enforces exactly the returned model/effort. Binding and effort parsing are
+// shared with the efficiency gate (efficiency-config.mjs).
+import { assertApprovedGateModel } from "./approved-models.mjs";
+import {
+  EFFICIENCY_PROVIDERS,
+  NO_EFFORT,
+  resolveBindingModel,
+  resolveEffort,
+} from "./efficiency-config.mjs";
+
+const profile = (provider, modes) => {
+  const { catalogKind, efforts, effortless, modelPattern } =
+    EFFICIENCY_PROVIDERS[provider];
+  return { catalogKind, efforts, effortless, modelPattern, modes };
+};
 const PROVIDERS = {
-  codex: { catalogKind: "codex-cli/v1", modes: ["cold", "warm"] },
-  kimi: { catalogKind: "kimi-cli/v1", modes: ["cold"] },
-  claude: {
-    catalogKind: "claude-cli/v1",
-    modes: ["cold", "warm"],
-    efforts: ["low", "medium", "high", "xhigh", "max"],
-    // Bindings the installed Claude Code catalog publishes without effort
-    // levels (probed 2026-09-25: `haiku`, Haiku 4.5, supportsEffort false).
-    // Only these may run with RAH_DRIFT_EFFORT=none; they must.
-    effortless: ["haiku"],
-  },
-  // OpenCode binding ids are `provider/model`; the reasoning level is the
-  // catalog variant, sent as `variant` on every prompt.
-  opencode: {
-    catalogKind: "opencode-cli/v1",
-    modes: ["cold", "warm"],
-    modelPattern: /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._/:-]*$/u,
-  },
+  codex: profile("codex", ["cold", "warm"]),
+  kimi: profile("kimi", ["cold"]),
+  claude: profile("claude", ["cold", "warm"]),
+  opencode: profile("opencode", ["cold", "warm"]),
 };
 // The explicit "no effort" value (an effortless Claude binding only).
-export const DRIFT_NO_EFFORT = "none";
+export const DRIFT_NO_EFFORT = NO_EFFORT;
 export const DRIFT_DEFAULTS = { rounds: 20, compactAt: "8,15", mode: "cold" };
-const MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/:-]{0,199}$/u;
-const EFFORT_PATTERN = /^[a-z][a-z0-9_-]{0,31}$/u;
 
 export function parseDriftEnv(env) {
   const fail = (why) => {
@@ -34,48 +33,27 @@ export function parseDriftEnv(env) {
   const provider = env.RAH_DRIFT_PROVIDER;
   if (!Object.hasOwn(PROVIDERS, provider ?? ""))
     fail("RAH_DRIFT_PROVIDER must be codex, claude, kimi or opencode");
-  const {
-    catalogKind,
-    modes,
-    efforts,
-    effortless = [],
-    modelPattern,
-  } = PROVIDERS[provider];
+  const { catalogKind, modes, efforts, effortless, modelPattern } =
+    PROVIDERS[provider];
   // RAH_DRIFT_MODEL is the catalog binding id: either the full
   // `local:<kind>:<modelId>` form or the bare model id the CLI publishes.
-  const rawModel = env.RAH_DRIFT_MODEL;
-  if (!rawModel || !MODEL_PATTERN.test(rawModel))
-    fail("RAH_DRIFT_MODEL (binding id) is required");
-  const prefix = `local:${catalogKind}:`;
-  let model = rawModel;
-  if (rawModel.startsWith("local:")) {
-    if (!rawModel.startsWith(prefix))
-      fail(`RAH_DRIFT_MODEL binding belongs to another CLI (want ${prefix})`);
-    model = rawModel.slice(prefix.length);
-  }
-  if (!model) fail("RAH_DRIFT_MODEL has an empty model id");
+  const model = resolveBindingModel(env.RAH_DRIFT_MODEL, catalogKind, (why) =>
+    fail(`RAH_DRIFT_MODEL: ${why}`),
+  );
   if (modelPattern !== undefined && !modelPattern.test(model))
     fail(`RAH_DRIFT_MODEL must be a provider/model binding for ${provider}`);
-  const rawEffort = env.RAH_DRIFT_EFFORT;
-  const noEffort = effortless.includes(model);
-  if (noEffort && rawEffort !== DRIFT_NO_EFFORT)
-    fail(
-      `RAH_DRIFT_EFFORT must be ${DRIFT_NO_EFFORT}: ${model} publishes no effort levels`,
-    );
-  if (!noEffort && rawEffort === DRIFT_NO_EFFORT)
-    fail(
-      `RAH_DRIFT_EFFORT=${DRIFT_NO_EFFORT} is allowed only for an effortless binding (${provider}: ${effortless.join(", ") || "none"})`,
-    );
   // null: no effort argument at all (the guard then admits zero --effort).
-  const effort = noEffort ? null : rawEffort;
-  if (
-    !noEffort &&
-    (!effort ||
-      !EFFORT_PATTERN.test(effort) ||
-      effort === "default" ||
-      (efforts !== undefined && !efforts.includes(effort)))
-  )
-    fail("RAH_DRIFT_EFFORT must name an explicit reasoning level");
+  const effort = resolveEffort(
+    env.RAH_DRIFT_EFFORT,
+    { model, provider, efforts, effortless },
+    fail,
+    "RAH_DRIFT_EFFORT",
+  );
+  try {
+    assertApprovedGateModel({ provider, model, effort });
+  } catch (error) {
+    fail(error.message);
+  }
   const mode = env.RAH_DRIFT_MODE ?? DRIFT_DEFAULTS.mode;
   if (!["cold", "warm"].includes(mode))
     fail("RAH_DRIFT_MODE must be warm or cold");
@@ -107,7 +85,7 @@ export function parseDriftEnv(env) {
     provider,
     catalogKind,
     model,
-    bindingId: prefix + model,
+    bindingId: `local:${catalogKind}:${model}`,
     effort,
     mode,
     rounds,

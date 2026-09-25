@@ -3,39 +3,194 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { model, effort } from "./common.mjs";
+import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
 import { startGuardedUnixProxy } from "./ws-guard.mjs";
-// Validator for one exact model/effort pair (the drift gate passes its own;
-// the efficiency gate keeps the common.mjs pair below).
+
+// The product's process-only Codex switches (memory, multi_agent, goals):
+// the only config keys besides the approved effort, and only as `false`.
+const PRODUCT_FALSE_KEYS = new Set(
+  providerLaunchPolicy("codex")
+    .args.filter((a) => a !== "-c")
+    .map((a) => a.split("=")[0]),
+);
+const SANDBOXES = new Set([
+  "read-only",
+  "workspace-write",
+  "danger-full-access",
+]);
+const isRecord = (v) =>
+  v !== null && typeof v === "object" && !Array.isArray(v);
+const refuse = (why) => {
+  throw new Error(`Unsupported gate request: ${why}`);
+};
+function onlyKeys(value, allowed, where) {
+  if (value === undefined) return {};
+  if (!isRecord(value)) refuse(`${where} is not an object`);
+  for (const key of Object.keys(value))
+    if (!allowed.includes(key)) refuse(`${where}.${key}`);
+  return value;
+}
+const str = (v, where) => {
+  if (typeof v !== "string" || v === "") refuse(`${where} must be a string`);
+};
+function textInput(input, where) {
+  if (!Array.isArray(input) || input.length === 0)
+    refuse(`${where}.input must be text items`);
+  for (const item of input) {
+    onlyKeys(item, ["type", "text"], `${where}.input[]`);
+    if (item.type !== "text" || typeof item.text !== "string")
+      refuse(`${where}.input[] must be text`);
+  }
+}
+const THREAD_KEYS = [
+  "model",
+  "config",
+  "approvalPolicy",
+  "cwd",
+  "developerInstructions",
+  "experimentalRawEvents",
+  "sandbox",
+];
+function threadParams(p, approved, where, extra) {
+  onlyKeys(p, [...THREAD_KEYS, ...extra], where);
+  assert.equal(p.model, approved.model, "Unapproved model");
+  const config = onlyKeys(
+    p.config,
+    [...PRODUCT_FALSE_KEYS, "model_reasoning_effort"],
+    `${where}.config`,
+  );
+  assert.equal(
+    config.model_reasoning_effort,
+    approved.effort,
+    "Unapproved effort",
+  );
+  for (const key of PRODUCT_FALSE_KEYS)
+    if (config[key] !== undefined && config[key] !== false)
+      refuse(`${where}.config.${key} must be false`);
+  if (p.approvalPolicy !== undefined && p.approvalPolicy !== "never")
+    refuse(`${where}.approvalPolicy`);
+  if (p.sandbox !== undefined && !SANDBOXES.has(p.sandbox))
+    refuse(`${where}.sandbox`);
+  if (p.cwd !== undefined) str(p.cwd, `${where}.cwd`);
+  if (
+    p.developerInstructions !== undefined &&
+    typeof p.developerInstructions !== "string"
+  )
+    refuse(`${where}.developerInstructions`);
+  if (
+    p.experimentalRawEvents !== undefined &&
+    typeof p.experimentalRawEvents !== "boolean"
+  )
+    refuse(`${where}.experimentalRawEvents`);
+}
+
+// Whitelist validator for one exact model/effort pair: only the JSON-RPC
+// methods and parameters the product drivers (and the drift compaction
+// client) actually send pass; everything else fails closed.
 export function createCodexRequestGuard(approved) {
   assert.ok(
     approved?.model && approved?.effort,
     "Guard needs model and effort",
   );
   return (message) => {
-    const p = message.params ?? {};
-    if (
-      ["thread/start", "thread/resume", "thread/fork"].includes(message.method)
-    ) {
-      assert.equal(p.model, approved.model, "Unapproved model");
-      assert.equal(
-        p.config?.model_reasoning_effort,
-        approved.effort,
-        "Unapproved effort",
-      );
+    if (!isRecord(message)) refuse("frame is not an object");
+    if (message.method === undefined) {
+      // A response to a server request (approval decision or error).
+      onlyKeys(message, ["id", "jsonrpc", "result", "error"], "response");
+      if (message.id === undefined) refuse("response without id");
+      if ((message.result === undefined) === (message.error === undefined))
+        refuse("response needs exactly one of result/error");
+      return;
     }
-    if (message.method === "turn/start" || message.method === "turn/steer") {
-      if (p.model !== undefined)
-        assert.equal(p.model, approved.model, "Unapproved turn model");
-      if (p.effort !== undefined)
-        assert.equal(p.effort, approved.effort, "Unapproved turn effort");
+    onlyKeys(message, ["id", "jsonrpc", "method", "params"], "frame");
+    const p = message.params ?? {};
+    const where = String(message.method);
+    switch (message.method) {
+      case "initialize": {
+        onlyKeys(p, ["capabilities", "clientInfo"], where);
+        onlyKeys(p.capabilities, ["experimentalApi"], `${where}.capabilities`);
+        onlyKeys(
+          p.clientInfo,
+          ["name", "title", "version"],
+          `${where}.clientInfo`,
+        );
+        return;
+      }
+      case "initialized":
+        onlyKeys(p, [], where);
+        return;
+      case "thread/start":
+        return threadParams(p, approved, where, []);
+      case "thread/resume":
+        threadParams(p, approved, where, ["threadId", "excludeTurns"]);
+        str(p.threadId, `${where}.threadId`);
+        if (p.excludeTurns !== undefined && p.excludeTurns !== true)
+          refuse(`${where}.excludeTurns`);
+        return;
+      case "thread/compact/start":
+        onlyKeys(p, ["threadId"], where);
+        str(p.threadId, `${where}.threadId`);
+        return;
+      case "turn/start":
+        onlyKeys(
+          p,
+          ["threadId", "input", "clientUserMessageId", "model", "effort"],
+          where,
+        );
+        if (p.model !== undefined)
+          assert.equal(p.model, approved.model, "Unapproved turn model");
+        if (p.effort !== undefined)
+          assert.equal(p.effort, approved.effort, "Unapproved turn effort");
+        str(p.threadId, `${where}.threadId`);
+        textInput(p.input, where);
+        return;
+      case "turn/steer":
+        onlyKeys(p, ["threadId", "expectedTurnId", "input"], where);
+        str(p.threadId, `${where}.threadId`);
+        str(p.expectedTurnId, `${where}.expectedTurnId`);
+        textInput(p.input, where);
+        return;
+      case "turn/interrupt":
+        onlyKeys(p, ["threadId", "turnId"], where);
+        str(p.threadId, `${where}.threadId`);
+        str(p.turnId, `${where}.turnId`);
+        return;
+      default:
+        refuse(`method ${where}`);
     }
   };
 }
-export const assertAuthorizedRequest = createCodexRequestGuard({
-  model,
-  effort,
-});
+
+// argv whitelist: `--version`, the catalog probe `debug models [--bundled]`,
+// and `app-server` with only the product's `-c <switch>=false` pairs and one
+// `--listen`. Every other subcommand (`debug app-server send-message-v2`,
+// `app-server daemon|proxy`, `exec`, ...) could start or reach a model turn
+// outside this fence and is refused.
+export function classifyCodexLaunch(args) {
+  if (args.length === 1 && args[0] === "--version") return { kind: "version" };
+  if (
+    args[0] === "debug" &&
+    args[1] === "models" &&
+    (args.length === 2 || (args.length === 3 && args[2] === "--bundled"))
+  )
+    return { kind: "catalog" };
+  if (args[0] !== "app-server") throw new Error("Unsupported gate CLI command");
+  let listens = 0;
+  for (let i = 1; i < args.length; i++) {
+    const a = args[i];
+    if (a === "-c") {
+      const [key, value, ...rest] = String(args[++i] ?? "").split("=");
+      if (!PRODUCT_FALSE_KEYS.has(key) || value !== "false" || rest.length)
+        throw new Error(`Unsupported gate config override ${args[i]}`);
+    } else if (a === "--listen") {
+      listens += 1;
+      if (listens > 1 || typeof args[++i] !== "string")
+        throw new Error("Unsupported gate --listen transport");
+    } else throw new Error(`Unsupported gate CLI argument ${a}`);
+  }
+  listenPlan(args);
+  return { kind: "app-server" };
+}
 // S2-a warm driver: `--listen unix://PATH`. The real CLI moves to a short
 // sibling socket (macOS caps socket paths at 104 bytes) and the shim's proxy
 // takes PATH, so every request still crosses this fence. Any other listen
@@ -57,20 +212,21 @@ export function listenPlan(args) {
   return { args: rewritten, listenPath, upstreamPath };
 }
 // Test-only stdio fence: unsupported model requests never reach the provider CLI.
-// options.model/effort select the approved pair (default: common.mjs);
+// options.model/effort: the approved pair (required);
 // options.socketRecordPath appends each guarded warm socket path (JSON line)
 // so a gate harness can reach the runtime only through this same fence.
 export async function runGuardedCodex(executable, options = {}) {
-  const validateRequest =
-    options.model === undefined
-      ? assertAuthorizedRequest
-      : createCodexRequestGuard(options);
+  const validateRequest = createCodexRequestGuard(options);
   const args = process.argv.slice(2);
-  assert.ok(
-    ["app-server", "debug", "--version"].includes(args[0]),
-    "Unsupported gate CLI command",
-  );
-  const plan = args[0] === "app-server" ? listenPlan(args) : null;
+  let launch;
+  try {
+    launch = classifyCodexLaunch(args);
+  } catch (e) {
+    process.stderr.write("PAID_GATE_MODEL_DENIED " + String(e) + "\n");
+    process.exitCode = 1;
+    return;
+  }
+  const plan = launch.kind === "app-server" ? listenPlan(args) : null;
   const child = spawn(executable, plan ? plan.args : args, {
     stdio: ["pipe", "pipe", "pipe"],
   });
@@ -107,7 +263,7 @@ export async function runGuardedCodex(executable, options = {}) {
         () => {},
       );
   }
-  if (args[0] === "app-server") {
+  if (launch.kind === "app-server") {
     const lines = createInterface({ input: process.stdin });
     lines.on("line", (line) => {
       if (rejected) return;

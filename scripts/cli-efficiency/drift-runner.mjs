@@ -1,20 +1,17 @@
 // Paid long-session drift arm: one Role instance, one native session, the
 // scripted Human sequence, forced compactions, and per-round ledger evidence.
-// Bootstrap follows rah.mjs (isolated daemon.mjs process, prepared local
-// workbench, guarded CLI shim, Role create/instantiate); nothing touches the
+// Bootstrap is shared with rah.mjs (gate-daemon.mjs: isolated daemon.mjs
+// process, prepared local workbench, guarded CLI shim); nothing touches the
 // formal workbench or its database.
 import assert from "node:assert/strict";
-import { spawn, execFileSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, globSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { RoomKernel } from "@rah-os/kernel";
-import {
-  localCliRuntimeSpec,
-  prepareLocalWorkbench,
-} from "../../packages/daemon/src/index.ts";
 import { wait, transcript } from "./common.mjs";
+import { prepareGateDaemon } from "./gate-daemon.mjs";
 import { createCodexRequestGuard } from "./model-guard.mjs";
 import { createKimiRequestGuard } from "./drift-kimi-guard.mjs";
 import {
@@ -25,6 +22,8 @@ import {
   readOpenCodeRound,
 } from "./drift-opencode-guard.mjs";
 import {
+  assertCodexTurnContexts,
+  checkRoundModels,
   codexToolCalls,
   countCodexCompactions,
   countCodexTargetRejections,
@@ -39,10 +38,13 @@ import {
   compactOpenCodePerTurn,
   compactOpenCodeWarm,
 } from "./drift-compaction.mjs";
-import { writeGuardedShim } from "./guarded-shim.mjs";
 import { claudeTranscriptRound } from "./claude-usage.mjs";
 import { assertClaudeTranscriptModel } from "./native-claude.mjs";
-import { readClaudeTranscript } from "./provider-files.mjs";
+import { assertKimiRequests, kimiWireRound } from "./kimi-usage.mjs";
+import {
+  readClaudeTranscriptWithSubagents,
+  readKimiWire,
+} from "./provider-files.mjs";
 import { DRIFT_ROLE_INSTRUCTIONS } from "./drift-scenario.mjs";
 
 const ROUND_TIMEOUT_MS = 360_000;
@@ -57,23 +59,10 @@ export async function runDriftArm({
   save,
 }) {
   const { provider, model, effort, bindingId, mode } = config;
-  const stateDirectory = join(root, "state");
-  const dbPath = join(stateDirectory, "room.db");
-  const query = (sql, ...args) => {
-    const db = new DatabaseSync(dbPath, { readOnly: true });
-    try {
-      return db
-        .prepare(sql)
-        .all(...args)
-        .map((row) => ({ ...row }));
-    } finally {
-      db.close();
-    }
-  };
-  const realCli = execFileSync("which", [provider], {
+  const socketRecordPath = join(root, "warm-sockets.jsonl");
+  const cliPath = execFileSync("which", [provider], {
     encoding: "utf8",
   }).trim();
-  const socketRecordPath = join(root, "warm-sockets.jsonl");
   // OpenCode: the approved variant's provider options (from the CLI's own
   // verbose catalog) become the compaction agent's options, because the
   // native summarize request carries no variant.
@@ -81,7 +70,7 @@ export async function runDriftArm({
     provider === "opencode"
       ? openCodeVariantOptions(
           execFileSync(
-            realCli,
+            cliPath,
             [
               "models",
               parseOpenCodeBinding(model).providerID,
@@ -95,16 +84,17 @@ export async function runDriftArm({
         )
       : undefined;
   if (compactionOptions) result.arm.compactionOptions = compactionOptions;
-  const shim = writeGuardedShim({
+  const gate = await prepareGateDaemon({
     provider,
-    path: join(root, `guarded-${provider}.mjs`),
-    realCli,
     model,
     effort,
+    root,
+    cwd,
+    warm: mode === "warm",
     // Codex: the warm socket proxy record; Claude warm: the /compact
     // injection socket record; OpenCode warm: the summarize socket record
     // (all cross the same fence).
-    options:
+    shimOptions:
       provider === "codex"
         ? { socketRecordPath }
         : provider === "claude" && mode === "warm"
@@ -117,7 +107,24 @@ export async function runDriftArm({
                   : {}),
               }
             : {},
+    processes: result.processes,
+    save,
+    consumerId: "drift-gate",
   });
+  const { realCli, spec, prepared, stateDirectory, start, stop, post, head } =
+    gate;
+  const dbPath = join(stateDirectory, "room.db");
+  const query = (sql, ...args) => {
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    try {
+      return db
+        .prepare(sql)
+        .all(...args)
+        .map((row) => ({ ...row }));
+    } finally {
+      db.close();
+    }
+  };
   // Claude compaction launches are fenced by classifyClaudeLaunch instead.
   const validate =
     provider === "codex"
@@ -129,106 +136,7 @@ export async function runDriftArm({
           : undefined;
   // effort null (effortless Haiku): the product sends no effort argument.
   const reasoning = effort ?? "default";
-  const spec = {
-    ...localCliRuntimeSpec(provider, cwd),
-    reasoning,
-    executable: shim,
-  };
-  const prepared = await prepareLocalWorkbench({
-    runtimeSpecs: [spec],
-    stateDirectory,
-    workspaceCwd: cwd,
-  });
-  const daemonConfig =
-    mode === "warm"
-      ? { ...prepared.config, warmRuntimes: { [provider]: { enabled: true } } }
-      : {
-          ...prepared.config,
-          // Codex and OpenCode run warm by default in the product; the
-          // per-turn arm opts out explicitly.
-          warmRuntimes: {
-            codex: { enabled: false },
-            opencode: { enabled: false },
-          },
-        };
-  const configPath = join(root, "config.json");
-  writeFileSync(configPath, JSON.stringify(daemonConfig), { mode: 0o600 });
-
-  let child, exit, origin, observer;
-  async function start() {
-    let out = "";
-    child = spawn(
-      process.execPath,
-      [new URL("./daemon.mjs", import.meta.url).pathname, configPath],
-      { stdio: ["ignore", "pipe", "pipe"] },
-    );
-    exit = new Promise((r) =>
-      child.once("close", (code, signal) => r({ code, signal })),
-    );
-    child.stdout.on("data", (b) => {
-      out = (out + b).slice(-10000);
-      const m = out.match(/GATE_READY (.*)\n/);
-      if (m) origin = JSON.parse(m[1]).origin;
-    });
-    child.stderr.on("data", (b) =>
-      writeFileSync(join(root, "daemon.log"), b, { flag: "a", mode: 0o600 }),
-    );
-    await wait(() => {
-      assert.equal(child.exitCode, null, "Daemon startup failed");
-      return origin;
-    }, 60000);
-    result.processes.push({
-      pid: child.pid,
-      startedAt: new Date().toISOString(),
-    });
-    save();
-  }
-  async function stop() {
-    if (!child) return;
-    child.kill("SIGTERM");
-    let timer;
-    try {
-      const s = await Promise.race([
-        exit,
-        new Promise((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error("Graceful drain timed out")),
-            45000,
-          );
-        }),
-      ]);
-      result.processes.at(-1).finishedAt = new Date().toISOString();
-      result.processes.at(-1).exit = s;
-      child = undefined;
-      save();
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  async function post(path, body) {
-    const r = await fetch(origin + path, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${prepared.humanAccessToken}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await r.json();
-    assert.equal(
-      r.status,
-      200,
-      `${path}: ${JSON.stringify(data).slice(0, 500)}`,
-    );
-    return data;
-  }
-  const head = async (id) =>
-    (
-      await post("/v3/client/rooms/sync", {
-        roomId: id,
-        consumerId: "drift-gate",
-      })
-    ).latestRoomSeq;
+  let observer;
 
   // Native session of the instance: warm runtime row, else the provider
   // session record (both are opaque metadata; used only to prove continuity
@@ -501,57 +409,65 @@ export async function runDriftArm({
         sessionId && current && current !== sessionId,
       );
       sessionId ??= current;
-      // Codex rollout (diagnostic only): Worker call kinds and natural
-      // compactions inside this round's window.
+      // Native session files (diagnostic only): Worker call kinds, natural
+      // compactions, and the post-hoc model fence. Each provider's reader
+      // returns the number of approved model records in this round's window;
+      // an unreadable source or zero records is missing evidence
+      // (modelEvidenceMissing), an unapproved model throws.
       let toolCalls = null;
       let rolloutCompactions = null;
       let targetRejections = null;
-      if (provider === "claude" && current) {
-        try {
-          const t = claudeTranscriptRound(readClaudeTranscript(current), {
-            from: startedAt,
-            to: round.finishedAt,
-          });
-          assertClaudeTranscriptModel(t, config);
+      const windowFrom = Date.parse(startedAt);
+      const windowTo = Date.parse(round.finishedAt);
+      const readers = {
+        claude: () => {
+          const t = claudeTranscriptRound(
+            readClaudeTranscriptWithSubagents(current),
+            { from: startedAt, to: round.finishedAt },
+          );
           toolCalls = t.toolCalls;
           rolloutCompactions = t.compactBoundaries;
           targetRejections = t.targetRejections;
-        } catch (error) {
-          if (/Unapproved/.test(String(error.message))) throw error;
-          round.transcriptError = String(error.message).slice(0, 200);
-        }
-      }
-      if (provider === "opencode" && current) {
-        // Stored assistants of the session tree in this round's window: the
-        // post-hoc fence (model and variant) and natural compactions.
-        try {
+          return assertClaudeTranscriptModel(t, config);
+        },
+        // Stored assistants of the session tree: model and variant.
+        opencode: () => {
           const t = assertOpenCodeAssistants(
-            readOpenCodeRound(
-              current,
-              Date.parse(startedAt),
-              Date.parse(round.finishedAt),
-            ),
+            readOpenCodeRound(current, windowFrom, windowTo),
             config,
           );
           rolloutCompactions = t.compactions;
           round.openCodeAssistants = t.assistants;
-        } catch (error) {
-          if (/Unapproved/.test(String(error.message))) throw error;
-          round.transcriptError = String(error.message).slice(0, 200);
-        }
-      }
-      if (provider === "codex" && current) {
-        try {
+          return t.assistants;
+        },
+        // Rollout turn_context records: exact model and effort per turn.
+        codex: () => {
           const events = transcript(current).filter(
             (e) => e.timestamp >= startedAt && e.timestamp <= round.finishedAt,
           );
           toolCalls = codexToolCalls(events);
           rolloutCompactions = countCodexCompactions(events);
           targetRejections = countCodexTargetRejections(events);
-        } catch (error) {
-          round.transcriptError = String(error.message).slice(0, 200);
-        }
-      }
+          return assertCodexTurnContexts(events, config);
+        },
+        // Session wire llm.request records: exact alias and thinking level.
+        kimi: () => {
+          const wire = kimiWireRound(readKimiWire(current), {
+            from: startedAt,
+            to: round.finishedAt,
+          });
+          if (!wire.requests.length) return 0;
+          assertKimiRequests(wire.requests, config);
+          return wire.requests.length;
+        },
+      };
+      const modelEvidence = checkRoundModels(
+        current ? readers[provider] : null,
+      );
+      round.modelEvidence = modelEvidence;
+      // A guard that saw another model after forwarding (Claude result
+      // modelUsage, sub-agent frames) fails the arm.
+      gate.assertNoGuardViolations();
       const evaluation = evaluateRound(
         step,
         {
@@ -568,6 +484,7 @@ export async function runDriftArm({
           targetRejections,
           usage,
           compactionsInRound: trajectoryCompactions + (rolloutCompactions ?? 0),
+          modelEvidence,
         },
         { threadId, roomId, provider, mode },
       );

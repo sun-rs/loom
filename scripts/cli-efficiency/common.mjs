@@ -2,9 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync, globSync } from "node:fs";
 import { homedir } from "node:os";
 import { summarizeUsage } from "./metrics.mjs";
-export const model = "gpt-5.6-luna",
-  effort = "low",
-  bindingId = "local:codex-cli/v1:gpt-5.6-luna";
 export const instructions =
   "Read-only bounded review of scripts/workbench-launch-receipt.mjs and scripts/workbench-launch-receipt.test.mjs only. Do not edit files, write memory, create tasks, run restart commands, install dependencies, or read other project files. Distinguish proven facts from conditional concerns.";
 const baseQuestions = [
@@ -34,13 +31,10 @@ export function transcript(sessionId) {
 }
 // usageOptions.replyAt splits generations at the effective Room reply (RAH arm);
 // omitted for native, whose final answer generation is the reply.
-// approved: the exact model/effort of this gate run (default: the Codex pair).
-export function measure(
-  sessionId,
-  round,
-  usageOptions,
-  approved = { model, effort },
-) {
+// approved: the exact model/effort of this gate run (required; the approval
+// table in approved-models.mjs admitted it before any paid call).
+export function measure(sessionId, round, usageOptions, approved) {
+  assert.ok(approved?.model && approved?.effort, "measure needs model/effort");
   const events = transcript(sessionId).filter(
     (e) => e.timestamp >= round.startedAt && e.timestamp <= round.finishedAt,
   );

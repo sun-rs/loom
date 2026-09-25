@@ -2,7 +2,7 @@
 // truth): Claude Code transcripts and Kimi Code session wires.
 import { globSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const one = (paths, what) => {
   if (paths.length !== 1)
@@ -20,6 +20,19 @@ export function claudeTranscriptPath(sessionId) {
 
 export function readClaudeTranscript(sessionId) {
   return readFileSync(claudeTranscriptPath(sessionId), "utf8");
+}
+
+// The main transcript followed by its sub-agent transcripts
+// (`<session>/subagents/*.jsonl`, sidechain entries) so the post-hoc model
+// fence also covers sub-agent generations; usage stays main-chain only.
+export function readClaudeTranscriptWithSubagents(sessionId) {
+  const main = claudeTranscriptPath(sessionId);
+  const subagents = globSync(
+    join(dirname(main), sessionId, "subagents", "*.jsonl"),
+  ).sort();
+  return [main, ...subagents]
+    .map((path) => readFileSync(path, "utf8"))
+    .join("\n");
 }
 
 // Main agent only; subagent wires live beside it and are not counted.

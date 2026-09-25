@@ -20,7 +20,43 @@ const EVIDENCE_GAP_FAILURES = [
   "runFailed",
   "roundTimeout",
   "sessionChanged",
+  // Post-hoc model check could not run (unreadable transcript/db/wire, or no
+  // model record in the round window): unverified, never a pass.
+  "modelEvidenceMissing",
 ];
+
+// read: returns the number of approved model records in the round window
+// and throws `Unapproved ...` on any other model/effort (a violation, which
+// propagates). Any other read failure or zero records is missing evidence.
+export function checkRoundModels(read) {
+  if (typeof read !== "function")
+    return { status: "missing", reason: "no native session to check" };
+  try {
+    const records = read();
+    return records > 0
+      ? { status: "verified", records }
+      : { status: "missing", reason: "no model record in the round window" };
+  } catch (error) {
+    const reason = String(error?.message ?? error).slice(0, 200);
+    if (/Unapproved/.test(reason)) throw error;
+    return { status: "missing", reason };
+  }
+}
+
+// Codex rollout `turn_context` records (one per native turn): each must carry
+// exactly the approved model and effort. Returns how many were checked.
+export function assertCodexTurnContexts(events, approved) {
+  let records = 0;
+  for (const e of events) {
+    if (e?.type !== "turn_context") continue;
+    records += 1;
+    if (e.payload?.model !== approved.model)
+      throw new Error(`Unapproved model ${e.payload?.model}`);
+    if (e.payload?.effort !== approved.effort)
+      throw new Error(`Unapproved effort ${e.payload?.effort}`);
+  }
+  return records;
+}
 
 const codePoints = (s) => [...s].length;
 
@@ -216,6 +252,9 @@ export function evaluateRound(spec, evidence, context) {
       }
     : null;
   checks.compactionsInRound = evidence.compactionsInRound ?? null;
+  // Fail closed: absent post-hoc model evidence is never treated as verified.
+  checks.modelEvidence = evidence.modelEvidence ?? null;
+  if (checks.modelEvidence?.status !== "verified") fail("modelEvidenceMissing");
   return { round: spec.round, template: spec.template, checks, failures };
 }
 
