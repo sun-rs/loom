@@ -22,7 +22,15 @@
 // FAKE_NO_LIFECYCLE=1 (an older CLI without `msg_lifecycle_v1`),
 // FAKE_NO_TERMINAL_REASON=1 (an older CLI: an interrupted result carries no
 // `terminal_reason`), FAKE_SILENT_INTERRUPT=1 (the interrupt ends the turn but
-// its control_response never arrives).
+// its control_response never arrives), FAKE_INTERRUPT_TERMINAL_REASON (the
+// interrupted turn's result carries this `terminal_reason` instead, e.g. a
+// provider failure that lands while the interrupt is in flight).
+//
+// Exit code (real 2.1.282 `runHeadless`, read from the installed binary's
+// embedded source: `go(en?.type==="result"&&en?.is_error||io?1:0)`): when
+// stdin closes and the queue drains the process exits 1 if the last result it
+// wrote had `is_error: true` (an interrupted turn's `error_during_execution`
+// included), otherwise 0.
 //
 // Verified against the real 2.1.282 binary without any model call (API base
 // URL pointed at a local server that never answers): `command_lifecycle`
@@ -74,6 +82,7 @@ let initialized = false;
 let inputClosed = false;
 let turnIndex = 0;
 let resultIndex = 0;
+let lastResultIsError = false;
 const lifecycle = (uuid, state) => {
   if (env.FAKE_NO_LIFECYCLE === "1" || typeof uuid !== "string") return;
   send({
@@ -117,7 +126,7 @@ async function drain() {
   if (running !== undefined) return;
   const next = queue.shift();
   if (next === undefined) {
-    if (inputClosed) process.exit(0);
+    if (inputClosed) process.exit(lastResultIsError ? 1 : 0);
     return;
   }
   running = { input: next, interrupted: false, wake: () => undefined };
@@ -222,14 +231,16 @@ async function runTurn(turn) {
         ? {}
         : {
             terminal_reason:
-              env.FAKE_FOLLOW_UP_FIRST === "1"
+              env.FAKE_INTERRUPT_TERMINAL_REASON ||
+              (env.FAKE_FOLLOW_UP_FIRST === "1"
                 ? "aborted_streaming"
-                : "aborted_tools",
+                : "aborted_tools"),
           }),
       usage: { input_tokens: 10, output_tokens: 1 },
       user_message_uuid: input.uuid,
       result_index: resultIndex++,
     });
+    lastResultIsError = true;
     lifecycle(input.uuid, "cancelled");
     record({ kind: "turn-interrupted", turn: turnIndex });
     return;
@@ -256,6 +267,7 @@ async function runTurn(turn) {
     user_message_uuid: input.uuid,
     result_index: resultIndex++,
   });
+  lastResultIsError = false;
   lifecycle(input.uuid, "completed");
   record({ kind: "turn-completed", turn: turnIndex });
 }

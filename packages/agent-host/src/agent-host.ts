@@ -1121,6 +1121,7 @@ export class AgentHost {
     if (proofFailure !== null) return proofFailure;
     // S2-a: a quiesced turn carries its native result, never an exit code.
     const quiesced = exit.quiesced;
+    let runFailure: { message: string; failure?: RuntimeFailure } | undefined;
     try {
       await this.#control.finishRunAttempt({
         ...(exit.code === null ? {} : { exitCode: exit.code }),
@@ -1145,14 +1146,24 @@ export class AgentHost {
           : quiesced.result !== "success") ||
           exit.failure !== undefined)
       ) {
-        return this.#retryFailedActivation(
-          activation,
-          exit.failure?.message ??
+        runFailure = {
+          message:
+            exit.failure?.message ??
             (quiesced === undefined
               ? `runtime exited with code ${String(exit.code)}`
               : `runtime turn ended ${quiesced.result}`),
-          exit.failure,
-        );
+          ...(exit.failure === undefined ? {} : { failure: exit.failure }),
+        };
+        // A failed run whose `final` reply committed (the Kernel's durable
+        // marker for this RunAttempt) is not re-executed when delivery is
+        // acknowledged: completion below proves ACK through `toSeq`, and a
+        // refusal falls back to this retry. The exit stays as recorded.
+        if (!(await this.#finalReplyCommitted(runAttempt.runAttemptId)))
+          return this.#retryFailedActivation(
+            activation,
+            runFailure.message,
+            runFailure.failure,
+          );
       }
     } catch (error) {
       const failure = errorMessage(error);
@@ -1177,7 +1188,13 @@ export class AgentHost {
         state: "completed",
       };
     } catch (error) {
-      return this.#retryFailedActivation(activation, errorMessage(error));
+      return runFailure === undefined
+        ? this.#retryFailedActivation(activation, errorMessage(error))
+        : this.#retryFailedActivation(
+            activation,
+            runFailure.message,
+            runFailure.failure,
+          );
     }
   }
 
@@ -1300,6 +1317,16 @@ export class AgentHost {
           runAttempt.runAttemptId,
           failure,
         );
+  }
+
+  /** Whether this RunAttempt committed a `final` reply (durable marker). */
+  async #finalReplyCommitted(runAttemptId: string): Promise<boolean> {
+    if (this.#control.readFinalReply === undefined) return false;
+    try {
+      return (await this.#control.readFinalReply({ runAttemptId })) !== null;
+    } catch {
+      return false;
+    }
   }
 
   async #retryFailedActivation(

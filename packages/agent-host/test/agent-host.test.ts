@@ -1470,3 +1470,112 @@ for (const [label, finalReplyCommitted, expected] of [
     }
   });
 }
+
+/**
+ * Real Claude smoke 2026-09-25 (cold, Haiku): the RunAttempt had committed its
+ * `--final` reply (Kernel marker) and delivery was acknowledged through
+ * `toSeq`, yet the run exited 1 and the Activation was retried twice into
+ * duplicate replies and quarantined. A reply that is committed and
+ * acknowledged is a finished obligation: the Host completes the Activation
+ * (the Kernel still proves ACK through `toSeq`); the failed exit stays on the
+ * RunAttempt as recorded. Without the marker, or without the ACK, the normal
+ * retry applies.
+ */
+for (const [label, marker, acknowledged, expected] of [
+  [
+    "with the final marker and ACK completes without re-executing",
+    true,
+    true,
+    "completed",
+  ],
+  ["with the final marker but no ACK is retried", true, false, "queued"],
+  ["with ACK but no final marker is retried", false, true, "queued"],
+] as const) {
+  test(`a run that exits 1 ${label}`, async () => {
+    const directory = mkdtempSync(
+      join(tmpdir(), "rah-os-agent-host-final-exit-"),
+    );
+    try {
+      const kernel = new RoomKernel({
+        databasePath: join(directory, "room.db"),
+      });
+      kernel.initialize();
+      const human = kernel.provisionPrincipal({ handle: "h", kind: "human" });
+      const agent = kernel.provisionPrincipal({ handle: "a", kind: "agent" });
+      const humanActor = kernel.authenticateAccessToken(human.accessToken);
+      const agentActor = kernel.authenticateAccessToken(agent.accessToken);
+      const room = kernel.createRoom(humanActor, { name: "F", slug: "f" });
+      kernel.addMember(humanActor, {
+        principalId: agent.principal.principalId,
+        roomId: room.roomId,
+      });
+      kernel.postMessage(humanActor, {
+        body: "answer",
+        idempotencyKey: "final-exit",
+        recipients: [
+          { participantId: agent.principal.principalId, reason: "mention" },
+        ],
+        roomId: room.roomId,
+      });
+      const runtime = new FakeRuntimeAdapter({
+        onStart: (input) => {
+          const delivery = kernel.sync(agentActor, {
+            consumerId: input.consumerId,
+            roomId: input.roomId,
+          });
+          if (acknowledged) {
+            kernel.acknowledgeCursor(agentActor, {
+              consumerId: input.consumerId,
+              roomId: input.roomId,
+              throughSeq: delivery.cursorAfter,
+            });
+          }
+          const reply = kernel.postMessage(agentActor, {
+            basedOnRoomSeq: delivery.cursorAfter,
+            body: "FAKE final reply",
+            idempotencyKey: `reply-${input.runAttemptId}`,
+            recipients: [],
+            roomId: input.roomId,
+          });
+          if (marker)
+            kernel.finalReplies.recordInTransaction(
+              {
+                activationId: input.activationId,
+                consumerId: input.consumerId,
+                hostId: input.hostId,
+                participantId: input.participantId,
+                roomId: input.roomId,
+                runAttemptId: input.runAttemptId,
+                toSeq: input.toSeq,
+              },
+              reply.event,
+            );
+        },
+      });
+      // The CLI's exit after its interrupted, committed final turn.
+      runtime.enqueueExit({ code: 1 });
+      const host = new AgentHost({
+        host: authenticateHost(kernel, "final-exit-host", [
+          agent.principal.principalId,
+        ]),
+        kernel,
+        leaseMs: 30_000,
+        runtime,
+      });
+      const result = await host.reconcileOnce();
+      assert.equal(
+        result.state,
+        expected === "completed" ? "completed" : "failed",
+        JSON.stringify(result),
+      );
+      assert.equal(runtime.starts.length, 1);
+      const [run] = kernel.listRunAttempts({ roomId: room.roomId });
+      assert.equal(run?.exitCode, 1, "the real exit is kept");
+      const activation = kernel.listActivations({ roomId: room.roomId })[0];
+      assert.equal(activation?.state, expected);
+      assert.equal(activation?.attemptCount, 1);
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
+}

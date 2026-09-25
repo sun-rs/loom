@@ -193,6 +193,19 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
   `deepseek/deepseek-v4-pro`、`aihubmix/deepseek-v4.1-flash`），按授权 id 运行会在付费调用前的目录核对处失败；
   gate 不替换模型，需负责人确认。Haiku transcript 是否记录 effort 字段未知，若记录会被判越权。
 
+### 二十一、真实 Claude 中断形状回归修复
+
+负责人授权的 Haiku 冒烟（Claude Code 2.1.282，漂移门禁 10 轮）暴露冷路径回归。本批未跑付费 CLI、未重启服务、热模式默认值不变。
+
+- 证据（冷模式 room.db）：第 1 轮三次 RunAttempt 都提交了 `message-post --final --based-on-room-seq 4`，`run_attempt_final_replies` 有行；轨迹为 `claude:result:final-reply-interrupt` 后接 `claude:driver:error: Claude turn ended with error_during_execution`；`run_attempts.exit_code` 三次均为 1；`subscription_cursors.last_seq` 已到 4（=toSeq，ACK-on-post 生效）；Activation 因运行失败重试两次、三条重复回复后隔离。
+- 真实形状（读已安装二进制内嵌源码，未调用模型）：中断轮次的 result 为 `subtype:"error_during_execution"`、`is_error:true`、带 `terminal_reason:"aborted_tools"|"aborted_streaming"`；interrupt 控制请求处理器调用 abort 后立即返回 `{still_queued}`，所以 control_response 先于 result。与第七轮 P2-4 推测不同，驱动已正确识别本次中断（轨迹里的 `final-reply-interrupt` 即证据）。真正原因是 headless 退出码：`runHeadless` 以 `go(en?.type==="result"&&en?.is_error||io?1:0)` 退出，最后一条 result 为 `is_error` 时退出码为 1；冷驱动要求 `code === 0`，于是判为失败。fake 在 stdin 关闭时总是退出 0，所以测试一直没有暴露这个问题。
+- `run_attempt_final_replies` 的中断列为空：冷驱动只在运行成功时才写 `rah-final-interrupt/v1` 报告，列为空是运行失败的后果，记录链路本身没问题。
+- 热模式第 1 轮首次尝试（executionMode=cold）的失败与此无关：模型只输出了正文、没有调用 `message-post`，运行成功但未 ACK，按既有规则重试后完成。第 2–10 轮热路径中断均记录 requested/accepted/terminal=true。
+- 修法一（冷驱动 `claude-stream-json-driver.mjs`）：只在以下条件同时成立时接受退出码 1：本驱动的 final 中断造成了首个 result（`endedByInterrupt`）、该 result 是最后一条且 `is_error`、无信号。其余非零退出仍判失败。P2-4 的判定没有改：与本次中断无关的 `error_during_execution`（例如 `terminal_reason:model_error`，或旧版无 reason 且无回执）仍判失败。热驱动 shutdown 本来就忽略 Claude 退出码，逻辑没有改。
+- 修法二（Host `agent-host.ts`，堵住重复回复）：运行失败、按原逻辑会重试时，先读 Kernel 中本 RunAttempt 的 final 标记；标记存在就走 `completeActivation`，由 Kernel 证明 ACK 已到 toSeq、运行时终止证明与 obligations 满足；Kernel 拒绝时按原失败信息重试。RunAttempt 的退出码与错误照原样保留，不改写。没有标记，或有标记但未 ACK，都按原规则重试。
+- 测试：`fixtures/fake-claude-stream.mjs` 按真实规则设置退出码（最后一条 result 为 `is_error` 时退出 1），新增 `FAKE_INTERRUPT_TERMINAL_REASON`。改后既有三条中断用例与新增的“真实退出码”用例在旧实现下都失败（exit 1，报错与真实证据相同），修复后通过。`claude-final-reply-driver.test.ts` 新增“中断在途时出现 model_error 仍判失败”。`agent-host.test.ts` 新增三例：退出码 1 + final 标记 + ACK → completed，不再启动；有标记无 ACK → 重试；有 ACK 无标记 → 重试。其中第一例在旧实现下失败（重试）。`claude-warm-driver-close.test.ts` 新增真实顺序用例：先回执，再 aborted_tools is_error result，Claude 退出 1 时 shutdown 仍退出 0。这一例写完即通过，属于特征测试。
+- 未解决：真实付费复测未跑。热模式首轮为何走 cold 执行未查。有标记但未 ACK 的重试仍按运行失败信息记录 `last_error`，不会触发“上次已发 final”的重试提醒（行为与之前相同）。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

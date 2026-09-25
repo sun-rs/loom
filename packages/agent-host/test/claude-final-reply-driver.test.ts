@@ -351,6 +351,37 @@ test("final reply (older CLI): a reason-less error_during_execution without a co
   assert.match(result.stderr, /error_during_execution/u);
 });
 
+test("final reply (real 2.1.282 exit): the CLI exits 1 after the interrupted turn's is_error result; the run is still the final success", async () => {
+  // Real smoke 2026-09-25 (Haiku, cold): the result was recognised as this
+  // interrupt's end, yet the run failed on the CLI's exit code 1 and the
+  // Activation was retried into duplicate replies.
+  const result = await runTurn({
+    wake: WAKE,
+    signal: { runAttemptId: "run-1", turnId: "accepted" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.doesNotMatch(result.stderr, /error_during_execution/u);
+  assert.equal(
+    byProtocol(result.frames, "rah-provider-session/v1").length,
+    1,
+    "the session binding is written",
+  );
+  assert.equal(
+    byProtocol(result.frames, "rah-final-interrupt/v1")[0]?.terminal,
+    true,
+  );
+});
+
+test("final reply: a provider failure (terminal_reason model_error) while the interrupt is in flight still fails the run", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    signal: { runAttemptId: "run-1", turnId: "accepted" },
+    env: { FAKE_INTERRUPT_TERMINAL_REASON: "model_error" },
+  });
+  assert.notEqual(result.code, 0, "an unrelated error is never a final end");
+  assert.match(result.stderr, /error_during_execution/u);
+});
+
 test("Host termination (not a final reply) still ends the run as interrupted", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-claude-final-stop-"));
   const record = join(directory, "record.jsonl");

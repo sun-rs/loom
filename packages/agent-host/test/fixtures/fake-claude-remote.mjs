@@ -23,6 +23,8 @@ createInterface({ input: process.stdin })
   .on("line", (line) => socket.write(`${line}\n`))
   .on("close", () => {
     socket.end();
-    process.exit(0);
+    // FAKE_CLAUDE_EXIT_CODE: the real headless CLI exits 1 when its last
+    // result had `is_error` (an interrupted turn's included).
+    process.exit(Number(process.env.FAKE_CLAUDE_EXIT_CODE ?? 0));
   });
 socket.on("error", () => process.exit(2));

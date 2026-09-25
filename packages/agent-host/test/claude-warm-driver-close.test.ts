@@ -30,7 +30,7 @@ const FAKE = fileURLToPath(
 
 type Json = Record<string, any>;
 
-async function startDriver() {
+async function startDriver(env: Record<string, string> = {}) {
   const directory = mkdtempSync(join(tmpdir(), "loom-claude-warm-close-"));
   chmodSync(directory, 0o700);
   const executable = join(directory, "claude");
@@ -74,7 +74,11 @@ async function startDriver() {
     ],
     {
       cwd: directory,
-      env: { ...process.env, FAKE_CLAUDE_CONTROL_PORT: String(port) },
+      env: {
+        ...process.env,
+        FAKE_CLAUDE_CONTROL_PORT: String(port),
+        ...env,
+      },
       stdio: ["pipe", "pipe", "pipe", "pipe"],
     },
   );
@@ -129,9 +133,14 @@ async function startDriver() {
     },
     async close() {
       child.stdin!.end();
-      await new Promise((resolve) => child.once("close", resolve));
+      const code =
+        child.exitCode ??
+        (await new Promise<number | null>((resolve) =>
+          child.once("close", resolve),
+        ));
       server.close();
       rmSync(directory, { force: true, recursive: true });
+      return code;
     },
   };
   await until(() => (socket === undefined ? undefined : true), "fake connect");
@@ -438,5 +447,35 @@ test("P2-4 (warm): a reason-less error_during_execution before the interrupt rec
     assert.equal(end.endedAfterFinalReply, undefined);
   } finally {
     await h.close();
+  }
+});
+
+test("real 2.1.282 shape (warm): receipt before the aborted_tools is_error result is the final end, and Claude's exit 1 at shutdown is not a crash", async () => {
+  // Order read from the installed binary: the interrupt control handler
+  // aborts and answers `{still_queued}` at once; the aborted turn's result
+  // (`error_during_execution`, `is_error: true`, `terminal_reason`
+  // aborted_tools) follows, then the input's `cancelled` lifecycle. The
+  // headless CLI later exits 1 because its last result had `is_error`.
+  const h = await startDriver({ FAKE_CLAUDE_EXIT_CODE: "1" });
+  let closed = false;
+  try {
+    const wake = await acceptedWake(h);
+    const interrupt = await finalPostedAndArmed(h, wake);
+    h.claude(answer(interrupt, { still_queued: [] }));
+    await h.settle(30);
+    h.claude(result(wake, aborted));
+    h.claude(lifecycle(wake, "cancelled"));
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    assert.equal(end.status, "interrupted");
+    assert.equal(end.endedAfterFinalReply, true);
+    assert.equal(end.errorMessage, undefined);
+    closed = true;
+    assert.equal(await h.close(), 0, "a clean shutdown, not a fatal");
+    assert.equal(
+      h.frames.some((f) => f.type === "fatal"),
+      false,
+    );
+  } finally {
+    if (!closed) await h.close();
   }
 });

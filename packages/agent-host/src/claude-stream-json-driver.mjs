@@ -180,6 +180,7 @@ async function runTurn(resumeSession) {
   let failedResult;
   let protocolError;
   let endedAfterFinalReply = false;
+  let finalInterruptResult;
   const toolNames = new Map();
   // A fresh uuid per turn input: the replay echo of exactly this uuid and
   // text is the only acceptance of this turn (never a resumed session's
@@ -305,9 +306,10 @@ async function runTurn(resumeSession) {
       }
       // Ended by the Host after the final reply committed: the reply is
       // done, so the aborted turn is this run's success.
-      if (resultCount === 1 && finalInterrupt.endedByInterrupt(frame))
+      if (resultCount === 1 && finalInterrupt.endedByInterrupt(frame)) {
         endedAfterFinalReply = true;
-      else if (frame.subtype !== "success" || frame.is_error === true)
+        finalInterruptResult = frame;
+      } else if (frame.subtype !== "success" || frame.is_error === true)
         failedResult = frame;
       resultFrame = frame;
       // Close admission at the first result; already written user inputs remain
@@ -383,12 +385,22 @@ async function runTurn(resumeSession) {
         )
       : normalizeClaudeTrajectoryEvent(resultFrame),
   );
+  // Claude Code headless exits 1 when the last result it wrote had
+  // `is_error` (2.1.282 `runHeadless`), which the interrupted turn's
+  // `error_during_execution` does. That exit is explained only when this
+  // driver's own final interrupt produced that last result.
+  const exitedAsExpected =
+    terminal.signal === null &&
+    (terminal.code === 0 ||
+      (terminal.code === 1 &&
+        endedAfterFinalReply &&
+        resultFrame === finalInterruptResult &&
+        resultFrame.is_error === true));
   const succeeded =
     failedResult === undefined &&
     ((resultFrame.subtype === "success" && resultFrame.is_error !== true) ||
       endedAfterFinalReply) &&
-    terminal.code === 0 &&
-    terminal.signal === null &&
+    exitedAsExpected &&
     !toolActivityBeforeInput;
   return {
     error: succeeded
