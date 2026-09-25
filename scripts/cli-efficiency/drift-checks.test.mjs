@@ -10,6 +10,7 @@ import {
   evaluateRound,
   exitCodeFor,
   formatDriftTable,
+  summarizeCompactionOverhead,
   summarizeDrift,
 } from "./drift-checks.mjs";
 import { buildDriftScenario } from "./drift-scenario.mjs";
@@ -537,4 +538,172 @@ test("codex rollout turn contexts: exact model and effort, counted", () => {
     () => assertCodexTurnContexts([ctxEvent("gpt-6-luna", "ultra")], approved),
     /Unapproved effort ultra/,
   );
+});
+
+// Owner B (2026-09-25): platform overhead after repeated compactions.
+// Synthetic rounds: usage and Worker (protocol) calls per round.
+const overheadRounds = (rounds, of) =>
+  Array.from({ length: rounds }, (_, i) => {
+    const round = i + 1;
+    const {
+      input,
+      uncached = input / 5,
+      generations = 2,
+      protocol = 1,
+    } = of(round);
+    return {
+      round,
+      template: "qa",
+      failures: [],
+      checks: {
+        usage: { generations, input, uncached, completeness: "complete" },
+        protocolCalls: protocol,
+      },
+    };
+  });
+test("owner B: evaluateRound counts protocol calls, unknown conservatively included", () => {
+  const spec = specOf("qa");
+  const e = evaluateRound(
+    spec,
+    evidenceFor(spec, {
+      toolCalls: [
+        { kind: "other" },
+        { kind: "box-check" },
+        { kind: "box-post", turnHandle: true, final: true },
+        { kind: "unknown" },
+      ],
+    }),
+    ctx,
+  );
+  assert.equal(e.checks.protocolCalls, 3);
+  assert.deepEqual(e.checks.toolCalls, {
+    total: 4,
+    business: 1,
+    protocol: 2,
+    unknown: 1,
+    byKind: { other: 1, "box-check": 1, "box-post": 1, unknown: 1 },
+  });
+  // No tool-call evidence: unknown, never zero.
+  assert.equal(
+    evaluateRound(spec, evidenceFor(spec), ctx).checks.protocolCalls,
+    null,
+  );
+});
+test("owner B: a single compaction with flat overhead is stable", () => {
+  const rounds = overheadRounds(10, () => ({ input: 1000 }));
+  const o = summarizeCompactionOverhead(rounds, [5]);
+  assert.equal(o.status, "stable");
+  assert.equal(o.compactionOverheadRising, false);
+  assert.equal(o.riseThreshold, 0.25);
+  assert.deepEqual(o.baseline, {
+    fromRound: 1,
+    toRound: 5,
+    rounds: 5,
+    meanInput: 1000,
+    meanUncached: 200,
+    meanGenerations: 2,
+    meanProtocolCalls: 1,
+  });
+  assert.equal(o.windows.length, 1);
+  assert.deepEqual(o.windows[0].range, { fromRound: 6, toRound: 10 });
+  assert.deepEqual(o.windows[0].ratio, {
+    input: 1,
+    uncached: 1,
+    generations: 1,
+    protocolCalls: 1,
+  });
+  assert.deepEqual(o.windows[0].reasons, []);
+});
+test("owner B: overhead rising only after the second compaction is flagged with step changes", () => {
+  const rounds = overheadRounds(20, (r) => ({
+    input: r <= 8 ? 1000 : r <= 15 ? 1100 : 1300,
+  }));
+  const o = summarizeCompactionOverhead(rounds, [8, 15]);
+  assert.equal(o.windows.length, 2);
+  assert.deepEqual(o.windows[0].range, { fromRound: 9, toRound: 15 });
+  assert.deepEqual(o.windows[1].range, { fromRound: 16, toRound: 20 });
+  assert.equal(o.windows[0].ratio.input, 1.1);
+  assert.equal(o.windows[0].rising, false);
+  assert.equal(o.windows[1].ratio.input, 1.3);
+  // Change against the previous (post-compaction) window.
+  assert.equal(o.windows[1].step.input, 1.182);
+  assert.equal(o.windows[1].rising, true);
+  assert.deepEqual(o.windows[1].reasons, ["input"]);
+  assert.equal(o.compactionOverheadRising, true);
+  assert.equal(o.status, "rising");
+});
+test("owner B: rising protocol calls are flagged; exactly the threshold is not", () => {
+  const protocol = summarizeCompactionOverhead(
+    overheadRounds(12, (r) => ({ input: 1000, protocol: r <= 6 ? 1 : 2 })),
+    [6],
+  );
+  assert.deepEqual(protocol.windows[0].reasons, ["protocolCalls"]);
+  assert.equal(protocol.compactionOverheadRising, true);
+  const edge = summarizeCompactionOverhead(
+    overheadRounds(12, (r) => ({ input: r <= 6 ? 1000 : 1250 })),
+    [6],
+  );
+  assert.equal(edge.compactionOverheadRising, false);
+  // The threshold is adjustable.
+  const strict = summarizeCompactionOverhead(
+    overheadRounds(12, (r) => ({ input: r <= 6 ? 1000 : 1250 })),
+    [6],
+    { riseRatio: 0.2 },
+  );
+  assert.equal(strict.compactionOverheadRising, true);
+  // Uncached input and generations are reported, not judged.
+  const uncached = summarizeCompactionOverhead(
+    overheadRounds(12, (r) => ({
+      input: 1000,
+      uncached: r <= 6 ? 100 : 900,
+      generations: r <= 6 ? 2 : 5,
+    })),
+    [6],
+  );
+  assert.equal(uncached.windows[0].ratio.uncached, 9);
+  assert.equal(uncached.windows[0].ratio.generations, 2.5);
+  assert.equal(uncached.compactionOverheadRising, false);
+});
+test("owner B: no compaction or missing usage never claims a trend", () => {
+  assert.equal(
+    summarizeCompactionOverhead(
+      overheadRounds(8, () => ({ input: 1 })),
+      [],
+    ).status,
+    "no-compaction",
+  );
+  const missing = overheadRounds(10, () => ({ input: 1000 })).map((e) => ({
+    ...e,
+    checks: { usage: null, protocolCalls: null },
+  }));
+  const o = summarizeCompactionOverhead(missing, [5]);
+  assert.equal(o.status, "insufficient-data");
+  assert.equal(o.compactionOverheadRising, false);
+  assert.equal(o.windows[0].ratio.input, null);
+});
+test("owner B: rising overhead is an independent sub-item of noDegradation", () => {
+  const base = passAll();
+  const rising = base.map((e) =>
+    e.round > 15
+      ? {
+          ...e,
+          checks: { ...e.checks, usage: { ...e.checks.usage, input: 2000 } },
+        }
+      : e,
+  );
+  const ok = summarizeDrift(base, { compactAt: [8, 15], compactions });
+  assert.equal(ok.compactionOverhead.status, "stable");
+  assert.deepEqual(ok.degradation, {
+    behavior: true,
+    compactionOverhead: true,
+  });
+  assert.equal(ok.status, "pass");
+  const sum = summarizeDrift(rising, { compactAt: [8, 15], compactions });
+  assert.equal(sum.compactionOverhead.compactionOverheadRising, true);
+  assert.deepEqual(sum.degradation, {
+    behavior: true,
+    compactionOverhead: false,
+  });
+  assert.equal(sum.criteria.noDegradation, false);
+  assert.equal(sum.status, "violated");
 });

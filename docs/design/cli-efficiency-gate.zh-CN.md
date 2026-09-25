@@ -93,12 +93,26 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：thread/start、
 
 预算采用 owner 2026-09-24 修订后的 [evo 目标合同](../evo/target-contract.zh-CN.md) 第 6 节（数值集中在 `metrics.mjs` 的 `budgets`）：
 
-- 协议额外生成（整轮）：RAH 整轮生成数 − 原生整轮生成数 ≤ 1；不设绝对总数上限，原生完成同一工作所需的工具轮次不算协议开销。
-- 回复前额外生成：RAH 回复前生成数 − 原生整轮生成数 ≤ 0；回复切分未知即 `generationsBeforeReplyMissing`。
+- 业务路径差（负责人 2026-09-25 裁定 A，`tool-calls.mjs`）：工具调用分三类。协议 = Worker CLI 调用（`message-post`、`message-check`、
+  Task 命令、`worker help` 等其他 `worker <命令>`）与读 `MEMORY.md`；业务 = 其他可识别调用（读文件、搜索等）；`unknown` = 参数缺失无法判定，
+  RAH 侧保守计为协议并在 `notes` 标 `toolCategoryUnknown`。原生侧没有 Worker CLI，全部调用按业务计。
+  `workPathExtraGenerations` = RAH 业务调用数 − 原生业务调用数（带符号：RAH 少做业务时为负，不能借此掩盖协议生成）；
+  回复前版本 `workPathExtraGenerationsBeforeReply` 只计 `replyAt` 之前的 RAH 业务调用（`workPath.businessToolCallsBeforeReply.basis`
+  为 `reply-time`；缺时间戳时退回整轮 `whole-round`）。任一侧没有工具调用证据时不抵扣，标 `workPathUnavailable`。
+  原始差 `extraGenerations`/`extraGenerationsBeforeReply`、业务差、`workPath.toolCalls`（按类别与种类计数）全部写入证据，终端逐轮打印一行
+  （`formatComparisonRound`）。
+- 协议额外生成（整轮）：`extraProtocolGenerations` = (RAH 整轮生成数 − 原生整轮生成数) − 业务路径差 ≤ 1；不设绝对总数上限。
+- 回复前额外生成：`extraProtocolGenerationsBeforeReply` = (RAH 回复前生成数 − 原生整轮生成数) − 回复前业务路径差 ≤ 0；回复切分未知即
+  `generationsBeforeReplyMissing`。例：原生一次 `nl` 读完即答（2 次），RAH `sed` 读后又 `nl` 重读再发帖（3 次）：原始差 +1、业务差 +1、
+  协议差 0，不超预算但照常报告；RAH 读一次、多一次 `message-check` 再发帖：业务差 0、协议差 +1，超预算。
 - 固定开销（`fixedOverhead`，按组判一次）：新 session 第 1 轮第 1 次生成的输入，RAH − 原生 ≤ 3,000 token；任一侧缺数据即 `fixedOverheadMissing`。续聊轮的首请求只报告、不设预算，但仍须两侧都有（缺即 `firstInputMissing`），供分解使用。
 - 每轮残留（`perRoundResidue`，只报告）：相邻两个续聊轮之间的上下文增长（后一轮首请求 − 前一轮首请求）之差，RAH − 原生。
 - 业务差异（`workPathVariance`，只报告）：逐轮业务工具调用数（除 box-post 外）与生成数之差；第 1→2 轮上下文增长之差单列为 `round1HistoryDelta`，它同时含第 1 轮工作路径与第 1 轮协议历史，仅凭用量无法再拆，不计入固定开销，也不据此放宽固定开销上限。
-- 单轮总输入不超过 2 × (原生同轮总输入 + 3,000)。每轮附 `inputDecomposition`，把总输入差精确分解为 G_rah × 固定开销 + G_rah × `round1HistoryDelta` + G_rah × 累计残留 + (G_rah − G_原生) × 原生首请求 + 轮内增长之差（G 为整轮生成数）；超预算时 runner 打印该分解。未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
+- 单轮总输入：判定值 `input.judged` = RAH 总输入 − `input.workPath` 不超过 2 × (原生同轮总输入 + 3,000)，`input.workPath` = 业务路径差 ×
+  原生首请求（合同 §6 第 64 行：工作路径不同属业务差异，不计入平台开销；无工具证据时为 null、不抵扣）。原始总输入 `input.raw` 与
+  `inputRatio` 照常报告，`inputRatioJudged` 另报。每轮附 `inputDecomposition`，把总输入差精确分解为 G_rah × 固定开销 + G_rah × `round1HistoryDelta` + G_rah × 累计残留 + (G_rah − G_原生) × 原生首请求 + 轮内增长之差（G 为整轮生成数），其中第四项再拆为 `workPathGenerations`（业务差 × 原生首请求）与 `protocolGenerations`；超预算时 runner 打印该分解。
+  局限：业务差按工具调用数计，一次生成内并行的多个业务调用会多抵扣（种类计数写入证据供人工核对）；重读输出在后续生成中的累积仍算在 RAH 侧；
+  `round1HistoryDelta` 中的工作路径部分仍无法拆出。未缓存输入比值只作诊断报告，不计入预算失败（合同第 6 节未签此项）。
 - 额外回复耗时不超过 max(5 秒, 原生同轮耗时 × 15%)：短任务按秒计，长任务按百分比计。
 - 用量证据：RAH 组须有产品入库用量（`agent.run.usage.get`）且 `completeness` 为 `complete`；`partial`/`unavailable` 或缺失即 `usageEvidenceMissing`。两者都有时，将产品入库的生成数、输入、缓存、输出与原生轨迹推导的 RAH 用量交叉核对，不一致即 `usageEvidenceMismatch`。证据类失败判 `missing-evidence`，不能判预算内。Kimi 这类 CLI 不提供的维度记为 `unmeasured` 而不记为失败项，但总结论同样是 `missing-evidence`（`compareRounds`/`compareArm`/`gateStatus`），可测子项（耗时、送达）的结论另见 `measuredStatus`；以 wire.jsonl 替代产品用量尚无合同决定，不据此判达标。
 

@@ -327,6 +327,8 @@ export async function rahArm({
         replyAt: effective?.createdAt ?? null,
         productUsage,
       });
+      // Before-reply work-path split (metrics.mjs workPathOf, owner A).
+      round.metrics.replyAt = effective?.createdAt ?? null;
       if (round.retried) {
         round.metrics.retried = true;
         round.metrics.attempts = round.attempts;

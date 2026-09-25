@@ -226,3 +226,16 @@ test("fails closed on combinations outside the approval table", () => {
   ])
     assert.doesNotThrow(() => parseDriftEnv(env), JSON.stringify(env));
 });
+
+test("owner B: the compaction overhead rise threshold defaults to 25% and is adjustable", () => {
+  assert.equal(parseDriftEnv(base).overheadRise, 0.25);
+  assert.equal(
+    parseDriftEnv({ ...base, RAH_DRIFT_OVERHEAD_RISE: "0.4" }).overheadRise,
+    0.4,
+  );
+  for (const v of ["0", "-0.1", "abc", "", "11"])
+    assert.throws(
+      () => parseDriftEnv({ ...base, RAH_DRIFT_OVERHEAD_RISE: v }),
+      /RAH_DRIFT_OVERHEAD_RISE/,
+    );
+});

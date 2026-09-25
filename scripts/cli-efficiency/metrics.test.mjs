@@ -388,6 +388,24 @@ test("contract §6 residue and work-path variance are reported separately", asyn
     round: 1,
     businessToolCalls: { rah: 2, native: 1, delta: 1 },
     generations: { rah: 4, native: 2, delta: 2 },
+    // Owner A: one of the two extra generations is the extra business read.
+    extraGenerations: { raw: 2, workPath: 1, protocol: 1 },
+    toolCalls: {
+      rah: {
+        total: 3,
+        business: 2,
+        protocol: 1,
+        unknown: 0,
+        byKind: { other: 2, "box-post": 1 },
+      },
+      native: {
+        total: 1,
+        business: 1,
+        protocol: 0,
+        unknown: 0,
+        byKind: { other: 1 },
+      },
+    },
   });
   assert.equal(r.workPathVariance.rounds[1].businessToolCalls.delta, 0);
 });
@@ -701,4 +719,174 @@ test("seventh review P1-4: latency-only evidence is never within budget or quali
     }).status,
     "failed",
   );
+});
+
+// Owner 2026-09-25 A: extra business generations caused by a different work
+// path (e.g. re-reading a file with line numbers) are reported, never judged
+// as protocol overhead. Protocol extra = total extra − business call delta.
+const at = (s) => `2026-01-01T00:00:${String(s).padStart(2, "0")}.000Z`;
+const call = (kind, s) => ({ name: "exec", kind, at: at(s) });
+const nativeRead = {
+  ...nativeRound,
+  generations: 2,
+  generationsTotal: 2,
+  generationsBeforeReply: 2,
+  generationsAfterReply: 0,
+  firstInput: 10000,
+  input: 22000,
+  toolCalls: [call("other", 1)],
+};
+const rahWork = (toolCalls, overrides = {}) =>
+  recorded({
+    ...nativeRound,
+    generations: 3,
+    generationsTotal: 3,
+    generationsBeforeReply: 3,
+    generationsAfterReply: 0,
+    firstInput: 12000,
+    input: 45000,
+    replySeconds: 12,
+    replyAt: at(9),
+    toolCalls,
+    ...overrides,
+  });
+test("owner A: a pure business re-read is reported but is not protocol overhead", () => {
+  // sed read, nl re-read, post: raw input 55000 exceeds 2 × (22000 + 3000),
+  // the re-read generation's input (1 × native first request) is work path.
+  const r = compareRounds(
+    nativeRead,
+    rahWork([call("other", 1), call("other", 3), call("box-post", 5)], {
+      input: 55000,
+    }),
+  );
+  assert.deepEqual(r.failures, []);
+  assert.equal(r.extraGenerations, 1);
+  assert.equal(r.extraGenerationsBeforeReply, 1);
+  assert.equal(r.workPathExtraGenerations, 1);
+  assert.equal(r.workPathExtraGenerationsBeforeReply, 1);
+  assert.equal(r.extraProtocolGenerations, 0);
+  assert.equal(r.extraProtocolGenerationsBeforeReply, 0);
+  assert.deepEqual(r.workPath.businessToolCalls, {
+    rah: 2,
+    native: 1,
+    delta: 1,
+  });
+  assert.deepEqual(r.workPath.toolCalls.rah.byKind, {
+    other: 2,
+    "box-post": 1,
+  });
+  assert.equal(r.workPath.unknownCountedAsProtocol, 0);
+  assert.deepEqual(r.input, {
+    raw: 55000,
+    workPath: 10000,
+    judged: 45000,
+    budget: 50000,
+  });
+  assert.equal(r.inputRatio, 55000 / 22000);
+  assert.deepEqual(r.notes, []);
+});
+test("owner A: one more protocol call is still over budget", () => {
+  const r = compareRounds(
+    nativeRead,
+    rahWork([call("other", 1), call("box-check", 3), call("box-post", 5)]),
+  );
+  assert.equal(r.workPathExtraGenerations, 0);
+  assert.equal(r.extraProtocolGenerationsBeforeReply, 1);
+  assert.deepEqual(r.failures, ["generationsBeforeReply"]);
+  // RAH doing less business work never hides a protocol generation.
+  const lessWork = compareRounds(
+    {
+      ...nativeRead,
+      generations: 3,
+      generationsTotal: 3,
+      generationsBeforeReply: 3,
+      input: 32000,
+      toolCalls: [call("other", 1), call("other", 2)],
+    },
+    rahWork([call("other", 1), call("box-check", 3), call("box-post", 5)]),
+  );
+  assert.equal(lessWork.extraGenerationsBeforeReply, 0);
+  assert.equal(lessWork.workPathExtraGenerations, -1);
+  assert.equal(lessWork.extraProtocolGenerationsBeforeReply, 1);
+  assert.deepEqual(lessWork.failures, ["generationsBeforeReply"]);
+});
+test("owner A: an unknown tool category is conservatively counted as protocol", () => {
+  const r = compareRounds(
+    nativeRead,
+    rahWork([call("other", 1), call("unknown", 3), call("box-post", 5)]),
+  );
+  assert.equal(r.workPath.businessToolCalls.rah, 1);
+  assert.equal(r.workPath.unknownCountedAsProtocol, 1);
+  assert.equal(r.extraProtocolGenerationsBeforeReply, 1);
+  assert.deepEqual(r.failures, ["generationsBeforeReply"]);
+  assert.deepEqual(r.notes, ["toolCategoryUnknown"]);
+  // Native has no Worker CLI: its unknown calls count as business, which
+  // only shrinks the credited delta.
+  const nat = compareRounds(
+    { ...nativeRead, toolCalls: [call("unknown", 1)] },
+    rahWork([call("other", 1), call("other", 3), call("box-post", 5)]),
+  );
+  assert.equal(nat.workPath.businessToolCalls.native, 1);
+  assert.equal(nat.workPathExtraGenerations, 1);
+});
+test("owner A: without tool-call evidence nothing is credited", () => {
+  const r = compareRounds(
+    { ...nativeRead, toolCalls: undefined },
+    rahWork([call("other", 1), call("other", 3), call("box-post", 5)]),
+  );
+  assert.equal(r.workPathExtraGenerations, null);
+  assert.equal(r.extraProtocolGenerationsBeforeReply, 1);
+  assert.equal(r.input.workPath, null);
+  assert.equal(r.input.judged, r.input.raw);
+  assert.deepEqual(r.notes, ["workPathUnavailable"]);
+  assert.deepEqual(r.failures, ["generationsBeforeReply"]);
+});
+test("owner A: a business call after the reply does not credit before-reply", () => {
+  const r = compareRounds(
+    nativeRead,
+    rahWork([call("other", 1), call("box-post", 5), call("other", 12)], {
+      generationsBeforeReply: 2,
+      generationsAfterReply: 1,
+    }),
+  );
+  assert.equal(r.workPathExtraGenerations, 1);
+  assert.equal(r.workPathExtraGenerationsBeforeReply, 0);
+  assert.equal(r.extraProtocolGenerationsBeforeReply, 0);
+  assert.equal(r.extraProtocolGenerations, 0);
+});
+test("owner A: the terminal line reports raw, work-path and protocol counts", async () => {
+  const { formatComparisonRound } = await import("./metrics.mjs");
+  const r = compareRounds(
+    nativeRead,
+    rahWork([call("other", 1), call("other", 3), call("box-post", 5)], {
+      input: 55000,
+    }),
+  );
+  const line = formatComparisonRound("role", 1, r);
+  for (const part of [
+    "role round 1",
+    "extra raw +1 (before-reply +1)",
+    "work-path +1 (before-reply +1)",
+    "protocol +0 (before-reply +0)",
+    "business calls rah 2 / native 1",
+    '"box-post":1',
+    "input raw 55000 work-path 10000 judged 45000 budget 50000",
+  ])
+    assert.ok(line.includes(part), `${part} in ${line}`);
+});
+test("owner A: the input decomposition splits extra generations into work path and protocol", async () => {
+  const { compareArm } = await import("./metrics.mjs");
+  const r = compareArm(
+    [nativeRead],
+    [rahWork([call("other", 1), call("other", 3), call("box-post", 5)])],
+  );
+  const d = r.rounds[0].inputDecomposition;
+  assert.equal(d.extraGenerations, 10000);
+  assert.equal(d.workPathGenerations, 10000);
+  assert.equal(d.protocolGenerations, 0);
+  assert.deepEqual(r.workPathVariance.rounds[0].extraGenerations, {
+    raw: 1,
+    workPath: 1,
+    protocol: 0,
+  });
 });

@@ -24,7 +24,15 @@ const PROVIDERS = {
 };
 // The explicit "no effort" value (an effortless Claude binding only).
 export const DRIFT_NO_EFFORT = NO_EFFORT;
-export const DRIFT_DEFAULTS = { rounds: 20, compactAt: "8,15", mode: "cold" };
+export const DRIFT_DEFAULTS = {
+  rounds: 20,
+  compactAt: "8,15",
+  mode: "cold",
+  // Owner 2026-09-25 B: a post-compaction window whose mean input or protocol
+  // calls exceed the first pre-compaction window by more than this ratio
+  // flags compactionOverheadRising (RAH_DRIFT_OVERHEAD_RISE).
+  overheadRise: 0.25,
+};
 
 export function parseDriftEnv(env) {
   const fail = (why) => {
@@ -81,6 +89,16 @@ export function parseDriftEnv(env) {
     if (i > 0 && n <= compactAt[i - 1])
       fail("RAH_DRIFT_COMPACT_AT must be strictly increasing");
   }
+  const riseText = env.RAH_DRIFT_OVERHEAD_RISE;
+  const overheadRise =
+    riseText === undefined ? DRIFT_DEFAULTS.overheadRise : Number(riseText);
+  if (
+    riseText !== undefined &&
+    (!/^\d+(\.\d+)?$/u.test(riseText) ||
+      !(overheadRise > 0) ||
+      overheadRise > 10)
+  )
+    fail("RAH_DRIFT_OVERHEAD_RISE must be a number in (0, 10]");
   return {
     provider,
     catalogKind,
@@ -91,5 +109,6 @@ export function parseDriftEnv(env) {
     rounds,
     // Compaction N is forced after round N completes, before round N+1.
     compactAt,
+    overheadRise,
   };
 }

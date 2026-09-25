@@ -3,10 +3,17 @@
 // Tasks, product usage) and these functions judge it. Model prose is never a
 // source of truth; the format check reads the committed Room message body.
 import { runSucceeded, replyTurnHandle } from "./warm.mjs";
+import {
+  countToolCalls,
+  toolCallCategory,
+  workerCallKind,
+} from "./tool-calls.mjs";
 
 export const DRIFT_CRITERIA = {
   finalMinRate: 0.95,
   degradationWindow: 3,
+  // Default of RAH_DRIFT_OVERHEAD_RISE (drift-config.mjs).
+  compactionOverheadRise: 0.25,
 };
 
 // Per-round failures that are statistics, not hard gate failures. Format is
@@ -91,14 +98,9 @@ export function codexToolCalls(events) {
       ["function_call", "custom_tool_call"].includes(e.payload?.type),
     )
     .map((e) => {
-      const args = String(e.payload.arguments ?? e.payload.input ?? "");
-      const kind = /message-post/.test(args)
-        ? "box-post"
-        : /message-check/.test(args)
-          ? "box-check"
-          : /task-(create|claim|update)|tasks?\s+create/.test(args)
-            ? "task-command"
-            : "other";
+      const raw = e.payload.arguments ?? e.payload.input;
+      const args = typeof raw === "string" ? raw : "";
+      const kind = workerCallKind(raw);
       return {
         kind,
         ...(kind === "box-post" || kind === "box-check"
@@ -251,6 +253,12 @@ export function evaluateRound(spec, evidence, context) {
         completeness: u.completeness ?? null,
       }
     : null;
+  // Owner B: Worker (protocol) calls per round; an unknown category counts
+  // as protocol. null when the round's tool calls were not collected.
+  checks.toolCalls = countToolCalls(evidence.toolCalls);
+  checks.protocolCalls = checks.toolCalls
+    ? checks.toolCalls.protocol + checks.toolCalls.unknown
+    : null;
   checks.compactionsInRound = evidence.compactionsInRound ?? null;
   // Fail closed: absent post-hoc model evidence is never treated as verified.
   checks.modelEvidence = evidence.modelEvidence ?? null;
@@ -329,13 +337,109 @@ export function summarizeRounds(evaluated, extras = []) {
   };
 }
 
+const exactMean = (values) => {
+  const v = values.filter((x) => typeof x === "number" && Number.isFinite(x));
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+};
+const round3 = (x) => (x === null ? null : Math.round(x * 1000) / 1000);
+const ratioOf = (value, base) =>
+  value === null || base === null || base === 0 ? null : round3(value / base);
+function overheadWindow(evaluated, fromRound, toRound) {
+  const rounds = evaluated.filter(
+    (e) => e.round >= fromRound && e.round <= toRound,
+  );
+  const pick = (f) => exactMean(rounds.map(f));
+  return {
+    fromRound,
+    toRound,
+    rounds: rounds.length,
+    meanInput: pick((e) => e.checks.usage?.input),
+    meanUncached: pick((e) => e.checks.usage?.uncached),
+    meanGenerations: pick((e) => e.checks.usage?.generations),
+    meanProtocolCalls: pick((e) => e.checks.protocolCalls),
+  };
+}
+const OVERHEAD_KEYS = [
+  ["input", "meanInput"],
+  ["uncached", "meanUncached"],
+  ["generations", "meanGenerations"],
+  ["protocolCalls", "meanProtocolCalls"],
+];
+const ratios = (w, base) =>
+  Object.fromEntries(
+    OVERHEAD_KEYS.map(([k, m]) => [k, ratioOf(w[m], base[m])]),
+  );
+/**
+ * Owner 2026-09-25 B: platform overhead after repeated compactions. The
+ * baseline is the first pre-compaction window (rounds 1..first compaction);
+ * each compaction opens a window up to the next compaction (or the last
+ * round). Per window: mean input, uncached input, generations and protocol
+ * (Worker) calls per round, the ratio to the baseline and the step change to
+ * the previous window. A window whose mean input or protocol calls exceed
+ * the baseline by more than `riseRatio` is rising (uncached input and
+ * generations are reported only). Protocol calls from a zero baseline to a
+ * positive mean also rise. Missing usage yields `insufficient-data`, never a
+ * trend.
+ */
+export function summarizeCompactionOverhead(
+  evaluated,
+  compactAt,
+  { riseRatio = DRIFT_CRITERIA.compactionOverheadRise } = {},
+) {
+  if (!compactAt.length)
+    return {
+      status: "no-compaction",
+      riseThreshold: riseRatio,
+      baseline: null,
+      windows: [],
+      compactionOverheadRising: false,
+    };
+  const last = Math.max(0, ...evaluated.map((e) => e.round));
+  const baseline = overheadWindow(evaluated, 1, compactAt[0]);
+  let previous = baseline;
+  let insufficient = false;
+  const windows = compactAt.map((c, i) => {
+    const w = overheadWindow(evaluated, c + 1, compactAt[i + 1] ?? last);
+    const ratio = ratios(w, baseline);
+    const step = ratios(w, previous);
+    previous = w;
+    const reasons = [];
+    if (ratio.input !== null && ratio.input > 1 + riseRatio)
+      reasons.push("input");
+    if (
+      (ratio.protocolCalls !== null && ratio.protocolCalls > 1 + riseRatio) ||
+      (baseline.meanProtocolCalls === 0 && w.meanProtocolCalls > 0)
+    )
+      reasons.push("protocolCalls");
+    if (ratio.input === null) insufficient = true;
+    const { fromRound, toRound, ...means } = w;
+    return {
+      afterCompaction: c,
+      range: { fromRound, toRound },
+      ...means,
+      ratio,
+      step,
+      rising: reasons.length > 0,
+      reasons,
+    };
+  });
+  const rising = windows.some((w) => w.rising);
+  return {
+    status: rising ? "rising" : insufficient ? "insufficient-data" : "stable",
+    riseThreshold: riseRatio,
+    baseline,
+    windows,
+    compactionOverheadRising: rising,
+  };
+}
+
 // compactions: [{afterRound, forced, observed}]. Rates compare the three
 // rounds after each compaction with every earlier round; any absolute
 // failure (delivery, target, Task, silence, quarantine) inside the window is
 // degradation too.
 export function summarizeDrift(
   evaluated,
-  { compactAt, compactions = [], extras = [] },
+  { compactAt, compactions = [], extras = [], overheadRise },
 ) {
   const totals = summarizeRounds(evaluated, extras);
   const w = DRIFT_CRITERIA.degradationWindow;
@@ -369,6 +473,17 @@ export function summarizeDrift(
       reasons,
     };
   });
+  const compactionOverhead = summarizeCompactionOverhead(
+    evaluated,
+    compactAt,
+    overheadRise === undefined ? {} : { riseRatio: overheadRise },
+  );
+  // noDegradation has two independent sub-items: behavior after each
+  // compaction (windows) and platform overhead after compactions (owner B).
+  const degradation = {
+    behavior: windows.every((x) => !x.degraded),
+    compactionOverhead: !compactionOverhead.compactionOverheadRising,
+  };
   const criteria = {
     delivery100: totals.delivered === totals.expectedReplies,
     wrongTarget0: totals.wrongTarget === 0,
@@ -377,7 +492,7 @@ export function summarizeDrift(
     final95:
       totals.finalRate !== null &&
       totals.finalRate >= DRIFT_CRITERIA.finalMinRate,
-    noDegradation: windows.every((x) => !x.degraded),
+    noDegradation: degradation.behavior && degradation.compactionOverhead,
     noQuarantine: totals.quarantined === 0,
     ack100: totals.ackIncomplete === 0,
     noRetry: totals.retries === 0,
@@ -406,7 +521,16 @@ export function summarizeDrift(
     : Object.values(criteria).every(Boolean)
       ? "pass"
       : "violated";
-  return { totals, windows, criteria, hardFailures, evidenceGaps, status };
+  return {
+    totals,
+    windows,
+    compactionOverhead,
+    degradation,
+    criteria,
+    hardFailures,
+    evidenceGaps,
+    status,
+  };
 }
 
 export function exitCodeFor(status) {
@@ -439,6 +563,7 @@ export function formatDriftTable(evaluated, extras = []) {
     "ack",
     "turn",
     "gen",
+    "proto",
     "input",
     "uncached",
     "reply_s",
@@ -461,6 +586,7 @@ export function formatDriftTable(evaluated, extras = []) {
       cell(c.ackCompleted && !c.quarantined && !c.retries),
       cell(c.turnHandle),
       cell(c.usage?.generations),
+      cell(c.protocolCalls),
       cell(c.usage?.input),
       cell(c.usage?.uncached),
       cell(x.firstReplySeconds ?? x.settledSeconds),

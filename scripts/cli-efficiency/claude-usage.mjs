@@ -8,22 +8,13 @@
 // independent cross-check (one line per content block, usage repeated per
 // line of a message id, so it is deduplicated by message id).
 import { ClaudeStreamUsageTracker } from "../../packages/agent-host/src/provider-usage.js";
-
-const WORKER_POST = /message-post/;
-const WORKER_CHECK = /message-check/;
-// Same patterns as drift-checks.mjs `codexToolCalls`.
-const WORKER_TASK = /task-(create|claim|update)|tasks?\s+create/;
+import { workerCallKind } from "./tool-calls.mjs";
 
 // One tool call → Worker call kind (boolean handle flag only; the handle
 // itself is never recorded). Mirrors common.mjs `measure` for Codex.
 export function workerCall(name, args, at) {
-  const kind = WORKER_POST.test(args)
-    ? "box-post"
-    : WORKER_CHECK.test(args)
-      ? "box-check"
-      : WORKER_TASK.test(args)
-        ? "task-command"
-        : "other";
+  // Absent arguments (undefined) are an unclassifiable, `unknown` call.
+  const kind = workerCallKind(args);
   return {
     at,
     name,
@@ -35,13 +26,15 @@ export function workerCall(name, args, at) {
   };
 }
 
+// Tool input → argument text; absent input stays undefined (unknown kind).
+export const jsonArgs = (input) =>
+  input === undefined || input === null ? undefined : JSON.stringify(input);
+
 // tool_use content blocks → Worker call kinds.
 export function claudeToolCalls(content, at) {
   return (Array.isArray(content) ? content : [])
     .filter((block) => block?.type === "tool_use")
-    .map((block) =>
-      workerCall(block.name, JSON.stringify(block.input ?? {}), at),
-    );
+    .map((block) => workerCall(block.name, jsonArgs(block.input), at));
 }
 
 const textOf = (content) =>

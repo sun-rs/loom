@@ -117,6 +117,7 @@ try {
     compactAt: config.compactAt,
     compactions: result.compactions,
     extras: result.rounds,
+    overheadRise: config.overheadRise,
   });
   console.log(formatDriftTable(evaluated, result.rounds));
   for (const c of result.compactions)
@@ -132,6 +133,25 @@ try {
         ` input ${w.before.meanInput}→${w.after.meanInput}` +
         (w.degraded ? ` DEGRADED(${w.reasons.join(",")})` : ""),
     );
+  // Owner 2026-09-25 B: overhead trend after repeated compactions.
+  const overhead = result.summary.compactionOverhead;
+  console.log(
+    `compaction overhead ${overhead.status} (threshold +${overhead.riseThreshold * 100}%)` +
+      (overhead.baseline
+        ? ` baseline r${overhead.baseline.fromRound}-${overhead.baseline.toRound}` +
+          ` input ${overhead.baseline.meanInput} protocol ${overhead.baseline.meanProtocolCalls}`
+        : ""),
+  );
+  for (const w of overhead.windows)
+    console.log(
+      `  after compaction ${w.afterCompaction} r${w.range.fromRound}-${w.range.toRound}:` +
+        ` input ${w.meanInput} (x${w.ratio.input}, step x${w.step.input})` +
+        ` uncached ${w.meanUncached} (x${w.ratio.uncached})` +
+        ` gen ${w.meanGenerations} (x${w.ratio.generations})` +
+        ` protocol ${w.meanProtocolCalls} (x${w.ratio.protocolCalls}, step x${w.step.protocolCalls})` +
+        (w.rising ? ` RISING(${w.reasons.join(",")})` : ""),
+    );
+  console.log("degradation " + JSON.stringify(result.summary.degradation));
   console.log("criteria " + JSON.stringify(result.summary.criteria));
   if (result.summary.evidenceGaps.length)
     console.log("evidence gaps " + result.summary.evidenceGaps.join(", "));

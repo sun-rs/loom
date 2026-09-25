@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { countToolCalls } from "./tool-calls.mjs";
 // Budgets of docs/evo/target-contract.zh-CN.md §6 as revised by the owner on
 // 2026-09-24 (the earlier "≤2 before reply, total input ≤2×" was unreachable).
 // Generation limits are relative to the native arm's whole-turn count, so
@@ -281,10 +282,42 @@ export function gateStatus({ arms, comparisons }) {
   return { status, measuredStatus };
 }
 const diff = (a, b) => (finite(a) && finite(b) ? a - b : null);
-const businessToolCalls = (m) =>
-  Array.isArray(m.toolCalls)
-    ? m.toolCalls.filter((c) => c.kind !== "box-post").length
-    : null;
+// Owner 2026-09-25 A: generations a different work path costs (re-reading a
+// file, another read command) are business, reported but not judged as
+// platform overhead. Business calls: RAH `other` calls (tool-calls.mjs; an
+// unknown category counts as protocol); native has no Worker CLI, so every
+// native call is business. Delta = RAH − native, signed: RAH doing less
+// business work never hides a protocol generation. Before-reply counts only
+// RAH business calls at or before the effective reply (`replyAt`), when every
+// business call carries a timestamp; otherwise the whole round.
+function workPathOf(native, rah) {
+  const rahCounts = countToolCalls(rah.toolCalls);
+  const nativeCounts = countToolCalls(native.toolCalls);
+  const rahBusiness = rahCounts?.business ?? null;
+  const nativeBusiness = nativeCounts?.total ?? null;
+  const delta = diff(rahBusiness, nativeBusiness);
+  const cut = Date.parse(rah.replyAt ?? "");
+  const business = (rah.toolCalls ?? []).filter((c) => c?.kind === "other");
+  const timed =
+    Number.isFinite(cut) && business.every((c) => finite(Date.parse(c.at)));
+  const rahBefore = timed
+    ? business.filter((c) => Date.parse(c.at) <= cut).length
+    : rahBusiness;
+  const deltaBefore = diff(rahBefore, nativeBusiness);
+  return {
+    businessToolCalls: { rah: rahBusiness, native: nativeBusiness, delta },
+    businessToolCallsBeforeReply: {
+      rah: rahBefore,
+      native: nativeBusiness,
+      delta: deltaBefore,
+      basis: timed ? "reply-time" : "whole-round",
+    },
+    toolCalls: { rah: rahCounts, native: nativeCounts },
+    unknownCountedAsProtocol: rahCounts?.unknown ?? null,
+    extraGenerations: delta,
+    extraGenerationsBeforeReply: deltaBefore,
+  };
+}
 // Context growth of round i = first request of i − first request of i−1.
 const growth = (rounds, i) =>
   diff(rounds[i]?.firstInput, rounds[i - 1]?.firstInput);
@@ -348,16 +381,21 @@ export function compareArm(nativeRounds, rahRounds, options = {}) {
     const rah = rahRounds[i];
     const gRah = generationCounts(rah).total;
     const gNat = generationCounts(nat).total;
-    const nb = businessToolCalls(nat);
-    const rb = businessToolCalls(rah);
+    const compared = compareRounds(nat, rah, options);
     workRounds.push({
       round: i + 1,
-      businessToolCalls: { rah: rb, native: nb, delta: diff(rb, nb) },
+      businessToolCalls: compared.workPath.businessToolCalls,
       generations: {
         rah: gRah ?? null,
         native: gNat ?? null,
         delta: diff(gRah, gNat),
       },
+      extraGenerations: {
+        raw: compared.extraGenerations,
+        workPath: compared.workPathExtraGenerations,
+        protocol: compared.extraProtocolGenerations,
+      },
+      toolCalls: compared.workPath.toolCalls,
     });
     // Residue accumulates: round i's context carries every earlier residue.
     if (i >= 2) {
@@ -378,6 +416,7 @@ export function compareArm(nativeRounds, rahRounds, options = {}) {
       rah.input,
       rah.firstInput,
     ];
+    const w = compared.workPathExtraGenerations;
     const inputDecomposition = parts.every(finite)
       ? {
           rah: rah.input,
@@ -389,13 +428,18 @@ export function compareArm(nativeRounds, rahRounds, options = {}) {
           round1History: gRah * h,
           residue: gRah * r,
           extraGenerations: (gRah - gNat) * nat.firstInput,
+          // Split of extraGenerations (owner A): work-path generations are
+          // business, reported; null when tool calls were not collected.
+          workPathGenerations: finite(w) ? w * nat.firstInput : null,
+          protocolGenerations:
+            (gRah - gNat - (finite(w) ? w : 0)) * nat.firstInput,
           intraRound:
             rah.input -
             gRah * rah.firstInput -
             (nat.input - gNat * nat.firstInput),
         }
       : null;
-    rounds.push({ ...compareRounds(nat, rah, options), inputDecomposition });
+    rounds.push({ ...compared, inputDecomposition });
   }
   const all = [...failures, ...rounds.flatMap((x) => x.failures)];
   const measuredStatus = statusOf(all);
@@ -419,14 +463,29 @@ export function compareRounds(native, rah, options = {}) {
   const tokens = !unmeasured.includes("tokens");
   const counts = !unmeasured.includes("generations");
   const failures = [];
+  const notes = [];
+  const workPath = workPathOf(native, rah);
+  if (workPath.extraGenerations === null) notes.push("workPathUnavailable");
+  if (workPath.unknownCountedAsProtocol > 0) notes.push("toolCategoryUnknown");
+  // Contract §6 line 64: input a different work path costs is business. Its
+  // estimate is the work-path generations × native first request; the rest
+  // (the re-read's tool output in later generations) stays on RAH.
+  const workPathInput =
+    finite(workPath.extraGenerations) && finite(native.firstInput)
+      ? workPath.extraGenerations * native.firstInput
+      : null;
+  const input = {
+    raw: finite(rah.input) ? rah.input : null,
+    workPath: workPathInput,
+    judged: finite(rah.input) ? rah.input - (workPathInput ?? 0) : null,
+    budget: finite(native.input)
+      ? budgets.inputRatio * (native.input + budgets.inputAllowanceTokens)
+      : null,
+  };
   if (tokens) {
-    if (!finite(native.input) || !finite(rah.input))
+    if (input.judged === null || input.budget === null)
       failures.push("inputMissing");
-    else if (
-      rah.input >
-      budgets.inputRatio * (native.input + budgets.inputAllowanceTokens)
-    )
-      failures.push("input");
+    else if (input.judged > input.budget) failures.push("input");
   }
   // A follow-up's first request is reported (and decomposed by compareArm),
   // not budgeted; the decomposition still needs it on both sides.
@@ -437,7 +496,9 @@ export function compareRounds(native, rah, options = {}) {
     rah: generationCounts(rah),
   };
   const nativeTotal = generations.native.total;
-  const extraProtocolGenerations =
+  // Raw extras are reported; the budgets judge the protocol extras (raw −
+  // work-path business delta; no credit without tool-call evidence).
+  const extraGenerations =
     finite(nativeTotal) && finite(generations.rah.total)
       ? generations.rah.total - nativeTotal
       : null;
@@ -445,14 +506,25 @@ export function compareRounds(native, rah, options = {}) {
     finite(nativeTotal) && finite(generations.rah.beforeReply)
       ? generations.rah.beforeReply - nativeTotal
       : null;
+  const credit = (v) => (finite(v) ? v : 0);
+  const extraProtocolGenerations =
+    extraGenerations === null
+      ? null
+      : extraGenerations - credit(workPath.extraGenerations);
+  const extraProtocolGenerationsBeforeReply =
+    extraGenerationsBeforeReply === null
+      ? null
+      : extraGenerationsBeforeReply -
+        credit(workPath.extraGenerationsBeforeReply);
   if (counts) {
     if (extraProtocolGenerations === null) failures.push("generationsMissing");
     else if (extraProtocolGenerations > budgets.maxExtraGenerations)
       failures.push("generations");
-    if (extraGenerationsBeforeReply === null)
+    if (extraProtocolGenerationsBeforeReply === null)
       failures.push("generationsBeforeReplyMissing");
     else if (
-      extraGenerationsBeforeReply > budgets.maxExtraGenerationsBeforeReply
+      extraProtocolGenerationsBeforeReply >
+      budgets.maxExtraGenerationsBeforeReply
     )
       failures.push("generationsBeforeReply");
   }
@@ -481,12 +553,21 @@ export function compareRounds(native, rah, options = {}) {
     measuredStatus,
     failures,
     unmeasured,
+    notes,
     generations,
-    extraProtocolGenerations,
+    extraGenerations,
     extraGenerationsBeforeReply,
+    workPathExtraGenerations: workPath.extraGenerations,
+    workPathExtraGenerationsBeforeReply: workPath.extraGenerationsBeforeReply,
+    extraProtocolGenerations,
+    extraProtocolGenerationsBeforeReply,
+    workPath,
+    input,
     usageEvidence: evidence,
     finalInterrupt: finalInterruptOf(rah),
     inputRatio: rah.input / native.input,
+    inputRatioJudged:
+      input.judged === null ? null : input.judged / native.input,
     uncachedRatio: native.uncached ? rah.uncached / native.uncached : null,
     replyRatio: rah.replySeconds / native.replySeconds,
   };
@@ -497,5 +578,28 @@ export function isEffectiveAnswer(body) {
     typeof body === "string" &&
     /^审查结论[:：]/u.test(body.trim()) &&
     body.trim().length >= 80
+  );
+}
+const signed = (v) => (finite(v) ? (v >= 0 ? `+${v}` : String(v)) : "?");
+// One terminal line per compared round: raw, work-path and protocol extras,
+// business call counts by kind, and raw/judged input (owner A: everything is
+// reported, only the protocol values are judged).
+export function formatComparisonRound(kind, round, r) {
+  const w = r.workPath ?? {};
+  const b = w.businessToolCalls ?? {};
+  return (
+    `${kind} round ${round}: extra raw ${signed(r.extraGenerations)} ` +
+    `(before-reply ${signed(r.extraGenerationsBeforeReply)}), ` +
+    `work-path ${signed(r.workPathExtraGenerations)} ` +
+    `(before-reply ${signed(r.workPathExtraGenerationsBeforeReply)}), ` +
+    `protocol ${signed(r.extraProtocolGenerations)} ` +
+    `(before-reply ${signed(r.extraProtocolGenerationsBeforeReply)}); ` +
+    `business calls rah ${b.rah ?? "?"} / native ${b.native ?? "?"}; ` +
+    `kinds rah ${JSON.stringify(w.toolCalls?.rah?.byKind ?? null)} ` +
+    `native ${JSON.stringify(w.toolCalls?.native?.byKind ?? null)}; ` +
+    `input raw ${r.input?.raw ?? "?"} work-path ${r.input?.workPath ?? "-"} ` +
+    `judged ${r.input?.judged ?? "?"} budget ${r.input?.budget ?? "?"}` +
+    ((r.notes ?? []).length ? `; notes ${r.notes.join(",")}` : "") +
+    ((r.failures ?? []).length ? `; FAIL ${r.failures.join(",")}` : "")
   );
 }

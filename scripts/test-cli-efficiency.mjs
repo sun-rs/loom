@@ -17,7 +17,12 @@ import {
 import { parseEfficiencyEnv } from "./cli-efficiency/efficiency-config.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
-import { budgets, compareArm, gateStatus } from "./cli-efficiency/metrics.mjs";
+import {
+  budgets,
+  compareArm,
+  formatComparisonRound,
+  gateStatus,
+} from "./cli-efficiency/metrics.mjs";
 import { compareWarmCold } from "./cli-efficiency/warm.mjs";
 assert.ok(
   process.argv.includes("--paid"),
@@ -210,6 +215,11 @@ try {
         JSON.stringify(result.warmVsCold.coldResumeCostAvoided),
     );
   }
+  // Owner 2026-09-25 A: raw, work-path and protocol extras and raw/judged
+  // input for every round; only the protocol values are judged.
+  for (const [kind, c] of Object.entries(result.comparisons))
+    for (const [i, r] of (c.rounds ?? []).entries())
+      console.log(formatComparisonRound(kind, i + 1, r));
   for (const [kind, c] of Object.entries(result.comparisons))
     for (const [i, r] of (c.rounds ?? []).entries())
       if (r.failures.includes("input"))

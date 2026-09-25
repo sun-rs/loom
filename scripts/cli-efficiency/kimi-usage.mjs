@@ -9,7 +9,7 @@
 // inputCacheCreation}`; each request is logged as `llm.request` with its
 // `modelAlias` and `thinkingEffort`. The same wire serves both arms (the
 // product's Kimi ACP driver records no usage), so both are counted alike.
-import { workerCall } from "./claude-usage.mjs";
+import { jsonArgs, workerCall } from "./claude-usage.mjs";
 
 export const KIMI_THINKING_ENV = "KIMI_MODEL_THINKING_EFFORT";
 
@@ -130,7 +130,7 @@ export function kimiWireRound(text, { from, to } = {}) {
     if (r.type !== "context.append_loop_event") continue;
     const e = r.event ?? {};
     if (e.type === "tool.call")
-      toolCalls.push(workerCall(e.name, JSON.stringify(e.args ?? {}), at));
+      toolCalls.push(workerCall(e.name, jsonArgs(e.args), at));
     if (e.type !== "step.end" || !e.usage || typeof e.messageId !== "string")
       continue;
     if (byId.has(e.messageId)) continue;

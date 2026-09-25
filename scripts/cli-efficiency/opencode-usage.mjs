@@ -11,7 +11,7 @@
 import { existsSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { openCodeStepFinishUsage } from "../../packages/agent-host/src/provider-usage.js";
-import { workerCall } from "./claude-usage.mjs";
+import { jsonArgs, workerCall } from "./claude-usage.mjs";
 import { openCodeDatabasePath } from "./drift-opencode-guard.mjs";
 
 const NATIVE_TITLE = "Loom efficiency gate native";
@@ -151,7 +151,7 @@ export function parseOpenCodeRunRound(entries) {
       out.toolCalls.push(
         workerCall(
           part.tool,
-          JSON.stringify(part.state?.input ?? {}),
+          jsonArgs(part.state?.input),
           new Date(when).toISOString(),
         ),
       );
@@ -185,7 +185,7 @@ export function readOpenCodeToolCalls(
       .map(({ at, part }) =>
         workerCall(
           part.tool,
-          JSON.stringify(part.state?.input ?? {}),
+          jsonArgs(part.state?.input),
           new Date(at).toISOString(),
         ),
       );

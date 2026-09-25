@@ -29,14 +29,15 @@ RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:
 `kimi-code/k3-256k/low`、Claude `haiku`/无 effort、OpenCode `deepseek/deepseek-flash/low`）。OpenCode 目录已不再发布
 `deepseek/deepseek-v4-flash`，该行仍在表内但会在目录核对处（付费调用前）失败。
 
-| 变量                   | 说明                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------- |
-| `RAH_DRIFT_PROVIDER`   | `codex`、`claude`、`kimi` 或 `opencode`                                         |
-| `RAH_DRIFT_MODEL`      | 目录 binding id：裸模型 id 或 `local:<kind>:<modelId>`；须在批准表与 CLI 目录中 |
-| `RAH_DRIFT_EFFORT`     | 明确推理档位（不接受 `default`）；`none` 只许且必须用于 Claude `haiku`          |
-| `RAH_DRIFT_MODE`       | `cold`（每轮进程，默认）或 `warm`（Codex/Claude/OpenCode 热进程）               |
-| `RAH_DRIFT_ROUNDS`     | 默认 20（6..60）                                                                |
-| `RAH_DRIFT_COMPACT_AT` | 默认 `8,15`：第 N 轮结束后、第 N+1 轮前强制压缩；空串表示不压缩                 |
+| 变量                      | 说明                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| `RAH_DRIFT_PROVIDER`      | `codex`、`claude`、`kimi` 或 `opencode`                                         |
+| `RAH_DRIFT_MODEL`         | 目录 binding id：裸模型 id 或 `local:<kind>:<modelId>`；须在批准表与 CLI 目录中 |
+| `RAH_DRIFT_EFFORT`        | 明确推理档位（不接受 `default`）；`none` 只许且必须用于 Claude `haiku`          |
+| `RAH_DRIFT_MODE`          | `cold`（每轮进程，默认）或 `warm`（Codex/Claude/OpenCode 热进程）               |
+| `RAH_DRIFT_ROUNDS`        | 默认 20（6..60）                                                                |
+| `RAH_DRIFT_COMPACT_AT`    | 默认 `8,15`：第 N 轮结束后、第 N+1 轮前强制压缩；空串表示不压缩                 |
+| `RAH_DRIFT_OVERHEAD_RISE` | 压缩后开销上升阈值，默认 `0.25`（+25%），取值 (0, 10]                           |
 
 缺参数、未知 provider、表外组合、Kimi 用 warm、压缩轮越界或乱序、Haiku 带 effort 或非 Haiku 用 `none`、OpenCode
 模型不是 `provider/model` 均在启动前失败（binding 与 effort 解析与效率 Gate 共用 `efficiency-config.mjs`）。`none` 时目录探针还须确认该 binding 不发布任何 effort 档位。免费单测：
@@ -144,11 +145,26 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
 - 本轮无新 Task；格式检查读已提交消息正文（前缀、码点长度、必含词）。
 - ACK：Activation 全部 completed，无 quarantined、无重试或多 Run；Run 成功。
 - 生成数、输入、未缓存输入、首条回复与结算耗时、session 不变、压缩标记。
+- 协议调用数 `checks.protocolCalls`：Worker CLI 调用与读 `MEMORY.md`（分类见 `tool-calls.mjs`，与效率门禁共用），参数缺失无法判定的调用
+  保守计入；`checks.toolCalls` 另记按类别与种类计数；未采集工具调用（Kimi、OpenCode）为 null，不记为 0。
+
+## 压缩后开销趋势（负责人 2026-09-25 裁定 B）
+
+担心多次压缩后平台开销（重注入的规则、协议调用）逐次累积。`summarizeCompactionOverhead` 以首次压缩前窗口（第 1 轮至首个压缩轮）为基线，
+每次压缩后到下一次压缩（或末轮）为一个窗口，对每个窗口报告每轮平均输入、未缓存输入、生成数、协议调用数，相对基线的比值 `ratio` 与相对
+上一窗口的逐次变化 `step`。任一压缩后窗口的平均输入或平均协议调用相对基线升高超过阈值（默认 +25%，`RAH_DRIFT_OVERHEAD_RISE` 可调；
+恰好等于阈值不算）、或协议调用从基线 0 变为正数，即标 `compactionOverheadRising`；未缓存输入与生成数只报告。结果在
+`summary.compactionOverhead`（`status`: `stable`/`rising`/`insufficient-data`/`no-compaction`），并作为 `noDegradation` 的独立子项：
+`summary.degradation = {behavior, compactionOverhead}`，任一为 false 即 `noDegradation` 为 false、gate `violated`。缺用量的窗口为
+`insufficient-data`：不判上升，也不证明平稳。终端逐窗口打印均值、比值与逐次变化。
+局限：基线窗口含全部题型，压缩后窗口题型构成不同（压缩后三轮固定为 `qa`、`other`、`thread-recall`），窗口长度也不同；上下文随轮数自然增长，
+比值只反映窗口均值，需结合逐轮表人工判读。尚无付费样本。
 
 ## 通过标准（违规退出码 2，证据缺失/运行失败退出码 1）
 
 需回复处送达 100%；错目标 0；违规 Task 0；沉默违规 0；`--final` ≥95% 的最终帖；无 quarantined；
-每次压缩后三轮不退化：格式、`--final`、`--turn` 比率不低于压缩前全部轮次，且窗口内无任何绝对违规。
+每次压缩后三轮不退化：格式、`--final`、`--turn` 比率不低于压缩前全部轮次，且窗口内无任何绝对违规；压缩后开销不上升（见上节，
+`noDegradation` 的独立子项）。
 全部通过也只是指标通过，仍须人工看回复质量。结果写入打印的隔离目录 `result.json`（无令牌、句柄；
 回复正文截断 400 字）并打印逐轮表格与压缩前后摘要。证据记录被测代码 `codeCommit`（HEAD）与 `workingTree`
 （`git status --porcelain` 含未跟踪文件的摘要与 `git diff HEAD` 摘要），题目源文件快照另记 `sourceRef`；同目录另写
