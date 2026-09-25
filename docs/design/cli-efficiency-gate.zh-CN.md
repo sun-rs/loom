@@ -102,6 +102,8 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：thread/start、
 - 额外回复耗时不超过 max(5 秒, 原生同轮耗时 × 15%)：短任务按秒计，长任务按百分比计。
 - 用量证据：RAH 组须有产品入库用量（`agent.run.usage.get`）且 `completeness` 为 `complete`；`partial`/`unavailable` 或缺失即 `usageEvidenceMissing`。两者都有时，将产品入库的生成数、输入、缓存、输出与原生轨迹推导的 RAH 用量交叉核对，不一致即 `usageEvidenceMismatch`。证据类失败判 `missing-evidence`，不能判预算内。Kimi 这类 CLI 不提供的维度记为 `unmeasured` 而不记为失败项，但总结论同样是 `missing-evidence`（`compareRounds`/`compareArm`/`gateStatus`），可测子项（耗时、送达）的结论另见 `measuredStatus`；以 wire.jsonl 替代产品用量尚无合同决定，不据此判达标。
 
+- Kernel 重试轮（`retried`，`round-retry.mjs`）：同一问题出现多于一个 RunAttempt 时，只有全部尝试结束后恰好一条回复、目标正确、为 `final` 回复、ACK 完成且无隔离，才记为软项 `retried`：用量与生成数按该轮全部尝试求和（Codex 轨迹按每个尝试一个 turn 核对），该轮固定记失败项 `retried`（超预算，不因汇总后恰好在预算内而判达标），组结果单列 `retriedRounds`，后续轮照常运行。重复回复、无回复、final 缺失、ACK 未完成、隔离、错投或任一尝试运行失败仍是硬失败。与漂移门禁 `retried → violated` 口径一致。
+
 超预算返回退出码 2，运行失败或 `missing-evidence` 返回 1。所有指标在预算内也只是 `needs-quality-review`，
 还必须人工确认源文件范围、证据准确性、前后连续和输出质量；不自动冒称 parity。
 不得因当前失败临时放宽。对每一项超额解释固定平台成本、重复输入、额外工具轮次及提供商等待。

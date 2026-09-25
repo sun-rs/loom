@@ -155,6 +155,49 @@ export function kimiWireRound(text, { from, to } = {}) {
   };
 }
 
+// Native compactions in the wire window (`full_compaction.begin` →
+// `context.apply_compaction` → `full_compaction.complete`). `completed` only
+// when both the applied context and the completion record exist; the token
+// counts are Kimi's own before/after of the compaction itself.
+export function kimiWireCompactions(text, { from, to } = {}) {
+  const lo = bound(from, -Infinity);
+  const hi = bound(to, Infinity);
+  const out = [];
+  let current;
+  for (const raw of String(text).split("\n")) {
+    if (!raw.trim()) continue;
+    let r;
+    try {
+      r = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    if (typeof r?.time !== "number" || r.time < lo || r.time > hi) continue;
+    const at = new Date(r.time).toISOString();
+    if (r.type === "full_compaction.begin") {
+      current = {
+        source: r.source ?? null,
+        beganAt: at,
+        applied: false,
+        completed: false,
+        tokensBefore: null,
+        tokensAfter: null,
+      };
+      out.push(current);
+    } else if (r.type === "context.apply_compaction" && current) {
+      current.applied = true;
+      const n = (v) => (Number.isSafeInteger(v) && v >= 0 ? v : null);
+      current.tokensBefore = n(r.tokensBefore);
+      current.tokensAfter = n(r.tokensAfter);
+    } else if (r.type === "full_compaction.complete" && current) {
+      current.completed = current.applied;
+      current.completedAt = at;
+      current = undefined;
+    }
+  }
+  return out;
+}
+
 // Post-hoc fence: every model request in the window used exactly the
 // approved alias and thinking level.
 export function assertKimiRequests(requests, approved) {

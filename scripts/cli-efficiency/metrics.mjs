@@ -405,6 +405,9 @@ export function compareArm(nativeRounds, rahRounds, options = {}) {
     failures,
     unmeasured,
     finalInterrupt: summarizeFinalInterrupts(rahRounds.slice(0, n)),
+    retriedRounds: rahRounds
+      .slice(0, n)
+      .flatMap((r, i) => (r.retried === true ? [i + 1] : [])),
     fixedOverhead,
     perRoundResidue,
     workPathVariance: { round1HistoryDelta: history1, rounds: workRounds },
@@ -465,6 +468,9 @@ export function compareRounds(native, rah, options = {}) {
       )
   )
     failures.push("replySeconds");
+  // A round the Kernel retried (round-retry.mjs) is a counted soft item:
+  // over budget however its summed cost fared, never within budget.
+  if (rah.retried === true) failures.push("retried");
   const evidence = usageEvidence(rah, !unmeasured.includes("productUsage"));
   if (!["complete", "not-recorded"].includes(evidence.completeness))
     failures.push("usageEvidenceMissing");

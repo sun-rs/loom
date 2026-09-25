@@ -1691,3 +1691,94 @@ test("a run that exits 1 after a committed but unacknowledged --final reply is r
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+/**
+ * Acceptance follow-up 1: a run that ends cleanly without a reply or a
+ * delivery confirmation is retried by the Host loop straight away. With the
+ * fake clock advanced only by the loop's own waits, the retry must start at
+ * the instant the first attempt finished, not after the backoff plus a poll.
+ */
+test("the Host loop starts the retry of a clean exit that neither posted nor acknowledged without any idle wait", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-agent-host-unconfirmed-"),
+  );
+  let nowMs = Date.parse("2026-09-25T12:00:00.000Z");
+  const kernel = new RoomKernel({
+    databasePath: join(directory, "room.db"),
+    now: () => new Date(nowMs),
+  });
+  kernel.initialize();
+  try {
+    const human = kernel.provisionPrincipal({ handle: "h", kind: "human" });
+    const agent = kernel.provisionPrincipal({ handle: "a", kind: "agent" });
+    const agentId = agent.principal.principalId;
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const agentActor = kernel.authenticateAccessToken(agent.accessToken);
+    const room = kernel.createRoom(humanActor, { name: "U", slug: "u" });
+    kernel.addMember(humanActor, { principalId: agentId, roomId: room.roomId });
+    kernel.postMessage(humanActor, {
+      body: "answer",
+      idempotencyKey: "unconfirmed",
+      recipients: [{ participantId: agentId, reason: "mention" }],
+      roomId: room.roomId,
+    });
+    let starts = 0;
+    const runtime = new FakeRuntimeAdapter({
+      onStart: (input) => {
+        starts += 1;
+        if (starts === 1) return; // plain-text answer: no post, no check
+        const delivery = kernel.sync(agentActor, {
+          consumerId: input.consumerId,
+          roomId: input.roomId,
+        });
+        kernel.acknowledgeCursor(agentActor, {
+          consumerId: input.consumerId,
+          roomId: input.roomId,
+          throughSeq: delivery.cursorAfter,
+        });
+      },
+    });
+    runtime.enqueueExit({ code: 0 });
+    runtime.enqueueExit({ code: 0 });
+    const abortController = new AbortController();
+    const waited: number[] = [];
+    const agentHost = new AgentHost({
+      host: authenticateHost(kernel, "unconfirmed-host", [agentId]),
+      kernel,
+      leaseMs: 30_000,
+      pollIntervalMs: 30_000,
+      retryAfterMs: 10_000,
+      retryJitterRatio: 0,
+      runtime,
+      wait: async (delayMs) => {
+        waited.push(delayMs);
+        nowMs += delayMs;
+        const done = kernel
+          .listActivations({ roomId: room.roomId })
+          .every((activation) => activation.state === "completed");
+        if (done || waited.length > 5) abortController.abort();
+      },
+    });
+    await agentHost.run({ signal: abortController.signal });
+    const [activation] = kernel.listActivations({ roomId: room.roomId });
+    assert.equal(activation?.state, "completed");
+    const attempts = kernel
+      .listRunAttempts({ roomId: room.roomId })
+      .sort((a, b) => a.attemptNumber - b.attemptNumber);
+    assert.equal(attempts.length, 2);
+    assert.equal(
+      Date.parse(attempts[1]!.startedAt) - Date.parse(attempts[0]!.finishedAt!),
+      0,
+      "no backoff or poll wait between the attempts",
+    );
+    assert.deepEqual(
+      waited.slice(0, 1),
+      [30_000],
+      "the only wait is the idle poll after completion",
+    );
+    assert.equal(waited.length, 1);
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

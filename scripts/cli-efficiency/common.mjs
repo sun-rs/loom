@@ -33,13 +33,27 @@ export function transcript(sessionId) {
 // omitted for native, whose final answer generation is the reply.
 // approved: the exact model/effort of this gate run (required; the approval
 // table in approved-models.mjs admitted it before any paid call).
-export function measure(sessionId, round, usageOptions, approved) {
+// turns: native turns expected in the round window (one per RunAttempt; a
+// Kernel retry of the round's Activation is a second turn of the thread).
+export function measure(
+  sessionId,
+  round,
+  usageOptions,
+  approved,
+  { turns = 1 } = {},
+) {
   assert.ok(approved?.model && approved?.effort, "measure needs model/effort");
   const events = transcript(sessionId).filter(
     (e) => e.timestamp >= round.startedAt && e.timestamp <= round.finishedAt,
   );
   const contexts = events.filter((e) => e.type === "turn_context");
-  assert.equal(contexts.length, 1, "One native turn per human question");
+  assert.equal(
+    contexts.length,
+    turns,
+    turns === 1
+      ? "One native turn per human question"
+      : "One native turn per RunAttempt",
+  );
   for (const e of contexts) {
     assert.equal(e.payload.model, approved.model);
     assert.equal(e.payload.effort, approved.effort);

@@ -46,7 +46,8 @@ import {
   parseClaudeStreamRound,
 } from "./claude-usage.mjs";
 import { nativeEnvironment, runLines } from "./cli-process.mjs";
-import { readClaudeTranscript } from "./provider-files.mjs";
+import { readClaudeTranscript, readKimiWire } from "./provider-files.mjs";
+import { kimiWireCompactions } from "./kimi-usage.mjs";
 import {
   allocateLoopbackPort,
   assertOpenCodeServerConfig,
@@ -381,6 +382,23 @@ export function parseKimiCompaction(text) {
   };
 }
 
+// Observed: the reply said completed, the session wire holds a completed
+// native compaction since the request (the durable proof; kimi-code 0.39
+// runs `/compact` in the background and its `/usage` after the compaction is
+// a rebased estimate that can exceed the measured count before), or `/usage`
+// dropped. None of these → not observed; an unreadable wire proves nothing.
+export function kimiCompactionObserved(record, wireCompactions = []) {
+  return Boolean(
+    record.reply?.completed ||
+    wireCompactions.some((c) => c.completed) ||
+    (record.contextBefore !== null &&
+      record.contextBefore !== undefined &&
+      record.contextAfter !== null &&
+      record.contextAfter !== undefined &&
+      record.contextAfter < record.contextBefore),
+  );
+}
+
 export async function compactKimi({
   kimi,
   cwd,
@@ -389,8 +407,18 @@ export async function compactKimi({
   effort,
   validate,
   timeoutMs = COMPACTION_TIMEOUT_MS,
+  readWire = () => readKimiWire(sessionId),
 }) {
   const started = Date.now();
+  const since = new Date(started).toISOString();
+  const wireCompactions = () => {
+    try {
+      return kimiWireCompactions(readWire(), { from: since });
+    } catch (error) {
+      record.wireError = String(error.message ?? error).slice(0, 200);
+      return [];
+    }
+  };
   const proc = spawnStdio(kimi, ["acp"], cwd);
   const client = rpcClient({
     write: (t) => proc.child.stdin.write(t + "\n"),
@@ -453,16 +481,12 @@ export async function compactKimi({
     record.reply = parseKimiCompaction(reply);
     record.contextAfter = null;
     const end = Date.now() + timeoutMs;
-    // Background variant: poll `/usage` (local, no LLM turn) until it drops.
+    // Background variant: poll the wire and `/usage` (local, no LLM turn)
+    // until the wire records the completed compaction or the context drops.
     while (!record.reply.completed && Date.now() < end) {
       await sleep(3000);
       record.contextAfter = parseKimiContextTokens(await say("/usage"));
-      if (
-        record.contextBefore !== null &&
-        record.contextAfter !== null &&
-        record.contextAfter < record.contextBefore
-      )
-        break;
+      if (kimiCompactionObserved(record, wireCompactions())) break;
     }
     if (record.reply.completed)
       record.contextAfter = parseKimiContextTokens(await say("/usage"));
@@ -473,12 +497,8 @@ export async function compactKimi({
     record.exit = await proc.stop();
   }
   record.durationMs = Date.now() - started;
-  record.observed = Boolean(
-    record.reply?.completed ||
-    (record.contextBefore !== null &&
-      record.contextAfter !== null &&
-      record.contextAfter < record.contextBefore),
-  );
+  record.wireCompactions = wireCompactions();
+  record.observed = kimiCompactionObserved(record, record.wireCompactions);
   return record;
 }
 

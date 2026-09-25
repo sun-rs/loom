@@ -34,6 +34,49 @@ export function previousAttemptUnconfirmed(
 }
 
 /**
+ * True when a retry with `error` follows a RunAttempt that ended cleanly
+ * (state `exited`, exit 0 or a successful native turn, no error or signal)
+ * with neither a reply nor a delivery confirmation: `error` is exactly the
+ * Kernel's completion refusal (no appended run failure) and no message of
+ * this Activation was committed. Read before the retry is written, from the
+ * durable RunAttempt, not from the Host's classification alone.
+ */
+export function previousAttemptCleanExitUnconfirmed(
+  database: DatabaseSync,
+  input: Readonly<{
+    activationId: string;
+    error: string;
+    participantId: string;
+  }>,
+): boolean {
+  if (!input.error.startsWith(ACTIVATION_DELIVERY_NOT_ACKNOWLEDGED))
+    return false;
+  if (!/^[^;]*\d+$/u.test(input.error)) return false;
+  const attempt = database
+    .prepare(
+      `SELECT state, exit_code, exit_signal, error FROM run_attempts
+        WHERE activation_id = ? ORDER BY attempt_number DESC LIMIT 1`,
+    )
+    .get(input.activationId);
+  if (attempt === undefined) return false;
+  const exitCode = attempt.exit_code;
+  if (
+    text(attempt, "state") !== "exited" ||
+    (exitCode !== null && exitCode !== 0) ||
+    nullableText(attempt, "exit_signal") !== null ||
+    nullableText(attempt, "error") !== null
+  )
+    return false;
+  const posted = database
+    .prepare(
+      `SELECT 1 FROM room_events WHERE type='message.posted' AND actor_id=?
+        AND json_extract(payload_json, '$.activationId')=? LIMIT 1`,
+    )
+    .get(input.participantId, input.activationId);
+  return posted === undefined;
+}
+
+/**
  * The message a previous RunAttempt of this Activation already committed in
  * this Room when that attempt ended without acknowledging delivery: the same
  * durable retry record, plus this participant's latest post carrying this

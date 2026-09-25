@@ -374,6 +374,26 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 
 首轮纯文本调查（`~/.loom/reviews/2026-09-25-first-turn-plaintext.md`）：失败与成功首轮的平台输入归一化后相同；首轮失败 4/34，后续应答轮 0/136，均一次重试后恰好一条回复。属模型遵守度，原生 CLI 默认把正文当作回答是结构性诱因。
 
+### 三十二、验收后续修复
+
+范围：第三十一节与首轮纯文本调查（第 4.1、5 节）指出的三项；不改提示词、不改前端，没有运行付费 CLI，没有重启服务。
+
+1. 干净退出未回帖的重试路径（Kernel）：
+   - 根因：RunAttempt 干净结束（exit 0 或原生 turn 成功）却既未回帖也未 ACK 时，Host 走通用运行错误退避（`retryAfterMs` 起按次数翻倍），Activation 的 `available_at` 在未来，Host 本轮变空闲后按 `pollIntervalMs` 等待；门禁配置下约 10 s 退避 + 下次轮询，即调查中约 30 s 的空等。fake 时钟测试复现为两次尝试之间恰好 30 000 ms。
+   - 修法：在既有重试 owner `retryActivation` / `applyActivationRetryPolicy` 中，Kernel 依据持久事实判定该类别（`previousAttemptCleanExitUnconfirmed`：错误恰为 Kernel 自己的“delivery not acknowledged”拒绝且未附运行失败、最新 RunAttempt 为 `exited`/exit 0 或空且无错误与信号、本 Activation 没有 `message.posted`、处置为 `recoverable`），此时 `available_at = now`，并在同一事务里写一条 `activation.requested` Outbox 唤醒提示（挂在 `activation.retry_scheduled` 事件的 seq 上）。其他类别退避不变；同错误指纹围栏照常计数，连续 3 次仍隔离，被阻断的重试不发提示。没有新队列，RunAttempt 记录不变，重试仍是新的 RunAttempt 并带既有一行提醒。
+   - 测试：`packages/kernel/test/activation-unconfirmed-retry.test.ts`（立即可租并有唯一新提示；exit 1、附运行失败的拒绝、已回帖、RunAttempt failed 四类仍按原退避且无提示；连续 3 次仍触发围栏）；`agent-host.test.ts` 新增 Host 循环用例（fake 时钟只随循环自身等待前进，第二次尝试开始时间等于第一次结束时间，唯一等待是完成后的空闲轮询）。
+2. 效率门禁重试轮：
+   - 根因：`rah.mjs` 断言每轮恰好一个 RunAttempt（`Unexpected follow-up Run`），一次 Kernel 重试就中止整组，后续轮与热/冷对照全部丢失；用量只取第一个尝试。
+   - 修法：新增 `scripts/cli-efficiency/round-retry.mjs`。`roundRunVerdict` 在多尝试轮要求恰好一条回复、无线程/他房错投、恰有一个尝试提交 `final`、所有 Activation completed、无隔离、每个尝试运行成功，否则硬失败；单尝试轮保持原检查。`mergeRoundProductUsage` 把各尝试的产品用量求和（生成拼接、totals 求和、完整度取最差、execution 取第一个尝试）。Codex 轨迹核对改为每个尝试一个 turn。`compareRounds` 对 `retried` 轮固定加失败项 `retried`（超预算），`compareArm` 输出 `retriedRounds`。门禁文档已同步。
+   - 测试：`round-retry.test.mjs`（软项成立；重复回复、无回复、final 缺失/未采集、ACK 未完成、隔离、线程错投、他房错投、尝试失败均硬失败；用量求和；`retried` 轮即使求和后在预算内也判超预算并列入 `retriedRounds`）。
+3. Kimi 漂移门禁取证：
+   - 根因一（modelEvidenceMissing）：kimi-code 0.39 的 session id 本身带 `session_` 前缀（产品记录与 print 模式 resume hint 都是 `session_<uuid>`，也是目录名），而 `provider-files.mjs` 的 `kimiWirePath` 按 `session_${sessionId}` 拼目录，得到 `session_session_…`，永远找到 0 个 wire。wire 实际在 `~/.kimi-code/sessions/wd_workspace_…/session_<uuid>/agents/main/wire.jsonl`，产品没有使用临时 `KIMI_CODE_HOME`。同一缺陷也使第三十一节 Kimi 效率门禁两组 6 轮全部 `launch-guard-only`、用量不可得（证据 `wireError: Expected exactly one Kimi session wire, found 0`），并非 CLI 不给数据。早先 r2 的 `modelEvidence` 为 null，是因为当时还没有逐轮核对。
+   - 根因二（压缩 observed=false）：压缩确实发生（wire 有 `full_compaction.begin` → `context.apply_compaction`（tokensBefore 28174 → tokensAfter 27318）→ `full_compaction.complete`，约 13 s 完成），但 0.39 的 `/compact` 在后台运行、回复里没有 “Compaction completed”，门禁只靠 `/usage` 下降判定；压缩后的 `/usage` 是重估值（`token_counting.rebased`，27318），大于压缩前的实测值 26405，于是一直等满 240 s 超时并判未观测。r2 上下文较大，重估值仍低于压缩前，所以 observed=true。
+   - 修法：`kimiWirePath` 接受带或不带前缀的 id，sessions 目录 glob 找不到时查 CLI 自己的 `session_index.jsonl`（`sessionDir`），仍要求恰好一个，否则抛错（读不到 = missing，不判通过）。新增 `kimiWireCompactions`（`kimi-usage.mjs`）与 `kimiCompactionObserved`（`drift-compaction.mjs`）：以 wire 中本次请求之后已完成的原生压缩为持久证明，回复完成或 `/usage` 下降仍可作证；轮询在 wire 出现完成记录时即停止；记录保留 `wireCompactions`/`wireError`。
+   - 测试：`kimi-wire-evidence.test.mjs`，夹具 `fixtures/kimi-acp-0.39-session/wire.jsonl` 为该次付费运行的真实 wire（只保留门禁读取的记录类型，去掉提示与消息正文，压缩摘要替换）。覆盖：真实带前缀 id 与裸 id 都能定位；仅索引可达的布局；缺失时抛错且 `checkRoundModels` 为 missing；第 1 轮窗口核对为 verified（3 条请求，k3-256k/low）；压缩在 `/usage` 增长时仍由 wire 观测到，没有 wire 证明或只有 begin 未 complete 时不观测。
+
+检查：`npm run check`、`npm run format:check`、`git diff --check` 通过。未验证：三项都没有真实 CLI 复跑；修复 1 在真实 Host 上省下的时间、修复 2 的软项在付费门禁中的表现、修复 3 在真实 Kimi 门禁中的逐轮核对与压缩观测，都需下一批经负责人授权的付费运行确认。单尝试轮的多条回复（例如先发进度再发结论）仍按原口径不判硬失败。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

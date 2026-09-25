@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { RuntimeRetryDisposition } from "@rah-os/protocol";
+import { WakeHintSchema, type RuntimeRetryDisposition } from "@rah-os/protocol";
 
+import { previousAttemptCleanExitUnconfirmed } from "./activation-retry-reminder.ts";
 import { integer, nullableText, text } from "./sqlite-row.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 
@@ -35,6 +36,13 @@ export function applyActivationRetryPolicy(
 ): ActivationRetryFenceObservation {
   const observedAt = input.now.toISOString();
   const retryDisposition = input.retryDisposition ?? "recoverable";
+  // The previous RunAttempt ended cleanly without a reply or delivery
+  // confirmation: not a transient failure, so the retry is leasable now and
+  // one Outbox wake hint is recorded. The same-error fence still counts it.
+  const wakeNow =
+    retryDisposition === "recoverable" &&
+    previousAttemptCleanExitUnconfirmed(database, input);
+  const retryDelayMs = wakeNow ? 0 : input.retryAfterMs;
   const retryFence =
     retryDisposition === "recoverable"
       ? noteActivationRetryFailure(database, {
@@ -65,7 +73,7 @@ export function applyActivationRetryPolicy(
         input.activationId,
       );
   } else {
-    const availableAt = new Date(input.now.getTime() + input.retryAfterMs);
+    const availableAt = new Date(input.now.getTime() + retryDelayMs);
     database
       .prepare(
         "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = ?, updated_at = ? WHERE activation_id = ?",
@@ -82,8 +90,8 @@ export function applyActivationRetryPolicy(
   }
   const availableAt = retryFence.blocked
     ? undefined
-    : new Date(input.now.getTime() + input.retryAfterMs).toISOString();
-  events.append({
+    : new Date(input.now.getTime() + retryDelayMs).toISOString();
+  const event = events.append({
     actorId: input.systemPrincipalId,
     aggregateId: input.activationId,
     aggregateType: "activation",
@@ -108,6 +116,23 @@ export function applyActivationRetryPolicy(
       ? "activation.retry_blocked"
       : "activation.retry_scheduled",
   });
+  if (wakeNow && !retryFence.blocked) {
+    const row = database
+      .prepare("SELECT reason FROM activations WHERE activation_id = ?")
+      .get(input.activationId);
+    events.insertOutbox({
+      payload: WakeHintSchema.parse({
+        activationId: input.activationId,
+        headCursor: input.toSeq,
+        participantId: input.participantId,
+        reason: row === undefined ? undefined : text(row, "reason"),
+        roomId: input.roomId,
+      }),
+      roomId: input.roomId,
+      roomSeq: event.roomSeq,
+      topic: "activation.requested",
+    });
+  }
   return retryFence;
 }
 

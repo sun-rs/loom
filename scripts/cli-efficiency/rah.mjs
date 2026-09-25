@@ -1,4 +1,5 @@
 import { isEffectiveAnswer, summarizeGenerations } from "./metrics.mjs";
+import { mergeRoundProductUsage, roundRunVerdict } from "./round-retry.mjs";
 import {
   runSucceeded,
   replyTurnHandle,
@@ -251,6 +252,7 @@ export async function rahArm({
       round.runs = observer
         .listRunAttempts({ roomId })
         .filter((r) => !oldRuns.has(r.runAttemptId))
+        .sort((a, b) => a.attemptNumber - b.attemptNumber)
         .map((r) => ({
           runAttemptId: r.runAttemptId,
           startedAt: r.startedAt,
@@ -258,22 +260,39 @@ export async function rahArm({
           state: r.state,
           exitCode: r.exitCode,
         }));
-      assert.equal(round.runs.length, 1, "Unexpected follow-up Run");
-      // Product-recorded usage; compareRounds requires it complete and
-      // cross-checks it against the transcript-derived RAH usage.
-      const productUsage = await post("/v3/client/agents/run-usage/get", {
-        agentId,
-        runAttemptId: round.runs[0].runAttemptId,
+      // Product-recorded usage of every attempt; compareRounds requires it
+      // complete and cross-checks it against the transcript-derived usage.
+      const usages = [];
+      for (const run of round.runs)
+        usages.push(
+          await post("/v3/client/agents/run-usage/get", {
+            agentId,
+            runAttemptId: run.runAttemptId,
+          }),
+        );
+      for (const [index, run] of round.runs.entries())
+        run.succeeded = runSucceeded(run, usages[index].execution ?? null);
+      // A Kernel retry within the round is a counted soft item only when
+      // the round still ends with exactly one on-target final reply and a
+      // completed ACK (round-retry.mjs); anything else fails the arm.
+      const verdict = roundRunVerdict({
+        runs: round.runs,
+        replies: round.replies,
+        activations: observer.listActivations({ roomId }),
+        finalInterrupts: usages.map((u) => u.finalInterrupt),
+        roomId,
       });
+      round.attempts = verdict.attempts;
+      if (verdict.retried) round.retried = true;
+      round.runVerdict = verdict.failures;
+      save();
+      assert.deepEqual(verdict.failures, [], "Round run verdict");
+      const productUsage = mergeRoundProductUsage(usages);
       // S2-a execution record: null for per-turn runs.
       round.execution = productUsage.execution ?? null;
       // S2-b: measured native session resume, per-turn runs included.
       round.sessionResumeMs = productUsage.sessionResumeMs ?? null;
       save();
-      assert.ok(
-        runSucceeded(round.runs[0], round.execution),
-        "RunAttempt did not succeed",
-      );
       round.queueSeconds =
         (Date.parse(round.runs[0].startedAt) - Date.parse(round.startedAt)) /
         1000;
@@ -308,6 +327,10 @@ export async function rahArm({
         replyAt: effective?.createdAt ?? null,
         productUsage,
       });
+      if (round.retried) {
+        round.metrics.retried = true;
+        round.metrics.attempts = round.attempts;
+      }
       round.replyTurnHandle = replyTurnHandle(round.metrics.toolCalls);
       round.metrics.productUsage = {
         completeness: productUsage.completeness,
@@ -368,7 +391,9 @@ export async function rahArm({
 // - kimi: the session wire (the product records no Kimi usage).
 function measureRah({ config, sessionId, round, replyAt, productUsage }) {
   if (config.provider === "codex")
-    return measure(sessionId, round, { replyAt }, config);
+    return measure(sessionId, round, { replyAt }, config, {
+      turns: round.runs.length,
+    });
   if (config.provider === "kimi")
     return measureKimiWire(sessionId, round, config, { replyAt });
   const records = productUsage.generations ?? [];
