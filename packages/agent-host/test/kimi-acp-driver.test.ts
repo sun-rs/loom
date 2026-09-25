@@ -464,6 +464,37 @@ test("review P1-1: a session that stays in `auto` refuses the run with KIMI_UNSA
   assert.equal(byProtocol(result.frames, "rah-delivery-accepted/v1").length, 0);
 });
 
+// Real regression (Kimi efficiency gate, 2026-09-25): a mode request that is
+// never answered held every run for the 30 s handshake timeout, as long as
+// the runtime start deadline. A control request fails well before it, with a
+// cause that says the mode was unconfirmed, not that Kimi is unsafe.
+test("real regression: an unanswered mode request fails fast with KIMI_MODE_UNCONFIRMED; no prompt is sent", async () => {
+  const started = Date.now();
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    env: { FAKE_MODE_SILENT: "1" },
+  });
+  const elapsed = Date.now() - started;
+  assert.equal(result.code, 1);
+  assert.match(result.stderr, /KIMI_MODE_UNCONFIRMED: .*timed out/u);
+  assert.doesNotMatch(result.stderr, /KIMI_UNSAFE_PERMISSION_MODE/u);
+  assert.ok(elapsed < 15_000, `failed after ${elapsed}ms`);
+  assert.equal(sentFrames(result.records, "session/prompt").length, 0);
+});
+
+test("real regression: a CLI without the mode option is refused as KIMI_MODE_UNSUPPORTED, distinct from an unsafe mode", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    env: { FAKE_MODE_UNSUPPORTED: "1" },
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.stderr, /KIMI_MODE_UNSUPPORTED: .*Unknown configId/u);
+  assert.doesNotMatch(result.stderr, /KIMI_UNSAFE_PERMISSION_MODE/u);
+  assert.equal(sentFrames(result.records, "session/prompt").length, 0);
+});
+
 test("review P1-1: a resumed session with an active native goal is refused with KIMI_NATIVE_GOAL_ACTIVE before session/resume", async () => {
   const result = await runTurn({
     scenario: "reply",

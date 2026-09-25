@@ -41,7 +41,7 @@
 // session never reach the product driver meanwhile (it would abort an
 // unprompted run), and a driver prompt that arrives is held until the end.
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { appendFileSync, existsSync, rmSync } from "node:fs";
 import {
   request as httpRequest,
@@ -244,6 +244,21 @@ export function openCodeVariantOptions(text, model, effort) {
   if (!isRecord(options) || !Object.keys(options).length)
     throw new Error(`${model} has no variant ${effort}`);
   return options;
+}
+
+// The single resolver of the gate's OpenCode compaction options (efficiency
+// and drift arms): the approved variant's options from the installed CLI's
+// own `opencode models <provider> --verbose --pure` catalog.
+export function readOpenCodeCompactionOptions(executable, model, effort) {
+  return openCodeVariantOptions(
+    execFileSync(
+      executable,
+      ["models", parseOpenCodeBinding(model).providerID, "--verbose", "--pure"],
+      { encoding: "utf8", timeout: 60_000 },
+    ),
+    model,
+    effort,
+  );
 }
 
 // The gate's served config: the approved model as the default and the small

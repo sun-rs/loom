@@ -132,6 +132,21 @@ input.on("line", (line) => {
     sessionId = frame.params.sessionId;
     send({ id: frame.id, result: { configOptions: configOptions() } });
   } else if (frame.method === "session/set_config_option") {
+    // FAKE_MODE_SILENT: the mode request is never answered (a hung control
+    // request); FAKE_MODE_UNSUPPORTED: an older CLI without the mode option
+    // (kimi-code answers an unknown configId with invalid_params).
+    if (frame.params.configId === "mode" && env.FAKE_MODE_SILENT) return;
+    if (frame.params.configId === "mode" && env.FAKE_MODE_UNSUPPORTED) {
+      send({
+        id: frame.id,
+        error: {
+          code: -32602,
+          message: "Invalid params: Unknown configId: mode",
+          data: { configId: "mode" },
+        },
+      });
+      return;
+    }
     if (frame.params.configId === "mode" && !env.FAKE_MODE_LOCKED)
       mode = frame.params.value;
     send({

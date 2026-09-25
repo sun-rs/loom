@@ -1,8 +1,9 @@
 // Test-only model fence for `kimi acp` (stdio JSON-RPC, one message per
 // line), used by the paid drift gate. It is stateful and fails closed: a
 // `session/prompt` is forwarded only after this process saw the exact
-// approved `session/set_model` and `thinking` config for that session. Any
-// other model, thinking value or config option closes the CLI.
+// approved `session/set_model` and `thinking` config for that session. The
+// safe `mode=default` pin is admitted; any other model, thinking value, mode
+// or config option closes the CLI and exits the wrapper.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
@@ -34,6 +35,13 @@ export function createKimiRequestGuard(approved, env = {}) {
         state(p.sessionId).model = true;
         return;
       case "session/set_config_option":
+        // The product driver pins every session to the ACP `default` mode
+        // (manual permission, the native-goal fence); it is not a model
+        // choice. Any other mode stays denied.
+        if (p.configId === "mode") {
+          assert.equal(p.value, "default", "Unapproved mode");
+          return;
+        }
         assert.equal(p.configId, "thinking", "Unapproved config option");
         assert.equal(p.value, approved.effort, "Unapproved thinking");
         state(p.sessionId).thinking = true;
@@ -86,6 +94,9 @@ export async function runGuardedKimi(executable, approved) {
         process.stderr.write("PAID_GATE_MODEL_DENIED " + String(e) + "\n");
         child.kill("SIGTERM");
         lines.close();
+        // Release stdin so the wrapper exits with the CLI instead of waiting
+        // for the driver to close it (the driver would only see a timeout).
+        process.stdin.destroy();
       }
     });
     process.stdin.on("end", () => child.stdin.end());

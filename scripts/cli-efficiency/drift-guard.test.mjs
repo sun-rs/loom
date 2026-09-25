@@ -1,5 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { chmodSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createKimiRequestGuard } from "./drift-kimi-guard.mjs";
 import { createCodexRequestGuard } from "./model-guard.mjs";
 import {
@@ -85,6 +89,73 @@ test("kimi guard: other models, thinking values, options and env are denied", ()
   assert.doesNotThrow(() =>
     createKimiRequestGuard(approved, { KIMI_MODEL_THINKING_EFFORT: "high" }),
   );
+});
+
+// Real regression (Kimi efficiency gate, 2026-09-25): the product driver pins
+// every session to the ACP `default` mode (manual permission) with
+// `session/set_config_option {configId:"mode"}`; the guard denied it and the
+// real kimi-code 0.39.1 never saw it. `default` is the safe mode, not a model
+// choice; any other mode is still denied.
+test("kimi guard: only the safe `default` mode may be pinned", () => {
+  const guard = createKimiRequestGuard(approved);
+  guard({
+    method: "session/set_config_option",
+    params: { sessionId: "s", configId: "mode", value: "default" },
+  });
+  for (const value of ["auto", "yolo", "plan"])
+    assert.throws(
+      () =>
+        guard({
+          method: "session/set_config_option",
+          params: { sessionId: "s", configId: "mode", value },
+        }),
+      /Unapproved mode/,
+    );
+});
+
+// The denial killed kimi but the wrapper stayed alive until its stdin
+// closed, so the driver waited its full request timeout (30 s) instead of
+// seeing the CLI exit.
+test("kimi guard process: a denied request exits the wrapper while stdin stays open", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kimi-guard-test-"));
+  const fakeCli = join(dir, "fake-kimi");
+  writeFileSync(
+    fakeCli,
+    `#!${process.execPath}\nprocess.stdin.resume();\nsetInterval(() => {}, 1000);\n`,
+  );
+  chmodSync(fakeCli, 0o755);
+  const guardUrl = new URL("./drift-kimi-guard.mjs", import.meta.url).href;
+  const wrapper = join(dir, "guarded-kimi.mjs");
+  writeFileSync(
+    wrapper,
+    `import { runGuardedKimi } from ${JSON.stringify(guardUrl)};\nawait runGuardedKimi(${JSON.stringify(fakeCli)}, ${JSON.stringify(approved)});\n`,
+  );
+  const child = spawn(process.execPath, [wrapper, "acp"], {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  let stderr = "";
+  child.stderr.on("data", (chunk) => (stderr += chunk));
+  const started = Date.now();
+  child.stdin.write(
+    `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "session/set_config_option", params: { sessionId: "s", configId: "mode", value: "yolo" } })}\n`,
+  );
+  const exited = new Promise((resolve) => child.once("close", resolve));
+  let timer;
+  const code = await Promise.race([
+    exited,
+    new Promise((resolve) => {
+      timer = setTimeout(() => resolve("still running"), 5000);
+    }),
+  ]);
+  clearTimeout(timer);
+  child.stdin.destroy();
+  if (code === "still running") {
+    child.kill("SIGKILL");
+    await exited;
+  }
+  assert.match(stderr, /PAID_GATE_MODEL_DENIED/);
+  assert.equal(code, 1, "the wrapper exits promptly with the denial");
+  assert.ok(Date.now() - started < 5000);
 });
 
 test("codex guard is parametrized by the drift model/effort", () => {

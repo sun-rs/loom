@@ -23,6 +23,10 @@ import { isAbsolute, join } from "node:path";
 
 export const KIMI_UNSAFE_PERMISSION_MODE = "KIMI_UNSAFE_PERMISSION_MODE";
 export const KIMI_NATIVE_GOAL_ACTIVE = "KIMI_NATIVE_GOAL_ACTIVE";
+/** The CLI rejected the mode option itself (method or configId unknown). */
+export const KIMI_MODE_UNSUPPORTED = "KIMI_MODE_UNSUPPORTED";
+/** The mode request failed or went unanswered; the mode is unknown. */
+export const KIMI_MODE_UNCONFIRMED = "KIMI_MODE_UNCONFIRMED";
 /** ACP mode id that maps to the `manual` permission mode. */
 export const KIMI_SAFE_MODE_ID = "default";
 
@@ -131,5 +135,22 @@ export function assertKimiSafeMode(effective) {
   if (effective === KIMI_SAFE_MODE_ID) return;
   throw new Error(
     `${KIMI_UNSAFE_PERMISSION_MODE}: Kimi did not confirm mode=${KIMI_SAFE_MODE_ID} (effective=${effective ?? "unknown"}); auto/yolo modes approve native goals without asking`,
+  );
+}
+
+/**
+ * Why pinning the mode failed, kept apart from an unsafe mode: JSON-RPC
+ * method-not-found / invalid-params mean this CLI has no mode option; any
+ * other failure (a timeout included) leaves the mode unknown. Both refuse
+ * the run — without a confirmed `default` the goal fence is not in place.
+ */
+export function kimiModeFailure(error) {
+  const code = error?.code;
+  const unsupported = code === -32601 || code === -32602;
+  const detail = error instanceof Error ? error.message : String(error);
+  return new Error(
+    unsupported
+      ? `${KIMI_MODE_UNSUPPORTED}: this Kimi CLI rejected the ACP mode option (${detail}); the native-goal fence cannot be pinned`
+      : `${KIMI_MODE_UNCONFIRMED}: Kimi did not confirm mode=${KIMI_SAFE_MODE_ID} (${detail})`,
   );
 }

@@ -31,6 +31,7 @@ import {
   inspectKimiSession,
   isKimiGoalMutationTool,
   KIMI_SAFE_MODE_ID,
+  kimiModeFailure,
 } from "./kimi-native-autonomy.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import { providerUsageGap, ProviderUsageWriter } from "./provider-usage.js";
@@ -42,6 +43,10 @@ import {
 } from "./provider-trajectory-normalizer.js";
 
 const HANDSHAKE_TIMEOUT_MS = 30_000;
+// Model/thinking/mode control requests answer in milliseconds on kimi-code
+// 0.39.1 (in-process state changes); a hung one must fail well before the
+// Host's runtime start deadline instead of consuming it.
+const CONTROL_REQUEST_TIMEOUT_MS = 5_000;
 const CANCEL_CONFIRM_TIMEOUT_MS = 600;
 const CANCEL_EXIT_TIMEOUT_MS = 150;
 const PROVIDER_TERM_TIMEOUT_MS = 150;
@@ -422,7 +427,7 @@ async function configureSession(sessionId) {
     await request(
       "session/set_model",
       { modelId: options.model, sessionId },
-      HANDSHAKE_TIMEOUT_MS,
+      CONTROL_REQUEST_TIMEOUT_MS,
     );
   }
   if (options.thinkingLevel !== undefined) {
@@ -433,7 +438,7 @@ async function configureSession(sessionId) {
         sessionId,
         value: options.thinkingLevel,
       },
-      HANDSHAKE_TIMEOUT_MS,
+      CONTROL_REQUEST_TIMEOUT_MS,
     );
     const effective = configOptionValue(configured, "thinking");
     if (effective !== options.thinkingLevel) {
@@ -445,11 +450,16 @@ async function configureSession(sessionId) {
   // Review P1-1: `auto` (and `yolo`) approve native goal tools without
   // asking; pin this session to `default` (manual) so every goal mutation
   // reaches the permission answer below, and refuse an unconfirmed mode.
-  const moded = await request(
-    "session/set_config_option",
-    { configId: "mode", sessionId, value: KIMI_SAFE_MODE_ID },
-    HANDSHAKE_TIMEOUT_MS,
-  );
+  let moded;
+  try {
+    moded = await request(
+      "session/set_config_option",
+      { configId: "mode", sessionId, value: KIMI_SAFE_MODE_ID },
+      CONTROL_REQUEST_TIMEOUT_MS,
+    );
+  } catch (error) {
+    throw kimiModeFailure(error);
+  }
   assertKimiSafeMode(configOptionValue(moded, "mode"));
 }
 

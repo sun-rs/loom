@@ -12,7 +12,11 @@ import {
   prepareLocalWorkbench,
 } from "../../packages/daemon/src/index.ts";
 import { wait } from "./common.mjs";
-import { assertNoGuardViolations, writeGuardedShim } from "./guarded-shim.mjs";
+import {
+  assertNoGuardViolations,
+  resolveGateShimOptions,
+  writeGuardedShim,
+} from "./guarded-shim.mjs";
 
 // Codex and OpenCode run warm by default in the product; a per-turn arm opts
 // out explicitly, a warm arm turns on only the provider under test.
@@ -39,13 +43,22 @@ export async function prepareGateDaemon({
   const realCli = execFileSync("which", [provider], {
     encoding: "utf8",
   }).trim();
+  // OpenCode: the compaction reasoning options are resolved here, once, for
+  // both the efficiency and the drift arms.
+  const options = resolveGateShimOptions({
+    provider,
+    realCli,
+    model,
+    effort,
+    options: shimOptions,
+  });
   const shimPath = writeGuardedShim({
     provider,
     path: join(root, `guarded-${provider}.mjs`),
     realCli,
     model,
     effort,
-    options: shimOptions,
+    options,
   });
   // effort null (effortless Claude Haiku): the product sends no effort.
   const spec = {
@@ -143,6 +156,7 @@ export async function prepareGateDaemon({
   return {
     realCli,
     shimPath,
+    compactionOptions: options.compactionOptions,
     spec,
     prepared,
     stateDirectory,

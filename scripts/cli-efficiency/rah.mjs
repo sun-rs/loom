@@ -59,6 +59,8 @@ export async function rahArm({
     consumerId: "efficiency-gate",
   });
   const { spec, prepared, stateDirectory, post, head } = gate;
+  // OpenCode: the compaction options the guarded serve was given (evidence).
+  if (gate.compactionOptions) arm.compactionOptions = gate.compactionOptions;
   // Every instance runtime of the participant owning `instanceRuntimeId`
   // (read-only; no secrets, handles or paths).
   const runtimeRows = (instanceRuntimeId) => {

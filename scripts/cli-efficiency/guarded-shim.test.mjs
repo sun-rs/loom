@@ -12,6 +12,7 @@ import { join } from "node:path";
 import {
   assertNoGuardViolations,
   guardViolationPath,
+  resolveGateShimOptions,
   writeGuardedShim,
 } from "./guarded-shim.mjs";
 
@@ -140,5 +141,110 @@ test("options carry transport settings only; model/effort overrides are refused"
       /Unsupported guarded shim option/,
     );
     assert.equal(existsSync(path), false);
+  }
+});
+
+// Efficiency gate regression (2026-09-25): the efficiency arms wrote an
+// OpenCode shim without compaction options, so every guarded serve exited
+// with `Compaction reasoning options are required` before listening.
+test("an OpenCode shim is never written without compaction reasoning options", () => {
+  for (const options of [undefined, {}, { compactionOptions: {} }]) {
+    const path = join(dir, `opencode-no-compaction-${Math.random()}.mjs`);
+    assert.throws(
+      () =>
+        writeGuardedShim({
+          provider: "opencode",
+          path,
+          realCli: "/bin/real",
+          model: "deepseek/deepseek-flash",
+          effort: "low",
+          options,
+        }),
+      /compaction reasoning options/,
+    );
+    assert.equal(existsSync(path), false);
+  }
+});
+
+const FAKE_CATALOG_CLI = `#!/usr/bin/env node
+import { appendFileSync } from "node:fs";
+appendFileSync(process.env.FAKE_CATALOG_RECORD, JSON.stringify(process.argv.slice(2)) + "\\n");
+process.stdout.write([
+  "deepseek/deepseek-flash",
+  "{",
+  '  "id": "deepseek-flash",',
+  '  "variants": { "low": { "reasoningEffort": "low" }, "high": { "reasoningEffort": "high" } }',
+  "}",
+].join("\\n") + "\\n");
+`;
+
+test("gate shim options: OpenCode compaction options come only from the CLI's verbose catalog", () => {
+  const fake = join(dir, "fake-catalog-opencode.mjs");
+  writeFileSync(fake, FAKE_CATALOG_CLI, { mode: 0o700 });
+  const record = join(dir, "fake-catalog-record.jsonl");
+  const previous = process.env.FAKE_CATALOG_RECORD;
+  process.env.FAKE_CATALOG_RECORD = record;
+  try {
+    const base = {
+      provider: "opencode",
+      realCli: fake,
+      model: "deepseek/deepseek-flash",
+      effort: "low",
+    };
+    assert.deepEqual(resolveGateShimOptions({ ...base, options: {} }), {
+      compactionOptions: { reasoningEffort: "low" },
+    });
+    assert.deepEqual(
+      resolveGateShimOptions({ ...base, options: { controlRecordPath: "/c" } }),
+      {
+        controlRecordPath: "/c",
+        compactionOptions: { reasoningEffort: "low" },
+      },
+    );
+    assert.deepEqual(
+      readFileSync(record, "utf8")
+        .trim()
+        .split("\n")
+        .map((l) => JSON.parse(l))[0],
+      ["models", "deepseek", "--verbose", "--pure"],
+    );
+    // A caller cannot supply its own (possibly wrong) compaction options.
+    assert.throws(
+      () =>
+        resolveGateShimOptions({
+          ...base,
+          options: { compactionOptions: { reasoningEffort: "high" } },
+        }),
+      /catalog/,
+    );
+    // The resolved options are exactly what the written shim passes.
+    const shim = readFileSync(
+      writeGuardedShim({
+        ...base,
+        path: join(dir, "opencode-resolved.mjs"),
+        options: resolveGateShimOptions({ ...base, options: {} }),
+      }),
+      "utf8",
+    );
+    assert.ok(
+      shim.includes(`{"compactionOptions":{"reasoningEffort":"low"}}`),
+      shim,
+    );
+    // Other providers: options unchanged, no catalog call.
+    const calls = readFileSync(record, "utf8").trim().split("\n").length;
+    assert.deepEqual(
+      resolveGateShimOptions({
+        provider: "codex",
+        realCli: fake,
+        model: "gpt-6-luna",
+        effort: "low",
+        options: { socketRecordPath: "/r" },
+      }),
+      { socketRecordPath: "/r" },
+    );
+    assert.equal(readFileSync(record, "utf8").trim().split("\n").length, calls);
+  } finally {
+    if (previous === undefined) delete process.env.FAKE_CATALOG_RECORD;
+    else process.env.FAKE_CATALOG_RECORD = previous;
   }
 });

@@ -4,7 +4,6 @@
 // process, prepared local workbench, guarded CLI shim); nothing touches the
 // formal workbench or its database.
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, globSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -17,8 +16,6 @@ import { createKimiRequestGuard } from "./drift-kimi-guard.mjs";
 import {
   assertOpenCodeAssistants,
   createOpenCodeRequestGuard,
-  openCodeVariantOptions,
-  parseOpenCodeBinding,
   readOpenCodeRound,
 } from "./drift-opencode-guard.mjs";
 import {
@@ -60,30 +57,6 @@ export async function runDriftArm({
 }) {
   const { provider, model, effort, bindingId, mode } = config;
   const socketRecordPath = join(root, "warm-sockets.jsonl");
-  const cliPath = execFileSync("which", [provider], {
-    encoding: "utf8",
-  }).trim();
-  // OpenCode: the approved variant's provider options (from the CLI's own
-  // verbose catalog) become the compaction agent's options, because the
-  // native summarize request carries no variant.
-  const compactionOptions =
-    provider === "opencode"
-      ? openCodeVariantOptions(
-          execFileSync(
-            cliPath,
-            [
-              "models",
-              parseOpenCodeBinding(model).providerID,
-              "--verbose",
-              "--pure",
-            ],
-            { encoding: "utf8", timeout: 60_000 },
-          ),
-          model,
-          effort,
-        )
-      : undefined;
-  if (compactionOptions) result.arm.compactionOptions = compactionOptions;
   const gate = await prepareGateDaemon({
     provider,
     model,
@@ -99,13 +72,8 @@ export async function runDriftArm({
         ? { socketRecordPath }
         : provider === "claude" && mode === "warm"
           ? { injectRecordPath: socketRecordPath }
-          : provider === "opencode"
-            ? {
-                compactionOptions,
-                ...(mode === "warm"
-                  ? { controlRecordPath: socketRecordPath }
-                  : {}),
-              }
+          : provider === "opencode" && mode === "warm"
+            ? { controlRecordPath: socketRecordPath }
             : {},
     processes: result.processes,
     save,
@@ -113,6 +81,11 @@ export async function runDriftArm({
   });
   const { realCli, spec, prepared, stateDirectory, start, stop, post, head } =
     gate;
+  // OpenCode: the approved variant's options (resolved from the CLI's own
+  // verbose catalog by the gate bootstrap) are the compaction agent's
+  // options, because the native summarize request carries no variant.
+  const { compactionOptions } = gate;
+  if (compactionOptions) result.arm.compactionOptions = compactionOptions;
   const dbPath = join(stateDirectory, "room.db");
   const query = (sql, ...args) => {
     const db = new DatabaseSync(dbPath, { readOnly: true });
