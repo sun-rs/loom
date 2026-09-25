@@ -213,6 +213,14 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 冷模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-cold.json`）：门禁通过。送达 100%、每轮一条回复、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%；压缩前后无退化。第 1 轮格式超长（模型遵守度）。第二十一节修复前同一场景第 1 轮三次重复回复并隔离，修复后消失。
 - 热模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-warm.json`）：第 2–10 轮全部正确，续聊平均约 5–7 s；压缩后无退化。第 1 轮首次尝试（新会话首轮走冷执行）模型只输出正文未调用 `message-post`，无 ACK，按规则重试一次后正确回复，全轮仅一条回复。两次热模式复测都出现，属于 Haiku 首轮协议遵守问题，门禁记为 retried（violated）。是否需要在首轮给出更强的工具调用约束待后续对比 Sonnet 再定；不以提示词补丁处理。
 
+### 二十三、OpenCode 真实冒烟（b1971f3）
+
+OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 2026-09-25 批准以 `deepseek/deepseek-flash`（DeepSeek V4.1 Flash）/ low 替代。漂移门禁 10 轮、第 5 轮后原生 `POST /session/:id/summarize` 强制压缩。
+
+- 热模式（`docs/evo/evidence/2026-09-25-drift-opencode-warm.json`）：门禁通过。送达 100%、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%，压缩后无退化；续聊约 2–5 s。
+- 冷模式（`docs/evo/evidence/2026-09-25-drift-opencode-cold.json`）：第 5 轮（应沉默）模型正确未发言，但没有执行唤醒指示的 `message-check`，无 ACK，按规则重试一次后补齐；其余全部正确，续聊约 4–6 s。门禁记为 retried（violated）。属于模型协议遵守度；沉默轮仍需显式读取确认，不以"已展示+未发帖"推断 ACK（守 AGENTS 不变量）。
+- 第 1 轮两种模式格式超长（模型遵守度）。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |
