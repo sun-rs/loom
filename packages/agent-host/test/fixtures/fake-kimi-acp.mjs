@@ -23,7 +23,13 @@
 // (before its tool the model calls CreateGoal: the real ACP server asks the
 // client with `session/request_permission` whose `toolCall.title` is the tool
 // name and the canonical approve_once / approve_always / reject options —
-// kimi-code 0.39.1 `acp-server/src/approval.ts`; the answer is recorded).
+// kimi-code 0.39.1 `acp-server/src/approval.ts`; the answer is recorded),
+// updategoal / setgoalbudget (the same permission shape for UpdateGoal /
+// SetGoalBudget).
+// ACP mode: the session starts in FAKE_INITIAL_MODE (default "default");
+// `session/set_config_option` {configId:"mode"} switches it and answers the
+// `configOptions` snapshot (id "mode", currentValue) like kimi-code 0.39.1
+// `acp-server/src/config-options.ts`; FAKE_MODE_LOCKED keeps the initial mode.
 // FAKE_RECORD (jsonl) records every frame and event. FAKE_TOOL_COMMAND
 // replaces the derived Worker command. FAKE_FOLLOW_UP_MS bounds the wait for
 // a cancel before the post-reply generation (default 300).
@@ -65,6 +71,8 @@ let turn;
 let turnSequence = 0;
 let requestSequence = 0;
 const pending = new Map();
+let mode = env.FAKE_INITIAL_MODE ?? "default";
+const configOptions = () => [{ id: "mode", currentValue: mode }];
 record({
   event: "spawn",
   args,
@@ -116,10 +124,25 @@ input.on("line", (line) => {
     });
   } else if (frame.method === "session/new") {
     sessionId = env.FAKE_SESSION ?? "kimi-session-new";
-    send({ id: frame.id, result: { sessionId } });
+    send({
+      id: frame.id,
+      result: { sessionId, configOptions: configOptions() },
+    });
   } else if (frame.method === "session/resume") {
     sessionId = frame.params.sessionId;
-    send({ id: frame.id, result: {} });
+    send({ id: frame.id, result: { configOptions: configOptions() } });
+  } else if (frame.method === "session/set_config_option") {
+    if (frame.params.configId === "mode" && !env.FAKE_MODE_LOCKED)
+      mode = frame.params.value;
+    send({
+      id: frame.id,
+      result: {
+        configOptions:
+          frame.params.configId === "mode"
+            ? configOptions()
+            : [{ id: frame.params.configId, currentValue: frame.params.value }],
+      },
+    });
   } else if (frame.method === "session/prompt") {
     if (turn !== undefined && !turn.settled) {
       send({
@@ -212,12 +235,17 @@ async function runPrompt(frame) {
     content: { type: "text", text: "FAKE KIMI thinking" },
   });
   await delay(Number(env.FAKE_ACCEPT_GAP_MS ?? 0));
-  if (tokens.has("goal")) {
-    const goalCallId = `${turnId}:call-goal`;
+  for (const [token, tool, title] of [
+    ["goal", "CreateGoal", "Creating a goal"],
+    ["updategoal", "UpdateGoal", "Setting goal status: active"],
+    ["setgoalbudget", "SetGoalBudget", "Setting goal budget"],
+  ]) {
+    if (!tokens.has(token)) continue;
+    const goalCallId = `${turnId}:call-${token}`;
     update({
       sessionUpdate: "tool_call",
       toolCallId: goalCallId,
-      title: "Creating a goal",
+      title,
       kind: "other",
       status: "pending",
     });
@@ -225,13 +253,13 @@ async function runPrompt(frame) {
       sessionId,
       toolCall: {
         toolCallId: goalCallId,
-        title: "CreateGoal",
+        title: tool,
         content: [
           {
             type: "content",
             content: {
               type: "text",
-              text: "Requesting approval to Creating a goal",
+              text: `Requesting approval to ${title}`,
             },
           },
         ],
@@ -246,7 +274,11 @@ async function runPrompt(frame) {
         { optionId: "reject", name: "Reject", kind: "reject_once" },
       ],
     });
-    record({ event: "goal-permission", outcome: answer?.outcome ?? null });
+    record({
+      event: "goal-permission",
+      tool,
+      outcome: answer?.outcome ?? null,
+    });
     update({
       sessionUpdate: "tool_call_update",
       toolCallId: goalCallId,

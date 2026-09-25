@@ -403,7 +403,7 @@ rl.on("line", (line) => {
   if (frame.method === "initialize") send({jsonrpc:"2.0",id:frame.id,result:{protocolVersion:1,agentCapabilities:{mcpCapabilities:{http:true,sse:false}}}});
   else if (frame.method === "session/new") { sessionId = "acp-local-only"; send({jsonrpc:"2.0",id:frame.id,result:{sessionId}}); }
   else if (frame.method === "session/set_model") send({jsonrpc:"2.0",id:frame.id,result:{} });
-  else if (frame.method === "session/set_config_option") send({jsonrpc:"2.0",id:frame.id,result:{configOptions:[{id:"thinking",currentValue:frame.params.value}]}});
+  else if (frame.method === "session/set_config_option") send({jsonrpc:"2.0",id:frame.id,result:{configOptions:[{id:frame.params.configId,currentValue:frame.params.value}]}});
   else if (frame.method === "session/prompt") {
     promptRequestId = frame.id;
     send({jsonrpc:"2.0",method:"session/update",params:{sessionId,update:{sessionUpdate:"agent_thought_chunk",messageId:"thought-1",content:{type:"text",text:"分析任务"}}}});

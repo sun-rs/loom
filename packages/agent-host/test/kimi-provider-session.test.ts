@@ -79,6 +79,8 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
         args: ["--prompt", "canonical room worker prompt"],
         env: {
           FAKE_KIMI_RECORD_PATH: recordPath,
+          // Never the user's real Kimi home.
+          KIMI_CODE_HOME: join(directory, "kimi-home"),
           RAH_REQUIRE_SESSION_CONTINUITY: strictContinuity ? "1" : "0",
         },
         standingPromptDigest: "sha256-standing-prompt-digest",
@@ -250,22 +252,28 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
       ),
     );
 
+    // Review P1-1: every established session is pinned to the ACP `default`
+    // mode (session/set_config_option) before its prompt.
     assert.deepEqual(methodsFor("resumed-run"), [
       "initialize",
       "session/resume",
+      "session/set_config_option",
       "session/prompt",
     ]);
     assert.deepEqual(methodsFor("missing-run"), [
       "initialize",
       "session/resume",
       "session/new",
+      "session/set_config_option",
       "session/prompt",
     ]);
     assert.deepEqual(methodsFor("prompt-missing-run"), [
       "initialize",
       "session/resume",
+      "session/set_config_option",
       "session/prompt",
       "session/new",
+      "session/set_config_option",
       "session/prompt",
     ]);
     assert.deepEqual(methodsFor("transient-run"), [
@@ -275,17 +283,20 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
     assert.deepEqual(methodsFor("tool-missing-run"), [
       "initialize",
       "session/resume",
+      "session/set_config_option",
       "session/prompt",
     ]);
     assert.deepEqual(methodsFor("cancel-seed"), [
       "initialize",
       "session/new",
+      "session/set_config_option",
       "session/prompt",
       "session/cancel",
     ]);
     assert.deepEqual(methodsFor("cancel-run"), [
       "initialize",
       "session/new",
+      "session/set_config_option",
       "session/prompt",
     ]);
     const cancelFrames = records
@@ -465,6 +476,8 @@ rl.on("line", (line) => {
   } else if (frame.method === "session/new") {
     activeSessionId = activationId.endsWith("-run") ? "kimi-session-replacement" : "kimi-session-persisted";
     send({jsonrpc:"2.0",id:frame.id,result:{sessionId:activeSessionId}});
+  } else if (frame.method === "session/set_config_option") {
+    send({jsonrpc:"2.0",id:frame.id,result:{configOptions:[{id:frame.params.configId,currentValue:frame.params.value}]}});
   } else if (frame.method === "session/prompt") {
     const line = frame.params.prompt[0].text.split("\\n").find((line) => line.startsWith("Current standing instructions file: "));
     if (line) {

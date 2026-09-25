@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import {
   chmodSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -52,6 +53,8 @@ type Scenario = {
   /** The Host cancels the run (SIGTERM) once the turn's tool is running. */
   cancelWhileRunning?: boolean;
   env?: Record<string, string>;
+  /** Kimi's own persisted session (index + main wire) in a temp KIMI_CODE_HOME. */
+  nativeSession?: { sessionId: string; wire: unknown[] };
 };
 
 async function runTurn(input: Scenario) {
@@ -64,6 +67,21 @@ async function runTurn(input: Scenario) {
   writeFileSync(executable, readFileSync(FAKE), { mode: 0o700 });
   if (input.wake !== undefined)
     writeFileSync(wakePath, input.wake, { mode: 0o600 });
+  // Never the user's real Kimi home: a temp KIMI_CODE_HOME per run.
+  const kimiHome = join(directory, "kimi-home");
+  mkdirSync(kimiHome, { recursive: true });
+  if (input.nativeSession !== undefined) {
+    const sessionDir = join(kimiHome, "sessions", "wd_fake", "session_dir");
+    mkdirSync(join(sessionDir, "agents", "main"), { recursive: true });
+    writeFileSync(
+      join(kimiHome, "session_index.jsonl"),
+      `${JSON.stringify({ sessionId: input.nativeSession.sessionId, sessionDir, workDir: directory })}\n`,
+    );
+    writeFileSync(
+      join(sessionDir, "agents", "main", "wire.jsonl"),
+      input.nativeSession.wire.map((e) => JSON.stringify(e)).join("\n") + "\n",
+    );
+  }
   try {
     const child = spawn(
       process.execPath,
@@ -90,6 +108,7 @@ async function runTurn(input: Scenario) {
           FAKE_TOOL_COMMAND:
             input.toolCommand ?? ": message-post --based-on-room-seq 7 --final",
           RAH_RUN_ATTEMPT_ID: "run-1",
+          KIMI_CODE_HOME: kimiHome,
           ...input.env,
         },
         stdio: ["pipe", "pipe", "pipe", "pipe"],
@@ -395,4 +414,130 @@ test("batch 3 P2-7: a resumed session's wake carries no per-turn standing-file l
   const freshPrompt = fresh.records.find((r) => r.event === "prompt");
   assert.match(String(freshPrompt?.text), /FAKE standing prompt/u);
   assert.match(String(freshPrompt?.text), /standing instructions file/iu);
+});
+
+// Codex review of batches 3-4 P1-1. kimi-code 0.39.1 auto-approves CreateGoal
+// in the `auto` permission mode (never asking the client) and a resumed goal
+// drives continuation turns outside the lane. The driver pins the session to
+// the ACP `default` mode (manual permission) through the per-session
+// `session/set_config_option` and refuses any run it cannot pin.
+const modeRequests = (records: Record<string, unknown>[]) =>
+  sentFrames(records, "session/set_config_option")
+    .map(
+      (r) =>
+        (r.frame as { params: { configId: string; value: string } }).params,
+    )
+    .filter((p) => p.configId === "mode");
+
+test("review P1-1: a session Kimi reports in `auto` is pinned to `default` before the prompt, and the turn runs", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    env: { FAKE_INITIAL_MODE: "auto" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.deepEqual(
+    modeRequests(result.records).map((p) => p.value),
+    ["default"],
+  );
+  const modeAt = result.records.findIndex(
+    (r) =>
+      (r.frame as { params?: { configId?: string } } | undefined)?.params
+        ?.configId === "mode",
+  );
+  const promptAt = result.records.findIndex((r) => r.event === "prompt");
+  assert.ok(
+    modeAt >= 0 && promptAt > modeAt,
+    "mode is pinned before the prompt",
+  );
+});
+
+test("review P1-1: a session that stays in `auto` refuses the run with KIMI_UNSAFE_PERMISSION_MODE; no prompt is sent", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    env: { FAKE_INITIAL_MODE: "auto", FAKE_MODE_LOCKED: "1" },
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.stderr, /KIMI_UNSAFE_PERMISSION_MODE: .*effective=auto/u);
+  assert.equal(sentFrames(result.records, "session/prompt").length, 0);
+  assert.equal(byProtocol(result.frames, "rah-delivery-accepted/v1").length, 0);
+});
+
+test("review P1-1: a resumed session with an active native goal is refused with KIMI_NATIVE_GOAL_ACTIVE before session/resume", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    resume: "kimi-session-goal",
+    nativeSession: {
+      sessionId: "kimi-session-goal",
+      wire: [
+        { type: "metadata", protocol_version: "1.5" },
+        {
+          type: "goal.create",
+          agentId: "main",
+          goalId: "goal-1",
+          objective: "x",
+        },
+      ],
+    },
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.stderr, /KIMI_NATIVE_GOAL_ACTIVE: /u);
+  assert.equal(sentFrames(result.records, "session/resume").length, 0);
+  assert.equal(
+    sentFrames(result.records, "session/new").length,
+    0,
+    "never a silent new session",
+  );
+  assert.equal(sentFrames(result.records, "session/prompt").length, 0);
+});
+
+test("review P1-1: a resumed session whose native goal is paused (or cleared) runs normally", async () => {
+  for (const tail of [
+    {
+      type: "goal.update",
+      agentId: "main",
+      status: "paused",
+      reason: "Paused after agent resume",
+    },
+    { type: "goal.clear", agentId: "main" },
+  ]) {
+    const result = await runTurn({
+      scenario: "reply",
+      wake: WAKE,
+      resume: "kimi-session-goal",
+      nativeSession: {
+        sessionId: "kimi-session-goal",
+        wire: [
+          {
+            type: "goal.create",
+            agentId: "main",
+            goalId: "goal-1",
+            objective: "x",
+          },
+          tail,
+        ],
+      },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(sentFrames(result.records, "session/resume").length, 1);
+    assert.ok(result.records.some((r) => r.event === "tool-completed"));
+  }
+});
+
+test("review P1-1: UpdateGoal and SetGoalBudget permissions (resume or reshape a native goal) are rejected under full_access", async () => {
+  const result = await runTurn({
+    scenario: "updategoal+setgoalbudget+reply",
+    wake: WAKE,
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const answers = result.records.filter((r) => r.event === "goal-permission");
+  assert.deepEqual(
+    answers.map((r) => [r.tool, r.outcome]),
+    [
+      ["UpdateGoal", { optionId: "reject", outcome: "selected" }],
+      ["SetGoalBudget", { optionId: "reject", outcome: "selected" }],
+    ],
+  );
 });

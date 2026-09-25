@@ -153,7 +153,9 @@ export function providerMemoryConfig(runtimeId) {
 // cores stop the cron scheduler and `CronCreate` refuses under
 // `KIMI_DISABLE_CRON=1`, so a cron persisted in a resumed session never fires.
 // Kimi goals have no process switch (only the user's config.toml `[tools]
-// disabled`); the Kimi driver rejects the `CreateGoal` approval instead.
+// disabled`); the Kimi driver pins the ACP `default` (manual) mode, refuses
+// to resume an active native goal and rejects goal-tool approvals instead
+// (kimi-native-autonomy.js).
 function providerAutonomyConfig(runtimeId) {
   return runtimeId === "codex"
     ? { "features.multi_agent": false, "features.goals": false }

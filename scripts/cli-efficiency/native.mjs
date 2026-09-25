@@ -2,6 +2,34 @@ import { isEffectiveAnswer } from "./metrics.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { measure } from "./common.mjs";
+import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+
+// Same process switches as the product app-server (memory and autonomy:
+// multi_agent/goals off), so the native baseline takes the same single-agent
+// path (Codex review of batches 3-4 P2-2).
+export function codexNativeArgs({ model, effort, sessionId, prompt }) {
+  return [
+    "exec",
+    "--json",
+    "--skip-git-repo-check",
+    "--dangerously-bypass-approvals-and-sandbox",
+    "-m",
+    model,
+    "-c",
+    `model_reasoning_effort="${effort}"`,
+    ...providerLaunchPolicy("codex").args,
+    ...(sessionId ? ["resume", sessionId] : []),
+    prompt,
+  ];
+}
+export function codexNativeEnvironment(environment = process.env) {
+  return {
+    ...Object.fromEntries(
+      Object.entries(environment).filter(([k]) => !k.startsWith("RAH_")),
+    ),
+    ...providerLaunchPolicy("codex").environment,
+  };
+}
 // Installed CLI directly; no RAH worker, scheduler or runtime adapter in this arm.
 // config: the gate's exact {model, effort} (required).
 export async function nativeRound({
@@ -18,29 +46,15 @@ export async function nativeRound({
     answer,
     seenId = sessionId,
     stderr = "";
-  const args = [
-    "exec",
-    "--json",
-    "--skip-git-repo-check",
-    "--dangerously-bypass-approvals-and-sandbox",
-    "-m",
-    config.model,
-    "-c",
-    `model_reasoning_effort="${config.effort}"`,
-    "-c",
-    "features.memories=false",
-    "-c",
-    "memories.generate_memories=false",
-    "-c",
-    "memories.use_memories=false",
-    ...(sessionId ? ["resume", sessionId] : []),
+  const args = codexNativeArgs({
+    model: config.model,
+    effort: config.effort,
+    sessionId,
     prompt,
-  ];
+  });
   const child = spawn("codex", args, {
     cwd,
-    env: Object.fromEntries(
-      Object.entries(process.env).filter(([k]) => !k.startsWith("RAH_")),
-    ),
+    env: codexNativeEnvironment(),
     stdio: ["ignore", "pipe", "pipe"],
   });
   round.pid = child.pid;

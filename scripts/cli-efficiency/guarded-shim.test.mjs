@@ -106,3 +106,39 @@ test("guard violation records fail the arm; none recorded passes", () => {
     /Unapproved model claude-opus-5-5/,
   );
 });
+
+test("options carry transport settings only; model/effort overrides are refused", () => {
+  for (const [provider, options] of [
+    ["codex", { socketRecordPath: "/r", model: "gpt-6-sol" }],
+    ["codex", { effort: "high" }],
+    ["codex", { model: "gpt-6-sol", effort: "high" }],
+    ["claude", { injectRecordPath: "/i", model: "opus" }],
+    ["claude", { violationRecordPath: "/elsewhere" }],
+    ["kimi", { effort: "max" }],
+    ["kimi", { socketRecordPath: "/r" }],
+    [
+      "opencode",
+      { compactionOptions: { reasoningEffort: "low" }, model: "x/y" },
+    ],
+    ["codex", { reasoning: "high" }],
+  ]) {
+    const path = join(
+      dir,
+      `override-${provider}-${Object.keys(options).join("-")}.mjs`,
+    );
+    const [model, effort] = APPROVED[provider];
+    assert.throws(
+      () =>
+        writeGuardedShim({
+          provider,
+          path,
+          realCli: "/bin/real",
+          model,
+          effort,
+          options,
+        }),
+      /Unsupported guarded shim option/,
+    );
+    assert.equal(existsSync(path), false);
+  }
+});

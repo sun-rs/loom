@@ -154,7 +154,11 @@ test("S2-c2: a resumed Kimi instance session gets the protocol card (no system l
     const runtime = implementations.createRuntime(active, report, {
       activationEnvironment: () => ({
         args: ["--prompt", "canonical room worker prompt"],
-        env: { FAKE_KIMI_RECORD_PATH: recordPath },
+        env: {
+          FAKE_KIMI_RECORD_PATH: recordPath,
+          // Never the user's real Kimi home.
+          KIMI_CODE_HOME: join(directory, "kimi-home"),
+        },
         standingPromptDigest: "sha256-standing-prompt-digest",
         ...(protocolVersion === undefined
           ? {}
@@ -511,6 +515,8 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   } else if (frame.method === "session/new") {
     sessionId = "kimi-session-" + process.env.RAH_PARTICIPANT_ID;
     send({jsonrpc:"2.0",id:frame.id,result:{sessionId}});
+  } else if (frame.method === "session/set_config_option") {
+    send({jsonrpc:"2.0",id:frame.id,result:{configOptions:[{id:frame.params.configId,currentValue:frame.params.value}]}});
   } else if (frame.method === "session/prompt") {
     send({jsonrpc:"2.0",id:frame.id,result:{stopReason:"end_turn"}});
   }

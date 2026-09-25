@@ -25,6 +25,13 @@ import {
   kimiCompactionCompleted,
 } from "./kimi-acp-events.js";
 import { createKimiFinalInterrupt } from "./kimi-final-interrupt.js";
+import {
+  assertKimiResumeSafe,
+  assertKimiSafeMode,
+  inspectKimiSession,
+  isKimiGoalMutationTool,
+  KIMI_SAFE_MODE_ID,
+} from "./kimi-native-autonomy.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import { providerUsageGap, ProviderUsageWriter } from "./provider-usage.js";
 import {
@@ -88,10 +95,14 @@ let activePromptSettlement;
 let activePrompt;
 let compactionOrdinal = 0;
 
+// Process-only: no native cron turn outside this instance's lane.
+const kimiEnvironment = {
+  ...process.env,
+  ...providerLaunchPolicy("kimi").environment,
+};
 const kimi = spawn(options.executable, providerLaunchArguments("kimi"), {
   cwd: process.cwd(),
-  // Process-only: no native cron turn outside this instance's lane.
-  env: { ...process.env, ...providerLaunchPolicy("kimi").environment },
+  env: kimiEnvironment,
   shell: false,
   stdio: ["pipe", "pipe", "pipe"],
 });
@@ -319,6 +330,10 @@ async function runTurn(resumeSessionId, mcpServers) {
   observedToolActivity = false;
   const method =
     resumeSessionId === undefined ? "session/new" : "session/resume";
+  // Review P1-1: a persisted active native goal would drive turns outside
+  // this lane; refuse before resuming (never a silent new session).
+  if (resumeSessionId !== undefined)
+    assertKimiResumeSafe(inspectKimiSession(resumeSessionId, kimiEnvironment));
   const established = await request(
     method,
     {
@@ -410,22 +425,32 @@ async function configureSession(sessionId) {
       HANDSHAKE_TIMEOUT_MS,
     );
   }
-  if (options.thinkingLevel === undefined) return;
-  const configured = await request(
+  if (options.thinkingLevel !== undefined) {
+    const configured = await request(
+      "session/set_config_option",
+      {
+        configId: "thinking",
+        sessionId,
+        value: options.thinkingLevel,
+      },
+      HANDSHAKE_TIMEOUT_MS,
+    );
+    const effective = configOptionValue(configured, "thinking");
+    if (effective !== options.thinkingLevel) {
+      throw new Error(
+        `Kimi did not confirm thinking=${options.thinkingLevel} (effective=${effective ?? "unknown"})`,
+      );
+    }
+  }
+  // Review P1-1: `auto` (and `yolo`) approve native goal tools without
+  // asking; pin this session to `default` (manual) so every goal mutation
+  // reaches the permission answer below, and refuse an unconfirmed mode.
+  const moded = await request(
     "session/set_config_option",
-    {
-      configId: "thinking",
-      sessionId,
-      value: options.thinkingLevel,
-    },
+    { configId: "mode", sessionId, value: KIMI_SAFE_MODE_ID },
     HANDSHAKE_TIMEOUT_MS,
   );
-  const effective = configOptionValue(configured, "thinking");
-  if (effective !== options.thinkingLevel) {
-    throw new Error(
-      `Kimi did not confirm thinking=${options.thinkingLevel} (effective=${effective ?? "unknown"})`,
-    );
-  }
+  assertKimiSafeMode(configOptionValue(moded, "mode"));
 }
 
 async function handleFrame(frame) {
@@ -485,12 +510,15 @@ async function handleAgentRequest(frame) {
       if (turnCancelled) {
         result = { outcome: { outcome: "cancelled" } };
       } else {
-        // Full review batch 3 P1-6: a native goal drives continuation turns
-        // while idle, outside this instance's lane; kimi-code asks for every
-        // CreateGoal outside its `auto` permission mode.
+        // Full review batch 3 P1-6 / review P1-1: a native goal drives
+        // continuation turns outside this instance's lane. In the pinned
+        // `default` mode kimi-code asks for CreateGoal, UpdateGoal (resume)
+        // and SetGoalBudget; all are rejected.
         const optionId = selectPermissionOption(
           frame.params,
-          isNativeGoalStart(frame.params) ? "reject" : options.toolAccessMode,
+          isNativeGoalMutation(frame.params)
+            ? "reject"
+            : options.toolAccessMode,
         );
         if (optionId === undefined) {
           throw new RpcError(
@@ -658,9 +686,9 @@ function failPending(error) {
 }
 
 /** kimi-code 0.39.1 ACP: a permission's `toolCall.title` is the tool name. */
-function isNativeGoalStart(params) {
+function isNativeGoalMutation(params) {
   return isRecord(params) && isRecord(params.toolCall)
-    ? params.toolCall.title === "CreateGoal"
+    ? isKimiGoalMutationTool(params.toolCall.title)
     : false;
 }
 

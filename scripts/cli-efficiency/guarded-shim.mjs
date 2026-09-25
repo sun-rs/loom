@@ -11,6 +11,16 @@ const MODULES = {
   opencode: ["./drift-opencode-guard.mjs", "runGuardedOpenCode"],
 };
 
+// Transport-only option keys per provider (Codex review of batches 3-4
+// P2-1). The approved model/effort come only from the approval table, so an
+// option can never carry or override them.
+const TRANSPORT_OPTIONS = {
+  codex: new Set(["socketRecordPath"]),
+  claude: new Set(["injectRecordPath"]),
+  kimi: new Set(),
+  opencode: new Set(["compactionOptions", "controlRecordPath"]),
+};
+
 // Post-hoc violations a guard observed after forwarding (JSON lines).
 export const guardViolationPath = (shimPath) => `${shimPath}.violations.jsonl`;
 
@@ -39,10 +49,21 @@ export function writeGuardedShim({
   const entry = MODULES[provider];
   if (!entry) throw new Error(`No gate guard for ${provider}`);
   assertApprovedGateModel({ provider, model, effort });
+  for (const key of Object.keys(options ?? {}))
+    if (!TRANSPORT_OPTIONS[provider].has(key))
+      throw new Error(
+        `Unsupported guarded shim option for ${provider}: ${key}`,
+      );
   const [module, fn] = entry;
   const href = new URL(module, import.meta.url).href;
   const approved =
     provider === "codex" ? { model, effort, ...options } : { model, effort };
+  // Validate exactly what the shim will pass to the guard.
+  assertApprovedGateModel({
+    provider,
+    model: approved.model,
+    effort: approved.effort,
+  });
   const shimOptions =
     provider === "claude"
       ? { ...options, violationRecordPath: guardViolationPath(path) }
