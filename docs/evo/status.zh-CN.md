@@ -354,6 +354,26 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 - 修法：新增 `readOpenCodeCompactionOptions`（`drift-opencode-guard.mjs`），执行 `opencode models <provider> --verbose --pure` 并取批准 variant 的选项。`guarded-shim.mjs` 的 `resolveGateShimOptions` 是唯一调用方，拒绝调用方自带 `compactionOptions`。`prepareGateDaemon` 为效率组和漂移组统一调用它并返回解析结果，漂移组删掉了自己的解析；两组都把解析结果记为 `arm.compactionOptions`。`writeGuardedShim` 现在拒绝写出没有压缩选项的 OpenCode shim。守卫没有放宽。
 - 验证：`guarded-shim.test.mjs` 新增两例，已先确认失败：一例是缺选项时拒写，另一例用 fake CLI 目录验证选项来源、参数和调用方覆盖被拒。另外用真实 `opencode serve`（1.18.32，临时 HOME，只读 `models` 目录，没有模型调用）跑了一次免费验证：经守卫的 shim 通过了配置核对并开始监听，`GET /config` 返回 `model`/`small_model` 为批准绑定、`agent.compaction.options={"reasoningEffort":"low"}`；`PATCH /config` 被 403 拒绝；临时库中会话数和消息数都是 0。付费效率门禁尚未复跑。
 
+### 三十一、累计付费验收（2026-09-25，d917f01，负责人授权）
+
+证据 `docs/evo/evidence/2026-09-25-acc-*.json`（脱敏版，附原始摘要）。模型：Codex gpt-6-luna/low、Claude haiku、Kimi k3-256k/low、OpenCode deepseek-flash/low。
+
+效率门禁（与原生同题 3 轮）：
+
+- Codex：固定开销 2.78k（≤3k，未回退；先前“8.3k”是把逐生成累加的分解项误读为固定开销）。续轮生成与原生相同、输入在预算内，常驻续轮约 7 s vs 原生 9–10 s。首轮多 1 次回复前生成，为模型重读文件（业务工作路径差），平台无协议调用；合同 §6 两处口径冲突待负责人裁定。
+- Claude haiku：常驻续轮达标；首轮固定开销 3.8k、延迟 +6 s 超预算。每轮组第 3 轮（重启后）模型把发帖命令写进代码块，重试一次后正确，门禁硬失败中止该组。
+- Kimi：可测子项全部在预算内（回复时间为原生 41–76%），用量不可得故 missing-evidence。首次运行因门禁 Kimi 守卫拦截 mode=default 而隔离，已修（第二十九节）。
+- OpenCode：每轮组 3 轮在预算内；常驻组首轮纯文本未发帖，重试后正确，门禁硬失败中止。首次运行因门禁未传压缩选项失败，已修（第三十节）。
+- Codex 常驻重启续聊：daemon 重启后同 session 续聊，第 3 轮在延迟与输入预算内。
+
+长会话漂移（10 轮，第 5 轮后压缩）：
+
+- Codex 常驻、OpenCode 常驻：门禁通过（0 重试、压缩后无退化）。
+- Claude 冷/热：沉默轮各一次未执行 message-check → 重试一次；其余正确，送达/目标/Task/final 全对。
+- Kimi 冷：行为全部正确（0 重试），但每轮事后模型核对读不到 wire 记录（modelEvidenceMissing）且压缩未观测到，判 missing-evidence；属门禁取证问题，待修。
+
+首轮纯文本调查（`~/.loom/reviews/2026-09-25-first-turn-plaintext.md`）：失败与成功首轮的平台输入归一化后相同；首轮失败 4/34，后续应答轮 0/136，均一次重试后恰好一条回复。属模型遵守度，原生 CLI 默认把正文当作回答是结构性诱因。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

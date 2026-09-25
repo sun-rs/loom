@@ -1,0 +1,1284 @@
+{
+  "schemaVersion": 1,
+  "gate": "long-session-drift",
+  "root": "<tmp>",
+  "startedAt": "2026-09-25T14:03:03.888Z",
+  "config": {
+    "provider": "kimi",
+    "catalogKind": "kimi-cli/v1",
+    "model": "kimi-code/k3-256k",
+    "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+    "effort": "low",
+    "mode": "cold",
+    "rounds": 10,
+    "compactAt": [5]
+  },
+  "cliVersion": "0.39.1",
+  "codeCommit": "d917f01a723ae1520299dbb3eadd9485ad12982b",
+  "sourceRef": "d917f01a723ae1520299dbb3eadd9485ad12982b",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "criteria": {
+    "finalMinRate": 0.95,
+    "degradationWindow": 3
+  },
+  "scenario": [
+    {
+      "round": 1,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "问题：scripts/workbench-launch-receipt.mjs 导出了哪些函数？回答以“R01答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R01答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 2,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "messages": [
+        {
+          "target": "thread",
+          "body": "复述规则：你靠什么确认消息已送达？"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "thread",
+        "format": {
+          "prefix": "【规则】",
+          "maxChars": null,
+          "mustInclude": ["LOOM-7Q"],
+          "mustIncludeAny": ["message-check", "based-on-room-seq"]
+        }
+      }
+    },
+    {
+      "round": 3,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "【仅供参考】今天下午的例会改到四点。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 4,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "帮我记一下：下周三前补齐网络配置重启的回归测试，建个任务跟进。"
+        },
+        {
+          "target": "room",
+          "body": "补充：看完上一条一起回复，回答以“R04答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R04答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 5,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "@other 请把昨天的构建日志发我一下。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 6,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "问题：测试文件里一共有几个 test 用例？回答以“R06答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R06答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 7,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "@other 你那边的发布清单更新了吗？"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 8,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "messages": [
+        {
+          "target": "thread",
+          "body": "请复述规则：送达是怎么确认的？"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "thread",
+        "format": {
+          "prefix": "【规则】",
+          "maxChars": null,
+          "mustInclude": ["LOOM-7Q"],
+          "mustIncludeAny": ["message-check", "based-on-room-seq"]
+        }
+      }
+    },
+    {
+      "round": 9,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "【仅供参考】构建机今晚十点重启维护。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 10,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "帮我记一下：整理 receipt 字段说明，建个任务跟进。"
+        },
+        {
+          "target": "room",
+          "body": "补充：看完上一条一起回复，回答以“R10答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R10答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    }
+  ],
+  "arm": {
+    "status": "complete",
+    "roomId": "room_52969bc6-3ee8-419c-b9bc-48754539dd5e",
+    "participantId": "principal_08673995-d39a-4446-95c4-11eb072434cc",
+    "threadCreated": true,
+    "sessionId": "session_c12f6837-9cc9-4cce-8a11-5a73e2521f16",
+    "placements": [
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      }
+    ]
+  },
+  "processes": [
+    {
+      "pid": 79643,
+      "startedAt": "2026-09-25T14:03:06.606Z",
+      "finishedAt": "2026-09-25T14:08:35.272Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "startedAt": "2026-09-25T14:03:06.661Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_a5c15e44-114b-449f-adaa-2be60353031a"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:03:16.211Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 1,
+        "template": "qa",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": false,
+            "prefixOk": true,
+            "lengthOk": false,
+            "includeOk": true,
+            "chars": 76
+          },
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["format", "modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_26fd319c-bf34-4d2a-9848-7ad71af285d8",
+          "activationId": "activation_7babfb90-08eb-4240-9f08-9f63012ce780",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:03:06.724Z",
+          "finishedAt": "2026-09-25T14:03:16.119Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_26fd319c-bf34-4d2a-9848-7ad71af285d8",
+          "eventId": "event_8f6fb74b-b70a-4b47-b74c-033a1aa33f38",
+          "roomSeq": 9,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 9,
+          "target": "room",
+          "chars": 76,
+          "body": "R01答：导出 restartNetworkEnvironment、readLaunchReceipt、writeLaunchReceipt 三个函数。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 8.767,
+      "settledSeconds": 9.459
+    },
+    {
+      "round": 2,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "startedAt": "2026-09-25T14:03:16.231Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_0ddcad0c-a913-4fa1-8bd8-ae5a614248e7"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:03:23.689Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 2,
+        "template": "thread-recall",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 147
+          },
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_fefedfc3-9806-44f4-9332-6a89ce24c400",
+          "activationId": "activation_1da6a6a4-5e8c-4405-b51b-61cc7ee9cd2c",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:03:16.293Z",
+          "finishedAt": "2026-09-25T14:03:23.620Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_fefedfc3-9806-44f4-9332-6a89ce24c400",
+          "eventId": "event_6148e2c2-bc0d-47e2-95b4-a0790725bfe2",
+          "roomSeq": 19,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 19,
+          "target": "thread",
+          "chars": 147,
+          "body": "【规则】暗号 LOOM-7Q。我靠 Worker 命令 message-check（或以 --based-on-room-seq 回复时自动附带的送达确认）来确认消息已送达；message-post 返回的 Message ID 只是提交结果，送达确认由 message-check 自动完成。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 6.7,
+      "settledSeconds": 7.39
+    },
+    {
+      "round": 3,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "startedAt": "2026-09-25T14:03:23.701Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_a157d9d3-38d2-471f-b048-32162d95d2c9"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:03:31.318Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 3,
+        "template": "fyi",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_60dd578d-6ad9-4c1b-b377-f649b9918472",
+          "activationId": "activation_63eb52e4-a58c-47a4-8d0b-04341061d4b2",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:03:23.856Z",
+          "finishedAt": "2026-09-25T14:03:31.296Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": null,
+      "firstReplySeconds": null,
+      "settledSeconds": 7.596
+    },
+    {
+      "round": 4,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "startedAt": "2026-09-25T14:03:31.327Z",
+      "compactedBefore": false,
+      "humanMessageIds": [
+        "message_f5f0a63d-a36c-4349-b0b3-a725e6c44271",
+        "message_2ea7885e-d0ee-4ce5-af93-d903d2690cd1"
+      ],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:03:38.640Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 4,
+        "template": "task-window",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 36
+          },
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": true,
+      "runs": [
+        {
+          "runAttemptId": "run_10da4b2c-a73c-413c-9bd8-06979ee99db5",
+          "activationId": "activation_0afa21d5-4d86-463f-93b6-7ca1f0ce5ddd",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:03:31.401Z",
+          "finishedAt": "2026-09-25T14:03:38.632Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_10da4b2c-a73c-413c-9bd8-06979ee99db5",
+          "eventId": "event_914d9bd5-d06b-414d-bc1c-cdc3c697990e",
+          "roomSeq": 37,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 37,
+          "target": "room",
+          "chars": 36,
+          "body": "R04答：我是只读助理，不能建Task；请您自行创建该回归测试跟进任务。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 6.611,
+      "settledSeconds": 7.306
+    },
+    {
+      "round": 5,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "startedAt": "2026-09-25T14:03:38.656Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_1d8a3206-c893-4278-a363-c4da4fa6e0ba"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:03:51.228Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 5,
+        "template": "other",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_89baef95-9932-4d76-bc9b-767500fb6bd1",
+          "activationId": "activation_a30b716e-067f-4840-ae55-42edf5376e8c",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:03:38.704Z",
+          "finishedAt": "2026-09-25T14:03:51.177Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": null,
+      "firstReplySeconds": null,
+      "settledSeconds": 12.522
+    },
+    {
+      "round": 6,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "startedAt": "2026-09-25T14:07:52.255Z",
+      "compactedBefore": true,
+      "humanMessageIds": ["message_0d4c7bcf-d9c9-40b2-98cd-2f7981fb78ee"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:08:00.979Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 6,
+        "template": "qa",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 20
+          },
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_2aa6ae85-efcf-4127-9301-98bd60de4ede",
+          "activationId": "activation_35b4ff31-146e-4ecd-b46c-da2405552b6c",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:07:52.451Z",
+          "finishedAt": "2026-09-25T14:08:00.942Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_2aa6ae85-efcf-4127-9301-98bd60de4ede",
+          "eventId": "event_626c9982-5ec1-4f44-9d76-5f0ba5c00cb5",
+          "roomSeq": 54,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 54,
+          "target": "room",
+          "chars": 20,
+          "body": "R06答：测试文件共10个test用例。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 8.003,
+      "settledSeconds": 8.688
+    },
+    {
+      "round": 7,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "startedAt": "2026-09-25T14:08:00.989Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_6d60df39-1187-4094-8adc-19ca1d656f22"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:08:11.766Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 7,
+        "template": "other",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_e9fab259-926f-4036-a12d-7a5015c60eef",
+          "activationId": "activation_188567cd-b3f9-4597-905c-ae03eda46fc8",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:08:01.003Z",
+          "finishedAt": "2026-09-25T14:08:11.762Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": null,
+      "firstReplySeconds": null,
+      "settledSeconds": 10.773
+    },
+    {
+      "round": 8,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "startedAt": "2026-09-25T14:08:11.776Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_f40e851c-fa54-4724-ac14-f2a4f6126dfc"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:08:20.191Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 8,
+        "template": "thread-recall",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 128
+          },
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_a3549366-a397-4e2b-8917-3c8759c9b4ed",
+          "activationId": "activation_242b8559-00e1-4332-a50a-fbc8843306a2",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:08:11.823Z",
+          "finishedAt": "2026-09-25T14:08:20.155Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_a3549366-a397-4e2b-8917-3c8759c9b4ed",
+          "eventId": "event_46ec31be-c4f3-4c9e-8d06-2f6db0641896",
+          "roomSeq": 71,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 71,
+          "target": "thread",
+          "chars": 128,
+          "body": "【规则】暗号 LOOM-7Q。送达靠 Worker 自动确认：message-check 或带 --based-on-room-seq 的 message-post 回复会附带送达确认；message-post 返回 Message ID 即已投递到频道。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 7.698,
+      "settledSeconds": 8.38
+    },
+    {
+      "round": 9,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "startedAt": "2026-09-25T14:08:20.201Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_13b9742a-f2c8-4db3-be77-20e59a45b71f"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:08:29.787Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 9,
+        "template": "fyi",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_5bdbefd0-6713-464f-9dea-fa8a5b0b8ac2",
+          "activationId": "activation_c895052e-e12f-4874-9bd5-57e283695d67",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:08:20.382Z",
+          "finishedAt": "2026-09-25T14:08:29.703Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": null,
+      "firstReplySeconds": null,
+      "settledSeconds": 9.503
+    },
+    {
+      "round": 10,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "startedAt": "2026-09-25T14:08:29.800Z",
+      "compactedBefore": false,
+      "humanMessageIds": [
+        "message_fd51792e-03dd-40ef-9fc1-fac36d427975",
+        "message_944890bc-2a65-47b2-9ee2-b6196d565151"
+      ],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:08:35.251Z",
+      "modelEvidence": {
+        "status": "missing",
+        "reason": "Expected exactly one Kimi session wire, found 0"
+      },
+      "evaluation": {
+        "round": 10,
+        "template": "task-window",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 37
+          },
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": null,
+            "input": null,
+            "uncached": null,
+            "completeness": "unavailable"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "missing",
+            "reason": "Expected exactly one Kimi session wire, found 0"
+          }
+        },
+        "failures": ["modelEvidenceMissing"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": true,
+      "runs": [
+        {
+          "runAttemptId": "run_7383df02-ad89-4b74-8d51-d655d3234593",
+          "activationId": "activation_e86dbfd8-ad73-4d56-9c16-3fccd867cd13",
+          "attemptNumber": 1,
+          "state": "exited",
+          "exitCode": 0,
+          "startedAt": "2026-09-25T14:08:29.953Z",
+          "finishedAt": "2026-09-25T14:08:35.184Z",
+          "executionMode": null
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_7383df02-ad89-4b74-8d51-d655d3234593",
+          "eventId": "event_67270ccd-a848-4493-9aa8-869653253694",
+          "roomSeq": 89,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 89,
+          "target": "room",
+          "chars": 37,
+          "body": "R10答：我不能创建任务，请您自行创建Task跟进receipt字段整理。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 4.696,
+      "settledSeconds": 5.385
+    }
+  ],
+  "compactions": [
+    {
+      "afterRound": 5,
+      "provider": "kimi",
+      "mode": "cold",
+      "mechanism": "kimi-acp:/compact builtin via short-lived acp",
+      "forced": true,
+      "contextBefore": 26405,
+      "reply": {
+        "completed": false,
+        "background": true,
+        "alreadyRunning": false,
+        "blocked": false,
+        "tokensBefore": null,
+        "tokensAfter": null
+      },
+      "contextAfter": 27318,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "durationMs": 241013,
+      "observed": false
+    }
+  ],
+  "status": "missing-evidence",
+  "catalogVerifiedAt": "2026-09-25T14:03:04.368Z",
+  "summary": {
+    "totals": {
+      "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "expectedReplies": 6,
+      "delivered": 6,
+      "wrongTarget": 0,
+      "targetRejections": null,
+      "targetRejectionsObserved": 0,
+      "targetRejectionsUnobservedRounds": 10,
+      "silentRounds": 4,
+      "silenceViolations": 0,
+      "forbiddenTasks": 0,
+      "finalPosts": 6,
+      "finalOnLastPost": 6,
+      "finalRate": 1,
+      "formatChecked": 6,
+      "formatOk": 5,
+      "formatRate": 0.8333333333333334,
+      "turnHandleChecked": 0,
+      "turnHandleOk": 0,
+      "turnHandleRate": null,
+      "quarantined": 0,
+      "retries": 0,
+      "ackIncomplete": 0,
+      "turnHandleMissing": 0,
+      "failedRounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "meanGenerations": null,
+      "meanInput": null,
+      "meanUncached": null,
+      "meanFirstReplySeconds": 7.1,
+      "meanSettledSeconds": 8.7
+    },
+    "windows": [
+      {
+        "afterRound": 5,
+        "compaction": {
+          "forced": true,
+          "observed": false,
+          "mechanism": "kimi-acp:/compact builtin via short-lived acp"
+        },
+        "before": {
+          "rounds": [1, 2, 3, 4, 5],
+          "expectedReplies": 3,
+          "delivered": 3,
+          "wrongTarget": 0,
+          "targetRejections": null,
+          "targetRejectionsObserved": 0,
+          "targetRejectionsUnobservedRounds": 5,
+          "silentRounds": 2,
+          "silenceViolations": 0,
+          "forbiddenTasks": 0,
+          "finalPosts": 3,
+          "finalOnLastPost": 3,
+          "finalRate": 1,
+          "formatChecked": 3,
+          "formatOk": 2,
+          "formatRate": 0.6666666666666666,
+          "turnHandleChecked": 0,
+          "turnHandleOk": 0,
+          "turnHandleRate": null,
+          "quarantined": 0,
+          "retries": 0,
+          "ackIncomplete": 0,
+          "turnHandleMissing": 0,
+          "failedRounds": [1, 2, 3, 4, 5],
+          "meanGenerations": null,
+          "meanInput": null,
+          "meanUncached": null,
+          "meanFirstReplySeconds": 7.4,
+          "meanSettledSeconds": 8.9
+        },
+        "after": {
+          "rounds": [6, 7, 8],
+          "expectedReplies": 2,
+          "delivered": 2,
+          "wrongTarget": 0,
+          "targetRejections": null,
+          "targetRejectionsObserved": 0,
+          "targetRejectionsUnobservedRounds": 3,
+          "silentRounds": 1,
+          "silenceViolations": 0,
+          "forbiddenTasks": 0,
+          "finalPosts": 2,
+          "finalOnLastPost": 2,
+          "finalRate": 1,
+          "formatChecked": 2,
+          "formatOk": 2,
+          "formatRate": 1,
+          "turnHandleChecked": 0,
+          "turnHandleOk": 0,
+          "turnHandleRate": null,
+          "quarantined": 0,
+          "retries": 0,
+          "ackIncomplete": 0,
+          "turnHandleMissing": 0,
+          "failedRounds": [6, 7, 8],
+          "meanGenerations": null,
+          "meanInput": null,
+          "meanUncached": null,
+          "meanFirstReplySeconds": 7.9,
+          "meanSettledSeconds": 9.3
+        },
+        "degraded": false,
+        "reasons": []
+      }
+    ],
+    "criteria": {
+      "delivery100": true,
+      "wrongTarget0": true,
+      "forbiddenTask0": true,
+      "silence0": true,
+      "final95": true,
+      "noDegradation": true,
+      "noQuarantine": true,
+      "ack100": true,
+      "noRetry": true,
+      "turnHandle100": true,
+      "noHardRoundFailure": true
+    },
+    "hardFailures": [],
+    "evidenceGaps": [
+      "compaction5NotObserved",
+      "round1:modelEvidenceMissing",
+      "round2:modelEvidenceMissing",
+      "round3:modelEvidenceMissing",
+      "round4:modelEvidenceMissing",
+      "round5:modelEvidenceMissing",
+      "round6:modelEvidenceMissing",
+      "round7:modelEvidenceMissing",
+      "round8:modelEvidenceMissing",
+      "round9:modelEvidenceMissing",
+      "round10:modelEvidenceMissing"
+    ],
+    "status": "missing-evidence"
+  },
+  "finishedAt": "2026-09-25T14:08:35.275Z",
+  "rawResultSha256": "77a03ed98429506fd63078fa1a52b34f3a4cd36fa266863dc7680befba7f0aa2"
+}

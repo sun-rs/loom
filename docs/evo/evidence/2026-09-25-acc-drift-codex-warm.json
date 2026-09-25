@@ -1,0 +1,1255 @@
+{
+  "schemaVersion": 1,
+  "gate": "long-session-drift",
+  "root": "<tmp>",
+  "startedAt": "2026-09-25T14:01:28.183Z",
+  "config": {
+    "provider": "codex",
+    "catalogKind": "codex-cli/v1",
+    "model": "gpt-6-luna",
+    "bindingId": "local:codex-cli/v1:gpt-6-luna",
+    "effort": "low",
+    "mode": "warm",
+    "rounds": 10,
+    "compactAt": [5]
+  },
+  "cliVersion": "codex-cli 0.156.1",
+  "codeCommit": "d917f01a723ae1520299dbb3eadd9485ad12982b",
+  "sourceRef": "d917f01a723ae1520299dbb3eadd9485ad12982b",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "criteria": {
+    "finalMinRate": 0.95,
+    "degradationWindow": 3
+  },
+  "scenario": [
+    {
+      "round": 1,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "问题：scripts/workbench-launch-receipt.mjs 导出了哪些函数？回答以“R01答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R01答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 2,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "messages": [
+        {
+          "target": "thread",
+          "body": "复述规则：你靠什么确认消息已送达？"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "thread",
+        "format": {
+          "prefix": "【规则】",
+          "maxChars": null,
+          "mustInclude": ["LOOM-7Q"],
+          "mustIncludeAny": ["message-check", "based-on-room-seq"]
+        }
+      }
+    },
+    {
+      "round": 3,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "【仅供参考】今天下午的例会改到四点。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 4,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "帮我记一下：下周三前补齐网络配置重启的回归测试，建个任务跟进。"
+        },
+        {
+          "target": "room",
+          "body": "补充：看完上一条一起回复，回答以“R04答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R04答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 5,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "@other 请把昨天的构建日志发我一下。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 6,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "问题：测试文件里一共有几个 test 用例？回答以“R06答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R06答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 7,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "@other 你那边的发布清单更新了吗？"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 8,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "messages": [
+        {
+          "target": "thread",
+          "body": "请复述规则：送达是怎么确认的？"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "thread",
+        "format": {
+          "prefix": "【规则】",
+          "maxChars": null,
+          "mustInclude": ["LOOM-7Q"],
+          "mustIncludeAny": ["message-check", "based-on-room-seq"]
+        }
+      }
+    },
+    {
+      "round": 9,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "【仅供参考】构建机今晚十点重启维护。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 10,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "帮我记一下：整理 receipt 字段说明，建个任务跟进。"
+        },
+        {
+          "target": "room",
+          "body": "补充：看完上一条一起回复，回答以“R10答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R10答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    }
+  ],
+  "arm": {
+    "status": "complete",
+    "roomId": "room_64a53c0b-07dc-4979-b4ef-59eee8c102ab",
+    "participantId": "principal_aa1f537b-5dcd-42ae-9192-6a9d6f1f66f9",
+    "threadCreated": true,
+    "sessionId": "01a0d8df-07ee-7993-840c-1058710b8874",
+    "placements": [
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      {
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      }
+    ]
+  },
+  "processes": [
+    {
+      "pid": 77749,
+      "startedAt": "2026-09-25T14:01:29.989Z",
+      "finishedAt": "2026-09-25T14:02:46.458Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "startedAt": "2026-09-25T14:01:30.045Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_c73243e3-6fcb-4929-b35b-2c9515981070"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:01:44.045Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 1,
+        "template": "qa",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": false,
+            "prefixOk": true,
+            "lengthOk": false,
+            "includeOk": true,
+            "chars": 73
+          },
+          "turnHandle": true,
+          "warmExecution": ["cold"],
+          "usage": {
+            "generations": 3,
+            "input": 55293,
+            "uncached": 13053,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": ["format"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_2e4dc16c-9654-407f-990c-4285a3d663c2",
+          "activationId": "activation_4e5ae058-5f0c-4dad-b15f-9bfc5060e771",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:01:30.112Z",
+          "finishedAt": "2026-09-25T14:01:43.970Z",
+          "executionMode": "cold"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_2e4dc16c-9654-407f-990c-4285a3d663c2",
+          "eventId": "event_1f33ad7d-1fd2-452f-918f-5c4ac65c64e4",
+          "roomSeq": 9,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 9,
+          "target": "room",
+          "chars": 73,
+          "body": "R01答：导出 restartNetworkEnvironment、readLaunchReceipt 和 writeLaunchReceipt。"
+        }
+      ],
+      "toolCallKinds": ["other", "other", "box-post"],
+      "firstReplySeconds": 13.905,
+      "settledSeconds": 13.926
+    },
+    {
+      "round": 2,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "startedAt": "2026-09-25T14:01:44.071Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_87ad90ef-595d-4408-9079-09baa2611070"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:01:48.383Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 2,
+        "template": "thread-recall",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": false,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": false,
+            "chars": 53
+          },
+          "turnHandle": true,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 1,
+            "input": 20992,
+            "uncached": 2816,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": ["format"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_3076df3a-3270-413b-97d7-af090da3b898",
+          "activationId": "activation_0f2f3c3b-5127-468f-9699-84e1035a79a7",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:01:44.214Z",
+          "finishedAt": "2026-09-25T14:01:48.367Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_3076df3a-3270-413b-97d7-af090da3b898",
+          "eventId": "event_db47265f-903b-4ffe-829b-451d37f28d06",
+          "roomSeq": 19,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 19,
+          "target": "thread",
+          "chars": 53,
+          "body": "【规则】我靠 Worker 的自动投递确认（message-check 或基于序号的回复）确认消息已送达。"
+        }
+      ],
+      "toolCallKinds": ["box-post"],
+      "firstReplySeconds": 4.277,
+      "settledSeconds": 4.297
+    },
+    {
+      "round": 3,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "startedAt": "2026-09-25T14:01:48.399Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_482629f0-03fc-418c-b28e-2d73ac3cd4eb"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:01:52.514Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 3,
+        "template": "fyi",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 2,
+            "input": 42953,
+            "uncached": 2505,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_817d46ec-c772-44e5-94d5-e95ce85c04fa",
+          "activationId": "activation_58478d9d-b3a6-4fc1-8c68-cbe303545f9f",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:01:48.496Z",
+          "finishedAt": "2026-09-25T14:01:52.415Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": ["box-check"],
+      "firstReplySeconds": null,
+      "settledSeconds": 4.017
+    },
+    {
+      "round": 4,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "startedAt": "2026-09-25T14:01:52.541Z",
+      "compactedBefore": false,
+      "humanMessageIds": [
+        "message_8d66b083-d070-468f-abcb-dfe5dc6714aa",
+        "message_c778950e-9819-4a81-b602-3812c878e4fc"
+      ],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:00.057Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 4,
+        "template": "task-window",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 39
+          },
+          "turnHandle": true,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 2,
+            "input": 43943,
+            "uncached": 1447,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": true,
+      "runs": [
+        {
+          "runAttemptId": "run_ab930b2a-3686-455e-bf28-959f46029399",
+          "activationId": "activation_82eac5ea-1e9c-41aa-9508-f8ac7bdcdf84",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:01:52.783Z",
+          "finishedAt": "2026-09-25T14:01:59.972Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_ab930b2a-3686-455e-bf28-959f46029399",
+          "eventId": "event_cc2212e7-e8ca-4619-b8cf-e9d796d9e6fd",
+          "roomSeq": 37,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 37,
+          "target": "room",
+          "chars": 39,
+          "body": "R04答：下周三前补齐网络配置重启回归测试。请 Human 自行创建任务跟进。"
+        }
+      ],
+      "toolCallKinds": ["box-check", "box-post"],
+      "firstReplySeconds": 7.413,
+      "settledSeconds": 7.432
+    },
+    {
+      "round": 5,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "startedAt": "2026-09-25T14:02:00.076Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_0fbdbff3-2924-4068-8561-19e8407f46bc"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:04.053Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 5,
+        "template": "other",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 2,
+            "input": 45181,
+            "uncached": 1661,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_977ce65a-27ae-4a87-9f2d-34e17d3f2747",
+          "activationId": "activation_b2cc2051-10cc-431d-aeec-664a426b460e",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:02:00.090Z",
+          "finishedAt": "2026-09-25T14:02:03.964Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": ["box-check"],
+      "firstReplySeconds": null,
+      "settledSeconds": 3.889
+    },
+    {
+      "round": 6,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "startedAt": "2026-09-25T14:02:12.669Z",
+      "compactedBefore": true,
+      "humanMessageIds": ["message_bd9f1d73-5d28-45eb-87d8-5435280ef54b"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:23.704Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 6,
+        "template": "qa",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 27
+          },
+          "turnHandle": true,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 2,
+            "input": 38199,
+            "uncached": 9015,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_b9d3bf73-816c-4a80-8230-66adac745f2a",
+          "activationId": "activation_9b6d8bbc-9a1a-4a58-ac19-49509c655be8",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:02:12.694Z",
+          "finishedAt": "2026-09-25T14:02:23.616Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_b9d3bf73-816c-4a80-8230-66adac745f2a",
+          "eventId": "event_55f2c2bf-4768-4df5-ab47-3d5fac6d52f3",
+          "roomSeq": 54,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 54,
+          "target": "room",
+          "chars": 27,
+          "body": "R06答：测试文件里一共有 10 个 test 用例。"
+        }
+      ],
+      "toolCallKinds": ["other", "box-post"],
+      "firstReplySeconds": 10.929,
+      "settledSeconds": 10.948
+    },
+    {
+      "round": 7,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "startedAt": "2026-09-25T14:02:23.724Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_7d920119-fbfb-4622-a1e3-5813ea8147ce"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:28.809Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 7,
+        "template": "other",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 2,
+            "input": 39591,
+            "uncached": 2215,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_ea7f5515-3b33-4476-8c15-082054cd498b",
+          "activationId": "activation_029cdbb4-cda3-49fa-af55-c26e2f75c248",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:02:23.775Z",
+          "finishedAt": "2026-09-25T14:02:28.715Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": ["box-check"],
+      "firstReplySeconds": null,
+      "settledSeconds": 4.992
+    },
+    {
+      "round": 8,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "startedAt": "2026-09-25T14:02:28.833Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_0beca2a3-ea93-4eb8-a895-e16db5e09712"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:34.216Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 8,
+        "template": "thread-recall",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 85
+          },
+          "turnHandle": true,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 1,
+            "input": 20074,
+            "uncached": 874,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_a6eb3887-dda7-41c5-b2b9-6a86e8cc40ae",
+          "activationId": "activation_669e1be4-f976-46bd-8e6c-025610d0fab1",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:02:29.065Z",
+          "finishedAt": "2026-09-25T14:02:34.152Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_a6eb3887-dda7-41c5-b2b9-6a86e8cc40ae",
+          "eventId": "event_0134a621-0c7f-4adb-95ee-6048163905ad",
+          "roomSeq": 71,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 71,
+          "target": "thread",
+          "chars": 85,
+          "body": "【规则】我用 Worker 的 message-check 命令确认消息已送达；回复时也可用 --based-on-room-seq 参数确认送达。暗号：LOOM-7Q。"
+        }
+      ],
+      "toolCallKinds": ["box-post"],
+      "firstReplySeconds": 5.301,
+      "settledSeconds": 5.32
+    },
+    {
+      "round": 9,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "startedAt": "2026-09-25T14:02:34.235Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_9a5a5213-8518-4617-bf56-b2dfc0d5d365"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:41.725Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 9,
+        "template": "fyi",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": null,
+          "turnHandle": null,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 2,
+            "input": 41239,
+            "uncached": 1815,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_d88c0a85-563e-42ec-a8a8-2673983f2820",
+          "activationId": "activation_c19b9050-4f8e-4c75-954b-6f878b48e7f0",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:02:34.351Z",
+          "finishedAt": "2026-09-25T14:02:41.649Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": ["box-check"],
+      "firstReplySeconds": null,
+      "settledSeconds": 7.416
+    },
+    {
+      "round": 10,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "startedAt": "2026-09-25T14:02:41.760Z",
+      "compactedBefore": false,
+      "humanMessageIds": [
+        "message_d11ad8d5-a71f-496c-91df-c7cc3156e6ac",
+        "message_965685be-0a2a-4b1e-a170-ae835b3746d0"
+      ],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-25T14:02:46.275Z",
+      "modelEvidence": {
+        "status": "verified",
+        "records": 1
+      },
+      "evaluation": {
+        "round": 10,
+        "template": "task-window",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": 0,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 31
+          },
+          "turnHandle": true,
+          "warmExecution": ["warm"],
+          "usage": {
+            "generations": 1,
+            "input": 20954,
+            "uncached": 730,
+            "completeness": "complete"
+          },
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 1
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": true,
+      "runs": [
+        {
+          "runAttemptId": "run_84e013ba-6fdc-4f06-b54f-886d2ed0b517",
+          "activationId": "activation_31a33d57-565d-4c7f-b648-f93945377a7a",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-25T14:02:41.913Z",
+          "finishedAt": "2026-09-25T14:02:46.181Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_84e013ba-6fdc-4f06-b54f-886d2ed0b517",
+          "eventId": "event_579840b4-42d1-4497-ae5a-cce0bf349d6c",
+          "roomSeq": 89,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 89,
+          "target": "room",
+          "chars": 31,
+          "body": "R10答：我不能创建或跟进任务，请 Human 自行创建任务。"
+        }
+      ],
+      "toolCallKinds": ["box-post"],
+      "firstReplySeconds": 4.402,
+      "settledSeconds": 4.421
+    }
+  ],
+  "compactions": [
+    {
+      "afterRound": 5,
+      "provider": "codex",
+      "mode": "warm",
+      "mechanism": "codex-warm:thread/compact/start via guarded socket",
+      "forced": true,
+      "rolloutBefore": 0,
+      "notified": false,
+      "rolloutAfter": 1,
+      "turn": {
+        "started": false,
+        "completed": false
+      },
+      "durationMs": 8586,
+      "observed": true
+    }
+  ],
+  "status": "pass",
+  "catalogVerifiedAt": "2026-09-25T14:01:28.205Z",
+  "summary": {
+    "totals": {
+      "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "expectedReplies": 6,
+      "delivered": 6,
+      "wrongTarget": 0,
+      "targetRejections": 0,
+      "targetRejectionsObserved": 0,
+      "targetRejectionsUnobservedRounds": 0,
+      "silentRounds": 4,
+      "silenceViolations": 0,
+      "forbiddenTasks": 0,
+      "finalPosts": 6,
+      "finalOnLastPost": 6,
+      "finalRate": 1,
+      "formatChecked": 6,
+      "formatOk": 4,
+      "formatRate": 0.6666666666666666,
+      "turnHandleChecked": 6,
+      "turnHandleOk": 6,
+      "turnHandleRate": 1,
+      "quarantined": 0,
+      "retries": 0,
+      "ackIncomplete": 0,
+      "turnHandleMissing": 0,
+      "failedRounds": [1, 2],
+      "meanGenerations": 1.8,
+      "meanInput": 36841.9,
+      "meanUncached": 3613.1,
+      "meanFirstReplySeconds": 7.7,
+      "meanSettledSeconds": 6.7
+    },
+    "windows": [
+      {
+        "afterRound": 5,
+        "compaction": {
+          "forced": true,
+          "observed": true,
+          "mechanism": "codex-warm:thread/compact/start via guarded socket"
+        },
+        "before": {
+          "rounds": [1, 2, 3, 4, 5],
+          "expectedReplies": 3,
+          "delivered": 3,
+          "wrongTarget": 0,
+          "targetRejections": 0,
+          "targetRejectionsObserved": 0,
+          "targetRejectionsUnobservedRounds": 0,
+          "silentRounds": 2,
+          "silenceViolations": 0,
+          "forbiddenTasks": 0,
+          "finalPosts": 3,
+          "finalOnLastPost": 3,
+          "finalRate": 1,
+          "formatChecked": 3,
+          "formatOk": 1,
+          "formatRate": 0.3333333333333333,
+          "turnHandleChecked": 3,
+          "turnHandleOk": 3,
+          "turnHandleRate": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackIncomplete": 0,
+          "turnHandleMissing": 0,
+          "failedRounds": [1, 2],
+          "meanGenerations": 2,
+          "meanInput": 41672.4,
+          "meanUncached": 4296.4,
+          "meanFirstReplySeconds": 8.5,
+          "meanSettledSeconds": 6.7
+        },
+        "after": {
+          "rounds": [6, 7, 8],
+          "expectedReplies": 2,
+          "delivered": 2,
+          "wrongTarget": 0,
+          "targetRejections": 0,
+          "targetRejectionsObserved": 0,
+          "targetRejectionsUnobservedRounds": 0,
+          "silentRounds": 1,
+          "silenceViolations": 0,
+          "forbiddenTasks": 0,
+          "finalPosts": 2,
+          "finalOnLastPost": 2,
+          "finalRate": 1,
+          "formatChecked": 2,
+          "formatOk": 2,
+          "formatRate": 1,
+          "turnHandleChecked": 2,
+          "turnHandleOk": 2,
+          "turnHandleRate": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackIncomplete": 0,
+          "turnHandleMissing": 0,
+          "failedRounds": [],
+          "meanGenerations": 1.7,
+          "meanInput": 32621.3,
+          "meanUncached": 4034.7,
+          "meanFirstReplySeconds": 8.1,
+          "meanSettledSeconds": 7.1
+        },
+        "degraded": false,
+        "reasons": []
+      }
+    ],
+    "criteria": {
+      "delivery100": true,
+      "wrongTarget0": true,
+      "forbiddenTask0": true,
+      "silence0": true,
+      "final95": true,
+      "noDegradation": true,
+      "noQuarantine": true,
+      "ack100": true,
+      "noRetry": true,
+      "turnHandle100": true,
+      "noHardRoundFailure": true
+    },
+    "hardFailures": [],
+    "evidenceGaps": [],
+    "status": "pass"
+  },
+  "finishedAt": "2026-09-25T14:02:46.461Z",
+  "rawResultSha256": "9f5dc1dc1f215bbbb844c319df8b11f086025a5f38530a611d29cf9d6f63987d"
+}
