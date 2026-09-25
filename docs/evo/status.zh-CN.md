@@ -206,6 +206,13 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - 测试：`fixtures/fake-claude-stream.mjs` 按真实规则设置退出码（最后一条 result 为 `is_error` 时退出 1），新增 `FAKE_INTERRUPT_TERMINAL_REASON`。改后既有三条中断用例与新增的“真实退出码”用例在旧实现下都失败（exit 1，报错与真实证据相同），修复后通过。`claude-final-reply-driver.test.ts` 新增“中断在途时出现 model_error 仍判失败”。`agent-host.test.ts` 新增三例：退出码 1 + final 标记 + ACK → completed，不再启动；有标记无 ACK → 重试；有 ACK 无标记 → 重试。其中第一例在旧实现下失败（重试）。`claude-warm-driver-close.test.ts` 新增真实顺序用例：先回执，再 aborted_tools is_error result，Claude 退出 1 时 shutdown 仍退出 0。这一例写完即通过，属于特征测试。
 - 未解决：真实付费复测未跑。热模式首轮为何走 cold 执行未查。有标记但未 ACK 的重试仍按运行失败信息记录 `last_error`，不会触发“上次已发 final”的重试提醒（行为与之前相同）。
 
+### 二十二、Claude Haiku 真实冒烟复测（8491489）
+
+负责人授权 Claude Code 2.1.282 `haiku`（Haiku 4.5，无 effort），漂移门禁 10 轮、第 5 轮后强制压缩。
+
+- 冷模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-cold.json`）：门禁通过。送达 100%、每轮一条回复、0 重试、0 隔离、目标错投 0、沉默与 Task 规则全对、`--final` 与 ACK 100%；压缩前后无退化。第 1 轮格式超长（模型遵守度）。第二十一节修复前同一场景第 1 轮三次重复回复并隔离，修复后消失。
+- 热模式（`docs/evo/evidence/2026-09-25-drift-claude-haiku-warm.json`）：第 2–10 轮全部正确，续聊平均约 5–7 s；压缩后无退化。第 1 轮首次尝试（新会话首轮走冷执行）模型只输出正文未调用 `message-post`，无 ACK，按规则重试一次后正确回复，全轮仅一条回复。两次热模式复测都出现，属于 Haiku 首轮协议遵守问题，门禁记为 retried（violated）。是否需要在首轮给出更强的工具调用约束待后续对比 Sonnet 再定；不以提示词补丁处理。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |
