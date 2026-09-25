@@ -186,6 +186,85 @@ test("Claude version model and explicit effort both reach the CLI", async () => 
   }
 });
 
+test("Claude binding without effort levels (Haiku) launches with --model and no --effort", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-claude-effortless-"));
+  try {
+    const executable = join(directory, "fake-claude.mjs");
+    const recordPath = join(directory, "record.jsonl");
+    writeFileSync(executable, fakeClaude, { mode: 0o700 });
+    const registry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "registry.db"),
+      hostId: "host-claude",
+    });
+    registry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const revision = registry.importManifest(manifest(executable));
+    const report = registry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    const active = registry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    const binding =
+      report.reportVersion === 2
+        ? report.modelBindings.find((b) => b.modelId === "haiku")
+        : undefined;
+    assert.ok(binding, "the probe publishes the effortless binding");
+    assert.deepEqual(binding.supportedReasoning, []);
+    const runtime = implementations.createRuntime(
+      active,
+      report,
+      {
+        cwd: directory,
+        supervisorDirectory: join(directory, "supervisors"),
+        activationEnvironment: () => ({
+          args: ["--prompt", "test prompt"],
+          env: { FAKE_CLAUDE_RECORD_PATH: recordPath },
+        }),
+      },
+      {
+        source: "explicit_binding",
+        modelBindingId: binding.modelBindingId,
+        modelId: binding.modelId,
+        provider: binding.provider,
+      },
+      "full_access",
+    );
+    const run = await runtime.start(
+      {
+        activationId: "activation-effortless",
+        consumerId: "consumer-effortless",
+        fromSeq: 1,
+        toSeq: 1,
+        hostId: "host-claude",
+        participantId: "agent-effortless",
+        roomId: "room-effortless",
+        runAttemptId: "run-effortless",
+        reason: "manual",
+      },
+      { registerPrepared: async () => undefined },
+    );
+    assert.equal((await runtime.reap(run)).code, 0);
+    const spawn = readFileSync(recordPath, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line))
+      .find((row) => row.kind === "spawn");
+    assert.deepEqual(
+      spawn.args.filter((a: string) => a === "--model"),
+      ["--model"],
+    );
+    assert.equal(spawn.args[spawn.args.indexOf("--model") + 1], "haiku");
+    assert.equal(
+      spawn.args.some((a: string) => a.startsWith("--effort")),
+      false,
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("Claude stream-json resumes only accepted sessions and interrupts natively", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-claude-provider-session-"));
   chmodSync(directory, 0o700);
@@ -609,7 +688,7 @@ if (args.includes("--input-format") && args.includes("stream-json") && !activati
   rl.on("line", (line) => {
     const frame = JSON.parse(line);
     if (frame.type === "control_request") process.stdout.write(JSON.stringify({
-      type:"control_response",response:{request_id:frame.request_id,subtype:"success",response:{models:[{value:"claude-test",displayName:"Claude Test",description:"test",supportsEffort:true,supportedEffortLevels:["low","high"]}]}}
+      type:"control_response",response:{request_id:frame.request_id,subtype:"success",response:{models:[{value:"claude-test",displayName:"Claude Test",description:"test",supportsEffort:true,supportedEffortLevels:["low","high"]},{value:"haiku",displayName:"Haiku (fake)",description:"no effort levels",supportsEffort:false}]}}
     }) + "\\n");
   });
 } else {

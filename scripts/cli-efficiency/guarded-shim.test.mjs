@@ -37,5 +37,13 @@ test("each provider's shim calls its own guard with the exact model/effort", () 
     /runGuardedKimi\("\/bin\/real", \{"model":"m","effort":"e"\}\)/,
   );
   assert.equal(statSync(join(dir, "kimi.mjs")).mode & 0o777, 0o700);
-  assert.throws(() => read("opencode"), /No gate guard/);
+  const opencode = read("opencode", {
+    compactionOptions: { reasoningEffort: "e" },
+  });
+  assert.match(opencode, /drift-opencode-guard\.mjs/);
+  assert.match(
+    opencode,
+    /runGuardedOpenCode\("\/bin\/real", \{"model":"m","effort":"e"\}, \{"compactionOptions":\{"reasoningEffort":"e"\}\}\)/,
+  );
+  assert.throws(() => read("gemini"), /No gate guard/);
 });

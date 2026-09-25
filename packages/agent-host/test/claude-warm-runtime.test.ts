@@ -54,6 +54,9 @@ async function harness(
     policy?: WarmRuntimePolicyOverrides;
     env?: Record<string, string>;
     interruptQuiesceTimeoutMs?: number;
+    resolvedModel?: ConstructorParameters<
+      typeof CodexWarmAdapter
+    >[0]["resolvedModel"];
   } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-claude-"));
@@ -149,6 +152,9 @@ async function harness(
       ...(options.interruptQuiesceTimeoutMs === undefined
         ? {}
         : { interruptQuiesceTimeoutMs: options.interruptQuiesceTimeoutMs }),
+      ...(options.resolvedModel === undefined
+        ? {}
+        : { resolvedModel: options.resolvedModel }),
       isWarm: () => true,
       issueWorkerCredential: async (input) =>
         worker.issueActivationCredential(host, input),
@@ -356,6 +362,38 @@ test("warm Claude: three Activations run on one process and one session, each qu
     const [row] = sql(state, "SELECT state, pid FROM instance_runtimes");
     assert.equal(row?.state, "idle");
     assert.ok(alive(Number(row?.pid)));
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm Claude: a binding without effort levels (Haiku) runs with --model and no --effort on one process", async () => {
+  const state = await harness({
+    resolvedModel: {
+      source: "explicit_binding",
+      modelBindingId: "local:claude-cli/v1:haiku",
+      modelId: "haiku",
+      provider: "anthropic",
+    },
+  });
+  try {
+    for (let turn = 1; turn <= 2; turn += 1) {
+      state.post(`[fake:ack] effortless ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+    }
+    assert.equal(starts(state).length, 1, "one Claude process");
+    const argv = starts(state)[0]!.argv as string[];
+    assert.deepEqual(
+      argv.filter((a) => a === "--model"),
+      ["--model"],
+    );
+    assert.equal(argv[argv.indexOf("--model") + 1], "haiku");
+    assert.equal(
+      argv.some((a) => a.startsWith("--effort")),
+      false,
+    );
+    assert.equal(turns(state).length, 2);
   } finally {
     await state.cleanup();
   }

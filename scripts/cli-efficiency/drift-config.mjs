@@ -8,8 +8,21 @@ const PROVIDERS = {
     catalogKind: "claude-cli/v1",
     modes: ["cold", "warm"],
     efforts: ["low", "medium", "high", "xhigh", "max"],
+    // Bindings the installed Claude Code catalog publishes without effort
+    // levels (probed 2026-09-25: `haiku`, Haiku 4.5, supportsEffort false).
+    // Only these may run with RAH_DRIFT_EFFORT=none; they must.
+    effortless: ["haiku"],
+  },
+  // OpenCode binding ids are `provider/model`; the reasoning level is the
+  // catalog variant, sent as `variant` on every prompt.
+  opencode: {
+    catalogKind: "opencode-cli/v1",
+    modes: ["cold", "warm"],
+    modelPattern: /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._/:-]*$/u,
   },
 };
+// The explicit "no effort" value (an effortless Claude binding only).
+export const DRIFT_NO_EFFORT = "none";
 export const DRIFT_DEFAULTS = { rounds: 20, compactAt: "8,15", mode: "cold" };
 const MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/:-]{0,199}$/u;
 const EFFORT_PATTERN = /^[a-z][a-z0-9_-]{0,31}$/u;
@@ -20,8 +33,14 @@ export function parseDriftEnv(env) {
   };
   const provider = env.RAH_DRIFT_PROVIDER;
   if (!Object.hasOwn(PROVIDERS, provider ?? ""))
-    fail("RAH_DRIFT_PROVIDER must be codex, claude or kimi");
-  const { catalogKind, modes, efforts } = PROVIDERS[provider];
+    fail("RAH_DRIFT_PROVIDER must be codex, claude, kimi or opencode");
+  const {
+    catalogKind,
+    modes,
+    efforts,
+    effortless = [],
+    modelPattern,
+  } = PROVIDERS[provider];
   // RAH_DRIFT_MODEL is the catalog binding id: either the full
   // `local:<kind>:<modelId>` form or the bare model id the CLI publishes.
   const rawModel = env.RAH_DRIFT_MODEL;
@@ -35,12 +54,26 @@ export function parseDriftEnv(env) {
     model = rawModel.slice(prefix.length);
   }
   if (!model) fail("RAH_DRIFT_MODEL has an empty model id");
-  const effort = env.RAH_DRIFT_EFFORT;
+  if (modelPattern !== undefined && !modelPattern.test(model))
+    fail(`RAH_DRIFT_MODEL must be a provider/model binding for ${provider}`);
+  const rawEffort = env.RAH_DRIFT_EFFORT;
+  const noEffort = effortless.includes(model);
+  if (noEffort && rawEffort !== DRIFT_NO_EFFORT)
+    fail(
+      `RAH_DRIFT_EFFORT must be ${DRIFT_NO_EFFORT}: ${model} publishes no effort levels`,
+    );
+  if (!noEffort && rawEffort === DRIFT_NO_EFFORT)
+    fail(
+      `RAH_DRIFT_EFFORT=${DRIFT_NO_EFFORT} is allowed only for an effortless binding (${provider}: ${effortless.join(", ") || "none"})`,
+    );
+  // null: no effort argument at all (the guard then admits zero --effort).
+  const effort = noEffort ? null : rawEffort;
   if (
-    !effort ||
-    !EFFORT_PATTERN.test(effort) ||
-    effort === "default" ||
-    (efforts !== undefined && !efforts.includes(effort))
+    !noEffort &&
+    (!effort ||
+      !EFFORT_PATTERN.test(effort) ||
+      effort === "default" ||
+      (efforts !== undefined && !efforts.includes(effort)))
   )
     fail("RAH_DRIFT_EFFORT must name an explicit reasoning level");
   const mode = env.RAH_DRIFT_MODE ?? DRIFT_DEFAULTS.mode;

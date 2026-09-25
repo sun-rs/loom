@@ -252,3 +252,58 @@ test("injection: timeout without a boundary is reported, input flushed", async (
   const again = await h.gate.inject("/compact", { sessionId: "s" });
   assert.equal(again.refused, "busy");
 });
+
+test("launch: an effortless (Haiku) approval needs exactly one --model and zero --effort", () => {
+  const haiku = { model: "haiku", effort: null };
+  const i = product.indexOf("--model");
+  // The product omits --effort for a binding without effort levels.
+  const haikuTurn = [
+    ...product.slice(0, i),
+    "--model",
+    "haiku",
+    ...product.slice(i + 4),
+  ];
+  assert.ok(!haikuTurn.includes("--effort"));
+  assert.equal(classifyClaudeLaunch(haikuTurn, haiku), "turn");
+  assert.equal(classifyClaudeLaunch(catalog, haiku), "catalog");
+  assert.equal(classifyClaudeLaunch(["--version"], haiku), "version");
+  for (const args of [
+    [...haikuTurn, "--effort", "low"],
+    [...haikuTurn, "--effort=low"],
+    [...haikuTurn, "--effort", ""],
+    [...haikuTurn, "--model", "haiku"],
+    haikuTurn.map((a) => (a === "haiku" ? "sonnet" : a)),
+    haikuTurn.filter((a) => a !== "--model" && a !== "haiku"),
+    [...haikuTurn, "--fallback-model", "sonnet"],
+  ])
+    assert.throws(
+      () => classifyClaudeLaunch(args, haiku),
+      /Unapproved|Unsupported/,
+      JSON.stringify(args.slice(-3)),
+    );
+});
+
+test("launch: an approval must state its effort; only null means none", () => {
+  const turn = product;
+  for (const approval of [
+    { model: "sonnet" },
+    { model: "sonnet", effort: "" },
+    { model: "sonnet", effort: undefined },
+    { effort: null },
+  ])
+    assert.throws(
+      () => classifyClaudeLaunch(turn, approval),
+      /Guard needs/,
+      JSON.stringify(approval),
+    );
+  // A non-effortless approval still refuses a launch without --effort.
+  const i = product.indexOf("--effort");
+  assert.throws(
+    () =>
+      classifyClaudeLaunch(
+        [...product.slice(0, i), ...product.slice(i + 2)],
+        approved,
+      ),
+    /Unapproved effort/,
+  );
+});

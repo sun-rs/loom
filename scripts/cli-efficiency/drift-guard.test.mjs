@@ -210,3 +210,48 @@ test("claude compaction evidence: compact_boundary or transcript growth, same se
     false,
   );
 });
+
+test("claude haiku compaction: /compact with --model only, and the guard admits it", async () => {
+  const { claudeCompactArgs } = await import("./drift-compaction.mjs");
+  const { classifyClaudeLaunch } = await import("./claude-guard.mjs");
+  const args = claudeCompactArgs({
+    model: "haiku",
+    effort: null,
+    sessionId: "s-1",
+  });
+  assert.equal(args[args.indexOf("--model") + 1], "haiku");
+  assert.ok(!args.includes("--effort"));
+  assert.equal(
+    classifyClaudeLaunch(args, { model: "haiku", effort: null }),
+    "turn",
+  );
+  assert.throws(
+    () => claudeCompactArgs({ model: "sonnet", sessionId: "s" }),
+    /effort/,
+  );
+});
+
+test("claude transcript fence: an effortless approval admits no recorded effort", async () => {
+  const { assertClaudeTranscriptModel } = await import("./native-claude.mjs");
+  const haiku = { model: "haiku", effort: null };
+  assertClaudeTranscriptModel(
+    { models: ["claude-haiku-4-5-20251001"], efforts: [] },
+    haiku,
+  );
+  assert.throws(
+    () =>
+      assertClaudeTranscriptModel(
+        { models: ["claude-haiku-4-5-20251001"], efforts: ["medium"] },
+        haiku,
+      ),
+    /Unapproved effort/,
+  );
+  assert.throws(
+    () =>
+      assertClaudeTranscriptModel(
+        { models: ["claude-sonnet-5"], efforts: [] },
+        haiku,
+      ),
+    /Unapproved model/,
+  );
+});

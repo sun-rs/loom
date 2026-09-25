@@ -18,6 +18,13 @@ import { wait, transcript } from "./common.mjs";
 import { createCodexRequestGuard } from "./model-guard.mjs";
 import { createKimiRequestGuard } from "./drift-kimi-guard.mjs";
 import {
+  assertOpenCodeAssistants,
+  createOpenCodeRequestGuard,
+  openCodeVariantOptions,
+  parseOpenCodeBinding,
+  readOpenCodeRound,
+} from "./drift-opencode-guard.mjs";
+import {
   codexToolCalls,
   countCodexCompactions,
   countCodexTargetRejections,
@@ -29,6 +36,8 @@ import {
   compactCodexPerTurn,
   compactCodexWarm,
   compactKimi,
+  compactOpenCodePerTurn,
+  compactOpenCodeWarm,
 } from "./drift-compaction.mjs";
 import { writeGuardedShim } from "./guarded-shim.mjs";
 import { claudeTranscriptRound } from "./claude-usage.mjs";
@@ -65,6 +74,27 @@ export async function runDriftArm({
     encoding: "utf8",
   }).trim();
   const socketRecordPath = join(root, "warm-sockets.jsonl");
+  // OpenCode: the approved variant's provider options (from the CLI's own
+  // verbose catalog) become the compaction agent's options, because the
+  // native summarize request carries no variant.
+  const compactionOptions =
+    provider === "opencode"
+      ? openCodeVariantOptions(
+          execFileSync(
+            realCli,
+            [
+              "models",
+              parseOpenCodeBinding(model).providerID,
+              "--verbose",
+              "--pure",
+            ],
+            { encoding: "utf8", timeout: 60_000 },
+          ),
+          model,
+          effort,
+        )
+      : undefined;
+  if (compactionOptions) result.arm.compactionOptions = compactionOptions;
   const shim = writeGuardedShim({
     provider,
     path: join(root, `guarded-${provider}.mjs`),
@@ -72,13 +102,21 @@ export async function runDriftArm({
     model,
     effort,
     // Codex: the warm socket proxy record; Claude warm: the /compact
-    // injection socket record (both cross the same fence).
+    // injection socket record; OpenCode warm: the summarize socket record
+    // (all cross the same fence).
     options:
       provider === "codex"
         ? { socketRecordPath }
         : provider === "claude" && mode === "warm"
           ? { injectRecordPath: socketRecordPath }
-          : {},
+          : provider === "opencode"
+            ? {
+                compactionOptions,
+                ...(mode === "warm"
+                  ? { controlRecordPath: socketRecordPath }
+                  : {}),
+              }
+            : {},
   });
   // Claude compaction launches are fenced by classifyClaudeLaunch instead.
   const validate =
@@ -86,10 +124,14 @@ export async function runDriftArm({
       ? createCodexRequestGuard({ model, effort })
       : provider === "kimi"
         ? createKimiRequestGuard({ model, effort })
-        : undefined;
+        : provider === "opencode"
+          ? createOpenCodeRequestGuard({ model, effort })
+          : undefined;
+  // effort null (effortless Haiku): the product sends no effort argument.
+  const reasoning = effort ?? "default";
   const spec = {
     ...localCliRuntimeSpec(provider, cwd),
-    reasoning: effort,
+    reasoning,
     executable: shim,
   };
   const prepared = await prepareLocalWorkbench({
@@ -217,10 +259,17 @@ export async function runDriftArm({
       (b) => b.modelBindingId === bindingId,
     );
     assert.equal(binding?.modelId, model, "Approved binding not offered");
-    assert.ok(
-      binding.supportedReasoning.includes(effort),
-      "Approved effort not offered",
-    );
+    if (effort === null)
+      assert.deepEqual(
+        binding.supportedReasoning,
+        [],
+        "Effortless binding offers effort levels",
+      );
+    else
+      assert.ok(
+        binding.supportedReasoning.includes(effort),
+        "Approved effort not offered",
+      );
     const control = prepared.metadata.controlRoomId;
     const roomId = (
       await post("/v3/client/rooms/create", {
@@ -251,7 +300,7 @@ export async function runDriftArm({
           modelIntent: {
             exactBindingIds: [bindingId],
             fallback: "disabled",
-            reasoning: effort,
+            reasoning,
             serviceTier: "default",
           },
           toolAccessMode: "full_access",
@@ -464,6 +513,25 @@ export async function runDriftArm({
           round.transcriptError = String(error.message).slice(0, 200);
         }
       }
+      if (provider === "opencode" && current) {
+        // Stored assistants of the session tree in this round's window: the
+        // post-hoc fence (model and variant) and natural compactions.
+        try {
+          const t = assertOpenCodeAssistants(
+            readOpenCodeRound(
+              current,
+              Date.parse(startedAt),
+              Date.parse(round.finishedAt),
+            ),
+            config,
+          );
+          rolloutCompactions = t.compactions;
+          round.openCodeAssistants = t.assistants;
+        } catch (error) {
+          if (/Unapproved/.test(String(error.message))) throw error;
+          round.transcriptError = String(error.message).slice(0, 200);
+        }
+      }
       if (provider === "codex" && current) {
         try {
           const events = transcript(current).filter(
@@ -574,6 +642,26 @@ export async function runDriftArm({
             socketPath: lines.at(-1).socketPath,
             sessionId: current,
           });
+        } else if (provider === "opencode" && mode === "warm") {
+          const lines = socketLines().map((l) => JSON.parse(l));
+          assert.ok(
+            lines.length,
+            "Warm serve compaction socket was not recorded by the guard",
+          );
+          record = await compactOpenCodeWarm({
+            socketPath: lines.at(-1).socketPath,
+            sessionId: current,
+          });
+        } else if (provider === "opencode") {
+          record = await compactOpenCodePerTurn({
+            opencode: realCli,
+            cwd,
+            sessionId: current,
+            model,
+            effort,
+            compactionOptions,
+            validate,
+          });
         } else if (provider === "claude") {
           record = await compactClaudePerTurn({
             claude: realCli,
@@ -635,7 +723,11 @@ export async function runDriftArm({
     }));
     for (const p of result.arm.placements) {
       assert.equal(p.modelId, model, "Placement used another model");
-      assert.equal(p.reasoning, effort, "Placement used another effort");
+      assert.equal(
+        p.reasoning,
+        effort ?? undefined,
+        "Placement used another effort",
+      );
     }
     result.arm.status = "complete";
   } finally {

@@ -1,6 +1,8 @@
 // Test-only model fence for Claude Code, used by the paid efficiency and
 // drift gates. It fails closed: a launch that could run a model turn must
-// carry exactly one `--model` and one `--effort` with the approved values,
+// carry exactly one `--model` and one `--effort` with the approved values
+// (an approval with `effort: null`, the effortless Haiku binding, requires
+// exactly one `--model` and zero `--effort`),
 // and the stream-json stdin may carry only user input, interrupts and
 // control responses (no set_model / thinking / flag-settings requests).
 //
@@ -42,8 +44,10 @@ function flagValues(args, long, short) {
 // "version" | "catalog" | "turn"; throws for anything else.
 export function classifyClaudeLaunch(args, approved) {
   assert.ok(
-    approved?.model && approved?.effort,
-    "Guard needs model and effort",
+    approved?.model &&
+      (approved.effort === null ||
+        (typeof approved.effort === "string" && approved.effort !== "")),
+    "Guard needs model and effort (null only for an effortless binding)",
   );
   if (args.length === 1 && ["--version", "-v"].includes(args[0]))
     return "version";
@@ -68,7 +72,10 @@ export function classifyClaudeLaunch(args, approved) {
   if (!print) throw new Error("Unsupported gate CLI command");
   if (models.length !== 1 || models[0] !== approved.model)
     throw new Error("Unapproved model (exactly one approved --model required)");
-  if (efforts.length !== 1 || efforts[0] !== approved.effort)
+  if (approved.effort === null) {
+    if (efforts.length !== 0)
+      throw new Error("Unapproved effort (this binding admits no --effort)");
+  } else if (efforts.length !== 1 || efforts[0] !== approved.effort)
     throw new Error(
       "Unapproved effort (exactly one approved --effort required)",
     );

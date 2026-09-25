@@ -80,10 +80,18 @@ try {
   });
   const binding = catalog.find((b) => b.modelBindingId === config.bindingId);
   assert.equal(binding?.modelId, config.model, "Binding not in CLI catalog");
-  assert.ok(
-    binding.supportedReasoning.includes(config.effort),
-    "Effort not supported by binding",
-  );
+  if (config.effort === null)
+    // RAH_DRIFT_EFFORT=none: the binding must publish no effort levels.
+    assert.deepEqual(
+      binding.supportedReasoning,
+      [],
+      "Binding publishes effort levels; an explicit effort is required",
+    );
+  else
+    assert.ok(
+      binding.supportedReasoning.includes(config.effort),
+      "Effort not supported by binding",
+    );
   result.catalogVerifiedAt = new Date().toISOString();
   save();
   const cwd = join(root, "workspace");

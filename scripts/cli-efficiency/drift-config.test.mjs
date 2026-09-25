@@ -76,3 +76,96 @@ test("claude: warm and cold, claude-cli binding, Claude effort levels", () => {
   assert.equal(cold.bindingId, "local:claude-cli/v1:sonnet");
   assert.equal(parseDriftEnv({ ...env, RAH_DRIFT_MODE: "warm" }).mode, "warm");
 });
+
+test("claude haiku: RAH_DRIFT_EFFORT=none yields a null effort, cold and warm", () => {
+  const env = {
+    RAH_DRIFT_PROVIDER: "claude",
+    RAH_DRIFT_MODEL: "haiku",
+    RAH_DRIFT_EFFORT: "none",
+  };
+  const cold = parseDriftEnv(env);
+  assert.equal(cold.effort, null);
+  assert.equal(cold.model, "haiku");
+  assert.equal(cold.bindingId, "local:claude-cli/v1:haiku");
+  assert.equal(parseDriftEnv({ ...env, RAH_DRIFT_MODE: "warm" }).mode, "warm");
+  assert.equal(
+    parseDriftEnv({ ...env, RAH_DRIFT_MODEL: "local:claude-cli/v1:haiku" })
+      .effort,
+    null,
+  );
+});
+
+test("effort none is fail-closed: only for the effortless Claude binding, which requires it", () => {
+  const bad = [
+    // Haiku with an explicit effort, or without any effort value.
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "haiku",
+      RAH_DRIFT_EFFORT: "low",
+    },
+    { RAH_DRIFT_PROVIDER: "claude", RAH_DRIFT_MODEL: "haiku" },
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "haiku",
+      RAH_DRIFT_EFFORT: "default",
+    },
+    // Other Claude models still need an explicit effort.
+    {
+      RAH_DRIFT_PROVIDER: "claude",
+      RAH_DRIFT_MODEL: "sonnet",
+      RAH_DRIFT_EFFORT: "none",
+    },
+    { RAH_DRIFT_PROVIDER: "claude", RAH_DRIFT_MODEL: "sonnet" },
+    // Other providers never accept none.
+    { ...base, RAH_DRIFT_EFFORT: "none" },
+    {
+      RAH_DRIFT_PROVIDER: "opencode",
+      RAH_DRIFT_MODEL: "deepseek/deepseek-v4-flash",
+      RAH_DRIFT_EFFORT: "none",
+    },
+  ];
+  for (const env of bad)
+    assert.throws(
+      () => parseDriftEnv(env),
+      /Invalid drift gate/,
+      JSON.stringify(env),
+    );
+});
+
+test("opencode: cold and warm, opencode-cli binding, provider/model ids", () => {
+  const env = {
+    RAH_DRIFT_PROVIDER: "opencode",
+    RAH_DRIFT_MODEL: "deepseek/deepseek-v4-flash",
+    RAH_DRIFT_EFFORT: "low",
+  };
+  const cold = parseDriftEnv(env);
+  assert.equal(cold.mode, "cold");
+  assert.equal(cold.catalogKind, "opencode-cli/v1");
+  assert.equal(cold.model, "deepseek/deepseek-v4-flash");
+  assert.equal(cold.effort, "low");
+  assert.equal(
+    cold.bindingId,
+    "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+  );
+  assert.equal(parseDriftEnv({ ...env, RAH_DRIFT_MODE: "warm" }).mode, "warm");
+  assert.equal(
+    parseDriftEnv({
+      ...env,
+      RAH_DRIFT_MODEL: "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+    }).model,
+    "deepseek/deepseek-v4-flash",
+  );
+  const bad = [
+    { ...env, RAH_DRIFT_MODEL: "deepseek-v4-flash" },
+    { ...env, RAH_DRIFT_MODEL: "local:claude-cli/v1:haiku" },
+    { ...env, RAH_DRIFT_EFFORT: undefined },
+    { ...env, RAH_DRIFT_EFFORT: "default" },
+    { ...env, RAH_DRIFT_MODE: "hot" },
+  ];
+  for (const b of bad)
+    assert.throws(
+      () => parseDriftEnv(b),
+      /Invalid drift gate/,
+      JSON.stringify(b),
+    );
+});

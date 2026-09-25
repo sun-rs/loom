@@ -164,6 +164,35 @@ evo 的目标合同见 [target-contract](target-contract.zh-CN.md)（owner 2026-
 - Claude 忙时输入：final 已 armed 后仍启动的幸存 notice 也会被再次中断，其中断结果归属 final 结束、不记错误；notice 回执文字改为"已写入、等待原生确认"。测试：`claude-warm-driver-close.test.ts`。
 - 仍未验证（需付费冒烟）：真实 Claude 的 result/lifecycle 先后顺序与旧版 CLI 形状、真实 OpenCode abort 与下一次模型请求的时序及 abort 超时频率、SSE 顺序、压缩后规则；以上修复只由 fake 确定性测试证明。审查指出的 `opencode-event-identity.js` 只按 session+role 过滤（非当前轮 ancestry）未在本批修改。
 
+### 二十、漂移门禁支持 Claude Haiku 与 OpenCode
+
+负责人于 2026-09-25 为冒烟授权两个付费模型：Claude Code 用 Haiku 4.5（无 effort 参数），OpenCode 用
+`deepseek/deepseek-v4-flash` + `low`。本批只改 gate 与测试，未跑付费 CLI，未重启服务，热模式默认值不变
+（[漂移 gate 文档](../design/long-session-drift-gate.zh-CN.md)）。
+
+- Claude Haiku：免费目录探针（`probeLocalModelCatalog`，只发 `initialize`）确认本机 Claude Code 2.1.282 发布的 binding
+  为 `haiku`（Haiku 4.5，`supportsEffort: false`，无 effort 档位）。`RAH_DRIFT_EFFORT=none` 只许且必须用于该 binding，
+  其他 Claude 模型仍须显式 effort；`claude-guard.mjs` 对 `effort: null` 要求恰好一个 `--model`、零个 `--effort`；
+  压缩参数、transcript 事后围栏、placement 核对同步处理。产品侧无需改动：Role `reasoning: default` 时冷驱动
+  （`runtime-implementation-registry.ts`）与热驱动（`codex-warm-adapter.ts` → `claude-warm-driver.mjs`）都不传 `--effort`；
+  新增两条免费产品测试固定该行为（`claude-provider-session.test.ts`、`claude-warm-runtime.test.ts`，写完即通过，属
+  特征测试）。
+- OpenCode：`drift-config` 增加 `opencode`（`opencode-cli/v1`，cold/warm，warm 经既有 `warmRuntimes.opencode`）。新
+  `drift-opencode-guard.mjs`：守卫 shim 把真实 `opencode serve` 移到另一回环端口，自己在产品指定端口做 fail-closed
+  HTTP 代理，逐个校验冷驱动与热 serve 的每次 `POST /message`（许可 model + variant）、summarize 与其余请求白名单，
+  并在监听前核对合并配置中无 agent 固定到其他模型；每轮再读 `opencode.db` 做事后模型/variant 围栏。
+- OpenCode 强制压缩：原生入口 `POST /session/:id/summarize {providerID, modelID}`（1.18.32 `/doc` 核实，无 variant
+  字段；源码 `SessionCompaction.process` 选项合并含 `agent.options`），gate 把许可 variant 的选项注入为
+  `agent.compaction.options` 并核对生效。冷：短生命周期 serve；热：经 shim 私有 socket，压缩期间隐藏该 session 的
+  SSE 事件、暂存驱动 prompt。观察证据为新完成的 compaction assistant。用量沿用产品 `step-finish` 归一化。
+- 测试（免费）：`drift-config.test.mjs`（Haiku `none`、非 Haiku 缺 effort / 用 `none` 被拒、opencode 解析）、
+  `claude-guard.test.mjs`（Haiku 带 `--effort` 被拒、批准值必须声明 effort）、`drift-guard.test.mjs`（Haiku 压缩参数与
+  transcript 围栏）、`drift-opencode-guard.test.mjs`（错误模型/variant/路由被拒、配置核对、variant 选项解析、压缩证据、
+  SSE 过滤，以及用假 OpenCode 的 shim 端到端：代理放行、隐藏压缩、违规 403 并关闭、启动时拒绝他模 agent、冷压缩）。
+- 阻塞：2026-09-25 本机 OpenCode 目录已无 `deepseek/deepseek-v4-flash`（现为 `deepseek/deepseek-flash`＝V4.1 Flash、
+  `deepseek/deepseek-v4-pro`、`aihubmix/deepseek-v4.1-flash`），按授权 id 运行会在付费调用前的目录核对处失败；
+  gate 不替换模型，需负责人确认。Haiku transcript 是否记录 effort 字段未知，若记录会被判越权。
+
 ## 已知缺陷（待阶段 3 修复）
 
 | 级别 | 问题                                                                                                                                                                                 | 位置                                                      |

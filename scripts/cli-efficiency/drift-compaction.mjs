@@ -21,6 +21,14 @@
 //   claude warm:    the guarded shim (claude-guard.mjs) injects `/compact` as
 //                   a stream-json user message into the idle warm process;
 //                   its frames never reach the product driver.
+//   opencode per-turn: after the round's run exited, a short-lived
+//                   `opencode serve` (the approved compaction reasoning in
+//                   its config) receives the native `POST
+//                   /session/:id/summarize` with the approved model;
+//                   observed by the new finished compaction assistant.
+//   opencode warm:  the guarded shim (drift-opencode-guard.mjs) sends the
+//                   same summarize to the idle warm serve; the session's
+//                   events never reach the product driver.
 import { spawn } from "node:child_process";
 import { globSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -39,6 +47,15 @@ import {
 } from "./claude-usage.mjs";
 import { nativeEnvironment, runLines } from "./cli-process.mjs";
 import { readClaudeTranscript } from "./provider-files.mjs";
+import {
+  allocateLoopbackPort,
+  assertOpenCodeServerConfig,
+  openCodeSessionDirectory,
+  openCodeSummarize,
+  requestOpenCodeCompaction,
+  waitForOpenCodeConfig,
+  withCompactionOptions,
+} from "./drift-opencode-guard.mjs";
 
 const COMPACTION_TIMEOUT_MS = 240_000;
 
@@ -465,7 +482,10 @@ export async function compactKimi({
   return record;
 }
 
+// effort null: the effortless (Haiku) binding, launched without --effort.
 export function claudeCompactArgs({ model, effort, sessionId }) {
+  if (effort === undefined || effort === "")
+    throw new Error("Claude compaction needs an effort (null for none)");
   return [
     "-p",
     "/compact",
@@ -474,8 +494,7 @@ export function claudeCompactArgs({ model, effort, sessionId }) {
     "--verbose",
     "--model",
     model,
-    "--effort",
-    effort,
+    ...(effort === null ? [] : ["--effort", effort]),
     "--resume",
     sessionId,
   ];
@@ -593,6 +612,125 @@ export async function compactClaudeWarm({
     record.error = String(error.message ?? error).slice(0, 300);
     record.observed = false;
   }
+  record.durationMs = Date.now() - started;
+  return record;
+}
+
+// A model-fence violation fails the gate instead of becoming a record error.
+const rethrowUnapproved = (error) => {
+  if (/Unapproved/u.test(String(error?.message ?? error))) throw error;
+};
+
+export async function compactOpenCodePerTurn({
+  opencode,
+  cwd,
+  sessionId,
+  model,
+  effort,
+  compactionOptions,
+  validate,
+  dbPath,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const record = {
+    mechanism:
+      "opencode-per-turn:POST /session/:id/summarize via short-lived serve",
+    forced: true,
+  };
+  // The session belongs to the directory it was created in.
+  let directory = cwd;
+  try {
+    directory = openCodeSessionDirectory(sessionId, dbPath) ?? cwd;
+  } catch {
+    // keep cwd; a wrong directory makes summarize fail visibly
+  }
+  const port = await allocateLoopbackPort();
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const approved = { model, effort, compactionOptions };
+  let child;
+  const exited = { done: false };
+  try {
+    child = spawn(
+      opencode,
+      ["serve", "--pure", "--hostname", "127.0.0.1", "--port", String(port)],
+      {
+        cwd: directory,
+        env: {
+          ...cleanEnv(),
+          OPENCODE_CONFIG_CONTENT: withCompactionOptions(
+            process.env.OPENCODE_CONFIG_CONTENT,
+            compactionOptions,
+          ),
+        },
+        stdio: ["ignore", "ignore", "pipe"],
+      },
+    );
+    let stderr = "";
+    child.stderr.on("data", (b) => (stderr = (stderr + b).slice(-2000)));
+    child.once("close", () => (exited.done = true));
+    child.once("error", () => (exited.done = true));
+    try {
+      assertOpenCodeServerConfig(
+        await waitForOpenCodeConfig(baseUrl, directory, { exited }),
+        approved,
+      );
+      Object.assign(
+        record,
+        await openCodeSummarize({
+          baseUrl,
+          directory,
+          sessionId,
+          approved,
+          validate,
+          timeoutMs,
+        }),
+      );
+    } catch (error) {
+      rethrowUnapproved(error);
+      record.error = String(error.message ?? error).slice(0, 300);
+      if (stderr) record.stderrTail = stderr.slice(-300);
+    }
+  } finally {
+    if (child && !exited.done) {
+      const closed = new Promise((r) => child.once("close", r));
+      child.kill("SIGTERM");
+      const hard = setTimeout(() => child.kill("SIGKILL"), 8000);
+      await closed;
+      clearTimeout(hard);
+    }
+  }
+  record.observed = Boolean(record.observed);
+  record.durationMs = Date.now() - started;
+  return record;
+}
+
+export async function compactOpenCodeWarm({
+  socketPath,
+  sessionId,
+  timeoutMs = COMPACTION_TIMEOUT_MS,
+}) {
+  const started = Date.now();
+  const record = {
+    mechanism: "opencode-warm:summarize through the guarded warm serve",
+    forced: true,
+  };
+  try {
+    let reply;
+    // The warm runtime may still be answering the round's prompt.
+    for (let i = 0; i < 30; i++) {
+      reply = await requestOpenCodeCompaction(socketPath, sessionId, timeoutMs);
+      if (reply.refused !== "busy") break;
+      await sleep(1000);
+    }
+    if (reply.refused || reply.error)
+      throw new Error(reply.refused ?? reply.error);
+    Object.assign(record, reply);
+  } catch (error) {
+    rethrowUnapproved(error);
+    record.error = String(error.message ?? error).slice(0, 300);
+  }
+  record.observed = Boolean(record.observed);
   record.durationMs = Date.now() - started;
   return record;
 }

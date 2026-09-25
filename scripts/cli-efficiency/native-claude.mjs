@@ -116,10 +116,17 @@ export function transcriptCheck(transcript, generations) {
 }
 
 // Post-hoc fence: the transcript's models match the approved binding and any
-// recorded effort equals the approved one (absent effort stays visible).
+// recorded effort equals the approved one (absent effort stays visible). An
+// effortless approval (effort null) admits no recorded effort at all.
 export function assertClaudeTranscriptModel(transcript, config) {
   for (const m of transcript.models)
     assert.ok(claudeModelMatches(config.model, m), `Unapproved model ${m}`);
   for (const e of transcript.efforts)
-    assert.equal(e, config.effort, "Unapproved effort in transcript");
+    assert.equal(
+      e,
+      config.effort,
+      config.effort === null
+        ? `Unapproved effort in transcript (${e}; the binding admits none)`
+        : "Unapproved effort in transcript",
+    );
 }
