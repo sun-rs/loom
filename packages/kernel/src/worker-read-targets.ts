@@ -1,4 +1,7 @@
-import { instanceWorkerRoomPredicate } from "./instance-worker-scope.ts";
+import {
+  instanceWorkerRoomPredicate,
+  requireInstanceWorkerRoom,
+} from "./instance-worker-scope.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import {
   isWorkerShortRef,
@@ -17,13 +20,20 @@ export type WorkerVisibleRoomScope = Pick<
   ActivationCredentialScope,
   "participantId" | "roomId"
 >;
-export const WORKER_VISIBLE_ROOMS = `SELECT r.*, r.rowid AS room_order, d.left_principal_id, d.right_principal_id,
+const workerJoinedRooms = (
+  instanceScope: string,
+) => `SELECT r.*, r.rowid AS room_order, d.left_principal_id, d.right_principal_id,
   peer.handle AS peer_handle FROM rooms r
   JOIN memberships membership ON membership.room_id=r.room_id AND r.system_hidden=0
-    AND ${instanceWorkerRoomPredicate("membership.principal_id", "r.room_id")}
+    ${instanceScope}
   LEFT JOIN direct_room_pairs d ON d.room_id=r.room_id
   LEFT JOIN principals peer ON peer.principal_id=CASE WHEN d.left_principal_id=membership.principal_id
     THEN d.right_principal_id ELSE d.left_principal_id END`;
+export const WORKER_VISIBLE_ROOMS = workerJoinedRooms(
+  `AND ${instanceWorkerRoomPredicate("membership.principal_id", "r.room_id")}`,
+);
+/** Joined Rooms before the instance execution scope; only to name a refusal. */
+const WORKER_JOINED_ROOMS = workerJoinedRooms("");
 
 export function workerRoomEntry(
   database: DatabaseSync,
@@ -181,6 +191,23 @@ export function resolveWorkerReadTarget(
       )
       .all(origin.participantId, ...values);
   let rows = lookup();
+  // A joined Room hidden only by the instance execution scope (the other side
+  // of the shared lane: the private box during channel work) is refused as
+  // such, instead of reading as absent and inviting a Direct Room open.
+  if (rows.length === 0) {
+    const hidden = database
+      .prepare(
+        `${WORKER_JOINED_ROOMS} WHERE membership.principal_id=?
+    AND r.kind IN ('channel','direct') AND ${where} LIMIT 1`,
+      )
+      .get(origin.participantId, ...values);
+    if (hidden !== undefined)
+      requireInstanceWorkerRoom(
+        database,
+        origin.participantId,
+        text(hidden, "room_id"),
+      );
+  }
   // Raft resolves a *writable* DM target: addressing a peer the Agent may write
   // to brings the Direct Room into existence. Only an absent Room is opened; an
   // ambiguous one still refuses, and a peer outside the directory above never

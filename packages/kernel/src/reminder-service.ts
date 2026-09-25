@@ -32,7 +32,10 @@ import type {
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 import { requireRoomMember } from "./collaboration-policy.ts";
-import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
+import {
+  activeInstancePrivateBoxPredicate,
+  requireInstanceReplyTarget,
+} from "./instance-worker-scope.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -840,6 +843,14 @@ export class ReminderService {
       );
     }
     const targetRoomId = text(target, "room_id");
+    // A Role instance's reminder fires where its turn runs: a private turn must
+    // not carry its private anchor and title into the channel, or back.
+    requireInstanceReplyTarget(
+      this.#database,
+      scope.participantId,
+      scope.roomId,
+      targetRoomId,
+    );
     requireRoomMember(this.#database, targetRoomId, scope.participantId);
     return targetRoomId;
   }

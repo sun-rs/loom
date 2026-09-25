@@ -70,6 +70,13 @@ export const RoomSchema = z
     directParticipantIds: z
       .tuple([IdentifierSchema, IdentifierSchema])
       .optional(),
+    // S3: present only on a Role instance's private box, in room.list and
+    // room.direct.open. `active` is false once new private work is refused
+    // (the instance or the Human left the instance's channel).
+    instancePrivateBox: z
+      .object({ instanceId: IdentifierSchema, active: z.boolean() })
+      .strict()
+      .optional(),
     kind: RoomKindSchema,
     name: IdentifierSchema,
     roomId: IdentifierSchema,

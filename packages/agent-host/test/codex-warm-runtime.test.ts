@@ -72,6 +72,8 @@ async function harness(
     perAdapter?: (
       pool: InstanceRuntimePool,
     ) => Partial<CodexWarmAdapterOptions>;
+    /** S3: a Workspace Direct Room with the same participant beside the Room. */
+    privateBox?: boolean;
   } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-codex-"));
@@ -103,6 +105,27 @@ async function harness(
   const actor = kernel.authenticateAccessToken(human.accessToken);
   const room = kernel.createRoom(actor, { name: "Warm", slug: "warm" });
   kernel.addMember(actor, { principalId: participantId, roomId: room.roomId });
+  let directRoomId: string | undefined;
+  if (options.privateBox === true) {
+    const workspace = kernel.createWorkspace(actor, {
+      name: "Warm workspace",
+      slug: "warm-workspace",
+      idempotencyKey: "warm-workspace",
+    });
+    kernel.addMember(actor, {
+      principalId: participantId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    directRoomId = kernel.openDirectRoom(actor, {
+      workspaceId: workspace.workspace.workspaceId,
+      peerPrincipalId: participantId,
+      basedOnControlRoomSeq: kernel.sync(actor, {
+        roomId: workspace.controlRoom.roomId,
+        consumerId: "warm-direct-open",
+      }).latestRoomSeq,
+      idempotencyKey: "warm-direct",
+    }).roomId;
+  }
   const hostToken = kernel.provisionHostCredential({
     hostId: "warm-host",
     participantIds: [participantId],
@@ -252,15 +275,16 @@ async function harness(
     directory,
     kernel,
     participantId,
-    post(body: string, sender = actor) {
+    post(body: string, sender = actor, roomId = room.roomId) {
       messages += 1;
       return kernel.postMessage(sender, {
         body,
         idempotencyKey: `warm-message-${messages}`,
         recipients: [{ participantId, reason: "mention" }],
-        roomId: room.roomId,
+        roomId,
       });
     },
+    directRoomId,
     records: readRecords,
     sessions,
     turnStartsAtBinding,
@@ -512,6 +536,76 @@ test("three Activations run on one warm process and one thread, each quiesced", 
         .listActivations({ roomId: state.roomId })
         .every((activation) => activation.state === "completed"),
       true,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("S3: a private-box turn after a channel turn continues the same warm runtime and thread under its own Room scope", async () => {
+  const state = await harness({ privateBox: true });
+  try {
+    const directRoomId = state.directRoomId!;
+    state.post("[fake:ack] channel question");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    state.post("[fake:ack] private question", state.actor, directRoomId);
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    state.post("[fake:ack] channel again");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const records = state.records();
+    assert.equal(
+      records.filter((record) => record.event === "start").length,
+      1,
+      "one app-server process serves both Rooms",
+    );
+    assert.equal(new Set(threadIds(state).turns).size, 1, "one native thread");
+    assert.equal(threadIds(state).starts, 1);
+    const activations = [
+      ...state.kernel.listActivations({ roomId: state.roomId }),
+      ...state.kernel.listActivations({ roomId: directRoomId }),
+    ];
+    const runs = sql(
+      state,
+      "SELECT activation_id, room_id, instance_runtime_id, execution_mode FROM run_attempts ORDER BY started_at",
+    );
+    assert.deepEqual(
+      runs.map((run) => run.room_id),
+      [state.roomId, directRoomId, state.roomId],
+    );
+    assert.deepEqual(
+      runs.map((run) => run.execution_mode),
+      ["cold", "warm", "warm"],
+    );
+    assert.equal(new Set(runs.map((run) => run.instance_runtime_id)).size, 1);
+    // Each turn's Worker authority names its own Activation's Room and range.
+    assert.deepEqual(
+      records
+        .filter((record) => record.event === "turn")
+        .map((record) => record.scope),
+      runs.map((run) => {
+        const activation = activations.find(
+          (candidate) => candidate.activationId === run.activation_id,
+        )!;
+        return {
+          room: activation.roomId,
+          from: String(activation.fromSeq),
+          to: String(activation.toSeq),
+        };
+      }),
+    );
+    assert.ok(
+      records
+        .filter((record) => record.event === "worker")
+        .every((record) => record.status === 0),
     );
   } finally {
     await state.cleanup();

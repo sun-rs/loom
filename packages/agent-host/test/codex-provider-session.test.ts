@@ -411,6 +411,152 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
   }
 });
 
+test("S3: an instance's private turn after a channel turn resumes the same native session with its own Room scope", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-codex-private-box-"));
+  chmodSync(directory, 0o700);
+  try {
+    const executable = join(directory, "fake-codex-resume-server.mjs");
+    const recordPath = join(directory, "resume-record.jsonl");
+    writeFileSync(executable, fakeCodexServer, { mode: 0o700 });
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-codex-resume",
+    });
+    profileRegistry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const revision = profileRegistry.importManifest(manifest(executable));
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    const active = profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    const runtime = implementations.createRuntime(active, report, {
+      activationEnvironment: () => ({
+        args: ["--prompt", "FAKE standing prompt"],
+        env: { FAKE_CODEX_RECORD_PATH: recordPath },
+        standingPromptDigest: "sha256-standing-prompt-digest",
+      }),
+      cwd: directory,
+      providerSessionStore: new ProviderSessionStore({
+        rootDirectory: join(directory, "provider-sessions"),
+      }),
+      supervisorDirectory: join(directory, "supervisors"),
+    });
+    const participantId = "instance-shared-lane";
+    const bindings: string[] = [];
+    let lastDiag: unknown;
+    const turn = async (
+      suffix: string,
+      roomId: string,
+      fromSeq: number,
+      toSeq: number,
+      requireExisting: boolean,
+    ) => {
+      const activationId = `activation-${suffix}`;
+      const runAttemptId = `run-${suffix}`;
+      const run = await runtime.start(
+        {
+          agent: {
+            // The instance's channel stays its origin on every turn; only the
+            // Activation's Room names the box this turn serves.
+            instanceChannelId: "room-channel",
+            instanceSessionRequired: requireExisting,
+            participantId,
+            schemaVersion: 1 as const,
+            agentDefinitionRevision: {
+              agentId: "instance-definition",
+              agentDefinitionRevisionId: "agent-definition-resume-v1",
+              revision: 1,
+              role: "reviewer",
+              instructionRefs: [],
+              skillRefs: [],
+              memoryPolicyRef: {
+                artifactId: "memory-resume",
+                versionId: "memory-resume-v1",
+                contentDigest: `sha256:${"b".repeat(64)}` as const,
+              },
+              executionPolicyRevisionId: "policy",
+              contentDigest: `sha256:${"a".repeat(64)}` as const,
+              createdBy: "owner",
+              createdAt: "2026-08-29T08:00:00.000Z",
+            },
+          },
+          activationId,
+          consumerId: `consumer-${suffix}`,
+          contextManifest: {
+            ...contextManifest({
+              activationId,
+              contentDigest: active.contentDigest,
+              participantId,
+              runAttemptId,
+              runtimeProfileRevisionId: active.runtimeProfileRevisionId,
+              suffix,
+            }),
+            eventRanges: [{ fromSeq, toSeq }],
+            roomId,
+            throughRoomSeq: toSeq,
+          },
+          fromSeq,
+          hostId: "host-codex-resume",
+          participantId,
+          reason: "manual",
+          roomId,
+          runAttemptId,
+          toSeq,
+        },
+        {
+          recordTrajectory: async () => undefined,
+          recordInstanceSessionBinding: async (input) => {
+            bindings.push(input.runAttemptId);
+          },
+          registerPrepared: async () => undefined,
+        },
+      );
+      const exit = await runtime.reap(run);
+      lastDiag = runtime.diagnostics(run);
+      return exit;
+    };
+    const first = await turn("channel", "room-channel", 3, 5, false);
+    assert.equal(first.code, 0, JSON.stringify(lastDiag));
+    // The Kernel now requires the bound session for every Room of this lane.
+    assert.equal((await turn("private", "room-private", 2, 2, true)).code, 0);
+    assert.equal((await turn("back", "room-channel", 6, 7, true)).code, 0);
+    const records = readFileSync(recordPath, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    const of = (suffix: string) =>
+      records.filter((r) => r.activationId === `activation-${suffix}`);
+    const threadCalls = (suffix: string) =>
+      of(suffix)
+        .filter((r) => String(r.frame?.method).startsWith("thread/"))
+        .map((r) => [r.frame.method, r.frame.params?.threadId]);
+    assert.deepEqual(threadCalls("channel"), [["thread/start", undefined]]);
+    assert.deepEqual(threadCalls("private"), [
+      ["thread/resume", "codex-thread-persisted"],
+    ]);
+    assert.deepEqual(threadCalls("back"), [
+      ["thread/resume", "codex-thread-persisted"],
+    ]);
+    assert.deepEqual(
+      ["channel", "private", "back"].map(
+        (suffix) => of(suffix).find((r) => r.env)?.env,
+      ),
+      [
+        { room: "room-channel", from: "3", to: "5" },
+        { room: "room-private", from: "2", to: "2" },
+        { room: "room-channel", from: "6", to: "7" },
+      ],
+    );
+    assert.deepEqual(bindings, ["run-channel", "run-private", "run-back"]);
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 function manifest(
   executable: string,
   fixedArgs: readonly string[] = [],
@@ -521,7 +667,7 @@ if (args.join(" ") === "debug models" || args.join(" ") === "debug models --bund
 }
 const activationId = process.env.RAH_ACTIVATION_ID;
 const record = (value) => appendFileSync(process.env.FAKE_CODEX_RECORD_PATH, JSON.stringify({activationId,...value}) + "\\n");
-record({args});
+record({args,env:{room:process.env.RAH_ROOM_ID,from:process.env.RAH_FROM_SEQ,to:process.env.RAH_TO_SEQ}});
 const rl = createInterface({ input: process.stdin });
 const send = (value) => process.stdout.write(JSON.stringify(value) + "\\n");
 let threadId;

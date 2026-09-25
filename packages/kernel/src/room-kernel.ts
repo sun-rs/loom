@@ -1,4 +1,5 @@
 import { migrateIdentityAccounts } from "./identity-accounts.ts";
+import { withInstancePrivateBox } from "./instance-worker-scope.ts";
 import { assertAgentFirstRunSatisfied } from "./agent-first-run.ts";
 import { reconcileDeletedAgentTaskOwners } from "./task-agent-deletion.ts";
 import { editHumanTask } from "./human-task-edit.ts";
@@ -1505,7 +1506,7 @@ export class RoomKernel {
           input.peerPrincipalId,
           input.idempotencyKey,
         );
-      return room;
+      return withInstancePrivateBox(this.#database, room);
     });
   }
   addMember(
@@ -1533,10 +1534,9 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     input: { workspaceId?: string } = {},
   ): Room[] {
-    return this.#collaboration.listRooms(
-      this.#requireAuthenticatedActor(actor),
-      input,
-    );
+    return this.#collaboration
+      .listRooms(this.#requireAuthenticatedActor(actor), input)
+      .map((room) => withInstancePrivateBox(this.#database, room));
   }
   listRoomAgentActivity(
     actor: AuthenticatedActorContext,

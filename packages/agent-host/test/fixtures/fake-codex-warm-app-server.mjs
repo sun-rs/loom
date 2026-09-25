@@ -151,7 +151,13 @@ const server = createServer(async (socket) => {
   async function runTurn(turn) {
     const has = (name) => turn.text.includes(`[fake:${name}]`);
     const handle = /--turn ([A-Za-z0-9_-]{22})/u.exec(turn.text)?.[1];
-    record({ event: "turn", turnId: turn.id, handle, text: turn.text });
+    record({
+      event: "turn",
+      turnId: turn.id,
+      handle,
+      scope: turnScope(handle),
+      text: turn.text,
+    });
     notify("turn/started", { threadId, turn: { id: turn.id } });
     notify("item/agentMessage/delta", {
       threadId,
@@ -325,6 +331,24 @@ const server = createServer(async (socket) => {
     notify("thread/tokenUsage/updated", usagePayload(turn, usageTotal));
   }
 });
+
+/** The per-turn Room scope the Host issued with this turn's handle. */
+function turnScope(handle) {
+  const root = process.env.RAH_WORKER_TURN_ROOT;
+  if (!root || !handle) return undefined;
+  try {
+    const scope = JSON.parse(
+      readFileSync(join(root, handle, "scope.json"), "utf8"),
+    );
+    return {
+      room: scope.RAH_ROOM_ID,
+      from: scope.RAH_FROM_SEQ,
+      to: scope.RAH_TO_SEQ,
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 async function runWorker(turn, handle, command) {
   const cli = process.env.RAH_WORKER_CLI;

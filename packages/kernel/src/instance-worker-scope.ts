@@ -58,6 +58,32 @@ export function activeInstancePrivateBoxPredicate(room: string) {
           WHERE source.room_id=i.channel_id AND source.principal_id=member.principal_id))
   )`;
 }
+/** The Room projection's `instancePrivateBox`: which instance a Direct Room
+ * is the private box of, and whether it accepts new private work. */
+export function withInstancePrivateBox<
+  T extends { kind: string; roomId: string },
+>(database: DatabaseSync, room: T): T {
+  if (room.kind !== "direct") return room;
+  const row = database
+    .prepare(
+      `SELECT i.instance_id,
+         EXISTS (SELECT 1 WHERE ${activeInstancePrivateBoxPredicate("d.room_id")}) AS active
+       FROM direct_room_pairs d
+       JOIN role_instances i
+         ON i.instance_id IN (d.left_principal_id, d.right_principal_id)
+       WHERE d.room_id=? LIMIT 1`,
+    )
+    .get(room.roomId);
+  if (row === undefined) return room;
+  return {
+    ...room,
+    instancePrivateBox: {
+      instanceId: String(row.instance_id),
+      active: Number(row.active) === 1,
+    },
+  };
+}
+
 export function requireActiveInstancePrivateBox(
   database: DatabaseSync,
   roomId: string,
