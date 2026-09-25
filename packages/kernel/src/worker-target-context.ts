@@ -25,6 +25,7 @@ import { ForbiddenError, NotFoundError, StaleContextError } from "./errors.ts";
 import {
   findActiveHeldMessageDraftForTarget,
   heldDraftReplyIntent,
+  heldDraftResendJudgement,
   settleHeldDraftReplyIntent,
   type HeldDraftReplyIntent,
   saveHeldMessageDraft,
@@ -338,15 +339,6 @@ export class WorkerTargetContextService {
         target.roomId,
       );
       const threadId = workerReadThread(target, input.threadId) ?? undefined;
-      // A saved draft already passed this guard when it was first posted.
-      const judgedReply =
-        input.sendDraft !== true &&
-        assertWorkerReplyTarget(this.#context.database, origin, {
-          roomId: target.roomId,
-          threadId,
-          modelBasedOnRoomSeq: input.basedOnRoomSeq,
-          final: input.final,
-        });
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);
       // `--send-draft` resends the held send's own causal marker and `--final`
       // (same Activation only), so it acknowledges delivery and records the
@@ -357,6 +349,20 @@ export class WorkerTargetContextService {
         origin.activationId,
         input,
       );
+      // A saved draft keeps the verdict of its held send; a resend that newly
+      // makes it this turn's reply is judged on the draft's own target.
+      const judgement =
+        input.sendDraft === true
+          ? heldDraftResendJudgement(draft?.row, origin, intent)
+          : {
+              roomId: target.roomId,
+              threadId,
+              modelBasedOnRoomSeq: input.basedOnRoomSeq,
+              final: input.final,
+            };
+      const judgedReply =
+        judgement !== undefined &&
+        assertWorkerReplyTarget(this.#context.database, origin, judgement);
       const window = this.#resolveSendWindow(
         origin,
         target,

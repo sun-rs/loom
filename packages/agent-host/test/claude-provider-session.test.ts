@@ -443,7 +443,7 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       assert.equal(
         (await runActivation(scenario, "after")).code,
         0,
-        `${scenario} must not persist failed Provider-session evidence`,
+        `the turn after ${scenario} runs`,
       );
     }
 
@@ -542,18 +542,21 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       ),
       true,
     );
-    assert.equal(
-      forActivation("cancel-run").some(
-        (record) => record.kind === "spawn" && record.args.includes("--resume"),
-      ),
-      false,
-      "a cancelled turn must not persist Provider-session evidence",
-    );
-    for (const scenario of [
-      "identity-drift",
-      "tool-before-input",
-      "abnormal-success",
-    ]) {
+    // Full review batch 2 (contract §3): the cancelled turn's input was
+    // accepted under a confirmed identity, so the next turn resumes that
+    // session; so does a turn whose CLI exited abnormally after success.
+    for (const after of ["cancel-run", "abnormal-success-after"]) {
+      const spawn = forActivation(after).find(
+        (record) => record.kind === "spawn",
+      );
+      assert.equal(
+        spawn?.args[spawn.args.indexOf("--resume") + 1],
+        "claude-session-resumed",
+        `${after} resumes the accepted session`,
+      );
+    }
+    // Identity or input order in doubt: nothing is bound.
+    for (const scenario of ["identity-drift", "tool-before-input"]) {
       assert.equal(
         forActivation(`${scenario}-after`).some(
           (record) =>

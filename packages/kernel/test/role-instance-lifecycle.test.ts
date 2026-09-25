@@ -167,6 +167,84 @@ test("channel creation cannot add an existing Role instance to a second channel"
   }
 });
 
+test("a removed instance cannot rejoin with its old ID; re-adding the Role creates a new instance", () => {
+  const f = roleInstanceFixture();
+  try {
+    // An existing member's replay stays an idempotent no-op.
+    f.kernel.addMember(f.actor, {
+      roomId: f.home.roomId,
+      principalId: f.instance.instanceId,
+    });
+    f.kernel.removeRoomMember(f.actor, {
+      roomId: f.home.roomId,
+      principalId: f.instance.instanceId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "remove",
+    });
+    const refused = /removed Role instance cannot rejoin/;
+    assert.throws(
+      () =>
+        f.kernel.addMember(f.actor, {
+          roomId: f.home.roomId,
+          principalId: f.instance.instanceId,
+        }),
+      refused,
+    );
+    assert.throws(
+      () =>
+        f.kernel.addRoomMember(f.actor, {
+          roomId: f.home.roomId,
+          principalId: f.instance.instanceId,
+          role: "member",
+          basedOnRoomSeq: f.head(f.home.roomId),
+          idempotencyKey: "readd",
+        }),
+      refused,
+    );
+    assert.equal(
+      f.db
+        .prepare("SELECT 1 FROM memberships WHERE room_id=? AND principal_id=?")
+        .get(f.home.roomId, f.instance.instanceId),
+      undefined,
+    );
+    assert.equal(
+      f.kernel.roles
+        .list(f.actor, { controlRoomId: f.controlRoomId })
+        .instances.some((i) => i.instanceId === f.instance.instanceId),
+      false,
+    );
+    // The old private box stays inactive.
+    assert.throws(
+      () =>
+        f.kernel.postMessage(f.actor, {
+          roomId: f.privateBox.roomId,
+          body: "must not wake the removed instance",
+          idempotencyKey: "private-after-readd",
+          recipients: [],
+        }),
+      /private box.*inactive/i,
+    );
+    // The same Role instantiated again is a new instance with a new ID.
+    const again = f.kernel.roles.instantiate(f.actor, {
+      roleId: f.kernel.roles
+        .list(f.actor, { controlRoomId: f.controlRoomId })
+        .roles.map((role) => role.roleId)[0]!,
+      channelId: f.home.roomId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "instance-again",
+    }).instance;
+    assert.notEqual(again.instanceId, f.instance.instanceId);
+    assert.deepEqual(
+      f.kernel.roles
+        .list(f.actor, { controlRoomId: f.controlRoomId })
+        .instances.map((i) => i.instanceId),
+      [again.instanceId],
+    );
+  } finally {
+    f.close();
+  }
+});
+
 test("a removed instance's private box rejects thread creation and thread replies", () => {
   const f = roleInstanceFixture();
   try {
@@ -354,6 +432,11 @@ function startInstanceRun(f: ReturnType<typeof roleInstanceFixture>) {
     idempotencyKey: `wake-${String(Math.random())}`,
     recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
   });
+  return startInstanceRunFromQueue(f);
+}
+
+/** Leases the next queued Activation and starts a fake run for it. */
+function startInstanceRunFromQueue(f: ReturnType<typeof roleInstanceFixture>) {
   const activation = f.kernel.leaseNextActivation(f.host, {
     leaseMs: 600_000,
   });
@@ -614,6 +697,183 @@ test("a late binding receipt from the previous generation cannot bind the new on
         .get(f.instance.instanceId)!.bound_run_attempt_id,
       null,
     );
+  } finally {
+    f.close();
+  }
+});
+
+test("full review batch 2: a binding reported mid-run survives the run's failure", () => {
+  const f = roleInstanceFixture();
+  try {
+    // The cold drivers now report the binding as soon as the provider took
+    // the input; the run can still fail, be cancelled or crash afterwards.
+    const work = startInstanceRun(f);
+    f.kernel.instanceSessions.record(f.host, {
+      runAttemptId: work.run.runAttemptId,
+      runtimeRunId: work.runtime.runtimeRunId,
+    });
+    work.finish(1);
+    // The next launch must resume that session (fail closed if lost), never
+    // start a new one silently.
+    assert.equal(launchContext(f).instanceSessionRequired, true);
+    assert.equal(launchContext(f).instanceSessionGeneration, 0);
+  } finally {
+    f.close();
+  }
+});
+
+/** Ends a run in failure and lets the Host's retry decision quarantine it. */
+function quarantineInstanceRun(
+  f: ReturnType<typeof roleInstanceFixture>,
+  error: string,
+  retryDisposition: "action_required" | "sticky_terminal",
+) {
+  const work = startInstanceRun(f);
+  f.kernel.instanceSessions.record(f.host, {
+    runAttemptId: work.run.runAttemptId,
+    runtimeRunId: work.runtime.runtimeRunId,
+  });
+  f.kernel.recordRuntimeTermination(f.host, {
+    runAttemptId: work.run.runAttemptId,
+    runtimeRunId: work.runtime.runtimeRunId,
+    exit: { code: 1 },
+  });
+  f.kernel.finishRunAttempt(f.host, {
+    runAttemptId: work.run.runAttemptId,
+    state: "failed",
+    exitCode: 1,
+  });
+  f.kernel.retryActivation(f.host, {
+    activationId: work.activation.activationId,
+    error,
+    retryAfterMs: 0,
+    retryDisposition,
+  });
+  const state = (activationId = work.activation.activationId) =>
+    String(
+      f.db
+        .prepare("SELECT state FROM activations WHERE activation_id=?")
+        .get(activationId)!.state,
+    );
+  assert.equal(state(), "quarantined", "precondition: a real quarantine");
+  return { ...work, state };
+}
+
+const SESSION_CONTINUITY_FAILURE =
+  "RAH_SESSION_CONTINUITY_REQUIRED: previously launched instance has no session binding";
+
+test("full review batch 2: a session reset requeues the session-continuity quarantine and the new generation runs", () => {
+  const f = roleInstanceFixture();
+  try {
+    const blocked = quarantineInstanceRun(
+      f,
+      SESSION_CONTINUITY_FAILURE,
+      "sticky_terminal",
+    );
+    f.kernel.postMessage(f.actor, {
+      roomId: f.home.roomId,
+      body: "are you there?",
+      idempotencyKey: "after-quarantine",
+      recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
+    });
+    assert.equal(
+      f.kernel.leaseNextActivation(f.host, { leaseMs: 600_000 }),
+      null,
+      "precondition: the quarantine blocks the whole lane",
+    );
+    const reset = resetSession(f, "reset-after-quarantine");
+    assert.equal(reset.sessionGeneration, 1);
+    assert.deepEqual(reset.event.payload.recovery, {
+      resumedActivationIds: [blocked.activation.activationId],
+    });
+    assert.equal(blocked.state(), "queued");
+    const fence = f.db
+      .prepare(
+        "SELECT state, resolution_kind FROM activation_retry_fences WHERE activation_id=?",
+      )
+      .get(blocked.activation.activationId)!;
+    assert.equal(fence.state, "resolved");
+    assert.equal(fence.resolution_kind, "restart");
+    const resumed = f.db
+      .prepare(
+        "SELECT payload_json FROM room_events WHERE type='activation.retry_resumed' AND aggregate_id=?",
+      )
+      .get(blocked.activation.activationId);
+    assert.ok(resumed, "the recovery is a visible Room event");
+    assert.equal(
+      JSON.parse(String(resumed.payload_json)).cause,
+      "instance.session_reset",
+    );
+    // The old obligation runs again, merged with the follow-up, under the new
+    // generation: a fresh native session, bound and then required.
+    const next = startInstanceRunFromQueue(f);
+    assert.equal(next.activation.activationId, blocked.activation.activationId);
+    assert.equal(launchContext(f).instanceSessionGeneration, 1);
+    assert.equal(launchContext(f).instanceSessionRequired, false);
+    f.kernel.instanceSessions.record(f.host, {
+      runAttemptId: next.run.runAttemptId,
+      runtimeRunId: next.runtime.runtimeRunId,
+    });
+    next.finish(0);
+    assert.equal(blocked.state(), "completed");
+    assert.equal(launchContext(f).instanceSessionRequired, true);
+    assert.equal(launchContext(f).instanceSessionGeneration, 1);
+  } finally {
+    f.close();
+  }
+});
+
+test("full review batch 2: a session reset never lifts an unrelated quarantine", () => {
+  const f = roleInstanceFixture();
+  try {
+    const blocked = quarantineInstanceRun(
+      f,
+      "access token could not be refreshed",
+      "action_required",
+    );
+    const reset = resetSession(f, "reset-with-auth-quarantine");
+    assert.equal(reset.sessionGeneration, 1);
+    assert.deepEqual(reset.event.payload.recovery, {
+      resumedActivationIds: [],
+    });
+    assert.equal(blocked.state(), "quarantined");
+    assert.equal(
+      f.kernel.leaseNextActivation(f.host, { leaseMs: 600_000 }),
+      null,
+      "the unrelated quarantine still holds the lane",
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("full review batch 2: unresolved runtime cleanup still refuses the reset and keeps the quarantine", () => {
+  const f = roleInstanceFixture();
+  try {
+    const blocked = quarantineInstanceRun(
+      f,
+      SESSION_CONTINUITY_FAILURE,
+      "sticky_terminal",
+    );
+    const now = new Date().toISOString();
+    f.db
+      .prepare(
+        "INSERT INTO runtime_cleanup_states(runtime_run_id, host_id, participant_id, run_attempt_id, state, last_cleanup_id, observed_at, updated_at) VALUES(?, ?, ?, ?, 'pending', NULL, ?, ?)",
+      )
+      .run(
+        blocked.runtime.runtimeRunId,
+        f.host.hostId,
+        f.instance.instanceId,
+        blocked.run.runAttemptId,
+        now,
+        now,
+      );
+    assert.throws(
+      () => resetSession(f, "reset-with-leftovers"),
+      /unresolved leftover processes/,
+    );
+    assert.equal(blocked.state(), "quarantined");
+    assert.equal(launchContext(f).instanceSessionGeneration, 0);
   } finally {
     f.close();
   }

@@ -28,6 +28,8 @@ type Scenario = {
   rejectInterrupt?: boolean;
   /** Resume this recorded thread; the fake answers after the delay. */
   resume?: { threadId: string; delayMs: number };
+  /** The Host cancels the run (SIGTERM) while the posting tool runs. */
+  cancelWhileRunning?: boolean;
 };
 
 async function runTurn(scenario: Scenario) {
@@ -94,6 +96,7 @@ async function runTurn(scenario: Scenario) {
       child.stdin!.write(
         `${JSON.stringify({ protocol: "rah-final-reply/v1", ...scenario.signal })}\n`,
       );
+    if (scenario.cancelWhileRunning === true) child.kill("SIGTERM");
     // Let the frame reach the driver while the posting tool is still running.
     await new Promise((resolve) => setTimeout(resolve, 100));
     writeFileSync(release, "1");
@@ -240,6 +243,18 @@ test("S2-b: a fresh thread (no resume) reports no session resume measurement", a
   });
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(resumeFrame(result.frames), []);
+});
+
+/**
+ * Full review batch 2 (drivers P2-1, contract §3): once `turn/start` accepted
+ * this turn's input, the thread is bound even if the Host then cancels the
+ * run, so the next Activation resumes it instead of silently starting a new
+ * thread.
+ */
+test("session binding: a run cancelled after turn/start still reports its thread", async () => {
+  const result = await runTurn({ cancelWhileRunning: true });
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(sessionFrame(result.frames)?.providerSessionId, "thread-1");
 });
 
 /**

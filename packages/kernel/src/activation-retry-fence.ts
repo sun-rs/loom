@@ -285,9 +285,26 @@ export type ResumedActivationRetryFence = Readonly<{
   sameErrorCount: number;
 }>;
 
+/**
+ * The Host's marker for a failure that only a new native session can clear
+ * (`runtime-error-policy.ts`): a lost, ambiguous or refused session binding.
+ */
+export const SESSION_CONTINUITY_FAILURE_MARKER =
+  "RAH_SESSION_CONTINUITY_REQUIRED";
+
+/**
+ * Requeues the participant's retry-blocked quarantined Activations (merging a
+ * queued follow-up) and resolves their fences as `restart`. `errorMarker`
+ * narrows the recovery to fences whose last error carries it, so an exit that
+ * clears one cause never lifts an unrelated safety fence.
+ */
 export function resumeBlockedActivationRetryFences(
   database: DatabaseSync,
-  input: Readonly<{ participantId: string; resumedAt: string }>,
+  input: Readonly<{
+    errorMarker?: string;
+    participantId: string;
+    resumedAt: string;
+  }>,
 ): readonly ResumedActivationRetryFence[] {
   const rows = database
     .prepare(
@@ -297,9 +314,14 @@ export function resumeBlockedActivationRetryFences(
        JOIN activations USING(activation_id)
        WHERE activation_retry_fences.participant_id = ?
          AND activation_retry_fences.state = 'blocked'
+         AND (? IS NULL OR instr(activation_retry_fences.last_error, ?) > 0)
        ORDER BY activation_retry_fences.blocked_at, activation_retry_fences.activation_id`,
     )
-    .all(input.participantId);
+    .all(
+      input.participantId,
+      input.errorMarker ?? null,
+      input.errorMarker ?? null,
+    );
   const resumed: ResumedActivationRetryFence[] = [];
   for (const row of rows) {
     if (text(row, "activation_state") !== "quarantined") continue;

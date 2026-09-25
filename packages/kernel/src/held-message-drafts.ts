@@ -260,6 +260,45 @@ export function heldDraftReplyIntent(
 }
 
 /**
+ * The reply-target judgement of a `--send-draft` resend: the target the draft
+ * holds, when the resent intent makes it this turn's reply (`--final` or a
+ * causal marker) but the held send itself was not judged as one. The guard
+ * judged a held send in this Activation's Room whenever it carried either
+ * marker, so such a draft of this Activation keeps its verdict; anything else
+ * (a deliberate post, another Activation's draft) is judged now. Undefined
+ * when there is nothing left to judge.
+ */
+export function heldDraftResendJudgement(
+  draft: Row | undefined,
+  scope: { activationId: string; roomId: string },
+  intent: HeldDraftReplyIntent,
+):
+  | {
+      roomId: string;
+      threadId: string | undefined;
+      modelBasedOnRoomSeq: number | undefined;
+      final: boolean;
+    }
+  | undefined {
+  if (draft === undefined) return undefined;
+  if (!intent.final && intent.basedOnRoomSeq === undefined) return undefined;
+  const roomId = text(draft, "room_id");
+  const judged =
+    text(draft, "activation_id") === scope.activationId &&
+    roomId === scope.roomId &&
+    (Number(draft.reply_final ?? 0) === 1 ||
+      draft.reply_based_on_room_seq !== null);
+  if (judged) return undefined;
+  const threadId = draft.thread_id;
+  return {
+    roomId,
+    threadId: typeof threadId === "string" ? threadId : undefined,
+    modelBasedOnRoomSeq: intent.basedOnRoomSeq,
+    final: intent.final,
+  };
+}
+
+/**
  * The one in-transaction step both Worker post entries (the originating route
  * and the explicit-target route) run after the send decision: a send the
  * Kernel saved as a draft (freshness hold or target confirmation) keeps the

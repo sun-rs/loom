@@ -62,6 +62,8 @@ let activeChild;
 let finalReportForRun;
 let stopping = false;
 let terminationPromise;
+// The native session this run already reported as bound (reported once).
+let boundProviderSessionId;
 const providerSessionIds = new Set(
   options.resumeSession === undefined ? [] : [options.resumeSession],
 );
@@ -175,6 +177,25 @@ async function runTurn(resumeSession) {
   let inputAccepted = false;
   let toolActivity = false;
   let toolActivityBeforeInput = false;
+  let initObserved = false;
+  /**
+   * Contract §3: once the session holds this input (its replay echo) and its
+   * identity is confirmed (`system/init` agrees with it), it is bound, so a
+   * later cancel, crash or error resumes it instead of a silently new
+   * session. Never while the identity or the input order is in doubt.
+   * Reported once; success reports it idempotently.
+   */
+  const bindAcceptedSession = () => {
+    const id = sessionId ?? resumeSession;
+    if (
+      inputAccepted &&
+      initObserved &&
+      protocolError === undefined &&
+      !toolActivityBeforeInput &&
+      id !== undefined
+    )
+      writeProviderSessionEvidence(id);
+  };
   let resultFrame;
   let resultCount = 0;
   let failedResult;
@@ -275,10 +296,15 @@ async function runTurn(resumeSession) {
       }
       providerSessionIds.add(observedSessionId);
     }
+    if (frame.type === "system" && frame.subtype === "init") {
+      initObserved = true;
+      bindAcceptedSession();
+    }
     if (!inputAccepted) {
       const replay = activationReplay(frame, inputUuid);
       if (replay !== undefined) {
         inputAccepted = true;
+        bindAcceptedSession();
         const threadId = observedSessionId ?? sessionId ?? resumeSession;
         // ACCEPTANCE SIGNAL: the replay echo of THIS turn's uuid with exactly
         // this text (`--replay-user-messages`). Only a Host-prepared wake is
@@ -589,6 +615,8 @@ function redactProviderSessionIds(message) {
 }
 
 function writeProviderSessionEvidence(providerSessionId) {
+  if (boundProviderSessionId === providerSessionId) return;
+  boundProviderSessionId = providerSessionId;
   try {
     writeSync(
       3,

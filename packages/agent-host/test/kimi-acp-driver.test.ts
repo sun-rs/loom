@@ -49,6 +49,8 @@ type Scenario = {
   resume?: string;
   toolCommand?: string;
   signal?: { runAttemptId: string; turnId?: string | "accepted" };
+  /** The Host cancels the run (SIGTERM) once the turn's tool is running. */
+  cancelWhileRunning?: boolean;
   env?: Record<string, string>;
 };
 
@@ -133,6 +135,14 @@ async function runTurn(input: Scenario) {
         })}\n`,
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    if (input.cancelWhileRunning === true) {
+      await until(
+        () =>
+          records().some((r) => r.event === "tool-running") ||
+          child.exitCode !== null,
+      );
+      child.kill("SIGTERM");
     }
     writeFileSync(release, "1");
     const code = await closed;
@@ -308,6 +318,33 @@ test("stopReason: a refusal fails the run instead of reading as success", async 
   assert.equal(result.code, 1);
   assert.match(result.stderr, /refusal/u);
   assert.deepEqual(byProtocol(result.frames, "rah-provider-session/v1"), []);
+});
+
+/**
+ * Full review batch 2 (drivers P2-1, contract §3): once the runtime took this
+ * turn's input, its native session is bound even when the run then ends
+ * without success (cancel, crash, provider error), so the next Activation
+ * resumes it instead of silently starting a new session. A run that never
+ * reached acceptance (the refusal above) still binds nothing.
+ */
+test("session binding: a run cancelled after the input was accepted still reports its session", async () => {
+  const result = await runTurn({
+    scenario: "hang",
+    wake: WAKE,
+    cancelWhileRunning: true,
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const accepted = byProtocol(result.frames, "rah-delivery-accepted/v1");
+  assert.equal(accepted.length, 1);
+  const bound = byProtocol(result.frames, "rah-provider-session/v1");
+  assert.deepEqual(
+    bound.map((frame) => frame.providerSessionId),
+    [accepted[0]!.threadId],
+  );
+  assert.ok(
+    result.frames.indexOf(bound[0]!) < result.frames.indexOf(accepted[0]!),
+    "bound before the acceptance is reported, so before any tool can post",
+  );
 });
 
 test("usage stays unavailable: a session-ready run reports the provider gap, never zero usage", async () => {

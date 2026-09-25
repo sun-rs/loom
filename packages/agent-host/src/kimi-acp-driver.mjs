@@ -73,6 +73,8 @@ const trajectoryWriter = new RuntimeTrajectoryWriter();
 let terminalSequence = 0;
 let stopping = false;
 let usageGapReported = false;
+// The native session this run already reported as bound (reported once).
+let boundProviderSessionId;
 let activeSessionId;
 let acceptCurrentTurnUpdates = false;
 let observedToolActivity = false;
@@ -571,6 +573,10 @@ function observePromptUpdate(frame) {
     isKimiTurnModelUpdate(update)
   ) {
     prompt.deliveryReported = true;
+    // Contract §3: the session now holds this input, so it is bound before
+    // anything else (a later cancel, crash or error resumes it, never a
+    // silently new session). Reported once; success reports it idempotently.
+    writeProviderSessionEvidence(prompt.sessionId);
     // ACCEPTANCE SIGNAL: the first model update of the only prompt in flight,
     // which precedes any tool of this turn (so any post). Only a
     // Host-prepared wake is reported; its digest is what the Host prepared.
@@ -912,6 +918,8 @@ function redactProviderSessionIds(message) {
 }
 
 function writeProviderSessionEvidence(providerSessionId) {
+  if (boundProviderSessionId === providerSessionId) return;
+  boundProviderSessionId = providerSessionId;
   // Kimi ACP exposes no native per-generation usage: say so once per run, so
   // the Kernel reports this RunAttempt's usage as unavailable, never as zero.
   if (!usageGapReported) {

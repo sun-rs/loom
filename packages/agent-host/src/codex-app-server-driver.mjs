@@ -61,6 +61,8 @@ let usageTracker;
 let requestSequence = 0;
 let activeThreadId;
 let activeTurnId;
+// The native thread this run already reported as bound (reported once).
+let boundProviderSessionId;
 let startingTurn = false;
 let earlyStartedTurnId;
 let driverCompleted = false;
@@ -253,6 +255,10 @@ try {
   if (activeTurnId === undefined) {
     throw new Error("turn/start returned no turn.id");
   }
+  // Contract §3: the thread now holds this input, so it is bound before
+  // anything else (a later cancel, crash or error resumes it, never a
+  // silently new thread). Reported once; success reports it idempotently.
+  writeProviderSessionEvidence(activeThreadId);
   // ACCEPTANCE SIGNAL (Codex only). The JSON-RPC *response* to the very
   // `turn/start` request that carried this wake text, correlated two ways: the
   // request id is matched by `pending` before `requestState.resolve` runs
@@ -681,6 +687,8 @@ function writeSessionResumeMeasurement(sessionResumeMs) {
 }
 
 function writeProviderSessionEvidence(providerSessionId) {
+  if (boundProviderSessionId === providerSessionId) return;
+  boundProviderSessionId = providerSessionId;
   try {
     writeSync(
       3,

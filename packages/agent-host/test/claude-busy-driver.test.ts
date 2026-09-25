@@ -84,7 +84,15 @@ rl.on('close',()=>{if(inputs!==${resumed ? 2 : 1})process.exitCode=8;});
         assert.equal(code, failFirst ? 1 : 0, stderr);
         assert.ok(receipt.includes(`"accepted":${resumed}`), receipt);
         if (!resumed) assert.equal(receipt.includes('"accepted":true'), false);
-        assert.equal(receipt.includes("rah-provider-session/v1"), !failFirst);
+        // Full review batch 2 (contract §3): every run here took its input
+        // under a confirmed identity, so its session is bound even when the
+        // turn then fails.
+        assert.ok(
+          receipt.includes(
+            '"protocol":"rah-provider-session/v1","provider":"claude-stream-json/v1","providerSessionId":"session-a"',
+          ),
+          receipt,
+        );
         if (failFirst) assert.ok(stderr.includes("first turn failed"), stderr);
       } finally {
         clearTimeout(timer);

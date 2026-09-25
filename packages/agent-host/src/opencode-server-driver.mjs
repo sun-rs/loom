@@ -67,6 +67,8 @@ const partTexts = new Map();
 const toolStates = new Map();
 let server;
 let activeSessionId;
+// The native session this run already reported as bound (reported once).
+let boundProviderSessionId;
 let eventController;
 let eventFailureReject;
 let stopping = false;
@@ -462,6 +464,11 @@ function observePromptMessage(info) {
   prompt.observed = true;
   if (prompt.deliveryReported) return;
   prompt.deliveryReported = true;
+  // Contract §3: the session loop now holds this input, so the session is
+  // bound before anything else (a later cancel, crash or error resumes it,
+  // never a silently new session). Reported once; success reports it again
+  // idempotently.
+  writeProviderSessionEvidence(prompt.sessionId);
   if (options.wakeInput !== undefined)
     writeHostFrame({
       protocol: "rah-delivery-accepted/v1",
@@ -909,6 +916,8 @@ function redactProviderSessionIds(message) {
 }
 
 function writeProviderSessionEvidence(providerSessionId) {
+  if (boundProviderSessionId === providerSessionId) return;
+  boundProviderSessionId = providerSessionId;
   try {
     writeSync(
       3,

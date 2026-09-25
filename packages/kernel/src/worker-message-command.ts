@@ -16,6 +16,7 @@ import { NotFoundError } from "./errors.ts";
 import {
   findActiveHeldMessageDraftForTarget,
   heldDraftReplyIntent,
+  heldDraftResendJudgement,
   SEND_DRAFT_NOT_FOUND_MESSAGE,
   settleHeldDraftReplyIntent,
 } from "./held-message-drafts.ts";
@@ -102,8 +103,16 @@ export function postWorkerMessageTransaction(context: {
     ...(heldDraftId === undefined ? {} : { heldDraftId }),
   };
   const route = resolveWorkerReplyRoute({ ...context, input });
-  // Judged on the normalized target, like the `--target` route; a saved draft
-  // already passed it when it was first posted.
+  // `--send-draft` restores the held send's own causal marker and `--final`
+  // (same Activation only) through the step the target route shares.
+  const intent = heldDraftReplyIntent(
+    draftRow,
+    scope.activationId,
+    context.input,
+  );
+  // Judged on the normalized target, like the `--target` route. A saved draft
+  // keeps the verdict of its held send; a resend that newly makes it this
+  // turn's reply is judged on the draft's own target.
   if (heldDraftId === undefined)
     assertWorkerReplyTarget(database, scope, {
       roomId: scope.roomId,
@@ -111,6 +120,11 @@ export function postWorkerMessageTransaction(context: {
       modelBasedOnRoomSeq: context.input.basedOnRoomSeq,
       final: parsed.final,
     });
+  else {
+    const judgement = heldDraftResendJudgement(draftRow, scope, intent);
+    if (judgement !== undefined)
+      assertWorkerReplyTarget(database, scope, judgement);
+  }
   const attachmentComment = context.comments.workerMetadata(execution, input, {
     roomId: scope.roomId,
     ...(route.threadId === undefined ? {} : { threadId: route.threadId }),
@@ -122,13 +136,6 @@ export function postWorkerMessageTransaction(context: {
     eventFromRow: context.eventFromRow,
     resolveLive: (ids) => files.forWorkerMessage(execution, ids),
   });
-  // `--send-draft` restores the held send's own causal marker and `--final`
-  // (same Activation only) through the step the target route shares.
-  const intent = heldDraftReplyIntent(
-    draftRow,
-    scope.activationId,
-    context.input,
-  );
   const result = context.collaboration.postActivationMessage(
     context.principal,
     {

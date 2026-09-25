@@ -71,3 +71,31 @@ export function requireActiveInstancePrivateBox(
       "Instance private box is inactive: source channel membership removed",
     );
 }
+
+/**
+ * The single admission check of every generic membership entry for a Role
+ * instance: it may only be re-confirmed in its own channel while it is still
+ * a member there. A removed instance never rejoins under its old ID, which
+ * would revive its old principal, session binding and private box; re-adding
+ * the Role is `roles.instantiate`, which creates a new instance.
+ */
+export function requireRoleInstanceMembershipEntry(
+  database: DatabaseSync,
+  principalId: string,
+  roomId: string,
+): void {
+  const instance = database
+    .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
+    .get(principalId);
+  if (instance === undefined) return;
+  if (instance.channel_id !== roomId)
+    throw new ForbiddenError("Role instance cannot join another channel");
+  if (
+    !database
+      .prepare("SELECT 1 FROM memberships WHERE room_id=? AND principal_id=?")
+      .get(roomId, principalId)
+  )
+    throw new ForbiddenError(
+      "removed Role instance cannot rejoin; instantiate the Role again to add a new instance",
+    );
+}

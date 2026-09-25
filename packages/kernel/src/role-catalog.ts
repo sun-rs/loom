@@ -18,6 +18,10 @@ import {
 } from "./errors.ts";
 import { advanceInstanceSessionGeneration } from "./instance-session.ts";
 import {
+  resumeBlockedActivationRetryFences,
+  SESSION_CONTINUITY_FAILURE_MARKER,
+} from "./activation-retry-fence.ts";
+import {
   provisionWorkspaceAgentTransaction,
   workspaceAgentProvisionResult,
 } from "./workspace-agent-provisioning.ts";
@@ -366,7 +370,9 @@ export class RoleCatalog {
    * A leased Activation without such a run is allowed, because the session
    * generation is read when its RunAttempt is created (the launch then uses
    * the new generation). The reset is recorded in the instance's channel; it
-   * never deletes history.
+   * never deletes history. In the same transaction it requeues the
+   * Activations quarantined by a session-continuity failure (the only fence a
+   * new session clears) and records them as its recovery scope.
    */
   resetInstanceSession(
     auth: AuthenticatedActorContext,
@@ -422,11 +428,20 @@ export class RoleCatalog {
           "Role instance has running work; wait for it to finish before resetting its session",
         );
       assertNoUnresolvedRuntimeCleanup(c.database, input.instanceId);
+      const resetAt = c.now().toISOString();
       const sessionGeneration = advanceInstanceSessionGeneration(
         c.database,
         input.instanceId,
-        c.now().toISOString(),
+        resetAt,
       );
+      // The obligations a lost session blocked run again in the new
+      // generation, through the existing retry owner; any other quarantine
+      // (auth, input size, zero evidence, ...) keeps holding the lane.
+      const resumed = resumeBlockedActivationRetryFences(c.database, {
+        errorMarker: SESSION_CONTINUITY_FAILURE_MARKER,
+        participantId: input.instanceId,
+        resumedAt: resetAt,
+      });
       const event = c.events.append({
         actorId,
         aggregateId: input.instanceId,
@@ -437,10 +452,33 @@ export class RoleCatalog {
         payload: {
           instanceId: input.instanceId,
           notice: "context continuity interrupted by Human reset",
+          recovery: {
+            resumedActivationIds: resumed.map((retry) => retry.activationId),
+          },
           requestDigest,
           sessionGeneration,
         },
       });
+      for (const retry of resumed)
+        c.events.append({
+          actorId,
+          aggregateId: retry.activationId,
+          aggregateType: "activation",
+          idempotencyKey: `${input.idempotencyKey}:activation-retry-resume:${retry.activationId}`,
+          payload: {
+            activationId: retry.activationId,
+            cause: "instance.session_reset",
+            errorFingerprint: retry.errorFingerprint,
+            ...(retry.mergedActivationId === undefined
+              ? {}
+              : { mergedActivationId: retry.mergedActivationId }),
+            participantId: input.instanceId,
+            sameErrorCount: retry.sameErrorCount,
+            sessionGeneration,
+          },
+          roomId: retry.roomId,
+          type: "activation.retry_resumed",
+        });
       return P.InstanceSessionResetResponseSchema.parse({
         instanceId: input.instanceId,
         channelId,

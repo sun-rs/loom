@@ -1,5 +1,8 @@
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
-import { requireActiveInstancePrivateBox } from "./instance-worker-scope.ts";
+import {
+  requireActiveInstancePrivateBox,
+  requireRoleInstanceMembershipEntry,
+} from "./instance-worker-scope.ts";
 import { agentGreetingEnabled, firstRunReplay } from "./agent-first-run.ts";
 import {
   readSystemChannelVisibility,
@@ -973,11 +976,11 @@ export class CollaborationService {
     actorId: string,
     input: { principalId: string; roomId: string },
   ): void {
-    const instance = this.#database
-      .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
-      .get(input.principalId);
-    if (instance && text(instance, "channel_id") !== input.roomId)
-      throw new ForbiddenError("Role instance cannot join another channel");
+    requireRoleInstanceMembershipEntry(
+      this.#database,
+      input.principalId,
+      input.roomId,
+    );
     this.#assertMutableMembershipRoom(input.roomId);
     requireRoomManager(this.#database, input.roomId, actorId);
     this.#requirePrincipal(input.principalId);
@@ -1067,11 +1070,11 @@ export class CollaborationService {
       roomId: string;
     },
   ): RoomMembershipMutationResult {
-    const instance = this.#database
-      .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
-      .get(input.principalId);
-    if (instance && text(instance, "channel_id") !== input.roomId)
-      throw new ForbiddenError("Role instance cannot join another channel");
+    requireRoleInstanceMembershipEntry(
+      this.#database,
+      input.principalId,
+      input.roomId,
+    );
     this.#assertMutableMembershipRoom(input.roomId);
     const actorRole = requireRoomManager(
       this.#database,

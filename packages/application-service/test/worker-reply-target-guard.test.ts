@@ -71,6 +71,8 @@ async function fixture() {
   return {
     actor,
     agentId,
+    database,
+    head,
     kernel,
     oldThreadId: old.thread.threadId,
     post,
@@ -135,7 +137,24 @@ async function fixture() {
         });
         return presented;
       };
-      return { activation, call, present };
+      /** End the run and complete the Activation, as the Host does. */
+      const end = () => {
+        kernel.recordRuntimeTermination(host, {
+          exit: { code: 0 },
+          runAttemptId: run.runAttemptId,
+          runtimeRunId: runtime.runtimeRunId,
+        });
+        kernel.finishRunAttempt(host, {
+          runAttemptId: run.runAttemptId,
+          state: "exited",
+          exitCode: 0,
+        });
+        kernel.completeActivation(host, {
+          activationId: activation.activationId,
+          consumerId: "worker",
+        });
+      };
+      return { activation, call, end, present, run };
     },
     async close() {
       await service.close();
@@ -513,3 +532,163 @@ test("an old Task Thread of a Task assigned to this Agent accepts the reply", as
     await f.close();
   }
 });
+
+/**
+ * Full review batch 2 (kernel P2-2): a deliberate post the guard did not judge
+ * (confirmed delivery, no causal marker, not final) may be held as a draft in
+ * an unrelated Thread. Resending it with a newly added `--final` or based-on
+ * makes it this turn's reply, so the resend is judged like any reply: refused
+ * before any write, with no ACK and no final marker.
+ */
+for (const route of ["originating", "target"] as const) {
+  test(`--send-draft adding --final to an unjudged draft is judged (${route} route)`, async () => {
+    const f = await fixture();
+    try {
+      f.post("new channel question");
+      const run = f.activate();
+      await run.present();
+      // This turn's reply lands in the channel and confirms delivery.
+      const replied = await run.call("messages/post", {
+        body: "the answer",
+        basedOnRoomSeq: run.activation.toSeq,
+      });
+      assert.equal(replied.status, 200, JSON.stringify(replied.body));
+      const target =
+        route === "target"
+          ? { channel: `#drift:${shortWorkerRef(f.oldThreadId)}` }
+          : { threadId: f.oldThreadId };
+      // A newer fact in that Thread arrives before the deliberate post.
+      f.reply(f.oldThreadId, "newer note in the old Thread", f.head());
+      const held = await run.call("messages/post", {
+        ...target,
+        body: "deliberate note",
+      });
+      assert.equal(held.status, 200, JSON.stringify(held.body));
+      assert.equal(held.body.state, "held", JSON.stringify(held.body));
+      // The judgement comes before any freshness decision (re-hold, or the
+      // commit the target route would otherwise make here).
+      const resent = await run.call("messages/post", {
+        ...target,
+        sendDraft: true,
+        final: true,
+        basedOnRoomSeq: run.activation.toSeq,
+      });
+      assert.equal(resent.status, 409, JSON.stringify(resent.body));
+      assert.equal(
+        resent.body.error.code,
+        "reply_target_mismatch",
+        JSON.stringify(resent.body),
+      );
+      const finals = f.database
+        .prepare(
+          "SELECT COUNT(*) AS n FROM run_attempt_final_replies WHERE run_attempt_id=?",
+        )
+        .get(run.run.runAttemptId)!.n;
+      assert.equal(finals, 0, "a refused resend records no final marker");
+      const published = f.database
+        .prepare(
+          "SELECT COUNT(*) AS n FROM room_events WHERE room_id=? AND actor_id=? AND type='message.posted'",
+        )
+        .get(f.room.roomId, f.agentId)!.n;
+      assert.equal(published, 1, "only the channel reply was published");
+    } finally {
+      await f.close();
+    }
+  });
+}
+
+/**
+ * Full review batch 2 (kernel P1-1): this participant's own earlier reply
+ * inside the delivered range is not a message delivered to it, so it never
+ * makes that Thread a reply target of this turn. Two timings put the previous
+ * round's reply into the range: the `message-check` replay starts right after
+ * the previous Activation's `toSeq` (ordinary sequential dialogue), and a busy
+ * append queues the next Activation from before the previous reply.
+ */
+for (const { name, busyAppend, viaCheck } of [
+  {
+    name: "sequential dialogue, message-check replay",
+    busyAppend: false,
+    viaCheck: true,
+  },
+  { name: "busy append, presented window", busyAppend: true, viaCheck: false },
+  {
+    name: "busy append, message-check replay",
+    busyAppend: true,
+    viaCheck: true,
+  },
+]) {
+  test(`own earlier reply in the delivered range does not widen reply targets (${name})`, async () => {
+    const f = await fixture();
+    try {
+      f.reply(f.oldThreadId, "question in the old Thread", f.head());
+      const first = f.activate();
+      await first.present();
+      if (busyAppend) f.post("new top-level question while busy");
+      const answered = await first.call("messages/post", {
+        threadId: f.oldThreadId,
+        body: "answer in the old Thread",
+        basedOnRoomSeq: first.activation.toSeq,
+      });
+      assert.equal(answered.status, 200, JSON.stringify(answered.body));
+      if (!busyAppend) f.post("new top-level question");
+      f.post("another top-level question");
+      first.end();
+
+      const second = f.activate();
+      const ownReply = f.database
+        .prepare(
+          "SELECT MAX(room_seq) AS n FROM room_events WHERE room_id=? AND actor_id=? AND type='message.posted'",
+        )
+        .get(f.room.roomId, f.agentId)!.n as number;
+      if (viaCheck) {
+        const checked = await second.call("message-check");
+        assert.equal(checked.status, 200, JSON.stringify(checked.body));
+      } else await second.present();
+      // The timing under test: the own reply lies inside what was delivered.
+      assert.ok(ownReply <= second.activation.toSeq);
+      if (!viaCheck) assert.ok(ownReply >= second.activation.fromSeq);
+      const drifted = await second.call("messages/post", {
+        threadId: f.oldThreadId,
+        body: "second answer drifted into the old Thread",
+        basedOnRoomSeq: second.activation.toSeq,
+        final: true,
+      });
+      assert.equal(drifted.status, 409, JSON.stringify(drifted.body));
+      assert.equal(drifted.body.error.code, "reply_target_mismatch");
+      assert.match(
+        drifted.body.error.suggestedNextAction,
+        /--target "#drift"/u,
+      );
+      assert.doesNotMatch(
+        drifted.body.error.suggestedNextAction,
+        new RegExp(shortWorkerRef(f.oldThreadId), "u"),
+      );
+      const finals = f.database
+        .prepare(
+          "SELECT COUNT(*) AS n FROM run_attempt_final_replies WHERE run_attempt_id=?",
+        )
+        .get(second.run.runAttemptId)!.n;
+      assert.equal(finals, 0, "a refused reply records no final marker");
+      const published = f.database
+        .prepare(
+          "SELECT COUNT(*) AS n FROM room_events WHERE room_id=? AND actor_id=? AND type='message.posted' AND room_seq > ?",
+        )
+        .get(f.room.roomId, f.agentId, second.activation.toSeq)!.n;
+      assert.equal(published, 0, "nothing was published by the refusal");
+      if (!viaCheck) {
+        const cursor = f.database
+          .prepare(
+            "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id='worker'",
+          )
+          .get(f.room.roomId, f.agentId) as { last_seq: number } | undefined;
+        assert.ok(
+          cursor === undefined || cursor.last_seq < second.activation.toSeq,
+          "a refused reply does not acknowledge delivery",
+        );
+      }
+    } finally {
+      await f.close();
+    }
+  });
+}

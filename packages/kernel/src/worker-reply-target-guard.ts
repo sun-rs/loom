@@ -64,7 +64,9 @@ function deliveryConfirmed(
  * A reply must land where the delivered messages arrived, with explicit
  * evidence for anything else:
  * - a Thread a delivered event belongs to, or one rooted at a delivered
- *   message, or one this participant opened after the window head;
+ *   message, or one this participant opened after the window head (this
+ *   participant's own events in the range, such as its previous round's reply
+ *   caught by a replay or a busy append, were never delivered to it);
  * - the Room top level when a delivered inbox item arrived there (or the
  *   window delivered no inbox item at all);
  * - an old Task Thread whose Task this participant is assigned to, claimed,
@@ -112,10 +114,10 @@ export function assertWorkerReplyTarget(
       `SELECT 1 FROM threads t WHERE t.thread_id=? AND t.room_id=? AND (
         EXISTS (SELECT 1 FROM room_events e
           LEFT JOIN tasks ON e.aggregate_type='task' AND tasks.task_id=e.aggregate_id
-          WHERE e.room_id=t.room_id AND e.room_seq BETWEEN ? AND ?
+          WHERE e.room_id=t.room_id AND e.room_seq BETWEEN ? AND ? AND e.actor_id<>?
             AND COALESCE(tasks.thread_id, json_extract(e.payload_json, '$.threadId'))=t.thread_id)
         OR EXISTS (SELECT 1 FROM room_events e
-          WHERE e.room_id=t.room_id AND e.room_seq BETWEEN ? AND ?
+          WHERE e.room_id=t.room_id AND e.room_seq BETWEEN ? AND ? AND e.actor_id<>?
             AND e.type='message.posted' AND e.aggregate_id=t.root_message_id)
         OR (t.created_by=? AND EXISTS (SELECT 1 FROM room_events e
           WHERE e.room_id=t.room_id AND e.room_seq > ?
@@ -134,8 +136,10 @@ export function assertWorkerReplyTarget(
       scope.roomId,
       fromSeq,
       scope.toSeq,
+      scope.participantId,
       fromSeq,
       scope.toSeq,
+      scope.participantId,
       scope.participantId,
       scope.toSeq,
       scope.participantId,

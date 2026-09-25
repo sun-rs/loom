@@ -278,15 +278,23 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
       (record) => record.signal === "SIGTERM",
     );
     assert.ok(abortIndex >= 0 && termIndex > abortIndex);
+    // Full review batch 2 (contract §3): the session loop took the cancelled
+    // turn's input, so that session is bound and the next run resumes it
+    // instead of silently creating a replacement.
     assert.equal(
       forActivation("cancel-run").some(
         (record) =>
           record.method === "GET" &&
-          typeof record.path === "string" &&
-          record.path.startsWith("/session/"),
+          record.path === "/session/opencode-session-cancelled",
+      ),
+      true,
+      "a cancelled turn whose input was accepted stays bound",
+    );
+    assert.equal(
+      forActivation("cancel-run").some(
+        (record) => record.method === "POST" && record.path === "/session",
       ),
       false,
-      "a cancelled turn must not persist Provider-session evidence",
     );
     const projected = JSON.stringify(trajectory);
     assert.doesNotMatch(projected, /PRIVATE_ACTIVATION_INPUT/u);
@@ -441,7 +449,6 @@ const sessionForActivation = () => {
   if (activationId.includes("missing-run")) return "opencode-session-replacement";
   if (activationId.includes("resumed")) return "opencode-session-resumed";
   if (activationId.includes("missing")) return "opencode-session-missing";
-  if (activationId.includes("cancel-run")) return "opencode-session-cancel-fresh";
   return "opencode-session-cancelled";
 };
 const finishPrompt = () => {

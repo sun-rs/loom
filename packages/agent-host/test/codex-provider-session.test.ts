@@ -338,11 +338,25 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
       "turn/start",
       "turn/interrupt",
     ]);
-    assert.equal(methodsFor("codex-cancel-run").includes("thread/start"), true);
+    // Full review batch 2 (contract §3): turn/start accepted the first turn's
+    // input before the Host interrupted it, so that thread is bound and the
+    // next run resumes it instead of silently starting a replacement.
     assert.equal(
       methodsFor("codex-cancel-run").includes("thread/resume"),
+      true,
+      "an interrupted first turn whose input was accepted stays bound",
+    );
+    assert.equal(
+      methodsFor("codex-cancel-run").includes("thread/start"),
       false,
-      "an interrupted first turn must not create ready Provider-session evidence",
+    );
+    assert.equal(
+      records.find(
+        (record) =>
+          record.activationId === "activation-codex-cancel-run" &&
+          record.frame?.method === "thread/resume",
+      )?.frame?.params?.threadId,
+      "codex-thread-cancelled",
     );
     const cancelRecords = records.filter(
       (record) => record.activationId === "activation-codex-cancel-seed",
@@ -535,9 +549,7 @@ rl.on("line", (line) => {
   } else if (frame.method === "thread/start") {
     threadId = activationId === "activation-codex-cancel-seed"
       ? "codex-thread-cancelled"
-      : activationId === "activation-codex-cancel-run"
-        ? "codex-thread-cancel-replacement"
-        : activationId.endsWith("missing") ? "codex-thread-fallback" : "codex-thread-persisted";
+      : activationId.endsWith("missing") ? "codex-thread-fallback" : "codex-thread-persisted";
     send({jsonrpc:"2.0",id:frame.id,result:{thread:{id:threadId}}});
   } else if (frame.method === "turn/start") {
     activeTurnId = "turn-" + activationId;
