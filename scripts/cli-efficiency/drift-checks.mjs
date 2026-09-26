@@ -236,6 +236,16 @@ export function evaluateRound(spec, evidence, context) {
       : null;
   if (checks.format && !checks.format.ok) fail("format");
 
+  // Opt-in attached-directory check: an on-target reply (committed Room
+  // message body) carries the random passphrase of the attached file.
+  checks.attachedRead =
+    typeof expect.attachedSecret === "string"
+      ? replies.some(
+          (m) => onTarget(m) && String(m.body).includes(expect.attachedSecret),
+        )
+      : null;
+  if (checks.attachedRead === false) fail("attachedRead");
+
   const warmCodex = context.provider === "codex" && context.mode === "warm";
   checks.turnHandle = warmCodex ? replyTurnHandle(evidence.toolCalls) : null;
   if (warmCodex && checks.turnHandle === false) fail("turnHandleMissing");
@@ -319,6 +329,11 @@ export function summarizeRounds(evaluated, extras = []) {
       handles.filter((e) => e.checks.turnHandle).length,
       handles.length,
     ),
+    attachedReadChecked: evaluated.filter(
+      (e) => typeof e.checks.attachedRead === "boolean",
+    ).length,
+    attachedReadOk: evaluated.filter((e) => e.checks.attachedRead === true)
+      .length,
     quarantined: evaluated.reduce((a, e) => a + e.checks.quarantined, 0),
     retries: evaluated.reduce((a, e) => a + e.checks.retries, 0),
     ackIncomplete: evaluated.filter((e) => e.failures.includes("ackIncomplete"))

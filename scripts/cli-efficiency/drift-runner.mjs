@@ -5,7 +5,7 @@
 // formal workbench or its database.
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { existsSync, globSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, globSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { RoomKernel } from "@rah-os/kernel";
@@ -42,11 +42,24 @@ import {
   readClaudeTranscriptWithSubagents,
   readKimiWire,
 } from "./provider-files.mjs";
-import { DRIFT_ROLE_INSTRUCTIONS } from "./drift-scenario.mjs";
+import { driftRoleInstructions } from "./drift-scenario.mjs";
+import {
+  kimiLocalConfigStatus,
+  readChannelHomeReceipts,
+  readJsonLines,
+  summarizeAttachEvidence,
+  summarizeOpenCodePermissions,
+  summarizeUsageRecords,
+} from "./drift-attach.mjs";
 
 const ROUND_TIMEOUT_MS = 360_000;
 const BODY_LIMIT = 400;
 
+// attach (RAH_DRIFT_ATTACH): {directory, relativeFile, passphrase} from
+// drift-attach.mjs createAttachedFixture; the Channel is created with that
+// attached directory and the instance runs in the Channel's primary
+// directory (the workspace's source files are copied there so every other
+// round asks the same questions).
 export async function runDriftArm({
   config,
   root,
@@ -54,9 +67,14 @@ export async function runDriftArm({
   scenario,
   result,
   save,
+  attach,
 }) {
   const { provider, model, effort, bindingId, mode } = config;
   const socketRecordPath = join(root, "warm-sockets.jsonl");
+  // Gate-private diagnostics: guarded launches (cwd, --add-dir) and the
+  // guards' admitted Codex thread / OpenCode session requests.
+  const launchRecordPath = join(root, "launches.jsonl");
+  const requestRecordPath = join(root, "requests.jsonl");
   const gate = await prepareGateDaemon({
     provider,
     model,
@@ -69,15 +87,21 @@ export async function runDriftArm({
     // (all cross the same fence).
     shimOptions:
       provider === "codex"
-        ? { socketRecordPath }
+        ? { socketRecordPath, requestRecordPath }
         : provider === "claude" && mode === "warm"
           ? { injectRecordPath: socketRecordPath }
-          : provider === "opencode" && mode === "warm"
-            ? { controlRecordPath: socketRecordPath }
+          : provider === "opencode"
+            ? {
+                ...(mode === "warm"
+                  ? { controlRecordPath: socketRecordPath }
+                  : {}),
+                requestRecordPath,
+              }
             : {},
     processes: result.processes,
     save,
     consumerId: "drift-gate",
+    launchRecordPath,
   });
   const { realCli, spec, prepared, stateDirectory, start, stop, post, head } =
     gate;
@@ -110,6 +134,14 @@ export async function runDriftArm({
   // effort null (effortless Haiku): the product sends no effort argument.
   const reasoning = effort ?? "default";
   let observer;
+  // The instance's run directory: the Channel primary directory with
+  // attach, else the shared workspace (existing_mount).
+  let runCwd = cwd;
+  let roomId;
+  let participantId;
+  // Launches from the instance's creation on (daemon catalog probes run
+  // earlier and may use another cwd).
+  let instanceFrom;
 
   // Native session of the instance: warm runtime row, else the provider
   // session record (both are opaque metadata; used only to prove continuity
@@ -160,7 +192,7 @@ export async function runDriftArm({
         "Approved effort not offered",
       );
     const control = prepared.metadata.controlRoomId;
-    const roomId = (
+    roomId = (
       await post("/v3/client/rooms/create", {
         workspaceId: prepared.metadata.workspaceId,
         basedOnControlRoomSeq: await head(control),
@@ -168,8 +200,31 @@ export async function runDriftArm({
         name: "Isolated drift gate",
         slug: "drift",
         idempotencyKey: randomUUID(),
+        ...(attach ? { additionalDirectories: [attach.directory] } : {}),
       })
     ).room.roomId;
+    // Channel workspace as the Kernel recorded it (projection columns).
+    const channelWorkspace = readChannelWorkspace(query, roomId);
+    result.arm.channelWorkspace = channelWorkspace;
+    if (attach) {
+      const primary = channelWorkspace.workspace?.primaryDirectory;
+      assert.ok(primary, "Channel primary directory was not recorded");
+      assert.equal(
+        channelWorkspace.primary?.state,
+        "ready",
+        "Channel primary directory is not ready",
+      );
+      assert.deepEqual(
+        channelWorkspace.workspace.additionalDirectories,
+        [attach.directory],
+        "Attached directory was not recorded",
+      );
+      cpSync(join(cwd, "scripts"), join(primary, "scripts"), {
+        recursive: true,
+      });
+      runCwd = primary;
+    }
+    save();
     const role = (
       await post("/v3/client/roles/create", {
         controlRoomId: control,
@@ -178,13 +233,19 @@ export async function runDriftArm({
         configuration: {
           displayName: "Drift Assistant",
           handle: "drift-assistant",
-          instructions: DRIFT_ROLE_INSTRUCTIONS,
+          instructions: driftRoleInstructions(attach),
           role: "Read-only assistant under a long session",
-          executionWorkspace: {
-            kind: "existing_mount",
-            workspaceMountRevisionId:
-              prepared.config.workspace.workspaceMountRevisionId,
-          },
+          // With attach the Kernel chooses the Channel home (a new instance
+          // of a Channel with a workspace, evo status §39).
+          ...(attach
+            ? {}
+            : {
+                executionWorkspace: {
+                  kind: "existing_mount",
+                  workspaceMountRevisionId:
+                    prepared.config.workspace.workspaceMountRevisionId,
+                },
+              }),
           runtimeOfferId: runtime.runtimeOfferId,
           modelIntent: {
             exactBindingIds: [bindingId],
@@ -196,13 +257,14 @@ export async function runDriftArm({
         },
       })
     ).role;
+    instanceFrom = new Date().toISOString();
     const created = await post("/v3/client/roles/instantiate", {
       roleId: role.roleId,
       channelId: roomId,
       basedOnRoomSeq: await head(roomId),
       idempotencyKey: randomUUID(),
     });
-    const participantId = created.instance.instanceId;
+    participantId = created.instance.instanceId;
     const agentId = created.agent.definition.agentId;
     Object.assign(result.arm, { roomId, participantId });
     save();
@@ -377,6 +439,22 @@ export async function runDriftArm({
           usage[k] = usage[k] === null || t[f] == null ? null : usage[k] + t[f];
         if (u.completeness !== "complete") usage.completeness = u.completeness;
       }
+      // Product usage rows and gaps of the round's RunAttempts (Kimi: read
+      // by the Host driver from the session wire).
+      round.usageRecords = summarizeUsageRecords(provider, {
+        rows: runIds.length
+          ? query(
+              `SELECT COUNT(*) AS n FROM run_attempt_usage WHERE run_attempt_id IN (${inList(runIds)})`,
+              ...runIds,
+            )[0].n
+          : 0,
+        gapReasons: runIds.length
+          ? query(
+              `SELECT DISTINCT reason FROM run_attempt_usage_gaps WHERE run_attempt_id IN (${inList(runIds)}) ORDER BY reason`,
+              ...runIds,
+            ).map((g) => g.reason)
+          : [],
+      });
       const current = sessionOf(participantId, runs);
       const sessionChanged = Boolean(
         sessionId && current && current !== sessionId,
@@ -553,7 +631,7 @@ export async function runDriftArm({
         } else if (provider === "opencode") {
           record = await compactOpenCodePerTurn({
             opencode: realCli,
-            cwd,
+            cwd: runCwd,
             sessionId: current,
             model,
             effort,
@@ -563,7 +641,7 @@ export async function runDriftArm({
         } else if (provider === "claude") {
           record = await compactClaudePerTurn({
             claude: realCli,
-            cwd,
+            cwd: runCwd,
             sessionId: current,
             model,
             effort,
@@ -584,7 +662,7 @@ export async function runDriftArm({
         } else if (provider === "codex") {
           record = await compactCodexPerTurn({
             codex: realCli,
-            cwd,
+            cwd: runCwd,
             threadId: current,
             model,
             effort,
@@ -593,7 +671,7 @@ export async function runDriftArm({
         } else {
           record = await compactKimi({
             kimi: realCli,
-            cwd,
+            cwd: runCwd,
             sessionId: current,
             model,
             effort,
@@ -618,6 +696,7 @@ export async function runDriftArm({
     result.arm.placements = observer.listPlacements({ roomId }).map((p) => ({
       modelId: p.resolvedModel.modelId,
       reasoning: p.resolvedModel.reasoning,
+      workspaceMountRevisionId: p.workspaceMountRevisionId ?? null,
     }));
     for (const p of result.arm.placements) {
       assert.equal(p.modelId, model, "Placement used another model");
@@ -633,6 +712,56 @@ export async function runDriftArm({
       result.arm.stopError = String(e);
     });
     observer?.close();
+    try {
+      collectRecordEvidence();
+    } catch (e) {
+      result.arm.recordEvidenceError = String(e);
+    }
     save();
   }
+
+  // Diagnostic evidence from the gate-private records; never gate status.
+  function collectRecordEvidence() {
+    const requests = readJsonLines(requestRecordPath);
+    if (provider === "opencode")
+      result.arm.openCodePermission = summarizeOpenCodePermissions(requests);
+    if (!attach) return;
+    const channel = roomId ? readChannelWorkspace(query, roomId) : {};
+    const primaryDirectory = channel.workspace?.primaryDirectory ?? null;
+    result.attach = summarizeAttachEvidence({
+      provider,
+      primaryDirectory,
+      attachedDirectory: attach.directory,
+      from: instanceFrom,
+      receipts: participantId
+        ? readChannelHomeReceipts(stateDirectory, participantId)
+        : [],
+      placementMounts: (result.arm.placements ?? [])
+        .map((p) => p.workspaceMountRevisionId)
+        .filter(Boolean),
+      channelWorkspace: channel.workspace,
+      primaryState: channel.primary,
+      launches: readJsonLines(launchRecordPath),
+      codexRequests: provider === "codex" ? requests : undefined,
+      openCodeRequests: provider === "opencode" ? requests : undefined,
+      kimiLocalConfig:
+        provider === "kimi"
+          ? kimiLocalConfigStatus(primaryDirectory, attach.directory)
+          : undefined,
+    });
+  }
+}
+
+// rooms.channel_workspace_json (Kernel-recorded workspace incl. the primary
+// directory) and channel_workspace_state_json (Host readiness observation).
+function readChannelWorkspace(query, roomId) {
+  const row = query(
+    "SELECT channel_workspace_json, channel_workspace_state_json FROM rooms WHERE room_id = ?",
+    roomId,
+  )[0];
+  const parse = (text) => (typeof text === "string" ? JSON.parse(text) : null);
+  return {
+    workspace: parse(row?.channel_workspace_json),
+    primary: parse(row?.channel_workspace_state_json),
+  };
 }

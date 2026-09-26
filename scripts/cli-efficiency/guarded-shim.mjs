@@ -16,10 +16,14 @@ const MODULES = {
 // P2-1). The approved model/effort come only from the approval table, so an
 // option can never carry or override them.
 const TRANSPORT_OPTIONS = {
-  codex: new Set(["socketRecordPath"]),
+  codex: new Set(["socketRecordPath", "requestRecordPath"]),
   claude: new Set(["injectRecordPath"]),
   kimi: new Set(),
-  opencode: new Set(["compactionOptions", "controlRecordPath"]),
+  opencode: new Set([
+    "compactionOptions",
+    "controlRecordPath",
+    "requestRecordPath",
+  ]),
 };
 
 // The gate's shim options (efficiency and drift arms alike): OpenCode's
@@ -60,6 +64,9 @@ export function assertNoGuardViolations(shimPath) {
 // opencode {compactionOptions, controlRecordPath?}. Claude effort null is the
 // effortless (Haiku) approval. Claude additionally records post-hoc model
 // violations next to the shim (see assertNoGuardViolations).
+// launchRecordPath (drift attach evidence, any provider): the shim appends
+// each launch's cwd, probe flag and `--add-dir` values (drift-attach.mjs
+// gateLaunchRecord; no other argv) before the guard runs.
 export function writeGuardedShim({
   provider,
   path,
@@ -67,6 +74,7 @@ export function writeGuardedShim({
   model,
   effort,
   options = {},
+  launchRecordPath,
 }) {
   const entry = MODULES[provider];
   if (!entry) throw new Error(`No gate guard for ${provider}`);
@@ -103,9 +111,13 @@ export function writeGuardedShim({
     provider === "claude" || provider === "opencode"
       ? `, ${JSON.stringify(shimOptions)}`
       : "";
+  const record =
+    launchRecordPath === undefined
+      ? ""
+      : `import {appendGateLaunchRecord} from ${JSON.stringify(new URL("./drift-attach.mjs", import.meta.url).href)};\nappendGateLaunchRecord(${JSON.stringify(launchRecordPath)});\n`;
   writeFileSync(
     path,
-    `#!/usr/bin/env node\nimport {${fn}} from ${JSON.stringify(href)};\nawait ${fn}(${JSON.stringify(realCli)}, ${JSON.stringify(approved)}${extra});\n`,
+    `#!/usr/bin/env node\nimport {${fn}} from ${JSON.stringify(href)};\n${record}await ${fn}(${JSON.stringify(realCli)}, ${JSON.stringify(approved)}${extra});\n`,
     { mode: 0o700 },
   );
   return path;

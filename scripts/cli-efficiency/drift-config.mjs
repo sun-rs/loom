@@ -22,6 +22,8 @@ const PROVIDERS = {
   claude: profile("claude", ["cold", "warm"]),
   opencode: profile("opencode", ["cold", "warm"]),
 };
+// Five kinds plus the attached-read round (drift-scenario.mjs).
+const ATTACH_LAST_SEGMENT_MIN = 6;
 // The explicit "no effort" value (an effortless Claude binding only).
 export const DRIFT_NO_EFFORT = NO_EFFORT;
 export const DRIFT_DEFAULTS = {
@@ -99,6 +101,18 @@ export function parseDriftEnv(env) {
       overheadRise > 10)
   )
     fail("RAH_DRIFT_OVERHEAD_RISE must be a number in (0, 10]");
+  // Opt-in channel attached-directory check (drift-attach.mjs): the
+  // attached-read round follows the five kinds of the last segment, so that
+  // segment needs one more round. Every other constraint is unchanged.
+  const attachText = env.RAH_DRIFT_ATTACH;
+  if (attachText !== undefined && !["0", "1"].includes(attachText))
+    fail("RAH_DRIFT_ATTACH must be 1 or 0");
+  const attach = attachText === "1";
+  const lastSegment = rounds - (compactAt.at(-1) ?? 0);
+  if (attach && lastSegment < ATTACH_LAST_SEGMENT_MIN)
+    fail(
+      `RAH_DRIFT_ATTACH needs at least ${ATTACH_LAST_SEGMENT_MIN} rounds after the last compaction (has ${lastSegment})`,
+    );
   return {
     provider,
     catalogKind,
@@ -110,5 +124,6 @@ export function parseDriftEnv(env) {
     // Compaction N is forced after round N completes, before round N+1.
     compactAt,
     overheadRise,
+    attach,
   };
 }

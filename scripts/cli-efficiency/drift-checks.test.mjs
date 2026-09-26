@@ -707,3 +707,100 @@ test("owner B: rising overhead is an independent sub-item of noDegradation", () 
   assert.equal(sum.criteria.noDegradation, false);
   assert.equal(sum.status, "violated");
 });
+
+const attachScenario = buildDriftScenario({
+  rounds: 6,
+  compactAt: [],
+  attach: {
+    relativeFile: "facts/attached-secret.txt",
+    passphrase: "LOOM-ATT-feedface",
+  },
+});
+const attachedRead = attachScenario[5];
+const attachedReply = (body, extra = {}) => ({
+  messageId: "m6",
+  roomId: "room-1",
+  threadId: null,
+  body,
+  roomSeq: 60,
+  eventId: "e6",
+  ...extra,
+});
+
+test("attached-read: a reply containing the passphrase passes", () => {
+  const e = evaluateRound(
+    attachedRead,
+    evidenceFor(attachedRead, {
+      replies: [attachedReply("口令是 LOOM-ATT-feedface")],
+    }),
+    ctx,
+  );
+  assert.equal(e.checks.attachedRead, true);
+  assert.deepEqual(e.failures, []);
+  // Other rounds do not carry the check.
+  const qa = evaluateRound(specOf("qa"), evidenceFor(specOf("qa")), ctx);
+  assert.equal(qa.checks.attachedRead, null);
+});
+
+test("attached-read: no passphrase, no reply or a reply elsewhere fails attachedRead", () => {
+  const wrong = evaluateRound(
+    attachedRead,
+    evidenceFor(attachedRead, {
+      replies: [attachedReply("找不到附加目录")],
+    }),
+    ctx,
+  );
+  assert.equal(wrong.checks.attachedRead, false);
+  assert.deepEqual(wrong.failures, ["attachedRead"]);
+  const none = evaluateRound(
+    attachedRead,
+    evidenceFor(attachedRead, { replies: [], finalReplies: [] }),
+    ctx,
+  );
+  assert.ok(none.failures.includes("attachedRead"));
+  assert.ok(none.failures.includes("notDelivered"));
+  const elsewhere = evaluateRound(
+    attachedRead,
+    evidenceFor(attachedRead, {
+      replies: [attachedReply("LOOM-ATT-feedface", { roomId: "dm-1" })],
+    }),
+    ctx,
+  );
+  assert.ok(elsewhere.failures.includes("attachedRead"));
+  assert.ok(elsewhere.failures.includes("wrongTarget"));
+});
+
+test("attached-read: a failed read is a hard violation counted in the totals", () => {
+  const evaluated = attachScenario.map((spec) =>
+    evaluateRound(
+      spec,
+      spec.template === "attached-read"
+        ? evidenceFor(spec, { replies: [attachedReply("不知道")] })
+        : evidenceFor(spec),
+      ctx,
+    ),
+  );
+  const s = summarizeDrift(evaluated, { compactAt: [] });
+  assert.equal(s.totals.attachedReadChecked, 1);
+  assert.equal(s.totals.attachedReadOk, 0);
+  assert.equal(s.criteria.noHardRoundFailure, false);
+  assert.ok(s.hardFailures.includes("round6:attachedRead"));
+  assert.equal(s.status, "violated");
+  const ok = summarizeDrift(
+    attachScenario.map((spec) =>
+      evaluateRound(
+        spec,
+        spec.template === "attached-read"
+          ? evidenceFor(spec, {
+              replies: [attachedReply("LOOM-ATT-feedface")],
+            })
+          : evidenceFor(spec),
+        ctx,
+      ),
+    ),
+    { compactAt: [] },
+  );
+  assert.equal(ok.totals.attachedReadOk, 1);
+  assert.equal(ok.status, "pass");
+  assert.equal(ok.compactionOverhead.status, "no-compaction");
+});

@@ -5,7 +5,7 @@
 // authenticated client API. Nothing touches the formal workbench.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   localCliRuntimeSpec,
@@ -26,7 +26,19 @@ export function gateWarmRuntimes(provider, warm) {
     : { codex: { enabled: false }, opencode: { enabled: false } };
 }
 
+// The isolated daemon's config: Channel homes (created at room.create, evo
+// status §39) stay under the gate's own temporary root instead of the
+// default ~/.loom/channel-workspaces; canonical, as the Host requires.
+export function gateDaemonConfig(prepared, { provider, warm, root }) {
+  return {
+    ...prepared.config,
+    channelWorkspaceRoot: join(realpathSync(root), "channel-workspaces"),
+    warmRuntimes: gateWarmRuntimes(provider, warm),
+  };
+}
+
 // processes: the evidence array each daemon start/stop is recorded in.
+// launchRecordPath: optional guarded-launch record (drift attach evidence).
 export async function prepareGateDaemon({
   provider,
   model,
@@ -38,6 +50,7 @@ export async function prepareGateDaemon({
   processes,
   save,
   consumerId,
+  launchRecordPath,
 }) {
   const stateDirectory = join(root, "state");
   const realCli = execFileSync("which", [provider], {
@@ -59,6 +72,7 @@ export async function prepareGateDaemon({
     model,
     effort,
     options,
+    launchRecordPath,
   });
   // effort null (effortless Claude Haiku): the product sends no effort.
   const spec = {
@@ -74,10 +88,7 @@ export async function prepareGateDaemon({
   const configPath = join(root, "config.json");
   writeFileSync(
     configPath,
-    JSON.stringify({
-      ...prepared.config,
-      warmRuntimes: gateWarmRuntimes(provider, warm),
-    }),
+    JSON.stringify(gateDaemonConfig(prepared, { provider, warm, root })),
     { mode: 0o600 },
   );
 

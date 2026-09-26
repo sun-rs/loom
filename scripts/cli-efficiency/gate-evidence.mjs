@@ -7,7 +7,7 @@
 // matched against the gate's original output.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { realpathSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -31,9 +31,21 @@ export function codeProvenance({ git = defaultGit, sourceRef = "HEAD" } = {}) {
   };
 }
 
+const canonical = (path) => {
+  try {
+    return realpathSync(path);
+  } catch {
+    return undefined;
+  }
+};
+
+// The canonical root first: it may contain the given root as a substring
+// (macOS /private/var/... vs /var/...).
 export function redactEvidence(result, { root, home = homedir() }) {
   let text = JSON.stringify(result, null, 2) + "\n";
+  const realRoot = root ? canonical(root) : undefined;
   for (const [from, to] of [
+    ...(realRoot && realRoot !== root ? [[realRoot, "<tmp>"]] : []),
     [root, "<tmp>"],
     [home, "~"],
   ])

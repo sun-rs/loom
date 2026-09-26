@@ -19,6 +19,7 @@ import {
   createOpenCodeRequestGuard,
   createSseSessionFilter,
   openCodeCompactionEvidence,
+  openCodeRequestRecord,
   openCodeVariantOptions,
   requestOpenCodeCompaction,
   withCompactionOptions,
@@ -772,6 +773,168 @@ test("opencode per-turn compaction: a short-lived serve, the fenced summarize, t
   } finally {
     if (previous === undefined) delete process.env.FAKE_OC_RECORD;
     else process.env.FAKE_OC_RECORD = previous;
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+// Review 2026-09-26 P1-1 (evo status §41): both drivers install the deny
+// rules on a resumed session with `PATCH /session/:id {permission}` before
+// prompting. The gate admits exactly that shape.
+const DENIES = [
+  { action: "deny", pattern: "*", permission: "question" },
+  { action: "deny", pattern: "*", permission: "plan_enter" },
+  { action: "deny", pattern: "*", permission: "plan_exit" },
+];
+test("request guard: PATCH /session/:id carries only permission rules", () => {
+  const guard = createOpenCodeRequestGuard(approved);
+  const patch = (path, body) => guard("PATCH", path, JSON.stringify(body));
+  assert.doesNotThrow(() => patch("/session/ses_1", { permission: DENIES }));
+  for (const body of [
+    {},
+    { permission: [] },
+    { permission: DENIES, title: "x" },
+    { permission: DENIES, model },
+    { permission: [{ action: "allow", pattern: "*" }] },
+    { permission: [{ ...DENIES[0], extra: 1 }] },
+    { permission: "deny" },
+  ])
+    assert.throws(
+      () => patch("/session/ses_1", body),
+      /Unsupported gate request/,
+      JSON.stringify(body),
+    );
+  for (const path of ["/session", "/session/ses_1/message", "/config"])
+    assert.throws(
+      () => patch(path, { permission: DENIES }),
+      /Unsupported gate request PATCH/,
+      path,
+    );
+  assert.throws(
+    () => guard("DELETE", "/session/ses_1", undefined),
+    /Unsupported gate request DELETE/,
+  );
+  // The product helper sends exactly this body.
+  const here = new URL(".", import.meta.url);
+  const source = readFileSync(
+    new URL("../../packages/agent-host/src/opencode-server-client.js", here),
+    "utf8",
+  );
+  assert.match(source, /method: "PATCH"/);
+});
+
+test("request record: session create and permission patch rules, prompt attached lines", () => {
+  const create = {
+    title: "Loom",
+    permission: [{ action: "allow", pattern: "*", permission: "*" }, ...DENIES],
+  };
+  assert.deepEqual(
+    openCodeRequestRecord("POST", "/session", JSON.stringify(create), "t0"),
+    { kind: "session-create", at: "t0", permission: create.permission },
+  );
+  assert.deepEqual(
+    openCodeRequestRecord(
+      "PATCH",
+      "/session/ses_1",
+      JSON.stringify({ permission: DENIES }),
+      "t1",
+    ),
+    {
+      kind: "session-permission",
+      at: "t1",
+      sessionId: "ses_1",
+      permission: DENIES,
+    },
+  );
+  assert.equal(
+    openCodeRequestRecord(
+      "POST",
+      "/session/ses_1/message",
+      JSON.stringify(prompt),
+      "t2",
+    ),
+    null,
+  );
+  assert.equal(openCodeRequestRecord("GET", "/session", undefined, "t3"), null);
+});
+
+test("guarded opencode serve: records session permission requests and the standing-prompt attached line", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-og-record-"));
+  let child;
+  try {
+    const { record } = startShim(directory);
+    const requestRecordPath = join(directory, "requests.jsonl");
+    const shim = writeGuardedShim({
+      provider: "opencode",
+      path: join(directory, "guarded-opencode-record.mjs"),
+      realCli: join(directory, "fake-opencode.mjs"),
+      model: approved.model,
+      effort: approved.effort,
+      options: {
+        compactionOptions: { reasoningEffort: "low" },
+        requestRecordPath,
+      },
+    });
+    const rules = join(directory, "rules.md");
+    writeFileSync(
+      rules,
+      "## Current Runtime Context\n- Attached directory: /tmp/attached-x\n",
+    );
+    const port = await freePort();
+    child = spawn(
+      shim,
+      ["serve", "--pure", "--hostname", "127.0.0.1", "--port", String(port)],
+      {
+        cwd: directory,
+        env: {
+          ...process.env,
+          FAKE_OC_RECORD: record,
+          OPENCODE_CONFIG_CONTENT: JSON.stringify({ instructions: [rules] }),
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    const base = `http://127.0.0.1:${port}`;
+    const q = `?directory=${encodeURIComponent(directory)}`;
+    await until(async () => (await fetch(base + "/path" + q)).ok, "proxy");
+    const created = await fetch(base + "/session" + q, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "Loom",
+        permission: [
+          { action: "allow", pattern: "*", permission: "*" },
+          ...DENIES,
+        ],
+      }),
+    });
+    assert.equal(created.status, 200);
+    const patched = await fetch(base + "/session/ses_1" + q, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ permission: DENIES }),
+    });
+    assert.equal(patched.status, 200);
+    const lines = readFileSync(requestRecordPath, "utf8")
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    assert.deepEqual(
+      lines.map((l) => l.kind),
+      ["serve-launch", "session-create", "session-permission"],
+    );
+    assert.deepEqual(lines[0].instructions, {
+      status: "read",
+      directories: ["/tmp/attached-x"],
+    });
+    assert.equal(lines[1].permission.length, 4);
+    assert.equal(lines[2].sessionId, "ses_1");
+    // The PATCH reached the real serve.
+    assert.ok(
+      readFileSync(record, "utf8").includes('"method":"PATCH"'),
+      "forwarded",
+    );
+  } finally {
+    child?.kill("SIGKILL");
     rmSync(directory, { recursive: true, force: true });
   }
 });

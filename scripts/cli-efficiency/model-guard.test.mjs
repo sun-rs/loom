@@ -1,10 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   classifyCodexLaunch,
+  codexThreadRecord,
   createCodexRequestGuard,
   listenPlan,
 } from "./model-guard.mjs";
+import { writeGuardedShim } from "./guarded-shim.mjs";
 
 const approved = { model: "gpt-6-luna", effort: "low" };
 const guard = createCodexRequestGuard(approved);
@@ -294,4 +300,153 @@ test("stdio listen (the per-turn Codex driver) passes through without a proxy", 
 test("the guard needs an explicit approved pair (no implicit default)", () => {
   assert.throws(() => createCodexRequestGuard({}), /model and effort/);
   assert.throws(() => createCodexRequestGuard(undefined), /model and effort/);
+});
+
+// Channel attached directories (evo status §39): the product sends
+// `runtimeWorkspaceRoots = [cwd, ...attached]` on thread/start|resume.
+test("channel attached directories: runtimeWorkspaceRoots of absolute paths pass on thread/start|resume", () => {
+  const roots = ["/tmp/w", "/tmp/attached"];
+  assert.doesNotThrow(() =>
+    guard({
+      id: 1,
+      method: "thread/start",
+      params: { ...threadStart, runtimeWorkspaceRoots: roots },
+    }),
+  );
+  assert.doesNotThrow(() =>
+    guard({
+      id: 2,
+      method: "thread/resume",
+      params: {
+        threadId: "t",
+        ...threadStart,
+        excludeTurns: true,
+        runtimeWorkspaceRoots: roots,
+      },
+    }),
+  );
+  for (const bad of [
+    [],
+    "/tmp/w",
+    ["relative/dir"],
+    ["/tmp/w", ""],
+    ["/tmp/w", 3],
+  ])
+    assert.throws(
+      () =>
+        guard({
+          id: 3,
+          method: "thread/start",
+          params: { ...threadStart, runtimeWorkspaceRoots: bad },
+        }),
+      /runtimeWorkspaceRoots/,
+      JSON.stringify(bad),
+    );
+  // Still refused on turns.
+  assert.throws(
+    () =>
+      guard({
+        id: 4,
+        method: "turn/start",
+        params: { input: text, threadId: "t", runtimeWorkspaceRoots: roots },
+      }),
+    /Unsupported gate request/,
+  );
+});
+
+test("thread record: cwd and runtimeWorkspaceRoots of thread/start|resume only", () => {
+  assert.deepEqual(
+    codexThreadRecord(
+      {
+        id: 1,
+        method: "thread/start",
+        params: { ...threadStart, runtimeWorkspaceRoots: ["/tmp/w", "/a"] },
+      },
+      "t0",
+    ),
+    {
+      kind: "thread",
+      at: "t0",
+      method: "thread/start",
+      cwd: "/tmp/w",
+      runtimeWorkspaceRoots: ["/tmp/w", "/a"],
+    },
+  );
+  assert.deepEqual(
+    codexThreadRecord(
+      { id: 2, method: "thread/resume", params: { threadId: "t" } },
+      "t1",
+    ),
+    {
+      kind: "thread",
+      at: "t1",
+      method: "thread/resume",
+      cwd: null,
+      runtimeWorkspaceRoots: null,
+    },
+  );
+  assert.equal(codexThreadRecord(productMessages[5], "t2"), null);
+  assert.equal(codexThreadRecord({ id: 1, result: {} }, "t3"), null);
+});
+
+test("guarded codex (stdio): admitted thread requests are recorded; nothing else is", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "loom-codex-record-"));
+  try {
+    const fake = join(dir, "fake-codex.mjs");
+    // FAKE Codex app-server (no model): echoes each stdin line as a result.
+    writeFileSync(
+      fake,
+      `#!/usr/bin/env node
+import { createInterface } from "node:readline";
+createInterface({ input: process.stdin }).on("line", (l) => {
+  const m = JSON.parse(l);
+  if (m.id !== undefined) process.stdout.write(JSON.stringify({ id: m.id, result: {} }) + "\\n");
+});
+`,
+      { mode: 0o700 },
+    );
+    const requestRecordPath = join(dir, "requests.jsonl");
+    const shim = writeGuardedShim({
+      provider: "codex",
+      path: join(dir, "guarded-codex.mjs"),
+      realCli: fake,
+      model: approved.model,
+      effort: approved.effort,
+      options: { requestRecordPath },
+    });
+    const child = spawn(shim, ["app-server", "--listen", "stdio://"], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let out = "";
+    child.stdout.on("data", (b) => (out += b));
+    const exited = new Promise((r) => child.once("close", r));
+    child.stdin.write(
+      JSON.stringify({
+        id: 1,
+        method: "thread/start",
+        params: { ...threadStart, runtimeWorkspaceRoots: ["/tmp/w", "/a"] },
+      }) + "\n",
+    );
+    child.stdin.write(JSON.stringify(productMessages[5]) + "\n");
+    await new Promise((r) => {
+      const t = setInterval(() => {
+        if (out.split("\n").filter(Boolean).length >= 2) {
+          clearInterval(t);
+          r();
+        }
+      }, 20);
+    });
+    child.stdin.end();
+    await exited;
+    const lines = readFileSync(requestRecordPath, "utf8")
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].method, "thread/start");
+    assert.deepEqual(lines[0].runtimeWorkspaceRoots, ["/tmp/w", "/a"]);
+    assert.equal(lines[0].cwd, "/tmp/w");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

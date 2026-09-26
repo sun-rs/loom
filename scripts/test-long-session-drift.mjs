@@ -16,6 +16,7 @@ import {
   summarizeDrift,
 } from "./cli-efficiency/drift-checks.mjs";
 import { runDriftArm } from "./cli-efficiency/drift-runner.mjs";
+import { createAttachedFixture } from "./cli-efficiency/drift-attach.mjs";
 import {
   codeProvenance,
   writeEvidence,
@@ -28,8 +29,18 @@ assert.ok(
 // The model/effort must be in approved-models.mjs, checked here before any
 // process starts.
 const config = parseDriftEnv(process.env);
-const scenario = buildDriftScenario(config);
 const root = mkdtempSync(join(tmpdir(), "rah-cli-drift-"));
+// RAH_DRIFT_ATTACH=1: an attached directory with a random passphrase file
+// (drift-attach.mjs), attached to the Channel through room.create.
+const attach = config.attach ? createAttachedFixture(root) : undefined;
+const scenario = buildDriftScenario({
+  rounds: config.rounds,
+  compactAt: config.compactAt,
+  attach: attach && {
+    relativeFile: attach.relativeFile,
+    passphrase: attach.passphrase,
+  },
+});
 // codeCommit/workingTree: the code under test; sourceRef: the snapshot of
 // the scenario's source files (HEAD).
 const provenance = codeProvenance();
@@ -53,6 +64,7 @@ const result = {
   root,
   startedAt: new Date().toISOString(),
   config,
+  ...(attach ? { attachFixture: attach } : {}),
   cliVersion,
   ...provenance,
   sourceHashes: Object.fromEntries(files.map((f) => [f, hash(snapshot[f])])),
@@ -104,7 +116,7 @@ try {
   mkdirSync(join(cwd, "scripts"), { recursive: true });
   for (const f of files) writeFileSync(join(cwd, f), snapshot[f]);
   try {
-    await runDriftArm({ config, root, cwd, scenario, result, save });
+    await runDriftArm({ config, root, cwd, scenario, result, save, attach });
   } catch (error) {
     result.arm.status = "failed";
     result.arm.error = String(error);
@@ -152,6 +164,33 @@ try {
         (w.rising ? ` RISING(${w.reasons.join(",")})` : ""),
     );
   console.log("degradation " + JSON.stringify(result.summary.degradation));
+  if (attach) {
+    const t = result.summary.totals;
+    console.log(
+      `attached read ${t.attachedReadOk}/${t.attachedReadChecked}` +
+        ` (${attach.relativeFile} in ${attach.directory})`,
+    );
+    console.log("attach evidence " + JSON.stringify(result.attach ?? null));
+  }
+  if (result.arm.openCodePermission)
+    console.log(
+      "opencode permission denied " +
+        JSON.stringify(result.arm.openCodePermission.denied) +
+        ` (creates ${result.arm.openCodePermission.sessionCreates},` +
+        ` patches ${result.arm.openCodePermission.permissionPatches})`,
+    );
+  console.log(
+    "usage records " +
+      result.rounds
+        .map(
+          (r) =>
+            `r${r.round}:${r.usageRecords?.rows ?? "-"}` +
+            (r.usageRecords?.gapReasons?.length
+              ? `[${r.usageRecords.gapReasons.join("+")}]`
+              : ""),
+        )
+        .join(" "),
+  );
   console.log("criteria " + JSON.stringify(result.summary.criteria));
   if (result.summary.evidenceGaps.length)
     console.log("evidence gaps " + result.summary.evidenceGaps.join(", "));

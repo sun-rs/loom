@@ -16,7 +16,8 @@
 //     variant, so the shim injects the approved variant's options as
 //     `agent.compaction.options` into the real serve's config content.
 //   - Session create, abort, permission/question replies pass without model
-//     fields; every other mutation (command, shell, init, fork, config,
+//     fields; `PATCH /session/:id` passes only with a `permission` rule list
+//     (the drivers' deny rules on a resumed session); every other mutation (command, shell, init, fork, config,
 //     tui, ...) is refused. Session create must carry an explicit,
 //     non-default title: with a default title OpenCode 1.18.32 titles the
 //     session on its first user message through the small model
@@ -42,6 +43,7 @@
 // unprompted run), and a driver prompt that arrives is held until the end.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
+import { openCodeInstructionAttachedDirectories } from "./drift-attach.mjs";
 import { appendFileSync, existsSync, rmSync } from "node:fs";
 import {
   request as httpRequest,
@@ -68,6 +70,26 @@ const PLAIN_POSTS = [
   /^\/question\/[^/]+\/reject$/u,
 ];
 const MODEL_FIELDS = ["model", "modelID", "providerID", "variant", "agent"];
+// Review 2026-09-26 P1-1 (evo status §41): the drivers install the deny
+// rules on a resumed session with `PATCH /session/:id {permission}`.
+const SESSION_UPDATE = /^\/session\/([^/]+)$/u;
+const RULE_KEYS = ["action", "pattern", "permission"];
+function assertPermissionOnly(body, pathname) {
+  const refuse = () => {
+    throw new Error(`Unsupported gate request PATCH ${pathname} body`);
+  };
+  if (Object.keys(body).length !== 1 || !Array.isArray(body.permission))
+    refuse();
+  if (!body.permission.length) refuse();
+  for (const rule of body.permission)
+    if (
+      !isRecord(rule) ||
+      Object.keys(rule).length !== RULE_KEYS.length ||
+      !RULE_KEYS.every((k) => typeof rule[k] === "string") ||
+      !["allow", "deny", "ask"].includes(rule.action)
+    )
+      refuse();
+}
 // OpenCode's generated default titles (`Session.isDefaultTitle`).
 const DEFAULT_TITLE = /^(?:New|Child) session - /u;
 const PROMPT_PARTS = new Set(["text", "file"]);
@@ -92,7 +114,7 @@ export function createOpenCodeRequestGuard(approved) {
   return (method, pathname, bodyText) => {
     const verb = String(method).toUpperCase();
     if (verb === "GET" || verb === "HEAD") return;
-    if (verb !== "POST")
+    if (verb !== "POST" && !(verb === "PATCH" && SESSION_UPDATE.test(pathname)))
       throw new Error(`Unsupported gate request ${verb} ${pathname}`);
     let body = {};
     if (bodyText !== undefined && bodyText !== "") {
@@ -104,6 +126,7 @@ export function createOpenCodeRequestGuard(approved) {
       if (!isRecord(body))
         throw new Error(`Unsupported gate request body ${pathname}`);
     }
+    if (verb === "PATCH") return assertPermissionOnly(body, pathname);
     if (PROMPT.test(pathname)) {
       if (!sameModel(body.model))
         throw new Error("Unapproved model (exact approved model required)");
@@ -145,6 +168,34 @@ export function createOpenCodeRequestGuard(approved) {
     }
     throw new Error(`Unsupported gate request POST ${pathname}`);
   };
+}
+
+// Drift evidence of an admitted request: the permission rules of a session
+// create or permission PATCH (null for everything else; no prompt text).
+export function openCodeRequestRecord(
+  method,
+  pathname,
+  bodyText,
+  at = new Date().toISOString(),
+) {
+  const verb = String(method).toUpperCase();
+  const update = verb === "PATCH" && SESSION_UPDATE.exec(pathname);
+  if (!(verb === "POST" && pathname === "/session") && !update) return null;
+  let body = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch {
+    body = {};
+  }
+  const permission = Array.isArray(body?.permission) ? body.permission : null;
+  return update
+    ? {
+        kind: "session-permission",
+        at,
+        sessionId: decodeURIComponent(update[1]),
+        permission,
+      }
+    : { kind: "session-create", at, permission };
 }
 
 // {kind: "version" | "catalog"} or {kind: "serve", port, upstreamArgs(p)}.
@@ -564,6 +615,21 @@ export async function runGuardedOpenCode(executable, approved, options = {}) {
     process.exitCode = 1;
     return;
   }
+  const recordRequest = (record) => {
+    if (options.requestRecordPath && record)
+      appendFileSync(options.requestRecordPath, JSON.stringify(record) + "\n", {
+        mode: 0o600,
+      });
+  };
+  // Drift attach evidence: the product's standing prompt (instructions
+  // file) lists the Channel's attached directories.
+  recordRequest({
+    kind: "serve-launch",
+    at: new Date().toISOString(),
+    instructions: openCodeInstructionAttachedDirectories(
+      process.env.OPENCODE_CONFIG_CONTENT,
+    ),
+  });
   const upstreamPort = await allocateLoopbackPort();
   const upstream = `http://127.0.0.1:${upstreamPort}`;
   const directory = process.cwd();
@@ -638,6 +704,13 @@ export async function runGuardedOpenCode(executable, approved, options = {}) {
         res.end();
         return;
       }
+      recordRequest(
+        openCodeRequestRecord(
+          req.method,
+          url.pathname,
+          body.length ? body.toString("utf8") : undefined,
+        ),
+      );
       const prompt = req.method === "POST" && PROMPT.test(url.pathname);
       if (prompt && injection) await injection.done;
       let settled = !prompt;

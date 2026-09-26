@@ -50,6 +50,8 @@ const THREAD_KEYS = [
   "developerInstructions",
   "experimentalRawEvents",
   "sandbox",
+  // Channel attached directories (evo status §39): [cwd, ...attached].
+  "runtimeWorkspaceRoots",
 ];
 function threadParams(p, approved, where, extra) {
   onlyKeys(p, [...THREAD_KEYS, ...extra], where);
@@ -72,6 +74,15 @@ function threadParams(p, approved, where, extra) {
   if (p.sandbox !== undefined && !SANDBOXES.has(p.sandbox))
     refuse(`${where}.sandbox`);
   if (p.cwd !== undefined) str(p.cwd, `${where}.cwd`);
+  if (
+    p.runtimeWorkspaceRoots !== undefined &&
+    (!Array.isArray(p.runtimeWorkspaceRoots) ||
+      p.runtimeWorkspaceRoots.length === 0 ||
+      !p.runtimeWorkspaceRoots.every(
+        (r) => typeof r === "string" && r.startsWith("/"),
+      ))
+  )
+    refuse(`${where}.runtimeWorkspaceRoots must be absolute paths`);
   if (
     p.developerInstructions !== undefined &&
     typeof p.developerInstructions !== "string"
@@ -161,6 +172,22 @@ export function createCodexRequestGuard(approved) {
   };
 }
 
+// Drift attach evidence: the cwd and workspace roots of an admitted
+// thread/start|resume (null for every other frame). Never the instructions.
+export function codexThreadRecord(message, at = new Date().toISOString()) {
+  if (!["thread/start", "thread/resume"].includes(message?.method)) return null;
+  const p = message.params ?? {};
+  return {
+    kind: "thread",
+    at,
+    method: message.method,
+    cwd: typeof p.cwd === "string" ? p.cwd : null,
+    runtimeWorkspaceRoots: Array.isArray(p.runtimeWorkspaceRoots)
+      ? p.runtimeWorkspaceRoots
+      : null,
+  };
+}
+
 // argv whitelist: `--version`, the catalog probe `debug models [--bundled]`,
 // and `app-server` with only the product's `-c <switch>=false` pairs and one
 // `--listen`. Every other subcommand (`debug app-server send-message-v2`,
@@ -214,9 +241,19 @@ export function listenPlan(args) {
 // Test-only stdio fence: unsupported model requests never reach the provider CLI.
 // options.model/effort: the approved pair (required);
 // options.socketRecordPath appends each guarded warm socket path (JSON line)
-// so a gate harness can reach the runtime only through this same fence.
+// so a gate harness can reach the runtime only through this same fence;
+// options.requestRecordPath appends each admitted thread request's cwd and
+// workspace roots (codexThreadRecord) for the drift attach evidence.
 export async function runGuardedCodex(executable, options = {}) {
-  const validateRequest = createCodexRequestGuard(options);
+  const validateOnly = createCodexRequestGuard(options);
+  const validateRequest = (message) => {
+    validateOnly(message);
+    const record = options.requestRecordPath && codexThreadRecord(message);
+    if (record)
+      appendFileSync(options.requestRecordPath, JSON.stringify(record) + "\n", {
+        mode: 0o600,
+      });
+  };
   const args = process.argv.slice(2);
   let launch;
   try {

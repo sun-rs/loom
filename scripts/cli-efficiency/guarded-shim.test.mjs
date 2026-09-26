@@ -4,9 +4,11 @@ import {
   existsSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   statSync,
   writeFileSync,
 } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -247,4 +249,38 @@ test("gate shim options: OpenCode compaction options come only from the CLI's ve
     if (previous === undefined) delete process.env.FAKE_CATALOG_RECORD;
     else process.env.FAKE_CATALOG_RECORD = previous;
   }
+});
+
+test("launchRecordPath: every guarded launch records its cwd, probe flag and --add-dir values first", () => {
+  const work = mkdtempSync(join(tmpdir(), "loom-shim-launch-"));
+  const fake = join(work, "fake-kimi.mjs");
+  // FAKE Kimi CLI (no model): prints a version.
+  writeFileSync(fake, '#!/usr/bin/env node\nconsole.log("0.39.1");\n', {
+    mode: 0o700,
+  });
+  const launchRecordPath = join(work, "launches.jsonl");
+  const shim = writeGuardedShim({
+    provider: "kimi",
+    path: join(work, "guarded-kimi.mjs"),
+    realCli: fake,
+    model: "kimi-code/k3-256k",
+    effort: "low",
+    launchRecordPath,
+  });
+  const run = spawnSync(shim, ["--version"], { cwd: work, encoding: "utf8" });
+  assert.equal(run.status, 0, run.stderr);
+  const [record] = readFileSync(launchRecordPath, "utf8")
+    .trim()
+    .split("\n")
+    .map((l) => JSON.parse(l));
+  assert.equal(record.cwd, realpathSync(work));
+  assert.equal(record.subcommand, "--version");
+  assert.equal(record.probe, true);
+  assert.deepEqual(record.addDirs, []);
+  // Without the path, the shim text has no launch record.
+  assert.ok(!read("kimi").includes("appendGateLaunchRecord"));
+  assert.ok(
+    readFileSync(shim, "utf8").includes("appendGateLaunchRecord"),
+    "recorded before the guard",
+  );
 });

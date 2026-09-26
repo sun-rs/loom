@@ -239,3 +239,78 @@ test("owner B: the compaction overhead rise threshold defaults to 25% and is adj
       /RAH_DRIFT_OVERHEAD_RISE/,
     );
 });
+
+test("an empty RAH_DRIFT_COMPACT_AT runs without forced compaction (short smoke)", () => {
+  const c = parseDriftEnv({
+    ...base,
+    RAH_DRIFT_ROUNDS: "6",
+    RAH_DRIFT_COMPACT_AT: "",
+  });
+  assert.equal(c.rounds, 6);
+  assert.deepEqual(c.compactAt, []);
+  assert.deepEqual(
+    parseDriftEnv({ ...base, RAH_DRIFT_ROUNDS: "6", RAH_DRIFT_COMPACT_AT: " " })
+      .compactAt,
+    [],
+  );
+});
+
+test("RAH_DRIFT_ATTACH: opt-in attached-directory check, off by default", () => {
+  assert.equal(parseDriftEnv(base).attach, false);
+  assert.equal(parseDriftEnv({ ...base, RAH_DRIFT_ATTACH: "0" }).attach, false);
+  const c = parseDriftEnv({
+    ...base,
+    RAH_DRIFT_ATTACH: "1",
+    RAH_DRIFT_ROUNDS: "6",
+    RAH_DRIFT_COMPACT_AT: "",
+  });
+  assert.equal(c.attach, true);
+  for (const value of ["yes", "true", "2", ""])
+    assert.throws(
+      () => parseDriftEnv({ ...base, RAH_DRIFT_ATTACH: value }),
+      /RAH_DRIFT_ATTACH must be 1 or 0/,
+      value,
+    );
+});
+
+test("RAH_DRIFT_ATTACH keeps the round minimum and compaction constraints and needs one more round in the last segment", () => {
+  const attach = { ...base, RAH_DRIFT_ATTACH: "1" };
+  // Unchanged constraints.
+  for (const env of [
+    { ...attach, RAH_DRIFT_ROUNDS: "5", RAH_DRIFT_COMPACT_AT: "" },
+    { ...attach, RAH_DRIFT_ROUNDS: "12", RAH_DRIFT_COMPACT_AT: "12" },
+    { ...attach, RAH_DRIFT_ROUNDS: "20", RAH_DRIFT_COMPACT_AT: "15,8" },
+  ])
+    assert.throws(() => parseDriftEnv(env), /Invalid drift gate/);
+  // The attached-read round sits in the last segment after its five kinds.
+  assert.throws(
+    () => parseDriftEnv(attach),
+    /RAH_DRIFT_ATTACH needs at least 6 rounds after the last compaction/,
+  );
+  assert.throws(
+    () =>
+      parseDriftEnv({
+        ...attach,
+        RAH_DRIFT_ROUNDS: "10",
+        RAH_DRIFT_COMPACT_AT: "5",
+      }),
+    /at least 6 rounds after the last compaction/,
+  );
+  assert.deepEqual(
+    parseDriftEnv({
+      ...attach,
+      RAH_DRIFT_ROUNDS: "11",
+      RAH_DRIFT_COMPACT_AT: "5",
+    }).compactAt,
+    [5],
+  );
+  // Without attach the same short last segment stays valid.
+  assert.equal(
+    parseDriftEnv({
+      ...base,
+      RAH_DRIFT_ROUNDS: "10",
+      RAH_DRIFT_COMPACT_AT: "5",
+    }).rounds,
+    10,
+  );
+});

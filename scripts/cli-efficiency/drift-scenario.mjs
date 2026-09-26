@@ -18,6 +18,20 @@ export const DRIFT_ROLE_INSTRUCTIONS = [
   "消息指定开头或字数时严格遵守；一轮只发一条完成回复。",
 ].join("\n");
 
+// Opt-in attached-directory check (RAH_DRIFT_ATTACH): one extra standing
+// line lets the instance read a Channel attached directory when the Human
+// asks. It names neither the file nor its content.
+export const ATTACH_ROLE_INSTRUCTION =
+  "例外：Human 明确要求读取本频道附加目录中的文件时，可以只读地读取该文件。";
+export function driftRoleInstructions(attach) {
+  return attach
+    ? `${DRIFT_ROLE_INSTRUCTIONS}\n${ATTACH_ROLE_INSTRUCTION}`
+    : DRIFT_ROLE_INSTRUCTIONS;
+}
+export const ATTACH_TEMPLATE = "attached-read";
+// Five kinds plus the attached-read round in the last segment.
+export const ATTACH_SEGMENT_MIN = 6;
+
 const QA_TOPICS = [
   "scripts/workbench-launch-receipt.mjs 导出了哪些函数？",
   "测试文件里一共有几个 test 用例？",
@@ -151,6 +165,41 @@ function roundSpec(template, round, occurrence) {
   throw new Error(`Unknown drift template ${template}`);
 }
 
+// The Human names the file relative to the attached directory and says it
+// is in the attached directory, never its absolute path: the check is
+// whether the instance knows where its attached directory is.
+function attachedReadSpec(round, attach) {
+  return {
+    round,
+    template: ATTACH_TEMPLATE,
+    kinds: [ATTACH_TEMPLATE],
+    messages: [
+      {
+        target: "room",
+        body: `请读取本频道附加目录中的 ${attach.relativeFile}，只回复文件里的口令本身，不要其他文字。`,
+      },
+    ],
+    expect: {
+      reply: true,
+      target: "room",
+      format: null,
+      attachedSecret: attach.passphrase,
+    },
+  };
+}
+
+function assertAttach(attach) {
+  if (
+    typeof attach?.relativeFile !== "string" ||
+    attach.relativeFile === "" ||
+    attach.relativeFile.startsWith("/") ||
+    attach.relativeFile.split("/").includes("..")
+  )
+    throw new Error("Attached-read needs a relative file inside the directory");
+  if (typeof attach.passphrase !== "string" || attach.passphrase === "")
+    throw new Error("Attached-read needs a passphrase");
+}
+
 export function segmentsOf(rounds, compactAt) {
   const bounds = [0, ...compactAt, rounds];
   return bounds.slice(1).map((end, i) => ({
@@ -160,10 +209,22 @@ export function segmentsOf(rounds, compactAt) {
   }));
 }
 
-export function buildDriftScenario({ rounds, compactAt }) {
+// attach: {relativeFile, passphrase} adds one attached-read round right
+// after the five kinds of the last segment (it replaces the first filler
+// round there; all other rounds are unchanged).
+export function buildDriftScenario({ rounds, compactAt, attach }) {
+  if (attach !== undefined) assertAttach(attach);
   const need = Object.keys(TEMPLATES).length;
+  const segments = segmentsOf(rounds, compactAt);
+  const last = segments.at(-1);
+  if (attach !== undefined && last.to - last.from + 1 < ATTACH_SEGMENT_MIN)
+    throw new Error(
+      `Drift attached-read round needs ≥${ATTACH_SEGMENT_MIN} rounds in the last segment ` +
+        `(rounds ${last.from}..${last.to})`,
+    );
+  const attachRound = attach === undefined ? null : last.from + need;
   const plan = [];
-  for (const segment of segmentsOf(rounds, compactAt)) {
+  for (const segment of segments) {
     const size = segment.to - segment.from + 1;
     if (size < need)
       throw new Error(
@@ -180,18 +241,27 @@ export function buildDriftScenario({ rounds, compactAt }) {
   const scenario = plan.map((template, i) => {
     const occurrence = seen[template] ?? 0;
     seen[template] = occurrence + 1;
-    return roundSpec(template, i + 1, occurrence);
+    return i + 1 === attachRound
+      ? attachedReadSpec(i + 1, attach)
+      : roundSpec(template, i + 1, occurrence);
   });
-  const missing = coverageGaps(scenario, compactAt);
+  const missing = coverageGaps(scenario, compactAt, {
+    attach: attach !== undefined,
+  });
   if (missing.length)
     throw new Error("Drift coverage gap: " + missing.join(", "));
   return scenario;
 }
 
 // "segment<i>:<kind>" for every kind missing from a segment; round 1 must
-// be a room Q&A because its Human message roots the thread used later.
-export function coverageGaps(scenario, compactAt) {
+// be a room Q&A because its Human message roots the thread used later. With
+// attach, exactly one attached-read round is required.
+export function coverageGaps(scenario, compactAt, { attach = false } = {}) {
   const gaps = [];
+  if (attach) {
+    const count = scenario.filter((r) => r.template === ATTACH_TEMPLATE).length;
+    if (count !== 1) gaps.push(`${ATTACH_TEMPLATE}:count=${count}`);
+  }
   if (scenario[0]?.template !== "qa") gaps.push("round1:not-qa");
   for (const segment of segmentsOf(scenario.length, compactAt)) {
     const kinds = new Set(

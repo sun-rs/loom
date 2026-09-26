@@ -717,6 +717,22 @@ B. 权限收口
 - 附加目录：创建时记录身份后，恶意并发改名的 TOCTOU 仍未解决；没有预备器的 Core 与此前创建的频道仍在首次绑定时记录。
 - 真实 CLI 均未验证（未授权付费运行）；控制台不存在；本地服务未重启。
 
+### 四十二、附加目录冒烟门禁
+
+为付费冒烟准备（负责人要求），漂移门禁新增可选的频道附加目录检查 `RAH_DRIFT_ATTACH=1`，细节见 [漂移门禁文档](../design/long-session-drift-gate.zh-CN.md#附加目录冒烟rah_drift_attach1可选)。每项先写失败测试并确认失败，再实现；没有运行任何付费 CLI 或真实 CLI，没有重启服务，没有改前端，没有放宽已有断言。
+
+1. 夹具与频道：gate 在临时根下建附加目录与 `facts/attached-secret.txt`（每次随机口令，目录取 realpath）；隔离 daemon 配置 `channelWorkspaceRoot = <临时根>/channel-workspaces`（`gate-daemon.mjs#gateDaemonConfig`，对所有 gate 生效：此前 gate 建频道会在真实 `~/.loom/channel-workspaces` 建主目录）；频道经真实 `room.create` 带 `additionalDirectories` 创建，要求主目录已记录且 `primary.state = ready`，题目源文件复制进主目录；Role 不再指定 `existing_mount`，实例由 Kernel 选 `channel_home`；常驻指令多一行只读许可（不含文件名与口令）。
+2. 场景与判定：最后一段五类模板之后插入 `attached-read` 轮（只给相对名与“附加目录中”）；频道内目标正确的回复含口令为 ok，否则硬失败 `attachedRead`。轮数 6..60、每段 ≥5 轮与压缩轮规则不变，开启时最后一段须 ≥6 轮；`RAH_DRIFT_COMPACT_AT` 空串（不压缩）原本已允许，补了测试。
+3. 证据（只报告，缺来源记 `unknown`）：`result.attach` 记频道工作区、实例 cwd（Host channel_home 回执、placement 挂载、守卫 shim 记录的实例创建后每次 CLI 启动 cwd、Codex thread cwd）、各 CLI 附带方式（Claude `--add-dir=`、Codex `runtimeWorkspaceRoots`、Kimi 平台版 `local.toml`、OpenCode 常驻提示词 `- Attached directory:` 行）；每轮 `usageRecords`（`run_attempt_usage` 行数与缺口原因，Kimi 标 `kimi-wire`）；OpenCode `arm.openCodePermission`（`POST /session` 与 `PATCH /session/:id` 的规则，按 `findLast` 报告 question/plan_enter/plan_exit 是否 deny）。shim 启动记录只存 cwd、子命令、探针标记与 `--add-dir` 值，不存其他 argv（可能含凭据）。脱敏文件同时替换临时根的规范路径。
+4. 围栏修正（产品已发送、原 gate 会拒绝的请求）：Codex 围栏放行 `thread/start|resume` 的 `runtimeWorkspaceRoots`（只许非空绝对路径数组；第三十九节起有附加目录时产品发送，原白名单会拒绝并杀掉 CLI）；OpenCode 代理放行 `PATCH /session/:id`，只许恰好一个 permission 规则数组（第四十一节起续聊旧会话时产品发送，原代理只放行 POST，会 403 并关闭 CLI）。模型/effort 校验不变。
+5. 测试：`drift-config.test.mjs`（ATTACH 取值、默认关闭、约束不变、最后一段 ≥6、空压缩串）、`drift-scenario.test.mjs`（插入位置、消息不含绝对路径与口令、其余轮不变、覆盖检查、常驻指令）、`drift-checks.test.mjs`（含口令通过、无口令/无回复/他处回复失败、汇总与 `violated`）、新增 `drift-attach.test.mjs`（夹具随机与权限、启动记录不含其他 argv、Kimi 文件各状态、OpenCode 提示行与规则求值、Host 回执、四家附带方式与 cwd 判定、用量来源）、`model-guard.test.mjs`（roots 放行与非法形状拒绝、thread 记录、假 Codex stdio 端到端记录）、`drift-opencode-guard.test.mjs`（PATCH 形状、请求记录、假 serve 端到端记录与提示行）、`guarded-shim.test.mjs`（启动记录）、新增 `gate-daemon.test.mjs`（主目录根在临时根下）、`gate-evidence.test.mjs`（规范路径脱敏）。
+
+偏离与未解决：
+
+- 附带方式证据只证明参数/文件/提示行已交给 CLI；模型是否使用只由 `attached-read` 轮判定。cwd 与附带方式证据不影响 gate 状态，需人工看。
+- Codex 每轮压缩客户端恢复线程时不带 `runtimeWorkspaceRoots`；OpenCode 提示行只在 serve 启动时读取；OpenCode 规则证据是请求级（PATCH 为追加，未读回会话最终规则）。
+- 尚无付费样本（未授权运行）；控制台不存在；本地服务未重启。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

@@ -24,6 +24,22 @@ RAH_DRIFT_PROVIDER=opencode RAH_DRIFT_MODEL=deepseek/deepseek-flash RAH_DRIFT_EF
 RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:drift -- --paid
 ```
 
+附加目录短冒烟（6 轮、不压缩，第 6 轮为 `attached-read`，见“附加目录冒烟”一节）：
+
+```sh
+RAH_DRIFT_PROVIDER=codex RAH_DRIFT_MODEL=gpt-6-luna RAH_DRIFT_EFFORT=low RAH_DRIFT_MODE=warm \
+RAH_DRIFT_ROUNDS=6 RAH_DRIFT_COMPACT_AT= RAH_DRIFT_ATTACH=1 npm run test:cli:drift -- --paid
+
+RAH_DRIFT_PROVIDER=opencode RAH_DRIFT_MODEL=deepseek/deepseek-flash RAH_DRIFT_EFFORT=low RAH_DRIFT_MODE=warm \
+RAH_DRIFT_ROUNDS=6 RAH_DRIFT_COMPACT_AT= RAH_DRIFT_ATTACH=1 npm run test:cli:drift -- --paid
+
+RAH_DRIFT_PROVIDER=claude RAH_DRIFT_MODEL=haiku RAH_DRIFT_EFFORT=none RAH_DRIFT_MODE=cold \
+RAH_DRIFT_ROUNDS=6 RAH_DRIFT_COMPACT_AT= RAH_DRIFT_ATTACH=1 npm run test:cli:drift -- --paid
+
+RAH_DRIFT_PROVIDER=kimi RAH_DRIFT_MODEL=kimi-code/k3-256k RAH_DRIFT_EFFORT=low RAH_DRIFT_MODE=cold \
+RAH_DRIFT_ROUNDS=6 RAH_DRIFT_COMPACT_AT= RAH_DRIFT_ATTACH=1 npm run test:cli:drift -- --paid
+```
+
 批准组合见 AGENTS.md 授权表（2026-09-09 矩阵：Claude `sonnet/low`、Codex `gpt-5.6-luna/low`、OpenCode
 `deepseek/deepseek-v4-flash/low`、Kimi `kimi-code/k3/high`；2026-09-25 追加：Codex `gpt-6-luna/low`、Kimi
 `kimi-code/k3-256k/low`、Claude `haiku`/无 effort、OpenCode `deepseek/deepseek-flash/low`）。OpenCode 目录已不再发布
@@ -36,13 +52,30 @@ RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:
 | `RAH_DRIFT_EFFORT`        | 明确推理档位（不接受 `default`）；`none` 只许且必须用于 Claude `haiku`          |
 | `RAH_DRIFT_MODE`          | `cold`（每轮进程，默认）或 `warm`（Codex/Claude/OpenCode 热进程）               |
 | `RAH_DRIFT_ROUNDS`        | 默认 20（6..60）                                                                |
-| `RAH_DRIFT_COMPACT_AT`    | 默认 `8,15`：第 N 轮结束后、第 N+1 轮前强制压缩；空串表示不压缩                 |
+| `RAH_DRIFT_COMPACT_AT`    | 默认 `8,15`：第 N 轮结束后、第 N+1 轮前强制压缩；空串表示不压缩（短冒烟）       |
 | `RAH_DRIFT_OVERHEAD_RISE` | 压缩后开销上升阈值，默认 `0.25`（+25%），取值 (0, 10]                           |
+| `RAH_DRIFT_ATTACH`        | `1` 开启频道附加目录检查（见下节），`0`/不设关闭；其他值启动前失败              |
 
 缺参数、未知 provider、表外组合、Kimi 用 warm、压缩轮越界或乱序、Haiku 带 effort 或非 Haiku 用 `none`、OpenCode
 模型不是 `provider/model` 均在启动前失败（binding 与 effort 解析与效率 Gate 共用 `efficiency-config.mjs`）。`none` 时目录探针还须确认该 binding 不发布任何 effort 档位。免费单测：
 `npm run test:cli:drift:unit`（场景生成器、判定器、Kimi/Codex/Claude/OpenCode 围栏、压缩证据解析、OpenCode
-守卫代理端到端假 CLI 测试）。
+守卫代理端到端假 CLI 测试、附加目录夹具与证据汇总、gate daemon 配置）。
+
+## 附加目录冒烟（`RAH_DRIFT_ATTACH=1`，可选）
+
+目的：在真实 CLI 上验证频道工作区（status 第三十九至四十一节）——实例在频道主目录运行、四家 CLI 的附加目录附带方式生效、模型能读到附加目录中的文件。
+
+- 准备：gate 在临时根下建 `attached/facts/attached-secret.txt`，内容含每次随机生成的口令 `LOOM-ATT-<24 位 hex>`；目录取 realpath（Host 要求规范路径，macOS 临时目录在 `/var → /private/var` 符号链接下）。隔离 daemon 的 `channelWorkspaceRoot` 设为 `<临时根>/channel-workspaces`（不论是否开启本检查，gate 都不再在真实 `~/.loom/channel-workspaces` 建主目录）。频道经真实 `POST /v3/client/rooms/create` 带 `additionalDirectories: [附加目录]` 创建；gate 读 `rooms.channel_workspace_json`/`channel_workspace_state_json`，要求主目录已记录、`primary.state = ready`、附加目录已记录，然后把题目源文件复制进主目录（其余轮次题目不变）。Role 不再指定 `existing_mount`，由 Kernel 为新频道实例选 `channel_home`；常驻指令多一行“Human 明确要求读取本频道附加目录中的文件时，可以只读地读取该文件”（不含文件名与口令）。
+- 场景：最后一段在五类模板之后插入一个 `attached-read` 轮（替换该段第一个填充轮，其余轮次不变）：Human 在频道要求“读取本频道附加目录中的 `facts/attached-secret.txt`，只回复口令”，只给相对名、不给绝对路径。回复（频道内、目标正确的已提交正文）包含口令为 ok，否则记硬失败 `attachedRead`（gate `violated`）；`summary.totals.attachedReadOk/attachedReadChecked` 汇总。
+- 约束不放宽：轮数仍为 6..60，每段仍须 ≥5 轮，压缩轮规则不变；开启时最后一段须 ≥6 轮（配置解析与场景生成两处都拒绝）。短冒烟用 `RAH_DRIFT_ROUNDS=6 RAH_DRIFT_COMPACT_AT=`（第 6 轮即 `attached-read`）。
+- 证据 `result.attach`（只报告，不影响 gate 状态；来源缺失记 `unknown`，不推断）：
+  - `channelWorkspace`：主目录、附加目录、`primaryState`、附加目录是否已记录。
+  - `cwd`：Host channel_home 挂载回执（`<state>/agent-workspaces/.mount-receipts`）的 cwd、placement 的挂载是否就是这些回执、实例创建后每次真实 CLI 启动的 cwd（守卫 shim 的启动记录 `launches.jsonl`，排除目录/版本探针）、Codex thread 请求的 `cwd`；全部等于主目录为 `primary`，任一不同为 `other`。
+  - `attachment`：Claude 每次轮次启动都带 `--add-dir=<附加目录>`（shim 启动记录只保存 cwd、子命令、探针标记与 `--add-dir` 值，不保存其他 argv）；Codex 每个 `thread/start|resume` 的 `runtimeWorkspaceRoots` 含附加目录（并报告主目录是否在首位）；Kimi 主目录下 `.kimi-code/local.toml` 存在、首行摘要与正文一致（平台版本）且列出附加目录；OpenCode 每次 serve 启动时 `OPENCODE_CONFIG_CONTENT` 的 `instructions` 文件（常驻提示词）含 `- Attached directory: <附加目录>` 行。
+- 与附加目录无关、每次都记录的证据：
+  - 每轮 `usageRecords`：本轮 RunAttempt 的 `run_attempt_usage` 行数与 `run_attempt_usage_gaps` 原因；Kimi 的行由 Host 驱动读 session wire 写入（`source: kimi-wire`，无行为 `none`），其他 CLI 为驱动用量帧。
+  - OpenCode `arm.openCodePermission`：守卫代理记录的 `POST /session` 与 `PATCH /session/:id` 的 permission 规则，按 OpenCode 1.18.32 的 `findLast` 通配求值报告 `question`/`plan_enter`/`plan_exit` 是否被 deny（每条记录都 deny 才为 true；没有记录为 null）。
+- 脱敏：`result.redacted.json` 同时替换临时根的规范路径（`/private/var/...`）。
 
 ## 模型围栏（fail closed）
 
@@ -51,7 +84,8 @@ RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:
   （`createCodexRequestGuard`）。围栏是白名单：只放行产品驱动与压缩客户端实际发送的 `initialize`/`initialized`、
   `thread/start|resume`、`thread/compact/start`、`turn/start|steer|interrupt` 及对服务端请求的响应，参数逐键限定
   （`config` 只许产品的 memory/multi_agent/goals 开关为 false 与许可 effort；`approvalPolicy` 只许 `never`；
-  `approvalsReviewer`、`serviceTier`、非文本输入等一律拒绝）；thread/start|resume 必须带许可值，turn 级覆盖不得偏离。
+  `approvalsReviewer`、`serviceTier`、非文本输入等一律拒绝）；thread/start|resume 必须带许可值，turn 级覆盖不得偏离；
+  频道附加目录的 `runtimeWorkspaceRoots` 只许非空的绝对路径数组。
   启动参数只许 `--version`、`debug models [--bundled]` 与带产品 `-c <开关>=false`、单个 `--listen` 的 `app-server`
   （`debug app-server send-message-v2`、`app-server daemon|proxy`、`exec` 等一律拒绝）。
 - Kimi：`drift-kimi-guard.mjs` 有状态校验 ACP：`session/set_model` 只许许可模型、只许 `thinking`
@@ -70,7 +104,9 @@ RAH_DRIFT_MODE=warm RAH_DRIFT_ROUNDS=10 RAH_DRIFT_COMPACT_AT=5 npm run test:cli:
 - OpenCode：`drift-opencode-guard.mjs`。两个产品驱动都启动 `serve --pure --hostname 127.0.0.1 --port N`；守卫 shim
   把真实 serve 放到另一回环端口，自己监听 N 做 fail-closed 代理：`POST /session/:id/message|prompt_async` 必须
   恰好带许可 `model`（providerID/modelID）与 `variant`，禁止 agent 覆盖和 subtask/agent 部件；`POST
-/session/:id/summarize` 只许许可模型；建 session、abort、permission/question 回复不得带模型字段；建 session
+/session/:id/summarize` 只许许可模型；建 session、abort、permission/question 回复不得带模型字段；`PATCH /session/:id`
+  只许恰好一个 `permission` 规则数组（每条只有 action/pattern/permission 三个字符串；驱动在续聊会话上安装 deny 规则，status 第四十一节），
+  其他 PATCH 路径与字段拒绝；建 session
   必须带非空、非默认（`New/Child session - …`）标题，避免 OpenCode 首条用户消息时经 small model 自动生成标题；其余一切
   非 GET 请求（command、shell、init、fork、config、tui 等）拒绝。违规回 403 并关闭 CLI。真实 serve 的配置内容把
   `model` 与 `small_model` 覆盖为许可模型；代理开始监听前读合并后的 `GET /config`：`model`/`small_model` 不等于许可值、
@@ -188,5 +224,8 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
   Sonnet 运行是否出现未知，出现时需负责人决定是否批准该后台模型，gate 不自行放宽。
 - Codex 事后核对依赖 rollout `turn_context` 的 `model`/`effort` 字段；Kimi 依赖 wire `llm.request` 记录。二者均为
   CLI 私有格式，版本变化导致缺字段时判证据缺失，而不是通过。
+- 附加目录冒烟：附带方式证据只证明“参数/文件/提示行已交给 CLI”，是否被模型实际使用只由 `attached-read` 轮判定；Codex 每轮
+  压缩客户端恢复线程时带实例 cwd 但不带 `runtimeWorkspaceRoots`（附加目录冒烟默认不压缩）；OpenCode 提示行证据在 serve 启动时读
+  instructions 文件，驱动之后换文件（规则变化）不再记录；启动记录只覆盖实例创建之后的 CLI 进程。尚无付费样本。
 - OpenCode 热压缩的 SSE 隐藏按 session id 过滤；OpenCode 手动压缩不带 variant，gate 靠注入 compaction agent 选项
   保持许可档位，压缩 assistant 的 `variant` 字段因此仍为空（证据如实记录）。

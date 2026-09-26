@@ -61,3 +61,19 @@ test("redaction replaces the temporary root and home, raw digest kept", () => {
   assert.equal(redacted.root, "<tmp>");
   assert.equal(JSON.parse(raw).root, dir);
 });
+
+// Canonical paths under the root (the attached directory and channel homes
+// of the drift attach check are realpaths; macOS tmpdir is under /var ->
+// /private/var) are redacted as well.
+test("redaction: the canonical form of the temporary root is replaced too", async () => {
+  const { realpathSync, symlinkSync } = await import("node:fs");
+  const real = mkdtempSync(join(tmpdir(), "loom-redact-real-"));
+  const link = join(mkdtempSync(join(tmpdir(), "loom-redact-link-")), "root");
+  symlinkSync(real, link);
+  const text = redactEvidence(
+    { a: `${realpathSync(real)}/attached`, b: `${link}/state` },
+    { root: link, home: "/nonexistent-home" },
+  );
+  assert.ok(text.includes('"a": "<tmp>/attached"'), text);
+  assert.ok(text.includes('"b": "<tmp>/state"'), text);
+});
