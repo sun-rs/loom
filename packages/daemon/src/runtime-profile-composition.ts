@@ -67,6 +67,12 @@ type RuntimeWorkerService = Pick<
 export function createConfiguredRuntime(input: {
   /** Owner 2026-09-26: the channel home's Human-attached directories. */
   additionalDirectories?: readonly string[] | undefined;
+  /**
+   * Review 2026-09-26 P1-1: throws when the channel workspace (primary or
+   * attached directory) is no longer the approved/created directory. Run
+   * before each activation's environment and evidence capture.
+   */
+  verifyWorkspace?: (() => void) | undefined;
   startupMemoryTransport?: "tool" | "system" | undefined;
   executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
   launchEnvironment?: (
@@ -112,6 +118,7 @@ export function createConfiguredRuntime(input: {
   const runtimeLeases = async (
     scope: ActivationEnvelope,
   ): Promise<ActivationEnvironmentLease[]> => {
+    input.verifyWorkspace?.();
     const runtimeId = (
       {
         "codex-app-server/v1": "codex",
@@ -199,7 +206,11 @@ export function createConfiguredRuntime(input: {
       throw error;
     }
   };
-  const issueWorkerCredential = async (scope: ActivationEnvelope) =>
+  const issueWorkerCredential = async (scope: ActivationEnvelope) => {
+    input.verifyWorkspace?.();
+    return await issueVerifiedWorkerCredential(scope);
+  };
+  const issueVerifiedWorkerCredential = async (scope: ActivationEnvelope) =>
     typeof input.workerService.issueActivationCredentialForWorkspace ===
     "function"
       ? await input.workerService.issueActivationCredentialForWorkspace(

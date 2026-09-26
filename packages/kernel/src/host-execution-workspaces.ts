@@ -14,8 +14,9 @@ import { authorizedHostParticipantIds } from "./host-authorization.ts";
 import { jsonObject, text } from "./sqlite-row.ts";
 
 /**
- * Host-scoped configuration projection. It never returns Host-derived paths;
- * the only paths are a channel home's Human-attached directories.
+ * Host-scoped configuration projection. The only paths are a channel home's
+ * Human-attached directories and its primary directory recorded at Channel
+ * creation; nothing is derived from the Host's current configuration.
  */
 export function listHostExecutionWorkspaceBindings(
   database: DatabaseSync,
@@ -45,7 +46,7 @@ export function listHostExecutionWorkspaceBindings(
       revision.executionWorkspace?.kind === "channel_home"
         ? revision.executionWorkspace
         : undefined;
-    const channelWorkspace =
+    const channelWorkspaceJson =
       channelHome === undefined
         ? undefined
         : database
@@ -53,6 +54,10 @@ export function listHostExecutionWorkspaceBindings(
               "SELECT channel_workspace_json FROM rooms WHERE room_id = ?",
             )
             .get(channelHome.roomId)?.channel_workspace_json;
+    const channelWorkspace =
+      typeof channelWorkspaceJson === "string"
+        ? ChannelWorkspaceSchema.parse(JSON.parse(channelWorkspaceJson))
+        : undefined;
     result.push(
       HostExecutionWorkspaceBindingSchema.parse({
         participantId,
@@ -65,10 +70,10 @@ export function listHostExecutionWorkspaceBindings(
           ? {}
           : {
               additionalDirectories:
-                typeof channelWorkspace === "string"
-                  ? ChannelWorkspaceSchema.parse(JSON.parse(channelWorkspace))
-                      .additionalDirectories
-                  : [],
+                channelWorkspace?.additionalDirectories ?? [],
+              ...(channelWorkspace?.primaryDirectory === undefined
+                ? {}
+                : { primaryDirectory: channelWorkspace.primaryDirectory }),
             }),
       }),
     );

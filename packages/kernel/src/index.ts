@@ -75,6 +75,10 @@ export type {
   PlacementCapacityPolicy,
   RoomKernelOptions,
 } from "./room-kernel.ts";
+export type {
+  ChannelPrimaryDirectoryPreparer,
+  PreparedChannelPrimaryDirectory,
+} from "./room-kernel-options.ts";
 export { planNextPlacement } from "./placement-planner.ts";
 export type {
   PlacementActivationCandidate,

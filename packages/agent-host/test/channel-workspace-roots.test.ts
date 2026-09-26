@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -94,5 +101,35 @@ test("workspace roots list the channel home and every attached directory; browsi
   assert.deepEqual(
     (await coordinator.workspaceRoots("other")).roots.map((r) => r.rootId),
     ["agent-workspace"],
+  );
+});
+
+test("review P1-1: browsing never follows an attached root that became a symlink, even without a Host verifier", async (t) => {
+  const base = await realpath(
+    await mkdtemp(join(tmpdir(), "rah-channel-roots-")),
+  );
+  t.after(() => rm(base, { recursive: true, force: true }));
+  const app = join(base, "app");
+  const data = join(base, "loom-data");
+  await mkdir(data, { recursive: true });
+  await writeFile(join(data, "internal.md"), "NOT IN APPROVED ROOT");
+  await symlink(data, app);
+  const coordinator = new AgentMemoryCoordinator({
+    rootDirectory: join(base, "memory"),
+    resolveAttachedDirectories: async () => [app],
+    wake: () => false,
+  });
+  t.after(() => coordinator.close());
+  await assert.rejects(
+    coordinator.previewWorkspaceFile(
+      "instance",
+      "attached-project-1",
+      "internal.md",
+    ),
+    /attached_directory_symlink/u,
+  );
+  assert.equal(
+    (await coordinator.workspaceRoots("instance")).roots[1]?.state,
+    "absent",
   );
 });

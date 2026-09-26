@@ -606,21 +606,21 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
    - 新实例：频道有 `channel_workspace_json` 且 Offer 支持私有工作区时，`executionWorkspace = {kind:"channel_home", roomId}`；否则保持原来的 `agent_private`。
    - `listHostExecutionWorkspaceBindings` 对 channel_home 附上频道的附加目录；规划器与恢复来源校验把 channel_home 与 agent_private 同样按“每个参与者一个挂载”处理。
 4. Host 主目录（`AgentExecutionWorkspaceCatalog`）：
-   - 时机：与现有私有目录一致，Host 在挂载刷新遇到第一个 channel_home 绑定时惰性创建；没有 channel_home 绑定就不创建根目录。
-   - 永不复用：先写所有权回执（`<state>/agent-workspaces/.channel-homes/<hash>.json`，0600，link 发布），再 `mkdir`；路径上已有目录而没有回执时拒绝并记入 `failures`。回执里的绝对路径是权威：以后改 `channelWorkspaceRoot` 也不会搬动已有主目录（CLI 按 cwd 定位会话）。
+   - 时机：已被第 12 项（负责人裁定 P2-2 选 A）取代：创建频道时由 Host 创建；惰性创建只留给没有 Host 预备器的 Core 与此前创建的频道。
+   - 永不复用：先写所有权回执（`<state>/agent-workspaces/.channel-homes/<hash>.json`，0600，link 发布），再 `mkdir`；路径上已有目录而没有回执时拒绝并记入 `failures`。回执里的绝对路径是权威：以后改 `channelWorkspaceRoot` 也不会搬动已有主目录（CLI 按 cwd 定位会话）。审查后回执只算“创建意图”，另有“创建完成”记录，见第 12 项。
    - 同频道实例共享 cwd，但挂载按参与者区分（revision id 摘要含 participantId、roomId、附加目录），每个实例仍是独立 lane；附加目录不同就是新挂载。挂载回执 schemaVersion 2，旧的 schemaVersion 1 私有回执照旧解析。
    - 重置不删主目录：`quarantinePrivate` 对 channel_home 返回 `undefined`（与 legacy 挂载相同），实例 session reset / full reset 都不碰主目录；频道归档、删除也不删除。
 5. 各 CLI 的附带方式（附加目录纳入常驻 `runtimeKey`，变化后在空闲边界重启）：
    - Claude 冷、热：每个附加目录一个 `--add-dir=<abs>`。
    - Codex 冷、热：`thread/start` 与 `thread/resume` 带 `runtimeWorkspaceRoots=[cwd, ...附加目录]`；没有附加目录时不带该字段，已有线程请求不变。新增 `codex-app-server-schema.test.ts`，用 `codex app-server generate-ts --experimental` 锁定两个参数里的字段（只生成绑定，不启动模型；本机没有 codex 时跳过）。
-   - Kimi：驱动（Host 侧进程）在启动 `kimi acp` 前在 cwd 写 `.kimi-code/local.toml`（`[workspace] additional_dir = [...]`，0600，内容不变不重写，原子替换）；没有附加目录时不写。
+   - Kimi：驱动（Host 侧进程）在启动 `kimi acp` 前在 cwd 写 `.kimi-code/local.toml`（`[workspace] additional_dir = [...]`，0600，内容不变不重写）；没有附加目录时不写。审查后只新建或更新平台管理版本，见第 12 项。
    - OpenCode：`runtimeContextLayer` 增加 `- Attached directory: <abs>`。是否注入只在 `attachedDirectoriesForPrompt`（`runtime-profile-composition.ts`）一处判定：Claude、Codex、Kimi 已原生告知，不重复；OpenCode 与 generic 进程注入。runtime context 不进 `deterministicDigest`，不算提示词漂移。
 6. Kimi 0.39.1 免费探针（2026-09-26，临时 `KIMI_CODE_HOME` 指向本地假 OpenAI 兼容服务，只记录请求体后回 400，未访问任何真实模型）：
    - cwd 下写入 `local.toml` 后 `session/new` + 一轮 prompt，第一个模型请求的 system 消息里有 `## Additional Directories`、附加目录路径和目录两层列表。
    - 新进程 `session/resume` 同一 session 再发一轮，system 消息仍包含该段。
    - 结论：确认可用，采用原生方案，未退回提示词一行。
 7. git 证据（`captureDeliveryEvidenceBaseline`）：按创建顺序逐个采集附加目录，取第一个 git 结果；都不是 git 时采集 cwd，非 git 如实记为 `not_git`。只记录一个根：有多个 git 附加目录时，后面的不产生交付证据。
-8. 文件浏览：本地 daemon 的 Agent 工作区根对 channel_home 实例增加 `runtime-project`（主目录）和每个附加目录（`attached-project-N`），复用 `listWorkspaceRoot`/`readWorkspaceRoot` 的 root-scoped 读取（realpath、拒绝 `..`、过滤 `.git` 与密钥文件、拒绝 `/`）。私有 cwd 与 legacy cwd 仍不作为浏览根暴露（行为不变）。
+8. 文件浏览：本地 daemon 的 Agent 工作区根对 channel_home 实例增加 `runtime-project`（主目录）和每个附加目录（`attached-project-N`），复用 `listWorkspaceRoot`/`readWorkspaceRoot` 的 root-scoped 读取（拒绝 `..`、过滤 `.git` 与密钥文件、拒绝 `/`）。附加根不再先 realpath 再当作安全，见第 12 项。私有 cwd 与 legacy cwd 仍不作为浏览根暴露（行为不变）。
 9. 已有频道与实例：
    - 已有实例的修订冻结，保持原 cwd。
    - 已有频道（schema 71 前创建，`channel_workspace_json` 为 NULL）的新实例保持 `agent_private`，不为旧频道补建主目录。理由：补建只对新实例有意义，却让同一频道出现两种 cwd，文件与证据分散；保持旧行为对会话连续性没有任何风险。
@@ -638,8 +638,18 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
     - 主目录根默认在 `~/.loom/`，与 evo 数据目录（`~/.loom/evo`）分开；校验器拒绝与 Loom 数据目录（`stateDirectory`）或主目录根重叠（包含或被包含）的附加目录，所以 `~` 本身会被拒。
     - 远端 Host 的 catalog 没有主目录根，channel_home 绑定会记为失败（远端本来拒绝 Role 实例）。
     - Registry 冷路径参数接线由驱动测试与共享函数覆盖，没有单独的“registry 冷启动 + 假 CLI”测试。
-    - 附加目录校验只在创建时做；之后目录被删、被替换为符号链接，平台不再检查，CLI 会看到不存在的路径。
+    - （已由第 12 项修复）原先附加目录只在创建时校验；审查复现根被替换为指向数据目录的符号链接后，浏览接口会跟过去读出数据目录文件。
     - 前端与控制台没有入口（前端冻结；`apps/console` 不存在），只能经 API 创建。真实 CLI 未验证模型是否实际使用附加目录；本地服务未重启，正式库仍是旧 schema，下次启动迁移到 71。
+12. 审查修复（2026-09-26，依据 `~/.loom/reviews/2026-09-26-channel-workspace-review.md`；负责人批准修 P1-1、P1-2、P2-1，P2-2 裁定选 A）。每项先写失败测试并确认失败，再实现；没有运行付费 CLI，没有重启服务，没有改前端。
+    - 共同的 Host 路径校验（`agent-host/src/channel-directory-check.ts`）：目录必须存在、是目录、叶子与祖先都不是符号链接（`realpath` 必须等于保存的路径）、不与 Loom 数据目录或主目录根重叠；记录过身份时 dev/ino 必须一致。错误带可诊断代码（`attached_directory_symlink`、`attached_directory_not_canonical`、`attached_directory_missing`、`attached_directory_reserved`、`attached_directory_replaced`、`channel_home_missing`、`channel_home_replaced`、`channel_home_unowned`、`channel_home_path_mismatch` 等）。daemon 创建时的校验器改为调用它，规则只有一份。
+    - P1-1 附加目录：第一次绑定刷新时记录每个附加目录的 dev/ino（`.channel-homes/<房间 hash>.attached-<路径 hash>.json`）；此后每次绑定刷新、启动解析（`resolveWorkspace`）、每次激活的环境准备与交付证据采集前（`verifyWorkspace`）、文件浏览前（`verifyAttachedDirectory`）都复核。不一致即拒绝：挂载不发布、激活失败、浏览报错；不静默规范化到新目标。浏览根不再先 `realpath`；没有 Host 校验器时浏览端也至少拒绝符号链接与非规范路径。同名普通目录替换靠 dev/ino 识别。
+    - P2-1 主目录：拆成“创建意图”（原回执）与“创建完成”（`<hash>.created.json`，只在 Loom 独占 `mkdir` 成功后写，含 dev/ino）。只有意图、没有完成记录的已有目录一律拒绝（`channel_home_unowned`，不能区分“崩溃前自己建的”与“外部建的”时选择拒绝）；只有意图且目录不存在时补完创建。有完成记录时目录缺失报 `channel_home_missing`、被替换报 `channel_home_replaced`，都阻断刷新、启动解析与浏览，不补建空目录，也不让旧 session 在别的目录继续。创建与记录逻辑集中在 `channel-home-records.ts` 一处，频道创建与惰性路径共用。
+    - P1-2 Kimi `.kimi-code/local.toml`：不存在时用 link 独占发布新建；已存在时只在它仍是未改动的平台版本时更新（首行带其余内容的 sha256 标记；也识别首版格式）。不认识的文件报 `KIMI_LOCAL_CONFIG_FOREIGN`、平台文件被改过报 `KIMI_LOCAL_CONFIG_MODIFIED`，原文件保持不变，Kimi 启动失败；`local.toml` 或 `.kimi-code` 是符号链接或特殊文件报 `KIMI_LOCAL_CONFIG_UNSAFE`。同频道两个 Kimi 同时初始化：发布冲突时内容相同即视为成功。不做 TOML 合并。
+    - P2-2（选 A）创建时建好主目录：daemon 给 Kernel 注入 `channelPrimaryDirectoryPreparer`（Kernel 自己不碰文件系统）。Kernel 在创建事务中完成全部校验后调用它；Host 独占创建 `<根>/<房间 id>` 并写意图与完成记录，返回绝对路径。建不出来（路径被占、不可写）则 `ConflictError`（含 Host 错误码），不写任何行；事务之后失败则调用 `rollback`，只在目录仍是同一个空目录时删除目录和两条记录。幂等重放直接返回原频道与原路径，不再调用 Host。路径写入 `channel_workspace_json.primaryDirectory` 与创建事件，此后改根配置不影响该频道；Host 绑定带 `primaryDirectory`，Host 以它为准（与意图记录不一致即 `channel_home_path_mismatch`）。崩溃窗口：目录与记录已写而 Kernel 未提交时，留下一个空目录和对应记录，其房间 id 永不再用，不会被别的频道接管；未做启动清理。没有预备器的 Core（测试）与此前创建的频道仍在第一次绑定时惰性创建，并同样走意图/完成记录。
+    - Room 投影：`channelWorkspace.primary = {state: pending|ready|failed, reason?}`。创建时 Host 预备成功即 `ready`；此后 daemon 每次挂载刷新把 Host 结果上报（`kernel.reportChannelWorkspaceStates`，只允许上报本 Host 有 channel_home 绑定的频道，只在变化时写）。存储在 `rooms.channel_workspace_state_json`（schema 72）。这是 Host 观测，不追加 Room 事件、不改 Room 序号；客户端下次读取房间时看到。
+    - 测试（先失败）：agent-host `channel-directory-integrity.test.ts`（附加根被换成指向数据目录的符号链接、祖先被换成符号链接、删除、同名普通目录替换、与数据目录重叠；意图已写但创建未完成、只有意图时补完、主目录被替换、被删除且重启后也不补建、两个 catalog 并发首次准备、以创建时记录的路径为准与不一致被拒、创建时建目录与回滚只删未动过的空目录、路径被占与父目录不可写）；`kimi-workspace-config.test.ts`（新建与重复启动不变、用户文件保留、平台文件被改后拒绝、平台文件与首版格式可更新、符号链接/目录/`.kimi-code` 链接拒绝、两进程并发初始化）；`channel-workspace-roots.test.ts` 新增无 Host 校验器时不跟随符号链接；kernel `channel-workspace.test.ts`（创建时预备并记录路径与 ready、重放不再预备、预备失败无频道行、提交失败回滚、改根不影响已记录路径、绑定带路径、状态 pending/ready/failed 与越权上报被拒且不改序号）；daemon `channel-workspace-composition.test.ts`（真实 Kernel + daemon 预备器：创建即目录就绪、路径被占时创建失败无行、重放同一目录；每次激活前复核，复核失败不采集证据）。
+    - 同步修改（非放宽）：`channel-home-workspace.test.ts` 的附加目录改为真实临时目录（刷新时现在复核附加目录）；kernel 投影断言补 `primary: {state:"pending"}`；schema 常量断言 71 → 72；七个 daemon 测试和两个 fixture 脚本的 v4 配置显式设 `channelWorkspaceRoot` 到临时 state 下（否则创建频道会在真实 `~/.loom/channel-workspaces` 建目录）。`room-kernel.ts` 行数棘轮（6925）未放宽：原子创建与回滚放在 `CollaborationService.createWorkspaceRoomAtomically`，状态上报放在 `channel-workspace-state.ts`。
+    - 未解决：单次 lstat+realpath 不能消除恶意并发改名的 TOCTOU（需要目录句柄读取，未做）；附加目录身份在第一次绑定刷新时记录，频道创建到第一次绑定之间的替换识别不了（创建时校验器不写身份）；目录被替换时浏览根列表仍显示为 `absent`（协议只有 absent/ready）；`local-workbench` 启动的浏览器门禁若创建频道，会在真实 `~/.loom/channel-workspaces` 建目录（默认根如此，未改）；主目录位于 git worktree 内时 Kimi 读错位置的问题仍未处理；崩溃后遗留的空目录没有清理；控制台未接入状态显示（`apps/console` 不存在）。
 
 ## 当前状态（2026-09-25，批次 4 后）
 

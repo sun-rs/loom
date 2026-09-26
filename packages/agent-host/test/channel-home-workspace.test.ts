@@ -45,8 +45,15 @@ function channelBinding(
 async function fixture(t: TestContext) {
   const base = await mkdtemp(join(await realpath(tmpdir()), "channel-home-"));
   t.after(() => rm(base, { recursive: true, force: true }));
+  // Attached directories must exist: the Host re-checks them at refresh.
+  const app = join(base, "work", "app");
+  const lib = join(base, "work", "lib");
+  await mkdir(app, { recursive: true });
+  await mkdir(lib, { recursive: true });
   return {
     base,
+    app,
+    lib,
     options: {
       rootDirectory: join(base, "state", "agent-workspaces"),
       channelHomeRoot: join(base, "channel-workspaces"),
@@ -62,13 +69,13 @@ const mountOf = (mounts: WorkspaceMountDescriptor[], id: string) => {
 };
 
 test("instances of one Channel share its newly created home with per-instance mounts; the home root is lazy", async (t) => {
-  const { options } = await fixture(t);
+  const { options, app } = await fixture(t);
   const catalog = await AgentExecutionWorkspaceCatalog.open(options);
   await catalog.refresh([]);
   await assert.rejects(lstat(options.channelHomeRoot), { code: "ENOENT" });
   const mounts = await catalog.refresh([
-    channelBinding("a", "room-1", ["/work/app"]),
-    channelBinding("b", "room-1", ["/work/app"]),
+    channelBinding("a", "room-1", [app]),
+    channelBinding("b", "room-1", [app]),
     channelBinding("c", "room-2"),
   ]);
   assert.deepEqual(catalog.failures, []);
@@ -78,7 +85,7 @@ test("instances of one Channel share its newly created home with per-instance mo
   assert.notEqual(a.workspaceMountRevisionId, b.workspaceMountRevisionId);
   assert.deepEqual(catalog.resolveWorkspace(a), {
     cwd: home,
-    additionalDirectories: ["/work/app"],
+    additionalDirectories: [app],
   });
   assert.equal(catalog.resolve(b), home);
   assert.equal(
@@ -88,7 +95,7 @@ test("instances of one Channel share its newly created home with per-instance mo
   assert.ok((await lstat(home)).isDirectory());
   assert.equal(await catalog.projectDirectory("a"), home);
   assert.equal(await catalog.channelHomeDirectory("a"), home);
-  assert.deepEqual(await catalog.attachedDirectories("a"), ["/work/app"]);
+  assert.deepEqual(await catalog.attachedDirectories("a"), [app]);
   assert.deepEqual(await catalog.attachedDirectories("c"), []);
 });
 
@@ -105,10 +112,10 @@ test("a directory already at the home path that Loom did not create is never reu
 });
 
 test("the home survives restart and an instance reset; a changed attached set is a new mount", async (t) => {
-  const { options } = await fixture(t);
+  const { options, app, lib } = await fixture(t);
   const first = await AgentExecutionWorkspaceCatalog.open(options);
   const before = mountOf(
-    await first.refresh([channelBinding("a", "room-1", ["/work/app"])]),
+    await first.refresh([channelBinding("a", "room-1", [app])]),
     "a",
   );
   const home = first.resolve(before);
@@ -120,13 +127,13 @@ test("the home survives restart and an instance reset; a changed attached set is
   await next.refresh([]);
   assert.equal(next.resolve(before), home, "frozen receipt after restart");
   const again = mountOf(
-    await next.refresh([channelBinding("a", "room-1", ["/work/app"])]),
+    await next.refresh([channelBinding("a", "room-1", [app])]),
     "a",
   );
   assert.deepEqual(next.failures, []);
   assert.equal(again.workspaceMountRevisionId, before.workspaceMountRevisionId);
   const changed = mountOf(
-    await next.refresh([channelBinding("a", "room-1", ["/work/lib"])]),
+    await next.refresh([channelBinding("a", "room-1", [lib])]),
     "a",
   );
   assert.notEqual(

@@ -107,6 +107,11 @@ export function createDaemonAgentMemoryCoordinator(input: {
             await input.executionWorkspaces!.channelHomeDirectory(owner),
           resolveAttachedDirectories: async (owner: string) =>
             await input.executionWorkspaces!.attachedDirectories(owner),
+          verifyAttachedDirectory: (owner: string, directory: string) =>
+            input.executionWorkspaces!.verifyAttachedDirectory(
+              owner,
+              directory,
+            ),
         }),
     // Typed App Inbox state is not a Room Message. The next canonical
     // Activation receives it until a dedicated maintenance lane exists.

@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ChannelAttachedDirectoriesSchema } from "./channel-workspace.ts";
+import {
+  ChannelAttachedDirectoriesSchema,
+  ChannelAttachedDirectorySchema,
+} from "./channel-workspace.ts";
 
 import {
   ContentDigestSchema,
@@ -74,6 +77,8 @@ export const HostExecutionWorkspaceBindingSchema = z
     // The channel home's Human-attached directories (host paths the Human
     // chose at Channel creation), never a Host-derived path.
     additionalDirectories: ChannelAttachedDirectoriesSchema.optional(),
+    // The channel home's primary directory recorded at Channel creation.
+    primaryDirectory: ChannelAttachedDirectorySchema.optional(),
   })
   .strict()
   .refine(
@@ -83,6 +88,15 @@ export const HostExecutionWorkspaceBindingSchema = z
     {
       message: "attached directories exist only for a channel home",
       path: ["additionalDirectories"],
+    },
+  )
+  .refine(
+    (binding) =>
+      binding.primaryDirectory === undefined ||
+      binding.executionWorkspace?.kind === "channel_home",
+    {
+      message: "a primary directory exists only for a channel home",
+      path: ["primaryDirectory"],
     },
   );
 export type HostExecutionWorkspaceBinding = z.infer<

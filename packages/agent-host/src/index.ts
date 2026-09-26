@@ -728,6 +728,14 @@ export * from "./activation-environment-lease.ts";
 export * from "./agent-skills.ts";
 
 export { AgentExecutionWorkspaceCatalog } from "./agent-execution-workspace-catalog.ts";
+export {
+  ChannelDirectoryError,
+  checkAttachedDirectory,
+  checkChannelHomeDirectory,
+  reservedChannelDirectories,
+  type ChannelDirectoryIdentity,
+} from "./channel-directory-check.ts";
+export { createChannelHome } from "./channel-home-records.ts";
 export { quarantineAgentExecutionWorkspaceReset } from "./agent-execution-workspace-reset.ts";
 
 export { withRuntimeExecutionWorkspace } from "./runtime-execution-workspace.ts";

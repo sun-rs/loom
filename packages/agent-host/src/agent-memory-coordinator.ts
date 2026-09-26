@@ -19,6 +19,7 @@ import type {
   AgentWorkspaceRoots,
 } from "@rah-os/protocol";
 import { AgentMemoryConfigStore } from "./agent-memory-config-store.ts";
+import { checkAttachedDirectory } from "./channel-directory-check.ts";
 
 import {
   AgentMemoryCleanerRuntime,
@@ -102,6 +103,9 @@ export class AgentMemoryCoordinator {
     ((ownerParticipantId: string) => Promise<string | undefined>) | undefined;
   readonly #resolveAttachedDirectories:
     ((ownerParticipantId: string) => Promise<readonly string[]>) | undefined;
+  readonly #verifyAttachedDirectory:
+    | ((ownerParticipantId: string, directory: string) => void | Promise<void>)
+    | undefined;
   readonly #rootDirectory: string;
   readonly #configs: AgentMemoryConfigStore;
   readonly #resetting = new Set<string>();
@@ -125,6 +129,14 @@ export class AgentMemoryCoordinator {
     resolveAttachedDirectories?: (
       ownerParticipantId: string,
     ) => Promise<readonly string[]>;
+    /**
+     * Review 2026-09-26 P1-1: the Host owner's re-check of an attached
+     * directory (shared rules plus recorded identity) before every browse.
+     */
+    verifyAttachedDirectory?: (
+      ownerParticipantId: string,
+      directory: string,
+    ) => void | Promise<void>;
     rootDirectory: string;
     wake: (
       ownerParticipantId: string,
@@ -143,6 +155,7 @@ export class AgentMemoryCoordinator {
     }
     this.#resolveProjectDirectory = options.resolveProjectDirectory;
     this.#resolveAttachedDirectories = options.resolveAttachedDirectories;
+    this.#verifyAttachedDirectory = options.verifyAttachedDirectory;
     this.#acquireResetFence = options.acquireResetFence;
     this.#quarantineProviderContinuity = options.quarantineProviderContinuity;
     this.#now = options.now ?? Date.now;
@@ -288,7 +301,9 @@ export class AgentMemoryCoordinator {
         rootId: `attached-project-${index + 1}`,
         rootKind: `attached-project-${index + 1}`,
         rootPath: directory,
-        state: (await existsDirectory(directory)) ? "ready" : "absent",
+        state: (await this.#attachedDirectoryUsable(participantId, directory))
+          ? "ready"
+          : "absent",
       });
     return { defaultRootId: "agent-workspace", roots };
   }
@@ -299,7 +314,12 @@ export class AgentMemoryCoordinator {
     return (await this.#resolveAttachedDirectories?.(participantId)) ?? [];
   }
 
-  /** Root-scoped like `runtime-project`: canonical, never the host root. */
+  /**
+   * Root-scoped like `runtime-project`, never the host root. Review
+   * 2026-09-26 P1-1: the stored path is verified as it is (canonical, no
+   * symlink, recorded identity through the Host owner), never re-resolved to
+   * whatever it points at now.
+   */
   async #requireAttachedDirectory(
     participantId: string,
     rootId: AgentWorkspaceRoot["rootId"],
@@ -311,10 +331,24 @@ export class AgentMemoryCoordinator {
         : (await this.#attachedDirectories(participantId))[Number(index) - 1];
     if (directory === undefined || !isAbsolute(directory))
       throw new Error("No such attached directory for this Agent");
-    const root = await realpath(directory);
-    if (root === "/")
+    if (directory === "/")
       throw new Error("Filesystem root is not a runtime project");
-    return root;
+    checkAttachedDirectory(directory, []);
+    await this.#verifyAttachedDirectory?.(participantId, directory);
+    return directory;
+  }
+
+  async #attachedDirectoryUsable(
+    participantId: string,
+    directory: string,
+  ): Promise<boolean> {
+    try {
+      checkAttachedDirectory(directory, []);
+      await this.#verifyAttachedDirectory?.(participantId, directory);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async browseWorkspace(

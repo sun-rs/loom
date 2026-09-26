@@ -217,6 +217,8 @@ test("DaemonApplication launches a real fake child that edits its own profile an
     const config = DaemonConfigSchema.parse({
       schemaVersion: 4,
       stateDirectory,
+      // Channel homes stay inside the temporary state, never in ~/.loom.
+      channelWorkspaceRoot: join(stateDirectory, "channel-workspaces"),
       client: { bindHost: "127.0.0.1", port: 0 },
       host: {
         hostId,

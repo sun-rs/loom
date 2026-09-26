@@ -2355,6 +2355,8 @@ function validConfigV4(stateDirectory: string, secretPath: string) {
     runtimeStartTimeoutMs: legacy.runtimeStartTimeoutMs,
     schemaVersion: 4 as const,
     stateDirectory,
+    // Channel homes stay inside the temporary state, never in ~/.loom.
+    channelWorkspaceRoot: join(stateDirectory, "channel-workspaces"),
     taskClaimHeartbeatIntervalMs: legacy.taskClaimHeartbeatIntervalMs,
     taskClaimLeaseMs: legacy.taskClaimLeaseMs,
     workspace: {

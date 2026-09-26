@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import type { RuntimeOffer } from "@rah-os/protocol";
@@ -11,6 +11,7 @@ import {
   IdempotencyConflictError,
   RoomKernel,
 } from "../src/index.ts";
+import type { RoomKernelOptions } from "../src/room-kernel-options.ts";
 
 /**
  * Owner 2026-09-26 channel workspace: every new Channel owns a platform home
@@ -18,13 +19,21 @@ import {
  * provider; every assertion reads durable Kernel state.
  */
 function fixture(
-  options: { validator?: (paths: readonly string[]) => void } = {},
+  options: {
+    validator?: (paths: readonly string[]) => void;
+    preparer?: RoomKernelOptions["channelPrimaryDirectoryPreparer"];
+    createId?: (prefix: string) => string;
+  } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-channel-workspace-"));
   const databasePath = join(directory, "room.db");
   const validated: string[][] = [];
   const kernel = new RoomKernel({
     databasePath,
+    ...(options.preparer === undefined
+      ? {}
+      : { channelPrimaryDirectoryPreparer: options.preparer }),
+    ...(options.createId === undefined ? {} : { createId: options.createId }),
     ...(options.validator === undefined
       ? {}
       : {
@@ -137,6 +146,7 @@ function fixture(
     actor,
     close,
     createChannel,
+    databasePath,
     db,
     head,
     host,
@@ -153,6 +163,7 @@ test("a new Channel records a platform home with no attached directories, in its
     assert.deepEqual(created.room.channelWorkspace, {
       kind: "channel_home",
       additionalDirectories: [],
+      primary: { state: "pending" },
     });
     assert.deepEqual(created.event.payload.channelWorkspace, {
       kind: "channel_home",
@@ -171,7 +182,11 @@ test("a new Channel records a platform home with no attached directories, in its
       f.kernel
         .listRooms(f.actor)
         .find((room) => room.roomId === created.room.roomId)?.channelWorkspace,
-      { kind: "channel_home", additionalDirectories: [] },
+      {
+        kind: "channel_home",
+        additionalDirectories: [],
+        primary: { state: "pending" },
+      },
     );
   } finally {
     f.close();
@@ -186,6 +201,7 @@ test("attached directories are validated by the Host validator, stored in order 
     assert.deepEqual(created.room.channelWorkspace, {
       kind: "channel_home",
       additionalDirectories: ["/work/app", "/work/lib"],
+      primary: { state: "pending" },
     });
     const replay = f.kernel.createWorkspaceRoom(f.actor, {
       workspaceId: created.room.workspaceId,
@@ -304,6 +320,202 @@ test("an existing Channel without a home keeps the private per-instance cwd for 
         ?.channelWorkspace,
       undefined,
     );
+  } finally {
+    f.close();
+  }
+});
+
+/** Fake Host preparer: records calls, no filesystem. */
+function fakePreparer(root: string, failWith?: string) {
+  const prepared: string[] = [];
+  const rolledBack: string[] = [];
+  return {
+    prepared,
+    rolledBack,
+    preparer: (roomId: string) => {
+      if (failWith !== undefined) throw new Error(failWith);
+      prepared.push(roomId);
+      return {
+        primaryDirectory: `${root}/${roomId}`,
+        rollback: () => {
+          rolledBack.push(roomId);
+        },
+      };
+    },
+  };
+}
+
+test("option A: the Host prepares the primary directory at Channel creation; the path is recorded, the state is ready and a replay prepares nothing", () => {
+  const host = fakePreparer("/homes/a");
+  const f = fixture({ preparer: host.preparer });
+  try {
+    const created = f.createChannel("fixed");
+    const channel = created.room;
+    assert.deepEqual(host.prepared, [channel.roomId]);
+    assert.deepEqual(channel.channelWorkspace, {
+      kind: "channel_home",
+      additionalDirectories: [],
+      primaryDirectory: `/homes/a/${channel.roomId}`,
+      primary: { state: "ready" },
+    });
+    assert.equal(
+      (created.event.payload.channelWorkspace as { primaryDirectory?: string })
+        .primaryDirectory,
+      `/homes/a/${channel.roomId}`,
+    );
+    const replay = f.createChannel("fixed");
+    assert.equal(replay.deduplicated, true);
+    assert.equal(replay.room.roomId, channel.roomId);
+    assert.equal(
+      replay.room.channelWorkspace?.primaryDirectory,
+      `/homes/a/${channel.roomId}`,
+    );
+    assert.deepEqual(
+      host.prepared,
+      [channel.roomId],
+      "replay prepares nothing",
+    );
+    assert.deepEqual(host.rolledBack, []);
+  } finally {
+    f.close();
+  }
+});
+
+test("option A: a Host preparation failure fails Channel creation with a diagnosable error and leaves no Channel row", () => {
+  const host = fakePreparer(
+    "/homes/a",
+    "channel_home_unowned: /homes/a/x already exists and was not created by Loom",
+  );
+  const f = fixture({ preparer: host.preparer });
+  try {
+    const before = f.db.prepare("SELECT COUNT(*) AS n FROM rooms").get() as {
+      n: number;
+    };
+    assert.throws(
+      () => f.createChannel("conflict"),
+      (error: unknown) =>
+        error instanceof ConflictError &&
+        /primary directory/u.test(error.message) &&
+        /channel_home_unowned/u.test(error.message),
+    );
+    const after = f.db.prepare("SELECT COUNT(*) AS n FROM rooms").get() as {
+      n: number;
+    };
+    assert.equal(after.n, before.n);
+  } finally {
+    f.close();
+  }
+});
+
+test("option A: a Kernel commit failure after preparation rolls the prepared directory back", () => {
+  const host = fakePreparer("/homes/a");
+  let forcedRoomId: string | undefined;
+  let ids = 0;
+  const f = fixture({
+    preparer: host.preparer,
+    // The second Channel reuses the first one's room id, so its INSERT fails
+    // after the Host already prepared the directory.
+    createId: (prefix) =>
+      prefix === "room" && forcedRoomId !== undefined
+        ? forcedRoomId
+        : `${prefix}_${String((ids += 1))}`,
+  });
+  try {
+    forcedRoomId = undefined;
+    const first = f.createChannel("first").room;
+    forcedRoomId = first.roomId;
+    assert.throws(() => f.createChannel("second"));
+    assert.deepEqual(host.rolledBack, [first.roomId]);
+    assert.equal(
+      f.kernel.listRooms(f.actor).filter((room) => room.slug === "second")
+        .length,
+      0,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("the recorded primary directory is never re-derived when the Host root later changes", () => {
+  const f = fixture({ preparer: fakePreparer("/homes/a").preparer });
+  try {
+    const channel = f.createChannel("fixed").room;
+    f.kernel.close();
+    const reopened = new RoomKernel({
+      databasePath: f.databasePath,
+      channelPrimaryDirectoryPreparer: fakePreparer("/homes/b").preparer,
+    });
+    try {
+      reopened.initialize();
+      const row = f.db
+        .prepare("SELECT channel_workspace_json FROM rooms WHERE room_id=?")
+        .get(channel.roomId) as { channel_workspace_json: string };
+      assert.equal(
+        JSON.parse(row.channel_workspace_json).primaryDirectory,
+        `/homes/a/${channel.roomId}`,
+      );
+    } finally {
+      reopened.close();
+    }
+  } finally {
+    f.db.close();
+    rmSync(dirname(f.databasePath), { recursive: true, force: true });
+  }
+});
+
+test("the Host binding carries the recorded primary directory", () => {
+  const f = fixture({ preparer: fakePreparer("/homes/a").preparer });
+  try {
+    const channel = f.createChannel("bound").room;
+    const created = f.instantiate(channel.roomId);
+    const binding = f.kernel
+      .listHostExecutionWorkspaceBindings(f.host)
+      .find((b) => b.participantId === created.instance.instanceId);
+    assert.equal(binding?.primaryDirectory, `/homes/a/${channel.roomId}`);
+  } finally {
+    f.close();
+  }
+});
+
+test("the Room projection shows the primary directory state reported by its Host: pending until reported, then ready or failed", () => {
+  const f = fixture();
+  try {
+    const channel = f.createChannel("state").room;
+    const other = f.createChannel("unbound").room;
+    const stateOf = (roomId: string) =>
+      f.kernel.listRooms(f.actor).find((room) => room.roomId === roomId)
+        ?.channelWorkspace?.primary;
+    assert.deepEqual(stateOf(channel.roomId), { state: "pending" });
+    f.instantiate(channel.roomId);
+    const seq = f.head(channel.roomId);
+    f.kernel.reportChannelWorkspaceStates(f.host, [
+      { roomId: channel.roomId, state: "ready" },
+    ]);
+    assert.deepEqual(stateOf(channel.roomId), { state: "ready" });
+    f.kernel.reportChannelWorkspaceStates(f.host, [
+      {
+        roomId: channel.roomId,
+        state: "failed",
+        reason: "channel_home_replaced: the primary directory was replaced",
+      },
+    ]);
+    assert.deepEqual(stateOf(channel.roomId), {
+      state: "failed",
+      reason: "channel_home_replaced: the primary directory was replaced",
+    });
+    assert.equal(
+      f.head(channel.roomId),
+      seq,
+      "a Host observation is not a Room business event",
+    );
+    assert.throws(
+      () =>
+        f.kernel.reportChannelWorkspaceStates(f.host, [
+          { roomId: other.roomId, state: "ready" },
+        ]),
+      /not bound/u,
+    );
+    assert.deepEqual(stateOf(other.roomId), { state: "pending" });
   } finally {
     f.close();
   }

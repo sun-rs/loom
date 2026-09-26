@@ -1,8 +1,11 @@
+import { mkdirSync, realpathSync } from "node:fs";
 import { realpath } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import {
   AgentExecutionWorkspaceCatalog,
+  createChannelHome,
+  reservedChannelDirectories,
   readAgentExecutionResetReceipt,
   type AgentExecutionResetCoordinator,
 } from "@rah-os/agent-host";
@@ -35,6 +38,10 @@ export async function createDaemonExecutionWorkspaceComposition(input: {
             "agent-workspaces",
           ),
           channelHomeRoot: defaultChannelWorkspaceRoot(config),
+          reservedDirectories: reservedChannelDirectories({
+            stateDirectory: config.stateDirectory,
+            channelWorkspaceRoot: defaultChannelWorkspaceRoot(config),
+          }),
           legacyCwd: config.workspace.cwd,
           isResetCommitted: async (owner, operationId) => {
             const receipt = await readAgentExecutionResetReceipt(
@@ -68,11 +75,22 @@ export async function createDaemonExecutionWorkspaceComposition(input: {
   const refreshExecutionWorkspaces = () => {
     workspaceRefresh = workspaceRefresh
       .catch(() => [])
-      .then(() =>
-        executionWorkspaces!.refresh(
+      .then(async () => {
+        const mounts = await executionWorkspaces!.refresh(
           kernel.listHostExecutionWorkspaceBindings(host),
-        ),
-      );
+        );
+        try {
+          // Host observation for the Room projection; a Channel unbound
+          // since the refresh is simply reported again next time.
+          kernel.reportChannelWorkspaceStates(
+            host,
+            executionWorkspaces!.channelHomeStates(),
+          );
+        } catch {
+          // Not a mount failure: placement already uses `mounts`.
+        }
+        return mounts;
+      });
     return workspaceRefresh;
   };
   function resolveRuntimeWorkspace(
@@ -84,6 +102,15 @@ export async function createDaemonExecutionWorkspaceComposition(input: {
       : { cwd: legacyCwd, additionalDirectories: [] };
     return {
       cwd: resolved.cwd,
+      // Review P1-1: re-verify the channel workspace before each
+      // activation's environment and delivery evidence capture.
+      ...(placement
+        ? {
+            verifyWorkspace: () => {
+              executionWorkspaces!.resolveWorkspace(placement);
+            },
+          }
+        : {}),
       ...(resolved.additionalDirectories.length === 0
         ? {}
         : { additionalDirectories: [...resolved.additionalDirectories] }),
@@ -166,15 +193,36 @@ export function defaultChannelWorkspaceRoot(
   );
 }
 
-/** Owner 2026-09-26: the Core-side check of Human-attached Channel directories. */
+/**
+ * Owner 2026-09-26: the Core-side Host hooks of a Channel workspace: the
+ * check of Human-attached directories, and (P2-2 option A) the creation of
+ * the primary directory `<root>/<roomId>` during Channel creation. The
+ * records are the execution catalog's (`createChannelHome`), so the first
+ * binding verifies exactly this directory. Crash after the directory is
+ * created but before the Kernel commit leaves an empty directory with Loom
+ * records for a room id that never exists and is never reused; it is not
+ * adopted by any other Channel.
+ */
 export function channelWorkspaceCoreOptions(config: DaemonConfig) {
-  return config.schemaVersion === 4
-    ? {
-        channelAttachedDirectoryValidator:
-          createChannelAttachedDirectoryValidator({
-            stateDirectory: config.stateDirectory,
-            channelWorkspaceRoot: defaultChannelWorkspaceRoot(config),
-          }),
-      }
-    : {};
+  if (config.schemaVersion !== 4) return {};
+  const root = resolve(defaultChannelWorkspaceRoot(config));
+  return {
+    channelAttachedDirectoryValidator: createChannelAttachedDirectoryValidator({
+      stateDirectory: config.stateDirectory,
+      channelWorkspaceRoot: root,
+    }),
+    channelPrimaryDirectoryPreparer: (roomId: string) => {
+      // The recorded path is canonical: every later check requires
+      // realpath(path) === path (a configured root may sit under a symlink).
+      mkdirSync(root, { recursive: true, mode: 0o700 });
+      return createChannelHome({
+        rootDirectory: join(
+          realpathSync(config.stateDirectory),
+          "agent-workspaces",
+        ),
+        roomId,
+        defaultCwd: join(realpathSync(root), roomId),
+      });
+    },
+  };
 }

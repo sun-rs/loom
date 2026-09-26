@@ -1738,4 +1738,23 @@ export function migrateChannelWorkspaceV71(database: DatabaseSync): void {
   ) {
     database.exec("ALTER TABLE rooms ADD COLUMN channel_workspace_json TEXT");
   }
+  // Same migration unit (room metadata); schema 72.
+  migrateChannelWorkspaceStateV72(database);
+}
+
+/**
+ * Host observation of a Channel's primary directory (pending/ready/failed),
+ * kept beside the immutable creation record. NULL means not yet reported.
+ */
+export function migrateChannelWorkspaceStateV72(database: DatabaseSync): void {
+  const roomColumns = database.prepare("PRAGMA table_info(rooms)").all();
+  if (
+    !roomColumns.some(
+      (row) => requiredString(row, "name") === "channel_workspace_state_json",
+    )
+  ) {
+    database.exec(
+      "ALTER TABLE rooms ADD COLUMN channel_workspace_state_json TEXT",
+    );
+  }
 }

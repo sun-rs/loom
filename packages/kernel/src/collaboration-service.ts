@@ -16,10 +16,15 @@ import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { heldDraftRecoveryTarget } from "./held-draft-recovery.ts";
 import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
 import type { DatabaseSync } from "node:sqlite";
+import type {
+  ChannelPrimaryDirectoryPreparer,
+  PreparedChannelPrimaryDirectory,
+} from "./room-kernel-options.ts";
 
 import {
   ActivationReasonSchema,
   ChannelAttachedDirectoriesSchema,
+  ChannelAttachedDirectorySchema,
   ClientWorkspaceUpdateRequestSchema,
   MembershipRoleSchema,
   ParticipantKindSchema,
@@ -134,6 +139,9 @@ export type DirectRoomOpenInput = {
 export class CollaborationService {
   readonly #attachedDirectoryValidator:
     ((paths: readonly string[]) => void) | undefined;
+  readonly #channelPrimaryDirectoryPreparer:
+    ChannelPrimaryDirectoryPreparer | undefined;
+  readonly #transaction: <T>(operation: () => T) => T;
   readonly #createId: (prefix: string) => string;
   readonly #database: DatabaseSync;
   readonly #events: RoomEventWriter;
@@ -141,12 +149,18 @@ export class CollaborationService {
 
   constructor(input: {
     attachedDirectoryValidator?: (paths: readonly string[]) => void;
+    channelPrimaryDirectoryPreparer?:
+      ChannelPrimaryDirectoryPreparer | undefined;
     createId: (prefix: string) => string;
     database: DatabaseSync;
     events: RoomEventWriter;
     now: () => Date;
+    transaction?: <T>(operation: () => T) => T;
   }) {
     this.#attachedDirectoryValidator = input.attachedDirectoryValidator;
+    this.#channelPrimaryDirectoryPreparer =
+      input.channelPrimaryDirectoryPreparer;
+    this.#transaction = input.transaction ?? ((operation) => operation());
     this.#createId = input.createId;
     this.#database = input.database;
     this.#events = input.events;
@@ -357,9 +371,38 @@ export class CollaborationService {
     };
   }
 
+  /**
+   * One transaction; P2-2 option A: a primary directory the Host prepared
+   * inside it is rolled back when the transaction does not commit.
+   */
+  createWorkspaceRoomAtomically(
+    actor: () => Principal,
+    input: WorkspaceRoomCreateInput,
+  ): RoomMutationResult {
+    let prepared: PreparedChannelPrimaryDirectory | undefined;
+    try {
+      return this.#transaction(() =>
+        this.createWorkspaceRoom(actor(), input, (directory) => {
+          prepared = directory;
+        }),
+      );
+    } catch (error) {
+      try {
+        prepared?.rollback();
+      } catch {
+        // The creation error is the diagnosis; an unremovable directory is
+        // left in place (its room id is never reused).
+      }
+      throw error;
+    }
+  }
+
   createWorkspaceRoom(
     actor: Principal,
     input: WorkspaceRoomCreateInput,
+    onPrimaryDirectoryPrepared?: (
+      prepared: PreparedChannelPrimaryDirectory,
+    ) => void,
   ): RoomMutationResult {
     if (actor.kind !== "human") {
       throw new ForbiddenError("only Human principals can create Rooms");
@@ -493,9 +536,39 @@ export class CollaborationService {
 
     const roomId = this.#createId("room");
     const createdAt = this.#timestamp();
+    // P2-2 option A: the Host creates the primary directory now, after every
+    // Kernel check passed. Its path is recorded and never re-derived; a
+    // failure leaves no Channel. Without a Host preparer (tests, a Core with
+    // no Host) the Host creates it lazily at the first binding.
+    let recordedWorkspace: ChannelWorkspace = channelWorkspace;
+    if (this.#channelPrimaryDirectoryPreparer !== undefined) {
+      let prepared: PreparedChannelPrimaryDirectory;
+      try {
+        prepared = this.#channelPrimaryDirectoryPreparer(roomId);
+      } catch (error) {
+        throw new ConflictError(
+          `Channel primary directory could not be created: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      onPrimaryDirectoryPrepared?.(prepared);
+      const primaryDirectory = ChannelAttachedDirectorySchema.safeParse(
+        prepared.primaryDirectory,
+      );
+      if (
+        !primaryDirectory.success ||
+        !primaryDirectory.data.endsWith(`/${roomId}`)
+      )
+        throw new ConflictError(
+          "Channel primary directory is not an absolute path for this Channel",
+        );
+      recordedWorkspace = {
+        ...channelWorkspace,
+        primaryDirectory: primaryDirectory.data,
+      };
+    }
     this.#database
       .prepare(
-        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json, channel_workspace_state_json) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)",
       )
       .run(
         roomId,
@@ -506,7 +579,11 @@ export class CollaborationService {
         description ?? null,
         visibility,
         createdAt,
-        JSON.stringify(channelWorkspace),
+        JSON.stringify(recordedWorkspace),
+        // The Host's successful preparation is its readiness receipt.
+        recordedWorkspace.primaryDirectory === undefined
+          ? null
+          : JSON.stringify({ state: "ready", updatedAt: createdAt }),
       );
     this.#database
       .prepare(
@@ -519,7 +596,7 @@ export class CollaborationService {
       aggregateType: "room",
       idempotencyKey: `room.bootstrap:${idempotencyKey}`,
       payload: {
-        channelWorkspace,
+        channelWorkspace: recordedWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
         kind: input.kind,
@@ -578,7 +655,7 @@ export class CollaborationService {
       idempotencyKey,
       payload: {
         basedOnControlRoomSeq: input.basedOnControlRoomSeq,
-        channelWorkspace,
+        channelWorkspace: recordedWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
         kind: input.kind,

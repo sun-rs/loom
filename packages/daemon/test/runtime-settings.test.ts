@@ -155,6 +155,8 @@ test("the daemon reads runtime-settings.json and migrates a legacy runtime-concu
     })),
     schemaVersion: 4,
     stateDirectory,
+    // Channel homes stay inside the temporary state, never in ~/.loom.
+    channelWorkspaceRoot: join(stateDirectory, "channel-workspaces"),
   } as unknown as DaemonConfig;
   try {
     const legacy = JSON.stringify({

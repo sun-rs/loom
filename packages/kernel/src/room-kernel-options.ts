@@ -27,6 +27,14 @@ export type PlacementCapacityPolicy = {
  */
 export type InPlaceWorkspaceSharing = "exclusive" | "shared";
 
+export type PreparedChannelPrimaryDirectory = Readonly<{
+  primaryDirectory: string;
+  rollback(): void;
+}>;
+export type ChannelPrimaryDirectoryPreparer = (
+  roomId: string,
+) => PreparedChannelPrimaryDirectory;
+
 export type RoomKernelOptions = {
   /**
    * Owner 2026-09-26: the Host-side check of Human-attached Channel
@@ -34,6 +42,15 @@ export type RoomKernelOptions = {
    * throws with a reason; without it attached directories are refused.
    */
   channelAttachedDirectoryValidator?: (paths: readonly string[]) => void;
+  /**
+   * Owner 2026-09-26 (P2-2 option A): the Host creates a new Channel's
+   * primary directory during Channel creation (Kernel never touches the
+   * filesystem). Called inside the creation transaction once every Kernel
+   * check has passed; a throw fails the creation with no Channel row. The
+   * returned absolute path is recorded and never re-derived. If the Kernel
+   * transaction then fails, `rollback` is called to remove the directory.
+   */
+  channelPrimaryDirectoryPreparer?: ChannelPrimaryDirectoryPreparer;
   createId?: (prefix: string) => string;
   databasePath: string;
   inPlaceWorkspaceSharing?: InPlaceWorkspaceSharing;

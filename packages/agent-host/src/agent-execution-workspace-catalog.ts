@@ -24,6 +24,21 @@ import {
   prepareAgentExecutionWorkspace,
   quarantineAgentExecutionWorkspace,
 } from "./agent-execution-workspace.ts";
+import {
+  ChannelDirectoryError,
+  checkAttachedDirectory,
+  checkChannelHomeDirectory,
+  type ChannelDirectoryIdentity,
+  type ReservedDirectory,
+} from "./channel-directory-check.ts";
+import {
+  channelHomeRecordsRoot,
+  createChannelHome,
+  readChannelHomeCreated,
+  readPrivateRecord,
+  writeOnce,
+  type ChannelHomeCreated,
+} from "./channel-home-records.ts";
 
 type Options = Readonly<{
   rootDirectory: string;
@@ -32,6 +47,11 @@ type Options = Readonly<{
    * (`<root>/<roomId>`). Created lazily on the first channel-home binding.
    */
   channelHomeRoot?: string;
+  /**
+   * Loom data and the channel home root: an attached directory must never
+   * overlap them (the same rule as at Channel creation).
+   */
+  reservedDirectories?: readonly ReservedDirectory[];
   legacyCwd: string;
   legacyMount: WorkspaceMountDescriptor;
   isResetCommitted?: (owner: string, operationId: string) => Promise<boolean>;
@@ -54,7 +74,18 @@ type ChannelHomeReceipt = {
   mount: WorkspaceMountDescriptor & { participantId: string };
 };
 type Receipt = PrivateReceipt | ChannelHomeReceipt;
-type ChannelHomeOwnership = { schemaVersion: 1; roomId: string; cwd: string };
+/** Identity of a Human-attached directory, recorded at its first check. */
+type AttachedIdentity = {
+  schemaVersion: 1;
+  roomId: string;
+  path: string;
+  identity: ChannelDirectoryIdentity;
+};
+export type ChannelHomeState = Readonly<{
+  roomId: string;
+  state: "ready" | "failed";
+  reason?: string;
+}>;
 
 /** Host-local mount provenance, not a second placement or authorization owner.
  * Caller supplies only authenticated Host binding projections. Immutable
@@ -65,7 +96,9 @@ export class AgentExecutionWorkspaceCatalog {
   readonly #receipts = new Map<string, Receipt>();
   readonly #authorized = new Map<string, HostExecutionWorkspaceBinding>();
   readonly #privateIntent = new Set<string>();
-  readonly #channelHomes = new Map<string, string>();
+  readonly #channelHomes = new Map<string, ChannelHomeCreated>();
+  readonly #attachedIdentities = new Map<string, ChannelDirectoryIdentity>();
+  #channelHomeStates = new Map<string, ChannelHomeState>();
   readonly #resetting = new Set<string>();
   readonly #resetOperations = new Map<string, string>();
   readonly #failedResets = new Map<string, string>();
@@ -161,15 +194,31 @@ export class AgentExecutionWorkspaceCatalog {
         this.#privateIntent.add(b.participantId);
     const mounts: WorkspaceMountDescriptor[] = [this.#options.legacyMount];
     this.#failures = [];
+    const states = new Map<string, ChannelHomeState>();
     for (const b of parsed) {
       if (this.#resetting.has(b.participantId)) continue;
       try {
         const mount = await this.#serial(b.participantId, async () => {
           if (this.#resetting.has(b.participantId)) return undefined;
           if (b.executionWorkspace?.kind === "channel_home") {
-            const cwd = await this.#prepareChannelHome(
-              b.executionWorkspace.roomId,
-            );
+            const roomId = b.executionWorkspace.roomId;
+            let cwd: string;
+            try {
+              cwd = await this.#prepareChannelHome(
+                roomId,
+                b.primaryDirectory,
+                b.additionalDirectories ?? [],
+              );
+            } catch (error) {
+              states.set(roomId, {
+                roomId,
+                state: "failed",
+                reason: errorMessage(error),
+              });
+              throw error;
+            }
+            if (!states.has(roomId))
+              states.set(roomId, { roomId, state: "ready" });
             const receipt = makeChannelHomeReceipt(
               cwd,
               b.participantId,
@@ -212,14 +261,16 @@ export class AgentExecutionWorkspaceCatalog {
         if (this.#failures.length < 100)
           this.#failures.push({
             participantId: b.participantId,
-            message: (error instanceof Error
-              ? error.message
-              : String(error)
-            ).slice(0, 1000),
+            message: errorMessage(error),
           });
       }
     }
+    this.#channelHomeStates = states;
     return mounts;
+  }
+  /** Readiness of each Channel home seen in the last refresh (Host report). */
+  channelHomeStates(): ChannelHomeState[] {
+    return [...this.#channelHomeStates.values()];
   }
   /** Recovery only: caller must validate exact original Attempt/Placement provenance. */
   resolveFrozen(placement: Placement): string {
@@ -251,6 +302,7 @@ export class AgentExecutionWorkspaceCatalog {
           this.#options.rootDirectory,
           placement.participantId,
         );
+      else this.#verifyChannelWorkspace(receipt);
       assertSafeDirectory(receipt.cwd, true);
       return Object.freeze({
         cwd: receipt.cwd,
@@ -277,10 +329,12 @@ export class AgentExecutionWorkspaceCatalog {
     const binding = this.#authorized.get(owner);
     if (!binding) return undefined;
     if (binding.executionWorkspace?.kind === "channel_home") {
-      const cwd = this.#channelHomes.get(binding.executionWorkspace.roomId);
-      if (cwd === undefined) return undefined;
-      assertSafeDirectory(cwd, true);
-      return cwd;
+      const created = this.#channelHomeCreated(
+        binding.executionWorkspace.roomId,
+      );
+      if (created === undefined) return undefined;
+      checkChannelHomeDirectory(created.cwd, created.identity);
+      return created.cwd;
     }
     if (binding.executionWorkspace?.kind !== "agent_private")
       return this.#options.legacyCwd;
@@ -306,40 +360,140 @@ export class AgentExecutionWorkspaceCatalog {
       : [];
   }
   /**
-   * Owner 2026-09-26: `<channelHomeRoot>/<roomId>`, created by Loom exactly
-   * once. An ownership receipt written before creation proves Loom made it;
-   * an existing directory without one is never adopted. The recorded path
-   * stays authoritative even if the configured root later changes, because
-   * Claude/Kimi locate sessions by cwd.
+   * Verify the attached directory `path` of `owner`'s channel home against
+   * the shared Host rules and its recorded identity (file browsing root).
    */
-  async #prepareChannelHome(roomId: string): Promise<string> {
+  verifyAttachedDirectory(owner: string, path: string): void {
+    const binding = this.#authorized.get(owner);
+    if (
+      binding?.executionWorkspace?.kind !== "channel_home" ||
+      !(binding.additionalDirectories ?? []).includes(path)
+    )
+      throw new Error("No such attached directory for this Agent");
+    this.#checkAttached(binding.executionWorkspace.roomId, path);
+  }
+  /** Launch-time check of a frozen channel-home receipt (P1-1, P2-1). */
+  #verifyChannelWorkspace(receipt: ChannelHomeReceipt): void {
+    const created = this.#channelHomeCreated(receipt.roomId);
+    if (created === undefined)
+      throw new ChannelDirectoryError(
+        "channel_home_unowned",
+        `${receipt.cwd} has no Loom creation record`,
+      );
+    if (created.cwd !== receipt.cwd)
+      throw new ChannelDirectoryError(
+        "channel_home_path_mismatch",
+        `${receipt.cwd} is not the recorded channel home ${created.cwd}`,
+      );
+    checkChannelHomeDirectory(created.cwd, created.identity);
+    for (const path of receipt.additionalDirectories)
+      this.#checkAttached(receipt.roomId, path);
+  }
+  #checkAttached(roomId: string, path: string): void {
+    const identity = this.#attachedIdentity(roomId, path);
+    if (identity === undefined)
+      throw new ChannelDirectoryError(
+        "attached_directory_unrecorded",
+        `${path} has no recorded identity for this Channel`,
+      );
+    checkAttachedDirectory(
+      path,
+      this.#options.reservedDirectories ?? [],
+      identity,
+    );
+  }
+  #channelHomesRoot(): string {
+    return channelHomeRecordsRoot(this.#options.rootDirectory);
+  }
+  #channelHomeCreated(roomId: string): ChannelHomeCreated | undefined {
+    const cached = this.#channelHomes.get(roomId);
+    if (cached !== undefined) return cached;
+    const created = readChannelHomeCreated(this.#options.rootDirectory, roomId);
+    if (created !== undefined) this.#channelHomes.set(roomId, created);
+    return created;
+  }
+  #attachedIdentity(
+    roomId: string,
+    path: string,
+  ): ChannelDirectoryIdentity | undefined {
+    const key = `${roomId}\u0000${path}`;
+    const cached = this.#attachedIdentities.get(key);
+    if (cached !== undefined) return cached;
+    const raw = readPrivateRecord(this.#attachedIdentityPath(roomId, path));
+    const record =
+      raw === undefined ? undefined : parseAttachedIdentity(raw, roomId, path);
+    if (record !== undefined)
+      this.#attachedIdentities.set(key, record.identity);
+    return record?.identity;
+  }
+  #attachedIdentityPath(roomId: string, path: string): string {
+    return join(
+      this.#channelHomesRoot(),
+      `${hash(roomId)}.attached-${hash(path)}.json`,
+    );
+  }
+  /** First check records the approved directory's identity; later compare. */
+  #recordAttached(roomId: string, path: string): void {
+    if (this.#attachedIdentity(roomId, path) !== undefined) {
+      this.#checkAttached(roomId, path);
+      return;
+    }
+    const identity = checkAttachedDirectory(
+      path,
+      this.#options.reservedDirectories ?? [],
+    );
+    const record: AttachedIdentity = {
+      schemaVersion: 1,
+      roomId,
+      path,
+      identity,
+    };
+    writeOnce(this.#attachedIdentityPath(roomId, path), JSON.stringify(record));
+    this.#checkAttached(roomId, path);
+  }
+  /**
+   * Owner 2026-09-26: `<root>/<roomId>`, created by Loom exactly once. The
+   * path is the one recorded at Channel creation (`primaryDirectory`), else
+   * `<channelHomeRoot>/<roomId>` for Channels created before it was recorded.
+   * Review P2-1: the intent record precedes creation, the completion record
+   * (with dev/ino) follows Loom's own exclusive mkdir. An existing directory
+   * with only an intent is never adopted; a created home that is missing or
+   * replaced blocks, and is never recreated empty.
+   */
+  async #prepareChannelHome(
+    roomId: string,
+    primaryDirectory: string | undefined,
+    attached: readonly string[],
+  ): Promise<string> {
     return await this.#serial(`channel-home:${roomId}`, async () => {
       if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/u.test(roomId))
         throw new Error("Channel home room id is not a safe path segment");
-      const ownershipRoot = join(this.#options.rootDirectory, ".channel-homes");
-      await ensureDirectory(ownershipRoot);
-      const ownershipPath = join(ownershipRoot, `${hash(roomId)}.json`);
-      let ownership = await readChannelHomeOwnership(ownershipPath, roomId);
-      if (ownership === undefined) {
-        const root = this.#options.channelHomeRoot;
-        if (root === undefined)
-          throw new Error("Execution catalog has no channel home root");
-        await ensureSharedDirectory(root);
-        const cwd = join(root, roomId);
-        if (await pathExists(cwd))
-          throw new Error(
-            `Channel home ${cwd} already exists and was not created by Loom; refusing to reuse it`,
+      await ensureDirectory(this.#channelHomesRoot());
+      for (const path of attached) this.#recordAttached(roomId, path);
+      const expectPath = (cwd: string) => {
+        if (primaryDirectory !== undefined && primaryDirectory !== cwd)
+          throw new ChannelDirectoryError(
+            "channel_home_path_mismatch",
+            `recorded channel home ${cwd} differs from ${primaryDirectory}`,
           );
-        ownership = { schemaVersion: 1, roomId, cwd };
-        await writePrivateFileOnce(ownershipPath, JSON.stringify(ownership));
+      };
+      const created = this.#channelHomeCreated(roomId);
+      if (created !== undefined) {
+        expectPath(created.cwd);
+        checkChannelHomeDirectory(created.cwd, created.identity);
+        return created.cwd;
       }
-      if (!(await pathExists(ownership.cwd))) {
-        await ensureSharedDirectory(dirname(ownership.cwd));
-        await mkdir(ownership.cwd, { mode: 0o700 });
-      }
-      assertSafeDirectory(ownership.cwd, true);
-      this.#channelHomes.set(roomId, ownership.cwd);
-      return ownership.cwd;
+      // Not created at Channel creation (a Core without a Host preparer, or
+      // a Channel created before option A): the shared owner creates it now.
+      const root = this.#options.channelHomeRoot;
+      const { record } = createChannelHome({
+        rootDirectory: this.#options.rootDirectory,
+        roomId,
+        primaryDirectory,
+        defaultCwd: root === undefined ? undefined : join(root, roomId),
+      });
+      this.#channelHomes.set(roomId, record);
+      return record.cwd;
     });
   }
   async quarantinePrivate(
@@ -662,60 +816,36 @@ function sameBinding(
   );
 }
 
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await lstat(path);
-    return true;
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT")
-      return false;
-    throw error;
-  }
+function errorMessage(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error)).slice(
+    0,
+    1000,
+  );
 }
-/** A user-visible parent (e.g. ~/.loom/channel-workspaces): no symlinks. */
-async function ensureSharedDirectory(path: string): Promise<void> {
-  const parent = dirname(path);
-  if (parent !== path && !(await pathExists(parent)))
-    await ensureSharedDirectory(parent);
-  assertSafeDirectory(path);
-  await mkdir(path, { recursive: true, mode: 0o700 });
-  assertSafeDirectory(path, true);
-}
-async function readChannelHomeOwnership(
-  path: string,
-  roomId: string,
-): Promise<ChannelHomeOwnership | undefined> {
-  if (!(await pathExists(path))) return undefined;
-  assertSafeFile(path);
-  const raw = JSON.parse(await readFile(path, "utf8")) as ChannelHomeOwnership;
+function parseIdentity(value: unknown): ChannelDirectoryIdentity {
+  const raw = value as Record<string, unknown> | null;
   if (
-    raw.schemaVersion !== 1 ||
-    raw.roomId !== roomId ||
-    typeof raw.cwd !== "string" ||
-    !isAbsolute(raw.cwd) ||
-    join(dirname(raw.cwd), roomId) !== raw.cwd
+    typeof raw !== "object" ||
+    raw === null ||
+    typeof raw.dev !== "string" ||
+    typeof raw.ino !== "string" ||
+    !/^\d+$/u.test(raw.dev) ||
+    !/^\d+$/u.test(raw.ino)
   )
-    throw new Error("Invalid channel home ownership receipt");
-  return raw;
+    throw new Error("Invalid channel directory identity");
+  return { dev: raw.dev, ino: raw.ino };
 }
-async function writePrivateFileOnce(path: string, text: string): Promise<void> {
-  const temporaryPath = `${path}.${randomUUID()}.tmp`;
-  try {
-    const handle = await open(temporaryPath, "wx", 0o600);
-    try {
-      await handle.writeFile(text);
-      await handle.sync();
-    } finally {
-      await handle.close();
-    }
-    await link(temporaryPath, path);
-    const directory = await open(dirname(path), "r");
-    try {
-      await directory.sync();
-    } finally {
-      await directory.close();
-    }
-  } finally {
-    await rm(temporaryPath, { force: true });
-  }
+function parseAttachedIdentity(
+  raw: Record<string, unknown>,
+  roomId: string,
+  path: string,
+): AttachedIdentity {
+  if (raw.schemaVersion !== 1 || raw.roomId !== roomId || raw.path !== path)
+    throw new Error("Invalid attached directory identity record");
+  return {
+    schemaVersion: 1,
+    roomId,
+    path,
+    identity: parseIdentity(raw.identity),
+  };
 }

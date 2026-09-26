@@ -515,6 +515,8 @@ if (command === "debug models" || command === "debug models --bundled") {
     runtimeStartTimeoutMs: 10_000,
     schemaVersion: 4,
     stateDirectory,
+    // Channel homes stay inside the temporary state, never in ~/.loom.
+    channelWorkspaceRoot: join(stateDirectory, "channel-workspaces"),
     taskClaimHeartbeatIntervalMs: 10_000,
     taskClaimLeaseMs: 30_000,
     workspace: {

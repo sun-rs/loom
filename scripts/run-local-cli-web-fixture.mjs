@@ -233,6 +233,8 @@ try {
     })),
     schemaVersion: 4,
     stateDirectory,
+    // Channel homes stay inside the temporary state, never in ~/.loom.
+    channelWorkspaceRoot: join(stateDirectory, "channel-workspaces"),
     taskClaimHeartbeatIntervalMs: 5 * 60_000,
     taskClaimLeaseMs: 15 * 60_000,
     workspace: {

@@ -34,6 +34,7 @@ import { claimTaskTransaction, type TaskClaimInput } from "./task-claim.ts";
 import { projectPlacementPlannerInput } from "./placement-planner-projection.ts";
 import { assertRuntimeWorkspaceProvenance } from "./runtime-workspace-provenance.ts";
 import { listHostExecutionWorkspaceBindings } from "./host-execution-workspaces.ts";
+import { reportChannelWorkspaceStates } from "./channel-workspace-state.ts";
 import type { RuntimeNoticeInput } from "./runtime-pending-notice.ts";
 import { renewValidatedActivationLease } from "./activation-lease-renewal.ts";
 import { pendingRuntimeNotice } from "./runtime-pending-notice.ts";
@@ -429,7 +430,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 71;
+export const KERNEL_SCHEMA_VERSION = 72;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -723,10 +724,12 @@ export class RoomKernel {
             attachedDirectoryValidator:
               options.channelAttachedDirectoryValidator,
           }),
+      channelPrimaryDirectoryPreparer: options.channelPrimaryDirectoryPreparer,
       createId: this.#createId,
       database: this.#database,
       events: this.#roomEvents,
       now: this.#now,
+      transaction: (operation) => this.#transaction(operation),
     });
     this.attachmentComments = new AttachmentCommentsService({
       database: this.#database,
@@ -1420,11 +1423,9 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     input: WorkspaceRoomCreateInput,
   ): RoomMutationResult {
-    return this.#transaction(() =>
-      this.#collaboration.createWorkspaceRoom(
-        this.getAuthenticatedPrincipal(actor),
-        input,
-      ),
+    return this.#collaboration.createWorkspaceRoomAtomically(
+      () => this.getAuthenticatedPrincipal(actor),
+      input,
     );
   }
   updateWorkspaceRoom(
@@ -3546,6 +3547,15 @@ export class RoomKernel {
 
   listHostExecutionWorkspaceBindings(host: AuthenticatedHostContext) {
     return listHostExecutionWorkspaceBindings(this.#database, host);
+  }
+
+  reportChannelWorkspaceStates(
+    host: AuthenticatedHostContext,
+    reports: unknown[],
+  ) {
+    this.#transaction(() =>
+      reportChannelWorkspaceStates(this.#database, host, reports, this.#now),
+    );
   }
 
   publishRuntimeOffer(

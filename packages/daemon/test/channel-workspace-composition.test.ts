@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  lstat,
   mkdir,
   mkdtemp,
   realpath,
@@ -9,6 +10,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import {
   GenericProcessAdapter,
@@ -24,7 +26,10 @@ import { RoomKernel } from "@rah-os/kernel";
 import type { RuntimeProfileManifestV2 } from "@rah-os/protocol";
 
 import { createChannelAttachedDirectoryValidator } from "../src/channel-attached-directory-validator.ts";
-import { defaultChannelWorkspaceRoot } from "../src/daemon-execution-workspace-composition.ts";
+import {
+  channelWorkspaceCoreOptions,
+  defaultChannelWorkspaceRoot,
+} from "../src/daemon-execution-workspace-composition.ts";
 import {
   attachedDirectoriesForPrompt,
   createConfiguredRuntime,
@@ -77,6 +82,76 @@ test("the channel home root defaults to ~/.loom/channel-workspaces and is config
     defaultChannelWorkspaceRoot({}, "/Users/x"),
     "/Users/x/.loom/channel-workspaces",
   );
+});
+
+test("option A: creating a Channel creates its primary directory on the Host; a conflict fails creation with no Channel; replay returns the same directory", async (t) => {
+  const base = await realpath(await mkdtemp(join(tmpdir(), "rah-option-a-")));
+  t.after(() => rm(base, { recursive: true, force: true }));
+  const stateDirectory = join(base, "state");
+  const channelWorkspaceRoot = join(base, "homes");
+  await mkdir(stateDirectory);
+  let forcedRoomId: string | undefined;
+  let nextId = 0;
+  const kernel = new RoomKernel({
+    databasePath: join(stateDirectory, "room.db"),
+    ...channelWorkspaceCoreOptions({
+      schemaVersion: 4,
+      stateDirectory,
+      channelWorkspaceRoot,
+    } as unknown as Parameters<typeof channelWorkspaceCoreOptions>[0]),
+    createId: (prefix: string) =>
+      prefix === "room" && forcedRoomId !== undefined
+        ? forcedRoomId
+        : `${prefix}_${String((nextId += 1))}`,
+  });
+  t.after(() => kernel.close());
+  kernel.initialize();
+  const actor = kernel.authenticateAccessToken(
+    kernel.provisionPrincipal({ handle: "owner", kind: "human" }).accessToken,
+  );
+  const workspace = kernel.createWorkspace(actor, {
+    name: "Channels",
+    slug: "channels",
+    idempotencyKey: "workspace",
+  });
+  const database = new DatabaseSync(join(stateDirectory, "room.db"));
+  t.after(() => database.close());
+  const head = () =>
+    Number(
+      database
+        .prepare("SELECT next_seq - 1 AS seq FROM rooms WHERE room_id=?")
+        .get(workspace.controlRoom.roomId)!.seq,
+    );
+  const create = (slug: string) =>
+    kernel.createWorkspaceRoom(actor, {
+      workspaceId: workspace.workspace.workspaceId,
+      basedOnControlRoomSeq: head(),
+      kind: "channel",
+      idempotencyKey: slug,
+      name: slug,
+      slug,
+    });
+  const created = create("build").room;
+  const home = join(channelWorkspaceRoot, created.roomId);
+  assert.equal(created.channelWorkspace?.primaryDirectory, home);
+  assert.deepEqual(created.channelWorkspace?.primary, { state: "ready" });
+  assert.ok((await lstat(home)).isDirectory());
+  const replay = create("build");
+  assert.equal(replay.deduplicated, true);
+  assert.equal(replay.room.channelWorkspace?.primaryDirectory, home);
+
+  // A foreign directory already occupies the next Channel's home path.
+  const before = kernel.listRooms(actor).length;
+  forcedRoomId = "room_taken";
+  await mkdir(join(channelWorkspaceRoot, "room_taken"));
+  assert.throws(
+    () => create("other"),
+    (error: unknown) =>
+      error instanceof Error &&
+      /primary directory could not be created/u.test(error.message) &&
+      /channel_home_unowned/u.test(error.message),
+  );
+  assert.equal(kernel.listRooms(actor).length, before, "no Channel row");
 });
 
 test("only a CLI without a native mechanism gets the attached-directory prompt line", () => {
@@ -207,78 +282,96 @@ test("a channel-home runtime passes attached directories to the adapter, the pro
   const evidence: unknown[] = [];
   const cwd = join(directory, "home");
   await mkdir(cwd);
-  const runtime = createConfiguredRuntime({
-    additionalDirectories: ["/work/app", "/work/lib"],
-    cwd,
-    host,
-    implementations,
-    probeReport,
-    runtimeProfileRegistry: registry,
-    runtimeProfileRevision: revision,
-    supervisorDirectory: directory,
-    credentialEnvironment: new RuntimeCredentialEnvironmentBinding({
-      manifest,
-      resolvers: {},
-    }),
-    workerService: {
-      origin: "http://127.0.0.1:1",
-      issueActivationCredential: () => {
-        throw new Error("legacy credential fallback must not be used");
+  let verified = 0;
+  let refuse = false;
+  const configure = () =>
+    createConfiguredRuntime({
+      additionalDirectories: ["/work/app", "/work/lib"],
+      // Review P1-1: the Host re-checks the channel workspace before each
+      // activation's environment and evidence capture.
+      verifyWorkspace: () => {
+        verified += 1;
+        if (refuse)
+          throw new Error(
+            "attached_directory_replaced: /work/app is no longer the directory approved for this Channel",
+          );
       },
-      issueActivationCredentialForWorkspace: async (
-        _host: unknown,
-        _scope: ActivationEnvelope,
-        options: {
-          workspaceRoot: string;
-          attachedDirectories?: readonly string[];
+      cwd,
+      host,
+      implementations,
+      probeReport,
+      runtimeProfileRegistry: registry,
+      runtimeProfileRevision: revision,
+      supervisorDirectory: directory,
+      credentialEnvironment: new RuntimeCredentialEnvironmentBinding({
+        manifest,
+        resolvers: {},
+      }),
+      workerService: {
+        origin: "http://127.0.0.1:1",
+        issueActivationCredential: () => {
+          throw new Error("legacy credential fallback must not be used");
         },
-      ) => {
-        evidence.push(options);
-        return {
-          accessToken: "rah_wat_channel_fixture_0123456789",
-          expiresAt: "2099-01-01T00:00:00.000Z",
-          revoke: () => {},
-        };
-      },
-    },
-  });
-  assert.deepEqual(created?.additionalDirectories, ["/work/app", "/work/lib"]);
-  await runtime.start(
-    {
-      activationId: "activation-1",
-      consumerId: "consumer-1",
-      hostId: host.hostId,
-      participantId: agent.principalId,
-      roomId: "room-1",
-      reason: "manual",
-      fromSeq: 1,
-      toSeq: 1,
-      runAttemptId: "run-1",
-      agent: {
-        schemaVersion: 1,
-        participantId: agent.principalId,
-        handle: agent.handle,
-        agentDefinitionRevision: {
-          agentId: "definition-1",
-          agentDefinitionRevisionId: "revision-1",
-          contentDigest: `sha256:${"1".repeat(64)}`,
-          createdAt: "2026-09-26T00:00:00.000Z",
-          createdBy: "human-owner",
-          executionPolicyRevisionId: "policy-1",
-          instructionRefs: [],
-          skillRefs: [],
-          revision: 1,
-          role: "Assistant",
-          memoryPolicyRef: {
-            artifactId: "memory-policy",
-            versionId: "memory-v1",
-            contentDigest: `sha256:${"2".repeat(64)}`,
+        issueActivationCredentialForWorkspace: async (
+          _host: unknown,
+          _scope: ActivationEnvelope,
+          options: {
+            workspaceRoot: string;
+            attachedDirectories?: readonly string[];
           },
+        ) => {
+          evidence.push(options);
+          return {
+            accessToken: "rah_wat_channel_fixture_0123456789",
+            expiresAt: "2099-01-01T00:00:00.000Z",
+            revoke: () => {},
+          };
+        },
+      },
+    });
+  const runtime = configure();
+  assert.deepEqual(created?.additionalDirectories, ["/work/app", "/work/lib"]);
+  const scope = {
+    activationId: "activation-1",
+    consumerId: "consumer-1",
+    hostId: host.hostId,
+    participantId: agent.principalId,
+    roomId: "room-1",
+    reason: "manual",
+    fromSeq: 1,
+    toSeq: 1,
+    runAttemptId: "run-1",
+    agent: {
+      schemaVersion: 1,
+      participantId: agent.principalId,
+      handle: agent.handle,
+      agentDefinitionRevision: {
+        agentId: "definition-1",
+        agentDefinitionRevisionId: "revision-1",
+        contentDigest: `sha256:${"1".repeat(64)}`,
+        createdAt: "2026-09-26T00:00:00.000Z",
+        createdBy: "human-owner",
+        executionPolicyRevisionId: "policy-1",
+        instructionRefs: [],
+        skillRefs: [],
+        revision: 1,
+        role: "Assistant",
+        memoryPolicyRef: {
+          artifactId: "memory-policy",
+          versionId: "memory-v1",
+          contentDigest: `sha256:${"2".repeat(64)}`,
         },
       },
     },
-    { registerPrepared: async () => undefined },
+  } satisfies ActivationEnvelope;
+  await runtime.start(scope, { registerPrepared: async () => undefined });
+  assert.ok(verified >= 1, "verified before the activation");
+  refuse = true;
+  await assert.rejects(
+    configure().start(scope, { registerPrepared: async () => undefined }),
+    /attached_directory_replaced/u,
   );
+  assert.equal(evidence.length, 1, "no evidence captured from a replaced root");
   assert.match(prompt, /^- Attached directory: \/work\/app$/mu);
   assert.deepEqual(evidence, [
     { workspaceRoot: cwd, attachedDirectories: ["/work/app", "/work/lib"] },

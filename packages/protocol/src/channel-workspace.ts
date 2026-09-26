@@ -42,6 +42,43 @@ export const ChannelWorkspaceSchema = z
   .object({
     kind: z.literal("channel_home"),
     additionalDirectories: ChannelAttachedDirectoriesSchema,
+    // Absolute path of the primary directory, fixed at creation from the
+    // then-configured channel workspace root; a later root change never
+    // moves it. Absent on Channels created before it was recorded.
+    primaryDirectory: ChannelAttachedDirectorySchema.optional(),
   })
   .strict();
 export type ChannelWorkspace = z.infer<typeof ChannelWorkspaceSchema>;
+
+/**
+ * Host observation of the primary directory, reported by the Host that
+ * prepares it (Kernel is never the filesystem owner): `pending` until a Host
+ * reports, `ready` once created and verified, `failed` with a reason.
+ */
+export const ChannelWorkspacePrimaryStateSchema = z
+  .object({
+    state: z.enum(["pending", "ready", "failed"]),
+    reason: z.string().min(1).max(1_000).optional(),
+  })
+  .strict();
+export type ChannelWorkspacePrimaryState = z.infer<
+  typeof ChannelWorkspacePrimaryStateSchema
+>;
+
+export const ChannelWorkspaceProjectionSchema = ChannelWorkspaceSchema.extend({
+  primary: ChannelWorkspacePrimaryStateSchema.optional(),
+}).strict();
+export type ChannelWorkspaceProjection = z.infer<
+  typeof ChannelWorkspaceProjectionSchema
+>;
+
+export const ChannelWorkspaceStateReportSchema = z
+  .object({
+    roomId: z.string().min(1).max(256),
+    state: z.enum(["ready", "failed"]),
+    reason: z.string().min(1).max(1_000).optional(),
+  })
+  .strict();
+export type ChannelWorkspaceStateReport = z.infer<
+  typeof ChannelWorkspaceStateReportSchema
+>;

@@ -1,5 +1,7 @@
 import {
+  ChannelWorkspacePrimaryStateSchema,
   ChannelWorkspaceSchema,
+  type ChannelWorkspacePrimaryState,
   MessageSchema,
   RoomMembershipSchema,
   ThreadSchema,
@@ -41,7 +43,12 @@ export function roomProjectionFromRow(row: Row): Room {
   const right = nullableText(row, "right_principal_id");
   const channelWorkspace =
     typeof row.channel_workspace_json === "string"
-      ? ChannelWorkspaceSchema.parse(JSON.parse(row.channel_workspace_json))
+      ? {
+          ...ChannelWorkspaceSchema.parse(
+            JSON.parse(row.channel_workspace_json),
+          ),
+          primary: primaryState(row.channel_workspace_state_json),
+        }
       : undefined;
   return {
     ...(archivedAt === null ? {} : { archivedAt }),
@@ -125,5 +132,15 @@ export function workspaceProjectionFromRow(row: Row): Workspace {
     slug: text(row, "workspace_slug"),
     state: text(row, "workspace_state"),
     workspaceId: text(row, "workspace_id"),
+  });
+}
+
+/** Host-reported primary directory readiness; `pending` until reported. */
+function primaryState(value: unknown): ChannelWorkspacePrimaryState {
+  if (typeof value !== "string") return { state: "pending" };
+  const parsed = JSON.parse(value) as Record<string, unknown>;
+  return ChannelWorkspacePrimaryStateSchema.parse({
+    state: parsed.state,
+    ...(parsed.reason === undefined ? {} : { reason: parsed.reason }),
   });
 }
