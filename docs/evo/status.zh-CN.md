@@ -818,6 +818,13 @@ B. 权限收口
 - 急停状态仍只看已同步的事件窗口，窗口外历史显示“未知”，未补只读 SOS 查询。
 - 真实 CLI 与真实输入法未验证；本地服务未重启。
 
+### 四十七、控制台真实验收（2026-09-26，8b57726，负责人授权）
+
+经控制台同一 API（网关 trusted-proxy、RoomSession + runRoomMutationAtLatest、每意图一个幂等键）在正式 evo 服务上：创建频道 `smoke-console`（主目录 `~/.loom/channel-workspaces/<roomId>`，primary=ready，附加目录已登记）；创建 Codex Role（`local:codex-cli/v1:gpt-6-luna`/low，fallback disabled）并实例化；Human @实例请其读取附加目录中的口令文件。状态序列 waking(queued) → working → idle；回复逐字等于口令、位于频道顶层，发帖到回复约 12.4 s（冷启动）；1 个 RunAttempt、2 次生成、0 重试；用量 complete（输入 34,938 / 缓存 18,944 / 输出 218），Codex 不报费用，汇总显示未知。报告 `~/.loom/reviews/2026-09-26-console-real-acceptance.md`。
+
+- 待查：回到 idle 后 activity.updatedAt 显示实例化时刻而非运行结束时刻。
+- 测试频道留在正式库；其附加目录位于会话临时目录，会话清理后该频道的附加目录复核会失败（预期行为）。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
