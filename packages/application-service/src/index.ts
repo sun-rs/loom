@@ -12,7 +12,10 @@ export type {
   ClientApplicationServiceOptions as HumanHttpApplicationServiceOptions,
 } from "./client-application-service.ts";
 export type { ProfileImageAdministrationPort } from "./client-profile-image-routes.ts";
-export { WorkerApplicationService } from "./worker-application-service.ts";
+export {
+  WorkerApplicationService,
+  captureDeliveryEvidenceBaseline,
+} from "./worker-application-service.ts";
 
 export type {
   ActivationCredentialScope,

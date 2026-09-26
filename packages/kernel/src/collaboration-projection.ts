@@ -1,4 +1,5 @@
 import {
+  ChannelWorkspaceSchema,
   MessageSchema,
   RoomMembershipSchema,
   ThreadSchema,
@@ -38,8 +39,13 @@ export function roomProjectionFromRow(row: Row): Room {
   const visibility = nullableText(row, "visibility");
   const left = nullableText(row, "left_principal_id");
   const right = nullableText(row, "right_principal_id");
+  const channelWorkspace =
+    typeof row.channel_workspace_json === "string"
+      ? ChannelWorkspaceSchema.parse(JSON.parse(row.channel_workspace_json))
+      : undefined;
   return {
     ...(archivedAt === null ? {} : { archivedAt }),
+    ...(channelWorkspace === undefined ? {} : { channelWorkspace }),
     createdAt: text(row, "created_at"),
     ...(description === null ? {} : { description }),
     ...(left === null || right === null

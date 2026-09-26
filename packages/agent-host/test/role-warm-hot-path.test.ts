@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -38,7 +39,9 @@ const fakeServerPath = fileURLToPath(
   new URL("./fixtures/fake-codex-warm-app-server.mjs", import.meta.url),
 );
 
-async function roleHarness() {
+async function roleHarness(
+  options: { additionalDirectories?: () => readonly string[] } = {},
+) {
   const directory = mkdtempSync(join(tmpdir(), "rah-role-warm-"));
   chmodSync(directory, 0o700);
   const socketRoot = mkdtempSync("/tmp/lr-");
@@ -200,6 +203,9 @@ async function roleHarness() {
       active,
       report,
       {
+        ...(options.additionalDirectories === undefined
+          ? {}
+          : { additionalDirectories: options.additionalDirectories() }),
         cwd: directory,
         providerSessionStore,
         // Present so the adapter renders the bodied wake, which carries the
@@ -261,6 +267,7 @@ async function roleHarness() {
         roomId,
       });
     },
+    directory,
     records: readRecords,
     async cleanup() {
       await pool.shutdown().catch(() => undefined);
@@ -437,6 +444,57 @@ test("Role hot path: a private message queues behind a channel turn, runs on the
         )
         .get(oldRuntimeId)!.state,
       "terminated",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("channel workspace: the production warm adapter passes attached directories to the driver, and a changed set restarts the runtime at an idle boundary", async () => {
+  let attached: readonly string[] = ["/work/app"];
+  const state = await roleHarness({ additionalDirectories: () => attached });
+  try {
+    state.post(state.home, "[fake:ack] first");
+    const first = await state.agentHost.reconcileOnce();
+    assert.equal(first.state, "completed", JSON.stringify(first));
+    const starts = () =>
+      state
+        .records()
+        .filter(
+          (record) =>
+            record.event === "request" && record.method === "thread/start",
+        )
+        .map(
+          (record) =>
+            (record.params as { runtimeWorkspaceRoots?: string[] })
+              .runtimeWorkspaceRoots,
+        );
+    const resumes = () =>
+      state
+        .records()
+        .filter(
+          (record) =>
+            record.event === "request" && record.method === "thread/resume",
+        )
+        .map(
+          (record) =>
+            (record.params as { runtimeWorkspaceRoots?: string[] })
+              .runtimeWorkspaceRoots,
+        );
+    assert.deepEqual(starts(), [[realpathSync(state.directory), "/work/app"]]);
+    const processes = () =>
+      state.records().filter((record) => record.event === "start").length;
+    assert.equal(processes(), 1);
+
+    attached = ["/work/lib"];
+    state.post(state.home, "[fake:ack] second");
+    const second = await state.agentHost.reconcileOnce();
+    assert.equal(second.state, "completed", JSON.stringify(second));
+    assert.equal(processes(), 2, "a new runtime key restarts the runtime");
+    assert.deepEqual(
+      resumes(),
+      [[realpathSync(state.directory), "/work/lib"]],
+      "the same thread resumes with the new roots",
     );
   } finally {
     await state.cleanup();

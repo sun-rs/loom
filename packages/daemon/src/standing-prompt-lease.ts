@@ -20,6 +20,7 @@ import {
 export const DAEMON_VERSION = "0.1.0";
 
 export type StandingPromptLeaseOptions = {
+  attachedDirectories?: readonly string[];
   deliveryMode?: PromptDeliveryMode;
   previousDeliveryMode?: PromptDeliveryMode;
   daemonVersion?: string;
@@ -77,6 +78,10 @@ export function standingPromptLease(
       ...(options.workspacePath === undefined
         ? {}
         : { workspacePath: options.workspacePath }),
+      ...(options.attachedDirectories === undefined ||
+      options.attachedDirectories.length === 0
+        ? {}
+        : { attachedDirectories: options.attachedDirectories }),
     },
   };
   const compiled = compileStandingPrompt(compilerInput);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ChannelAttachedDirectoriesSchema } from "./channel-workspace.ts";
 
 import {
   ContentDigestSchema,
@@ -46,6 +47,11 @@ export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
 
 export const AgentExecutionWorkspaceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("agent_private") }).strict(),
+  // Owner 2026-09-26: a Role instance of a Channel created with a platform
+  // home runs in that home. Only new instances of such Channels get it.
+  z
+    .object({ kind: z.literal("channel_home"), roomId: IdentifierSchema })
+    .strict(),
   z
     .object({
       kind: z.literal("existing_mount"),
@@ -65,8 +71,20 @@ export const HostExecutionWorkspaceBindingSchema = z
     agentDefinitionRevisionId: IdentifierSchema,
     workspaceDefinitionId: IdentifierSchema,
     executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
+    // The channel home's Human-attached directories (host paths the Human
+    // chose at Channel creation), never a Host-derived path.
+    additionalDirectories: ChannelAttachedDirectoriesSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (binding) =>
+      binding.additionalDirectories === undefined ||
+      binding.executionWorkspace?.kind === "channel_home",
+    {
+      message: "attached directories exist only for a channel home",
+      path: ["additionalDirectories"],
+    },
+  );
 export type HostExecutionWorkspaceBinding = z.infer<
   typeof HostExecutionWorkspaceBindingSchema
 >;

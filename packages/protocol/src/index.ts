@@ -826,6 +826,7 @@ export type ClientAgentManageResponse = z.infer<
 >;
 
 export * from "./agent-workspace.ts";
+export * from "./channel-workspace.ts";
 export * from "./member-graph.ts";
 export * from "./client-task-reassignment.ts";
 export const ClientAgentGetRequestSchema = z

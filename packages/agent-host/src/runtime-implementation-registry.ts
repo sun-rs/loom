@@ -92,6 +92,12 @@ export type RuntimeCreationOptions = Pick<
   GenericProcessAdapterOptions,
   "activationEnvironment" | "beforeStart" | "cwd" | "supervisorDirectory"
 > & {
+  /**
+   * Owner 2026-09-26: the channel home's Human-attached directories. Each
+   * CLI receives them natively (Claude `--add-dir`, Codex workspace roots,
+   * Kimi project config); OpenCode gets a standing-prompt line instead.
+   */
+  additionalDirectories?: readonly string[];
   providerSessionStore?: ProviderSessionStore;
   /**
    * Codex, Claude (S2-c1), Kimi (S2-c2) and OpenCode (S2-c3). Invoked when
@@ -511,7 +517,11 @@ function createGenericProcessRuntime(
       : undefined,
     toolAccessMode ?? "full_access",
   );
-  const { recordDeliveryAcceptance: _generic, ...genericOptions } = options;
+  const {
+    additionalDirectories: _genericAttached,
+    recordDeliveryAcceptance: _generic,
+    ...genericOptions
+  } = options;
   return new GenericProcessAdapter({
     ...genericOptions,
     args: [
@@ -606,6 +616,7 @@ function createClaudeStreamJsonRuntime(
   const config = revision.manifest.adapter.config;
   const {
     activationEnvironment: baseActivationEnvironment,
+    additionalDirectories,
     providerSessionStore,
     recordDeliveryAcceptance,
     ...processOptions
@@ -624,6 +635,7 @@ function createClaudeStreamJsonRuntime(
     ...(revision.manifest.adapter.fixedArgs[0] === undefined
       ? []
       : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
+    ...attachedDirectoryDriverArgs(additionalDirectories),
   ];
   if (resolvedModel?.source === "custom_model") {
     args.push("--model", resolvedModel.modelId);
@@ -813,6 +825,7 @@ function createCodexAppServerRuntime(
   const config = revision.manifest.adapter.config;
   const {
     activationEnvironment: baseActivationEnvironment,
+    additionalDirectories,
     providerSessionStore,
     recordDeliveryAcceptance,
     ...processOptions
@@ -831,6 +844,7 @@ function createCodexAppServerRuntime(
     ...(revision.manifest.adapter.fixedArgs[0] === undefined
       ? []
       : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
+    ...attachedDirectoryDriverArgs(additionalDirectories),
   ];
   if (resolvedModel?.source === "custom_model") {
     args.push("--model", resolvedModel.modelId);
@@ -1015,6 +1029,9 @@ function createWarmInstanceRuntime(
       ...(revision.manifest.adapter.fixedArgs[0] === undefined
         ? []
         : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
+      ...(driver === CLAUDE_WARM_DRIVER || driver === CODEX_WARM_DRIVER
+        ? attachedDirectoryDriverArgs(options.additionalDirectories)
+        : []),
     ],
     env:
       revision.manifest.manifestVersion === 1
@@ -1071,6 +1088,7 @@ function createWarmInstanceRuntime(
         input.agent?.instanceSessionGeneration ?? null,
         input.contextManifest?.placement?.workspaceMountRevisionId ?? null,
         options.cwd,
+        [...(options.additionalDirectories ?? [])],
         ...(driver === CLAUDE_WARM_DRIVER
           ? [driver.kind, resolvedModel === undefined ? null : resolvedModel]
           : []),
@@ -1222,6 +1240,7 @@ function createKimiAcpRuntime(
   const config = revision.manifest.adapter.config;
   const {
     activationEnvironment: baseActivationEnvironment,
+    additionalDirectories,
     providerSessionStore,
     recordDeliveryAcceptance,
     ...processOptions
@@ -1240,6 +1259,7 @@ function createKimiAcpRuntime(
     ...(revision.manifest.adapter.fixedArgs[0] === undefined
       ? []
       : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
+    ...attachedDirectoryDriverArgs(additionalDirectories),
   ];
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
@@ -1444,6 +1464,9 @@ function createOpenCodeServerRuntime(
   const config = revision.manifest.adapter.config;
   const {
     activationEnvironment: baseActivationEnvironment,
+    // OpenCode serve has no attached-directory mechanism (references stay
+    // empty on the serve path); the daemon adds a standing-prompt line.
+    additionalDirectories: _openCodeAttached,
     providerSessionStore,
     recordDeliveryAcceptance,
     ...processOptions
@@ -1910,4 +1933,14 @@ function customModelRuntime(
     : revision.manifest.adapter.kind === "codex-app-server/v1"
       ? "codex"
       : undefined;
+}
+
+/** One `--additional-dir <abs>` per attached directory, in creation order. */
+function attachedDirectoryDriverArgs(
+  directories: readonly string[] | undefined,
+): string[] {
+  return (directories ?? []).flatMap((directory) => [
+    "--additional-dir",
+    directory,
+  ]);
 }

@@ -1,4 +1,5 @@
 import { realpath } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import {
   AgentExecutionWorkspaceCatalog,
@@ -11,6 +12,7 @@ import type {
   RuntimeRecoveryDescriptor,
   WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
+import { createChannelAttachedDirectoryValidator } from "./channel-attached-directory-validator.ts";
 import type { DaemonConfig } from "./config.ts";
 import type { RuntimeOfferPublisher } from "./runtime-offer-publisher.ts";
 
@@ -32,6 +34,7 @@ export async function createDaemonExecutionWorkspaceComposition(input: {
             await realpath(config.stateDirectory),
             "agent-workspaces",
           ),
+          channelHomeRoot: defaultChannelWorkspaceRoot(config),
           legacyCwd: config.workspace.cwd,
           isResetCommitted: async (owner, operationId) => {
             const receipt = await readAgentExecutionResetReceipt(
@@ -76,8 +79,14 @@ export async function createDaemonExecutionWorkspaceComposition(input: {
     placement: PlacementDecision | undefined,
     legacyCwd: string,
   ) {
+    const resolved = placement
+      ? executionWorkspaces!.resolveWorkspace(placement)
+      : { cwd: legacyCwd, additionalDirectories: [] };
     return {
-      cwd: placement ? executionWorkspaces!.resolve(placement) : legacyCwd,
+      cwd: resolved.cwd,
+      ...(resolved.additionalDirectories.length === 0
+        ? {}
+        : { additionalDirectories: [...resolved.additionalDirectories] }),
       ...(placement
         ? {
             executionWorkspace: {
@@ -142,4 +151,30 @@ export function legacyWorkspaceMountDescriptors(
       workspaceMountRevisionId: workspace.workspaceMountRevisionId,
     },
   ];
+}
+
+/**
+ * Owner 2026-09-26: parent of the platform-created Channel homes. Default
+ * `~/.loom/channel-workspaces`; tests and deployments inject another root.
+ */
+export function defaultChannelWorkspaceRoot(
+  config: { channelWorkspaceRoot?: string | undefined },
+  home: string = homedir(),
+): string {
+  return (
+    config.channelWorkspaceRoot ?? join(home, ".loom", "channel-workspaces")
+  );
+}
+
+/** Owner 2026-09-26: the Core-side check of Human-attached Channel directories. */
+export function channelWorkspaceCoreOptions(config: DaemonConfig) {
+  return config.schemaVersion === 4
+    ? {
+        channelAttachedDirectoryValidator:
+          createChannelAttachedDirectoryValidator({
+            stateDirectory: config.stateDirectory,
+            channelWorkspaceRoot: defaultChannelWorkspaceRoot(config),
+          }),
+      }
+    : {};
 }

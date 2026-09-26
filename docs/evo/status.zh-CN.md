@@ -585,6 +585,62 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
    - 调小 Host 上限后，常驻池忙时上限在本进程内保持原值，直到重建；此期间仅靠 Kernel 上限约束新工作（Kernel 释放 placement 与常驻池释放槽位之间的短暂重叠与以前相同）。
    - 未做正式服务验证（未重启）；真实多 CLI 并发、长任务恢复未测。
 
+### 三十九、频道工作区：主目录与附加目录
+
+依据 `~/.loom/reviews/2026-09-26-cli-additional-dir.md`（四家核实与改动点清单），负责人 2026-09-26 批准（“按推荐”），目标合同新增 §2a，AGENTS.md 的 Channel 定义同步修改。每项先写失败测试并确认失败，再做最小实现；没有运行付费 CLI（Kimi 探针用本地假 API，免费），没有重启服务，没有改前端。
+
+1. 模型（schema 71）：
+   - 每个新频道由平台新建一个主目录，默认 `~/.loom/channel-workspaces/<频道 id>`（daemon v4 配置 `channelWorkspaceRoot` 可改，测试注入临时目录），是该频道所有实例（含私聊）的 CLI cwd 与默认产物目录。
+   - 附加目录在创建频道时可选 0–16 个：规范绝对路径、必须已存在的目录、Human 鉴权；平台只校验，不创建、不删除。
+   - 创建后两者都不可修改：`room.update` 命令是 strict schema，没有工作区字段；Kernel 没有其他写入路径。
+   - 不设置 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD`，四家都不自动加载附加目录里的 AGENTS.md/CLAUDE.md。
+2. 协议（`channel-workspace.ts` 等）：
+   - `ChannelAttachedDirectorySchema`（规范绝对路径，拒绝 `/`、尾部 `/`、空段、`.`、`..`、控制字符）；`ChannelWorkspaceSchema = {kind:"channel_home", additionalDirectories}`，去重、最多 16 个。
+   - `room.create` 增加可选 `additionalDirectories`；Room 投影增加可选 `channelWorkspace`（旧频道没有）。
+   - `AgentExecutionWorkspaceSchema` 增加 `{kind:"channel_home", roomId}`；Host 绑定增加 `additionalDirectories`（只允许 channel_home 带）。
+   - 文件浏览根增加 `attached-project-1..16`（id 与 kind 相同，沿用“id 与 kind 一致”的约束），根列表上限 2 → 18。
+3. Kernel：
+   - `rooms.channel_workspace_json`（`migrateChannelWorkspaceV71`，旧行为 NULL）。`createWorkspaceRoom` 在同一事务写投影列和 `room.created`、`workspace.room_created` 两个事件的 `channelWorkspace`。
+   - 幂等：重放比较附加目录列表，不同则 `IdempotencyConflictError`；Host 文件系统校验只对新请求执行，重放返回原结果（即使目录后来被删）。
+   - 校验器由 daemon 注入（`RoomKernelOptions.channelAttachedDirectoryValidator`），拒绝原因包装为 `ConflictError`，不写任何行；没有注入校验器的 Core 拒绝非空附加目录。
+   - 新实例：频道有 `channel_workspace_json` 且 Offer 支持私有工作区时，`executionWorkspace = {kind:"channel_home", roomId}`；否则保持原来的 `agent_private`。
+   - `listHostExecutionWorkspaceBindings` 对 channel_home 附上频道的附加目录；规划器与恢复来源校验把 channel_home 与 agent_private 同样按“每个参与者一个挂载”处理。
+4. Host 主目录（`AgentExecutionWorkspaceCatalog`）：
+   - 时机：与现有私有目录一致，Host 在挂载刷新遇到第一个 channel_home 绑定时惰性创建；没有 channel_home 绑定就不创建根目录。
+   - 永不复用：先写所有权回执（`<state>/agent-workspaces/.channel-homes/<hash>.json`，0600，link 发布），再 `mkdir`；路径上已有目录而没有回执时拒绝并记入 `failures`。回执里的绝对路径是权威：以后改 `channelWorkspaceRoot` 也不会搬动已有主目录（CLI 按 cwd 定位会话）。
+   - 同频道实例共享 cwd，但挂载按参与者区分（revision id 摘要含 participantId、roomId、附加目录），每个实例仍是独立 lane；附加目录不同就是新挂载。挂载回执 schemaVersion 2，旧的 schemaVersion 1 私有回执照旧解析。
+   - 重置不删主目录：`quarantinePrivate` 对 channel_home 返回 `undefined`（与 legacy 挂载相同），实例 session reset / full reset 都不碰主目录；频道归档、删除也不删除。
+5. 各 CLI 的附带方式（附加目录纳入常驻 `runtimeKey`，变化后在空闲边界重启）：
+   - Claude 冷、热：每个附加目录一个 `--add-dir=<abs>`。
+   - Codex 冷、热：`thread/start` 与 `thread/resume` 带 `runtimeWorkspaceRoots=[cwd, ...附加目录]`；没有附加目录时不带该字段，已有线程请求不变。新增 `codex-app-server-schema.test.ts`，用 `codex app-server generate-ts --experimental` 锁定两个参数里的字段（只生成绑定，不启动模型；本机没有 codex 时跳过）。
+   - Kimi：驱动（Host 侧进程）在启动 `kimi acp` 前在 cwd 写 `.kimi-code/local.toml`（`[workspace] additional_dir = [...]`，0600，内容不变不重写，原子替换）；没有附加目录时不写。
+   - OpenCode：`runtimeContextLayer` 增加 `- Attached directory: <abs>`。是否注入只在 `attachedDirectoriesForPrompt`（`runtime-profile-composition.ts`）一处判定：Claude、Codex、Kimi 已原生告知，不重复；OpenCode 与 generic 进程注入。runtime context 不进 `deterministicDigest`，不算提示词漂移。
+6. Kimi 0.39.1 免费探针（2026-09-26，临时 `KIMI_CODE_HOME` 指向本地假 OpenAI 兼容服务，只记录请求体后回 400，未访问任何真实模型）：
+   - cwd 下写入 `local.toml` 后 `session/new` + 一轮 prompt，第一个模型请求的 system 消息里有 `## Additional Directories`、附加目录路径和目录两层列表。
+   - 新进程 `session/resume` 同一 session 再发一轮，system 消息仍包含该段。
+   - 结论：确认可用，采用原生方案，未退回提示词一行。
+7. git 证据（`captureDeliveryEvidenceBaseline`）：按创建顺序逐个采集附加目录，取第一个 git 结果；都不是 git 时采集 cwd，非 git 如实记为 `not_git`。只记录一个根：有多个 git 附加目录时，后面的不产生交付证据。
+8. 文件浏览：本地 daemon 的 Agent 工作区根对 channel_home 实例增加 `runtime-project`（主目录）和每个附加目录（`attached-project-N`），复用 `listWorkspaceRoot`/`readWorkspaceRoot` 的 root-scoped 读取（realpath、拒绝 `..`、过滤 `.git` 与密钥文件、拒绝 `/`）。私有 cwd 与 legacy cwd 仍不作为浏览根暴露（行为不变）。
+9. 已有频道与实例：
+   - 已有实例的修订冻结，保持原 cwd。
+   - 已有频道（schema 71 前创建，`channel_workspace_json` 为 NULL）的新实例保持 `agent_private`，不为旧频道补建主目录。理由：补建只对新实例有意义，却让同一频道出现两种 cwd，文件与证据分散；保持旧行为对会话连续性没有任何风险。
+10. 测试（均先失败）：
+    - protocol `channel-workspace.test.ts`：创建带/不带附加目录、非规范路径与重复被拒、update 命令拒绝工作区字段、投影、channel_home 与绑定、浏览根。
+    - kernel `channel-workspace.test.ts`：新频道记录主目录与事件、校验与幂等重放、拒绝时不建频道（无校验器也拒绝）、新频道新实例为 channel_home 且绑定带附加目录、旧频道新实例保持 agent_private。
+    - agent-host `channel-home-workspace.test.ts`：同频道共享主目录且挂载按实例区分、根目录惰性创建、已有目录不复用、重启后沿用、重置不删主目录、附加目录变化产生新挂载、私有 cwd 不变、未配置根时可见失败。
+    - agent-host `channel-attached-directory-drivers.test.ts`（真实驱动 + 假 CLI）：Claude 冷热 `--add-dir=`、Codex 冷 start/resume 的 roots、Kimi `local.toml`、非绝对路径在启动 CLI 前被拒。`codex-warm-runtime.test.ts` 新增热 `thread/start` roots；`role-warm-hot-path.test.ts` 新增生产 registry 路径：附加目录变化后 runtimeKey 变化、重启进程并以新 roots resume 同一线程。
+    - agent-host `channel-workspace-roots.test.ts`：主目录与附加目录浏览根、root-scoped、越界与未知根被拒。
+    - daemon `channel-workspace-composition.test.ts`：校验器（不存在、非目录、符号链接/非规范、Loom 数据目录内外重叠、主目录根）、默认根、提示行只给非原生 CLI、组合层把附加目录传给 adapter、提示词与证据根。
+    - application-service `delivery-evidence-roots.test.ts`：证据根选择规则。
+    - schema 版本常量 70 → 71 的既有断言同步修改（11 处，7 个文件）。`daemon-application.ts` 行数棘轮（800）未放宽：校验器接线放在 `daemon-execution-workspace-composition.ts#channelWorkspaceCoreOptions`。
+11. 偏离与未解决：
+    - Kimi 的 `local.toml` 写在 cwd；若 cwd 位于 git worktree 内，Kimi 会读 worktree 根的文件而不是这里。频道主目录默认不在 git 仓库内，未处理该情况。
+    - 主目录根默认在 `~/.loom/`，与 evo 数据目录（`~/.loom/evo`）分开；校验器拒绝与 Loom 数据目录（`stateDirectory`）或主目录根重叠（包含或被包含）的附加目录，所以 `~` 本身会被拒。
+    - 远端 Host 的 catalog 没有主目录根，channel_home 绑定会记为失败（远端本来拒绝 Role 实例）。
+    - Registry 冷路径参数接线由驱动测试与共享函数覆盖，没有单独的“registry 冷启动 + 假 CLI”测试。
+    - 附加目录校验只在创建时做；之后目录被删、被替换为符号链接，平台不再检查，CLI 会看到不存在的路径。
+    - 前端与控制台没有入口（前端冻结；`apps/console` 不存在），只能经 API 创建。真实 CLI 未验证模型是否实际使用附加目录；本地服务未重启，正式库仍是旧 schema，下次启动迁移到 71。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
@@ -606,6 +662,7 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 | 新实例首轮等待                 | 挂载发布按 30 s 刷新周期                                                                                                 | —                                                                    | —                                                                                                                      | 首轮约 30 s 等待未修                                                                                                                                                                                  |
 | 付费门禁自身                   | 单一批准表、Codex 白名单围栏、Claude 斜杠命令与事后核对、漂移事后核对 fail-closed、证据来源字段（第二十八节）            | 门禁免费单测（已纳入 `npm run check`）                               | 批次 4 之后的门禁代码未付费运行                                                                                        | Claude result `modelUsage` 若含 CLI 后台其他模型族会判越权，是否出现未知；shim 选项白名单与原生 Codex 开关同步见第二十九节                                                                            |
 | S3 私聊                        | 仅 Human 开、共享 session、忙时排队、不 steer、双向隔离（含提醒与 `dm:@` 读写）、`instancePrivateBox` 投影（第三十五节） | Kernel 隔离/steer/游标/代数测试；Codex 冷、热 fake 共享 session 测试 | —                                                                                                                      | 真实 CLI 私聊轮未跑；控制台可见未满足；推迟项见第三十五节第 4 项                                                                                                                                      |
+| 频道工作区（第三十九节）       | 新频道平台主目录与创建时附加目录（不可改）；四家原生/提示行附带；证据根与浏览根                                          | Kernel/Host/驱动假 CLI 测试；Kimi 免费假 API 探针                    | —                                                                                                                      | 真实 CLI 未验证；控制台与前端无入口；旧频道不补建主目录                                                                                                                                               |
 | S4–S6                          | 未开始                                                                                                                   | —                                                                    | —                                                                                                                      | fork、side、平台记忆                                                                                                                                                                                  |
 
 目标合同 §6 表的“9/23 基线”一列（负责人 2026-09-25 批准由“当前基线”改名，数值与预算未改）是 2026-09-23 的数据（首轮失败、用量未采集），之后的实测见本页效率各节。

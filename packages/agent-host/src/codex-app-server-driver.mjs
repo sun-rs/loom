@@ -1,5 +1,9 @@
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
+  codexWorkspaceRoots,
+  parseAttachedDirectory,
+} from "./channel-attached-directories.js";
+import {
   providerLaunchArguments,
   providerLaunchPolicy,
   providerMemoryConfig as memoryConfig,
@@ -168,6 +172,7 @@ try {
     cwd: process.cwd(),
     developerInstructions: options.prompt,
     experimentalRawEvents: true,
+    ...codexWorkspaceRoots(process.cwd(), options.additionalDirectories),
     sandbox: sandboxMode(options.toolAccessMode),
   };
   if (options.model !== undefined) threadStart.model = options.model;
@@ -577,7 +582,7 @@ function sandboxMode(mode) {
 }
 
 function parseArguments(args) {
-  const parsed = { codexConfigArgs: [] };
+  const parsed = { additionalDirectories: [], codexConfigArgs: [] };
   for (let index = 0; index < args.length; index += 1) {
     const name = args[index];
     const value = args[index + 1];
@@ -593,6 +598,8 @@ function parseArguments(args) {
     else if (name === "--wake-input-file")
       parsed.wakeInput = readProviderPromptFile(value);
     else if (name === "-c") parsed.codexConfigArgs.push(name, value);
+    else if (name === "--additional-dir")
+      parsed.additionalDirectories.push(parseAttachedDirectory(value));
     else throw new Error(`unsupported codex app-server driver option: ${name}`);
     index += 1;
   }

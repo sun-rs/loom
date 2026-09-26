@@ -247,6 +247,7 @@ import {
   migrateCollaborationSchemaV7,
   migrateRoomMetadataV14,
   migrateSystemChannelVisibilityV56,
+  migrateChannelWorkspaceV71,
   migrateActivationRetryFencesV35,
   migrateInputRequestCancellationV38,
   migrateReminderTargetsV36,
@@ -428,7 +429,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 70;
+export const KERNEL_SCHEMA_VERSION = 71;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -716,6 +717,12 @@ export class RoomKernel {
       transaction: (operation) => this.#transaction(operation),
     });
     this.#collaboration = new CollaborationService({
+      ...(options.channelAttachedDirectoryValidator === undefined
+        ? {}
+        : {
+            attachedDirectoryValidator:
+              options.channelAttachedDirectoryValidator,
+          }),
       createId: this.#createId,
       database: this.#database,
       events: this.#roomEvents,
@@ -838,6 +845,7 @@ export class RoomKernel {
     unit("room-metadata", "transactional", () => {
       migrateRoomMetadataV14(this.#database);
       migrateSystemChannelVisibilityV56(this.#database);
+      migrateChannelWorkspaceV71(this.#database);
     });
     unit("activation-retry-fences-v35", "external", () =>
       migrateActivationRetryFencesV35(this.#database),

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
+  realpathSync,
   existsSync,
   mkdtempSync,
   readFileSync,
@@ -76,6 +77,8 @@ async function harness(
     ) => Partial<CodexWarmAdapterOptions>;
     /** S3: a Workspace Direct Room with the same participant beside the Room. */
     privateBox?: boolean;
+    /** Appended to the warm driver arguments (e.g. attached directories). */
+    extraDriverArgs?: string[];
   } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-codex-"));
@@ -182,6 +185,7 @@ async function harness(
           "full_access",
           "--prompt",
           "FAKE standing prompt for the warm runtime test",
+          ...(options.extraDriverArgs ?? []),
         ],
         env: {
           FAKE_CODEX_RECORD_PATH: recordPath,
@@ -539,6 +543,35 @@ test("three Activations run on one warm process and one thread, each quiesced", 
         .listActivations({ roomId: state.roomId })
         .every((activation) => activation.state === "completed"),
       true,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("channel workspace: the warm thread/start carries runtimeWorkspaceRoots = [cwd, ...attached directories]", async () => {
+  const state = await harness({
+    extraDriverArgs: [
+      "--additional-dir",
+      "/work/app",
+      "--additional-dir",
+      "/work/lib",
+    ],
+  });
+  try {
+    state.post("[fake:ack] attached");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const start = state
+      .records()
+      .find(
+        (record) =>
+          record.event === "request" && record.method === "thread/start",
+      );
+    assert.deepEqual(
+      (start?.params as { runtimeWorkspaceRoots?: string[] })
+        .runtimeWorkspaceRoots,
+      [realpathSync(state.directory), "/work/app", "/work/lib"],
     );
   } finally {
     await state.cleanup();

@@ -1,5 +1,9 @@
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
+  claudeAttachedDirectoryArgs,
+  parseAttachedDirectory,
+} from "./channel-attached-directories.js";
+import {
   providerLaunchArguments,
   providerLaunchPolicy,
 } from "./provider-launch-arguments.js";
@@ -163,6 +167,7 @@ async function runTurn(resumeSession) {
   if (options.model !== undefined) args.push("--model", options.model);
   if (options.effort !== undefined) args.push("--effort", options.effort);
   if (resumeSession !== undefined) args.push("--resume", resumeSession);
+  args.push(...claudeAttachedDirectoryArgs(options.additionalDirectories));
   args.push(...options.providerArgs);
 
   const child = spawn(options.executable, args, {
@@ -651,6 +656,7 @@ function parseArguments(args) {
     executable: undefined,
     model: undefined,
     prompt: undefined,
+    additionalDirectories: [],
     providerArgs: [],
     resumeSession: undefined,
     toolAccessMode: undefined,
@@ -669,6 +675,8 @@ function parseArguments(args) {
     else if (flag === "--wake-input-file")
       parsed.wakeInput = readProviderPromptFile(value);
     else if (flag === "--tool-access-mode") parsed.toolAccessMode = value;
+    else if (flag === "--additional-dir")
+      parsed.additionalDirectories.push(parseAttachedDirectory(value));
     else if (flag === "--mcp-config") {
       parsed.providerArgs.push(flag, value);
     } else throw new Error(`unknown Claude driver argument: ${flag}`);

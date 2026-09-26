@@ -37,6 +37,25 @@ import { standingPromptLease } from "./standing-prompt-lease.ts";
 
 export { assertRuntimeProfileRevisionStillActive };
 
+/**
+ * Owner 2026-09-26: the one place deciding which CLIs need the attached
+ * directories as a standing-prompt fact. Claude (`--add-dir`), Codex
+ * (workspace roots) and Kimi (project config) learn them natively, so a
+ * prompt line would only repeat it; OpenCode serve and generic processes
+ * have no native mechanism.
+ */
+const NATIVE_ATTACHED_DIRECTORY_ADAPTERS: ReadonlySet<string> = new Set([
+  "claude-stream-json/v1",
+  "codex-app-server/v1",
+  "kimi-acp/v1",
+]);
+export function attachedDirectoriesForPrompt(
+  adapterKind: string,
+  directories: readonly string[],
+): readonly string[] {
+  return NATIVE_ATTACHED_DIRECTORY_ADAPTERS.has(adapterKind) ? [] : directories;
+}
+
 type RuntimeWorkerService = Pick<
   WorkerApplicationService,
   "issueActivationCredential" | "origin"
@@ -46,6 +65,8 @@ type RuntimeWorkerService = Pick<
   >;
 
 export function createConfiguredRuntime(input: {
+  /** Owner 2026-09-26: the channel home's Human-attached directories. */
+  additionalDirectories?: readonly string[] | undefined;
   startupMemoryTransport?: "tool" | "system" | undefined;
   executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
   launchEnvironment?: (
@@ -81,6 +102,7 @@ export function createConfiguredRuntime(input: {
   warmRuntimeKinds?: ReadonlySet<string> | undefined;
   workerService: RuntimeWorkerService;
 }): RuntimeAdapter {
+  const attachedDirectories = [...(input.additionalDirectories ?? [])];
   let runtime: RuntimeAdapter;
   /**
    * The runtime-level lease (secrets, launch env, memory, standing prompt).
@@ -123,6 +145,10 @@ export function createConfiguredRuntime(input: {
             ? {}
             : { toolAccessMode: input.toolAccessMode }),
           workspacePath: input.cwd,
+          attachedDirectories: attachedDirectoriesForPrompt(
+            input.runtimeProfileRevision.manifest.adapter.kind,
+            attachedDirectories,
+          ),
         });
         const activation = {
           activationId: scope.activationId,
@@ -179,7 +205,12 @@ export function createConfiguredRuntime(input: {
       ? await input.workerService.issueActivationCredentialForWorkspace(
           input.host,
           scope,
-          { workspaceRoot: input.cwd },
+          {
+            workspaceRoot: input.cwd,
+            ...(attachedDirectories.length === 0
+              ? {}
+              : { attachedDirectories }),
+          },
         )
       : input.workerService.issueActivationCredential(input.host, scope);
   const creationOptions = {
@@ -222,6 +253,9 @@ export function createConfiguredRuntime(input: {
         input.runtimeProfileRevision,
       ),
     cwd: input.cwd,
+    ...(attachedDirectories.length === 0
+      ? {}
+      : { additionalDirectories: attachedDirectories }),
     providerSessionStore: new ProviderSessionStore({
       rootDirectory: join(input.supervisorDirectory, "provider-sessions"),
     }),

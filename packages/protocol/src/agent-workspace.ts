@@ -10,9 +10,14 @@ const Path = z
       !p.split("/").some((x) => x === ".." || x === "."),
     "relative workspace path required",
   );
-export const AgentWorkspaceRootIdSchema = z.enum([
-  "agent-workspace",
-  "runtime-project",
+/**
+ * `runtime-project` is the instance's execution cwd (the channel home for a
+ * channel-home instance). Owner 2026-09-26: each Human-attached directory of
+ * the channel is one more root-scoped root, numbered in creation order.
+ */
+export const AgentWorkspaceRootIdSchema = z.union([
+  z.enum(["agent-workspace", "runtime-project"]),
+  z.templateLiteral(["attached-project-", z.number().int().min(1).max(16)]),
 ]);
 export const AgentWorkspaceRootKindSchema = AgentWorkspaceRootIdSchema;
 export const AgentWorkspaceRootsRequestSchema = z
@@ -33,7 +38,7 @@ const AgentWorkspaceRootSchema = z
 export const AgentWorkspaceRootsSchema = z
   .object({
     defaultRootId: AgentWorkspaceRootIdSchema,
-    roots: z.array(AgentWorkspaceRootSchema).min(1).max(2),
+    roots: z.array(AgentWorkspaceRootSchema).min(1).max(18),
   })
   .strict()
   .superRefine((value, context) => {

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { rejectDuplicateStrings } from "./common.ts";
+import { ChannelAttachedDirectoriesSchema } from "./channel-workspace.ts";
 import {
   MembershipRoleSchema,
   MessageSchema,
@@ -271,6 +272,7 @@ export type ClientAgentActivityListResponse = z.infer<
 
 export const ClientRoomCreateRequestSchema = z
   .object({
+    additionalDirectories: ChannelAttachedDirectoriesSchema.optional(),
     basedOnControlRoomSeq: z.number().int().nonnegative(),
     description: z.string().trim().max(2_000).optional(),
     idempotencyKey: IdentifierSchema,

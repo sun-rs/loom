@@ -83,8 +83,11 @@ never installs them or configures their accounts.
   execution lane and one continuous session that is never silently replaced and
   never auto-rotated by task, turn count or tokens.
 - **Channel** is the collaboration record and message box; its members are
-  instances, not Roles. A Channel is not a filesystem project; runtime cwd and
-  memory home are separate.
+  instances, not Roles. A Channel owns one platform-created home directory (the
+  CLI cwd and default artifact directory of its instances, private box
+  included) plus optional Human-attached directories, both fixed at creation;
+  memory homes stay per instance (owner approved 2026-09-26). Channels created
+  before that keep their instances' private cwds.
 
 Instances run in parallel; each has one serial lane. A Channel `@instance` is a
 public directed request. The private box shares the instance session (so it

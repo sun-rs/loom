@@ -1722,3 +1722,20 @@ export function migrateSystemChannelVisibilityV56(
     );
   }
 }
+
+/**
+ * Owner 2026-09-26: a Channel's platform home and Human-attached directories,
+ * immutable after creation. NULL for every Channel created before schema 71:
+ * those keep per-instance private cwds (a cwd change would silently replace
+ * Claude/Kimi sessions, which are located by cwd).
+ */
+export function migrateChannelWorkspaceV71(database: DatabaseSync): void {
+  const roomColumns = database.prepare("PRAGMA table_info(rooms)").all();
+  if (
+    !roomColumns.some(
+      (row) => requiredString(row, "name") === "channel_workspace_json",
+    )
+  ) {
+    database.exec("ALTER TABLE rooms ADD COLUMN channel_workspace_json TEXT");
+  }
+}

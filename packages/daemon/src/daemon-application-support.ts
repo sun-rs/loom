@@ -98,6 +98,16 @@ export function createDaemonAgentMemoryCoordinator(input: {
       "supervisors",
       "agent-memory",
     ),
+    // Owner 2026-09-26: a channel-home instance browses its Channel home and
+    // attached directories; other Agents keep exposing only their memory.
+    ...(input.executionWorkspaces === undefined
+      ? {}
+      : {
+          resolveProjectDirectory: async (owner: string) =>
+            await input.executionWorkspaces!.channelHomeDirectory(owner),
+          resolveAttachedDirectories: async (owner: string) =>
+            await input.executionWorkspaces!.attachedDirectories(owner),
+        }),
     // Typed App Inbox state is not a Room Message. The next canonical
     // Activation receives it until a dedicated maintenance lane exists.
     wake: () => false,

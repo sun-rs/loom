@@ -557,17 +557,19 @@ function evaluateOffer(
     addReason(reasons, "isolation_insufficient");
   }
 
-  if (
-    candidate.executionWorkspace?.kind === "agent_private" &&
-    offer.supportsAgentPrivateWorkspace !== true
-  )
+  // A channel home is shared by the Channel's instances but mounted per
+  // participant, exactly like a private cwd (one mount per lane).
+  const perParticipantMount =
+    candidate.executionWorkspace?.kind === "agent_private" ||
+    candidate.executionWorkspace?.kind === "channel_home";
+  if (perParticipantMount && offer.supportsAgentPrivateWorkspace !== true)
     addReason(reasons, "private_workspace_unsupported");
 
   const workspaceCandidates = offer.workspaceMountDescriptors
     .filter(
       (workspace) =>
         workspace.workspaceDefinitionId === candidate.workspaceDefinitionId &&
-        (candidate.executionWorkspace?.kind === "agent_private"
+        (perParticipantMount
           ? workspace.participantId === candidate.participantId
           : workspace.participantId === undefined &&
             (candidate.executionWorkspace?.kind !== "existing_mount" ||

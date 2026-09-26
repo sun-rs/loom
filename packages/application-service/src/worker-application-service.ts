@@ -182,6 +182,39 @@ export type TaskDeliveryEvidenceCollector = {
   }): Promise<TaskDeliveryEvidenceCapture>;
 };
 
+/**
+ * Owner 2026-09-26: the evidence root is the first attached directory whose
+ * baseline is git (creation order), else the cwd. A channel home is normally
+ * not a repository; its non-git result is recorded as it is. Only one root
+ * is captured: with several git attached directories the later ones carry no
+ * delivery evidence.
+ */
+export async function captureDeliveryEvidenceBaseline(
+  collector: TaskDeliveryEvidenceCollector | undefined,
+  input: { workspaceRoot: string; attachedDirectories?: readonly string[] },
+): Promise<TaskDeliveryEvidenceBaseline> {
+  if (collector === undefined)
+    return {
+      reason: "collector_unavailable",
+      source: "unavailable",
+      workspaceRoot: input.workspaceRoot,
+    };
+  const capture = async (
+    workspaceRoot: string,
+  ): Promise<TaskDeliveryEvidenceBaseline> => {
+    try {
+      return await collector.captureBaseline({ workspaceRoot });
+    } catch {
+      return { reason: "capture_failed", source: "unavailable", workspaceRoot };
+    }
+  };
+  for (const directory of input.attachedDirectories ?? []) {
+    const baseline = await capture(directory);
+    if (baseline.source === "git") return baseline;
+  }
+  return await capture(input.workspaceRoot);
+}
+
 type WorkerGrant = {
   messageCheck?: { cursor?: number; pending: Map<number, number[]> };
   claimedTaskIds: Set<string>;
@@ -456,29 +489,17 @@ export class WorkerApplicationService {
   async issueActivationCredentialForWorkspace(
     host: AuthenticatedHostContext,
     uncheckedScope: ActivationCredentialScope,
-    options: { ttlMs?: number; workspaceRoot: string },
+    options: {
+      ttlMs?: number;
+      workspaceRoot: string;
+      /** Owner 2026-09-26: the channel home's attached directories. */
+      attachedDirectories?: readonly string[];
+    },
   ): Promise<IssuedActivationCredential> {
-    const collector = this.#deliveryEvidenceCollector;
-    let baseline: TaskDeliveryEvidenceBaseline;
-    if (collector === undefined) {
-      baseline = {
-        reason: "collector_unavailable",
-        source: "unavailable",
-        workspaceRoot: options.workspaceRoot,
-      };
-    } else {
-      try {
-        baseline = await collector.captureBaseline({
-          workspaceRoot: options.workspaceRoot,
-        });
-      } catch {
-        baseline = {
-          reason: "capture_failed",
-          source: "unavailable",
-          workspaceRoot: options.workspaceRoot,
-        };
-      }
-    }
+    const baseline = await captureDeliveryEvidenceBaseline(
+      this.#deliveryEvidenceCollector,
+      options,
+    );
     return this.#issueActivationCredential(host, uncheckedScope, {
       ...(options.ttlMs === undefined ? {} : { ttlMs: options.ttlMs }),
       deliveryEvidenceBaseline: baseline,

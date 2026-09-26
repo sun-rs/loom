@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import {
   HOST_EXECUTION_WORKSPACE_BINDING_LIMIT,
   AgentDefinitionRevisionSchema,
+  ChannelWorkspaceSchema,
   HostExecutionWorkspaceBindingSchema,
   type HostExecutionWorkspaceBinding,
 } from "@rah-os/protocol";
@@ -12,7 +13,10 @@ import {
 import { authorizedHostParticipantIds } from "./host-authorization.ts";
 import { jsonObject, text } from "./sqlite-row.ts";
 
-/** Host-scoped configuration projection; never returns host filesystem paths. */
+/**
+ * Host-scoped configuration projection. It never returns Host-derived paths;
+ * the only paths are a channel home's Human-attached directories.
+ */
 export function listHostExecutionWorkspaceBindings(
   database: DatabaseSync,
   host: AuthenticatedHostContext,
@@ -37,6 +41,18 @@ export function listHostExecutionWorkspaceBindings(
     const revision = AgentDefinitionRevisionSchema.parse(
       jsonObject(row, "definition_json"),
     );
+    const channelHome =
+      revision.executionWorkspace?.kind === "channel_home"
+        ? revision.executionWorkspace
+        : undefined;
+    const channelWorkspace =
+      channelHome === undefined
+        ? undefined
+        : database
+            .prepare(
+              "SELECT channel_workspace_json FROM rooms WHERE room_id = ?",
+            )
+            .get(channelHome.roomId)?.channel_workspace_json;
     result.push(
       HostExecutionWorkspaceBindingSchema.parse({
         participantId,
@@ -45,6 +61,15 @@ export function listHostExecutionWorkspaceBindings(
         ...(revision.executionWorkspace === undefined
           ? {}
           : { executionWorkspace: revision.executionWorkspace }),
+        ...(channelHome === undefined
+          ? {}
+          : {
+              additionalDirectories:
+                typeof channelWorkspace === "string"
+                  ? ChannelWorkspaceSchema.parse(JSON.parse(channelWorkspace))
+                      .additionalDirectories
+                  : [],
+            }),
       }),
     );
   }

@@ -248,6 +248,10 @@ export const DaemonConfigV4Schema = z
         participantIds: UniqueIdentifierListSchema,
       })
       .strict(),
+    // Owner 2026-09-26: parent of platform-created Channel homes; default
+    // `~/.loom/channel-workspaces`. Never relocate an existing root: homes
+    // are recorded by absolute path and CLI sessions are located by cwd.
+    channelWorkspaceRoot: AbsolutePathSchema.optional(),
     runtimes: z.array(DaemonConfigV4RuntimeSchema).min(1).max(64),
     schemaVersion: z.literal(4),
     startupProbeMode: z.enum(["refresh", "reuse-latest"]).optional(),

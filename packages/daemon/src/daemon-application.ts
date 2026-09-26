@@ -4,6 +4,7 @@ import {
 } from "./runtime-catalog-refresh.ts";
 import {
   createDaemonExecutionWorkspaceComposition,
+  channelWorkspaceCoreOptions,
   legacyWorkspaceMountDescriptors,
 } from "./daemon-execution-workspace-composition.ts";
 import { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
@@ -151,6 +152,7 @@ export class DaemonApplication {
       );
       core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
+        ...channelWorkspaceCoreOptions(this.#config),
         ...(this.#config.schemaVersion === 4 && runtimeSettings
           ? {
               inPlaceWorkspaceSharing:

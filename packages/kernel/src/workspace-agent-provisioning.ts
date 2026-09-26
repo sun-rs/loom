@@ -163,13 +163,27 @@ export function provisionWorkspaceAgentTransaction(
     normalized.toolAccessMode ?? "full_access",
   );
 
+  // Owner 2026-09-26: a new instance of a Channel created with a platform
+  // home runs in that home. Channels created before it keep per-instance
+  // private cwds (existing instances keep theirs: their revisions are frozen).
+  const channelHome =
+    owner.roleInstance !== undefined &&
+    typeof owner.database
+      .prepare("SELECT channel_workspace_json FROM rooms WHERE room_id = ?")
+      .get(owner.roleInstance.channelId)?.channel_workspace_json === "string";
   const executionWorkspace =
     normalized.executionWorkspace ??
     (offer.supportsAgentPrivateWorkspace === true
-      ? { kind: "agent_private" as const }
+      ? channelHome
+        ? {
+            kind: "channel_home" as const,
+            roomId: owner.roleInstance!.channelId,
+          }
+        : { kind: "agent_private" as const }
       : undefined);
   if (
-    executionWorkspace?.kind === "agent_private" &&
+    (executionWorkspace?.kind === "agent_private" ||
+      executionWorkspace?.kind === "channel_home") &&
     offer.supportsAgentPrivateWorkspace !== true
   )
     throw new ConflictError(

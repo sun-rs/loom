@@ -39,7 +39,10 @@ export function assertRuntimeWorkspaceProvenance(
     : undefined;
   const workspace = descriptor.executionWorkspace;
   if (!workspace) {
-    if (revision?.executionWorkspace?.kind === "agent_private")
+    if (
+      revision?.executionWorkspace?.kind === "agent_private" ||
+      revision?.executionWorkspace?.kind === "channel_home"
+    )
       throw new ConflictError(
         "Private workspace recovery provenance is required",
       );

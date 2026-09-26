@@ -93,6 +93,10 @@ import {
 } from "./provider-launch-arguments.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
+  claudeAttachedDirectoryArgs,
+  parseAttachedDirectory,
+} from "./channel-attached-directories.js";
+import {
   normalizeClaudeTrajectoryEvent,
   RuntimeTrajectoryWriter,
   runtimeStatusTrajectory,
@@ -145,6 +149,7 @@ const args = [
   ...(options.model === undefined ? [] : ["--model", options.model]),
   ...(options.effort === undefined ? [] : ["--effort", options.effort]),
   ...(resumed ? ["--resume", sessionId] : ["--session-id", sessionId]),
+  ...claudeAttachedDirectoryArgs(options.additionalDirectories),
   ...options.providerArgs,
 ];
 const claude = spawn(options.executable, args, {
@@ -857,7 +862,7 @@ function textOf(message) {
 }
 
 function parseArguments(argv) {
-  const parsed = { providerArgs: [] };
+  const parsed = { additionalDirectories: [], providerArgs: [] };
   for (let index = 0; index < argv.length; index += 1) {
     const name = argv[index];
     const value = argv[index + 1];
@@ -876,6 +881,8 @@ function parseArguments(argv) {
     // The Codex transport's socket directory; Claude speaks over stdio.
     else if (name === "--socket-dir") parsed.socketDirectory = value;
     else if (name === "--mcp-config") parsed.providerArgs.push(name, value);
+    else if (name === "--additional-dir")
+      parsed.additionalDirectories.push(parseAttachedDirectory(value));
     else throw new Error(`unsupported claude warm driver option: ${name}`);
     index += 1;
   }

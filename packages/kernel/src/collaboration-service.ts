@@ -19,6 +19,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import {
   ActivationReasonSchema,
+  ChannelAttachedDirectoriesSchema,
   ClientWorkspaceUpdateRequestSchema,
   MembershipRoleSchema,
   ParticipantKindSchema,
@@ -27,6 +28,7 @@ import {
   WorkspaceSchema,
   type ActivationReason,
   type Attachment,
+  type ChannelWorkspace,
   type MembershipRole,
   type Room,
   type RoomMembership,
@@ -103,6 +105,8 @@ export type WorkspaceRoomCreateInput = {
   slug: string;
   visibility?: "public" | "private" | undefined;
   workspaceId: string;
+  /** Owner 2026-09-26: fixed at creation; there is no later mutation. */
+  additionalDirectories?: readonly string[] | undefined;
 };
 
 export type WorkspaceRoomUpdateInput = {
@@ -128,17 +132,21 @@ export type DirectRoomOpenInput = {
 };
 
 export class CollaborationService {
+  readonly #attachedDirectoryValidator:
+    ((paths: readonly string[]) => void) | undefined;
   readonly #createId: (prefix: string) => string;
   readonly #database: DatabaseSync;
   readonly #events: RoomEventWriter;
   readonly #now: () => Date;
 
   constructor(input: {
+    attachedDirectoryValidator?: (paths: readonly string[]) => void;
     createId: (prefix: string) => string;
     database: DatabaseSync;
     events: RoomEventWriter;
     now: () => Date;
   }) {
+    this.#attachedDirectoryValidator = input.attachedDirectoryValidator;
     this.#createId = input.createId;
     this.#database = input.database;
     this.#events = input.events;
@@ -410,6 +418,17 @@ export class CollaborationService {
       }
       requireRoomMember(this.#database, workspace.controlRoomId, principalId);
     }
+    const attached = ChannelAttachedDirectoriesSchema.safeParse([
+      ...(input.additionalDirectories ?? []),
+    ]);
+    if (!attached.success)
+      throw new ConflictError(
+        `Attached directories are invalid: ${attached.error.issues[0]?.message ?? "invalid"}`,
+      );
+    const channelWorkspace: ChannelWorkspace = {
+      kind: "channel_home",
+      additionalDirectories: attached.data,
+    };
     const idempotencyKey = this.#requiredLabel(
       input.idempotencyKey,
       "idempotencyKey",
@@ -428,7 +447,11 @@ export class CollaborationService {
         event.payload.description !== description ||
         event.payload.visibility !== visibility ||
         JSON.stringify(event.payload.initialAgentParticipantIds) !==
-          JSON.stringify(initialAgentParticipantIds)
+          JSON.stringify(initialAgentParticipantIds) ||
+        JSON.stringify(
+          (event.payload.channelWorkspace as ChannelWorkspace | undefined)
+            ?.additionalDirectories ?? [],
+        ) !== JSON.stringify(channelWorkspace.additionalDirectories)
       ) {
         throw this.#idempotencyConflict(idempotencyKey);
       }
@@ -443,6 +466,23 @@ export class CollaborationService {
       actor,
       input.basedOnControlRoomSeq,
     );
+    if (channelWorkspace.additionalDirectories.length > 0) {
+      // Host filesystem facts are checked only for a new mutation; a replay
+      // returns the recorded result even if a directory later disappeared.
+      if (this.#attachedDirectoryValidator === undefined)
+        throw new ConflictError(
+          "Attached Channel directories are unavailable on this Core",
+        );
+      try {
+        this.#attachedDirectoryValidator(
+          channelWorkspace.additionalDirectories,
+        );
+      } catch (error) {
+        throw new ConflictError(
+          `Attached directory rejected: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
     if (
       !workspaceRoomSlugIsAvailable(this.#database, input.workspaceId, slug)
     ) {
@@ -455,7 +495,7 @@ export class CollaborationService {
     const createdAt = this.#timestamp();
     this.#database
       .prepare(
-        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?)",
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
       )
       .run(
         roomId,
@@ -466,6 +506,7 @@ export class CollaborationService {
         description ?? null,
         visibility,
         createdAt,
+        JSON.stringify(channelWorkspace),
       );
     this.#database
       .prepare(
@@ -478,6 +519,7 @@ export class CollaborationService {
       aggregateType: "room",
       idempotencyKey: `room.bootstrap:${idempotencyKey}`,
       payload: {
+        channelWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
         kind: input.kind,
@@ -536,6 +578,7 @@ export class CollaborationService {
       idempotencyKey,
       payload: {
         basedOnControlRoomSeq: input.basedOnControlRoomSeq,
+        channelWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
         kind: input.kind,

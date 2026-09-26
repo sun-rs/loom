@@ -28,6 +28,12 @@ export type PlacementCapacityPolicy = {
 export type InPlaceWorkspaceSharing = "exclusive" | "shared";
 
 export type RoomKernelOptions = {
+  /**
+   * Owner 2026-09-26: the Host-side check of Human-attached Channel
+   * directories (exists, is a directory, canonical, outside Loom data). It
+   * throws with a reason; without it attached directories are refused.
+   */
+  channelAttachedDirectoryValidator?: (paths: readonly string[]) => void;
   createId?: (prefix: string) => string;
   databasePath: string;
   inPlaceWorkspaceSharing?: InPlaceWorkspaceSharing;

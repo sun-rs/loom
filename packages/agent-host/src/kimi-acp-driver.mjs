@@ -1,4 +1,8 @@
 import {
+  parseAttachedDirectory,
+  writeKimiWorkspaceConfig,
+} from "./channel-attached-directories.js";
+import {
   providerLaunchArguments,
   providerLaunchPolicy,
 } from "./provider-launch-arguments.js";
@@ -105,6 +109,10 @@ const kimiEnvironment = {
   ...process.env,
   ...providerLaunchPolicy("kimi").environment,
 };
+// Owner 2026-09-26: the Channel's attached directories reach Kimi through its
+// persistent project config, read at every process start (ACP
+// additionalDirectories would be dropped on session/resume).
+writeKimiWorkspaceConfig(process.cwd(), options.additionalDirectories);
 const kimi = spawn(options.executable, providerLaunchArguments("kimi"), {
   cwd: process.cwd(),
   env: kimiEnvironment,
@@ -1027,6 +1035,7 @@ function configOptionValue(result, configId) {
 
 function parseArguments(args) {
   const parsed = {
+    additionalDirectories: [],
     mcpConfigFile: undefined,
     model: undefined,
     resumeSession: undefined,
@@ -1038,6 +1047,8 @@ function parseArguments(args) {
     if (value === undefined)
       throw new Error(`missing value for ${String(flag)}`);
     if (flag === "--executable") parsed.executable = value;
+    else if (flag === "--additional-dir")
+      parsed.additionalDirectories.push(parseAttachedDirectory(value));
     else if (flag === "--mcp-config-file") parsed.mcpConfigFile = value;
     else if (flag === "--model") parsed.model = value;
     else if (flag === "--prompt") parsed.prompt = value;

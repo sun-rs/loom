@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AttachmentSchema } from "./room-files.ts";
 
+import { ChannelWorkspaceSchema } from "./channel-workspace.ts";
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
 export const ParticipantKindSchema = z.enum(["human", "agent", "service"]);
@@ -64,6 +65,9 @@ export type MembershipRole = z.infer<typeof MembershipRoleSchema>;
 export const RoomSchema = z
   .object({
     archivedAt: TimestampSchema.optional(),
+    // Owner 2026-09-26: present on Channels created with a platform home;
+    // immutable after creation. Legacy Channels omit it.
+    channelWorkspace: ChannelWorkspaceSchema.optional(),
     createdAt: TimestampSchema,
     description: z.string().trim().max(2_000).optional(),
     // Immutable pair from Kernel, not a viewer-specific name or UI cache.

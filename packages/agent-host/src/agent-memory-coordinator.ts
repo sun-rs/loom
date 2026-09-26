@@ -100,6 +100,8 @@ export class AgentMemoryCoordinator {
   readonly #projectDirectory: string | undefined;
   readonly #resolveProjectDirectory:
     ((ownerParticipantId: string) => Promise<string | undefined>) | undefined;
+  readonly #resolveAttachedDirectories:
+    ((ownerParticipantId: string) => Promise<readonly string[]>) | undefined;
   readonly #rootDirectory: string;
   readonly #configs: AgentMemoryConfigStore;
   readonly #resetting = new Set<string>();
@@ -119,6 +121,10 @@ export class AgentMemoryCoordinator {
     resolveProjectDirectory?: (
       ownerParticipantId: string,
     ) => Promise<string | undefined>;
+    /** Owner 2026-09-26: a channel home's Human-attached directories. */
+    resolveAttachedDirectories?: (
+      ownerParticipantId: string,
+    ) => Promise<readonly string[]>;
     rootDirectory: string;
     wake: (
       ownerParticipantId: string,
@@ -136,6 +142,7 @@ export class AgentMemoryCoordinator {
       throw new Error("Runtime project directory must be absolute");
     }
     this.#resolveProjectDirectory = options.resolveProjectDirectory;
+    this.#resolveAttachedDirectories = options.resolveAttachedDirectories;
     this.#acquireResetFence = options.acquireResetFence;
     this.#quarantineProviderContinuity = options.quarantineProviderContinuity;
     this.#now = options.now ?? Date.now;
@@ -273,7 +280,41 @@ export class AgentMemoryCoordinator {
         state: "ready",
       });
     }
+    for (const [index, directory] of (
+      await this.#attachedDirectories(participantId)
+    ).entries())
+      roots.push({
+        label: basename(directory) || directory,
+        rootId: `attached-project-${index + 1}`,
+        rootKind: `attached-project-${index + 1}`,
+        rootPath: directory,
+        state: (await existsDirectory(directory)) ? "ready" : "absent",
+      });
     return { defaultRootId: "agent-workspace", roots };
+  }
+
+  async #attachedDirectories(
+    participantId: string,
+  ): Promise<readonly string[]> {
+    return (await this.#resolveAttachedDirectories?.(participantId)) ?? [];
+  }
+
+  /** Root-scoped like `runtime-project`: canonical, never the host root. */
+  async #requireAttachedDirectory(
+    participantId: string,
+    rootId: AgentWorkspaceRoot["rootId"],
+  ): Promise<string> {
+    const index = /^attached-project-(\d+)$/u.exec(rootId)?.[1];
+    const directory =
+      index === undefined
+        ? undefined
+        : (await this.#attachedDirectories(participantId))[Number(index) - 1];
+    if (directory === undefined || !isAbsolute(directory))
+      throw new Error("No such attached directory for this Agent");
+    const root = await realpath(directory);
+    if (root === "/")
+      throw new Error("Filesystem root is not a runtime project");
+    return root;
   }
 
   async browseWorkspace(
@@ -282,6 +323,20 @@ export class AgentMemoryCoordinator {
     path: string,
     includeHidden: boolean,
   ) {
+    if (rootId.startsWith("attached-project-")) {
+      const rootDirectory = await this.#requireAttachedDirectory(
+        requireParticipantId(owner),
+        rootId,
+      );
+      return listWorkspaceRoot({
+        rootDirectory,
+        rootId,
+        rootKind: rootId,
+        rootLabel: basename(rootDirectory) || rootDirectory,
+        path,
+        includeHidden,
+      });
+    }
     if (rootId === "runtime-project") {
       const rootDirectory = await this.#requireProjectDirectory(
         requireParticipantId(owner),
@@ -308,6 +363,19 @@ export class AgentMemoryCoordinator {
     rootId: AgentWorkspaceRoot["rootId"],
     path: string,
   ) {
+    if (rootId.startsWith("attached-project-")) {
+      const rootDirectory = await this.#requireAttachedDirectory(
+        requireParticipantId(owner),
+        rootId,
+      );
+      return readWorkspaceRoot({
+        rootDirectory,
+        rootId,
+        rootKind: rootId,
+        rootLabel: basename(rootDirectory) || rootDirectory,
+        path,
+      });
+    }
     if (rootId === "runtime-project") {
       const rootDirectory = await this.#requireProjectDirectory(
         requireParticipantId(owner),

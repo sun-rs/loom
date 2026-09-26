@@ -33,6 +33,11 @@ export type StandingPromptRuntimeContext = {
   machineOs?: string;
   daemonVersion?: string;
   workspacePath?: string;
+  /**
+   * Owner 2026-09-26: the channel's attached directories, only for a CLI
+   * without a native mechanism (OpenCode); others learn them natively.
+   */
+  attachedDirectories?: readonly string[];
   roomId?: string;
   workspaceMode?: string;
   toolAccessMode?: string;
@@ -81,6 +86,8 @@ function runtimeContextLayer(
   if (context.daemonVersion) lines.push(`- Daemon: v${context.daemonVersion}`);
   if (context.workspacePath)
     lines.push(`- Workspace: ${context.workspacePath}`);
+  for (const directory of context.attachedDirectories ?? [])
+    lines.push(`- Attached directory: ${directory}`);
   if (context.roomId) lines.push(`- Room: ${context.roomId}`);
   if (context.workspaceMode)
     lines.push(`- Workspace mode: ${context.workspaceMode}`);
