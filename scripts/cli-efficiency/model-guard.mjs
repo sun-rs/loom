@@ -207,6 +207,18 @@ export function classifyCodexLaunch(args) {
     (args.length === 2 || (args.length === 3 && args[2] === "--bundled"))
   )
     return { kind: "catalog" };
+  // `mcp list --json` (read-only, no model) runs before every product launch
+  // to resolve the user's MCP servers; only the product's `-c` pairs follow.
+  if (args[0] === "mcp" && args[1] === "list" && args[2] === "--json") {
+    for (let i = 3; i < args.length; i++) {
+      if (args[i] !== "-c")
+        throw new Error(`Unsupported gate CLI argument ${args[i]}`);
+      const entry = String(args[++i] ?? "");
+      if (!PRODUCT_CONFIG.has(entry) && !MCP_DISABLE.test(entry))
+        throw new Error(`Unsupported gate config override ${args[i]}`);
+    }
+    return { kind: "mcp-list" };
+  }
   if (args[0] !== "app-server") throw new Error("Unsupported gate CLI command");
   let listens = 0;
   for (let i = 1; i < args.length; i++) {

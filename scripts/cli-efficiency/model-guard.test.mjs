@@ -244,7 +244,28 @@ test("argv: only the product's subcommand forms reach the real CLI", () => {
     ["app-server", "--listen", "unix:///s/d/app-server.sock"],
   ])
     assert.equal(classifyCodexLaunch(ok).kind, "app-server", ok.join(" "));
+  // The product lists the user's MCP servers before every Codex launch
+  // (read-only, no model); the verification pass adds per-name disables.
+  assert.deepEqual(classifyCodexLaunch(["mcp", "list", "--json"]), {
+    kind: "mcp-list",
+  });
+  assert.deepEqual(
+    classifyCodexLaunch([
+      "mcp",
+      "list",
+      "--json",
+      "-c",
+      "features.plugins=false",
+      "-c",
+      "mcp_servers.node_repl.enabled=false",
+    ]),
+    { kind: "mcp-list" },
+  );
   for (const bad of [
+    ["mcp", "add", "x"],
+    ["mcp", "list"],
+    ["mcp", "list", "--json", "-c", "model=gpt-6-sol"],
+    ["mcp", "list", "--json", "--extra"],
     ["debug", "app-server", "send-message-v2", "hi"],
     ["debug", "models", "--extra"],
     ["debug"],
