@@ -119,6 +119,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "archiveWorkspaceRoom",
       "assignTask",
       "authenticateHumanAccessToken",
+      "authorizeLegacyChannelMemoryImport",
       "cancelFile",
       "cancelTask",
       "completeTask",

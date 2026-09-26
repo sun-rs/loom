@@ -25,7 +25,7 @@ for (const unexpected of [false, true]) {
       )
         .replace("rendered_at", "presented_at")
         .replace(
-          "  sent_at TEXT,\n  sent_by_host_id TEXT,\n  pending_ack_seq INTEGER,\n",
+          "  sent_at TEXT,\n  sent_by_host_id TEXT,\n  pending_ack_seq INTEGER,\n  memory_json TEXT,\n",
           "",
         );
       if (unexpected) legacy = legacy.replace("from_seq > 0", "from_seq >= 0");
@@ -73,6 +73,7 @@ for (const unexpected of [false, true]) {
             sent_at: null,
             sent_by_host_id: null,
             pending_ack_seq: null,
+            memory_json: null,
           },
         );
         assert.equal(RoomKernel.inspectSchemaState(path).pending.length, 0);

@@ -1,6 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import type {
   ActivationCredentialScope,
+  InstanceMemoryIndex,
   MemoryIndexDelta,
   RoomEvent,
   WorkerAddressing,
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS activation_presented_windows (
   sent_at TEXT,
   sent_by_host_id TEXT,
   pending_ack_seq INTEGER,
+  memory_json TEXT,
   PRIMARY KEY (activation_id, consumer_id, run_attempt_id)
 ) STRICT;
 `;
@@ -165,8 +167,10 @@ export type RenderedPresentedWindow = PresentedWindow & {
   previousAttemptReplyMessageId?: string;
   /** See `activation-retry-reminder.ts`. */
   previousAttemptReplyFinal?: true;
-  /** S6 batch B: see `channel-memory-index.ts`. */
+  /** S6 batch B: see `channel-memory-index.ts` (frozen per RunAttempt). */
   memoryDelta?: MemoryIndexDelta;
+  /** Review P2-1: an index refresh (see `channel-memory-index.ts`). */
+  memoryIndex?: InstanceMemoryIndex;
 };
 
 const TERMINAL_RUN_ATTEMPT_STATES = new Set([
@@ -457,7 +461,7 @@ export function markPresentedWindowSent(
   key: PresentedWindowKey,
   hostId: string,
   sentAt: string,
-): { pendingAckSeq: number | undefined } {
+): { pendingAckSeq: number | undefined; newlySent: boolean } {
   const row = database
     .prepare(
       `SELECT sent_at, sent_by_host_id, pending_ack_seq FROM activation_presented_windows
@@ -477,12 +481,12 @@ export function markPresentedWindowSent(
     attempt === undefined ||
     TERMINAL_RUN_ATTEMPT_STATES.has(text(attempt as Row, "state"))
   )
-    return { pendingAckSeq: undefined };
+    return { pendingAckSeq: undefined, newlySent: false };
   const already = nullableText(row as Row, "sent_at");
   if (already !== null && already !== undefined) {
     if (nullableText(row as Row, "sent_by_host_id") !== hostId)
       throw new ConflictError("presented rendering was sent by another Host");
-    return { pendingAckSeq: undefined };
+    return { pendingAckSeq: undefined, newlySent: false };
   }
   database
     .prepare(
@@ -494,6 +498,7 @@ export function markPresentedWindowSent(
   return {
     pendingAckSeq:
       pending == null ? undefined : integer(row as Row, "pending_ack_seq"),
+    newlySent: true,
   };
 }
 

@@ -40,6 +40,7 @@ import {
   recordWorkerTargetReadPosition,
 } from "./worker-target-read-position.ts";
 import { syncRoomEventWindow } from "./room-sync.ts";
+import { hideUnreadableMemoryEvents } from "./worker-message-projection.ts";
 import { annotateTaskAnchoredEvents } from "./task-anchor-annotation.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 import {
@@ -232,7 +233,7 @@ export class WorkerTargetContextService {
         contextReceipt: this.#sign(receipt),
         window: null,
       };
-      const window = syncRoomEventWindow(
+      const scanned = syncRoomEventWindow(
         this.#context.database,
         origin.participantId,
         {
@@ -255,6 +256,16 @@ export class WorkerTargetContextService {
             Buffer.byteLength(JSON.stringify(envelope)) - 4 + 48,
         },
       );
+      // Review P2-2: same memory projection as sync; the cursor is the
+      // scanned range, never renumbered.
+      const window = {
+        ...scanned,
+        events: hideUnreadableMemoryEvents(
+          this.#context.database,
+          origin.participantId,
+          scanned.events,
+        ),
+      };
       receipt.cursor = window.cursorAfter;
       recordWorkerTargetContextWindow(
         this.#context.database,

@@ -14,10 +14,15 @@ import type { ActivationEnvironmentLease } from "./generic-process-adapter.ts";
  * renders it. Bodies are never included.
  *
  * - `renderChannelMemoryIndex`: the light index at the end of a new session's
- *   standing prompt, bounded by `MEMORY_INDEX_MAX_BYTES` (4 KiB, contract §6
+ *   standing prompt, bounded by `MEMORY_INDEX_MAX_BYTES` (3 KiB, contract §6
  *   fixed-overhead budget) with the omitted count stated, never silently cut.
  * - `renderChannelMemoryDelta`: the lines of entries changed since the
- *   session's index, appended to the next wake; never the full index.
+ *   session's index, appended to the next wake; never the full index. Past
+ *   the Kernel's 30-change bound the rest is counted with a warning that the
+ *   index may be stale and how to check it (a stated loss, not a queue).
+ * - `renderChannelMemoryIndexRefresh`: the current index in a wake, once,
+ *   when the session held only the reading-off notice and reading is on now
+ *   (review P2-1); same byte budget as the launch index.
  */
 
 /** The single standing-prompt line about channel memory. */
@@ -79,9 +84,22 @@ export function renderChannelMemoryDelta(delta: MemoryIndexDelta): string {
     "## Channel memory changed",
     ...delta.changes.map(changeLine),
     ...(delta.omitted > 0
-      ? [`${String(delta.omitted)} more changed entries: \`memory list\`.`]
+      ? [
+          `${String(delta.omitted)} more changed entries omitted, so your memory index may be out of date: check with \`memory list --include-invalidated\` or \`memory search --query TEXT\` (an entry no longer listed was deleted).`,
+        ]
       : []),
   ].join("\n");
+}
+
+export function renderChannelMemoryIndexRefresh(
+  index: InstanceMemoryIndex,
+): string {
+  const heading = `${INDEX_HEADING} (reading is now on)`;
+  const extra = bytes(heading) - bytes(INDEX_HEADING);
+  return renderChannelMemoryIndex(
+    index,
+    MEMORY_INDEX_MAX_BYTES - extra,
+  ).replace(INDEX_HEADING, heading);
 }
 
 /**

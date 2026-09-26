@@ -11,14 +11,29 @@ import { instanceSessionState } from "./instance-session.ts";
 import { integer, nullableInteger, text, type Row } from "./sqlite-row.ts";
 
 /**
- * evo S6 batch B (schema 75). The index a Host injects at session start and
- * the per-wake delta. `memory_index_marks` records, per instance session
- * generation, the channel memory sequence through which a wake carrying the
- * delta was registered as sent (the driver accepted exactly that input), and
- * the one delta currently presented but not yet sent (an instance has one
- * lane). A new session generation starts without a row. Host transport
- * knowledge, never a read receipt: it proves the text reached the runtime,
- * not that a model used it.
+ * evo S6 batch B (schema 75, delivery contract reworked at 76 after review).
+ * The index a Host injects at session start and the per-wake delta.
+ *
+ * `memory_index_marks` holds, per instance session generation, what the
+ * session was proven to hold — Host transport knowledge, never a read
+ * receipt (it proves the text reached the runtime, not that a model used it):
+ *
+ * - `served_seq` / `served_read_enabled`: the last index the Host read under
+ *   its own credential for this generation. A launch claim
+ *   (`memoryIndexSeq`) counts only when it equals this, and it is consumed by
+ *   the first accepted wake that carried it;
+ * - `index_state`: `index` (a real index snapshot, launch prompt or refresh,
+ *   was delivered), `notice` (only the reading-off notice was), or NULL
+ *   (nothing proven);
+ * - `index_seq`: the channel memory seq of the delivered index snapshot;
+ * - `delta_seq`: the head of the last delivered wake delta;
+ * - `through_seq`: the seq through which the session holds entry knowledge
+ *   (index or delta); the next delta starts after it.
+ *
+ * Nothing here advances on a presentation. The snapshot a wake carries is
+ * frozen on its presented window (`activation_presented_windows.memory_json`)
+ * and applied only when the Host registers that window as sent.
+ * `pending_run_attempt_id` / `pending_through_seq` (schema 75) are retired.
  */
 export const MEMORY_INDEX_MARKS_SCHEMA = `
 CREATE TABLE IF NOT EXISTS memory_index_marks (
@@ -26,9 +41,12 @@ CREATE TABLE IF NOT EXISTS memory_index_marks (
   session_generation INTEGER NOT NULL CHECK (session_generation >= 0),
   room_id TEXT NOT NULL,
   through_seq INTEGER CHECK (through_seq IS NULL OR through_seq >= 0),
-  pending_run_attempt_id TEXT,
-  pending_through_seq INTEGER,
   updated_at TEXT NOT NULL,
+  served_seq INTEGER,
+  served_read_enabled INTEGER,
+  index_state TEXT CHECK (index_state IS NULL OR index_state IN ('index', 'notice')),
+  index_seq INTEGER,
+  delta_seq INTEGER,
   PRIMARY KEY (instance_id, session_generation)
 ) STRICT;
 `;
@@ -55,6 +73,40 @@ export function migrateChannelMemoryV75(database: DatabaseSync): void {
     );
   if (!revisions.has("import_path"))
     database.exec("ALTER TABLE memory_revisions ADD COLUMN import_path TEXT");
+}
+
+/**
+ * Schema 76: the frozen memory snapshot on each presented window and the
+ * per-generation delivery state (see MEMORY_INDEX_MARKS_SCHEMA).
+ */
+export function migrateChannelMemoryV76(database: DatabaseSync): void {
+  const columns = (table: string) =>
+    new Set(
+      database
+        .prepare(`PRAGMA table_info(${table})`)
+        .all()
+        .map((row) => text(row, "name")),
+    );
+  const windows = columns("activation_presented_windows");
+  if (!windows.has("memory_json"))
+    database.exec(
+      "ALTER TABLE activation_presented_windows ADD COLUMN memory_json TEXT",
+    );
+  const marks = columns("memory_index_marks");
+  if (marks.has("pending_run_attempt_id")) {
+    database.exec(`
+      ALTER TABLE memory_index_marks DROP COLUMN pending_run_attempt_id;
+      ALTER TABLE memory_index_marks DROP COLUMN pending_through_seq;
+    `);
+  }
+  if (!marks.has("served_seq"))
+    database.exec(`
+      ALTER TABLE memory_index_marks ADD COLUMN served_seq INTEGER;
+      ALTER TABLE memory_index_marks ADD COLUMN served_read_enabled INTEGER;
+      ALTER TABLE memory_index_marks ADD COLUMN index_state TEXT CHECK (index_state IS NULL OR index_state IN ('index', 'notice'));
+      ALTER TABLE memory_index_marks ADD COLUMN index_seq INTEGER;
+      ALTER TABLE memory_index_marks ADD COLUMN delta_seq INTEGER;
+    `);
 }
 
 /** The channel sequence of the latest accepted memory change, or 0. */
@@ -138,45 +190,83 @@ export function instanceMemoryIndex(
 }
 
 /**
- * The delta a presented window carries: entries changed after the later of
- * the launch's index (`memoryIndexSeq`, Host-supplied only when the session
- * holds that prompt) and the session's mark. With neither — a session that
- * predates the index, or a first wake that never registered — every entry
- * ever changed is listed (bounded), erring toward repetition, never loss.
- * Undefined for non-instances, a read switch that is off, or no change.
+ * The Host's session-start read (the caller authenticated and authorized
+ * it). It also records what was served: review P1-1, the only source a
+ * launch claim may be verified against.
  */
-export function presentedMemoryDelta(
+export function serveInstanceMemoryIndex(
   database: DatabaseSync,
-  scope: Readonly<P.ActivationCredentialScope>,
-  memoryIndexSeq: number | undefined,
-): P.MemoryIndexDelta | undefined {
-  const isInstance =
-    database
-      .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
-      .get(scope.participantId) !== undefined;
-  if (!isInstance) return undefined;
-  let readable: boolean;
-  try {
-    readable = hasMemoryAccess(database, scope, "read");
-  } catch {
-    return undefined;
-  }
-  if (!readable) return undefined;
-  const channelId = instanceChannel(database, scope.participantId);
-  const head = channelMemoryHeadSeq(database, channelId);
-  const mark = database
+  instanceId: string,
+  now: string,
+): P.InstanceMemoryIndex {
+  const index = instanceMemoryIndex(database, instanceId);
+  database
     .prepare(
-      "SELECT through_seq FROM memory_index_marks WHERE instance_id=? AND session_generation=?",
+      `INSERT INTO memory_index_marks(instance_id, session_generation, room_id, through_seq, updated_at,
+         served_seq, served_read_enabled)
+       VALUES(?, ?, ?, NULL, ?, ?, ?)
+       ON CONFLICT(instance_id, session_generation) DO UPDATE SET
+         served_seq=excluded.served_seq,
+         served_read_enabled=excluded.served_read_enabled,
+         updated_at=excluded.updated_at`,
     )
-    .get(
-      scope.participantId,
-      instanceSessionState(database, scope.participantId).generation,
+    .run(
+      instanceId,
+      instanceSessionState(database, instanceId).generation,
+      index.channelId,
+      now,
+      index.throughSeq,
+      index.readEnabled ? 1 : 0,
     );
-  const base = Math.max(
-    memoryIndexSeq ?? 0,
-    mark === undefined ? 0 : (nullableInteger(mark, "through_seq") ?? 0),
-  );
-  if (head <= base) return undefined;
+  return index;
+}
+
+/**
+ * The memory part of one RunAttempt's wake, frozen with its presented window.
+ * `launch`: the Host-served index the launch prompt carried (a verified
+ * claim), applied at the send; `delta` / `index` (a refresh): what the wake
+ * text carries.
+ */
+type MemoryPresentation = {
+  generation: number;
+  launch?: { seq: number; kind: "index" | "notice" };
+  delta?: P.MemoryIndexDelta;
+  index?: P.InstanceMemoryIndex;
+};
+
+type MarkRow = {
+  servedSeq: number | undefined;
+  servedReadEnabled: boolean;
+  indexState: "index" | "notice" | undefined;
+  throughSeq: number | undefined;
+};
+
+function readMark(
+  database: DatabaseSync,
+  instanceId: string,
+  generation: number,
+): MarkRow | undefined {
+  const row = database
+    .prepare(
+      "SELECT * FROM memory_index_marks WHERE instance_id=? AND session_generation=?",
+    )
+    .get(instanceId, generation);
+  if (row === undefined) return undefined;
+  const state = row["index_state"];
+  return {
+    servedSeq: nullableInteger(row, "served_seq") ?? undefined,
+    servedReadEnabled: nullableInteger(row, "served_read_enabled") === 1,
+    indexState: state === "index" || state === "notice" ? state : undefined,
+    throughSeq: nullableInteger(row, "through_seq") ?? undefined,
+  };
+}
+
+function changedSince(
+  database: DatabaseSync,
+  channelId: string,
+  base: number,
+  head: number,
+): P.MemoryIndexDelta {
   const rows = database
     .prepare(
       `SELECT e.*, MAX(ev.room_seq) AS changed_seq FROM memory_entries e
@@ -203,94 +293,189 @@ export function presentedMemoryDelta(
   });
 }
 
-/** Keeps the presented (not yet sent) delta head for this RunAttempt. */
-export function recordPresentedMemoryDelta(
+/**
+ * What a new presentation carries. The session's knowledge is the delivered
+ * state plus, when the launch prompt carried a Host-served index, that index.
+ * - read off: nothing (the launch claim is still kept for the send);
+ * - the session holds only the reading-off notice: a refresh with the current
+ *   index (bounded by the Host renderer), never a delta from a head the
+ *   session was never given;
+ * - otherwise: entries changed after the known baseline; with no baseline at
+ *   all (a session that predates the index, or a launch without one) every
+ *   entry ever changed, bounded — erring toward repetition, never loss.
+ */
+function computeMemoryPresentation(
   database: DatabaseSync,
   scope: Readonly<P.ActivationCredentialScope>,
-  throughSeq: number | undefined,
-  now: string,
-): void {
-  const generation = instanceSessionState(
-    database,
-    scope.participantId,
-  ).generation;
-  if (throughSeq === undefined) {
+  claimedIndexSeq: number | undefined,
+): MemoryPresentation | undefined {
+  const instanceId = scope.participantId;
+  const isInstance =
+    database
+      .prepare("SELECT 1 FROM role_instances WHERE instance_id=?")
+      .get(instanceId) !== undefined;
+  if (!isInstance) return undefined;
+  const generation = instanceSessionState(database, instanceId).generation;
+  const mark = readMark(database, instanceId, generation);
+  // Only an index the Host itself read for this generation, never a bare
+  // request-body number, can describe what the launch prompt carried.
+  const launch =
+    claimedIndexSeq !== undefined && mark?.servedSeq === claimedIndexSeq
+      ? {
+          seq: claimedIndexSeq,
+          kind: mark.servedReadEnabled
+            ? ("index" as const)
+            : ("notice" as const),
+        }
+      : undefined;
+  const presentation: MemoryPresentation = {
+    generation,
+    ...(launch === undefined ? {} : { launch }),
+  };
+  let readable: boolean;
+  try {
+    readable = hasMemoryAccess(database, scope, "read");
+  } catch {
+    readable = false;
+  }
+  if (!readable) return presentation;
+  const holdsOnlyNotice =
+    launch !== undefined
+      ? launch.kind === "notice"
+      : mark?.indexState === "notice";
+  if (holdsOnlyNotice)
+    return {
+      ...presentation,
+      index: instanceMemoryIndex(database, instanceId),
+    };
+  const base = Math.max(
+    launch?.kind === "index" ? launch.seq : 0,
+    mark?.throughSeq ?? 0,
+  );
+  const channelId = instanceChannel(database, instanceId);
+  const head = channelMemoryHeadSeq(database, channelId);
+  if (head <= base) return presentation;
+  return {
+    ...presentation,
+    delta: changedSince(database, channelId, base, head),
+  };
+}
+
+/**
+ * Attaches the memory part to a presented window. The first presentation of
+ * a RunAttempt freezes it on the window record; every later presentation of
+ * the same RunAttempt returns exactly that snapshot, so the text the Host
+ * sends and the state its registration applies are the same version.
+ */
+export function withPresentedMemory<Window extends object>(
+  database: DatabaseSync,
+  scope: Readonly<P.ActivationCredentialScope>,
+  claimedIndexSeq: number | undefined,
+  window: Window,
+): Window & {
+  memoryDelta?: P.MemoryIndexDelta;
+  memoryIndex?: P.InstanceMemoryIndex;
+} {
+  const key = [scope.activationId, scope.consumerId, scope.runAttemptId];
+  const stored = database
+    .prepare(
+      `SELECT memory_json FROM activation_presented_windows
+        WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
+    )
+    .get(...key);
+  let presentation: MemoryPresentation | undefined;
+  const frozen = stored === undefined ? null : stored["memory_json"];
+  if (typeof frozen === "string") {
+    presentation = JSON.parse(frozen) as MemoryPresentation | undefined;
+  } else {
+    presentation = computeMemoryPresentation(database, scope, claimedIndexSeq);
     database
       .prepare(
-        `UPDATE memory_index_marks SET pending_run_attempt_id=NULL, pending_through_seq=NULL
-          WHERE instance_id=? AND session_generation=? AND pending_run_attempt_id=?`,
+        `UPDATE activation_presented_windows SET memory_json=?
+          WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
       )
-      .run(scope.participantId, generation, scope.runAttemptId);
-    return;
+      .run(JSON.stringify(presentation ?? null), ...key);
   }
-  database
-    .prepare(
-      `INSERT INTO memory_index_marks(instance_id, session_generation, room_id, through_seq,
-         pending_run_attempt_id, pending_through_seq, updated_at)
-       VALUES(?, ?, ?, NULL, ?, ?, ?)
-       ON CONFLICT(instance_id, session_generation) DO UPDATE SET
-         pending_run_attempt_id=excluded.pending_run_attempt_id,
-         pending_through_seq=excluded.pending_through_seq,
-         updated_at=excluded.updated_at`,
-    )
-    .run(
-      scope.participantId,
-      generation,
-      instanceChannel(database, scope.participantId),
-      scope.runAttemptId,
-      throughSeq,
-      now,
-    );
+  return {
+    ...window,
+    ...(presentation?.delta === undefined
+      ? {}
+      : { memoryDelta: presentation.delta }),
+    ...(presentation?.index === undefined
+      ? {}
+      : { memoryIndex: presentation.index }),
+  };
 }
 
 /**
- * After the Host registered a presented window as sent: when that RunAttempt
- * carried the pending delta, the session now holds it. Monotonic; a late or
- * foreign RunAttempt changes nothing.
+ * The Host registered this RunAttempt's window as sent (a transition, never a
+ * duplicate or a late receipt): the session now holds exactly the frozen
+ * snapshot. The launch index first (a notice clears the entry baseline: that
+ * prompt replaced whatever index the session had), then the refresh or delta.
+ * A snapshot from an older session generation changes nothing.
  */
-export function advanceMemoryIndexMark(
+export function applySentMemoryPresentation(
   database: DatabaseSync,
-  key: { runAttemptId: string },
+  key: { activationId: string; consumerId: string; runAttemptId: string },
   now: string,
 ): void {
-  const attempt = database
-    .prepare("SELECT participant_id FROM run_attempts WHERE run_attempt_id=?")
-    .get(key.runAttemptId);
-  if (attempt === undefined) return;
-  const participantId = text(attempt, "participant_id");
-  const sent = database
+  const row = database
     .prepare(
-      "SELECT 1 FROM activation_presented_windows WHERE run_attempt_id=? AND sent_at IS NOT NULL",
+      `SELECT w.memory_json, r.participant_id FROM activation_presented_windows w
+         JOIN run_attempts r ON r.run_attempt_id=w.run_attempt_id
+        WHERE w.activation_id=? AND w.consumer_id=? AND w.run_attempt_id=?`,
     )
-    .get(key.runAttemptId);
-  if (sent === undefined) return;
+    .get(key.activationId, key.consumerId, key.runAttemptId);
+  const frozen = row === undefined ? null : row["memory_json"];
+  if (typeof frozen !== "string") return;
+  const presentation = JSON.parse(frozen) as MemoryPresentation | null;
+  if (presentation === null) return;
+  const instanceId = text(row!, "participant_id");
+  if (
+    instanceSessionState(database, instanceId).generation !==
+    presentation.generation
+  )
+    return;
+  const where = "WHERE instance_id=? AND session_generation=?";
+  const args = [instanceId, presentation.generation] as const;
   database
     .prepare(
-      `UPDATE memory_index_marks SET
-         through_seq=MAX(COALESCE(through_seq, 0), pending_through_seq),
-         pending_run_attempt_id=NULL, pending_through_seq=NULL, updated_at=?
-       WHERE instance_id=? AND session_generation=? AND pending_run_attempt_id=?`,
+      `INSERT INTO memory_index_marks(instance_id, session_generation, room_id, through_seq, updated_at)
+       VALUES(?, ?, ?, NULL, ?) ON CONFLICT(instance_id, session_generation) DO NOTHING`,
     )
-    .run(
-      now,
-      participantId,
-      instanceSessionState(database, participantId).generation,
-      key.runAttemptId,
-    );
-}
-
-/**
- * Attaches the memory delta to a freshly rendered presented window and keeps
- * its head pending for this RunAttempt until the Host registers the send.
- */
-export function withPresentedMemoryDelta<Window extends object>(
-  database: DatabaseSync,
-  scope: Readonly<P.ActivationCredentialScope>,
-  memoryIndexSeq: number | undefined,
-  now: string,
-  window: Window,
-): Window & { memoryDelta?: P.MemoryIndexDelta } {
-  const memoryDelta = presentedMemoryDelta(database, scope, memoryIndexSeq);
-  recordPresentedMemoryDelta(database, scope, memoryDelta?.throughSeq, now);
-  return memoryDelta === undefined ? window : { ...window, memoryDelta };
+    .run(...args, instanceChannel(database, instanceId), now);
+  const { launch, index, delta } = presentation;
+  if (launch?.kind === "index")
+    database
+      .prepare(
+        `UPDATE memory_index_marks SET index_state='index', index_seq=?,
+           through_seq=MAX(COALESCE(through_seq, 0), ?),
+           served_seq=CASE WHEN served_seq=? THEN NULL ELSE served_seq END,
+           updated_at=? ${where}`,
+      )
+      .run(launch.seq, launch.seq, launch.seq, now, ...args);
+  if (launch?.kind === "notice")
+    database
+      .prepare(
+        `UPDATE memory_index_marks SET index_state='notice', index_seq=NULL,
+           through_seq=NULL, delta_seq=NULL,
+           served_seq=CASE WHEN served_seq=? THEN NULL ELSE served_seq END,
+           updated_at=? ${where}`,
+      )
+      .run(launch.seq, now, ...args);
+  if (index !== undefined)
+    database
+      .prepare(
+        `UPDATE memory_index_marks SET index_state='index', index_seq=?,
+           through_seq=MAX(COALESCE(through_seq, 0), ?), updated_at=? ${where}`,
+      )
+      .run(index.throughSeq, index.throughSeq, now, ...args);
+  if (delta !== undefined)
+    database
+      .prepare(
+        `UPDATE memory_index_marks SET
+           delta_seq=MAX(COALESCE(delta_seq, 0), ?),
+           through_seq=MAX(COALESCE(through_seq, 0), ?), updated_at=? ${where}`,
+      )
+      .run(delta.throughSeq, delta.throughSeq, now, ...args);
 }

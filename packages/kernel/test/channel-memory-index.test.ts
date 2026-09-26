@@ -210,6 +210,242 @@ test("a wake carries only entries changed since the session's index, and a sent 
   }
 });
 
+const sent = (
+  f: RoleInstanceFixture,
+  run: ReturnType<typeof startInstanceRun>,
+) =>
+  f.kernel.markPresentedDeliverySent(f.host, {
+    activationId: run.activation.activationId,
+    consumerId: "worker",
+    runAttemptId: run.run.runAttemptId,
+  });
+
+const markRow = (f: RoleInstanceFixture) =>
+  f.db
+    .prepare(
+      "SELECT through_seq, index_state, index_seq, delta_seq FROM memory_index_marks WHERE instance_id=?",
+    )
+    .get(f.instance.instanceId);
+
+test("review P1-1: a RunAttempt's memory delta is frozen with its presented window; a re-present never replaces the snapshot the send registers", () => {
+  const f = roleInstanceFixture();
+  try {
+    const alpha = write(f, "alpha");
+    const run = startInstanceRun(f);
+    const first = f.kernel.presentWorkerMessages(
+      run.execution,
+      {},
+    ).memoryDelta!;
+    assert.deepEqual(
+      first.changes.map((item) => [item.name, item.pinned]),
+      [["alpha", false]],
+    );
+    f.kernel.memory.humanPin(f.actor, {
+      entryId: alpha.entryId,
+      expectedRevision: 1,
+      pinned: true,
+      idempotencyKey: "pin-alpha",
+    });
+    const second = f.kernel.presentWorkerMessages(run.execution, {});
+    assert.deepEqual(
+      second.memoryDelta,
+      first,
+      "the same RunAttempt re-presents the frozen snapshot",
+    );
+    // Only the first input was ever registered; a duplicate receipt changes
+    // nothing.
+    sent(f, run);
+    sent(f, run);
+    assert.equal(Number(markRow(f)!.through_seq), first.throughSeq);
+    run.finish(0);
+    const next = startInstanceRun(f);
+    const owed = f.kernel.presentWorkerMessages(next.execution, {}).memoryDelta;
+    assert.deepEqual(
+      owed?.changes.map((item) => [item.name, item.pinned]),
+      [["alpha", true]],
+      "the undelivered pin is still owed to the session",
+    );
+    next.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("review P1-1: an unsent window and a receipt arriving after the RunAttempt ended advance nothing", () => {
+  const f = roleInstanceFixture();
+  try {
+    write(f, "alpha");
+    const unsent = startInstanceRun(f);
+    assert.ok(f.kernel.presentWorkerMessages(unsent.execution, {}).memoryDelta);
+    unsent.finish(0);
+    try {
+      sent(f, unsent);
+    } catch {
+      // A refusal is as good as a no-op; neither may advance the mark.
+    }
+    assert.equal(markRow(f)?.through_seq ?? null, null);
+    const next = startInstanceRun(f);
+    assert.deepEqual(
+      f.kernel
+        .presentWorkerMessages(next.execution, {})
+        .memoryDelta?.changes.map((item) => item.name),
+      ["alpha"],
+    );
+    next.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("review P1-1: a memoryIndexSeq the Host never served is not trusted as a baseline", () => {
+  const f = roleInstanceFixture();
+  try {
+    write(f, "alpha");
+    const forged = startInstanceRun(f);
+    assert.deepEqual(
+      f.kernel
+        .presentWorkerMessages(forged.execution, { memoryIndexSeq: 9999 })
+        .memoryDelta?.changes.map((item) => item.name),
+      ["alpha"],
+      "a request-body seq alone suppresses nothing",
+    );
+    sent(f, forged);
+    assert.ok(Number(markRow(f)!.through_seq) < 9999);
+    forged.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("review P2-1: the launch index becomes the session baseline once its first wake is accepted, so a resumed session is not re-sent it", () => {
+  const f = roleInstanceFixture();
+  try {
+    write(f, "first");
+    const launch = f.kernel.readInstanceMemoryIndex(f.host, {
+      participantId: f.instance.instanceId,
+    });
+    const turn1 = startInstanceRun(f);
+    assert.equal(
+      f.kernel.presentWorkerMessages(turn1.execution, {
+        memoryIndexSeq: launch.throughSeq,
+      }).memoryDelta,
+      undefined,
+    );
+    sent(f, turn1);
+    turn1.finish(0);
+    assert.equal(markRow(f)!.index_state, "index");
+    assert.equal(Number(markRow(f)!.index_seq), launch.throughSeq);
+    // The process was reclaimed; the same native session resumes without a
+    // launch seq.
+    const turn2 = startInstanceRun(f);
+    const resumed = f.kernel.presentWorkerMessages(turn2.execution, {});
+    assert.equal(resumed.memoryDelta, undefined);
+    assert.equal(resumed.memoryIndex, undefined);
+    turn2.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("review P2-1: a session launched with reading off holds only the notice; turning reading on refreshes the index once even with no entry change", () => {
+  const f = roleInstanceFixture();
+  try {
+    write(f, "kept");
+    humanPolicy(f, { readDefault: false });
+    const launch = f.kernel.readInstanceMemoryIndex(f.host, {
+      participantId: f.instance.instanceId,
+    });
+    assert.equal(launch.readEnabled, false);
+    const off = startInstanceRun(f);
+    const offPresented = f.kernel.presentWorkerMessages(off.execution, {
+      memoryIndexSeq: launch.throughSeq,
+    });
+    assert.equal(offPresented.memoryDelta, undefined);
+    assert.equal(offPresented.memoryIndex, undefined);
+    sent(f, off);
+    off.finish(0);
+    assert.equal(markRow(f)!.index_state, "notice");
+    assert.equal(markRow(f)!.through_seq, null);
+
+    humanPolicy(f, { readDefault: true });
+    const on = startInstanceRun(f);
+    const refreshed = f.kernel.presentWorkerMessages(on.execution, {});
+    assert.equal(refreshed.memoryDelta, undefined);
+    assert.deepEqual(
+      refreshed.memoryIndex?.entries.map((item) => item.name),
+      ["kept"],
+    );
+    sent(f, on);
+    on.finish(0);
+    assert.equal(markRow(f)!.index_state, "index");
+
+    const after = startInstanceRun(f);
+    const quiet = f.kernel.presentWorkerMessages(after.execution, {});
+    assert.equal(quiet.memoryIndex, undefined, "refreshed once, not per wake");
+    assert.equal(quiet.memoryDelta, undefined);
+    after.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("more than 30 non-active changes: 30 are listed and the rest counted, never re-sent after delivery", () => {
+  const f = roleInstanceFixture();
+  try {
+    const work = startInstanceRun(f);
+    const names = Array.from(
+      { length: 32 },
+      (_, index) => `entry-${String(index).padStart(2, "0")}`,
+    );
+    const receipts = names.map((name) =>
+      f.kernel.memory.write(work.execution, entry(name)),
+    );
+    work.finish(0);
+    const baseline = startInstanceRun(f);
+    assert.equal(
+      f.kernel.presentWorkerMessages(baseline.execution, {}).memoryDelta
+        ?.omitted,
+      2,
+    );
+    sent(f, baseline);
+    baseline.finish(0);
+    for (const receipt of receipts)
+      f.kernel.memory.humanInvalidate(f.actor, {
+        entryId: receipt.entryId,
+        expectedRevision: 1,
+        reason: "stale",
+        idempotencyKey: `invalidate-${receipt.entryId}`,
+      });
+    const turn = startInstanceRun(f);
+    const delta = f.kernel.presentWorkerMessages(
+      turn.execution,
+      {},
+    ).memoryDelta!;
+    assert.equal(delta.changes.length, 30);
+    assert.equal(delta.omitted, 2);
+    assert.ok(delta.changes.every((item) => item.state === "invalidated"));
+    sent(f, turn);
+    turn.finish(0);
+    const next = startInstanceRun(f);
+    assert.equal(
+      f.kernel.presentWorkerMessages(next.execution, {}).memoryDelta,
+      undefined,
+      "the omitted changes are a stated loss, not a queue",
+    );
+    // The Worker can still see what the delta only counted.
+    const listed = f.kernel.memory.list(next.execution, {
+      includeInvalidated: true,
+    });
+    assert.equal(
+      listed.entries.filter((item) => item.state === "invalidated").length,
+      32,
+    );
+    next.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
 test("a read switch that is off carries no delta", () => {
   const f = roleInstanceFixture();
   try {
@@ -388,5 +624,70 @@ test("import requires a channel manager and an instance of that channel", () => 
     );
   } finally {
     f.close();
+  }
+});
+
+test("schema 76 upgrades a schema 75 database: the pending mark columns are retired and windows gain the frozen memory snapshot", async () => {
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { DatabaseSync } = await import("node:sqlite");
+  const { RoomKernel } = await import("../src/index.ts");
+  const directory = mkdtempSync(join(tmpdir(), "rah-memory-v76-"));
+  const path = join(directory, "room.db");
+  try {
+    let kernel = new RoomKernel({ databasePath: path });
+    kernel.initialize();
+    kernel.close();
+    const db = new DatabaseSync(path);
+    db.exec(`
+      DROP TABLE memory_index_marks;
+      CREATE TABLE memory_index_marks (
+        instance_id TEXT NOT NULL,
+        session_generation INTEGER NOT NULL CHECK (session_generation >= 0),
+        room_id TEXT NOT NULL,
+        through_seq INTEGER CHECK (through_seq IS NULL OR through_seq >= 0),
+        pending_run_attempt_id TEXT,
+        pending_through_seq INTEGER,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (instance_id, session_generation)
+      ) STRICT;
+      INSERT INTO memory_index_marks VALUES ('i', 0, 'r', 7, 'run', 9, '2026-09-27');
+      ALTER TABLE activation_presented_windows DROP COLUMN memory_json;
+      PRAGMA user_version = 75;
+    `);
+    db.close();
+    kernel = new RoomKernel({ databasePath: path });
+    kernel.initialize();
+    kernel.close();
+    const read = new DatabaseSync(path, { readOnly: true });
+    try {
+      assert.deepEqual(
+        { ...read.prepare("SELECT * FROM memory_index_marks").get() },
+        {
+          instance_id: "i",
+          session_generation: 0,
+          room_id: "r",
+          through_seq: 7,
+          updated_at: "2026-09-27",
+          served_seq: null,
+          served_read_enabled: null,
+          index_state: null,
+          index_seq: null,
+          delta_seq: null,
+        },
+      );
+      assert.ok(
+        read
+          .prepare("PRAGMA table_info(activation_presented_windows)")
+          .all()
+          .some((column) => column.name === "memory_json"),
+      );
+      assert.equal(RoomKernel.inspectSchemaState(path).pending.length, 0);
+    } finally {
+      read.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });

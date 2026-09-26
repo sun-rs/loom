@@ -899,6 +899,9 @@ export class WorkerApplicationService {
           ...(presented.memoryDelta === undefined
             ? {}
             : { memoryDelta: presented.memoryDelta }),
+          ...(presented.memoryIndex === undefined
+            ? {}
+            : { memoryIndex: presented.memoryIndex }),
         }),
       );
       return;

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { MemoryIndexDeltaSchema } from "./channel-memory.ts";
+import {
+  InstanceMemoryIndexSchema,
+  MemoryIndexDeltaSchema,
+} from "./channel-memory.ts";
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
 import { WorkerAddressingSchema } from "./worker-addressing.ts";
@@ -21,8 +24,11 @@ export const WorkerMessagePresentRequestSchema = z
     /**
      * S6 batch B: the channel memory sequence of the index this launch's
      * standing prompt carries into the session (set by the Host only when the
-     * session will hold that prompt). A lower bound for the memory delta; it
-     * selects nothing in the Room window, its bound or its digest.
+     * session will hold that prompt). A claim, not a fact: the Kernel counts
+     * it only when it equals the index the Host itself read for this session
+     * generation, and it becomes the session baseline only when the Host
+     * registers this RunAttempt's wake as sent. It selects nothing in the
+     * Room window, its bound or its digest.
      */
     memoryIndexSeq: z.number().int().nonnegative().optional(),
   })
@@ -83,10 +89,18 @@ export const WorkerMessagePresentResponseSchema = z
     previousAttemptReplyFinal: z.literal(true).optional(),
     /**
      * S6 batch B: channel memory entries changed since the index this session
-     * last received (a Role instance with memory read on only). Registered as
-     * received when the Host registers this rendering as sent.
+     * last received (a Role instance with memory read on only). Frozen with
+     * this RunAttempt's window: a re-present returns the same snapshot.
+     * Registered as received only when the Host registers this rendering as
+     * sent.
      */
     memoryDelta: MemoryIndexDeltaSchema.optional(),
+    /**
+     * Review P2-1: the current index, when the session holds only the
+     * reading-off notice and reading is now on. Same freezing and
+     * registration as `memoryDelta`; never beside it.
+     */
+    memoryIndex: InstanceMemoryIndexSchema.optional(),
   })
   .strict()
   .refine((value) => value.toSeq >= value.fromSeq, {

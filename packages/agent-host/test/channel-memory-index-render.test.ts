@@ -132,7 +132,7 @@ test("the delta lists only the changed entries and their new state", () => {
       "- deploy [project, pinned] — how releases ship",
       "- old-plan [project] invalidated — retired",
       "- secret [user] deleted",
-      "2 more changed entries: `memory list`.",
+      "2 more changed entries omitted, so your memory index may be out of date: check with `memory list --include-invalidated` or `memory search --query TEXT` (an entry no longer listed was deleted).",
     ].join("\n"),
   );
 });
@@ -180,6 +180,44 @@ test("a bodied wake appends the delta after the events and reply line", () => {
     /\n\n## Channel memory changed\n- deploy \[project\] — how releases ship$/u,
   );
   assert.equal(text.match(/Channel memory/gu)?.length, 1);
+});
+
+test("review P2-1: a wake refresh carries the current index within the same byte budget, replacing the reading-off notice", () => {
+  const entries = Array.from({ length: 200 }, (_, n) =>
+    row(`entry-${String(n).padStart(3, "0")}`, "x".repeat(120)),
+  );
+  const text = formatBodiedWakeInput({
+    present: {
+      fromSeq: 5,
+      toSeq: 5,
+      contentDigest: `sha256:${"0".repeat(64)}`,
+      events: [
+        {
+          eventId: "e5",
+          roomId: "channel",
+          roomSeq: 5,
+          type: "message.posted",
+          actorId: "human",
+          aggregateType: "message",
+          aggregateId: "m5",
+          createdAt: "2026-09-27T00:00:00.000Z",
+          payload: { body: "hi", messageId: "m5" },
+        } as never,
+      ],
+      presentedSeqs: [5],
+      presentedThroughSeq: 5,
+      noticeCount: 0,
+      renderedAt: "2026-09-27T00:00:00.000Z",
+      memoryIndex: index(entries, 200),
+    },
+  })!;
+  const section = text.slice(text.indexOf("## Channel memory index"));
+  assert.match(section, /^## Channel memory index \(reading is now on\)\n/u);
+  assert.ok(
+    Buffer.byteLength(section) <= 3072,
+    String(Buffer.byteLength(section)),
+  );
+  assert.match(section, /more entries not shown/u);
 });
 
 test("the standing-prompt pointer is one line naming the help topic", () => {

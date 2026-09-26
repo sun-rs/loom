@@ -43,7 +43,7 @@ async function harness(
       apiVersion: 3,
       buildVersion: "test",
       capabilities: {} as never,
-      kernelSchemaVersion: 75,
+      kernelSchemaVersion: 76,
       protocolVersion: 1,
       state: "online",
     }),
@@ -96,7 +96,7 @@ async function harness(
     await client.close();
     f.close();
   };
-  return { f, work, workerPost, humanPost, sdk, close };
+  return { f, work, worker, workerPost, humanPost, sdk, close };
 }
 
 const note = {
@@ -541,7 +541,7 @@ test("legacy import is unavailable without the Host memory administration", asyn
   }
 });
 
-test("message-present carries the memory delta since the Host's index seq", async () => {
+test("message-present carries the memory delta, frozen for the RunAttempt; a request-body seq cannot replace it", async () => {
   const h = await harness();
   try {
     assert.equal((await h.workerPost("write", note)).status, 200);
@@ -554,17 +554,203 @@ test("message-present carries the memory delta since the Host's index seq", asyn
       delta?.changes.map((item) => [item.name, item.description]),
       [["release-train", "releases leave on Thursdays"]],
     );
-    const none = await h.workerPost("/message-present", {
+    // Review P1-1: a re-present of the same RunAttempt returns the frozen
+    // snapshot, whatever seq the Worker request claims.
+    const again = await h.workerPost("/message-present", {
       memoryIndexSeq: delta!.throughSeq,
     });
-    assert.equal(
-      WorkerMessagePresentResponseSchema.parse(none.body).memoryDelta,
-      undefined,
+    assert.deepEqual(
+      WorkerMessagePresentResponseSchema.parse(again.body).memoryDelta,
+      delta,
     );
     assert.equal(
       (await h.workerPost("/message-present", { memoryIndexSeq: -1 })).status,
       400,
     );
+  } finally {
+    await h.close();
+  }
+});
+
+test("review P2-2: with reading off, Worker sync and message-check show no memory entry names; the scanned cursor still covers them", async () => {
+  const h = await harness();
+  try {
+    assert.equal(
+      (await h.workerPost("write", { ...note, name: "secret-name" })).status,
+      200,
+    );
+    h.work.finish(0);
+    const policy = MemoryPolicySchema.parse(
+      (await h.humanPost("policy/read", { channelId: h.f.home.roomId })).body,
+    );
+    assert.equal(
+      (
+        await h.humanPost("policy/update", {
+          channelId: h.f.home.roomId,
+          expectedRevision: policy.revision,
+          readDefault: false,
+          idempotencyKey: "read-off",
+        })
+      ).status,
+      200,
+    );
+    const next = startInstanceRun(h.f);
+    const credential = h.worker.issueActivationCredential(h.f.host, next.scope);
+    const post = async (path: string, body: unknown) => {
+      const response = await fetch(`${h.worker.origin}/v1/worker/${path}`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${credential.accessToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      assert.equal(response.status, 200);
+      return (await response.json()) as {
+        cursorAfter: number;
+        events: { roomSeq: number; type: string; payload: unknown }[];
+      };
+    };
+    const memorySeq = Number(
+      h.f.db
+        .prepare(
+          "SELECT MAX(room_seq) AS seq FROM room_events WHERE room_id=? AND type='memory.entry_changed'",
+        )
+        .get(h.f.home.roomId)!.seq,
+    );
+    const sync = await post("sync", {});
+    assert.equal(JSON.stringify(sync).includes("secret-name"), false);
+    assert.ok(
+      sync.events.every((event) => event.type !== "memory.entry_changed"),
+    );
+    assert.ok(sync.cursorAfter >= memorySeq, "the cursor is not renumbered");
+    const check = (await post("message-check", {})) as unknown as {
+      delivery: { cursorAfter: number };
+    };
+    assert.equal(JSON.stringify(check).includes("secret-name"), false);
+    const room = await post("rooms/read", { channel: "#home" });
+    assert.equal(JSON.stringify(room).includes("secret-name"), false);
+    // The Human ledger keeps the full metadata-only event.
+    assert.match(
+      String(
+        h.f.db
+          .prepare(
+            "SELECT payload_json FROM room_events WHERE room_seq=? AND room_id=?",
+          )
+          .get(memorySeq, h.f.home.roomId)!.payload_json,
+      ),
+      /secret-name/u,
+    );
+    next.finish(0);
+  } finally {
+    await h.close();
+  }
+});
+
+test("review P2-4: import reads only selected files after the instance check; oversize and unknown selections are explicit skips", async () => {
+  const legacy: Record<string, string> = {
+    "MEMORY.md": "# Memory\n- [small](notes/small.md)\n",
+    "notes/small.md": "# Small\nkeep this\n",
+  };
+  const bytes: Record<string, number> = {
+    "MEMORY.md": Buffer.byteLength(legacy["MEMORY.md"]!),
+    "notes/small.md": Buffer.byteLength(legacy["notes/small.md"]!),
+    "notes/huge.md": 2 * 1024 * 1024,
+    "notes/binary.md": 12,
+  };
+  const reads: string[] = [];
+  const inspected: string[] = [];
+  const file = (relativePath: string) => ({
+    bytes: bytes[relativePath]!,
+    contentDigest: `sha256:${"b".repeat(64)}`,
+    modifiedAt: "2026-09-20T00:00:00.000Z",
+    relativePath,
+  });
+  const h = await harness({
+    agentMemoryAdministration: {
+      computerHostId: "host",
+      inspectWorkspace: (participantId: string) => {
+        inspected.push(participantId);
+        return {
+          files: Object.keys(bytes).map(file),
+          indexOverThreshold: false,
+          noteCount: 3,
+          ownerParticipantId: participantId,
+          schemaVersion: 1,
+          state: "ready",
+          thresholdBytes: 65536,
+        } as const;
+      },
+      readWorkspaceFile: (participantId: string, relativePath: string) => {
+        reads.push(relativePath);
+        if (legacy[relativePath] === undefined)
+          throw new Error(`unreadable legacy file ${relativePath}`);
+        return {
+          content: legacy[relativePath],
+          file: file(relativePath),
+          ownerParticipantId: participantId,
+        };
+      },
+      resetWorkspace: () => {
+        throw new Error("reset must not be called by an import");
+      },
+    } as never,
+  });
+  try {
+    const channelId = h.f.home.roomId;
+    const instanceId = h.f.instance.instanceId;
+    // Wrong channel: refused before the Host directory is touched.
+    const wrong = await h.humanPost("import-legacy", {
+      channelId: h.f.channel("elsewhere").roomId,
+      instanceId,
+      mode: "files",
+      idempotencyKey: "import-wrong-channel",
+    });
+    assert.equal(wrong.status, 404);
+    assert.deepEqual(inspected, []);
+
+    const selected = await h.sdk.request("memory.import.legacy", {
+      channelId,
+      instanceId,
+      mode: "files",
+      relativePaths: ["notes/small.md", "notes/missing.md"],
+      idempotencyKey: "import-selected",
+    });
+    assert.deepEqual(reads, ["notes/small.md"], "only the selection is read");
+    assert.deepEqual(
+      selected.results.map((item) => [item.path, item.status]),
+      [
+        ["notes/small.md", "created"],
+        ["notes/missing.md", "skipped"],
+      ],
+    );
+    assert.match(selected.results[1]!.reason!, /not .*legacy memory/u);
+
+    const huge = await h.sdk.request("memory.import.legacy", {
+      channelId,
+      instanceId,
+      mode: "files",
+      relativePaths: ["notes/huge.md"],
+      idempotencyKey: "import-huge",
+    });
+    assert.deepEqual(reads, ["notes/small.md"], "an oversize file is not read");
+    assert.equal(huge.results[0]!.status, "skipped");
+    assert.match(huge.results[0]!.reason!, /exceeds/u);
+
+    const whole = await h.sdk.request("memory.import.legacy", {
+      channelId,
+      instanceId,
+      mode: "whole",
+      idempotencyKey: "import-whole-too-large",
+    });
+    assert.deepEqual(
+      reads,
+      ["notes/small.md"],
+      "whole mode checks its budget first",
+    );
+    assert.equal(whole.results.length, 1);
+    assert.equal(whole.results[0]!.status, "skipped");
+    assert.match(whole.results[0]!.reason!, /exceeds/u);
   } finally {
     await h.close();
   }

@@ -9,6 +9,7 @@ import {
   InstanceSessionResetRequestSchema,
   InstanceSessionResetResponseSchema,
 } from "@rah-os/protocol";
+import { importLegacyChannelMemory } from "./legacy-memory-import.ts";
 import { canonicalAgentIdField } from "@rah-os/protocol";
 import {
   SystemChannelVisibilityReadSchema,
@@ -106,7 +107,6 @@ import {
   ClientAgentMemoryReadRequestSchema,
   ClientMemoryImportLegacyRequestSchema,
   MemoryImportLegacyResponseSchema,
-  type LegacyMemoryFile,
   ClientAgentMemoryReadResponseSchema,
   ClientAgentMemoryResetRequestSchema,
   ClientAgentMemoryResetResponseSchema,
@@ -1064,35 +1064,21 @@ export class ClientApplicationService {
       return;
     }
     if (path === "/memory/import-legacy") {
-      // S6 batch B: the Host's legacy per-instance directory is only read;
-      // the Kernel authorizes the Human, checks the instance and imports.
+      // S6 batch B: the Host's legacy per-instance directory is only read.
       const command = parseClientRequest(
         ClientMemoryImportLegacyRequestSchema,
         body,
       );
-      this.#human.getChannelMemoryPolicy(actor, {
-        channelId: command.channelId,
-      });
-      const administration = this.#requireAgentMemoryAdministration();
-      const workspace = await administration.inspectWorkspace(
-        command.instanceId,
-      );
-      const files: LegacyMemoryFile[] = [];
-      for (const file of workspace.files)
-        files.push({
-          relativePath: file.relativePath,
-          content: (
-            await administration.readWorkspaceFile(
-              command.instanceId,
-              file.relativePath,
-            )
-          ).content,
-        });
       writeJson(
         response,
         200,
         MemoryImportLegacyResponseSchema.parse(
-          this.#human.importLegacyChannelMemory(actor, command, files),
+          await importLegacyChannelMemory(
+            this.#human,
+            actor,
+            command,
+            this.#requireAgentMemoryAdministration(),
+          ),
         ),
       );
       return;

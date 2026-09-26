@@ -432,7 +432,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 75;
+export const KERNEL_SCHEMA_VERSION = 76;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1085,6 +1085,7 @@ export class RoomKernel {
       // upgrade can never advertise a version its objects do not have.
       InstanceRuntime.migrateInstanceRuntimeColumnsV65(this.#database);
       MemoryIndex.migrateChannelMemoryV75(this.#database);
+      MemoryIndex.migrateChannelMemoryV76(this.#database);
       RunAttemptUsageService.migrateCleanupV66(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
       this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
@@ -1819,11 +1820,10 @@ export class RoomKernel {
   ): RenderedPresentedWindow {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      return MemoryIndex.withPresentedMemoryDelta(
+      return MemoryIndex.withPresentedMemory(
         this.#database,
         scope,
         request.memoryIndexSeq,
-        this.#timestamp(),
         renderPresentedWindow(this.#database, scope, this.#timestamp(), (row) =>
           this.#eventFromRow(row),
         ),
@@ -1837,8 +1837,14 @@ export class RoomKernel {
     input: { participantId: string },
   ) {
     const authenticatedHost = this.#requireAuthenticatedHost(host);
-    this.#requireHostParticipant(authenticatedHost, input.participantId);
-    return MemoryIndex.instanceMemoryIndex(this.#database, input.participantId);
+    return this.#transaction(() => {
+      this.#requireHostParticipant(authenticatedHost, input.participantId);
+      return MemoryIndex.serveInstanceMemoryIndex(
+        this.#database,
+        input.participantId,
+        this.#timestamp(),
+      );
+    });
   }
 
   /** Phase-table fields for one RunAttempt's wake delivery. Read-only, and it
@@ -1876,17 +1882,19 @@ export class RoomKernel {
       );
       this.#requireRunAttemptOwner(runAttempt, authenticatedHost.hostId);
       this.#requireRunAttemptHostGeneration(runAttempt, authenticatedHost);
-      const { pendingAckSeq } = markPresentedWindowSent(
+      const { pendingAckSeq, newlySent } = markPresentedWindowSent(
         this.#database,
         input,
         authenticatedHost.hostId,
         this.#timestamp(),
       );
-      MemoryIndex.advanceMemoryIndexMark(
-        this.#database,
-        input,
-        this.#timestamp(),
-      );
+      // Review P1-1: only the transition to sent applies the frozen snapshot.
+      if (newlySent)
+        MemoryIndex.applySentMemoryPresentation(
+          this.#database,
+          input,
+          this.#timestamp(),
+        );
       // Race closure: a post that already succeeded, in this Room, with the
       // model's own causal marker, and was refused only because the send was
       // not yet registered. It is replayed here through the same four gates

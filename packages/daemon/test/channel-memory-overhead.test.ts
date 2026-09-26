@@ -216,7 +216,7 @@ async function measure(): Promise<{
   return { beforeTool, beforeSystem, rows };
 }
 
-test("§6 offline measurement: the default index bound keeps the first-turn standing prompt within the fixed-overhead budget", async () => {
+test("§6 offline estimate (not a native-CLI measurement): with the default index bound the estimated first-turn standing prompt plus an assumed 200-token wake allowance stays under the fixed-overhead budget", async () => {
   const { beforeTool, beforeSystem, rows } = await measure();
   if (process.env.LOOM_S6_OVERHEAD_REPORT === "1")
     process.stdout.write(

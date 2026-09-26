@@ -10,9 +10,12 @@ export function isPresentedWindowMigration(
   legacy.columns = legacy.columns
     .filter(
       (column) =>
-        !["sent_at", "sent_by_host_id", "pending_ack_seq"].includes(
-          column.name,
-        ),
+        ![
+          "sent_at",
+          "sent_by_host_id",
+          "pending_ack_seq",
+          "memory_json",
+        ].includes(column.name),
     )
     .map((column) => ({
       ...column,

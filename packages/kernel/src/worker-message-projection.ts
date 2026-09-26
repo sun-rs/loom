@@ -1,3 +1,8 @@
+import type { DatabaseSync } from "node:sqlite";
+
+import type { RoomEvent } from "@rah-os/protocol";
+
+import { effectiveMemorySwitches } from "./channel-memory-access.ts";
 import type { WorkerSyncResult } from "./types.ts";
 
 /** Raft 1.0.18 check formats the Agent inbox, not the execution audit ledger.
@@ -48,4 +53,46 @@ export function projectWorkerMessageCheck(
       (event) => !isExecutionAuditEvent(event.type),
     ),
   };
+}
+
+const MEMORY_ENTRY_EVENT = "memory.entry_changed";
+
+/**
+ * Review P2-2 (owner: an instance whose memory read is off does not see entry
+ * names). The one Worker event projection for memory: a
+ * `memory.entry_changed` event (entry id, name, type, revision, state) is
+ * visible only to a Role instance of that channel, still a member, whose
+ * effective read switch is on. Otherwise it is filtered out whole — never
+ * renumbered: a caller's cursor, ACK and `toSeq` stay the scanned range, as
+ * for the execution-audit omissions above. The Human ledger is unchanged.
+ * Applied to every Worker surface that returns raw Room events (`sync`,
+ * `message-check`, `rooms/read`); the wake window already omits memory.*.
+ */
+export function hideUnreadableMemoryEvents<Event extends RoomEvent>(
+  database: DatabaseSync,
+  participantId: string,
+  events: readonly Event[],
+): Event[] {
+  if (!events.some((event) => event.type === MEMORY_ENTRY_EVENT))
+    return [...events];
+  const readable = new Map<string, boolean>();
+  const canRead = (roomId: string): boolean => {
+    const known = readable.get(roomId);
+    if (known !== undefined) return known;
+    const instance =
+      database
+        .prepare(
+          `SELECT 1 FROM role_instances i JOIN memberships m
+             ON m.room_id=i.channel_id AND m.principal_id=i.instance_id
+            WHERE i.instance_id=? AND i.channel_id=?`,
+        )
+        .get(participantId, roomId) !== undefined;
+    const allowed =
+      instance && effectiveMemorySwitches(database, roomId, participantId).read;
+    readable.set(roomId, allowed);
+    return allowed;
+  };
+  return events.filter(
+    (event) => event.type !== MEMORY_ENTRY_EVENT || canRead(event.roomId),
+  );
 }

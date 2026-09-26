@@ -136,7 +136,7 @@ To mute ordinary Activity in your current joined regular Channel without leaving
 
 Channel memory is long-term memory kept by Loom for this channel. Every instance of the channel shares it, and the channel, author, model and session are taken from your credential. It is not a file: use these commands.
 
-A new session starts with a light index at the end of the standing prompt (one line per entry, pinned first, then most recently updated, up to about 4 KB; the rest are counted, find them with \`memory search\` or \`memory list\`). Bodies are never preloaded. Later changes arrive as a short \`## Channel memory changed\` section in a wake, listing only the changed entries.
+A new session starts with a light index at the end of the standing prompt (one line per entry, pinned first, then most recently updated, up to about 3 KB; the rest are counted, find them with \`memory search\` or \`memory list\`). Bodies are never preloaded. Later changes arrive as a short \`## Channel memory changed\` section in a wake, listing only the changed entries (at most 30; when more changed, the rest are only counted and your index may be out of date: \`memory list --include-invalidated\` shows invalidated entries too, and an entry no longer listed was deleted). If reading was off when the session started and is turned on later, the next wake carries the current index once.
 
 - Index: \`${CLI} worker memory list [--include-invalidated]\` prints \`name [type] (revision) — description\`, pinned first, then most recently updated.
 - Body on demand: \`memory read --name NAME\`; find entries with \`memory search --query TEXT\`; see who changed what with \`memory history --name NAME\`.

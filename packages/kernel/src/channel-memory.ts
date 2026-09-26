@@ -331,18 +331,8 @@ export class ChannelMemoryService {
   ): P.MemoryImportLegacyResponse {
     const input = P.ClientMemoryImportLegacyRequestSchema.parse(raw);
     return this.#c.transaction(() => {
-      const actorId = this.#requireHumanManager(actor, input.channelId);
-      const instance = this.#c.database
-        .prepare(
-          `SELECT p.handle FROM role_instances i JOIN principals p ON p.principal_id=i.instance_id
-            WHERE i.instance_id=? AND i.channel_id=?`,
-        )
-        .get(input.instanceId, input.channelId);
-      if (instance === undefined)
-        throw new NotFoundError(
-          `instance ${input.instanceId} is not an instance of this channel`,
-        );
-      const owner = slugPart(text(instance, "handle")) || "instance";
+      const { actorId, handle } = this.#importTarget(actor, input);
+      const owner = slugPart(handle) || "instance";
       const selected =
         input.relativePaths === undefined
           ? files
@@ -359,6 +349,37 @@ export class ChannelMemoryService {
         results: items.map((item) => this.#importOne(actorId, input, item)),
       };
     });
+  }
+
+  /**
+   * Review P2-4: the authorization an import needs, checked before the server
+   * touches the Host's legacy directory — a manager of the channel, and an
+   * instance of that channel. Reads nothing and changes nothing.
+   */
+  humanAuthorizeImportLegacy(
+    actor: AuthenticatedActorContext,
+    raw: P.ClientMemoryImportLegacyRequest,
+  ): void {
+    const input = P.ClientMemoryImportLegacyRequestSchema.parse(raw);
+    this.#c.transaction(() => this.#importTarget(actor, input));
+  }
+
+  #importTarget(
+    actor: AuthenticatedActorContext,
+    input: { channelId: string; instanceId: string },
+  ): { actorId: string; handle: string } {
+    const actorId = this.#requireHumanManager(actor, input.channelId);
+    const instance = this.#c.database
+      .prepare(
+        `SELECT p.handle FROM role_instances i JOIN principals p ON p.principal_id=i.instance_id
+          WHERE i.instance_id=? AND i.channel_id=?`,
+      )
+      .get(input.instanceId, input.channelId);
+    if (instance === undefined)
+      throw new NotFoundError(
+        `instance ${input.instanceId} is not an instance of this channel`,
+      );
+    return { actorId, handle: text(instance, "handle") };
   }
 
   readPolicy(

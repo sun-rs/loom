@@ -48,6 +48,7 @@ import {
   type MemoryChangeKind,
   type PolicyForm,
 } from "./memory.ts";
+import { createMemoryDetailLoader } from "./memory-detail.ts";
 import { Poller } from "./poll.ts";
 
 const MEMORY_POLL_MS = 10_000;
@@ -304,7 +305,7 @@ export function memoryPanel(
     }
     const entry = current;
     detailBox.hidden = false;
-    const busy = entrySlot.state !== "idle";
+    const busy = entrySlot.state !== "idle" || !detailLoader.state().actionable;
     const actions: HTMLElement[] = [];
     if (entry.state !== "deleted") {
       actions.push(
@@ -412,29 +413,33 @@ export function memoryPanel(
     renderDetailStale();
   };
 
-  const loadDetail = async (entryId: string): Promise<boolean> => {
-    try {
-      const read = await context.client.request("memory.read", { entryId });
-      current = read.entry;
-      details.set(detailKey(read.entry), read.entry);
-      history = undefined;
+  // Review P2-3: one load owner decides what the detail shows; a late
+  // response for another selection, or after the panel stopped, never lands.
+  const detailLoader = createMemoryDetailLoader(
+    {
+      read: (entryId, signal) =>
+        context.client.request("memory.read", { entryId }, { signal }),
+      history: (entryId, signal) =>
+        context.client.request("memory.history", { entryId }, { signal }),
+    },
+    (state) => {
+      current = state.current;
+      history = state.history;
+      if (state.current !== undefined)
+        details.set(detailKey(state.current), state.current);
+      if (state.error !== undefined && !isAbort(state.error)) {
+        detailBox.hidden = false;
+        detailBox.replaceChildren(
+          el("p", {
+            className: "error",
+            text: `记忆读取失败：${errorText(state.error)}`,
+          }),
+        );
+        return;
+      }
       renderDetail();
-      history = await context.client.request("memory.history", { entryId });
-      renderDetail();
-      return true;
-    } catch (error) {
-      current = undefined;
-      history = undefined;
-      detailBox.hidden = false;
-      detailBox.replaceChildren(
-        el("p", {
-          className: "error",
-          text: `记忆读取失败：${errorText(error)}`,
-        }),
-      );
-      return false;
-    }
-  };
+    },
+  );
 
   const select = async (entryId: string) => {
     selectedId = entryId;
@@ -442,11 +447,11 @@ export function memoryPanel(
     actionStatus.textContent = "";
     actionStatus.className = "action-status";
     renderList();
-    await loadDetail(entryId);
+    await detailLoader.select(entryId);
   };
 
   const refreshAfterWrite = async () => {
-    if (selectedId !== undefined) await loadDetail(selectedId);
+    await detailLoader.reload();
     await loadList();
   };
 
@@ -489,7 +494,13 @@ export function memoryPanel(
       setStatus(actionStatus, "error", INTENT_BUSY_UNKNOWN);
       return;
     }
-    if (entrySlot.state === "pending" || current === undefined) return;
+    if (
+      entrySlot.state === "pending" ||
+      current === undefined ||
+      !detailLoader.state().actionable ||
+      current.entryId !== selectedId
+    )
+      return;
     const built = buildMemoryChange(kind, current, reason);
     if (!built.ok) {
       setStatus(actionStatus, "error", built.error);
@@ -1024,6 +1035,9 @@ export function memoryPanel(
           .catch(() => undefined);
       }
     },
-    stop: () => poller.stop(),
+    stop: () => {
+      poller.stop();
+      detailLoader.stop();
+    },
   };
 }
