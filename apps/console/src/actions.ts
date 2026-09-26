@@ -1,8 +1,9 @@
 /**
- * Console write layer (no DOM). Every Room write runs through client-core's
- * runRoomMutationAtLatest: `basedOnRoomSeq` comes from the synced RoomSession,
- * a stale_context refusal re-syncs and retries, and one user action keeps one
- * idempotency key across its retries. Inputs are pre-checked with the
+ * Console write layer (no DOM). Every Room write is a WriteIntentSlot intent
+ * run through client-core's runRoomMutationAtLatest: `basedOnRoomSeq` comes
+ * from the synced RoomSession, a stale_context refusal re-syncs and retries,
+ * and one intent keeps one idempotency key and one frozen payload across its
+ * stale retries and any retry after an unknown result. Inputs are pre-checked with the
  * protocol schemas; the server stays the only owner of the decision.
  * Throwaway: deleted in phase 4.
  */
@@ -31,18 +32,176 @@ export function newIdempotencyKey(action: string): string {
   return `console-${action}-${crypto.randomUUID()}`;
 }
 
-/** One user action: one key, reused by every stale retry of that action. */
-export async function runRoomAction<Result>(input: {
+/**
+ * Whether a failed write may have committed. Only an explicit 4xx business
+ * refusal proves it did not (the Kernel checks replays first, so a refusal is
+ * never an already committed write); a network error, timeout, 5xx or an
+ * unreadable success response leaves the result unknown.
+ */
+export function classifyWriteFailure(error: unknown): "rejected" | "unknown" {
+  return error instanceof RahClientError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    error.status !== 408
+    ? "rejected"
+    : "unknown";
+}
+
+function isStaleContext(error: unknown): boolean {
+  return (
+    error instanceof RahClientError &&
+    error.status === 409 &&
+    error.code === "stale_context"
+  );
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    for (const nested of Object.values(value)) deepFreeze(nested);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+export type IntentState = "idle" | "pending" | "unknown";
+
+export type IntentOutcome<Result> =
+  | { kind: "ok"; result: Result }
+  | { kind: "rejected"; error: unknown }
+  | { kind: "unknown"; error: unknown }
+  | { kind: "busy"; state: IntentState };
+
+export type IntentSpec<Payload, Result> = {
   action: string;
-  mutate: (basedOnRoomSeq: number, idempotencyKey: string) => Promise<Result>;
+  /** Called for the submit and for every retry of this same intent. */
+  onSettled?: (outcome: IntentOutcome<Result>) => void;
+  /** Copied and frozen at submit; every attempt sends exactly this. */
+  payload: Payload;
+  send: (
+    payload: Readonly<Payload>,
+    basedOnRoomSeq: number,
+    idempotencyKey: string,
+  ) => Promise<Result>;
   session: RoomMutationSequenceSession;
-}): Promise<Result> {
-  const key = newIdempotencyKey(input.action);
-  return await runRoomMutationAtLatest({
-    maxAttempts: STALE_RETRY_ATTEMPTS,
-    mutate: (basedOnRoomSeq) => input.mutate(basedOnRoomSeq, key),
-    session: input.session,
-  });
+};
+
+type Intent = {
+  action: string;
+  execute: () => Promise<IntentOutcome<unknown>>;
+  key: string;
+  payload: unknown;
+};
+
+/**
+ * One submitted write intent per surface (form-level, in memory only). It
+ * keeps the frozen payload, the idempotency key and the last `basedOnRoomSeq`
+ * actually sent. A lost or unreadable response leaves it `unknown`: the only
+ * ways forward are a retry of the identical request (same key, payload and
+ * basis, so a committed write replays instead of repeating) or an explicit
+ * abandon. A new intent starts only after success, refusal or abandon.
+ * A page reload drops the record; the idempotency key goes with it.
+ */
+export class WriteIntentSlot {
+  #intent: Intent | undefined;
+  #state: IntentState = "idle";
+  readonly #listeners = new Set<(state: IntentState) => void>();
+
+  get state(): IntentState {
+    return this.#state;
+  }
+
+  /** The submitted intent while pending or unknown. */
+  get current(): { action: string; key: string; payload: unknown } | undefined {
+    const intent = this.#intent;
+    return intent === undefined
+      ? undefined
+      : { action: intent.action, key: intent.key, payload: intent.payload };
+  }
+
+  onChange(listener: (state: IntentState) => void): () => void {
+    this.#listeners.add(listener);
+    return () => this.#listeners.delete(listener);
+  }
+
+  async submit<Payload, Result>(
+    spec: IntentSpec<Payload, Result>,
+  ): Promise<IntentOutcome<Result>> {
+    if (this.#state !== "idle") return { kind: "busy", state: this.#state };
+    const payload = deepFreeze(structuredClone(spec.payload));
+    const key = newIdempotencyKey(spec.action);
+    let lastSeq: number | undefined;
+    let uncertain = false;
+    const attempt = async (basedOnRoomSeq: number): Promise<Result> => {
+      lastSeq = basedOnRoomSeq;
+      uncertain = true;
+      try {
+        const result = await spec.send(payload, basedOnRoomSeq, key);
+        uncertain = false;
+        return result;
+      } catch (error) {
+        if (classifyWriteFailure(error) === "rejected") uncertain = false;
+        throw error;
+      }
+    };
+    const run = async (): Promise<Result> => {
+      if (lastSeq !== undefined) {
+        // Replay the identical request first: a committed write returns its
+        // recorded result; a stale refusal proves nothing was committed.
+        try {
+          return await attempt(lastSeq);
+        } catch (error) {
+          if (!isStaleContext(error)) throw error;
+        }
+      }
+      return await runRoomMutationAtLatest({
+        maxAttempts: STALE_RETRY_ATTEMPTS,
+        mutate: attempt,
+        session: spec.session,
+      });
+    };
+    const execute = async (): Promise<IntentOutcome<Result>> => {
+      this.#set("pending");
+      let outcome: IntentOutcome<Result>;
+      try {
+        outcome = { kind: "ok", result: await run() };
+      } catch (error) {
+        outcome = uncertain
+          ? { kind: "unknown", error }
+          : { kind: "rejected", error };
+      }
+      if (outcome.kind === "unknown") this.#set("unknown");
+      else {
+        this.#intent = undefined;
+        this.#set("idle");
+      }
+      spec.onSettled?.(outcome);
+      return outcome;
+    };
+    this.#intent = { action: spec.action, execute, key, payload };
+    return await execute();
+  }
+
+  /** Re-sends the unknown intent unchanged. */
+  async retry(): Promise<IntentOutcome<unknown>> {
+    const intent = this.#intent;
+    if (this.#state !== "unknown" || intent === undefined) {
+      return { kind: "busy", state: this.#state };
+    }
+    return await intent.execute();
+  }
+
+  /** The Human gives up verifying an unknown intent. */
+  abandon(): boolean {
+    if (this.#state !== "unknown") return false;
+    this.#intent = undefined;
+    this.#set("idle");
+    return true;
+  }
+
+  #set(state: IntentState): void {
+    this.#state = state;
+    for (const listener of this.#listeners) listener(state);
+  }
 }
 
 /**
@@ -186,10 +345,30 @@ export type RoleForm = {
   runtimeOfferId: string;
 };
 
+type RoleConfiguration = RoleCreateRequest["configuration"];
+
+/** The editable fields of an existing Role configuration (for role.revise). */
+export function roleFormFrom(configuration: RoleConfiguration): RoleForm {
+  return {
+    displayName: configuration.displayName,
+    handle: configuration.handle,
+    instructions: configuration.instructions,
+    modelBindingId: configuration.modelIntent.exactBindingIds?.[0] ?? "",
+    reasoning: configuration.modelIntent.reasoning ?? "",
+    role: configuration.role,
+    runtimeOfferId: configuration.runtimeOfferId,
+  };
+}
+
+/**
+ * `base` (a revision) keeps every configuration field the console does not
+ * edit; the model intent is replaced by the exact published binding.
+ */
 export function buildRoleConfiguration(
   form: RoleForm,
   choices: readonly RuntimeChoice[],
-): Checked<RoleCreateRequest["configuration"]> {
+  base?: RoleConfiguration,
+): Checked<RoleConfiguration> {
   const runtime = choices.find(
     ({ runtimeOfferId }) => runtimeOfferId === form.runtimeOfferId,
   );
@@ -209,6 +388,7 @@ export function buildRoleConfiguration(
     return { ok: false, error: "请选择该模型发布的推理强度" };
   }
   const parsed = RoleConfigurationSchema.safeParse({
+    ...base,
     displayName: form.displayName.trim(),
     handle: form.handle.trim(),
     instructions: form.instructions.trim(),
@@ -245,6 +425,27 @@ export type SettingsForm = {
 };
 
 const MINUTE_MS = 60_000;
+
+/**
+ * When a saved value takes effect (daemon-runtime-settings apply +
+ * agent-host run-watchdog): concurrency, start pacing and the wake-chain
+ * limit only steer later scheduling; watchdog thresholds are read on every
+ * supervision tick, so they apply to runs already in progress.
+ */
+export function settingScope(key: keyof SettingsForm): "future" | "immediate" {
+  return key === "noProgressWarnMinutes" ||
+    key === "queuedStallTerminateMinutes" ||
+    key === "maxRunMinutes"
+    ? "immediate"
+    : "future";
+}
+
+export const SETTINGS_SCOPE_NOTES = {
+  future:
+    "并发上限、启动限流与唤醒上限只影响之后的调度决定；已开始的运行照常进行（调低并发上限不会中断它们，只是之后少放行）。",
+  immediate:
+    "看门狗阈值保存后立即适用于正在运行的工作：调低单次运行时长上限或排队时无进展终止阈值，已超过新阈值的运行会在下一次看门狗检查时被终止（有终止证明），并在同一 session 上续接这一轮；告警阈值只影响告警。",
+} as const;
 
 export function settingsFormFrom(settings: RuntimeSettings): SettingsForm {
   return {
@@ -377,7 +578,7 @@ export function sosState(events: readonly RoomEvent[]): SosState {
         break;
     }
   }
-  return { kind: "unknown", label: "未急停（已同步的事件窗口内没有急停记录）" };
+  return { kind: "unknown", label: "急停状态未知（当前事件窗口无记录）" };
 }
 
 const LIFECYCLE_LABELS: Record<string, string> = {

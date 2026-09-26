@@ -23,6 +23,8 @@ import {
   loadNewerMessages,
   loadUsage,
   recentProblems,
+  runAttemptsInRoom,
+  runUsageDetail,
   settingsRows,
   stateLabel,
   summarizeChannels,
@@ -30,6 +32,7 @@ import {
   wakeLimitNotice,
   watchdogWarningActive,
 } from "../src/model.ts";
+import { parseRoute } from "../src/route.ts";
 
 // FIXTURE ONLY: every identifier and reply below is fake test data.
 const NOW = "2026-09-26T12:00:00.000Z";
@@ -416,6 +419,13 @@ test("instance status joins role.list, room activity, private boxes and recent f
   assert.equal(second?.stateLabel, "错误");
   assert.equal(second?.lastError, "fixture provider exited 1");
   assert.equal(second?.privateBoxLabel, "私聊未打开");
+  assert.equal(first?.privateBoxRoomId, "room-private-1");
+  assert.equal(second?.privateBoxRoomId, null);
+  assert.deepEqual(
+    first?.runs.map(({ runAttemptId }) => runAttemptId),
+    ["aggregate-fixture"],
+    "the card lists this Channel's RunAttempts",
+  );
   assert.equal(
     second?.watchdogWarning,
     null,
@@ -687,4 +697,272 @@ test("runtime settings are shown read-only with every group", () => {
     { label: "排队时无进展终止阈值", value: "15 分钟" },
     { label: "单次运行时长上限", value: "240 分钟" },
   ]);
+});
+
+test("hash routes decode ids and an invalid percent-encoding is an invalid route, not a crash", () => {
+  assert.deepEqual(parseRoute(""), { kind: "channels" });
+  assert.deepEqual(parseRoute("#/"), { kind: "channels" });
+  assert.deepEqual(parseRoute("#/channels"), { kind: "channels" });
+  assert.deepEqual(parseRoute("#/channel/room%2Fa"), {
+    kind: "channel",
+    roomId: "room/a",
+  });
+  assert.deepEqual(parseRoute("#/direct/room-dm"), {
+    kind: "direct",
+    roomId: "room-dm",
+  });
+  assert.deepEqual(parseRoute("#/roles"), { kind: "roles" });
+  assert.deepEqual(parseRoute("#/usage"), { kind: "usage" });
+  assert.deepEqual(parseRoute("#/settings"), { kind: "settings" });
+  assert.deepEqual(parseRoute("#/channel/%E0%A4%A"), {
+    kind: "invalid",
+    hash: "/channel/%E0%A4%A",
+  });
+  assert.deepEqual(parseRoute("#/direct/%"), {
+    kind: "invalid",
+    hash: "/direct/%",
+  });
+});
+
+function runActivity(
+  activityId: string,
+  eventType: string,
+  runAttemptId: string,
+  roomId: string,
+  createdAt: string,
+): AgentActivityRecord {
+  return {
+    ...activity(activityId, eventType, "neutral", createdAt),
+    aggregateId: runAttemptId,
+    aggregateType: "run_attempt",
+    roomId,
+    roomKind: roomId === "room-dm" ? "direct" : "channel",
+  } as AgentActivityRecord;
+}
+
+test("RunAttempts for a view come only from run facts of that Room, newest first", () => {
+  const runs = runAttemptsInRoom(
+    [
+      runActivity(
+        "a1",
+        "run.started",
+        "run-1",
+        "room-a",
+        "2026-09-26T12:00:00.000Z",
+      ),
+      runActivity(
+        "a2",
+        "run.finished",
+        "run-1",
+        "room-a",
+        "2026-09-26T12:01:00.000Z",
+      ),
+      runActivity(
+        "a3",
+        "run.started",
+        "run-dm",
+        "room-dm",
+        "2026-09-26T12:02:00.000Z",
+      ),
+      runActivity(
+        "a4",
+        "run.started",
+        "run-2",
+        "room-a",
+        "2026-09-26T12:03:00.000Z",
+      ),
+      {
+        ...activity("a5", "message.posted", "neutral"),
+        aggregateType: "message",
+      } as AgentActivityRecord,
+    ],
+    "room-a",
+  );
+  assert.deepEqual(runs, [
+    {
+      lastEventType: "run.started",
+      runAttemptId: "run-2",
+      updatedAt: "2026-09-26T12:03:00.000Z",
+    },
+    {
+      lastEventType: "run.finished",
+      runAttemptId: "run-1",
+      updatedAt: "2026-09-26T12:01:00.000Z",
+    },
+  ]);
+  assert.deepEqual(
+    runAttemptsInRoom(
+      [runActivity("a3", "run.started", "run-dm", "room-dm", NOW)],
+      "room-a",
+    ),
+    [],
+    "a private-box run never shows in the Channel view",
+  );
+});
+
+function generation(overrides: Record<string, unknown> = {}) {
+  return {
+    cachedInputTokens: 800,
+    contextUsedTokens: null,
+    contextWindow: null,
+    inputTokens: 1_000,
+    observedAt: NOW,
+    outputTokens: 50,
+    provider: "codex",
+    reasoningOutputTokens: 10,
+    recordedAt: NOW,
+    responseId: "response-1",
+    ...overrides,
+  };
+}
+
+test("RunAttempt drill-down shows recorded facts and unknown (never 0) for what the CLI did not report", () => {
+  const codex = runUsageDetail({
+    cliCosts: [],
+    completeness: "partial",
+    execution: {
+      instanceRuntimeId: "runtime-1",
+      lateFrameCount: 0,
+      mode: "warm",
+      sessionResumeMs: null,
+    },
+    finalInterrupt: {
+      accepted: true,
+      committedRoomSeq: 12,
+      preemptedFollowUp: "unknown",
+      requested: true,
+      sent: true,
+      terminal: false,
+    },
+    gaps: [
+      {
+        firstObservedAt: NOW,
+        lastObservedAt: NOW,
+        occurrences: 2,
+        provider: "codex",
+        reason: "correction_frame",
+      },
+    ],
+    generations: [
+      generation({ contextUsedTokens: 30_000, contextWindow: 258_000 }),
+    ],
+    processCleanups: [
+      {
+        blocking: false,
+        capExceeded: [],
+        cleanupId: "cleanup-1",
+        foundCount: 3,
+        killedCount: 3,
+        observedAt: NOW,
+        portsObserved: true,
+        recordedAt: NOW,
+        releasedPorts: [],
+        remainingCount: 0,
+        remainingPorts: [],
+        trigger: "run_end",
+        unknownCount: 0,
+      },
+    ],
+    runAttemptId: "run-1",
+    sessionResumeMs: 420,
+    totals: {
+      cachedInputTokens: 800,
+      generations: 1,
+      inputTokens: 1_000,
+      outputTokens: 50,
+      reasoningOutputTokens: 10,
+    },
+    truncated: false,
+  });
+  const field = (label: string) =>
+    codex.rows.find((row) => row.label === label)?.value;
+  assert.equal(field("执行方式"), "热（复用常驻进程）");
+  assert.equal(field("session 恢复耗时"), "420 ms");
+  assert.equal(field("用量完整性"), "部分（有采集缺口）");
+  assert.equal(field("输入 token"), "1,000（部分）");
+  assert.equal(field("上下文占用"), "30,000 / 258,000");
+  assert.match(field("final 收尾") ?? "", /已请求/u);
+  assert.match(field("final 收尾") ?? "", /已终止：否/u);
+  assert.match(field("final 收尾") ?? "", /抢占后续生成：未知/u);
+  assert.equal(field("CLI 自报费用"), "未知（CLI 未报告）");
+  assert.deepEqual(codex.gaps, ["correction_frame × 2（codex）"]);
+  assert.deepEqual(codex.processCleanups, ["run_end：发现 3，终止 3，剩余 0"]);
+  assert.equal(codex.generations[0]?.context, "30,000 / 258,000");
+
+  const claude = runUsageDetail({
+    completeness: "unavailable",
+    gaps: [],
+    generations: [],
+    processCleanups: [],
+    runAttemptId: "run-2",
+    totals: {
+      cachedInputTokens: null,
+      generations: null,
+      inputTokens: null,
+      outputTokens: null,
+      reasoningOutputTokens: null,
+    },
+    truncated: false,
+  });
+  const claudeField = (label: string) =>
+    claude.rows.find((row) => row.label === label)?.value;
+  assert.equal(claudeField("执行方式"), "未知");
+  assert.equal(claudeField("session 恢复耗时"), "未知");
+  assert.equal(claudeField("final 收尾"), "未知");
+  assert.equal(claudeField("输入 token"), "未知");
+  assert.equal(claudeField("生成次数"), "未知");
+  assert.equal(claudeField("上下文占用"), "未知");
+  assert.equal(claudeField("CLI 自报费用"), "未知");
+  for (const row of claude.rows) {
+    assert.doesNotMatch(row.value, /^0( |$)/u, `${row.label} is never 0`);
+  }
+
+  const withCost = runUsageDetail({
+    cliCosts: [
+      {
+        costId: "cost-1",
+        costUsd: null,
+        observedAt: NOW,
+        provider: "claude",
+        recordedAt: NOW,
+        reportedTotalUsd: 0.5,
+        source: "claude_result_total_cost_usd",
+      },
+      {
+        costId: "cost-2",
+        costUsd: 0.0123,
+        observedAt: NOW,
+        provider: "claude",
+        recordedAt: NOW,
+        reportedTotalUsd: 0.5123,
+        source: "claude_result_total_cost_usd",
+      },
+    ],
+    completeness: "complete",
+    execution: null,
+    finalInterrupt: null,
+    gaps: [],
+    generations: [generation({ provider: "claude" })],
+    processCleanups: [],
+    runAttemptId: "run-3",
+    sessionResumeMs: null,
+    totals: {
+      cachedInputTokens: 800,
+      generations: 1,
+      inputTokens: 1_000,
+      outputTokens: 50,
+      reasoningOutputTokens: 10,
+    },
+    truncated: false,
+  });
+  const costField = (label: string) =>
+    withCost.rows.find((row) => row.label === label)?.value;
+  assert.equal(costField("final 收尾"), "本轮没有 final 回复");
+  assert.equal(costField("执行方式"), "未知（按轮进程或无记录）");
+  assert.equal(costField("session 恢复耗时"), "未知（未恢复或未测量）");
+  assert.equal(costField("上下文占用"), "未知");
+  assert.equal(
+    costField("CLI 自报费用"),
+    "≥ $0.0123（部分：1 条未知，CLI 自报）",
+  );
 });

@@ -9,7 +9,11 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
 - `evo` is the backend rebuild. Its frontend product code (`apps/web/src`,
   `packages/ui-web`, `packages/ui-tokens/specs`) stays identical to `main` until
   phase 4; test files may differ only where `main` is corrected first.
-  Acceptance uses a throwaway `apps/console` (planned) plus API and tests.
+  Acceptance uses the throwaway `apps/console` (served by the local gateway at
+  `/_rah/console/`) plus API and tests. It is deleted in phase 4 together with
+  `scripts/run-console-browser-gate.mjs`, the gateway `consoleDirectory` branch
+  and the `build:console`/`test:console:*` scripts; the full deletion list is in
+  `docs/evo/status.zh-CN.md` §44–§46.
 - `docs/evo/target-contract.zh-CN.md` is the single target contract and takes
   precedence; `docs/evo/status.zh-CN.md` records the evo-vs-main delta; code
   proves current behavior but never overrides owner goals or safety

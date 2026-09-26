@@ -6,7 +6,7 @@ import {
   handleWorkbenchServiceControl,
   type WorkbenchServiceControl,
 } from "./workbench-service-control.ts";
-import { existsSync, statSync } from "node:fs";
+import { existsSync, lstatSync, realpathSync, statSync } from "node:fs";
 import {
   createServer,
   request as createHttpRequest,
@@ -20,6 +20,7 @@ import {
   basename,
   extname,
   isAbsolute,
+  join,
   relative,
   resolve,
   sep,
@@ -330,21 +331,18 @@ export class LocalWorkbenchGateway {
     }
     if (requestUrl.pathname.startsWith(`${CONSOLE_PREFIX}/`)) {
       const consoleDirectory = this.#consoleDirectory;
-      const consoleIndex =
-        consoleDirectory === undefined
-          ? undefined
-          : resolve(consoleDirectory, "index.html");
       if (
         consoleDirectory === undefined ||
-        consoleIndex === undefined ||
-        !existsSync(consoleIndex) ||
-        !statSync(consoleIndex).isFile()
+        typeof consoleStaticTarget(consoleDirectory, "/index.html") === "string"
       ) {
         sendText(response, 404, CONSOLE_UNAVAILABLE);
         return;
       }
       const consolePath = requestUrl.pathname.slice(CONSOLE_PREFIX.length);
-      if (hasEncodedTraversal(consolePath)) {
+      if (
+        hasEncodedTraversal(consolePath) ||
+        consoleStaticTarget(consoleDirectory, consolePath) === "refused"
+      ) {
         sendText(response, 404, "Not found");
         return;
       }
@@ -516,6 +514,49 @@ export class LocalWorkbenchGateway {
       response.setHeader(WEB_BUILD_HEADER, this.#webBuildId);
     }
   }
+}
+
+/**
+ * Resolves a console path against the canonical build root without following
+ * links: any symlink on the way (the file itself or an ancestor directory) is
+ * `refused` (404, no SPA fallback), and a regular file must canonicalize inside
+ * the canonical root. `missing` lets the caller fall back as before. The build
+ * tree is trusted not to change between this check and the read (no directory
+ * handle strategy against a hostile concurrent writer).
+ */
+function consoleStaticTarget(
+  root: string,
+  encodedPathname: string,
+): "missing" | "refused" | { file: string } {
+  let segments: string[];
+  let canonicalRoot: string;
+  try {
+    segments = decodeURIComponent(encodedPathname)
+      .split("/")
+      .filter((segment) => segment.length > 0);
+    canonicalRoot = realpathSync(root);
+  } catch {
+    return "missing";
+  }
+  let current = canonicalRoot;
+  for (const [index, segment] of segments.entries()) {
+    current = join(current, segment);
+    let entry: ReturnType<typeof lstatSync>;
+    try {
+      entry = lstatSync(current);
+    } catch {
+      return "missing";
+    }
+    if (entry.isSymbolicLink()) return "refused";
+    const last = index === segments.length - 1;
+    if (!last && !entry.isDirectory()) return "missing";
+    if (last && !entry.isFile()) return "missing";
+  }
+  if (segments.length === 0) return "missing";
+  const canonical = realpathSync(current);
+  return canonical.startsWith(`${canonicalRoot}${sep}`)
+    ? { file: canonical }
+    : "refused";
 }
 
 /** Console paths never carry a dot segment or a backslash, encoded or not. */

@@ -1,11 +1,12 @@
-import {
-  ActionGate,
-  parseAttachedDirectoryLines,
-  runRoomAction,
-} from "./actions.ts";
-import { errorText, roomSession } from "./api.ts";
+import { WriteIntentSlot, parseAttachedDirectoryLines } from "./actions.ts";
+import { roomSession } from "./api.ts";
 import { subscribe, type ConsoleContext } from "./context.ts";
 import { button, el, field, labelled, setStatus } from "./dom.ts";
+import {
+  INTENT_BUSY_UNKNOWN,
+  intentControls,
+  reportOutcome,
+} from "./intent-view.ts";
 import { summarizeChannels, type ChannelSummary } from "./model.ts";
 
 function channelDirectories(summary: ChannelSummary): HTMLElement {
@@ -55,7 +56,7 @@ function createChannelForm(context: ConsoleContext): {
   refresh: () => void;
 } {
   let watch: ReturnType<typeof setInterval> | undefined;
-  const gate = new ActionGate();
+  const slot = new WriteIntentSlot();
   const name = el("input", {
     attrs: { autocomplete: "off", id: "create-channel-name", required: "" },
   });
@@ -101,9 +102,14 @@ function createChannelForm(context: ConsoleContext): {
     attrs: { id: "create-channel-submit", type: "submit" },
     text: "创建频道",
   });
-  gate.onChange((pending) => {
-    submit.disabled = pending;
-    submit.textContent = pending ? "创建中…" : "创建频道";
+  // The submitted fields are frozen in the intent; while it is pending or
+  // unknown the inputs are disabled so the form always shows what was sent.
+  slot.onChange((state) => {
+    submit.disabled = state !== "idle";
+    submit.textContent = state === "pending" ? "创建中…" : "创建频道";
+    for (const input of [name, slug, directories]) {
+      input.disabled = state !== "idle";
+    }
   });
   const form = el("form", { attrs: { id: "create-channel-form" } }, [
     labelled("名称", name),
@@ -115,76 +121,93 @@ function createChannelForm(context: ConsoleContext): {
     ),
     el("div", { className: "form-actions" }, [submit]),
     status,
+    intentControls(slot, "create-channel", status),
     created,
   ]);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    void gate
-      .run(async () => {
-        const identity = context.identity;
-        if (identity === undefined) {
-          setStatus(status, "error", "尚未连接，无法创建");
-          return;
-        }
-        if (name.value.trim() === "" || slug.value.trim() === "") {
-          setStatus(status, "error", "名称和 slug 不能为空");
-          return;
-        }
-        const attached = parseAttachedDirectoryLines(directories.value);
-        if (!attached.ok) {
-          setStatus(status, "error", attached.error);
-          return;
-        }
-        setStatus(status, "info", "提交中…");
-        try {
-          const result = await runRoomAction({
-            action: "channel-create",
-            session: roomSession(context.client, identity.controlRoomId),
-            mutate: (basedOnControlRoomSeq, idempotencyKey) =>
-              context.client.request("room.create", {
-                ...(attached.value.length === 0
-                  ? {}
-                  : { additionalDirectories: attached.value }),
-                basedOnControlRoomSeq,
-                idempotencyKey,
-                kind: "channel",
-                name: name.value.trim(),
-                slug: slug.value.trim(),
-                workspaceId: identity.workspaceId,
-              }),
-          });
-          createdRoomId = result.room.roomId;
-          setStatus(
-            status,
-            "ok",
-            `已创建 #${result.room.name}${result.deduplicated ? "（重复提交，已去重）" : ""}`,
-          );
-          name.value = "";
-          slug.value = "";
-          directories.value = "";
-          renderCreated();
-          context.refreshRooms();
-          // The Host reports the primary directory shortly after creation;
-          // re-read the list until it leaves `pending` (bounded).
-          clearInterval(watch);
-          let reads = 0;
-          watch = setInterval(() => {
-            reads += 1;
-            const state = context.rooms.find(
-              ({ roomId }) => roomId === createdRoomId,
-            )?.channelWorkspace?.primary?.state;
+    if (slot.state === "unknown") {
+      setStatus(status, "error", INTENT_BUSY_UNKNOWN);
+      return;
+    }
+    if (slot.state === "pending") return;
+    const identity = context.identity;
+    if (identity === undefined) {
+      setStatus(status, "error", "尚未连接，无法创建");
+      return;
+    }
+    if (name.value.trim() === "" || slug.value.trim() === "") {
+      setStatus(status, "error", "名称和 slug 不能为空");
+      return;
+    }
+    const attached = parseAttachedDirectoryLines(directories.value);
+    if (!attached.ok) {
+      setStatus(status, "error", attached.error);
+      return;
+    }
+    const submitted = [name.value, slug.value, directories.value] as const;
+    setStatus(status, "info", "提交中…");
+    void slot
+      .submit({
+        action: "channel-create",
+        payload: {
+          additionalDirectories: attached.value,
+          name: name.value.trim(),
+          slug: slug.value.trim(),
+          workspaceId: identity.workspaceId,
+        },
+        session: roomSession(context.client, identity.controlRoomId),
+        send: (payload, basedOnControlRoomSeq, idempotencyKey) =>
+          context.client.request("room.create", {
+            ...(payload.additionalDirectories.length === 0
+              ? {}
+              : { additionalDirectories: [...payload.additionalDirectories] }),
+            basedOnControlRoomSeq,
+            idempotencyKey,
+            kind: "channel",
+            name: payload.name,
+            slug: payload.slug,
+            workspaceId: payload.workspaceId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(status, outcome, "创建失败", (result) => {
+            createdRoomId = result.room.roomId;
+            setStatus(
+              status,
+              "ok",
+              `已创建 #${result.room.name}${result.deduplicated ? "（重复提交，已去重）" : ""}`,
+            );
+            // Clears only a form still showing exactly what was sent.
             if (
-              (state !== undefined && state !== "pending") ||
-              reads > PRIMARY_WATCH_LIMIT
+              name.value === submitted[0] &&
+              slug.value === submitted[1] &&
+              directories.value === submitted[2]
             ) {
-              clearInterval(watch);
-              return;
+              name.value = "";
+              slug.value = "";
+              directories.value = "";
             }
+            renderCreated();
             context.refreshRooms();
-          }, PRIMARY_WATCH_MS);
-        } catch (error) {
-          setStatus(status, "error", `创建失败：${errorText(error)}`);
-        }
+            // The Host reports the primary directory shortly after creation;
+            // re-read the list until it leaves `pending` (bounded).
+            clearInterval(watch);
+            let reads = 0;
+            watch = setInterval(() => {
+              reads += 1;
+              const state = context.rooms.find(
+                ({ roomId }) => roomId === createdRoomId,
+              )?.channelWorkspace?.primary?.state;
+              if (
+                (state !== undefined && state !== "pending") ||
+                reads > PRIMARY_WATCH_LIMIT
+              ) {
+                clearInterval(watch);
+                return;
+              }
+              context.refreshRooms();
+            }, PRIMARY_WATCH_MS);
+          }),
       })
       .catch(() => undefined);
   });

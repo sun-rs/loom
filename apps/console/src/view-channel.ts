@@ -1,13 +1,11 @@
 import type { RoleListResponse } from "@rah-os/protocol";
 
 import {
-  ActionGate,
+  WriteIntentSlot,
   activeWorkHint,
-  buildMessagePost,
-  composerKeyAction,
   lifecycleEvents,
-  runRoomAction,
   sosState,
+  type IntentState,
 } from "./actions.ts";
 import { errorText, isAbort, roomSession } from "./api.ts";
 import { subscribe, type ConsoleContext } from "./context.ts";
@@ -22,16 +20,20 @@ import {
   setStatus,
 } from "./dom.ts";
 import {
+  INTENT_BUSY_UNKNOWN,
+  intentControls,
+  reportOutcome,
+} from "./intent-view.ts";
+import {
   SYSTEM_PRINCIPAL_ID,
   loadInstanceStatuses,
-  loadLatestMessages,
-  loadNewerMessages,
   summarizeChannels,
   wakeLimitNotice,
   type InstanceStatus,
-  type MessageWindow,
 } from "./model.ts";
 import { Poller } from "./poll.ts";
+import { messagePanel } from "./view-messages.ts";
+import { runDetailPanel, runList, type RunDetailPanel } from "./view-run.ts";
 
 const CHANNEL_POLL_MS = 3_000;
 
@@ -72,69 +74,118 @@ type CardView = {
   update: (status: InstanceStatus) => void;
 };
 
-function instanceCard(
-  context: ConsoleContext,
-  roomId: string,
-  initial: InstanceStatus,
-  refresh: () => void,
-): CardView {
-  const gate = new ActionGate();
+function instanceCard(input: {
+  context: ConsoleContext;
+  initial: InstanceStatus;
+  refresh: () => void;
+  roomId: string;
+  runDetail: RunDetailPanel;
+}): CardView {
+  const { context, roomId } = input;
+  // One intent per card: reset, removal and opening the private box.
+  const slot = new WriteIntentSlot();
   const info = el("div", { className: "instance-info" });
   const confirmArea = el("div", { className: "confirm-area" });
   const result = el("p", { className: "action-status action-result" });
   const hint = el("p", { className: "muted action-hint" });
-  let status = initial;
+  let status = input.initial;
 
-  const reset = () =>
-    gate.run(async () => {
-      confirmArea.replaceChildren();
-      hint.textContent = "";
-      setStatus(result, "info", "重置中…");
-      try {
-        const response = await runRoomAction({
-          action: "session-reset",
-          session: roomSession(context.client, roomId),
-          mutate: (basedOnRoomSeq, idempotencyKey) =>
-            context.client.request("instance.session.reset", {
-              basedOnRoomSeq,
-              idempotencyKey,
-              instanceId: status.instanceId,
-            }),
-        });
-        setStatus(
-          result,
-          "ok",
-          `session 已重置：代数 ${String(response.sessionGeneration)}，事件 #${String(response.event.roomSeq)}`,
-        );
-        refresh();
-      } catch (error) {
-        setStatus(result, "error", `重置被拒绝：${errorText(error)}`);
-      }
-    });
-  const remove = () =>
-    gate.run(async () => {
-      confirmArea.replaceChildren();
-      hint.textContent = "";
-      setStatus(result, "info", "移出中…");
-      try {
-        await runRoomAction({
-          action: "instance-remove",
-          session: roomSession(context.client, roomId),
-          mutate: (basedOnRoomSeq, idempotencyKey) =>
-            context.client.request("room.member.remove", {
-              basedOnRoomSeq,
-              idempotencyKey,
-              principalId: status.instanceId,
-              roomId,
-            }),
-        });
-        setStatus(result, "ok", "已移出频道");
-        refresh();
-      } catch (error) {
-        setStatus(result, "error", `移出被拒绝：${errorText(error)}`);
-        hint.textContent = activeWorkHint(error) ?? "";
-      }
-    });
+  const refusedWhileUnknown = (): boolean => {
+    if (slot.state === "unknown") {
+      setStatus(result, "error", INTENT_BUSY_UNKNOWN);
+      return true;
+    }
+    return slot.state === "pending";
+  };
+  const reset = () => {
+    if (refusedWhileUnknown()) return;
+    confirmArea.replaceChildren();
+    hint.textContent = "";
+    setStatus(result, "info", "重置中…");
+    void slot
+      .submit({
+        action: "session-reset",
+        payload: { instanceId: status.instanceId },
+        session: roomSession(context.client, roomId),
+        send: (payload, basedOnRoomSeq, idempotencyKey) =>
+          context.client.request("instance.session.reset", {
+            basedOnRoomSeq,
+            idempotencyKey,
+            instanceId: payload.instanceId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(result, outcome, "重置被拒绝", (response) => {
+            setStatus(
+              result,
+              "ok",
+              `session 已重置：代数 ${String(response.sessionGeneration)}，事件 #${String(response.event.roomSeq)}${response.deduplicated ? "（重试核实：原请求已执行）" : ""}`,
+            );
+            input.refresh();
+          }),
+      })
+      .catch(() => undefined);
+  };
+  const remove = () => {
+    if (refusedWhileUnknown()) return;
+    confirmArea.replaceChildren();
+    hint.textContent = "";
+    setStatus(result, "info", "移出中…");
+    void slot
+      .submit({
+        action: "instance-remove",
+        payload: { principalId: status.instanceId, roomId },
+        session: roomSession(context.client, roomId),
+        send: (payload, basedOnRoomSeq, idempotencyKey) =>
+          context.client.request("room.member.remove", {
+            basedOnRoomSeq,
+            idempotencyKey,
+            principalId: payload.principalId,
+            roomId: payload.roomId,
+          }),
+        onSettled: (outcome) => {
+          reportOutcome(result, outcome, "移出被拒绝", () => {
+            setStatus(result, "ok", "已移出频道");
+            input.refresh();
+          });
+          if (outcome.kind === "rejected") {
+            hint.textContent = activeWorkHint(outcome.error) ?? "";
+          }
+        },
+      })
+      .catch(() => undefined);
+  };
+  const openPrivateBox = () => {
+    if (refusedWhileUnknown()) return;
+    const identity = context.identity;
+    if (identity === undefined) {
+      setStatus(result, "error", "尚未连接，无法打开私聊");
+      return;
+    }
+    setStatus(result, "info", "打开私聊中…");
+    void slot
+      .submit({
+        action: "direct-open",
+        payload: {
+          peerPrincipalId: status.instanceId,
+          workspaceId: identity.workspaceId,
+        },
+        session: roomSession(context.client, identity.controlRoomId),
+        send: (payload, basedOnControlRoomSeq, idempotencyKey) =>
+          context.client.request("room.direct.open", {
+            basedOnControlRoomSeq,
+            idempotencyKey,
+            peerPrincipalId: payload.peerPrincipalId,
+            workspaceId: payload.workspaceId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(result, outcome, "打开私聊被拒绝", (response) => {
+            setStatus(result, "ok", "私聊已打开");
+            context.refreshRooms();
+            window.location.hash = `#/direct/${encodeURIComponent(response.room.roomId)}`;
+          }),
+      })
+      .catch(() => undefined);
+  };
 
   const resetButton = button(
     "重置 session…",
@@ -145,9 +196,10 @@ function instanceCard(
           confirmLabel: "确认重置",
           consequence: RESET_CONSEQUENCE,
           onCancel: () => confirmArea.replaceChildren(),
-          onConfirm: () => void reset().catch(() => undefined),
+          onConfirm: reset,
         }),
       );
+      renderSlot(slot.state);
     },
     { className: "secondary action-reset" },
   );
@@ -160,36 +212,59 @@ function instanceCard(
           confirmLabel: "确认移出",
           consequence: REMOVE_CONSEQUENCE,
           onCancel: () => confirmArea.replaceChildren(),
-          onConfirm: () => void remove().catch(() => undefined),
+          onConfirm: remove,
         }),
       );
+      renderSlot(slot.state);
     },
     { className: "secondary action-remove" },
   );
+  const openBoxButton = button("打开私聊", openPrivateBox, {
+    className: "secondary action-open-direct",
+  });
+  const boxLink = el("a", { className: "open-direct-link", text: "查看私聊" });
   const actions = el("div", { className: "form-actions instance-actions" }, [
     resetButton,
     removeButton,
+    openBoxButton,
+    boxLink,
   ]);
-  gate.onChange((pending) => {
-    resetButton.disabled = pending;
-    removeButton.disabled = pending;
+  const renderSlot = (state: IntentState) => {
+    const busy = state !== "idle";
+    resetButton.disabled = busy;
+    removeButton.disabled = busy;
+    openBoxButton.disabled = busy;
     for (const node of confirmArea.querySelectorAll("button")) {
-      node.disabled = pending;
+      node.disabled = busy;
     }
-  });
+  };
+  slot.onChange(renderSlot);
 
-  const root = el("li", { attrs: { "data-instance-id": initial.instanceId } }, [
-    info,
-    actions,
-    confirmArea,
-    result,
-    hint,
-  ]);
+  const root = el(
+    "li",
+    { attrs: { "data-instance-id": input.initial.instanceId } },
+    [
+      info,
+      actions,
+      confirmArea,
+      result,
+      intentControls(slot, `instance-${input.initial.instanceId}`, result),
+      hint,
+    ],
+  );
   const update = (next: InstanceStatus) => {
     status = next;
     root.className = `instance-card state-${next.member ? (next.state ?? "none") : "removed"}`;
     actions.hidden = !next.member;
     if (!next.member) confirmArea.replaceChildren();
+    openBoxButton.hidden = next.privateBoxRoomId !== null;
+    boxLink.hidden = next.privateBoxRoomId === null;
+    if (next.privateBoxRoomId !== null) {
+      boxLink.setAttribute(
+        "href",
+        `#/direct/${encodeURIComponent(next.privateBoxRoomId)}`,
+      );
+    }
     info.replaceChildren(
       ...present(
         el("div", { className: "instance-head" }, [
@@ -216,6 +291,15 @@ function instanceCard(
           ? null
           : field("看门狗", next.watchdogWarning, "watchdog-warning"),
         field("私聊", next.privateBoxLabel, "private-box"),
+        next.member
+          ? runList(next.runs, (run) =>
+              input.runDetail.show(
+                next.agentId,
+                run.runAttemptId,
+                `${next.roleName} @${next.handle}`,
+              ),
+            )
+          : null,
         next.recentProblems.length === 0
           ? null
           : el("div", { className: "problems" }, [
@@ -234,7 +318,7 @@ function instanceCard(
       ),
     );
   };
-  update(initial);
+  update(input.initial);
   return { root, update };
 }
 
@@ -246,16 +330,10 @@ export function mountChannel(
   const header = el("section", { className: "panel channel-header" });
   const notice = el("div", { attrs: { id: "wake-notice" } });
   const instanceBody = el("div");
-  const messageList = el("ol", {
-    attrs: { id: "message-list" },
-    className: "message-list",
-  });
-  const messageStatus = el("p", { className: "muted", text: "加载中…" });
   const lifecycleList = el("ol", {
     attrs: { id: "lifecycle-events" },
     className: "lifecycle-list",
   });
-  let messageWindow: MessageWindow | undefined;
   let statuses: InstanceStatus[] = [];
   let roles: RoleListResponse["roles"] = [];
   const cards = new Map<string, CardView>();
@@ -263,81 +341,62 @@ export function mountChannel(
     attrs: { id: "instance-list" },
     className: "instance-list",
   });
+  const runDetail = runDetailPanel(context);
 
-  // --- Composer: Enter sends, Shift+Enter newline, IME never sends. ---
-  const composerGate = new ActionGate();
+  const actorLabel = (actorId: string): string => {
+    if (actorId === SYSTEM_PRINCIPAL_ID) return "Loom 系统";
+    if (actorId === context.identity?.principalId) {
+      return `${context.identity.displayName}（Human）`;
+    }
+    const instance = statuses.find(({ instanceId }) => instanceId === actorId);
+    return instance === undefined
+      ? actorId
+      : `${instance.roleName} @${instance.handle}`;
+  };
+
+  // --- Messages: this Channel only (a private box has its own page). ---
   const mention = el("select", { attrs: { id: "composer-mention" } });
-  const input = el("textarea", {
-    attrs: {
-      id: "composer-input",
-      placeholder: "发消息（Enter 发送，Shift+Enter 换行）",
-      rows: "3",
-    },
-  });
-  const send = el("button", {
-    attrs: { id: "composer-send", type: "button" },
-    text: "发送",
-  });
-  const composerStatus = el("p", {
-    attrs: { id: "composer-status", role: "status" },
-    className: "action-status",
-  });
-  const submitMessage = () =>
-    composerGate.run(async () => {
-      if (context.identity === undefined) {
-        setStatus(composerStatus, "error", "尚未连接，无法发送");
-        return;
-      }
+  const messages = messagePanel({
+    actorLabel,
+    context,
+    heading: "消息（最近 50 条）",
+    mention,
+    mentionTarget: () => {
       const target = statuses.find(
         ({ instanceId, member }) => member && instanceId === mention.value,
       );
-      const post = buildMessagePost(
-        input.value,
-        target === undefined
-          ? undefined
-          : { handle: target.handle, participantId: target.instanceId },
+      return target === undefined
+        ? undefined
+        : { handle: target.handle, participantId: target.instanceId };
+    },
+    onRendered: (window) => {
+      const wake =
+        context.identity === undefined
+          ? null
+          : wakeLimitNotice(window.messages, context.identity.principalId);
+      notice.replaceChildren(
+        ...(wake === null
+          ? []
+          : [
+              el(
+                "div",
+                { className: "wake-notice", attrs: { role: "alert" } },
+                [
+                  el("strong", {
+                    text: "唤醒已达上限（Human 发言前实例不会互相唤醒）",
+                  }),
+                  el("p", { text: wake }),
+                ],
+              ),
+            ]),
       );
-      if (!post.ok) {
-        setStatus(composerStatus, "error", post.error);
-        return;
-      }
-      setStatus(composerStatus, "info", "发送中…");
-      try {
-        await runRoomAction({
-          action: "message",
-          session: roomSession(context.client, roomId),
-          mutate: (basedOnRoomSeq, idempotencyKey) =>
-            context.client.request("message.post", {
-              basedOnRoomSeq,
-              body: post.value.body,
-              idempotencyKey,
-              recipients: post.value.recipients,
-              roomId,
-            }),
-        });
-        input.value = "";
-        setStatus(composerStatus, "ok", "已发送");
-        poller.runNow();
-      } catch (error) {
-        setStatus(composerStatus, "error", `发送失败：${errorText(error)}`);
-      }
-    });
-  composerGate.onChange((pending) => {
-    send.disabled = pending;
-    send.textContent = pending ? "发送中…" : "发送";
-  });
-  send.addEventListener("click", () => {
-    void submitMessage().catch(() => undefined);
-  });
-  input.addEventListener("keydown", (event) => {
-    if (composerKeyAction(event) !== "submit") return;
-    // Keyboard and button share one gate: a pending send refuses both.
-    event.preventDefault();
-    void submitMessage().catch(() => undefined);
+    },
+    pollNow: () => poller.runNow(),
+    roomId,
   });
 
   // --- Instantiate a Role into this Channel. ---
-  const instantiateGate = new ActionGate();
+  const instantiateSlot = new WriteIntentSlot();
   const roleSelect = el("select", { attrs: { id: "instantiate-role" } });
   const instantiateButton = el("button", {
     attrs: { id: "instantiate-submit", type: "button" },
@@ -347,49 +406,50 @@ export function mountChannel(
     attrs: { id: "instantiate-status", role: "status" },
     className: "action-status",
   });
-  instantiateGate.onChange((pending) => {
-    instantiateButton.disabled = pending;
+  instantiateSlot.onChange((state) => {
+    instantiateButton.disabled = state !== "idle";
+    roleSelect.disabled = state !== "idle";
   });
   instantiateButton.addEventListener("click", () => {
-    void instantiateGate
-      .run(async () => {
-        const role = roles.find(({ roleId }) => roleId === roleSelect.value);
-        if (role === undefined) {
-          setStatus(instantiateStatus, "error", "请选择 Role");
-          return;
-        }
-        setStatus(instantiateStatus, "info", "实例化中…");
-        try {
-          const result = await runRoomAction({
-            action: "instantiate",
-            session: roomSession(context.client, roomId),
-            mutate: (basedOnRoomSeq, idempotencyKey) =>
-              context.client.request("role.instantiate", {
-                basedOnRoomSeq,
-                channelId: roomId,
-                idempotencyKey,
-                roleId: role.roleId,
-              }),
-          });
-          setStatus(
+    if (instantiateSlot.state !== "idle") return;
+    const role = roles.find(({ roleId }) => roleId === roleSelect.value);
+    if (role === undefined) {
+      setStatus(instantiateStatus, "error", "请选择 Role");
+      return;
+    }
+    setStatus(instantiateStatus, "info", "实例化中…");
+    void instantiateSlot
+      .submit({
+        action: "instantiate",
+        payload: { channelId: roomId, roleId: role.roleId },
+        session: roomSession(context.client, roomId),
+        send: (payload, basedOnRoomSeq, idempotencyKey) =>
+          context.client.request("role.instantiate", {
+            basedOnRoomSeq,
+            channelId: payload.channelId,
+            idempotencyKey,
+            roleId: payload.roleId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(
             instantiateStatus,
-            "ok",
-            `已实例化 @${result.agent.handle}（${result.instance.instanceId}）`,
-          );
-          poller.runNow();
-        } catch (error) {
-          setStatus(
-            instantiateStatus,
-            "error",
-            `实例化失败：${errorText(error)}`,
-          );
-        }
+            outcome,
+            "实例化被拒绝",
+            (result) => {
+              setStatus(
+                instantiateStatus,
+                "ok",
+                `已实例化 @${result.agent.handle}（${result.instance.instanceId}）${result.deduplicated ? "（重试核实：原请求已执行）" : ""}`,
+              );
+              poller.runNow();
+            },
+          ),
       })
       .catch(() => undefined);
   });
 
-  // --- Channel emergency stop / resume. ---
-  const sosGate = new ActionGate();
+  // --- Channel emergency stop / resume (one intent for both). ---
+  const sosSlot = new WriteIntentSlot();
   const sosLabel = el("span", {
     attrs: { id: "sos-state" },
     className: "field-value",
@@ -406,60 +466,73 @@ export function mountChannel(
     attrs: { id: "sos-status", role: "status" },
     className: "action-status",
   });
-  const stop = () =>
-    sosGate.run(async () => {
-      sosConfirm.replaceChildren();
-      setStatus(sosStatus, "info", "急停中…");
-      try {
-        const result = await runRoomAction({
-          action: "sos-stop",
-          session: roomSession(context.client, roomId),
-          mutate: (basedOnRoomSeq, idempotencyKey) =>
-            context.client.request("room.sos.stop", {
-              basedOnRoomSeq,
-              idempotencyKey,
-              roomId,
-            }),
-        });
-        setStatus(
-          sosStatus,
-          "ok",
-          result.operation.state === "stopped"
-            ? "已急停"
-            : `急停中：等待 ${String(result.operation.pendingTargetCount)} 个运行终止证明`,
-        );
-        poller.runNow();
-      } catch (error) {
-        setStatus(sosStatus, "error", `急停失败：${errorText(error)}`);
-      }
-    });
-  const resume = () =>
-    sosGate.run(async () => {
-      const text = guidance.value.trim();
-      if (text.length === 0) {
-        setStatus(sosStatus, "error", "恢复需要填写指引");
-        return;
-      }
-      setStatus(sosStatus, "info", "恢复中…");
-      try {
-        await runRoomAction({
-          action: "sos-resume",
-          session: roomSession(context.client, roomId),
-          mutate: (basedOnRoomSeq, idempotencyKey) =>
-            context.client.request("room.sos.resume", {
-              basedOnRoomSeq,
-              guidance: text,
-              idempotencyKey,
-              roomId,
-            }),
-        });
-        guidance.value = "";
-        setStatus(sosStatus, "ok", "已恢复");
-        poller.runNow();
-      } catch (error) {
-        setStatus(sosStatus, "error", `恢复失败：${errorText(error)}`);
-      }
-    });
+  const sosBusy = (): boolean => {
+    if (sosSlot.state === "unknown") {
+      setStatus(sosStatus, "error", INTENT_BUSY_UNKNOWN);
+      return true;
+    }
+    return sosSlot.state === "pending";
+  };
+  const stop = () => {
+    if (sosBusy()) return;
+    sosConfirm.replaceChildren();
+    setStatus(sosStatus, "info", "急停中…");
+    void sosSlot
+      .submit({
+        action: "sos-stop",
+        payload: { roomId },
+        session: roomSession(context.client, roomId),
+        send: (payload, basedOnRoomSeq, idempotencyKey) =>
+          context.client.request("room.sos.stop", {
+            basedOnRoomSeq,
+            idempotencyKey,
+            roomId: payload.roomId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(sosStatus, outcome, "急停被拒绝", (result) => {
+            setStatus(
+              sosStatus,
+              "ok",
+              result.operation.state === "stopped"
+                ? "已急停"
+                : `急停中：等待 ${String(result.operation.pendingTargetCount)} 个运行终止证明`,
+            );
+            poller.runNow();
+          }),
+      })
+      .catch(() => undefined);
+  };
+  const resume = () => {
+    if (sosBusy()) return;
+    const submitted = guidance.value;
+    const text = submitted.trim();
+    if (text.length === 0) {
+      setStatus(sosStatus, "error", "恢复需要填写指引");
+      return;
+    }
+    setStatus(sosStatus, "info", "恢复中…");
+    void sosSlot
+      .submit({
+        action: "sos-resume",
+        payload: { guidance: text, roomId },
+        session: roomSession(context.client, roomId),
+        send: (payload, basedOnRoomSeq, idempotencyKey) =>
+          context.client.request("room.sos.resume", {
+            basedOnRoomSeq,
+            guidance: payload.guidance,
+            idempotencyKey,
+            roomId: payload.roomId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(sosStatus, outcome, "恢复被拒绝", () => {
+            // Guidance edited while the request ran is kept.
+            if (guidance.value === submitted) guidance.value = "";
+            setStatus(sosStatus, "ok", "已恢复");
+            poller.runNow();
+          }),
+      })
+      .catch(() => undefined);
+  };
   const stopButton = button(
     "急停…",
     () => {
@@ -469,24 +542,23 @@ export function mountChannel(
           confirmLabel: "确认急停",
           consequence: SOS_CONSEQUENCE,
           onCancel: () => sosConfirm.replaceChildren(),
-          onConfirm: () => void stop().catch(() => undefined),
+          onConfirm: stop,
         }),
       );
+      renderSos(sosSlot.state);
     },
     { attrs: { id: "sos-stop" }, className: "danger" },
   );
-  const resumeButton = button(
-    "恢复",
-    () => void resume().catch(() => undefined),
-    { attrs: { id: "sos-resume" } },
-  );
-  sosGate.onChange((pending) => {
-    stopButton.disabled = pending;
-    resumeButton.disabled = pending;
+  const resumeButton = button("恢复", resume, { attrs: { id: "sos-resume" } });
+  const renderSos = (state: IntentState) => {
+    const busy = state !== "idle";
+    stopButton.disabled = busy;
+    resumeButton.disabled = busy;
     for (const node of sosConfirm.querySelectorAll("button")) {
-      node.disabled = pending;
+      node.disabled = busy;
     }
-  });
+  };
+  sosSlot.onChange(renderSos);
 
   container.replaceChildren(
     header,
@@ -502,6 +574,7 @@ export function mountChannel(
       labelled("恢复指引", guidance),
       el("div", { className: "form-actions" }, [resumeButton]),
       sosStatus,
+      intentControls(sosSlot, "sos", sosStatus),
     ]),
     el("div", { className: "channel-body" }, [
       el("section", { className: "panel" }, [
@@ -511,20 +584,12 @@ export function mountChannel(
           labelled("添加实例（选择 Role）", roleSelect),
           el("div", { className: "form-actions" }, [instantiateButton]),
           instantiateStatus,
+          intentControls(instantiateSlot, "instantiate", instantiateStatus),
         ]),
       ]),
-      el("section", { className: "panel messages" }, [
-        el("h2", { text: "消息（最近 50 条）" }),
-        messageStatus,
-        messageList,
-        el("div", { className: "composer" }, [
-          labelled("@ 实例（可选）", mention),
-          input,
-          el("div", { className: "form-actions" }, [send]),
-          composerStatus,
-        ]),
-      ]),
+      messages.element,
     ]),
+    runDetail.element,
     el("section", { className: "panel" }, [
       el("h2", { text: "最近生命周期事件（已同步的事件窗口）" }),
       lifecycleList,
@@ -565,72 +630,6 @@ export function mountChannel(
     );
   };
 
-  const actorLabel = (actorId: string): string => {
-    if (actorId === SYSTEM_PRINCIPAL_ID) return "Loom 系统";
-    if (actorId === context.identity?.principalId) {
-      return `${context.identity.displayName}（Human）`;
-    }
-    const instance = statuses.find(({ instanceId }) => instanceId === actorId);
-    return instance === undefined
-      ? actorId
-      : `${instance.roleName} @${instance.handle}`;
-  };
-
-  const renderMessages = () => {
-    if (messageWindow === undefined) return;
-    const nearBottom =
-      messageList.scrollHeight -
-        messageList.scrollTop -
-        messageList.clientHeight <
-      48;
-    messageStatus.textContent =
-      messageWindow.messages.length === 0 ? "暂无消息" : "";
-    messageList.replaceChildren(
-      ...messageWindow.messages.map((message) =>
-        el(
-          "li",
-          {
-            attrs: {
-              "data-actor-id": message.actorId,
-              "data-room-seq": String(message.roomSeq),
-            },
-            className: `message${message.system ? " is-system" : ""}`,
-          },
-          [
-            el("div", { className: "message-meta" }, [
-              el("span", {
-                className: "message-actor",
-                text: actorLabel(message.actorId),
-              }),
-              el("span", {
-                className: "muted",
-                text: ` · #${String(message.roomSeq)} · ${localTime(message.createdAt)}`,
-              }),
-            ]),
-            el("div", { className: "message-body", text: message.body }),
-          ],
-        ),
-      ),
-    );
-    if (nearBottom) messageList.scrollTop = messageList.scrollHeight;
-    const wake =
-      context.identity === undefined
-        ? null
-        : wakeLimitNotice(messageWindow.messages, context.identity.principalId);
-    notice.replaceChildren(
-      ...(wake === null
-        ? []
-        : [
-            el("div", { className: "wake-notice", attrs: { role: "alert" } }, [
-              el("strong", {
-                text: "唤醒已达上限（Human 发言前实例不会互相唤醒）",
-              }),
-              el("p", { text: wake }),
-            ]),
-          ]),
-    );
-  };
-
   const renderInstances = (error?: string) => {
     const seen = new Set<string>();
     for (const status of statuses) {
@@ -639,7 +638,13 @@ export function mountChannel(
       if (existing === undefined) {
         cards.set(
           status.instanceId,
-          instanceCard(context, roomId, status, () => poller.runNow()),
+          instanceCard({
+            context,
+            initial: status,
+            refresh: () => poller.runNow(),
+            roomId,
+            runDetail,
+          }),
         );
       } else existing.update(status);
     }
@@ -715,20 +720,8 @@ export function mountChannel(
   };
 
   const poller = new Poller(CHANNEL_POLL_MS, async (signal) => {
-    try {
-      const next =
-        messageWindow === undefined
-          ? await loadLatestMessages(context.client, roomId, { signal })
-          : await loadNewerMessages(context.client, roomId, messageWindow, {
-              signal,
-            });
-      if (signal.aborted) return;
-      messageWindow = next;
-      renderMessages();
-    } catch (error) {
-      if (signal.aborted || isAbort(error)) return;
-      messageStatus.textContent = `消息读取失败：${errorText(error)}`;
-    }
+    await messages.refresh(signal);
+    if (signal.aborted) return;
     try {
       // The same causal session every write is based on.
       await roomSession(context.client, roomId).syncUntilCurrent({
@@ -784,7 +777,7 @@ export function mountChannel(
         roles.length === 0 ? "还没有 Role（先到 Role 页创建）" : "选择 Role",
       );
       renderInstances();
-      renderMessages();
+      messages.render();
       renderEvents();
     } catch (error) {
       if (signal.aborted || isAbort(error)) return;

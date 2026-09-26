@@ -16,10 +16,13 @@ import {
   buildRoleConfiguration,
   buildSettingsUpdate,
   composerKeyAction,
+  roleFormFrom,
+  SETTINGS_SCOPE_NOTES,
+  settingScope,
   isSettingsConflict,
   lifecycleEvents,
   parseAttachedDirectoryLines,
-  runRoomAction,
+  WriteIntentSlot,
   runtimeChoices,
   sosState,
 } from "../src/actions.ts";
@@ -45,19 +48,21 @@ function fakeSession(heads: number[]) {
 
 const stale = () => new RahClientError("stale_context", "newer facts", 409);
 
-test("a Room action syncs first, reuses one idempotency key across stale retries and stops after the retry budget", async () => {
+test("an intent syncs first, keeps one idempotency key across stale retries and is refused after the retry budget", async () => {
   const { session } = fakeSession([4, 6, 9, 12]);
   const seen: Array<[number, string]> = [];
-  const result = await runRoomAction({
+  const slot = new WriteIntentSlot();
+  const outcome = await slot.submit({
     action: "message",
+    payload: {},
     session,
-    mutate: async (basedOnRoomSeq, key) => {
+    send: async (_payload, basedOnRoomSeq, key) => {
       seen.push([basedOnRoomSeq, key]);
       if (seen.length < 3) throw stale();
       return "posted";
     },
   });
-  assert.equal(result, "posted");
+  assert.deepEqual(outcome, { kind: "ok", result: "posted" });
   assert.deepEqual(
     seen.map(([seq]) => seq),
     [4, 6, 9],
@@ -68,49 +73,36 @@ test("a Room action syncs first, reuses one idempotency key across stale retries
 
   const exhausted = fakeSession([1, 2, 3, 4, 5]);
   let attempts = 0;
-  await assert.rejects(
-    runRoomAction({
-      action: "message",
-      session: exhausted.session,
-      mutate: async () => {
-        attempts += 1;
-        throw stale();
-      },
-    }),
-    (error: unknown) =>
-      error instanceof RahClientError && error.code === "stale_context",
+  const refused = await slot.submit({
+    action: "message",
+    payload: {},
+    session: exhausted.session,
+    send: async () => {
+      attempts += 1;
+      throw stale();
+    },
+  });
+  assert.equal(refused.kind, "rejected");
+  assert.equal(
+    (refused as { error: RahClientError }).error.code,
+    "stale_context",
   );
   assert.equal(attempts, STALE_RETRY_ATTEMPTS);
   assert.equal(STALE_RETRY_ATTEMPTS, 3);
-});
+  assert.equal(slot.state, "idle", "a definite refusal ends the intent");
 
-test("a Room action never retries a non-stale failure and each user action gets a new key", async () => {
-  const { session } = fakeSession([2]);
-  let attempts = 0;
-  await assert.rejects(
-    runRoomAction({
-      action: "remove",
-      session,
-      mutate: async () => {
-        attempts += 1;
-        throw new RahClientError("conflict", "active collaboration work", 409);
-      },
-    }),
-    /active collaboration work/u,
-  );
-  assert.equal(attempts, 1);
-
-  const keys: string[] = [];
-  for (let index = 0; index < 2; index += 1) {
-    await runRoomAction({
-      action: "message",
-      session,
-      mutate: async (_seq, key) => {
-        keys.push(key);
-      },
-    });
-  }
-  assert.notEqual(keys[0], keys[1]);
+  let other = 0;
+  const conflict = await slot.submit({
+    action: "remove",
+    payload: {},
+    session,
+    send: async () => {
+      other += 1;
+      throw new RahClientError("conflict", "active collaboration work", 409);
+    },
+  });
+  assert.equal(conflict.kind, "rejected");
+  assert.equal(other, 1, "a non-stale refusal is never retried");
 });
 
 test("the action gate runs one action at a time and reports pending to every submit path", async () => {
@@ -417,6 +409,9 @@ function event(roomSeq: number, type: string, payload = {}): RoomEvent {
 
 test("SOS state and lifecycle events come from the synced Room events", () => {
   assert.equal(sosState([]).kind, "unknown");
+  // No SOS fact in the window is unknown, never "not stopped".
+  assert.equal(sosState([]).label, "急停状态未知（当前事件窗口无记录）");
+  assert.doesNotMatch(sosState([event(1, "message.posted")]).label, /未急停/u);
   assert.equal(
     sosState([event(1, "message.posted"), event(2, "room.agent_sos_requested")])
       .kind,
@@ -451,4 +446,83 @@ test("SOS state and lifecycle events come from the synced Room events", () => {
     ],
   );
   assert.match(lifecycle[1]!.label, /session/u);
+});
+
+test("concurrency and start limits only affect later scheduling; watchdog thresholds apply to running work at once", () => {
+  for (const key of [
+    "maxConcurrentRuns",
+    "maxConcurrentStarts",
+    "minStartIntervalMs",
+    "wakeChainLimit",
+    "runtimes",
+  ] as const) {
+    assert.equal(settingScope(key), "future", key);
+  }
+  for (const key of [
+    "noProgressWarnMinutes",
+    "queuedStallTerminateMinutes",
+    "maxRunMinutes",
+  ] as const) {
+    assert.equal(settingScope(key), "immediate", key);
+  }
+  assert.match(SETTINGS_SCOPE_NOTES.future, /之后/u);
+  assert.match(SETTINGS_SCOPE_NOTES.immediate, /正在运行/u);
+  assert.match(SETTINGS_SCOPE_NOTES.immediate, /终止/u);
+  assert.match(SETTINGS_SCOPE_NOTES.immediate, /续接/u);
+  for (const note of Object.values(SETTINGS_SCOPE_NOTES)) {
+    assert.doesNotMatch(note, /不会被中断/u);
+  }
+});
+
+test("a Role revision keeps configuration fields the console does not edit and only takes a published binding", () => {
+  const base = {
+    avatarKey: "avatar-fixture",
+    description: "FIXTURE description kept across revisions",
+    displayName: "Fixture Reviewer",
+    handle: "fixture-reviewer",
+    instructions: "FIXTURE ONLY",
+    modelIntent: {
+      exactBindingIds: ["binding-fixture"],
+      fallback: "disabled" as const,
+      reasoning: "low" as const,
+    },
+    role: "reviewer",
+    runtimeOfferId: "offer-fixture",
+  };
+  const form = roleFormFrom(base);
+  assert.deepEqual(form, {
+    displayName: "Fixture Reviewer",
+    handle: "fixture-reviewer",
+    instructions: "FIXTURE ONLY",
+    modelBindingId: "binding-fixture",
+    reasoning: "low",
+    role: "reviewer",
+    runtimeOfferId: "offer-fixture",
+  });
+  const choices = runtimeChoices(inventory);
+  const revised = buildRoleConfiguration(
+    { ...form, instructions: "FIXTURE revised", reasoning: "high" },
+    choices,
+    base,
+  );
+  assert.deepEqual(revised, {
+    ok: true,
+    value: {
+      ...base,
+      instructions: "FIXTURE revised",
+      modelIntent: {
+        exactBindingIds: ["binding-fixture"],
+        fallback: "disabled",
+        reasoning: "high",
+      },
+    },
+  });
+  assert.equal(
+    buildRoleConfiguration(
+      { ...form, modelBindingId: "binding-guessed" },
+      choices,
+      base,
+    ).ok,
+    false,
+  );
 });

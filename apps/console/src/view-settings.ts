@@ -2,8 +2,10 @@ import type { RuntimeSettings } from "@rah-os/protocol";
 
 import {
   ActionGate,
+  SETTINGS_SCOPE_NOTES,
   buildSettingsUpdate,
   isSettingsConflict,
+  settingScope,
   settingsFormFrom,
   type SettingsForm,
 } from "./actions.ts";
@@ -30,12 +32,21 @@ const SCALAR_FIELDS: ReadonlyArray<{
     key: "wakeChainLimit",
     label: "实例互相唤醒上限（1–1000）",
   },
-  { key: "noProgressWarnMinutes", label: "无进展告警阈值（分钟）" },
   {
+    hint: "看门狗：即时适用于正在运行的工作（只产生告警）",
+    key: "noProgressWarnMinutes",
+    label: "无进展告警阈值（分钟）",
+  },
+  {
+    hint: "看门狗：即时适用于正在运行的工作，调低可能终止当前轮并续接",
     key: "queuedStallTerminateMinutes",
     label: "排队时无进展终止阈值（分钟）",
   },
-  { key: "maxRunMinutes", label: "单次运行时长上限（分钟）" },
+  {
+    hint: "看门狗：即时适用于正在运行的工作，调低可能终止当前轮并续接",
+    key: "maxRunMinutes",
+    label: "单次运行时长上限（分钟）",
+  },
 ];
 
 export function mountSettings(
@@ -86,7 +97,10 @@ export function mountSettings(
       ...SCALAR_FIELDS.map(({ hint, key, label }) => {
         const control = input(`settings-${key}`, values[key]);
         inputs.set(key, control);
-        return labelled(label, control, hint);
+        const row = labelled(label, control, hint);
+        // Watchdog rows apply to running work at once (settingScope).
+        row.setAttribute("data-scope", settingScope(key));
+        return row;
       }),
       ...settings.runtimes.map((runtime) => {
         const control = input(
@@ -149,8 +163,14 @@ export function mountSettings(
   });
   const form = el("form", { attrs: { id: "settings-form" } }, [
     el("p", {
+      attrs: { id: "settings-scope-future" },
       className: "muted",
-      text: "修改只影响之后的调度决定；正在运行的工作不会被中断。",
+      text: SETTINGS_SCOPE_NOTES.future,
+    }),
+    el("p", {
+      attrs: { id: "settings-scope-immediate" },
+      className: "muted settings-immediate",
+      text: SETTINGS_SCOPE_NOTES.immediate,
     }),
     baseLabel,
     staleNotice,
@@ -204,10 +224,17 @@ export function mountSettings(
           latest = saved;
           renderRows(saved);
           fillForm(saved);
+          const changed = Object.keys(update.value).filter(
+            (key) => key !== "expectedRevision",
+          );
           setStatus(
             status,
             "ok",
-            `已保存为修订 ${String(saved.revision)}（只影响之后的调度）`,
+            `已保存为修订 ${String(saved.revision)}（${
+              changed.includes("watchdog")
+                ? "看门狗阈值已即时适用于正在运行的工作"
+                : "只影响之后的调度"
+            }）`,
           );
         } catch (error) {
           if (isSettingsConflict(error)) {

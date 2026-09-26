@@ -1,5 +1,6 @@
 // Real-browser gate for the throwaway evo console (batch 1 read-only views,
-// batch 2 intervention writes; docs/evo/status.zh-CN.md §44, §45). Deleted in
+// batch 2 intervention writes, review fixes and batch 3 private box / run
+// drill-down / Role revision; docs/evo/status.zh-CN.md §44–§46). Deleted in
 // phase 4 with apps/console.
 //
 // FIXTURE ONLY: the Loom service started here uses a temporary HOME,
@@ -10,6 +11,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import {
   chmodSync,
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -75,6 +77,11 @@ const missingDirectory = join(temporaryDirectory, "missing-fixture");
 const fakeCodexState = join(temporaryDirectory, "fake-codex-state");
 const fakeCodexModes = join(temporaryDirectory, "fake-codex-modes.jsonl");
 const chromeProfileDirectory = join(temporaryDirectory, "chrome-profile");
+// The gateway serves a temporary copy of the console build so the symlink
+// probes below never touch the repository's dist directory.
+const consoleCopy = join(temporaryDirectory, "console-dist");
+const outsideSecret = join(temporaryDirectory, "outside-secret.txt");
+const outsideDirectory = join(temporaryDirectory, "outside-directory");
 const xssBody =
   'FIXTURE xss probe <img src=x onerror="window.__consoleXss=1"> (not a real request)';
 const screenshots = [];
@@ -95,6 +102,13 @@ try {
   }
   // The startup repository guard needs git and the leftover-process sweeper
   // needs ps/lsof; nothing else leaks from PATH (no real provider CLI).
+  cpSync(consoleDirectory, consoleCopy, { recursive: true });
+  mkdirSync(outsideDirectory);
+  writeFileSync(outsideSecret, "FIXTURE outside secret (must never be served)");
+  writeFileSync(join(outsideDirectory, "leak.js"), "FIXTURE outside asset");
+  symlinkSync(outsideSecret, join(consoleCopy, "linked-secret.txt"));
+  symlinkSync(outsideDirectory, join(consoleCopy, "linked-directory"));
+  symlinkSync(outsideDirectory, join(consoleCopy, "assets", "linked-assets"));
   for (const tool of ["git", "ps", "lsof"]) {
     symlinkSync(
       execFileSync("which", [tool], { encoding: "utf8" }).trim(),
@@ -238,6 +252,30 @@ if (args.join(" ") === "debug models --bundled") {
     browser.command("Runtime.enable"),
     browser.command("Log.enable"),
   ]);
+  // CDP Fetch interception (instrumentation, not page code): holds a request
+  // (delayed response) or drops a committed write's response (result unknown).
+  let interceptor;
+  const interceptErrors = [];
+  browser.on("Fetch.requestPaused", (params) => {
+    const handler = interceptor;
+    const settle =
+      handler === undefined
+        ? browser.command("Fetch.continueRequest", {
+            requestId: params.requestId,
+          })
+        : handler(params);
+    void Promise.resolve(settle).catch((error) =>
+      interceptErrors.push(String(error)),
+    );
+  });
+  const intercept = async (patterns, handler) => {
+    interceptor = handler;
+    await browser.command("Fetch.enable", { patterns });
+  };
+  const stopIntercept = async () => {
+    await browser.command("Fetch.disable");
+    interceptor = undefined;
+  };
   // Instrumentation injected by CDP (not page content): record CSP reports.
   await browser.command("Page.addScriptToEvaluateOnNewDocument", {
     source: `window.__cspViolations = [];
@@ -299,8 +337,74 @@ if (args.join(" ") === "debug models --bundled") {
   const hostRefusalText = await textOf("#create-channel-status");
   assert.equal((await listChannels()).length, channelsBefore);
   await setValue("#create-channel-directories", `${attachedDirectory}\n`);
+  // Delayed response + stale retry: the first request is held, another
+  // control-Room write lands meanwhile (so it comes back stale) and the form
+  // is edited by script while disabled; the retried payload must not change.
+  const createRequests = [];
+  let releaseCreate;
+  const createHeld = new Promise((resolvePromise) => {
+    releaseCreate = resolvePromise;
+  });
+  await intercept(
+    [{ requestStage: "Request", urlPattern: "*/v3/client/rooms/create" }],
+    async (params) => {
+      createRequests.push(JSON.parse(params.request.postData ?? "{}"));
+      if (createRequests.length === 1) {
+        releaseCreate(params.requestId);
+        return;
+      }
+      await browser.command("Fetch.continueRequest", {
+        requestId: params.requestId,
+      });
+    },
+  );
   await click("#create-channel-submit");
+  const heldCreate = await createHeld;
+  const frozenForm = await evaluate(
+    browser,
+    `["#create-channel-name", "#create-channel-slug", "#create-channel-directories"].map((selector) => document.querySelector(selector).disabled)`,
+  );
+  assert.deepEqual(
+    frozenForm,
+    [true, true, true],
+    "the create form is frozen while its intent is pending",
+  );
+  await client.request("room.create", {
+    basedOnControlRoomSeq: await head(controlRoomId),
+    idempotencyKey: "console-gate-side-channel",
+    kind: "channel",
+    name: "console-gate-side",
+    slug: "console-gate-side",
+    workspaceId: workspace.workspaceId,
+  });
+  await setValue("#create-channel-name", "console-gate-edited");
+  await browser.command("Fetch.continueRequest", { requestId: heldCreate });
   await waitForText("#create-channel-status", "已创建 #console-gate-fixture");
+  await stopIntercept();
+  assert.ok(
+    createRequests.length >= 2,
+    `the stale refusal was retried (${String(createRequests.length)} requests)`,
+  );
+  for (const request of createRequests) {
+    assert.equal(request.idempotencyKey, createRequests[0].idempotencyKey);
+    assert.equal(request.name, "console-gate-fixture");
+    assert.equal(request.slug, "console-gate-fixture");
+    assert.deepEqual(request.additionalDirectories, [attachedDirectory]);
+  }
+  assert.equal(
+    (await listChannels()).filter(({ slug }) => slug === "console-gate-fixture")
+      .length,
+    1,
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#create-channel-name").value`,
+    ),
+    "console-gate-edited",
+    "an edited field is not cleared by the success of the earlier intent",
+  );
+  const createStaleRequests = createRequests.length;
   const channelHref = await waitForBrowserValue(
     browser,
     `document.querySelector("#create-channel-result a")?.getAttribute("href")`,
@@ -339,6 +443,8 @@ if (args.join(" ") === "debug models --bundled") {
     `document.querySelector("#composer-input") !== null && document.querySelector("#channel-title")?.textContent === "#console-gate-fixture"`,
     { description: "channel page with composer" },
   );
+  await waitForText("#sos-state", "急停状态未知（当前事件窗口无记录）");
+  const sosUnknownText = await textOf("#sos-state");
   await typeInto("#composer-input", xssBody);
   await pressEnter();
   await waitForBrowserValue(
@@ -444,6 +550,57 @@ if (args.join(" ") === "debug models --bundled") {
   });
   assert.equal(await textOf(`${card} .instance-queued .field-value`), "排队 0");
 
+  // --- 4b. Revise the Role (binding only from the Host catalog). ---
+  await navigateHash("#/roles");
+  const roleCard = `.role-card[data-role-id=${JSON.stringify(role.roleId)}]`;
+  await click(`${roleCard} .role-revise-open`);
+  await waitForText("#role-revise-target", role.roleRevisionId);
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#role-revise-binding").value`,
+    ),
+    binding.modelBindingId,
+    "the revision form starts from the current configuration",
+  );
+  assert.deepEqual(
+    await evaluate(
+      browser,
+      `[...document.querySelector("#role-revise-binding").options].map((option) => option.value).filter(Boolean)`,
+    ),
+    runtime.modelBindingDescriptors.map(({ modelBindingId }) => modelBindingId),
+    "revision model choices are exactly the offer's published bindings",
+  );
+  await setValue(
+    "#role-revise-instructions",
+    "FIXTURE ONLY: console browser gate role, revision 2.",
+  );
+  await click("#role-revise-submit");
+  await waitForText("#role-revise-status", "已保存为修订");
+  const revisedRole = (
+    await client.request("role.list", { controlRoomId })
+  ).roles.find(({ roleId }) => roleId === role.roleId);
+  assert.notEqual(revisedRole.roleRevisionId, role.roleRevisionId);
+  assert.equal(
+    revisedRole.configuration.instructions,
+    "FIXTURE ONLY: console browser gate role, revision 2.",
+  );
+  assert.deepEqual(revisedRole.configuration.modelIntent, {
+    exactBindingIds: [binding.modelBindingId],
+    fallback: "disabled",
+    reasoning: "high",
+  });
+  assert.ok(
+    (await textOf("#role-revise-status")).includes(revisedRole.roleRevisionId),
+  );
+  await navigateHash(`#/channel/${encodeURIComponent(channelId)}`);
+  await waitForText(`${card} .revision`, "Role 已有新修订");
+  const staleInstance = (
+    await client.request("role.list", { controlRoomId })
+  ).instances.find(({ instanceId: id }) => id === instanceId);
+  assert.equal(staleInstance.isCurrent, false);
+  assert.equal(staleInstance.roleRevisionId, role.roleRevisionId);
+
   // --- 5. Send with Enter (mention): waking/working, reply, back to idle. ---
   await evaluate(
     browser,
@@ -520,6 +677,226 @@ if (args.join(" ") === "debug models --bundled") {
   );
   await screenshot("channel-reply-1440x1000.png");
 
+  // --- 5b. RunAttempt drill-down equals the raw API response. ---
+  const channelRunIds = await waitForBrowserValue(
+    browser,
+    `(() => { const ids = [...document.querySelectorAll('${card} .run-open')].map((node) => node.getAttribute("data-run-attempt-id")); return ids.length > 0 ? ids : null; })()`,
+    { description: "channel runs in the instance card", timeoutMs: 20_000 },
+  );
+  await click(`${card} .run-open`);
+  const channelRun = await checkRunDetail(
+    client,
+    instance.agentId,
+    channelRunIds[0],
+  );
+  await screenshot("run-detail-1440x1000.png");
+
+  // --- 5c. Private box: open, send, and the Channel never shows it. ---
+  await click(`${card} .action-open-direct`);
+  await waitForBrowserValue(
+    browser,
+    `location.hash.startsWith("#/direct/") && (document.querySelector("#direct-title")?.textContent ?? "").startsWith("私聊")`,
+    { description: "private box page", timeoutMs: 20_000 },
+  );
+  const directId = decodeURIComponent(
+    (await evaluate(browser, "location.hash")).replace(/^#\/direct\//u, ""),
+  );
+  const directRoom = (
+    await client.request("room.list", { workspaceId: workspace.workspaceId })
+  ).rooms.find(({ roomId }) => roomId === directId);
+  assert.equal(directRoom?.kind, "direct");
+  assert.deepEqual(directRoom.instancePrivateBox, {
+    active: true,
+    instanceId,
+  });
+  const privateBody = "FIXTURE private-box secret [fake:final]";
+  await typeInto("#composer-input", privateBody);
+  await pressEnter();
+  await waitForText("#composer-status", "已发送");
+  const privateMessages = await listMessages(directId);
+  assert.ok(
+    privateMessages.some(
+      ({ actorId, body }) => actorId === humanId && body === privateBody,
+    ),
+    "the private message is in the private box",
+  );
+  await waitForBrowserValue(
+    browser,
+    `[...document.querySelectorAll('#message-list .message[data-actor-id=${JSON.stringify(instanceId)}] .message-body')].some((node) => node.textContent.startsWith("FAKE final answer"))`,
+    { description: "fake CLI reply in the private box", timeoutMs: 120_000 },
+  );
+  const directRunIds = await waitForBrowserValue(
+    browser,
+    `(() => { const ids = [...document.querySelectorAll("#direct-instance .run-open")].map((node) => node.getAttribute("data-run-attempt-id")); return ids.length > 0 ? ids : null; })()`,
+    { description: "private-box runs", timeoutMs: 30_000 },
+  );
+  await click("#direct-instance .run-open");
+  await checkRunDetail(client, instance.agentId, directRunIds[0]);
+  await screenshot("private-box-1440x1000.png");
+  await navigateHash(`#/channel/${encodeURIComponent(channelId)}`);
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector("#channel-title")?.textContent === "#console-gate-fixture" && document.querySelectorAll("#message-list .message").length > 0 && document.querySelector('${card} .open-direct-link') !== null && !document.querySelector('${card} .open-direct-link').hidden`,
+    { description: "channel page again with the private-box link" },
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelectorAll('${card} .run-open').length > 0`,
+    { description: "channel runs again" },
+  );
+  const channelApiMessages = (await listMessages(channelId)).slice(-50);
+  const channelView = await evaluate(
+    browser,
+    `({
+      bodies: [...document.querySelectorAll("#message-list .message-body")].map((node) => node.textContent),
+      text: document.querySelector("#console-main")?.innerText ?? document.body.innerText,
+      runIds: [...document.querySelectorAll('${card} .run-open')].map((node) => node.getAttribute("data-run-attempt-id")),
+    })`,
+  );
+  assert.equal(
+    channelView.text.includes("private-box secret"),
+    false,
+    "the Channel page shows no private-box content",
+  );
+  assert.deepEqual(
+    channelView.bodies,
+    channelApiMessages.map(({ body }) => body),
+    "the Channel page shows exactly the Channel's own messages",
+  );
+  for (const runId of directRunIds) {
+    assert.equal(
+      channelView.runIds.includes(runId),
+      false,
+      "a private-box run is not listed on the Channel",
+    );
+  }
+  await waitForBrowserValue(browser, `${stateText} === "空闲"`, {
+    description: "idle after the private-box turn",
+    timeoutMs: 30_000,
+  });
+
+  // --- 5d. Result unknown: the response of a committed post is dropped. ---
+  const lostBody = "FIXTURE lost response probe [fake:final]";
+  const lostRequests = [];
+  await intercept(
+    [{ requestStage: "Response", urlPattern: "*/v3/client/messages/post" }],
+    async (params) => {
+      lostRequests.push(JSON.parse(params.request.postData ?? "{}"));
+      await browser.command(
+        lostRequests.length === 1
+          ? "Fetch.failRequest"
+          : "Fetch.continueRequest",
+        lostRequests.length === 1
+          ? { errorReason: "ConnectionReset", requestId: params.requestId }
+          : { requestId: params.requestId },
+      );
+    },
+  );
+  const countBody = async (roomId, body) =>
+    (await listMessages(roomId)).filter((message) => message.body === body)
+      .length;
+  await setValue("#composer-mention", "");
+  await typeInto("#composer-input", lostBody);
+  await pressEnter();
+  await waitForText("#composer-status", "结果未知");
+  assert.equal(
+    await countBody(channelId, lostBody),
+    1,
+    "the server committed the post whose response was lost",
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#composer-unknown").hidden`,
+    ),
+    false,
+  );
+  const unknownText = await textOf("#composer-status");
+  await screenshot("unknown-result-1440x1000.png");
+  const draftWhileUnknown = "FIXTURE draft typed while the result is unknown";
+  await typeInto("#composer-input", draftWhileUnknown);
+  await pressEnter();
+  await waitForText("#composer-status", "上一次操作结果未知");
+  assert.equal(await countBody(channelId, draftWhileUnknown), 0);
+  await click("#composer-retry");
+  await waitForText("#composer-status", "重试核实：原请求已执行");
+  await stopIntercept();
+  assert.equal(
+    await countBody(channelId, lostBody),
+    1,
+    "the retry replayed the committed post instead of posting again",
+  );
+  assert.equal(lostRequests.length, 2);
+  assert.deepEqual(lostRequests[1], lostRequests[0], "identical retry request");
+  assert.equal(
+    await evaluate(browser, `document.querySelector("#composer-input").value`),
+    draftWhileUnknown,
+    "the new draft survives the retried intent's success",
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#composer-unknown").hidden`,
+    ),
+    true,
+  );
+
+  // --- 5e. Delayed response + stale retry: the draft typed meanwhile stays. ---
+  const delayedBody = "FIXTURE delayed original [fake:final]";
+  const editedDraft = "FIXTURE edited while the send was in flight";
+  const delayedRequests = [];
+  let releaseDelayed;
+  const delayedHeld = new Promise((resolvePromise) => {
+    releaseDelayed = resolvePromise;
+  });
+  await intercept(
+    [{ requestStage: "Request", urlPattern: "*/v3/client/messages/post" }],
+    async (params) => {
+      delayedRequests.push(JSON.parse(params.request.postData ?? "{}"));
+      if (delayedRequests.length === 1) {
+        releaseDelayed(params.requestId);
+        return;
+      }
+      await browser.command("Fetch.continueRequest", {
+        requestId: params.requestId,
+      });
+    },
+  );
+  await typeInto("#composer-input", delayedBody);
+  await pressEnter();
+  const heldPost = await delayedHeld;
+  await client.request("message.post", {
+    basedOnRoomSeq: await head(channelId),
+    body: "FIXTURE concurrent write while a send is held [fake:final]",
+    idempotencyKey: "console-gate-concurrent-write",
+    recipients: [],
+    roomId: channelId,
+  });
+  await typeInto("#composer-input", editedDraft);
+  await browser.command("Fetch.continueRequest", { requestId: heldPost });
+  await waitForText("#composer-status", "已发送");
+  await stopIntercept();
+  assert.ok(
+    delayedRequests.length >= 2,
+    `the stale refusal was retried (${String(delayedRequests.length)} requests)`,
+  );
+  for (const request of delayedRequests) {
+    assert.equal(request.idempotencyKey, delayedRequests[0].idempotencyKey);
+    assert.equal(request.body, delayedBody);
+  }
+  assert.equal(await countBody(channelId, delayedBody), 1);
+  assert.equal(await countBody(channelId, editedDraft), 0);
+  assert.equal(
+    await evaluate(browser, `document.querySelector("#composer-input").value`),
+    editedDraft,
+    "a draft edited during the delayed send is not cleared",
+  );
+  await setValue("#composer-input", "");
+  await waitForBrowserValue(browser, `${stateText} === "空闲"`, {
+    description: "idle after the unknown-result probes",
+    timeoutMs: 60_000,
+  });
+
   // --- 6. Shift+Enter inserts a newline; IME confirmation never sends. ---
   const countBefore = (await listMessages(channelId)).length;
   await setValue("#composer-mention", "");
@@ -582,6 +959,31 @@ if (args.join(" ") === "debug models --bundled") {
     browser,
     `document.querySelector("#settings-wakeChainLimit") !== null`,
     { description: "settings form" },
+  );
+  // Watchdog thresholds apply to running work at once; limits do not.
+  const scopeText = {
+    future: await textOf("#settings-scope-future"),
+    immediate: await textOf("#settings-scope-immediate"),
+  };
+  assert.match(scopeText.future, /只影响之后的调度/u);
+  assert.match(scopeText.immediate, /立即适用于正在运行的工作/u);
+  assert.match(scopeText.immediate, /终止/u);
+  assert.match(scopeText.immediate, /续接/u);
+  assert.deepEqual(
+    await evaluate(
+      browser,
+      `[...document.querySelectorAll('#settings-fields [data-scope="immediate"] input')].map((node) => node.id)`,
+    ),
+    [
+      "settings-noProgressWarnMinutes",
+      "settings-queuedStallTerminateMinutes",
+      "settings-maxRunMinutes",
+    ],
+  );
+  assert.equal(
+    (await textOf("#console-main")).includes("不会被中断"),
+    false,
+    "no blanket promise that running work is never interrupted",
   );
   const settingsBefore = await client.request("runtime.settings.read", {});
   const newLimit = settingsBefore.wakeGuard.instanceChainLimit === 7 ? 6 : 7;
@@ -702,6 +1104,74 @@ if (args.join(" ") === "debug models --bundled") {
   await waitForText("#sos-state", "运行中（已恢复）");
   await screenshot("channel-actions-1440x1000.png");
 
+  // --- 11b. Result unknown for an instantiation: retry, one instance. ---
+  const instancesOfRole = async () =>
+    (await client.request("role.list", { controlRoomId })).instances.filter(
+      ({ channelId: id, roleId }) => id === channelId && roleId === role.roleId,
+    ).length;
+  const instancesBefore = await instancesOfRole();
+  const instantiateRequests = [];
+  await intercept(
+    [{ requestStage: "Response", urlPattern: "*/v3/client/roles/instantiate" }],
+    async (params) => {
+      instantiateRequests.push(JSON.parse(params.request.postData ?? "{}"));
+      await browser.command(
+        instantiateRequests.length === 1
+          ? "Fetch.failRequest"
+          : "Fetch.continueRequest",
+        instantiateRequests.length === 1
+          ? { errorReason: "ConnectionReset", requestId: params.requestId }
+          : { requestId: params.requestId },
+      );
+    },
+  );
+  await setValue("#instantiate-role", role.roleId);
+  await click("#instantiate-submit");
+  await waitForText("#instantiate-status", "结果未知");
+  assert.equal(await instancesOfRole(), instancesBefore + 1);
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#instantiate-submit").disabled`,
+    ),
+    true,
+    "no new instantiation while the last result is unknown",
+  );
+  await click("#instantiate-retry");
+  await waitForText("#instantiate-status", "重试核实：原请求已执行");
+  await stopIntercept();
+  assert.equal(
+    await instancesOfRole(),
+    instancesBefore + 1,
+    "the retried instantiation created exactly one instance",
+  );
+  assert.equal(instantiateRequests.length, 2);
+  assert.deepEqual(instantiateRequests[1], instantiateRequests[0]);
+
+  // --- 11c. An invalid percent-encoding in the hash is an invalid route. ---
+  await navigateHash("#/channel/%E0%A4%A");
+  await waitForText("#invalid-route", "无效路由");
+  assert.deepEqual(browserErrors, [], "the invalid route threw nothing");
+
+  // --- 11d. Symlinks in the console root are refused with 404. ---
+  const symlinkProbes = await evaluate(
+    browser,
+    `Promise.all(${JSON.stringify([
+      "/_rah/console/linked-secret.txt",
+      "/_rah/console/linked-directory/leak.js",
+      "/_rah/console/linked-directory/some-route",
+      "/_rah/console/assets/linked-assets/leak.js",
+    ])}.map(async (path) => {
+      const response = await fetch(path);
+      return { body: await response.text(), path, status: response.status };
+    }))`,
+  );
+  for (const probe of symlinkProbes) {
+    assert.equal(probe.status, 404, probe.path);
+    assert.doesNotMatch(probe.body, /FIXTURE outside/u, probe.path);
+    assert.doesNotMatch(probe.body, /console-root/u, `${probe.path} no SPA`);
+  }
+
   // --- 12. A cross-origin write is refused by the gateway. ---
   const foreign = await fetch(`${origin}/v3/client/rooms/list`, {
     body: JSON.stringify({ workspaceId: workspace.workspaceId }),
@@ -798,7 +1268,14 @@ if (args.join(" ") === "debug models --bundled") {
     "/v3/client/rooms/create",
     "/v3/client/rooms/members/remove",
     "/v3/client/runtime-settings/update",
+    // Stale refusals and the deliberately dropped responses above.
+    "/v3/client/messages/post",
+    "/v3/client/roles/instantiate",
+    // Symlink probes (404).
+    "/_rah/console/linked-",
+    "/_rah/console/assets/linked-",
   ];
+  assert.deepEqual(interceptErrors, [], "interception commands succeeded");
   for (const url of networkErrors) {
     assert.ok(
       expectedFailures.some((path) => String(url).includes(path)),
@@ -820,8 +1297,18 @@ if (args.join(" ") === "debug models --bundled") {
       {
         apiStates,
         browser: chromeExecutable,
+        channelRun: channelRun.rows,
         conflictText,
+        createStaleRequests,
+        delayedRequests: delayedRequests.length,
+        directRoom: directId,
         expectedRefusedRequests: networkErrors.length,
+        scopeText,
+        sosUnknownText,
+        symlinkProbes: symlinkProbes.map(
+          ({ path, status }) => `${path} ${String(status)}`,
+        ),
+        unknownText,
         fakeCodexModes: modes,
         fixture: "temporary HOME/RAH_DATA_HOME, fake codex, random port",
         hostRefusalText,
@@ -973,6 +1460,93 @@ async function screenshot(name) {
   screenshots.push(path);
 }
 
+/**
+ * The open run-detail panel shows exactly what `agent.run.usage.get` returns:
+ * formatted numbers, and "未知" (never 0) for every null the API reports.
+ */
+async function checkRunDetail(client, agentId, runAttemptId) {
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector("#run-detail .run-detail-title")?.getAttribute("data-run-attempt-id") === ${JSON.stringify(runAttemptId)} && document.querySelectorAll("#run-detail [data-field]").length > 0`,
+    { description: `run detail for ${runAttemptId}`, timeoutMs: 20_000 },
+  );
+  const raw = await client.request("agent.run.usage.get", {
+    agentId,
+    runAttemptId,
+  });
+  const view = await evaluate(
+    browser,
+    `({
+      generations: document.querySelectorAll("#run-detail .run-generations li").length,
+      rows: Object.fromEntries([...document.querySelectorAll("#run-detail [data-field]")].map((node) => [node.getAttribute("data-field"), node.querySelector(".field-value").textContent])),
+    })`,
+  );
+  const count = (value) =>
+    value === null ? "未知" : value.toLocaleString("en-US");
+  const total = (value) =>
+    value === null
+      ? "未知"
+      : `${count(value)}${raw.completeness === "partial" ? "（部分）" : ""}`;
+  const expected = {
+    推理token: total(raw.totals.reasoningOutputTokens),
+    生成次数: total(raw.totals.generations),
+    缓存输入token: total(raw.totals.cachedInputTokens),
+    输入token: total(raw.totals.inputTokens),
+    输出token: total(raw.totals.outputTokens),
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    const label = key.replace(/token$/u, " token");
+    assert.equal(view.rows[label], value, `${label} matches the API`);
+  }
+  const context = [...raw.generations]
+    .reverse()
+    .find(
+      ({ contextUsedTokens, contextWindow }) =>
+        contextUsedTokens !== null || contextWindow !== null,
+    );
+  assert.equal(
+    view.rows["上下文占用"],
+    context === undefined
+      ? "未知"
+      : `${count(context.contextUsedTokens)} / ${count(context.contextWindow)}`,
+  );
+  if (raw.execution === undefined) assert.equal(view.rows["执行方式"], "未知");
+  else if (raw.execution === null) {
+    assert.equal(view.rows["执行方式"], "未知（按轮进程或无记录）");
+  } else {
+    assert.ok(
+      view.rows["执行方式"].startsWith(
+        raw.execution.mode === "warm" ? "热" : "冷",
+      ),
+    );
+  }
+  const resume = [raw.sessionResumeMs, raw.execution?.sessionResumeMs].find(
+    (value) => typeof value === "number",
+  );
+  if (resume !== undefined) {
+    assert.equal(view.rows["session 恢复耗时"], `${String(resume)} ms`);
+  } else {
+    assert.ok(view.rows["session 恢复耗时"].startsWith("未知"));
+  }
+  if (raw.finalInterrupt === undefined) {
+    assert.equal(view.rows["final 收尾"], "未知");
+  } else if (raw.finalInterrupt === null) {
+    assert.equal(view.rows["final 收尾"], "本轮没有 final 回复");
+  } else {
+    assert.ok(
+      view.rows["final 收尾"].includes(
+        `#${String(raw.finalInterrupt.committedRoomSeq)}`,
+      ),
+    );
+  }
+  if (raw.cliCosts === undefined || raw.cliCosts.length === 0) {
+    assert.ok(view.rows["CLI 自报费用"].startsWith("未知"));
+  }
+  assert.equal(view.generations, raw.generations.length);
+  // Every null the API reports was asserted above to read "未知", never 0.
+  return { raw, rows: view.rows };
+}
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
@@ -988,7 +1562,7 @@ async function startWorkbench() {
         ...process.env,
         HOME: fakeHome,
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
-        RAH_CONSOLE_STATIC_DIRECTORY: consoleDirectory,
+        RAH_CONSOLE_STATIC_DIRECTORY: consoleCopy,
         RAH_DATA_HOME: dataHome,
         RAH_WEB_PORT: String(await availablePort()),
         RAH_WORKSPACE_CWD: workspaceCwd,

@@ -430,3 +430,46 @@ button:disabled {
     max-height: none;
   }
 }
+
+.intent-unknown {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--warn-line);
+  background: var(--warn-bg);
+}
+
+.settings-immediate {
+  border-left: 3px solid var(--warn-line);
+  padding-left: 8px;
+}
+
+.run-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.run-open {
+  max-width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.run-generations,
+.run-gaps,
+.run-cleanups {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+
+.run-detail-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.instance-actions a {
+  align-self: center;
+}

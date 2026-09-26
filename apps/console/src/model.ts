@@ -10,6 +10,7 @@ import type {
   Room,
   RoomAgentActivity,
   RoomAgentActivityState,
+  ClientRunAttemptUsageGetResponse,
   RoleListResponse,
   RuntimeSettings,
   UsageSummaryResponse,
@@ -262,12 +263,16 @@ export type InstanceStatus = {
   /** Still a Channel member (listed by the Room activity projection). */
   member: boolean;
   privateBoxLabel: string;
+  /** The instance's private box, when a Human has opened it. */
+  privateBoxRoomId: string | null;
   /** Rooms (this Channel, the private box) holding queued Activations. */
   queuedCount: number;
   queuedLabel: string;
   recentProblems: ProblemRecord[];
   roleId: string;
   roleName: string;
+  /** This Room's recent RunAttempts (from the recent activity page). */
+  runs: RunAttemptEntry[];
   state: RoomAgentActivityState | undefined;
   stateLabel: string;
   updatedAt: string | null;
@@ -362,11 +367,13 @@ export function assembleInstanceStatuses(input: {
             : box.active
               ? "私聊可用"
               : "私聊已停用",
+        privateBoxRoomId: boxRoom?.roomId ?? null,
         queuedCount: member ? queued.count : 0,
         queuedLabel: member ? queued.label : "—",
         recentProblems: recentProblems(records),
         roleId: instance.roleId,
         roleName: role?.configuration.displayName ?? instance.roleId,
+        runs: runAttemptsInRoom(records, input.roomId).slice(0, 5),
         state: current?.state,
         stateLabel: member ? stateLabel(current?.state) : "已移出频道",
         updatedAt: current?.updatedAt ?? null,
@@ -565,4 +572,200 @@ export function settingsRows(
     },
     { label: "单次运行时长上限", value: minutes(settings.watchdog.maxRunMs) },
   ];
+}
+
+export type RunAttemptEntry = {
+  lastEventType: string;
+  runAttemptId: string;
+  updatedAt: string;
+};
+
+/**
+ * RunAttempts of one Room (a Channel or a private box), from the instance's
+ * run facts, newest first. A run of another Room never shows here, so the
+ * Channel view lists no private-box run and vice versa.
+ */
+export function runAttemptsInRoom(
+  records: readonly AgentActivityRecord[],
+  roomId: string,
+): RunAttemptEntry[] {
+  const latest = new Map<string, RunAttemptEntry>();
+  for (const record of records) {
+    if (
+      record.source !== "room_event" ||
+      record.aggregateType !== "run_attempt" ||
+      record.roomId !== roomId
+    ) {
+      continue;
+    }
+    const known = latest.get(record.aggregateId);
+    if (known === undefined || record.createdAt > known.updatedAt) {
+      latest.set(record.aggregateId, {
+        lastEventType: record.eventType,
+        runAttemptId: record.aggregateId,
+        updatedAt: record.createdAt,
+      });
+    }
+  }
+  return [...latest.values()].sort((a, b) =>
+    b.updatedAt.localeCompare(a.updatedAt),
+  );
+}
+
+export type RunUsageDetail = {
+  gaps: string[];
+  generations: Array<{
+    cachedInputTokens: string;
+    context: string;
+    inputTokens: string;
+    observedAt: string;
+    outputTokens: string;
+    provider: string;
+    reasoningOutputTokens: string;
+    responseId: string;
+  }>;
+  processCleanups: string[];
+  rows: Array<{ label: string; value: string }>;
+  truncated: boolean;
+};
+
+const yesNoUnknown = (value: boolean | "unknown"): string =>
+  value === "unknown" ? UNKNOWN : value ? "是" : "否";
+
+function contextText(
+  used: number | null | undefined,
+  window: number | null | undefined,
+): string {
+  if ((used ?? null) === null && (window ?? null) === null) return UNKNOWN;
+  return `${formatCount(used)} / ${formatCount(window)}`;
+}
+
+/**
+ * RunAttempt drill-down (`agent.run.usage.get`). Values are copied from the
+ * response; anything the CLI or Host did not record is "未知", never 0.
+ * Context occupancy is reported natively only by Codex today.
+ */
+export function runUsageDetail(
+  response: ClientRunAttemptUsageGetResponse,
+): RunUsageDetail {
+  const execution = response.execution;
+  const executionText =
+    execution === undefined
+      ? UNKNOWN
+      : execution === null
+        ? `${UNKNOWN}（按轮进程或无记录）`
+        : `${execution.mode === "warm" ? "热（复用常驻进程）" : "冷（新启动常驻进程）"}${
+            execution.lateFrameCount > 0
+              ? `，迟到帧 ${String(execution.lateFrameCount)}（未计入）`
+              : ""
+          }`;
+  const measured = [response.sessionResumeMs, execution?.sessionResumeMs].find(
+    (value): value is number => typeof value === "number",
+  );
+  const resumeText =
+    measured !== undefined
+      ? `${String(measured)} ms`
+      : response.sessionResumeMs === null || execution?.sessionResumeMs === null
+        ? `${UNKNOWN}（未恢复或未测量）`
+        : UNKNOWN;
+  const final = response.finalInterrupt;
+  const finalText =
+    final === undefined
+      ? UNKNOWN
+      : final === null
+        ? "本轮没有 final 回复"
+        : `final 帖 #${String(final.committedRoomSeq)}；已请求：${final.requested ? "是" : "否"}；已接受：${yesNoUnknown(final.accepted)}；已终止：${yesNoUnknown(final.terminal)}；抢占后续生成：${yesNoUnknown(final.preemptedFollowUp)}`;
+  const partial = response.completeness === "partial";
+  const tokens = (value: number | null) =>
+    value === null
+      ? UNKNOWN
+      : partial
+        ? `${formatCount(value)}（部分）`
+        : formatCount(value);
+  const lastContext = [...response.generations]
+    .reverse()
+    .find(
+      ({ contextUsedTokens, contextWindow }) =>
+        contextUsedTokens !== null || contextWindow !== null,
+    );
+  const costs = response.cliCosts;
+  let costText: string;
+  if (costs === undefined) costText = UNKNOWN;
+  else if (costs.length === 0) costText = `${UNKNOWN}（CLI 未报告）`;
+  else {
+    const known = costs.filter(
+      (cost): cost is typeof cost & { costUsd: number } =>
+        cost.costUsd !== null,
+    );
+    const unknownCount = costs.length - known.length;
+    const sum = known.reduce((total, cost) => total + cost.costUsd, 0);
+    costText =
+      known.length === 0
+        ? `${UNKNOWN}（CLI 自报 ${String(costs.length)} 条，增量均未知）`
+        : unknownCount > 0
+          ? `≥ ${formatUsd(sum)}（部分：${String(unknownCount)} 条未知，CLI 自报）`
+          : `${formatUsd(sum)}（CLI 自报）`;
+  }
+  return {
+    gaps: response.gaps.map(
+      (gap) => `${gap.reason} × ${String(gap.occurrences)}（${gap.provider}）`,
+    ),
+    generations: response.generations.map((entry) => ({
+      cachedInputTokens: formatCount(entry.cachedInputTokens),
+      context: contextText(entry.contextUsedTokens, entry.contextWindow),
+      inputTokens: formatCount(entry.inputTokens),
+      observedAt: entry.observedAt,
+      outputTokens: formatCount(entry.outputTokens),
+      provider: entry.provider,
+      reasoningOutputTokens: formatCount(entry.reasoningOutputTokens),
+      responseId: entry.responseId,
+    })),
+    processCleanups: response.processCleanups.map(
+      (cleanup) =>
+        `${cleanup.trigger}：发现 ${String(cleanup.foundCount)}，终止 ${String(cleanup.killedCount)}，剩余 ${String(cleanup.remainingCount)}${
+          cleanup.unknownCount > 0
+            ? `，无法确认 ${String(cleanup.unknownCount)}`
+            : ""
+        }${cleanup.blocking ? "（阻塞新运行）" : ""}${
+          cleanup.error === undefined ? "" : `，错误：${cleanup.error}`
+        }`,
+    ),
+    rows: [
+      { label: "执行方式", value: executionText },
+      { label: "session 恢复耗时", value: resumeText },
+      { label: "final 收尾", value: finalText },
+      {
+        label: "用量完整性",
+        value:
+          response.completeness === "complete"
+            ? "完整"
+            : partial
+              ? "部分（有采集缺口）"
+              : `无记录（${UNKNOWN}）`,
+      },
+      { label: "生成次数", value: tokens(response.totals.generations) },
+      { label: "输入 token", value: tokens(response.totals.inputTokens) },
+      {
+        label: "缓存输入 token",
+        value: tokens(response.totals.cachedInputTokens),
+      },
+      { label: "输出 token", value: tokens(response.totals.outputTokens) },
+      {
+        label: "推理 token",
+        value: tokens(response.totals.reasoningOutputTokens),
+      },
+      {
+        label: "上下文占用",
+        value:
+          lastContext === undefined
+            ? UNKNOWN
+            : contextText(
+                lastContext.contextUsedTokens,
+                lastContext.contextWindow,
+              ),
+      },
+      { label: "CLI 自报费用", value: costText },
+    ],
+    truncated: response.truncated,
+  };
 }
