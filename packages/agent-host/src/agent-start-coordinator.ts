@@ -223,7 +223,13 @@ export class AgentStartCoordinator {
         `Agent start invariant violation after ${context}: activeStarts is negative`,
       );
     }
-    if (this.activeStarts > this.maxConcurrentStarts) {
+    // Only a claim can break the cap: a runtime reduction may leave already
+    // admitted starts above the new value until they finish (see
+    // `AgentStartGate.updateSettings`), while `getPumpState` admits nothing new.
+    if (
+      context === "claimStartSlot" &&
+      this.activeStarts > this.maxConcurrentStarts
+    ) {
       throw new Error(
         `Agent start invariant violation after ${context}: activeStarts exceeds maxConcurrentStarts`,
       );
@@ -340,6 +346,35 @@ export class AgentStartGate {
 
   snapshot(): AgentStartSnapshot {
     return this.coordinator.snapshot();
+  }
+
+  /**
+   * Runtime settings change (daemon concurrency settings). Applies to the next
+   * admission: raising the cap admits queued starts now; lowering it never
+   * interrupts starts already admitted.
+   */
+  updateSettings(settings: Partial<AgentStartSchedulerSettings>): void {
+    const { maxConcurrentStarts, minStartIntervalMs } = settings;
+    if (
+      maxConcurrentStarts !== undefined &&
+      (!Number.isSafeInteger(maxConcurrentStarts) || maxConcurrentStarts < 1)
+    )
+      throw new Error("maxConcurrentStarts must be a positive integer");
+    if (
+      minStartIntervalMs !== undefined &&
+      (!Number.isSafeInteger(minStartIntervalMs) || minStartIntervalMs < 0)
+    )
+      throw new Error("minStartIntervalMs must be a non-negative integer");
+    if (maxConcurrentStarts !== undefined)
+      this.coordinator.maxConcurrentStarts = maxConcurrentStarts;
+    if (minStartIntervalMs !== undefined)
+      this.coordinator.minStartIntervalMs = minStartIntervalMs;
+    // One pump admits one start; a raised cap may free several slots at once.
+    for (let guard = this.coordinator.queue.length; guard >= 0; guard -= 1) {
+      const kind = this.coordinator.getPumpState(this.#now()).kind;
+      if (kind !== "blocked") this.pump();
+      if (kind !== "ready") break;
+    }
   }
 
   /**

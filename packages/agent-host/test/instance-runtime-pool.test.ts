@@ -773,3 +773,29 @@ async function waitFor<T>(
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
 }
+
+test("raising the busy-turn cap at runtime admits a turn waiting for a slot", async () => {
+  const state = setup({ policy: { admissionWaitMs: 5_000, maxBusyTurns: 1 } });
+  try {
+    await state.acquire("", {
+      participantId: "participant-2",
+      runAttemptId: "run-a",
+    });
+    let admitted = false;
+    const waiting = state
+      .acquire("", { runAttemptId: "run-1" })
+      .then((value) => {
+        admitted = true;
+        return value;
+      });
+    await pause(50);
+    assert.equal(admitted, false, "cap 1 holds the second turn");
+    state.pool.setMaxBusyTurns(2);
+    await waiting;
+    assert.equal(admitted, true);
+    assert.equal(state.pool.policy.maxBusyTurns, 2);
+    assert.throws(() => state.pool.setMaxBusyTurns(0), /maxBusyTurns/u);
+  } finally {
+    await state.cleanup();
+  }
+});

@@ -462,6 +462,27 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
        该测试首次运行即通过（这是验收，不是行为修复）。为确认断言有效，临时去掉生产运行时键里的会话代数：reset 断言按预期失败，改动随后已还原。
    - 验收边界更新：第 2 条所说“热路径 harness 仍用旧式 Agent”的缺口，现在由 Codex 的 Role 热路径组合测试补上。仍然不证明真实 Codex 协议，也不证明 Claude/Kimi/OpenCode 的 Role 热路径。同一 session 会记得私聊内容，这不是内容防泄漏沙箱；现在能承诺的只有工具与 API 的权限和投递范围。“忙时移除实例被拒”仍是暂时限制，不算生命周期验收通过：控制台提供移除操作之前，必须补上安全停止/取消，或者明确展示拒绝原因和清理路径。控制台仍不存在。
 
+### 三十六、同一 CLI 多实例并发
+
+依据 `~/.loom/reviews/2026-09-26-scenario-capability-audit.md` 的并发发现（合同 §3“不同实例并行”）与负责人随后的裁定（两级上限、运行中可配置、启动限流）。先写失败测试再最小实现；没有运行付费 CLI，没有重启服务，没有改前端。
+
+1. 根因：本地服务的 daemon 配置每次启动由 `local-workbench-bootstrap.ts#buildConfig` 在内存中生成，每个 CLI offer 写死 `maxConcurrent: 1`，Host 上限写成 CLI 种数。同一 CLI 的所有实例共用一个 offer，Kernel 规划器按 offer 满额判 `capacity_exhausted`，所以不同 Role、不同频道的同 CLI 实例只能串行。规划器本身（`lane_busy` 保证每实例单 lane，满额只挂起不失败）、`MultiLaneAgentHost` 多 worker、常驻池（按实例的 busy 槽与 LRU）、清扫（按 runtime id 标记）都已支持并发 >1。`config.ts` 的 `z.literal(1)` 只属于旧 v3 单运行时配置，v3 在 `daemon-application.ts` 固定单 lane，保持不变；本地服务用的 v4 早已允许 1–64。
+2. 两级上限与启动限流（全部由 Human 运行中修改）：
+   - 全局：同时运行的实例数，Kernel Host 上限；默认 20。
+   - 每家 CLI：该 CLI（RuntimeProfile）的实例数，Kernel RuntimeProfile 上限；默认 4。
+   - 启动闸门：同时启动数与启动间隔，默认 5 个、500 ms（沿用 Raft 默认与既有 `RAH_DAEMON_*` 环境变量作为缺省来源）。
+   - offer 本身改为公布配置上限 64（`DaemonConcurrencySchema` 最大值），不再承担调度上限；任一上限达到时新工作持久挂起（queued），不失败。
+3. 默认值依据：全局 20 = 常驻池忙时硬上限 `maxBusyTurns`，规划器在同一处挂起多余工作，而不是让常驻池等待后按可恢复失败重试；全局值修改时常驻池忙时上限随之同步（`InstanceRuntimePool.setMaxBusyTurns`，调大会唤醒等待中的轮次）。每家 CLI 默认 4 没有依据：Claude Code、Codex、Kimi、OpenCode 都没有公开的同时 session 上限（未联网核实），取保守值，需要时由 Human 调大。【无依据，保守值】
+4. 运行中配置：新增 Human 鉴权的 `/v3/client/runtime-concurrency/read|update`（protocol `runtime-concurrency-settings.ts`；带 `expectedRevision`，未配置的 RuntimeProfile 与越界值被拒）。唯一所有者是 daemon 的 `RuntimeConcurrencySettings`，持久化到数据目录 `runtime-concurrency.json`（0600，原子替换），重启后保留；没配置过的项取默认值。`daemon-runtime-concurrency.ts` 在启动时和每次修改后应用：Kernel `placementCapacity.update`（新的 `PlacementCapacityLimits` 所有者，从 `room-kernel.ts` 移出）、`MultiLaneAgentHost.setCapacity`（调大立即增加 lane；调小不停 lane，靠 Kernel Host 上限约束）、`AgentStartGate.updateSettings`、常驻池。修改只影响之后的调度，运行中的不受影响；调小启动上限时已放行的启动继续，直到低于新值才放行下一个（启动闸门的上限不变量改为只在占用槽位时检查）。client-sdk 与前端没有加入口（阶段 4）。
+5. 正式库迁移：不直接改 room.db。下次启动时 offer 发布器以 64 重新发布同一 offer ID，`maxConcurrent` 属于能力摘要，生成一条新的不可变 observation；上限不变的重复发布只续租。设置文件不存在时用默认值，第一次修改才写入。
+6. 测试：
+   - `local-workbench-bootstrap.test.ts`：offer 为 64、Host 默认 20（修复前为 1，按预期失败）；`maxConcurrentRuns` 越界被拒。
+   - `offer-concurrency-republish.test.ts`（Kernel，Role 实例）：旧 observation 为 1 时只放行一个，以更大值重新发布后跨频道并行；每家 CLI 上限和 Host 上限各自触发排队；运行中调大放行、调小不影响已运行、只约束新工作。
+   - `same-cli-instance-concurrency.test.ts`（组合 daemon + Fake CLI，结论读 room.db）：三个实例共用一个 offer，两个同时运行、第三个 queued 无失败、忙碌实例追加消息不开第二条 lane；经设置 API：每家上限 1 → 只跑 1 个，调到 3 → 被 Host 上限 2 挡住，Host 调到 3 → 新增 lane 放行第三个，Host 调到 1 → 已运行的 3 个不受影响、下一轮只跑 1 个；未鉴权 401；设置文件内容核对。关闭应用逻辑或 lane 扩容时该测试失败（已验证）。
+   - `runtime-concurrency-settings.test.ts`：默认值、修订号冲突、未知 RuntimeProfile、越界、0600 持久化与重启后读回。
+   - `agent-start-coordinator.test.ts`、`instance-runtime-pool.test.ts`：启动上限运行中调大立即放行、调小不打断；常驻池调大忙时上限放行等待中的轮次。
+7. 风险与未解决：全局 20 意味着默认 20 个 lane worker，每次唤醒提示最多 20 次认领事务（此前生产为 4 个）；lane 只增不减。冷路径（Kimi、默认的 Claude）进程数只受这两级上限与逐 run 资源上限约束。多个实例在同一共享仓库目录同时写入的问题仍在（没有每实例 worktree，见审计 P1）。每家 CLI 默认值无依据。效率门禁 `gate-daemon.mjs` 也走新默认，单实例门禁行为不变。本地服务尚未重启，正式库 offer 仍为 1，下次启动才更新。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

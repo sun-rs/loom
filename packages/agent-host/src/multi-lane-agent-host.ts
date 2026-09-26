@@ -34,34 +34,63 @@ export type MultiLaneAgentHostOptions = Omit<
 };
 
 export class MultiLaneAgentHost {
-  readonly capacity: number;
+  #capacity: number;
   readonly #host: AuthenticatedHostContext;
   readonly #kernel: NonNullable<AgentHostOptions["kernel"]>;
   readonly #workers: AgentHost[];
   readonly #startGate: AgentStartGate;
   readonly #processHygiene: AgentHostOptions["processHygiene"];
   readonly #instanceRuntimePool: AgentHostOptions["instanceRuntimePool"];
+  readonly #createWorker: () => AgentHost;
+  #launchWorker: ((worker: AgentHost) => void) | undefined;
   #running = false;
 
   constructor(options: MultiLaneAgentHostOptions) {
     if (!Number.isInteger(options.capacity) || options.capacity <= 0) {
       throw new Error("capacity must be a positive integer");
     }
-    this.capacity = options.capacity;
+    this.#capacity = options.capacity;
     this.#host = options.host;
     this.#kernel = options.kernel;
     this.#startGate = new AgentStartGate(options.runtimeStartScheduler ?? {});
     this.#processHygiene = options.processHygiene;
     this.#instanceRuntimePool = options.instanceRuntimePool;
-    this.#workers = Array.from(
-      { length: options.capacity },
-      () =>
-        new AgentHost({
-          ...options,
-          manageHostLifecycle: false,
-          startGate: this.#startGate,
-        }),
+    this.#createWorker = () =>
+      new AgentHost({
+        ...options,
+        manageHostLifecycle: false,
+        startGate: this.#startGate,
+      });
+    this.#workers = Array.from({ length: options.capacity }, () =>
+      this.#createWorker(),
     );
+  }
+
+  get capacity(): number {
+    return this.#capacity;
+  }
+
+  /**
+   * Runtime concurrency setting. Raising adds lanes immediately, even while
+   * running; lowering keeps the existing lanes (they idle), because the Kernel
+   * Host cap already bounds how many placements exist and a lane is never
+   * stopped under a running Activation.
+   */
+  setCapacity(capacity: number): void {
+    if (!Number.isInteger(capacity) || capacity <= 0) {
+      throw new Error("capacity must be a positive integer");
+    }
+    this.#capacity = capacity;
+    while (this.#workers.length < capacity) {
+      const worker = this.#createWorker();
+      this.#workers.push(worker);
+      this.#launchWorker?.(worker);
+    }
+  }
+
+  /** Runtime start-rate setting; applies to the next start admission. */
+  updateStartScheduler(settings: Partial<AgentStartSchedulerSettings>): void {
+    this.#startGate.updateSettings(settings);
   }
 
   async run(input: { signal: AbortSignal }): Promise<void> {
@@ -99,20 +128,30 @@ export class MultiLaneAgentHost {
       }
       if (this.#instanceRuntimePool !== undefined)
         await startInstanceRuntimes(this.#instanceRuntimePool);
-      const outcomes = await Promise.allSettled(
-        this.#workers.map(async (worker) => {
-          try {
-            await worker.run({ signal: shutdown.signal });
-          } catch (error) {
-            shutdown.abort(error);
-            throw error;
-          }
-        }),
-      );
+      const runs: Promise<void>[] = [];
+      this.#launchWorker = (worker) => {
+        runs.push(
+          (async () => {
+            try {
+              await worker.run({ signal: shutdown.signal });
+            } catch (error) {
+              shutdown.abort(error);
+              throw error;
+            }
+          })(),
+        );
+      };
+      for (const worker of this.#workers) this.#launchWorker(worker);
+      // Lanes added by setCapacity while running join the same settlement.
+      let outcomes: PromiseSettledResult<void>[] = [];
+      while (outcomes.length < runs.length)
+        outcomes = await Promise.allSettled([...runs]);
+      this.#launchWorker = undefined;
       failures = outcomes.flatMap((outcome) =>
         outcome.status === "rejected" ? [outcome.reason] : [],
       );
     } finally {
+      this.#launchWorker = undefined;
       janitorStop.abort();
       await janitorLoop;
       await stopInstanceRuntimes(this.#instanceRuntimePool);

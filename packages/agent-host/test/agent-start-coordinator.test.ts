@@ -158,3 +158,55 @@ test("cancelling the gate rejects everything still queued", async () => {
   held.resolve();
   await running;
 });
+
+test("start limits change at runtime: raising admits queued starts, lowering never interrupts active ones", async () => {
+  const gate = new AgentStartGate({
+    maxConcurrentStarts: 1,
+    minStartIntervalMs: 0,
+  });
+  const held = [deferred(), deferred(), deferred()];
+  const started: string[] = [];
+  const runs = held.map((hold, index) =>
+    gate.runStart(`agent-${index}`, async () => {
+      started.push(`agent-${index}`);
+      await hold.promise;
+    }),
+  );
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(started, ["agent-0"]);
+
+  gate.updateSettings({ maxConcurrentStarts: 3 });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(started, ["agent-0", "agent-1", "agent-2"]);
+
+  // Lowering below the active count keeps the three admitted starts running.
+  gate.updateSettings({ maxConcurrentStarts: 1, minStartIntervalMs: 25 });
+  assert.equal(gate.snapshot().activeStarts, 3);
+  assert.equal(gate.snapshot().maxConcurrentStarts, 1);
+  const late = deferred();
+  const lateRun = gate.runStart("agent-late", async () => {
+    started.push("agent-late");
+    await late.promise;
+  });
+  held[0]?.resolve();
+  held[1]?.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(
+    started.includes("agent-late"),
+    false,
+    "no new start while active starts are at or above the lowered cap",
+  );
+  held[2]?.resolve();
+  late.resolve();
+  await Promise.all([...runs, lateRun]);
+  assert.ok(started.includes("agent-late"));
+
+  assert.throws(
+    () => gate.updateSettings({ maxConcurrentStarts: 0 }),
+    /maxConcurrentStarts/u,
+  );
+  assert.throws(
+    () => gate.updateSettings({ minStartIntervalMs: -1 }),
+    /minStartIntervalMs/u,
+  );
+});

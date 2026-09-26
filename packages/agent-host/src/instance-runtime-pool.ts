@@ -1160,6 +1160,18 @@ export class InstanceRuntimePool {
     this.#busySlots.add(slot);
   }
 
+  /**
+   * Runtime concurrency setting: the busy-turn hard cap follows the daemon's
+   * Host run cap. Raising it wakes turns waiting for a slot; lowering it
+   * never interrupts busy turns.
+   */
+  setMaxBusyTurns(value: number): void {
+    if (!Number.isSafeInteger(value) || value < 1)
+      throw new Error("maxBusyTurns must be a positive integer");
+    this.policy.maxBusyTurns = value;
+    for (const waiter of [...this.#admissionWaiters]) waiter();
+  }
+
   #releaseSlot(slot: string): void {
     if (!this.#busySlots.delete(slot)) return;
     this.#admissionWaiters[0]?.();

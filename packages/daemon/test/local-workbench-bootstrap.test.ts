@@ -7,6 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import {
   buildRuntimeOfferFromProfile,
+  DEFAULT_WARM_RUNTIME_POLICY,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
 import { ProviderSessionStore } from "../../agent-host/src/provider-session-store.ts";
@@ -161,6 +162,58 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
       }),
       /belongs to workspace/u,
     );
+  } finally {
+    rmSync(parent, { force: true, recursive: true });
+  }
+});
+
+test("different instances of one CLI share its offer in parallel up to a configurable Host cap", async () => {
+  const parent = mkdtempSync(
+    join(tmpdir(), "rah-local-workbench-concurrency-"),
+  );
+  const stateDirectory = join(parent, "state");
+  const workspaceCwd = join(parent, "workspace");
+  mkdirSync(workspaceCwd);
+  const spec = fakeRuntimeSpec(workspaceCwd);
+  try {
+    const defaults = await prepareLocalWorkbench({
+      runtimeSpecs: [spec],
+      stateDirectory,
+      workspaceCwd,
+    });
+    // Contract §3: different instances run in parallel. A per-CLI offer of 1
+    // serialized every instance of that CLI across Roles and Channels. The
+    // offer now advertises the config ceiling; the runtime-adjustable Host and
+    // per-CLI caps (daemon concurrency settings) bound scheduling. The Host
+    // default follows the warm pool's hard busy-turn cap, so the planner holds
+    // excess work durably at the same bound instead of the pool failing it.
+    assert.equal(defaults.config.runtimes[0]?.offer.maxConcurrent, 64);
+    assert.equal(
+      defaults.config.host.maxConcurrent,
+      DEFAULT_WARM_RUNTIME_POLICY.maxBusyTurns,
+      "the Host cap bounds all lanes, not the number of installed CLIs",
+    );
+
+    const configured = await prepareLocalWorkbench({
+      maxConcurrentRuns: 3,
+      runtimeSpecs: [spec],
+      stateDirectory,
+      workspaceCwd,
+    });
+    assert.equal(configured.config.runtimes[0]?.offer.maxConcurrent, 64);
+    assert.equal(configured.config.host.maxConcurrent, 3);
+
+    for (const invalid of [0, 1.5, 65]) {
+      await assert.rejects(
+        prepareLocalWorkbench({
+          maxConcurrentRuns: invalid,
+          runtimeSpecs: [spec],
+          stateDirectory,
+          workspaceCwd,
+        }),
+        /concurrency/u,
+      );
+    }
   } finally {
     rmSync(parent, { force: true, recursive: true });
   }

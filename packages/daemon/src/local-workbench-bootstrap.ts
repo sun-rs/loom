@@ -13,6 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { hostname } from "node:os";
 
 import {
+  DEFAULT_WARM_RUNTIME_POLICY,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
@@ -77,6 +78,7 @@ export type PreparedLocalWorkbench = {
 };
 
 export async function prepareLocalWorkbench(input: {
+  maxConcurrentRuns?: number;
   runtimeSpecs: readonly LocalWorkbenchRuntimeSpec[];
   stateDirectory: string;
   workspaceCwd: string;
@@ -84,6 +86,7 @@ export async function prepareLocalWorkbench(input: {
   const stateDirectory = resolve(input.stateDirectory);
   const workspaceCwd = resolve(input.workspaceCwd);
   validateRuntimeSpecs(input.runtimeSpecs, workspaceCwd);
+  const maxConcurrentRuns = validateMaxConcurrentRuns(input.maxConcurrentRuns);
   assertWorkspaceDirectory(workspaceCwd);
 
   const initializedNow = !existsSync(stateDirectory);
@@ -136,6 +139,7 @@ export async function prepareLocalWorkbench(input: {
   });
   return {
     config: buildConfig({
+      maxConcurrentRuns,
       participantIds,
       hostSecretPath,
       metadata,
@@ -364,6 +368,7 @@ async function prepareRuntimeRegistry(input: {
 }
 
 function buildConfig(input: {
+  maxConcurrentRuns: number;
   participantIds: readonly string[];
   hostSecretPath: string;
   metadata: LocalWorkbenchMetadata;
@@ -379,7 +384,7 @@ function buildConfig(input: {
     host: {
       credential: { path: input.hostSecretPath, source: "file" },
       hostId: input.metadata.hostId,
-      maxConcurrent: input.runtimeSpecs.length,
+      maxConcurrent: input.maxConcurrentRuns,
       participantIds: input.participantIds,
     },
     hostStaleAfterMs: 60_000,
@@ -403,7 +408,11 @@ function buildConfig(input: {
       kind: "runtime-profile-registry",
       offer: {
         leaseMs: 120_000,
-        maxConcurrent: 1,
+        // Every instance of this CLI shares one offer. The offer advertises
+        // the Host ceiling; the Human's runtime settings (Host cap, per-CLI
+        // cap) bound scheduling, each instance keeps one lane (`lane_busy`),
+        // and work above a cap is held durably (`capacity_exhausted`).
+        maxConcurrent: LOCAL_OFFER_MAX_CONCURRENT,
         refreshIntervalMs: 30_000,
         runtimeOfferId: input.runtimeOfferIds.get(spec.cliId),
       },
@@ -555,6 +564,30 @@ function assertWorkspaceDirectory(path: string): void {
   if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
     throw new Error(`workspace path ${path} must be a real directory`);
   }
+}
+
+/**
+ * Contract §3: different instances run in parallel, one lane each. This is the
+ * default Host cap (all running instances); the Human changes it, and each
+ * per-CLI cap, at runtime through the daemon concurrency settings. The default
+ * is the warm pool's hard busy-turn cap: the Kernel planner then holds excess
+ * work durably at the same bound where the pool would otherwise make a turn
+ * wait `admissionWaitMs` and fail recoverably.
+ */
+/** The daemon config ceiling (`DaemonConcurrencySchema`), not a default. */
+const LOCAL_OFFER_MAX_CONCURRENT = 64;
+
+export const DEFAULT_LOCAL_MAX_CONCURRENT_RUNS =
+  DEFAULT_WARM_RUNTIME_POLICY.maxBusyTurns;
+
+function validateMaxConcurrentRuns(value: number | undefined): number {
+  if (value === undefined) return DEFAULT_LOCAL_MAX_CONCURRENT_RUNS;
+  if (!Number.isSafeInteger(value) || value < 1 || value > 64) {
+    throw new Error(
+      "local workbench run concurrency must be an integer from 1 to 64",
+    );
+  }
+  return value;
 }
 
 function validateRuntimeSpecs(

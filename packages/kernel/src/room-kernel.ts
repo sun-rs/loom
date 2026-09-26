@@ -208,9 +208,8 @@ import { hostProjectionFromRow } from "./host-projection.ts";
 import { canonicalDigest, canonicalValue } from "./canonical-digest.ts";
 import { persistContextManifest } from "./context-manifest.ts";
 import {
-  assertPositiveCapacityLimit,
-  capacityLimitMap,
   capacityProfileResourceId,
+  PlacementCapacityLimits,
 } from "./capacity-policy.ts";
 import {
   requireHumanTaskManager,
@@ -438,10 +437,7 @@ export class RoomKernel {
   readonly #runtimeOfferClockSkewMs: number;
   readonly #runtimeOfferMaxTtlMs: number;
   readonly #inPlaceWorkspaceSharing: InPlaceWorkspaceSharing;
-  readonly #defaultPlacementMaxConcurrent: number;
-  readonly #hostPlacementLimits: Map<string, number>;
-  readonly #poolPlacementLimits: Map<string, number>;
-  readonly #runtimeProfilePlacementLimits: Map<string, number>;
+  readonly placementCapacity: PlacementCapacityLimits;
   readonly #activationObligations: ActivationObligationService;
   readonly #roomEvents: RoomEventWriter;
   readonly #collaboration: CollaborationService;
@@ -489,28 +485,8 @@ export class RoomKernel {
     this.#inPlaceWorkspaceSharing = options.inPlaceWorkspaceSharing ?? "shared";
     this.#createId =
       options.createId ?? ((prefix) => `${prefix}_${randomUUID()}`);
-    const placementCapacityPolicy = options.placementCapacityPolicy ?? {};
-    this.#defaultPlacementMaxConcurrent =
-      placementCapacityPolicy.defaultMaxConcurrent ?? 1;
-    assertPositiveCapacityLimit(
-      this.#defaultPlacementMaxConcurrent,
-      "placementCapacityPolicy.defaultMaxConcurrent",
-    );
-    this.#hostPlacementLimits = capacityLimitMap(
-      placementCapacityPolicy.hostLimits ?? [],
-      ({ hostId }) => hostId,
-      "Host",
-    );
-    this.#poolPlacementLimits = capacityLimitMap(
-      placementCapacityPolicy.poolLimits ?? [],
-      ({ capacityPoolId }) => capacityPoolId,
-      "capacity pool",
-    );
-    this.#runtimeProfilePlacementLimits = capacityLimitMap(
-      placementCapacityPolicy.runtimeProfileLimits ?? [],
-      ({ hostId, runtimeProfileId }) =>
-        capacityProfileResourceId(hostId, runtimeProfileId),
-      "runtime profile",
+    this.placementCapacity = new PlacementCapacityLimits(
+      options.placementCapacityPolicy ?? {},
     );
     this.#runtimeCertifications = new Map();
     for (const untrustedCertification of options.runtimeCertifications ?? []) {
@@ -5846,10 +5822,7 @@ export class RoomKernel {
       database: this.#database,
       now,
       schedulerVersion,
-      defaultMaxConcurrent: this.#defaultPlacementMaxConcurrent,
-      hostLimits: this.#hostPlacementLimits,
-      poolLimits: this.#poolPlacementLimits,
-      profileLimits: this.#runtimeProfilePlacementLimits,
+      ...this.placementCapacity.plannerLimits(),
       sharing: this.#inPlaceWorkspaceSharing,
       readRuntimeOffer: (row) => this.#runtimeOfferFromRow(row),
       isTrustedOffer: (offer) =>
