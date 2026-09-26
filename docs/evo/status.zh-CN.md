@@ -993,6 +993,16 @@ B. 权限收口
 8. 测试（先失败后通过）：`kernel/test/channel-memory-index.test.ts` 新增 7 项——同一 RunAttempt 重取 present 返回同一快照且只登记第一次、重复回执、置顶变化留到下一轮（先因重取返回新快照失败）；未送达与终止后迟到回执不推进（先因缺列失败）；未经 Host 读取的 `memoryIndexSeq` 不被信任（先因增量被压掉失败）；新建→首轮→进程回收→同 session 续聊不重发（先失败）；读关闭启动→打开且条目无变化时刷新一次（先失败）；超过 30 条非 active 变化列 30 计 2、送达后不重发且 Worker 能列出全部失效项（先失败）；schema 75→76 升级（实现后补）。`application-service/test/channel-memory-api.test.ts` 新增 2 项：HTTP sync/message-check/rooms/read 读关闭不含条目名且游标覆盖该事件（先失败，另以临时去掉 rooms/read 过滤确认该路径被测到）；导入“已选小文件 + 未选超大/不可读文件 + 未知路径 + 超大单选 + whole 超预算 + 错误频道不触碰 Host 目录”（先失败）；原“message-present 返回增量且 seq 校验”一项按新合同改为断言冻结快照不被请求体替换。`agent-host/test/channel-memory-index-render.test.ts` 截断行断言更新、新增索引刷新渲染与 3 KiB 上限 1 项（先失败）。`apps/console/test/memory-detail.test.ts` 3 项：A/B 反序、旧 history 迟到与 history 条目不符、停止后废弃（先以模块不存在失败）。既有测试随之更新：schema 版本断言 75→76、presented window 旧表兼容测试与签名识别加 `memory_json`、core 端口清单加 `authorizeLegacyChannelMemoryImport`。
 9. 未解决：真实 CLI 与效率门禁仍未跑；服务未重启、未部署；已删除条目 Worker 无列举入口；控制台详情修复未跑浏览器门禁；读开关关闭仍撤不回已进入 session 的索引（同第五十一节）。
 
+### 五十三、累计效率门禁复测（2026-09-27，8ea005a，负责人授权）
+
+证据 `docs/evo/evidence/2026-09-27-eff-*.json`，与原生同题 3 轮，判定用协议额外生成（业务路径差只报告）。首次 Codex 运行因门禁围栏未放行产品的只读 `codex mcp list --json` 预检而三组隔离（仅原生组调用模型），已修（8ea005a）后重跑。
+
+- Codex（gpt-6-luna/low）：role（冷）3 轮全部达标，输入远低于预算；role-warm 续轮达标（8–9 s vs 原生约 9.7 s），首轮协议额外生成 0，业务路径差 +3（模型多读文件），仅延迟超预算；legacy 超预算（待移除路径）。
+- Claude（haiku）：role-warm 3 轮全部达标；role 续轮达标，首轮延迟 46 s vs 25 s 超预算，协议 0、输入达标。
+- Kimi（k3-256k/low）：3 轮协议额外生成 0、输入约为预算一半，延迟全部超预算；上次复测平台快于原生，差异主要来自 Kimi 服务端单次调用波动（见首轮延迟调查），需交替顺序与多样本判定；产品侧用量（ACP 不报）仍缺，判 missing-evidence。
+- OpenCode（deepseek-flash/low）：role 与 role-warm 6 轮全部在预算内，门禁结论 needs-quality-review（待人工质量抽检）。
+- 结论：四家协议额外生成均为 0（legacy 除外），输入均在预算内；剩余超标项全部是首轮或 Kimi 的延迟。平台记忆索引首次真实跑，未见额外生成。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
