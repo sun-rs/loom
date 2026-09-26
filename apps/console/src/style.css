@@ -1,0 +1,300 @@
+/* Throwaway evo console styling (not the product UI library). */
+:root {
+  color-scheme: light;
+  --ink: #111;
+  --muted: #666;
+  --line: #d4d4d4;
+  --panel: #fff;
+  --page: #f4f4f2;
+  --accent: #1f5fbf;
+  --warn-bg: #fff4d6;
+  --warn-line: #d9a400;
+  --error: #b3261e;
+  --ok: #1e7b34;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+}
+
+.console-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.console-title {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.console-title h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.console-badge {
+  padding: 1px 6px;
+  border: 1px solid var(--warn-line);
+  background: var(--warn-bg);
+  font-size: 12px;
+}
+
+.connection {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.connection.is-connected {
+  color: var(--ok);
+}
+
+.connection.is-disconnected {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.console-nav {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.console-nav a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.console-nav a[aria-current="page"] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+main {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.panel {
+  min-width: 0;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--error);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(7em, max-content) 1fr;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.field-label {
+  color: var(--muted);
+}
+
+.field-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.channel-list,
+.instance-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.channel-card,
+.instance-card {
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+
+.channel-card.is-legacy .legacy-note .field-value {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.channel-name {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.channel-body {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.instance-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.revision {
+  font-size: 12px;
+}
+
+.revision.is-stale {
+  color: var(--error);
+}
+
+.instance-card.state-error .instance-state .field-value,
+.last-error .field-value {
+  color: var(--error);
+}
+
+.watchdog-warning .field-value,
+.problem.tone-warning {
+  color: #8a5a00;
+}
+
+.problem.tone-error {
+  color: var(--error);
+}
+
+.problems ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.wake-notice {
+  padding: 8px 12px;
+  border: 1px solid var(--warn-line);
+  background: var(--warn-bg);
+}
+
+.wake-notice p {
+  margin: 4px 0 0;
+}
+
+.message-list {
+  display: grid;
+  gap: 6px;
+  max-height: 70vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.message {
+  padding: 6px 8px;
+  border-left: 3px solid var(--line);
+}
+
+.message.is-system {
+  border-left-color: var(--warn-line);
+  background: var(--warn-bg);
+}
+
+.message-actor {
+  font-weight: 600;
+}
+
+.message-meta {
+  font-size: 12px;
+}
+
+.message-body {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.toggle-group button {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font: inherit;
+  cursor: pointer;
+}
+
+.toggle-group button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-table th,
+.usage-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.usage-total td {
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .console-nav {
+    margin-left: 0;
+  }
+
+  .channel-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .message-list {
+    max-height: none;
+  }
+}

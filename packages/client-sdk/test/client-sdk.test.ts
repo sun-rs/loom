@@ -106,6 +106,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "room.update",
     "runtime.guide.read",
     "runtime.guide.update",
+    "runtime.settings.read",
+    "runtime.settings.update",
     "search",
     "sidebar.get",
     "sidebar.patch",
@@ -319,6 +321,16 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { groupBy: "instance" },
       operation: "usage.summary",
       path: "/v3/client/usage/summary",
+    },
+    {
+      input: {},
+      operation: "runtime.settings.read",
+      path: "/v3/client/runtime-settings/read",
+    },
+    {
+      input: { expectedRevision: 0, maxConcurrentRuns: 2 },
+      operation: "runtime.settings.update",
+      path: "/v3/client/runtime-settings/update",
     },
     {
       input: { controlRoomId: "room-control" },

@@ -15,8 +15,12 @@ import {
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
+import { HttpRahClient } from "@rah-os/client-sdk";
 import { RoomKernel } from "@rah-os/kernel";
-import type { RuntimeProfileManifestV2 } from "@rah-os/protocol";
+import type {
+  RuntimeProfileManifestV2,
+  RuntimeSettingsUpdate,
+} from "@rah-os/protocol";
 
 import { DaemonApplication, DaemonConfigSchema } from "../src/index.ts";
 
@@ -164,6 +168,7 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
     activeObserver,
     barrierPath,
     clientRequest,
+    humanAccessToken,
     humanMutation,
     live,
     participantIds,
@@ -177,12 +182,16 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
     revision: number;
     runtimes: { maxConcurrentRuns: number; runtimeProfileId: string }[];
   };
-  const update = async (body: Record<string, unknown>) => {
-    const current = await clientRequest<Settings>(
-      "/v3/client/runtime-settings/read",
-      {},
-    );
-    return await clientRequest<Settings>("/v3/client/runtime-settings/update", {
+  // End to end through the typed SDK facade the console uses.
+  const sdk = new HttpRahClient({
+    accessToken: () => humanAccessToken,
+    baseUrl: harness.origin,
+  });
+  const update = async (
+    body: Omit<RuntimeSettingsUpdate, "expectedRevision">,
+  ) => {
+    const current = await sdk.request("runtime.settings.read", {});
+    return await sdk.request("runtime.settings.update", {
       ...body,
       expectedRevision: current.revision,
     });
@@ -602,6 +611,7 @@ async function startSameCliDaemon(caps: {
       barrierPath,
       origin,
       clientRequest,
+      humanAccessToken: human.accessToken,
       humanMutation,
       live,
       newAttempts,

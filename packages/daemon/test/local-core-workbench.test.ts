@@ -24,6 +24,9 @@ test("one local Core owner composes persistent daemon and loopback gateway", asy
   mkdirSync(staticDirectory, { mode: 0o700 });
   mkdirSync(workspaceCwd, { mode: 0o700 });
   writeFileSync(join(staticDirectory, "index.html"), "<!doctype html>RAH");
+  const consoleDirectory = join(directory, "console-dist");
+  mkdirSync(consoleDirectory, { mode: 0o700 });
+  writeFileSync(join(consoleDirectory, "index.html"), "LOOM CONSOLE");
   const codexPath = join(binDirectory, "codex");
   writeFileSync(
     codexPath,
@@ -55,6 +58,7 @@ else process.exitCode = 2;
       { mode: 0o600 },
     );
     running = await startLocalCoreWorkbench({
+      consoleDirectory,
       environment: { ...process.env, PATH: binDirectory },
       mode: { kind: "loopback", port: 0 },
       staticDirectory,
@@ -83,6 +87,9 @@ else process.exitCode = 2;
         db.close();
       }
     };
+    const consolePage = async () =>
+      await (await fetch(`${origin}/_rah/console/`)).text();
+    assert.equal(await consolePage(), "LOOM CONSOLE");
     const beforeHost = hostInstance();
     const before = await status();
     const restart = (
@@ -153,6 +160,11 @@ else process.exitCode = 2;
       "AgentHost was actually reconstructed",
     );
     assert.equal(running.descriptor.webOrigin, origin);
+    assert.equal(
+      await consolePage(),
+      "LOOM CONSOLE",
+      "the restarted gateway keeps serving the console",
+    );
     assert.equal(running.descriptor.persistent, true);
     assert.equal(running.descriptor.runtimes.length, 1);
     assert.equal(running.descriptor.runtimes[0]?.cliId, "codex");

@@ -742,6 +742,26 @@ B. 权限收口
 - Kimi：产品侧逐轮用量均来自 wire（每轮 1–2 行），不再是整体缺口。
 - 门禁结论：OpenCode、Claude、Kimi pass；Codex violated，唯一原因是第 3 轮沉默轮未 message-check 重试一次（模型遵守度，已知问题）。首轮格式超长为既有软项。
 
+### 四十四、最小控制台：批次 1（只读）
+
+计划见负责人存档的控制台计划（2026-09-26）。批次 1 只读，不含任何写操作；每项先写失败测试并确认失败，再实现。没有运行付费 CLI，没有重启服务，没有改前端冻结范围（`git diff main --stat -- apps/web/src packages/ui-web packages/ui-tokens/specs` 为空），没有放宽断言，没有新增外部依赖（lockfile 只新增 `apps/console` 工作区与其 `node_modules/@rah-os/console` 链接）。
+
+1. 网关（B2）：`LocalWorkbenchGateway` 新增可选 `consoleDirectory`（绝对路径）。`/_rah/console` 301 到 `/_rah/console/`；`/_rah/console/*` 只从该目录取文件，缺失的非 `assets/` 路径只回退到该目录的 `index.html`，缺失的 `assets/*` 为 404；该分支位于原 `/_rah/` 404 与 apps/web SPA 回退之前。沿用 CSP（`script-src 'self'`、无 `unsafe-eval`）、`nosniff`、`no-referrer`、`X-Frame-Options`，index 为 `no-store` 并下发 loopback 会话 Cookie；trusted-network 模式可访问、无 Cookie。未配置、目录不存在或无 index 时返回 404 与“run npm run build:console”。解码后含 `..` 段或反斜杠的路径一律 404；非 GET/HEAD 为 405；API 写请求仍要求同源 Origin（未改）。`startLocalCoreWorkbench` 只在 loopback/Tailnet 网关透传（LAN 网关不提供控制台），`startRestartableLocalCoreWorkbench` 经 `...input` 透传，重启后仍可访问；`scripts/run-local-workbench.mjs` 读 `RAH_CONSOLE_STATIC_DIRECTORY`，否则在 `apps/console/dist` 存在时使用它。测试：`local-workbench-gateway.test.ts` 三个新测试（服务与头、未构建 404、trusted-network），`local-core-workbench.test.ts` 重启前后控制台页。
+2. SDK（B1）：client-sdk 新增 `runtime.settings.read` / `runtime.settings.update`（`/v3/client/runtime-settings/read|update`，schema 为 protocol 的 `RuntimeSettings*`），操作名快照与路由映射测试已更新；`same-cli-instance-concurrency.test.ts` 的运行设置读改改经 `HttpRahClient` 端到端调用。
+3. `apps/console`（`@rah-os/console`，私有）：原生 TS + DOM，vite 构建，`base: /_rah/console/`，单入口，index 无内联脚本；`main.ts` 先把 Zod 设为 jitless 再动态加载应用（同 apps/web，否则 Zod 的 `Function("")` 探测会在无 `unsafe-eval` 的 CSP 下报违规）。`api.ts` 用 `HttpRahClient` trusted-proxy 模式（网关替换占位 Bearer）并缓存每房间 `RoomSession`（批次 2 写路径用）；`model.ts` 为纯函数与经 `RahClient` 的读取；`view-*.ts` 只用 `createElement`/`textContent`；hash 路由；轮询：当前频道 3 秒、列表/用量/设置 15 秒，`document.hidden` 时暂停，新请求中止旧请求（AbortSignal），被中止的响应不渲染。
+4. 只读视图：连接与身份（未连接明确显示原因）；频道列表（仅未归档 channel：主目录路径、`primary.state`（含失败原因）、附加目录；无 `channelWorkspace` 的旧频道标“实例使用私有 cwd”，有工作区但未记录主目录显示“未记录”）；频道消息只读（最近 50 条，之后按 `afterSeq` 增量，系统消息高亮）；实例状态（`role.list` 过滤本频道实例、`isCurrent`、`room.agent.activity.list` 的 state/lastError，`waking` 显示“排队或启动中”，无记录显示“无运行记录”；私聊可用/已停用/未打开；最近运行事实为 `run.watchdog_warning` 时显示“无进展已达告警阈值”，之后有 run 结束/开始即不再显示；`agent.activity.list` 最近 3 条 warning/error）；唤醒上限系统通知横幅，窗口内 Human 再发言后消失；用量（`usage.summary` 按实例，24 小时/7 天；无用量记录的运行不计 0，只有部分运行有记录时标“部分”，费用为 CLI 自报，未知显示“未知”）；运行设置只读（经新 SDK 操作）。
+5. 根脚本：`build:console`、`test:console:unit`、`test:console:browser`（先 `build:console`）；`typecheck` 追加 `@rah-os/console`；`check` 追加 `test:console:unit`；`.prettierignore` 加 `apps/console/dist/`。
+6. 测试：`apps/console/test/model.test.ts`（FakeRahClient：频道拼装与旧频道、身份、消息窗口与增量、唤醒上限提示、实例状态拼装与加载调用、状态文案、用量格式化与未知、用量时间窗、运行设置行）。浏览器门禁 `scripts/run-console-browser-gate.mjs`（系统 Chrome + CDP；临时 HOME 与 `RAH_DATA_HOME`、假 codex、随机端口；fixture URL 与数据均标注 FIXTURE）：经 API 预置带临时附加目录的频道（主目录须在临时 HOME 下且 `ready`）、XSS 探针消息、Role 与实例；断言身份、频道卡片三项与 API 一致、旧频道标注（本夹具中为 0 个）、实例卡片（名称、最新修订、状态文案、私聊未打开）、注入的 `<img onerror>` 以文本显示且页面无 img、运行设置与 API 一致且无输入控件、用量合计行、1440 与 390×844 无横向滚动且关键区域在视口内、无 CSP 违规与控制台错误。本地运行通过。
+
+删除点（phase 4）：删除 `apps/console`、`scripts/run-console-browser-gate.mjs`、网关 `consoleDirectory` 分支与 `CONSOLE_PREFIX` 常量、`startLocalCoreWorkbench` 的 `consoleDirectory` 与 `run-local-workbench.mjs` 的 `RAH_CONSOLE_STATIC_DIRECTORY` 读取、根脚本 `build:console`/`test:console:*` 及 `typecheck`/`check` 中的追加项、`.prettierignore` 条目；client-sdk 的 `runtime.settings.*` 操作保留（产品设置页可用）。
+
+偏离与未解决：
+
+- 唤醒上限提示只看已加载的最近 50 条窗口；通知与 Human 发言都在窗口外时不显示。系统消息只按 `actorId = principal_system` 与正文“连续唤醒”识别（Message 无 systemNotice 字段）。
+- 看门狗告警按实例的最近 20 条活动判断，跨房间（频道与私聊）合并。
+- 浏览器门禁未覆盖旧频道标注（新夹具没有旧频道，只有单测）、系统消息高亮与唤醒横幅（单测覆盖）、轮询的旧响应丢弃（只有实现，无浏览器断言）。
+- 排队原因、压缩次数、失败 run 全文等计划推迟项未做；本地服务未重启。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

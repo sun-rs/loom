@@ -76,6 +76,8 @@ export type RunningLocalCoreWorkbench = {
 };
 
 export async function startLocalCoreWorkbench(input: {
+  /** Built throwaway console served at /_rah/console/ (loopback/Tailnet gateway only). */
+  consoleDirectory?: string;
   serviceControl?: WorkbenchServiceControl;
   environment?: NodeJS.ProcessEnv;
   mode: LocalCoreWorkbenchMode;
@@ -153,6 +155,9 @@ export async function startLocalCoreWorkbench(input: {
     if (input.mode.kind === "loopback" || input.mode.kind === "tailnet") {
       gateway = new LocalWorkbenchGateway({
         ...common,
+        ...(input.consoleDirectory === undefined
+          ? {}
+          : { consoleDirectory: resolve(input.consoleDirectory) }),
         ...(input.mode.kind === "tailnet"
           ? {
               bindHost: input.mode.bindHost,

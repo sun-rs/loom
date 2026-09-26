@@ -1,4 +1,5 @@
 apps/web/dist/
+apps/console/dist/
 packages/raft-ui-snapshot/reference/
 # Adopted byte-exact resources retain source formatting; maintained owners are checked.
 packages/ui-tokens/src/neo-brutalist/vendor/

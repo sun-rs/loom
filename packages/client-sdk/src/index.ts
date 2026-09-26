@@ -31,6 +31,14 @@ import {
   type SystemChannelVisibilityMutation,
 } from "@rah-os/protocol";
 import {
+  RuntimeSettingsReadSchema,
+  RuntimeSettingsSchema,
+  RuntimeSettingsUpdateSchema,
+  type RuntimeSettings,
+  type RuntimeSettingsRead,
+  type RuntimeSettingsUpdate,
+} from "@rah-os/protocol";
+import {
   RuntimeGuideReadSchema,
   type RuntimeGuideRead,
   RuntimeGuideUpdateSchema,
@@ -446,6 +454,14 @@ export type RahClientOperationMap = ComposerOperationMap &
     "runtime.guide.update": {
       input: RuntimeGuideUpdate;
       output: RuntimeGuideSettingsView;
+    };
+    "runtime.settings.read": {
+      input: RuntimeSettingsRead;
+      output: RuntimeSettings;
+    };
+    "runtime.settings.update": {
+      input: RuntimeSettingsUpdate;
+      output: RuntimeSettings;
     };
     "computer.profile.update": {
       input: ClientComputerProfileUpdateRequest;
@@ -903,6 +919,20 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: RuntimeGuideSettingsSchema,
     path: "/v3/client/runtime-guide/update",
+  },
+  "runtime.settings.read": {
+    authenticated: true,
+    input: RuntimeSettingsReadSchema,
+    method: "POST",
+    output: RuntimeSettingsSchema,
+    path: "/v3/client/runtime-settings/read",
+  },
+  "runtime.settings.update": {
+    authenticated: true,
+    input: RuntimeSettingsUpdateSchema,
+    method: "POST",
+    output: RuntimeSettingsSchema,
+    path: "/v3/client/runtime-settings/update",
   },
   "computer.profile.update": {
     authenticated: true,

@@ -50,6 +50,14 @@ const CONTENT_SECURITY_POLICY = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
 ].join("; ");
+/**
+ * Throwaway evo console (docs/evo/status.zh-CN.md §44): served from its own
+ * build directory under this prefix, outside the apps/web service worker
+ * scope. Deleted in phase 4 together with apps/console.
+ */
+const CONSOLE_PREFIX = "/_rah/console";
+const CONSOLE_UNAVAILABLE =
+  "Loom console is not built; run npm run build:console";
 
 export class LocalWorkbenchGateway {
   readonly #serviceControl: WorkbenchServiceControl | undefined;
@@ -60,6 +68,7 @@ export class LocalWorkbenchGateway {
   readonly #sessionToken: string | undefined;
   readonly #browserAccess: "session" | "trusted-network";
   readonly #staticDirectory: string;
+  readonly #consoleDirectory: string | undefined;
   readonly #webBuildId: string | undefined;
   #origin: string | undefined;
   #server: Server | undefined;
@@ -77,6 +86,8 @@ export class LocalWorkbenchGateway {
     browserAccess?: "session" | "trusted-network";
     sessionToken?: string;
     staticDirectory: string;
+    /** Absolute apps/console build directory; absent means the console is unavailable. */
+    consoleDirectory?: string;
   }) {
     if (input.accessToken.trim().length === 0) {
       throw new Error("local workbench Human access token is required");
@@ -90,6 +101,12 @@ export class LocalWorkbenchGateway {
     }
     if (!isAbsolute(input.staticDirectory)) {
       throw new Error("local workbench static directory must be absolute");
+    }
+    if (
+      input.consoleDirectory !== undefined &&
+      !isAbsolute(input.consoleDirectory)
+    ) {
+      throw new Error("local workbench console directory must be absolute");
     }
     const browserAccess = input.browserAccess ?? "session";
     if (
@@ -152,6 +169,10 @@ export class LocalWorkbenchGateway {
     this.#sessionToken = input.sessionToken;
     this.#browserAccess = browserAccess;
     this.#staticDirectory = resolve(input.staticDirectory);
+    this.#consoleDirectory =
+      input.consoleDirectory === undefined
+        ? undefined
+        : resolve(input.consoleDirectory);
     this.#webBuildId = readWebBuildId(this.#staticDirectory);
   }
 
@@ -300,6 +321,43 @@ export class LocalWorkbenchGateway {
       );
       return;
     }
+    if (requestUrl.pathname === CONSOLE_PREFIX) {
+      response.statusCode = 301;
+      response.setHeader("cache-control", "no-store");
+      response.setHeader("location", `${CONSOLE_PREFIX}/`);
+      response.end();
+      return;
+    }
+    if (requestUrl.pathname.startsWith(`${CONSOLE_PREFIX}/`)) {
+      const consoleDirectory = this.#consoleDirectory;
+      const consoleIndex =
+        consoleDirectory === undefined
+          ? undefined
+          : resolve(consoleDirectory, "index.html");
+      if (
+        consoleDirectory === undefined ||
+        consoleIndex === undefined ||
+        !existsSync(consoleIndex) ||
+        !statSync(consoleIndex).isFile()
+      ) {
+        sendText(response, 404, CONSOLE_UNAVAILABLE);
+        return;
+      }
+      const consolePath = requestUrl.pathname.slice(CONSOLE_PREFIX.length);
+      if (hasEncodedTraversal(consolePath)) {
+        sendText(response, 404, "Not found");
+        return;
+      }
+      await this.#serveStatic(
+        request,
+        response,
+        consolePath,
+        undefined,
+        false,
+        consoleDirectory,
+      );
+      return;
+    }
     if (requestUrl.pathname.startsWith("/_rah/")) {
       sendText(response, 404, "LAN gateway route unavailable");
       return;
@@ -379,6 +437,7 @@ export class LocalWorkbenchGateway {
     encodedPathname: string,
     recoveryNonce?: string | null,
     recoveringAsset = false,
+    root = this.#staticDirectory,
   ): Promise<void> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       sendText(response, 405, "Method not allowed");
@@ -395,12 +454,13 @@ export class LocalWorkbenchGateway {
       sendText(response, 400, "Invalid path");
       return;
     }
-    const candidate = resolve(
-      this.#staticDirectory,
-      pathname.replace(/^\/+/, ""),
-    );
-    const relativePath = relative(this.#staticDirectory, candidate);
-    if (relativePath === ".." || relativePath.startsWith(`..${sep}`)) {
+    const candidate = resolve(root, pathname.replace(/^\/+/, ""));
+    const relativePath = relative(root, candidate);
+    if (
+      relativePath === ".." ||
+      relativePath.startsWith(`..${sep}`) ||
+      isAbsolute(relativePath)
+    ) {
       sendText(response, 404, "Not found");
       return;
     }
@@ -416,7 +476,7 @@ export class LocalWorkbenchGateway {
       existsSync(candidate) &&
       statSync(candidate).isFile()
         ? candidate
-        : resolve(this.#staticDirectory, "index.html");
+        : resolve(root, "index.html");
     const isIndex = staticPath.endsWith(`${sep}index.html`);
     response.statusCode = 200;
     response.setHeader("content-type", contentType(staticPath));
@@ -456,6 +516,20 @@ export class LocalWorkbenchGateway {
       response.setHeader(WEB_BUILD_HEADER, this.#webBuildId);
     }
   }
+}
+
+/** Console paths never carry a dot segment or a backslash, encoded or not. */
+function hasEncodedTraversal(encodedPathname: string): boolean {
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(encodedPathname);
+  } catch {
+    return true;
+  }
+  return (
+    pathname.includes("\\") ||
+    pathname.split("/").some((segment) => segment === "..")
+  );
 }
 
 function revalidatedShellFile(path: string): boolean {
