@@ -146,6 +146,58 @@ test("a non-mention recipient on an instance-authored message is not activated, 
   }
 });
 
+test("a mention recipient on an instance-authored message wakes only a participant the body canonically @mentions", () => {
+  const state = fixture(["alpha", "beta", "gamma"]);
+  try {
+    const noMention = state.kernel.postMessage(state.agentActors.alpha!, {
+      basedOnRoomSeq: currentSeq(state),
+      body: "No mention anywhere",
+      idempotencyKey: "alpha-forged-mention",
+      recipients: [
+        { participantId: state.agents.beta!.principalId, reason: "mention" },
+      ],
+      roomId: state.room.roomId,
+    });
+    assert.deepEqual(noMention.event.payload.mentions, []);
+    assert.deepEqual(noMention.activationIds, []);
+    assert.equal(inboxCount(state, noMention.event.eventId), 0);
+
+    const other = state.kernel.postMessage(state.agentActors.alpha!, {
+      basedOnRoomSeq: currentSeq(state),
+      body: "@gamma please look",
+      idempotencyKey: "alpha-mentions-gamma-only",
+      recipients: [
+        { participantId: state.agents.beta!.principalId, reason: "mention" },
+        { participantId: state.agents.gamma!.principalId, reason: "mention" },
+      ],
+      roomId: state.room.roomId,
+    });
+    assert.equal(other.activationIds.length, 1);
+    assert.deepEqual(
+      sql(
+        state,
+        "SELECT participant_id FROM inbox_items WHERE event_id = ?",
+        other.event.eventId,
+      ).map((row) => String(row.participant_id)),
+      [state.agents.gamma!.principalId],
+      "only the canonically mentioned recipient is woken",
+    );
+
+    const real = mention(state, "alpha", "beta", "real");
+    assert.equal(real.activationIds.length, 1);
+    assert.deepEqual(
+      sql(
+        state,
+        "SELECT participant_id FROM inbox_items WHERE event_id = ?",
+        real.event.eventId,
+      ).map((row) => String(row.participant_id)),
+      [state.agents.beta!.principalId],
+    );
+  } finally {
+    state.close();
+  }
+});
+
 test("new triggers for an instance with pending work merge into its queued Activation", () => {
   const state = fixture(["alpha", "beta"]);
   try {

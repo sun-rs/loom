@@ -2219,6 +2219,10 @@ test("the daemon composes the warm pool and leftover-process hygiene by default;
     // janitor and start fence over live rows an earlier Host left behind.
     assert.ok(off.instanceRuntimePool instanceof InstanceRuntimePool);
     assert.deepEqual(off.warmRuntimeKinds, new Set());
+    // The persisted Host run cap is the pool's busy cap from construction:
+    // a later runtime reduction only reaches the Kernel placement caps.
+    const capped = createDaemonRuntimeHygiene(base, host, kernel, 3);
+    assert.equal(capped.instanceRuntimePool?.policy.maxBusyTurns, 3);
   } finally {
     kernel.close();
     rmSync(directory, { force: true, recursive: true });

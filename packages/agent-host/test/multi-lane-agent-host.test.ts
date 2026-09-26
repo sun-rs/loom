@@ -616,7 +616,14 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
             (activation) =>
               activation.participantId === agentB.principal.principalId &&
               activation.state === "completed",
-          )
+          ) &&
+          // Agent B's earlier Activations are already completed; wait for the
+          // isolated Task itself, which only Agent B's new run submits. A drain
+          // no longer lets a lane still queued in the start gate start.
+          kernel
+            .listTasks(humanActor, { roomId: room.roomId })
+            .find((task) => task.taskId === isolatedTask.taskId)?.state ===
+            "submitted"
         );
       });
     } finally {

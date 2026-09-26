@@ -1214,7 +1214,7 @@ test("deleting a cross-Room Reminder target clears its durable Reminder graph wi
   }
 });
 
-test("the explicit Room eraser covers every table whose foreign keys can reach rooms", () => {
+test("the explicit Room eraser covers every table whose foreign keys can reach rooms or that carries a room_id", () => {
   const f = fixture();
   try {
     const database = new DatabaseSync(f.databasePath, { readOnly: true });
@@ -1232,8 +1232,18 @@ test("the explicit Room eraser covers every table whose foreign keys can reach r
         edges.push({ from: table, to: String(foreignKey.table) });
       }
     }
+    // FK-less room-scoped bookkeeping (a plain room_id column) must be erased
+    // too; only the deletion tombstone itself outlives the Room.
+    const roomScoped = tables.filter(
+      (table) =>
+        table !== "room_deletion_receipts" &&
+        database
+          .prepare(`PRAGMA table_info("${table}")`)
+          .all()
+          .some((column) => String(column.name) === "room_id"),
+    );
     database.close();
-    const reachable = new Set(["rooms"]);
+    const reachable = new Set(["rooms", ...roomScoped]);
     for (let changed = true; changed;) {
       changed = false;
       for (const edge of edges) {
@@ -1246,6 +1256,94 @@ test("the explicit Room eraser covers every table whose foreign keys can reach r
     assert.deepEqual(
       [...reachable].sort(),
       [...ROOM_DELETION_REFERENCED_TABLES].sort(),
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("Room deletion erases the Channel's instance wake guard and wake chain after real wakes and preserves another Room", () => {
+  const f = fixture();
+  try {
+    const alpha = f.kernel.provisionPrincipal({
+      handle: "wake-alpha",
+      kind: "agent",
+    });
+    const beta = f.kernel.provisionPrincipal({
+      handle: "wake-beta",
+      kind: "agent",
+    });
+    for (const agent of [alpha, beta])
+      f.kernel.addMember(f.ownerActor, {
+        principalId: agent.principal.principalId,
+        roomId: f.channel.room.roomId,
+      });
+    f.kernel.postRoomMessage(f.ownerActor, {
+      basedOnRoomSeq: f.head(),
+      body: "Human starts the Channel chain",
+      idempotencyKey: "wake-human",
+      roomId: f.channel.room.roomId,
+    });
+    f.kernel.postRoomMessage(f.ownerActor, {
+      basedOnRoomSeq: f.kernel.sync(f.ownerActor, {
+        consumerId: "wake-control-head",
+        roomId: f.workspace.controlRoom.roomId,
+      }).latestRoomSeq,
+      body: "Human message in another Room",
+      idempotencyKey: "wake-control-human",
+      roomId: f.workspace.controlRoom.roomId,
+    });
+    const wake = f.kernel.postMessage(
+      f.kernel.authenticateAccessToken(alpha.accessToken),
+      {
+        basedOnRoomSeq: f.head(),
+        body: "@wake-beta please check",
+        idempotencyKey: "wake-alpha-mentions-beta",
+        recipients: [
+          { participantId: beta.principal.principalId, reason: "mention" },
+        ],
+        roomId: f.channel.room.roomId,
+      },
+    );
+    assert.equal(wake.activationIds.length, 1);
+    const count = (table: string, roomId: string) => {
+      const audited = new DatabaseSync(f.databasePath, { readOnly: true });
+      try {
+        return Number(
+          audited
+            .prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE room_id=?`)
+            .get(roomId)!.count,
+        );
+      } finally {
+        audited.close();
+      }
+    };
+    assert.equal(count("instance_wake_guards", f.channel.room.roomId), 1);
+    assert.equal(count("instance_wake_chain", f.channel.room.roomId), 1);
+    assert.equal(
+      count("instance_wake_guards", f.workspace.controlRoom.roomId),
+      1,
+    );
+    // Retire the derived wake; the active-work gate is tested separately.
+    const writable = new DatabaseSync(f.databasePath);
+    try {
+      writable
+        .prepare("UPDATE activations SET state='cancelled' WHERE room_id=?")
+        .run(f.channel.room.roomId);
+    } finally {
+      writable.close();
+    }
+    f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "delete-wake-guard",
+      roomId: f.channel.room.roomId,
+    });
+    assert.equal(count("instance_wake_guards", f.channel.room.roomId), 0);
+    assert.equal(count("instance_wake_chain", f.channel.room.roomId), 0);
+    assert.equal(
+      count("instance_wake_guards", f.workspace.controlRoom.roomId),
+      1,
+      "another Room's guard survives",
     );
   } finally {
     f.close();

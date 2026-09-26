@@ -15,11 +15,11 @@ import { ConflictError } from "@rah-os/kernel";
 import {
   RUN_GUARD_DEFAULTS,
   RunWatchdogSettingsUpdateSchema,
-  RuntimeConcurrencySettingsSchema,
-  RuntimeConcurrencyUpdateSchema,
+  RuntimeSettingsSchema,
+  RuntimeSettingsUpdateSchema,
   WakeGuardSettingsUpdateSchema,
-  type RuntimeConcurrencySettings as RuntimeConcurrencyView,
-  type RuntimeConcurrencyUpdate,
+  type RuntimeSettings as RuntimeSettingsView,
+  type RuntimeSettingsUpdate,
 } from "@rah-os/protocol";
 import { z } from "zod";
 
@@ -47,7 +47,7 @@ const State = z
   })
   .strict();
 
-export type RuntimeConcurrencyRuntime = {
+export type RuntimeSettingsRuntime = {
   offerMaxConcurrent: number;
   runtimeOfferId: string;
   runtimeProfileId: string;
@@ -60,15 +60,15 @@ export type RuntimeConcurrencyRuntime = {
  * notifies the appliers (Kernel placement caps and run guards, Host lanes,
  * warm pool, start gate); it holds no work or queue itself.
  */
-export class RuntimeConcurrencySettings {
+export class RuntimeSettings {
   readonly path: string;
   readonly #defaults: {
     maxConcurrentRuns: number;
     maxConcurrentStarts: number;
     minStartIntervalMs: number;
   };
-  readonly #runtimes: readonly RuntimeConcurrencyRuntime[];
-  readonly #listeners: ((view: RuntimeConcurrencyView) => void)[] = [];
+  readonly #runtimes: readonly RuntimeSettingsRuntime[];
+  readonly #listeners: ((view: RuntimeSettingsView) => void)[] = [];
   #state: z.infer<typeof State>;
 
   constructor(input: {
@@ -78,23 +78,39 @@ export class RuntimeConcurrencySettings {
       minStartIntervalMs: number;
     };
     path: string;
-    runtimes: readonly RuntimeConcurrencyRuntime[];
+    /**
+     * The file an earlier build persisted the same document to. Read only
+     * when `path` does not exist yet: its state is written atomically to
+     * `path` at once and the legacy file is left unchanged (an older build
+     * rolled back to still finds its last values; this build never reads it
+     * again once `path` exists).
+     */
+    legacyPath?: string;
+    runtimes: readonly RuntimeSettingsRuntime[];
   }) {
     this.path = input.path;
     this.#defaults = input.defaults;
     this.#runtimes = input.runtimes;
-    this.#state = existsSync(input.path)
-      ? State.parse(JSON.parse(readFileSync(input.path, "utf8")))
-      : { revision: 0 };
+    if (existsSync(input.path)) {
+      this.#state = State.parse(JSON.parse(readFileSync(input.path, "utf8")));
+    } else if (input.legacyPath !== undefined && existsSync(input.legacyPath)) {
+      const migrated = State.parse(
+        JSON.parse(readFileSync(input.legacyPath, "utf8")),
+      );
+      this.#persist(migrated);
+      this.#state = migrated;
+    } else {
+      this.#state = { revision: 0 };
+    }
   }
 
-  onChange(listener: (view: RuntimeConcurrencyView) => void): void {
+  onChange(listener: (view: RuntimeSettingsView) => void): void {
     this.#listeners.push(listener);
   }
 
-  read(): RuntimeConcurrencyView {
+  read(): RuntimeSettingsView {
     const state = this.#state;
-    return RuntimeConcurrencySettingsSchema.parse({
+    return RuntimeSettingsSchema.parse({
       maxConcurrentRuns:
         state.maxConcurrentRuns ?? this.#defaults.maxConcurrentRuns,
       maxConcurrentStarts:
@@ -113,11 +129,11 @@ export class RuntimeConcurrencySettings {
     });
   }
 
-  update(raw: RuntimeConcurrencyUpdate): RuntimeConcurrencyView {
-    const input = RuntimeConcurrencyUpdateSchema.parse(raw);
+  update(raw: RuntimeSettingsUpdate): RuntimeSettingsView {
+    const input = RuntimeSettingsUpdateSchema.parse(raw);
     if (input.expectedRevision !== this.#state.revision)
       throw new ConflictError(
-        "Concurrency settings revision changed; reload settings",
+        "Runtime settings revision changed; reload settings",
       );
     const runtimeLimits = { ...this.#state.runtimeMaxConcurrentRuns };
     for (const runtime of input.runtimes ?? []) {

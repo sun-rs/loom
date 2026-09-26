@@ -382,9 +382,17 @@ export class AgentStartGate {
    * the start, then release the slot. The slot is released once the start has
    * been attempted — upstream releases it on "spawn attempted" too, because the
    * knob bounds concurrent *starts*, never concurrent *runs*.
+   *
+   * Aborting `signal` while the Agent is still queued removes exactly that
+   * queued item and rejects with the abort reason; `start` never runs. Once a
+   * slot was granted the signal has no effect.
    */
-  async runStart<T>(agentId: string, start: () => Promise<T>): Promise<T> {
-    await this.#waitForStartSlot(agentId);
+  async runStart<T>(
+    agentId: string,
+    start: () => Promise<T>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    await this.#waitForStartSlot(agentId, signal);
     this.coordinator.markStarting(agentId);
     try {
       return await start();
@@ -429,15 +437,38 @@ export class AgentStartGate {
     item.resolve();
   }
 
-  #waitForStartSlot(agentId: string): Promise<void> {
+  #waitForStartSlot(agentId: string, signal?: AbortSignal): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this.coordinator.enqueue({
+      if (signal?.aborted) {
+        reject(abortReason(signal));
+        return;
+      }
+      const onAbort = () => {
+        if (this.coordinator.getQueued(agentId) !== item) return;
+        this.coordinator.cancelQueued(agentId);
+        reject(abortReason(signal!));
+      };
+      const item: QueuedAgentStart = {
         agentId,
         enqueuedAtMs: this.#now(),
-        reject,
-        resolve,
-      });
+        reject: (error) => {
+          signal?.removeEventListener("abort", onAbort);
+          reject(error);
+        },
+        resolve: () => {
+          signal?.removeEventListener("abort", onAbort);
+          resolve();
+        },
+      };
+      this.coordinator.enqueue(item);
+      signal?.addEventListener("abort", onAbort, { once: true });
       this.pump();
     });
   }
+}
+
+function abortReason(signal: AbortSignal): Error {
+  return signal.reason instanceof Error
+    ? signal.reason
+    : new Error("queued Agent start was aborted");
 }

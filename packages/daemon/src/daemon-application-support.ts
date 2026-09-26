@@ -1,6 +1,6 @@
 import { runAgentDeletionReconciler } from "./agent-deletion-reconciler.ts";
 import type { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
-import type { RuntimeConcurrencySettings } from "./runtime-concurrency-settings.ts";
+import type { RuntimeSettings } from "./runtime-settings.ts";
 import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
 import {
   DAEMON_BUILD_VERSION,
@@ -535,7 +535,7 @@ export function createDaemonComputerProfileAdministration(
 
 export function createDaemonHumanClientService(input: {
   runtimeGuideSettings?: RuntimeGuideSettings;
-  runtimeConcurrency?: RuntimeConcurrencySettings;
+  runtimeSettings?: RuntimeSettings;
   computerProfiles?: LocalComputerProfileStore;
   agentExecutionResetCoordinator: AgentExecutionResetCoordinator;
   agentMemoryCoordinator: AgentMemoryCoordinator;
@@ -570,8 +570,8 @@ export function createDaemonHumanClientService(input: {
     ...(input.runtimeGuideSettings
       ? { runtimeGuideSettings: input.runtimeGuideSettings }
       : {}),
-    ...(input.runtimeConcurrency
-      ? { runtimeConcurrencySettings: input.runtimeConcurrency }
+    ...(input.runtimeSettings
+      ? { runtimeSettings: input.runtimeSettings }
       : {}),
     agentExecutionAdministration: createDaemonAgentExecutionAdministration({
       coordinator: input.agentExecutionResetCoordinator,

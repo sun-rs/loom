@@ -25,8 +25,10 @@ import { integer, text, type Row } from "./sqlite-row.ts";
 
 /**
  * Ratchet derived from PRAGMA foreign_key_list after complete Kernel
- * initialization. A new table whose FK path reaches rooms must be explicitly
- * erased or protected by a kind invariant before this set can change.
+ * initialization, plus FK-less tables carrying a room_id column (except the
+ * deletion tombstone). A new table whose FK path reaches rooms, or that is
+ * keyed by room_id, must be explicitly erased or protected by a kind invariant
+ * before this set can change.
  */
 export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "activation_cancellation_requests",
@@ -52,6 +54,8 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "human_thread_follows",
   "inbox_items",
   "input_requests",
+  "instance_wake_chain",
+  "instance_wake_guards",
   "managed_mcp_assignment_revisions",
   "managed_mcp_assignments",
   "managed_mcp_calls",
@@ -364,6 +368,8 @@ export class RoomDeletionService {
       `DELETE FROM messages WHERE room_id=?`,
       `DELETE FROM threads WHERE room_id=?`,
       `DELETE FROM agent_channel_attention WHERE room_id=?`,
+      `DELETE FROM instance_wake_chain WHERE room_id=?`,
+      `DELETE FROM instance_wake_guards WHERE room_id=?`,
       `DELETE FROM memberships WHERE room_id=?`,
     ];
     for (const sql of statements) {

@@ -7,7 +7,7 @@ import {
   legacyWorkspaceMountDescriptors,
 } from "./daemon-execution-workspace-composition.ts";
 import { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
-import { openDaemonRuntimeConcurrency } from "./daemon-runtime-concurrency.ts";
+import { openDaemonRuntimeSettings } from "./daemon-runtime-settings.ts";
 import { LocalComputerProfileStore } from "./local-computer-profile-store.ts";
 import { createDaemonWorkerProfileMetadata } from "./daemon-worker-profile-metadata.ts";
 import { join } from "node:path";
@@ -145,17 +145,18 @@ export class DaemonApplication {
       const computerProfiles = new LocalComputerProfileStore({
         path: join(this.#config.stateDirectory, "computer-profiles.json"),
       });
-      const concurrency = openDaemonRuntimeConcurrency(this.#config);
+      const runtimeSettings = openDaemonRuntimeSettings(this.#config);
       const hostAccessToken = await this.#secretProvider.load(
         this.#config.host.credential,
       );
       core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
-        ...(this.#config.schemaVersion === 4 && concurrency
+        ...(this.#config.schemaVersion === 4 && runtimeSettings
           ? {
               inPlaceWorkspaceSharing:
                 this.#config.workspace.sharing ?? "shared",
-              placementCapacityPolicy: concurrency.placementCapacityPolicy(),
+              placementCapacityPolicy:
+                runtimeSettings.placementCapacityPolicy(),
             }
           : {}),
       });
@@ -232,8 +233,9 @@ export class DaemonApplication {
         });
       const activeAgentExecutionResetCoordinator =
         agentExecutionResetCoordinator;
+      const maxRuns = runtimeSettings?.settings.read().maxConcurrentRuns;
       const { processHygiene, instanceRuntimePool, warmRuntimeKinds } =
-        createDaemonRuntimeHygiene(this.#config, host, kernel);
+        createDaemonRuntimeHygiene(this.#config, host, kernel, maxRuns);
       let runtime: RuntimeAdapter;
       const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
       let placementRuntimeResolver:
@@ -645,13 +647,13 @@ export class DaemonApplication {
           ? new AgentHost(runnerOptions)
           : new MultiLaneAgentHost({
               ...runnerOptions,
-              capacity: concurrency?.settings.read().maxConcurrentRuns ?? 1,
+              capacity: maxRuns ?? 1,
               placementRuntimeResolver,
-              ...(concurrency
-                ? { runtimeStartScheduler: concurrency.startScheduler() }
+              ...(runtimeSettings
+                ? { runtimeStartScheduler: runtimeSettings.startScheduler() }
                 : {}),
             });
-      concurrency?.attach({
+      runtimeSettings?.attach({
         kernel,
         lanes: runner instanceof MultiLaneAgentHost ? runner : undefined,
         pool: instanceRuntimePool,
@@ -695,7 +697,9 @@ export class DaemonApplication {
       });
       clientService = createDaemonHumanClientService({
         runtimeGuideSettings,
-        ...(concurrency ? { runtimeConcurrency: concurrency.settings } : {}),
+        ...(runtimeSettings
+          ? { runtimeSettings: runtimeSettings.settings }
+          : {}),
         computerProfiles,
         agentExecutionResetCoordinator: activeAgentExecutionResetCoordinator,
         agentMemoryCoordinator: activeAgentMemoryCoordinator,

@@ -21,11 +21,11 @@ import {
   RuntimeGuideUpdateSchema,
   RuntimeGuideSettingsSchema,
   type RuntimeGuideUpdate,
-  RuntimeConcurrencyReadSchema,
-  RuntimeConcurrencySettingsSchema,
-  RuntimeConcurrencyUpdateSchema,
-  type RuntimeConcurrencySettings,
-  type RuntimeConcurrencyUpdate,
+  RuntimeSettingsReadSchema,
+  RuntimeSettingsSchema,
+  RuntimeSettingsUpdateSchema,
+  type RuntimeSettings,
+  type RuntimeSettingsUpdate,
   type RuntimeGuideRead,
   type RuntimeGuideSettingsView,
 } from "@rah-os/protocol";
@@ -241,9 +241,9 @@ export type ClientApplicationServiceOptions = {
     read(input?: RuntimeGuideRead): RuntimeGuideSettingsView;
     update(input: RuntimeGuideUpdate): RuntimeGuideSettingsView;
   };
-  runtimeConcurrencySettings?: {
-    read(): RuntimeConcurrencySettings;
-    update(input: RuntimeConcurrencyUpdate): RuntimeConcurrencySettings;
+  runtimeSettings?: {
+    read(): RuntimeSettings;
+    update(input: RuntimeSettingsUpdate): RuntimeSettings;
   };
   agentExecutionAdministration?: AgentExecutionAdministrationPort;
   agentMemoryAdministration?: AgentMemoryAdministrationPort;
@@ -389,8 +389,8 @@ const CLIENT_V2_DATA_PATHS = new Set([
 const CLIENT_V3_DATA_PATHS = new Set([
   "/runtime-guide/read",
   "/runtime-guide/update",
-  "/runtime-concurrency/read",
-  "/runtime-concurrency/update",
+  "/runtime-settings/read",
+  "/runtime-settings/update",
   ...AGENT_WORKSPACE_PATHS,
   ...COMPUTER_PROFILE_PATHS,
   ...FILE_DATA_PATHS,
@@ -471,7 +471,7 @@ export class ClientApplicationService {
     AgentMemoryAdministrationPort | undefined;
   readonly #bindHost: "127.0.0.1";
   readonly #runtimeGuideSettings: ClientApplicationServiceOptions["runtimeGuideSettings"];
-  readonly #runtimeConcurrencySettings: ClientApplicationServiceOptions["runtimeConcurrencySettings"];
+  readonly #runtimeSettings: ClientApplicationServiceOptions["runtimeSettings"];
   readonly #computerProfileAdministration:
     ComputerProfileAdministrationPort | undefined;
   readonly #health: () => ClientHealthResponse;
@@ -500,7 +500,7 @@ export class ClientApplicationService {
     this.#bindHost = options.bindHost ?? "127.0.0.1";
     this.#computerProfileAdministration = options.computerProfileAdministration;
     this.#runtimeGuideSettings = options.runtimeGuideSettings;
-    this.#runtimeConcurrencySettings = options.runtimeConcurrencySettings;
+    this.#runtimeSettings = options.runtimeSettings;
     this.#health = options.health;
     this.#human = options.human;
     this.#localRuntimeInventory = options.localRuntimeInventory;
@@ -763,24 +763,24 @@ export class ClientApplicationService {
       return;
     }
     if (
-      path === "/runtime-concurrency/read" ||
-      path === "/runtime-concurrency/update"
+      path === "/runtime-settings/read" ||
+      path === "/runtime-settings/update"
     ) {
       // Human-authenticated like every client data route; the daemon owns the
       // values and applies an update to the next scheduling decision.
-      if (!this.#runtimeConcurrencySettings)
+      if (!this.#runtimeSettings)
         throw new HttpRequestError(
           "not_found",
-          "Runtime concurrency settings unavailable",
+          "Runtime settings unavailable",
           404,
         );
       const value = path.endsWith("/update")
-        ? this.#runtimeConcurrencySettings.update(
-            parseClientRequest(RuntimeConcurrencyUpdateSchema, body),
+        ? this.#runtimeSettings.update(
+            parseClientRequest(RuntimeSettingsUpdateSchema, body),
           )
-        : (parseClientRequest(RuntimeConcurrencyReadSchema, body),
-          this.#runtimeConcurrencySettings.read());
-      writeJson(response, 200, RuntimeConcurrencySettingsSchema.parse(value));
+        : (parseClientRequest(RuntimeSettingsReadSchema, body),
+          this.#runtimeSettings.read());
+      writeJson(response, 200, RuntimeSettingsSchema.parse(value));
       return;
     }
     if (path === "/runtime-guide/read" || path === "/runtime-guide/update") {

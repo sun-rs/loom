@@ -774,6 +774,26 @@ async function waitFor<T>(
   }
 }
 
+test("lowering the busy-turn cap while turns are busy lets a turn the Kernel already placed under the old cap start instead of failing admission", async () => {
+  const state = setup({ policy: { admissionWaitMs: 300, maxBusyTurns: 3 } });
+  try {
+    await state.acquire("", {
+      participantId: "participant-2",
+      runAttemptId: "run-a",
+    });
+    await state.acquire("", {
+      participantId: "participant-3",
+      runAttemptId: "run-b",
+    });
+    // Claimed under cap 3 but not yet started; the Human lowers the cap to 1.
+    state.pool.setMaxBusyTurns(1);
+    const placed = await state.acquire("", { runAttemptId: "run-c" });
+    assert.ok(placed.runtime, "the already placed turn starts");
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("raising the busy-turn cap at runtime admits a turn waiting for a slot", async () => {
   const state = setup({ policy: { admissionWaitMs: 5_000, maxBusyTurns: 1 } });
   try {

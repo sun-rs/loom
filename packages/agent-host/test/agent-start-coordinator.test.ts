@@ -159,6 +159,46 @@ test("cancelling the gate rejects everything still queued", async () => {
   await running;
 });
 
+test("aborting one queued start removes only it from the queue, rejects it and never runs it", async () => {
+  const gate = new AgentStartGate({
+    maxConcurrentStarts: 1,
+    minStartIntervalMs: 0,
+  });
+  const held = deferred();
+  const running = gate.runStart("agent-a", async () => {
+    await held.promise;
+  });
+  const abort = new AbortController();
+  let abortedStarted = false;
+  const aborted = gate.runStart(
+    "agent-b",
+    async () => {
+      abortedStarted = true;
+    },
+    abort.signal,
+  );
+  const kept = gate.runStart("agent-c", async () => "started");
+  await new Promise((resolve) => setImmediate(resolve));
+  abort.abort(new Error("activation cancelled while queued"));
+  await assert.rejects(aborted, /activation cancelled while queued/);
+  assert.deepEqual(gate.snapshot().queuedAgentIds, ["agent-c"]);
+  held.resolve();
+  await running;
+  assert.equal(await kept, "started");
+  assert.equal(abortedStarted, false);
+  // A signal aborted after its start was admitted changes nothing.
+  const late = new AbortController();
+  const admitted = gate.runStart(
+    "agent-d",
+    async () => {
+      late.abort();
+      return "ran";
+    },
+    late.signal,
+  );
+  assert.equal(await admitted, "ran");
+});
+
 test("start limits change at runtime: raising admits queued starts, lowering never interrupts active ones", async () => {
   const gate = new AgentStartGate({
     maxConcurrentStarts: 1,

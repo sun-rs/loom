@@ -8,9 +8,10 @@ import {
 } from "./run-watchdog.ts";
 
 /**
- * Human-owned daemon concurrency settings (contract §3: instances run in
- * parallel, one lane each). Two run caps — all instances on this Host, and the
- * instances of one CLI (RuntimeProfile) — plus the start-rate gate. A change
+ * Human-owned daemon runtime settings (formerly "runtime concurrency"). The
+ * concurrency group (contract §3: instances run in parallel, one lane each)
+ * has two run caps — all instances on this Host, and the instances of one CLI
+ * (RuntimeProfile) — plus the start-rate gate. A change
  * applies to the next scheduling decision; running work is never interrupted.
  * The same document, revision and API also carry the evo §37 groups
  * `wakeGuard` (instance-to-instance wake chain limit) and `watchdog` (run
@@ -18,12 +19,10 @@ import {
  */
 const RunCapSchema = z.number().int().min(1).max(64);
 
-export const RuntimeConcurrencyReadSchema = z.object({}).strict();
-export type RuntimeConcurrencyRead = z.infer<
-  typeof RuntimeConcurrencyReadSchema
->;
+export const RuntimeSettingsReadSchema = z.object({}).strict();
+export type RuntimeSettingsRead = z.infer<typeof RuntimeSettingsReadSchema>;
 
-export const RuntimeConcurrencyUpdateSchema = z
+export const RuntimeSettingsUpdateSchema = z
   .object({
     expectedRevision: z.number().int().nonnegative(),
     maxConcurrentRuns: RunCapSchema.optional(),
@@ -44,11 +43,9 @@ export const RuntimeConcurrencyUpdateSchema = z
     watchdog: RunWatchdogSettingsUpdateSchema.optional(),
   })
   .strict();
-export type RuntimeConcurrencyUpdate = z.infer<
-  typeof RuntimeConcurrencyUpdateSchema
->;
+export type RuntimeSettingsUpdate = z.infer<typeof RuntimeSettingsUpdateSchema>;
 
-export const RuntimeConcurrencySettingsSchema = z
+export const RuntimeSettingsSchema = z
   .object({
     revision: z.number().int().nonnegative(),
     maxConcurrentRuns: RunCapSchema,
@@ -69,6 +66,4 @@ export const RuntimeConcurrencySettingsSchema = z
     watchdog: RunWatchdogSettingsSchema,
   })
   .strict();
-export type RuntimeConcurrencySettings = z.infer<
-  typeof RuntimeConcurrencySettingsSchema
->;
+export type RuntimeSettings = z.infer<typeof RuntimeSettingsSchema>;

@@ -35,6 +35,8 @@ export function createDaemonRuntimeHygiene(
   config: DaemonConfig,
   host: AuthenticatedHostContext,
   kernel: RoomKernel,
+  /** The persisted Host run cap (runtime concurrency settings), if any. */
+  maxBusyTurns?: number,
 ) {
   const processHygiene = createDaemonProcessHygiene(config.processHygiene);
   const instanceRuntimePool = createDaemonInstanceRuntimePool({
@@ -43,6 +45,7 @@ export function createDaemonRuntimeHygiene(
     hygiene: processHygiene,
     hostStartTimeoutMs: config.runtimeStartTimeoutMs,
     kernel,
+    ...(maxBusyTurns === undefined ? {} : { maxBusyTurns }),
     stateDirectory: config.stateDirectory,
   });
   return {
@@ -83,6 +86,12 @@ export function createDaemonInstanceRuntimePool(input: {
   /** The Host's runtime start deadline (bounds the busy-slot wait). */
   hostStartTimeoutMs?: number;
   kernel: RoomKernel;
+  /**
+   * The busy-turn hard cap at construction: the persisted Host run cap. Later
+   * reductions are enforced by the Kernel placement planner (see
+   * `InstanceRuntimePool.setMaxBusyTurns`).
+   */
+  maxBusyTurns?: number;
   stateDirectory: string;
 }): InstanceRuntimePool | undefined {
   const codex = input.config?.codex;
@@ -106,6 +115,9 @@ export function createDaemonInstanceRuntimePool(input: {
     policy: {
       ...policy,
       ...(codex?.idleTtlMs === undefined ? {} : { idleTtlMs: codex.idleTtlMs }),
+      ...(input.maxBusyTurns === undefined
+        ? {}
+        : { maxBusyTurns: input.maxBusyTurns }),
     },
     stateDirectory: join(input.stateDirectory, "warm-runtimes"),
   });

@@ -179,13 +179,13 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
   };
   const update = async (body: Record<string, unknown>) => {
     const current = await clientRequest<Settings>(
-      "/v3/client/runtime-concurrency/read",
+      "/v3/client/runtime-settings/read",
       {},
     );
-    return await clientRequest<Settings>(
-      "/v3/client/runtime-concurrency/update",
-      { ...body, expectedRevision: current.revision },
-    );
+    return await clientRequest<Settings>("/v3/client/runtime-settings/update", {
+      ...body,
+      expectedRevision: current.revision,
+    });
   };
   const holdsAt = async (expected: number) => {
     await waitUntil(() => live().length === expected, 30_000);
@@ -212,7 +212,7 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
   };
   try {
     const initial = await clientRequest<Settings>(
-      "/v3/client/runtime-concurrency/read",
+      "/v3/client/runtime-settings/read",
       {},
     );
     assert.equal(initial.revision, 0);
@@ -221,7 +221,7 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
     assert.ok(runtimeProfileId);
     assert.equal(initial.runtimes[0]?.maxConcurrentRuns, 4);
     const unauthenticated = await fetch(
-      `${harness.origin}/v3/client/runtime-concurrency/read`,
+      `${harness.origin}/v3/client/runtime-settings/read`,
       {
         body: "{}",
         headers: { "content-type": "application/json" },
@@ -229,6 +229,10 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
       },
     );
     assert.equal(unauthenticated.status, 401);
+    // The pre-rename route is gone (no caller existed).
+    await assert.rejects(
+      clientRequest("/v3/client/runtime-concurrency/read", {}),
+    );
 
     // Per-CLI cap 1: one instance runs, the other two queue.
     await update({ runtimes: [{ maxConcurrentRuns: 1, runtimeProfileId }] });
@@ -265,7 +269,7 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
     assert.equal(starts.maxConcurrentStarts, 2);
     assert.equal(starts.minStartIntervalMs, 0);
     const persisted = JSON.parse(
-      readFileSync(join(stateDirectory, "runtime-concurrency.json"), "utf8"),
+      readFileSync(join(stateDirectory, "runtime-settings.json"), "utf8"),
     ) as Record<string, unknown>;
     assert.deepEqual(persisted, {
       maxConcurrentRuns: 1,
@@ -290,7 +294,7 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
     assert.equal(guards.watchdog.noProgressWarnMs, 15 * 60_000);
     assert.deepEqual(
       JSON.parse(
-        readFileSync(join(stateDirectory, "runtime-concurrency.json"), "utf8"),
+        readFileSync(join(stateDirectory, "runtime-settings.json"), "utf8"),
       ).watchdog,
       { maxRunMs: 2 * 60 * 60_000 },
     );

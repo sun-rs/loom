@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * evo §37: the wake-guard and run-watchdog groups of the Human's runtime
  * settings. They live in the same daemon settings document, revision and API
- * as the concurrency caps (`runtime-concurrency-settings.ts`); this module only
+ * as the concurrency caps (`runtime-settings.ts`); this module only
  * declares their bounds, defaults and the Host-facing watchdog read.
  */
 const MINUTE_MS = 60_000;

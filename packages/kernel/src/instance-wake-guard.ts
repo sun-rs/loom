@@ -9,8 +9,9 @@ import { integer, nullableInteger, text } from "./sqlite-row.ts";
  * guard. Owner: the Kernel attention derivation (`RoomEventWriter`), so every
  * facade (Worker CLI, MCP, any future path) is held to the same rule.
  *
- * - An instance's `message.posted` wakes another instance only through an
- *   explicit `mention` recipient; implicit routes (room policy, Thread
+ * - An agent-authored `message.posted` (Role instance or legacy Agent) wakes
+ *   another agent only through a `mention` recipient that the message's
+ *   canonical mentions (bound participant IDs) prove; implicit routes (room policy, Thread
  *   followers, reply chains, Thread root) never do. Multica's rule: agent
  *   authors skip implicit routing (`comment.go:2685`).
  * - Each Channel counts consecutive instance-to-instance wakes since its last
@@ -54,6 +55,24 @@ function principalKind(
   return row === undefined ? undefined : text(row, "kind");
 }
 
+/**
+ * A `mention` recipient must be proven by the canonical mentions the
+ * RoomEventWriter bound to the message (participant IDs), never by a
+ * facade-supplied reason or a display-name rematch.
+ */
+function canonicallyMentions(event: RoomEvent, participantId: string): boolean {
+  const mentions = (event.payload as { mentions?: unknown }).mentions;
+  return (
+    Array.isArray(mentions) &&
+    mentions.some(
+      (mention: unknown) =>
+        typeof mention === "object" &&
+        mention !== null &&
+        (mention as { principalId?: unknown }).principalId === participantId,
+    )
+  );
+}
+
 /** A Human message resets its Channel's instance chain. */
 export function noteHumanMessageForWakeGuard(
   database: DatabaseSync,
@@ -94,6 +113,8 @@ export function decideInstanceWake(
   if (principalKind(database, event.actorId) !== "agent")
     return { kind: "not_instance_wake" };
   if (recipient.reason !== "mention") return { kind: "implicit_route_refused" };
+  if (!canonicallyMentions(event, recipient.participantId))
+    return { kind: "implicit_route_refused" };
   const limit = chainLimit();
   const guard = database
     .prepare("SELECT * FROM instance_wake_guards WHERE room_id = ?")

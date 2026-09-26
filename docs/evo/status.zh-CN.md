@@ -472,14 +472,14 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
    - 每家 CLI：该 CLI（RuntimeProfile）的实例数，Kernel RuntimeProfile 上限；默认 4。
    - 启动闸门：同时启动数与启动间隔，默认 5 个、500 ms（沿用 Raft 默认与既有 `RAH_DAEMON_*` 环境变量作为缺省来源）。
    - offer 本身改为公布配置上限 64（`DaemonConcurrencySchema` 最大值），不再承担调度上限；任一上限达到时新工作持久挂起（queued），不失败。
-3. 默认值依据：全局 20 = 常驻池忙时硬上限 `maxBusyTurns`，规划器在同一处挂起多余工作，而不是让常驻池等待后按可恢复失败重试；全局值修改时常驻池忙时上限随之同步（`InstanceRuntimePool.setMaxBusyTurns`，调大会唤醒等待中的轮次）。每家 CLI 默认 4 没有依据：Claude Code、Codex、Kimi、OpenCode 都没有公开的同时 session 上限（未联网核实），取保守值，需要时由 Human 调大。【无依据，保守值】
-4. 运行中配置：新增 Human 鉴权的 `/v3/client/runtime-concurrency/read|update`（protocol `runtime-concurrency-settings.ts`；带 `expectedRevision`，未配置的 RuntimeProfile 与越界值被拒）。唯一所有者是 daemon 的 `RuntimeConcurrencySettings`，持久化到数据目录 `runtime-concurrency.json`（0600，原子替换），重启后保留；没配置过的项取默认值。`daemon-runtime-concurrency.ts` 在启动时和每次修改后应用：Kernel `placementCapacity.update`（新的 `PlacementCapacityLimits` 所有者，从 `room-kernel.ts` 移出）、`MultiLaneAgentHost.setCapacity`（调大立即增加 lane；调小不停 lane，靠 Kernel Host 上限约束）、`AgentStartGate.updateSettings`、常驻池。修改只影响之后的调度，运行中的不受影响；调小启动上限时已放行的启动继续，直到低于新值才放行下一个（启动闸门的上限不变量改为只在占用槽位时检查）。client-sdk 与前端没有加入口（阶段 4）。
+3. 默认值依据：全局 20 = 常驻池忙时硬上限 `maxBusyTurns`，规划器在同一处挂起多余工作，而不是让常驻池等待后按可恢复失败重试；全局值调大时常驻池忙时上限随之同步（`InstanceRuntimePool.setMaxBusyTurns`，唤醒等待中的轮次）；调小只由 Kernel 规划器约束，常驻池保留当前上限，重建时取持久化值（第三十八节）。每家 CLI 默认 4 没有依据：Claude Code、Codex、Kimi、OpenCode 都没有公开的同时 session 上限（未联网核实），取保守值，需要时由 Human 调大。【无依据，保守值】
+4. 运行中配置：新增 Human 鉴权的 `/v3/client/runtime-settings/read|update`（第三十八节由 runtime-concurrency 改名；protocol `runtime-settings.ts`；带 `expectedRevision`，未配置的 RuntimeProfile 与越界值被拒）。唯一所有者是 daemon 的 `RuntimeSettings`，持久化到数据目录 `runtime-settings.json`（0600，原子替换；旧 `runtime-concurrency.json` 启动时迁移一次），重启后保留；没配置过的项取默认值。`daemon-runtime-settings.ts` 在启动时和每次修改后应用：Kernel `placementCapacity.update`（新的 `PlacementCapacityLimits` 所有者，从 `room-kernel.ts` 移出）、`MultiLaneAgentHost.setCapacity`（调大立即增加 lane；lane 只增不减，调小不减少 worker 数，历史 lane 继续轮询认领，最多 64 个，带来空认领与 heartbeat 开销；新工作靠 Kernel Host 上限约束，同实例单 lane 仍由 Kernel `lane_busy` 保证）、`AgentStartGate.updateSettings`、常驻池。修改只影响之后的调度，运行中的不受影响；调小启动上限时已放行的启动继续，直到低于新值才放行下一个（启动闸门的上限不变量改为只在占用槽位时检查）。client-sdk 与前端没有加入口（阶段 4）。
 5. 正式库迁移：不直接改 room.db。下次启动时 offer 发布器以 64 重新发布同一 offer ID，`maxConcurrent` 属于能力摘要，生成一条新的不可变 observation；上限不变的重复发布只续租。设置文件不存在时用默认值，第一次修改才写入。
 6. 测试：
    - `local-workbench-bootstrap.test.ts`：offer 为 64、Host 默认 20（修复前为 1，按预期失败）；`maxConcurrentRuns` 越界被拒。
    - `offer-concurrency-republish.test.ts`（Kernel，Role 实例）：旧 observation 为 1 时只放行一个，以更大值重新发布后跨频道并行；每家 CLI 上限和 Host 上限各自触发排队；运行中调大放行、调小不影响已运行、只约束新工作。
    - `same-cli-instance-concurrency.test.ts`（组合 daemon + Fake CLI，结论读 room.db）：三个实例共用一个 offer，两个同时运行、第三个 queued 无失败、忙碌实例追加消息不开第二条 lane；经设置 API：每家上限 1 → 只跑 1 个，调到 3 → 被 Host 上限 2 挡住，Host 调到 3 → 新增 lane 放行第三个，Host 调到 1 → 已运行的 3 个不受影响、下一轮只跑 1 个；未鉴权 401；设置文件内容核对。关闭应用逻辑或 lane 扩容时该测试失败（已验证）。
-   - `runtime-concurrency-settings.test.ts`：默认值、修订号冲突、未知 RuntimeProfile、越界、0600 持久化与重启后读回。
+   - `runtime-settings.test.ts`：默认值、修订号冲突、未知 RuntimeProfile、越界、0600 持久化与重启后读回。
    - `agent-start-coordinator.test.ts`、`instance-runtime-pool.test.ts`：启动上限运行中调大立即放行、调小不打断；常驻池调大忙时上限放行等待中的轮次。
 7. 风险与未解决：全局 20 意味着默认 20 个 lane worker，每次唤醒提示最多 20 次认领事务（此前生产为 4 个）；lane 只增不减。冷路径（Kimi、默认的 Claude）进程数只受这两级上限与逐 run 资源上限约束。多个实例在同一共享仓库目录同时写入的问题仍在（没有每实例 worktree，见审计 P1）。每家 CLI 默认值无依据。效率门禁 `gate-daemon.mjs` 也走新默认，单实例门禁行为不变。本地服务尚未重启，正式库 offer 仍为 1，下次启动才更新。
 
@@ -488,8 +488,8 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 依据 `~/.loom/reviews/2026-09-26-upstream-substrate-research.md` 第 1、2 节、`~/.loom/reviews/2026-09-26-scenario-capability-audit.md` A、I 节与负责人裁定 A/B/C。先写失败测试再最小实现；没有运行付费 CLI，没有重启服务，没有改前端。
 
 1. 唤醒规则（裁定 A，参考 Multica `comment.go:2685`“agent 作者跳过隐式路由”）：
-   - 实例发的消息只有显式 `@实例` 才唤醒其他实例。`room_policy`、线程关注者、回复链、线程根都不再唤醒。Worker 路由 `workerReplyRecipients` 只保留 @ 解析结果，事件 `recipientIds` 与实际唤醒一致。
-   - 同一规则在 Kernel 注意力派生处（`RoomEventWriter.deriveAttention` → `instance-wake-guard.ts`）统一强制：实例作者的 `message.posted` 里非 `mention` 的收件人不写 Inbox、不建 Activation，任何门面都绕不过。
+   - agent 作者发的消息只有显式 `@` 才唤醒其他 agent。规则按作者 `principals.kind='agent'` 判定，不查 `role_instances`、不限定 room 类型，所以 Role 实例和旧 Agent 都适用（旧 Agent 的隐式路由唤醒同样取消，不是保留旧逻辑）。`room_policy`、线程关注者、回复链、线程根都不再唤醒。Worker 路由 `workerReplyRecipients` 只保留 @ 解析结果，事件 `recipientIds` 与实际唤醒一致。
+   - 同一规则在 Kernel 注意力派生处（`RoomEventWriter.deriveAttention` → `instance-wake-guard.ts`）统一强制：agent 作者的 `message.posted` 里非 `mention` 的收件人不写 Inbox、不建 Activation；`mention` 收件人还必须出现在 `RoomEventWriter` 为该消息绑定的 canonical mentions（按 participantId，不按显示名重新匹配）里，否则同样拒绝（第三十八节补上；此前守卫只信 `reason`）。
    - Human 消息规则不变（ADR-0015 已补充说明）。Task 指派、审查等非消息事件不属于本规则，也不计数。
 2. 合并：实例已有排队中的 Activation 时，新触发只把 `to_seq` 并入它（既有机制，本次用测试锁定）。
 3. 连续激活上限：
@@ -500,22 +500,23 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
 4. 看门狗（裁定 B，参考 Raft 1.0.32 daemon 语义，去掉“2 分钟无首事件即杀”）：
    - 规则只有一处定义（`agent-host/src/run-watchdog.ts`），冷热路径共用：
      - 无进展达到告警阈值（默认 15 分钟）：只告警，写诊断日志，并写一条 `run.watchdog_warning` 活动事件。每个 RunAttempt 至多一条，幂等；实例活动列表显示为 warning，不改 run、Activation 或 Task。
-     - 同一实例已有排队工作，且无进展达到终止阈值（默认 15 分钟）：终止并重试。
+     - 同一实例已有排队工作，且无进展达到终止阈值（默认 15 分钟）：终止并重试。“排队工作”包括私聊排队：私聊排队也会触发该实例频道工作的终止（只是调度恢复，不会把私聊内容 steer 进频道）。
      - 总时长达到上限（默认 4 小时）：不论有无进展，终止并重试。
-   - 进展定义：冷路径以 provider 轨迹或用量帧为准，不看 stdout 文本；热路径沿用原生轮次进展时钟（传输心跳不算），等待审批时不算停滞，但总时长上限照样生效。
+   - 进展定义：冷路径以 provider 轨迹或用量帧为准，不看 stdout 文本；热路径沿用原生轮次进展时钟（传输心跳不算），等待审批时不算停滞，但总时长上限照样生效。冷热在审批上不对称：冷路径没有审批豁免，只看进展时钟；当前无人值守权限策略下很少出现，以后支持真实等待审批时须接入统一状态，不能只凭共用决策函数声称一致。
+   - 看门狗是时间策略，不是卡死证明：静默的编译、测试、外部工具或无事件的长推理都可能正常却被终止，15 分钟与 4 小时不能宣传为不会误伤长任务。
    - 冷路径由 AgentHost 监督：`watchRunProgress` 与原有存活探测并行。热轮由适配器监督：`warm-turn-supervisor.ts` 调同一规则，适配器声明 `supervisesRun` 后 AgentHost 不再重复监督。原来的 `stallMs`、`toolStallMs` 策略（15 分钟无进展即中断，工具运行时 60 分钟）已删除；配置里的旧键仍可解析，但不再使用。
 5. 终止与续接：
    - 走既有终止证明路径。冷路径：`runtime.cancel`，先向进程组长发 SIGTERM，宽限后对进程组发 SIGKILL，宽限沿用现有 `terminationGraceMs`，本地服务为 5 秒。热路径：先原生 interrupt，静默等待上限内收尾则运行时保留；否则 `abortRuntime`，SIGTERM 后按 pool `killGraceMs` 发 SIGKILL，终止原因记为 `stall`。
-   - RunAttempt 记为 `timed_out`，并写入终止证明。Activation 按可恢复失败重试，排队的后续工作并入重试。重试续接原会话：热路径 interrupt 收尾时仍在同一进程、同一线程；被杀时新进程 `thread/resume` 同一线程。冷路径按既有 resume 续接。
+   - RunAttempt 状态冷热不同：冷路径记 `timed_out`；热路径按原生收尾结果或实际退出记 `cancelled`/`failed`/`exited`，并带 watchdog 失败文本；两路都写终止证明，不为统一而伪造原生退出结果。Activation 按可恢复失败重试，同房间排队的后续工作并入重试（跨房间不合并）。重试续接原会话：热路径 interrupt 收尾时仍在同一进程、同一线程；被杀时新进程 `thread/resume` 同一线程。冷路径按既有 resume 续接。
    - 最终答复已提交的 run 不重跑，只做完成（仍需 ACK 到 `toSeq`）。
-   - 失败文本不含变量数字（`LOOM_RUN_WATCHDOG_QUEUED_STALL` / `LOOM_RUN_WATCHDOG_MAX_DURATION`），同一错误连续 3 次即由既有 retry fence 隔离（`activation.retry_blocked`）。资源失败仍用原来的 `stallRetryBudget`。
+   - 失败文本不含变量数字（`LOOM_RUN_WATCHDOG_QUEUED_STALL` / `LOOM_RUN_WATCHDOG_MAX_DURATION`），同一错误连续 3 次即由既有 retry fence 隔离（`activation.retry_blocked`）。fence 按 Activation（`activation_id`）计，隔离的是该 Activation，不是实例的全局错误计数，不阻断该实例在其他房间的新工作。资源失败仍用原来的 `stallRetryBudget`。
 6. 运行中配置（裁定 C，与第三十六节的并发设置共用一份，不另建存储）：
-   - 同一文件 `runtime-concurrency.json`、同一修订号、同一 Human 鉴权 API `/v3/client/runtime-concurrency/read|update`，新增并列分组：
+   - 同一文件 `runtime-settings.json`、同一修订号、同一 Human 鉴权 API `/v3/client/runtime-settings/read|update`，新增并列分组：
      - `wakeGuard.instanceChainLimit`：1–1000，默认 10；
      - `watchdog.noProgressWarnMs`、`watchdog.queuedStallTerminateMs`：1 分钟–1 天，默认各 15 分钟；
      - `watchdog.maxRunMs`：1 分钟–7 天，默认 4 小时。
    - 分组可以只改部分字段，越界值被拒；文件只保存改过的字段。
-   - 边界、默认值与 Host 读取结构定义在 protocol `run-watchdog.ts`。`DaemonRuntimeConcurrency.attach` 在启动时和每次修改后把两组推给 Kernel `runGuards`（进程内唯一所有者 `RunGuardPolicy`）。唤醒上限在每次派生时读取；Host 每个监督周期经控制端口 `readRunWatchdog` 读取阈值和“同实例是否有排队工作”，所以运行中的 run 也在下一周期生效，无需重启。
+   - 边界、默认值与 Host 读取结构定义在 protocol `run-watchdog.ts`。`DaemonRuntimeSettings.attach` 在启动时和每次修改后把两组推给 Kernel `runGuards`（进程内唯一所有者 `RunGuardPolicy`）。唤醒上限在每次派生时读取；Host 每个监督周期经控制端口 `readRunWatchdog` 读取阈值和“同实例是否有排队工作”，所以运行中的 run 也在下一周期生效，无需重启。
    - 只有 v4 daemon（本地服务）有该设置；v2/v3 与单独使用 Kernel 的测试取默认值。
 7. 测试（全部 fake，结论读 room.db）：
    - `kernel/test/instance-wake-guard.test.ts`：
@@ -538,7 +539,7 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
      - 无排队时 4 小时前不杀；3 次时长失败后被 fence 隔离，每次都在同一进程上运行，包括按次新建适配器的情形。
      - 不响应 interrupt 的轮次被杀，有 `process_exit` 证明，重试 `thread/resume` 同一线程。
    - `claude-warm-runtime.test.ts`：有排队时的停滞终止与重试。
-   - `daemon/test/runtime-concurrency-settings.test.ts`：两组部分更新、共用修订号、越界拒绝、重启后读回；attach 后立即推给 Kernel，之后每次修改也推。`same-cli-instance-concurrency.test.ts` 经 API 更新两组并核对文件。`daemon-application.test.ts`：旧 `stallMs`、`toolStallMs` 仍可解析。
+   - `daemon/test/runtime-settings.test.ts`：两组部分更新、共用修订号、越界拒绝、重启后读回；attach 后立即推给 Kernel，之后每次修改也推。`same-cli-instance-concurrency.test.ts` 经 API 更新两组并核对文件。`daemon-application.test.ts`：旧 `stallMs`、`toolStallMs` 仍可解析。
    - 规则变化导致旧断言修改（不是放宽）：
      - `room-kernel.test.ts` 两条 Worker @ 测试：第三个实例不再被 `room_policy` 唤醒。
      - 两条“认领实例消息为任务”测试：消息体加上显式 @。
@@ -550,9 +551,39 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
    - 热轮时长终止的 `terminated_reason` 记为 `stall`，未新增枚举，以免改 CHECK 约束。
    - 链计数只覆盖消息；实例经 Task 指派或审查唤醒其他实例不计数，属于有持久义务的显式动作。
    - 冷路径以轨迹帧为进展，长时间无输出的工具在有排队工作时会被终止（与 Raft 一致，原热路径的“工具 60 分钟窗口”已取消）。
-   - 设置 API 名称仍叫 runtime-concurrency，未改名为通用 runtime settings（涉及第三十六节的 API 与测试，留待负责人决定）。
+   - 设置 API 已按负责人决定改名为通用 runtime settings（第三十八节）。
    - client-sdk 与控制台没有入口。
    - 本地服务未重启，正式库仍是 schema 69，下次启动迁移。
+
+### 三十八、并发/唤醒/看门狗审查修复
+
+依据 `~/.loom/reviews/2026-09-26-review-concurrency-wake-watchdog.md`（P1-1、P2-1、P2-2、P2-3 与文档范围说明），负责人已批准修复，并追加同意把设置改名为 runtime settings。每项先写失败测试并确认失败，再做最小实现；没有运行付费 CLI，没有重启服务，没有改前端，没有延长 lease，没有新建队列。
+
+1. P1-1 启动闸门等待受监督（`agent-host.ts#startBehindGate`，`AgentStartGate.runStart(agentId, start, signal)`）：
+   - 已认领的 Activation 在启动闸门排队时按运行期同一节奏（`leaseRenewIntervalMs`）续租并发 heartbeat，合法的启动积压不再让租约过期；获准启动后仍先取一次新续租再 `runtime.start`（原不变量不变）。
+   - 等待中续租发现取消（`ActivationCancellationRequestedError`）、Agent 暂停或租约丢失，或 daemon 开始 drain，立即把本 lane 的闸门项移出队列（按 item 身份，只移除这一项）并返回，不调用 `runtime.start`：取消走既有 `resolveActivationCancellation`（RunAttempt `cancelled`）；drain 把 RunAttempt 记 `cancelled` 后按既有 drain 惯例重试；其余走既有 pre-start 失败路径。
+   - Kernel 仍是唯一队列与单 lane 所有者：闸门项只是本 Host 已租到的 Activation 的进程内启动槽位。
+   - 测试（修复前均失败）：`start-gate-wait-supervision.test.ts`（假时钟、临时库、Fake 运行时，结论读 room.db）——排队 80 s（租约 60 s）后启动成功，唯一 RunAttempt 为 `exited`、无 retry fence、Activation `completed` 且无 `last_error`（修复前复现审查所述 `pre-start lease validation failed ... durable retry failed`）；排队中取消在槽位仍被占用时结束为 `cancelled`、未启动 CLI、闸门队列为空（修复前一直挂起）；`AgentHost.run` 退出不等排队者获准、未启动 CLI、无未结束 RunAttempt（修复前一直挂起）。`agent-start-coordinator.test.ts`：中止一个排队项只移除它并拒绝、不执行，已获准后中止无影响（修复前超时）。
+2. P2-1 动态缩容不再把已准入工作变成 admission failure（`InstanceRuntimePool.setMaxBusyTurns`、`daemon-process-hygiene.ts`）：
+   - 准入线性化点明确为 Kernel 规划器。运行中调小 Host 上限只作用于 Kernel placement 上限；常驻池忙时上限只跟随调大，调小时保留当前值，所以旧上限下已预留、尚未进入常驻池的工作（例如仍在启动闸门）正常启动并自然排空，不记 provider 失败、不进 retry fence；新 placement 由 Kernel 挡住。
+   - 常驻池构造时直接取持久化的 Host 上限（原来靠 attach 首次调用下调默认 20），重启后调小值生效。
+   - 测试：`instance-runtime-pool.test.ts`“忙 + 已认领尚未启动 + 调小”——上限 3 时两轮忙，调到 1 后第三轮获准（修复前 `RAH_WARM_ADMISSION_FULL`）；`daemon-application.test.ts` 断言工厂按传入上限构造常驻池（实现后补的接线断言）。
+3. P2-2 Kernel 唤醒守卫用 canonical mentions 证明 `@`（`instance-wake-guard.ts`）：agent 作者消息的 `mention` 收件人必须出现在 `RoomEventWriter` 已绑定的 `payload.mentions[].principalId` 里，不按显示名重新匹配；否则按隐式路由拒绝（不写 Inbox、不建 Activation、不计数）。测试 `instance-wake-guard.test.ts`：`reason=mention` 但正文无 @ → 拒（修复前产生 1 个 Activation）；正文 @别人 → 只唤醒被 @ 者；真正 @本人 → 放行。
+4. P2-3 Room 永久删除清理唤醒表（`room-deletion-service.ts`）：删除事务清理 `instance_wake_chain` 与 `instance_wake_guards`；`ROOM_DELETION_REFERENCED_TABLES` 加入两表，棘轮测试扩为“外键可达 rooms，或带 `room_id` 列的表（删除回执 `room_deletion_receipts` 除外）”，以后无外键的房间级表也会被棘轮抓到。测试：有真实唤醒记录（Human 发言 + agent @ 另一 agent）后删除频道，两表该房间行清零、另一房间的 guard 保留（修复前删除后仍残留）；棘轮测试修复前报缺两表。表结构不变，schema 仍为 70。
+5. 文档修正（第三十六、三十七节原文已改）：唤醒规则适用于所有 agent 作者（含旧 Agent）；RunAttempt 状态冷路径 `timed_out`、热路径按原生结果 `cancelled`/`failed`/`exited` 并带 watchdog failure；retry fence 按 Activation 计，“排队后续并入重试”限同房间；看门狗是时间策略不是卡死证明，私聊排队也会触发频道工作的终止；冷热审批状态不对称；lane 只增不减（调小不减 worker）。
+6. 设置改名（负责人同意）：runtime-concurrency 泛化为 runtime settings。
+   - API 路由 `/v3/client/runtime-settings/read|update`，旧路由 `/v3/client/runtime-concurrency/*` 删除（前端与 client-sdk 无调用方）。
+   - protocol `runtime-settings.ts`：`RuntimeSettingsSchema`、`RuntimeSettingsReadSchema`、`RuntimeSettingsUpdateSchema` 与对应类型；daemon `runtime-settings.ts`（`RuntimeSettings`、`RuntimeSettingsRuntime`）、`daemon-runtime-settings.ts`（`DaemonRuntimeSettings`、`openDaemonRuntimeSettings`）；application-service 选项 `runtimeSettings`。字段与校验不变。
+   - 持久化文件 `runtime-settings.json`。启动时只存在旧 `runtime-concurrency.json` 则读取、校验后原子写入新文件（临时文件 + fsync + rename，0600），旧文件保留不改：回滚到旧构建时仍能读到上次的值；新文件存在后本构建不再读旧文件。两者都不存在时取默认值。
+   - 测试：`runtime-settings.test.ts` 迁移用例（实现前读到默认 revision 0 而失败）——旧文件的值被读出、新文件 0600 且内容一致、旧文件字节不变、之后修改只写新文件、重开读新文件、两者皆无时为默认；`same-cli-instance-concurrency.test.ts` 改用新路由并断言旧路由不可用。
+7. 规则变化导致的既有测试修改（不是放宽）：
+   - `collaboration-closure.test.ts`“Agent-authored Task input …”：agent 作者消息体加上显式 `@codex`（此前只传 `reason:"mention"`，正是 P2-2 拒绝的形态）。
+   - `multi-lane-agent-host.test.ts` 隔离段：等待条件增加“Agent B 的隔离 Task 已 submitted”。原条件会被 B 之前已完成的 Activation 提前满足，B 的新 run 实际是在停机时从启动闸门放行才跑完；P1-1 后 drain 不再放行排队者，所以等待必须看这次 run 的结果。原断言不变。
+8. 未解决：
+   - drain 时闸门中的项按既有 drain 惯例走 `retryActivation`，计入该 Activation 的同错误计数；同一 Activation 连续 3 次在闸门中遇到停机会被 fence 隔离（与既有 drain 超时路径相同，未新增无惩罚归还的 Kernel API）。
+   - 等待中的取消在下一次续租时才发现，延迟至多 `leaseRenewIntervalMs`（本地服务 20 s）；drain 立即生效。
+   - 调小 Host 上限后，常驻池忙时上限在本进程内保持原值，直到重建；此期间仅靠 Kernel 上限约束新工作（Kernel 释放 placement 与常驻池释放槽位之间的短暂重叠与以前相同）。
+   - 未做正式服务验证（未重启）；真实多 CLI 并发、长任务恢复未测。
 
 ## 当前状态（2026-09-25，批次 4 后）
 

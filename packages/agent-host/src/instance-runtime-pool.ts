@@ -1164,13 +1164,22 @@ export class InstanceRuntimePool {
   }
 
   /**
-   * Runtime concurrency setting: the busy-turn hard cap follows the daemon's
-   * Host run cap. Raising it wakes turns waiting for a slot; lowering it
-   * never interrupts busy turns.
+   * Runtime concurrency setting: the busy-turn hard cap follows raises of the
+   * daemon's Host run cap and wakes turns waiting for a slot. A reduction is
+   * enforced where work is admitted — the Kernel placement planner, the single
+   * linearization point — which never revokes placements it already made. The
+   * pool keeps its current cap for such a reduction: a turn the Kernel placed
+   * under the old cap but that has not reached the pool yet (for example still
+   * in the start gate) starts and drains naturally instead of failing
+   * `RAH_WARM_ADMISSION_FULL` into a provider retry, while new placements are
+   * held by the Kernel. The reduced value reaches the pool at its next
+   * construction (the daemon passes the persisted cap in). Busy turns are never
+   * interrupted.
    */
   setMaxBusyTurns(value: number): void {
     if (!Number.isSafeInteger(value) || value < 1)
       throw new Error("maxBusyTurns must be a positive integer");
+    if (value <= this.policy.maxBusyTurns) return;
     this.policy.maxBusyTurns = value;
     for (const waiter of [...this.#admissionWaiters]) waiter();
   }

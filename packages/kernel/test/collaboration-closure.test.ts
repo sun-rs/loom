@@ -329,7 +329,8 @@ for (const humanCount of [0, 1, 2])
       }).latestRoomSeq;
       const msg = f.kernel.postMessage(f.otherAgentActor, {
         basedOnRoomSeq: seq,
-        body: "Implement a file",
+        // evo §38: an agent's mention must be a canonical body @mention.
+        body: "@codex Implement a file",
         roomId: f.room.roomId,
         recipients: [{ participantId: f.agent.principalId, reason: "mention" }],
         idempotencyKey: "agent-work",

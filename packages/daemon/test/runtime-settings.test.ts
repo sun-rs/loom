@@ -1,17 +1,28 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, statSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
 import { RoomKernel } from "@rah-os/kernel";
-import type { RuntimeConcurrencySettings as View } from "@rah-os/protocol";
+import type { RuntimeSettings as View } from "@rah-os/protocol";
 
-import { DaemonRuntimeConcurrency } from "../src/daemon-runtime-concurrency.ts";
+import type { DaemonConfig } from "../src/config.ts";
+import {
+  DaemonRuntimeSettings,
+  openDaemonRuntimeSettings,
+} from "../src/daemon-runtime-settings.ts";
 import {
   DEFAULT_PER_CLI_MAX_CONCURRENT_RUNS,
-  RuntimeConcurrencySettings,
-} from "../src/runtime-concurrency-settings.ts";
+  RuntimeSettings,
+} from "../src/runtime-settings.ts";
 
 const runtimes = [
   {
@@ -29,13 +40,13 @@ const runtimes = [
 test("concurrency settings default to the Host cap, a conservative per-CLI cap and Raft's start gate", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-concurrency-settings-"));
   try {
-    const settings = new RuntimeConcurrencySettings({
+    const settings = new RuntimeSettings({
       defaults: {
         maxConcurrentRuns: 20,
         maxConcurrentStarts: 5,
         minStartIntervalMs: 500,
       },
-      path: join(directory, "runtime-concurrency.json"),
+      path: join(directory, "runtime-settings.json"),
       runtimes,
     });
     assert.equal(DEFAULT_PER_CLI_MAX_CONCURRENT_RUNS, 4);
@@ -62,14 +73,14 @@ test("concurrency settings default to the Host cap, a conservative per-CLI cap a
 
 test("a concurrency update is validated, persisted owner-private, applied to listeners and survives a restart", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-concurrency-settings-"));
-  const path = join(directory, "runtime-concurrency.json");
+  const path = join(directory, "runtime-settings.json");
   const defaults = {
     maxConcurrentRuns: 20,
     maxConcurrentStarts: 5,
     minStartIntervalMs: 500,
   };
   try {
-    const settings = new RuntimeConcurrencySettings({
+    const settings = new RuntimeSettings({
       defaults,
       path,
       runtimes,
@@ -117,7 +128,7 @@ test("a concurrency update is validated, persisted owner-private, applied to lis
     );
     assert.equal(applied.length, 1);
 
-    const restarted = new RuntimeConcurrencySettings({
+    const restarted = new RuntimeSettings({
       defaults,
       path,
       runtimes,
@@ -128,6 +139,77 @@ test("a concurrency update is validated, persisted owner-private, applied to lis
   }
 });
 
+test("the daemon reads runtime-settings.json and migrates a legacy runtime-concurrency.json once, atomically, keeping the legacy file", () => {
+  const stateDirectory = mkdtempSync(join(tmpdir(), "loom-runtime-settings-"));
+  const legacyPath = join(stateDirectory, "runtime-concurrency.json");
+  const path = join(stateDirectory, "runtime-settings.json");
+  // Only the fields the daemon opener reads (v4 Host cap, runtimes, state).
+  const config = {
+    host: { hostId: "host-1", maxConcurrent: 20 },
+    runtimes: runtimes.map((runtime) => ({
+      offer: {
+        maxConcurrent: runtime.offerMaxConcurrent,
+        runtimeOfferId: runtime.runtimeOfferId,
+      },
+      runtimeProfileId: runtime.runtimeProfileId,
+    })),
+    schemaVersion: 4,
+    stateDirectory,
+  } as unknown as DaemonConfig;
+  try {
+    const legacy = JSON.stringify({
+      maxConcurrentRuns: 6,
+      revision: 3,
+      runtimeMaxConcurrentRuns: { "profile-codex": 2 },
+      wakeGuard: { instanceChainLimit: 7 },
+    });
+    writeFileSync(legacyPath, legacy, { mode: 0o600 });
+
+    const migrated = openDaemonRuntimeSettings(config)!.settings;
+    assert.equal(migrated.path, path);
+    const view = migrated.read();
+    assert.equal(view.revision, 3);
+    assert.equal(view.maxConcurrentRuns, 6);
+    assert.deepEqual(
+      view.runtimes.map((runtime) => runtime.maxConcurrentRuns),
+      [2, 4],
+    );
+    assert.equal(view.wakeGuard.instanceChainLimit, 7);
+    assert.ok(existsSync(path), "the new file is written at startup");
+    assert.equal(statSync(path).mode & 0o777, 0o600);
+    assert.deepEqual(
+      JSON.parse(readFileSync(path, "utf8")),
+      JSON.parse(legacy),
+    );
+    assert.equal(
+      readFileSync(legacyPath, "utf8"),
+      legacy,
+      "the legacy file is kept unchanged",
+    );
+
+    const updated = migrated.update({
+      expectedRevision: 3,
+      maxConcurrentRuns: 9,
+    });
+    assert.equal(updated.revision, 4);
+    assert.equal(readFileSync(legacyPath, "utf8"), legacy);
+
+    // Once the new file exists the legacy one is never read again.
+    const reopened = openDaemonRuntimeSettings(config)!.settings.read();
+    assert.deepEqual(reopened, updated);
+
+    rmSync(legacyPath);
+    rmSync(path);
+    assert.equal(
+      openDaemonRuntimeSettings(config)!.settings.read().revision,
+      0,
+      "neither file: defaults",
+    );
+  } finally {
+    rmSync(stateDirectory, { force: true, recursive: true });
+  }
+});
+
 /**
  * evo §37 C: the wake-guard and watchdog groups share the concurrency
  * settings' document, revision and API; a change is validated, persisted,
@@ -135,14 +217,14 @@ test("a concurrency update is validated, persisted owner-private, applied to lis
  */
 test("the wakeGuard and watchdog groups update partially under the shared revision, persist and survive a restart", () => {
   const directory = mkdtempSync(join(tmpdir(), "loom-run-guard-settings-"));
-  const path = join(directory, "runtime-concurrency.json");
+  const path = join(directory, "runtime-settings.json");
   const defaults = {
     maxConcurrentRuns: 20,
     maxConcurrentStarts: 5,
     minStartIntervalMs: 500,
   };
   try {
-    const settings = new RuntimeConcurrencySettings({
+    const settings = new RuntimeSettings({
       defaults,
       path,
       runtimes,
@@ -178,7 +260,7 @@ test("the wakeGuard and watchdog groups update partially under the shared revisi
       2,
       "rejected updates change nothing",
     );
-    const restarted = new RuntimeConcurrencySettings({
+    const restarted = new RuntimeSettings({
       defaults,
       path,
       runtimes,
@@ -194,20 +276,20 @@ test("attaching the settings pushes the wakeGuard and watchdog groups into the K
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   kernel.initialize();
   try {
-    const settings = new RuntimeConcurrencySettings({
+    const settings = new RuntimeSettings({
       defaults: {
         maxConcurrentRuns: 2,
         maxConcurrentStarts: 5,
         minStartIntervalMs: 500,
       },
-      path: join(directory, "runtime-concurrency.json"),
+      path: join(directory, "runtime-settings.json"),
       runtimes,
     });
     settings.update({
       expectedRevision: 0,
       watchdog: { noProgressWarnMs: 5 * 60_000 },
     });
-    new DaemonRuntimeConcurrency("host-1", settings).attach({
+    new DaemonRuntimeSettings("host-1", settings).attach({
       kernel,
       lanes: undefined,
       pool: undefined,

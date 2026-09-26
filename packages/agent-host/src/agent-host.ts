@@ -138,12 +138,15 @@ export type AgentHostOptions = {
 };
 
 /**
- * Outcome of the gated runtime start. `lease-lost` carries the renewal failure
- * taken after the start slot was granted, so the caller can resolve a
- * cancellation rather than treat it as a start failure.
+ * Outcome of the gated runtime start. `lease-lost` carries a renewal failure
+ * taken while the lane waited or right after the slot was granted, so the
+ * caller can resolve a cancellation rather than treat it as a start failure;
+ * `draining` means the daemon began to stop before the slot was granted.
  */
 type GatedRuntimeStart =
-  { error: unknown; kind: "lease-lost" } | { kind: "started"; run: RunHandle };
+  | { kind: "draining" }
+  | { error: unknown; kind: "lease-lost" }
+  | { kind: "started"; run: RunHandle };
 
 export type InstanceRuntimeLifecycle = {
   janitor(): Promise<void>;
@@ -777,36 +780,28 @@ export class AgentHost {
       // Upstream Raft bounds how many Agents may be *starting* at once — never
       // how many may be running — with AgentStartCoordinator. The gate is the
       // port of that queue-and-pump; without one, every lane starts at once.
-      //
-      // The queue wait sits before run supervision begins, so nothing renews
-      // the activation lease while a lane waits for a start slot. Renew again
-      // once the slot is in hand: that restores the invariant this host had
-      // before the gate existed — the un-renewed window is exactly the bounded
-      // `runtime.start` — and a cancellation or an expiry that landed during
-      // the wait is discovered here, before a runtime is spawned. Raft has no
-      // activation lease, so there is no upstream contract to copy; this keeps
-      // a RAH invariant that the ported gate widened.
-      let gated: GatedRuntimeStart;
-      if (this.#startGate === undefined) {
-        gated = { kind: "started", run: await startRuntime() };
-      } else {
-        gated = await this.#startGate.runStart(
-          activation.participantId,
-          async (): Promise<GatedRuntimeStart> => {
-            try {
-              await this.#control.renewActivationLease({
-                activationId: activation.activationId,
-                leaseMs: this.#leaseMs,
-              });
-            } catch (error) {
-              return { error, kind: "lease-lost" };
-            }
-            return { kind: "started", run: await startRuntime() };
-          },
-        );
-      }
+      // Raft has no activation lease; RAH keeps the claimed Activation under
+      // supervision while it waits (see `#startBehindGate`).
+      const gated: GatedRuntimeStart =
+        this.#startGate === undefined
+          ? { kind: "started", run: await startRuntime() }
+          : await this.#startBehindGate(
+              this.#startGate,
+              activation,
+              startRuntime,
+            );
       if (gated.kind === "lease-lost") {
         return this.#failPreStartLease(gated.error, activation, runAttempt);
+      }
+      if (gated.kind === "draining") {
+        const failure =
+          "daemon draining: the runtime was not started (it waited in the start gate)";
+        await this.#control.finishRunAttempt({
+          error: failure,
+          runAttemptId: runAttempt.runAttemptId,
+          state: "cancelled",
+        });
+        return this.#retryFailedActivation(activation, failure);
       }
       run = gated.run;
       if (
@@ -1407,6 +1402,86 @@ export class AgentHost {
           runAttempt.runAttemptId,
           failure,
         );
+  }
+
+  /**
+   * Evo review P1-1: wait for a start slot while the claimed Activation stays
+   * supervised. The lease is renewed on the run cadence during the wait, so a
+   * legitimate backlog never expires it; a cancellation, a paused Agent or a
+   * lost lease found by that renewal, or a daemon drain, removes this lane's
+   * queued item from the gate and returns before any runtime is spawned. The
+   * Kernel stays the only queue and lane owner: the gate item is the in-memory
+   * start slot of an Activation this Host already leased. After the slot is
+   * granted the supervision stops, one fresh renewal is taken (the un-renewed
+   * window stays the bounded `runtime.start`), and run supervision takes over.
+   */
+  async #startBehindGate(
+    gate: AgentStartGate,
+    activation: Activation,
+    startRuntime: () => Promise<RunHandle>,
+  ): Promise<GatedRuntimeStart> {
+    const waiting = new AbortController();
+    let stopped: GatedRuntimeStart | undefined;
+    const supervision = this.#superviseStartWait(
+      activation.activationId,
+      waiting.signal,
+    ).then((outcome) => {
+      if (outcome === undefined) return;
+      stopped = outcome;
+      waiting.abort(new Error("start wait supervision stopped this lane"));
+    });
+    try {
+      return await gate.runStart(
+        activation.participantId,
+        async (): Promise<GatedRuntimeStart> => {
+          waiting.abort();
+          await supervision;
+          if (stopped !== undefined) return stopped;
+          try {
+            await this.#control.renewActivationLease({
+              activationId: activation.activationId,
+              leaseMs: this.#leaseMs,
+            });
+          } catch (error) {
+            return { error, kind: "lease-lost" };
+          }
+          return { kind: "started", run: await startRuntime() };
+        },
+        waiting.signal,
+      );
+    } catch (error) {
+      await supervision;
+      if (stopped !== undefined) return stopped;
+      throw error;
+    } finally {
+      waiting.abort();
+      await supervision;
+    }
+  }
+
+  async #superviseStartWait(
+    activationId: string,
+    signal: AbortSignal,
+  ): Promise<GatedRuntimeStart | undefined> {
+    const shutdown = this.#runSignal;
+    const either =
+      shutdown === undefined ? signal : AbortSignal.any([signal, shutdown]);
+    while (!signal.aborted) {
+      if (shutdown?.aborted) return { kind: "draining" };
+      await this.#maintenanceWait(this.#leaseRenewIntervalMs, either);
+      if (signal.aborted) return undefined;
+      if (shutdown?.aborted) return { kind: "draining" };
+      try {
+        await this.#heartbeat();
+        await this.#control.renewActivationLease({
+          activationId,
+          leaseMs: this.#leaseMs,
+        });
+      } catch (error) {
+        return { error, kind: "lease-lost" };
+      }
+    }
+    return undefined;
   }
 
   /** Whether this RunAttempt committed a `final` reply (durable marker). */
