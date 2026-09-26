@@ -329,12 +329,15 @@ test("an existing Channel without a home keeps the private per-instance cwd for 
 function fakePreparer(root: string, failWith?: string) {
   const prepared: string[] = [];
   const rolledBack: string[] = [];
+  const attached: (readonly string[])[] = [];
   return {
     prepared,
     rolledBack,
-    preparer: (roomId: string) => {
+    attached,
+    preparer: (roomId: string, additionalDirectories: readonly string[]) => {
       if (failWith !== undefined) throw new Error(failWith);
       prepared.push(roomId);
+      attached.push([...additionalDirectories]);
       return {
         primaryDirectory: `${root}/${roomId}`,
         rollback: () => {
@@ -376,6 +379,20 @@ test("option A: the Host prepares the primary directory at Channel creation; the
       "replay prepares nothing",
     );
     assert.deepEqual(host.rolledBack, []);
+  } finally {
+    f.close();
+  }
+});
+
+// Review 2026-09-26 minor fix: the attached directories go to the same Host
+// preparer as the primary directory, so their identities are recorded at
+// creation rather than at the first binding.
+test("option A: the Host preparer receives the Channel's attached directories at creation", () => {
+  const host = fakePreparer("/homes/a");
+  const f = fixture({ preparer: host.preparer, validator: () => undefined });
+  try {
+    f.createChannel("with-attached", ["/work/app", "/work/lib"]);
+    assert.deepEqual(host.attached, [["/work/app", "/work/lib"]]);
   } finally {
     f.close();
   }

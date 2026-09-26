@@ -20,8 +20,10 @@ import { text, type Row } from "./sqlite-row.ts";
  * instance's Channel over RunAttempts started in `[from, to)`. Read only and
  * diagnostic: token figures are sums of recorded Provider generations, a run
  * without any is `unavailable` (never zero), and cost is only what the CLI
- * itself reported (no Loom price table, no estimate). Visibility: Channels
- * the Human is a member of.
+ * itself reported (no Loom price table, no estimate). Visibility: runs
+ * whose executing room (`run_attempts.room_id`, e.g. a private box) the Human
+ * is a member of, of instances in Channels the Human is a member of; the
+ * Channel is only the grouping key, never the ACL (review 2026-09-26 P2-4).
  */
 export function summarizeUsage(
   database: DatabaseSync,
@@ -44,6 +46,8 @@ export function summarizeUsage(
           ON m.room_id = ri.channel_id AND m.principal_id = ?
         JOIN principals AS human
           ON human.principal_id = m.principal_id AND human.kind = 'human'
+        JOIN memberships AS seen
+          ON seen.room_id = ra.room_id AND seen.principal_id = m.principal_id
        WHERE (? IS NULL OR ri.channel_id = ?)
          AND (? IS NULL OR ri.instance_id = ?)
          AND (? IS NULL OR ra.started_at >= ?)
@@ -83,6 +87,7 @@ export function summarizeUsage(
       reasoningReported: 0,
       gaps: new Set(),
       costs: [],
+      openCodeSteps: new Set(),
     });
   for (const row of all(
     `SELECT u.run_attempt_id, u.provider, COUNT(*) AS generations,
@@ -114,7 +119,7 @@ export function summarizeUsage(
     run.providers.add(text(row, "provider"));
   }
   for (const row of all(
-    `SELECT c.run_attempt_id, c.provider, c.source, c.cost_usd
+    `SELECT c.run_attempt_id, c.provider, c.source, c.cost_id, c.cost_usd
        FROM run_attempt_cli_costs AS c JOIN scope USING (run_attempt_id)`,
   )) {
     const run = runs.get(text(row, "run_attempt_id"));
@@ -122,9 +127,20 @@ export function summarizeUsage(
     run.providers.add(text(row, "provider"));
     run.costs.push({
       source: text(row, "source") as ProviderCostSource,
+      costId: text(row, "cost_id"),
       costUsd: row.cost_usd === null ? null : Number(row.cost_usd),
     });
   }
+  // OpenCode records usage and cost per step under the same step-finish part
+  // id: the step identities of its usage, to prove per-step cost coverage.
+  for (const row of all(
+    `SELECT u.run_attempt_id, u.response_id
+       FROM run_attempt_usage AS u JOIN scope USING (run_attempt_id)
+      WHERE u.provider = '${OPENCODE_USAGE_PROVIDER}'`,
+  ))
+    runs
+      .get(text(row, "run_attempt_id"))
+      ?.openCodeSteps.add(text(row, "response_id"));
 
   const groups = new Map<string, RunFacts[]>();
   for (const run of runs.values()) {
@@ -177,8 +193,39 @@ type RunFacts = {
   reasoningOutputTokens: number;
   reasoningReported: number;
   gaps: Set<ProviderUsageGapReason>;
-  costs: { source: ProviderCostSource; costUsd: number | null }[];
+  costs: {
+    source: ProviderCostSource;
+    costId: string;
+    costUsd: number | null;
+  }[];
+  /** Response ids of the run's OpenCode usage (step-finish part ids). */
+  openCodeSteps: Set<string>;
 };
+
+const OPENCODE_USAGE_PROVIDER = "opencode-server/v1";
+
+/**
+ * Review 2026-09-26 P2-1: whether a run's CLI cost capture is proven
+ * complete, not merely whether the records that arrived are known. Any
+ * unknown record, usage capture gap or late frame leaves it unproven. OpenCode
+ * reports a cost per step: the usage and cost step ids must match exactly.
+ * Claude's cost is a cumulative difference per result and cannot be matched
+ * per step, so only the record and gap conditions apply to it.
+ */
+function costCaptureComplete(run: RunFacts): boolean {
+  if (run.costs.length === 0) return false;
+  if (run.costs.some((entry) => entry.costUsd === null)) return false;
+  if (run.gaps.size > 0 || run.lateFrames) return false;
+  const stepCosts = new Set(
+    run.costs
+      .filter((entry) => entry.source === "opencode_step_finish_cost")
+      .map((entry) => entry.costId),
+  );
+  if (stepCosts.size === 0 && run.openCodeSteps.size === 0) return true;
+  if (stepCosts.size !== run.openCodeSteps.size) return false;
+  for (const step of run.openCodeSteps) if (!stepCosts.has(step)) return false;
+  return true;
+}
 
 function groupKey(run: RunFacts, groupBy: "instance" | "channel") {
   return groupBy === "instance"
@@ -206,10 +253,11 @@ function figures(runs: RunFacts[]) {
   const cost = {
     knownUnits: 0,
     anyKnown: false,
-    runsKnown: 0,
+    runsComplete: 0,
     runsPartial: 0,
     runsUnknown: 0,
     runsUnreported: 0,
+    runsAllRecordsKnown: 0,
   };
   const sources = new Map<
     ProviderCostSource,
@@ -232,8 +280,10 @@ function figures(runs: RunFacts[]) {
     for (const reason of run.gaps)
       gapRuns.set(reason, (gapRuns.get(reason) ?? 0) + 1);
     const known = run.costs.filter((entry) => entry.costUsd !== null).length;
+    if (run.costs.length > 0 && known === run.costs.length)
+      cost.runsAllRecordsKnown += 1;
     if (run.costs.length === 0) cost.runsUnreported += 1;
-    else if (known === run.costs.length) cost.runsKnown += 1;
+    else if (costCaptureComplete(run)) cost.runsComplete += 1;
     else if (known > 0) cost.runsPartial += 1;
     else cost.runsUnknown += 1;
     for (const entry of run.costs) {
@@ -272,10 +322,11 @@ function figures(runs: RunFacts[]) {
     cliEstimatedCost: {
       basis: "cli_reported_estimate" as const,
       totalUsd: cost.anyKnown ? fromUnits(cost.knownUnits) : null,
-      runsKnown: cost.runsKnown,
+      runsComplete: cost.runsComplete,
       runsPartial: cost.runsPartial,
       runsUnknown: cost.runsUnknown,
       runsUnreported: cost.runsUnreported,
+      runsAllRecordsKnown: cost.runsAllRecordsKnown,
       sources: ProviderCostSourceSchema.options
         .filter((source) => sources.has(source))
         .map((source) => {

@@ -78,92 +78,230 @@ export function kimiWireSize(path) {
 }
 
 /**
- * Usage of one prompt from the wire bytes appended since it was sent.
- * `ended` is false when the region has no turn end yet.
+ * The wire's baseline right before `session/prompt`: its size (the offset
+ * this prompt's records start at) and its file identity, so a replaced or
+ * restored file is never read as this prompt's. `undefined` when the file
+ * does not exist.
  */
-export function kimiTurnUsage(text, { now = Date.now } = {}) {
-  const lines = String(text).split("\n");
+export function kimiWireBaseline(path) {
+  let stats;
+  try {
+    stats = statSync(path);
+  } catch {
+    return undefined;
+  }
+  return {
+    offset: stats.size,
+    identity: { dev: stats.dev, ino: stats.ino },
+  };
+}
+
+/**
+ * Usage of one prompt from the wire bytes appended since it was sent.
+ *
+ * Review 2026-09-26 P2-2: the region is attributed only between boundaries
+ * kimi-code 0.39.1 writes itself. The turn starts at the `turn.prompt` record
+ * (`TurnManager.prompt` logs it before launching the turn; its `input` is the
+ * prompt's parts, ACP text blocks passed through unchanged) whose text is
+ * `promptText` — records before it (a late tail of an earlier turn, an
+ * earlier prompt) are never this prompt's. The turn's number is the `turnId`
+ * of its step events; every later step event and the `turn.ended` must carry
+ * the same number, and the turn stops at that `turn.ended`. A record of
+ * another turn inside it breaks the boundary: a gap, never attributed.
+ *
+ * A prompt that only compacted (a manual compaction writes no turn records)
+ * is accepted only with independent proof that the prompt settled
+ * (`promptSettled`, the ACP prompt result) and a complete compaction with no
+ * turn record in the region; a compaction inside a turn never ends it.
+ * `ended` is false while the region may still grow into proof.
+ */
+export function kimiTurnUsage(
+  text,
+  { now = Date.now, promptText, promptSettled = false } = {},
+) {
+  const rawLines = String(text).split("\n");
   const usages = [];
   const gaps = [];
   const gap = (reason) => {
     if (!gaps.some((entry) => entry.reason === reason))
       gaps.push(providerUsageGap(KIMI_USAGE_PROVIDER, reason, now));
   };
-  let ended = false;
-  let inCompaction = false;
-  let compactionDone = false;
-  let stepAfterCompaction = false;
-  let turnRecords = 0;
-  let stepUsages = 0;
-  const seen = new Set();
-  for (let index = 0; index < lines.length && !ended; index += 1) {
-    const raw = lines[index];
+  const records = [];
+  for (let index = 0; index < rawLines.length; index += 1) {
+    const raw = rawLines[index];
     if (raw.trim() === "") continue;
-    let record;
     try {
-      record = JSON.parse(raw);
+      const record = JSON.parse(raw);
+      if (isRecord(record)) records.push(record);
     } catch {
       // The first line may be the torn tail of a pre-prompt record and the
       // last one a record still being written; neither is this prompt's.
-      if (index !== 0 && index !== lines.length - 1) gap("parse_error");
-      continue;
+      if (index !== 0 && index !== rawLines.length - 1) gap("parse_error");
     }
-    if (!isRecord(record)) continue;
-    const at =
-      typeof record.time === "number" && Number.isFinite(record.time)
-        ? new Date(record.time).toISOString()
-        : new Date(now()).toISOString();
-    if (record.type === "turn.ended") {
+  }
+  const observedAt = (record) =>
+    typeof record.time === "number" && Number.isFinite(record.time)
+      ? new Date(record.time).toISOString()
+      : new Date(now()).toISOString();
+  const seen = new Set();
+  const collect = (usage) => {
+    if (usage === undefined) return gap("parse_error");
+    if (seen.has(usage.responseId)) return;
+    seen.add(usage.responseId);
+    usages.push(usage);
+  };
+
+  const start = records.findIndex(
+    (record) =>
+      record.type === "turn.prompt" &&
+      (promptText === undefined || turnPromptText(record) === promptText),
+  );
+  if (start < 0) {
+    return compactionOnlyPrompt(records, {
+      collect,
+      gap,
+      gaps,
+      observedAt,
+      promptSettled,
+      usages,
+    });
+  }
+  // Without this prompt's text the first prompt record is only assumed to
+  // be ours: usage before it makes the start unproven.
+  if (
+    promptText === undefined &&
+    records.slice(0, start).some(carriesTurnUsage)
+  )
+    gap("parse_error");
+
+  let ended = false;
+  let turnId;
+  let inCompaction = false;
+  let turnRecords = 0;
+  let stepUsages = 0;
+  const sameTurn = (value) => {
+    if (value === undefined || value === null) return false;
+    const id = String(value);
+    if (turnId === undefined) turnId = id;
+    return id === turnId;
+  };
+  for (const record of records.slice(start + 1)) {
+    const at = observedAt(record);
+    if (record.type === "turn.prompt") {
+      // Another prompt began before this turn ended: boundary broken.
+      gap("parse_error");
       ended = true;
-    } else if (record.type === "full_compaction.begin") {
-      inCompaction = true;
-    } else if (record.type === "full_compaction.complete") {
-      inCompaction = false;
-      compactionDone = true;
-      stepAfterCompaction = false;
-    } else if (record.type === "usage.record") {
+      break;
+    }
+    if (record.type === "turn.ended") {
+      if (!sameTurn(record.turnId)) gap("parse_error");
+      ended = true;
+      break;
+    }
+    if (record.type === "full_compaction.begin") inCompaction = true;
+    else if (record.type === "full_compaction.complete") inCompaction = false;
+    else if (record.type === "usage.record") {
       if (record.usageScope === "turn") turnRecords += 1;
-      else if (inCompaction) {
-        const usage = kimiUsage(record.usage, `compaction:${at}`, at);
-        if (usage === undefined) gap("parse_error");
-        else if (!seen.has(usage.responseId)) {
-          seen.add(usage.responseId);
-          usages.push(usage);
-        }
-      } else gap("parse_error");
+      else if (inCompaction)
+        collect(kimiUsage(record.usage, `compaction:${at}`, at));
+      else gap("parse_error");
     } else if (record.type === "context.append_loop_event") {
       const event = isRecord(record.event) ? record.event : {};
-      if (event.type === "step.begin") stepAfterCompaction = true;
+      if (event.type === "step.begin" || event.type === "step.end") {
+        if (!sameTurn(event.turnId)) {
+          gap("parse_error");
+          ended = true;
+          break;
+        }
+      }
       if (event.type === "tool.call" && SUB_AGENT_TOOLS.has(event.name))
         gap("unsupported_provider");
       if (event.type !== "step.end" || event.usage === undefined) continue;
       stepUsages += 1;
-      const usage =
+      collect(
         typeof event.messageId === "string" && event.messageId !== ""
           ? kimiUsage(event.usage, event.messageId, at)
-          : undefined;
-      if (usage === undefined) gap("parse_error");
-      else if (!seen.has(usage.responseId)) {
-        seen.add(usage.responseId);
-        usages.push(usage);
-      }
+          : undefined,
+      );
     }
   }
-  // A prompt that only compacted ends with the compaction (no turn record).
-  if (!ended && compactionDone && !stepAfterCompaction && !inCompaction)
-    ended = true;
   if (turnRecords !== stepUsages) gap("inconsistent_total");
   return { ended, usages, gaps };
+}
+
+function compactionOnlyPrompt(
+  records,
+  { collect, gap, gaps, observedAt, promptSettled, usages },
+) {
+  const turnRecord = records.some(
+    (record) =>
+      record.type === "turn.prompt" ||
+      record.type === "prompt.accepted" ||
+      record.type === "turn.ended" ||
+      (record.type === "context.append_loop_event" &&
+        isRecord(record.event) &&
+        (record.event.type === "step.begin" ||
+          record.event.type === "step.end")),
+  );
+  const begin = records.findIndex(
+    (record) => record.type === "full_compaction.begin",
+  );
+  const complete = records.findIndex(
+    (record, index) =>
+      index > begin && record.type === "full_compaction.complete",
+  );
+  if (!promptSettled || turnRecord || begin < 0 || complete < 0)
+    return { ended: false, usages, gaps };
+  for (const record of records.slice(begin + 1, complete)) {
+    if (record.type !== "usage.record") continue;
+    if (record.usageScope === "turn") gap("inconsistent_total");
+    else {
+      const at = observedAt(record);
+      collect(kimiUsage(record.usage, `compaction:${at}`, at));
+    }
+  }
+  if (records.slice(complete + 1).some(carriesTurnUsage)) gap("parse_error");
+  return { ended: true, usages, gaps };
+}
+
+/** The text of a `turn.prompt` record's input parts. */
+function turnPromptText(record) {
+  if (!Array.isArray(record.input)) return undefined;
+  let text = "";
+  for (const part of record.input) {
+    if (
+      !isRecord(part) ||
+      part.type !== "text" ||
+      typeof part.text !== "string"
+    )
+      return undefined;
+    text += part.text;
+  }
+  return text;
+}
+
+function carriesTurnUsage(record) {
+  if (record.type === "usage.record") return true;
+  return (
+    record.type === "context.append_loop_event" &&
+    isRecord(record.event) &&
+    record.event.type === "step.end" &&
+    record.event.usage !== undefined
+  );
 }
 
 /**
  * Reads the region from `offset`, waiting up to `timeoutMs` for its turn end
  * (the wire may be flushed just after the prompt response). An unreadable
- * wire or a region that never ends is a `parse_error` gap.
+ * wire, a file whose identity differs from the baseline, or a region that
+ * never ends is a `parse_error` gap.
  */
 export async function readKimiTurnUsage({
   path,
   offset,
+  identity,
+  promptText,
+  promptSettled = false,
   timeoutMs = 2_000,
   pollMs = 25,
   now = Date.now,
@@ -172,14 +310,14 @@ export async function readKimiTurnUsage({
   for (;;) {
     let text;
     try {
-      text = readFrom(path, offset);
+      text = readFrom(path, offset, identity);
     } catch {
       return {
         usages: [],
         gaps: [providerUsageGap(KIMI_USAGE_PROVIDER, "parse_error", now)],
       };
     }
-    const result = kimiTurnUsage(text, { now });
+    const result = kimiTurnUsage(text, { now, promptText, promptSettled });
     if (result.ended || Date.now() >= deadline) {
       if (!result.ended)
         result.gaps.push(
@@ -201,10 +339,16 @@ function dedupeGaps(gaps) {
   );
 }
 
-function readFrom(path, offset) {
+function readFrom(path, offset, identity) {
   const fd = openSync(path, "r");
   try {
-    const size = fstatSync(fd).size;
+    const stats = fstatSync(fd);
+    if (
+      identity !== undefined &&
+      (stats.dev !== identity.dev || stats.ino !== identity.ino)
+    )
+      throw new Error("Kimi wire replaced since the prompt baseline");
+    const size = stats.size;
     const length = size - offset;
     if (length < 0) throw new Error("Kimi wire shrank");
     if (length > MAX_TURN_WIRE_BYTES) throw new Error("Kimi turn too large");

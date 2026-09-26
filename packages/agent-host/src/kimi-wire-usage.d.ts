@@ -6,13 +6,24 @@ export function kimiMainWirePath(
   environment?: NodeJS.ProcessEnv,
 ): string | undefined;
 export function kimiWireSize(path: string): number;
+export type KimiWireIdentity = { dev: number; ino: number };
+export function kimiWireBaseline(
+  path: string,
+): { offset: number; identity: KimiWireIdentity } | undefined;
 export function kimiTurnUsage(
   text: string,
-  options?: { now?: () => number },
+  options?: {
+    now?: () => number;
+    promptText?: string;
+    promptSettled?: boolean;
+  },
 ): { ended: boolean; usages: ProviderUsage[]; gaps: ProviderUsageGap[] };
 export function readKimiTurnUsage(options: {
   path: string;
   offset: number;
+  identity?: KimiWireIdentity;
+  promptText?: string;
+  promptSettled?: boolean;
   timeoutMs?: number;
   pollMs?: number;
   now?: () => number;

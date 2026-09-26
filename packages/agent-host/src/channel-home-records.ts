@@ -16,8 +16,10 @@ import {
 import { dirname, isAbsolute, join } from "node:path";
 import {
   ChannelDirectoryError,
+  checkAttachedDirectory,
   checkChannelHomeDirectory,
   type ChannelDirectoryIdentity,
+  type ReservedDirectory,
 } from "./channel-directory-check.ts";
 
 /**
@@ -79,6 +81,14 @@ export function createChannelHome(input: {
   roomId: string;
   primaryDirectory?: string | undefined;
   defaultCwd?: string | undefined;
+  /**
+   * Review 2026-09-26 minor fix: the Channel's Human-attached directories,
+   * checked against the shared Host rules and their identities recorded by
+   * this same preparation (not at the first binding); `rollback` removes the
+   * records it wrote.
+   */
+  attachedDirectories?: readonly string[] | undefined;
+  reservedDirectories?: readonly ReservedDirectory[] | undefined;
 }): Readonly<{
   primaryDirectory: string;
   record: ChannelHomeCreated;
@@ -87,6 +97,11 @@ export function createChannelHome(input: {
   const { rootDirectory, roomId } = input;
   if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/u.test(roomId))
     throw new Error("Channel home room id is not a safe path segment");
+  // Every attached directory passes the Host rules before anything exists.
+  const attached = (input.attachedDirectories ?? []).map((path) => ({
+    path,
+    identity: checkAttachedDirectory(path, input.reservedDirectories ?? []),
+  }));
   ensurePrivateDirectory(channelHomeRecordsRoot(rootDirectory));
   const intentFile = intentPath(rootDirectory, roomId);
   let intent = readIntent(intentFile, roomId);
@@ -137,10 +152,20 @@ export function createChannelHome(input: {
     identity: checkChannelHomeDirectory(cwd),
   };
   writeOnce(createdPath(rootDirectory, roomId), JSON.stringify(record));
+  const attachedRecords = attached.map(({ path, identity }) =>
+    recordChannelAttachedIdentity(
+      rootDirectory,
+      roomId,
+      path,
+      identity,
+      input.reservedDirectories ?? [],
+    ),
+  );
   return Object.freeze({
     primaryDirectory: cwd,
     record,
     rollback: () => {
+      for (const file of attachedRecords) rmSync(file, { force: true });
       try {
         checkChannelHomeDirectory(cwd, record.identity);
         if (readdirSync(cwd).length !== 0) return;
@@ -154,6 +179,64 @@ export function createChannelHome(input: {
   });
 }
 
+/** Identity of a Human-attached directory of one Channel. */
+export type ChannelAttachedIdentity = Readonly<{
+  schemaVersion: 1;
+  roomId: string;
+  path: string;
+  identity: ChannelDirectoryIdentity;
+}>;
+
+export function readChannelAttachedIdentity(
+  rootDirectory: string,
+  roomId: string,
+  path: string,
+): ChannelDirectoryIdentity | undefined {
+  const raw = readPrivateRecord(attachedPath(rootDirectory, roomId, path));
+  if (raw === undefined) return undefined;
+  if (raw.schemaVersion !== 1 || raw.roomId !== roomId || raw.path !== path)
+    throw new Error("Invalid attached directory identity record");
+  return parseIdentity(raw.identity);
+}
+
+/**
+ * Record (write once) the identity of `path` for `roomId`, then check the
+ * directory against whichever record won: a concurrent or earlier record of
+ * another directory object is refused. Returns the record file.
+ */
+export function recordChannelAttachedIdentity(
+  rootDirectory: string,
+  roomId: string,
+  path: string,
+  identity: ChannelDirectoryIdentity,
+  reservedDirectories: readonly ReservedDirectory[],
+): string {
+  ensurePrivateDirectory(channelHomeRecordsRoot(rootDirectory));
+  const file = attachedPath(rootDirectory, roomId, path);
+  const record: ChannelAttachedIdentity = {
+    schemaVersion: 1,
+    roomId,
+    path,
+    identity,
+  };
+  writeOnce(file, JSON.stringify(record));
+  const recorded = readChannelAttachedIdentity(rootDirectory, roomId, path);
+  if (recorded === undefined)
+    throw new Error("Attached directory identity record vanished");
+  checkAttachedDirectory(path, reservedDirectories, recorded);
+  return file;
+}
+
+function attachedPath(
+  rootDirectory: string,
+  roomId: string,
+  path: string,
+): string {
+  return join(
+    channelHomeRecordsRoot(rootDirectory),
+    `${hash(roomId)}.attached-${hash(path)}.json`,
+  );
+}
 function intentPath(rootDirectory: string, roomId: string): string {
   return join(channelHomeRecordsRoot(rootDirectory), `${hash(roomId)}.json`);
 }

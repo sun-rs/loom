@@ -4,6 +4,7 @@ import {
   mkdir,
   mkdtemp,
   realpath,
+  rename,
   rm,
   symlink,
   writeFile,
@@ -13,7 +14,9 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import {
+  AgentExecutionWorkspaceCatalog,
   GenericProcessAdapter,
+  reservedChannelDirectories,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
@@ -152,6 +155,90 @@ test("option A: creating a Channel creates its primary directory on the Host; a 
       /channel_home_unowned/u.test(error.message),
   );
   assert.equal(kernel.listRooms(actor).length, before, "no Channel row");
+});
+
+// Review 2026-09-26 minor fix: the daemon's creation-time preparer records
+// the attached directories' identities with the primary directory; a
+// directory replaced after creation and before the first binding is refused.
+test("option A: an attached directory replaced after Channel creation and before the first binding is refused", async (t) => {
+  const base = await realpath(await mkdtemp(join(tmpdir(), "rah-attached-a-")));
+  t.after(() => rm(base, { recursive: true, force: true }));
+  const stateDirectory = join(base, "state");
+  const channelWorkspaceRoot = join(base, "homes");
+  const app = join(base, "work", "app");
+  await mkdir(stateDirectory);
+  await mkdir(app, { recursive: true });
+  const config = {
+    schemaVersion: 4,
+    stateDirectory,
+    channelWorkspaceRoot,
+  } as unknown as Parameters<typeof channelWorkspaceCoreOptions>[0];
+  const kernel = new RoomKernel({
+    databasePath: join(stateDirectory, "room.db"),
+    ...channelWorkspaceCoreOptions(config),
+  });
+  t.after(() => kernel.close());
+  kernel.initialize();
+  const actor = kernel.authenticateAccessToken(
+    kernel.provisionPrincipal({ handle: "owner", kind: "human" }).accessToken,
+  );
+  const workspace = kernel.createWorkspace(actor, {
+    name: "Channels",
+    slug: "channels",
+    idempotencyKey: "workspace",
+  });
+  const database = new DatabaseSync(join(stateDirectory, "room.db"));
+  t.after(() => database.close());
+  const head = Number(
+    database
+      .prepare("SELECT next_seq - 1 AS seq FROM rooms WHERE room_id=?")
+      .get(workspace.controlRoom.roomId)!.seq,
+  );
+  const room = kernel.createWorkspaceRoom(actor, {
+    workspaceId: workspace.workspace.workspaceId,
+    basedOnControlRoomSeq: head,
+    kind: "channel",
+    idempotencyKey: "attached",
+    name: "attached",
+    slug: "attached",
+    additionalDirectories: [app],
+  }).room;
+  await rename(app, `${app}-old`);
+  await mkdir(app);
+  const catalog = await AgentExecutionWorkspaceCatalog.open({
+    rootDirectory: join(stateDirectory, "agent-workspaces"),
+    channelHomeRoot: channelWorkspaceRoot,
+    reservedDirectories: reservedChannelDirectories({
+      stateDirectory,
+      channelWorkspaceRoot,
+    }),
+    legacyCwd: join(base, "legacy"),
+    legacyMount: {
+      workspaceDefinitionId: "workspace",
+      workspaceMountRevisionId: "legacy",
+      workspaceMountDigest: `sha256:${"a".repeat(64)}`,
+      modes: ["in_place"],
+    },
+  });
+  const mounts = await catalog.refresh([
+    {
+      participantId: "instance-a",
+      agentDefinitionRevisionId: "revision-a",
+      workspaceDefinitionId: "workspace",
+      executionWorkspace: { kind: "channel_home", roomId: room.roomId },
+      additionalDirectories: [app],
+      primaryDirectory: room.channelWorkspace!.primaryDirectory!,
+    },
+  ]);
+  assert.equal(
+    mounts.some((mount) => mount.participantId === "instance-a"),
+    false,
+    "no mount for a replaced attached directory",
+  );
+  assert.match(
+    catalog.failures[0]?.message ?? "",
+    /attached_directory_replaced/u,
+  );
 });
 
 test("only a CLI without a native mechanism gets the attached-directory prompt line", () => {

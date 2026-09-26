@@ -10,6 +10,7 @@ import {
 import {
   roleInstanceFixture,
   startInstanceRun,
+  startInstanceRunFromQueue,
   type RoleInstanceFixture,
 } from "./role-instance-fixture.ts";
 
@@ -154,16 +155,18 @@ test("usage summary by instance: observed token sums, completeness, gaps and CLI
     c.finish(0);
     // Run D: OpenCode per-step costs, one of them reported as 0.
     const d = startInstanceRun(f);
-    f.kernel.runAttemptUsage.record(
-      f.host,
-      usage(d, "d:1", {
-        provider: "opencode-server/v1",
-        inputTokens: 300,
-        cachedInputTokens: 0,
-        outputTokens: 30,
-        reasoningOutputTokens: 5,
-      }),
-    );
+    // Each step's usage and cost share the step-finish part id.
+    for (const id of ["prt_1", "prt_2"])
+      f.kernel.runAttemptUsage.record(
+        f.host,
+        usage(d, id, {
+          provider: "opencode-server/v1",
+          inputTokens: 300,
+          cachedInputTokens: 0,
+          outputTokens: 30,
+          reasoningOutputTokens: 5,
+        }),
+      );
     for (const [id, usd] of [
       ["prt_1", 0.01],
       ["prt_2", 0],
@@ -199,21 +202,24 @@ test("usage summary by instance: observed token sums, completeness, gaps and CLI
       unavailable: 1,
     });
     assert.deepEqual(group!.tokens, {
-      generations: 4,
-      inputTokens: 1000 + 500 + 2000 + 300,
-      cachedInputTokens: 600 + 0 + 1500 + 0,
-      outputTokens: 50 + 50 + 80 + 30,
-      reasoningOutputTokens: 10 + 10 + 5,
-      reasoningReportedGenerations: 3,
+      generations: 5,
+      inputTokens: 1000 + 500 + 2000 + 300 + 300,
+      cachedInputTokens: 600 + 0 + 1500 + 0 + 0,
+      outputTokens: 50 + 50 + 80 + 30 + 30,
+      reasoningOutputTokens: 10 + 10 + 5 + 5,
+      reasoningReportedGenerations: 4,
     });
     assert.deepEqual(group!.gaps, [{ reason: "inconsistent_total", runs: 1 }]);
     const spend = group!.cliEstimatedCost;
     assert.equal(spend.basis, "cli_reported_estimate");
     assert.equal(spend.totalUsd, 0.51);
+    // D: every step's usage has its known cost and no gap: complete. B: a
+    // record of unknown value: partial.
     assert.deepEqual(
-      [spend.runsKnown, spend.runsPartial, spend.runsUnknown],
+      [spend.runsComplete, spend.runsPartial, spend.runsUnknown],
       [1, 1, 0],
     );
+    assert.equal(spend.runsAllRecordsKnown, 1);
     assert.equal(spend.runsUnreported, 2, "Codex run and empty run");
     assert.deepEqual(spend.sources, [
       {
@@ -233,6 +239,82 @@ test("usage summary by instance: observed token sums, completeness, gaps and CLI
     ]);
     assert.deepEqual(summary.totals.runs, group!.runs);
     assert.deepEqual(summary.totals.tokens, group!.tokens);
+  } finally {
+    f.close();
+  }
+});
+
+/**
+ * Review 2026-09-26 P2-1: a run whose received cost records are all known is
+ * not a run whose cost was captured completely. A capture gap, a late frame
+ * or an OpenCode step whose usage has no cost (by step-finish part id) keeps
+ * the run partial; the known subtotal stays, nothing is filled in.
+ */
+test("cost coverage: known cost records do not make a run complete when its capture has gaps or uncosted steps", () => {
+  const f = roleInstanceFixture();
+  try {
+    const opencode = {
+      provider: "opencode-server/v1",
+      source: "opencode_step_finish_cost" as const,
+      reportedTotalUsd: null,
+    };
+    const openUsage = {
+      provider: "opencode-server/v1",
+      inputTokens: 100,
+      cachedInputTokens: 0,
+      outputTokens: 10,
+      reasoningOutputTokens: null,
+    };
+    // Gap run: one step with usage and cost, then a step that did not parse.
+    const gap = startInstanceRun(f);
+    f.kernel.runAttemptUsage.record(f.host, usage(gap, "prt_g1", openUsage));
+    f.kernel.runAttemptUsage.recordGap(f.host, {
+      provider: "opencode-server/v1",
+      reason: "parse_error",
+      observedAt: "2026-09-26T01:00:02.000Z",
+      runAttemptId: gap.run.runAttemptId,
+      runtimeRunId: gap.runtime.runtimeRunId,
+    });
+    f.kernel.runAttemptUsage.recordCost(
+      f.host,
+      cost(gap, "prt_g1", { ...opencode, costUsd: 0.1 }),
+    );
+    gap.finish(0);
+    // Uncosted step: two steps' usage, only one step's cost.
+    const uncosted = startInstanceRun(f);
+    for (const id of ["prt_u1", "prt_u2"])
+      f.kernel.runAttemptUsage.record(f.host, usage(uncosted, id, openUsage));
+    f.kernel.runAttemptUsage.recordCost(
+      f.host,
+      cost(uncosted, "prt_u1", { ...opencode, costUsd: 0.2 }),
+    );
+    uncosted.finish(0);
+    // Claude: a known cumulative increase, but a usage capture gap.
+    const claude = startInstanceRun(f);
+    f.kernel.runAttemptUsage.record(
+      f.host,
+      usage(claude, "msg_1", {
+        provider: "claude-stream-json/v1",
+        reasoningOutputTokens: null,
+      }),
+    );
+    f.kernel.runAttemptUsage.recordGap(f.host, {
+      provider: "claude-stream-json/v1",
+      reason: "correction_frame",
+      observedAt: "2026-09-26T01:00:02.000Z",
+      runAttemptId: claude.run.runAttemptId,
+      runtimeRunId: claude.runtime.runtimeRunId,
+    });
+    f.kernel.runAttemptUsage.recordCost(f.host, cost(claude, "result-c", {}));
+    claude.finish(0);
+
+    const spend = f.kernel.runAttemptUsage.summary(f.actor, {
+      groupBy: "instance",
+    }).totals.cliEstimatedCost;
+    assert.equal(spend.runsComplete, 0, "no run's cost capture is complete");
+    assert.equal(spend.runsPartial, 3);
+    assert.equal(spend.runsAllRecordsKnown, 3, "every received record known");
+    assert.equal(spend.totalUsd, 0.8, "known subtotal kept, nothing filled in");
   } finally {
     f.close();
   }
@@ -334,6 +416,56 @@ test("usage summary shows only Channels the Human belongs to", () => {
     });
     assert.deepEqual(hidden.groups, []);
     assert.equal(hidden.totals.runs.total, 0);
+  } finally {
+    f.close();
+  }
+});
+
+// Review 2026-09-26 P2-4: Channel membership groups the figures but is not
+// the ACL: a run is counted only when the Human can see the room it actually
+// executed in, so another Channel member never sees private-box usage.
+test("usage summary counts only runs whose executing room the Human can see", () => {
+  const f = roleInstanceFixture();
+  try {
+    f.kernel.postMessage(f.actor, {
+      roomId: f.privateBox.roomId,
+      body: "private question",
+      idempotencyKey: "private-wake",
+      recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
+    });
+    const privateRun = startInstanceRunFromQueue(f);
+    f.kernel.runAttemptUsage.record(
+      f.host,
+      usage(privateRun, "p:1", { inputTokens: 123, cachedInputTokens: 0 }),
+    );
+    privateRun.finish(0);
+    const channelRun = startInstanceRun(f);
+    f.kernel.runAttemptUsage.record(
+      f.host,
+      usage(channelRun, "c:1", { inputTokens: 7, cachedInputTokens: 0 }),
+    );
+    channelRun.finish(0);
+    const colleague = f.kernel.provisionPrincipal({
+      handle: "colleague",
+      kind: "human",
+    });
+    f.kernel.addMember(f.actor, {
+      principalId: colleague.principal.principalId,
+      roomId: f.home.roomId,
+    });
+    const seen = f.kernel.runAttemptUsage.summary(
+      f.kernel.authenticateAccessToken(colleague.accessToken),
+      { groupBy: "instance" },
+    );
+    assert.equal(seen.totals.runs.total, 1, "only the Channel run");
+    assert.equal(seen.totals.tokens.inputTokens, 7);
+    assert.equal(seen.groups[0]!.channelId, f.home.roomId);
+    const own = f.kernel.runAttemptUsage.summary(f.actor, {
+      groupBy: "channel",
+    });
+    assert.equal(own.groups.length, 1, "grouped under the instance's Channel");
+    assert.equal(own.groups[0]!.channelId, f.home.roomId);
+    assert.equal(own.totals.tokens.inputTokens, 130);
   } finally {
     f.close();
   }

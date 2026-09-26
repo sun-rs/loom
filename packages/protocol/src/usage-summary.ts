@@ -69,12 +69,29 @@ const UsageSummaryCostSchema = z
     basis: z.literal("cli_reported_estimate"),
     /** Sum of known values; `null` when no RunAttempt has a known value. */
     totalUsd: UsdSchema.nullable(),
-    /** Every cost record known. */
-    runsKnown: CountSchema,
-    /** Some records known, some not: `totalUsd` undercounts these runs. */
+    /**
+     * The run's cost capture is proven complete: every received record has a
+     * known value, the run has no usage capture gap or late frame, and (for
+     * OpenCode's per-step costs) every step with recorded usage has a cost
+     * record with the same step-finish part id and vice versa. Claude's
+     * cumulative-difference costs cannot be matched per step; for them only
+     * the record and gap conditions apply.
+     */
+    runsComplete: CountSchema,
+    /**
+     * Some value known but completeness not proven (an unknown record, a
+     * capture gap, a late frame or an uncosted step): `totalUsd` may
+     * undercount these runs; the missing amount is unknown, never filled in.
+     */
     runsPartial: CountSchema,
     /** Records exist but none could be attributed. */
     runsUnknown: CountSchema,
+    /**
+     * Runs whose received cost records all carry a known value (attribution
+     * of what arrived), whether or not the capture was complete: a superset of
+     * `runsComplete`, never a coverage figure by itself.
+     */
+    runsAllRecordsKnown: CountSchema,
     /** The CLI reported no cost at all (Codex, Kimi, or no result). */
     runsUnreported: CountSchema,
     sources: z

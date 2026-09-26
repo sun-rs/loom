@@ -544,7 +544,10 @@ export class CollaborationService {
     if (this.#channelPrimaryDirectoryPreparer !== undefined) {
       let prepared: PreparedChannelPrimaryDirectory;
       try {
-        prepared = this.#channelPrimaryDirectoryPreparer(roomId);
+        prepared = this.#channelPrimaryDirectoryPreparer(
+          roomId,
+          channelWorkspace.additionalDirectories,
+        );
       } catch (error) {
         throw new ConflictError(
           `Channel primary directory could not be created: ${error instanceof Error ? error.message : String(error)}`,

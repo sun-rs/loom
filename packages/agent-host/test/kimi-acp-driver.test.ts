@@ -54,7 +54,12 @@ type Scenario = {
   cancelWhileRunning?: boolean;
   env?: Record<string, string>;
   /** Kimi's own persisted session (index + main wire) in a temp KIMI_CODE_HOME. */
-  nativeSession?: { sessionId: string; wire: unknown[] };
+  nativeSession?: {
+    sessionId: string;
+    wire: unknown[];
+    /** Indexed, but its wire file does not exist. */
+    noWireFile?: boolean;
+  };
 };
 
 async function runTurn(input: Scenario) {
@@ -77,10 +82,12 @@ async function runTurn(input: Scenario) {
       join(kimiHome, "session_index.jsonl"),
       `${JSON.stringify({ sessionId: input.nativeSession.sessionId, sessionDir, workDir: directory })}\n`,
     );
-    writeFileSync(
-      join(sessionDir, "agents", "main", "wire.jsonl"),
-      input.nativeSession.wire.map((e) => JSON.stringify(e)).join("\n") + "\n",
-    );
+    if (input.nativeSession.noWireFile !== true)
+      writeFileSync(
+        join(sessionDir, "agents", "main", "wire.jsonl"),
+        input.nativeSession.wire.map((e) => JSON.stringify(e)).join("\n") +
+          "\n",
+      );
   }
   try {
     const child = spawn(
@@ -465,6 +472,75 @@ test("evo §40: a resumed session whose wire cannot be found reports a parse gap
   );
   assert.deepEqual(byProtocol(result.frames, "rah-provider-usage/v1"), []);
 });
+
+// Review 2026-09-26 P2-2: a resumed session's baseline needs the wire file;
+// "indexed but missing" is not offset 0 (a file appearing later — restored
+// or foreign — would be counted whole).
+test("a resumed session whose indexed wire file does not exist is a parse gap, never offset 0", async () => {
+  const turn = wireTurnFile([...HISTORY, ...TURN_2]);
+  try {
+    const result = await runTurn({
+      scenario: "reply",
+      wake: WAKE,
+      resume: "kimi-session-nowire",
+      nativeSession: {
+        sessionId: "kimi-session-nowire",
+        wire: [],
+        noWireFile: true,
+      },
+      env: { FAKE_WIRE_TURN: turn.path },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(byProtocol(result.frames, "rah-provider-usage/v1"), []);
+    assert.deepEqual(
+      byProtocol(result.frames, "rah-provider-usage-gap/v1").map(
+        (frame) => frame.reason,
+      ),
+      ["parse_error"],
+    );
+  } finally {
+    turn.cleanup();
+  }
+});
+
+// Review 2026-09-26 P2-3: a prompt that fails after the model finished a
+// step keeps that step's usage with a gap; the run still fails with the
+// original error.
+for (const [token, label] of [
+  ["wirefail", "rejected"],
+  ["wiredrop", "disconnected"],
+] as const)
+  test(`a prompt ${label} after one finished step keeps that step's usage with a gap and still fails`, async () => {
+    const turn = wireTurnFile(wireLines.slice(30, 37)); // step 1 only
+    try {
+      const result = await runTurn({
+        scenario: token,
+        wake: WAKE,
+        env: { FAKE_WIRE_TURN: turn.path },
+      });
+      assert.notEqual(result.code, 0, "the run fails");
+      if (token === "wirefail")
+        assert.match(result.stderr, /FAKE Kimi internal error/u);
+      assert.deepEqual(
+        byProtocol(result.frames, "rah-provider-usage/v1").map(
+          (frame) => frame.responseId,
+        ),
+        [TURN_2_IDS[0]],
+      );
+      assert.deepEqual(
+        [
+          ...new Set(
+            byProtocol(result.frames, "rah-provider-usage-gap/v1").map(
+              (frame) => frame.reason,
+            ),
+          ),
+        ],
+        ["parse_error"],
+      );
+    } finally {
+      turn.cleanup();
+    }
+  });
 
 test("batch 3 P1-6: the Kimi launch carries KIMI_DISABLE_CRON=1 (no persisted cron turn can fire)", async () => {
   const result = await runTurn({ scenario: "reply", wake: WAKE });

@@ -34,9 +34,9 @@ import {
 import {
   channelHomeRecordsRoot,
   createChannelHome,
+  readChannelAttachedIdentity,
   readChannelHomeCreated,
-  readPrivateRecord,
-  writeOnce,
+  recordChannelAttachedIdentity,
   type ChannelHomeCreated,
 } from "./channel-home-records.ts";
 
@@ -74,13 +74,6 @@ type ChannelHomeReceipt = {
   mount: WorkspaceMountDescriptor & { participantId: string };
 };
 type Receipt = PrivateReceipt | ChannelHomeReceipt;
-/** Identity of a Human-attached directory, recorded at its first check. */
-type AttachedIdentity = {
-  schemaVersion: 1;
-  roomId: string;
-  path: string;
-  identity: ChannelDirectoryIdentity;
-};
 export type ChannelHomeState = Readonly<{
   roomId: string;
   state: "ready" | "failed";
@@ -419,36 +412,33 @@ export class AgentExecutionWorkspaceCatalog {
     const key = `${roomId}\u0000${path}`;
     const cached = this.#attachedIdentities.get(key);
     if (cached !== undefined) return cached;
-    const raw = readPrivateRecord(this.#attachedIdentityPath(roomId, path));
-    const record =
-      raw === undefined ? undefined : parseAttachedIdentity(raw, roomId, path);
-    if (record !== undefined)
-      this.#attachedIdentities.set(key, record.identity);
-    return record?.identity;
-  }
-  #attachedIdentityPath(roomId: string, path: string): string {
-    return join(
-      this.#channelHomesRoot(),
-      `${hash(roomId)}.attached-${hash(path)}.json`,
+    const identity = readChannelAttachedIdentity(
+      this.#options.rootDirectory,
+      roomId,
+      path,
     );
+    if (identity !== undefined) this.#attachedIdentities.set(key, identity);
+    return identity;
   }
-  /** First check records the approved directory's identity; later compare. */
+  /**
+   * The identity recorded at Channel creation (the Host preparer) is
+   * compared. Only a Channel whose Host did not prepare it at creation (a
+   * Core without a preparer, a Channel created before) records it at this
+   * first check.
+   */
   #recordAttached(roomId: string, path: string): void {
     if (this.#attachedIdentity(roomId, path) !== undefined) {
       this.#checkAttached(roomId, path);
       return;
     }
-    const identity = checkAttachedDirectory(
-      path,
-      this.#options.reservedDirectories ?? [],
-    );
-    const record: AttachedIdentity = {
-      schemaVersion: 1,
+    const reserved = this.#options.reservedDirectories ?? [];
+    recordChannelAttachedIdentity(
+      this.#options.rootDirectory,
       roomId,
       path,
-      identity,
-    };
-    writeOnce(this.#attachedIdentityPath(roomId, path), JSON.stringify(record));
+      checkAttachedDirectory(path, reserved),
+      reserved,
+    );
     this.#checkAttached(roomId, path);
   }
   /**
@@ -821,31 +811,4 @@ function errorMessage(error: unknown): string {
     0,
     1000,
   );
-}
-function parseIdentity(value: unknown): ChannelDirectoryIdentity {
-  const raw = value as Record<string, unknown> | null;
-  if (
-    typeof raw !== "object" ||
-    raw === null ||
-    typeof raw.dev !== "string" ||
-    typeof raw.ino !== "string" ||
-    !/^\d+$/u.test(raw.dev) ||
-    !/^\d+$/u.test(raw.ino)
-  )
-    throw new Error("Invalid channel directory identity");
-  return { dev: raw.dev, ino: raw.ino };
-}
-function parseAttachedIdentity(
-  raw: Record<string, unknown>,
-  roomId: string,
-  path: string,
-): AttachedIdentity {
-  if (raw.schemaVersion !== 1 || raw.roomId !== roomId || raw.path !== path)
-    throw new Error("Invalid attached directory identity record");
-  return {
-    schemaVersion: 1,
-    roomId,
-    path,
-    identity: parseIdentity(raw.identity),
-  };
 }

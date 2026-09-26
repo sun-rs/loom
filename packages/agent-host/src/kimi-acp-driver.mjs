@@ -42,7 +42,7 @@ import { readProviderPromptFile } from "./provider-prompt-file.js";
 import { providerUsageGap, ProviderUsageWriter } from "./provider-usage.js";
 import {
   kimiMainWirePath,
-  kimiWireSize,
+  kimiWireBaseline,
   readKimiTurnUsage,
 } from "./kimi-wire-usage.js";
 import {
@@ -100,6 +100,8 @@ let stopping = false;
 // evo §40: per-generation usage read from the session wire after a prompt.
 const usageWriter = new ProviderUsageWriter();
 const TURN_WIRE_WAIT_MS = 2_000;
+/** Bounded best-effort wait for the wire of a prompt that failed. */
+const FAILED_TURN_WIRE_WAIT_MS = 500;
 // The native session this run already reported as bound (reported once).
 let boundProviderSessionId;
 let activeSessionId;
@@ -386,7 +388,21 @@ async function runTurn(resumeSessionId, mcpServers) {
     requestId: undefined,
     sessionId,
   };
+  // Full review batch 3 P2-7: only a fresh session's first prompt carries
+  // the rules and the Run-scoped file pointer; a resumed wake is the body
+  // alone — after a compaction the Host's rules card restates the rules
+  // (session-rules-card).
+  const promptText = [
+    ...(resumeSessionId === undefined
+      ? [
+          options.prompt,
+          `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
+        ]
+      : []),
+    TURN_INPUT,
+  ].join("\n\n");
   const wire = kimiWireStart(sessionId, resumeSessionId !== undefined);
+  wire.promptText = promptText;
   activePrompt = prompt;
   acceptCurrentTurnUpdates = true;
   let settlePrompt;
@@ -398,24 +414,7 @@ async function runTurn(resumeSessionId, mcpServers) {
     const promptResult = await request(
       "session/prompt",
       {
-        prompt: [
-          {
-            // Full review batch 3 P2-7: only a fresh session's first prompt
-            // carries the rules and the Run-scoped file pointer; a resumed
-            // wake is the body alone — after a compaction the Host's rules
-            // card restates the rules (session-rules-card).
-            text: [
-              ...(resumeSessionId === undefined
-                ? [
-                    options.prompt,
-                    `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
-                  ]
-                : []),
-              TURN_INPUT,
-            ].join("\n\n"),
-            type: "text",
-          },
-        ],
+        prompt: [{ text: promptText, type: "text" }],
         sessionId,
       },
       0,
@@ -425,11 +424,17 @@ async function runTurn(resumeSessionId, mcpServers) {
     );
     prompt.finalInterrupt.settle(stringField(promptResult, "stopReason"));
     settlePrompt(promptResult);
-    await emitKimiTurnUsage(wire);
+    await emitKimiTurnUsage(wire, { promptSettled: true });
     return { finalInterrupt: prompt.finalInterrupt, promptResult, sessionId };
   } catch (error) {
     prompt.finalInterrupt.settle(undefined);
     settlePrompt(undefined);
+    // Review 2026-09-26 P2-3: steps the model already finished before the
+    // prompt failed were spent. Once the prompt was sent, a bounded best
+    // effort read keeps them with a gap; the run still fails with the
+    // original error, and a failed read never replaces it.
+    if (prompt.requestId !== undefined)
+      await emitKimiTurnUsage(wire, { failed: true }).catch(() => undefined);
     throw error;
   } finally {
     acceptCurrentTurnUpdates = false;
@@ -447,16 +452,25 @@ async function runTurn(resumeSessionId, mcpServers) {
  * attributed (its history would be counted), so it stays a gap.
  */
 function kimiWireStart(sessionId, resumed) {
+  let path;
   try {
-    const path = kimiMainWirePath(sessionId, kimiEnvironment);
-    if (path !== undefined) return { path, offset: kimiWireSize(path) };
+    path = kimiMainWirePath(sessionId, kimiEnvironment);
   } catch {
-    // Unreadable: decided below.
+    path = undefined;
   }
-  return resumed ? { unavailable: true } : { sessionId, offset: 0 };
+  // Review 2026-09-26 P2-2: the baseline carries the file identity; a
+  // resumed session whose wire does not exist has no trustworthy offset
+  // (offset 0 would count a restored or foreign file), so it is a gap.
+  const baseline = path === undefined ? undefined : kimiWireBaseline(path);
+  if (baseline !== undefined)
+    return { path, offset: baseline.offset, identity: baseline.identity };
+  return resumed ? { unavailable: true } : { sessionId, path, offset: 0 };
 }
 
-async function emitKimiTurnUsage(wire) {
+async function emitKimiTurnUsage(
+  wire,
+  { promptSettled = false, failed = false } = {},
+) {
   let path = wire.path;
   if (path === undefined && wire.sessionId !== undefined)
     path = kimiMainWirePath(wire.sessionId, kimiEnvironment);
@@ -467,10 +481,19 @@ async function emitKimiTurnUsage(wire) {
   const result = await readKimiTurnUsage({
     path,
     offset: wire.offset,
-    timeoutMs: stopping ? 0 : TURN_WIRE_WAIT_MS,
+    identity: wire.identity,
+    promptText: wire.promptText,
+    promptSettled,
+    timeoutMs: stopping
+      ? 0
+      : failed
+        ? FAILED_TURN_WIRE_WAIT_MS
+        : TURN_WIRE_WAIT_MS,
   });
   for (const usage of result.usages) usageWriter.emit(usage);
   for (const gap of result.gaps) usageWriter.emit(gap);
+  // A failed prompt's capture is never complete, even if its region ended.
+  if (failed) usageWriter.emit(providerUsageGap(PROVIDER, "parse_error"));
 }
 
 async function configureSession(sessionId) {
@@ -624,7 +647,6 @@ async function handleAgentRequest(frame) {
 function request(method, params, timeoutMs, onId) {
   requestSequence += 1;
   const id = requestSequence;
-  onId?.(id);
   return new Promise((resolve, reject) => {
     const timer =
       timeoutMs > 0
@@ -640,7 +662,11 @@ function request(method, params, timeoutMs, onId) {
       pending.delete(String(id));
       clearTimeout(timer);
       reject(error);
+      return;
     }
+    // Only a request actually written has an id (review 2026-09-26 P2-3:
+    // a prompt counts as sent from here).
+    onId?.(id);
   });
 }
 

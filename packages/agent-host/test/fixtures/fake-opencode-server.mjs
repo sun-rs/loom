@@ -148,6 +148,41 @@ const readBody = async (req) => {
   return text === "" ? undefined : JSON.parse(text);
 };
 
+// Session permission rules survive a server restart like OpenCode's own
+// storage. A session this fake never created is a pre-evo-§40 session: its
+// rules are the old allow-all (FAKE_RESUMED_PERMISSION=current: the current
+// rules). `PATCH /session/:id` merges like 1.18.32's `session.update`
+// (`Permission.merge(existing, payload)` appends); FAKE_PATCH_FAIL=1 answers
+// 500, FAKE_PATCH_IGNORE=1 answers 200 without changing the rules.
+const permissionStore = `${env.FAKE_RECORD ?? "/nonexistent"}.permissions.json`;
+function storedPermissions() {
+  try {
+    return JSON.parse(readFileSync(permissionStore, "utf8"));
+  } catch {
+    return {};
+  }
+}
+function sessionPermission(id) {
+  const stored = storedPermissions()[id];
+  if (stored !== undefined) return stored;
+  const allowAll = [{ permission: "*", pattern: "*", action: "allow" }];
+  return env.FAKE_RESUMED_PERMISSION === "current"
+    ? [
+        ...allowAll,
+        { permission: "question", pattern: "*", action: "deny" },
+        { permission: "plan_enter", pattern: "*", action: "deny" },
+        { permission: "plan_exit", pattern: "*", action: "deny" },
+      ]
+    : allowAll;
+}
+function storePermission(id, permission) {
+  if (env.FAKE_RECORD === undefined) return;
+  writeFileSync(
+    permissionStore,
+    JSON.stringify({ ...storedPermissions(), [id]: permission }),
+  );
+}
+
 function session(id) {
   let value = sessions.get(id);
   if (value === undefined) {
@@ -629,6 +664,7 @@ const server = createServer(async (req, res) => {
   if (req.method === "POST" && url.pathname === "/session") {
     const id = env.FAKE_SESSION ?? "ses_fakenew";
     session(id);
+    storePermission(id, Array.isArray(body?.permission) ? body.permission : []);
     return send(res, 200, { id, directory: process.cwd(), title: "created" });
   }
   const match = /^\/session\/([^/]+)(\/[a-z_]+)?$/u.exec(url.pathname);
@@ -649,7 +685,24 @@ const server = createServer(async (req, res) => {
         id,
         directory: process.cwd(),
         title: "existing",
+        permission: sessionPermission(id),
         ...(childParents.has(id) ? { parentID: childParents.get(id) } : {}),
+      });
+    }
+    if (req.method === "PATCH" && tail === undefined) {
+      record({ event: "permission-patch", permission: body?.permission });
+      if (env.FAKE_PATCH_FAIL === "1")
+        return send(res, 500, {
+          name: "UnknownError",
+          data: { message: "FAKE session update failure" },
+        });
+      if (Array.isArray(body?.permission) && env.FAKE_PATCH_IGNORE !== "1")
+        storePermission(id, [...sessionPermission(id), ...body.permission]);
+      return send(res, 200, {
+        id,
+        directory: process.cwd(),
+        title: "existing",
+        permission: sessionPermission(id),
       });
     }
     if (req.method === "GET" && tail === "/children")

@@ -35,6 +35,12 @@
 // found through KIMI_CODE_HOME/session_index.jsonl like kimi-code 0.39.1
 // (a new session is indexed at session/new), before it answers the prompt;
 // FAKE_WIRE_LATE_END_MS appends the last record that long after the answer.
+// Like kimi-code 0.39.1 (`TurnManager.prompt`), the prompt's own
+// `prompt.accepted` and `turn.prompt` (input = the ACP text block, passed
+// through) are appended when the prompt starts. Tokens wirefail / wiredrop:
+// the turn's wire records are appended, then the prompt is answered with a
+// JSON-RPC error / the process exits without answering (review 2026-09-26
+// P2-3).
 // FAKE_RECORD (jsonl) records every frame and event. FAKE_TOOL_COMMAND
 // replaces the derived Worker command. FAKE_FOLLOW_UP_MS bounds the wait for
 // a cancel before the post-reply generation (default 300).
@@ -217,6 +223,17 @@ function wirePath(create) {
   return path;
 }
 
+function appendPromptWire(text) {
+  if (!env.FAKE_WIRE_TURN) return;
+  const path = wirePath(false);
+  if (!path) return;
+  const content = [{ type: "text", text }];
+  appendFileSync(
+    path,
+    `${JSON.stringify({ type: "prompt.accepted", agentId: "main", promptId: `msg_fake${turnSequence}`, content })}\n${JSON.stringify({ type: "turn.prompt", agentId: "main", input: content, origin: { kind: "user" } })}\n`,
+  );
+}
+
 function appendTurnWire() {
   if (!env.FAKE_WIRE_TURN) return;
   const path = wirePath(false);
@@ -264,6 +281,18 @@ async function runPrompt(frame) {
     .map((block) => block.text)
     .join("");
   record({ event: "prompt", text, tokens: [...tokens] });
+  appendPromptWire(text);
+  if (tokens.has("wirefail") || tokens.has("wiredrop")) {
+    appendTurnWire();
+    await delay(20);
+    if (tokens.has("wiredrop")) process.exit(1);
+    current.settled = true;
+    send({
+      id: frame.id,
+      error: { code: -32603, message: "FAKE Kimi internal error" },
+    });
+    return;
+  }
   const settle = (stopReason) => {
     if (current.settled) return;
     current.settled = true;

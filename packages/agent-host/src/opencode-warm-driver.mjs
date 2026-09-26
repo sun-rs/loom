@@ -82,6 +82,7 @@ import {
   isRecord,
   openCodeEventError,
   OPENCODE_SESSION_PERMISSION,
+  ensureOpenCodeSessionPermission,
   openCodeStepFinishPart,
   pendingOpenCodeRequests,
   record,
@@ -191,6 +192,11 @@ try {
       assertSessionReplacementAllowed();
     }
   }
+  // Review 2026-09-26 P1-1: before ready (so before any turn input), the
+  // resumed session carries the verified denies; failure is fatal here and
+  // never replaces the session.
+  if (resumed)
+    await ensureOpenCodeSessionPermission({ requestJson, sessionId });
   sessionId ??= await createSession();
   emit("ready", {
     resumed,
@@ -1172,7 +1178,7 @@ async function replaceServer() {
     await stopOpenCodeServer(old, { termTimeoutMs: SERVER_TERM_TIMEOUT_MS });
   server = await startServer();
   await subscribeEvents();
-  await requestJson(`/session/${encodeURIComponent(sessionId)}`);
+  await ensureOpenCodeSessionPermission({ requestJson, sessionId });
 }
 
 // ---------------------------------------------------------------- helpers

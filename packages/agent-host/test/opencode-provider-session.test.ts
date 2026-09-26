@@ -478,7 +478,8 @@ const server = createServer(async (req,res) => {
   if (req.method === "GET" && url.pathname.startsWith("/session/")) {
     if (activationId.includes("missing-run")) return send(res,404,{name:"NotFoundError"});
     activeSessionId = decodeURIComponent(url.pathname.slice("/session/".length));
-    return send(res,200,{id:activeSessionId,directory:process.cwd(),title:"existing",time:{created:1,updated:1}});
+    // Every session here was created by the driver with the evo §40 rules.
+    return send(res,200,{id:activeSessionId,directory:process.cwd(),title:"existing",time:{created:1,updated:1},permission:[{permission:"*",pattern:"*",action:"allow"},{permission:"question",pattern:"*",action:"deny"},{permission:"plan_enter",pattern:"*",action:"deny"},{permission:"plan_exit",pattern:"*",action:"deny"}]});
   }
   if (req.method === "POST" && url.pathname === "/session") {
     activeSessionId = sessionForActivation();

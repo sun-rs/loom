@@ -364,6 +364,58 @@ test("option A: the Host creates a Channel home at Channel creation; a catalog v
   );
 });
 
+// Review 2026-09-26 minor fix: the attached directories' identities are
+// recorded by the same Host preparation that creates the primary directory,
+// so a directory replaced between Channel creation and the first binding is
+// refused (it used to be adopted as the "first check").
+test("option A: attached directory identities are recorded at Channel creation; a replacement before the first binding is refused", async (t) => {
+  const f = await fixture(t);
+  const home = join(f.homes, "room-1");
+  createChannelHome({
+    rootDirectory: f.options.rootDirectory,
+    roomId: "room-1",
+    defaultCwd: home,
+    attachedDirectories: [f.app],
+    reservedDirectories: f.options.reservedDirectories,
+  });
+  await rename(f.app, `${f.app}-old`);
+  await mkdir(f.app);
+  await writeFile(join(f.app, "main.ts"), "foreign");
+  const mounts = await f.catalog.refresh([
+    binding("a", "room-1", [f.app], home),
+  ]);
+  assert.equal(
+    mounts.some((m) => m.participantId === "a"),
+    false,
+  );
+  assert.match(
+    f.catalog.failures[0]?.message ?? "",
+    /attached_directory_replaced/u,
+  );
+});
+
+test("option A: an attached directory rejected by the Host rules fails the preparation and leaves no records", async (t) => {
+  const f = await fixture(t);
+  const inside = join(f.state, "project");
+  await mkdir(inside);
+  const home = join(f.homes, "room-1");
+  assert.throws(
+    () =>
+      createChannelHome({
+        rootDirectory: f.options.rootDirectory,
+        roomId: "room-1",
+        defaultCwd: home,
+        attachedDirectories: [inside],
+        reservedDirectories: f.options.reservedDirectories,
+      }),
+    /attached_directory/u,
+  );
+  await assert.rejects(lstat(home), { code: "ENOENT" });
+  await assert.rejects(lstat(intentPath(f.options.rootDirectory, "room-1")), {
+    code: "ENOENT",
+  });
+});
+
 test("option A: Channel home creation fails on an existing path or an unwritable parent, leaving no completion record", async (t) => {
   const f = await fixture(t);
   const taken = join(f.homes, "room-1");

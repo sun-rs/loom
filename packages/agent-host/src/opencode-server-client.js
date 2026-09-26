@@ -23,6 +23,95 @@ export const OPENCODE_SESSION_PERMISSION = Object.freeze([
   Object.freeze({ action: "deny", pattern: "*", permission: "plan_exit" }),
 ]);
 
+/** The denies the rules add after the allow (the tools they hide). */
+export const OPENCODE_DENIED_PERMISSIONS = Object.freeze(
+  OPENCODE_SESSION_PERMISSION.filter((rule) => rule.action === "deny").map(
+    (rule) => rule.permission,
+  ),
+);
+
+/**
+ * Review 2026-09-26 P1-1: a session created before the denies existed keeps
+ * its own ruleset (allow-all) across resumes and server restarts. Before a
+ * resumed session receives any input, both drivers call this: read the
+ * session's rules; when a denied tool is not hidden, install the denies with
+ * OpenCode 1.18.32's `PATCH /session/:id` (`session.update`, whose
+ * `permission` is merged by appending — so only the missing denies are sent
+ * and an already-ruled session is never patched again), then read the rules
+ * back and prove every deny is effective. Any failure throws a diagnostic;
+ * the caller neither prompts nor replaces the session.
+ */
+export async function ensureOpenCodeSessionPermission({
+  requestJson,
+  sessionId,
+}) {
+  const path = `/session/${encodeURIComponent(sessionId)}`;
+  const fail = (reason) =>
+    new Error(
+      `OpenCode session permission rules could not be installed on the resumed session: ${reason}`,
+    );
+  let info;
+  try {
+    info = await requestJson(path);
+  } catch (error) {
+    throw fail(`read failed (${errorText(error)})`);
+  }
+  if (openCodeDeniesEffective(record(info).permission)) return false;
+  try {
+    await requestJson(path, {
+      body: JSON.stringify({
+        permission: OPENCODE_SESSION_PERMISSION.filter(
+          (rule) => rule.action === "deny",
+        ),
+      }),
+      method: "PATCH",
+    });
+  } catch (error) {
+    throw fail(`update failed (${errorText(error)})`);
+  }
+  let verified;
+  try {
+    verified = await requestJson(path);
+  } catch (error) {
+    throw fail(`verification read failed (${errorText(error)})`);
+  }
+  if (!openCodeDeniesEffective(record(verified).permission))
+    throw fail("the rules read back do not hide question/plan_enter/plan_exit");
+  return true;
+}
+
+/**
+ * Whether every denied tool is hidden by `rules`, evaluated as OpenCode
+ * 1.18.32 does for the tool list: the last rule whose `permission` wildcard
+ * matches the tool decides, and only a `pattern: "*"` deny hides it.
+ */
+export function openCodeDeniesEffective(rules) {
+  if (!Array.isArray(rules)) return false;
+  return OPENCODE_DENIED_PERMISSIONS.every((tool) => {
+    const decisive = rules.findLast(
+      (rule) =>
+        isRecord(rule) &&
+        typeof rule.permission === "string" &&
+        openCodeWildcardMatch(tool, rule.permission),
+    );
+    return decisive?.action === "deny" && decisive.pattern === "*";
+  });
+}
+
+function openCodeWildcardMatch(value, pattern) {
+  let source = pattern
+    .replaceAll("\\", "/")
+    .replace(/[.+^${}()|[\]\\]/gu, "\\$&")
+    .replace(/\*/gu, ".*")
+    .replace(/\?/gu, ".");
+  if (source.endsWith(" .*")) source = `${source.slice(0, -3)}( .*)?`;
+  return new RegExp(`^${source}$`, "su").test(value);
+}
+
+function errorText(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 const MAX_LINEAGE_DEPTH = 8;
 const MAX_PRELOADED_CHILDREN = 64;
 

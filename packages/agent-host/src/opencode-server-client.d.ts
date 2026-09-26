@@ -8,6 +8,12 @@ export const OPENCODE_SESSION_PERMISSION: readonly {
   pattern: string;
   permission: string;
 }[];
+export const OPENCODE_DENIED_PERMISSIONS: readonly string[];
+export function ensureOpenCodeSessionPermission(options: {
+  requestJson: (path: string, init?: RequestInit) => Promise<unknown>;
+  sessionId: string;
+}): Promise<boolean>;
+export function openCodeDeniesEffective(rules: unknown): boolean;
 export function extractSseData(buffer: string): {
   items: string[];
   remainder: string;

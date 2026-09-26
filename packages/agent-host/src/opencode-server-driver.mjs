@@ -28,6 +28,7 @@ import {
   extractSseData,
   isRecord,
   OPENCODE_SESSION_PERMISSION,
+  ensureOpenCodeSessionPermission,
   openCodeEventError,
   openCodeStepFinishPart,
   preloadOpenCodeChildSessions,
@@ -179,6 +180,15 @@ try {
         ),
       );
     }
+  }
+  if (resumed) {
+    // Review 2026-09-26 P1-1: the resumed session's own rules may predate
+    // the denies; install and verify them before any input (fail: no prompt,
+    // no replacement session).
+    await ensureOpenCodeSessionPermission({
+      requestJson,
+      sessionId: activeSessionId,
+    });
   }
   if (activeSessionId === undefined) {
     activeSessionId = await createSession();

@@ -31,8 +31,14 @@ export type PreparedChannelPrimaryDirectory = Readonly<{
   primaryDirectory: string;
   rollback(): void;
 }>;
+/**
+ * `additionalDirectories` are the Channel's Human-attached directories: the
+ * Host records their identities in this same preparation (review 2026-09-26
+ * minor fix), so a directory replaced before the first binding is refused.
+ */
 export type ChannelPrimaryDirectoryPreparer = (
   roomId: string,
+  additionalDirectories: readonly string[],
 ) => PreparedChannelPrimaryDirectory;
 
 export type RoomKernelOptions = {

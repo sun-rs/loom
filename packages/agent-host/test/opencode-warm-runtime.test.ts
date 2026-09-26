@@ -364,6 +364,63 @@ test("warm OpenCode: three Activations run on one server and one session, each a
   }
 });
 
+// Review 2026-09-26 P1-1: a warm runtime that resumes a pre-rules
+// (allow-all) session installs the deny rules through the shared
+// install-and-verify step before it reports ready, so before any input.
+test("warm OpenCode resume: a pre-rules allow-all session gets the deny rules installed and verified before the first prompt", async () => {
+  const state = await harness({ env: { FAKE_SCENARIO: "nofinal" } });
+  try {
+    state.sessions.set(state.participantId, "ses_fakelegacy");
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const records = state.records();
+    const patch = records.findIndex((r) => r.event === "permission-patch");
+    assert.ok(patch >= 0, "rules installed on the resumed session");
+    assert.deepEqual(records[patch]!.permission, [
+      { action: "deny", pattern: "*", permission: "question" },
+      { action: "deny", pattern: "*", permission: "plan_enter" },
+      { action: "deny", pattern: "*", permission: "plan_exit" },
+    ]);
+    const verify = records.findIndex(
+      (r, position) =>
+        position > patch &&
+        r.event === "request" &&
+        r.method === "GET" &&
+        r.path === "/session/ses_fakelegacy",
+    );
+    assert.ok(verify > patch, "read back");
+    assert.ok(
+      verify < records.findIndex((r) => r.event === "prompt"),
+      "before the prompt",
+    );
+    assert.equal(requests(state, "POST", "/session").length, 0);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode resume: a failed rule installation ends the runtime with a diagnostic, sends no prompt and creates no session", async () => {
+  const state = await harness({
+    env: { FAKE_SCENARIO: "nofinal", FAKE_PATCH_FAIL: "1" },
+  });
+  try {
+    state.sessions.set(state.participantId, "ses_fakelegacy");
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.notEqual(result.state, "completed", JSON.stringify(result));
+    assert.equal(events(state, "permission-patch").length, 1);
+    assert.equal(prompts(state).length, 0, "no input submitted");
+    assert.equal(requests(state, "POST", "/session").length, 0);
+    assert.match(
+      JSON.stringify(state.kernel.listRunAttempts({ roomId: state.roomId })),
+      /OpenCode session permission/u,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("warm OpenCode final reply: the committed --final post ends the run with POST /abort, quiesces as success, and the server continues", async () => {
   const state = await harness({ env: { FAKE_SCENARIO: "reply" } });
   try {

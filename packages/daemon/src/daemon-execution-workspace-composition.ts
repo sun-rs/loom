@@ -206,12 +206,19 @@ export function defaultChannelWorkspaceRoot(
 export function channelWorkspaceCoreOptions(config: DaemonConfig) {
   if (config.schemaVersion !== 4) return {};
   const root = resolve(defaultChannelWorkspaceRoot(config));
+  const reservedDirectories = reservedChannelDirectories({
+    stateDirectory: config.stateDirectory,
+    channelWorkspaceRoot: root,
+  });
   return {
     channelAttachedDirectoryValidator: createChannelAttachedDirectoryValidator({
       stateDirectory: config.stateDirectory,
       channelWorkspaceRoot: root,
     }),
-    channelPrimaryDirectoryPreparer: (roomId: string) => {
+    channelPrimaryDirectoryPreparer: (
+      roomId: string,
+      additionalDirectories: readonly string[],
+    ) => {
       // The recorded path is canonical: every later check requires
       // realpath(path) === path (a configured root may sit under a symlink).
       mkdirSync(root, { recursive: true, mode: 0o700 });
@@ -222,6 +229,10 @@ export function channelWorkspaceCoreOptions(config: DaemonConfig) {
         ),
         roomId,
         defaultCwd: join(realpathSync(root), roomId),
+        // Review 2026-09-26 minor fix: attached identities are recorded by
+        // this creation-time preparation, not at the first binding.
+        attachedDirectories: additionalDirectories,
+        reservedDirectories,
       });
     },
   };

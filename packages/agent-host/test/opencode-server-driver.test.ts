@@ -206,6 +206,84 @@ test("session rules allow all tools, then deny question and plan mode", async ()
   ]);
 });
 
+const DENY_RULES = [
+  { action: "deny", pattern: "*", permission: "question" },
+  { action: "deny", pattern: "*", permission: "plan_enter" },
+  { action: "deny", pattern: "*", permission: "plan_exit" },
+];
+
+// Review 2026-09-26 P1-1: a session created before these rules keeps its own
+// allow-all ruleset; resuming it must install the denies (1.18.32
+// `PATCH /session/:id` merges `permission`) and prove them before any input.
+test("resume: a pre-rules allow-all session gets the deny rules installed and verified before the prompt", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    resume: "ses_fakeresumed",
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const index = (predicate: (r: Record<string, unknown>) => boolean) =>
+    result.records.findIndex(predicate);
+  const patch = index((r) => r.event === "permission-patch");
+  assert.ok(patch >= 0, "rules installed on the resumed session");
+  assert.deepEqual(result.records[patch]!.permission, DENY_RULES);
+  const verify = result.records.findIndex(
+    (r, position) =>
+      position > patch &&
+      r.event === "request" &&
+      r.method === "GET" &&
+      r.path === "/session/ses_fakeresumed",
+  );
+  assert.ok(verify > patch, "the installed rules were read back");
+  assert.ok(verify < index((r) => r.event === "prompt"), "before the prompt");
+  assert.equal(
+    requests(result.records, "/session").filter((r) => r.path === "/session")
+      .length,
+    0,
+    "no new session",
+  );
+});
+
+test("resume: a session that already carries the rules is not patched again", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    resume: "ses_fakeresumed",
+    env: { FAKE_RESUMED_PERMISSION: "current" },
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(
+    result.records.filter((r) => r.event === "permission-patch").length,
+    0,
+  );
+});
+
+for (const [label, env] of [
+  ["the update fails", { FAKE_PATCH_FAIL: "1" }],
+  ["the update does not take effect", { FAKE_PATCH_IGNORE: "1" }],
+] as const)
+  test(`resume: when ${label}, the run fails with a diagnostic, sends no prompt and creates no session`, async () => {
+    const result = await runTurn({
+      scenario: "reply",
+      wake: WAKE,
+      resume: "ses_fakeresumed",
+      env,
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /OpenCode session permission/u);
+    assert.equal(
+      result.records.filter((r) => r.event === "prompt").length,
+      0,
+      "no input submitted",
+    );
+    assert.equal(
+      requests(result.records, "/session").filter((r) => r.path === "/session")
+        .length,
+      0,
+      "the bound session is never replaced",
+    );
+  });
+
 test("rules: the standing prompt is a server instructions file present in every model request, including the autocontinue step after compaction; no per-message system", async () => {
   const result = await runTurn({ scenario: "compact+reply", wake: WAKE });
   assert.equal(result.code, 0, result.stderr);
