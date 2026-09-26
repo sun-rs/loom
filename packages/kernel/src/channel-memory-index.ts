@@ -76,6 +76,71 @@ export function migrateChannelMemoryV75(database: DatabaseSync): void {
 }
 
 /**
+ * Owner ruling 2026-09-27: a Human delete leaves only the tombstone (name,
+ * time, reason, metadata), so the description goes with the body. This
+ * idempotent pass clears what a delete before the ruling left behind; it
+ * runs on every open and touches only deleted entries.
+ */
+export function clearDeletedMemoryDescriptions(database: DatabaseSync): void {
+  database.exec(`
+    UPDATE memory_entries SET description='' WHERE state='deleted' AND description<>'';
+    UPDATE memory_revisions SET description='' WHERE description<>''
+      AND entry_id IN (SELECT entry_id FROM memory_entries WHERE state='deleted');
+  `);
+}
+
+/**
+ * Owner ruling 2026-09-27: a snapshot already frozen on a presented window of
+ * the channel's instances keeps its sequence numbers (the send still
+ * registers the same version) but loses the deleted entry's description, so a
+ * re-present never returns it. Text a Host already sent is outside the delete
+ * boundary (target contract §4).
+ */
+export function clearPresentedMemoryDescription(
+  database: DatabaseSync,
+  channelId: string,
+  entry: { entryId: string; name: string },
+): void {
+  const rows = database
+    .prepare(
+      `SELECT w.activation_id, w.consumer_id, w.run_attempt_id, w.memory_json
+         FROM activation_presented_windows w
+         JOIN run_attempts r ON r.run_attempt_id=w.run_attempt_id
+         JOIN role_instances i ON i.instance_id=r.participant_id
+        WHERE i.channel_id=? AND w.memory_json IS NOT NULL`,
+    )
+    .all(channelId);
+  const update = database.prepare(
+    `UPDATE activation_presented_windows SET memory_json=?
+      WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
+  );
+  for (const row of rows) {
+    const presentation = JSON.parse(
+      text(row, "memory_json"),
+    ) as MemoryPresentation | null;
+    if (presentation === null) continue;
+    let changed = false;
+    for (const change of presentation.delta?.changes ?? [])
+      if (change.name === entry.name && change.description !== null) {
+        change.description = null;
+        changed = true;
+      }
+    for (const item of presentation.index?.entries ?? [])
+      if (item.entryId === entry.entryId && item.description !== "") {
+        item.description = "";
+        changed = true;
+      }
+    if (changed)
+      update.run(
+        JSON.stringify(presentation),
+        text(row, "activation_id"),
+        text(row, "consumer_id"),
+        text(row, "run_attempt_id"),
+      );
+  }
+}
+
+/**
  * Schema 76: the frozen memory snapshot on each presented window and the
  * per-generation delivery state (see MEMORY_INDEX_MARKS_SCHEMA).
  */

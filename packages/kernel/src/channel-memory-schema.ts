@@ -1,7 +1,7 @@
 /**
  * evo S6 batch A (schema 74): channel-scoped platform memory. The Kernel is
  * the single owner: `memory_entries` is the projection, `memory_revisions`
- * the immutable history (a Human delete redacts bodies only), the switch
+ * the immutable history (a Human delete clears bodies and descriptions), the switch
  * tables hold the channel defaults and per-instance overrides, and the FTS5
  * table indexes the active entries for retrieval. Provenance columns are
  * plain text on purpose: they record history and survive the deletion of a

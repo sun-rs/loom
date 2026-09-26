@@ -83,10 +83,13 @@ function mutationEvent(roomSeq: number) {
 test("the delete confirmation states the exact deletion boundary and needs a reason", () => {
   assert.equal(
     MEMORY_DELETE_BOUNDARY,
-    "删除后平台在线读取与检索不再能取得正文；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。",
+    "删除后平台在线读取与检索不再能取得正文与描述（当前与所有修订都清空）；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。",
   );
   const text = deleteConfirmText(entry());
   assert.ok(text.includes(MEMORY_DELETE_BOUNDARY));
+  // Owner ruling 2026-09-27: only name, time and reason stay as the tombstone.
+  assert.ok(text.includes("名称、删除时间与原因作为墓碑保留"));
+  assert.ok(!text.includes("名称、描述与原因"));
   assert.ok(text.includes("fixture-note"));
   assert.ok(text.includes("修订 3"));
 

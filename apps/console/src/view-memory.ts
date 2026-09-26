@@ -343,7 +343,12 @@ export function memoryPanel(
         }),
         detailStale,
         field("类型", entry.type),
-        field("描述", entry.description),
+        field(
+          "描述",
+          entry.state === "deleted"
+            ? "（描述已随删除清空）"
+            : entry.description,
+        ),
         field(
           "作者",
           provenanceLabel(entry.provenance, instanceLabel),

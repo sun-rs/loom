@@ -25,7 +25,7 @@ import type { Checked } from "./actions.ts";
 
 /** Target contract §4 deletion boundary, shown before every delete. */
 export const MEMORY_DELETE_BOUNDARY =
-  "删除后平台在线读取与检索不再能取得正文；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。";
+  "删除后平台在线读取与检索不再能取得正文与描述（当前与所有修订都清空）；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。";
 
 export const MEMORY_IMPORT_NOTE =
   "一次性 Human 导入：把该实例旧的私有记忆（MEMORY.md 与 notes/ 下的文件）复制为本频道的平台记忆。只读取旧目录，不修改它；不会自动执行。已导入过的文件显示为“已导入过”，不会重复创建。";
@@ -126,7 +126,7 @@ export async function sendMemoryChange(
 export function deleteConfirmText(
   entry: Pick<MemoryEntry, "name" | "revision">,
 ): string {
-  return `删除记忆 ${entry.name}（修订 ${String(entry.revision)}）。${MEMORY_DELETE_BOUNDARY}删除需要填写原因，名称、描述与原因作为墓碑保留。`;
+  return `删除记忆 ${entry.name}（修订 ${String(entry.revision)}）。${MEMORY_DELETE_BOUNDARY}删除需要填写原因，名称、删除时间与原因作为墓碑保留。`;
 }
 
 /** A revision (or policy revision) mismatch: re-read before changing. */

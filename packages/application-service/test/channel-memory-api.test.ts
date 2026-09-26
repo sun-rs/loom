@@ -292,6 +292,27 @@ test("Human API and SDK administer memory and switches; the Worker route obeys t
     assert.equal(deleted.entry.body, null);
     const history = await h.sdk.request("memory.history", { entryId });
     assert.ok(history.revisions.every((revision) => revision.body === null));
+    // Owner ruling 2026-09-27: the description is cleared with the body.
+    assert.equal(deleted.entry.description, "");
+    assert.equal(history.entry.description, "");
+    assert.ok(
+      history.revisions.every((revision) => revision.description === ""),
+    );
+    const responses = [
+      await h.humanPost("history", { entryId }),
+      await h.humanPost("read", { entryId }),
+      await h.humanPost("list", {
+        channelId,
+        includeInvalidated: true,
+        includeDeleted: true,
+      }),
+    ];
+    assert.deepEqual(
+      responses.map((response) => response.status),
+      [200, 200, 200],
+    );
+    const humanViews = JSON.stringify(responses.map((r) => r.body));
+    assert.ok(!humanViews.includes(note.description), humanViews);
   } finally {
     await h.close();
   }

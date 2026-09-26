@@ -691,3 +691,97 @@ test("schema 76 upgrades a schema 75 database: the pending mark columns are reti
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("owner ruling 2026-09-27: a Human delete clears the deleted entry's description from snapshots already frozen on presented windows", () => {
+  const f = roleInstanceFixture();
+  try {
+    const writer = startInstanceRun(f);
+    const alpha = f.kernel.memory.write(
+      writer.execution,
+      entry("alpha", "about the Acme customer contract"),
+    );
+    writer.finish(0);
+    write(f, "beta");
+    const run = startInstanceRun(f);
+    const frozen = f.kernel.presentWorkerMessages(
+      run.execution,
+      {},
+    ).memoryDelta!;
+    assert.deepEqual(
+      frozen.changes.map((item) => [item.name, item.description]),
+      [
+        ["alpha", "about the Acme customer contract"],
+        ["beta", "what beta is about"],
+      ],
+    );
+    f.kernel.memory.humanDelete(f.actor, {
+      entryId: alpha.entryId,
+      expectedRevision: 1,
+      reason: "privacy",
+      idempotencyKey: "delete-alpha",
+    });
+    const again = f.kernel.presentWorkerMessages(
+      run.execution,
+      {},
+    ).memoryDelta!;
+    assert.equal(again.throughSeq, frozen.throughSeq, "still the snapshot");
+    assert.deepEqual(
+      again.changes.map((item) => [item.name, item.description]),
+      [
+        ["alpha", null],
+        ["beta", "what beta is about"],
+      ],
+    );
+    assert.equal(
+      Number(
+        f.db
+          .prepare(
+            "SELECT count(*) AS n FROM activation_presented_windows WHERE memory_json LIKE '%Acme%'",
+          )
+          .get()!.n,
+      ),
+      0,
+    );
+    run.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("owner ruling 2026-09-27: opening the Kernel clears descriptions a pre-ruling delete left on tombstones", async () => {
+  const { RoomKernel } = await import("../src/index.ts");
+  const f = roleInstanceFixture();
+  try {
+    const alpha = write(f, "alpha");
+    const beta = write(f, "beta");
+    f.kernel.memory.humanDelete(f.actor, {
+      entryId: alpha.entryId,
+      expectedRevision: 1,
+      reason: "privacy",
+      idempotencyKey: "delete-alpha",
+    });
+    // What a delete before the ruling left behind.
+    f.db
+      .prepare("UPDATE memory_entries SET description='old' WHERE entry_id=?")
+      .run(alpha.entryId);
+    f.db
+      .prepare("UPDATE memory_revisions SET description='old' WHERE entry_id=?")
+      .run(alpha.entryId);
+    const path = String(f.db.prepare("PRAGMA database_list").get()!.file);
+    const reopened = new RoomKernel({ databasePath: path });
+    reopened.initialize();
+    reopened.close();
+    const described = (table: string, entryId: string) =>
+      f.db
+        .prepare(`SELECT DISTINCT description FROM ${table} WHERE entry_id=?`)
+        .all(entryId)
+        .map((row) => row.description);
+    assert.deepEqual(described("memory_entries", alpha.entryId), [""]);
+    assert.deepEqual(described("memory_revisions", alpha.entryId), [""]);
+    assert.deepEqual(described("memory_entries", beta.entryId), [
+      "what beta is about",
+    ]);
+  } finally {
+    f.close();
+  }
+});

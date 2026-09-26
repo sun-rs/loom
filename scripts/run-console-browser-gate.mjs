@@ -1303,7 +1303,7 @@ if (args.join(" ") === "debug models --bundled") {
   await click("#memory-delete-open");
   await waitForText(
     "#memory-delete-text",
-    "删除后平台在线读取与检索不再能取得正文；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。",
+    "删除后平台在线读取与检索不再能取得正文与描述（当前与所有修订都清空）；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。",
   );
   await click("#memory-delete-submit");
   await waitForText("#memory-action-status", "请填写原因");
@@ -1319,6 +1319,14 @@ if (args.join(" ") === "debug models --bundled") {
       await client.request("memory.history", { entryId: alpha.entryId })
     ).revisions.every(({ body }) => body === null),
     "every revision body is redacted",
+  );
+  // Owner ruling 2026-09-27: the description is cleared with the body.
+  assert.equal(alphaNow.description, "");
+  assert.ok(
+    (
+      await client.request("memory.history", { entryId: alpha.entryId })
+    ).revisions.every(({ description }) => description === ""),
+    "every revision description is cleared",
   );
   await waitForText("#memory-detail-body", "正文已删除");
   await click("#memory-include-deleted");

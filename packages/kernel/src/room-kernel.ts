@@ -1086,6 +1086,7 @@ export class RoomKernel {
       InstanceRuntime.migrateInstanceRuntimeColumnsV65(this.#database);
       MemoryIndex.migrateChannelMemoryV75(this.#database);
       MemoryIndex.migrateChannelMemoryV76(this.#database);
+      MemoryIndex.clearDeletedMemoryDescriptions(this.#database);
       RunAttemptUsageService.migrateCleanupV66(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
       this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);

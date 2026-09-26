@@ -15,6 +15,7 @@ import {
   hasMemoryAccess,
   requireMemoryAccess,
 } from "./channel-memory-access.ts";
+import { clearPresentedMemoryDescription } from "./channel-memory-index.ts";
 import { requireRoomManager } from "./collaboration-policy.ts";
 import {
   ConflictError,
@@ -286,14 +287,18 @@ export class ChannelMemoryService {
     return this.#humanChange(actor, input, "restore", restoration);
   }
 
-  /** Human-only privacy delete: every revision body is redacted, the tombstone stays. */
+  /**
+   * Human-only privacy delete: every revision body and description is
+   * cleared (owner ruling 2026-09-27); the tombstone keeps name, time,
+   * reason and metadata.
+   */
   humanDelete(
     actor: AuthenticatedActorContext,
     raw: P.ClientMemoryDeleteRequest,
   ): P.MemoryMutationResponse {
     const input = P.ClientMemoryDeleteRequestSchema.parse(raw);
     return this.#humanChange(actor, input, "delete", (current) => ({
-      next: { ...current, body: null, state: "deleted" },
+      next: { ...current, body: null, description: "", state: "deleted" },
       reason: input.reason,
     }));
   }
@@ -745,12 +750,17 @@ export class ChannelMemoryService {
           at,
           entryId,
         );
-    if (next.state === "deleted")
+    if (next.state === "deleted") {
       c.database
         .prepare(
-          "UPDATE memory_revisions SET body=NULL, body_sha256=NULL WHERE entry_id=?",
+          "UPDATE memory_revisions SET body=NULL, body_sha256=NULL, description='' WHERE entry_id=?",
         )
         .run(entryId);
+      clearPresentedMemoryDescription(c.database, input.channelId, {
+        entryId,
+        name: next.name,
+      });
+    }
     const p = input.provenance;
     c.database
       .prepare(
@@ -1052,7 +1062,7 @@ export class ChannelMemoryService {
     return this.#detailAt(text(row, "entry_id"), integer(row, "revision"));
   }
 
-  /** The entry as it stood at one revision (bodies redacted by a delete stay null). */
+  /** The entry as it stood at one revision (a delete leaves bodies null, descriptions empty). */
   #detailAt(entryId: string, revision: number): P.MemoryEntryDetail {
     const entry = this.#c.database
       .prepare("SELECT * FROM memory_entries WHERE entry_id=?")

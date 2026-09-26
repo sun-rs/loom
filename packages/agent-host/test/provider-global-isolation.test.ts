@@ -20,6 +20,7 @@ import { RuntimeLaunchEnvironmentSchema } from "@rah-os/protocol";
 
 import { filterUserLaunchEnvironment } from "../src/launch-environment-policy.ts";
 import {
+  providerLaunchArguments,
   providerLaunchDefaults,
   providerLaunchPolicy,
   providerLaunchRequiredArgs,
@@ -540,7 +541,10 @@ const drivers: DriverCase[] = [
   },
 ];
 
-async function recordLaunch(item: DriverCase) {
+async function recordLaunch(
+  item: DriverCase,
+  extra: { driverArgs?: string[]; env?: Record<string, string> } = {},
+) {
   const directory = mkdtempSync(join(tmpdir(), "loom-iso-driver-"));
   try {
     const recordPath = join(directory, "record.jsonl");
@@ -560,6 +564,7 @@ async function recordLaunch(item: DriverCase) {
       [
         fileURLToPath(new URL(`../src/${item.driver}`, import.meta.url)),
         ...item.args({ executable, directory, wake }),
+        ...(extra.driverArgs ?? []),
       ],
       {
         cwd: workspace,
@@ -578,6 +583,7 @@ async function recordLaunch(item: DriverCase) {
             runtimeId: item.runtimeId,
             overrideArgs: providerLaunchRequiredArgs(item.runtimeId),
           }),
+          ...extra.env,
         },
         stdio: ["pipe", "ignore", "pipe"],
       },
@@ -653,4 +659,101 @@ for (const item of drivers)
         "project,local",
       );
     }
+  });
+
+// Owner ruling 2026-09-27: native CLI memory stays off on every launch path.
+// The loop above compares each path with the policy object; this one pins the
+// literal switches, so dropping one from the policy fails here too.
+// - Claude Code: CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 (process environment).
+// - Codex: features.memories / memories.generate_memories /
+//   memories.use_memories = false, each as the last `-c` for its key (Codex
+//   applies `-c` overrides in order), after any Host-built `-c` pass-through.
+// - Kimi and OpenCode: no native persistent memory switch; the main-branch
+//   audit docs/audits/2026-09-11-provider-auto-memory-disable.zh-CN.md added
+//   none because none was verified for them, and the owner treats both as
+//   having no native persistent memory. Their launches are pinned to carry no
+//   invented memory switch.
+// A Role launchEnvironment cannot carry the Claude key (schema and filter
+// reject it); a value that slipped into the driver environment still loses.
+// User launch arguments cannot re-open a memory key (validator), and a full
+// override keeps only the required transport (recordLaunch uses one).
+const CODEX_MEMORY_KEYS = [
+  "features.memories",
+  "memories.generate_memories",
+  "memories.use_memories",
+];
+const lastConfigValue = (argv: readonly string[], key: string) =>
+  configPairs(argv)
+    .filter((entry) => entry.startsWith(`${key}=`))
+    .at(-1);
+const nativeMemoryPaths: Array<[string, DriverCase]> = [
+  ["Claude cold", drivers[0]!],
+  ["Claude warm", drivers[1]!],
+  ["Codex cold", drivers[2]!],
+  ["Codex warm", drivers[3]!],
+  ["OpenCode cold", drivers[4]!],
+  ["OpenCode warm", drivers[5]!],
+  ["Kimi", drivers[6]!],
+];
+
+test("native memory switches are protected from Role launch environments and user launch arguments", () => {
+  assert.deepEqual(
+    filterUserLaunchEnvironment({ CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0" })
+      .rejected,
+    ["CLAUDE_CODE_DISABLE_AUTO_MEMORY"],
+  );
+  assert.equal(
+    RuntimeLaunchEnvironmentSchema.safeParse({
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
+    }).success,
+    false,
+  );
+  for (const runtimeId of ["claude", "codex", "opencode", "kimi"])
+    for (const key of CODEX_MEMORY_KEYS)
+      for (const envelope of [
+        { runtimeId, additionalArgs: ["-c", `${key}=true`] },
+        { runtimeId, additionalArgs: ["--config", `${key}=true`] },
+        {
+          runtimeId,
+          overrideArgs: [
+            ...providerLaunchRequiredArgs(runtimeId),
+            "-c",
+            `${key}=true`,
+          ],
+        },
+      ])
+        assert.throws(
+          () =>
+            providerLaunchArguments(runtimeId, {
+              RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify(envelope),
+            }),
+          /managed/,
+          JSON.stringify(envelope),
+        );
+});
+
+for (const [label, item] of nativeMemoryPaths)
+  test(`${label} (${item.driver}) launches with native memory off, whatever the Role environment or pass-through carries`, async () => {
+    const { first } = await recordLaunch(item, {
+      env: { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0" },
+      ...(item.runtimeId === "codex"
+        ? {
+            driverArgs: CODEX_MEMORY_KEYS.flatMap((key) => [
+              "-c",
+              `${key}=true`,
+            ]),
+          }
+        : {}),
+    });
+    if (item.runtimeId === "claude")
+      assert.equal(first.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY, "1");
+    if (item.runtimeId === "codex")
+      for (const key of CODEX_MEMORY_KEYS)
+        assert.equal(lastConfigValue(first.argv, key), `${key}=false`, key);
+    else
+      assert.equal(
+        first.argv.some((arg) => /memor/iu.test(arg)),
+        false,
+        `${label} carries no invented memory switch: ${first.argv.join(" ")}`,
+      );
   });

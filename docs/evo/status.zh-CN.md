@@ -843,7 +843,7 @@ B. 权限收口
 2. 语义：
    - 更新、失效、恢复、删除、置顶都要 `expectedRevision`，不一致即拒绝（409），不合并、不后写覆盖；更新只接受 active 条目且必须有实际变化。
    - invalidate：实例与 Human 都可以，需要理由；条目退出列表（`--include-invalidated` 才显示）与检索，正文与历史保留；restore 恢复为 active。
-   - delete：只有 Human（频道 owner/admin）；所有修订的正文置空（描述、名字等元数据保留为 tombstone），名字释放可重用；Worker 端没有 delete 命令也没有路由。删除边界（§50）：平台在线读取与检索不再能取得正文；不追溯清理已进入 session/诊断/备份/SQLite 物理残留（WAL）的副本，不是物理擦除。
+   - delete：只有 Human（频道 owner/admin）；所有修订的正文置空，名字等元数据保留为 tombstone（第五十四节起描述也清空，只留名字、删除时间、原因与元数据），名字释放可重用；Worker 端没有 delete 命令也没有路由。删除边界（§50，第五十四节更新）：平台在线读取与检索不再能取得正文与描述；不追溯清理已进入 session/诊断/备份/SQLite 物理残留（WAL）的副本，不是物理擦除。
    - pin：只有 Human；列表与检索同分时 pinned 优先，再按最近更新。
 3. 权限（Kernel 在列出与检索之前判定，`channel-memory-access.ts`）：
    - Worker：只有 Role 实例有平台记忆；作用域 = 该实例所属频道，从凭据推出，请求里没有也不接受频道、作者或出处字段（strict schema，HTTP 400）；实例必须仍是频道成员；有效开关 = 成员覆盖 ?? 频道默认（默认开）。
@@ -913,7 +913,7 @@ B. 权限收口
    - 不缓存：每个 driver 进程启动时只解析一次（两次列表约 30 ms），进程内缓存没有收益，按 mtime/size 缓存还可能漏掉其他配置层的变化。
    - 调用方：两个 Codex driver 传入自己的 `--executable`；daemon 设置投影（`managedLaunch`）与 gate argv 围栏改用只含固定开关的 `providerLaunchSwitches`（按名关闭在每次启动时解析）；效率门禁的原生组与 drift 脚本按各自 cwd 解析。
    - 残余：列表以 driver 进程 cwd 解析；若将来 thread 的 cwd 与进程 cwd 不同，项目级配置层可能不一致，需要届时复核。
-3. P2-1 删除边界：目标合同 §4、本文件 §48 与 Human API 删除请求的 schema 注释写明“平台在线读取与检索不再能取得正文；不追溯清理已进入 session/诊断/备份/SQLite 物理残留（WAL）”。没有实现物理擦除。`apps/console` 目前没有记忆界面，没有可改的删除文案；记忆控制台（批次 B）的删除确认必须沿用这句话。
+3. P2-1 删除边界：目标合同 §4、本文件 §48 与 Human API 删除请求的 schema 注释写明“平台在线读取与检索不再能取得正文；不追溯清理已进入 session/诊断/备份/SQLite 物理残留（WAL）”（第五十四节按负责人裁定扩为“正文与描述”，描述在当前投影与所有修订中清空）。没有实现物理擦除。`apps/console` 目前没有记忆界面，没有可改的删除文案；记忆控制台（批次 B）的删除确认必须沿用这句话。
 4. P2-2 声明修正：§49 总述改为“按各 CLI 能力关闭已核实的若干全局配置来源”，并在总述旁加支持矩阵与剩余入口。目标合同 §4 把已裁定语义写入（负责人 2026-09-26 批准）：频道共享（私聊写入属于共享频道记忆，不是私有记忆）、只经显式工具写入、不物化、写入不蕴含读取、`expectedRevision` 并发、实例只可失效/恢复、仅 Human 删除及删除边界、side 只有判定点未接入、FTS 频道过滤只保证输出范围。
 5. 测试（先失败后通过）：
    - `application-service/test/channel-memory-api.test.ts` 新增 1 项：read=false/write=true 下 write 重放、update 及重放、invalidate 及重放、restore 及重放、revision 冲突、同名冲突、无变化更新都不含正文/描述/出处，响应键恰为收据六项；Human API 仍能读到正文。修复前失败于“write replay leaks memory content”。既有 2 项改为经 read 验证出处。
@@ -1002,6 +1002,23 @@ B. 权限收口
 - Kimi（k3-256k/low）：3 轮协议额外生成 0、输入约为预算一半，延迟全部超预算；上次复测平台快于原生，差异主要来自 Kimi 服务端单次调用波动（见首轮延迟调查），需交替顺序与多样本判定；产品侧用量（ACP 不报）仍缺，判 missing-evidence。
 - OpenCode（deepseek-flash/low）：role 与 role-warm 6 轮全部在预算内，门禁结论 needs-quality-review（待人工质量抽检）。
 - 结论：四家协议额外生成均为 0（legacy 除外），输入均在预算内；剩余超标项全部是首轮或 Kimi 的延迟。平台记忆索引首次真实跑，未见额外生成。
+
+### 五十四、记忆删除清描述与原生记忆关闭回归
+
+负责人 2026-09-27 裁定两项。
+
+1. 频道记忆 Human 删除清描述：
+   - Kernel（`channel-memory.ts`）：删除时当前投影 `description` 置为空串，所有修订的 `description` 同样置空（与正文置空在同一事务）；tombstone 只保留名字、删除时间、原因与出处元数据；FTS 行照旧移除；Room 事件本来就不含描述。列为 NOT NULL 的 STRICT 表不改，未升 schema（仍为 76）。
+   - 已冻结在 presented window 上的记忆快照（`memory_json`，同频道实例的窗口）同步去掉该条描述：增量项描述置 `null`、索引刷新项置空串；序号不变，所以 Host 送达登记的仍是同一版本。已送到 provider session 的文本不在删除边界内（同 §4）。
+   - 裁定前删除留下的描述：每次打开 Kernel 时幂等清掉 `state='deleted'` 条目的投影与修订描述（`clearDeletedMemoryDescriptions`）。
+   - 目标合同 §4、本文件 §48/§50 删除边界、Human API 删除请求 schema 注释同步为“正文与描述”。控制台删除确认文案改为“删除后平台在线读取与检索不再能取得正文与描述（当前与所有修订都清空）……名称、删除时间与原因作为墓碑保留”，已删除条目详情的描述显示“（描述已随删除清空）”。控制台浏览器门禁脚本（`scripts/run-console-browser-gate.mjs`）的删除文案与描述清空断言同步更新，但本批未运行浏览器门禁。
+   - 测试（先失败后通过）：`kernel/test/channel-memory.test.ts` 新增 1 项（删除后投影/全部修订/FTS 无旧描述，Human 读取、历史、含已删除的列表、检索、删除幂等重放都只返回空描述，Worker list/search 不含、read/history 为 not_found，Room 事件不含；修复前失败于删除响应仍带旧描述）；`kernel/test/channel-memory-index.test.ts` 新增 2 项（冻结快照再次 present 时该条描述为 null 且表内无残留；重新打开 Kernel 清掉旧 tombstone 描述而不动有效条目；修复前分别失败）；`application-service/test/channel-memory-api.test.ts` 在 Human API/SDK 用例中加断言（删除响应、历史、HTTP read/history/list 均无旧描述；撤掉 Kernel 修复时该用例失败）；`apps/console/test/memory.test.ts` 删除确认文案断言更新（先失败）。
+2. 原生 CLI 记忆关闭回归保护（`agent-host/test/provider-global-isolation.test.ts`）：
+   - 既有七路径启动测试只拿记录下的参数/环境与策略对象比较，策略里删掉某个记忆开关时仍会通过（已用临时变异验证：删掉 Claude 环境变量与 `memories.use_memories` 后该组七项仍全过）。新增 7 项逐路径断言字面值：Claude 冷（`claude-stream-json-driver`）/热（`claude-warm-driver`）子进程环境 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`，驱动环境预置为 `0` 仍输；Codex 冷（`codex-app-server-driver`）/热（`codex-warm-driver`）argv 中 `features.memories`、`memories.generate_memories`、`memories.use_memories` 各自最后一个 `-c` 为 `false`，驱动 `-c` 透传三项为 `true` 仍输；OpenCode 冷/热与 Kimi 不带任何记忆相关参数。另新增 1 项：Role `launchEnvironment` 的 schema 与过滤器拒绝 `CLAUDE_CODE_DISABLE_AUTO_MEMORY`，用户附加参数或完全覆盖参数中以 `-c`/`--config` 重开任一记忆键都被拒。上述变异下新增的 Claude/Codex 四项全部失败。
+   - 这是对现有行为的回归保护，没有产品代码改动，所以没有“修复前失败”阶段；以变异验证代替。
+   - Kimi/OpenCode：依据 main 分支 `docs/audits/2026-09-11-provider-auto-memory-disable.zh-CN.md`（该批只为 Claude/Codex 查证了官方记忆开关，Kimi/OpenCode 没有查证到开关，未添加禁用参数），负责人视为无原生持久记忆。该审计是“未查证到开关”，不是对不存在持久记忆的源码证明。
+   - 未覆盖：Codex 热路径 `thread/start|resume` 的 `config` 三项只在冷路径（`codex-provider-session.test.ts`）有断言，热路径需要假 app-server socket，本批未补。
+3. 检查：`npm run check`、`npm run format:check`、`git diff --check`、`npm run build:console` 通过。未跑付费 CLI，服务未重启、未部署，未 commit/push。
 
 ## 当前状态（2026-09-26，控制台批次 3 后）
 

@@ -381,8 +381,10 @@ export type ClientMemoryRestoreRequest = z.infer<
 
 /**
  * Human-only privacy delete. Boundary (target contract §4): the platform's
- * online read and retrieval can no longer return the body (every revision's
- * body is set to null; name, description and reason stay as the tombstone).
+ * online read and retrieval can no longer return the body or the description
+ * (owner ruling 2026-09-27: every revision's body is set to null and its
+ * description to ""; name, deletion time, reason and metadata stay as the
+ * tombstone).
  * It does not retroactively remove copies that already reached a provider
  * session, diagnostics, backups, or SQLite physical remnants (WAL).
  */

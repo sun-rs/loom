@@ -807,3 +807,122 @@ test("a later turn of the same instance keeps writing under its current session 
     f.close();
   }
 });
+
+test("owner ruling 2026-09-27: a Human delete also clears the description from the projection, every revision and every view", () => {
+  const f = roleInstanceFixture();
+  try {
+    const work = startInstanceRun(f);
+    const secret = "the Acme customer contract";
+    const { entryId } = f.kernel.memory.write(work.execution, {
+      ...entry("customer"),
+      description: `about ${secret}`,
+    });
+    f.kernel.memory.update(work.execution, {
+      name: "customer",
+      expectedRevision: 1,
+      description: `still about ${secret}`,
+      idempotencyKey: "update-customer",
+    });
+    const deleted = f.kernel.memory.humanDelete(f.actor, {
+      entryId,
+      expectedRevision: 2,
+      reason: "privacy",
+      idempotencyKey: "delete-customer",
+    });
+    assert.equal(deleted.entry.description, "");
+    assert.equal(deleted.entry.name, "customer", "the name stays");
+    assert.equal(
+      count(
+        f,
+        "SELECT count(*) AS n FROM memory_entries WHERE entry_id=? AND description<>''",
+        entryId,
+      ),
+      0,
+      "the projection keeps no description",
+    );
+    assert.equal(
+      count(
+        f,
+        "SELECT count(*) AS n FROM memory_revisions WHERE entry_id=? AND description<>''",
+        entryId,
+      ),
+      0,
+      "no revision keeps a description",
+    );
+    assert.equal(
+      count(
+        f,
+        "SELECT count(*) AS n FROM memory_entries_fts WHERE entry_id=?",
+        entryId,
+      ),
+      0,
+    );
+    // Human views: the tombstone keeps name, time and reason only.
+    const history = f.kernel.memory.humanHistory(f.actor, { entryId });
+    assert.equal(history.entry.description, "");
+    assert.deepEqual(
+      history.revisions.map((r) => [r.revision, r.op, r.description, r.body]),
+      [
+        [3, "delete", "", null],
+        [2, "update", "", null],
+        [1, "create", "", null],
+      ],
+    );
+    assert.equal(history.revisions[0]!.reason, "privacy");
+    assert.equal(
+      f.kernel.memory.humanRead(f.actor, { entryId }).entry.description,
+      "",
+    );
+    const listed = f.kernel.memory.humanList(f.actor, {
+      channelId: f.home.roomId,
+      includeInvalidated: true,
+      includeDeleted: true,
+    });
+    assert.deepEqual(
+      listed.entries.map((e) => [e.name, e.state, e.description]),
+      [["customer", "deleted", ""]],
+    );
+    assert.equal(
+      f.kernel.memory.humanSearch(f.actor, {
+        channelId: f.home.roomId,
+        query: "Acme",
+      }).entries.length,
+      0,
+    );
+    // An idempotent replay of the delete returns the cleared tombstone.
+    assert.equal(
+      f.kernel.memory.humanDelete(f.actor, {
+        entryId,
+        expectedRevision: 2,
+        reason: "privacy",
+        idempotencyKey: "delete-customer",
+      }).entry.description,
+      "",
+    );
+    // Worker views never return it either.
+    const workerViews = JSON.stringify([
+      f.kernel.memory.list(work.execution, { includeInvalidated: true }),
+      f.kernel.memory.search(work.execution, { query: "Acme" }).entries,
+    ]);
+    assert.ok(!workerViews.includes("Acme"), workerViews);
+    for (const read of [
+      () => f.kernel.memory.read(work.execution, { name: "customer" }),
+      () => f.kernel.memory.history(work.execution, { name: "customer" }),
+    ])
+      assert.throws(
+        read,
+        (error: Error & { code?: string }) => error.code === "not_found",
+      );
+    assert.equal(
+      count(
+        f,
+        "SELECT count(*) AS n FROM room_events WHERE aggregate_id=? AND payload_json LIKE '%Acme%'",
+        entryId,
+      ),
+      0,
+      "Room events never carried a description",
+    );
+  } finally {
+    f.close();
+  }
+});
