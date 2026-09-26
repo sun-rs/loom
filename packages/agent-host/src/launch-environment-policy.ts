@@ -58,6 +58,8 @@ export const MANAGED_CARRIER_ENVIRONMENT_KEYS: readonly string[] = [
   "RAH_WORKER_TURN_ROOT",
   // P2-3: the protocol-update wake line; only the Host's lease sets it.
   "RAH_PROTOCOL_NOTICE",
+  // S6 batch B: the launch's channel memory index sequence (Host lease only).
+  "RAH_MEMORY_INDEX_SEQ",
   "RAH_AGENT_CONTEXT_JSON",
   "RAH_AGENT_INBOX_API_URL",
   "RAH_AGENT_INBOX_CLI",

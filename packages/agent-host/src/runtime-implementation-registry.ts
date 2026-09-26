@@ -1,5 +1,6 @@
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
 import { createHostBodiedWake, renderBodiedWake } from "./bodied-wake.ts";
+import { resumedMemoryIndexLease } from "./channel-memory-index.ts";
 import { SessionRulesCard } from "./session-rules-card.ts";
 import {
   createSessionProtocolState,
@@ -1317,24 +1318,28 @@ function createKimiAcpRuntime(
         key,
         previous,
       );
-      const card = rulesCard.prepare(
+      const rules = rulesCard.prepare(
         input,
         key,
         previous,
         protocolNotice !== undefined,
       );
+      if (previous === null) return await wake.withBodiedWake(input, lease);
+      // S6 batch B: the card also re-provides the channel memory index; a
+      // plain resume keeps the index its first prompt carried.
+      const resumed = resumedMemoryIndexLease(rules, lease);
+      const card = resumed.card;
       if (card !== undefined) {
         if (preparedCards.size >= 64)
           preparedCards.delete(preparedCards.keys().next().value!);
         preparedCards.set(input.runAttemptId, card);
       }
-      if (previous === null) return await wake.withBodiedWake(input, lease);
       return await wake.withBodiedWake(input, {
         // The card states the current rules itself; the notice line would
         // only repeat that they changed.
         ...(card === undefined
-          ? protocolUpgrade.withNotice(lease, protocolNotice)
-          : lease),
+          ? protocolUpgrade.withNotice(resumed.lease, protocolNotice)
+          : resumed.lease),
         args: [
           ...(lease.args ?? []),
           "--resume-session",

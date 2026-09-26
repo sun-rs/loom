@@ -1,7 +1,10 @@
 import type { PromptDeliveryMode } from "./standing-prompt-delivery.ts";
 import { hostname } from "node:os";
 
+import type { InstanceMemoryIndex } from "@rah-os/protocol";
 import {
+  RAH_MEMORY_INDEX_SEQ_ENV,
+  renderChannelMemoryIndex,
   STANDING_PROTOCOL_VERSION,
   type ActivationEnvelope,
   type ActivationEnvironmentLease,
@@ -21,6 +24,16 @@ export const DAEMON_VERSION = "0.1.0";
 
 export type StandingPromptLeaseOptions = {
   attachedDirectories?: readonly string[];
+  /**
+   * S6 batch B: a Role instance's channel memory index (read by the Host
+   * under its credential). `carryIndexSeq`: this launch's prompt is what the
+   * session will hold (a new session, or a runtime rebuilding its system
+   * layer from the launch prompt), so its seq bounds the wake delta.
+   */
+  channelMemory?: {
+    index: InstanceMemoryIndex | undefined;
+    carryIndexSeq: boolean;
+  };
   deliveryMode?: PromptDeliveryMode;
   previousDeliveryMode?: PromptDeliveryMode;
   daemonVersion?: string;
@@ -47,7 +60,17 @@ export function standingPromptLease(
     return undefined;
   }
   const revision = agent.agentDefinitionRevision;
+  const memory = options.channelMemory;
+  const memorySection =
+    memory === undefined
+      ? undefined
+      : memory.index === undefined
+        ? "## Channel memory index\nNot available at launch: use `memory list`."
+        : renderChannelMemoryIndex(memory.index);
   const compilerInput = {
+    ...(memorySection === undefined
+      ? {}
+      : { channelMemory: { section: memorySection } }),
     agent: {
       ...(revision.description === undefined
         ? {}
@@ -106,7 +129,18 @@ export function standingPromptLease(
     env: Object.freeze({
       RAH_REQUIRE_SESSION_CONTINUITY:
         agent.instanceChannelId === undefined ? "0" : "1",
+      ...(memory?.index !== undefined && memory.carryIndexSeq
+        ? { [RAH_MEMORY_INDEX_SEQ_ENV]: String(memory.index.throughSeq) }
+        : {}),
     }),
+    ...(memory?.index === undefined || memorySection === undefined
+      ? {}
+      : {
+          memoryIndex: Object.freeze({
+            section: memorySection,
+            throughSeq: memory.index.throughSeq,
+          }),
+        }),
     standingPromptDigest: compiled.deterministicDigest,
     standingProtocolVersion: STANDING_PROTOCOL_VERSION,
   });

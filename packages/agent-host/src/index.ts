@@ -30,6 +30,12 @@ export { AgentMemoryCoordinator } from "./agent-memory-coordinator.ts";
 export { prepareAgentMemoryRun } from "./agent-memory-activation.ts";
 export { buildAgentMemoryInstructions } from "./agent-memory-prompt.ts";
 export {
+  CHANNEL_MEMORY_POINTER,
+  RAH_MEMORY_INDEX_SEQ_ENV,
+  renderChannelMemoryDelta,
+  renderChannelMemoryIndex,
+} from "./channel-memory-index.ts";
+export {
   buildAgentMemoryBootstrap,
   AGENT_MEMORY_BOOTSTRAP_MAX_BYTES,
   RAH_AGENT_MEMORY_BOOTSTRAP_JSON_ENV,

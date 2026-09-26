@@ -838,8 +838,16 @@ export class WorkerApplicationService {
     }
 
     if (route === "/v1/worker/message-present") {
-      parseWorkerRequest(WorkerMessagePresentRequestSchema, body);
-      const presented = this.#kernel.presentWorkerMessages(grant.execution);
+      const request = parseWorkerRequest(
+        WorkerMessagePresentRequestSchema,
+        body,
+      );
+      const presented = this.#kernel.presentWorkerMessages(
+        grant.execution,
+        request.memoryIndexSeq === undefined
+          ? {}
+          : { memoryIndexSeq: request.memoryIndexSeq },
+      );
       // PRESENT-ONLY: deliberately no `grant.deliveredCursors` write.
       // A delivered cursor is what `/v1/worker/acknowledge` and the `sync`
       // continuation accept, so registering one here would let the Host's own
@@ -888,6 +896,9 @@ export class WorkerApplicationService {
           ...(presented.previousAttemptReplyFinal === true
             ? { previousAttemptReplyFinal: true }
             : {}),
+          ...(presented.memoryDelta === undefined
+            ? {}
+            : { memoryDelta: presented.memoryDelta }),
         }),
       );
       return;

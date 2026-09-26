@@ -65,6 +65,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "memory_access_overrides",
   "memory_access_policies",
   "memory_entries",
+  "memory_index_marks",
   "memory_revisions",
   "message_reactions",
   "messages",
@@ -384,6 +385,7 @@ export class RoomDeletionService {
       `DELETE FROM memory_entries WHERE scope_room_id=?`,
       `DELETE FROM memory_access_overrides WHERE room_id=?`,
       `DELETE FROM memory_access_policies WHERE room_id=?`,
+      `DELETE FROM memory_index_marks WHERE room_id=?`,
       `DELETE FROM memberships WHERE room_id=?`,
     ];
     for (const sql of statements) {

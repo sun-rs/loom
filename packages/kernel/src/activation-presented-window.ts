@@ -1,6 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import type {
   ActivationCredentialScope,
+  MemoryIndexDelta,
   RoomEvent,
   WorkerAddressing,
 } from "@rah-os/protocol";
@@ -164,6 +165,8 @@ export type RenderedPresentedWindow = PresentedWindow & {
   previousAttemptReplyMessageId?: string;
   /** See `activation-retry-reminder.ts`. */
   previousAttemptReplyFinal?: true;
+  /** S6 batch B: see `channel-memory-index.ts`. */
+  memoryDelta?: MemoryIndexDelta;
 };
 
 const TERMINAL_RUN_ATTEMPT_STATES = new Set([

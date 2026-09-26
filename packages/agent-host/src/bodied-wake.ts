@@ -19,6 +19,7 @@ import {
   RAH_WORKER_API_URL_ENV,
   RAH_WORKER_SESSION_FILE_ENV,
 } from "./worker-credential-file.ts";
+import { RAH_MEMORY_INDEX_SEQ_ENV } from "./channel-memory-index.ts";
 import { readMemoryIndexAgainstSystemSnapshot } from "./worker-startup-context.ts";
 import { formatBodiedWakeInput } from "./wake-message-input.ts";
 
@@ -93,7 +94,7 @@ export async function renderBodiedWake(input: {
         authorization: `Bearer ${token}`,
         "content-type": "application/json",
       },
-      body: "{}",
+      body: JSON.stringify(memoryIndexSeqBody(env)),
       signal: AbortSignal.timeout(PRESENT_TIMEOUT_MS),
     },
   );
@@ -121,6 +122,21 @@ export async function renderBodiedWake(input: {
           },
         }),
   });
+}
+
+/**
+ * S6 batch B: the channel memory seq of the index this launch's prompt put in
+ * the session, when the Host set one; the Kernel's lower bound for the delta.
+ */
+function memoryIndexSeqBody(
+  env: Readonly<Record<string, string | undefined>>,
+): { memoryIndexSeq?: number } {
+  const raw = env[RAH_MEMORY_INDEX_SEQ_ENV];
+  if (raw === undefined) return {};
+  const seq = Number(raw);
+  if (!Number.isSafeInteger(seq) || seq < 0)
+    throw new Error("invalid launch memory index sequence");
+  return { memoryIndexSeq: seq };
 }
 
 /**

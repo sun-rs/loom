@@ -104,6 +104,9 @@ import {
   type AgentMemoryConfigPatch,
   ClientAgentMemoryGetResponseSchema,
   ClientAgentMemoryReadRequestSchema,
+  ClientMemoryImportLegacyRequestSchema,
+  MemoryImportLegacyResponseSchema,
+  type LegacyMemoryFile,
   ClientAgentMemoryReadResponseSchema,
   ClientAgentMemoryResetRequestSchema,
   ClientAgentMemoryResetResponseSchema,
@@ -410,6 +413,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/get",
   "/agents/execution/reset",
   "/agents/memory/get",
+  "/memory/import-legacy",
   "/agents/memory/config/get",
   "/agents/memory/config/patch",
   "/agents/memory/read",
@@ -1057,6 +1061,40 @@ export class ClientApplicationService {
           );
         throw error;
       }
+      return;
+    }
+    if (path === "/memory/import-legacy") {
+      // S6 batch B: the Host's legacy per-instance directory is only read;
+      // the Kernel authorizes the Human, checks the instance and imports.
+      const command = parseClientRequest(
+        ClientMemoryImportLegacyRequestSchema,
+        body,
+      );
+      this.#human.getChannelMemoryPolicy(actor, {
+        channelId: command.channelId,
+      });
+      const administration = this.#requireAgentMemoryAdministration();
+      const workspace = await administration.inspectWorkspace(
+        command.instanceId,
+      );
+      const files: LegacyMemoryFile[] = [];
+      for (const file of workspace.files)
+        files.push({
+          relativePath: file.relativePath,
+          content: (
+            await administration.readWorkspaceFile(
+              command.instanceId,
+              file.relativePath,
+            )
+          ).content,
+        });
+      writeJson(
+        response,
+        200,
+        MemoryImportLegacyResponseSchema.parse(
+          this.#human.importLegacyChannelMemory(actor, command, files),
+        ),
+      );
       return;
     }
     if (path === "/agents/memory/get") {

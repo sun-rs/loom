@@ -56,6 +56,7 @@ import { createDaemonWebPush } from "./daemon-web-push.ts";
 import {
   assertRuntimeProfileRevisionStillActive,
   createConfiguredRuntime,
+  kernelRuntimePorts,
   createConfiguredCredentialEnvironment,
 } from "./runtime-profile-composition.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
@@ -373,7 +374,7 @@ export class DaemonApplication {
           host,
           implementations,
           probeReport,
-          deliveryAcceptanceKernel: kernel,
+          ...kernelRuntimePorts(kernel),
           runtimeProfileRegistry,
           runtimeProfileRevision: activeRevision,
           supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),
@@ -517,9 +518,7 @@ export class DaemonApplication {
               probeReport: placementProbeReport,
               // S1-d: the v4 placement path registers the Codex acceptance
               // too, which is what enables the bodied wake for instances.
-              ...(kernel === undefined
-                ? {}
-                : { deliveryAcceptanceKernel: kernel }),
+              ...kernelRuntimePorts(kernel),
               ...(placement?.resolvedModel === undefined
                 ? {}
                 : { resolvedModel: placement.resolvedModel }),

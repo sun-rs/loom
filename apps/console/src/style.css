@@ -473,3 +473,56 @@ button:disabled {
 .instance-actions a {
   align-self: center;
 }
+
+.memory-list,
+.memory-history,
+.memory-import-list,
+.memory-import-results {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.memory-entry,
+.memory-revision,
+.memory-import-row {
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+
+.memory-entry.is-selected {
+  border-color: var(--accent);
+}
+
+.memory-entry.state-invalidated,
+.memory-entry.state-deleted {
+  opacity: 0.75;
+}
+
+.memory-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.memory-detail {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--accent);
+}
+
+.memory-body {
+  max-height: 320px;
+  margin: 4px 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.memory-toolbar input[type="search"] {
+  min-width: 0;
+  flex: 1 1 200px;
+}

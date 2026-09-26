@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS memory_revisions (
   idempotency_key TEXT NOT NULL,
   event_id TEXT NOT NULL,
   created_at TEXT NOT NULL,
+  import_instance_id TEXT,
+  import_path TEXT,
   PRIMARY KEY (entry_id, revision)
 ) STRICT;
 CREATE TABLE IF NOT EXISTS memory_access_policies (

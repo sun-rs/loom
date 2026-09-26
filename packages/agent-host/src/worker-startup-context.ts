@@ -39,12 +39,13 @@ export async function workerStartupContext(
     context.appInbox = JSON.parse(env.RAH_AGENT_APP_INBOX_JSON);
 
   const index = await readMemoryIndexAgainstSystemSnapshot(env);
-  if (index?.matchesSystem === true)
+  // S6 batch B: an S6 session (a Role instance) has no per-instance memory
+  // directory; its memory is the channel memory.
+  if (index === undefined)
+    return `## Current Activation context\n${JSON.stringify(context)}\n\nChannel memory: the index is at the end of your standing prompt; later changes arrive in wakes; \`memory list\` shows the current index.\n\n## Canonical Room delivery\n`;
+  if (index.matchesSystem)
     return `## Current Activation context\n${JSON.stringify(context)}\n\nThe complete original MEMORY.md is supplied in the current system prompt; the current file still matches that launch snapshot. Read that data completely.\n\n## Canonical Room delivery\n`;
-  const memory =
-    index?.content ??
-    "Memory path unavailable; read the original index when configured.";
-  return `## Current Activation context\n${JSON.stringify(context)}\n\n## Complete original MEMORY.md\n${memory}\n\n## Canonical Room delivery\n`;
+  return `## Current Activation context\n${JSON.stringify(context)}\n\n## Complete original MEMORY.md\n${index.content}\n\n## Canonical Room delivery\n`;
 }
 
 /**

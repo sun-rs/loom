@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import {
   authoritySection,
   buildAgentMemoryInstructions,
+  CHANNEL_MEMORY_POINTER,
   communicationStyleSection,
   credentialHygieneSection,
   formattingSection,
@@ -46,6 +47,13 @@ export type StandingPromptRuntimeContext = {
 export type StandingPromptInput = {
   agent?: StandingPromptAgentLayer;
   runtimeContext?: StandingPromptRuntimeContext;
+  /**
+   * S6 batch B: a Role instance session. Its memory is the channel memory:
+   * one pointer line replaces the legacy MEMORY.md prose and the rendered
+   * index is the last layer. The index text stays out of the continuity
+   * digest (an edit to memory never keys a different session).
+   */
+  channelMemory?: { section: string };
 };
 
 export type CompiledStandingPrompt = {
@@ -59,7 +67,10 @@ export type StandingPromptLayer = { id: string; text: string };
 const LEGACY_IDENTITY_SENTENCE =
   "You are a RAH OS Room worker launched for one durable Activation.";
 
-function identityLayer(agent: StandingPromptAgentLayer | undefined): string {
+function identityLayer(
+  agent: StandingPromptAgentLayer | undefined,
+  channelMemory: boolean,
+): string {
   if (!agent) {
     return LEGACY_IDENTITY_SENTENCE;
   }
@@ -69,7 +80,7 @@ function identityLayer(agent: StandingPromptAgentLayer | undefined): string {
   if (agent.participantId)
     ids.push(`participant id is \`${agent.participantId}\``);
   const idLine = ids.length > 0 ? ` Your ${ids.join(" and your ")}.` : "";
-  return `You are "${name}", an Agent in RAH OS — a Room-first workplace where one Human and several Agents collaborate through canonical Room messages and Tasks.${idLine} Your Workspace and MEMORY.md persist across Activations.`;
+  return `You are "${name}", an Agent in RAH OS — a Room-first workplace where one Human and several Agents collaborate through canonical Room messages and Tasks.${idLine} ${channelMemory ? "Your Workspace and your channel's memory persist across Activations." : "Your Workspace and MEMORY.md persist across Activations."}`;
 }
 
 function runtimeContextLayer(
@@ -110,7 +121,15 @@ ${lines.join("\n")}`;
  * prompt, `STANDING_PROTOCOL_VERSION` and `worker help protocol` render one
  * source. This compiler still composes them in the same order.
  */
-function platformLayer(agent: StandingPromptAgentLayer | undefined): string {
+function platformLayer(
+  agent: StandingPromptAgentLayer | undefined,
+  channelMemory: boolean,
+): string {
+  if (agent && channelMemory)
+    return `If the wake lacks your messages, run \`"$RAH_WORKER_CLI" worker message-check --startup\` (identity, scope, messages; validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON). Your role is stated in this prompt; do not duplicate it.
+${CHANNEL_MEMORY_POINTER}
+
+${workerCliSection()}`;
   const bootstrap = agent
     ? 'If the wake lacks your messages, run `"$RAH_WORKER_CLI" worker message-check --startup` (identity, scope, memory index, messages; validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON). Your role is stated in this prompt; do not duplicate it.'
     : "First parse process.env.RAH_AGENT_CONTEXT_JSON and process.env.RAH_CONTEXT_MANIFEST_JSON. The first contains the frozen AgentDefinition role and instructions; the second is the Kernel-owned audit record of the exact Room range, instruction/skill/memory content references, RuntimeProfile and Workspace revision selected for this RunAttempt. Follow those instructions unless they conflict with the canonical Worker protocol or system safety. Do not substitute mutable latest files for the manifest references.";
@@ -165,8 +184,9 @@ export function standingPromptLayers(
   input?: StandingPromptInput,
 ): readonly StandingPromptLayer[] {
   const agent = input?.agent;
+  const channelMemory = input?.channelMemory !== undefined;
   const candidates: readonly (StandingPromptLayer | undefined)[] = [
-    { id: "identity", text: identityLayer(agent) },
+    { id: "identity", text: identityLayer(agent, channelMemory) },
     runtimeContextLayer(input?.runtimeContext) === undefined
       ? undefined
       : {
@@ -174,7 +194,7 @@ export function standingPromptLayers(
           text: runtimeContextLayer(input?.runtimeContext)!,
         },
     { id: "authority", text: authoritySection() },
-    { id: "platform", text: platformLayer(agent) },
+    { id: "platform", text: platformLayer(agent, channelMemory) },
     { id: "credential-hygiene", text: credentialHygieneSection() },
     { id: "reminders", text: remindersSection() },
     { id: "communication-style", text: communicationStyleSection() },
@@ -189,6 +209,9 @@ export function standingPromptLayers(
       ? undefined
       : { id: "initial-role", text: initialRoleLayer(agent)! },
     { id: "startup", text: startupLayer(input?.runtimeContext?.deliveryMode) },
+    input?.channelMemory === undefined
+      ? undefined
+      : { id: "channel-memory", text: input.channelMemory.section },
   ];
   return candidates.filter(
     (layer): layer is StandingPromptLayer =>
@@ -210,6 +233,9 @@ export function compileStandingPrompt(
   // defaults and must participate in the provider-session continuity digest.
   const deterministic = renderLayers({
     ...(input?.agent === undefined ? {} : { agent: input.agent }),
+    ...(input?.channelMemory === undefined
+      ? {}
+      : { channelMemory: { section: "## Channel memory index" } }),
     runtimeContext: {
       deliveryMode: input?.runtimeContext?.deliveryMode ?? "wait",
     },

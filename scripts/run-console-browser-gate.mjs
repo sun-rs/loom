@@ -1,7 +1,7 @@
 // Real-browser gate for the throwaway evo console (batch 1 read-only views,
-// batch 2 intervention writes, review fixes and batch 3 private box / run
-// drill-down / Role revision; docs/evo/status.zh-CN.md §44–§46). Deleted in
-// phase 4 with apps/console.
+// batch 2 intervention writes, review fixes, batch 3 private box / run
+// drill-down / Role revision, and the S6 batch B channel memory panel;
+// docs/evo/status.zh-CN.md §44–§46). Deleted in phase 4 with apps/console.
 //
 // FIXTURE ONLY: the Loom service started here uses a temporary HOME,
 // RAH_DATA_HOME, random port and a fake `codex` executable. Its URL, Role,
@@ -9,6 +9,7 @@
 // never be handed to a user as the product. No paid provider runs.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   chmodSync,
   cpSync,
@@ -130,6 +131,9 @@ const args = process.argv.slice(2);
 const mode = (value) => appendFileSync(${JSON.stringify(fakeCodexModes)}, JSON.stringify({ mode: value, args }) + "\\n");
 if (args.join(" ") === "debug models --bundled") {
   process.stdout.write(JSON.stringify({models:[{slug:"gpt-console-fixture",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"high"}],service_tiers:[]}]}));
+} else if (args[0] === "mcp" && args[1] === "list" && args.includes("--json")) {
+  // FAKE \`codex mcp list --json\`: no user MCP servers (launch isolation probe).
+  process.stdout.write("[]");
 } else if (args[0] === "app-server" && args.some((value) => value.startsWith("unix://"))) {
   mode("warm");
   process.env.FAKE_CODEX_STATE_DIR = ${JSON.stringify(fakeCodexState)};
@@ -1089,6 +1093,281 @@ if (args.join(" ") === "debug models --bundled") {
     timeoutMs: 30_000,
   });
 
+  // --- 7b. Channel memory panel (S6 batch B): legacy import seeds memory
+  // through the Human API, then list, search, body + history, pin,
+  // invalidate + restore, a 409 revision conflict, delete with the boundary
+  // dialog and a switch change; the backend state is asserted after each. ---
+  // FIXTURE legacy per-instance memory, written where the Host keeps it
+  // (state/supervisors/agent-memory/<sha256(participant)>): evo instances no
+  // longer create it, so this stands in for data left by an older install.
+  const legacyWorkspace = join(
+    dataHome,
+    "state",
+    "supervisors",
+    "agent-memory",
+    createHash("sha256").update(instanceId).digest("hex"),
+  );
+  mkdirSync(join(legacyWorkspace, "notes"), { mode: 0o700, recursive: true });
+  for (const directory of [
+    dirname(legacyWorkspace),
+    legacyWorkspace,
+    join(legacyWorkspace, "notes"),
+  ]) {
+    chmodSync(directory, 0o700);
+  }
+  writeFileSync(
+    join(legacyWorkspace, "MEMORY.md"),
+    "# FIXTURE legacy index\n- notes/gate-alpha.md\n- notes/gate-beta.md\n",
+    { mode: 0o600 },
+  );
+  writeFileSync(
+    join(legacyWorkspace, "notes", "gate-alpha.md"),
+    "# FIXTURE alpha\nFIXTURE periwinkle fact for the console gate.\n",
+    { mode: 0o600 },
+  );
+  writeFileSync(
+    join(legacyWorkspace, "notes", "gate-beta.md"),
+    "# FIXTURE beta\nFIXTURE second legacy note.\n",
+    { mode: 0o600 },
+  );
+  const memoryList = async (flags = {}) =>
+    await client.request("memory.list", { channelId, ...flags });
+  const memoryRead = async (entryId) =>
+    (await client.request("memory.read", { entryId })).entry;
+  assert.equal((await memoryList()).total, 0, "no memory before the import");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector("#memory-panel") !== null && document.querySelector("#memory-import-note")?.textContent.includes("一次性 Human 导入")`,
+    { description: "memory panel with the import note" },
+  );
+  await waitForText("#memory-list", "没有记忆");
+  const importRow = `.memory-import-row[data-instance-id=${JSON.stringify(instanceId)}]`;
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector('${importRow} .memory-import-files') !== null`,
+    { description: "per-instance import controls" },
+  );
+  await setValue(
+    `${importRow} .memory-import-paths`,
+    "notes/gate-alpha.md\nnotes/gate-beta.md",
+  );
+  await click(`${importRow} .memory-import-files`);
+  await waitForText("#memory-import-status", "导入完成");
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelectorAll('#memory-import-results [data-status="created"]').length`,
+    ),
+    2,
+  );
+  let listed = await memoryList();
+  assert.equal(listed.total, 2, "exactly the two selected files were imported");
+  const alpha = listed.entries.find(({ description }) =>
+    description.includes("notes/gate-alpha.md"),
+  );
+  const beta = listed.entries.find(({ description }) =>
+    description.includes("notes/gate-beta.md"),
+  );
+  assert.ok(alpha && beta);
+  const alphaDetail = await memoryRead(alpha.entryId);
+  assert.equal(alphaDetail.provenance.actorKind, "human");
+  assert.deepEqual(alphaDetail.provenance.importedFrom, {
+    instanceId,
+    path: "notes/gate-alpha.md",
+  });
+  // A second click is a new request: the files are reported as imported.
+  await click(`${importRow} .memory-import-files`);
+  await waitForBrowserValue(
+    browser,
+    `document.querySelectorAll('#memory-import-results [data-status="existing"]').length === 2`,
+    { description: "second import reports existing" },
+  );
+  assert.equal((await memoryList()).total, 2, "the import never duplicates");
+
+  const entryRow = (entryId) =>
+    `#memory-list .memory-entry[data-entry-id=${JSON.stringify(entryId)}]`;
+  await waitForText(`${entryRow(alpha.entryId)} .memory-author`, "导入自实例");
+  assert.equal(
+    await textOf(`${entryRow(alpha.entryId)} .memory-revision .field-value`),
+    String(alpha.revision),
+  );
+  assert.equal(
+    await textOf(`${entryRow(alpha.entryId)} .memory-description .field-value`),
+    alpha.description,
+  );
+
+  // Search goes to memory.search; the UI shows exactly its result.
+  const found = await client.request("memory.search", {
+    channelId,
+    query: "periwinkle",
+  });
+  assert.deepEqual(
+    found.entries.map(({ entryId }) => entryId),
+    [alpha.entryId],
+  );
+  await setValue("#memory-search", "periwinkle");
+  await click("#memory-search-submit");
+  await waitForText("#memory-list-status", "检索");
+  await waitForBrowserValue(
+    browser,
+    `JSON.stringify([...document.querySelectorAll("#memory-list .memory-entry")].map((node) => node.getAttribute("data-entry-id"))) === ${JSON.stringify(JSON.stringify([alpha.entryId]))}`,
+    { description: "search result rows" },
+  );
+  await click("#memory-search-clear");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelectorAll("#memory-list .memory-entry").length === 2`,
+    { description: "full list after clearing the search" },
+  );
+
+  // Body and revision history.
+  await click(`${entryRow(alpha.entryId)} .memory-open`);
+  await waitForText("#memory-detail-body", "FIXTURE periwinkle fact");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelectorAll("#memory-history .memory-revision").length === 1`,
+    { description: "revision history" },
+  );
+
+  // Pin.
+  await click("#memory-pin");
+  await waitForText("#memory-action-status", "已置顶");
+  let alphaNow = await memoryRead(alpha.entryId);
+  assert.equal(alphaNow.pinned, true);
+  assert.equal(alphaNow.revision, alpha.revision + 1);
+
+  // Invalidate needs a reason: nothing is sent without one.
+  await click("#memory-invalidate");
+  await waitForText("#memory-action-status", "请填写原因");
+  assert.equal((await memoryRead(alpha.entryId)).state, "active");
+  await setValue("#memory-reason", "FIXTURE outdated fact");
+  await click("#memory-invalidate");
+  await waitForText("#memory-action-status", "已标为失效");
+  alphaNow = await memoryRead(alpha.entryId);
+  assert.equal(alphaNow.state, "invalidated");
+  assert.equal(
+    (await memoryList()).entries.some(
+      ({ entryId }) => entryId === alpha.entryId,
+    ),
+    false,
+    "the default list excludes invalidated memory",
+  );
+  await click("#memory-include-invalidated");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector('${entryRow(alpha.entryId)}')?.getAttribute("data-state") === "invalidated"`,
+    { description: "invalidated row shown when included" },
+  );
+  await click("#memory-restore");
+  await waitForText("#memory-action-status", "已恢复");
+  alphaNow = await memoryRead(alpha.entryId);
+  assert.equal(alphaNow.state, "active");
+  const history = await client.request("memory.history", {
+    entryId: alpha.entryId,
+  });
+  assert.deepEqual(history.revisions.map(({ op }) => op).sort(), [
+    "create",
+    "invalidate",
+    "pin",
+    "restore",
+  ]);
+  assert.equal(
+    history.revisions.find(({ op }) => op === "invalidate")?.reason,
+    "FIXTURE outdated fact",
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelectorAll("#memory-history .memory-revision").length === ${history.revisions.length}`,
+    { description: "history shows every revision" },
+  );
+
+  // Someone else changes the entry: the UI's revision is stale -> 409.
+  const shownRevision = alphaNow.revision;
+  await client.request("memory.pin", {
+    entryId: alpha.entryId,
+    expectedRevision: shownRevision,
+    idempotencyKey: "console-gate-memory-conflict-probe",
+    pinned: false,
+  });
+  await click("#memory-pin"); // still labelled "取消置顶" at the old revision
+  await waitForText("#memory-action-status", "修订冲突");
+  alphaNow = await memoryRead(alpha.entryId);
+  assert.equal(alphaNow.revision, shownRevision + 1, "the UI wrote nothing");
+  assert.equal(alphaNow.pinned, false);
+  await waitForText(
+    "#memory-detail-title",
+    `修订 ${String(alphaNow.revision)}`,
+  );
+
+  // Delete: the dialog states the boundary and needs a reason.
+  await click("#memory-delete-open");
+  await waitForText(
+    "#memory-delete-text",
+    "删除后平台在线读取与检索不再能取得正文；不追溯清理已进入 session、诊断、备份或 SQLite 物理残留（WAL）的副本。",
+  );
+  await click("#memory-delete-submit");
+  await waitForText("#memory-action-status", "请填写原因");
+  assert.equal((await memoryRead(alpha.entryId)).state, "active");
+  await setValue("#memory-delete-reason", "FIXTURE privacy delete");
+  await click("#memory-delete-submit");
+  await waitForText("#memory-action-status", "已删除");
+  alphaNow = await memoryRead(alpha.entryId);
+  assert.equal(alphaNow.state, "deleted");
+  assert.equal(alphaNow.body, null);
+  assert.ok(
+    (
+      await client.request("memory.history", { entryId: alpha.entryId })
+    ).revisions.every(({ body }) => body === null),
+    "every revision body is redacted",
+  );
+  await waitForText("#memory-detail-body", "正文已删除");
+  await click("#memory-include-deleted");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector('${entryRow(alpha.entryId)}')?.getAttribute("data-state") === "deleted"`,
+    { description: "deleted row shown when included" },
+  );
+  listed = await memoryList();
+  assert.deepEqual(
+    listed.entries.map(({ entryId }) => entryId),
+    [beta.entryId],
+  );
+
+  // Switches: a per-member write override, then back to inherit.
+  const policyBefore = await client.request("memory.policy.read", {
+    channelId,
+  });
+  const policyRow = `.memory-policy-row[data-instance-id=${JSON.stringify(instanceId)}]`;
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector('${policyRow} .memory-override-write') !== null`,
+    { description: "policy row for the instance" },
+  );
+  await setValue(`${policyRow} .memory-override-write`, "off");
+  await click("#memory-policy-submit");
+  await waitForText(
+    "#memory-policy-status",
+    `已保存为开关修订 ${String(policyBefore.revision + 1)}`,
+  );
+  let policyNow = await client.request("memory.policy.read", { channelId });
+  assert.deepEqual(policyNow.overrides, [
+    { instanceId, read: null, write: false },
+  ]);
+  assert.deepEqual(
+    policyNow.members.find((member) => member.instanceId === instanceId),
+    { instanceId, read: policyBefore.readDefault, write: false },
+  );
+  await waitForText(`${policyRow} .memory-effective`, "写 关");
+  await setValue(`${policyRow} .memory-override-write`, "inherit");
+  await click("#memory-policy-submit");
+  await waitForText(
+    "#memory-policy-status",
+    `已保存为开关修订 ${String(policyBefore.revision + 2)}`,
+  );
+  policyNow = await client.request("memory.policy.read", { channelId });
+  assert.deepEqual(policyNow.overrides, []);
+  await screenshot("channel-memory-1440x1000.png");
+
   // --- 8. Runtime settings: edit, read back, stale revision conflict. ---
   await navigateHash("#/settings");
   await waitForBrowserValue(
@@ -1405,6 +1684,8 @@ if (args.join(" ") === "debug models --bundled") {
     "/v3/client/rooms/create",
     "/v3/client/rooms/members/remove",
     "/v3/client/runtime-settings/update",
+    // The deliberate memory revision conflict (409).
+    "/v3/client/memory/pin",
     // Stale refusals and the deliberately dropped responses above.
     "/v3/client/messages/post",
     "/v3/client/roles/instantiate",

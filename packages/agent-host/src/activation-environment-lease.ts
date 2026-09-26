@@ -43,7 +43,11 @@ export function combineActivationEnvironmentLeases(
       "activation environment carries conflicting standing protocol versions",
     );
   }
+  const memoryIndex = leases.find(
+    (lease) => lease.memoryIndex !== undefined,
+  )?.memoryIndex;
   return Object.freeze({
+    ...(memoryIndex === undefined ? {} : { memoryIndex }),
     ...(protocolVersions[0] === undefined
       ? {}
       : { standingProtocolVersion: protocolVersions[0] }),

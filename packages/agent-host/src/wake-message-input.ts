@@ -35,6 +35,7 @@ import {
   type WorkerMessagePresentResponse,
 } from "@rah-os/protocol";
 
+import { renderChannelMemoryDelta } from "./channel-memory-index.ts";
 import { turnArgument } from "./provider-activation-input.js";
 import {
   compactWakeReplyTargets,
@@ -149,6 +150,9 @@ export function formatBodiedWakeInput(input: {
   const sections = [
     `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,
     ...memoryLines(input.memory),
+    ...(present.memoryDelta === undefined
+      ? []
+      : [renderChannelMemoryDelta(present.memoryDelta)]),
   ];
   return sections.join("\n\n");
 }

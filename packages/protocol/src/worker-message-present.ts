@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { MemoryIndexDeltaSchema } from "./channel-memory.ts";
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
 import { WorkerAddressingSchema } from "./worker-addressing.ts";
@@ -15,7 +16,17 @@ import { WorkerAddressingSchema } from "./worker-addressing.ts";
  * record it writes only becomes usable for an implicit acknowledgement after
  * the Host registers the send under the Host credential.
  */
-export const WorkerMessagePresentRequestSchema = z.object({}).strict();
+export const WorkerMessagePresentRequestSchema = z
+  .object({
+    /**
+     * S6 batch B: the channel memory sequence of the index this launch's
+     * standing prompt carries into the session (set by the Host only when the
+     * session will hold that prompt). A lower bound for the memory delta; it
+     * selects nothing in the Room window, its bound or its digest.
+     */
+    memoryIndexSeq: z.number().int().nonnegative().optional(),
+  })
+  .strict();
 export type WorkerMessagePresentRequest = z.infer<
   typeof WorkerMessagePresentRequestSchema
 >;
@@ -70,6 +81,12 @@ export const WorkerMessagePresentResponseSchema = z
      * carries this Activation's final-reply marker. Kernel-derived.
      */
     previousAttemptReplyFinal: z.literal(true).optional(),
+    /**
+     * S6 batch B: channel memory entries changed since the index this session
+     * last received (a Role instance with memory read on only). Registered as
+     * received when the Host registers this rendering as sent.
+     */
+    memoryDelta: MemoryIndexDeltaSchema.optional(),
   })
   .strict()
   .refine((value) => value.toSeq >= value.fromSeq, {

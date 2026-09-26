@@ -32,6 +32,7 @@ import {
   type InstanceStatus,
 } from "./model.ts";
 import { Poller } from "./poll.ts";
+import { memoryPanel } from "./view-memory.ts";
 import { messagePanel } from "./view-messages.ts";
 import { runDetailPanel, runList, type RunDetailPanel } from "./view-run.ts";
 
@@ -342,6 +343,7 @@ export function mountChannel(
     className: "instance-list",
   });
   const runDetail = runDetailPanel(context);
+  const memory = memoryPanel(context, roomId);
 
   const actorLabel = (actorId: string): string => {
     if (actorId === SYSTEM_PRINCIPAL_ID) return "Loom 系统";
@@ -590,6 +592,7 @@ export function mountChannel(
       messages.element,
     ]),
     runDetail.element,
+    memory.element,
     el("section", { className: "panel" }, [
       el("h2", { text: "最近生命周期事件（已同步的事件窗口）" }),
       lifecycleList,
@@ -777,6 +780,13 @@ export function mountChannel(
         roles.length === 0 ? "还没有 Role（先到 Role 页创建）" : "选择 Role",
       );
       renderInstances();
+      memory.setInstances(
+        statuses.map(({ handle, instanceId, member, roleName }) => ({
+          instanceId,
+          label: `${roleName} @${handle}`,
+          member,
+        })),
+      );
       messages.render();
       renderEvents();
     } catch (error) {
@@ -798,5 +808,6 @@ export function mountChannel(
   return () => {
     unsubscribe();
     poller.stop();
+    memory.stop();
   };
 }

@@ -128,6 +128,16 @@ export type IntentSpec<Payload, Result> = {
   session: RoomMutationSequenceSession;
 };
 
+/**
+ * For revision-checked writes: no Room basis is read or sent. These
+ * endpoints never answer `stale_context`, so the stale retry loop never
+ * repeats a send.
+ */
+const NO_ROOM_BASIS: RoomMutationSequenceSession = {
+  syncUntilCurrent: () =>
+    Promise.resolve({ caughtUp: true, state: { latestRoomSeq: 0 } }),
+};
+
 type Intent = {
   action: string;
   execute: () => Promise<IntentOutcome<unknown>>;
@@ -265,6 +275,32 @@ export class WriteIntentSlot {
     };
     this.#intent = { action: spec.action, execute, key, payload };
     return await execute();
+  }
+
+  /**
+   * An intent whose freshness is an `expectedRevision` inside the frozen
+   * payload instead of a Room basis (channel memory changes and switches).
+   * Same slot semantics: one key and payload across verification; a first
+   * send's 4xx (a revision mismatch is 409) is a refusal, anything else
+   * leaves the result unknown until a same-key success or an abandon.
+   */
+  async submitRevisioned<Payload, Result>(spec: {
+    action: string;
+    onSettled?: (outcome: IntentOutcome<Result>) => void;
+    payload: Payload;
+    send: (
+      payload: Readonly<Payload>,
+      idempotencyKey: string,
+    ) => Promise<Result>;
+  }): Promise<IntentOutcome<Result>> {
+    return await this.submit({
+      action: spec.action,
+      ...(spec.onSettled === undefined ? {} : { onSettled: spec.onSettled }),
+      payload: spec.payload,
+      send: (payload, _basedOnRoomSeq, idempotencyKey) =>
+        spec.send(payload, idempotencyKey),
+      session: NO_ROOM_BASIS,
+    });
   }
 
   /** Re-sends the unknown intent unchanged (verification). */

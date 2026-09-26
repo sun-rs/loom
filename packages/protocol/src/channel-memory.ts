@@ -97,6 +97,15 @@ export const MemoryProvenanceSchema = z
     viaRoomId: IdentifierSchema.nullable(),
     basedOnRoomSeq: z.number().int().nonnegative().nullable(),
     recordedAt: TimestampSchema,
+    /**
+     * S6 batch B: present only on a revision a Human imported from an
+     * instance's legacy per-instance memory (`MEMORY.md` / `notes/`); names
+     * the source instance and the file. The actor stays the Human.
+     */
+    importedFrom: z
+      .object({ instanceId: IdentifierSchema, path: z.string().min(1) })
+      .strict()
+      .optional(),
   })
   .strict();
 export type MemoryProvenance = z.infer<typeof MemoryProvenanceSchema>;
@@ -471,3 +480,106 @@ export const MemoryPolicyUpdateResponseSchema = z
 export type MemoryPolicyUpdateResponse = z.infer<
   typeof MemoryPolicyUpdateResponseSchema
 >;
+
+// S6 batch B: Human-triggered import of an instance's legacy memory.
+
+/**
+ * `whole`: one entry holding MEMORY.md followed by every note. `files`: one
+ * entry per file (MEMORY.md and each note), optionally only `relativePaths`.
+ * Never automatic; the legacy directory is only read, never changed.
+ */
+export const ClientMemoryImportLegacyRequestSchema = z
+  .object({
+    channelId: IdentifierSchema,
+    instanceId: IdentifierSchema,
+    mode: z.enum(["whole", "files"]),
+    relativePaths: z
+      .array(z.string().min(1).max(512))
+      .min(1)
+      .max(256)
+      .optional(),
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict()
+  .refine(
+    (value) => value.mode === "files" || value.relativePaths === undefined,
+    {
+      message: "relativePaths selects files only in files mode",
+    },
+  );
+export type ClientMemoryImportLegacyRequest = z.infer<
+  typeof ClientMemoryImportLegacyRequestSchema
+>;
+
+/** One legacy file as the Host read it; supplied to the Kernel by the server. */
+export type LegacyMemoryFile = { relativePath: string; content: string };
+
+export const MemoryImportLegacyResultSchema = z
+  .object({
+    path: z.string(),
+    status: z.enum(["created", "existing", "skipped"]),
+    entryId: IdentifierSchema.optional(),
+    name: MemoryEntryNameSchema.optional(),
+    reason: z.string().optional(),
+  })
+  .strict();
+
+export const MemoryImportLegacyResponseSchema = z
+  .object({
+    channelId: IdentifierSchema,
+    instanceId: IdentifierSchema,
+    results: z.array(MemoryImportLegacyResultSchema),
+  })
+  .strict();
+export type MemoryImportLegacyResponse = z.infer<
+  typeof MemoryImportLegacyResponseSchema
+>;
+
+// S6 batch B: the session memory index and its per-wake delta.
+
+/**
+ * Byte budget of the injected session index (contract §6 fixed overhead).
+ * The owner ruling asked for about 4 KB, to be cut if the §6 measurement
+ * exceeds the budget: at 4 KiB a CJK-description index put the standing
+ * prompt at ~2,954 estimated tokens, leaving no room for the first wake under
+ * the +3k budget, so the default is 3 KiB (`channel-memory-overhead.test.ts`).
+ */
+export const MEMORY_INDEX_MAX_BYTES = 3 * 1024;
+
+/**
+ * What a Role instance may see of its channel memory at session start, read
+ * by its Host under the Host credential. `throughSeq` is the channel Room
+ * sequence of the latest memory change this index reflects.
+ */
+export const InstanceMemoryIndexSchema = z
+  .object({
+    channelId: IdentifierSchema,
+    readEnabled: z.boolean(),
+    entries: z.array(MemoryEntrySchema),
+    total: z.number().int().nonnegative(),
+    throughSeq: z.number().int().nonnegative(),
+  })
+  .strict();
+export type InstanceMemoryIndex = z.infer<typeof InstanceMemoryIndexSchema>;
+
+/** One changed entry in a wake delta; no description once deleted. */
+export const MemoryIndexChangeSchema = z
+  .object({
+    name: MemoryEntryNameSchema,
+    type: MemoryEntryTypeSchema,
+    description: z.string().nullable(),
+    pinned: z.boolean(),
+    state: MemoryEntryStateSchema,
+  })
+  .strict();
+export type MemoryIndexChange = z.infer<typeof MemoryIndexChangeSchema>;
+
+export const MemoryIndexDeltaSchema = z
+  .object({
+    throughSeq: z.number().int().nonnegative(),
+    changes: z.array(MemoryIndexChangeSchema),
+    /** Changed entries beyond the bound, stated rather than listed. */
+    omitted: z.number().int().nonnegative(),
+  })
+  .strict();
+export type MemoryIndexDelta = z.infer<typeof MemoryIndexDeltaSchema>;

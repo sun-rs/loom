@@ -1,3 +1,5 @@
+import * as MemoryIndex from "./channel-memory-index.ts";
+import { migratePlacementAndProcessColumns } from "./placement-column-migration.ts";
 import { migrateIdentityAccounts } from "./identity-accounts.ts";
 import { withInstancePrivateBox } from "./instance-worker-scope.ts";
 import { assertAgentFirstRunSatisfied } from "./agent-first-run.ts";
@@ -430,7 +432,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 74;
+export const KERNEL_SCHEMA_VERSION = 75;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1073,39 +1075,7 @@ export class RoomKernel {
       this.instanceSessions.backfill(schemaVersion),
     );
     unit("placement-columns-and-version", "transactional", () => {
-      const placementColumns = this.#database
-        .prepare("PRAGMA table_info(placements)")
-        .all();
-      if (
-        !placementColumns.some(
-          (row) => text(row, "name") === "runtime_offer_observation_id",
-        )
-      ) {
-        this.#database.exec(
-          "ALTER TABLE placements ADD COLUMN runtime_offer_observation_id TEXT REFERENCES runtime_offer_observations(runtime_offer_observation_id)",
-        );
-      }
-      const runtimeProcessColumns = this.#database
-        .prepare("PRAGMA table_info(runtime_processes)")
-        .all();
-      if (
-        !runtimeProcessColumns.some(
-          (row) => text(row, "name") === "recovery_lease_owner_instance_id",
-        )
-      ) {
-        this.#database.exec(
-          "ALTER TABLE runtime_processes ADD COLUMN recovery_lease_owner_instance_id TEXT",
-        );
-      }
-      if (
-        !placementColumns.some(
-          (row) => text(row, "name") === "runtime_offer_snapshot_digest",
-        )
-      ) {
-        this.#database.exec(
-          "ALTER TABLE placements ADD COLUMN runtime_offer_snapshot_digest TEXT",
-        );
-      }
+      migratePlacementAndProcessColumns(this.#database);
       compactedRuntimeOfferObservationCount =
         compactUnreferencedRuntimeOfferObservations(
           this.#database,
@@ -1114,6 +1084,7 @@ export class RoomKernel {
       // The version stamp commits with the last schema unit: an interrupted
       // upgrade can never advertise a version its objects do not have.
       InstanceRuntime.migrateInstanceRuntimeColumnsV65(this.#database);
+      MemoryIndex.migrateChannelMemoryV75(this.#database);
       RunAttemptUsageService.migrateCleanupV66(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
       this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
@@ -1844,16 +1815,30 @@ export class RoomKernel {
    */
   presentWorkerMessages(
     execution: AuthenticatedWorkerExecutionContext,
+    request: { memoryIndexSeq?: number } = {},
   ): RenderedPresentedWindow {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      return renderPresentedWindow(
+      return MemoryIndex.withPresentedMemoryDelta(
         this.#database,
         scope,
+        request.memoryIndexSeq,
         this.#timestamp(),
-        (row) => this.#eventFromRow(row),
+        renderPresentedWindow(this.#database, scope, this.#timestamp(), (row) =>
+          this.#eventFromRow(row),
+        ),
       );
     });
+  }
+
+  /** S6 batch B: a Role instance's session-start memory index (Host). */
+  readInstanceMemoryIndex(
+    host: AuthenticatedHostContext,
+    input: { participantId: string },
+  ) {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    this.#requireHostParticipant(authenticatedHost, input.participantId);
+    return MemoryIndex.instanceMemoryIndex(this.#database, input.participantId);
   }
 
   /** Phase-table fields for one RunAttempt's wake delivery. Read-only, and it
@@ -1895,6 +1880,11 @@ export class RoomKernel {
         this.#database,
         input,
         authenticatedHost.hostId,
+        this.#timestamp(),
+      );
+      MemoryIndex.advanceMemoryIndexMark(
+        this.#database,
+        input,
         this.#timestamp(),
       );
       // Race closure: a post that already succeeded, in this Room, with the

@@ -22,6 +22,7 @@ import {
 import type { WorkerApplicationService } from "@rah-os/application-service";
 import type { AuthenticatedHostContext, RoomKernel } from "@rah-os/core";
 import type {
+  InstanceMemoryIndex,
   ResolvedModel,
   RuntimeProfileProbeReport,
   RuntimeProfileRevision,
@@ -64,6 +65,40 @@ type RuntimeWorkerService = Pick<
     Pick<WorkerApplicationService, "issueActivationCredentialForWorkspace">
   >;
 
+/**
+ * The Kernel ports a local runtime uses under its Host credential: the S1-d
+ * delivery acceptance and the S6 batch B session memory index.
+ */
+export function kernelRuntimePorts(kernel: RoomKernel | undefined): {
+  deliveryAcceptanceKernel?: Pick<RoomKernel, "markPresentedDeliverySent">;
+  memoryIndexKernel?: Pick<RoomKernel, "readInstanceMemoryIndex">;
+} {
+  return kernel === undefined
+    ? {}
+    : { deliveryAcceptanceKernel: kernel, memoryIndexKernel: kernel };
+}
+
+/** A failed index read starts the session without one, never blocks it. */
+function readMemoryIndex(
+  input: {
+    host: AuthenticatedHostContext;
+    memoryIndexKernel?: Pick<RoomKernel, "readInstanceMemoryIndex">;
+  },
+  participantId: string,
+): InstanceMemoryIndex | undefined {
+  if (input.memoryIndexKernel === undefined) return undefined;
+  try {
+    return input.memoryIndexKernel.readInstanceMemoryIndex(input.host, {
+      participantId,
+    });
+  } catch (error) {
+    process.stderr.write(
+      `[rah-os] channel memory index unavailable for ${participantId}: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    return undefined;
+  }
+}
+
 export function createConfiguredRuntime(input: {
   /** Owner 2026-09-26: the channel home's Human-attached directories. */
   additionalDirectories?: readonly string[] | undefined;
@@ -94,6 +129,12 @@ export function createConfiguredRuntime(input: {
    * whose Activations keep the explicit `message-check` path unchanged.
    */
   deliveryAcceptanceKernel?: Pick<RoomKernel, "markPresentedDeliverySent">;
+  /**
+   * S6 batch B: the Kernel read of a Role instance's channel memory index at
+   * session start, under `input.host`. Absent: the instance still starts
+   * without the legacy MEMORY.md and finds its memory through the Worker CLI.
+   */
+  memoryIndexKernel?: Pick<RoomKernel, "readInstanceMemoryIndex">;
   resolvedModel?: ResolvedModel;
   toolAccessMode?: ToolAccessMode;
   runtimeProfileRegistry: RuntimeProfileRegistry;
@@ -143,7 +184,26 @@ export function createConfiguredRuntime(input: {
           runtime,
           input.guideEnabled?.(runtime.guideRuntimeId) === true,
         );
+        // S6 batch B: every Role instance is an S6 session (only instances
+        // have channel memory). It gets the channel index and never the
+        // legacy per-instance MEMORY.md, whose directory stays untouched.
+        const s6 = scope.agent.instanceChannelId !== undefined;
+        const memoryIndex = s6
+          ? readMemoryIndex(input, scope.agent.participantId)
+          : undefined;
         const promptLease = standingPromptLease(scope, {
+          ...(!s6
+            ? {}
+            : {
+                channelMemory: {
+                  index: memoryIndex,
+                  // OpenCode rebuilds its system layer from the launch
+                  // prompt on every request; others keep the first one.
+                  carryIndexSeq:
+                    scope.agent.instanceSessionRequired !== true ||
+                    runtimeId === "opencode",
+                },
+              }),
           deliveryMode,
           ...(runtimeId === "claude" && deliveryMode === "direct"
             ? { previousDeliveryMode: "gated" }
@@ -163,8 +223,9 @@ export function createConfiguredRuntime(input: {
           roomId: scope.roomId,
           runAttemptId: scope.runAttemptId,
         };
-        const memoryLease =
-          input.agentMemoryCoordinator === undefined
+        const memoryLease: ActivationEnvironmentLease = s6
+          ? { env: {} }
+          : input.agentMemoryCoordinator === undefined
             ? await prepareAgentMemoryRun({
                 activation,
                 agent: scope.agent,

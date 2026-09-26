@@ -169,3 +169,17 @@ test("startup does not append an unchanged system-delivered index, but returns t
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("an S6 session's startup check names the channel memory index, never a legacy MEMORY.md", async () => {
+  const { workerStartupContext } =
+    await import("../src/worker-startup-context.ts");
+  const text = await workerStartupContext({
+    RAH_PARTICIPANT_ID: "instance-1",
+    RAH_ROOM_ID: "channel-1",
+  });
+  assert.doesNotMatch(text, /MEMORY\.md/u);
+  assert.match(
+    text,
+    /Channel memory: the index is at the end of your standing prompt; later changes arrive in wakes; `memory list` shows the current index\./u,
+  );
+});

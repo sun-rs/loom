@@ -26,6 +26,11 @@ const EXECUTION_AUDIT_EVENTS = new Set([
   "activation.retry_scheduled",
   "activation.retry_blocked",
   "activation.retry_resumed",
+  // S6 batch B: memory changes reach an instance through the session index
+  // and the wake delta, which obey its read switch; the metadata-only Room
+  // event stays in the ledger for the Human and diagnostics.
+  "memory.entry_changed",
+  "memory.policy_changed",
 ]);
 
 /** Shared with the wake rendering (`activation-presented-window.ts`), so a

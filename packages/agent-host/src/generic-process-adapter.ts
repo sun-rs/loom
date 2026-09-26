@@ -181,6 +181,13 @@ export type ActivationEnvironmentLease = {
    * version gets one wake line pointing at `worker help protocol`.
    */
   standingProtocolVersion?: string;
+  /**
+   * S6 batch B: the channel memory index section this lease's standing prompt
+   * carries, with its channel memory sequence. Host-private (never passed to
+   * the process); re-provides the full index after a native compaction on a
+   * runtime without a system layer (the Kimi rules card).
+   */
+  memoryIndex?: { section: string; throughSeq: number };
 };
 
 export type ProcessDiagnostics = {

@@ -317,6 +317,50 @@ export class ChannelMemoryService {
     );
   }
 
+  /**
+   * S6 batch B: a Human imports an instance's legacy per-instance memory
+   * (the server read `files` from the Host; the legacy directory is left
+   * untouched). One entry per file, or one `whole` entry. Idempotent by the
+   * import source: a file already imported from that instance is reported as
+   * existing, whatever idempotency key the request carries.
+   */
+  humanImportLegacy(
+    actor: AuthenticatedActorContext,
+    raw: P.ClientMemoryImportLegacyRequest,
+    files: readonly P.LegacyMemoryFile[],
+  ): P.MemoryImportLegacyResponse {
+    const input = P.ClientMemoryImportLegacyRequestSchema.parse(raw);
+    return this.#c.transaction(() => {
+      const actorId = this.#requireHumanManager(actor, input.channelId);
+      const instance = this.#c.database
+        .prepare(
+          `SELECT p.handle FROM role_instances i JOIN principals p ON p.principal_id=i.instance_id
+            WHERE i.instance_id=? AND i.channel_id=?`,
+        )
+        .get(input.instanceId, input.channelId);
+      if (instance === undefined)
+        throw new NotFoundError(
+          `instance ${input.instanceId} is not an instance of this channel`,
+        );
+      const owner = slugPart(text(instance, "handle")) || "instance";
+      const selected =
+        input.relativePaths === undefined
+          ? files
+          : files.filter((file) =>
+              input.relativePaths!.includes(file.relativePath),
+            );
+      const items =
+        input.mode === "whole"
+          ? [wholeImport(owner, selected)]
+          : selected.map((file) => fileImport(owner, file));
+      return {
+        channelId: input.channelId,
+        instanceId: input.instanceId,
+        results: items.map((item) => this.#importOne(actorId, input, item)),
+      };
+    });
+  }
+
   readPolicy(
     actor: AuthenticatedActorContext,
     raw: P.ClientMemoryPolicyReadRequest,
@@ -436,6 +480,88 @@ export class ChannelMemoryService {
   }
 
   // Internals.
+
+  #importOne(
+    actorId: string,
+    input: P.ClientMemoryImportLegacyRequest,
+    item: LegacyImport,
+  ): P.MemoryImportLegacyResponse["results"][number] {
+    const database = this.#c.database;
+    const prior = database
+      .prepare(
+        `SELECT e.entry_id, e.name, e.state FROM memory_entries e
+           JOIN memory_revisions r ON r.entry_id=e.entry_id AND r.revision=1
+          WHERE e.scope_room_id=? AND r.import_instance_id=? AND r.import_path=?`,
+      )
+      .get(input.channelId, input.instanceId, item.path);
+    if (prior !== undefined)
+      return {
+        path: item.path,
+        status: "existing",
+        entryId: text(prior, "entry_id"),
+        name: P.MemoryEntryNameSchema.parse(text(prior, "name")),
+        ...(text(prior, "state") === "active"
+          ? {}
+          : { reason: `already imported; now ${text(prior, "state")}` }),
+      };
+    const body = P.MemoryBodySchema.safeParse(item.body);
+    if (!body.success)
+      return {
+        path: item.path,
+        status: "skipped",
+        reason: body.error.issues[0]?.message ?? "invalid memory body",
+      };
+    const taken = this.#entryByName(input.channelId, item.name);
+    if (taken !== undefined)
+      return {
+        path: item.path,
+        status: "skipped",
+        name: P.MemoryEntryNameSchema.parse(item.name),
+        reason: `memory name '${item.name}' is already used in this channel`,
+      };
+    const digest = canonicalDigest({
+      op: "import",
+      channelId: input.channelId,
+      instanceId: input.instanceId,
+      path: item.path,
+    });
+    const key = `${input.idempotencyKey}:${item.path}`;
+    const replay = this.#replay(
+      input.channelId,
+      actorId,
+      key,
+      ENTRY_EVENT,
+      digest,
+    );
+    const committed =
+      replay ??
+      this.#commit({
+        actorId,
+        channelId: input.channelId,
+        digest,
+        key,
+        next: {
+          body: body.data,
+          description: item.description,
+          name: item.name,
+          pinned: false,
+          state: "active",
+          type: "reference",
+        },
+        op: "create",
+        provenance: {
+          ...humanProvenance(actorId, this.#c.now()),
+          importedFrom: { instanceId: input.instanceId, path: item.path },
+        },
+        reason: null,
+      });
+    return {
+      path: item.path,
+      status: replay === undefined ? "created" : "existing",
+      entryId: committed.entry.entryId,
+      name: committed.entry.name,
+    };
+  }
 
   #workerRead(worker: AuthenticatedWorkerExecutionContext): string {
     const scope = this.#c.requireWorker(worker);
@@ -609,8 +735,9 @@ export class ChannelMemoryService {
       .prepare(
         `INSERT INTO memory_revisions(entry_id,revision,op,name,type,description,body,body_sha256,pinned,state,reason,
            actor_principal_id,actor_kind,role_id,role_revision_id,instance_id,model_binding_id,model_reasoning,
-           session_generation,run_attempt_id,via_room_id,based_on_room_seq,idempotency_key,event_id,created_at)
-         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+           session_generation,run_attempt_id,via_room_id,based_on_room_seq,idempotency_key,event_id,created_at,
+           import_instance_id,import_path)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .run(
         entryId,
@@ -638,6 +765,8 @@ export class ChannelMemoryService {
         input.key,
         event.eventId,
         at,
+        p.importedFrom?.instanceId ?? null,
+        p.importedFrom?.path ?? null,
       );
     c.database
       .prepare("DELETE FROM memory_entries_fts WHERE entry_id=?")
@@ -1062,6 +1191,14 @@ function revisionFromRow(row: Row): P.MemoryRevision {
       viaRoomId: nullableText(row, "via_room_id"),
       basedOnRoomSeq: nullableInteger(row, "based_on_room_seq"),
       recordedAt: text(row, "created_at"),
+      ...(nullableText(row, "import_instance_id") === null
+        ? {}
+        : {
+            importedFrom: {
+              instanceId: text(row, "import_instance_id"),
+              path: text(row, "import_path"),
+            },
+          }),
     },
   });
 }
@@ -1089,4 +1226,83 @@ function eventKey(actorId: string, key: string): string {
 
 function sha256(value: string): string {
   return `sha256:${createHash("sha256").update(value, "utf8").digest("hex")}`;
+}
+
+type LegacyImport = {
+  body: string;
+  description: string;
+  name: string;
+  path: string;
+};
+
+/** The source label of a `whole` import. */
+const WHOLE_IMPORT_PATH = "MEMORY.md + notes/";
+
+function slugPart(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\.md$/u, "")
+    .replace(/[^a-z0-9._-]+/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/gu, "");
+}
+
+function importName(owner: string, part: string): string {
+  const name = `legacy-${owner}${part === "" ? "" : `-${part}`}`
+    .slice(0, 64)
+    .replace(/[^a-z0-9]+$/u, "");
+  return name;
+}
+
+function importDescription(path: string, content: string): string {
+  const line =
+    content
+      .split("\n")
+      .map((value) => value.replace(/^[\s#>*-]+/u, "").trim())
+      .find((value) => value !== "") ?? "";
+  const text = `Legacy ${path}${line === "" ? "" : `: ${line}`}`.replace(
+    /[\u0000-\u001f\u007f]/gu,
+    " ",
+  );
+  return text.length <= P.MEMORY_DESCRIPTION_MAX_CHARS
+    ? text
+    : `${text.slice(0, P.MEMORY_DESCRIPTION_MAX_CHARS - 1)}…`;
+}
+
+function fileImport(owner: string, file: P.LegacyMemoryFile): LegacyImport {
+  const part =
+    file.relativePath === "MEMORY.md"
+      ? "index"
+      : slugPart(
+          file.relativePath.replace(/^notes\//u, "").replaceAll("/", "-"),
+        );
+  return {
+    body: file.content,
+    description: importDescription(file.relativePath, file.content),
+    name: importName(owner, part),
+    path: file.relativePath,
+  };
+}
+
+function wholeImport(
+  owner: string,
+  files: readonly P.LegacyMemoryFile[],
+): LegacyImport {
+  const body = files
+    .map((file) =>
+      file.relativePath === "MEMORY.md"
+        ? file.content
+        : `## ${file.relativePath}\n\n${file.content}`,
+    )
+    .join("\n\n");
+  return {
+    body,
+    description:
+      `Legacy memory of @${owner}: MEMORY.md and ${String(files.filter((file) => file.relativePath !== "MEMORY.md").length)} notes`.slice(
+        0,
+        P.MEMORY_DESCRIPTION_MAX_CHARS,
+      ),
+    name: importName(owner, ""),
+    path: WHOLE_IMPORT_PATH,
+  };
 }

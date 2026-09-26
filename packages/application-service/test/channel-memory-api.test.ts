@@ -7,6 +7,7 @@ import {
   MemoryPolicySchema,
   MemoryReadResponseSchema,
   WorkerMemoryMutationReceiptSchema,
+  WorkerMessagePresentResponseSchema,
 } from "@rah-os/protocol";
 
 import {
@@ -22,16 +23,27 @@ import {
 // evo S6 batch A: the Worker CLI route and the Human API are facades over
 // the same Kernel memory owner. Fake Host, temporary database.
 
-async function harness() {
+async function harness(
+  options: {
+    agentMemoryAdministration?: NonNullable<
+      ConstructorParameters<
+        typeof ClientApplicationService
+      >[0]["agentMemoryAdministration"]
+    >;
+  } = {},
+) {
   const f = roleInstanceFixture();
   const worker = new WorkerApplicationService({ kernel: f.kernel });
   const client = new ClientApplicationService({
+    ...(options.agentMemoryAdministration === undefined
+      ? {}
+      : { agentMemoryAdministration: options.agentMemoryAdministration }),
     human: createHumanApplicationPort(f.kernel),
     health: () => ({
       apiVersion: 3,
       buildVersion: "test",
       capabilities: {} as never,
-      kernelSchemaVersion: 74,
+      kernelSchemaVersion: 75,
       protocolVersion: 1,
       state: "online",
     }),
@@ -41,14 +53,17 @@ async function harness() {
   const work = startInstanceRun(f);
   const credential = worker.issueActivationCredential(f.host, work.scope);
   const workerPost = async (path: string, body: unknown) => {
-    const response = await fetch(`${worker.origin}/v1/worker/memory/${path}`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${credential.accessToken}`,
-        "content-type": "application/json",
+    const response = await fetch(
+      `${worker.origin}/v1/worker/${path.startsWith("/") ? path.slice(1) : `memory/${path}`}`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${credential.accessToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    });
+    );
     return {
       status: response.status,
       body: (await response.json()) as unknown,
@@ -413,6 +428,143 @@ test("with read off and write on, Worker mutations and their replays return only
       entryId: receipt.entryId,
     });
     assert.equal(human.entry.body, secret);
+  } finally {
+    await h.close();
+  }
+});
+
+test("a Human imports an instance's legacy memory through the API and SDK, once", async () => {
+  const legacy: Record<string, string> = {
+    "MEMORY.md": "# Memory\n- [deploy](notes/deploy.md)\n",
+    "notes/deploy.md": "# Deploy\nrun make release\n",
+  };
+  const reads: string[] = [];
+  const file = (relativePath: string) => ({
+    bytes: Buffer.byteLength(legacy[relativePath]!),
+    contentDigest: `sha256:${"b".repeat(64)}`,
+    modifiedAt: "2026-09-20T00:00:00.000Z",
+    relativePath,
+  });
+  let owner = "";
+  const h = await harness({
+    agentMemoryAdministration: {
+      computerHostId: "host",
+      inspectWorkspace: (participantId: string) => {
+        owner = participantId;
+        return {
+          files: Object.keys(legacy).map(file),
+          indexOverThreshold: false,
+          noteCount: 1,
+          ownerParticipantId: participantId,
+          schemaVersion: 1,
+          state: "ready",
+          thresholdBytes: 65536,
+        } as const;
+      },
+      readWorkspaceFile: (participantId: string, relativePath: string) => {
+        reads.push(relativePath);
+        return {
+          content: legacy[relativePath]!,
+          file: file(relativePath),
+          ownerParticipantId: participantId,
+        };
+      },
+      resetWorkspace: () => {
+        throw new Error("reset must not be called by an import");
+      },
+    } as never,
+  });
+  try {
+    const channelId = h.f.home.roomId;
+    const request = {
+      channelId,
+      instanceId: h.f.instance.instanceId,
+      mode: "files" as const,
+      idempotencyKey: "import-legacy",
+    };
+    const first = await h.sdk.request("memory.import.legacy", request);
+    assert.equal(owner, h.f.instance.instanceId);
+    assert.deepEqual(reads, ["MEMORY.md", "notes/deploy.md"]);
+    assert.deepEqual(
+      first.results.map((item) => [item.path, item.status]),
+      [
+        ["MEMORY.md", "created"],
+        ["notes/deploy.md", "created"],
+      ],
+    );
+    const again = await h.sdk.request("memory.import.legacy", {
+      ...request,
+      idempotencyKey: "import-legacy-2",
+    });
+    assert.deepEqual(
+      again.results.map((item) => item.status),
+      ["existing", "existing"],
+    );
+    const deploy = first.results.find(
+      (item) => item.path === "notes/deploy.md",
+    )!;
+    const read = await h.sdk.request("memory.read", {
+      entryId: deploy.entryId!,
+    });
+    assert.deepEqual(read.entry.provenance.importedFrom, {
+      instanceId: h.f.instance.instanceId,
+      path: "notes/deploy.md",
+    });
+    assert.equal(read.entry.provenance.actorKind, "human");
+    const stranger = h.f.kernel.provisionPrincipal({
+      handle: "stranger",
+      kind: "human",
+    });
+    const refused = await h.humanPost(
+      "import-legacy",
+      request,
+      stranger.accessToken,
+    );
+    assert.ok([403, 404].includes(refused.status));
+  } finally {
+    await h.close();
+  }
+});
+
+test("legacy import is unavailable without the Host memory administration", async () => {
+  const h = await harness();
+  try {
+    const response = await h.humanPost("import-legacy", {
+      channelId: h.f.home.roomId,
+      instanceId: h.f.instance.instanceId,
+      mode: "whole",
+      idempotencyKey: "import-unavailable",
+    });
+    assert.equal(response.status, 503);
+  } finally {
+    await h.close();
+  }
+});
+
+test("message-present carries the memory delta since the Host's index seq", async () => {
+  const h = await harness();
+  try {
+    assert.equal((await h.workerPost("write", note)).status, 200);
+    const all = await h.workerPost("/message-present", {});
+    assert.equal(all.status, 200);
+    const delta = WorkerMessagePresentResponseSchema.parse(
+      all.body,
+    ).memoryDelta;
+    assert.deepEqual(
+      delta?.changes.map((item) => [item.name, item.description]),
+      [["release-train", "releases leave on Thursdays"]],
+    );
+    const none = await h.workerPost("/message-present", {
+      memoryIndexSeq: delta!.throughSeq,
+    });
+    assert.equal(
+      WorkerMessagePresentResponseSchema.parse(none.body).memoryDelta,
+      undefined,
+    );
+    assert.equal(
+      (await h.workerPost("/message-present", { memoryIndexSeq: -1 })).status,
+      400,
+    );
   } finally {
     await h.close();
   }

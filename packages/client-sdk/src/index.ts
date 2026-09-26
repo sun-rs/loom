@@ -1,5 +1,9 @@
 import {
   ClientMemoryDeleteRequestSchema,
+  ClientMemoryImportLegacyRequestSchema,
+  MemoryImportLegacyResponseSchema,
+  type ClientMemoryImportLegacyRequest,
+  type MemoryImportLegacyResponse,
   ClientMemoryEntryRequestSchema,
   ClientMemoryInvalidateRequestSchema,
   ClientMemoryListRequestSchema,
@@ -496,6 +500,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     "memory.pin": {
       input: ClientMemoryPinRequest;
       output: MemoryMutationResponse;
+    };
+    "memory.import.legacy": {
+      input: ClientMemoryImportLegacyRequest;
+      output: MemoryImportLegacyResponse;
     };
     "memory.policy.read": {
       input: ClientMemoryPolicyReadRequest;
@@ -1007,6 +1015,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: MemoryMutationResponseSchema,
     method: "POST",
     path: "/v3/client/memory/pin",
+  },
+  "memory.import.legacy": {
+    authenticated: true,
+    input: ClientMemoryImportLegacyRequestSchema,
+    output: MemoryImportLegacyResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/import-legacy",
   },
   "memory.policy.read": {
     authenticated: true,

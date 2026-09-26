@@ -1,5 +1,6 @@
 import { ROLE_CATALOG_SCHEMA } from "./role-catalog-schema.ts";
 import { CHANNEL_MEMORY_SCHEMA } from "./channel-memory-schema.ts";
+import { MEMORY_INDEX_MARKS_SCHEMA } from "./channel-memory-index.ts";
 import { RUN_ATTEMPT_USAGE_SCHEMA } from "./run-attempt-usage.ts";
 import { RUNTIME_PROCESS_CLEANUP_SCHEMA } from "./runtime-process-cleanup.ts";
 import { RUN_ATTEMPT_FINAL_REPLY_SCHEMA } from "./run-attempt-final-reply.ts";
@@ -27,6 +28,7 @@ ${INSTANCE_RUNTIME_SCHEMA}
 ${INSTANCE_SESSION_SCHEMA}
 ${INSTANCE_WAKE_GUARD_SCHEMA}
 ${CHANNEL_MEMORY_SCHEMA}
+${MEMORY_INDEX_MARKS_SCHEMA}
 
 CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
   secret_name TEXT PRIMARY KEY,
