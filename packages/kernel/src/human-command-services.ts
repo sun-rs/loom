@@ -1,4 +1,5 @@
 import { RoleCatalog } from "./role-catalog.ts";
+import { ChannelMemoryService } from "./channel-memory.ts";
 import { TaskDeletionService } from "./task-deletion.ts";
 import { TaskAmendmentService } from "./task-amendment.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -44,6 +45,7 @@ export function createHumanCommandServices(options: {
   };
   return Object.freeze({
     roles: new RoleCatalog(options),
+    memory: new ChannelMemoryService(options),
     followHumanThread: (
       actor: AuthenticatedActorContext,
       input: Parameters<HumanActivity["follow"]>[1],

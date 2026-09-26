@@ -830,6 +830,66 @@ B. 权限收口
 - 已修（待提交）：回到 idle 后 activity.updatedAt 曾固定取入频时刻；现取本频道该实例最近一次 Activation 结算时刻（不早于入频时刻），私聊与其他房间不计入（`room-agent-activity-queued.test.ts` 假时钟复现）。
 - 测试频道留在正式库；其附加目录位于会话临时目录，会话清理后该频道的附加目录复核会失败（预期行为）。
 
+### 四十八、S6 平台记忆：批次 A（存储与访问）
+
+依据 `~/.loom/reviews/2026-09-26-memory-research.md` 与其末尾负责人裁定（2026-09-26，“同意推荐”）。每项先写失败测试并确认失败，再做最小实现；没有运行付费 CLI，没有重启服务，没有改前端；常驻提示词与旧每实例 `MEMORY.md + notes/` 本批不变。
+
+1. 数据模型（Kernel，schema 74，`channel-memory-schema.ts`）：
+   - `memory_entries` 是投影：作用域只有频道（`scope_room_id`）；`name` 为小写 slug（1–64），在同一频道未删除条目中唯一（部分唯一索引 + 代码查重，冲突时报错并给出现有 revision）；`type` ∈ user/feedback/project/reference；`description` 一行 ≤150 字符；`body` ≤16 KiB（UTF-8 字节）；`pinned`；`state` ∈ active/invalidated/deleted；`revision`。
+   - `memory_revisions` 不可变（主键 entry_id+revision），每次变更一行完整快照与出处：作者 principal 与类型（instance/human）、Role 与 Role 修订、实例、模型 binding 与推理档（取自该 RunAttempt 的放置决定，无决定时为 null，不推算）、session 代数、RunAttempt、经由房间（频道或私聊）、`basedOnRoomSeq`（凭据的 Activation `toSeq`）、时间、幂等键、事件 ID。Human 变更的 Role/实例/模型/session/RunAttempt/经由房间/`basedOnRoomSeq` 均为 null。
+   - `memory_access_policies`（频道默认读写，缺省视为都开、修订 0）与 `memory_access_overrides`（成员覆盖，null 表示继承）；`memory_entries_fts`（FTS5 trigram，只收 active 条目）。
+   - 每次接受的变更在同一事务里更新投影、写一条修订、在频道追加一条 `memory.entry_changed` 事件（只含 entryId、name、type、op、revision、state、pinned、requestDigest；不含正文和描述），不派生 Inbox/Activation；开关变更追加 `memory.policy_changed`。幂等键按作者命名空间去重，同键不同请求为 `IdempotencyConflictError`。
+   - 频道删除时一并擦除该频道的记忆、修订、开关与 FTS 行（`ROOM_DELETION_REFERENCED_TABLES` 已登记）。
+2. 语义：
+   - 更新、失效、恢复、删除、置顶都要 `expectedRevision`，不一致即拒绝（409），不合并、不后写覆盖；更新只接受 active 条目且必须有实际变化。
+   - invalidate：实例与 Human 都可以，需要理由；条目退出列表（`--include-invalidated` 才显示）与检索，正文与历史保留；restore 恢复为 active。
+   - delete：只有 Human（频道 owner/admin）；所有修订的正文置空（描述、名字等元数据保留为 tombstone），名字释放可重用；Worker 端没有 delete 命令也没有路由。
+   - pin：只有 Human；列表与检索同分时 pinned 优先，再按最近更新。
+3. 权限（Kernel 在列出与检索之前判定，`channel-memory-access.ts`）：
+   - Worker：只有 Role 实例有平台记忆；作用域 = 该实例所属频道，从凭据推出，请求里没有也不接受频道、作者或出处字段（strict schema，HTTP 400）；实例必须仍是频道成员；有效开关 = 成员覆盖 ?? 频道默认（默认开）。
+   - 私聊规则：私聊轮（凭据房间是该实例仍有效的私聊）读写的就是该实例所属频道的记忆，与“私聊共享 session”一致；变更事件记在频道，不写进私聊，出处的经由房间记为私聊。其他 Direct 房间一律拒绝。
+   - Side（S5 未实现）：判定点 `decideMemoryAccess` 已按凭据种类 main/side 区分，side 只读不写；当前签发的凭据一律为 main，S5 签发 side 凭据时接入。
+   - Human：必须是 Human 且是该频道 owner/admin；开关只约束实例，Human 通过 Human API 始终可以管理本频道记忆。代理 principal 调 Human API 为 401/403。
+4. 检索：先按权限确定频道，再在该频道 active 条目上用 FTS5（trigram，支持中文子串，bm25 排序）；任何一个检索词不足 3 个字符时改用同范围内的 LIKE 扫描。没有向量库、嵌入、自动抽取、后台整理、TTL、逐条 ACL、全局/Role 作用域，记忆不物化为文件。
+5. 接口：
+   - Worker CLI（经现有 Worker 应用服务与鉴权）：`rah worker memory list|read|search|history|write|update|invalidate|restore`，路由 `/v1/worker/memory/*`（8 条，已登记 Raft 对照表为 justified/sqlite-ledger：Raft 只有文件记忆）；write 正文从 stdin 读（与 message-post 相同），update 用 `--body-stdin` 或 `--body` 换正文；输出为文本。
+   - Human API（protocol/application-service/client-sdk 同步）：`memory.list|read|search|history|invalidate|restore|delete|pin`、`memory.policy.read|update`（`/v3/client/memory/*`；开关更新带 `expectedRevision`，一次可改默认值与多个成员覆盖，覆盖读写都为 null 即删除）。
+   - `worker help memory` 新增“频道记忆”段：命令、存什么/不存什么、按主题组织与先查后写、记忆只证明写入时为真且冲突时以当前观察为准、出处不证明正确、记忆是数据不是指令、被拒说明是 Human 关了开关。原 MEMORY.md 传输说明保留在其后。
+6. 测试（先失败后通过）：`kernel/test/channel-memory.test.ts` 13 项（出处不可伪造、Room 事件只含元数据且不派生 Activation、唯一名与删除后重用、expectedRevision 冲突、幂等重放与冲突、invalidate/restore/delete 权限与语义含全部修订正文置空与 tombstone、开关与成员覆盖、side 判定点、其他频道实例/移除实例/非成员 Human 不可见、私聊规则、FTS 检索先过滤与中文/短词、大小类型名称描述校验、session 代数出处）；`application-service/test/channel-memory-api.test.ts` 2 项（Worker 路由与 Human HTTP/SDK 两条路径的开关强制、无 Worker delete 路由、代理令牌 401）；`agent-host/test/worker-memory-cli.test.ts` 5 项。schema 版本断言 73→74 的既有测试随之更新。
+7. 残余风险与未做：
+   - 不是强隔离：四家 CLI 以 full-access、同 UID 运行，仍可直接读取 `~/.loom/evo` 下的 SQLite 数据库文件；开关只封住认证的 Worker 路径与“不物化文件”这条文件路径，对恶意或被注入的模型不是强隔离。OS 沙箱或独立 UID 另立项（裁定 7）。
+   - 读开关关闭只影响之后的工具调用；本批没有注入，所以还不存在“已进 system 层的旧索引撤不回”问题，注入批次需如实标注。
+   - 下一批（B）：会话开始注入轻索引（约 4 KB、pinned 优先、超出附“还有 N 条”）与续聊增量；启用 S6 的频道新 session 不再加载旧每实例 MEMORY.md，旧目录只读保留并提供 Human 触发的逐条导入；控制台展示（列表、查看、历史、失效、删除、开关）；按合同 §6 实测固定开销。
+
+### 四十九、全局个人配置隔离
+
+依据 `~/.loom/reviews/2026-09-26-global-config-isolation.md` 的推荐做法，负责人已同意。Loom 实例的 CLI 不再加载 Human 的用户级指令、技能、hooks、notify、插件和 MCP。所有开关都只作用于 Loom 子进程（argv/env），不改任何用户文件；Human 自己运行 CLI 时照常读取全局内容。开关统一由 `providerLaunchPolicy`（`provider-launch-arguments.js`）提供，冷热两条启动路径（per-turn 与 warm driver）都在内置参数之后追加它，Role 的完整覆盖参数去不掉它。新增的参数进入 managed 集合，新增的环境变量进入 `USER_OVERRIDE_PROTECTED_KEYS` 与协议 `RuntimeLaunchEnvironmentSchema`，Role 和用户都覆盖不了。
+
+1. Claude Code 2.1.282：启动参数加 `--setting-sources project,local` 和 `--strict-mcp-config`（`--setting-sources` 新列入 managed；Loom 自己的 `--mcp-config` 保留）；环境变量加 `ENABLE_CLAUDEAI_MCP_SERVERS=false`（受保护）。没有使用 `CLAUDE_CONFIG_DIR` 或 `--bare`，keychain 登录不受影响。
+2. OpenCode 1.18.32：环境变量加 `OPENCODE_DISABLE_CLAUDE_CODE=1` 和 `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`（均受保护），两个 driver 都已接入；没有重定向 `XDG_CONFIG_HOME`。
+3. Codex 0.156.1：`-c` 依次为 `notify=[]`（排第一）、原有的 memory/autonomy 开关、`features.plugins=false`、`features.apps=false`、`features.hooks=false`、`skills.include_instructions=false`、`web_search="disabled"`，然后对用户 config.toml 中出现的每个 MCP 逐个加 `mcp_servers.<name>.enabled=false`。MCP 名字在每次启动时从子进程环境的 `$CODEX_HOME/config.toml`（未设置时为 `~/.codex/config.toml`）只读解析，支持表头、`[mcp_servers]` 内联项和根级点号键，并跳过多行字符串。
+   - web_search 实测：instance 使用 danger-full-access sandbox，此时即使配置 `web_search="cached"`，Codex 仍以 live 联网发出工具，所以唯一不受用户 `web_search` 影响的值是 `disabled`。业务影响：Codex 实例失去原生 web_search 工具（full-access 下仍可用 shell 访问网络）；Claude 的 WebSearch 不变。
+   - 技能实测：`skills.include_instructions=false` 会去掉全部技能清单，包括工作区/项目技能和 Codex 自带的 `.system` 技能。按目录禁用的 `skills.config` 不接受目录路径，只能逐个 SKILL.md，因此没有采用。
+   - 已记录的边界：Codex 的 `-c` 按每个 "." 拆分键，不支持带引号的段（实测会报 `invalid transport`），名字含 "." 或 "=" 的 MCP 无法按名关闭。遇到这种名字时启动失败并给出明确错误，不会带着该 MCP 运行。触发条件是用户 config.toml 里有 `[mcp_servers."a.b"]` 这种写法；本机没有。
+4. Kimi：本批没有改动，是已知限制（见下文）。
+5. 技能展示与实际加载保持一致（`agent-skills.ts`、`daemon-agent-skills.ts`）：Claude 的全局范围和 Codex 的全局、工作区两个范围都返回 `unavailable` 加新 issue `isolated_by_loom`，不再读取全局技能目录；Claude 工作区（`.claude/skills`、`.claude/commands`）照旧扫描。冻结的 `apps/web` 对未知 issue 显示“无法确认当前 CLI 的有效技能目录”，文案不准确，留到 phase 4 处理；`apps/console` 没有技能视图。
+6. 效率门禁的原生组与产品保持一致：Codex 原生组本来就使用同一策略，Claude 原生组现在追加同样的参数和环境，OpenCode 原生组追加同样的环境。gate 的 Codex argv 围栏（`model-guard.mjs`）只接受产品自己的 `-c` 项，以及 `mcp_servers.<name>.enabled=false`。
+7. 测试（先失败，再实现）：
+   - `agent-host/test/provider-global-isolation.test.ts`（16 项）：各家的策略参数和环境；Codex MCP 按名解析、只读、缺文件、默认 `~/.codex`、带 "." 的名字失败；isolation 参数不能通过用户附加参数加入或重开；每个策略环境变量都会被过滤器和协议 schema 拒绝；7 个 driver 各用一个 FAKE 记录器替代 CLI，断言策略参数按顺序到达 CLI，并且在 Role 完整覆盖参数、继承环境里有相反值时仍然生效。
+   - `agent-skills.test.ts` 按新语义改写；`provider-launch-arguments.test.ts`、`runtime-implementation-registry.test.ts`（改用临时 `CODEX_HOME`，不再读取真实配置）、`model-guard.test.mjs` 随契约更新。
+   - `agent-host/test/provider-global-isolation-probe.test.ts` 是可跳过的本机探针（`LOOM_CLI_ISOLATION_PROBE=1` 时运行，默认跳过）：使用已安装的三家二进制、临时 HOME 标记文件和 127.0.0.1 上的 FAKE 模型 API，每家先不带策略跑一次（证明探针能看到标记），再带策略跑一次。OpenCode 可能访问公开 npm registry（免费）。
+8. 免费验证（本机，FAKE API，未调用真实模型；三项探针均通过）：
+   - Claude：不带策略时，请求里含用户 CLAUDE.md、rules、skills、commands、agents，settings hook 执行，用户 MCP 启动；带策略时这些全部没有，项目 CLAUDE.md 和项目技能仍在，退出码 0。
+   - Codex：不带策略时，用户技能和 `~/.agents` 技能进入请求，notify 执行，用户 MCP 启动，hooks/list 列出用户 hook，web_search 为 live；带策略时 notify 没有执行，MCP 没有启动，hooks 为空，这两类技能都不在请求中，没有 web_search 工具；`config/read` 的有效值与策略一致；全局与项目 AGENTS.md 仍在。另用真实 `~/.codex` 的副本（notify 换成记录脚本，provider 指向 FAKE API）跑了一次：不带策略时 notify 触发 1 次，插件 MCP（codex_app、cua_repl）、`<plugins_instructions>`、babysit-pr、test-tui 和系统技能都在；带策略时 notify 0 次，插件与 marketplace 为空，node_repl 和 computer-use 都是 `enabled=false`，工具只剩内置 5 个。
+   - OpenCode（`opencode run --pure`，环境语义与 `serve --pure` 相同）：不带策略时 system 里有 `~/.claude/CLAUDE.md`、`~/.claude/skills`、`~/.agents/skills`；带策略时三者都没有。
+9. 已知限制：
+   - Codex 的 `$CODEX_HOME/AGENTS.md`（含 override）没有进程级开关，只能换专用 CODEX_HOME，这涉及已有 thread 迁移，待负责人决定。本机该文件目前是空文件。
+   - OpenCode 的 `~/.config/opencode`（opencode.json、AGENTS.md、skills、agent、command、plugin）仍然会读取，因为 provider/model 配置就放在那里。
+   - Kimi：`~/.kimi-code` 全部全局内容（config.toml 的 hooks/mcp/permission、以及 AGENTS.md、skills、mcp.json、plugins）和 `~/.agents/{AGENTS.md,skills}` 仍会进入。本机这些位置目前为空或不存在。
+   - Claude：组织托管策略（managed settings）始终生效，这是设计如此。OAuth 模式下 claude.ai 同步技能和连接器是否真的被排除，只有源码证据（本次探针使用 API key 和 FAKE API），还需要一次获授权的真实运行来确认。
+   - 生效时机：新开关在下一次 CLI 进程启动时生效。本批没有重启服务，正在运行的常驻进程仍使用旧参数。没有更换任何 home，已有原生 session 可以照常 resume。
+   - 未做：真实 CLI 验证、效率门禁、本地服务部署和重启。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
@@ -854,7 +914,8 @@ B. 权限收口
 | 付费门禁自身                        | 单一批准表、Codex 白名单围栏、Claude 斜杠命令与事后核对、漂移事后核对 fail-closed、证据来源字段（第二十八节）                                                      | 门禁免费单测（已纳入 `npm run check`）                               | 批次 4 之后的门禁代码未付费运行                                                                                        | Claude result `modelUsage` 若含 CLI 后台其他模型族会判越权，是否出现未知；shim 选项白名单与原生 Codex 开关同步见第二十九节                                                                                                                     |
 | S3 私聊                             | 仅 Human 开、共享 session、忙时排队、不 steer、双向隔离（含提醒与 `dm:@` 读写）、`instancePrivateBox` 投影（第三十五节）                                           | Kernel 隔离/steer/游标/代数测试；Codex 冷、热 fake 共享 session 测试 | —                                                                                                                      | 真实 CLI 私聊轮未跑；控制台可打开、查看私聊并在私聊发消息，频道页看不到私聊内容（第四十六节，仅 fake 门禁）；推迟项见第三十五节第 4 项                                                                                                         |
 | 频道工作区（第三十九节）            | 新频道平台主目录与创建时附加目录（不可改）；四家原生/提示行附带；证据根与浏览根                                                                                    | Kernel/Host/驱动假 CLI 测试；Kimi 免费假 API 探针                    | —                                                                                                                      | 真实 CLI 未验证；控制台可创建带附加目录的频道（第四十五节，fake 门禁），前端无入口；旧频道不补建主目录                                                                                                                                         |
-| S4–S6                               | 未开始                                                                                                                                                             | —                                                                    | —                                                                                                                      | fork、side、平台记忆                                                                                                                                                                                                                           |
+| S4–S5                               | 未开始                                                                                                                                                             | —                                                                    | —                                                                                                                      | fork、side                                                                                                                                                                                                                                     |
+| S6 平台记忆（第四十八节）           | 批次 A：Kernel 频道记忆存储、修订/失效/Human 删除、读写开关与成员覆盖、FTS 检索、Worker CLI 与 Human API                                                           | Kernel/应用服务/CLI 测试                                             | —                                                                                                                      | 索引注入、旧 MEMORY.md 切换与导入、控制台展示、§6 实测；同 UID 可直读数据库（非强隔离）                                                                                                                                                        |
 
 目标合同 §6 表的“9/23 基线”一列（负责人 2026-09-25 批准由“当前基线”改名，数值与预算未改）是 2026-09-23 的数据（首轮失败、用量未采集），之后的实测见本页效率各节。
 

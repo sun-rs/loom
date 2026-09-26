@@ -265,6 +265,32 @@ test("argv: only the product's subcommand forms reach the real CLI", () => {
     assert.throws(() => classifyCodexLaunch(bad), undefined, bad.join(" "));
 });
 
+// Global personal-config isolation (2026-09-26): the product app-server
+// launch carries non-boolean isolation switches and per-name MCP disables;
+// the gate admits exactly those, never a re-enable or another value.
+test("the product's isolation switches pass the gate's argv fence; re-enabling them does not", async () => {
+  const { providerLaunchPolicy } =
+    await import("../../packages/agent-host/src/provider-launch-arguments.js");
+  const product = [
+    "app-server",
+    ...providerLaunchPolicy("codex").args,
+    "-c",
+    "mcp_servers.user_mcp.enabled=false",
+    "--listen",
+    "stdio://",
+  ];
+  assert.equal(classifyCodexLaunch(product).kind, "app-server");
+  for (const bad of [
+    ["app-server", "-c", "notify=['/x']"],
+    ["app-server", "-c", 'web_search="live"'],
+    ["app-server", "-c", "features.plugins=true"],
+    ["app-server", "-c", "skills.include_instructions=true"],
+    ["app-server", "-c", "mcp_servers.user_mcp.enabled=true"],
+    ["app-server", "-c", "mcp_servers.user_mcp.command=/bin/sh"],
+  ])
+    assert.throws(() => classifyCodexLaunch(bad), undefined, bad.join(" "));
+});
+
 test("warm --listen unix:// is fenced by a proxy on the driver's socket path", () => {
   assert.equal(listenPlan(["app-server", "--config", "x"]), null);
   assert.deepEqual(

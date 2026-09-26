@@ -88,12 +88,11 @@ export function createDaemonAgentSkillsReader(input: {
       (root) => root.rootId === "agent-workspace",
     );
     if (!root) return unavailable("unresolved_home");
-    const { known: _known, ...configuration } = runtime.skillsConfiguration;
     return {
       ...base,
       ...(await (input.scan ?? scanAgentSkills)({
         cliId: runtime.cliId,
-        ...configuration,
+        home: runtime.skillsConfiguration.home,
         workspaceRoot: root.rootPath,
       })),
     };

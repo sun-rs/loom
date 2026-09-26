@@ -1,4 +1,38 @@
 import {
+  ClientMemoryDeleteRequestSchema,
+  ClientMemoryEntryRequestSchema,
+  ClientMemoryInvalidateRequestSchema,
+  ClientMemoryListRequestSchema,
+  ClientMemoryPinRequestSchema,
+  ClientMemoryPolicyReadRequestSchema,
+  ClientMemoryPolicyUpdateRequestSchema,
+  ClientMemoryRestoreRequestSchema,
+  ClientMemorySearchRequestSchema,
+  MemoryHistoryResponseSchema,
+  MemoryListResponseSchema,
+  MemoryMutationResponseSchema,
+  MemoryPolicySchema,
+  MemoryPolicyUpdateResponseSchema,
+  MemoryReadResponseSchema,
+  MemorySearchResponseSchema,
+  type ClientMemoryDeleteRequest,
+  type ClientMemoryEntryRequest,
+  type ClientMemoryInvalidateRequest,
+  type ClientMemoryListRequest,
+  type ClientMemoryPinRequest,
+  type ClientMemoryPolicyReadRequest,
+  type ClientMemoryPolicyUpdateRequest,
+  type ClientMemoryRestoreRequest,
+  type ClientMemorySearchRequest,
+  type MemoryHistoryResponse,
+  type MemoryListResponse,
+  type MemoryMutationResponse,
+  type MemoryPolicy,
+  type MemoryPolicyUpdateResponse,
+  type MemoryReadResponse,
+  type MemorySearchResponse,
+} from "@rah-os/protocol";
+import {
   type RoleCreateRequest,
   type RoleReviseRequest,
   type RoleCreateResponse,
@@ -430,6 +464,46 @@ export type RahClientOperationMap = ComposerOperationMap &
     "instance.session.reset": {
       input: InstanceSessionResetRequest;
       output: InstanceSessionResetResponse;
+    };
+    "memory.list": {
+      input: ClientMemoryListRequest;
+      output: MemoryListResponse;
+    };
+    "memory.read": {
+      input: ClientMemoryEntryRequest;
+      output: MemoryReadResponse;
+    };
+    "memory.search": {
+      input: ClientMemorySearchRequest;
+      output: MemorySearchResponse;
+    };
+    "memory.history": {
+      input: ClientMemoryEntryRequest;
+      output: MemoryHistoryResponse;
+    };
+    "memory.invalidate": {
+      input: ClientMemoryInvalidateRequest;
+      output: MemoryMutationResponse;
+    };
+    "memory.restore": {
+      input: ClientMemoryRestoreRequest;
+      output: MemoryMutationResponse;
+    };
+    "memory.delete": {
+      input: ClientMemoryDeleteRequest;
+      output: MemoryMutationResponse;
+    };
+    "memory.pin": {
+      input: ClientMemoryPinRequest;
+      output: MemoryMutationResponse;
+    };
+    "memory.policy.read": {
+      input: ClientMemoryPolicyReadRequest;
+      output: MemoryPolicy;
+    };
+    "memory.policy.update": {
+      input: ClientMemoryPolicyUpdateRequest;
+      output: MemoryPolicyUpdateResponse;
     };
     "agent.provision": {
       input: ClientAgentProvisionRequest;
@@ -877,6 +951,76 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: InstanceSessionResetResponseSchema,
     method: "POST",
     path: "/v3/client/instances/session/reset",
+  },
+  "memory.list": {
+    authenticated: true,
+    input: ClientMemoryListRequestSchema,
+    output: MemoryListResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/list",
+  },
+  "memory.read": {
+    authenticated: true,
+    input: ClientMemoryEntryRequestSchema,
+    output: MemoryReadResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/read",
+  },
+  "memory.search": {
+    authenticated: true,
+    input: ClientMemorySearchRequestSchema,
+    output: MemorySearchResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/search",
+  },
+  "memory.history": {
+    authenticated: true,
+    input: ClientMemoryEntryRequestSchema,
+    output: MemoryHistoryResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/history",
+  },
+  "memory.invalidate": {
+    authenticated: true,
+    input: ClientMemoryInvalidateRequestSchema,
+    output: MemoryMutationResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/invalidate",
+  },
+  "memory.restore": {
+    authenticated: true,
+    input: ClientMemoryRestoreRequestSchema,
+    output: MemoryMutationResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/restore",
+  },
+  "memory.delete": {
+    authenticated: true,
+    input: ClientMemoryDeleteRequestSchema,
+    output: MemoryMutationResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/delete",
+  },
+  "memory.pin": {
+    authenticated: true,
+    input: ClientMemoryPinRequestSchema,
+    output: MemoryMutationResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/pin",
+  },
+  "memory.policy.read": {
+    authenticated: true,
+    input: ClientMemoryPolicyReadRequestSchema,
+    output: MemoryPolicySchema,
+    method: "POST",
+    path: "/v3/client/memory/policy/read",
+  },
+  "memory.policy.update": {
+    authenticated: true,
+    input: ClientMemoryPolicyUpdateRequestSchema,
+    output: MemoryPolicyUpdateResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/policy/update",
   },
   "agent.provision": {
     authenticated: true,

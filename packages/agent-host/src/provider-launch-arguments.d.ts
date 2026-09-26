@@ -14,7 +14,13 @@ export function validateProviderLaunchOverride(
 export function providerMemoryConfig(
   runtimeId: string,
 ): Record<string, boolean>;
-export function providerLaunchPolicy(runtimeId: string): {
+export function codexUserMcpServerNames(
+  environment?: NodeJS.ProcessEnv,
+): string[];
+export function providerLaunchPolicy(
+  runtimeId: string,
+  environment?: NodeJS.ProcessEnv,
+): {
   args: string[];
   environment: Record<string, string>;
 };

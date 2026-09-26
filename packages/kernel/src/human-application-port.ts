@@ -70,6 +70,16 @@ export type HumanApplicationPort = Pick<
   listRoles: RoomKernel["roles"]["list"];
   instantiateRole: RoomKernel["roles"]["instantiate"];
   resetInstanceSession: RoomKernel["roles"]["resetInstanceSession"];
+  listChannelMemory: RoomKernel["memory"]["humanList"];
+  readChannelMemory: RoomKernel["memory"]["humanRead"];
+  searchChannelMemory: RoomKernel["memory"]["humanSearch"];
+  getChannelMemoryHistory: RoomKernel["memory"]["humanHistory"];
+  invalidateChannelMemory: RoomKernel["memory"]["humanInvalidate"];
+  restoreChannelMemory: RoomKernel["memory"]["humanRestore"];
+  deleteChannelMemory: RoomKernel["memory"]["humanDelete"];
+  pinChannelMemory: RoomKernel["memory"]["humanPin"];
+  getChannelMemoryPolicy: RoomKernel["memory"]["readPolicy"];
+  updateChannelMemoryPolicy: RoomKernel["memory"]["updatePolicy"];
   listMessageSocial: RoomKernel["messageSocial"]["list"];
   reactMessage: RoomKernel["messageSocial"]["react"];
   saveMessage: RoomKernel["messageSocial"]["save"];
@@ -121,6 +131,23 @@ export function createHumanApplicationPort(
     instantiateRole: (actor, input) => kernel.roles.instantiate(actor, input),
     resetInstanceSession: (actor, input) =>
       kernel.roles.resetInstanceSession(actor, input),
+    listChannelMemory: (actor, input) => kernel.memory.humanList(actor, input),
+    readChannelMemory: (actor, input) => kernel.memory.humanRead(actor, input),
+    searchChannelMemory: (actor, input) =>
+      kernel.memory.humanSearch(actor, input),
+    getChannelMemoryHistory: (actor, input) =>
+      kernel.memory.humanHistory(actor, input),
+    invalidateChannelMemory: (actor, input) =>
+      kernel.memory.humanInvalidate(actor, input),
+    restoreChannelMemory: (actor, input) =>
+      kernel.memory.humanRestore(actor, input),
+    deleteChannelMemory: (actor, input) =>
+      kernel.memory.humanDelete(actor, input),
+    pinChannelMemory: (actor, input) => kernel.memory.humanPin(actor, input),
+    getChannelMemoryPolicy: (actor, input) =>
+      kernel.memory.readPolicy(actor, input),
+    updateChannelMemoryPolicy: (actor, input) =>
+      kernel.memory.updatePolicy(actor, input),
     previewChannel: (actor, input) =>
       kernel.publicChannels.preview(actor, input),
     discoverPublicChannels: (actor, input) =>

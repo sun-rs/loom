@@ -14,6 +14,7 @@ import {
 import { classifyClaudeLaunch } from "./claude-guard.mjs";
 import { nativeEnvironment, runLines } from "./cli-process.mjs";
 import { readClaudeTranscript } from "./provider-files.mjs";
+import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
 
 export async function nativeClaudeRound({
   cwd,
@@ -23,12 +24,18 @@ export async function nativeClaudeRound({
   round,
   config,
 }) {
-  const args = claudeNativeArgs({
-    model: config.model,
-    effort: config.effort,
-    prompt,
-    sessionId,
-  });
+  // Same process-only memory and global-config isolation policy as the
+  // product's Claude drivers.
+  const policy = providerLaunchPolicy("claude");
+  const args = [
+    ...claudeNativeArgs({
+      model: config.model,
+      effort: config.effort,
+      prompt,
+      sessionId,
+    }),
+    ...policy.args,
+  ];
   assert.equal(classifyClaudeLaunch(args, config), "turn");
   const executable = execFileSync("which", ["claude"], {
     encoding: "utf8",
@@ -41,8 +48,7 @@ export async function nativeClaudeRound({
       executable,
       args,
       cwd,
-      // Same process-only memory policy as the product's Claude drivers.
-      env: nativeEnvironment({ CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" }),
+      env: nativeEnvironment(policy.environment),
       onSpawn: (pid) => {
         round.pid = pid;
         save();

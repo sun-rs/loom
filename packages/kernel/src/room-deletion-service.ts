@@ -62,6 +62,10 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "managed_mcp_server_revisions",
   "managed_mcp_servers",
   "memberships",
+  "memory_access_overrides",
+  "memory_access_policies",
+  "memory_entries",
+  "memory_revisions",
   "message_reactions",
   "messages",
   "outbox",
@@ -373,6 +377,13 @@ export class RoomDeletionService {
       `DELETE FROM agent_channel_attention WHERE room_id=?`,
       `DELETE FROM instance_wake_chain WHERE room_id=?`,
       `DELETE FROM instance_wake_guards WHERE room_id=?`,
+      `DELETE FROM memory_entries_fts WHERE entry_id IN
+         (SELECT entry_id FROM memory_entries WHERE scope_room_id=?)`,
+      `DELETE FROM memory_revisions WHERE entry_id IN
+         (SELECT entry_id FROM memory_entries WHERE scope_room_id=?)`,
+      `DELETE FROM memory_entries WHERE scope_room_id=?`,
+      `DELETE FROM memory_access_overrides WHERE room_id=?`,
+      `DELETE FROM memory_access_policies WHERE room_id=?`,
       `DELETE FROM memberships WHERE room_id=?`,
     ];
     for (const sql of statements) {

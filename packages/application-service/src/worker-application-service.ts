@@ -55,6 +55,7 @@ import {
   WORKER_READ_ROUTE_PATHS,
   handleWorkerReadRequest,
 } from "./worker-read-handler.ts";
+import { handleWorkerMemoryRequest } from "./worker-memory-routes.ts";
 import { createHash, randomBytes } from "node:crypto";
 import {
   createServer,
@@ -297,6 +298,14 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/messages/post",
   "/v1/worker/messages/search",
   "/v1/worker/messages/react",
+  "/v1/worker/memory/write",
+  "/v1/worker/memory/update",
+  "/v1/worker/memory/invalidate",
+  "/v1/worker/memory/restore",
+  "/v1/worker/memory/list",
+  "/v1/worker/memory/read",
+  "/v1/worker/memory/search",
+  "/v1/worker/memory/history",
   "/v1/worker/reminders/cancel",
   "/v1/worker/reminders/list",
   "/v1/worker/reminders/log",
@@ -708,6 +717,19 @@ export class WorkerApplicationService {
     );
     if (readResult !== undefined) {
       writeJson(response, 200, readResult);
+      return;
+    }
+    const memoryResult = route.startsWith("/v1/worker/memory/")
+      ? handleWorkerMemoryRequest(
+          this.#kernel,
+          grant.execution,
+          route,
+          body,
+          parseWorkerRequest,
+        )
+      : undefined;
+    if (memoryResult !== undefined) {
+      writeJson(response, 200, memoryResult);
       return;
     }
     if (route === "/v1/worker/profile/self/get") {

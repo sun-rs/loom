@@ -2891,6 +2891,144 @@
       "note": "§2.11 row 19: aligned on 2026-09-09 — the body no longer requires a cursor or a key; both are optional and server-derived."
     },
     {
+      "id": "cli.worker.memory",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker memory"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger. Actions: list, read, search, history, write, update, invalidate, restore (no delete)."
+    },
+    {
+      "id": "output-format.worker.memory",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker memory"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "text"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "Raft has no counterpart command, so there is no upstream format to compare. RAH renders text like its other read commands and offers no --json. evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.history",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/history"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.invalidate",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/invalidate"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.list",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/list"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.read",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/read"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.restore",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/restore"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.search",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/search"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.update",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/update"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
+      "id": "route.memory.write",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/memory/write"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "sqlite-ledger",
+      "note": "evo S6 batch A (owner ruling 2026-09-26, target contract §4): channel-scoped platform memory owned by the Kernel SQLite ledger. Raft keeps per-Agent file memory (MEMORY.md + notes/) with no platform store, so there is no upstream command or route to align with; RAH deliberately replaces file access with an authenticated Worker surface so the channel read/write switches can be enforced and provenance, revisions, invalidation and Human-only delete stay in the ledger."
+    },
+    {
       "id": "route.channels.unmute",
       "kind": "route",
       "rah": {

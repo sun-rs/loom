@@ -49,6 +49,7 @@ import {
   DISCOVERY_DATA_PATHS,
   routeDiscovery,
 } from "./client-discovery-routes.ts";
+import { MEMORY_DATA_PATHS, routeMemory } from "./client-memory-routes.ts";
 import {
   COMPUTER_PROFILE_PATHS,
   routeComputerProfile,
@@ -397,6 +398,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   ...COMPUTER_PROFILE_PATHS,
   ...FILE_DATA_PATHS,
   ...DISCOVERY_DATA_PATHS,
+  ...MEMORY_DATA_PATHS,
   ...CLIENT_V2_DATA_PATHS,
   "/agents/activity/list",
   "/agents/trajectory/list",
@@ -754,6 +756,14 @@ export class ClientApplicationService {
         response,
         200,
         routeFiles(this.#human, actor, path, body, parseClientRequest),
+      );
+      return;
+    }
+    if (MEMORY_DATA_PATHS.includes(path)) {
+      writeJson(
+        response,
+        200,
+        routeMemory(this.#human, actor, path, body, parseClientRequest),
       );
       return;
     }

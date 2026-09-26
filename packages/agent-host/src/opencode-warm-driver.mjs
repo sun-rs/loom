@@ -99,7 +99,10 @@ import {
   prepareOpenCodeInstructionsFile,
 } from "./opencode-standing-instructions.js";
 import { assertSessionReplacementAllowed } from "./provider-activation-input.js";
-import { providerLaunchArguments } from "./provider-launch-arguments.js";
+import {
+  providerLaunchArguments,
+  providerLaunchPolicy,
+} from "./provider-launch-arguments.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
   normalizeOpenCodeTrajectoryEvent,
@@ -958,6 +961,7 @@ async function startServer() {
       cwd: process.cwd(),
       env: {
         ...process.env,
+        ...providerLaunchPolicy("opencode").environment,
         OPENCODE_CONFIG_CONTENT: openCodeConfigContentWithInstructions(
           process.env.OPENCODE_CONFIG_CONTENT,
           rules,

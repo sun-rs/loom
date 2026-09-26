@@ -1670,6 +1670,7 @@ export * from "./worker-task-update.ts";
 
 export * from "./system-channel-visibility.ts";
 export * from "./composer-controls.ts";
+export * from "./channel-memory.ts";
 
 export {
   MessageMentionBindingSchema,

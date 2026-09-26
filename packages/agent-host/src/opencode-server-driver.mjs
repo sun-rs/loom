@@ -1,4 +1,7 @@
-import { providerLaunchArguments } from "./provider-launch-arguments.js";
+import {
+  providerLaunchArguments,
+  providerLaunchPolicy,
+} from "./provider-launch-arguments.js";
 import {
   assertSessionReplacementAllowed,
   providerActivationInput,
@@ -553,6 +556,7 @@ function serverEnvironment() {
   const rules = prepareOpenCodeInstructionsFile(options.prompt);
   return {
     ...process.env,
+    ...providerLaunchPolicy("opencode").environment,
     OPENCODE_CONFIG_CONTENT: openCodeConfigContentWithInstructions(
       process.env.OPENCODE_CONFIG_CONTENT,
       rules,

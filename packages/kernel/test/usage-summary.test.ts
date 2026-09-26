@@ -60,7 +60,7 @@ function setStartedAt(f: RoleInstanceFixture, run: Run, at: string) {
 }
 
 test("schema 73 stores CLI-reported cost facts", () => {
-  assert.equal(KERNEL_SCHEMA_VERSION, 73);
+  assert.equal(KERNEL_SCHEMA_VERSION, 74);
 });
 
 test("a CLI cost fact is recorded once per cost id and shown on the RunAttempt read", () => {

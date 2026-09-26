@@ -165,6 +165,7 @@ async function runTurn(resumeSession) {
   });
   const args = [
     ...providerLaunchArguments("claude"),
+    ...providerLaunchPolicy("claude").args,
     "--disallowed-tools",
     DISALLOWED_TOOLS,
     "--append-system-prompt-file",

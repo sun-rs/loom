@@ -430,7 +430,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 73;
+export const KERNEL_SCHEMA_VERSION = 74;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -472,6 +472,7 @@ export class RoomKernel {
   readonly humanSidebar;
   readonly humanNavigation;
   readonly roles;
+  readonly memory;
   readonly humanProfiles;
   readonly publicChannels;
   readonly humanNotifications;
@@ -665,6 +666,7 @@ export class RoomKernel {
     this.humanSidebar = humanCommands.humanSidebar;
     this.humanNavigation = humanCommands.humanNavigation;
     this.roles = humanCommands.roles;
+    this.memory = humanCommands.memory;
     this.humanProfiles = humanCommands.humanProfiles;
     this.humanTaskHistory = humanCommands.humanTaskHistory;
     this.taskAmendments = humanCommands.taskAmendments;
@@ -797,7 +799,6 @@ export class RoomKernel {
   get taskReviews(): TaskReviewService {
     return this.#taskReviews;
   }
-
   initialize(options?: KernelInitializeOptions): void {
     const schemaVersion = databaseSchemaVersion(this.#database);
     if (schemaVersion > KERNEL_SCHEMA_VERSION) {

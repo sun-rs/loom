@@ -201,7 +201,11 @@ rl.on("line", (line) => {
         {
           activationEnvironment: () => ({
             args: ["-c", 'mcp_servers.rah.url="http://127.0.0.1:43111/mcp"'],
-            env: { FAKE_CODEX_RECORD_PATH: policyRecordPath },
+            env: {
+              FAKE_CODEX_RECORD_PATH: policyRecordPath,
+              // No user config.toml: the Human's real MCP list stays out.
+              CODEX_HOME: join(directory, "no-user-codex-home"),
+            },
           }),
           cwd: directory,
           supervisorDirectory: join(directory, "supervisors"),
@@ -264,6 +268,9 @@ rl.on("line", (line) => {
       "app-server",
       "-c",
       'mcp_servers.rah.url="http://127.0.0.1:43111/mcp"',
+      // Global personal-config isolation (2026-09-26): notify first.
+      "-c",
+      "notify=[]",
       "-c",
       "features.memories=false",
       "-c",
@@ -278,6 +285,16 @@ rl.on("line", (line) => {
       "features.sleep_tool=false",
       "-c",
       "features.in_app_local_automation=false",
+      "-c",
+      "features.plugins=false",
+      "-c",
+      "features.apps=false",
+      "-c",
+      "features.hooks=false",
+      "-c",
+      "skills.include_instructions=false",
+      "-c",
+      'web_search="disabled"',
       "--listen",
       "stdio://",
     ]);

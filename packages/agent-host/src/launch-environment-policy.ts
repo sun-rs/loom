@@ -97,6 +97,10 @@ export const ACTIVATION_IDENTITY_FENCE_KEYS: readonly string[] = [
  */
 export const USER_OVERRIDE_PROTECTED_KEYS: readonly string[] = [
   "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+  // Global personal-config isolation (2026-09-26): claude.ai connectors
+  // (Claude Code 2.1.282) and OpenCode 1.18.32 cross-CLI Claude content and
+  // external skills stay off for every instance.
+  "ENABLE_CLAUDEAI_MCP_SERVERS",
   "HOME",
   // evo §40 B1: kimi-code 0.39.1 cron scheduler and in-turn WaitFor switches.
   "KIMI_CODE_EXPERIMENTAL_WAIT_FOR",
@@ -105,6 +109,8 @@ export const USER_OVERRIDE_PROTECTED_KEYS: readonly string[] = [
   "NODE_OPTIONS",
   "NODE_PATH",
   // evo §40 B1: OpenCode 1.18.32 merges it into the config permission.
+  "OPENCODE_DISABLE_CLAUDE_CODE",
+  "OPENCODE_DISABLE_EXTERNAL_SKILLS",
   "OPENCODE_PERMISSION",
   "PATH",
   "SHELL",

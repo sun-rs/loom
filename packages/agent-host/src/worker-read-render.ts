@@ -1,3 +1,4 @@
+import { WORKER_MEMORY_RENDERERS } from "./worker-memory-render.ts";
 import {
   WorkerTaskBatchResponseSchema,
   TaskStateSchema,
@@ -1828,6 +1829,7 @@ const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
   "/v1/worker/messages/search": renderMessageSearch,
   "/v1/worker/messages/resolve": (_body, result) =>
     renderMessageResolve(result),
+  ...WORKER_MEMORY_RENDERERS,
   "/v1/worker/reminders/cancel": (_body, result) =>
     renderReminderCanceled(asRecord(result.reminder)),
   "/v1/worker/reminders/list": (_body, result) =>

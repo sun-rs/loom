@@ -1,4 +1,8 @@
 // Human-managed launch overrides and legacy additions; no shell evaluation. Built-in transport stays owned here.
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
 export const PROVIDER_LAUNCH_ARGS_ENV = "RAH_PROVIDER_LAUNCH_ARGS_JSON";
 const base = {
   codex: ["app-server"],
@@ -51,6 +55,10 @@ const managed = new Set([
   "--settings",
   "--mcp-config",
   "--strict-mcp-config",
+  // Global personal-config isolation (2026-09-26): Claude Code 2.1.282 reads
+  // user settings, CLAUDE.md, skills, commands, agents and hooks only through
+  // the `user` setting source.
+  "--setting-sources",
   "--listen",
   "--port",
   "--hostname",
@@ -190,17 +198,154 @@ function providerAutonomyConfig(runtimeId) {
       }
     : {};
 }
-export function providerLaunchPolicy(runtimeId) {
+// Global personal-config isolation (review 2026-09-26). Every switch is
+// process-only: the Human's own CLI runs keep reading their global files and
+// no user file is written.
+// - Claude Code 2.1.282: `--setting-sources project,local` drops the user
+//   source (~/.claude/CLAUDE.md, rules, skills incl. claude.ai-synced skills,
+//   commands, agents, settings.json env/hooks); `--strict-mcp-config` drops
+//   ~/.claude.json MCP servers (Loom's own `--mcp-config` stays);
+//   ENABLE_CLAUDEAI_MCP_SERVERS=false drops claude.ai connectors (OAuth).
+//   Neither CLAUDE_CONFIG_DIR nor --bare: both lose the keychain login.
+// - OpenCode 1.18.32: OPENCODE_DISABLE_CLAUDE_CODE drops ~/.claude/CLAUDE.md
+//   and ~/.claude/skills; OPENCODE_DISABLE_EXTERNAL_SKILLS drops
+//   ~/.agents/skills. ~/.config/opencode is a known limitation (it holds the
+//   provider/model configuration the instance needs).
+// - Codex 0.156.1: see codexIsolationConfig below.
+// - Kimi: no process switch short of a dedicated KIMI_CODE_HOME (known
+//   limitation, owner decision pending).
+const CLAUDE_ISOLATION_ARGS = [
+  "--setting-sources",
+  "project,local",
+  "--strict-mcp-config",
+];
+const PROVIDER_ISOLATION_ENVIRONMENT = {
+  claude: {
+    CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1",
+    ENABLE_CLAUDEAI_MCP_SERVERS: "false",
+  },
+  kimi: { KIMI_DISABLE_CRON: "1" },
+  opencode: {
+    OPENCODE_DISABLE_CLAUDE_CODE: "1",
+    OPENCODE_DISABLE_EXTERNAL_SKILLS: "1",
+  },
+};
+
+// Codex 0.156.1 (`-c` overrides, measured against a fake Responses API):
+// `notify=[]` stops the user's turn-end program (it received each user
+// message and reply verbatim); plugins, apps and hooks are feature switches;
+// `skills.include_instructions=false` removes every skill listing from the
+// prompt; `web_search="disabled"` removes the native web search tool: under
+// the instance's danger-full-access sandbox Codex sends it with live web
+// access even when `web_search="cached"` is configured (measured), so
+// disabling is the only value independent of the user's `web_search`.
+// `mcp_servers={}` merges instead of replacing, so each user MCP server is
+// disabled by name.
+function codexIsolationConfig(environment) {
+  return [
+    ["notify", "[]"],
+    ["features.plugins", "false"],
+    ["features.apps", "false"],
+    ["features.hooks", "false"],
+    ["skills.include_instructions", "false"],
+    ["web_search", '"disabled"'],
+    ...codexUserMcpServerNames(environment).map((name) => [
+      `mcp_servers.${name}.enabled`,
+      "false",
+    ]),
+  ];
+}
+
+function codexConfigPath(environment) {
+  const codexHome =
+    environment.CODEX_HOME || join(environment.HOME || homedir(), ".codex");
+  return join(codexHome, "config.toml");
+}
+
+function tomlKey(raw) {
+  const key = raw.trim();
+  const quoted = /^"((?:[^"\\]|\\.)*)"$/u.exec(key) ?? /^'([^']*)'$/u.exec(key);
+  return quoted ? quoted[1] : key;
+}
+
+// Read-only scan of the user's config.toml for MCP server names: table
+// headers `[mcp_servers.<name>]` / `[mcp_servers.<name>.env]`, entries inside
+// `[mcp_servers]`, and root dotted keys `mcp_servers.<name>.<field> = ...`.
+// Codex splits a `-c` key on every dot, so a name containing "." or "=" cannot
+// be addressed; the launch fails closed instead of loading it.
+export function codexUserMcpServerNames(environment = process.env) {
+  let text;
+  try {
+    text = readFileSync(codexConfigPath(environment), "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  const names = new Set();
+  const segment = String.raw`(?:"(?:[^"\\]|\\.)*"|'[^']*'|[A-Za-z0-9_-]+)`;
+  const header = new RegExp(
+    String.raw`^\[\s*mcp_servers\s*\.\s*(${segment})\s*(?:\.[^\]]*)?\]\s*(?:#.*)?$`,
+    "u",
+  );
+  const dotted = new RegExp(
+    String.raw`^mcp_servers\s*\.\s*(${segment})\s*[.=]`,
+    "u",
+  );
+  const entry = new RegExp(String.raw`^(${segment})\s*[.=]`, "u");
+  let table = "";
+  let multiline;
+  for (const rawLine of text.split(/\r?\n/u)) {
+    const line = rawLine.trim();
+    // Lines inside a multi-line string are values, never keys.
+    if (multiline !== undefined) {
+      if (line.includes(multiline)) multiline = undefined;
+      continue;
+    }
+    if (!line || line.startsWith("#")) continue;
+    multiline = ['"""', "'''"].find(
+      (fence) => line.split(fence).length % 2 === 0,
+    );
+    if (line.startsWith("[")) {
+      table = line.replace(/\s*#[^"'\]]*$/u, "").replace(/\s+/gu, "");
+      const match = header.exec(line);
+      if (match) names.add(tomlKey(match[1]));
+      continue;
+    }
+    if (table === "") {
+      const match = dotted.exec(line);
+      if (match) names.add(tomlKey(match[1]));
+    } else if (table === "[mcp_servers]") {
+      const match = entry.exec(line);
+      if (match) names.add(tomlKey(match[1]));
+    }
+  }
+  const sorted = [...names].sort();
+  for (const name of sorted)
+    if (!/^[^.=\s]+$/u.test(name))
+      throw new Error(
+        `Codex MCP server name cannot be disabled for a Loom instance (-c splits keys on "."): ${name}`,
+      );
+  return sorted;
+}
+
+export function providerLaunchPolicy(runtimeId, environment = process.env) {
+  const falseSwitches = Object.keys({
+    ...providerMemoryConfig(runtimeId),
+    ...providerAutonomyConfig(runtimeId),
+  }).map((key) => [key, "false"]);
+  const isolation =
+    runtimeId === "codex" ? codexIsolationConfig(environment) : [];
+  // `notify=[]` first: nothing may reach the user's notify program.
+  const config = [
+    ...isolation.filter(([key]) => key === "notify"),
+    ...falseSwitches,
+    ...isolation.filter(([key]) => key !== "notify"),
+  ];
   return {
-    args: Object.keys({
-      ...providerMemoryConfig(runtimeId),
-      ...providerAutonomyConfig(runtimeId),
-    }).flatMap((key) => ["-c", `${key}=false`]),
-    environment:
-      runtimeId === "claude"
-        ? { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" }
-        : runtimeId === "kimi"
-          ? { KIMI_DISABLE_CRON: "1" }
-          : {},
+    args: [
+      ...config.flatMap(([key, value]) => ["-c", `${key}=${value}`]),
+      ...(runtimeId === "claude" ? CLAUDE_ISOLATION_ARGS : []),
+    ],
+    environment: { ...PROVIDER_ISOLATION_ENVIRONMENT[runtimeId] },
   };
 }

@@ -18,13 +18,16 @@ export const AgentSkillsIssueSchema = z.enum([
   "read_failed",
   "metadata_limit",
   "scan_limit",
+  // The runtime is launched so that these skills never load (Loom global
+  // personal-config isolation); nothing was read.
+  "isolated_by_loom",
 ]);
 export const AgentSkillsScopeSchema = z
   .object({
     state: z.enum(["ready", "partial", "error", "unavailable"]),
     skills: z.array(AgentSkillSchema).max(1000),
     truncated: z.boolean(),
-    issues: z.array(AgentSkillsIssueSchema).max(7),
+    issues: z.array(AgentSkillsIssueSchema).max(8),
   })
   .strict();
 export const AgentSkillsListRequestSchema = z

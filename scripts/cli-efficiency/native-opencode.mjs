@@ -16,6 +16,7 @@ import {
   openCodeNativeEnv,
   parseOpenCodeRunRound,
 } from "./opencode-usage.mjs";
+import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
 
 export async function nativeOpenCodeRound({
   cwd,
@@ -31,7 +32,11 @@ export async function nativeOpenCodeRound({
     prompt,
     sessionId,
   });
-  const env = openCodeNativeEnv(config, nativeEnvironment());
+  // Same process-only global-config isolation as the product's drivers.
+  const env = openCodeNativeEnv(
+    config,
+    nativeEnvironment(providerLaunchPolicy("opencode").environment),
+  );
   checkOpenCodeNativeLaunch(args, env, config);
   const executable = execFileSync("which", ["opencode"], {
     encoding: "utf8",

@@ -145,6 +145,7 @@ let shuttingDown = false;
 
 const args = [
   ...providerLaunchArguments("claude"),
+  ...providerLaunchPolicy("claude").args,
   "--disallowed-tools",
   CLAUDE_DISALLOWED_TOOLS,
   "--append-system-prompt-file",

@@ -191,8 +191,13 @@ const resumeParams = ({ threadId, model, effort, cwd }) => ({
   model,
   config: {
     ...Object.fromEntries(
+      // The product's boolean process switches as thread config; the
+      // non-boolean isolation switches and MCP disables stay process-level.
       providerLaunchPolicy("codex")
-        .args.filter((a) => a !== "-c")
+        .args.filter(
+          (a) =>
+            a !== "-c" && a.endsWith("=false") && !a.startsWith("mcp_servers."),
+        )
         .map((a) => [a.split("=")[0], false]),
     ),
     model_reasoning_effort: effort,

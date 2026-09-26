@@ -52,6 +52,7 @@ import {
   taskAddressList,
 } from "./worker-task-address-cli.ts";
 import { parseWorkerReadCommand } from "./worker-read-cli.ts";
+import { parseWorkerMemoryCommand } from "./worker-memory-cli.ts";
 import {
   renderWorkerAttachmentDownload,
   renderWorkerAttachmentPublish,
@@ -489,21 +490,25 @@ export async function runWorkerCliCommand(
           ? parseAgentInboxCommand(arguments_)
           : arguments_[0] === "reminder"
             ? parseReminderCommand(arguments_)
-            : parseCommand(
-                arguments_,
-                // Upstream picks the resolver by `opts.sendDraft`, so RAH does
-                // too: a normal send reads to the end, `--send-draft` only
-                // observes whether stdin was supplied by mistake.
-                arguments_[0] === "worker" &&
-                  arguments_[1] === "message-post" &&
-                  !arguments_.includes("--body")
-                  ? arguments_.includes("--send-draft")
-                    ? ((await resolveOptionalSendContent(runtime, () => {
-                        sendDraftStdinDeadlineExpired = true;
-                      })) ?? "")
-                    : await resolveSendContent(runtime)
-                  : "",
-              ),
+            : arguments_[0] === "worker" && arguments_[1] === "memory"
+              ? await parseWorkerMemoryCommand(arguments_, () =>
+                  resolveSendContent(runtime),
+                )
+              : parseCommand(
+                  arguments_,
+                  // Upstream picks the resolver by `opts.sendDraft`, so RAH does
+                  // too: a normal send reads to the end, `--send-draft` only
+                  // observes whether stdin was supplied by mistake.
+                  arguments_[0] === "worker" &&
+                    arguments_[1] === "message-post" &&
+                    !arguments_.includes("--body")
+                    ? arguments_.includes("--send-draft")
+                      ? ((await resolveOptionalSendContent(runtime, () => {
+                          sendDraftStdinDeadlineExpired = true;
+                        })) ?? "")
+                      : await resolveSendContent(runtime)
+                    : "",
+                ),
     );
     const messagePost = request.path === "/v1/worker/messages/post";
     // Raft's `handleMessageSend` calls `setSavedDraft(...)` and then
@@ -1957,6 +1962,15 @@ rah reminder snooze --id ID --by 30m
 rah reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT) [--tz IANA]
 rah reminder log --id ID
 rah worker message-check [--replay] [--startup]
+rah worker memory list [--include-invalidated] [--limit N]
+rah worker memory read --name NAME
+rah worker memory search --query TEXT [--limit N]
+rah worker memory history --name NAME
+rah worker memory write --name NAME --type user|feedback|project|reference --description TEXT <<'${MESSAGE_HEREDOC_DELIMITER}'
+rah worker memory update --name NAME --expected-revision N [--type TYPE] [--description TEXT] [--body-stdin]
+rah worker memory invalidate --name NAME --expected-revision N --reason TEXT
+rah worker memory restore --name NAME --expected-revision N
+Channel memory is shared by this channel's instances; the channel and author come from your credential. See worker help memory.
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
 rah worker room-list [--limit N] [--cursor CURSOR]

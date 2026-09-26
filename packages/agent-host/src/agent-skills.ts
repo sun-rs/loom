@@ -1,6 +1,6 @@
 import { constants } from "node:fs";
 import { lstat, open, opendir, realpath } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isAbsolute, join, resolve, sep } from "node:path";
 import type {
   AgentSkill,
   AgentSkillsIssue,
@@ -37,11 +37,14 @@ function missing(error: unknown) {
   return (error as NodeJS.ErrnoException).code === "ENOENT";
 }
 
+// Global personal-config isolation (2026-09-26): Loom launches Claude with
+// `--setting-sources project,local` (no ~/.claude skills or commands) and
+// Codex with `skills.include_instructions=false` (no skill listing at all),
+// see provider-launch-arguments.js. The Human's global skill directories are
+// therefore never presented as available to an instance, and are not read.
 export async function scanAgentSkills(input: {
   cliId: string;
   home: string;
-  codexHome?: string;
-  claudeConfigDirectory?: string;
   workspaceRoot: string;
   limits?: { entries?: number };
 }): Promise<{ global: AgentSkillsScope; workspace: AgentSkillsScope }> {
@@ -50,52 +53,16 @@ export async function scanAgentSkills(input: {
       global: unavailableAgentSkills("unsupported_runtime"),
       workspace: unavailableAgentSkills("unsupported_runtime"),
     };
-  const workspacePaths =
-    input.cliId === "codex"
-      ? [".codex/skills", ".agents/skills"]
-      : [".claude/skills", ".claude/commands"];
-  const providerRoot =
-    input.cliId === "codex"
-      ? (input.codexHome ?? join(input.home, ".codex"))
-      : (input.claudeConfigDirectory ?? join(input.home, ".claude"));
-  const validHome = [input.home, providerRoot].every(
-    (path) => isAbsolute(path) && resolve(path) !== sep,
-  );
-  const shared = join(input.home, ".agents/skills");
-  const globalDirectories =
-    input.cliId === "codex"
-      ? [
-          join(providerRoot, "skills"),
-          join(providerRoot, "skills/.system"),
-          join(providerRoot, ".agents/skills"),
-          ...(input.codexHome ? [] : [shared]),
-        ]
-      : [join(providerRoot, "skills"), join(providerRoot, "commands")];
+  const isolated = unavailableAgentSkills("isolated_by_loom");
+  if (input.cliId === "codex")
+    return {
+      global: isolated,
+      workspace: unavailableAgentSkills("isolated_by_loom"),
+    };
   return {
-    global: validHome
-      ? await scanScope({
-          directories: globalDirectories,
-          approvedRoots: [
-            providerRoot,
-            ...(input.cliId === "claude" || !input.codexHome ? [shared] : []),
-          ],
-          strictRoots: [
-            ...((
-              input.cliId === "codex"
-                ? input.codexHome
-                : input.claudeConfigDirectory
-            )
-              ? []
-              : [providerRoot]),
-            shared,
-          ],
-          home: input.home,
-          privateRoot: false,
-          maxEntries: input.limits?.entries ?? 1000,
-        })
-      : unavailableAgentSkills("unresolved_home"),
+    global: isolated,
     workspace: await scanScope({
-      directories: workspacePaths.map((path) =>
+      directories: [".claude/skills", ".claude/commands"].map((path) =>
         join(input.workspaceRoot, path),
       ),
       approvedRoots: [input.workspaceRoot],
@@ -109,7 +76,6 @@ export async function scanAgentSkills(input: {
 async function scanScope(input: {
   directories: string[];
   approvedRoots: string[];
-  strictRoots?: string[];
   home: string;
   privateRoot: boolean;
   maxEntries: number;
@@ -125,14 +91,6 @@ async function scanScope(input: {
         throw new ScanError("blocked_path");
       try {
         const canonical = await realpath(root);
-        // Automatically discovered defaults must not authorize a redirected root.
-        // Explicit provider-home overrides are trusted daemon configuration instead.
-        if (
-          input.strictRoots?.includes(root) &&
-          canonical !==
-            join(await realpath(input.home), relative(input.home, root))
-        )
-          throw new ScanError("blocked_path");
         if (
           input.privateRoot &&
           (canonical !== resolve(root) || (await lstat(root)).isSymbolicLink())

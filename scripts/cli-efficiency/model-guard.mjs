@@ -6,11 +6,19 @@ import { dirname, join } from "node:path";
 import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
 import { startGuardedUnixProxy } from "./ws-guard.mjs";
 
-// The product's process-only Codex switches (memory, multi_agent, goals):
-// the only config keys besides the approved effort, and only as `false`.
+// The product's process-only Codex switches (memory, multi_agent, goals,
+// global personal-config isolation), exactly as the product passes them.
+// Per-name user MCP disables are admitted only as `enabled=false`.
+const PRODUCT_CONFIG = new Set(
+  providerLaunchPolicy("codex").args.filter(
+    (a) => a !== "-c" && !a.startsWith("mcp_servers."),
+  ),
+);
+const MCP_DISABLE = /^mcp_servers\.[^.=\s]+\.enabled=false$/u;
+// Thread-level config keys besides the approved effort, only as `false`.
 const PRODUCT_FALSE_KEYS = new Set(
-  providerLaunchPolicy("codex")
-    .args.filter((a) => a !== "-c")
+  [...PRODUCT_CONFIG]
+    .filter((a) => a.endsWith("=false"))
     .map((a) => a.split("=")[0]),
 );
 const SANDBOXES = new Set([
@@ -189,7 +197,7 @@ export function codexThreadRecord(message, at = new Date().toISOString()) {
 }
 
 // argv whitelist: `--version`, the catalog probe `debug models [--bundled]`,
-// and `app-server` with only the product's `-c <switch>=false` pairs and one
+// and `app-server` with only the product's own `-c` pairs and one
 // `--listen`. Every other subcommand (`debug app-server send-message-v2`,
 // `app-server daemon|proxy`, `exec`, ...) could start or reach a model turn
 // outside this fence and is refused.
@@ -206,8 +214,8 @@ export function classifyCodexLaunch(args) {
   for (let i = 1; i < args.length; i++) {
     const a = args[i];
     if (a === "-c") {
-      const [key, value, ...rest] = String(args[++i] ?? "").split("=");
-      if (!PRODUCT_FALSE_KEYS.has(key) || value !== "false" || rest.length)
+      const entry = String(args[++i] ?? "");
+      if (!PRODUCT_CONFIG.has(entry) && !MCP_DISABLE.test(entry))
         throw new Error(`Unsupported gate config override ${args[i]}`);
     } else if (a === "--listen") {
       listens += 1;

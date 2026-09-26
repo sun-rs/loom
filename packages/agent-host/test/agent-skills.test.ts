@@ -29,44 +29,33 @@ async function skill(path: string, name: string, body = "secret body") {
   );
 }
 
-test("Codex scans actual configured home, builtins and Agent workspace metadata only; missing is an honest empty result", async () =>
+// Global personal-config isolation (2026-09-26): Loom launches Claude with
+// `--setting-sources project,local` and Codex with
+// `skills.include_instructions=false`, so the Human's global skills never load
+// in an instance. The listing reports that instead of presenting them.
+test("Codex instances load no skills: both scopes report Loom isolation without reading any skill file", async () =>
   fixture(async (root) => {
     const home = join(root, "human");
-    const codexHome = join(root, "effective-codex");
     const workspace = join(root, "agent");
     await mkdir(workspace);
-    await skill(join(codexHome, "skills", "alpha"), "Alpha");
-    await skill(join(codexHome, "skills", ".system", "system"), "System");
-    await skill(join(codexHome, ".agents", "skills", "shared"), "Shared");
-    await skill(join(home, ".agents", "skills", "excluded"), "Wrong home");
+    await skill(join(home, ".codex", "skills", "alpha"), "Alpha");
+    await skill(join(home, ".agents", "skills", "shared"), "Shared");
     await skill(join(workspace, ".codex", "skills", "local"), "Local");
     const result = await scanAgentSkills({
       cliId: "codex",
       home,
-      codexHome,
       workspaceRoot: workspace,
     });
-    assert.equal(result.global.state, "ready");
-    assert.deepEqual(
-      result.global.skills.map((s) => s.displayName),
-      ["Alpha", "System", "Shared"],
-    );
-    assert.equal(result.global.skills[0]?.userInvocable, true);
-    assert.deepEqual(
-      result.workspace.skills.map((s) => s.displayName),
-      ["Local"],
-    );
-    assert.ok(!JSON.stringify(result).includes("secret body"));
-    const empty = await scanAgentSkills({
-      cliId: "claude",
-      home,
-      workspaceRoot: join(root, "absent-agent"),
-    });
-    assert.equal(empty.workspace.state, "ready");
-    assert.deepEqual(empty.workspace.skills, []);
+    for (const scope of [result.global, result.workspace]) {
+      assert.equal(scope.state, "unavailable");
+      assert.deepEqual(scope.issues, ["isolated_by_loom"]);
+      assert.deepEqual(scope.skills, []);
+    }
+    assert.ok(!JSON.stringify(result).includes("Alpha"));
+    assert.ok(!JSON.stringify(result).includes("Local"));
   }));
 
-test("Claude commands, source groups, dedup and approved provider links match the source without leaking another Agent", async () =>
+test("Claude global skills and commands are reported as not loaded; workspace skills keep their source semantics", async () =>
   fixture(async (root) => {
     const home = join(root, "human");
     const workspace = join(root, "alice");
@@ -76,17 +65,17 @@ test("Claude commands, source groups, dedup and approved provider links match th
       join(home, ".claude", "commands", "command.md"),
       "---\nname: Command\n---\ncommand body",
     );
-    await writeFile(
-      join(home, ".claude", "commands", "first.md"),
-      "---\nname: Duplicate\n---",
-    );
-    await skill(join(home, ".agents", "skills", "shared"), "Linked");
-    await symlink(
-      join(home, ".agents", "skills", "shared"),
-      join(home, ".claude", "skills", "shared"),
-    );
     await skill(join(root, "bob", "private"), "PRIVATE");
     await skill(join(workspace, ".claude", "skills", "local"), "Local");
+    await mkdir(join(workspace, ".claude", "commands"));
+    await writeFile(
+      join(workspace, ".claude", "commands", "local.md"),
+      "---\nname: Duplicate\n---",
+    );
+    await writeFile(
+      join(workspace, ".claude", "commands", "command.md"),
+      "---\nname: Workspace command\n---",
+    );
     await symlink(
       join(root, "bob", "private"),
       join(workspace, ".claude", "skills", "escape"),
@@ -100,17 +89,18 @@ test("Claude commands, source groups, dedup and approved provider links match th
       home,
       workspaceRoot: workspace,
     });
-    assert.deepEqual(
-      result.global.skills.map((s) => s.displayName),
-      ["First", "Linked", "Command"],
-    );
-    assert.equal(result.global.skills[0]?.sourcePath, "~/.claude/skills");
+    assert.equal(result.global.state, "unavailable");
+    assert.deepEqual(result.global.issues, ["isolated_by_loom"]);
+    assert.deepEqual(result.global.skills, []);
+    assert.ok(!JSON.stringify(result).includes("First"));
     assert.deepEqual(
       result.workspace.skills.map((s) => s.displayName),
-      ["Local"],
+      ["Local", "Workspace command"],
     );
+    assert.equal(result.workspace.skills[0]?.userInvocable, true);
     assert.equal(result.workspace.state, "partial");
     assert.ok(!JSON.stringify(result).includes("PRIVATE"));
+    assert.ok(!JSON.stringify(result).includes("secret body"));
     await symlink(join(root, "bob"), join(root, "fake-agent"));
     const escaped = await scanAgentSkills({
       cliId: "claude",
@@ -119,6 +109,13 @@ test("Claude commands, source groups, dedup and approved provider links match th
     });
     assert.equal(escaped.workspace.state, "error");
     assert.deepEqual(escaped.workspace.skills, []);
+    const empty = await scanAgentSkills({
+      cliId: "claude",
+      home,
+      workspaceRoot: join(root, "absent-agent"),
+    });
+    assert.equal(empty.workspace.state, "ready");
+    assert.deepEqual(empty.workspace.skills, []);
   }));
 
 test("scan limits and metadata bounds are explicit; unsupported runtime never masquerades as a successful empty scan", async () =>
@@ -126,21 +123,21 @@ test("scan limits and metadata bounds are explicit; unsupported runtime never ma
     const home = join(root, "human");
     const workspace = join(root, "agent");
     await skill(
-      join(home, ".claude", "skills", "a"),
+      join(workspace, ".claude", "skills", "a"),
       "A",
       "x".repeat(1_000_000),
     );
-    await skill(join(home, ".claude", "skills", "b"), "B");
+    await skill(join(workspace, ".claude", "skills", "b"), "B");
     const result = await scanAgentSkills({
       cliId: "claude",
       home,
       workspaceRoot: workspace,
       limits: { entries: 1 },
     });
-    assert.equal(result.global.truncated, true);
-    assert.equal(result.global.skills.length, 1);
+    assert.equal(result.workspace.truncated, true);
+    assert.equal(result.workspace.skills.length, 1);
     await writeFile(
-      join(home, ".claude", "skills", "a", "SKILL.md"),
+      join(workspace, ".claude", "skills", "a", "SKILL.md"),
       `---\ndescription: ${"x".repeat(30_000)}\n---`,
     );
     const oversized = await scanAgentSkills({
@@ -148,8 +145,8 @@ test("scan limits and metadata bounds are explicit; unsupported runtime never ma
       home,
       workspaceRoot: workspace,
     });
-    assert.equal(oversized.global.state, "partial");
-    assert.ok(!oversized.global.skills.some((s) => s.name === "a"));
+    assert.equal(oversized.workspace.state, "partial");
+    assert.ok(!oversized.workspace.skills.some((s) => s.name === "a"));
     const unsupported = await scanAgentSkills({
       cliId: "kimi",
       home,
@@ -157,13 +154,6 @@ test("scan limits and metadata bounds are explicit; unsupported runtime never ma
     });
     assert.equal(unsupported.global.state, "unavailable");
     assert.equal(unsupported.global.issues[0], "unsupported_runtime");
-    const relativeHome = await scanAgentSkills({
-      cliId: "codex",
-      home,
-      codexHome: "relative",
-      workspaceRoot: workspace,
-    });
-    assert.equal(relativeHome.global.state, "unavailable");
   }));
 
 test("Skills can resolve a never-started Agent workspace without creating the memory root", async () =>
@@ -189,25 +179,6 @@ test("Skills can resolve a never-started Agent workspace without creating the me
     }
   }));
 
-test("default global roots cannot promote a root symlink into authorization for another Agent", async () =>
-  fixture(async (root) => {
-    const home = join(root, "human");
-    await mkdir(join(home, ".agents"), { recursive: true });
-    await skill(
-      join(root, "bob-private", "private-skill"),
-      "BOB PRIVATE METADATA",
-    );
-    await symlink(join(root, "bob-private"), join(home, ".agents", "skills"));
-    const result = await scanAgentSkills({
-      cliId: "codex",
-      home,
-      workspaceRoot: join(root, "alice"),
-    });
-    assert.equal(result.global.state, "error");
-    assert.deepEqual(result.global.issues, ["blocked_path"]);
-    assert.ok(!JSON.stringify(result).includes("BOB PRIVATE"));
-  }));
-
 test(
   "special files never block reads and permission failures cannot become empty success",
   { timeout: 3000 },
@@ -216,16 +187,17 @@ test(
       const { execFileSync } = await import("node:child_process");
       const { chmod } = await import("node:fs/promises");
       const home = join(root, "human");
-      const commands = join(home, ".claude", "commands");
+      const workspace = join(root, "agent");
+      const commands = join(workspace, ".claude", "commands");
       await mkdir(commands, { recursive: true });
       execFileSync("/usr/bin/mkfifo", [join(commands, "pipe.md")]);
       const pipeResult = await scanAgentSkills({
         cliId: "claude",
         home,
-        workspaceRoot: join(root, "agent"),
+        workspaceRoot: workspace,
       });
-      assert.equal(pipeResult.global.state, "error");
-      assert.deepEqual(pipeResult.global.issues, ["blocked_path"]);
+      assert.equal(pipeResult.workspace.state, "error");
+      assert.deepEqual(pipeResult.workspace.issues, ["blocked_path"]);
       await rm(join(commands, "pipe.md"));
       const denied = join(commands, "denied.md");
       await writeFile(denied, "---\nname: PRIVATE DENIED\n---");
@@ -233,29 +205,10 @@ test(
       const permissionResult = await scanAgentSkills({
         cliId: "claude",
         home,
-        workspaceRoot: join(root, "agent"),
+        workspaceRoot: workspace,
       });
-      assert.equal(permissionResult.global.state, "error");
-      assert.deepEqual(permissionResult.global.issues, ["read_failed"]);
-      assert.deepEqual(permissionResult.global.skills, []);
+      assert.equal(permissionResult.workspace.state, "error");
+      assert.deepEqual(permissionResult.workspace.issues, ["read_failed"]);
+      assert.deepEqual(permissionResult.workspace.skills, []);
     }),
 );
-
-test("Claude config override is the actual global source, leaving per-Agent workspace semantics intact", async () =>
-  fixture(async (root) => {
-    const home = join(root, "human");
-    const config = join(root, "effective-claude");
-    await skill(join(home, ".claude", "skills", "wrong"), "WRONG DEFAULT");
-    await skill(join(config, "skills", "actual"), "Actual configured skill");
-    const result = await scanAgentSkills({
-      cliId: "claude",
-      home,
-      claudeConfigDirectory: config,
-      workspaceRoot: join(root, "agent"),
-    });
-    assert.deepEqual(
-      result.global.skills.map((skill) => skill.displayName),
-      ["Actual configured skill"],
-    );
-    assert.equal(result.workspace.state, "ready");
-  }));
