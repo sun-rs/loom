@@ -246,6 +246,7 @@ import {
   planNextPlacement,
   type PlacementPlannerInput,
 } from "./placement-planner.ts";
+import { InstancePrewarmService } from "./instance-prewarm.ts";
 import {
   migrateCollaborationSchemaV7,
   migrateRoomMetadataV14,
@@ -490,6 +491,7 @@ export class RoomKernel {
   readonly finalReplies: RunAttemptFinalReplyService;
   readonly runtimeProcessCleanup;
   readonly instanceRuntimes: InstanceRuntime.InstanceRuntimeService;
+  readonly instancePrewarm: InstancePrewarmService;
   readonly instanceSessions: InstanceSessionService;
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
@@ -789,6 +791,10 @@ export class RoomKernel {
     this.finalReplies = new RunAttemptFinalReplyService(runtimeObservation);
     this.runtimeProcessCleanup = this.runAttemptUsage.cleanups;
     this.instanceSessions = new InstanceSessionService(runtimeObservation);
+    this.instancePrewarm = new InstancePrewarmService(
+      runtimeObservation,
+      (now) => this.#buildPlacementPlannerInput(now, "placement-planner/v1"),
+    );
     this.instanceRuntimes = new InstanceRuntime.InstanceRuntimeService({
       ...runtimeObservation,
       events: this.#roomEvents,
@@ -5855,14 +5861,6 @@ export class RoomKernel {
       isTrustedOffer: (offer) =>
         this.#runtimeOfferEvidenceIsCurrentlyTrusted(offer),
       readPlacement: (row) => this.#placementFromRow(row),
-      readAgentRevision: (id) =>
-        this.#agentDefinitionRevisionFromRow(
-          this.#requireAgentDefinitionRevisionRow(id),
-        ),
-      readExecutionPolicy: (id) =>
-        this.#executionPolicyRevisionFromRow(
-          this.#requireExecutionPolicyRevisionRow(id),
-        ),
     });
   }
 

@@ -6,6 +6,7 @@ import {
   warmExecutionFailures,
   compareWarmCold,
   replyTurnHandle,
+  firstRoundReport,
 } from "./warm.mjs";
 
 test("arm order keeps the historical default and appends role-warm only on opt-in", () => {
@@ -197,4 +198,78 @@ test("reply turn-handle evidence: every box-post carries --turn, unknown without
     null,
   );
   assert.equal(replyTurnHandle(undefined), null);
+});
+
+// Owner 2026-09-27: instances are prewarmed at creation. The prewarmed first
+// round is its own arm and never stands in for the cold first round.
+test("role-prewarm is reported beside role-warm, never instead of it", () => {
+  assert.deepEqual(
+    parseArmOrder(
+      { RAH_EFFICIENCY_ORDER: "native,role-warm,role-prewarm" },
+      { arms: ["native", "role", "role-warm", "role-prewarm"] },
+    ),
+    ["native", "role-warm", "role-prewarm"],
+  );
+  for (const order of ["native,role-prewarm", "native,role,role-prewarm"])
+    assert.throws(
+      () =>
+        parseArmOrder(
+          { RAH_EFFICIENCY_ORDER: order },
+          { arms: ["native", "role", "role-warm", "role-prewarm"] },
+        ),
+      /role-prewarm requires role-warm/,
+      order,
+    );
+  assert.throws(
+    () =>
+      parseArmOrder(
+        { RAH_EFFICIENCY_ORDER: "native,role-warm,role-prewarm" },
+        { arms: ["native", "role"] },
+      ),
+    /not supported/,
+  );
+});
+
+test("role-prewarm: the first round runs warm on the runtime prewarmed before it", () => {
+  const ok = [r(1, exec("warm")), r(2, exec("warm")), r(3, exec("warm"))];
+  assert.deepEqual(
+    warmExecutionFailures(ok, { prewarmedRuntimeId: "rt1", runtimeCount: 1 }),
+    [],
+  );
+  assert.deepEqual(
+    warmExecutionFailures([r(1, exec("cold")), r(2, exec("warm"))], {
+      prewarmedRuntimeId: "rt1",
+      runtimeCount: 1,
+    }),
+    ["notPrewarmed:r1"],
+    "a cold first round means the prewarm was not used",
+  );
+  assert.deepEqual(
+    warmExecutionFailures(
+      [r(1, exec("warm", "rt9")), r(2, exec("warm", "rt9"))],
+      { prewarmedRuntimeId: "rt1", runtimeCount: 1 },
+    ),
+    ["prewarmedRuntimeChanged:r1"],
+  );
+  // The cold arm keeps requiring a cold first round.
+  assert.deepEqual(warmExecutionFailures([r(1, exec("warm"))], {}), [
+    "notCold:r1",
+  ]);
+});
+
+test("the first-round block labels the cold and the prewarmed first round separately", () => {
+  const cold = [round(20, 30000, 3, exec("cold"), 2), round(9, 31000, 2)];
+  const prewarmed = [round(11, 30500, 3, exec("warm"), 1)];
+  assert.deepEqual(firstRoundReport(cold, prewarmed, { readyAfterMs: 2400 }), {
+    cold: { mode: "cold", replySeconds: 20, queueSeconds: 2, input: 30000 },
+    prewarmed: {
+      mode: "warm",
+      replySeconds: 11,
+      queueSeconds: 1,
+      input: 30500,
+      readyAfterMs: 2400,
+    },
+    replySecondsDelta: -9,
+  });
+  assert.equal(firstRoundReport([], prewarmed, {}).cold, null);
 });

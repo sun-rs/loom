@@ -13,6 +13,8 @@ import { dirname } from "node:path";
 
 import { ConflictError } from "@rah-os/kernel";
 import {
+  INSTANCE_PREWARM_DEFAULTS,
+  InstancePrewarmSettingsUpdateSchema,
   RUN_GUARD_DEFAULTS,
   RunWatchdogSettingsUpdateSchema,
   RuntimeSettingsSchema,
@@ -44,6 +46,8 @@ const State = z
     // evo §37: only the fields the Human set; the rest keep their defaults.
     wakeGuard: WakeGuardSettingsUpdateSchema.optional(),
     watchdog: RunWatchdogSettingsUpdateSchema.optional(),
+    // Owner 2026-09-27: instance runtime prewarming (only the set fields).
+    prewarm: InstancePrewarmSettingsUpdateSchema.optional(),
   })
   .strict();
 
@@ -56,7 +60,7 @@ export type RuntimeSettingsRuntime = {
 /**
  * Single daemon owner of the Human's runtime settings: the concurrency caps
  * and, in the same document and revision, the evo §37 `wakeGuard` and
- * `watchdog` groups. It persists them (owner-private, atomic replace) and
+ * `watchdog` groups and the instance `prewarm` group (owner 2026-09-27). It persists them (owner-private, atomic replace) and
  * notifies the appliers (Kernel placement caps and run guards, Host lanes,
  * warm pool, start gate); it holds no work or queue itself.
  */
@@ -126,6 +130,7 @@ export class RuntimeSettings {
       })),
       wakeGuard: { ...RUN_GUARD_DEFAULTS.wakeGuard, ...state.wakeGuard },
       watchdog: { ...RUN_GUARD_DEFAULTS.watchdog, ...state.watchdog },
+      prewarm: { ...INSTANCE_PREWARM_DEFAULTS, ...state.prewarm },
     });
   }
 
@@ -167,6 +172,9 @@ export class RuntimeSettings {
       ...(input.watchdog === undefined
         ? {}
         : { watchdog: { ...this.#state.watchdog, ...input.watchdog } }),
+      ...(input.prewarm === undefined
+        ? {}
+        : { prewarm: { ...this.#state.prewarm, ...input.prewarm } }),
     });
     this.#persist(next);
     this.#state = next;

@@ -20,6 +20,10 @@ import {
   instanceWakeLimitNotice,
   noteHumanMessageForWakeGuard,
 } from "./instance-wake-guard.ts";
+import {
+  INSTANCE_RUNTIME_HINT_TOPIC,
+  instanceRuntimeHint,
+} from "./instance-prewarm.ts";
 import { SYSTEM_PRINCIPAL_ID } from "./system-principal.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 
@@ -158,6 +162,15 @@ export class RoomEventWriter {
       roomSeq: event.roomSeq,
       topic: "room.event",
     });
+    // Owner 2026-09-27: a Host hint to prewarm or retire an instance runtime.
+    const runtimeHint = instanceRuntimeHint(this.#database, event);
+    if (runtimeHint !== undefined)
+      this.insertOutbox({
+        payload: runtimeHint,
+        roomId: event.roomId,
+        roomSeq: event.roomSeq,
+        topic: INSTANCE_RUNTIME_HINT_TOPIC,
+      });
     noteHumanMessageForWakeGuard(this.#database, event);
     return event;
   }

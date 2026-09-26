@@ -329,6 +329,7 @@ const settings: RuntimeSettings = {
     noProgressWarnMs: 900_000,
     queuedStallTerminateMs: 900_000,
   },
+  prewarm: { enabled: true, recentActiveHours: 24 },
 };
 
 const settingsForm = {
@@ -338,6 +339,8 @@ const settingsForm = {
   minStartIntervalMs: "0",
   noProgressWarnMinutes: "15",
   queuedStallTerminateMinutes: "15",
+  prewarmEnabled: "1",
+  prewarmRecentHours: "24",
   runtimes: { "profile-fixture": "2" },
   wakeChainLimit: "10",
 };
@@ -363,7 +366,24 @@ test("a settings update sends only changed fields with the revision it was based
     },
   );
   assert.equal(buildSettingsUpdate(settings, settingsForm).ok, false);
+  // Owner 2026-09-27: instance prewarming is switched off at runtime.
+  assert.deepEqual(
+    buildSettingsUpdate(settings, {
+      ...settingsForm,
+      prewarmEnabled: "0",
+      prewarmRecentHours: "6",
+    }),
+    {
+      ok: true,
+      value: {
+        expectedRevision: 7,
+        prewarm: { enabled: false, recentActiveHours: 6 },
+      },
+    },
+  );
   for (const bad of [
+    { prewarmEnabled: "2" },
+    { prewarmRecentHours: "721" },
     { wakeChainLimit: "0" },
     { maxConcurrentRuns: "65" },
     { noProgressWarnMinutes: "0.5" },

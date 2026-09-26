@@ -110,6 +110,7 @@ export type WarmRuntimeEndReason =
   | "config_restart"
   | "host_shutdown"
   | "resource_failure"
+  | "removed"
   | "start_failed";
 
 /** Ends of an idle runtime chosen by policy (proven exit, then recorded). */
@@ -123,6 +124,7 @@ type WarmStopReason = Extract<
   | "config_restart"
   | "host_shutdown"
   | "resource_failure"
+  | "removed"
 >;
 
 export type WarmTurnAdmission =
@@ -206,6 +208,8 @@ export class WarmRuntime {
   readonly instanceRuntimeId: string;
   readonly participantId: string;
   readonly key: string;
+  /** `instance_runtimes.driver` (one CLI per driver kind). */
+  readonly driver: string;
   readonly layout: WarmRuntimeLayout;
   state: "starting" | "idle" | "busy" | "stopping" | "suspect" | "dead" =
     "starting";
@@ -228,6 +232,8 @@ export class WarmRuntime {
   sessionResumeMs: number | null = null;
   /** Why no further turn may be admitted (restart at the idle boundary). */
   admissionClosed: string | undefined;
+  /** The instance was removed: stop at the next idle boundary, never reuse. */
+  retireReason: "removed" | undefined;
   readonly #pins = new Map<string, number>();
   /** Digest of the standing prompt this process was launched with. */
   standingPromptDigest: string | undefined;
@@ -251,6 +257,7 @@ export class WarmRuntime {
   #lastSeq = 0;
 
   constructor(input: {
+    driver: string;
     instanceRuntimeId: string;
     key: string;
     layout: WarmRuntimeLayout;
@@ -259,6 +266,7 @@ export class WarmRuntime {
     nowMs: number;
   }) {
     this.instanceRuntimeId = input.instanceRuntimeId;
+    this.driver = input.driver;
     this.key = input.key;
     this.layout = input.layout;
     this.participantId = input.participantId;
@@ -964,13 +972,15 @@ export class InstanceRuntimePool {
               `warm runtime ${runtime.instanceRuntimeId} is ${runtime.state}; the lane is still held`,
             );
           const restart =
-            runtime.key !== input.key
-              ? "config_restart"
-              : runtime.frameIntegrityLost
-                ? "resource_failure"
-                : runtime.pinned
-                  ? undefined
-                  : await this.#recycleReason(runtime, input.cliFingerprint);
+            runtime.retireReason !== undefined
+              ? runtime.retireReason
+              : runtime.key !== input.key
+                ? "config_restart"
+                : runtime.frameIntegrityLost
+                  ? "resource_failure"
+                  : runtime.pinned
+                    ? undefined
+                    : await this.#recycleReason(runtime, input.cliFingerprint);
           if (restart === undefined) {
             runtime.state = "busy";
             return { mode: "warm" as const, runtime };
@@ -1033,8 +1043,65 @@ export class InstanceRuntimePool {
       }
       if (runtime.state === "dead") return;
       await this.#confirmRelease(runtime);
+      if (runtime.retireReason !== undefined && this.#evictable(runtime))
+        await this.#stop(runtime, runtime.retireReason);
     });
     await this.enforceWarmCap();
+  }
+
+  /**
+   * Owner 2026-09-27: start the instance's warm runtime before its first
+   * turn — the same cold start (launch, spawn, readiness handshake, Kernel
+   * row) a turn would do, then idle. No turn, busy slot or model call. A
+   * prewarm never evicts or crowds out a live runtime: at the warm cap, the
+   * Host run cap or this driver's run cap it is skipped with the reason.
+   */
+  async prewarm(input: {
+    driver: string;
+    key: string;
+    launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
+    limits: { maxLive: number; maxLiveForDriver: number };
+    participantId: string;
+    cliFingerprint?: () => Promise<string | undefined>;
+  }): Promise<
+    | { kind: "started"; runtime: WarmRuntime }
+    | { kind: "skipped"; reason: string }
+  > {
+    return await this.#serialize(input.participantId, async () => {
+      const existing = this.#runtimes.get(input.participantId);
+      if (existing !== undefined && existing.state !== "dead")
+        return { kind: "skipped" as const, reason: "already_live" };
+      const live = [...this.#runtimes.values()].filter(
+        (runtime) => runtime.state !== "dead",
+      );
+      const reason =
+        live.length >= this.policy.maxWarm
+          ? "warm_cap"
+          : live.length >= input.limits.maxLive
+            ? "host_cap"
+            : live.filter((runtime) => runtime.driver === input.driver)
+                  .length >= input.limits.maxLiveForDriver
+              ? "cli_cap"
+              : undefined;
+      if (reason !== undefined) return { kind: "skipped" as const, reason };
+      const runtime = await this.#coldStart(input);
+      runtime.state = "idle";
+      runtime.lastActivityMs = this.#now();
+      return { kind: "started" as const, runtime };
+    });
+  }
+
+  /**
+   * The instance was removed from its Channel: its runtime ends with proof
+   * now when idle, else at the end of its current turn (never mid-turn).
+   */
+  async retire(participantId: string): Promise<void> {
+    await this.#serialize(participantId, async () => {
+      const runtime = this.#runtimes.get(participantId);
+      if (runtime === undefined || runtime.state === "dead") return;
+      runtime.retireReason = "removed";
+      if (this.#evictable(runtime)) await this.#stop(runtime, "removed");
+    });
   }
 
   /** Called by the adapter when a turn's process died. */
@@ -1052,7 +1119,11 @@ export class InstanceRuntimePool {
   async sweepIdle(): Promise<void> {
     for (const runtime of [...this.#runtimes.values()]) {
       await this.#serialize(runtime.participantId, async () => {
-        if (
+        if (this.#evictable(runtime) && runtime.retireReason !== undefined)
+          await this.#stop(runtime, runtime.retireReason).catch(
+            (error: unknown) => this.diagnostic(errorMessage(error)),
+          );
+        else if (
           this.#evictable(runtime) &&
           this.#now() - runtime.lastActivityMs >= this.idleTtlFor(runtime)
         )
@@ -1356,6 +1427,7 @@ export class InstanceRuntimePool {
         workerCli,
       };
       runtime = new WarmRuntime({
+        driver: input.driver,
         instanceRuntimeId,
         key: input.key,
         layout,

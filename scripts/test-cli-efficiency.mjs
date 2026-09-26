@@ -23,7 +23,7 @@ import {
   formatComparisonRound,
   gateStatus,
 } from "./cli-efficiency/metrics.mjs";
-import { compareWarmCold } from "./cli-efficiency/warm.mjs";
+import { compareWarmCold, firstRoundReport } from "./cli-efficiency/warm.mjs";
 assert.ok(
   process.argv.includes("--paid"),
   "Requires explicit --paid and user authorization",
@@ -31,7 +31,8 @@ assert.ok(
 // RAH_EFFICIENCY_PROVIDER=codex|claude|kimi|opencode (default codex): each
 // runtime is compared with its own native CLI. Codex default
 // native,legacy,role,role-warm; Claude and OpenCode native,role,role-warm;
-// Kimi native,role. The model/effort must be in approved-models.mjs, checked
+// Kimi native,role. role-prewarm (instance prewarmed at creation) is opt-in
+// through RAH_EFFICIENCY_ORDER and requires role-warm (the cold first round). The model/effort must be in approved-models.mjs, checked
 // here before any process starts. See efficiency-config.mjs.
 const config = parseEfficiencyEnv(process.env);
 const { provider, model, effort, bindingId, order } = config;
@@ -213,6 +214,18 @@ try {
     console.log(
       "cold resume cost avoided " +
         JSON.stringify(result.warmVsCold.coldResumeCostAvoided),
+    );
+  }
+  // Owner 2026-09-27: the cold and the prewarmed first round, labelled side
+  // by side; each arm above is judged against native on its own.
+  if (result.arms["role-warm"] && result.arms["role-prewarm"]) {
+    result.firstRound = firstRoundReport(
+      result.arms["role-warm"].rounds,
+      result.arms["role-prewarm"].rounds,
+      { readyAfterMs: result.arms["role-prewarm"].prewarmed?.readyAfterMs },
+    );
+    console.log(
+      "first round cold vs prewarmed " + JSON.stringify(result.firstRound),
     );
   }
   // Owner 2026-09-25 A: raw, work-path and protocol extras and raw/judged

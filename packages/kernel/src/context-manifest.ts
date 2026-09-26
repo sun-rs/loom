@@ -10,7 +10,10 @@ import { canonicalDigest } from "./canonical-digest.ts";
 import { jsonObject, text } from "./sqlite-row.ts";
 
 export function createContextManifest(input: {
-  activation: Activation;
+  activation: Pick<
+    Activation,
+    "activationId" | "fromSeq" | "participantId" | "roomId" | "toSeq"
+  >;
   agentContext?: AgentRuntimeContext;
   contextManifestId: string;
   createdAt: string;

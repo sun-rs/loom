@@ -49,7 +49,7 @@ import {
 } from "./registry-runtime-recovery.ts";
 import {
   LocalWakeSignal,
-  OutboxWakeDispatcher,
+  createOutboxDispatcherRunners,
 } from "./outbox-wake-dispatcher.ts";
 import { RuntimeOfferPublisher } from "./runtime-offer-publisher.ts";
 import { createDaemonWebPush } from "./daemon-web-push.ts";
@@ -659,13 +659,13 @@ export class DaemonApplication {
         lanes: runner instanceof MultiLaneAgentHost ? runner : undefined,
         pool: instanceRuntimePool,
       });
-      const wakeDispatcher = new OutboxWakeDispatcher({
-        dispatcherId: `${host.hostId}:${host.instanceId}:wake`,
+      const outboxDispatchers = createOutboxDispatcherRunners({
+        config: this.#config,
+        host,
         kernel,
-        leaseMs: this.#config.outboxLeaseMs,
-        pollIntervalMs: this.#config.outboxPollIntervalMs,
-        publisher: wakeSignal,
-        retryAfterMs: this.#config.outboxRetryAfterMs,
+        publishers: runtimeOfferPublishers,
+        runner,
+        wakeSignal,
       });
       const backgroundReconcilerRunners =
         createDaemonBackgroundReconcilerRunners(kernel, (lastError) => {
@@ -722,7 +722,7 @@ export class DaemonApplication {
       this.#health = { ...this.#health, state: "online" };
       await runCoupledComponents(input.signal, [
         async (signal) => await daemon.run({ signal }),
-        async (signal) => await wakeDispatcher.run({ signal }),
+        ...outboxDispatchers,
         ...backgroundReconcilerRunners,
         async (signal) => await webPush.dispatcher.run({ signal }),
         ...runtimeOfferPublishers.map(

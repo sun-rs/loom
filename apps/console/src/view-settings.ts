@@ -47,6 +47,16 @@ const SCALAR_FIELDS: ReadonlyArray<{
     key: "maxRunMinutes",
     label: "单次运行时长上限（分钟）",
   },
+  {
+    hint: "Codex、OpenCode 与开启常驻的 Claude；Kimi 每轮冷启动不预热。关闭只停止新的预热",
+    key: "prewarmEnabled",
+    label: "实例创建即预热常驻运行时（1 开，0 关）",
+  },
+  {
+    hint: "daemon 启动后，为这段时间内运行过的实例预热（0 不预热）",
+    key: "prewarmRecentHours",
+    label: "启动后预热最近活跃实例（小时，0–720）",
+  },
 ];
 
 export function mountSettings(

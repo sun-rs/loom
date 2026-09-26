@@ -158,6 +158,8 @@ export type InstanceRuntimeLifecycle = {
    * per-turn, so a suspect row fences the per-turn path too.
    */
   fenceStart?(participantId: string): Promise<void>;
+  /** Owner 2026-09-27: the instance was removed; end its warm runtime. */
+  retire?(participantId: string): Promise<void>;
 };
 
 export class AgentHost {

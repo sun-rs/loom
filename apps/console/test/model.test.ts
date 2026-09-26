@@ -686,6 +686,7 @@ test("runtime settings are shown read-only with every group", () => {
       noProgressWarnMs: 15 * 60_000,
       queuedStallTerminateMs: 15 * 60_000,
     },
+    prewarm: { enabled: true, recentActiveHours: 24 },
   });
   assert.deepEqual(rows, [
     { label: "修订号", value: "3" },
@@ -697,6 +698,8 @@ test("runtime settings are shown read-only with every group", () => {
     { label: "无进展告警阈值", value: "15 分钟" },
     { label: "排队时无进展终止阈值", value: "15 分钟" },
     { label: "单次运行时长上限", value: "240 分钟" },
+    { label: "实例创建即预热常驻运行时", value: "开" },
+    { label: "启动后预热最近活跃实例", value: "最近 24 小时" },
   ]);
 });
 

@@ -19,6 +19,8 @@ import {
   InstanceRuntimePool,
   WARM_RUNTIME_RECOVERY_DRIVER,
   type WarmRuntime,
+  type WarmRuntimeLaunch,
+  type WarmRuntimeLayout,
   type WarmTurn,
   type WarmTurnOutcome,
 } from "./instance-runtime-pool.ts";
@@ -36,6 +38,8 @@ import type {
   RuntimeAdapter,
   RuntimeAvailability,
   RuntimeBusyNotice,
+  RuntimePrewarmLimits,
+  RuntimePrewarmOutcome,
   RuntimeStartLifecycle,
 } from "./runtime.ts";
 import { validBusyNotice } from "./runtime-busy-input.ts";
@@ -210,6 +214,12 @@ export type CodexWarmAdapterOptions = {
   cliExecutable?: string;
 };
 
+/** What a cold launch prepared, kept on the runtime for its later turns. */
+type LaunchCapture = {
+  launchEnvironment?: Readonly<Record<string, string>>;
+  standingPromptDigest?: string | undefined;
+};
+
 type TurnBinding = {
   activationId: string;
   /** Why the Host ended the turn (S2-b supervision), if it did. */
@@ -263,73 +273,19 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       return await this.#options.legacy.start(input, lifecycle);
     const pool = this.#options.pool;
     const control = pool.control.instanceRuntimes!;
-    let standingPromptDigest: string | undefined;
-    let launchEnvironment: Readonly<Record<string, string>> = {};
-    const executable = this.#options.cliExecutable;
+    const launched: LaunchCapture = {};
     const acquired = await pool.acquire({
-      ...(executable === undefined
-        ? {}
-        : {
-            cliFingerprint: async () => await cliBinaryFingerprint(executable),
-          }),
+      ...this.#cliFingerprint(),
       runAttemptId: input.runAttemptId,
       driver: this.#driver.kind,
       key: this.#options.runtimeKey(input),
-      launch: async (layout) => {
-        const lease = await this.#options.runtimeEnvironment(input);
-        standingPromptDigest = lease.standingPromptDigest;
-        launchEnvironment = lease.env;
-        const model = this.#options.resolvedModel;
-        return {
-          args: [
-            isSea() ? this.#driver.seaEntry : this.#driver.entry,
-            ...this.#options.driverArgs,
-            ...(model?.source === "custom_model" ||
-            model?.source === "explicit_binding"
-              ? ["--model", model.modelId]
-              : []),
-            ...(model?.source === "explicit_binding" &&
-            model.reasoning !== undefined &&
-            model.reasoning !== "default"
-              ? ["--reasoning", model.reasoning]
-              : []),
-            ...(lease.args ?? []),
-            "--runtime-id",
-            layout.instanceRuntimeId,
-            "--host-generation",
-            pool.hostGeneration,
-            "--socket-dir",
-            layout.socketDirectory,
-          ],
-          cwd: this.#options.cwd,
-          env: resolveActivationEnvironment({
-            configured: this.#options.env ?? {},
-            // Stable identity only: per-turn values live in the handle scope.
-            fences: {
-              [LOOM_RUNTIME_ID_ENV]: layout.instanceRuntimeId,
-              [LOOM_RUN_ID_ENV]: layout.instanceRuntimeId,
-              RAH_CONSUMER_ID: input.consumerId,
-              RAH_HOST_ID: input.hostId,
-              RAH_PARTICIPANT_ID: input.participantId,
-            },
-            inherited: process.env,
-            leased: {
-              ...lease.env,
-              [RAH_AGENT_TOOL_BIN_ENV]: layout.binDirectory,
-              [RAH_WORKER_API_URL_ENV]: this.#options.workerApiOrigin,
-              [RAH_WORKER_CLI_ENV]: layout.workerCli,
-              [RAH_WORKER_TURN_ROOT_ENV]: layout.turnRoot,
-            },
-          }),
-          ...(lease.release === undefined ? {} : { release: lease.release }),
-        };
-      },
+      launch: async (layout) => await this.#launch(input, layout, launched),
       participantId: input.participantId,
     });
     const runtime = acquired.runtime;
     if (acquired.mode === "cold") {
-      runtime.standingPromptDigest = standingPromptDigest;
-      runtime.launchEnvironment = launchEnvironment;
+      runtime.standingPromptDigest = launched.standingPromptDigest;
+      runtime.launchEnvironment = launched.launchEnvironment ?? {};
     }
     const runtimeRunId = `turn:${randomUUID()}`;
     const turn = runtime.openTurn(input.runAttemptId, runtimeRunId);
@@ -485,6 +441,100 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       runAttemptId: input.runAttemptId,
     });
     return handle;
+  }
+
+  /**
+   * Owner 2026-09-27: the instance's warm runtime before any turn — exactly
+   * the launch (runtime key, runtime-level lease, resume of the recorded
+   * session) its first turn would do, stopped at the driver's readiness
+   * handshake. The first turn then finds it idle under the same key (`warm`)
+   * and binds the native session as a cold start would.
+   */
+  async prewarm(
+    input: ActivationEnvelope,
+    limits: RuntimePrewarmLimits,
+  ): Promise<RuntimePrewarmOutcome> {
+    if (!this.#warm(input)) return { kind: "skipped", reason: "not_warm" };
+    const launched: LaunchCapture = {};
+    const outcome = await this.#options.pool.prewarm({
+      ...this.#cliFingerprint(),
+      driver: this.#driver.kind,
+      key: this.#options.runtimeKey(input),
+      launch: async (layout) => await this.#launch(input, layout, launched),
+      limits,
+      participantId: input.participantId,
+    });
+    if (outcome.kind === "skipped") return outcome;
+    outcome.runtime.standingPromptDigest = launched.standingPromptDigest;
+    outcome.runtime.launchEnvironment = launched.launchEnvironment ?? {};
+    return {
+      instanceRuntimeId: outcome.runtime.instanceRuntimeId,
+      kind: "started",
+    };
+  }
+
+  #cliFingerprint() {
+    const executable = this.#options.cliExecutable;
+    return executable === undefined
+      ? {}
+      : {
+          cliFingerprint: async () => await cliBinaryFingerprint(executable),
+        };
+  }
+
+  async #launch(
+    input: ActivationEnvelope,
+    layout: WarmRuntimeLayout,
+    launched: LaunchCapture,
+  ): Promise<WarmRuntimeLaunch> {
+    const pool = this.#options.pool;
+    const lease = await this.#options.runtimeEnvironment(input);
+    launched.standingPromptDigest = lease.standingPromptDigest;
+    launched.launchEnvironment = lease.env;
+    const model = this.#options.resolvedModel;
+    return {
+      args: [
+        isSea() ? this.#driver.seaEntry : this.#driver.entry,
+        ...this.#options.driverArgs,
+        ...(model?.source === "custom_model" ||
+        model?.source === "explicit_binding"
+          ? ["--model", model.modelId]
+          : []),
+        ...(model?.source === "explicit_binding" &&
+        model.reasoning !== undefined &&
+        model.reasoning !== "default"
+          ? ["--reasoning", model.reasoning]
+          : []),
+        ...(lease.args ?? []),
+        "--runtime-id",
+        layout.instanceRuntimeId,
+        "--host-generation",
+        pool.hostGeneration,
+        "--socket-dir",
+        layout.socketDirectory,
+      ],
+      cwd: this.#options.cwd,
+      env: resolveActivationEnvironment({
+        configured: this.#options.env ?? {},
+        // Stable identity only: per-turn values live in the handle scope.
+        fences: {
+          [LOOM_RUNTIME_ID_ENV]: layout.instanceRuntimeId,
+          [LOOM_RUN_ID_ENV]: layout.instanceRuntimeId,
+          RAH_CONSUMER_ID: input.consumerId,
+          RAH_HOST_ID: input.hostId,
+          RAH_PARTICIPANT_ID: input.participantId,
+        },
+        inherited: process.env,
+        leased: {
+          ...lease.env,
+          [RAH_AGENT_TOOL_BIN_ENV]: layout.binDirectory,
+          [RAH_WORKER_API_URL_ENV]: this.#options.workerApiOrigin,
+          [RAH_WORKER_CLI_ENV]: layout.workerCli,
+          [RAH_WORKER_TURN_ROOT_ENV]: layout.turnRoot,
+        },
+      }),
+      ...(lease.release === undefined ? {} : { release: lease.release }),
+    };
   }
 
   async reap(run: RunHandle): Promise<RunExit> {

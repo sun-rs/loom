@@ -28,8 +28,8 @@ export function projectPlacementPlannerInput(input: {
   readRuntimeOffer(row: Row): RuntimeOfferProjection;
   isTrustedOffer(offer: RuntimeOfferProjection): boolean;
   readPlacement(row: Row): PlacementDecision;
-  readAgentRevision(id: string): AgentDefinitionRevision;
-  readExecutionPolicy(id: string): ExecutionPolicyRevision;
+  readAgentRevision?(id: string): AgentDefinitionRevision;
+  readExecutionPolicy?(id: string): ExecutionPolicyRevision;
 }): PlacementPlannerInput {
   const { now, schedulerVersion } = input;
   const offerRows = input.database
@@ -64,8 +64,12 @@ export function projectPlacementPlannerInput(input: {
     database: input.database,
     now,
     workspaceDefinitionId,
-    readAgentRevision: input.readAgentRevision,
-    readExecutionPolicy: input.readExecutionPolicy,
+    ...(input.readAgentRevision === undefined
+      ? {}
+      : { readAgentRevision: input.readAgentRevision }),
+    ...(input.readExecutionPolicy === undefined
+      ? {}
+      : { readExecutionPolicy: input.readExecutionPolicy }),
   });
 
   const hostRows = input.database

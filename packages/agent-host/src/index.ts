@@ -235,6 +235,15 @@ export {
   InstanceRuntimePool,
   WARM_RUNTIME_RECOVERY_DRIVER,
 } from "./instance-runtime-pool.ts";
+export {
+  DEFAULT_INSTANCE_PREWARM_SETTINGS,
+  InstancePrewarmer,
+} from "./instance-prewarm.ts";
+export type {
+  InstancePrewarmOutcome,
+  InstancePrewarmSettings,
+  InstancePrewarmerOptions,
+} from "./instance-prewarm.ts";
 export type {
   InstanceRuntimePoolOptions,
   WarmRuntime,
@@ -361,6 +370,8 @@ export type {
   RunHandle,
   RuntimeAdapter,
   RuntimeAvailability,
+  RuntimePrewarmLimits,
+  RuntimePrewarmOutcome,
   RuntimeRecoveryInput,
   RuntimeStartLifecycle,
 } from "./runtime.ts";

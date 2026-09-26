@@ -80,6 +80,12 @@ export type {
   PreparedChannelPrimaryDirectory,
 } from "./room-kernel-options.ts";
 export { planNextPlacement } from "./placement-planner.ts";
+export {
+  INSTANCE_RUNTIME_HINT_TOPIC,
+  InstancePrewarmService,
+  type InstancePrewarmPlan,
+  type InstanceRuntimeHint,
+} from "./instance-prewarm.ts";
 export type {
   PlacementActivationCandidate,
   PlacementHoldDraft,

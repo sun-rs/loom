@@ -14,6 +14,11 @@ import {
   AgentStartGate,
   type AgentStartSchedulerSettings,
 } from "./agent-start-coordinator.ts";
+import {
+  InstancePrewarmer,
+  type InstancePrewarmOutcome,
+  type InstancePrewarmSettings,
+} from "./instance-prewarm.ts";
 
 export type MultiLaneAgentHostOptions = Omit<
   AgentHostOptions,
@@ -26,6 +31,8 @@ export type MultiLaneAgentHostOptions = Omit<
    * then to Raft's defaults (5 concurrent starts, 500 ms apart).
    */
   runtimeStartScheduler?: Partial<AgentStartSchedulerSettings>;
+  /** Owner 2026-09-27: instance runtime prewarming (runtime settings). */
+  instancePrewarm?: Partial<InstancePrewarmSettings>;
   host: AuthenticatedHostContext;
   kernel: NonNullable<AgentHostOptions["kernel"]>;
   placementRuntimeResolver: NonNullable<
@@ -41,6 +48,7 @@ export class MultiLaneAgentHost {
   readonly #startGate: AgentStartGate;
   readonly #processHygiene: AgentHostOptions["processHygiene"];
   readonly #instanceRuntimePool: AgentHostOptions["instanceRuntimePool"];
+  readonly #prewarmer: InstancePrewarmer | undefined;
   readonly #createWorker: () => AgentHost;
   #launchWorker: ((worker: AgentHost) => void) | undefined;
   #running = false;
@@ -55,6 +63,22 @@ export class MultiLaneAgentHost {
     this.#startGate = new AgentStartGate(options.runtimeStartScheduler ?? {});
     this.#processHygiene = options.processHygiene;
     this.#instanceRuntimePool = options.instanceRuntimePool;
+    const pool = options.instanceRuntimePool;
+    const retire = pool?.retire?.bind(pool);
+    this.#prewarmer =
+      retire === undefined
+        ? undefined
+        : new InstancePrewarmer({
+            host: options.host,
+            kernel: options.kernel,
+            open: false,
+            pool: { retire },
+            resolveRuntime: options.placementRuntimeResolver,
+            ...(options.instancePrewarm === undefined
+              ? {}
+              : { settings: options.instancePrewarm }),
+            startGate: this.#startGate,
+          });
     this.#createWorker = () =>
       new AgentHost({
         ...options,
@@ -93,6 +117,25 @@ export class MultiLaneAgentHost {
     this.#startGate.updateSettings(settings);
   }
 
+  /** Runtime prewarm setting; applies to the next prewarm. */
+  updatePrewarmSettings(settings: Partial<InstancePrewarmSettings>): void {
+    this.#prewarmer?.updateSettings(settings);
+  }
+
+  /** Kernel `instance.runtime` hint: prewarm a newly created instance. */
+  async prewarmInstance(
+    participantId: string,
+  ): Promise<InstancePrewarmOutcome> {
+    return this.#prewarmer === undefined
+      ? { kind: "skipped", participantId, reason: "no_warm_pool" }
+      : await this.#prewarmer.prewarm(participantId);
+  }
+
+  /** Kernel `instance.runtime` hint: the instance left its Channel. */
+  async retireInstance(participantId: string): Promise<void> {
+    await this.#prewarmer?.retire(participantId);
+  }
+
   async run(input: { signal: AbortSignal }): Promise<void> {
     if (this.#running) {
       throw new Error("MultiLaneAgentHost is already running");
@@ -128,6 +171,10 @@ export class MultiLaneAgentHost {
       }
       if (this.#instanceRuntimePool !== undefined)
         await startInstanceRuntimes(this.#instanceRuntimePool);
+      // Owner 2026-09-27: after the start janitor, recently active instances
+      // get their warm runtime back in the background (lanes do not wait).
+      this.#prewarmer?.open();
+      void this.#prewarmer?.prewarmRecentlyActive().catch(() => undefined);
       const runs: Promise<void>[] = [];
       this.#launchWorker = (worker) => {
         runs.push(
@@ -154,6 +201,7 @@ export class MultiLaneAgentHost {
       this.#launchWorker = undefined;
       janitorStop.abort();
       await janitorLoop;
+      await this.#prewarmer?.close();
       await stopInstanceRuntimes(this.#instanceRuntimePool);
       input.signal.removeEventListener("abort", beginDrain);
       this.#startGate.cancelAll("MultiLaneAgentHost stopped");

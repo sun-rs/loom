@@ -19,6 +19,27 @@ import {
  */
 const RunCapSchema = z.number().int().min(1).max(64);
 
+/**
+ * Owner 2026-09-27 (contract §6a): the Host starts a Role instance's warm
+ * runtime when the instance is created, and after a daemon start for the
+ * instances with a RunAttempt in the last `recentActiveHours` (0: none).
+ * Switching it off stops new prewarms; runtimes already started keep the
+ * pool's normal idle rules.
+ */
+export const InstancePrewarmSettingsSchema = z
+  .object({
+    enabled: z.boolean(),
+    recentActiveHours: z.number().int().min(0).max(720),
+  })
+  .strict();
+export type InstancePrewarmSettingsView = z.infer<
+  typeof InstancePrewarmSettingsSchema
+>;
+export const InstancePrewarmSettingsUpdateSchema =
+  InstancePrewarmSettingsSchema.partial();
+export const INSTANCE_PREWARM_DEFAULTS: InstancePrewarmSettingsView =
+  Object.freeze({ enabled: true, recentActiveHours: 24 });
+
 export const RuntimeSettingsReadSchema = z.object({}).strict();
 export type RuntimeSettingsRead = z.infer<typeof RuntimeSettingsReadSchema>;
 
@@ -41,6 +62,7 @@ export const RuntimeSettingsUpdateSchema = z
       .optional(),
     wakeGuard: WakeGuardSettingsUpdateSchema.optional(),
     watchdog: RunWatchdogSettingsUpdateSchema.optional(),
+    prewarm: InstancePrewarmSettingsUpdateSchema.optional(),
   })
   .strict();
 export type RuntimeSettingsUpdate = z.infer<typeof RuntimeSettingsUpdateSchema>;
@@ -64,6 +86,7 @@ export const RuntimeSettingsSchema = z
     ),
     wakeGuard: WakeGuardSettingsSchema,
     watchdog: RunWatchdogSettingsSchema,
+    prewarm: InstancePrewarmSettingsSchema,
   })
   .strict();
 export type RuntimeSettings = z.infer<typeof RuntimeSettingsSchema>;

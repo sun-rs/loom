@@ -136,6 +136,11 @@ test("fails closed on unknown providers, foreign bindings and unsupported arms",
       RAH_EFFICIENCY_PROVIDER: "kimi",
       RAH_EFFICIENCY_ORDER: "native,role-warm",
     },
+    // Kimi runs per turn: nothing to prewarm.
+    {
+      RAH_EFFICIENCY_PROVIDER: "kimi",
+      RAH_EFFICIENCY_ORDER: "native,role,role-prewarm",
+    },
     { RAH_EFFICIENCY_PROVIDER: "claude", RAH_EFFICIENCY_ORDER: "role" },
     // Effortless haiku requires "none"; an effort binding never takes it.
     { RAH_EFFICIENCY_PROVIDER: "claude", RAH_EFFICIENCY_EFFORT: "low" },
@@ -155,4 +160,28 @@ test("fails closed on unknown providers, foreign bindings and unsupported arms",
       /Invalid efficiency gate|order/,
       JSON.stringify(env),
     );
+});
+
+// Owner 2026-09-27: the prewarmed first round is an opt-in arm of the warm
+// runtimes, beside (never instead of) the cold role-warm arm.
+test("role-prewarm is an opt-in arm for Codex, Claude and OpenCode", () => {
+  for (const provider of ["codex", "claude", "opencode"]) {
+    const env = {
+      RAH_EFFICIENCY_PROVIDER: provider,
+      RAH_EFFICIENCY_ORDER: "native,role-warm,role-prewarm",
+      ...(provider === "claude" ? { RAH_EFFICIENCY_EFFORT: "none" } : {}),
+    };
+    assert.deepEqual(parseEfficiencyEnv(env).order, [
+      "native",
+      "role-warm",
+      "role-prewarm",
+    ]);
+    assert.ok(
+      !parseEfficiencyEnv({
+        RAH_EFFICIENCY_PROVIDER: provider,
+        ...(provider === "claude" ? { RAH_EFFICIENCY_EFFORT: "none" } : {}),
+      }).order.includes("role-prewarm"),
+      `${provider}: not a default arm`,
+    );
+  }
 });

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { gateDaemonConfig } from "./gate-daemon.mjs";
+import { gateDaemonConfig, gateRuntimeSettings } from "./gate-daemon.mjs";
 
 // Channel homes (evo status §39) are created at room.create; the gate daemon
 // keeps them inside its own temporary root, never ~/.loom/channel-workspaces.
@@ -33,4 +33,17 @@ test("gate daemon config: channel homes under the gate root, warm switch per arm
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// Owner 2026-09-27: the product prewarms instances at creation by default.
+// Every gate arm measures a cold first round unless it opts in explicitly.
+test("gate runtime settings switch instance prewarming off unless the arm opts in", () => {
+  assert.deepEqual(gateRuntimeSettings({}), {
+    revision: 0,
+    prewarm: { enabled: false },
+  });
+  assert.deepEqual(gateRuntimeSettings({ prewarm: true }), {
+    revision: 0,
+    prewarm: { enabled: true },
+  });
 });

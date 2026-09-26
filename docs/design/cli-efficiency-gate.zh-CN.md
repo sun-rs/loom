@@ -179,6 +179,19 @@ node scripts/cli-efficiency/resume-probe.mjs --thread <thread-id> --repeat 3 [--
 
 断线目前按致命错误回收，不做在线 `thread/turns/list` 对账；这是比规格更保守的本期范围。
 
+## 预热首轮与冷首轮（owner 2026-09-27）
+
+产品默认在实例创建时预热常驻运行时（合同 §6a）。gate daemon 在自己的运行时设置里默认关闭预热，
+所以 `role`、`role-warm` 与漂移门禁仍测冷首轮与重启冷恢复。opt-in 组 `role-prewarm`（Codex、Claude、OpenCode）
+打开预热：创建实例后等到空闲运行时行（无轮次、无 RunAttempt）并记录就绪耗时，断言第 1 轮 `warm` 且复用预热的
+那个运行时，不做重启轮。它必须与 `role-warm` 同时运行，否则启动前失败——预热首轮不能替代冷首轮达标。
+
+```sh
+RAH_EFFICIENCY_ORDER=native,role-warm,role-prewarm npm run test:cli:efficiency -- --paid
+```
+
+两组各自对原生判定；`result.firstRound` 另外并列报告冷首轮与预热首轮（回复耗时、排队、输入、预热就绪耗时）。
+
 ## 最终回复收尾（`--final`，仅报告不设预算）
 
 模型用 `message-post --final` 发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，

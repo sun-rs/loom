@@ -130,6 +130,18 @@ export type RuntimeBusyNotice = {
   eventIds?: readonly string[];
 };
 
+/** Live warm runtimes a prewarm may not reach or exceed. */
+export type RuntimePrewarmLimits = {
+  /** All live warm runtimes of this Host (the Host run cap). */
+  maxLive: number;
+  /** Live warm runtimes of this driver (the per-CLI run cap). */
+  maxLiveForDriver: number;
+};
+
+export type RuntimePrewarmOutcome =
+  | { kind: "started"; instanceRuntimeId: string }
+  | { kind: "skipped"; reason: string };
+
 export interface RuntimeAdapter {
   readonly busyInputMode?: "direct" | "gated" | undefined;
   readonly guideRuntimeId?: string | undefined;
@@ -160,6 +172,16 @@ export interface RuntimeAdapter {
   cancel(run: RunHandle): Promise<RunExit>;
   reap(run: RunHandle): Promise<RunExit>;
   recover?(input: RuntimeRecoveryInput): Promise<RunExit>;
+  /**
+   * Owner 2026-09-27: start this instance's warm runtime before any turn
+   * (process and readiness handshake only, no model turn). `input` is the
+   * Kernel's read-only prewarm plan in envelope form: its ids name no
+   * Activation or RunAttempt. Only warm adapters implement it.
+   */
+  prewarm?(
+    input: ActivationEnvelope,
+    limits: RuntimePrewarmLimits,
+  ): Promise<RuntimePrewarmOutcome>;
   /**
    * S2-a: called once per claimed RunAttempt after its Activation outcome is
    * durable (complete, retry, quarantine, cancel). A warm runtime releases

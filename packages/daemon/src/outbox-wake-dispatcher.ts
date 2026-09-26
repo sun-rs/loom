@@ -1,4 +1,7 @@
+import { MultiLaneAgentHost } from "@rah-os/agent-host";
 import type { RoomKernel } from "@rah-os/core";
+
+import { InstanceRuntimeHintDispatcher } from "./instance-runtime-hint-dispatcher.ts";
 
 export interface ContentFreeWakePublisher {
   publish(): Promise<void> | void;
@@ -109,6 +112,56 @@ export class OutboxWakeDispatcher {
       }
     }
   }
+}
+
+/**
+ * The daemon's Outbox consumers for this Host: Activation wake hints, and
+ * (owner 2026-09-27) instance runtime hints — prewarm a created instance,
+ * retire a removed one — when the Host runs multi-lane with a warm pool.
+ */
+export function createOutboxDispatcherRunners(input: {
+  config: {
+    outboxLeaseMs: number;
+    outboxPollIntervalMs: number;
+    outboxRetryAfterMs: number;
+  };
+  host: { hostId: string; instanceId: string };
+  kernel: RoomKernel;
+  /** Re-observed before a prewarm (the new instance's channel-home mount). */
+  publishers: ReadonlyArray<{
+    publishAvailable(): boolean;
+    refreshWorkspaceMounts(): Promise<void>;
+  }>;
+  runner: unknown;
+  wakeSignal: ContentFreeWakePublisher;
+}): Array<(signal: AbortSignal) => Promise<void>> {
+  const { config, host, kernel } = input;
+  const wake = new OutboxWakeDispatcher({
+    dispatcherId: `${host.hostId}:${host.instanceId}:wake`,
+    kernel,
+    leaseMs: config.outboxLeaseMs,
+    pollIntervalMs: config.outboxPollIntervalMs,
+    publisher: input.wakeSignal,
+    retryAfterMs: config.outboxRetryAfterMs,
+  });
+  const runners = [async (signal: AbortSignal) => await wake.run({ signal })];
+  if (input.runner instanceof MultiLaneAgentHost) {
+    const hints = new InstanceRuntimeHintDispatcher({
+      beforePrewarm: async () => {
+        for (const publisher of input.publishers) {
+          await publisher.refreshWorkspaceMounts();
+          publisher.publishAvailable();
+        }
+      },
+      dispatcherId: `${host.hostId}:${host.instanceId}:instance-runtime`,
+      kernel,
+      leaseMs: config.outboxLeaseMs,
+      pollIntervalMs: config.outboxPollIntervalMs,
+      target: input.runner,
+    });
+    runners.push(async (signal: AbortSignal) => await hints.run({ signal }));
+  }
+  return runners;
 }
 
 async function waitForDelay(

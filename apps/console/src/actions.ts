@@ -550,6 +550,10 @@ export type SettingsForm = {
   minStartIntervalMs: string;
   noProgressWarnMinutes: string;
   queuedStallTerminateMinutes: string;
+  /** Owner 2026-09-27: "1" prewarm on instance creation, "0" off. */
+  prewarmEnabled: string;
+  /** Daemon-start prewarm window in hours (0: none). */
+  prewarmRecentHours: string;
   /** runtimeProfileId -> per-CLI run cap. */
   runtimes: Record<string, string>;
   wakeChainLimit: string;
@@ -590,6 +594,8 @@ export function settingsFormFrom(settings: RuntimeSettings): SettingsForm {
     queuedStallTerminateMinutes: String(
       settings.watchdog.queuedStallTerminateMs / MINUTE_MS,
     ),
+    prewarmEnabled: settings.prewarm.enabled ? "1" : "0",
+    prewarmRecentHours: String(settings.prewarm.recentActiveHours),
     runtimes: Object.fromEntries(
       settings.runtimes.map((runtime) => [
         runtime.runtimeProfileId,
@@ -662,6 +668,16 @@ export function buildSettingsUpdate(
   const maxRun = number("单次运行时长上限", form.maxRunMinutes, MINUTE_MS);
   if (maxRun !== base.watchdog.maxRunMs) watchdog.maxRunMs = maxRun;
   if (Object.keys(watchdog).length > 0) update.watchdog = watchdog;
+  const prewarm: NonNullable<RuntimeSettingsUpdate["prewarm"]> = {};
+  const enabledText = form.prewarmEnabled.trim();
+  if (enabledText !== "0" && enabledText !== "1")
+    numbers.push("实例创建即预热（1 开，0 关）");
+  const enabled = enabledText === "1";
+  if (enabled !== base.prewarm.enabled) prewarm.enabled = enabled;
+  const recent = number("启动后预热窗口", form.prewarmRecentHours);
+  if (recent !== base.prewarm.recentActiveHours)
+    prewarm.recentActiveHours = recent;
+  if (Object.keys(prewarm).length > 0) update.prewarm = prewarm;
   if (numbers.length > 0) {
     return { ok: false, error: `不是有效数字：${numbers.join("、")}` };
   }

@@ -17,6 +17,10 @@ export const LEGACY_RUNTIME_SETTINGS_FILE = "runtime-concurrency.json";
 
 type ConcurrencyLanes = {
   setCapacity(capacity: number): void;
+  updatePrewarmSettings?(settings: {
+    enabled: boolean;
+    recentActiveWindowMs: number;
+  }): void;
   updateStartScheduler(settings: {
     maxConcurrentStarts?: number;
     minStartIntervalMs?: number;
@@ -27,7 +31,8 @@ type ConcurrencyLanes = {
  * Composes the Human's runtime settings with their appliers: the Kernel
  * placement caps (Host cap and one cap per CLI RuntimeProfile), the Kernel
  * run guards (evo §37 wake chain limit and watchdog thresholds), the Host
- * lanes, the warm pool's busy-turn cap and the start gate. Only v4 (multi-lane)
+ * lanes, the warm pool's busy-turn cap, the start gate and instance
+ * prewarming. Only v4 (multi-lane)
  * daemons have them; v2/v3 keep their fixed single lane.
  */
 export function openDaemonRuntimeSettings(
@@ -69,6 +74,14 @@ export class DaemonRuntimeSettings {
     };
   }
 
+  /** Owner 2026-09-27: the Host's instance prewarm settings. */
+  prewarm(view: RuntimeSettingsView = this.settings.read()) {
+    return {
+      enabled: view.prewarm.enabled,
+      recentActiveWindowMs: view.prewarm.recentActiveHours * 3_600_000,
+    };
+  }
+
   startScheduler() {
     const view = this.settings.read();
     return {
@@ -97,6 +110,7 @@ export class DaemonRuntimeSettings {
       // Raises only: a reduction is enforced by the Kernel placement caps
       // above, so work already placed under the old cap starts and drains.
       input.pool?.setMaxBusyTurns(view.maxConcurrentRuns);
+      input.lanes?.updatePrewarmSettings?.(this.prewarm(view));
     };
     apply(this.settings.read());
     this.settings.onChange(apply);

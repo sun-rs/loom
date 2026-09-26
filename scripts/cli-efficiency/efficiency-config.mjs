@@ -13,6 +13,8 @@ export const NO_EFFORT = "none";
 export const CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"];
 
 // Defaults are the current owner-approved gate models (approved-models.mjs).
+// `role-prewarm` (owner 2026-09-27, opt-in via RAH_EFFICIENCY_ORDER): the
+// warm instance prewarmed at creation, reported beside the cold role-warm arm.
 // `productUsage`: whether the product records per-generation usage for this
 // runtime (Kimi ACP reports a capture gap, so its product usage is
 // `not-recorded` by design).
@@ -21,7 +23,7 @@ export const EFFICIENCY_PROVIDERS = {
     catalogKind: "codex-cli/v1",
     model: "gpt-6-luna",
     effort: "low",
-    arms: ["native", "legacy", "role", "role-warm"],
+    arms: ["native", "legacy", "role", "role-warm", "role-prewarm"],
     // The product runs Codex warm by default; role-warm measures that path.
     defaults: ["native", "legacy", "role", "role-warm"],
     warmAppend: true,
@@ -36,7 +38,7 @@ export const EFFICIENCY_PROVIDERS = {
     // Bindings the installed Claude Code catalog publishes without effort
     // levels (probed 2026-09-25: `haiku`, supportsEffort false).
     effortless: ["haiku"],
-    arms: ["native", "legacy", "role", "role-warm"],
+    arms: ["native", "legacy", "role", "role-warm", "role-prewarm"],
     defaults: ["native", "role", "role-warm"],
     warmAppend: true,
     // Claude Code reads CLAUDE.md natively (the others read AGENTS.md).
@@ -60,7 +62,7 @@ export const EFFICIENCY_PROVIDERS = {
     model: "deepseek/deepseek-flash",
     effort: "low",
     modelPattern: /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._/:-]*$/u,
-    arms: ["native", "role", "role-warm"],
+    arms: ["native", "role", "role-warm", "role-prewarm"],
     defaults: ["native", "role", "role-warm"],
     warmAppend: false,
     instructionFile: "AGENTS.md",

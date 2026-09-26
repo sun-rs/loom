@@ -47,7 +47,12 @@ export async function rahArm({
   // Its daemon restart before round 3 is skipped unless
   // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
   // resume at round 3; the per-turn arms keep the restart.
-  const warm = kind === "role-warm";
+  // role-prewarm (owner 2026-09-27): the same warm runtime, prewarmed at
+  // instance creation (the product default); round 1 must reuse it. Every
+  // other arm runs with prewarming off, so role-warm keeps measuring the cold
+  // first round. No daemon restart in this arm.
+  const prewarmed = kind === "role-prewarm";
+  const warm = kind === "role-warm" || prewarmed;
   const gate = await prepareGateDaemon({
     provider,
     model,
@@ -55,6 +60,7 @@ export async function rahArm({
     root,
     cwd,
     warm,
+    prewarm: prewarmed,
     processes: arm.processes,
     save,
     consumerId: "efficiency-gate",
@@ -85,8 +91,32 @@ export async function rahArm({
     }
   };
   const restartBeforeRound =
-    warm && process.env.RAH_EFFICIENCY_WARM_RESTART !== "1" ? undefined : 3;
-  Object.assign(arm, { warmRuntimes: warm, restartBeforeRound });
+    prewarmed || (warm && process.env.RAH_EFFICIENCY_WARM_RESTART !== "1")
+      ? undefined
+      : 3;
+  Object.assign(arm, {
+    warmRuntimes: warm,
+    firstRound: prewarmed ? "prewarmed" : warm ? "cold" : "per-turn",
+    restartBeforeRound,
+  });
+  // The live runtime row of one participant (read-only).
+  const liveRuntimeOf = (participant) => {
+    const db = new DatabaseSync(join(stateDirectory, "room.db"), {
+      readOnly: true,
+    });
+    try {
+      const row = db
+        .prepare(
+          `SELECT instance_runtime_id, pid, native_session_id, state, turn_count
+             FROM instance_runtimes
+            WHERE participant_id = ? AND state IN ('idle', 'busy')`,
+        )
+        .get(participant);
+      return row === undefined ? undefined : { ...row };
+    } finally {
+      db.close();
+    }
+  };
   let observer, participantId, agentId, roomId, actor;
   let sessionId;
   const start = gate.start;
@@ -153,6 +183,7 @@ export async function rahArm({
       })
     ).room.roomId;
     if (kind === "role" || warm) {
+      const createdAt = Date.now();
       const role = (
         await post("/v3/client/roles/create", {
           controlRoomId: control,
@@ -169,6 +200,23 @@ export async function rahArm({
       });
       participantId = created.instance.instanceId;
       agentId = created.agent.definition.agentId;
+      if (prewarmed) {
+        // Readiness of the prewarmed runtime before round 1: an idle row
+        // with no turn and no RunAttempt (process start only, no model).
+        await wait(() => liveRuntimeOf(participantId)?.state === "idle", 60000);
+        const runtime = liveRuntimeOf(participantId);
+        assert.equal(runtime.turn_count, 0, "Prewarm ran a turn");
+        assert.deepEqual(
+          observer.listRunAttempts({ roomId }),
+          [],
+          "Prewarm created a RunAttempt",
+        );
+        arm.prewarmed = {
+          instanceRuntimeId: runtime.instance_runtime_id,
+          readyAfterMs: Date.now() - createdAt,
+        };
+        save();
+      }
     } else {
       const agent = (
         await post("/v3/client/agents/list", { controlRoomId: control })
@@ -371,6 +419,9 @@ export async function rahArm({
       arm.warmFailures = warmExecutionFailures(arm.rounds, {
         restartBeforeRound,
         runtimeCount: arm.instanceRuntimes.length,
+        ...(prewarmed
+          ? { prewarmedRuntimeId: arm.prewarmed?.instanceRuntimeId ?? null }
+          : {}),
       });
       save();
       assert.deepEqual(arm.warmFailures, [], "Warm execution contract");

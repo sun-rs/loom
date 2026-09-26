@@ -65,6 +65,7 @@ test("concurrency settings default to the Host cap, a conservative per-CLI cap a
         noProgressWarnMs: 15 * 60_000,
         queuedStallTerminateMs: 15 * 60_000,
       },
+      prewarm: { enabled: true, recentActiveHours: 24 },
     });
   } finally {
     rmSync(directory, { force: true, recursive: true });
@@ -302,6 +303,69 @@ test("attaching the settings pushes the wakeGuard and watchdog groups into the K
       wakeGuard: { instanceChainLimit: 3 },
     });
     assert.equal(kernel.runGuards.wakeGuard().instanceChainLimit, 3);
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("the prewarm group is on by default, updates partially at runtime, persists, and reaches the Host lanes now and on every update", () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-prewarm-settings-"));
+  const path = join(directory, "runtime-settings.json");
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  kernel.initialize();
+  const defaults = {
+    maxConcurrentRuns: 2,
+    maxConcurrentStarts: 5,
+    minStartIntervalMs: 500,
+  };
+  try {
+    const settings = new RuntimeSettings({ defaults, path, runtimes });
+    const applied: unknown[] = [];
+    new DaemonRuntimeSettings("host-1", settings).attach({
+      kernel,
+      lanes: {
+        setCapacity: () => undefined,
+        updatePrewarmSettings: (value) => applied.push(value),
+        updateStartScheduler: () => undefined,
+      },
+      pool: undefined,
+    });
+    assert.deepEqual(applied, [
+      { enabled: true, recentActiveWindowMs: 24 * 3_600_000 },
+    ]);
+    const off = settings.update({
+      expectedRevision: 0,
+      prewarm: { enabled: false },
+    });
+    assert.deepEqual(off.prewarm, { enabled: false, recentActiveHours: 24 });
+    assert.deepEqual(applied.at(-1), {
+      enabled: false,
+      recentActiveWindowMs: 24 * 3_600_000,
+    });
+    settings.update({ expectedRevision: 1, prewarm: { recentActiveHours: 2 } });
+    assert.deepEqual(applied.at(-1), {
+      enabled: false,
+      recentActiveWindowMs: 2 * 3_600_000,
+    });
+    for (const bad of [
+      { prewarm: { recentActiveHours: -1 } },
+      { prewarm: { recentActiveHours: 721 } },
+      { prewarm: { enabled: "yes" } },
+    ])
+      assert.throws(
+        () =>
+          settings.update({
+            expectedRevision: 2,
+            ...(bad as Partial<Parameters<RuntimeSettings["update"]>[0]>),
+          }),
+        JSON.stringify(bad),
+      );
+    assert.deepEqual(
+      new RuntimeSettings({ defaults, path, runtimes }).read().prewarm,
+      { enabled: false, recentActiveHours: 2 },
+      "survives a restart",
+    );
   } finally {
     kernel.close();
     rmSync(directory, { force: true, recursive: true });

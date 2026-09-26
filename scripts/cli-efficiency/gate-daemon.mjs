@@ -26,6 +26,14 @@ export function gateWarmRuntimes(provider, warm) {
     : { codex: { enabled: false }, opencode: { enabled: false } };
 }
 
+// Owner 2026-09-27: the product prewarms a Role instance's warm runtime at
+// creation by default. The gate daemon's Human runtime settings switch that
+// off unless the arm opts in (role-prewarm), so every other arm keeps
+// measuring a cold first round and restart.
+export function gateRuntimeSettings({ prewarm = false } = {}) {
+  return { revision: 0, prewarm: { enabled: prewarm } };
+}
+
 // The isolated daemon's config: Channel homes (created at room.create, evo
 // status §39) stay under the gate's own temporary root instead of the
 // default ~/.loom/channel-workspaces; canonical, as the Host requires.
@@ -46,6 +54,7 @@ export async function prepareGateDaemon({
   root,
   cwd,
   warm,
+  prewarm = false,
   shimOptions = {},
   processes,
   save,
@@ -85,6 +94,11 @@ export async function prepareGateDaemon({
     stateDirectory,
     workspaceCwd: cwd,
   });
+  writeFileSync(
+    join(stateDirectory, "runtime-settings.json"),
+    JSON.stringify(gateRuntimeSettings({ prewarm })),
+    { mode: 0o600 },
+  );
   const configPath = join(root, "config.json");
   writeFileSync(
     configPath,

@@ -572,6 +572,17 @@ export function settingsRows(
       value: minutes(settings.watchdog.queuedStallTerminateMs),
     },
     { label: "单次运行时长上限", value: minutes(settings.watchdog.maxRunMs) },
+    {
+      label: "实例创建即预热常驻运行时",
+      value: settings.prewarm.enabled ? "开" : "关",
+    },
+    {
+      label: "启动后预热最近活跃实例",
+      value:
+        settings.prewarm.recentActiveHours === 0
+          ? "不预热"
+          : `最近 ${String(settings.prewarm.recentActiveHours)} 小时`,
+    },
   ];
 }
 

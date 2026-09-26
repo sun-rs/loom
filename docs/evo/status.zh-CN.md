@@ -1020,6 +1020,49 @@ B. 权限收口
    - 未覆盖：Codex 热路径 `thread/start|resume` 的 `config` 三项只在冷路径（`codex-provider-session.test.ts`）有断言，热路径需要假 app-server socket，本批未补。
 3. 检查：`npm run check`、`npm run format:check`、`git diff --check`、`npm run build:console` 通过。未跑付费 CLI，服务未重启、未部署，未 commit/push。
 
+### 五十五、实例创建即预热常驻运行时
+
+负责人 2026-09-27 裁定：实例创建时就拉起 CLI 进程，而不是等第一条消息；目标合同 §6a 同步修改（负责人批准）。每项先写失败测试再实现；没有运行付费 CLI，没有重启服务，没有改前端冻结范围，未 commit/push。
+
+1. 触发（Kernel 不起进程）：
+   - `role.instantiate` 成功的同一事务里，事件写入器按 `instance.created` 追加一条 Outbox 提示（topic `instance.runtime`，`{action:"prewarm", participantId, channelId}`，无正文）；Role 实例被移出其频道（`membership.removed`，含删除 Agent 时的移出）追加 `{action:"retire"}`。幂等重放不产生第二条。所有者：`kernel/src/instance-prewarm.ts`。
+   - daemon 的 `InstanceRuntimeHintDispatcher`（`createOutboxDispatcherRunners` 里与唤醒提示一起组合，只在多 lane Host 下）消费该 topic：预热前先让 Host 重新观察执行工作区并重新发布 offer（新实例的 channel home 挂载），再调用 Host；Host 池尚未启动（daemon 启动窗口）时该提示延后重投，其余一律尽力而为、处理后确认，失败只写诊断——丢失的提示只意味着首轮冷启动。
+2. 预热计划（Kernel 只读，`kernel.instancePrewarm`，所有者 `InstancePrewarmService`）：`plan(host, {participantId})` 用调度器自己的规划输入，把该实例作为唯一候选跑同一个 `planNextPlacement`，得到首轮会拿到的 placement（offer、observation、RuntimeProfile revision、workspace mount、resolvedModel、toolAccessMode）、agent 上下文（含 session 代数与 `instanceSessionRequired`）与对应的 ContextManifest；不写任何行，不开事务（尽力而为的计划；首轮仍由调度器在事务内正式放置）（测试核对 placements/activations/run_attempts/room_events/instance_runtimes 计数不变）。实例已移出、频道归档 → `instance_inactive`；规划器挂起（忙碌 `lane_busy`、Host 或每 CLI 运行上限满 `capacity_exhausted` 等）→ `placement_hold:<原因>`；放到别的 Host → 跳过。`recentlyActive(host, {since})`：本 Host 授权、仍在频道内、`since` 之后有 RunAttempt 的 Role 实例。
+3. Host（`agent-host/src/instance-prewarm.ts` 的 `InstancePrewarmer`，由 `MultiLaneAgentHost` 持有）：
+   - 用计划的 placement 走 Host 同一个 placement 解析器拿到首轮同款 adapter（同一 cwd/channel home、附加目录、runtimeKey、runtime 级租约与 session 恢复参数），调用 adapter 新增的可选 `prewarm`；只有常驻 adapter 实现它：Codex、OpenCode、开启常驻的 Claude。Kimi 与默认 Claude 是每轮 adapter → `per_turn_runtime`，不预热。
+   - `InstanceRuntimePool.prewarm` 在该参与者锁内执行与首轮完全相同的冷启动（登记 Kernel 行、spawn、身份记录、驱动就绪握手、`markReady`），之后置为 idle；不开轮次、不占忙时槽、不签 Worker 凭据、不建 RunAttempt。已有存活进程 → `already_live`；存活热进程达到软上限 `maxWarm` → `warm_cap`，达到 Host 运行上限 → `host_cap`，同一驱动达到每 CLI 上限 → `cli_cap`：均跳过并写诊断，从不为预热 LRU 淘汰或挤占已有进程。预热逐个串行执行，并经共享启动闸门（独立闸门键 `prewarm:<实例>`，与该实例真实启动不冲突）。
+   - 首轮：runtimeKey 与预热一致 → 复用预热进程，`execution_mode = warm`，同一 `instance_runtime_id`；session 绑定仍在首轮按既有规则持久化（Codex/OpenCode 在首轮输入前，Claude 在首个输入被接受后）。
+   - 之后全部沿用既有规则：空闲 TTL（从预热完成起算）、LRU、边界重启、看门狗、janitor、重置后按 key 不同在下一轮重启。实例移除：`pool.retire` 空闲时立即有证明地停止（`terminated_reason = removed`），忙碌时在本轮 lane 释放后停止，从不在轮中回收。
+   - daemon 启动：Host 池 janitor 之后后台为“最近活跃”实例预热（定义：最近 N 小时内有 RunAttempt 的、仍在频道内的 Role 实例，N 默认 24，可配置，0 表示不预热），恢复已绑定的 session；Host 停止时先等在途预热完成登记再停池。
+4. 运行时设置：`runtime-settings` 新增 `prewarm` 组 `{enabled（默认 true）, recentActiveHours（默认 24，0–720）}`，局部更新、共用修订号、持久化到 `runtime-settings.json`，运行中修改立即应用到 Host（关闭只停止新的预热，已启动的按空闲规则回收）。控制台设置页显示两项并可修改（`1/0` 开关与小时数）。
+5. 效率门禁：新增 opt-in 组 `role-prewarm`（Codex、Claude、OpenCode；Kimi 不支持），必须与 `role-warm` 同时出现（`RAH_EFFICIENCY_ORDER=native,role-warm,role-prewarm`），否则启动前失败——预热首轮不能替代冷首轮。gate daemon 默认在其运行时设置里关闭预热（`gateRuntimeSettings`），所以 `role`/`role-warm`/漂移门禁仍测冷首轮与重启冷恢复；`role-prewarm` 打开预热，创建实例后等待空闲运行时行（无轮次、无 RunAttempt）并记录就绪耗时，断言第 1 轮 `warm` 且为预热的那个运行时（`notPrewarmed`/`prewarmedRuntimeChanged`），不做重启轮；两组各自对原生判定，另输出标注清楚的首轮对照 `result.firstRound`（冷首轮 vs 预热首轮）。未运行付费门禁。
+6. 测试（结论读 room.db 与 FAKE 服务记录）：
+   - `kernel/test/instance-prewarm.test.ts`（5 项）：实例化写一次提示、重放不重复；计划只读且与真实首轮 placement/agent 上下文逐项相同；忙碌、Host 上限满、他 Host 不给计划；移除写 retire 提示并失去资格、Human 成员离开不写；最近活跃窗口。实现前按预期失败（缺导出）。
+   - `agent-host/test/instance-prewarm.test.ts`（7 项，FAKE Codex app-server）：预热后进程就绪、无 `turn/start`、无 RunAttempt，重复提示不起第二个进程，首条消息 `warm` 复用同一进程与 thread；`maxWarm`/Host/每 CLI 上限各自跳过且不驱逐已有进程；忙碌与 Kernel 运行上限挡住预热；运行中关闭不预热；移除回收（`removed`）；“daemon 重启”后按最近活跃预热并 `thread/resume` 原 thread、窗口外不预热；每轮 adapter 不预热。变异验证：让预热 key 与首轮不同时首轮变 `cold`，该测试失败。
+   - `daemon/test/instance-prewarm-composition.test.ts`（组合 daemon + FAKE Codex，Human API）：创建实例后出现 idle 运行时且无轮次；首条消息 `warm` 复用；daemon 重启后预热并恢复同一 session；移除后 `removed`；经设置 API 关闭后新实例不预热。`daemon/test/instance-runtime-hints.test.ts`：提示按序投递、Host 未启动时延后重投、只处理一次。`runtime-settings.test.ts` 新增 prewarm 组；控制台 `actions/model` 测试更新；门禁 `warm/gate-daemon/efficiency-config` 单测新增。
+7. 偏离与限制：
+   - Codex、OpenCode 驱动的就绪握手本来就包含 `thread/start|resume`（或 serve 的 session 创建/恢复），不调用模型；预热沿用该握手而不是只到进程启动。首轮前 session 不绑定：从未有过轮次的实例若预热后在首轮前被回收，CLI 自己的会话存储里会留下一个未绑定、无内容的原生 thread，之后首轮新建并绑定新的 thread，这不是静默替换（没有被绑定过的 session）。
+   - 每 CLI 上限按驱动种类计数（本地每家 CLI 一个 RuntimeProfile）；预热计入 Host 上限只看存活热进程数，冷路径进程不计。
+   - 为守住 `room-kernel.ts` 行数上限（6925），调度器读取 AgentDefinition/执行策略修订改为 `placement-candidate-projection.ts` 导出的模块函数（行为不变），Kernel 只增加一个服务字段。
+   - `session_resume_ms` 只在 cold 轮记在 RunAttempt 上；预热首轮为 warm，恢复耗时留在运行时行。
+   - v2/v3 单 lane daemon 没有提示消费者，`instance.runtime` Outbox 行会保留未发布。
+8. 检查：`npm run check`、`npm run format:check`、`git diff --check` 见本批汇报。服务未重启。
+
+### 五十六、原生记忆关闭证明门禁
+
+新增付费 opt-in 门禁 `scripts/test-native-memory-off.mjs`（`npm run test:cli:native-memory -- --paid`，可选 `--provider=claude|codex|all`、`--no-codex-followup`、`--codex-wait-seconds=N`），纯逻辑在 `scripts/cli-efficiency/native-memory.mjs`。第五十四节只证明启动参数/环境带有开关；本门禁用真实 CLI 证明开关确实阻止原生记忆写入。**待负责人授权并运行，本批未运行任何付费调用。**
+
+- 模型：Claude `haiku`（无 effort）、Codex `gpt-6-luna / low`，启动前经 `approved-models.mjs` 校验，所有模型进程经现有守卫 shim（Claude `claude-guard`、Codex `model-guard` app-server 白名单）。
+- 对照组 = 产品启动方式只去掉记忆开关（Claude 去掉 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` 并删除继承值；Codex 去掉 `features.memories`/`memories.generate_memories`/`memories.use_memories` 三个 `-c` 与 thread config 同名键），其余全局隔离开关保留；实验组 = 产品启动方式。同一提示“Please remember for future sessions: I prefer tabs for indentation. Save this to your memory.”。
+- 认证：临时 HOME 下 `claude auth status` 为未登录（钥匙串登录不可用，已免费验证），所以 Claude 两组在真实 HOME 下各用一个新的临时 cwd，项目记忆桶 `~/.claude/projects/<cwd 桶>/memory` 为该组独有；运行前后快照所有桶的 `memory/`，本次临时根目录下的桶计入该组，其他桶变化只列为“未归属”（例如 Human 自己的会话）。Codex 每组独立临时 `CODEX_HOME`，`auth.json` 为指向真实文件的符号链接，结束时检查链接是否被替换并给出补救说明；不改任何用户文件。
+- Codex 0.156.1 的 `memories` 特性默认关闭（`codex features list` 在空 `CODEX_HOME` 下为 false），因此两组的临时 `config.toml` 都像用户那样打开记忆（`min_rollout_idle_hours = 0`，提取与整合模型固定为 `gpt-6-luna`），实验组证明产品开关能覆盖用户配置。Codex 记忆在后续会话启动时由空闲线程异步生成，所以默认每组再开一个新线程发一轮 “Reply with exactly: OK” 并保持进程存活等待（默认 180 s；对照组出现记忆文件即提前结束，实验组等满窗口）。Codex 接受未知配置键而不报错，上述键名来自二进制字符串，是否生效只能由对照组结果证明。
+- 检查位置：Claude 该桶 `memory/`；Codex `$CODEX_HOME/memories/` 与 `memories_1.sqlite`（`stage1_outputs`、`jobs` 行数）。另记录 cwd 下文件（模型可能写 CLAUDE.md/AGENTS.md，仅作信息，不算原生记忆）、rollout 中出现的模型与 effort（非批准模型记为违规；后台记忆调用的 effort 不受门禁控制，如实列出）。
+- 判定：对照组未完成为 inconclusive；对照组没有写入记忆内容（Codex 只有 job 行也算）为 insensitive（“测试不灵敏、无法证明”），此时跳过实验组，不得记为通过；实验组有任何记忆活动（Codex 含仅启动流水线）为 fail；否则 pass。总判定：有守卫违规为 guard-violation，否则取 fail > inconclusive > insensitive > pass。仅 pass 时退出码为 0。
+- 调用上限：Claude 每组 1 轮；Codex 每组 1 轮 + 默认 1 轮续聊，合计至多 6 个主模型回合，另加 Codex 对照组后台记忆提取/整合调用（数量不受门禁控制，从 rollout 报告）。
+- 证据：临时目录下 `result.json` 与脱敏的 `result.redacted.json`（前后快照、差异、参数、模型、答案与记忆摘录各至多 160–200 字符）。
+- 已知限制：Claude 用 `-p` 单轮而非产品的 stream-json 常驻输入方式，开关相同；Claude 对照组生成的 `~/.claude/projects/<临时桶>` 目录不自动删除，路径记录在证据中。
+- 检查：`scripts/cli-efficiency/native-memory.test.mjs` 15 项免费单测（参数构造与守卫放行、快照与差异、sqlite 计数、判定、参数解析），`npm run test:cli:efficiency:unit` 全部通过；`npm run format:check`、`git diff --check` 通过；`npm run check` 在编写时因并行进行中的 daemon 预热改动（`daemon-application.ts` 未定义 `InstanceRuntimeHintDispatcher`、行数超 800 ratchet）失败，与本门禁文件无关，需在该批完成后复跑。单测在实现之后编写（门禁脚本本身不是产品行为改动）。未跑付费 CLI，服务未重启，未 commit/push。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
