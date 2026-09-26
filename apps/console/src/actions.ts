@@ -3,7 +3,7 @@
  * run through client-core's runRoomMutationAtLatest: `basedOnRoomSeq` comes
  * from the synced RoomSession, a stale_context refusal re-syncs and retries,
  * and one intent keeps one idempotency key and one frozen payload across its
- * stale retries and any retry after an unknown result. Inputs are pre-checked with the
+ * stale retries and any verification after an unknown result. Inputs are pre-checked with the
  * protocol schemas; the server stays the only owner of the decision.
  * Throwaway: deleted in phase 4.
  */
@@ -33,10 +33,13 @@ export function newIdempotencyKey(action: string): string {
 }
 
 /**
- * Whether a failed write may have committed. Only an explicit 4xx business
- * refusal proves it did not (the Kernel checks replays first, so a refusal is
- * never an already committed write); a network error, timeout, 5xx or an
- * unreadable success response leaves the result unknown.
+ * What one failed request says about itself. A 4xx means this request was
+ * refused, so it did not commit; that is proof about the original write only
+ * when this request was the first send. Once a send's result was unknown, a
+ * later 401/403/404/429 or idempotency conflict (gateway, authentication or a
+ * permission check that runs before the Kernel's replay lookup) proves
+ * nothing about it. A network error, timeout, 5xx or an unreadable success
+ * response leaves this request's own result unknown.
  */
 export function classifyWriteFailure(error: unknown): "rejected" | "unknown" {
   return error instanceof RahClientError &&
@@ -55,6 +58,36 @@ function isStaleContext(error: unknown): boolean {
   );
 }
 
+/**
+ * Console actions whose Kernel handler looks up the idempotency key (replay
+ * or conflict) before its freshness check, in one transaction. For these
+ * only, `stale_context` on an identical replay (same key, payload and basis)
+ * proves the original send never committed. Audited at evo HEAD c5cbf98;
+ * every other action keeps an unverified result unknown after a stale
+ * replay. Evidence (packages/kernel/src; replay line -> freshness line):
+ */
+export const REPLAY_BEFORE_FRESHNESS: Readonly<Record<string, string>> = {
+  "channel-create":
+    "room.create: collaboration-service.ts createWorkspaceRoomAtomically replay :479-503 -> basedOnControlRoomSeq check :504-508",
+  "direct-open":
+    "room.direct.open: collaboration-service.ts replay :987-999 -> basedOnControlRoomSeq check :1022-1026",
+  instantiate:
+    "role.instantiate: role-catalog.ts replay :267-291 -> fresh :292",
+  "instance-remove":
+    "room.member.remove: collaboration-service.ts replay :1316-1333 -> fresh :1340",
+  message:
+    "message.post: collaboration-service.ts postMessage replay :1840-1858 -> #assertFreshContext :1871",
+  "role-create": "role.create: role-catalog.ts replay :202-213 -> fresh :215",
+  "role-revise":
+    "role.revise: role-catalog.ts replay :85-96 -> revision check :98, fresh :100",
+  "session-reset":
+    "instance.session.reset: role-catalog.ts replay :401-415 -> fresh :416",
+  "sos-resume":
+    "room.sos.resume: room-agent-sos-service.ts replay :332-347 -> fresh :369",
+  "sos-stop":
+    "room.sos.stop: room-agent-sos-service.ts replay :59-76 -> fresh :94/:122",
+};
+
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === "object") {
     for (const nested of Object.values(value)) deepFreeze(nested);
@@ -68,7 +101,17 @@ export type IntentState = "idle" | "pending" | "unknown";
 export type IntentOutcome<Result> =
   | { kind: "ok"; result: Result }
   | { kind: "rejected"; error: unknown }
-  | { kind: "unknown"; error: unknown }
+  | {
+      kind: "unknown";
+      error: unknown;
+      /**
+       * True when an earlier send's result is still unverified and this
+       * attempt was refused (e.g. 401 after a cookie renewal, 403, 404, 429,
+       * idempotency conflict, or an unconfirmed stale replay): only this
+       * verification failed; the original key, payload and basis are kept.
+       */
+      verificationFailed: boolean;
+    }
   | { kind: "busy"; state: IntentState };
 
 export type IntentSpec<Payload, Result> = {
@@ -92,22 +135,52 @@ type Intent = {
   payload: unknown;
 };
 
+/** Slots with a pending or unknown intent, for the leave-page warning. */
+const unresolved = new Set<WriteIntentSlot>();
+
+export function hasUnresolvedIntents(): boolean {
+  return unresolved.size > 0;
+}
+
+/**
+ * The Human confirmed leaving: forget the warning for every current slot
+ * (their views are unmounted with them; nothing is sent or abandoned).
+ */
+export function discardUnresolvedIntents(): void {
+  for (const slot of unresolved) slot.discard();
+  unresolved.clear();
+}
+
 /**
  * One submitted write intent per surface (form-level, in memory only). It
- * keeps the frozen payload, the idempotency key and the last `basedOnRoomSeq`
- * actually sent. A lost or unreadable response leaves it `unknown`: the only
- * ways forward are a retry of the identical request (same key, payload and
- * basis, so a committed write replays instead of repeating) or an explicit
- * abandon. A new intent starts only after success, refusal or abandon.
+ * keeps the frozen payload, the idempotency key and, separately, whether an
+ * earlier send is still unverified (`unverified`, with the basis it was sent
+ * on) and what the latest request returned (the settled outcome).
+ *
+ * - First send: success ends the intent; a refusal (4xx) of that very
+ *   request, or a failure before anything was sent, returns to idle; any
+ *   other failure makes the result unknown.
+ * - Unknown: the only ways out are a same-key success (a replay of the
+ *   committed write, or its first commit), a `stale_context` on the
+ *   identical replay for an action in REPLAY_BEFORE_FRESHNESS (proof it never
+ *   committed; it is then re-sent at the current head under the same key),
+ *   or an explicit abandon. Any other refusal only fails this verification.
  * A page reload drops the record; the idempotency key goes with it.
  */
 export class WriteIntentSlot {
+  #discarded = false;
   #intent: Intent | undefined;
   #state: IntentState = "idle";
+  #unverified = false;
   readonly #listeners = new Set<(state: IntentState) => void>();
 
   get state(): IntentState {
     return this.#state;
+  }
+
+  /** An earlier send of the current intent may have committed. */
+  get unverified(): boolean {
+    return this.#unverified;
   }
 
   /** The submitted intent while pending or unknown. */
@@ -129,28 +202,32 @@ export class WriteIntentSlot {
     if (this.#state !== "idle") return { kind: "busy", state: this.#state };
     const payload = deepFreeze(structuredClone(spec.payload));
     const key = newIdempotencyKey(spec.action);
-    let lastSeq: number | undefined;
-    let uncertain = false;
+    const staleProvesUncommitted =
+      REPLAY_BEFORE_FRESHNESS[spec.action] !== undefined;
+    // Basis of the send whose result is unverified; replays use exactly it.
+    let unverifiedSeq: number | undefined;
     const attempt = async (basedOnRoomSeq: number): Promise<Result> => {
-      lastSeq = basedOnRoomSeq;
-      uncertain = true;
       try {
-        const result = await spec.send(payload, basedOnRoomSeq, key);
-        uncertain = false;
-        return result;
+        return await spec.send(payload, basedOnRoomSeq, key);
       } catch (error) {
-        if (classifyWriteFailure(error) === "rejected") uncertain = false;
+        if (!this.#unverified && classifyWriteFailure(error) === "unknown") {
+          this.#unverified = true;
+          unverifiedSeq = basedOnRoomSeq;
+        }
         throw error;
       }
     };
     const run = async (): Promise<Result> => {
-      if (lastSeq !== undefined) {
+      if (this.#unverified && unverifiedSeq !== undefined) {
         // Replay the identical request first: a committed write returns its
-        // recorded result; a stale refusal proves nothing was committed.
+        // recorded result.
         try {
-          return await attempt(lastSeq);
+          return await spec.send(payload, unverifiedSeq, key);
         } catch (error) {
-          if (!isStaleContext(error)) throw error;
+          if (!isStaleContext(error) || !staleProvesUncommitted) throw error;
+          // Replay-before-freshness: the original never committed.
+          this.#unverified = false;
+          unverifiedSeq = undefined;
         }
       }
       return await runRoomMutationAtLatest({
@@ -160,13 +237,22 @@ export class WriteIntentSlot {
       });
     };
     const execute = async (): Promise<IntentOutcome<Result>> => {
+      const verifying = this.#unverified;
       this.#set("pending");
       let outcome: IntentOutcome<Result>;
       try {
         outcome = { kind: "ok", result: await run() };
+        this.#unverified = false;
       } catch (error) {
-        outcome = uncertain
-          ? { kind: "unknown", error }
+        outcome = this.#unverified
+          ? {
+              error,
+              kind: "unknown",
+              verificationFailed:
+                verifying &&
+                (classifyWriteFailure(error) === "rejected" ||
+                  isStaleContext(error)),
+            }
           : { kind: "rejected", error };
       }
       if (outcome.kind === "unknown") this.#set("unknown");
@@ -181,7 +267,7 @@ export class WriteIntentSlot {
     return await execute();
   }
 
-  /** Re-sends the unknown intent unchanged. */
+  /** Re-sends the unknown intent unchanged (verification). */
   async retry(): Promise<IntentOutcome<unknown>> {
     const intent = this.#intent;
     if (this.#state !== "unknown" || intent === undefined) {
@@ -194,12 +280,21 @@ export class WriteIntentSlot {
   abandon(): boolean {
     if (this.#state !== "unknown") return false;
     this.#intent = undefined;
+    this.#unverified = false;
     this.#set("idle");
     return true;
   }
 
+  /** Leaves the leave-page registry for good (its view is gone). */
+  discard(): void {
+    this.#discarded = true;
+    unresolved.delete(this);
+  }
+
   #set(state: IntentState): void {
     this.#state = state;
+    if (state === "idle" || this.#discarded) unresolved.delete(this);
+    else unresolved.add(this);
     for (const listener of this.#listeners) listener(state);
   }
 }

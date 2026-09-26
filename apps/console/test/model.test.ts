@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { FakeRahClient, type RahClientOperation } from "@rah-os/client-sdk";
+import { RUN_ATTEMPT_CLI_COST_READ_LIMIT } from "@rah-os/protocol";
 import type {
   AgentActivityRecord,
   Message,
@@ -884,7 +885,7 @@ test("RunAttempt drill-down shows recorded facts and unknown (never 0) for what 
   assert.match(field("final 收尾") ?? "", /已请求/u);
   assert.match(field("final 收尾") ?? "", /已终止：否/u);
   assert.match(field("final 收尾") ?? "", /抢占后续生成：未知/u);
-  assert.equal(field("CLI 自报费用"), "未知（CLI 未报告）");
+  assert.equal(field("已记录费用小计（CLI 自报）"), "未知（CLI 未报告）");
   assert.deepEqual(codex.gaps, ["correction_frame × 2（codex）"]);
   assert.deepEqual(codex.processCleanups, ["run_end：发现 3，终止 3，剩余 0"]);
   assert.equal(codex.generations[0]?.context, "30,000 / 258,000");
@@ -912,7 +913,7 @@ test("RunAttempt drill-down shows recorded facts and unknown (never 0) for what 
   assert.equal(claudeField("输入 token"), "未知");
   assert.equal(claudeField("生成次数"), "未知");
   assert.equal(claudeField("上下文占用"), "未知");
-  assert.equal(claudeField("CLI 自报费用"), "未知");
+  assert.equal(claudeField("已记录费用小计（CLI 自报）"), "未知");
   for (const row of claude.rows) {
     assert.doesNotMatch(row.value, /^0( |$)/u, `${row.label} is never 0`);
   }
@@ -962,7 +963,138 @@ test("RunAttempt drill-down shows recorded facts and unknown (never 0) for what 
   assert.equal(costField("session 恢复耗时"), "未知（未恢复或未测量）");
   assert.equal(costField("上下文占用"), "未知");
   assert.equal(
-    costField("CLI 自报费用"),
-    "≥ $0.0123（部分：1 条未知，CLI 自报）",
+    costField("已记录费用小计（CLI 自报）"),
+    "≥ $0.0123（另有 1 条增量未知，未计入）",
+  );
+});
+
+function opencodeCost(index: number, costUsd: number | null) {
+  return {
+    costId: `cost-${String(index)}`,
+    costUsd,
+    observedAt: NOW,
+    provider: "opencode",
+    recordedAt: NOW,
+    reportedTotalUsd: null,
+    source: "opencode_step_finish_cost",
+  };
+}
+
+function usageResponse(overrides: Record<string, unknown>) {
+  return {
+    completeness: "complete",
+    gaps: [],
+    generations: [generation({ provider: "opencode" })],
+    processCleanups: [],
+    runAttemptId: "run-cost",
+    totals: {
+      cachedInputTokens: 800,
+      generations: 1,
+      inputTokens: 1_000,
+      outputTokens: 50,
+      reasoningOutputTokens: 10,
+    },
+    truncated: false,
+    ...overrides,
+  } as Parameters<typeof runUsageDetail>[0];
+}
+
+test("RunAttempt cost is the recorded subtotal: with a collection gap the whole-run completeness is marked unknown and no missing amount is estimated", () => {
+  const detail = runUsageDetail(
+    usageResponse({
+      cliCosts: [opencodeCost(1, 0.1)],
+      completeness: "partial",
+      gaps: [
+        {
+          firstObservedAt: NOW,
+          lastObservedAt: NOW,
+          occurrences: 1,
+          provider: "opencode",
+          reason: "parse_error",
+        },
+      ],
+    }),
+  );
+  const field = (label: string) =>
+    detail.rows.find((row) => row.label === label)?.value;
+  assert.equal(field("CLI 自报费用"), undefined, "no whole-run cost claim");
+  assert.equal(
+    field("已记录费用小计（CLI 自报）"),
+    "$0.1000（整轮完整性未知）",
+  );
+
+  // A gap alone (even if completeness said complete) is not a complete run.
+  const gapOnly = runUsageDetail(
+    usageResponse({
+      cliCosts: [opencodeCost(1, 0.1)],
+      gaps: [
+        {
+          firstObservedAt: NOW,
+          lastObservedAt: NOW,
+          occurrences: 1,
+          provider: "opencode",
+          reason: "parse_error",
+        },
+      ],
+    }),
+  );
+  assert.equal(
+    gapOnly.rows.find((row) => row.label === "已记录费用小计（CLI 自报）")
+      ?.value,
+    "$0.1000（整轮完整性未知）",
+  );
+
+  const complete = runUsageDetail(
+    usageResponse({ cliCosts: [opencodeCost(1, 0.1)] }),
+  );
+  assert.equal(
+    complete.rows.find((row) => row.label === "已记录费用小计（CLI 自报）")
+      ?.value,
+    "$0.1000",
+  );
+});
+
+test("RunAttempt lists cut at the read limit: context is the last listed generation, the cost subtotal only covers the listed records", () => {
+  const truncated = runUsageDetail(
+    usageResponse({
+      cliCosts: Array.from(
+        { length: RUN_ATTEMPT_CLI_COST_READ_LIMIT },
+        (_, i) => opencodeCost(i, 0.001),
+      ),
+      generations: [
+        generation({ contextUsedTokens: 30_000, contextWindow: 258_000 }),
+      ],
+      totals: {
+        cachedInputTokens: 800_000,
+        generations: 1_200,
+        inputTokens: 1_200_000,
+        outputTokens: 60_000,
+        reasoningOutputTokens: 12_000,
+      },
+      truncated: true,
+    }),
+  );
+  const field = (label: string) =>
+    truncated.rows.find((row) => row.label === label)?.value;
+  assert.equal(
+    field("上下文占用"),
+    "30,000 / 258,000（所列生成中的最后一次，不代表当前窗口）",
+  );
+  assert.equal(
+    field("已记录费用小计（CLI 自报）"),
+    `≥ $1.0000（费用记录达到读取上限 ${String(RUN_ATTEMPT_CLI_COST_READ_LIMIT)} 条，之后的未列出）`,
+  );
+  assert.equal(truncated.truncated, true);
+
+  const untruncated = runUsageDetail(
+    usageResponse({
+      generations: [
+        generation({ contextUsedTokens: 30_000, contextWindow: 258_000 }),
+      ],
+    }),
+  );
+  assert.equal(
+    untruncated.rows.find((row) => row.label === "上下文占用")?.value,
+    "30,000 / 258,000",
   );
 });

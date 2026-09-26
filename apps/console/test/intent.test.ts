@@ -4,9 +4,13 @@ import test from "node:test";
 import { FakeRahClient, RahClientError } from "@rah-os/client-sdk";
 
 import {
+  REPLAY_BEFORE_FRESHNESS,
   STALE_RETRY_ATTEMPTS,
   WriteIntentSlot,
   classifyWriteFailure,
+  discardUnresolvedIntents,
+  hasUnresolvedIntents,
+  type IntentOutcome,
   type IntentState,
 } from "../src/actions.ts";
 
@@ -349,4 +353,130 @@ test("one pending intent refuses a second submit and a retry", async () => {
   release();
   assert.equal((await first).kind, "ok");
   assert.equal(server.control.committed.size, 1);
+});
+
+const VERIFY_REFUSALS: Array<[string, RahClientError]> = [
+  [
+    "401 session expired",
+    new RahClientError("session_expired", "FIXTURE cookie rotated", 401),
+  ],
+  ["403 forbidden", new RahClientError("forbidden", "FIXTURE no access", 403)],
+  ["404 not found", new RahClientError("not_found", "FIXTURE gone", 404)],
+  [
+    "429 rate limited",
+    new RahClientError("rate_limited", "FIXTURE slow down", 429),
+  ],
+  [
+    "409 idempotency conflict",
+    new RahClientError("idempotency_conflict", "FIXTURE key reused", 409),
+  ],
+];
+
+for (const [label, refusal] of VERIFY_REFUSALS) {
+  test(`after a lost response, a ${label} on the verification keeps the original intent unknown; once access is restored the original key replays and takes effect once`, async () => {
+    const server = fakeServer({ digestSeq: true });
+    const slot = new WriteIntentSlot();
+    const settled: IntentOutcome<unknown>[] = [];
+    server.control.loseNextResponse = true;
+    const first = await slot.submit({
+      ...post(server, { body: "FIXTURE committed, response lost" }),
+      onSettled: (outcome) => settled.push(outcome),
+    });
+    assert.equal(first.kind, "unknown");
+    assert.equal(server.control.committed.size, 1);
+    const original = slot.current;
+
+    server.control.refuseNext = refusal;
+    const verification = await slot.retry();
+    assert.equal(verification.kind, "unknown");
+    assert.equal(
+      (verification as { verificationFailed: boolean }).verificationFailed,
+      true,
+      "only this verification failed; the original result is still unknown",
+    );
+    assert.equal(slot.state, "unknown");
+    assert.equal(slot.unverified, true);
+    assert.deepEqual(slot.current, original, "same key and payload kept");
+    assert.deepEqual(
+      server.control.sent[1],
+      server.control.sent[0],
+      "the verification resent the identical request",
+    );
+
+    // A new intent is still refused: it would carry a new key.
+    const other = await slot.submit(post(server, { body: "FIXTURE other" }));
+    assert.deepEqual(other, { kind: "busy", state: "unknown" });
+
+    // Access restored (e.g. the renewed cookie): the same key replays.
+    server.control.advanceHead();
+    const replayed = await slot.retry();
+    assert.equal(replayed.kind, "ok");
+    assert.equal(
+      (replayed as { result: { deduplicated: boolean } }).result.deduplicated,
+      true,
+    );
+    assert.equal(slot.state, "idle");
+    assert.equal(slot.unverified, false);
+    assert.equal(server.control.committed.size, 1, "exactly one effect");
+    assert.equal(server.control.sent.length, 3);
+    assert.deepEqual(server.control.sent[2], server.control.sent[0]);
+    assert.deepEqual(
+      settled.map((outcome) => outcome.kind),
+      ["unknown", "unknown", "ok"],
+    );
+  });
+}
+
+test("a first-send refusal (401/403/404/429) is a plain rejection: nothing was committed before it, so the slot returns to idle", async () => {
+  for (const [, refusal] of VERIFY_REFUSALS.slice(0, 4)) {
+    const server = fakeServer({ digestSeq: false });
+    const slot = new WriteIntentSlot();
+    server.control.refuseNext = refusal;
+    const outcome = await slot.submit(post(server, { body: "FIXTURE first" }));
+    assert.equal(outcome.kind, "rejected");
+    assert.equal(slot.state, "idle");
+    assert.equal(slot.unverified, false);
+    assert.equal(slot.current, undefined);
+  }
+});
+
+test("a stale refusal on the verification of an endpoint without a confirmed replay-before-freshness contract keeps the result unknown and sends nothing new", async () => {
+  const server = fakeServer({ digestSeq: false });
+  const slot = new WriteIntentSlot();
+  server.control.refuseNext = new RahClientError("unavailable", "down", 503);
+  const spec = { ...post(server, { body: "FIXTURE unconfirmed" }) };
+  spec.action = "fixture-unconfirmed-endpoint";
+  assert.equal(REPLAY_BEFORE_FRESHNESS[spec.action], undefined);
+  const first = await slot.submit(spec);
+  assert.equal(first.kind, "unknown");
+  server.control.advanceHead();
+  const verification = await slot.retry();
+  assert.equal(verification.kind, "unknown");
+  assert.equal(
+    (verification as { verificationFailed: boolean }).verificationFailed,
+    true,
+  );
+  assert.equal(slot.state, "unknown");
+  assert.equal(server.control.sent.length, 2, "no fresh-basis attempt");
+  assert.deepEqual(server.control.sent[1], server.control.sent[0]);
+  assert.equal(server.control.committed.size, 0);
+});
+
+test("the unresolved-intent registry tracks pending and unknown slots so leaving the page can warn", async () => {
+  const server = fakeServer({ digestSeq: false });
+  const slot = new WriteIntentSlot();
+  discardUnresolvedIntents(); // slots left unknown by earlier tests
+  assert.equal(hasUnresolvedIntents(), false);
+  server.control.loseNextResponse = true;
+  await slot.submit(post(server, { body: "FIXTURE unresolved" }));
+  assert.equal(hasUnresolvedIntents(), true);
+  assert.equal((await slot.retry()).kind, "ok");
+  assert.equal(hasUnresolvedIntents(), false);
+
+  server.control.loseNextResponse = true;
+  await slot.submit(post(server, { body: "FIXTURE left behind" }));
+  assert.equal(hasUnresolvedIntents(), true);
+  discardUnresolvedIntents();
+  assert.equal(hasUnresolvedIntents(), false);
+  assert.equal(slot.state, "unknown", "discard only forgets the warning");
 });

@@ -75,7 +75,11 @@ export function runDetailPanel(context: ConsoleContext): RunDetailPanel {
           el("div", { className: "field" }, [
             el("span", {
               className: "field-label",
-              text: `逐次生成${detail.truncated ? "（已截断，合计仍覆盖全部）" : ""}`,
+              text: `逐次生成${
+                detail.truncated
+                  ? `（已截断：只列最早 ${String(detail.generations.length)} 次；token 合计覆盖全部生成，上下文占用只取所列生成中的最后一次）`
+                  : ""
+              }`,
             }),
             detail.generations.length === 0
               ? el("span", { className: "field-value", text: "无记录" })

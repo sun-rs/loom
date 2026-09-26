@@ -841,6 +841,142 @@ if (args.join(" ") === "debug models --bundled") {
     true,
   );
 
+  // --- 5d-2. Unknown -> the verification gets 401 -> access restored ->
+  // the original key replays once. Request 1 commits and its response is
+  // dropped; request 2 (the first verification) is answered 401 by CDP before
+  // it reaches the gateway; request 3 goes through and replays. ---
+  const authBody = "FIXTURE unknown then 401 probe [fake:final]";
+  const authRequests = [];
+  let authResponses = 0;
+  await intercept(
+    [
+      { requestStage: "Request", urlPattern: "*/v3/client/messages/post" },
+      { requestStage: "Response", urlPattern: "*/v3/client/messages/post" },
+    ],
+    async (params) => {
+      if (
+        params.responseStatusCode !== undefined ||
+        params.responseErrorReason !== undefined
+      ) {
+        authResponses += 1;
+        await browser.command(
+          authResponses === 1 ? "Fetch.failRequest" : "Fetch.continueRequest",
+          authResponses === 1
+            ? { errorReason: "ConnectionReset", requestId: params.requestId }
+            : { requestId: params.requestId },
+        );
+        return;
+      }
+      authRequests.push(JSON.parse(params.request.postData ?? "{}"));
+      if (authRequests.length === 2) {
+        await browser.command("Fetch.fulfillRequest", {
+          body: Buffer.from(
+            JSON.stringify({
+              error: {
+                code: "session_expired",
+                message: "FIXTURE injected 401 (CDP), not the gateway",
+              },
+            }),
+          ).toString("base64"),
+          requestId: params.requestId,
+          responseCode: 401,
+          responseHeaders: [
+            { name: "content-type", value: "application/json" },
+          ],
+        });
+        return;
+      }
+      await browser.command("Fetch.continueRequest", {
+        requestId: params.requestId,
+      });
+    },
+  );
+  await setValue("#composer-input", "");
+  await typeInto("#composer-input", authBody);
+  await pressEnter();
+  await waitForText("#composer-status", "结果未知");
+  assert.equal(await countBody(channelId, authBody), 1, "committed once");
+  await click("#composer-retry");
+  await waitForText("#composer-status", "本次核实未成功");
+  const verifyFailedText = await textOf("#composer-status");
+  assert.match(verifyFailedText, /HTTP 401/u);
+  assert.match(verifyFailedText, /原操作结果仍未知/u);
+  assert.doesNotMatch(verifyFailedText, /请刷新页面/u);
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#composer-unknown").hidden`,
+    ),
+    false,
+    "the unknown intent survives the refused verification",
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#composer-send").disabled`,
+    ),
+    true,
+    "no new send (new key) while the original result is unknown",
+  );
+  await screenshot("unknown-verify-401-1440x1000.png");
+  // Leaving the page asks first; dismissing keeps the page and the intent.
+  const dialogs = [];
+  const onDialog = (params) => {
+    dialogs.push(params);
+    void browser
+      .command("Page.handleJavaScriptDialog", { accept: false })
+      .catch((error) => interceptErrors.push(String(error)));
+  };
+  browser.on("Page.javascriptDialogOpening", onDialog);
+  const hashBeforeLeave = await evaluate(browser, "location.hash");
+  await navigateHash("#/roles");
+  await waitUntil(async () => dialogs.length === 1, 10_000);
+  await waitUntil(
+    async () => (await evaluate(browser, "location.hash")) === hashBeforeLeave,
+    10_000,
+  );
+  assert.equal(dialogs[0].type, "confirm");
+  assert.match(dialogs[0].message, /幂等键/u);
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#composer-unknown")?.hidden`,
+    ),
+    false,
+    "dismissing the leave prompt keeps the page and the unknown intent",
+  );
+  await click("#composer-retry");
+  await waitForText("#composer-status", "重试核实：原请求已执行");
+  await stopIntercept();
+  assert.equal(authRequests.length, 3);
+  assert.deepEqual(authRequests[1], authRequests[0], "verification = original");
+  assert.deepEqual(authRequests[2], authRequests[0], "replay = original");
+  assert.equal(
+    await countBody(channelId, authBody),
+    1,
+    "unknown -> 401 -> restored -> replay took effect exactly once",
+  );
+  // Resolved: navigation no longer asks.
+  await navigateHash("#/roles");
+  await waitUntil(
+    async () =>
+      (await evaluate(
+        browser,
+        `document.querySelector("#role-create-submit") !== null`,
+      )) === true,
+    20_000,
+  );
+  assert.equal(dialogs.length, 1, "no prompt once nothing is unresolved");
+  await navigateHash(hashBeforeLeave);
+  await waitUntil(
+    async () =>
+      (await evaluate(
+        browser,
+        `document.querySelector("#composer-input") !== null`,
+      )) === true,
+    20_000,
+  );
+
   // --- 5e. Delayed response + stale retry: the draft typed meanwhile stays. ---
   const delayedBody = "FIXTURE delayed original [fake:final]";
   const editedDraft = "FIXTURE edited while the send was in flight";
@@ -1264,6 +1400,7 @@ if (args.join(" ") === "debug models --bundled") {
   const pageCsp = await evaluate(browser, "window.__cspViolations");
   assert.deepEqual([...cspViolations, ...pageCsp], [], "no CSP violations");
   assert.deepEqual(browserErrors, [], "no console errors");
+  assert.equal(dialogs.length, 1, "only the deliberate leave prompt opened");
   const expectedFailures = [
     "/v3/client/rooms/create",
     "/v3/client/rooms/members/remove",
@@ -1309,6 +1446,7 @@ if (args.join(" ") === "debug models --bundled") {
           ({ path, status }) => `${path} ${String(status)}`,
         ),
         unknownText,
+        verifyFailedText,
         fakeCodexModes: modes,
         fixture: "temporary HOME/RAH_DATA_HOME, fake codex, random port",
         hostRefusalText,
@@ -1540,7 +1678,7 @@ async function checkRunDetail(client, agentId, runAttemptId) {
     );
   }
   if (raw.cliCosts === undefined || raw.cliCosts.length === 0) {
-    assert.ok(view.rows["CLI 自报费用"].startsWith("未知"));
+    assert.ok(view.rows["已记录费用小计（CLI 自报）"].startsWith("未知"));
   }
   assert.equal(view.generations, raw.generations.length);
   // Every null the API reports was asserted above to read "未知", never 0.

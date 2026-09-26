@@ -1,7 +1,9 @@
 /** Console application; loaded by main.ts after Zod is made jitless. */
+import { discardUnresolvedIntents, hasUnresolvedIntents } from "./actions.ts";
 import { createConsoleClient, errorText, isAbort } from "./api.ts";
 import { notify, type ConsoleContext } from "./context.ts";
 import { el } from "./dom.ts";
+import { LEAVE_WITH_UNRESOLVED_INTENT } from "./intent-view.ts";
 import { loadIdentity } from "./model.ts";
 import { Poller } from "./poll.ts";
 import { parseRoute } from "./route.ts";
@@ -103,5 +105,24 @@ function route(): void {
       unmount = mountChannelList(shell.main, context);
   }
 }
-window.addEventListener("hashchange", route);
+// A pending or unknown intent lives only in this page: leaving drops its
+// idempotency key, so reload/close and in-app navigation ask first.
+window.addEventListener("beforeunload", (event) => {
+  if (!hasUnresolvedIntents()) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
+let currentUrl = window.location.href;
+window.addEventListener("hashchange", () => {
+  if (hasUnresolvedIntents()) {
+    if (!window.confirm(LEAVE_WITH_UNRESOLVED_INTENT)) {
+      // Stay: restore the address without another hashchange.
+      window.history.replaceState(window.history.state, "", currentUrl);
+      return;
+    }
+    discardUnresolvedIntents();
+  }
+  currentUrl = window.location.href;
+  route();
+});
 route();

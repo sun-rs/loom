@@ -4,6 +4,7 @@
  */
 import { listMessagesBounded } from "@rah-os/client-core";
 import type { RahClient } from "@rah-os/client-sdk";
+import { RUN_ATTEMPT_CLI_COST_READ_LIMIT } from "@rah-os/protocol";
 import type {
   AgentActivityRecord,
   Message,
@@ -688,6 +689,10 @@ export function runUsageDetail(
       ({ contextUsedTokens, contextWindow }) =>
         contextUsedTokens !== null || contextWindow !== null,
     );
+  // The console only sums the cost rows it was given: a recorded subtotal.
+  // A collection gap or a non-complete run leaves the whole-run total
+  // unknown; a list at the read limit may omit later rows. Nothing missing is
+  // estimated.
   const costs = response.cliCosts;
   let costText: string;
   if (costs === undefined) costText = UNKNOWN;
@@ -698,14 +703,34 @@ export function runUsageDetail(
         cost.costUsd !== null,
     );
     const unknownCount = costs.length - known.length;
+    const listCut = costs.length >= RUN_ATTEMPT_CLI_COST_READ_LIMIT;
+    const incomplete =
+      response.completeness !== "complete" || response.gaps.length > 0;
+    const notes = [
+      ...(unknownCount > 0
+        ? [`另有 ${String(unknownCount)} 条增量未知，未计入`]
+        : []),
+      ...(listCut
+        ? [
+            `费用记录达到读取上限 ${String(RUN_ATTEMPT_CLI_COST_READ_LIMIT)} 条，之后的未列出`,
+          ]
+        : []),
+      ...(incomplete ? ["整轮完整性未知"] : []),
+    ];
     const sum = known.reduce((total, cost) => total + cost.costUsd, 0);
     costText =
       known.length === 0
         ? `${UNKNOWN}（CLI 自报 ${String(costs.length)} 条，增量均未知）`
-        : unknownCount > 0
-          ? `≥ ${formatUsd(sum)}（部分：${String(unknownCount)} 条未知，CLI 自报）`
-          : `${formatUsd(sum)}（CLI 自报）`;
+        : `${unknownCount > 0 || listCut ? "≥ " : ""}${formatUsd(sum)}${
+            notes.length === 0 ? "" : `（${notes.join("；")}）`
+          }`;
   }
+  const lastContextText =
+    lastContext === undefined
+      ? UNKNOWN
+      : `${contextText(lastContext.contextUsedTokens, lastContext.contextWindow)}${
+          response.truncated ? "（所列生成中的最后一次，不代表当前窗口）" : ""
+        }`;
   return {
     gaps: response.gaps.map(
       (gap) => `${gap.reason} × ${String(gap.occurrences)}（${gap.provider}）`,
@@ -754,17 +779,8 @@ export function runUsageDetail(
         label: "推理 token",
         value: tokens(response.totals.reasoningOutputTokens),
       },
-      {
-        label: "上下文占用",
-        value:
-          lastContext === undefined
-            ? UNKNOWN
-            : contextText(
-                lastContext.contextUsedTokens,
-                lastContext.contextWindow,
-              ),
-      },
-      { label: "CLI 自报费用", value: costText },
+      { label: "上下文占用", value: lastContextText },
+      { label: "已记录费用小计（CLI 自报）", value: costText },
     ],
     truncated: response.truncated,
   };

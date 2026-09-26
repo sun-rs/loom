@@ -805,12 +805,17 @@ B. 权限收口
 8. 批次 3 RunAttempt 下钻：实例卡片“最近运行（本 Room）”列出该实例最近 20 条活动中本 Room 的 RunAttempt（`runAttemptsInRoom`，私聊运行不进频道列表），点击后 `agent.run.usage.get` 显示执行方式（冷/热、迟到帧）、`sessionResumeMs`、final 收尾（请求/接受/终止/抢占）、完整性与合计、上下文占用（只有 CLI 原生报告时有值，目前只有 Codex，其余“未知”）、采集缺口、进程清扫与 CLI 自报费用；所有 `null`/缺字段显示“未知”，不显示 0。测试 `model.test.ts`（Codex 样本、Claude 式全空样本、部分费用样本）。
 9. 批次 3 Role 修订：Role 页每张卡片“修订…”把当前配置填入修订表单，CLI/模型/推理强度只能从 `host.runtime.list` 目录选择（目录已不发布的 binding 无法保留，提交会被前端拦下）；未编辑的配置字段（描述、头像等）原样保留，`modelIntent` 换成所选 binding 的精确意图；带 `expectedRoleRevisionId`，他处已修订时显示拒绝原因并提示重新选择。卡片显示仍用旧修订的实例数。测试 `actions.test.ts`（`roleFormFrom`、带 base 的 `buildRoleConfiguration`）。
 10. 浏览器门禁扩展（`scripts/run-console-browser-gate.mjs`，临时 HOME/`RAH_DATA_HOME`、假 codex、随机端口，fixture 均标注 FIXTURE；网关服务控制台构建的临时副本）：创建频道的请求被 CDP Fetch 扣住时三个字段均禁用、期间另一控制房间写入使其 stale、脚本改写名称，最终 2 次请求同键同名同目录，频道只有一个，改过的字段不被清空；新频道急停状态显示“未知”；Role 修订（模型选项与目录一致、API 新修订与说明一致、实例卡片显示“Role 已有新修订”、实例仍冻结旧修订）；频道 RunAttempt 下钻与 API 原始响应逐项一致；打开私聊（API 确认 `instancePrivateBox`）、发私聊并收到假 CLI 回复、私聊运行下钻（该样本用量无记录，页面各项为“未知”并与 API 一致）、回到频道页后正文与 API 频道消息逐条一致、不含私聊文本、频道运行列表不含私聊运行；发消息响应被丢弃（服务端已提交）→“结果未知”→期间新草稿按 Enter 被拒→“核实/重试原操作”→服务端仍只有一条、两次请求体完全相同、新草稿保留；发消息请求被扣住期间外部写入使其 stale 且用户改写草稿 → 2 次请求同键同正文、服务端一条原文、零条改写文本、草稿保留；设置页两段范围文案与三个即时生效字段、无“不会被中断”；实例化响应被丢弃 →“结果未知”且实例化按钮禁用 → 重试后该 Role 在频道只多一个实例、两次请求体相同；非法 hash 显示无效路由且无异常；控制台根内文件链接、目录链接（含其下 SPA 路径）、`assets/` 下链接经浏览器 fetch 均 404 且无 SPA 回退。原有批次 1/2 断言保持。本地运行通过（截图目录形如 `$TMPDIR/loom-console-browser-gate/<时间戳>/`，含 run-detail、private-box、unknown-result）。
+11. 复审 2 修复（`~/.loom/reviews/2026-09-26-console-review-2.md`，P1-1 残留与 P2-1；先写失败测试并确认失败）：
+    - P1-1 未知后的拒绝不再清掉意图：`WriteIntentSlot` 分开保存“先前某次发送结果未核实”（`unverified` 与那次发送的 `basedOnRoomSeq`）和“本次请求的结果”（`IntentOutcome.unknown.verificationFailed`）。首次发送得到 4xx 或请求还没发出仍回空闲；一旦出现结果未知，只有三种情况能解除：同键请求成功（重放或首次提交），属于 `REPLAY_BEFORE_FRESHNESS` 的操作在原样重放时得到 `stale_context`（证明原请求未提交，随后在新头部用同一键重发），或用户显式放弃。其余情况都只算本次核实失败，保留原键、原 payload 和原序号，页面提示“本次核实未成功…原操作结果仍未知…恢复后可再核实”，且不再建议刷新（刷新会丢失原键）。其余情况包括 401（网关 Cookie 轮换）、403、404、429、幂等冲突和未确认端点的 stale；核实时再遇网络错误、超时或 5xx，则照常显示“结果未知”。`REPLAY_BEFORE_FRESHNESS` 按端点列出依据：已核对控制台用到的 10 个端点在 evo HEAD c5cbf98 的 Kernel 处理顺序，均为同一事务内先查幂等键、再查新鲜度，逐端点的行号写在 `actions.ts` 常量里；不在表内的操作一律保守保留未知，不再发新基准请求。权限检查在重放之前的端点（例如 role.* 的 `requireHumanControlRoomManager`）得到 403 时，同样只算核实失败。离开页面时：页面上有 pending 或未知意图时，`beforeunload` 会提示；站内 hash 导航用 `confirm` 询问，取消则用 `history.replaceState` 还原地址并保留意图，确认则丢弃提示登记。测试 `intent.test.ts`：提交后丢响应 → 未知 → 401/403/404/429/幂等冲突分别核实失败，状态仍未知，原键和 payload 不变，新提交被拒 → 头部推进后再核实，原键重放 `deduplicated`，服务端只有一次效果；首次 401/403/404/429 回空闲；未确认端点重放 stale 仍未知，且不发新请求；未解决意图登记。
+    - P2-1 费用与上下文口径：行名改为“已记录费用小计（CLI 自报）”，只对返回的费用行求和，不估算缺失金额。`completeness` 不是 complete 或存在采集缺口时，标注“整轮完整性未知”；有增量未知的行时加 “≥” 并注明“另有 N 条增量未知，未计入”；费用行数达到 `RUN_ATTEMPT_CLI_COST_READ_LIMIT`（1000）时加 “≥” 并注明之后的未列出。生成列表截断时，上下文占用标注“所列生成中的最后一次，不代表当前窗口”；逐次生成标题改为“已截断：只列最早 N 次；token 合计覆盖全部生成，上下文占用只取所列生成中的最后一次”，不再说“合计仍覆盖全部”。测试 `model.test.ts`：partial + parse_error 缺口 + 已知 OpenCode 0.1 显示 `$0.1000（整轮完整性未知）`；只有缺口时同样标注；完整时只显示金额；截断时上下文与 1000 条费用上限的标注。长运行的完整费用或最新上下文如确有需要，应由 Kernel 返回聚合结果与覆盖标记，前端不翻全历史（按触发条件列为后续项）。
+    - 浏览器门禁新增场景：发消息响应被丢弃（已提交）→ 结果未知 → 核实请求被 CDP 在到达网关前以 401 应答 → 显示“本次核实未成功（HTTP 401）…原操作结果仍未知”，不含“请刷新页面”，未知框仍在，发送按钮禁用 → 站内导航弹出确认，取消后留在原页，意图仍在 → 再核实，原键重放“原请求已执行” → 3 次请求体完全相同，服务端只有一条 → 解决后导航不再弹窗；截图 `unknown-verify-401-1440x1000.png`。运行详情断言改用新行名。
 
 删除点（phase 4）增补：`apps/console/src/route.ts`、`intent-view.ts`、`view-messages.ts`、`view-run.ts`、`view-direct.ts`、`apps/console/test/intent.test.ts` 随 `apps/console` 删除；网关 `consoleStaticTarget` 随 `consoleDirectory` 分支删除（其测试随之删除）。
 
 偏离与未解决：
 
-- 意图记录只在内存：页面刷新或离开该页后丢失，已知的幂等键随之丢失；此时 UI 无法再核实，需以刷新后的实际状态为准。放弃核实后同样只能看实际状态。
+- 意图记录只在内存：页面刷新或离开该页后丢失，已知的幂等键随之丢失；此时 UI 无法再核实，需以刷新后的实际状态为准。放弃核实后同样只能看实际状态。第 11 条起离开含 pending/未知意图的页面会先提示（浏览器对 `beforeunload` 只显示通用文案）。
+- `REPLAY_BEFORE_FRESHNESS` 是对 c5cbf98 的 Kernel 处理顺序的人工核对，不是协议保证；Kernel 调换顺序时需同步更新该表（未加自动化契约测试）。
 - 运行设置不在意图槽内（接口没有幂等键）：响应丢失后再保存会因修订号变化得到 409 冲突并提示重读，不会静默重复。
 - RunAttempt 列表只来自实例最近 20 条活动，较早的运行不列出；Codex 以外 CLI 的上下文占用为“未知”只有单测（门禁只有假 codex）；压缩次数仍未展示。
 - 私聊页只显示已出现在 `room.list` 的实例私聊；实例已移出频道时 `role.list` 不再列出它，私聊页读不到其运行记录（显示说明）。
@@ -822,7 +827,7 @@ B. 权限收口
 
 经控制台同一 API（网关 trusted-proxy、RoomSession + runRoomMutationAtLatest、每意图一个幂等键）在正式 evo 服务上：创建频道 `smoke-console`（主目录 `~/.loom/channel-workspaces/<roomId>`，primary=ready，附加目录已登记）；创建 Codex Role（`local:codex-cli/v1:gpt-6-luna`/low，fallback disabled）并实例化；Human @实例请其读取附加目录中的口令文件。状态序列 waking(queued) → working → idle；回复逐字等于口令、位于频道顶层，发帖到回复约 12.4 s（冷启动）；1 个 RunAttempt、2 次生成、0 重试；用量 complete（输入 34,938 / 缓存 18,944 / 输出 218），Codex 不报费用，汇总显示未知。报告 `~/.loom/reviews/2026-09-26-console-real-acceptance.md`。
 
-- 待查：回到 idle 后 activity.updatedAt 显示实例化时刻而非运行结束时刻。
+- 已修（待提交）：回到 idle 后 activity.updatedAt 曾固定取入频时刻；现取本频道该实例最近一次 Activation 结算时刻（不早于入频时刻），私聊与其他房间不计入（`room-agent-activity-queued.test.ts` 假时钟复现）。
 - 测试频道留在正式库；其附加目录位于会话临时目录，会话清理后该频道的附加目录复核会失败（预期行为）。
 
 ## 当前状态（2026-09-26，控制台批次 3 后）
