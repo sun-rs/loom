@@ -733,6 +733,15 @@ B. 权限收口
 - Codex 每轮压缩客户端恢复线程时不带 `runtimeWorkspaceRoots`；OpenCode 提示行只在 serve 启动时读取；OpenCode 规则证据是请求级（PATCH 为追加，未读回会话最终规则）。
 - 尚无付费样本（未授权运行）；控制台不存在；本地服务未重启。
 
+### 四十三、附加目录付费冒烟（2026-09-26，9762f59，负责人授权）
+
+证据 `docs/evo/evidence/2026-09-26-smoke-attach-*.json`，6 轮不压缩，频道带一个附加目录，第 6 轮要求读取附加目录中的随机口令文件。
+
+- 四家（Codex 常驻 gpt-6-luna/low、OpenCode 常驻 deepseek-flash/low、Claude 冷 haiku、Kimi 冷 k3-256k/low）附加目录读取全部通过（4/4），实例 cwd 为频道主目录，主目录 primary=ready。
+- OpenCode：新会话权限规则 question/plan_enter/plan_exit 均被 deny（本次无旧会话，PATCH 路径未触发，旧会话续聊只有 fake 与免费 serve 探针证据）。
+- Kimi：产品侧逐轮用量均来自 wire（每轮 1–2 行），不再是整体缺口。
+- 门禁结论：OpenCode、Claude、Kimi pass；Codex violated，唯一原因是第 3 轮沉默轮未 message-check 重试一次（模型遵守度，已知问题）。首轮格式超长为既有软项。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

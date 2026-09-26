@@ -1,0 +1,885 @@
+{
+  "schemaVersion": 1,
+  "gate": "long-session-drift",
+  "root": "<tmp>",
+  "startedAt": "2026-09-26T12:03:17.771Z",
+  "config": {
+    "provider": "opencode",
+    "catalogKind": "opencode-cli/v1",
+    "model": "deepseek/deepseek-flash",
+    "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+    "effort": "low",
+    "mode": "warm",
+    "rounds": 6,
+    "compactAt": [],
+    "overheadRise": 0.25,
+    "attach": true
+  },
+  "attachFixture": {
+    "directory": "<tmp>/attached",
+    "relativeFile": "facts/attached-secret.txt",
+    "passphrase": "LOOM-ATT-5a2519f31daaa32a31de9609"
+  },
+  "cliVersion": "1.18.32",
+  "codeCommit": "9762f59a35d6435ec5aceb502fa520c86fbd6a6a",
+  "sourceRef": "9762f59a35d6435ec5aceb502fa520c86fbd6a6a",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "criteria": {
+    "finalMinRate": 0.95,
+    "degradationWindow": 3,
+    "compactionOverheadRise": 0.25
+  },
+  "scenario": [
+    {
+      "round": 1,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "问题：scripts/workbench-launch-receipt.mjs 导出了哪些函数？回答以“R01答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R01答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 2,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "messages": [
+        {
+          "target": "thread",
+          "body": "复述规则：你靠什么确认消息已送达？"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "thread",
+        "format": {
+          "prefix": "【规则】",
+          "maxChars": null,
+          "mustInclude": ["LOOM-7Q"],
+          "mustIncludeAny": ["message-check", "based-on-room-seq"]
+        }
+      }
+    },
+    {
+      "round": 3,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "【仅供参考】今天下午的例会改到四点。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 4,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "帮我记一下：下周三前补齐网络配置重启的回归测试，建个任务跟进。"
+        },
+        {
+          "target": "room",
+          "body": "补充：看完上一条一起回复，回答以“R04答：”开头，不超过40字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": {
+          "prefix": "R04答：",
+          "maxChars": 40,
+          "mustInclude": [],
+          "mustIncludeAny": []
+        }
+      }
+    },
+    {
+      "round": 5,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "@other 请把昨天的构建日志发我一下。"
+        }
+      ],
+      "expect": {
+        "reply": false,
+        "target": null,
+        "format": null
+      }
+    },
+    {
+      "round": 6,
+      "template": "attached-read",
+      "kinds": ["attached-read"],
+      "messages": [
+        {
+          "target": "room",
+          "body": "请读取本频道附加目录中的 facts/attached-secret.txt，只回复文件里的口令本身，不要其他文字。"
+        }
+      ],
+      "expect": {
+        "reply": true,
+        "target": "room",
+        "format": null,
+        "attachedSecret": "LOOM-ATT-5a2519f31daaa32a31de9609"
+      }
+    }
+  ],
+  "arm": {
+    "status": "complete",
+    "compactionOptions": {
+      "reasoningEffort": "low"
+    },
+    "channelWorkspace": {
+      "workspace": {
+        "kind": "channel_home",
+        "additionalDirectories": ["<tmp>/attached"],
+        "primaryDirectory": "<tmp>/channel-workspaces/room_17c39768-4efa-4b97-99bc-63e79b506099"
+      },
+      "primary": {
+        "state": "ready",
+        "updatedAt": "2026-09-26T12:03:21.291Z"
+      }
+    },
+    "roomId": "room_17c39768-4efa-4b97-99bc-63e79b506099",
+    "participantId": "principal_eb910127-4ba0-403c-b0e4-236ab541da74",
+    "threadCreated": true,
+    "sessionId": "ses_f22664ef0ffeTPJQZdQ7CWvlrt",
+    "placements": [
+      {
+        "modelId": "deepseek/deepseek-flash",
+        "reasoning": "low",
+        "workspaceMountRevisionId": "channel-home-4173d5f65fe76aa803c88327e2b12046cb81e37954387e8c3cd138fbb7df86b0"
+      },
+      {
+        "modelId": "deepseek/deepseek-flash",
+        "reasoning": "low",
+        "workspaceMountRevisionId": "channel-home-4173d5f65fe76aa803c88327e2b12046cb81e37954387e8c3cd138fbb7df86b0"
+      },
+      {
+        "modelId": "deepseek/deepseek-flash",
+        "reasoning": "low",
+        "workspaceMountRevisionId": "channel-home-4173d5f65fe76aa803c88327e2b12046cb81e37954387e8c3cd138fbb7df86b0"
+      },
+      {
+        "modelId": "deepseek/deepseek-flash",
+        "reasoning": "low",
+        "workspaceMountRevisionId": "channel-home-4173d5f65fe76aa803c88327e2b12046cb81e37954387e8c3cd138fbb7df86b0"
+      },
+      {
+        "modelId": "deepseek/deepseek-flash",
+        "reasoning": "low",
+        "workspaceMountRevisionId": "channel-home-4173d5f65fe76aa803c88327e2b12046cb81e37954387e8c3cd138fbb7df86b0"
+      },
+      {
+        "modelId": "deepseek/deepseek-flash",
+        "reasoning": "low",
+        "workspaceMountRevisionId": "channel-home-4173d5f65fe76aa803c88327e2b12046cb81e37954387e8c3cd138fbb7df86b0"
+      }
+    ],
+    "openCodePermission": {
+      "sessionCreates": 1,
+      "permissionPatches": 0,
+      "denied": {
+        "question": true,
+        "plan_enter": true,
+        "plan_exit": true
+      },
+      "requests": [
+        {
+          "kind": "session-create",
+          "at": "2026-09-26T12:03:52.205Z",
+          "rules": 4,
+          "denied": {
+            "question": true,
+            "plan_enter": true,
+            "plan_exit": true
+          }
+        }
+      ]
+    }
+  },
+  "processes": [
+    {
+      "pid": 66759,
+      "startedAt": "2026-09-26T12:03:21.226Z",
+      "finishedAt": "2026-09-26T12:04:22.004Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "template": "qa",
+      "kinds": ["qa", "format"],
+      "startedAt": "2026-09-26T12:03:21.343Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_4626d6c0-5aab-4946-9d91-d08a03d1e135"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-26T12:04:07.488Z",
+      "usageRecords": {
+        "rows": 2,
+        "gapReasons": [],
+        "source": "driver-frames"
+      },
+      "openCodeAssistants": 3,
+      "modelEvidence": {
+        "status": "verified",
+        "records": 3
+      },
+      "evaluation": {
+        "round": 1,
+        "template": "qa",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": false,
+            "prefixOk": true,
+            "lengthOk": false,
+            "includeOk": true,
+            "chars": 44
+          },
+          "attachedRead": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": 2,
+            "input": 25172,
+            "uncached": 10964,
+            "completeness": "complete"
+          },
+          "toolCalls": null,
+          "protocolCalls": null,
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 3
+          }
+        },
+        "failures": ["format"]
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_39df586c-8b18-46ca-a0ae-4edeaed55ec7",
+          "activationId": "activation_f47d1f7f-d2a7-415c-b8ab-d3e99b1a4b87",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-26T12:03:51.398Z",
+          "finishedAt": "2026-09-26T12:04:07.466Z",
+          "executionMode": "cold"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_39df586c-8b18-46ca-a0ae-4edeaed55ec7",
+          "eventId": "event_115be1b3-696b-4ddb-affd-900b182f9bc4",
+          "roomSeq": 9,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 9,
+          "target": "room",
+          "chars": 44,
+          "body": "R01答：restartNetworkEnvironment 和读写回执两函数，共3个。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 46.086,
+      "settledSeconds": 46.124
+    },
+    {
+      "round": 2,
+      "template": "thread-recall",
+      "kinds": ["thread", "recall"],
+      "startedAt": "2026-09-26T12:04:07.503Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_93cda0e2-36aa-4b72-b534-458bb5e84567"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-26T12:04:09.822Z",
+      "usageRecords": {
+        "rows": 1,
+        "gapReasons": [],
+        "source": "driver-frames"
+      },
+      "openCodeAssistants": 2,
+      "modelEvidence": {
+        "status": "verified",
+        "records": 2
+      },
+      "evaluation": {
+        "round": 2,
+        "template": "thread-recall",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 109
+          },
+          "attachedRead": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": 1,
+            "input": 15686,
+            "uncached": 326,
+            "completeness": "complete"
+          },
+          "toolCalls": null,
+          "protocolCalls": null,
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 2
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_23217e31-16b4-49cf-9582-0148b3748653",
+          "activationId": "activation_8560ae4f-17fd-4267-8fea-d73f518ad001",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-26T12:04:07.783Z",
+          "finishedAt": "2026-09-26T12:04:09.779Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_23217e31-16b4-49cf-9582-0148b3748653",
+          "eventId": "event_79ff31d3-1a94-4eb7-ae08-3e0160a9d2d7",
+          "roomSeq": 19,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 19,
+          "target": "thread",
+          "chars": 109,
+          "body": "【规则】暗号 LOOM-7Q。我靠 worker message-post 的成功回执（\"Message sent… Message ID\"）确认消息已送达；无回复时用 worker message-check 确认。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 2.238,
+      "settledSeconds": 2.276
+    },
+    {
+      "round": 3,
+      "template": "fyi",
+      "kinds": ["fyi"],
+      "startedAt": "2026-09-26T12:04:09.833Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_d9b73931-ba66-49d1-a78a-a78377c3d937"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-26T12:04:12.151Z",
+      "usageRecords": {
+        "rows": 2,
+        "gapReasons": [],
+        "source": "driver-frames"
+      },
+      "openCodeAssistants": 2,
+      "modelEvidence": {
+        "status": "verified",
+        "records": 2
+      },
+      "evaluation": {
+        "round": 3,
+        "template": "fyi",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "attachedRead": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": 2,
+            "input": 32825,
+            "uncached": 697,
+            "completeness": "complete"
+          },
+          "toolCalls": null,
+          "protocolCalls": null,
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 2
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_87bf2792-cde3-4d53-9228-7506e0c85269",
+          "activationId": "activation_7ad65568-3833-4d40-aebe-673cc0a79c8d",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-26T12:04:10.039Z",
+          "finishedAt": "2026-09-26T12:04:12.083Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": null,
+      "firstReplySeconds": null,
+      "settledSeconds": 2.251
+    },
+    {
+      "round": 4,
+      "template": "task-window",
+      "kinds": ["task-temptation", "window", "format"],
+      "startedAt": "2026-09-26T12:04:12.169Z",
+      "compactedBefore": false,
+      "humanMessageIds": [
+        "message_01e8eae9-5be8-4d3a-bc36-86d4fde84623",
+        "message_4910fd0b-1dff-499a-b3b8-00b6c6a14cee"
+      ],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-26T12:04:14.372Z",
+      "usageRecords": {
+        "rows": 1,
+        "gapReasons": [],
+        "source": "driver-frames"
+      },
+      "openCodeAssistants": 2,
+      "modelEvidence": {
+        "status": "verified",
+        "records": 2
+      },
+      "evaluation": {
+        "round": 4,
+        "template": "task-window",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": {
+            "ok": true,
+            "prefixOk": true,
+            "lengthOk": true,
+            "includeOk": true,
+            "chars": 29
+          },
+          "attachedRead": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": 1,
+            "input": 16853,
+            "uncached": 213,
+            "completeness": "complete"
+          },
+          "toolCalls": null,
+          "protocolCalls": null,
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 2
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": true,
+      "runs": [
+        {
+          "runAttemptId": "run_40e3507c-3a5f-45a2-a998-83494845c1c9",
+          "activationId": "activation_ed678482-6b8f-434f-96e5-f46909d0f418",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-26T12:04:12.305Z",
+          "finishedAt": "2026-09-26T12:04:14.293Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_40e3507c-3a5f-45a2-a998-83494845c1c9",
+          "eventId": "event_cb94df99-5522-44fc-adfc-09d7ee598a63",
+          "roomSeq": 37,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 37,
+          "target": "room",
+          "chars": 29,
+          "body": "R04答：收到。请 Human 自行创建任务跟进回归测试。"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 2.093,
+      "settledSeconds": 2.125
+    },
+    {
+      "round": 5,
+      "template": "other",
+      "kinds": ["other-mention"],
+      "startedAt": "2026-09-26T12:04:14.382Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_b5ecca19-1a9e-43a2-b31c-6597803d648d"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-26T12:04:16.690Z",
+      "usageRecords": {
+        "rows": 2,
+        "gapReasons": [],
+        "source": "driver-frames"
+      },
+      "openCodeAssistants": 2,
+      "modelEvidence": {
+        "status": "verified",
+        "records": 2
+      },
+      "evaluation": {
+        "round": 5,
+        "template": "other",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 0,
+          "delivered": null,
+          "wrongTarget": 0,
+          "silenceViolation": false,
+          "silentAcked": true,
+          "finalMarker": null,
+          "finalOnLastPost": null,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "attachedRead": null,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": 2,
+            "input": 35091,
+            "uncached": 531,
+            "completeness": "complete"
+          },
+          "toolCalls": null,
+          "protocolCalls": null,
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 2
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_9cc4f11f-a66a-4973-8b84-d7420ba7ce2b",
+          "activationId": "activation_7666286e-d5a7-479c-bac1-0ccf346cf5cb",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-26T12:04:14.559Z",
+          "finishedAt": "2026-09-26T12:04:16.638Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [],
+      "replies": [],
+      "toolCallKinds": null,
+      "firstReplySeconds": null,
+      "settledSeconds": 2.257
+    },
+    {
+      "round": 6,
+      "template": "attached-read",
+      "kinds": ["attached-read"],
+      "startedAt": "2026-09-26T12:04:16.710Z",
+      "compactedBefore": false,
+      "humanMessageIds": ["message_901870ea-918a-4c03-851c-7b75a3581d37"],
+      "postedActivations": 1,
+      "finishedAt": "2026-09-26T12:04:21.813Z",
+      "usageRecords": {
+        "rows": 4,
+        "gapReasons": [],
+        "source": "driver-frames"
+      },
+      "openCodeAssistants": 5,
+      "modelEvidence": {
+        "status": "verified",
+        "records": 5
+      },
+      "evaluation": {
+        "round": 6,
+        "template": "attached-read",
+        "checks": {
+          "activationCount": 1,
+          "quarantined": 0,
+          "retries": 0,
+          "ackCompleted": true,
+          "runsSucceeded": true,
+          "replyCount": 1,
+          "delivered": true,
+          "wrongTarget": 0,
+          "silenceViolation": null,
+          "finalMarker": true,
+          "finalOnLastPost": true,
+          "targetRejections": null,
+          "forbiddenTasks": 0,
+          "format": null,
+          "attachedRead": true,
+          "turnHandle": null,
+          "warmExecution": null,
+          "usage": {
+            "generations": 4,
+            "input": 73148,
+            "uncached": 828,
+            "completeness": "complete"
+          },
+          "toolCalls": null,
+          "protocolCalls": null,
+          "compactionsInRound": 0,
+          "modelEvidence": {
+            "status": "verified",
+            "records": 5
+          }
+        },
+        "failures": []
+      },
+      "activationIds": 1,
+      "windowSingleActivation": null,
+      "runs": [
+        {
+          "runAttemptId": "run_a1b55f8f-5a6f-4d6d-a320-68ace1735043",
+          "activationId": "activation_b2b3f1ed-6f96-4787-8d66-6500042b4589",
+          "attemptNumber": 1,
+          "state": "exited",
+          "startedAt": "2026-09-26T12:04:16.840Z",
+          "finishedAt": "2026-09-26T12:04:21.754Z",
+          "executionMode": "warm"
+        }
+      ],
+      "finalReplies": [
+        {
+          "runAttemptId": "run_a1b55f8f-5a6f-4d6d-a320-68ace1735043",
+          "eventId": "event_87d4fb22-6b7c-46f7-9d7a-ed904e7828ec",
+          "roomSeq": 54,
+          "interruptSent": 1,
+          "interruptRequested": 1,
+          "interruptAccepted": "true",
+          "interruptTerminal": "true",
+          "preemptedFollowUp": "true"
+        }
+      ],
+      "replies": [
+        {
+          "roomSeq": 54,
+          "target": "room",
+          "chars": 33,
+          "body": "LOOM-ATT-5a2519f31daaa32a31de9609"
+        }
+      ],
+      "toolCallKinds": null,
+      "firstReplySeconds": 5,
+      "settledSeconds": 5.045
+    }
+  ],
+  "compactions": [],
+  "status": "pass",
+  "catalogVerifiedAt": "2026-09-26T12:03:18.333Z",
+  "attach": {
+    "channelWorkspace": {
+      "primaryDirectory": "<tmp>/channel-workspaces/room_17c39768-4efa-4b97-99bc-63e79b506099",
+      "additionalDirectories": ["<tmp>/attached"],
+      "primaryState": "ready",
+      "attachedRecorded": true
+    },
+    "cwd": {
+      "status": "primary",
+      "hostReceiptCwds": [
+        "<tmp>/channel-workspaces/room_17c39768-4efa-4b97-99bc-63e79b506099"
+      ],
+      "placementOnChannelHome": true,
+      "launchCwds": [
+        "<tmp>/channel-workspaces/room_17c39768-4efa-4b97-99bc-63e79b506099"
+      ],
+      "turnLaunches": 1
+    },
+    "attachment": {
+      "provider": "opencode",
+      "mechanism": "standing prompt '- Attached directory:' line",
+      "status": "effective",
+      "detail": "1/1 serve launches"
+    }
+  },
+  "summary": {
+    "totals": {
+      "rounds": [1, 2, 3, 4, 5, 6],
+      "expectedReplies": 4,
+      "delivered": 4,
+      "wrongTarget": 0,
+      "targetRejections": null,
+      "targetRejectionsObserved": 0,
+      "targetRejectionsUnobservedRounds": 6,
+      "silentRounds": 2,
+      "silenceViolations": 0,
+      "forbiddenTasks": 0,
+      "finalPosts": 4,
+      "finalOnLastPost": 4,
+      "finalRate": 1,
+      "formatChecked": 3,
+      "formatOk": 2,
+      "formatRate": 0.6666666666666666,
+      "turnHandleChecked": 0,
+      "turnHandleOk": 0,
+      "turnHandleRate": null,
+      "attachedReadChecked": 1,
+      "attachedReadOk": 1,
+      "quarantined": 0,
+      "retries": 0,
+      "ackIncomplete": 0,
+      "turnHandleMissing": 0,
+      "failedRounds": [1],
+      "meanGenerations": 2,
+      "meanInput": 33129.2,
+      "meanUncached": 2259.8,
+      "meanFirstReplySeconds": 13.9,
+      "meanSettledSeconds": 10
+    },
+    "windows": [],
+    "compactionOverhead": {
+      "status": "no-compaction",
+      "riseThreshold": 0.25,
+      "baseline": null,
+      "windows": [],
+      "compactionOverheadRising": false
+    },
+    "degradation": {
+      "behavior": true,
+      "compactionOverhead": true
+    },
+    "criteria": {
+      "delivery100": true,
+      "wrongTarget0": true,
+      "forbiddenTask0": true,
+      "silence0": true,
+      "final95": true,
+      "noDegradation": true,
+      "noQuarantine": true,
+      "ack100": true,
+      "noRetry": true,
+      "turnHandle100": true,
+      "noHardRoundFailure": true
+    },
+    "hardFailures": [],
+    "evidenceGaps": [],
+    "status": "pass"
+  },
+  "finishedAt": "2026-09-26T12:04:22.012Z",
+  "rawResultSha256": "a00566bff8fd9df6ef9a7fecda9c3356aaf055849c0ecef5109d508a4bd8bd35"
+}
