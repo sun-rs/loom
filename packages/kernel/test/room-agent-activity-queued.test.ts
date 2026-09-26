@@ -105,3 +105,42 @@ test("private-box queued work never marks the channel result as queued", () => {
     f.close();
   }
 });
+
+test("an idle instance reports the latest Room run end as updatedAt, not join time or private-box work", () => {
+  let clock = Date.parse("2026-09-26T14:32:18.000Z");
+  const f = roleInstanceFixture({ now: () => new Date(clock) });
+  const updatedAtIn = (roomId: string) =>
+    f.kernel
+      .listRoomAgentActivity(f.actor, { roomId })
+      .find(({ participantId }) => participantId === f.instance.instanceId)
+      ?.updatedAt;
+  try {
+    const joinedAt = updatedAtIn(f.home.roomId);
+    assert.equal(joinedAt, "2026-09-26T14:32:18.000Z");
+
+    clock += 5_000;
+    post(f, f.home.roomId, "channel-run");
+    const run = startInstanceRunFromQueue(f);
+    clock += 24_000;
+    run.finish(0);
+    assert.deepEqual(activityIn(f, f.home.roomId), {
+      queued: false,
+      state: "idle",
+    });
+    assert.equal(
+      updatedAtIn(f.home.roomId),
+      "2026-09-26T14:32:47.000Z",
+      "idle updatedAt is the last channel Activation end",
+    );
+
+    // Later private-box work neither moves the channel timestamp nor leaks.
+    clock += 60_000;
+    post(f, f.privateBox.roomId, "private-run");
+    const privateRun = startInstanceRunFromQueue(f);
+    clock += 10_000;
+    privateRun.finish(0);
+    assert.equal(updatedAtIn(f.home.roomId), "2026-09-26T14:32:47.000Z");
+  } finally {
+    f.close();
+  }
+});

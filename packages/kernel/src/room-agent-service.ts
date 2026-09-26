@@ -679,12 +679,26 @@ function agentActivity(
     )
     .get(roomId, participantId);
   if (activationRow === undefined) {
+    // Idle since the last Activation in this Room settled, or since joining.
+    const lastSettledAt = nullableText(
+      database
+        .prepare(
+          `SELECT MAX(updated_at) AS updated_at FROM activations
+           WHERE room_id = ? AND participant_id = ?`,
+        )
+        .get(roomId, participantId) ?? {},
+      "updated_at",
+    );
+    const joinedAt = text(memberRow, "joined_at");
     return RoomAgentActivitySchema.parse({
       participantId,
       queued,
       roomId,
       state: "idle",
-      updatedAt: text(memberRow, "joined_at"),
+      updatedAt:
+        lastSettledAt !== null && lastSettledAt > joinedAt
+          ? lastSettledAt
+          : joinedAt,
     });
   }
   const activationId = text(activationRow, "activation_id");
