@@ -413,6 +413,12 @@ export const RoomAgentActivitySchema = z
     activationId: IdentifierSchema.optional(),
     lastError: z.string().min(1).optional(),
     participantId: IdentifierSchema,
+    /**
+     * This Room holds a queued Activation for the participant (another Room,
+     * such as an instance private box, never sets it). Optional for older
+     * servers; current Kernels always report it.
+     */
+    queued: z.boolean().optional(),
     roomId: IdentifierSchema,
     runAttemptId: IdentifierSchema.optional(),
     state: RoomAgentActivityStateSchema,

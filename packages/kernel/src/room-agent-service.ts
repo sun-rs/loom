@@ -657,6 +657,14 @@ function agentActivity(
   participantId: string,
   memberRow: Row,
 ): RoomAgentActivity {
+  // Scoped to this Room: private-box or other-Room work never counts here.
+  const queued =
+    database
+      .prepare(
+        `SELECT EXISTS (SELECT 1 FROM activations
+           WHERE room_id = ? AND participant_id = ? AND state = 'queued') AS queued`,
+      )
+      .get(roomId, participantId)?.queued === 1;
   const activationRow = database
     .prepare(
       `SELECT * FROM activations
@@ -673,6 +681,7 @@ function agentActivity(
   if (activationRow === undefined) {
     return RoomAgentActivitySchema.parse({
       participantId,
+      queued,
       roomId,
       state: "idle",
       updatedAt: text(memberRow, "joined_at"),
@@ -708,6 +717,7 @@ function agentActivity(
     activationId,
     ...(lastError === undefined ? {} : { lastError }),
     participantId,
+    queued,
     roomId,
     ...(runRow === undefined
       ? {}

@@ -1,6 +1,6 @@
 /**
- * Loom evo throwaway console (docs/evo/status.zh-CN.md §44). Batch 1 is
- * read-only. Deleted in phase 4 with the gateway console branch.
+ * Loom evo throwaway console (docs/evo/status.zh-CN.md §44, §45). Batch 2
+ * adds intervention writes. Deleted in phase 4 with the gateway console branch.
  *
  * The gateway CSP omits `unsafe-eval`; Zod probes `Function("")` while its
  * module evaluates unless the shared global config is already jitless (same

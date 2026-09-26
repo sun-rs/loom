@@ -254,11 +254,17 @@ export function recentProblems(
 
 export type InstanceStatus = {
   agentId: string;
+  /** The instance principal's own handle (what a Channel @mention uses). */
   handle: string;
   instanceId: string;
   isCurrent: boolean;
   lastError: string | null;
+  /** Still a Channel member (listed by the Room activity projection). */
+  member: boolean;
   privateBoxLabel: string;
+  /** Rooms (this Channel, the private box) holding queued Activations. */
+  queuedCount: number;
+  queuedLabel: string;
   recentProblems: ProblemRecord[];
   roleId: string;
   roleName: string;
@@ -268,8 +274,41 @@ export type InstanceStatus = {
   watchdogWarning: string | null;
 };
 
+/**
+ * `queued` is per Room (B3): 1 when that Room holds queued work. A server
+ * that does not report it leaves the count unknown rather than 0.
+ */
+function queuedSummary(
+  channel: RoomAgentActivity | undefined,
+  privateBox: RoomAgentActivity | undefined,
+): { count: number; label: string } {
+  const flag = (entry: RoomAgentActivity | undefined) =>
+    entry === undefined
+      ? 0
+      : entry.queued === undefined
+        ? null
+        : entry.queued
+          ? 1
+          : 0;
+  const channelQueued = flag(channel);
+  const privateQueued = flag(privateBox);
+  if (channelQueued === null || privateQueued === null) {
+    return { count: 0, label: `排队 ${UNKNOWN}` };
+  }
+  const count = channelQueued + privateQueued;
+  return {
+    count,
+    label:
+      count === 0
+        ? "排队 0"
+        : `排队 ${String(count)}（频道 ${String(channelQueued)}，私聊 ${String(privateQueued)}）`,
+  };
+}
+
 export function assembleInstanceStatuses(input: {
   agentActivities: ReadonlyMap<string, readonly AgentActivityRecord[]>;
+  agentHandles: ReadonlyMap<string, string>;
+  privateActivities: ReadonlyMap<string, readonly RoomAgentActivity[]>;
   roleList: RoleListResponse;
   roomActivities: readonly RoomAgentActivity[];
   roomId: string;
@@ -287,7 +326,7 @@ export function assembleInstanceStatuses(input: {
     input.rooms.flatMap((room) =>
       room.instancePrivateBox === undefined
         ? []
-        : [[room.instancePrivateBox.instanceId, room.instancePrivateBox]],
+        : [[room.instancePrivateBox.instanceId, room]],
     ),
   );
   return input.roleList.instances
@@ -295,25 +334,41 @@ export function assembleInstanceStatuses(input: {
     .map((instance) => {
       const role = roles.get(instance.roleId);
       const current = activity.get(instance.instanceId);
+      const member = current !== undefined;
       const records = input.agentActivities.get(instance.agentId) ?? [];
-      const box = privateBoxes.get(instance.instanceId);
+      const boxRoom = privateBoxes.get(instance.instanceId);
+      const box = boxRoom?.instancePrivateBox;
+      const privateEntry = (
+        input.privateActivities.get(instance.instanceId) ?? []
+      ).find(
+        (entry) =>
+          entry.participantId === instance.instanceId &&
+          entry.roomId === boxRoom?.roomId,
+      );
+      const queued = queuedSummary(current, privateEntry);
       return {
         agentId: instance.agentId,
-        handle: role?.configuration.handle ?? instance.instanceId,
+        handle:
+          input.agentHandles.get(instance.agentId) ??
+          role?.configuration.handle ??
+          instance.instanceId,
         instanceId: instance.instanceId,
         isCurrent: instance.isCurrent,
         lastError: current?.lastError ?? null,
+        member,
         privateBoxLabel:
           box === undefined
             ? "私聊未打开"
             : box.active
               ? "私聊可用"
               : "私聊已停用",
+        queuedCount: member ? queued.count : 0,
+        queuedLabel: member ? queued.label : "—",
         recentProblems: recentProblems(records),
         roleId: instance.roleId,
         roleName: role?.configuration.displayName ?? instance.roleId,
         state: current?.state,
-        stateLabel: stateLabel(current?.state),
+        stateLabel: member ? stateLabel(current?.state) : "已移出频道",
         updatedAt: current?.updatedAt ?? null,
         watchdogWarning: watchdogWarningActive(records),
       };
@@ -338,7 +393,19 @@ export async function loadInstanceStatuses(
   const instances = roleList.instances.filter(
     ({ channelId }) => channelId === input.roomId,
   );
+  const agentHandles = new Map<string, string>();
+  if (instances.length > 0) {
+    const agents = await client.request(
+      "agent.list",
+      { controlRoomId: input.controlRoomId },
+      options(signal),
+    );
+    for (const agent of agents.agents) {
+      agentHandles.set(agent.definition.agentId, agent.handle);
+    }
+  }
   const agentActivities = new Map<string, readonly AgentActivityRecord[]>();
+  const privateActivities = new Map<string, readonly RoomAgentActivity[]>();
   for (const instance of instances) {
     const page = await client.request(
       "agent.activity.list",
@@ -346,9 +413,22 @@ export async function loadInstanceStatuses(
       options(signal),
     );
     agentActivities.set(instance.agentId, page.activities);
+    const box = input.rooms.find(
+      (room) => room.instancePrivateBox?.instanceId === instance.instanceId,
+    );
+    if (box !== undefined) {
+      const boxActivity = await client.request(
+        "room.agent.activity.list",
+        { roomId: box.roomId },
+        options(signal),
+      );
+      privateActivities.set(instance.instanceId, boxActivity.agents);
+    }
   }
   return assembleInstanceStatuses({
     agentActivities,
+    agentHandles,
+    privateActivities,
     roleList,
     roomActivities: roomActivities.agents,
     roomId: input.roomId,

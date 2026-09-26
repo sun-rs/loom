@@ -5,6 +5,7 @@ import { loadIdentity } from "./model.ts";
 import { Poller } from "./poll.ts";
 import { mountChannel } from "./view-channel.ts";
 import { mountChannelList } from "./view-channels.ts";
+import { mountRoles } from "./view-roles.ts";
 import { mountSettings } from "./view-settings.ts";
 import { createShell, renderConnection } from "./view-shell.ts";
 import { mountUsage } from "./view-usage.ts";
@@ -19,12 +20,13 @@ const context: ConsoleContext = {
   connection: { kind: "connecting" },
   identity: undefined,
   listeners: new Set(),
+  refreshRooms: () => undefined,
   rooms: [],
   roomsLoaded: false,
 };
 context.listeners.add(() => renderConnection(shell.connection, context));
 
-new Poller(LIST_POLL_MS, async (signal) => {
+const listPoller = new Poller(LIST_POLL_MS, async (signal) => {
   try {
     const identity = await loadIdentity(context.client, { signal });
     const rooms = await context.client.request(
@@ -42,7 +44,9 @@ new Poller(LIST_POLL_MS, async (signal) => {
     context.connection = { kind: "disconnected", reason: errorText(error) };
   }
   notify(context);
-}).start();
+});
+context.refreshRooms = () => listPoller.runNow();
+listPoller.start();
 
 let unmount: (() => void) | undefined;
 function route(): void {
@@ -62,6 +66,8 @@ function route(): void {
   }
   if (channel?.[1] !== undefined) {
     unmount = mountChannel(shell.main, context, decodeURIComponent(channel[1]));
+  } else if (hash === "/roles") {
+    unmount = mountRoles(shell.main, context);
   } else if (hash === "/usage") {
     unmount = mountUsage(shell.main, context);
   } else if (hash === "/settings") {

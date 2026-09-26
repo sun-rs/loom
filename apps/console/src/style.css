@@ -22,6 +22,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--page);
@@ -253,6 +257,7 @@ main {
   padding: 4px 10px;
   border: 1px solid var(--line);
   background: var(--panel);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
 }
@@ -283,6 +288,133 @@ main {
 
 .usage-total td {
   font-weight: 700;
+}
+
+/* Batch 2: forms and intervention actions. */
+form,
+.composer,
+.instantiate-row {
+  display: grid;
+  gap: 8px;
+}
+
+.instantiate-row,
+.composer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.form-row {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.form-row .hint {
+  font-size: 12px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: var(--panel);
+  color: var(--accent);
+}
+
+button.danger {
+  border-color: var(--error);
+  background: var(--error);
+  color: #fff;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.action-status {
+  min-height: 1em;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.action-status.tone-ok {
+  color: var(--ok);
+}
+
+.action-status.tone-error {
+  color: var(--error);
+}
+
+.confirm-box {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--warn-line);
+  background: var(--warn-bg);
+}
+
+.confirm-box p {
+  margin: 0 0 6px;
+}
+
+.instance-actions {
+  margin-top: 6px;
+}
+
+.instance-card.state-removed {
+  opacity: 0.7;
+}
+
+.lifecycle-list,
+.role-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role-card {
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+
+.created-channel {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--ok);
 }
 
 @media (max-width: 760px) {

@@ -16,6 +16,8 @@ export type ConsoleContext = {
   rooms: readonly Room[];
   roomsLoaded: boolean;
   listeners: Set<() => void>;
+  /** Re-reads identity and the Room list now (after a write). */
+  refreshRooms: () => void;
 };
 
 export function notify(context: ConsoleContext): void {

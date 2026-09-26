@@ -34,6 +34,7 @@ import {
 // FIXTURE ONLY: every identifier and reply below is fake test data.
 const NOW = "2026-09-26T12:00:00.000Z";
 const HUMAN = "principal-human-fixture";
+const DIGEST = `sha256:${"0".repeat(64)}`;
 
 function room(overrides: Partial<Room> & { roomId: string }): Room {
   return {
@@ -281,6 +282,7 @@ test("instance status joins role.list, room activity, private boxes and recent f
   const roomActivities: RoomAgentActivity[] = [
     {
       participantId: "instance-1",
+      queued: true,
       roomId: "room-a",
       state: "waking",
       updatedAt: NOW,
@@ -288,12 +290,31 @@ test("instance status joins role.list, room activity, private boxes and recent f
     {
       lastError: "fixture provider exited 1",
       participantId: "instance-2",
+      queued: false,
       roomId: "room-a",
       state: "error",
       updatedAt: NOW,
     },
   ];
   const statuses = assembleInstanceStatuses({
+    agentHandles: new Map([
+      ["agent-1", "reviewer-fixture1"],
+      ["agent-2", "reviewer-fixture2"],
+    ]),
+    privateActivities: new Map([
+      [
+        "instance-1",
+        [
+          {
+            participantId: "instance-1",
+            queued: true,
+            roomId: "room-private-1",
+            state: "waking",
+            updatedAt: NOW,
+          },
+        ],
+      ],
+    ]),
     agentActivities: new Map([
       [
         "agent-1",
@@ -332,6 +353,14 @@ test("instance status joins role.list, room activity, private boxes and recent f
           roleRevisionId: "revision-0",
         },
         {
+          agentId: "agent-4",
+          channelId: "room-a",
+          instanceId: "instance-removed",
+          isCurrent: true,
+          roleId: "role-1",
+          roleRevisionId: "revision-1",
+        },
+        {
           agentId: "agent-3",
           channelId: "room-other",
           instanceId: "instance-3",
@@ -362,9 +391,18 @@ test("instance status joins role.list, room activity, private boxes and recent f
   });
   assert.deepEqual(
     statuses.map((status) => status.instanceId),
-    ["instance-1", "instance-2"],
+    ["instance-1", "instance-2", "instance-removed"],
   );
-  const [first, second] = statuses;
+  const [first, second, removed] = statuses;
+  assert.equal(first?.handle, "reviewer-fixture1", "the instance's own handle");
+  assert.equal(first?.member, true);
+  assert.equal(first?.queuedCount, 2, "channel plus private box");
+  assert.equal(first?.queuedLabel, "排队 2（频道 1，私聊 1）");
+  assert.equal(second?.queuedCount, 0);
+  assert.equal(second?.queuedLabel, "排队 0");
+  assert.equal(removed?.member, false, "absent from the Room activity list");
+  assert.equal(removed?.stateLabel, "已移出频道");
+  assert.equal(removed?.queuedLabel, "—");
   assert.equal(first?.roleName, "Fixture Reviewer");
   assert.equal(first?.isCurrent, true);
   assert.equal(first?.stateLabel, "排队或启动中");
@@ -438,18 +476,63 @@ test("instance status loads through role.list, room.agent.activity.list and agen
       };
     }
     if (operation === "agent.activity.list") return { activities: [] };
+    if (operation === "agent.list") {
+      return {
+        agents: [
+          {
+            currentRevision: {
+              agentDefinitionRevisionId: "agent-revision-1",
+              agentId: "agent-1",
+              contentDigest: DIGEST,
+              createdAt: NOW,
+              createdBy: HUMAN,
+              executionPolicyRevisionId: "policy-1",
+              instructionRefs: [],
+              instructions: "FIXTURE ONLY",
+              memoryPolicyRef: {
+                artifactId: "memory-policy",
+                contentDigest: DIGEST,
+                versionId: "memory-policy-v1",
+              },
+              revision: 1,
+              role: "reviewer",
+              skillRefs: [],
+            },
+            definition: {
+              agentId: "agent-1",
+              controlRoomId: "room-control",
+              createdAt: NOW,
+              currentRevisionId: "agent-revision-1",
+              participantId: "instance-1",
+              state: "enabled",
+              updatedAt: NOW,
+            },
+            handle: "reviewer-fixture1",
+          },
+        ],
+      };
+    }
     throw new Error(`unexpected ${operation}`);
   });
   const statuses = await loadInstanceStatuses(client, {
     controlRoomId: "room-control",
     roomId: "room-a",
-    rooms: [],
+    rooms: [
+      room({
+        instancePrivateBox: { active: true, instanceId: "instance-1" },
+        kind: "direct",
+        roomId: "room-private-1",
+      }),
+    ],
   });
   assert.equal(statuses[0]?.stateLabel, "运行中");
+  assert.equal(statuses[0]?.handle, "reviewer-fixture1");
   assert.deepEqual(calls, [
     ["role.list", { controlRoomId: "room-control" }],
     ["room.agent.activity.list", { roomId: "room-a" }],
+    ["agent.list", { controlRoomId: "room-control" }],
     ["agent.activity.list", { agentId: "agent-1", limit: 20 }],
+    ["room.agent.activity.list", { roomId: "room-private-1" }],
   ]);
 });
 

@@ -16,7 +16,7 @@ export function createShell(root: HTMLElement): Shell {
         el("h1", { text: "Loom 控制台" }),
         el("span", {
           className: "console-badge",
-          text: "evo 临时 · 只读",
+          text: "evo 临时 · 介入操作",
         }),
       ]),
       connection,
@@ -25,6 +25,7 @@ export function createShell(root: HTMLElement): Shell {
         { attrs: { "aria-label": "控制台导航" }, className: "console-nav" },
         [
           el("a", { attrs: { href: "#/channels" }, text: "频道" }),
+          el("a", { attrs: { href: "#/roles" }, text: "Role" }),
           el("a", { attrs: { href: "#/usage" }, text: "用量" }),
           el("a", { attrs: { href: "#/settings" }, text: "运行设置" }),
         ],

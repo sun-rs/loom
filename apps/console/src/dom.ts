@@ -48,3 +48,62 @@ export function present(...children: readonly Child[]): Array<Node | string> {
       child !== null && child !== undefined && child !== false,
   );
 }
+
+export function button(
+  text: string,
+  onClick: () => void,
+  props: { attrs?: Record<string, string>; className?: string } = {},
+): HTMLButtonElement {
+  const element = el("button", {
+    attrs: { type: "button", ...props.attrs },
+    className: props.className ?? "",
+    text,
+  });
+  element.addEventListener("click", onClick);
+  return element;
+}
+
+/** A labelled form control; the label wraps the control for accessibility. */
+export function labelled(
+  label: string,
+  control: HTMLElement,
+  hint?: string,
+): HTMLElement {
+  return el("label", { className: "form-row" }, [
+    el("span", { className: "field-label", text: label }),
+    control,
+    hint === undefined
+      ? null
+      : el("span", { className: "muted hint", text: hint }),
+  ]);
+}
+
+export function setOptions(
+  select: HTMLSelectElement,
+  options: ReadonlyArray<{ label: string; value: string }>,
+  placeholder?: string,
+): void {
+  const previous = select.value;
+  select.replaceChildren(
+    ...(placeholder === undefined
+      ? []
+      : [el("option", { attrs: { value: "" }, text: placeholder })]),
+    ...options.map(({ label, value }) =>
+      el("option", { attrs: { value }, text: label }),
+    ),
+  );
+  if ([...select.options].some((option) => option.value === previous)) {
+    select.value = previous;
+  }
+}
+
+/** Status line for an action: neutral, success or error, text only. */
+export function setStatus(
+  element: HTMLElement,
+  tone: "info" | "ok" | "error",
+  text: string,
+): void {
+  element.classList.remove("tone-info", "tone-ok", "tone-error");
+  element.classList.add("action-status", `tone-${tone}`);
+  element.textContent = text;
+}
