@@ -16,10 +16,16 @@ export function providerMemoryConfig(
 ): Record<string, boolean>;
 export function codexUserMcpServerNames(
   environment?: NodeJS.ProcessEnv,
+  options?: { executable?: string; cwd?: string },
 ): string[];
+export function providerLaunchSwitches(runtimeId: string): {
+  args: string[];
+  environment: Record<string, string>;
+};
 export function providerLaunchPolicy(
   runtimeId: string,
   environment?: NodeJS.ProcessEnv,
+  options?: { codexExecutable?: string; cwd?: string },
 ): {
   args: string[];
   environment: Record<string, string>;

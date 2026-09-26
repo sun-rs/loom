@@ -1,7 +1,5 @@
 // Human-managed launch overrides and legacy additions; no shell evaluation. Built-in transport stays owned here.
-import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 
 export const PROVIDER_LAUNCH_ARGS_ENV = "RAH_PROVIDER_LAUNCH_ARGS_JSON";
 const base = {
@@ -239,102 +237,120 @@ const PROVIDER_ISOLATION_ENVIRONMENT = {
 // the instance's danger-full-access sandbox Codex sends it with live web
 // access even when `web_search="cached"` is configured (measured), so
 // disabling is the only value independent of the user's `web_search`.
-// `mcp_servers={}` merges instead of replacing, so each user MCP server is
-// disabled by name.
-function codexIsolationConfig(environment) {
-  return [
-    ["notify", "[]"],
-    ["features.plugins", "false"],
-    ["features.apps", "false"],
-    ["features.hooks", "false"],
-    ["skills.include_instructions", "false"],
-    ["web_search", '"disabled"'],
-    ...codexUserMcpServerNames(environment).map((name) => [
-      `mcp_servers.${name}.enabled`,
-      "false",
-    ]),
-  ];
-}
+const CODEX_ISOLATION_CONFIG = [
+  ["notify", "[]"],
+  ["features.plugins", "false"],
+  ["features.apps", "false"],
+  ["features.hooks", "false"],
+  ["skills.include_instructions", "false"],
+  ["web_search", '"disabled"'],
+];
 
-function codexConfigPath(environment) {
-  const codexHome =
-    environment.CODEX_HOME || join(environment.HOME || homedir(), ".codex");
-  return join(codexHome, "config.toml");
-}
+const CODEX_MCP_LIST_TIMEOUT_MS = 15_000;
 
-function tomlKey(raw) {
-  const key = raw.trim();
-  const quoted = /^"((?:[^"\\]|\\.)*)"$/u.exec(key) ?? /^'([^']*)'$/u.exec(key);
-  return quoted ? quoted[1] : key;
-}
-
-// Read-only scan of the user's config.toml for MCP server names: table
-// headers `[mcp_servers.<name>]` / `[mcp_servers.<name>.env]`, entries inside
-// `[mcp_servers]`, and root dotted keys `mcp_servers.<name>.<field> = ...`.
-// Codex splits a `-c` key on every dot, so a name containing "." or "=" cannot
-// be addressed; the launch fails closed instead of loading it.
-export function codexUserMcpServerNames(environment = process.env) {
-  let text;
-  try {
-    text = readFileSync(codexConfigPath(environment), "utf8");
-  } catch (error) {
-    if (error?.code === "ENOENT") return [];
-    throw error;
-  }
-  const names = new Set();
-  const segment = String.raw`(?:"(?:[^"\\]|\\.)*"|'[^']*'|[A-Za-z0-9_-]+)`;
-  const header = new RegExp(
-    String.raw`^\[\s*mcp_servers\s*\.\s*(${segment})\s*(?:\.[^\]]*)?\]\s*(?:#.*)?$`,
-    "u",
-  );
-  const dotted = new RegExp(
-    String.raw`^mcp_servers\s*\.\s*(${segment})\s*[.=]`,
-    "u",
-  );
-  const entry = new RegExp(String.raw`^(${segment})\s*[.=]`, "u");
-  let table = "";
-  let multiline;
-  for (const rawLine of text.split(/\r?\n/u)) {
-    const line = rawLine.trim();
-    // Lines inside a multi-line string are values, never keys.
-    if (multiline !== undefined) {
-      if (line.includes(multiline)) multiline = undefined;
-      continue;
-    }
-    if (!line || line.startsWith("#")) continue;
-    multiline = ['"""', "'''"].find(
-      (fence) => line.split(fence).length % 2 === 0,
+function codexMcpList(executable, environment, cwd, extraArgs) {
+  const command = `${executable} mcp list --json`;
+  const refuse = (why) =>
+    new Error(
+      `Codex user MCP servers could not be resolved (${why}); a Loom instance does not start while a user MCP server might stay enabled`,
     );
-    if (line.startsWith("[")) {
-      table = line.replace(/\s*#[^"'\]]*$/u, "").replace(/\s+/gu, "");
-      const match = header.exec(line);
-      if (match) names.add(tomlKey(match[1]));
-      continue;
-    }
-    if (table === "") {
-      const match = dotted.exec(line);
-      if (match) names.add(tomlKey(match[1]));
-    } else if (table === "[mcp_servers]") {
-      const match = entry.exec(line);
-      if (match) names.add(tomlKey(match[1]));
-    }
+  const result = spawnSync(
+    executable,
+    ["mcp", "list", "--json", ...extraArgs],
+    {
+      cwd,
+      encoding: "utf8",
+      env: environment,
+      maxBuffer: 8 * 1024 * 1024,
+      shell: false,
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: CODEX_MCP_LIST_TIMEOUT_MS,
+    },
+  );
+  if (result.error) throw refuse(`${command}: ${result.error.message}`);
+  if (result.status !== 0)
+    throw refuse(
+      `${command} exited ${String(result.status ?? result.signal)}: ${String(result.stderr).trim().slice(0, 2_000)}`,
+    );
+  let servers;
+  try {
+    servers = JSON.parse(result.stdout);
+  } catch {
+    throw refuse(`${command} did not print JSON`);
   }
-  const sorted = [...names].sort();
-  for (const name of sorted)
-    if (!/^[^.=\s]+$/u.test(name))
-      throw new Error(
-        `Codex MCP server name cannot be disabled for a Loom instance (-c splits keys on "."): ${name}`,
-      );
-  return sorted;
+  if (
+    !Array.isArray(servers) ||
+    servers.some(
+      (server) =>
+        server === null ||
+        typeof server !== "object" ||
+        typeof server.name !== "string" ||
+        server.name === "" ||
+        typeof server.enabled !== "boolean",
+    )
+  )
+    throw refuse(`${command} printed an unexpected shape`);
+  return servers;
 }
 
-export function providerLaunchPolicy(runtimeId, environment = process.env) {
+// The user's MCP servers as Codex itself resolves them: `codex mcp list
+// --json` loads the same configuration layers with Codex's own TOML parser
+// (root inline tables, quoted keys, escapes) and starts no server and no
+// model (free; about 10 ms with 0.156.1). No user file is read or written by
+// Loom (Codex itself keeps its `$CODEX_HOME/tmp`). The listing carries the
+// same fixed switches as the launch: plugin-provided servers disappear with
+// `features.plugins=false` (measured) and must not be addressed by name.
+// `mcp_servers={}` merges instead of replacing, so each server is disabled
+// by name, and a second listing with those overrides must report every
+// server disabled. Any failure refuses the launch (fail-closed): a
+// missing or failing CLI, a configuration Codex cannot parse, a name `-c`
+// cannot address (it splits keys on "." and the value on "="), or an
+// override Codex did not apply. Not cached: each driver resolves once at
+// start, so a cache would save nothing and could go stale.
+export function codexUserMcpServerNames(
+  environment = process.env,
+  { executable = "codex", cwd = process.cwd() } = {},
+) {
+  const fixed = providerLaunchSwitches("codex").args;
+  const names = [
+    ...new Set(
+      codexMcpList(executable, environment, cwd, fixed).map(({ name }) => name),
+    ),
+  ].sort();
+  for (const name of names)
+    if (/[.=]/u.test(name))
+      throw new Error(
+        `Codex MCP server name cannot be disabled for a Loom instance (-c splits keys on "." and "="): ${name}`,
+      );
+  if (names.length === 0) return names;
+  const stillEnabled = codexMcpList(executable, environment, cwd, [
+    ...fixed,
+    ...codexMcpDisableArgs(names),
+  ])
+    .filter((server) => server.enabled)
+    .map((server) => server.name);
+  if (stillEnabled.length > 0)
+    throw new Error(
+      `Codex did not apply the Loom MCP disable override to: ${stillEnabled.join(", ")}; the instance is not started`,
+    );
+  return names;
+}
+
+function codexMcpDisableArgs(names) {
+  return names.flatMap((name) => ["-c", `mcp_servers.${name}.enabled=false`]);
+}
+
+/**
+ * The fixed, process-only switches of a runtime: no user configuration is
+ * consulted. Projections and argv fences use it; a launch uses
+ * providerLaunchPolicy, which adds Codex's per-name user MCP disables.
+ */
+export function providerLaunchSwitches(runtimeId) {
   const falseSwitches = Object.keys({
     ...providerMemoryConfig(runtimeId),
     ...providerAutonomyConfig(runtimeId),
   }).map((key) => [key, "false"]);
-  const isolation =
-    runtimeId === "codex" ? codexIsolationConfig(environment) : [];
+  const isolation = runtimeId === "codex" ? CODEX_ISOLATION_CONFIG : [];
   // `notify=[]` first: nothing may reach the user's notify program.
   const config = [
     ...isolation.filter(([key]) => key === "notify"),
@@ -347,5 +363,31 @@ export function providerLaunchPolicy(runtimeId, environment = process.env) {
       ...(runtimeId === "claude" ? CLAUDE_ISOLATION_ARGS : []),
     ],
     environment: { ...PROVIDER_ISOLATION_ENVIRONMENT[runtimeId] },
+  };
+}
+
+/**
+ * The launch policy. For Codex, `environment`, `codexExecutable` and `cwd`
+ * must be the ones the provider process is spawned with, so the MCP servers
+ * resolved are the ones that process would load.
+ */
+export function providerLaunchPolicy(
+  runtimeId,
+  environment = process.env,
+  { codexExecutable = "codex", cwd = process.cwd() } = {},
+) {
+  const switches = providerLaunchSwitches(runtimeId);
+  if (runtimeId !== "codex") return switches;
+  return {
+    args: [
+      ...switches.args,
+      ...codexMcpDisableArgs(
+        codexUserMcpServerNames(environment, {
+          executable: codexExecutable,
+          cwd,
+        }),
+      ),
+    ],
+    environment: switches.environment,
   };
 }

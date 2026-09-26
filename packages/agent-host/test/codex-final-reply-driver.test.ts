@@ -265,6 +265,7 @@ test("session binding: a run cancelled after turn/start still reports its thread
  * and holds it open, so the Host's signal arrives mid-generation.
  */
 const fakeAppServer = `#!/usr/bin/env node
+if (process.argv[2] === "mcp") { process.stdout.write("[]"); process.exit(0); } // FAKE \`codex mcp list --json\`: no user MCP servers
 import { appendFileSync, existsSync } from "node:fs";
 import { createInterface } from "node:readline";
 const record = (value) => appendFileSync(process.env.FAKE_RECORD, JSON.stringify(value) + "\\n");

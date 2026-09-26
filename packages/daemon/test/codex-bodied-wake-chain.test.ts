@@ -540,6 +540,7 @@ function manifest(executable: string): RuntimeProfileManifestV3 {
 
 /** FAKE Codex app-server: acts as the model by running the wake's command. */
 const fakeCodexModel = `#!/usr/bin/env node
+if (process.argv[2] === "mcp") { process.stdout.write("[]"); process.exit(0); } // FAKE \`codex mcp list --json\`: no user MCP servers
 import { appendFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { createInterface } from "node:readline";

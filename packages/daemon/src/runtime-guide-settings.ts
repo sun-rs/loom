@@ -7,7 +7,7 @@ import {
   PROVIDER_LAUNCH_ARGS_ENV,
   providerLaunchDefaults,
   providerLaunchRequiredArgs,
-  providerLaunchPolicy,
+  providerLaunchSwitches,
 } from "@rah-os/agent-host";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -128,7 +128,9 @@ export class RuntimeGuideSettings {
         inheritedEnvironment: {},
         defaultArgs: providerLaunchDefaults(row.runtimeId),
         requiredArgs: providerLaunchRequiredArgs(row.runtimeId),
-        managedLaunch: providerLaunchPolicy(row.runtimeId),
+        // Fixed switches only: Codex's per-name user MCP disables are
+        // resolved by each launch (`codex mcp list --json`), not here.
+        managedLaunch: providerLaunchSwitches(row.runtimeId),
         overrideArgs: null,
         effectiveArgs: providerLaunchDefaults(row.runtimeId),
       })),

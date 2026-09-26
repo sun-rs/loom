@@ -2,12 +2,23 @@ import { isEffectiveAnswer } from "./metrics.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { measure } from "./common.mjs";
-import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import {
+  providerLaunchPolicy,
+  providerLaunchSwitches,
+} from "../../packages/agent-host/src/provider-launch-arguments.js";
 
 // Same process switches as the product app-server (memory and autonomy:
 // multi_agent/goals off), so the native baseline takes the same single-agent
-// path (Codex review of batches 3-4 P2-2).
-export function codexNativeArgs({ model, effort, sessionId, prompt }) {
+// path (Codex review of batches 3-4 P2-2). `launchArgs` is the product
+// launch policy resolved for the native run's cwd and environment (it lists
+// the user's MCP servers through `codex mcp list --json`).
+export function codexNativeArgs({
+  model,
+  effort,
+  sessionId,
+  prompt,
+  launchArgs,
+}) {
   return [
     "exec",
     "--json",
@@ -17,7 +28,7 @@ export function codexNativeArgs({ model, effort, sessionId, prompt }) {
     model,
     "-c",
     `model_reasoning_effort="${effort}"`,
-    ...providerLaunchPolicy("codex").args,
+    ...launchArgs,
     ...(sessionId ? ["resume", sessionId] : []),
     prompt,
   ];
@@ -27,7 +38,7 @@ export function codexNativeEnvironment(environment = process.env) {
     ...Object.fromEntries(
       Object.entries(environment).filter(([k]) => !k.startsWith("RAH_")),
     ),
-    ...providerLaunchPolicy("codex").environment,
+    ...providerLaunchSwitches("codex").environment,
   };
 }
 // Installed CLI directly; no RAH worker, scheduler or runtime adapter in this arm.
@@ -46,15 +57,17 @@ export async function nativeRound({
     answer,
     seenId = sessionId,
     stderr = "";
+  const env = codexNativeEnvironment();
   const args = codexNativeArgs({
     model: config.model,
     effort: config.effort,
     sessionId,
     prompt,
+    launchArgs: providerLaunchPolicy("codex", env, { cwd }).args,
   });
   const child = spawn("codex", args, {
     cwd,
-    env: codexNativeEnvironment(),
+    env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   round.pid = child.pid;

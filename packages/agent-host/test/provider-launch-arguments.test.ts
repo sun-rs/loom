@@ -89,47 +89,44 @@ test("Claude stream-json requires verbose according to the installed CLI", async
 });
 
 test("memory policy displayed in settings is the same launch contract consumed by drivers", async () => {
-  const { providerLaunchPolicy } =
+  const { providerLaunchPolicy, providerLaunchSwitches } =
     await import("../src/provider-launch-arguments.js");
   assert.deepEqual(providerLaunchPolicy("claude").environment, {
     CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1",
     // Global personal-config isolation (2026-09-26).
     ENABLE_CLAUDEAI_MCP_SERVERS: "false",
   });
-  assert.deepEqual(
-    providerLaunchPolicy("codex", {
-      CODEX_HOME: "/nonexistent/loom-test-codex-home",
-    }).args,
-    [
-      // Global personal-config isolation (2026-09-26): notify first.
-      "-c",
-      "notify=[]",
-      "-c",
-      "features.memories=false",
-      "-c",
-      "memories.generate_memories=false",
-      "-c",
-      "memories.use_memories=false",
-      "-c",
-      "features.multi_agent=false",
-      "-c",
-      "features.goals=false",
-      "-c",
-      "features.sleep_tool=false",
-      "-c",
-      "features.in_app_local_automation=false",
-      "-c",
-      "features.plugins=false",
-      "-c",
-      "features.apps=false",
-      "-c",
-      "features.hooks=false",
-      "-c",
-      "skills.include_instructions=false",
-      "-c",
-      'web_search="disabled"',
-    ],
-  );
+  // Settings show the fixed switches; each launch adds the per-name user
+  // MCP disables Codex lists (provider-global-isolation.test.ts).
+  assert.deepEqual(providerLaunchSwitches("codex").args, [
+    // Global personal-config isolation (2026-09-26): notify first.
+    "-c",
+    "notify=[]",
+    "-c",
+    "features.memories=false",
+    "-c",
+    "memories.generate_memories=false",
+    "-c",
+    "memories.use_memories=false",
+    "-c",
+    "features.multi_agent=false",
+    "-c",
+    "features.goals=false",
+    "-c",
+    "features.sleep_tool=false",
+    "-c",
+    "features.in_app_local_automation=false",
+    "-c",
+    "features.plugins=false",
+    "-c",
+    "features.apps=false",
+    "-c",
+    "features.hooks=false",
+    "-c",
+    "skills.include_instructions=false",
+    "-c",
+    'web_search="disabled"',
+  ]);
   // Full review batch 3 P1-6 (kimi-code 0.39.1 source: both agent cores stop
   // the cron scheduler and CronCreate refuses under KIMI_DISABLE_CRON=1).
   assert.deepEqual(providerLaunchPolicy("kimi").environment, {

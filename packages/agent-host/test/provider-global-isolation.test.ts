@@ -6,6 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -22,6 +23,7 @@ import {
   providerLaunchDefaults,
   providerLaunchPolicy,
   providerLaunchRequiredArgs,
+  providerLaunchSwitches,
   validateProviderLaunchArgs,
 } from "../src/provider-launch-arguments.js";
 
@@ -30,55 +32,109 @@ import {
 // notify programs, plugins or MCP servers. Every switch is process-only
 // (argv/env of the Loom child); no user file is read for writing.
 
-const CODEX_USER_CONFIG = `model = "gpt-6-sol"
-notify = ["/Users/someone/notify-program", "turn-ended"]
-web_search = "live"
-developer_instructions = """
-[mcp_servers.not_a_server]
-mcp_servers.also_not.command = "x"
-"""
-
-[mcp_servers]
-inline_one = { command = "/usr/bin/true" }
-
-[mcp_servers.node_repl]
-command = "/bin/node_repl"
-
-[mcp_servers.node_repl.env]
-CODEX_HOME = "/Users/someone/.codex"
-
-[mcp_servers.computer-use]
-command = "./client"
-enabled = false
-
-[mcp_servers."quoted_name"]
-command = "/usr/bin/true"
-
-[projects."/Users/someone/mcp_servers.fake"]
-trust_level = "trusted"
+// FAKE `codex mcp list --json` (not Codex): it mirrors what Codex 0.156.1
+// was measured to do (see provider-global-isolation-probe.test.ts, which
+// checks the real CLI): it lists `$CODEX_HOME/fake-mcp-list.json` (default
+// `$HOME/.codex`), drops plugin-provided servers under
+// `features.plugins=false`, applies `-c mcp_servers.<name>.enabled=false`
+// (splitting the key on "."), and records each call with its cwd.
+// Anything else in the argv behaves as the launch recorder given.
+const FAKE_CODEX_MCP_LIST = String.raw`
+import { appendFileSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+const argv = process.argv.slice(2);
+if (argv[0] === "mcp") {
+  const home = process.env.CODEX_HOME || join(process.env.HOME, ".codex");
+  const state = JSON.parse(readFileSync(join(home, "fake-mcp-list.json"), "utf8"));
+  appendFileSync(join(home, "fake-mcp-calls.jsonl"), JSON.stringify({ argv, cwd: process.cwd() }) + "\n");
+  if (state.exit) {
+    process.stderr.write(state.stderr ?? "FAKE failure\n");
+    process.exit(state.exit);
+  }
+  if (state.stdout !== undefined) {
+    process.stdout.write(state.stdout);
+    process.exit(0);
+  }
+  const overrides = [];
+  for (let i = 0; i < argv.length; i++) if (argv[i] === "-c") overrides.push(argv[++i]);
+  const pluginsOff = overrides.includes("features.plugins=false");
+  const servers = [...state.servers, ...(pluginsOff ? [] : state.pluginServers ?? [])].map((server) => ({ ...server }));
+  for (const entry of overrides) {
+    const [key] = entry.split("=");
+    const path = key.split(".");
+    if (path[0] !== "mcp_servers") continue;
+    const server = servers.find((candidate) => candidate.name === path[1]);
+    if (path.length !== 3 || path[2] !== "enabled" || !server) {
+      process.stderr.write("Error: failed to load bootstrap configuration\n  invalid transport in " + key + "\n");
+      process.exit(1);
+    }
+    if (!state.ignoreOverrides) server.enabled = false;
+  }
+  process.stdout.write(JSON.stringify(servers));
+  process.exit(0);
+}
 `;
 
-function withCodexHome<T>(
-  config: string | undefined,
-  run: (env: NodeJS.ProcessEnv, configPath: string) => T,
+function writeFakeCodex(directory: string, launch = "process.exit(64);") {
+  const path = join(directory, "fake-codex.mjs");
+  writeFileSync(
+    path,
+    `#!${process.execPath}\n${FAKE_CODEX_MCP_LIST}\n${launch}\n`,
+  );
+  chmodSync(path, 0o755);
+  return path;
+}
+
+type FakeMcpState = {
+  servers?: Array<{ name: string; enabled: boolean }>;
+  pluginServers?: Array<{ name: string; enabled: boolean }>;
+  exit?: number;
+  stderr?: string;
+  stdout?: string;
+  ignoreOverrides?: boolean;
+};
+
+function withFakeCodex<T>(
+  state: FakeMcpState | undefined,
+  run: (input: {
+    env: NodeJS.ProcessEnv;
+    executable: string;
+    cwd: string;
+    calls: () => Array<{ argv: string[]; cwd: string }>;
+    codexHome: string;
+  }) => T,
 ): T {
   const directory = mkdtempSync(join(tmpdir(), "loom-codex-home-"));
   try {
     const codexHome = join(directory, "codex-home");
+    const cwd = join(directory, "workspace");
     mkdirSync(codexHome);
-    const configPath = join(codexHome, "config.toml");
-    if (config !== undefined) writeFileSync(configPath, config);
-    return run(
-      { HOME: join(directory, "home"), CODEX_HOME: codexHome },
-      configPath,
-    );
+    mkdirSync(cwd);
+    if (state !== undefined)
+      writeFileSync(
+        join(codexHome, "fake-mcp-list.json"),
+        JSON.stringify({ servers: [], ...state }),
+      );
+    const callsPath = join(codexHome, "fake-mcp-calls.jsonl");
+    return run({
+      env: { HOME: join(directory, "home"), CODEX_HOME: codexHome },
+      executable: writeFakeCodex(directory),
+      cwd,
+      codexHome,
+      calls: () =>
+        existsSync(callsPath)
+          ? readFileSync(callsPath, "utf8")
+              .trim()
+              .split("\n")
+              .map(
+                (line) => JSON.parse(line) as { argv: string[]; cwd: string },
+              )
+          : [],
+    });
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
 }
-
-// A CODEX_HOME that does not exist: no test reads the Human's real config.
-const NO_USER_CONFIG = { CODEX_HOME: "/nonexistent/loom-test-codex-home" };
 
 const configPairs = (args: readonly string[]) => {
   const out: string[] = [];
@@ -121,79 +177,170 @@ test("Kimi keeps its home: no KIMI_CODE_HOME switch in this batch", () => {
 });
 
 test("Codex isolation: notify first, plugins/apps/hooks/skills off, native web search off, every user MCP disabled by name", () => {
-  withCodexHome(CODEX_USER_CONFIG, (env, configPath) => {
-    const before = readFileSync(configPath, "utf8");
-    const beforeMtime = statSync(configPath).mtimeMs;
-    const args = providerLaunchPolicy("codex", env).args;
-    const pairs = configPairs(args);
-    assert.equal(args.length, pairs.length * 2, "only -c pairs");
-    assert.equal(pairs[0], "notify=[]", "notify is disabled first");
-    for (const entry of [
-      "features.memories=false",
-      "memories.generate_memories=false",
-      "memories.use_memories=false",
-      "features.multi_agent=false",
-      "features.goals=false",
-      "features.sleep_tool=false",
-      "features.in_app_local_automation=false",
-      "features.plugins=false",
-      "features.apps=false",
-      "features.hooks=false",
-      "skills.include_instructions=false",
-      'web_search="disabled"',
-    ])
-      assert.ok(pairs.includes(entry), entry);
-    assert.deepEqual(
-      pairs.filter((entry) => entry.startsWith("mcp_servers.")),
-      [
-        "mcp_servers.computer-use.enabled=false",
-        "mcp_servers.inline_one.enabled=false",
-        "mcp_servers.node_repl.enabled=false",
-        "mcp_servers.quoted_name.enabled=false",
+  withFakeCodex(
+    {
+      servers: [
+        { name: "node_repl", enabled: true },
+        { name: "computer-use", enabled: false },
+        { name: "inline_one", enabled: true },
+        { name: "é unicode name", enabled: true },
       ],
-    );
-    assert.equal(readFileSync(configPath, "utf8"), before, "read-only");
-    assert.equal(statSync(configPath).mtimeMs, beforeMtime, "read-only");
-  });
+      pluginServers: [{ name: "plugin_app", enabled: true }],
+    },
+    ({ env, executable, cwd, calls, codexHome }) => {
+      const config = join(codexHome, "config.toml");
+      writeFileSync(
+        config,
+        "# FAKE user config: Loom never reads or writes it\n",
+      );
+      const beforeMtime = statSync(config).mtimeMs;
+      const args = providerLaunchPolicy("codex", env, {
+        codexExecutable: executable,
+        cwd,
+      }).args;
+      const pairs = configPairs(args);
+      assert.equal(args.length, pairs.length * 2, "only -c pairs");
+      assert.equal(pairs[0], "notify=[]", "notify is disabled first");
+      for (const entry of [
+        "features.memories=false",
+        "memories.generate_memories=false",
+        "memories.use_memories=false",
+        "features.multi_agent=false",
+        "features.goals=false",
+        "features.sleep_tool=false",
+        "features.in_app_local_automation=false",
+        "features.plugins=false",
+        "features.apps=false",
+        "features.hooks=false",
+        "skills.include_instructions=false",
+        'web_search="disabled"',
+      ])
+        assert.ok(pairs.includes(entry), entry);
+      assert.deepEqual(
+        pairs.filter((entry) => entry.startsWith("mcp_servers.")),
+        [
+          "mcp_servers.computer-use.enabled=false",
+          "mcp_servers.inline_one.enabled=false",
+          "mcp_servers.node_repl.enabled=false",
+          "mcp_servers.é unicode name.enabled=false",
+        ],
+        "every server Codex lists, never a plugin server the launch turns off",
+      );
+      const [listed, verified] = calls();
+      assert.equal(calls().length, 2, "one listing and one verification");
+      for (const call of [listed!, verified!]) {
+        assert.equal(call.cwd, realpathSync(cwd), "listed in the launch cwd");
+        assert.deepEqual(call.argv.slice(0, 3), ["mcp", "list", "--json"]);
+        assert.ok(
+          configPairs(call.argv).includes("features.plugins=false"),
+          "listed under the launch switches",
+        );
+      }
+      assert.ok(
+        configPairs(verified!.argv).includes(
+          "mcp_servers.node_repl.enabled=false",
+        ),
+        "verified with the disable overrides",
+      );
+      assert.equal(statSync(config).mtimeMs, beforeMtime, "read-only");
+    },
+  );
 });
 
-test("Codex isolation without a user config adds no MCP entries and does not create the file", () => {
-  withCodexHome(undefined, (env, configPath) => {
-    const pairs = configPairs(providerLaunchPolicy("codex", env).args);
+test("Codex isolation without user MCP servers adds no MCP entries and lists once", () => {
+  withFakeCodex({ servers: [] }, ({ env, executable, cwd, calls }) => {
+    const pairs = configPairs(
+      providerLaunchPolicy("codex", env, { codexExecutable: executable, cwd })
+        .args,
+    );
     assert.equal(pairs[0], "notify=[]");
     assert.deepEqual(
       pairs.filter((entry) => entry.startsWith("mcp_servers.")),
       [],
     );
-    assert.equal(existsSync(configPath), false);
+    assert.equal(calls().length, 1);
   });
 });
 
-test("Codex isolation reads the default ~/.codex when CODEX_HOME is unset", () => {
+test("Codex isolation lists with the launch environment (default ~/.codex when CODEX_HOME is unset)", () => {
   const home = mkdtempSync(join(tmpdir(), "loom-codex-default-home-"));
   try {
     mkdirSync(join(home, ".codex"));
     writeFileSync(
-      join(home, ".codex", "config.toml"),
-      '[mcp_servers.alpha]\ncommand = "/usr/bin/true"\n',
+      join(home, ".codex", "fake-mcp-list.json"),
+      JSON.stringify({ servers: [{ name: "alpha", enabled: true }] }),
     );
     assert.ok(
-      configPairs(providerLaunchPolicy("codex", { HOME: home }).args).includes(
-        "mcp_servers.alpha.enabled=false",
-      ),
+      configPairs(
+        providerLaunchPolicy(
+          "codex",
+          { HOME: home },
+          { codexExecutable: writeFakeCodex(home), cwd: home },
+        ).args,
+      ).includes("mcp_servers.alpha.enabled=false"),
     );
   } finally {
     rmSync(home, { recursive: true, force: true });
   }
 });
 
-test("Codex isolation fails closed for an MCP name that `-c` cannot address", () => {
-  withCodexHome('[mcp_servers."dot.name"]\ncommand = "x"\n', (env) => {
-    assert.throws(
-      () => providerLaunchPolicy("codex", env),
+test("Codex isolation fails closed whenever the user MCP servers cannot be resolved or disabled", () => {
+  const refused: Array<[string, FakeMcpState | undefined, RegExp]> = [
+    [
+      "Codex cannot parse the configuration",
+      {
+        exit: 1,
+        stderr:
+          "Error: failed to load bootstrap configuration\n  TOML parse error at line 1\n",
+      },
+      /could not be resolved.*exited 1.*TOML parse error/su,
+    ],
+    ["the listing is not JSON", { stdout: "not json" }, /did not print JSON/u],
+    [
+      "the listing has an unexpected shape",
+      { stdout: JSON.stringify([{ name: 7 }]) },
+      /unexpected shape/u,
+    ],
+    [
+      "a name `-c` cannot address",
+      { servers: [{ name: "dot.name", enabled: true }] },
       /cannot be disabled.*dot\.name/u,
-    );
-  });
+    ],
+    [
+      "a name containing '='",
+      { servers: [{ name: "a=b", enabled: true }] },
+      /cannot be disabled.*a=b/u,
+    ],
+    [
+      "Codex did not apply an override",
+      { servers: [{ name: "stubborn", enabled: true }], ignoreOverrides: true },
+      /did not apply.*stubborn/u,
+    ],
+  ];
+  for (const [label, state, error] of refused)
+    withFakeCodex(state, ({ env, executable, cwd }) => {
+      assert.throws(
+        () =>
+          providerLaunchPolicy("codex", env, {
+            codexExecutable: executable,
+            cwd,
+          }),
+        error,
+        label,
+      );
+    });
+  assert.throws(
+    () =>
+      providerLaunchPolicy(
+        "codex",
+        { CODEX_HOME: "/nonexistent/loom-test" },
+        {
+          codexExecutable: "/nonexistent/loom-test-codex",
+        },
+      ),
+    /could not be resolved.*ENOENT/su,
+    "a missing Codex CLI",
+  );
 });
 
 test("isolation switches cannot be added or reopened by user launch arguments", () => {
@@ -214,7 +361,7 @@ test("isolation switches cannot be added or reopened by user launch arguments", 
   // The isolation switches are appended by the drivers from the policy, so a
   // full override that keeps only the required transport cannot drop them.
   for (const runtimeId of ["claude", "codex", "opencode", "kimi"])
-    for (const arg of providerLaunchPolicy(runtimeId, NO_USER_CONFIG).args)
+    for (const arg of providerLaunchSwitches(runtimeId).args)
       if (arg.startsWith("--"))
         assert.equal(
           providerLaunchRequiredArgs(runtimeId).includes(arg),
@@ -226,7 +373,7 @@ test("isolation switches cannot be added or reopened by user launch arguments", 
 test("every policy environment key is protected from Role/user launch environments", () => {
   for (const runtimeId of ["claude", "codex", "opencode", "kimi"])
     for (const key of Object.keys(
-      providerLaunchPolicy(runtimeId, NO_USER_CONFIG).environment,
+      providerLaunchSwitches(runtimeId).environment,
     )) {
       assert.deepEqual(
         filterUserLaunchEnvironment({ [key]: "0" }).rejected,
@@ -257,11 +404,12 @@ function writeRecorder(directory: string, recordPath: string) {
   const path = join(directory, "fake-cli-recorder.mjs");
   writeFileSync(
     path,
-    `#!/usr/bin/env node
-import { appendFileSync } from "node:fs";
+    `#!${process.execPath}
+${FAKE_CODEX_MCP_LIST}
+import { appendFileSync as record } from "node:fs";
 const env = {};
 for (const key of ${JSON.stringify(RECORDED_ENV)}) env[key] = process.env[key] ?? null;
-appendFileSync(${JSON.stringify(recordPath)}, JSON.stringify({ argv: process.argv.slice(2), env }) + "\\n");
+record(${JSON.stringify(recordPath)}, JSON.stringify({ argv: process.argv.slice(2), env }) + "\\n");
 process.exit(3);
 `,
   );
@@ -402,8 +550,8 @@ async function recordLaunch(item: DriverCase) {
     const codexHome = join(directory, "codex-home");
     mkdirSync(codexHome);
     writeFileSync(
-      join(codexHome, "config.toml"),
-      '[mcp_servers.user_mcp]\ncommand = "/usr/bin/true"\n',
+      join(codexHome, "fake-mcp-list.json"),
+      JSON.stringify({ servers: [{ name: "user_mcp", enabled: true }] }),
     );
     const workspace = join(directory, "workspace");
     mkdirSync(workspace);
@@ -457,12 +605,21 @@ async function recordLaunch(item: DriverCase) {
           },
       );
     assert.ok(recorded, `${item.driver} record`);
+    const callsPath = join(codexHome, "fake-mcp-calls.jsonl");
     return {
       first: recorded,
-      policy: providerLaunchPolicy(item.runtimeId, {
-        HOME: join(directory, "home"),
-        CODEX_HOME: codexHome,
-      }),
+      mcpListCwds: existsSync(callsPath)
+        ? readFileSync(callsPath, "utf8")
+            .trim()
+            .split("\n")
+            .map((line) => (JSON.parse(line) as { cwd: string }).cwd)
+        : [],
+      workspace: realpathSync(workspace),
+      policy: providerLaunchPolicy(
+        item.runtimeId,
+        { HOME: join(directory, "home"), CODEX_HOME: codexHome },
+        { codexExecutable: executable, cwd: workspace },
+      ),
     };
   } finally {
     rmSync(directory, { recursive: true, force: true });
@@ -471,7 +628,7 @@ async function recordLaunch(item: DriverCase) {
 
 for (const item of drivers)
   test(`${item.driver} passes the isolation policy to the CLI and it wins over inherited values`, async () => {
-    const { first, policy } = await recordLaunch(item);
+    const { first, policy, mcpListCwds, workspace } = await recordLaunch(item);
     for (const [key, value] of Object.entries(policy.environment))
       assert.equal(first.env[key], value, `${item.driver} ${key}`);
     const argv = first.argv.join("\u0000");
@@ -479,11 +636,15 @@ for (const item of drivers)
       argv.includes(policy.args.join("\u0000")),
       `${item.driver} argv carries the policy args in order: ${first.argv.join(" ")}`,
     );
-    if (item.runtimeId === "codex")
+    if (item.runtimeId === "codex") {
       assert.ok(
         first.argv.includes("mcp_servers.user_mcp.enabled=false"),
-        "user MCP read from the child's CODEX_HOME",
+        "user MCP listed by the driver's Codex executable with the child's CODEX_HOME",
       );
+      assert.ok(mcpListCwds.length >= 2, "listed and verified before launch");
+      for (const cwd of mcpListCwds.slice(0, 2))
+        assert.equal(cwd, workspace, "listed in the launch cwd");
+    }
     if (item.runtimeId === "claude") {
       assert.equal(first.env.ENABLE_CLAUDEAI_MCP_SERVERS, "false");
       assert.ok(first.argv.includes("--strict-mcp-config"));

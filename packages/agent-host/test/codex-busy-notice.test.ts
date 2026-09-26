@@ -97,6 +97,7 @@ async function until(check: () => boolean) {
 }
 
 const fake = `#!/usr/bin/env node
+if (process.argv[2] === "mcp") { process.stdout.write("[]"); process.exit(0); } // FAKE \`codex mcp list --json\`: no user MCP servers
 import { createInterface } from 'node:readline';
 import { appendFileSync } from 'node:fs';
 const send = f => process.stdout.write(JSON.stringify(f)+'\\n');

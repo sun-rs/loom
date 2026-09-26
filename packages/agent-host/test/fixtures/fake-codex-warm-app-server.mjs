@@ -19,6 +19,12 @@ import { join } from "node:path";
 
 import { acceptUnixWebSocket } from "../../src/unix-websocket.mjs";
 
+if (process.argv[2] === "mcp") {
+  // FAKE `codex mcp list --json`: no user MCP servers.
+  process.stdout.write("[]");
+  process.exit(0);
+}
+
 const args = process.argv.slice(2);
 const listen = args[args.indexOf("--listen") + 1] ?? "";
 if (!listen.startsWith("unix://")) {

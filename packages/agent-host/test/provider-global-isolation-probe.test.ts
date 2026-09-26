@@ -15,7 +15,10 @@ import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import test from "node:test";
 
-import { providerLaunchPolicy } from "../src/provider-launch-arguments.js";
+import {
+  codexUserMcpServerNames,
+  providerLaunchPolicy,
+} from "../src/provider-launch-arguments.js";
 
 // Opt-in local probe for global personal-config isolation (2026-09-26).
 // It runs the INSTALLED Claude Code / Codex / OpenCode binaries against a
@@ -402,49 +405,52 @@ async function codexAppServer(
   return { config: config.result, hooks: hooks.result, stderr };
 }
 
+// FAKE Responses API: one assistant message, no model.
+function codexFakeResponse(request: IncomingMessage) {
+  if (request.method !== "POST")
+    return {
+      status: 200,
+      type: "application/json",
+      chunks: ['{"models":[],"data":[]}'],
+    };
+  const event = (type: string, data: object) =>
+    `event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`;
+  return {
+    status: 200,
+    type: "text/event-stream",
+    chunks: [
+      event("response.created", { response: { id: "r1" } }),
+      event("response.output_item.done", {
+        output_index: 0,
+        item: {
+          type: "message",
+          role: "assistant",
+          id: "m1",
+          content: [{ type: "output_text", text: "FAKE_REPLY" }],
+        },
+      }),
+      event("response.completed", {
+        response: {
+          id: "r1",
+          usage: {
+            input_tokens: 1,
+            output_tokens: 1,
+            total_tokens: 2,
+            input_tokens_details: { cached_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 0 },
+          },
+        },
+      }),
+    ],
+  };
+}
+
 test(
   "Codex probe: notify, user/agents skills, user MCP, hooks and native web search are off; only the global AGENTS.md remains (known limitation)",
   { skip: skip("codex"), timeout: 300_000 },
   async () => {
     const directory = mkdtempSync(join(tmpdir(), "loom-iso-codex-"));
-    const fake = await fakeServer((request) => {
-      if (request.method !== "POST")
-        return {
-          status: 200,
-          type: "application/json",
-          chunks: ['{"models":[],"data":[]}'],
-        };
-      const event = (type: string, data: object) =>
-        `event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`;
-      return {
-        status: 200,
-        type: "text/event-stream",
-        chunks: [
-          event("response.created", { response: { id: "r1" } }),
-          event("response.output_item.done", {
-            output_index: 0,
-            item: {
-              type: "message",
-              role: "assistant",
-              id: "m1",
-              content: [{ type: "output_text", text: "FAKE_REPLY" }],
-            },
-          }),
-          event("response.completed", {
-            response: {
-              id: "r1",
-              usage: {
-                input_tokens: 1,
-                output_tokens: 1,
-                total_tokens: 2,
-                input_tokens_details: { cached_tokens: 0 },
-                output_tokens_details: { reasoning_tokens: 0 },
-              },
-            },
-          }),
-        ],
-      };
-    });
+    const fake = await fakeServer(codexFakeResponse);
     try {
       const home = join(directory, "home");
       const codexHome = join(directory, "codex-home");
@@ -544,7 +550,7 @@ args = [${JSON.stringify(join(directory, "mcp.mjs"))}]
         "control lists the user hooks",
       );
 
-      const policy = providerLaunchPolicy("codex", env);
+      const policy = providerLaunchPolicy("codex", env, { cwd: project });
       assert.ok(policy.args.includes("mcp_servers.loomprobe.enabled=false"));
       const isolated = await once(policy.args);
       assert.equal(isolated.notify, false, "notify never runs");
@@ -572,6 +578,141 @@ args = [${JSON.stringify(join(directory, "mcp.mjs"))}]
     } finally {
       fake.server.close();
       rmSync(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+// Review 2026-09-27 P1-2: the user's MCP servers are listed by Codex's own
+// parser (`codex mcp list --json`), not a Loom regex. Every legal spelling of
+// the same server resolves to the same name; anything Codex cannot load, or
+// a name `-c` cannot address, refuses the launch. No model, no server start.
+test(
+  "Codex probe: MCP servers resolve through Codex's own TOML parser; unparseable or unaddressable configs refuse the launch",
+  { skip: skip("codex"), timeout: 120_000 },
+  () => {
+    const directory = mkdtempSync(join(tmpdir(), "loom-iso-codex-toml-"));
+    try {
+      const resolve = (config: string) => {
+        const codexHome = join(directory, `home-${String(Math.random())}`);
+        write(join(codexHome, "config.toml"), config);
+        return () =>
+          codexUserMcpServerNames(
+            {
+              ...baseEnv(join(directory, "home"), directory),
+              CODEX_HOME: codexHome,
+            },
+            { cwd: directory },
+          );
+      };
+      const cases: Array<[string, string, string[]]> = [
+        [
+          "root inline table",
+          'mcp_servers = { secret = { command = "demo" } }\n',
+          ["secret"],
+        ],
+        [
+          "quoted root key",
+          '["mcp_servers".secret]\ncommand = "demo"\n',
+          ["secret"],
+        ],
+        [
+          "unicode escape in a quoted key",
+          '[mcp_servers."se\\u0063ret"]\ncommand = "demo"\n',
+          ["secret"],
+        ],
+        [
+          "comments containing multi-line string fences",
+          `# """ not a string\n[mcp_servers.alpha]\ncommand = "x"\n# \'\'\' still a comment\n[mcp_servers.beta]\ncommand = "y"\n`,
+          ["alpha", "beta"],
+        ],
+        [
+          "a header inside a multi-line string is a value",
+          'developer_instructions = """\n[mcp_servers.not_a_server]\n"""\n[mcp_servers.real]\ncommand = "x"\n',
+          ["real"],
+        ],
+        [
+          "a disabled server is still disabled by name",
+          '[mcp_servers.off]\ncommand = "x"\nenabled = false\n',
+          ["off"],
+        ],
+        ["no MCP servers", 'model = "gpt-5.5"\n', []],
+      ];
+      for (const [label, config, names] of cases)
+        assert.deepEqual(resolve(config)(), names, label);
+      assert.throws(
+        resolve('[mcp_servers.broken\ncommand = "x"\n'),
+        /could not be resolved.*exited 1/su,
+        "a config Codex cannot parse refuses the launch",
+      );
+      assert.throws(
+        resolve('[mcp_servers."dot.name"]\ncommand = "x"\n'),
+        /cannot be disabled.*dot\.name/u,
+      );
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "Codex probe: a user MCP server declared as a root inline table is not started under the Loom policy",
+  { skip: skip("codex"), timeout: 300_000 },
+  async () => {
+    const directory = mkdtempSync(join(tmpdir(), "loom-iso-codex-inline-"));
+    const fake = await fakeServer(codexFakeResponse);
+    try {
+      const home = join(directory, "home");
+      const codexHome = join(directory, "codex-home");
+      const project = join(directory, "project");
+      const mcpFile = join(directory, "mcp-started.log");
+      mkdirSync(project, { recursive: true });
+      spawnSync("git", ["init", "-q", project]);
+      write(join(directory, "mcp.mjs"), markerMcp(mcpFile));
+      // Root inline table first: the Loom regex scanner of b69faa3 missed it.
+      write(
+        join(codexHome, "config.toml"),
+        `mcp_servers = { loomprobe = { command = ${JSON.stringify(process.execPath)}, args = [${JSON.stringify(join(directory, "mcp.mjs"))}] } }
+model = "gpt-5.5"
+model_provider = "fake"
+
+[model_providers.fake]
+name = "fake"
+base_url = "http://127.0.0.1:${fake.port}/v1"
+wire_api = "responses"
+env_key = "FAKE_KEY"
+`,
+      );
+      const env = {
+        ...baseEnv(home, directory),
+        CODEX_HOME: codexHome,
+        FAKE_KEY: "FAKE-loom-probe",
+      };
+      const once = async (args: string[]) => {
+        rmSync(mcpFile, { force: true });
+        await codexAppServer(args, { cwd: project, env });
+        return existsSync(mcpFile);
+      };
+      assert.equal(
+        await once([]),
+        true,
+        "control starts the inline MCP server",
+      );
+      const policy = providerLaunchPolicy("codex", env, { cwd: project });
+      assert.ok(policy.args.includes("mcp_servers.loomprobe.enabled=false"));
+      assert.equal(
+        await once(policy.args),
+        false,
+        "not started under the policy",
+      );
+    } finally {
+      fake.server.close();
+      // The app-server may still flush its home after SIGTERM.
+      rmSync(directory, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 200,
+      });
     }
   },
 );

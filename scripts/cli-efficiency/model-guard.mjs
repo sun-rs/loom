@@ -3,18 +3,16 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import { providerLaunchSwitches } from "../../packages/agent-host/src/provider-launch-arguments.js";
 import { startGuardedUnixProxy } from "./ws-guard.mjs";
 
 // The product's process-only Codex switches (memory, multi_agent, goals,
 // global personal-config isolation), exactly as the product passes them.
 // Per-name user MCP disables are admitted only as `enabled=false`.
 const PRODUCT_CONFIG = new Set(
-  providerLaunchPolicy("codex").args.filter(
-    (a) => a !== "-c" && !a.startsWith("mcp_servers."),
-  ),
+  providerLaunchSwitches("codex").args.filter((a) => a !== "-c"),
 );
-const MCP_DISABLE = /^mcp_servers\.[^.=\s]+\.enabled=false$/u;
+const MCP_DISABLE = /^mcp_servers\.[^.=]+\.enabled=false$/u;
 // Thread-level config keys besides the approved effort, only as `false`.
 const PRODUCT_FALSE_KEYS = new Set(
   [...PRODUCT_CONFIG]

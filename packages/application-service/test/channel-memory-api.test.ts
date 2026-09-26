@@ -4,9 +4,9 @@ import test from "node:test";
 import { createHumanApplicationPort } from "@rah-os/kernel";
 import {
   MemoryListResponseSchema,
-  MemoryMutationResponseSchema,
   MemoryPolicySchema,
   MemoryReadResponseSchema,
+  WorkerMemoryMutationReceiptSchema,
 } from "@rah-os/protocol";
 
 import {
@@ -107,16 +107,16 @@ test("the Worker memory route derives scope and provenance from the credential",
     assert.equal(scoped.status, 400);
     const written = await h.workerPost("write", note);
     assert.equal(written.status, 200);
-    const mutation = MemoryMutationResponseSchema.parse(written.body);
-    assert.equal(mutation.entry.channelId, h.f.home.roomId);
+    WorkerMemoryMutationReceiptSchema.parse(written.body);
+    const stored = MemoryReadResponseSchema.parse(
+      (await h.workerPost("read", { name: "release-train" })).body,
+    );
+    assert.equal(stored.entry.channelId, h.f.home.roomId);
     assert.equal(
-      mutation.entry.provenance.actorPrincipalId,
+      stored.entry.provenance.actorPrincipalId,
       h.f.instance.instanceId,
     );
-    assert.equal(
-      mutation.entry.provenance.runAttemptId,
-      h.work.run.runAttemptId,
-    );
+    assert.equal(stored.entry.provenance.runAttemptId, h.work.run.runAttemptId);
     const list = MemoryListResponseSchema.parse(
       (await h.workerPost("list", {})).body,
     );
@@ -176,10 +176,10 @@ test("the Worker memory route derives scope and provenance from the credential",
 test("Human API and SDK administer memory and switches; the Worker route obeys them", async () => {
   const h = await harness();
   try {
-    const written = MemoryMutationResponseSchema.parse(
+    const written = WorkerMemoryMutationReceiptSchema.parse(
       (await h.workerPost("write", note)).body,
     );
-    const entryId = written.entry.entryId;
+    const entryId = written.entryId;
     const channelId = h.f.home.roomId;
     const agentToken = h.f.kernel.provisionPrincipal({
       handle: "memory-agent",
@@ -277,6 +277,142 @@ test("Human API and SDK administer memory and switches; the Worker route obeys t
     assert.equal(deleted.entry.body, null);
     const history = await h.sdk.request("memory.history", { entryId });
     assert.ok(history.revisions.every((revision) => revision.body === null));
+  } finally {
+    await h.close();
+  }
+});
+
+test("with read off and write on, Worker mutations and their replays return only a receipt", async () => {
+  const h = await harness();
+  try {
+    const secret = "REVIEW-SECRET-BODY";
+    const secretDescription = "REVIEW-SECRET-DESCRIPTION";
+    const writeRequest = {
+      ...note,
+      description: secretDescription,
+      body: secret,
+    };
+    const written = await h.workerPost("write", writeRequest);
+    assert.equal(written.status, 200);
+    const channelId = h.f.home.roomId;
+    await h.sdk.request("memory.policy.update", {
+      channelId,
+      expectedRevision: 0,
+      readDefault: false,
+      writeDefault: true,
+      idempotencyKey: "policy-write-only",
+    });
+    assert.equal((await h.workerPost("read", { name: note.name })).status, 403);
+    const noLeak = (
+      label: string,
+      response: { status: number; body: unknown },
+    ) => {
+      const serialized = JSON.stringify(response.body);
+      assert.doesNotMatch(
+        serialized,
+        /REVIEW-SECRET-BODY|REVIEW-SECRET-DESCRIPTION/u,
+        `${label} leaks memory content`,
+      );
+      assert.doesNotMatch(serialized, /provenance|"body"|"description"/u);
+    };
+    const receiptKeys = [
+      "deduplicated",
+      "entryId",
+      "name",
+      "op",
+      "revision",
+      "state",
+    ];
+    const replayedWrite = await h.workerPost("write", writeRequest);
+    assert.equal(replayedWrite.status, 200);
+    noLeak("write replay", replayedWrite);
+    assert.deepEqual(
+      Object.keys(replayedWrite.body as object).sort(),
+      receiptKeys,
+    );
+    const updateRequest = {
+      name: note.name,
+      expectedRevision: 1,
+      type: "reference",
+      idempotencyKey: "update-type-only",
+    };
+    const updated = await h.workerPost("update", updateRequest);
+    assert.equal(updated.status, 200);
+    noLeak("update", updated);
+    const receipt = WorkerMemoryMutationReceiptSchema.parse(updated.body);
+    assert.deepEqual(Object.keys(receipt).sort(), receiptKeys);
+    assert.deepEqual(
+      { ...receipt, entryId: "x" },
+      {
+        entryId: "x",
+        name: note.name,
+        revision: 2,
+        op: "update",
+        state: "active",
+        deduplicated: false,
+      },
+    );
+    const replayedUpdate = await h.workerPost("update", updateRequest);
+    noLeak("update replay", replayedUpdate);
+    assert.equal(
+      WorkerMemoryMutationReceiptSchema.parse(replayedUpdate.body).deduplicated,
+      true,
+    );
+    const invalidateRequest = {
+      name: note.name,
+      expectedRevision: 2,
+      reason: "superseded",
+      idempotencyKey: "invalidate-write-only",
+    };
+    const invalidated = await h.workerPost("invalidate", invalidateRequest);
+    assert.equal(invalidated.status, 200);
+    noLeak("invalidate", invalidated);
+    noLeak(
+      "invalidate replay",
+      await h.workerPost("invalidate", invalidateRequest),
+    );
+    const restoreRequest = {
+      name: note.name,
+      expectedRevision: 3,
+      idempotencyKey: "restore-write-only",
+    };
+    const restored = await h.workerPost("restore", restoreRequest);
+    assert.equal(restored.status, 200);
+    noLeak("restore", restored);
+    assert.equal(
+      WorkerMemoryMutationReceiptSchema.parse(restored.body).state,
+      "active",
+    );
+    noLeak("restore replay", await h.workerPost("restore", restoreRequest));
+    // Conflicts may name the current revision, never the content.
+    const stale = await h.workerPost("update", {
+      name: note.name,
+      expectedRevision: 1,
+      body: "lost",
+      idempotencyKey: "update-stale-write-only",
+    });
+    assert.equal(stale.status, 409);
+    noLeak("revision conflict", stale);
+    const duplicate = await h.workerPost("write", {
+      ...writeRequest,
+      idempotencyKey: "write-duplicate-name",
+    });
+    assert.equal(duplicate.status, 409);
+    noLeak("name conflict", duplicate);
+    // Without read, an unchanged update is not an equality oracle.
+    const sameBody = await h.workerPost("update", {
+      name: note.name,
+      expectedRevision: 4,
+      body: secret,
+      idempotencyKey: "update-same-body",
+    });
+    assert.equal(sameBody.status, 200);
+    noLeak("unchanged update", sameBody);
+    // The Human API still returns the full entry.
+    const human = await h.sdk.request("memory.read", {
+      entryId: receipt.entryId,
+    });
+    assert.equal(human.entry.body, secret);
   } finally {
     await h.close();
   }

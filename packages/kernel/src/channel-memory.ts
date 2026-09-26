@@ -12,6 +12,7 @@ import {
   memoryOverride,
   memoryPolicyState,
   effectiveMemorySwitches,
+  hasMemoryAccess,
   requireMemoryAccess,
 } from "./channel-memory-access.ts";
 import { requireRoomManager } from "./collaboration-policy.ts";
@@ -78,7 +79,7 @@ export class ChannelMemoryService {
   write(
     worker: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerMemoryWriteRequest,
-  ): P.MemoryMutationResponse {
+  ): P.WorkerMemoryMutationReceipt {
     const input = P.WorkerMemoryWriteRequestSchema.parse(raw);
     return this.#c.transaction(() => {
       const scope = this.#c.requireWorker(worker);
@@ -95,38 +96,40 @@ export class ChannelMemoryService {
         ENTRY_EVENT,
         digest,
       );
-      if (prior) return prior;
+      if (prior) return workerReceipt(prior);
       const existing = this.#entryByName(channelId, input.name);
       if (existing)
         throw new ConflictError(
           `memory '${input.name}' already exists (revision ${integer(existing, "revision")}, ${text(existing, "state")}); read it, then update or restore it with --expected-revision ${integer(existing, "revision")}`,
         );
-      return this.#commit({
-        actorId: scope.participantId,
-        channelId,
-        digest,
-        key: input.idempotencyKey,
-        next: {
-          body: input.body,
-          description: input.description,
-          name: input.name,
-          pinned: false,
-          state: "active",
-          type: input.type,
-        },
-        op: "create",
-        provenance: this.#workerProvenance(scope),
-        reason: null,
-      });
+      return workerReceipt(
+        this.#commit({
+          actorId: scope.participantId,
+          channelId,
+          digest,
+          key: input.idempotencyKey,
+          next: {
+            body: input.body,
+            description: input.description,
+            name: input.name,
+            pinned: false,
+            state: "active",
+            type: input.type,
+          },
+          op: "create",
+          provenance: this.#workerProvenance(scope),
+          reason: null,
+        }),
+      );
     });
   }
 
   update(
     worker: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerMemoryUpdateRequest,
-  ): P.MemoryMutationResponse {
+  ): P.WorkerMemoryMutationReceipt {
     const input = P.WorkerMemoryUpdateRequestSchema.parse(raw);
-    return this.#workerChange(worker, input, "update", (current) => {
+    return this.#workerChange(worker, input, "update", (current, readable) => {
       if (current.state !== "active")
         throw new ConflictError(
           `memory '${current.name}' is ${current.state}; restore it before updating`,
@@ -139,7 +142,10 @@ export class ChannelMemoryService {
           : { description: input.description }),
         ...(input.body === undefined ? {} : { body: input.body }),
       };
+      // Refusing an unchanged update would tell a write-only instance that
+      // its guess equals the stored content, so only a reader is refused.
       if (
+        readable &&
         next.type === current.type &&
         next.description === current.description &&
         next.body === current.body
@@ -154,7 +160,7 @@ export class ChannelMemoryService {
   invalidate(
     worker: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerMemoryInvalidateRequest,
-  ): P.MemoryMutationResponse {
+  ): P.WorkerMemoryMutationReceipt {
     const input = P.WorkerMemoryInvalidateRequestSchema.parse(raw);
     return this.#workerChange(worker, input, "invalidate", (current) =>
       invalidation(current, input.reason),
@@ -164,7 +170,7 @@ export class ChannelMemoryService {
   restore(
     worker: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerMemoryRestoreRequest,
-  ): P.MemoryMutationResponse {
+  ): P.WorkerMemoryMutationReceipt {
     const input = P.WorkerMemoryRestoreRequestSchema.parse(raw);
     return this.#workerChange(worker, input, "restore", restoration);
   }
@@ -440,8 +446,11 @@ export class ChannelMemoryService {
     worker: AuthenticatedWorkerExecutionContext,
     input: { expectedRevision: number; idempotencyKey: string; name: string },
     op: P.MemoryRevisionOperation,
-    change: (current: Snapshot) => { next: Snapshot; reason: string | null },
-  ): P.MemoryMutationResponse {
+    change: (
+      current: Snapshot,
+      readable: boolean,
+    ) => { next: Snapshot; reason: string | null },
+  ): P.WorkerMemoryMutationReceipt {
     return this.#c.transaction(() => {
       const scope = this.#c.requireWorker(worker);
       const channelId = requireMemoryAccess(this.#c.database, scope, "write");
@@ -453,21 +462,26 @@ export class ChannelMemoryService {
         ENTRY_EVENT,
         digest,
       );
-      if (prior) return prior;
+      if (prior) return workerReceipt(prior);
       const row = this.#requireByName(channelId, input.name);
       requireRevision(row, input.expectedRevision);
-      const { next, reason } = change(snapshot(row));
-      return this.#commit({
-        actorId: scope.participantId,
-        channelId,
-        digest,
-        entry: row,
-        key: input.idempotencyKey,
-        next,
-        op,
-        provenance: this.#workerProvenance(scope),
-        reason,
-      });
+      const { next, reason } = change(
+        snapshot(row),
+        hasMemoryAccess(this.#c.database, scope, "read"),
+      );
+      return workerReceipt(
+        this.#commit({
+          actorId: scope.participantId,
+          channelId,
+          digest,
+          entry: row,
+          key: input.idempotencyKey,
+          next,
+          op,
+          provenance: this.#workerProvenance(scope),
+          reason,
+        }),
+      );
     });
   }
 
@@ -968,6 +982,25 @@ function restoration(current: Snapshot): {
   if (current.state !== "invalidated")
     throw new ConflictError(`memory '${current.name}' is not invalidated`);
   return { next: { ...current, state: "active" }, reason: null };
+}
+
+/**
+ * The Worker receipt of a change or its replay, taken from the metadata-only
+ * Room event: never the body, description or provenance (see
+ * WorkerMemoryMutationReceiptSchema).
+ */
+function workerReceipt(
+  response: P.MemoryMutationResponse,
+): P.WorkerMemoryMutationReceipt {
+  const payload = response.event.payload;
+  return {
+    entryId: String(payload.entryId),
+    name: P.MemoryEntryNameSchema.parse(payload.name),
+    revision: Number(payload.revision),
+    op: P.MemoryRevisionOperationSchema.parse(payload.op),
+    state: P.MemoryEntryStateSchema.parse(payload.state),
+    deduplicated: response.deduplicated,
+  };
 }
 
 function requireRevision(row: Row, expected: number): void {

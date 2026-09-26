@@ -269,11 +269,11 @@ test("argv: only the product's subcommand forms reach the real CLI", () => {
 // launch carries non-boolean isolation switches and per-name MCP disables;
 // the gate admits exactly those, never a re-enable or another value.
 test("the product's isolation switches pass the gate's argv fence; re-enabling them does not", async () => {
-  const { providerLaunchPolicy } =
+  const { providerLaunchSwitches } =
     await import("../../packages/agent-host/src/provider-launch-arguments.js");
   const product = [
     "app-server",
-    ...providerLaunchPolicy("codex").args,
+    ...providerLaunchSwitches("codex").args,
     "-c",
     "mcp_servers.user_mcp.enabled=false",
     "--listen",

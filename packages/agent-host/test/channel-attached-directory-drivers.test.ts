@@ -24,6 +24,7 @@ const driver = (name: string) =>
   fileURLToPath(new URL(`../src/${name}`, import.meta.url));
 
 const recordingCli = `#!/usr/bin/env node
+if (process.argv[2] === "mcp") { process.stdout.write("[]"); process.exit(0); } // FAKE \`codex mcp list --json\`: no user MCP servers
 const { appendFileSync, existsSync, readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const localToml = join(process.cwd(), ".kimi-code", "local.toml");

@@ -132,6 +132,7 @@ test("Codex app-server implementation drives an unattended policy-bound turn wit
     writeFileSync(
       executable,
       `#!/usr/bin/env node
+if (process.argv[2] === "mcp") { process.stdout.write("[]"); process.exit(0); } // FAKE \`codex mcp list --json\`: no user MCP servers
 import { appendFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 const args = process.argv.slice(2);

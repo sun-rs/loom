@@ -3,6 +3,7 @@ export {
   providerLaunchDefaults,
   providerLaunchRequiredArgs,
   providerLaunchPolicy,
+  providerLaunchSwitches,
   validateProviderLaunchArgs,
   validateProviderLaunchOverride,
 } from "./provider-launch-arguments.js";

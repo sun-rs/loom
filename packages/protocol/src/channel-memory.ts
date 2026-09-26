@@ -261,6 +261,26 @@ export type MemoryMutationResponse = z.infer<
   typeof MemoryMutationResponseSchema
 >;
 
+/**
+ * What a Worker memory change (and its idempotent replay) returns. Writing
+ * does not imply reading: the receipt never carries the body, description or
+ * provenance, so a write-only instance cannot read memory through a change.
+ * Content is read through `memory read`, which obeys the read switch.
+ */
+export const WorkerMemoryMutationReceiptSchema = z
+  .object({
+    entryId: IdentifierSchema,
+    name: MemoryEntryNameSchema,
+    revision: z.number().int().positive(),
+    op: MemoryRevisionOperationSchema,
+    state: MemoryEntryStateSchema,
+    deduplicated: z.boolean(),
+  })
+  .strict();
+export type WorkerMemoryMutationReceipt = z.infer<
+  typeof WorkerMemoryMutationReceiptSchema
+>;
+
 export const MemoryListResponseSchema = z
   .object({
     channelId: IdentifierSchema,
@@ -350,6 +370,13 @@ export type ClientMemoryRestoreRequest = z.infer<
   typeof ClientMemoryRestoreRequestSchema
 >;
 
+/**
+ * Human-only privacy delete. Boundary (target contract §4): the platform's
+ * online read and retrieval can no longer return the body (every revision's
+ * body is set to null; name, description and reason stay as the tombstone).
+ * It does not retroactively remove copies that already reached a provider
+ * session, diagnostics, backups, or SQLite physical remnants (WAL).
+ */
 export const ClientMemoryDeleteRequestSchema =
   ClientMemoryInvalidateRequestSchema;
 export type ClientMemoryDeleteRequest = ClientMemoryInvalidateRequest;

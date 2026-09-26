@@ -153,11 +153,11 @@ export function workerMemoryChannel(
   return channelId;
 }
 
-export function requireMemoryAccess(
+function workerMemoryDecision(
   database: DatabaseSync,
   scope: Readonly<ActivationCredentialScope>,
   access: MemoryAccess,
-): string {
+): { channelId: string; decision: MemoryAccessDecision } {
   const channelId = workerMemoryChannel(database, scope);
   const switches = effectiveMemorySwitches(
     database,
@@ -172,6 +172,24 @@ export function requireMemoryAccess(
     },
     access,
   );
+  return { channelId, decision };
+}
+
+export function requireMemoryAccess(
+  database: DatabaseSync,
+  scope: Readonly<ActivationCredentialScope>,
+  access: MemoryAccess,
+): string {
+  const { channelId, decision } = workerMemoryDecision(database, scope, access);
   if (!decision.allowed) throw new ForbiddenError(decision.reason);
   return channelId;
+}
+
+/** Whether the Worker may use `access` now, without throwing. */
+export function hasMemoryAccess(
+  database: DatabaseSync,
+  scope: Readonly<ActivationCredentialScope>,
+  access: MemoryAccess,
+): boolean {
+  return workerMemoryDecision(database, scope, access).decision.allowed;
 }

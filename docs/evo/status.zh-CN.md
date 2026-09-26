@@ -843,7 +843,7 @@ B. 权限收口
 2. 语义：
    - 更新、失效、恢复、删除、置顶都要 `expectedRevision`，不一致即拒绝（409），不合并、不后写覆盖；更新只接受 active 条目且必须有实际变化。
    - invalidate：实例与 Human 都可以，需要理由；条目退出列表（`--include-invalidated` 才显示）与检索，正文与历史保留；restore 恢复为 active。
-   - delete：只有 Human（频道 owner/admin）；所有修订的正文置空（描述、名字等元数据保留为 tombstone），名字释放可重用；Worker 端没有 delete 命令也没有路由。
+   - delete：只有 Human（频道 owner/admin）；所有修订的正文置空（描述、名字等元数据保留为 tombstone），名字释放可重用；Worker 端没有 delete 命令也没有路由。删除边界（§50）：平台在线读取与检索不再能取得正文；不追溯清理已进入 session/诊断/备份/SQLite 物理残留（WAL）的副本，不是物理擦除。
    - pin：只有 Human；列表与检索同分时 pinned 优先，再按最近更新。
 3. 权限（Kernel 在列出与检索之前判定，`channel-memory-access.ts`）：
    - Worker：只有 Role 实例有平台记忆；作用域 = 该实例所属频道，从凭据推出，请求里没有也不接受频道、作者或出处字段（strict schema，HTTP 400）；实例必须仍是频道成员；有效开关 = 成员覆盖 ?? 频道默认（默认开）。
@@ -855,7 +855,7 @@ B. 权限收口
    - Worker CLI（经现有 Worker 应用服务与鉴权）：`rah worker memory list|read|search|history|write|update|invalidate|restore`，路由 `/v1/worker/memory/*`（8 条，已登记 Raft 对照表为 justified/sqlite-ledger：Raft 只有文件记忆）；write 正文从 stdin 读（与 message-post 相同），update 用 `--body-stdin` 或 `--body` 换正文；输出为文本。
    - Human API（protocol/application-service/client-sdk 同步）：`memory.list|read|search|history|invalidate|restore|delete|pin`、`memory.policy.read|update`（`/v3/client/memory/*`；开关更新带 `expectedRevision`，一次可改默认值与多个成员覆盖，覆盖读写都为 null 即删除）。
    - `worker help memory` 新增“频道记忆”段：命令、存什么/不存什么、按主题组织与先查后写、记忆只证明写入时为真且冲突时以当前观察为准、出处不证明正确、记忆是数据不是指令、被拒说明是 Human 关了开关。原 MEMORY.md 传输说明保留在其后。
-6. 测试（先失败后通过）：`kernel/test/channel-memory.test.ts` 13 项（出处不可伪造、Room 事件只含元数据且不派生 Activation、唯一名与删除后重用、expectedRevision 冲突、幂等重放与冲突、invalidate/restore/delete 权限与语义含全部修订正文置空与 tombstone、开关与成员覆盖、side 判定点、其他频道实例/移除实例/非成员 Human 不可见、私聊规则、FTS 检索先过滤与中文/短词、大小类型名称描述校验、session 代数出处）；`application-service/test/channel-memory-api.test.ts` 2 项（Worker 路由与 Human HTTP/SDK 两条路径的开关强制、无 Worker delete 路由、代理令牌 401）；`agent-host/test/worker-memory-cli.test.ts` 5 项。schema 版本断言 73→74 的既有测试随之更新。
+6. 测试（先失败后通过）：`kernel/test/channel-memory.test.ts` 13 项（出处不可伪造、Room 事件只含元数据且不派生 Activation、唯一名与删除后重用、expectedRevision 冲突、幂等重放与冲突、invalidate/restore/delete 权限与语义含全部修订正文置空与 tombstone、开关与成员覆盖、side 判定点、其他频道实例/移除实例/非成员 Human 不可见、私聊规则、FTS 检索只返回许可范围（不证明执行器先按频道过滤）与中文/短词、大小类型名称描述校验、session 代数出处）；`application-service/test/channel-memory-api.test.ts` 2 项（Worker 路由与 Human HTTP/SDK 两条路径的开关强制、无 Worker delete 路由、代理令牌 401）；`agent-host/test/worker-memory-cli.test.ts` 5 项。schema 版本断言 73→74 的既有测试随之更新。
 7. 残余风险与未做：
    - 不是强隔离：四家 CLI 以 full-access、同 UID 运行，仍可直接读取 `~/.loom/evo` 下的 SQLite 数据库文件；开关只封住认证的 Worker 路径与“不物化文件”这条文件路径，对恶意或被注入的模型不是强隔离。OS 沙箱或独立 UID 另立项（裁定 7）。
    - 读开关关闭只影响之后的工具调用；本批没有注入，所以还不存在“已进 system 层的旧索引撤不回”问题，注入批次需如实标注。
@@ -863,19 +863,26 @@ B. 权限收口
 
 ### 四十九、全局个人配置隔离
 
-依据 `~/.loom/reviews/2026-09-26-global-config-isolation.md` 的推荐做法，负责人已同意。Loom 实例的 CLI 不再加载 Human 的用户级指令、技能、hooks、notify、插件和 MCP。所有开关都只作用于 Loom 子进程（argv/env），不改任何用户文件；Human 自己运行 CLI 时照常读取全局内容。开关统一由 `providerLaunchPolicy`（`provider-launch-arguments.js`）提供，冷热两条启动路径（per-turn 与 warm driver）都在内置参数之后追加它，Role 的完整覆盖参数去不掉它。新增的参数进入 managed 集合，新增的环境变量进入 `USER_OVERRIDE_PROTECTED_KEYS` 与协议 `RuntimeLaunchEnvironmentSchema`，Role 和用户都覆盖不了。
+依据 `~/.loom/reviews/2026-09-26-global-config-isolation.md` 的推荐做法，负责人已同意。按各 CLI 能力关闭已核实的若干全局配置来源，不是四家全面隔离；剩余入口见下表与第 9 项。所有开关都只作用于 Loom 子进程（argv/env），不改任何用户文件；Human 自己运行 CLI 时照常读取全局内容。开关统一由 `providerLaunchPolicy`（`provider-launch-arguments.js`）提供，冷热两条启动路径（per-turn 与 warm driver）都在内置参数之后追加它，Role 的完整覆盖参数去不掉它。新增的参数进入 managed 集合，新增的环境变量进入 `USER_OVERRIDE_PROTECTED_KEYS` 与协议 `RuntimeLaunchEnvironmentSchema`，Role 和用户都覆盖不了。
+
+| CLI                 | 已关闭（本机免费探针实测）                                                                                                                  | 仍会加载的全局入口                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Claude Code 2.1.282 | 用户 setting source（CLAUDE.md、rules、skills、commands、agents、settings hooks/env）、`~/.claude.json` MCP、claude.ai 连接器、自动记忆     | 组织托管策略（设计如此）；OAuth 下 claude.ai 同步技能/连接器只有源码证据              |
+| Codex 0.156.1       | notify、插件、apps、hooks、技能清单、原生 web_search、Codex 自己列出的每个用户 MCP（§50 起由 `codex mcp list --json` 解析，失败即拒绝启动） | `$CODEX_HOME/AGENTS.md`（含 override）；项目 AGENTS.md（设计如此）                    |
+| OpenCode 1.18.32    | `~/.claude/CLAUDE.md`、`~/.claude/skills`、`~/.agents/skills`                                                                               | `~/.config/opencode` 全部（opencode.json、AGENTS.md、skills、agent、command、plugin） |
+| Kimi                | 无（只有 `KIMI_DISABLE_CRON`）                                                                                                              | `~/.kimi-code` 全部全局内容与 `~/.agents/{AGENTS.md,skills}`                          |
 
 1. Claude Code 2.1.282：启动参数加 `--setting-sources project,local` 和 `--strict-mcp-config`（`--setting-sources` 新列入 managed；Loom 自己的 `--mcp-config` 保留）；环境变量加 `ENABLE_CLAUDEAI_MCP_SERVERS=false`（受保护）。没有使用 `CLAUDE_CONFIG_DIR` 或 `--bare`，keychain 登录不受影响。
 2. OpenCode 1.18.32：环境变量加 `OPENCODE_DISABLE_CLAUDE_CODE=1` 和 `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`（均受保护），两个 driver 都已接入；没有重定向 `XDG_CONFIG_HOME`。
-3. Codex 0.156.1：`-c` 依次为 `notify=[]`（排第一）、原有的 memory/autonomy 开关、`features.plugins=false`、`features.apps=false`、`features.hooks=false`、`skills.include_instructions=false`、`web_search="disabled"`，然后对用户 config.toml 中出现的每个 MCP 逐个加 `mcp_servers.<name>.enabled=false`。MCP 名字在每次启动时从子进程环境的 `$CODEX_HOME/config.toml`（未设置时为 `~/.codex/config.toml`）只读解析，支持表头、`[mcp_servers]` 内联项和根级点号键，并跳过多行字符串。
+3. Codex 0.156.1：`-c` 依次为 `notify=[]`（排第一）、原有的 memory/autonomy 开关、`features.plugins=false`、`features.apps=false`、`features.hooks=false`、`skills.include_instructions=false`、`web_search="disabled"`，然后对 Codex 列出的每个用户 MCP 逐个加 `mcp_servers.<name>.enabled=false`。本批最初用正则只读扫描 config.toml，审查证实会漏掉根级 inline table、带引号的根键并误解 Unicode 转义；§50 已改为每次启动前调用 Codex 自己的 `codex mcp list --json`。
    - web_search 实测：instance 使用 danger-full-access sandbox，此时即使配置 `web_search="cached"`，Codex 仍以 live 联网发出工具，所以唯一不受用户 `web_search` 影响的值是 `disabled`。业务影响：Codex 实例失去原生 web_search 工具（full-access 下仍可用 shell 访问网络）；Claude 的 WebSearch 不变。
    - 技能实测：`skills.include_instructions=false` 会去掉全部技能清单，包括工作区/项目技能和 Codex 自带的 `.system` 技能。按目录禁用的 `skills.config` 不接受目录路径，只能逐个 SKILL.md，因此没有采用。
    - 已记录的边界：Codex 的 `-c` 按每个 "." 拆分键，不支持带引号的段（实测会报 `invalid transport`），名字含 "." 或 "=" 的 MCP 无法按名关闭。遇到这种名字时启动失败并给出明确错误，不会带着该 MCP 运行。触发条件是用户 config.toml 里有 `[mcp_servers."a.b"]` 这种写法；本机没有。
 4. Kimi：本批没有改动，是已知限制（见下文）。
 5. 技能展示与实际加载保持一致（`agent-skills.ts`、`daemon-agent-skills.ts`）：Claude 的全局范围和 Codex 的全局、工作区两个范围都返回 `unavailable` 加新 issue `isolated_by_loom`，不再读取全局技能目录；Claude 工作区（`.claude/skills`、`.claude/commands`）照旧扫描。冻结的 `apps/web` 对未知 issue 显示“无法确认当前 CLI 的有效技能目录”，文案不准确，留到 phase 4 处理；`apps/console` 没有技能视图。
-6. 效率门禁的原生组与产品保持一致：Codex 原生组本来就使用同一策略，Claude 原生组现在追加同样的参数和环境，OpenCode 原生组追加同样的环境。gate 的 Codex argv 围栏（`model-guard.mjs`）只接受产品自己的 `-c` 项，以及 `mcp_servers.<name>.enabled=false`。
+6. 效率门禁的原生组与产品保持一致：Codex 原生组本来就使用同一策略，Claude 原生组现在追加同样的参数和环境，OpenCode 原生组追加同样的环境。gate 的 Codex argv 围栏（`model-guard.mjs`）只接受产品自己的固定 `-c` 项（`providerLaunchSwitches`），以及 `mcp_servers.<name>.enabled=false`（§50 起名字只排除 "." 与 "="）。
 7. 测试（先失败，再实现）：
-   - `agent-host/test/provider-global-isolation.test.ts`（16 项）：各家的策略参数和环境；Codex MCP 按名解析、只读、缺文件、默认 `~/.codex`、带 "." 的名字失败；isolation 参数不能通过用户附加参数加入或重开；每个策略环境变量都会被过滤器和协议 schema 拒绝；7 个 driver 各用一个 FAKE 记录器替代 CLI，断言策略参数按顺序到达 CLI，并且在 Role 完整覆盖参数、继承环境里有相反值时仍然生效。
+   - `agent-host/test/provider-global-isolation.test.ts`（16 项）：各家的策略参数和环境；Codex MCP 按名解析、只读、缺文件、默认 `~/.codex`、带 "." 的名字失败（§50 改为 FAKE `codex mcp list` 驱动）；isolation 参数不能通过用户附加参数加入或重开；每个策略环境变量都会被过滤器和协议 schema 拒绝；7 个 driver 各用一个 FAKE 记录器替代 CLI，断言策略参数按顺序到达 CLI，并且在 Role 完整覆盖参数、继承环境里有相反值时仍然生效。
    - `agent-skills.test.ts` 按新语义改写；`provider-launch-arguments.test.ts`、`runtime-implementation-registry.test.ts`（改用临时 `CODEX_HOME`，不再读取真实配置）、`model-guard.test.mjs` 随契约更新。
    - `agent-host/test/provider-global-isolation-probe.test.ts` 是可跳过的本机探针（`LOOM_CLI_ISOLATION_PROBE=1` 时运行，默认跳过）：使用已安装的三家二进制、临时 HOME 标记文件和 127.0.0.1 上的 FAKE 模型 API，每家先不带策略跑一次（证明探针能看到标记），再带策略跑一次。OpenCode 可能访问公开 npm registry（免费）。
 8. 免费验证（本机，FAKE API，未调用真实模型；三项探针均通过）：
@@ -889,6 +896,32 @@ B. 权限收口
    - Claude：组织托管策略（managed settings）始终生效，这是设计如此。OAuth 模式下 claude.ai 同步技能和连接器是否真的被排除，只有源码证据（本次探针使用 API key 和 FAKE API），还需要一次获授权的真实运行来确认。
    - 生效时机：新开关在下一次 CLI 进程启动时生效。本批没有重启服务，正在运行的常驻进程仍使用旧参数。没有更换任何 home，已有原生 session 可以照常 resume。
    - 未做：真实 CLI 验证、效率门禁、本地服务部署和重启。
+
+### 五十、记忆 A / 隔离审查修复
+
+依据 `~/.loom/reviews/2026-09-27-review-memory-a-isolation.md`（审查 b69faa3：2 个 P1、2 个 P2），负责人已批准修复。每项先写失败测试并确认失败再实现；没有运行付费 CLI，没有重启服务，没有改前端冻结范围，没有改用户配置文件。
+
+1. P1-1 写权限经变更返回值绕过读开关：
+   - 修法：Worker 的 write/update/invalidate/restore（含幂等重放）改为只返回收据 `WorkerMemoryMutationReceiptSchema`（entryId、name、revision、op、state、deduplicated），取自只含元数据的 Room 事件，不含 body、description、provenance，也不再返回事件本身；需要内容走 `memory read`（受读开关约束）。收据在 Kernel 生成（`channel-memory.ts` 的 `workerReceipt`），HTTP 路由按收据 schema 严格解析，CLI 文案改读收据字段。Human API 仍返回完整条目。
+   - 冲突与同名错误只含名字、修订号和状态，不含正文。另堵一个等值预言：读关闭时，“更新没有任何变化”不再报冲突（否则可以逐次猜测正文是否等于某值），照常写一条修订；读开启时仍报冲突。
+   - 读写开关的独立语义不变（没有改成“能写就能读”）。
+2. P1-2 Codex MCP 名单改用 Codex 自己的解析：
+   - 名单来源：已安装 Codex 0.156.1 提供 `codex mcp list --json`（输出 name/enabled/transport），它用 Codex 自己的配置加载器与 TOML 解析器解析全部配置层，不启动 MCP、不调用模型（本机约 10 ms；临时目录实测 marker MCP 未被启动）。审查中的三种写法（根级 inline table、`["mcp_servers".secret]`、`"se\u0063ret"`）它都解析为 `secret`；配置不可解析时退出码 1 并给出 TOML 错误；不存在的 `CODEX_HOME` 也退出 1。
+   - 启动前流程（`provider-launch-arguments.js` 的 `codexUserMcpServerNames`）：用与启动相同的可执行文件、环境与 cwd，带上启动的固定开关（`providerLaunchSwitches`）调用一次列表；名字含 "." 或 "=" 立即拒绝；再带上逐个 `mcp_servers.<name>.enabled=false` 调用一次列表，必须全部显示 `enabled=false`，否则拒绝。CLI 缺失、非零退出、非 JSON、结构不符、覆盖未生效都拒绝启动（fail-closed，错误写明原因）。Loom 不读写用户配置文件（Codex 自己会在 `$CODEX_HOME/tmp` 建目录，与正常启动相同）。
+   - 必须带固定开关的原因（实测）：本机真实配置下不带开关时还会列出插件提供的 `codex_app`、`cua_repl`，对它们加按名覆盖会使 Codex 报 `invalid transport` 而无法加载；带 `features.plugins=false` 后只剩 config 里的 node_repl、computer-use。
+   - 实测还表明含空格、引号、非 ASCII 的名字可以按名关闭，所以名字规则从“不含 . = 空白”放宽为“不含 . =”，其余由第二次列表验证兜底。
+   - 不缓存：每个 driver 进程启动时只解析一次（两次列表约 30 ms），进程内缓存没有收益，按 mtime/size 缓存还可能漏掉其他配置层的变化。
+   - 调用方：两个 Codex driver 传入自己的 `--executable`；daemon 设置投影（`managedLaunch`）与 gate argv 围栏改用只含固定开关的 `providerLaunchSwitches`（按名关闭在每次启动时解析）；效率门禁的原生组与 drift 脚本按各自 cwd 解析。
+   - 残余：列表以 driver 进程 cwd 解析；若将来 thread 的 cwd 与进程 cwd 不同，项目级配置层可能不一致，需要届时复核。
+3. P2-1 删除边界：目标合同 §4、本文件 §48 与 Human API 删除请求的 schema 注释写明“平台在线读取与检索不再能取得正文；不追溯清理已进入 session/诊断/备份/SQLite 物理残留（WAL）”。没有实现物理擦除。`apps/console` 目前没有记忆界面，没有可改的删除文案；记忆控制台（批次 B）的删除确认必须沿用这句话。
+4. P2-2 声明修正：§49 总述改为“按各 CLI 能力关闭已核实的若干全局配置来源”，并在总述旁加支持矩阵与剩余入口。目标合同 §4 把已裁定语义写入（负责人 2026-09-26 批准）：频道共享（私聊写入属于共享频道记忆，不是私有记忆）、只经显式工具写入、不物化、写入不蕴含读取、`expectedRevision` 并发、实例只可失效/恢复、仅 Human 删除及删除边界、side 只有判定点未接入、FTS 频道过滤只保证输出范围。
+5. 测试（先失败后通过）：
+   - `application-service/test/channel-memory-api.test.ts` 新增 1 项：read=false/write=true 下 write 重放、update 及重放、invalidate 及重放、restore 及重放、revision 冲突、同名冲突、无变化更新都不含正文/描述/出处，响应键恰为收据六项；Human API 仍能读到正文。修复前失败于“write replay leaks memory content”。既有 2 项改为经 read 验证出处。
+   - `kernel/test/channel-memory.test.ts`：Worker 返回值断言为收据，正文/出处/事件改从 Human 读取与 Room 事件表验证（断言内容不变）。`worker-memory-cli.test.ts` 的 FAKE 响应改为收据，并新增 update 文案断言。
+   - `agent-host/test/provider-global-isolation.test.ts`：Codex 部分改由 FAKE `codex mcp list`（模仿实测行为：插件服务器随 `features.plugins=false` 消失、按 "." 拆键、记录 cwd）驱动：名单与顺序、带固定开关列出并在启动 cwd 列出、第二次验证、无 MCP 只列一次、默认 `~/.codex` 经环境传递；fail-closed 六种情形（Codex 解析失败、非 JSON、结构不符、名字含 "."、名字含 "="、覆盖未生效）与 CLI 缺失。7 个 driver 的 FAKE 记录器同时实现 `mcp list`，断言两个 Codex driver 在启动 cwd 列出并验证后才启动。
+   - 其余带 FAKE Codex app-server 的测试（agent-host 7 处含共享 fixture、daemon 2 处）的 FAKE 脚本增加对 `mcp list --json` 返回 `[]`。
+   - 可选本机探针 `provider-global-isolation-probe.test.ts`（`LOOM_CLI_ISOLATION_PROBE=1`，使用已安装 Codex 0.156.1 与 127.0.0.1 FAKE 模型 API，免费）新增 2 项：真实 Codex 解析根级 inline table、带引号根键、Unicode 转义、注释内含多行字符串定界符、多行字符串内的假表头、已禁用服务器、无 MCP，解析失败与带 "." 名字拒绝；根级 inline table 声明的 marker MCP 不带策略时启动、带策略时不启动。两项对 b69faa3 的旧实现均失败（名单为 `[]`；策略缺少关闭项），对新实现通过；原 Codex 探针复跑通过。CI 没有 Codex，探针默认跳过。
+6. 未做：真实模型验证、效率门禁、服务重启与部署；物理擦除；Kimi/OpenCode/Codex 全局 AGENTS 等剩余入口（见 §49 表）。
 
 ## 当前状态（2026-09-26，控制台批次 3 后）
 

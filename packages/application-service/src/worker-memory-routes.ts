@@ -8,8 +8,9 @@ import * as P from "@rah-os/protocol";
 /**
  * evo S6 batch A: the Worker facade of channel memory. The Kernel derives the
  * channel, the switches and the provenance from the credential; these routes
- * only parse the strict request and shape the response. There is no delete
- * route: deleting memory is Human-only.
+ * only parse the strict request and shape the response. A change returns
+ * only a receipt (no body, description or provenance): write access never
+ * grants reading. There is no delete route: deleting memory is Human-only.
  */
 export function handleWorkerMemoryRequest(
   kernel: RoomKernel,
@@ -21,25 +22,25 @@ export function handleWorkerMemoryRequest(
   const memory = kernel.memory;
   switch (route) {
     case "/v1/worker/memory/write":
-      return P.MemoryMutationResponseSchema.parse(
+      return P.WorkerMemoryMutationReceiptSchema.parse(
         memory.write(execution, parse(P.WorkerMemoryWriteRequestSchema, body)),
       );
     case "/v1/worker/memory/update":
-      return P.MemoryMutationResponseSchema.parse(
+      return P.WorkerMemoryMutationReceiptSchema.parse(
         memory.update(
           execution,
           parse(P.WorkerMemoryUpdateRequestSchema, body),
         ),
       );
     case "/v1/worker/memory/invalidate":
-      return P.MemoryMutationResponseSchema.parse(
+      return P.WorkerMemoryMutationReceiptSchema.parse(
         memory.invalidate(
           execution,
           parse(P.WorkerMemoryInvalidateRequestSchema, body),
         ),
       );
     case "/v1/worker/memory/restore":
-      return P.MemoryMutationResponseSchema.parse(
+      return P.WorkerMemoryMutationReceiptSchema.parse(
         memory.restore(
           execution,
           parse(P.WorkerMemoryRestoreRequestSchema, body),

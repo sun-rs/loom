@@ -62,10 +62,10 @@ function renderDetail(result: Json): string {
   ].join("\n");
 }
 
+/** A change returns a receipt only; the content is read with `memory read`. */
 function renderMutation(op: string, result: Json): string {
-  const entry = record(result.entry);
-  const state = entry.state === "active" ? "" : `, ${String(entry.state)}`;
-  return `Memory ${op}: ${String(entry.name)} (revision ${String(entry.revision)}${state})${result.deduplicated === true ? " — already applied; nothing new was written" : ""}`;
+  const state = result.state === "active" ? "" : `, ${String(result.state)}`;
+  return `Memory ${op}: ${String(result.name)} (revision ${String(result.revision)}${state})${result.deduplicated === true ? " — already applied; nothing new was written" : ""}`;
 }
 
 function renderHistory(result: Json): string {

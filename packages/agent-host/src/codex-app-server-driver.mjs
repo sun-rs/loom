@@ -44,7 +44,9 @@ const codex = spawn(
   [
     ...providerLaunchArguments("codex"),
     ...options.codexConfigArgs,
-    ...providerLaunchPolicy("codex").args,
+    ...providerLaunchPolicy("codex", process.env, {
+      codexExecutable: options.executable,
+    }).args,
     "--listen",
     "stdio://",
   ],

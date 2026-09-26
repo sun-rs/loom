@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import { providerLaunchSwitches } from "../../packages/agent-host/src/provider-launch-arguments.js";
 import { codexNativeArgs } from "./native.mjs";
 
 // Codex review of batches 3-4 P2-2: the native Codex arm must run under the
@@ -13,7 +13,13 @@ const pairs = (args) => {
 };
 
 test("native Codex arm carries every product launch-policy -c switch", () => {
-  const policy = pairs(providerLaunchPolicy("codex").args);
+  // The resolved product policy: fixed switches plus per-name MCP disables.
+  const launchArgs = [
+    ...providerLaunchSwitches("codex").args,
+    "-c",
+    "mcp_servers.user_mcp.enabled=false",
+  ];
+  const policy = pairs(launchArgs);
   assert.ok(policy.includes("features.multi_agent=false"));
   assert.ok(policy.includes("features.goals=false"));
   assert.ok(policy.includes("memories.use_memories=false"));
@@ -23,6 +29,7 @@ test("native Codex arm carries every product launch-policy -c switch", () => {
       effort: "low",
       sessionId,
       prompt: "q",
+      launchArgs,
     });
     const configured = pairs(args);
     for (const entry of policy) assert.ok(configured.includes(entry), entry);
@@ -44,7 +51,7 @@ test("native Codex environment carries the product launch-policy environment", a
   assert.equal(env.RAH_X, undefined);
   assert.equal(env.PATH, "/bin");
   for (const [k, v] of Object.entries(
-    providerLaunchPolicy("codex").environment,
+    providerLaunchSwitches("codex").environment,
   ))
     assert.equal(env[k], v);
 });

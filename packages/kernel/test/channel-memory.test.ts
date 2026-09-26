@@ -78,6 +78,27 @@ function secondInstance(f: RoleInstanceFixture, channelId: string) {
 const count = (f: RoleInstanceFixture, sql: string, ...values: string[]) =>
   Number(f.db.prepare(sql).get(...values)!.n);
 
+/** A Worker change returns a receipt only; content is read separately. */
+const stored = (f: RoleInstanceFixture, entryId: string) =>
+  f.kernel.memory.humanRead(f.actor, { entryId }).entry;
+
+function entryEvent(f: RoleInstanceFixture, entryId: string, revision: number) {
+  const row = f.db
+    .prepare(
+      `SELECT event_id, type, room_id, actor_id, payload_json FROM room_events
+       WHERE aggregate_type='memory_entry' AND aggregate_id=?
+         AND json_extract(payload_json,'$.revision')=?`,
+    )
+    .get(entryId, revision)!;
+  return {
+    eventId: String(row.event_id),
+    type: String(row.type),
+    roomId: String(row.room_id),
+    actorId: String(row.actor_id),
+    payload: JSON.parse(String(row.payload_json)) as Record<string, unknown>,
+  };
+}
+
 test("provenance comes from the Worker credential and the request cannot carry it", () => {
   const f = roleInstanceFixture();
   try {
@@ -99,13 +120,23 @@ test("provenance comes from the Worker credential and the request cannot carry i
       /Unrecognized key/u,
     );
     const written = f.kernel.memory.write(work.execution, entry("deploy"));
-    assert.equal(written.deduplicated, false);
-    assert.equal(written.entry.channelId, f.home.roomId);
-    assert.equal(written.entry.revision, 1);
-    assert.equal(written.entry.state, "active");
-    assert.equal(written.entry.body, "body of deploy");
     assert.deepEqual(
-      { ...written.entry.provenance, recordedAt: "t" },
+      { ...written, entryId: "x" },
+      {
+        entryId: "x",
+        name: "deploy",
+        revision: 1,
+        op: "create",
+        state: "active",
+        deduplicated: false,
+      },
+      "the Worker receipt carries no body, description or provenance",
+    );
+    const saved = stored(f, written.entryId);
+    assert.equal(saved.channelId, f.home.roomId);
+    assert.equal(saved.body, "body of deploy");
+    assert.deepEqual(
+      { ...saved.provenance, recordedAt: "t" },
       {
         actorPrincipalId: f.instance.instanceId,
         actorKind: "instance",
@@ -137,7 +168,7 @@ test("each accepted change appends one metadata-only Room event in the channel",
       description: "SECRET-DESCRIPTION",
     });
     assert.equal(f.head(f.home.roomId), before + 1);
-    const event = written.event;
+    const event = entryEvent(f, written.entryId, 1);
     assert.equal(event.type, "memory.entry_changed");
     assert.equal(event.roomId, f.home.roomId);
     assert.equal(event.actorId, f.instance.instanceId);
@@ -170,7 +201,7 @@ test("each accepted change appends one metadata-only Room event in the channel",
       count(
         f,
         "SELECT count(*) AS n FROM memory_revisions WHERE entry_id=?",
-        written.entry.entryId,
+        written.entryId,
       ),
       1,
     );
@@ -209,7 +240,7 @@ test("a name is unique among the non-deleted entries of a channel", () => {
       /already exists/u,
     );
     f.kernel.memory.humanDelete(f.actor, {
-      entryId: first.entry.entryId,
+      entryId: first.entryId,
       expectedRevision: 2,
       reason: "privacy",
       idempotencyKey: "delete-deploy",
@@ -218,7 +249,7 @@ test("a name is unique among the non-deleted entries of a channel", () => {
       ...entry("deploy"),
       idempotencyKey: "write-deploy-after-delete",
     });
-    assert.notEqual(reused.entry.entryId, first.entry.entryId);
+    assert.notEqual(reused.entryId, first.entryId);
   } finally {
     f.close();
   }
@@ -235,9 +266,12 @@ test("update and invalidate require the current revision", () => {
       body: "second body",
       idempotencyKey: "update-1",
     });
-    assert.equal(updated.entry.revision, 2);
-    assert.equal(updated.entry.body, "second body");
-    assert.equal(updated.entry.description, "what deploy is about");
+    assert.equal(updated.revision, 2);
+    assert.equal(stored(f, updated.entryId).body, "second body");
+    assert.equal(
+      stored(f, updated.entryId).description,
+      "what deploy is about",
+    );
     for (const change of [
       () =>
         f.kernel.memory.update(work.execution, {
@@ -276,8 +310,7 @@ test("an idempotency key replays one change and refuses a different request", ()
     const head = f.head(f.home.roomId);
     const replay = f.kernel.memory.write(work.execution, entry("deploy"));
     assert.equal(replay.deduplicated, true);
-    assert.equal(replay.event.eventId, first.event.eventId);
-    assert.equal(replay.entry.entryId, first.entry.entryId);
+    assert.deepEqual({ ...replay, deduplicated: false }, first);
     assert.equal(f.head(f.home.roomId), head);
     assert.equal(
       count(f, "SELECT count(*) AS n FROM memory_revisions"),
@@ -301,7 +334,7 @@ test("instances and Humans invalidate and restore; only a Human deletes, redacti
   try {
     const work = startInstanceRun(f);
     const written = f.kernel.memory.write(work.execution, entry("deploy"));
-    const entryId = written.entry.entryId;
+    const entryId = written.entryId;
     f.kernel.memory.update(work.execution, {
       name: "deploy",
       expectedRevision: 1,
@@ -314,8 +347,8 @@ test("instances and Humans invalidate and restore; only a Human deletes, redacti
       reason: "no longer true",
       idempotencyKey: "invalidate",
     });
-    assert.equal(invalidated.entry.state, "invalidated");
-    assert.equal(invalidated.entry.body, "revised body", "history kept");
+    assert.equal(invalidated.state, "invalidated");
+    assert.equal(stored(f, entryId).body, "revised body", "history kept");
     assert.deepEqual(
       f.kernel.memory.list(work.execution, {}).entries.map((e) => e.name),
       [],
@@ -332,7 +365,7 @@ test("instances and Humans invalidate and restore; only a Human deletes, redacti
       expectedRevision: 3,
       idempotencyKey: "restore",
     });
-    assert.equal(restored.entry.state, "active");
+    assert.equal(restored.state, "active");
     const human = f.kernel.memory.humanInvalidate(f.actor, {
       entryId,
       expectedRevision: 4,
@@ -494,7 +527,7 @@ test("read and write switches are enforced with per-member overrides", () => {
       idempotencyKey: "policy-override",
     });
     const written = f.kernel.memory.write(work.execution, entry("allowed"));
-    assert.equal(written.entry.name, "allowed");
+    assert.equal(written.name, "allowed");
     for (const readCall of [
       () => f.kernel.memory.list(work.execution, {}),
       () => f.kernel.memory.read(work.execution, { name: "deploy" }),
@@ -624,9 +657,12 @@ test("a private-box turn reads and writes the memory of the instance's channel",
     const channelHead = f.head(f.home.roomId);
     const privateHead = f.head(f.privateBox.roomId);
     const written = f.kernel.memory.write(priv.execution, entry("from-dm"));
-    assert.equal(written.entry.channelId, f.home.roomId);
-    assert.equal(written.entry.provenance.viaRoomId, f.privateBox.roomId);
-    assert.equal(written.event.roomId, f.home.roomId);
+    assert.equal(stored(f, written.entryId).channelId, f.home.roomId);
+    assert.equal(
+      stored(f, written.entryId).provenance.viaRoomId,
+      f.privateBox.roomId,
+    );
+    assert.equal(entryEvent(f, written.entryId, 1).roomId, f.home.roomId);
     assert.equal(f.head(f.home.roomId), channelHead + 1);
     assert.equal(
       f.head(f.privateBox.roomId),
@@ -684,7 +720,7 @@ test("search uses full text inside the permitted scope; the list puts pinned ent
     );
     tick();
     f.kernel.memory.humanPin(f.actor, {
-      entryId: a.entry.entryId,
+      entryId: a.entryId,
       expectedRevision: 1,
       pinned: true,
       idempotencyKey: "pin-alpha",
@@ -732,7 +768,7 @@ test("size, type, name and description are validated", () => {
       ...entry("exact"),
       body: "x".repeat(16 * 1024),
     });
-    assert.equal(exact.entry.body!.length, 16 * 1024);
+    assert.equal(stored(f, exact.entryId).body!.length, 16 * 1024);
     assert.equal(count(f, "SELECT count(*) AS n FROM memory_entries"), 1);
   } finally {
     f.close();
@@ -757,11 +793,9 @@ test("a later turn of the same instance keeps writing under its current session 
       description: "updated after reset",
       idempotencyKey: "update-after-reset",
     });
-    assert.equal(updated.entry.provenance.sessionGeneration, 1);
-    assert.equal(
-      updated.entry.provenance.runAttemptId,
-      second.run.runAttemptId,
-    );
+    const provenance = stored(f, updated.entryId).provenance;
+    assert.equal(provenance.sessionGeneration, 1);
+    assert.equal(provenance.runAttemptId, second.run.runAttemptId);
     const history = f.kernel.memory.history(second.execution, {
       name: "deploy",
     });

@@ -34,7 +34,10 @@ import { globSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { connectUnixWebSocket } from "../../packages/agent-host/src/unix-websocket.mjs";
-import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import {
+  providerLaunchPolicy,
+  providerLaunchSwitches,
+} from "../../packages/agent-host/src/provider-launch-arguments.js";
 import { countCodexCompactions } from "./drift-checks.mjs";
 import { sleep } from "./common.mjs";
 import {
@@ -193,11 +196,8 @@ const resumeParams = ({ threadId, model, effort, cwd }) => ({
     ...Object.fromEntries(
       // The product's boolean process switches as thread config; the
       // non-boolean isolation switches and MCP disables stay process-level.
-      providerLaunchPolicy("codex")
-        .args.filter(
-          (a) =>
-            a !== "-c" && a.endsWith("=false") && !a.startsWith("mcp_servers."),
-        )
+      providerLaunchSwitches("codex")
+        .args.filter((a) => a !== "-c" && a.endsWith("=false"))
         .map((a) => [a.split("=")[0], false]),
     ),
     model_reasoning_effort: effort,
@@ -317,7 +317,13 @@ export async function compactCodexPerTurn({
   const before = codexRolloutCompactions(threadId);
   const proc = spawnStdio(
     codex,
-    ["app-server", ...providerLaunchPolicy("codex").args],
+    [
+      "app-server",
+      ...providerLaunchPolicy("codex", process.env, {
+        codexExecutable: codex,
+        cwd,
+      }).args,
+    ],
     cwd,
   );
   const client = rpcClient({

@@ -72,8 +72,11 @@ function harness(responses: Record<string, unknown>) {
 test("memory write reads the body from stdin and sends no scope or author", async () => {
   const h = harness({
     "/v1/worker/memory/write": {
-      entry: detail,
-      event: {},
+      entryId: "memory-1",
+      name: "deploy",
+      revision: 1,
+      op: "create",
+      state: "active",
       deduplicated: false,
     },
   });
@@ -138,8 +141,11 @@ test("memory commands refuse scope and author options before any request", async
 test("memory update sends only the changed fields and the expected revision", async () => {
   const h = harness({
     "/v1/worker/memory/update": {
-      entry: { ...detail, revision: 2, description: "new line" },
-      event: {},
+      entryId: "memory-1",
+      name: "deploy",
+      revision: 2,
+      op: "update",
+      state: "active",
       deduplicated: false,
     },
   });
@@ -170,6 +176,7 @@ test("memory update sends only the changed fields and the expected revision", as
       description: "new line",
       idempotencyKey: "k1",
     });
+    assert.match(h.stdout(), /Memory update: deploy \(revision 2\)/u);
     assert.equal(
       await runWorkerCliCommand(
         [
