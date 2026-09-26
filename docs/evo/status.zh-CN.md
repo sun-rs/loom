@@ -483,6 +483,77 @@ OpenCode 1.18.32 目录已不再发布 `deepseek/deepseek-v4-flash`，负责人 
    - `agent-start-coordinator.test.ts`、`instance-runtime-pool.test.ts`：启动上限运行中调大立即放行、调小不打断；常驻池调大忙时上限放行等待中的轮次。
 7. 风险与未解决：全局 20 意味着默认 20 个 lane worker，每次唤醒提示最多 20 次认领事务（此前生产为 4 个）；lane 只增不减。冷路径（Kimi、默认的 Claude）进程数只受这两级上限与逐 run 资源上限约束。多个实例在同一共享仓库目录同时写入的问题仍在（没有每实例 worktree，见审计 P1）。每家 CLI 默认值无依据。效率门禁 `gate-daemon.mjs` 也走新默认，单实例门禁行为不变。本地服务尚未重启，正式库 offer 仍为 1，下次启动才更新。
 
+### 三十七、唤醒防循环与运行看门狗
+
+依据 `~/.loom/reviews/2026-09-26-upstream-substrate-research.md` 第 1、2 节、`~/.loom/reviews/2026-09-26-scenario-capability-audit.md` A、I 节与负责人裁定 A/B/C。先写失败测试再最小实现；没有运行付费 CLI，没有重启服务，没有改前端。
+
+1. 唤醒规则（裁定 A，参考 Multica `comment.go:2685`“agent 作者跳过隐式路由”）：
+   - 实例发的消息只有显式 `@实例` 才唤醒其他实例。`room_policy`、线程关注者、回复链、线程根都不再唤醒。Worker 路由 `workerReplyRecipients` 只保留 @ 解析结果，事件 `recipientIds` 与实际唤醒一致。
+   - 同一规则在 Kernel 注意力派生处（`RoomEventWriter.deriveAttention` → `instance-wake-guard.ts`）统一强制：实例作者的 `message.posted` 里非 `mention` 的收件人不写 Inbox、不建 Activation，任何门面都绕不过。
+   - Human 消息规则不变（ADR-0015 已补充说明）。Task 指派、审查等非消息事件不属于本规则，也不计数。
+2. 合并：实例已有排队中的 Activation 时，新触发只把 `to_seq` 并入它（既有机制，本次用测试锁定）。
+3. 连续激活上限：
+   - 每个频道记录“自上一条 Human 消息以来连续的实例→实例唤醒次数”（表 `instance_wake_guards`）。每次唤醒决定（放行或拦下、当时的计数与上限）按“唤醒事件 + 收件人”记在因果链表 `instance_wake_chain`。
+   - 一次唤醒按收件人计一次，并入已有排队 Activation 也计。上限默认 10：第 11 次起不写 Inbox、不建 Activation，消息本身照常入频道。每次越限在频道里只写一条系统消息（`principal_system`，`systemNotice: instance_wake_chain_limit`），说明原因和继续方式：Human 在本频道发任意一条消息即重置。
+   - 计数按频道统计，覆盖该频道的顶层和所有线程，Human 在任一线程发言都会重置。不同频道各自计数，私聊房间也是独立频道，Human 在一个频道发言不影响其他频道。
+   - Schema 升到 70，只新增这两张表。
+4. 看门狗（裁定 B，参考 Raft 1.0.32 daemon 语义，去掉“2 分钟无首事件即杀”）：
+   - 规则只有一处定义（`agent-host/src/run-watchdog.ts`），冷热路径共用：
+     - 无进展达到告警阈值（默认 15 分钟）：只告警，写诊断日志，并写一条 `run.watchdog_warning` 活动事件。每个 RunAttempt 至多一条，幂等；实例活动列表显示为 warning，不改 run、Activation 或 Task。
+     - 同一实例已有排队工作，且无进展达到终止阈值（默认 15 分钟）：终止并重试。
+     - 总时长达到上限（默认 4 小时）：不论有无进展，终止并重试。
+   - 进展定义：冷路径以 provider 轨迹或用量帧为准，不看 stdout 文本；热路径沿用原生轮次进展时钟（传输心跳不算），等待审批时不算停滞，但总时长上限照样生效。
+   - 冷路径由 AgentHost 监督：`watchRunProgress` 与原有存活探测并行。热轮由适配器监督：`warm-turn-supervisor.ts` 调同一规则，适配器声明 `supervisesRun` 后 AgentHost 不再重复监督。原来的 `stallMs`、`toolStallMs` 策略（15 分钟无进展即中断，工具运行时 60 分钟）已删除；配置里的旧键仍可解析，但不再使用。
+5. 终止与续接：
+   - 走既有终止证明路径。冷路径：`runtime.cancel`，先向进程组长发 SIGTERM，宽限后对进程组发 SIGKILL，宽限沿用现有 `terminationGraceMs`，本地服务为 5 秒。热路径：先原生 interrupt，静默等待上限内收尾则运行时保留；否则 `abortRuntime`，SIGTERM 后按 pool `killGraceMs` 发 SIGKILL，终止原因记为 `stall`。
+   - RunAttempt 记为 `timed_out`，并写入终止证明。Activation 按可恢复失败重试，排队的后续工作并入重试。重试续接原会话：热路径 interrupt 收尾时仍在同一进程、同一线程；被杀时新进程 `thread/resume` 同一线程。冷路径按既有 resume 续接。
+   - 最终答复已提交的 run 不重跑，只做完成（仍需 ACK 到 `toSeq`）。
+   - 失败文本不含变量数字（`LOOM_RUN_WATCHDOG_QUEUED_STALL` / `LOOM_RUN_WATCHDOG_MAX_DURATION`），同一错误连续 3 次即由既有 retry fence 隔离（`activation.retry_blocked`）。资源失败仍用原来的 `stallRetryBudget`。
+6. 运行中配置（裁定 C，与第三十六节的并发设置共用一份，不另建存储）：
+   - 同一文件 `runtime-concurrency.json`、同一修订号、同一 Human 鉴权 API `/v3/client/runtime-concurrency/read|update`，新增并列分组：
+     - `wakeGuard.instanceChainLimit`：1–1000，默认 10；
+     - `watchdog.noProgressWarnMs`、`watchdog.queuedStallTerminateMs`：1 分钟–1 天，默认各 15 分钟；
+     - `watchdog.maxRunMs`：1 分钟–7 天，默认 4 小时。
+   - 分组可以只改部分字段，越界值被拒；文件只保存改过的字段。
+   - 边界、默认值与 Host 读取结构定义在 protocol `run-watchdog.ts`。`DaemonRuntimeConcurrency.attach` 在启动时和每次修改后把两组推给 Kernel `runGuards`（进程内唯一所有者 `RunGuardPolicy`）。唤醒上限在每次派生时读取；Host 每个监督周期经控制端口 `readRunWatchdog` 读取阈值和“同实例是否有排队工作”，所以运行中的 run 也在下一周期生效，无需重启。
+   - 只有 v4 daemon（本地服务）有该设置；v2/v3 与单独使用 Kernel 的测试取默认值。
+7. 测试（全部 fake，结论读 room.db）：
+   - `kernel/test/instance-wake-guard.test.ts`：
+     - 实例顶层回复不 @ 不唤醒；Human 顶层仍唤醒全部。
+     - Worker 回复 @ 只唤醒被 @ 者；线程里不 @ 不唤醒关注者，Human 线程回复仍唤醒关注者。
+     - 任何门面传入的非 mention 收件人都被拒。
+     - 排队中合并到同一 Activation。
+     - 第 10 次放行、第 11 次拦下，只写一条系统提示；Human 发言后重置，再次越限会再次提示。
+     - 线程与顶层共用一个计数，线程内 Human 发言也重置；频道之间互不影响。
+     - 上限修改立即生效。
+   - `kernel/test/run-watchdog-service.test.ts`：默认值、部分更新与校验、Host 只能读自己参与者的上下文、排队判定、告警幂等且不改状态，活动列表显示为 warning。
+   - `agent-host/test/run-watchdog.test.ts`（冷路径，假时钟）：
+     - 规则单元；无排队时只告警并正常完成；有排队时在阈值处终止、有终止证明、重试并合并后续工作。
+     - 总时长上限；运行中调低上限对当前 run 生效。
+     - 最终答复已提交时完成而不重跑。
+     - 同一失败 3 次被 fence 隔离。
+   - `agent-host/test/warm-runtime-policy.test.ts`：心跳不重置进展时钟；无排队只告警；有排队才终止；持续进展不告警；静默工具只告警；等待审批不判停滞，但 4 小时上限仍终止。
+   - `codex-warm-runtime.test.ts`：
+     - 有排队时 interrupt 收尾，同一运行时重试完成。
+     - 无排队时 4 小时前不杀；3 次时长失败后被 fence 隔离，每次都在同一进程上运行，包括按次新建适配器的情形。
+     - 不响应 interrupt 的轮次被杀，有 `process_exit` 证明，重试 `thread/resume` 同一线程。
+   - `claude-warm-runtime.test.ts`：有排队时的停滞终止与重试。
+   - `daemon/test/runtime-concurrency-settings.test.ts`：两组部分更新、共用修订号、越界拒绝、重启后读回；attach 后立即推给 Kernel，之后每次修改也推。`same-cli-instance-concurrency.test.ts` 经 API 更新两组并核对文件。`daemon-application.test.ts`：旧 `stallMs`、`toolStallMs` 仍可解析。
+   - 规则变化导致旧断言修改（不是放宽）：
+     - `room-kernel.test.ts` 两条 Worker @ 测试：第三个实例不再被 `room_policy` 唤醒。
+     - 两条“认领实例消息为任务”测试：消息体加上显式 @。
+     - `agent-task-split-chain.test.ts`：lead 的分派消息不再唤醒未被 @ 的 auditor（之后由 Human 显式 @）。
+     - `worker-process-integration.test.ts` 轮流报数：Fake CLI 回复带 `@对方`，9 次实例互唤醒在默认上限内。
+     - schema 版本常量 69 → 70。
+8. 偏离与未解决：
+   - 终止宽限没有统一成 Raft 的 10 秒：冷路径沿用 5 秒；热路径先原生 interrupt，再按 1 秒 SIGTERM 宽限。
+   - 热轮时长终止的 `terminated_reason` 记为 `stall`，未新增枚举，以免改 CHECK 约束。
+   - 链计数只覆盖消息；实例经 Task 指派或审查唤醒其他实例不计数，属于有持久义务的显式动作。
+   - 冷路径以轨迹帧为进展，长时间无输出的工具在有排队工作时会被终止（与 Raft 一致，原热路径的“工具 60 分钟窗口”已取消）。
+   - 设置 API 名称仍叫 runtime-concurrency，未改名为通用 runtime settings（涉及第三十六节的 API 与测试，留待负责人决定）。
+   - client-sdk 与控制台没有入口。
+   - 本地服务未重启，正式库仍是 schema 69，下次启动迁移。
+
 ## 当前状态（2026-09-25，批次 4 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

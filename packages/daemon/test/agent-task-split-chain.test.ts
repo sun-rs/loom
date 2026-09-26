@@ -398,9 +398,8 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       [
         { participantId: helperA, reason: "mention" },
         { participantId: helperB, reason: "mention" },
-        // No role gates the audit: an unmentioned Room Agent still hears the
-        // note under the Room's own delivery policy.
-        { participantId: auditor, reason: "room_policy" },
+        // evo §37 A: an instance's note wakes only the instances it @s; the
+        // unmentioned auditor is reached below by the Human's own @.
       ].sort((left, right) =>
         left.participantId.localeCompare(right.participantId),
       ),

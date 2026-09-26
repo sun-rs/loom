@@ -13,8 +13,11 @@ import { dirname } from "node:path";
 
 import { ConflictError } from "@rah-os/kernel";
 import {
+  RUN_GUARD_DEFAULTS,
+  RunWatchdogSettingsUpdateSchema,
   RuntimeConcurrencySettingsSchema,
   RuntimeConcurrencyUpdateSchema,
+  WakeGuardSettingsUpdateSchema,
   type RuntimeConcurrencySettings as RuntimeConcurrencyView,
   type RuntimeConcurrencyUpdate,
 } from "@rah-os/protocol";
@@ -38,6 +41,9 @@ const State = z
     runtimeMaxConcurrentRuns: z
       .record(z.string().min(1), z.number().int().min(1).max(64))
       .optional(),
+    // evo §37: only the fields the Human set; the rest keep their defaults.
+    wakeGuard: WakeGuardSettingsUpdateSchema.optional(),
+    watchdog: RunWatchdogSettingsUpdateSchema.optional(),
   })
   .strict();
 
@@ -48,9 +54,11 @@ export type RuntimeConcurrencyRuntime = {
 };
 
 /**
- * Single daemon owner of the Human's concurrency settings. It persists them
- * (owner-private, atomic replace) and notifies the appliers (Kernel placement
- * caps, Host lanes, warm pool, start gate); it holds no work or queue itself.
+ * Single daemon owner of the Human's runtime settings: the concurrency caps
+ * and, in the same document and revision, the evo §37 `wakeGuard` and
+ * `watchdog` groups. It persists them (owner-private, atomic replace) and
+ * notifies the appliers (Kernel placement caps and run guards, Host lanes,
+ * warm pool, start gate); it holds no work or queue itself.
  */
 export class RuntimeConcurrencySettings {
   readonly path: string;
@@ -100,6 +108,8 @@ export class RuntimeConcurrencySettings {
           state.runtimeMaxConcurrentRuns?.[runtime.runtimeProfileId] ??
           DEFAULT_PER_CLI_MAX_CONCURRENT_RUNS,
       })),
+      wakeGuard: { ...RUN_GUARD_DEFAULTS.wakeGuard, ...state.wakeGuard },
+      watchdog: { ...RUN_GUARD_DEFAULTS.watchdog, ...state.watchdog },
     });
   }
 
@@ -135,6 +145,12 @@ export class RuntimeConcurrencySettings {
         : { minStartIntervalMs: input.minStartIntervalMs }),
       revision: this.#state.revision + 1,
       runtimeMaxConcurrentRuns: runtimeLimits,
+      ...(input.wakeGuard === undefined
+        ? {}
+        : { wakeGuard: { ...this.#state.wakeGuard, ...input.wakeGuard } }),
+      ...(input.watchdog === undefined
+        ? {}
+        : { watchdog: { ...this.#state.watchdog, ...input.watchdog } }),
     });
     this.#persist(next);
     this.#state = next;

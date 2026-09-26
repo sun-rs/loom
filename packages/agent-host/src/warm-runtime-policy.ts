@@ -20,9 +20,10 @@ import { realpath, stat } from "node:fs/promises";
  *   `maxBusyTurns` turns are admitted at once, a further one waits at most
  *   `admissionWaitMs`, then fails recoverably (its Activation is retried
  *   instead of holding its lease).
- * - Stall: no native turn progress for `stallMs` (`toolStallMs` while a tool
- *   runs; never while awaiting approval) -> native interrupt, then a proven
- *   kill; at most `stallRetryBudget` recoverable retries per Activation.
+ * - Stall and duration: the evo §37 B run watchdog (`run-watchdog.ts`), with
+ *   thresholds from the Human's runtime settings, not from this policy.
+ * - Resource failure: at most `stallRetryBudget` recoverable retries per
+ *   Activation, then sticky.
  * - Busy RSS above `recycleRssKb`: alert and close admission (no kill);
  *   above `emergencyRssKb`: explicit resource failure (proven kill).
  */
@@ -35,8 +36,6 @@ export type WarmRuntimePolicy = {
   maxWarm: number;
   maxBusyTurns: number;
   admissionWaitMs: number;
-  stallMs: number;
-  toolStallMs: number;
   stallRetryBudget: number;
   emergencyRssKb: number;
   /** How often a busy turn's progress clock is checked (real time). */
@@ -56,10 +55,8 @@ export const DEFAULT_WARM_RUNTIME_POLICY: Readonly<WarmRuntimePolicy> = {
   maxWarm: 12,
   recycleRssKb: 2 * 1024 * 1024,
   resourceCheckIntervalMs: 30_000,
-  stallMs: 15 * 60_000,
   stallRetryBudget: 1,
   supervisionIntervalMs: 5_000,
-  toolStallMs: 60 * 60_000,
 };
 
 export type WarmRuntimePolicyOverrides = {

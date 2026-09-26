@@ -420,10 +420,15 @@ import {
   assertMessageReferenceDirectoryIsUnambiguous,
   principalHandleIsAvailable,
 } from "./message-reference-identity.ts";
-const SYSTEM_PRINCIPAL_ID = "principal_system";
+import {
+  SYSTEM_PRINCIPAL_ID,
+  ensureSystemPrincipal,
+} from "./system-principal.ts";
+import { RunGuardPolicy } from "./run-guard-policy.ts";
+import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 69;
+export const KERNEL_SCHEMA_VERSION = 70;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -475,6 +480,8 @@ export class RoomKernel {
   readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
   readonly runAttemptUsage: RunAttemptUsageService;
+  readonly runGuards = new RunGuardPolicy();
+  readonly runWatchdog: RunWatchdogService;
   readonly finalReplies: RunAttemptFinalReplyService;
   readonly runtimeProcessCleanup;
   readonly instanceRuntimes: InstanceRuntime.InstanceRuntimeService;
@@ -588,6 +595,7 @@ export class RoomKernel {
       database: this.#database,
       now: this.#now,
       obligations: this.#activationObligations,
+      wakeChainLimit: () => this.runGuards.wakeGuard().instanceChainLimit,
     });
     this.workerChannelAttention = new AgentChannelAttentionService({
       targetContext: () => this.workerTargetContext,
@@ -759,6 +767,11 @@ export class RoomKernel {
     };
     this.#runtimeTrajectory = new RuntimeTrajectoryService(runtimeObservation);
     this.runAttemptUsage = new RunAttemptUsageService(runtimeObservation);
+    this.runWatchdog = new RunWatchdogService(
+      runtimeObservation,
+      this.#roomEvents,
+      this.runGuards,
+    );
     this.finalReplies = new RunAttemptFinalReplyService(runtimeObservation);
     this.runtimeProcessCleanup = this.runAttemptUsage.cleanups;
     this.instanceSessions = new InstanceSessionService(runtimeObservation);
@@ -847,11 +860,7 @@ export class RoomKernel {
       migrateWorkerTargetReadPositions(this.#database);
       migrateWorkerSelfProfileObservations(this.#database);
       principalProfile.migrate(this.#database);
-      this.#database
-        .prepare(
-          "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
-        )
-        .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
+      ensureSystemPrincipal(this.#database, this.#timestamp());
       if (
         !this.#database
           .prepare("PRAGMA table_info(workspaces)")

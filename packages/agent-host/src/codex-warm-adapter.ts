@@ -44,6 +44,7 @@ import {
   superviseWarmTurn,
   type WarmTurnSupervision,
 } from "./warm-turn-supervisor.ts";
+import { runWatchdogFailure } from "./run-watchdog.ts";
 import {
   issueWorkerTurnHandle,
   RAH_WORKER_TURN_ROOT_ENV,
@@ -493,16 +494,18 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   }
 
   /**
-   * The turn's own outcome, unless supervision ends it first: a stall gets
-   * the native interrupt and, without quiescence in the bound, a proven kill;
-   * a resource failure is a proven kill. An unproven kill throws (no proof,
-   * no retry: the Host quarantines).
+   * The turn's own outcome, unless supervision ends it first: a watchdog
+   * termination (evo §37 B: stalled with queued work, or the duration cap)
+   * gets the native interrupt and, without quiescence in the bound, a proven
+   * kill; a resource failure is a proven kill. An unproven kill throws (no
+   * proof, no retry: the Host quarantines).
    */
   async #supervised(binding: TurnBinding): Promise<WarmTurnOutcome> {
     const { runtime, turn } = binding;
     const pool = this.#options.pool;
     const stop = new AbortController();
     const supervision = superviseWarmTurn({
+      activationId: binding.activationId,
       pool,
       runtime,
       signal: stop.signal,
@@ -520,9 +523,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     if ("outcome" in first) return first.outcome;
     binding.supervision = first.verdict;
     pool.diagnostic(
-      `[${runtime.instanceRuntimeId}] ${first.verdict.kind === "stalled" ? `turn ${turn.runAttemptId} stalled: no native progress for ${String(first.verdict.idleMs)} ms` : `resource failure: process-group RSS ${String(first.verdict.rssKb)} KiB above the emergency ceiling`}`,
+      `[${runtime.instanceRuntimeId}] ${first.verdict.kind === "watchdog" ? `turn ${turn.runAttemptId} ended by the run watchdog (${first.verdict.reason})` : `resource failure: process-group RSS ${String(first.verdict.rssKb)} KiB above the emergency ceiling`}`,
     );
-    if (first.verdict.kind === "stalled" && turn.nativeTurnId !== undefined) {
+    if (first.verdict.kind === "watchdog" && turn.nativeTurnId !== undefined) {
       try {
         runtime.command({
           op: "turn.interrupt",
@@ -542,15 +545,28 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     if (turn.outcome.settled) return await turn.outcome.promise;
     const exit = await pool.abortRuntime(
       runtime,
-      first.verdict.kind === "stalled" ? "stall" : "resource_failure",
+      first.verdict.kind === "watchdog" ? "stall" : "resource_failure",
     );
     return { exit: runExitFrom(exit), kind: "exit" };
   }
 
-  /** The failure a supervised end carries; the budget makes it sticky. */
+  /**
+   * The failure a supervised end carries. A watchdog end is recoverable: the
+   * retry resumes the instance's session, and the Kernel's same-error fence
+   * (3 identical failures) stops a loop. A resource failure keeps its own
+   * budget, after which it is sticky.
+   */
   #supervisionFailure(binding: TurnBinding): RuntimeFailure | undefined {
     const verdict = binding.supervision;
     if (verdict === undefined) return undefined;
+    if (verdict.kind === "watchdog")
+      return RuntimeFailureSchema.parse({
+        actionRequired: false,
+        errorClass: "TimeoutError",
+        message: runWatchdogFailure(verdict.reason),
+        retryDisposition: "recoverable",
+        sticky: false,
+      });
     // Review batch 1 #6: counted by the shared pool, not this adapter (the
     // production resolver builds a new adapter for every claim).
     const count = this.#options.pool.recordSupervisionFailure(
@@ -559,14 +575,16 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const exhausted = count > this.#options.pool.policy.stallRetryBudget;
     return RuntimeFailureSchema.parse({
       actionRequired: false,
-      errorClass: verdict.kind === "stalled" ? "TimeoutError" : "RuntimeError",
-      message:
-        verdict.kind === "stalled"
-          ? `RAH_RUNTIME_STALLED: no native turn progress for ${String(verdict.idleMs)} ms (tools in flight: ${String(verdict.toolsInFlight)}); the turn was interrupted${exhausted ? "; the retry budget is exhausted" : ""}`
-          : `RAH_RUNTIME_RESOURCE_FAILURE: process-group RSS ${String(verdict.rssKb)} KiB exceeded the emergency ceiling; the runtime was killed${exhausted ? "; the retry budget is exhausted" : ""}`,
+      errorClass: "RuntimeError",
+      message: `RAH_RUNTIME_RESOURCE_FAILURE: process-group RSS ${String(verdict.rssKb)} KiB exceeded the emergency ceiling; the runtime was killed${exhausted ? "; the retry budget is exhausted" : ""}`,
       retryDisposition: exhausted ? "sticky_terminal" : "recoverable",
       sticky: exhausted,
     });
+  }
+
+  /** evo §37 B: a warm turn applies the run watchdog in its supervisor. */
+  supervisesRun(run: RunHandle): boolean {
+    return this.#turns.has(run.runId);
   }
 
   async cancel(run: RunHandle): Promise<RunExit> {

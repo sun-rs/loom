@@ -3,47 +3,62 @@ import type {
   WarmRuntime,
   WarmTurn,
 } from "./instance-runtime-pool.ts";
+import {
+  RunWatchdogEpisode,
+  runWatchdogTick,
+  type RunWatchdogTerminationReason,
+} from "./run-watchdog.ts";
 
 /**
  * S2-b supervision of one busy warm turn (S2 spec §6, review P2 on stall and
- * leaks). The signals are kept apart:
+ * leaks), with the evo §37 B watchdog rule (`run-watchdog.ts`). The signals
+ * are kept apart:
  * - transport liveness (any envelope, keepalives) only feeds diagnostics and
  *   never resets the business-progress clock;
  * - native turn progress (item/tool/usage frames and the driver's `progress`
- *   envelopes) resets it;
- * - a running tool gets its own, longer window; awaiting approval never
- *   stalls (the Human decides).
- * A stall is an operating policy, not evidence of a model fault. Busy RSS
- * above the recycle threshold only alerts and closes admission to the
- * runtime (it restarts at its next idle boundary); only above the emergency
- * ceiling is it a resource failure. This function decides; the adapter acts
- * (native interrupt, proven kill) and never retries before closure is proven.
+ *   envelopes) resets it; awaiting approval never stalls (the Human decides).
+ * No progress past the warning threshold only warns; the turn is ended only
+ * when work for the same instance is queued and the stall passed the
+ * queued-work threshold, or when the turn reached the total duration cap.
+ * Busy RSS above the recycle threshold only alerts and closes admission to
+ * the runtime (it restarts at its next idle boundary); only above the
+ * emergency ceiling is it a resource failure. This function decides; the
+ * adapter acts (native interrupt, proven kill) and never retries before
+ * closure is proven.
  */
 export type WarmTurnSupervision =
-  | { kind: "stalled"; idleMs: number; toolsInFlight: number }
+  | { kind: "watchdog"; reason: RunWatchdogTerminationReason }
   | { kind: "resource_failure"; rssKb: number };
 
 export async function superviseWarmTurn(input: {
+  activationId: string;
   pool: InstanceRuntimePool;
   runtime: WarmRuntime;
   turn: WarmTurn;
   signal: AbortSignal;
 }): Promise<WarmTurnSupervision | undefined> {
-  const { pool, runtime, turn, signal } = input;
+  const { activationId, pool, runtime, turn, signal } = input;
   const policy = pool.policy;
+  const episode = new RunWatchdogEpisode();
   let lastResourceCheckMs: number | undefined;
   let measurementAlerted = false;
   while (!signal.aborted) {
     await abortableDelay(policy.supervisionIntervalMs, signal);
     if (signal.aborted || turn.outcome.settled) return undefined;
     const nowMs = pool.now();
-    if (!turn.awaitingApproval) {
-      const window =
-        turn.toolsInFlight > 0 ? policy.toolStallMs : policy.stallMs;
-      const idleMs = nowMs - turn.lastProgressMs;
-      if (idleMs >= window)
-        return { idleMs, kind: "stalled", toolsInFlight: turn.toolsInFlight };
-    }
+    const verdict = await runWatchdogTick({
+      activationId,
+      control: pool.control,
+      diagnostic: (message) =>
+        pool.diagnostic(`[${runtime.instanceRuntimeId}] ${message}`),
+      elapsedMs: nowMs - turn.openedMs,
+      episode,
+      idleMs: turn.awaitingApproval ? undefined : nowMs - turn.lastProgressMs,
+      runAttemptId: turn.runAttemptId,
+    });
+    if (signal.aborted || turn.outcome.settled) return undefined;
+    if (verdict.kind === "terminate")
+      return { kind: "watchdog", reason: verdict.reason };
     // Measurement cadence is real time (it bounds `ps` cost), not policy time.
     if (
       lastResourceCheckMs !== undefined &&

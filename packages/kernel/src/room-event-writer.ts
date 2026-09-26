@@ -3,6 +3,7 @@ import { allowsAgentChannelAttention } from "./agent-channel-attention.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
+  RUN_GUARD_DEFAULTS,
   RoomEventSchema,
   WakeHintSchema,
   type ActivationReason,
@@ -14,6 +15,12 @@ import type {
   ActivationObligationSpec,
 } from "./activation-obligation-service.ts";
 import { ConflictError, NotFoundError } from "./errors.ts";
+import {
+  decideInstanceWake,
+  instanceWakeLimitNotice,
+  noteHumanMessageForWakeGuard,
+} from "./instance-wake-guard.ts";
+import { SYSTEM_PRINCIPAL_ID } from "./system-principal.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 
 export type AttentionRecipient = {
@@ -37,17 +44,23 @@ export class RoomEventWriter {
   readonly #database: DatabaseSync;
   readonly #now: () => Date;
   readonly #obligations: ActivationObligationService;
+  readonly #wakeChainLimit: () => number;
 
   constructor(input: {
     createId: (prefix: string) => string;
     database: DatabaseSync;
     now: () => Date;
     obligations: ActivationObligationService;
+    /** evo §37 A: the live `wakeGuard.instanceChainLimit` (default 10). */
+    wakeChainLimit?: () => number;
   }) {
     this.#createId = input.createId;
     this.#database = input.database;
     this.#now = input.now;
     this.#obligations = input.obligations;
+    this.#wakeChainLimit =
+      input.wakeChainLimit ??
+      (() => RUN_GUARD_DEFAULTS.wakeGuard.instanceChainLimit);
   }
 
   append(input: AppendRoomEventInput, deletionRequest?: RoomEvent): RoomEvent {
@@ -145,6 +158,7 @@ export class RoomEventWriter {
       roomSeq: event.roomSeq,
       topic: "room.event",
     });
+    noteHumanMessageForWakeGuard(this.#database, event);
     return event;
   }
 
@@ -154,9 +168,21 @@ export class RoomEventWriter {
     createdAt: string,
   ): string[] {
     const activationIds: string[] = [];
+    let chainLimitNotice: { humanSeq: number; limit: number } | undefined;
     for (const recipient of recipients) {
       if (!allowsAgentChannelAttention(this.#database, event, recipient))
         continue;
+      const wake = decideInstanceWake(
+        this.#database,
+        event,
+        recipient,
+        this.#wakeChainLimit,
+      );
+      if (wake.kind === "implicit_route_refused") continue;
+      if (wake.kind === "chain_limit") {
+        if (wake.notice) chainLimitNotice = wake;
+        continue;
+      }
       this.insertInboxItem({
         createdAt,
         event,
@@ -218,7 +244,41 @@ export class RoomEventWriter {
         topic: "activation.requested",
       });
     }
+    if (chainLimitNotice !== undefined)
+      this.#postChainLimitNotice(event, chainLimitNotice, createdAt);
     return activationIds;
+  }
+
+  /** evo §37 A: the one visible system notice of a Channel chain trip. */
+  #postChainLimitNotice(
+    cause: RoomEvent,
+    trip: { humanSeq: number; limit: number },
+    createdAt: string,
+  ): void {
+    const messageId = this.#createId("message");
+    const body = instanceWakeLimitNotice(trip.limit);
+    this.#database
+      .prepare(
+        "INSERT INTO messages(message_id, room_id, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?)",
+      )
+      .run(messageId, cause.roomId, SYSTEM_PRINCIPAL_ID, body, createdAt);
+    this.append({
+      actorId: SYSTEM_PRINCIPAL_ID,
+      aggregateId: messageId,
+      aggregateType: "message",
+      idempotencyKey: `instance_wake_guard.notice:${cause.roomId}:${String(trip.humanSeq)}`,
+      payload: {
+        body,
+        causeEventId: cause.eventId,
+        chainLimit: trip.limit,
+        messageId,
+        recipientIds: [],
+        recipients: [],
+        systemNotice: "instance_wake_chain_limit",
+      },
+      roomId: cause.roomId,
+      type: "message.posted",
+    });
   }
 
   eventFromRow(row: Row): RoomEvent {

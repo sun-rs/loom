@@ -183,6 +183,7 @@ test("two external Agent processes take turns from committed Room replies withou
           env: {
             RAH_FAKE_MODE: "worker-task",
             RAH_FAKE_ROOM_REPLY_MODE: "turn-taking-counter",
+            RAH_FAKE_TURN_PEER: index === 0 ? "turn-taking-b" : "turn-taking-a",
           },
         });
         return {
@@ -235,7 +236,9 @@ test("two external Agent processes take turns from committed Room replies withou
 
     const numberEvents = roomNumberEvents(kernel, humanActor, room.roomId);
     assert.deepEqual(
-      numberEvents.map((event) => event.payload.body),
+      numberEvents.map((event) =>
+        String(event.payload.body).replace(/^@\S+\s+/u, ""),
+      ),
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
     );
     assert.equal(new Set(numberEvents.map((event) => event.actorId)).size, 2);
@@ -269,6 +272,6 @@ function roomNumberEvents(
       (event) =>
         event.type === "message.posted" &&
         typeof event.payload.body === "string" &&
-        /^\d+$/u.test(event.payload.body),
+        /^(?:@\S+\s+)?\d+$/u.test(event.payload.body),
     );
 }

@@ -92,6 +92,8 @@ export function createDaemonInstanceRuntimePool(input: {
     codex: _codex,
     claude: _claude,
     opencode: _opencode,
+    stallMs: _stallMs,
+    toolStallMs: _toolStallMs,
     ...policy
   } = input.config ?? {};
   return new InstanceRuntimePool({

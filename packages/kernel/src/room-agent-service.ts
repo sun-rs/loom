@@ -541,6 +541,7 @@ function activityTone(
   }
   if (
     eventType === "activation.retry_scheduled" ||
+    eventType === "run.watchdog_warning" ||
     eventType === "task.blocked" ||
     eventType === "task.cancelled" ||
     eventType === "agent.disabled"

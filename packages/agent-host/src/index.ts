@@ -740,3 +740,14 @@ export {
   openServiceLogs,
 } from "./service-log-rotation.ts";
 export { ComputerFileBrowser } from "./computer-file-browser.ts";
+export {
+  decideRunWatchdog,
+  RUN_WATCHDOG_MAX_DURATION,
+  RUN_WATCHDOG_QUEUED_STALL,
+  RunWatchdogEpisode,
+  runWatchdogFailure,
+} from "./run-watchdog.ts";
+export type {
+  RunWatchdogTerminationReason,
+  RunWatchdogVerdict,
+} from "./run-watchdog.ts";

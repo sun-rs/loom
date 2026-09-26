@@ -4,6 +4,7 @@ import { RUNTIME_PROCESS_CLEANUP_SCHEMA } from "./runtime-process-cleanup.ts";
 import { RUN_ATTEMPT_FINAL_REPLY_SCHEMA } from "./run-attempt-final-reply.ts";
 import { INSTANCE_RUNTIME_SCHEMA } from "./instance-runtime.ts";
 import { INSTANCE_SESSION_SCHEMA } from "./instance-session.ts";
+import { INSTANCE_WAKE_GUARD_SCHEMA } from "./instance-wake-guard.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { ACTIVATION_PRESENTED_WINDOW_SCHEMA } from "./activation-presented-window.ts";
 import { ACTIVATION_TASK_READS_SCHEMA } from "./activation-task-reads.ts";
@@ -23,6 +24,7 @@ ${RUNTIME_PROCESS_CLEANUP_SCHEMA}
 ${RUN_ATTEMPT_FINAL_REPLY_SCHEMA}
 ${INSTANCE_RUNTIME_SCHEMA}
 ${INSTANCE_SESSION_SCHEMA}
+${INSTANCE_WAKE_GUARD_SCHEMA}
 
 CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
   secret_name TEXT PRIMARY KEY,

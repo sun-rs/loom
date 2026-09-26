@@ -5,13 +5,10 @@ import {
   unresolvedMentionHandles,
   type ActivationCredentialScope,
   type WorkerMessagePostRequest,
-  type RoomEvent,
 } from "@rah-os/protocol";
 
 import type { MessageRecipient } from "./collaboration-service.ts";
-import { listRoomAgentRecipients } from "./room-agent-service.ts";
-import { listFollowingAgentThreadRecipients } from "./agent-thread-subscriptions.ts";
-import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
+import { integer, nullableText, text } from "./sqlite-row.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -25,7 +22,7 @@ import {
 
 /**
  * The Agents an Agent author may address by `@handle`. The membership and
- * enablement predicate mirrors {@link listRoomAgentRecipients}: a mention never
+ * enablement predicate mirrors `listRoomAgentRecipients`: a mention never
  * reaches outside the Room and never wakes a disabled Agent. Humans are not
  * Activation recipients, so only Agent members are mentionable.
  */
@@ -101,78 +98,22 @@ export function workerUnresolvedMentionHandles(input: {
   ]);
 }
 
+/**
+ * evo §37 A: an instance author wakes other instances only by an explicit
+ * `@handle`. Room policy, Thread followers, the reply chain and the Thread
+ * root never route an instance's message (Multica `comment.go:2685`: agent
+ * authors skip implicit routing). The Kernel attention derivation enforces the
+ * same rule for every facade (`instance-wake-guard.ts`).
+ */
 export function workerReplyRecipients(input: {
   body?: string | undefined;
-  causalEvent: RoomEvent;
   database: DatabaseSync;
   participantId: string;
   roomId: string;
-  threadId?: string;
 }): MessageRecipient[] {
-  const roomRecipients = listRoomAgentRecipients(
-    input.database,
-    input.roomId,
-    input.threadId === undefined ? "room_policy" : "thread_subscription",
-    input.participantId,
-  );
-  const result = new Map<string, MessageRecipient>();
-  if (input.threadId === undefined) {
-    for (const recipient of roomRecipients)
-      result.set(recipient.participantId, recipient);
-  } else {
-    for (const recipient of listFollowingAgentThreadRecipients(input.database, {
-      excludedParticipantId: input.participantId,
-      roomId: input.roomId,
-      threadId: input.threadId,
-    })) {
-      result.set(recipient.participantId, recipient);
-    }
-    const allowed = new Map(
-      roomRecipients.map(
-        (recipient) => [recipient.participantId, recipient] as const,
-      ),
-    );
-    for (const participantId of causalRecipientIds(input.causalEvent)) {
-      const recipient = allowed.get(participantId);
-      if (recipient !== undefined) result.set(participantId, recipient);
-    }
-  }
-  // A mention overrides membership and Thread routing for that participant: it
-  // both raises the reason and adds an Agent the route would otherwise omit.
-  for (const mention of workerMentionRecipients({
-    body: input.body,
-    database: input.database,
-    participantId: input.participantId,
-    roomId: input.roomId,
-  })) {
-    result.set(mention.participantId, mention);
-  }
-  return [...result.values()].sort((left, right) =>
+  return workerMentionRecipients(input).sort((left, right) =>
     left.participantId.localeCompare(right.participantId),
   );
-}
-
-function causalRecipientIds(event: RoomEvent): string[] {
-  const ids = new Set<string>();
-  const recipientIds = event.payload.recipientIds;
-  if (Array.isArray(recipientIds)) {
-    for (const participantId of recipientIds) {
-      if (typeof participantId === "string") ids.add(participantId);
-    }
-  }
-  const recipients = event.payload.recipients;
-  if (Array.isArray(recipients)) {
-    for (const recipient of recipients) {
-      const participantId =
-        typeof recipient === "object" && recipient !== null
-          ? (recipient as Record<string, unknown>).participantId
-          : undefined;
-      if (typeof participantId === "string") {
-        ids.add(participantId);
-      }
-    }
-  }
-  return [...ids];
 }
 
 /** Resolve an explicit Raft-style target inside the authenticated Room. The
@@ -181,13 +122,12 @@ export function resolveWorkerReplyRoute(context: {
   database: DatabaseSync;
   scope: ActivationCredentialScope;
   input: WorkerMessagePostRequest;
-  eventFromRow: (row: Row) => RoomEvent;
 }): {
   recipients: MessageRecipient[];
   threadId?: string;
   unresolvedMentionHandles: string[];
 } {
-  const { database, scope, input, eventFromRow } = context;
+  const { database, scope, input } = context;
   requireWorkerRoomVisibility(database, scope);
   if (input.basedOnRoomSeq !== scope.toSeq)
     throw new StaleContextError(input.basedOnRoomSeq, scope.toSeq);
@@ -196,7 +136,6 @@ export function resolveWorkerReplyRoute(context: {
     .get(scope.roomId, scope.toSeq);
   if (causalRow === undefined)
     throw new NotFoundError("Activation causal event was not found");
-  let causalEvent = eventFromRow(causalRow);
   let threadId: string | undefined;
   const held =
     input.heldDraftId === undefined
@@ -248,13 +187,8 @@ export function resolveWorkerReplyRoute(context: {
         `Coalesced messages require an explicit reply target: threadId or null for the Room. This Activation delivered ${targets.length} candidates: ${candidates}`,
       );
     }
-    if (targets.length === 1) {
+    if (targets.length === 1)
       threadId = nullableText(targets[0]!, "reply_thread_id") ?? undefined;
-      const row = database
-        .prepare("SELECT * FROM room_events WHERE room_id=? AND room_seq=?")
-        .get(scope.roomId, integer(targets[0]!, "latest_seq"));
-      if (row !== undefined) causalEvent = eventFromRow(row);
-    }
   }
   if (threadId !== undefined) {
     const thread = database
@@ -277,25 +211,15 @@ export function resolveWorkerReplyRoute(context: {
       );
     if (creationSeq > scope.toSeq && !ownTaskThread)
       throw new StaleContextError(scope.toSeq, integer(thread, "room_seq"));
-    // An explicit target must not inherit recipients from a different causal Thread.
-    const targetEvent = database
-      .prepare(
-        `SELECT * FROM room_events WHERE room_id=? AND room_seq<=?
-      AND json_extract(payload_json, '$.threadId')=? ORDER BY room_seq DESC LIMIT 1`,
-      )
-      .get(scope.roomId, Math.max(scope.toSeq, creationSeq), threadId);
-    if (targetEvent !== undefined) causalEvent = eventFromRow(targetEvent);
   }
   const body =
     input.body ?? (held === undefined ? undefined : text(held, "body"));
   return {
     recipients: workerReplyRecipients({
       database,
-      causalEvent,
       participantId: scope.participantId,
       roomId: scope.roomId,
       ...(body === undefined ? {} : { body }),
-      ...(threadId === undefined ? {} : { threadId }),
     }),
     ...(threadId === undefined ? {} : { threadId }),
     unresolvedMentionHandles: workerUnresolvedMentionHandles({

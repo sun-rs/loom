@@ -15,6 +15,7 @@ const EXECUTION_AUDIT_EVENTS = new Set([
   "run.turn_quiesced",
   "run.finished",
   "run.orphaned",
+  "run.watchdog_warning",
   "activation.leased",
   "activation.finished",
   "activation.cancelled",

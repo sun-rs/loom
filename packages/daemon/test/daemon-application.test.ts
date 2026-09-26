@@ -2237,9 +2237,7 @@ test("S2-b warm runtime policies are configurable; policies alone keep the warm 
     maxBusyTurns: 4,
     maxWarm: 3,
     recycleRssKb: 1024 * 1024,
-    stallMs: 600_000,
     stallRetryBudget: 0,
-    toolStallMs: 1_200_000,
   };
   const parsed = DaemonConfigSchema.parse({
     ...base,
@@ -2261,9 +2259,17 @@ test("S2-b warm runtime policies are configurable; policies alone keep the warm 
     new Set(["codex-app-server/v1", "opencode-server/v1"]),
     "policies alone neither disable Codex/OpenCode nor enable Claude",
   );
+  assert.doesNotThrow(
+    () =>
+      DaemonConfigSchema.parse({
+        ...base,
+        warmRuntimes: { stallMs: 600_000, toolStallMs: 1_200_000 },
+      }),
+    "retired stall keys (evo §37: runtime settings) still parse",
+  );
   for (const bad of [
     { maxWarm: 0 },
-    { stallMs: -1 },
+    { admissionWaitMs: -1 },
     { stallRetryBudget: 1.5 },
     { recycleRssKb: 4, emergencyRssKb: 2 },
   ])

@@ -274,6 +274,26 @@ test("Host and per-CLI caps change at runtime through the settings API, queue ex
       revision: starts.revision,
       runtimeMaxConcurrentRuns: { [runtimeProfileId]: 3 },
     });
+
+    // evo §37 C: the wake-guard and watchdog groups ride the same API,
+    // document and revision.
+    const guards = (await update({
+      wakeGuard: { instanceChainLimit: 3 },
+      watchdog: { maxRunMs: 2 * 60 * 60_000 },
+    })) as Settings & {
+      wakeGuard: { instanceChainLimit: number };
+      watchdog: { maxRunMs: number; noProgressWarnMs: number };
+    };
+    assert.equal(guards.revision, starts.revision + 1);
+    assert.equal(guards.wakeGuard.instanceChainLimit, 3);
+    assert.equal(guards.watchdog.maxRunMs, 2 * 60 * 60_000);
+    assert.equal(guards.watchdog.noProgressWarnMs, 15 * 60_000);
+    assert.deepEqual(
+      JSON.parse(
+        readFileSync(join(stateDirectory, "runtime-concurrency.json"), "utf8"),
+      ).watchdog,
+      { maxRunMs: 2 * 60 * 60_000 },
+    );
   } finally {
     await harness.stop();
   }

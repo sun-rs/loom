@@ -155,7 +155,9 @@ export type WarmTurn = {
    * Transport liveness (`WarmRuntime.lastTransportMs`) never moves it.
    */
   lastProgressMs: number;
-  /** Tools the driver reports in flight (their own stall window). */
+  /** evo §37 B: when the turn opened (policy time), for the duration cap. */
+  openedMs: number;
+  /** Tools the driver reports in flight (diagnostics only). */
   toolsInFlight: number;
   /** The driver reports the turn waits for an approval (never a stall). */
   awaitingApproval: boolean;
@@ -411,6 +413,7 @@ export class WarmRuntime {
       runtimeRunId,
       awaitingApproval: false,
       lastProgressMs: this.#pool.now(),
+      openedMs: this.#pool.now(),
       toolsInFlight: 0,
     };
     this.current = turn;

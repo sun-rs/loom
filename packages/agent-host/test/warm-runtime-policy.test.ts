@@ -74,9 +74,26 @@ function fakeControl() {
     ),
     terminatedAmong: async () => [],
   };
+  // evo §37 B: the live watchdog context the Kernel would return.
+  const watchdog = {
+    maxRunMs: 240 * 60_000,
+    noProgressWarnMs: 15 * 60_000,
+    queuedStallTerminateMs: 15 * 60_000,
+    queuedWorkWaiting: false,
+  };
   return {
     calls,
-    control: { instanceRuntimes } as unknown as AgentHostControlPort,
+    control: {
+      instanceRuntimes,
+      readRunWatchdog: async () => ({ ...watchdog }),
+      recordRunWatchdogWarning: log(
+        "recordRunWatchdogWarning",
+        () => undefined,
+      ),
+    } as unknown as AgentHostControlPort,
+    watchdog,
+    warnings: () =>
+      calls.filter((call) => call.method === "recordRunWatchdogWarning"),
     exits: () =>
       calls
         .filter((call) => call.method === "recordExit")
@@ -266,7 +283,6 @@ test("S2-b policy defaults are the owner's initial values", () => {
       maxBusyTurns: DEFAULT_WARM_RUNTIME_POLICY.maxBusyTurns,
       maxWarm: DEFAULT_WARM_RUNTIME_POLICY.maxWarm,
       recycleRssKb: DEFAULT_WARM_RUNTIME_POLICY.recycleRssKb,
-      stallMs: DEFAULT_WARM_RUNTIME_POLICY.stallMs,
       stallRetryBudget: DEFAULT_WARM_RUNTIME_POLICY.stallRetryBudget,
     },
     {
@@ -279,7 +295,6 @@ test("S2-b policy defaults are the owner's initial values", () => {
       maxBusyTurns: 20,
       maxWarm: 12,
       recycleRssKb: 2 * 1024 * 1024,
-      stallMs: 15 * 60_000,
       stallRetryBudget: 1,
     },
   );
@@ -533,14 +548,13 @@ test("busy-turn cap: admission gives up after its bound, so no Activation lease 
   }
 });
 
-const STALL = { stallMs: 15 * 60_000, toolStallMs: 60 * 60_000 };
-
 async function supervise(state: State, mode: string) {
   const { runtime } = await state.acquire("participant-1", { mode });
   const turn = await heldTurn(runtime);
   const stop = new AbortController();
   let verdict: unknown;
   const watched = superviseWarmTurn({
+    activationId: "activation-1",
     pool: state.pool,
     runtime,
     signal: stop.signal,
@@ -552,8 +566,8 @@ async function supervise(state: State, mode: string) {
   return { runtime, stop, turn, verdict: () => verdict, watched };
 }
 
-test("stall: transport keepalives never reset the business-progress clock", async () => {
-  const state = setup({ policy: STALL });
+test("evo §37 B warm stall: transport keepalives never reset the progress clock; a stall only warns until work is queued", async () => {
+  const state = setup();
   try {
     const watch = await supervise(state, "keepalive");
     await waitFor(
@@ -566,22 +580,31 @@ test("stall: transport keepalives never reset the business-progress clock", asyn
       () => watch.runtime.lastTransportMs > seen,
       "keepalives after the advance",
     );
-    assert.equal(watch.verdict(), undefined, "10 minutes is inside the window");
-    state.advance(5 * 60_000);
-    assert.deepEqual(await watch.watched, {
-      idleMs: 15 * 60_000,
-      kind: "stalled",
-      toolsInFlight: 0,
+    await settleSoon();
+    assert.equal(state.fake.warnings().length, 0, "10 minutes is no stall");
+    state.advance(20 * 60_000);
+    await waitFor(() => state.fake.warnings().length === 1, "the warning");
+    assert.deepEqual(state.fake.warnings()[0]!.input, {
+      runAttemptId: watch.turn.runAttemptId,
+      thresholdMs: 15 * 60_000,
     });
+    assert.equal(watch.verdict(), undefined, "nothing waits: never ended");
+    state.fake.watchdog.queuedWorkWaiting = true;
+    assert.deepEqual(await watch.watched, {
+      kind: "watchdog",
+      reason: "queued_stall",
+    });
+    assert.equal(state.fake.warnings().length, 1, "one warning per episode");
     watch.stop.abort();
   } finally {
     await state.cleanup();
   }
 });
 
-test("stall: native turn progress resets the clock", async () => {
-  const state = setup({ policy: STALL });
+test("evo §37 B warm stall: native turn progress resets the clock even with work queued", async () => {
+  const state = setup();
   try {
+    state.fake.watchdog.queuedWorkWaiting = true;
     const watch = await supervise(state, "progress");
     for (let step = 0; step < 6; step += 1) {
       state.advance(5 * 60_000);
@@ -592,6 +615,7 @@ test("stall: native turn progress resets the clock", async () => {
     }
     await settleSoon();
     assert.equal(watch.verdict(), undefined, "30 minutes of progress");
+    assert.equal(state.fake.warnings().length, 0);
     watch.stop.abort();
     assert.equal(await watch.watched, undefined);
   } finally {
@@ -599,38 +623,39 @@ test("stall: native turn progress resets the clock", async () => {
   }
 });
 
-test("stall: a running tool gets its own window; awaiting approval never stalls", async () => {
-  const state = setup({ policy: STALL });
+test("evo §37 B warm stall: a silent tool only warns; awaiting approval never stalls, but the duration cap still ends the turn", async () => {
+  const state = setup();
   try {
     const tool = await supervise(state, "tool-silent");
     await waitFor(() => tool.turn.toolsInFlight === 1, "the tool report");
-    state.advance(30 * 60_000);
-    await settleSoon();
-    assert.equal(tool.verdict(), undefined, "inside the tool window");
-    state.advance(30 * 60_000);
-    assert.deepEqual(await tool.watched, {
-      idleMs: 60 * 60_000,
-      kind: "stalled",
-      toolsInFlight: 1,
-    });
+    state.advance(60 * 60_000);
+    await waitFor(() => state.fake.warnings().length === 1, "the warning");
+    assert.equal(tool.verdict(), undefined, "a slow tool is not killed");
+    tool.stop.abort();
   } finally {
     await state.cleanup();
   }
-  const waiting = setup({ policy: STALL });
+  const waiting = setup();
   try {
+    waiting.fake.watchdog.queuedWorkWaiting = true;
     const approval = await supervise(waiting, "approval-wait");
     await waitFor(() => approval.turn.awaitingApproval, "the approval report");
-    waiting.advance(24 * 60 * 60_000);
+    waiting.advance(3 * 60 * 60_000);
     await settleSoon();
     assert.equal(approval.verdict(), undefined, "shown to the Human instead");
-    approval.stop.abort();
+    assert.equal(waiting.fake.warnings().length, 0);
+    waiting.advance(60 * 60_000);
+    assert.deepEqual(await approval.watched, {
+      kind: "watchdog",
+      reason: "max_duration",
+    });
   } finally {
     await waiting.cleanup();
   }
 });
 
 test("busy RSS: over the recycle threshold alerts and closes admission without killing; over the emergency ceiling is a resource failure", async () => {
-  const state = setup({ policy: STALL });
+  const state = setup();
   try {
     const watch = await supervise(state, "hold");
     state.rss.set(watch.runtime.pid!, 3 * 1024 * 1024);

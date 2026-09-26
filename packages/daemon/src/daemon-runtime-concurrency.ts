@@ -20,7 +20,8 @@ type ConcurrencyLanes = {
 
 /**
  * Composes the Human's concurrency settings with their appliers: the Kernel
- * placement caps (Host cap and one cap per CLI RuntimeProfile), the Host
+ * placement caps (Host cap and one cap per CLI RuntimeProfile), the Kernel
+ * run guards (evo §37 wake chain limit and watchdog thresholds), the Host
  * lanes, the warm pool's busy-turn cap and the start gate. Only v4 (multi-lane)
  * daemons have them; v2/v3 keep their fixed single lane.
  */
@@ -78,6 +79,10 @@ export class DaemonRuntimeConcurrency {
   }): void {
     const apply = (view: RuntimeConcurrencyView) => {
       input.kernel.placementCapacity.update(this.#limits(view));
+      input.kernel.runGuards.update({
+        wakeGuard: view.wakeGuard,
+        watchdog: view.watchdog,
+      });
       input.lanes?.setCapacity(view.maxConcurrentRuns);
       input.lanes?.updateStartScheduler({
         maxConcurrentStarts: view.maxConcurrentStarts,

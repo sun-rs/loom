@@ -90,8 +90,10 @@ const WarmRuntimesConfigSchema = z
     maxWarm: positive(),
     maxBusyTurns: positive(),
     admissionWaitMs: positive(),
-    stallMs: positive(),
-    toolStallMs: positive(),
+    // Retired (evo §37 B): stall thresholds are the Human's runtime settings
+    // (`watchdog` group). Historical files keep parsing; the values are unused.
+    stallMs: z.unknown().optional(),
+    toolStallMs: z.unknown().optional(),
     stallRetryBudget: z.number().int().nonnegative().optional(),
     emergencyRssKb: positive(),
     codex: z

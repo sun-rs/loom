@@ -26,6 +26,7 @@ import {
   InstanceRuntimePool,
   LeftoverProcessSweeper,
   renderBodiedWake,
+  RUN_WATCHDOG_QUEUED_STALL,
   RuntimeImplementationRegistry,
   RuntimeProcessHygiene,
   RuntimeProfileRegistry,
@@ -689,17 +690,18 @@ test("warm Claude: an unprompted native turn while idle is interrupted and never
   }
 });
 
+/** Watchdog ticks every 20 ms of real time; thresholds are the defaults. */
 const STALL_POLICY: WarmRuntimePolicyOverrides = {
-  stallMs: 15 * 60_000,
   supervisionIntervalMs: 20,
 };
 
-test("warm Claude S2-b stall: no progress interrupts the turn, fails it with the process alive, and the retry completes on the same runtime", async () => {
+test("warm Claude evo §37 B stall: with work queued, no progress interrupts the turn with the process alive, and the retry completes on the same runtime", async () => {
   const state = await harness({ policy: STALL_POLICY });
   try {
     state.post("[fake:hang-once] [fake:ack] please answer");
     const running = state.current.agentHost.reconcileOnce();
     await waitFor(() => turns(state)[0], "the hanging turn");
+    state.post("[fake:ack] a queued follow-up");
     let settled = false;
     const result = running.finally(() => {
       settled = true;
@@ -713,7 +715,7 @@ test("warm Claude S2-b stall: no progress interrupts the turn, fails it with the
     }
     const first = await result;
     assert.equal(first.state, "failed", JSON.stringify(first));
-    assert.match(String(first.error), /RAH_RUNTIME_STALLED/u);
+    assert.equal(String(first.error), RUN_WATCHDOG_QUEUED_STALL);
     const retried = await state.current.agentHost.reconcileOnce();
     assert.equal(retried.state, "completed", JSON.stringify(retried));
     const runs = sql(

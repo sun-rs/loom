@@ -2875,7 +2875,8 @@ test("another Agent can claim a causal top-level Agent message as a Task", () =>
   });
   const agentWork = kernel.postWorkerMessage(authorExecution, {
     basedOnRoomSeq: authorActivation.toSeq,
-    body: "Implement the migration, run the full gate, and report review evidence",
+    // evo §37 A: an instance wakes another instance only by an explicit @.
+    body: "@opencode @amp Implement the migration, run the full gate, and report review evidence",
     idempotencyKey: "agent-claim-agent-message",
   });
   assert.ok("event" in agentWork);
@@ -3028,7 +3029,7 @@ function postedRecipients(
     );
 }
 
-test("a Worker @mention of a Room Agent delivers with reason mention while others stay room_policy", () => {
+test("a Worker @mention of a Room Agent delivers with reason mention; evo §37 A: the other instances are not woken", () => {
   const { agent, humanActor, kernel, otherAgent, room } = createFixture();
   const thirdAgent = kernel.provisionPrincipal({
     handle: "amp",
@@ -3058,15 +3059,9 @@ test("a Worker @mention of a Room Agent delivers with reason mention while other
   });
   assert.ok("event" in posted);
 
-  assert.deepEqual(
-    postedRecipients(posted.event.payload),
-    [
-      { participantId: otherAgent.principalId, reason: "mention" },
-      { participantId: thirdAgent.principalId, reason: "room_policy" },
-    ].sort((left, right) =>
-      left.participantId.localeCompare(right.participantId),
-    ),
-  );
+  assert.deepEqual(postedRecipients(posted.event.payload), [
+    { participantId: otherAgent.principalId, reason: "mention" },
+  ]);
   assert.deepEqual(
     kernel
       .listActivations({
@@ -3083,13 +3078,13 @@ test("a Worker @mention of a Room Agent delivers with reason mention while other
         roomId: room.roomId,
       })
       .map(({ reason }) => reason),
-    ["room_policy"],
+    [],
   );
 
   kernel.close();
 });
 
-test("a Worker @mention of a non-member handle is ignored", () => {
+test("a Worker @mention of a non-member handle is ignored and wakes no one", () => {
   const { agent, humanActor, kernel, otherAgent, room } = createFixture();
   const outsider = kernel.provisionPrincipal({
     handle: "amp",
@@ -3115,9 +3110,14 @@ test("a Worker @mention of a non-member handle is ignored", () => {
   });
   assert.ok("event" in posted);
 
-  assert.deepEqual(postedRecipients(posted.event.payload), [
-    { participantId: otherAgent.principalId, reason: "room_policy" },
-  ]);
+  assert.deepEqual(postedRecipients(posted.event.payload), []);
+  assert.deepEqual(
+    kernel.listActivations({
+      participantId: otherAgent.principalId,
+      roomId: room.roomId,
+    }),
+    [],
+  );
   assert.deepEqual(
     kernel.listActivations({
       participantId: outsider.principalId,
@@ -3235,7 +3235,8 @@ test("an Agent message inside a Thread cannot be claimed as a Task", () => {
   });
   const threadedWork = kernel.postWorkerMessage(authorExecution, {
     basedOnRoomSeq: authorActivation.toSeq,
-    body: "Implement the migration, run the full gate, and report review evidence",
+    // evo §37 A: an instance wakes another instance only by an explicit @.
+    body: "@opencode Implement the migration, run the full gate, and report review evidence",
     idempotencyKey: "agent-thread-claim-agent-message",
   });
   assert.ok("event" in threadedWork);

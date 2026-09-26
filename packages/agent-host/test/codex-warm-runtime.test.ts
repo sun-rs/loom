@@ -27,6 +27,8 @@ import {
   protocolUpdateNotice,
   ProviderSessionStore,
   renderBodiedWake,
+  RUN_WATCHDOG_MAX_DURATION,
+  RUN_WATCHDOG_QUEUED_STALL,
   SessionProtocolUpgrade,
   RuntimeProcessHygiene,
   type ActivationEnvelope,
@@ -267,6 +269,7 @@ async function harness(
     advance(ms: number) {
       nowMs += ms;
     },
+    now: () => nowMs,
     get current() {
       return current;
     },
@@ -1446,7 +1449,7 @@ test("final reply (warm): the driver ignores a final command naming another nati
 });
 
 /**
- * Advance the fake clock by one stall window at a time until the run
+ * Advance the fake clock by 15 minutes at a time (up to 5 h) until the run
  * settles (a progress envelope racing a single advance would restart the
  * business clock at the advanced time).
  */
@@ -1468,12 +1471,12 @@ async function advanceUntilSettled<T>(
   return await result;
 }
 
+/** Watchdog ticks every 20 ms of real time; thresholds are the defaults. */
 const STALL_POLICY: WarmRuntimePolicyOverrides = {
-  stallMs: 15 * 60_000,
   supervisionIntervalMs: 20,
 };
 
-test("S2-b stall: no native progress interrupts the turn, fails it (stalled) with its process alive, and the retry completes on the same runtime", async () => {
+test("evo §37 B warm stall: with work queued for the instance, no native progress interrupts the turn with its process alive, and the retry completes on the same runtime", async () => {
   const state = await harness({ policy: STALL_POLICY });
   try {
     state.post("[fake:hang-once] [fake:ack] please answer");
@@ -1482,9 +1485,10 @@ test("S2-b stall: no native progress interrupts the turn, fails it (stalled) wit
       () => state.records().find((record) => record.event === "turn"),
       "the hanging turn",
     );
+    state.post("[fake:ack] a queued follow-up");
     const first = await advanceUntilSettled(state, running);
     assert.equal(first.state, "failed", JSON.stringify(first));
-    assert.match(String(first.error), /RAH_RUNTIME_STALLED/u);
+    assert.equal(String(first.error), RUN_WATCHDOG_QUEUED_STALL);
     const retried = await state.current.agentHost.reconcileOnce();
     assert.equal(retried.state, "completed", JSON.stringify(retried));
     const runs = sql(
@@ -1496,7 +1500,7 @@ test("S2-b stall: no native progress interrupts the turn, fails it (stalled) wit
     );
     assert.equal(runs.length, 2);
     assert.equal(runs[0]!.state, "failed");
-    assert.match(String(runs[0]!.error), /RAH_RUNTIME_STALLED/u);
+    assert.equal(String(runs[0]!.error), RUN_WATCHDOG_QUEUED_STALL);
     assert.equal(runs[0]!.proof_kind, "turn_quiesced", "closure proven first");
     assert.equal(runs[1]!.state, "exited");
     assert.equal(runs[0]!.instance_runtime_id, runs[1]!.instance_runtime_id);
@@ -1505,11 +1509,11 @@ test("S2-b stall: no native progress interrupts the turn, fails it (stalled) wit
   }
 });
 
-test("S2-b stall: past the retry budget the Activation is held for the Human instead of retried again", async () => {
+test("evo §37 B warm stall alone never ends a turn; the duration cap does, and three identical watchdog failures stop the instance through the retry fence", async () => {
   const state = await harness({ policy: STALL_POLICY });
   try {
     state.post("[fake:hang] please answer");
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
       const running = state.current.agentHost.reconcileOnce();
       await waitFor(
         () =>
@@ -1517,14 +1521,79 @@ test("S2-b stall: past the retry budget the Activation is held for the Human ins
           attempt,
         `hanging turn ${String(attempt)}`,
       );
+      const started = state.now();
       assert.equal((await advanceUntilSettled(state, running)).state, "failed");
+      assert.ok(
+        state.now() - started >= 4 * 60 * 60_000,
+        "no stall kill before the 4 h cap while nothing is queued",
+      );
     }
     const [activation] = sql(
       state,
       "SELECT state, last_error FROM activations",
     );
     assert.equal(activation!.state, "quarantined");
-    assert.match(String(activation!.last_error), /retry budget is exhausted/u);
+    assert.equal(String(activation!.last_error), RUN_WATCHDOG_MAX_DURATION);
+    assert.ok(
+      sql(
+        state,
+        "SELECT type FROM room_events WHERE type = 'run.watchdog_warning'",
+      ).length >= 1,
+      "the stall was reported",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("evo §37 B warm duration cap: a turn that ignores the native interrupt is killed with process-exit proof, and the retry cold-starts on the same thread", async () => {
+  const state = await harness({
+    interruptQuiesceTimeoutMs: 300,
+    policy: STALL_POLICY,
+  });
+  try {
+    state.post("[fake:hang-ignore-interrupt] stuck");
+    const running = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () => state.records().find((record) => record.event === "turn"),
+      "the stuck turn",
+    );
+    const first = await advanceUntilSettled(state, running);
+    assert.equal(first.state, "failed", JSON.stringify(first));
+    assert.equal(String(first.error), RUN_WATCHDOG_MAX_DURATION);
+    const [process] = state.kernel.listRuntimeProcesses({
+      roomId: state.roomId,
+    });
+    assert.equal(process?.proofKind, "process_exit", "termination proven");
+    const retry = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () =>
+        state
+          .records()
+          .filter(
+            (record) =>
+              record.event === "request" && record.method === "turn/start",
+          ).length === 2,
+      "the retried turn",
+    );
+    const records = state.records();
+    const threads = new Set(
+      records
+        .filter(
+          (record) =>
+            record.event === "request" && record.method === "turn/start",
+        )
+        .map((turn) => (turn.params as { threadId: string }).threadId),
+    );
+    assert.equal(threads.size, 1, "the same native session continues");
+    assert.ok(
+      records.some(
+        (record) =>
+          record.event === "request" && record.method === "thread/resume",
+      ),
+      "the new process resumed the thread instead of starting a new one",
+    );
+    await advanceUntilSettled(state, retry);
   } finally {
     await state.cleanup();
   }
@@ -1735,11 +1804,11 @@ test("review batch 1 #7: with warm runtimes switched off, a per-turn start is re
   }
 });
 
-test("review batch 1 #6: with a new adapter per claim (production resolver) the stall retry budget still holds across attempts", async () => {
+test("review batch 1 #6: with a new adapter per claim (production resolver) the watchdog failure count still holds across attempts", async () => {
   const state = await harness({ adapterPerClaim: true, policy: STALL_POLICY });
   try {
     state.post("[fake:hang] please answer");
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
       const running = state.current.agentHost.reconcileOnce();
       await waitFor(
         () =>
@@ -1754,11 +1823,11 @@ test("review batch 1 #6: with a new adapter per claim (production resolver) the 
       "SELECT state, last_error FROM activations",
     );
     assert.equal(activation!.state, "quarantined");
-    assert.match(String(activation!.last_error), /retry budget is exhausted/u);
+    assert.equal(String(activation!.last_error), RUN_WATCHDOG_MAX_DURATION);
     assert.equal(
       state.records().filter((record) => record.event === "start").length,
       1,
-      "both attempts ran on the one pooled process",
+      "every attempt ran on the one pooled process (same session)",
     );
   } finally {
     await state.cleanup();

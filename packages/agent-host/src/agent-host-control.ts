@@ -112,6 +112,14 @@ export type AgentHostControlPort = {
   readPendingRuntimeNotice?(
     input: HostInput<RoomKernel["readPendingRuntimeNotice"]>,
   ): Promise<HostResult<RoomKernel["readPendingRuntimeNotice"]>>;
+  /** evo §37 B: live watchdog thresholds and queued work of one leased run. */
+  readRunWatchdog?(
+    input: Parameters<RoomKernel["runWatchdog"]["read"]>[1],
+  ): Promise<ReturnType<RoomKernel["runWatchdog"]["read"]>>;
+  /** evo §37 B: the no-progress warning (an activity fact, never a failure). */
+  recordRunWatchdogWarning?(
+    input: Parameters<RoomKernel["runWatchdog"]["recordWarning"]>[1],
+  ): Promise<void>;
   /** Final-reply turn end: the durable marker of a committed `final` post. */
   readFinalReply?(
     input: Parameters<RoomKernel["finalReplies"]["read"]>[1],
@@ -278,6 +286,9 @@ export function createKernelAgentHostControlPort(
     instanceRuntimes: createKernelInstanceRuntimeControl(kernel, host),
     readPendingRuntimeNotice: async (input) =>
       kernel.readPendingRuntimeNotice(host, input),
+    readRunWatchdog: async (input) => kernel.runWatchdog.read(host, input),
+    recordRunWatchdogWarning: async (input) =>
+      kernel.runWatchdog.recordWarning(host, input),
     readFinalReply: async (input) => kernel.finalReplies.read(host, input),
     recordFinalReplyInterrupt: async (input) =>
       kernel.finalReplies.recordInterrupt(host, input),

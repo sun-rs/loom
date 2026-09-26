@@ -5,6 +5,7 @@ import { customModelAllowsEffort } from "./custom-model-effort.ts";
 export * from "./custom-model-effort.ts";
 export * from "./runtime-guide-settings.ts";
 export * from "./runtime-concurrency-settings.ts";
+export * from "./run-watchdog.ts";
 import { z } from "zod";
 import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
 export * from "./client-agent-profile.ts";

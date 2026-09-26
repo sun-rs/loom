@@ -447,8 +447,6 @@ export class WorkerTargetContextService {
             database: this.#context.database,
             participantId: origin.participantId,
             roomId: target.roomId,
-            causalEvent: this.#context.eventFromRow(window.causal),
-            ...(threadId ? { threadId } : {}),
             ...(typeof body === "string" ? { body } : {}),
           }),
         });

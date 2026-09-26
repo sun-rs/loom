@@ -145,6 +145,11 @@ export interface RuntimeAdapter {
   probe(): Promise<RuntimeAvailability>;
   /** Liveness only, never delivery/completion or process-group terminal proof. */
   isAlive?(run: RunHandle): Promise<boolean>;
+  /**
+   * evo §37 B: the adapter applies the run watchdog itself (a warm turn, with
+   * its native progress clock); AgentHost then does not run its own loop.
+   */
+  supervisesRun?(run: RunHandle): boolean;
   start(
     input: ActivationEnvelope,
     lifecycle: RuntimeStartLifecycle,

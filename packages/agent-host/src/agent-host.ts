@@ -3,6 +3,11 @@ import { maintainRuntimeBusyNotices } from "./runtime-busy-notices.ts";
 import { maintainFinalReplyInterrupt } from "./runtime-final-reply.ts";
 import { watchRuntimeLiveness } from "./runtime-watchdog.ts";
 import {
+  runWatchdogFailure,
+  watchRunProgress,
+  type RunWatchdogTerminationReason,
+} from "./run-watchdog.ts";
+import {
   ActivationCancellationRequestedError,
   AgentExecutionPausedError,
   AuthenticatedHostContext,
@@ -126,6 +131,10 @@ export type AgentHostOptions = {
   startGate?: AgentStartGate;
   timeoutWait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
   wait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
+  /** evo §37 B: the run watchdog clock (policy time) and tick cadence. */
+  now?: () => number;
+  watchdogIntervalMs?: number;
+  watchdogWait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
 };
 
 /**
@@ -183,6 +192,12 @@ export class AgentHost {
     signal: AbortSignal,
   ) => Promise<void>;
   readonly #wait: (delayMs: number, signal: AbortSignal) => Promise<void>;
+  readonly #now: () => number;
+  readonly #watchdogIntervalMs: number;
+  readonly #watchdogWait: (
+    delayMs: number,
+    signal: AbortSignal,
+  ) => Promise<void>;
   readonly #startGate: AgentStartGate | undefined;
   readonly #processHygiene: RuntimeProcessHygiene | undefined;
   readonly #instanceRuntimePool: InstanceRuntimeLifecycle | undefined;
@@ -286,6 +301,14 @@ export class AgentHost {
     this.#runtimeStartTimeoutMs = runtimeStartTimeoutMs;
     this.#timeoutWait = options.timeoutWait ?? waitForDelay;
     this.#wait = options.wait ?? waitForDelay;
+    this.#now = options.now ?? Date.now;
+    this.#watchdogIntervalMs = options.watchdogIntervalMs ?? 30_000;
+    if (
+      !Number.isInteger(this.#watchdogIntervalMs) ||
+      this.#watchdogIntervalMs <= 0
+    )
+      throw new Error("watchdogIntervalMs must be a positive integer");
+    this.#watchdogWait = options.watchdogWait ?? waitForDelay;
   }
 
   async reconcileOrphanOnce(): Promise<OrphanRecoveryCycleResult> {
@@ -685,15 +708,20 @@ export class AgentHost {
 
     let preparedRun: RunHandle | undefined;
     let run: RunHandle | undefined;
+    // evo §37 B: provider progress (trajectory or usage frames) for the
+    // watchdog of runs no adapter supervises; stdout text never counts.
+    let lastProgressMs = this.#now();
     try {
       const startRuntime = async () => {
         await this.#instanceRuntimePool?.fenceStart?.(activation.participantId);
         return await withDeadline(
           runtime.start(envelope, {
             recordTrajectory: async (activity) => {
+              lastProgressMs = this.#now();
               await this.#control.appendRunTrajectory(activity);
             },
             recordUsage: async (usage) => {
+              lastProgressMs = this.#now();
               await this.#control.recordRunAttemptUsage?.(usage);
             },
             ...(notice === undefined
@@ -912,9 +940,30 @@ export class AgentHost {
       );
     });
     const drainOutcome = this.#waitForDrainDeadline(supervisor.signal);
+    const startedAtMs = this.#now();
+    lastProgressMs = Math.max(lastProgressMs, startedAtMs);
+    // A warm turn is supervised by its adapter with the same rule
+    // (`warm-turn-supervisor.ts`); everything else by this loop.
+    const watchdogOutcome: Promise<RuntimeOutcome> =
+      runtime.supervisesRun?.(run) === true
+        ? untilAborted(supervisor.signal)
+        : watchRunProgress({
+            activationId: activation.activationId,
+            control: this.#control,
+            diagnostic: (message) =>
+              process.stderr.write(`[loom] watchdog: ${message}\n`),
+            intervalMs: this.#watchdogIntervalMs,
+            lastProgressMs: () => lastProgressMs,
+            now: this.#now,
+            runAttemptId: runAttempt.runAttemptId,
+            signal: supervisor.signal,
+            startedAtMs,
+            wait: this.#watchdogWait,
+          });
     const outcome = await Promise.race([
       reapOutcome,
       timeoutOutcome,
+      watchdogOutcome,
       maintenanceOutcome,
       drainOutcome,
     ]);
@@ -922,6 +971,7 @@ export class AgentHost {
     await Promise.all([
       maintenanceOutcome,
       drainOutcome,
+      watchdogOutcome,
       busyNotices,
       finalReply,
       monitoredCaps,
@@ -1003,8 +1053,11 @@ export class AgentHost {
       return this.#retryFailedActivation(activation, failure);
     }
 
-    if (outcome.kind === "timeout") {
-      const failure = `runtime timed out after ${this.#runTimeoutMs}ms`;
+    if (outcome.kind === "timeout" || outcome.kind === "watchdog") {
+      const failure =
+        outcome.kind === "watchdog"
+          ? runWatchdogFailure(outcome.reason)
+          : `runtime timed out after ${this.#runTimeoutMs}ms`;
       const termination = await this.#cancelRuntime(runtime, run);
       if (termination.kind === "unproven") {
         const quarantineFailure = `${failure}; runtime termination was not proven: ${termination.error}`;
@@ -1034,6 +1087,31 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "timed_out",
       });
+      // A run whose `final` reply already committed is not re-executed; its
+      // completion still requires delivery acknowledged through `toSeq`.
+      if (
+        outcome.kind === "watchdog" &&
+        (await this.#finalReplyCommitted(runAttempt.runAttemptId))
+      ) {
+        try {
+          await this.#control.completeActivation({
+            activationId: activation.activationId,
+            consumerId: this.#consumerId,
+          });
+          return {
+            activationId: activation.activationId,
+            exit: termination.exit,
+            runAttemptId: runAttempt.runAttemptId,
+            runId: run.runId,
+            state: "completed",
+          };
+        } catch (error) {
+          return this.#retryFailedActivation(
+            activation,
+            `${errorMessage(error)}; run failure: ${failure}`,
+          );
+        }
+      }
       return this.#retryFailedActivation(activation, failure);
     }
     if (outcome.kind === "maintenance_failed") {
@@ -1593,7 +1671,17 @@ type RuntimeOutcome =
   | { error: string; kind: "maintenance_failed" }
   | { error: string; kind: "reap_failed" }
   | { kind: "stopped" }
-  | { kind: "timeout" };
+  | { kind: "timeout" }
+  | { kind: "watchdog"; reason: RunWatchdogTerminationReason };
+
+function untilAborted(signal: AbortSignal): Promise<RuntimeOutcome> {
+  return new Promise((resolve) => {
+    if (signal.aborted) return resolve({ kind: "stopped" });
+    signal.addEventListener("abort", () => resolve({ kind: "stopped" }), {
+      once: true,
+    });
+  });
+}
 
 type RecoveryMaintenanceOutcome =
   { error: string; kind: "maintenance_failed" } | { kind: "stopped" };

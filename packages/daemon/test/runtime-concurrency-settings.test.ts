@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { RoomKernel } from "@rah-os/kernel";
 import type { RuntimeConcurrencySettings as View } from "@rah-os/protocol";
 
+import { DaemonRuntimeConcurrency } from "../src/daemon-runtime-concurrency.ts";
 import {
   DEFAULT_PER_CLI_MAX_CONCURRENT_RUNS,
   RuntimeConcurrencySettings,
@@ -46,6 +48,12 @@ test("concurrency settings default to the Host cap, a conservative per-CLI cap a
         ...runtime,
         maxConcurrentRuns: 4,
       })),
+      wakeGuard: { instanceChainLimit: 10 },
+      watchdog: {
+        maxRunMs: 4 * 60 * 60_000,
+        noProgressWarnMs: 15 * 60_000,
+        queuedStallTerminateMs: 15 * 60_000,
+      },
     });
   } finally {
     rmSync(directory, { force: true, recursive: true });
@@ -116,6 +124,102 @@ test("a concurrency update is validated, persisted owner-private, applied to lis
     });
     assert.deepEqual(restarted.read(), updated);
   } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+/**
+ * evo §37 C: the wake-guard and watchdog groups share the concurrency
+ * settings' document, revision and API; a change is validated, persisted,
+ * pushed to the Kernel at once and survives a restart.
+ */
+test("the wakeGuard and watchdog groups update partially under the shared revision, persist and survive a restart", () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-run-guard-settings-"));
+  const path = join(directory, "runtime-concurrency.json");
+  const defaults = {
+    maxConcurrentRuns: 20,
+    maxConcurrentStarts: 5,
+    minStartIntervalMs: 500,
+  };
+  try {
+    const settings = new RuntimeConcurrencySettings({
+      defaults,
+      path,
+      runtimes,
+    });
+    const first = settings.update({
+      expectedRevision: 0,
+      wakeGuard: { instanceChainLimit: 4 },
+    });
+    assert.equal(first.revision, 1);
+    assert.deepEqual(first.wakeGuard, { instanceChainLimit: 4 });
+    assert.equal(first.maxConcurrentRuns, 20, "other groups are untouched");
+    const second = settings.update({
+      expectedRevision: 1,
+      watchdog: { maxRunMs: 60 * 60_000 },
+    });
+    assert.deepEqual(second.watchdog, {
+      maxRunMs: 60 * 60_000,
+      noProgressWarnMs: 15 * 60_000,
+      queuedStallTerminateMs: 15 * 60_000,
+    });
+    assert.deepEqual(second.wakeGuard, { instanceChainLimit: 4 });
+    for (const bad of [
+      { wakeGuard: { instanceChainLimit: 0 } },
+      { watchdog: { maxRunMs: 1_000 } },
+      { watchdog: { noProgressWarnMs: 2 * 24 * 60 * 60_000 } },
+    ])
+      assert.throws(
+        () => settings.update({ expectedRevision: 2, ...bad }),
+        JSON.stringify(bad),
+      );
+    assert.equal(
+      settings.read().revision,
+      2,
+      "rejected updates change nothing",
+    );
+    const restarted = new RuntimeConcurrencySettings({
+      defaults,
+      path,
+      runtimes,
+    });
+    assert.deepEqual(restarted.read(), second);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("attaching the settings pushes the wakeGuard and watchdog groups into the Kernel now and on every update", () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-run-guard-attach-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  kernel.initialize();
+  try {
+    const settings = new RuntimeConcurrencySettings({
+      defaults: {
+        maxConcurrentRuns: 2,
+        maxConcurrentStarts: 5,
+        minStartIntervalMs: 500,
+      },
+      path: join(directory, "runtime-concurrency.json"),
+      runtimes,
+    });
+    settings.update({
+      expectedRevision: 0,
+      watchdog: { noProgressWarnMs: 5 * 60_000 },
+    });
+    new DaemonRuntimeConcurrency("host-1", settings).attach({
+      kernel,
+      lanes: undefined,
+      pool: undefined,
+    });
+    assert.equal(kernel.runGuards.watchdog().noProgressWarnMs, 5 * 60_000);
+    settings.update({
+      expectedRevision: 1,
+      wakeGuard: { instanceChainLimit: 3 },
+    });
+    assert.equal(kernel.runGuards.wakeGuard().instanceChainLimit, 3);
+  } finally {
+    kernel.close();
     rmSync(directory, { force: true, recursive: true });
   }
 });

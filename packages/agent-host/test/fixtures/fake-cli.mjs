@@ -1365,11 +1365,18 @@ function turnTakingCounterRoomReply(sourceMessage) {
   if (sourceMessage === undefined) return undefined;
   const body = sourceMessage.payload.body.trim();
   if (typeof sourceMessage.payload?.activationId !== "string") {
-    return /(?:1|一).*(?:10|十)/su.test(body) ? "1" : undefined;
+    return /(?:1|一).*(?:10|十)/su.test(body) ? withTurnPeer("1") : undefined;
   }
-  if (!/^\d+$/u.test(body)) return undefined;
-  const value = Number(body);
+  // evo §37 A: an instance wakes its peer only by an explicit @.
+  const count = body.replace(/^@\S+\s+/u, "");
+  if (!/^\d+$/u.test(count)) return undefined;
+  const value = Number(count);
   return Number.isInteger(value) && value >= 1 && value < 10
-    ? String(value + 1)
+    ? withTurnPeer(String(value + 1))
     : undefined;
+}
+
+function withTurnPeer(count) {
+  const peer = process.env.RAH_FAKE_TURN_PEER;
+  return peer ? `@${peer} ${count}` : count;
 }
