@@ -313,6 +313,14 @@ test("warm Claude: three Activations run on one process and one session, each qu
     assert.ok(argv.includes("--input-format"));
     assert.ok(argv.includes("--session-id"), "a fresh session id is chosen");
     assert.equal(argv.includes("--resume"), false);
+    // evo §40 B: the warm process carries the same tool fence as per-turn.
+    assert.equal(
+      argv[argv.indexOf("--permission-mode") + 1],
+      "bypassPermissions",
+    );
+    const disallowed = argv[argv.indexOf("--disallowed-tools") + 1]!.split(",");
+    for (const tool of ["AskUserQuestion", "RemoteTrigger", "ScheduleWakeup"])
+      assert.ok(disallowed.includes(tool), `${tool} disallowed`);
     const turnRecords = turns(state);
     assert.equal(turnRecords.length, 3);
     assert.equal(

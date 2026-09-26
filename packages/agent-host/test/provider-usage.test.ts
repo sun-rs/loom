@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ProviderCostFrameSchema,
   ProviderUsageFrameSchema,
   ProviderUsageGapFrameSchema,
 } from "@rah-os/protocol";
 
 import {
+  ClaudeResultCostTracker,
   ClaudeStreamUsageTracker,
+  openCodeStepFinishCost,
   CodexTokenUsageTracker,
   openCodeStepFinishUsage,
   providerUsageGap,
@@ -451,4 +454,87 @@ test("usage writer emits one valid fd3 frame per response id", () => {
     throw new Error("fd3 closed");
   });
   assert.doesNotThrow(() => failing.emit({ ...usage, responseId: "other" }));
+});
+
+// evo §40: Claude Code 2.1.282 `result.total_cost_usd` is the CLI's own
+// list-price estimate, cumulative for the session (restored on resume), so it
+// is never summed: the tracker records the raw value and the increase since
+// the previous result of the same process; a fresh session starts at 0; the
+// first result of a resumed process has no baseline and stays unknown.
+const claudeResult = (uuid: string, total: unknown) => ({
+  type: "result",
+  subtype: "success",
+  session_id: "claude-session",
+  uuid,
+  total_cost_usd: total,
+});
+
+test("Claude cost: a fresh session's results become per-result increases of the cumulative total", () => {
+  const tracker = new ClaudeResultCostTracker({ freshSession: true, now: at });
+  assert.equal(tracker.observe({ type: "assistant" }), undefined);
+  assert.deepEqual(tracker.observe(claudeResult("r1", 0.12)), {
+    provider: "claude-stream-json/v1",
+    costId: "r1",
+    source: "claude_result_total_cost_usd",
+    reportedTotalUsd: 0.12,
+    costUsd: 0.12,
+    observedAt: "2026-09-24T01:00:00.000Z",
+  });
+  const second = tracker.observe(claudeResult("r2", 0.3));
+  assert.equal(second?.reportedTotalUsd, 0.3);
+  assert.equal(second?.costUsd, 0.18);
+});
+
+test("Claude cost: the first result of a resumed process is unknown; later ones are increases", () => {
+  const tracker = new ClaudeResultCostTracker({ freshSession: false, now: at });
+  const first = tracker.observe(claudeResult("r1", 1.5));
+  assert.equal(first?.reportedTotalUsd, 1.5);
+  assert.equal(first?.costUsd, null, "no baseline: never the whole total");
+  assert.equal(tracker.observe(claudeResult("r2", 1.75))?.costUsd, 0.25);
+  // A total that went down proves nothing about this result.
+  assert.equal(tracker.observe(claudeResult("r3", 1.0))?.costUsd, null);
+  assert.equal(tracker.observe(claudeResult("r4", 1.1))?.costUsd, 0.1);
+  // No CLI value: no cost fact at all (unknown, never 0).
+  assert.equal(tracker.observe(claudeResult("r5", undefined)), undefined);
+  assert.equal(tracker.observe(claudeResult("r6", -1)), undefined);
+});
+
+test("OpenCode cost: each step-finish cost is copied as reported, including 0", () => {
+  const step = (cost: unknown) => ({
+    id: "prt_1",
+    type: "step-finish",
+    cost,
+    tokens: { input: 1, output: 1, reasoning: 0, cache: { read: 0, write: 0 } },
+  });
+  assert.deepEqual(openCodeStepFinishCost(step(0.0123), at), {
+    provider: "opencode-server/v1",
+    costId: "prt_1",
+    source: "opencode_step_finish_cost",
+    reportedTotalUsd: null,
+    costUsd: 0.0123,
+    observedAt: "2026-09-24T01:00:00.000Z",
+  });
+  assert.equal(openCodeStepFinishCost(step(0), at)?.costUsd, 0);
+  assert.equal(openCodeStepFinishCost(step(undefined), at), undefined);
+  assert.equal(openCodeStepFinishCost(step(-0.1), at), undefined);
+  assert.equal(
+    openCodeStepFinishCost({ ...step(0.1), type: "text" }, at),
+    undefined,
+  );
+});
+
+test("usage writer emits one valid cost frame per cost id", () => {
+  const written: string[] = [];
+  const writer = new ProviderUsageWriter((value) => written.push(value));
+  const fact = new ClaudeResultCostTracker({
+    freshSession: true,
+    now: at,
+  }).observe(claudeResult("r1", 0.2));
+  writer.emit(fact);
+  writer.emit(fact);
+  assert.equal(written.length, 1);
+  assert.deepEqual(ProviderCostFrameSchema.parse(JSON.parse(written[0]!)), {
+    protocol: "rah-provider-cost/v1",
+    ...fact,
+  });
 });

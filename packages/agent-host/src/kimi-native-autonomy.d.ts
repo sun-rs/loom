@@ -12,6 +12,7 @@ export type KimiSessionInspection =
   | { state: "unavailable"; reason: string };
 
 export declare function isKimiGoalMutationTool(title: unknown): boolean;
+export declare function isKimiUserQuestionTool(title: unknown): boolean;
 export declare function kimiHome(environment?: NodeJS.ProcessEnv): string;
 export declare function foldKimiMainWire(text: string): KimiNativeState;
 export declare function inspectKimiSession(

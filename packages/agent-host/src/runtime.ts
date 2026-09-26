@@ -5,6 +5,7 @@ import type {
   RuntimeRecoveryDescriptor,
   RuntimeTrajectoryAppendInput,
   RuntimeFailure,
+  RunAttemptCostRecordInput,
   RunAttemptUsageGapRecordInput,
   RunAttemptUsageRecordInput,
 } from "@rah-os/protocol";
@@ -85,6 +86,8 @@ export type RuntimeStartLifecycle = {
   recordUsage?(usage: RunAttemptUsageRecordInput): Promise<void>;
   /** A usage capture gap: the RunAttempt's usage is partial or unavailable. */
   recordUsageGap?(gap: RunAttemptUsageGapRecordInput): Promise<void>;
+  /** evo §40: a CLI-reported cost fact (never a Loom estimate). */
+  recordCost?(cost: RunAttemptCostRecordInput): Promise<void>;
   /**
    * S1-f: a Role instance's native session binding was persisted by the Host.
    * Durable Kernel evidence; its absence means a later launch starts fresh.

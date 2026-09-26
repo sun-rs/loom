@@ -293,6 +293,27 @@ test("filterUserLaunchEnvironment agrees with the per-Agent override schema at t
   );
 });
 
+// evo §40 B1: process-level permission and lane switches stay daemon-owned.
+// OpenCode 1.18.32 merges OPENCODE_PERMISSION into the config permission;
+// kimi-code 0.39.1 reads KIMI_DISABLE_CRON (cron scheduler) and
+// KIMI_CODE_EXPERIMENTAL_WAIT_FOR (the in-turn WaitFor tool).
+test("per-Agent environment cannot set permission or lane-scheduling switches", () => {
+  for (const key of [
+    "OPENCODE_PERMISSION",
+    "KIMI_DISABLE_CRON",
+    "KIMI_CODE_EXPERIMENTAL_WAIT_FOR",
+  ]) {
+    assert.equal(
+      RuntimeLaunchEnvironmentSchema.safeParse({ [key]: "x" }).success,
+      false,
+      key,
+    );
+    const filtered = filterUserLaunchEnvironment({ [key]: "x" });
+    assert.deepEqual(filtered.environment, {}, key);
+    assert.deepEqual(filtered.rejected, [key]);
+  }
+});
+
 test("four Provider profiles keep argv and configuration-directory discovery under the policy", () => {
   const environment = resolveActivationEnvironment({
     configured: {},

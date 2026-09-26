@@ -742,6 +742,9 @@ export class AgentHost {
             recordUsageGap: async (gap) => {
               await this.#control.recordRunAttemptUsageGap?.(gap);
             },
+            recordCost: async (cost) => {
+              await this.#control.recordRunAttemptCost?.(cost);
+            },
             recordFinalReplyInterrupt: async (report) => {
               await this.#control.recordFinalReplyInterrupt?.(report);
             },

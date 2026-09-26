@@ -337,6 +337,55 @@ test("GenericProcessAdapter keeps Provider session evidence out of canonical tra
   }
 });
 
+// evo §40: a CLI-reported cost frame reaches its owner; an invalid one is
+// dropped with a diagnostic (never guessed) and never becomes trajectory.
+test("GenericProcessAdapter routes CLI cost frames to the cost owner", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-provider-cost-frame-"));
+  try {
+    const cost = {
+      protocol: "rah-provider-cost/v1",
+      provider: "claude-stream-json/v1",
+      costId: "result-1",
+      source: "claude_result_total_cost_usd",
+      reportedTotalUsd: 0.4,
+      costUsd: 0.1,
+      observedAt: "2026-09-26T01:00:00.000Z",
+    };
+    const frames = [cost, { ...cost, costId: "bad", costUsd: -1 }];
+    const recorded: unknown[] = [];
+    const trajectory: unknown[] = [];
+    const adapter = new GenericProcessAdapter({
+      args: [
+        "-e",
+        `for (const frame of ${JSON.stringify(frames)}) require('node:fs').writeSync(3, JSON.stringify(frame)+'\\n');`,
+      ],
+      command: process.execPath,
+      cwd: directory,
+    });
+    const run = await adapter.start(activationEnvelope(), {
+      recordTrajectory: async (activity) => {
+        trajectory.push(activity.entry);
+      },
+      recordCost: async (input) => {
+        recorded.push(input);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+    const { protocol: _protocol, ...fields } = cost;
+    assert.deepEqual(recorded, [
+      { ...fields, runAttemptId: "run-process-test", runtimeRunId: run.runId },
+    ]);
+    assert.deepEqual(trajectory, []);
+    assert.match(
+      adapter.diagnostics(run).stderr,
+      /ignored invalid CLI cost frame/u,
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter routes Provider usage frames to the usage owner, never to trajectory", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-provider-usage-frame-"));
   try {

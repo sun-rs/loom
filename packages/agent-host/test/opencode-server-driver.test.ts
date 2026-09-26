@@ -186,6 +186,26 @@ const spawnConfig = (records: Record<string, unknown>[]) =>
     instructions?: string[];
   };
 
+// evo §40 B2: the session's rules allow every tool, then deny the ones that
+// take the Human's attention or a native mode away from the lane — the same
+// rules OpenCode 1.18.32's own `opencode run` puts on its session (question,
+// plan_enter, plan_exit deny). Permission evaluation is findLast over agent
+// then session rules, and a trailing `*` deny hides the tool, so user config
+// cannot re-open them.
+test("session rules allow all tools, then deny question and plan mode", async () => {
+  const result = await runTurn({ scenario: "reply", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const [created] = requests(result.records, "/session").filter(
+    (r) => r.path === "/session",
+  );
+  assert.deepEqual((created!.body as { permission: unknown }).permission, [
+    { action: "allow", pattern: "*", permission: "*" },
+    { action: "deny", pattern: "*", permission: "question" },
+    { action: "deny", pattern: "*", permission: "plan_enter" },
+    { action: "deny", pattern: "*", permission: "plan_exit" },
+  ]);
+});
+
 test("rules: the standing prompt is a server instructions file present in every model request, including the autocontinue step after compaction; no per-message system", async () => {
   const result = await runTurn({ scenario: "compact+reply", wake: WAKE });
   assert.equal(result.code, 0, result.stderr);

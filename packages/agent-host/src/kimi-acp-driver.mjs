@@ -34,11 +34,17 @@ import {
   assertKimiSafeMode,
   inspectKimiSession,
   isKimiGoalMutationTool,
+  isKimiUserQuestionTool,
   KIMI_SAFE_MODE_ID,
   kimiModeFailure,
 } from "./kimi-native-autonomy.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import { providerUsageGap, ProviderUsageWriter } from "./provider-usage.js";
+import {
+  kimiMainWirePath,
+  kimiWireSize,
+  readKimiTurnUsage,
+} from "./kimi-wire-usage.js";
 import {
   kimiPromptCompletionTrajectory,
   normalizeKimiTrajectoryNotification,
@@ -91,7 +97,9 @@ const terminals = new Map();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 let terminalSequence = 0;
 let stopping = false;
-let usageGapReported = false;
+// evo §40: per-generation usage read from the session wire after a prompt.
+const usageWriter = new ProviderUsageWriter();
+const TURN_WIRE_WAIT_MS = 2_000;
 // The native session this run already reported as bound (reported once).
 let boundProviderSessionId;
 let activeSessionId;
@@ -378,6 +386,7 @@ async function runTurn(resumeSessionId, mcpServers) {
     requestId: undefined,
     sessionId,
   };
+  const wire = kimiWireStart(sessionId, resumeSessionId !== undefined);
   activePrompt = prompt;
   acceptCurrentTurnUpdates = true;
   let settlePrompt;
@@ -416,6 +425,7 @@ async function runTurn(resumeSessionId, mcpServers) {
     );
     prompt.finalInterrupt.settle(stringField(promptResult, "stopReason"));
     settlePrompt(promptResult);
+    await emitKimiTurnUsage(wire);
     return { finalInterrupt: prompt.finalInterrupt, promptResult, sessionId };
   } catch (error) {
     prompt.finalInterrupt.settle(undefined);
@@ -428,6 +438,39 @@ async function runTurn(resumeSessionId, mcpServers) {
       activePromptSettlement = undefined;
     }
   }
+}
+
+/**
+ * evo §40: where this prompt's wire records will start. A fresh session's
+ * wire holds no earlier prompt, so offset 0 is exact even if Kimi indexes it
+ * only later; a resumed session without a readable offset cannot be
+ * attributed (its history would be counted), so it stays a gap.
+ */
+function kimiWireStart(sessionId, resumed) {
+  try {
+    const path = kimiMainWirePath(sessionId, kimiEnvironment);
+    if (path !== undefined) return { path, offset: kimiWireSize(path) };
+  } catch {
+    // Unreadable: decided below.
+  }
+  return resumed ? { unavailable: true } : { sessionId, offset: 0 };
+}
+
+async function emitKimiTurnUsage(wire) {
+  let path = wire.path;
+  if (path === undefined && wire.sessionId !== undefined)
+    path = kimiMainWirePath(wire.sessionId, kimiEnvironment);
+  if (wire.unavailable || path === undefined) {
+    usageWriter.emit(providerUsageGap(PROVIDER, "parse_error"));
+    return;
+  }
+  const result = await readKimiTurnUsage({
+    path,
+    offset: wire.offset,
+    timeoutMs: stopping ? 0 : TURN_WIRE_WAIT_MS,
+  });
+  for (const usage of result.usages) usageWriter.emit(usage);
+  for (const gap of result.gaps) usageWriter.emit(gap);
 }
 
 async function configureSession(sessionId) {
@@ -531,10 +574,11 @@ async function handleAgentRequest(frame) {
         // Full review batch 3 P1-6 / review P1-1: a native goal drives
         // continuation turns outside this instance's lane. In the pinned
         // `default` mode kimi-code asks for CreateGoal, UpdateGoal (resume)
-        // and SetGoalBudget; all are rejected.
+        // and SetGoalBudget; all are rejected. evo §40: AskUserQuestion is
+        // dismissed too (its answers arrive as allow_once options).
         const optionId = selectPermissionOption(
           frame.params,
-          isNativeGoalMutation(frame.params)
+          isNativeGoalMutation(frame.params) || isUserQuestion(frame.params)
             ? "reject"
             : options.toolAccessMode,
         );
@@ -707,6 +751,12 @@ function failPending(error) {
 function isNativeGoalMutation(params) {
   return isRecord(params) && isRecord(params.toolCall)
     ? isKimiGoalMutationTool(params.toolCall.title)
+    : false;
+}
+
+function isUserQuestion(params) {
+  return isRecord(params) && isRecord(params.toolCall)
+    ? isKimiUserQuestionTool(params.toolCall.title)
     : false;
 }
 
@@ -988,14 +1038,6 @@ function redactProviderSessionIds(message) {
 function writeProviderSessionEvidence(providerSessionId) {
   if (boundProviderSessionId === providerSessionId) return;
   boundProviderSessionId = providerSessionId;
-  // Kimi ACP exposes no native per-generation usage: say so once per run, so
-  // the Kernel reports this RunAttempt's usage as unavailable, never as zero.
-  if (!usageGapReported) {
-    usageGapReported = true;
-    new ProviderUsageWriter().emit(
-      providerUsageGap("kimi-acp/v1", "unsupported_provider"),
-    );
-  }
   try {
     writeSync(
       3,

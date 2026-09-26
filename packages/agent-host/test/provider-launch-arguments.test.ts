@@ -105,10 +105,67 @@ test("memory policy displayed in settings is the same launch contract consumed b
     "features.multi_agent=false",
     "-c",
     "features.goals=false",
+    "-c",
+    "features.sleep_tool=false",
+    "-c",
+    "features.in_app_local_automation=false",
   ]);
   // Full review batch 3 P1-6 (kimi-code 0.39.1 source: both agent cores stop
   // the cron scheduler and CronCreate refuses under KIMI_DISABLE_CRON=1).
   assert.deepEqual(providerLaunchPolicy("kimi").environment, {
     KIMI_DISABLE_CRON: "1",
   });
+});
+
+// evo §40 B1: permission, approval, sandbox, tool-policy and scope switches
+// belong to the daemon for all four CLIs; a stored or replayed addition can
+// never re-open them (Multica `claudeBlockedArgs` precedent). Aliases count.
+test("permission, approval, sandbox and tool-policy switches cannot be added by user configuration", () => {
+  for (const args of [
+    // Claude Code 2.1.282 aliases and permission hooks.
+    ["--disallowedTools", "Bash"],
+    ["--allowedTools", "Bash"],
+    ["--disallowed-tools=Bash"],
+    ["--permission-prompt-tool", "mcp__x__approve"],
+    ["--permission-mode=default"],
+    ["--add-dir", "/tmp/elsewhere"],
+    // Codex CLI 0.156.1 approval and sandbox switches.
+    ["--dangerously-bypass-approvals-and-sandbox"],
+    ["--ask-for-approval", "on-request"],
+    ["-a", "on-request"],
+    ["--sandbox=read-only"],
+    ["-s", "read-only"],
+    ["--full-auto"],
+    ["--profile", "other"],
+    ["-c", "approval_policy=on-request"],
+    ["--config=sandbox_mode=read-only"],
+    ["--enable", "sleep_tool"],
+    // kimi-code 0.39.1 permission modes.
+    ["--yolo"],
+    ["-y"],
+    ["--auto"],
+    ["--plan"],
+  ])
+    assert.throws(
+      () => validateProviderLaunchArgs(args),
+      /managed/,
+      `rejects ${args.join(" ")}`,
+    );
+});
+
+// evo §40 B2: native tools that take scheduling or the Human's attention away
+// from the instance's lane are disabled by launch configuration.
+test("Claude launches disallow plan mode, self-scheduling, remote routines and user questions", async () => {
+  const { CLAUDE_DISALLOWED_TOOLS } =
+    await import("../src/claude-stream-launch.js");
+  assert.deepEqual(CLAUDE_DISALLOWED_TOOLS.split(","), [
+    "EnterPlanMode",
+    "ExitPlanMode",
+    "ScheduleWakeup",
+    "CronCreate",
+    "CronList",
+    "CronDelete",
+    "RemoteTrigger",
+    "AskUserQuestion",
+  ]);
 });

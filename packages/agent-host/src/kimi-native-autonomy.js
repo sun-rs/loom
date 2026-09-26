@@ -42,6 +42,16 @@ export function isKimiGoalMutationTool(title) {
   return typeof title === "string" && GOAL_MUTATION_TOOLS.has(title);
 }
 
+/**
+ * evo §40 B2: kimi-code 0.39.1 ACP asks AskUserQuestion through
+ * `session/request_permission` titled "AskUserQuestion", one allow_once
+ * option per answer. No Human is at the CLI, so the driver dismisses it
+ * (reject_once) instead of letting the unattended policy pick an answer.
+ */
+export function isKimiUserQuestionTool(title) {
+  return title === "AskUserQuestion";
+}
+
 export function kimiHome(environment = process.env) {
   const configured = environment.KIMI_CODE_HOME;
   return typeof configured === "string" && configured !== ""

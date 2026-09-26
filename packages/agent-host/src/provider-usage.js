@@ -259,11 +259,91 @@ export function openCodeStepFinishUsage(part, now = Date.now) {
 const OPENCODE_PROVIDER = "opencode-server/v1";
 
 /**
- * One usage frame per response id per driver process; every gap is written
- * (the Kernel aggregates them per reason). fd3 failures stay silent.
+ * evo §40: Claude Code 2.1.282 `result.total_cost_usd` — the CLI's own
+ * list-price estimate, cumulative for the whole session: a resumed process
+ * restores the session's cost state from its transcript (`costState`), and a
+ * warm process keeps adding to it. It is never summed. Each result becomes a
+ * cost fact with the raw cumulative value and the increase since the previous
+ * result of this same process; a fresh session starts at 0, so its first
+ * result is its whole value. The first result of a resumed process has no
+ * baseline this process saw, so its increase is unknown (`null`), never the
+ * whole total; so is a total that went down. No CLI value: no fact.
+ */
+export class ClaudeResultCostTracker {
+  #now;
+  #previous;
+  #ordinal = 0;
+
+  constructor({ freshSession, now = Date.now }) {
+    this.#now = now;
+    this.#previous = freshSession ? 0 : undefined;
+  }
+
+  observe(frame) {
+    if (!isRecord(frame) || frame.type !== "result") return undefined;
+    const total = usd(frame.total_cost_usd);
+    if (total === undefined) return undefined;
+    this.#ordinal += 1;
+    const previous = this.#previous;
+    this.#previous = total;
+    const increase =
+      previous === undefined || total < previous
+        ? null
+        : roundUsd(total - previous);
+    return {
+      provider: CLAUDE_PROVIDER,
+      costId:
+        string(frame.uuid) ??
+        `${string(frame.session_id) ?? "session"}:result:${this.#ordinal}`,
+      source: "claude_result_total_cost_usd",
+      reportedTotalUsd: total,
+      costUsd: increase,
+      observedAt: new Date(this.#now()).toISOString(),
+    };
+  }
+}
+
+/**
+ * evo §40: OpenCode 1.18 `step-finish` part `cost`, its per-step estimate from
+ * the models.dev price cache (0 for a model without a price). Copied as is.
+ */
+export function openCodeStepFinishCost(part, now = Date.now) {
+  if (!isRecord(part) || part.type !== "step-finish") return undefined;
+  const id = string(part.id);
+  const cost = usd(part.cost);
+  if (id === undefined || cost === undefined) return undefined;
+  return {
+    provider: OPENCODE_PROVIDER,
+    costId: id,
+    source: "opencode_step_finish_cost",
+    reportedTotalUsd: null,
+    costUsd: cost,
+    observedAt: new Date(now()).toISOString(),
+  };
+}
+
+function usd(value) {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 1_000_000
+    ? value
+    : undefined;
+}
+
+/** Undo binary float noise of a subtraction; nothing is estimated. */
+function roundUsd(value) {
+  return Math.round(value * 1e10) / 1e10;
+}
+
+/**
+ * One usage frame per response id and one cost frame per cost id per driver
+ * process; every gap is written (the Kernel aggregates them per reason).
+ * fd3 failures stay silent.
  */
 export class ProviderUsageWriter {
   #emitted = new Set();
+  #emittedCosts = new Set();
   #write;
 
   constructor(write = defaultWrite) {
@@ -273,7 +353,11 @@ export class ProviderUsageWriter {
   emit(usage) {
     if (usage === undefined) return;
     let frame;
-    if (usage.reason !== undefined) {
+    if (usage.costId !== undefined) {
+      if (this.#emittedCosts.has(usage.costId)) return;
+      this.#emittedCosts.add(usage.costId);
+      frame = { protocol: "rah-provider-cost/v1", ...usage };
+    } else if (usage.reason !== undefined) {
       frame = { protocol: "rah-provider-usage-gap/v1", ...usage };
     } else {
       if (this.#emitted.has(usage.responseId)) return;

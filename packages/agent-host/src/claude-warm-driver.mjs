@@ -102,6 +102,7 @@ import {
   runtimeStatusTrajectory,
 } from "./provider-trajectory-normalizer.js";
 import {
+  ClaudeResultCostTracker,
   ClaudeStreamUsageTracker,
   ProviderUsageWriter,
 } from "./provider-usage.js";
@@ -132,6 +133,8 @@ writeFileSync(promptPath, options.prompt, { mode: 0o600 });
 const resumed = options.resumeSession !== undefined;
 const sessionId = options.resumeSession ?? randomUUID();
 const usageTracker = new ClaudeStreamUsageTracker();
+// evo §40: the process's cumulative cost starts at 0 only for a fresh session.
+const costTracker = new ClaudeResultCostTracker({ freshSession: !resumed });
 const controlRequests = new Map();
 /** Inputs of closed turns: their late lifecycle frames are expected noise. */
 const recentInputs = new Set();
@@ -556,6 +559,7 @@ function observe(turn, frame) {
     turn.writer.emit(normalizeClaudeTrajectoryEvent(frame));
   }
   turn.usageWriter.emit(usageTracker.observe(frame));
+  turn.usageWriter.emit(costTracker.observe(frame));
   if (turn.tools.size !== toolsBefore) reportProgress(turn, true);
   else if (
     turn.lastFrameSeq === framesBefore &&

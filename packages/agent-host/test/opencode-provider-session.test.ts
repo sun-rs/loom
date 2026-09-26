@@ -214,8 +214,12 @@ test("OpenCode native server resumes sessions, auto-authorizes, recovers 404, an
     const create = forActivation("resumed-seed").find(
       (record) => record.method === "POST" && record.path === "/session",
     );
+    // evo §40 B2: allow all, then deny question and plan mode.
     assert.deepEqual(create.body.permission, [
       { action: "allow", pattern: "*", permission: "*" },
+      { action: "deny", pattern: "*", permission: "question" },
+      { action: "deny", pattern: "*", permission: "plan_enter" },
+      { action: "deny", pattern: "*", permission: "plan_exit" },
     ]);
     assert.deepEqual(JSON.parse(create.permissionEnv), { "*": "allow" });
     const prompt = forActivation("resumed-seed").find(

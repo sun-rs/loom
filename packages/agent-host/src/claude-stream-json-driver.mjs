@@ -37,6 +37,7 @@ import {
 } from "./claude-stream-launch.js";
 import { createClaudeFinalInterrupt } from "./claude-final-interrupt.js";
 import {
+  ClaudeResultCostTracker,
   ClaudeStreamUsageTracker,
   ProviderUsageWriter,
 } from "./provider-usage.js";
@@ -157,6 +158,11 @@ try {
 }
 
 async function runTurn(resumeSession) {
+  // evo §40: one Claude process per call; its cumulative cost starts at 0
+  // only for a fresh session.
+  const costTracker = new ClaudeResultCostTracker({
+    freshSession: resumeSession === undefined,
+  });
   const args = [
     ...providerLaunchArguments("claude"),
     "--disallowed-tools",
@@ -347,6 +353,7 @@ async function runTurn(resumeSession) {
     }
     busyInput.observe(frame);
     usageWriter.emit(usageTracker.observe(frame));
+    usageWriter.emit(costTracker.observe(frame));
     rememberToolNames(frame, toolNames);
     if (frame.type === "result") {
       lastResult = frame;

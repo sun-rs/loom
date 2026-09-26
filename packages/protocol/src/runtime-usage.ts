@@ -323,6 +323,62 @@ export type RunAttemptFinalInterruptRecordInput = z.infer<
   typeof RunAttemptFinalInterruptRecordInputSchema
 >;
 
+/**
+ * evo §40: CLI-reported cost, copied verbatim; Loom keeps no price table and
+ * never estimates. Each source says what the CLI number means:
+ * - `claude_result_total_cost_usd`: Claude Code's `result.total_cost_usd`, the
+ *   CLI's own list-price estimate, cumulative for the session (2.1.282
+ *   restores the session's cost state on resume). `reportedTotalUsd` is the
+ *   raw cumulative value; `costUsd` is the increase since the previous result
+ *   of the same CLI process, or the whole value when that process started a
+ *   fresh session, and `null` (unknown) for the first result of a resumed
+ *   process, whose baseline this process never saw.
+ * - `opencode_step_finish_cost`: OpenCode's `step-finish` part `cost`, its
+ *   per-step estimate from the models.dev price cache; OpenCode reports 0 for
+ *   models without a price, so a zero is "CLI said 0", not "free".
+ * Codex and Kimi report no cost: nothing is recorded and cost stays unknown.
+ */
+export const ProviderCostSourceSchema = z.enum([
+  "claude_result_total_cost_usd",
+  "opencode_step_finish_cost",
+]);
+export type ProviderCostSource = z.infer<typeof ProviderCostSourceSchema>;
+
+const UsdSchema = z.number().finite().nonnegative().max(1_000_000);
+
+const ProviderCostShape = {
+  provider: z.string().trim().min(1).max(128),
+  costId: z.string().trim().min(1).max(512),
+  source: ProviderCostSourceSchema,
+  reportedTotalUsd: UsdSchema.nullable(),
+  costUsd: UsdSchema.nullable(),
+  observedAt: TimestampSchema,
+} as const;
+
+/** Host-private fd3 frame: one CLI-reported cost fact. */
+export const ProviderCostFrameSchema = z
+  .object({ protocol: z.literal("rah-provider-cost/v1"), ...ProviderCostShape })
+  .strict();
+export type ProviderCostFrame = z.infer<typeof ProviderCostFrameSchema>;
+
+/** The Host's authenticated write, bound to one RunAttempt runtime. */
+export const RunAttemptCostRecordInputSchema = z
+  .object({
+    ...ProviderCostShape,
+    runAttemptId: IdentifierSchema,
+    runtimeRunId: IdentifierSchema,
+  })
+  .strict();
+export type RunAttemptCostRecordInput = z.infer<
+  typeof RunAttemptCostRecordInputSchema
+>;
+
+export const RunAttemptCliCostSchema = z
+  .object({ ...ProviderCostShape, recordedAt: TimestampSchema })
+  .strict();
+export type RunAttemptCliCost = z.infer<typeof RunAttemptCliCostSchema>;
+
+export const RUN_ATTEMPT_CLI_COST_READ_LIMIT = 1000;
 export const ClientRunAttemptUsageGetResponseSchema = z
   .object({
     runAttemptId: IdentifierSchema,
@@ -365,6 +421,11 @@ export const ClientRunAttemptUsageGetResponseSchema = z
      * did not resume a session or nothing was measured.
      */
     sessionResumeMs: z.number().int().nonnegative().nullable().optional(),
+    /** evo §40: CLI-reported cost facts of this RunAttempt, oldest first. */
+    cliCosts: z
+      .array(RunAttemptCliCostSchema)
+      .max(RUN_ATTEMPT_CLI_COST_READ_LIMIT)
+      .optional(),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

@@ -1,4 +1,5 @@
 import type {
+  ProviderCostFrame,
   ProviderUsageFrame,
   ProviderUsageGapFrame,
   ProviderUsageGapReason,
@@ -6,6 +7,17 @@ import type {
 
 export type ProviderUsage = Omit<ProviderUsageFrame, "protocol">;
 export type ProviderUsageGap = Omit<ProviderUsageGapFrame, "protocol">;
+export type ProviderCost = Omit<ProviderCostFrame, "protocol">;
+
+export class ClaudeResultCostTracker {
+  constructor(options: { freshSession: boolean; now?: () => number });
+  observe(frame: unknown): ProviderCost | undefined;
+}
+
+export function openCodeStepFinishCost(
+  part: unknown,
+  now?: () => number,
+): ProviderCost | undefined;
 
 export function providerUsageGap(
   provider: string,
@@ -30,5 +42,7 @@ export function openCodeStepFinishUsage(
 
 export class ProviderUsageWriter {
   constructor(write?: (value: string) => void);
-  emit(usage: ProviderUsage | ProviderUsageGap | undefined): void;
+  emit(
+    usage: ProviderUsage | ProviderUsageGap | ProviderCost | undefined,
+  ): void;
 }

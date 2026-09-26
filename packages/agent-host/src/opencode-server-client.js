@@ -8,6 +8,21 @@
 // already answered is 404 `PermissionNotFoundError`). Host-private
 // observation only: nothing here is Room truth.
 
+/**
+ * The session rules both drivers create: every tool allowed, then the tools
+ * that wait for a Human answer or switch the session into a native mode
+ * denied — the same three denies OpenCode 1.18.32's own non-interactive
+ * `opencode run` puts on its session. Evaluation is `findLast` over the agent
+ * rules then these session rules, and a trailing `*` deny removes the tool
+ * from the model's tool list, so a user config cannot re-open them (evo §40).
+ */
+export const OPENCODE_SESSION_PERMISSION = Object.freeze([
+  Object.freeze({ action: "allow", pattern: "*", permission: "*" }),
+  Object.freeze({ action: "deny", pattern: "*", permission: "question" }),
+  Object.freeze({ action: "deny", pattern: "*", permission: "plan_enter" }),
+  Object.freeze({ action: "deny", pattern: "*", permission: "plan_exit" }),
+]);
+
 const MAX_LINEAGE_DEPTH = 8;
 const MAX_PRELOADED_CHILDREN = 64;
 

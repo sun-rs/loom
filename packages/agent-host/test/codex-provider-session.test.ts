@@ -280,6 +280,9 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
         // turns outside this instance's lane (codex-cli 0.156.1 feature keys).
         "features.multi_agent",
         "features.goals",
+        // evo §40 B2: in-turn sleeping and native automations.
+        "features.sleep_tool",
+        "features.in_app_local_automation",
       ]) {
         assert.ok(
           record.args.includes(`${key}=false`),

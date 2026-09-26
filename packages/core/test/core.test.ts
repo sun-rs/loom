@@ -145,6 +145,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "getSidebarPreferences",
       "getSystemChannelVisibility",
       "getTask",
+      "getUsageSummary",
       "getWorkspaceAgentManagementView",
       "instantiateRole",
       "joinPublicChannel",

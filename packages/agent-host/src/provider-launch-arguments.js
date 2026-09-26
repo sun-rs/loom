@@ -65,6 +65,25 @@ const managed = new Set([
   "--config",
   "--replay-user-messages",
   "--include-partial-messages",
+  // evo §40 B1: permission, approval, sandbox, tool-policy and scope switches
+  // are daemon-owned (Multica `claudeBlockedArgs` precedent). Claude Code
+  // 2.1.282 camelCase aliases, its permission hook and extra directories
+  // (Channel attached directories are fixed at creation); Codex CLI 0.156.1
+  // approval/sandbox switches and profiles; kimi-code 0.39.1 modes.
+  "--disallowedTools",
+  "--allowedTools",
+  "--permission-prompt-tool",
+  "--add-dir",
+  "--dangerously-bypass-approvals-and-sandbox",
+  "--ask-for-approval",
+  "-a",
+  "-s",
+  "--full-auto",
+  "--profile",
+  "--yolo",
+  "-y",
+  "--auto",
+  "--plan",
 ]);
 function validateShape(args) {
   if (
@@ -156,9 +175,19 @@ export function providerMemoryConfig(runtimeId) {
 // disabled`); the Kimi driver pins the ACP `default` (manual) mode, refuses
 // to resume an active native goal and rejects goal-tool approvals instead
 // (kimi-native-autonomy.js).
+// evo §40 B2 (codex-cli 0.156.1 `codex features list`, both stable and on by
+// default): `sleep_tool` gives the model `clock.sleep` to wait across sleeps
+// inside a turn (long waiting owned by the tool loop, holding the lane) and
+// `in_app_local_automation` lets it create recurring automations (a native
+// scheduler outside the lane).
 function providerAutonomyConfig(runtimeId) {
   return runtimeId === "codex"
-    ? { "features.multi_agent": false, "features.goals": false }
+    ? {
+        "features.multi_agent": false,
+        "features.goals": false,
+        "features.sleep_tool": false,
+        "features.in_app_local_automation": false,
+      }
     : {};
 }
 export function providerLaunchPolicy(runtimeId) {

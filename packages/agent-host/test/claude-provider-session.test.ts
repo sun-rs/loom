@@ -464,6 +464,24 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       assert.ok(record.args.includes("value with spaces"));
       assert.ok(record.args.includes("--test-extra"));
       assert.equal(record.args.includes("--verbose"), true);
+      // evo §40 B: bypass mode and the lane-stealing tools on every child.
+      assert.equal(
+        record.args[record.args.indexOf("--permission-mode") + 1],
+        "bypassPermissions",
+      );
+      const disallowed =
+        record.args[record.args.indexOf("--disallowed-tools") + 1].split(",");
+      for (const tool of [
+        "EnterPlanMode",
+        "ExitPlanMode",
+        "ScheduleWakeup",
+        "CronCreate",
+        "CronList",
+        "CronDelete",
+        "RemoteTrigger",
+        "AskUserQuestion",
+      ])
+        assert.ok(disallowed.includes(tool), `${tool} disallowed`);
       assert.equal(
         record.autoMemoryDisabled,
         "1",

@@ -274,6 +274,10 @@ rl.on("line", (line) => {
       "features.multi_agent=false",
       "-c",
       "features.goals=false",
+      "-c",
+      "features.sleep_tool=false",
+      "-c",
+      "features.in_app_local_automation=false",
       "--listen",
       "stdio://",
     ]);

@@ -132,6 +132,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "thread.followers",
     "thread.list",
     "thread.reply",
+    "usage.summary",
     "workspace.create",
     "workspace.human.list",
     "workspace.list",
@@ -313,6 +314,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { agentId: "agent-definition", runAttemptId: "run-1" },
       operation: "agent.run.usage.get",
       path: "/v3/client/agents/run-usage/get",
+    },
+    {
+      input: { groupBy: "instance" },
+      operation: "usage.summary",
+      path: "/v3/client/usage/summary",
     },
     {
       input: { controlRoomId: "room-control" },

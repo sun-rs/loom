@@ -76,6 +76,8 @@ import {
   ClientAgentTrajectoryListRequestSchema,
   ClientRunAttemptUsageGetRequestSchema,
   ClientRunAttemptUsageGetResponseSchema,
+  UsageSummaryRequestSchema,
+  UsageSummaryResponseSchema,
   ClientAgentPresenceListRequestSchema,
   ClientAgentPresenceListResponseSchema,
   ClientAgentRemindersListRequestSchema,
@@ -208,6 +210,8 @@ import {
   type ClientAgentTrajectoryListRequest,
   type ClientRunAttemptUsageGetRequest,
   type ClientRunAttemptUsageGetResponse,
+  type UsageSummaryRequest,
+  type UsageSummaryResponse,
   type ClientAgentTrajectoryListResponse,
   type ClientAgentOnboardRequest,
   type ClientAgentRoomsListRequest,
@@ -359,6 +363,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     "agent.run.usage.get": {
       input: ClientRunAttemptUsageGetRequest;
       output: ClientRunAttemptUsageGetResponse;
+    };
+    "usage.summary": {
+      input: UsageSummaryRequest;
+      output: UsageSummaryResponse;
     };
     "agent.presence.list": {
       input: ClientAgentPresenceListRequest;
@@ -720,6 +728,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRunAttemptUsageGetResponseSchema,
     path: "/v3/client/agents/run-usage/get",
+  },
+  "usage.summary": {
+    authenticated: true,
+    input: UsageSummaryRequestSchema,
+    method: "POST",
+    output: UsageSummaryResponseSchema,
+    path: "/v3/client/usage/summary",
   },
   "agent.presence.list": {
     authenticated: true,

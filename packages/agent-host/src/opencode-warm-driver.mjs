@@ -81,6 +81,7 @@ import {
   extractSseData,
   isRecord,
   openCodeEventError,
+  OPENCODE_SESSION_PERMISSION,
   openCodeStepFinishPart,
   pendingOpenCodeRequests,
   record,
@@ -105,6 +106,7 @@ import {
   runtimeStatusTrajectory,
 } from "./provider-trajectory-normalizer.js";
 import {
+  openCodeStepFinishCost,
   openCodeStepFinishUsage,
   ProviderUsageWriter,
 } from "./provider-usage.js";
@@ -586,8 +588,10 @@ async function handleEvent(event) {
   if (childSessions.has(properties.sessionID)) {
     const step = openCodeStepFinishPart(event);
     const turn = active;
-    if (step !== undefined && turn?.accepted === true && !turn.settled)
+    if (step !== undefined && turn?.accepted === true && !turn.settled) {
       turn.usageWriter.emit(openCodeStepFinishUsage(step));
+      turn.usageWriter.emit(openCodeStepFinishCost(step));
+    }
     return;
   }
   const ids = [
@@ -724,6 +728,7 @@ function projectEvent(turn, event) {
     const part = record(properties.part);
     turn.finalInterrupt.observePart(part);
     turn.usageWriter.emit(openCodeStepFinishUsage(part));
+    turn.usageWriter.emit(openCodeStepFinishCost(part));
     const partId = stringField(part, "id");
     const partType = stringField(part, "type");
     if (partId !== undefined && partType !== undefined)
@@ -997,7 +1002,7 @@ async function startServer() {
 async function createSession() {
   const created = await requestJson("/session", {
     body: JSON.stringify({
-      permission: [{ action: "allow", pattern: "*", permission: "*" }],
+      permission: OPENCODE_SESSION_PERMISSION,
       title: "RAH OS Role instance",
     }),
     method: "POST",

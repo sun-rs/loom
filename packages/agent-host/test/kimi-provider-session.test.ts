@@ -168,16 +168,16 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
     assert.equal((await runActivation("cancel", "seed", "cancel")).code, 0);
     assert.equal((await runActivation("cancel", "run")).code, 0);
 
-    // Kimi ACP exposes no native usage: each session-ready run says so, so the
-    // Kernel reports its usage as unavailable instead of zero.
+    // evo §40: usage comes from Kimi's session wire; this fake keeps none,
+    // so each prompted run reports a parse gap (unavailable, never zero).
     const resumedSeedGaps = usageGaps.filter(
       (gap) => gap.runAttemptId === "run-kimi-resumed-seed",
     );
     assert.deepEqual(
       resumedSeedGaps.map((gap) => gap.reason),
-      ["unsupported_provider"],
+      ["parse_error"],
     );
-    assert.ok(usageGaps.every((gap) => gap.reason === "unsupported_provider"));
+    assert.ok(usageGaps.every((gap) => gap.reason === "parse_error"));
 
     const records = readFileSync(recordPath, "utf8")
       .trim()

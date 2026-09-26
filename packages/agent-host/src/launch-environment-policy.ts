@@ -98,9 +98,14 @@ export const ACTIVATION_IDENTITY_FENCE_KEYS: readonly string[] = [
 export const USER_OVERRIDE_PROTECTED_KEYS: readonly string[] = [
   "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
   "HOME",
+  // evo §40 B1: kimi-code 0.39.1 cron scheduler and in-turn WaitFor switches.
+  "KIMI_CODE_EXPERIMENTAL_WAIT_FOR",
+  "KIMI_DISABLE_CRON",
   "KIMI_MODEL_THINKING_EFFORT",
   "NODE_OPTIONS",
   "NODE_PATH",
+  // evo §40 B1: OpenCode 1.18.32 merges it into the config permission.
+  "OPENCODE_PERMISSION",
   "PATH",
   "SHELL",
   "USER",

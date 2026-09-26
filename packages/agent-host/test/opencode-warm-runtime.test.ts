@@ -288,6 +288,17 @@ test("warm OpenCode: three Activations run on one server and one session, each a
     }
     assert.equal(spawns(state).length, 1, "one opencode serve");
     assert.equal(requests(state, "POST", "/session").length, 1);
+    // evo §40 B2: same session rules as the per-turn driver.
+    assert.deepEqual(
+      (requests(state, "POST", "/session")[0]!.body as { permission: unknown })
+        .permission,
+      [
+        { action: "allow", pattern: "*", permission: "*" },
+        { action: "deny", pattern: "*", permission: "question" },
+        { action: "deny", pattern: "*", permission: "plan_enter" },
+        { action: "deny", pattern: "*", permission: "plan_exit" },
+      ],
+    );
     const sent = prompts(state);
     assert.equal(sent.length, 3);
     const ids = sent.map((record) => String(record.messageID));

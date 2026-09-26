@@ -366,14 +366,102 @@ test("session binding: a run cancelled after the input was accepted still report
   );
 });
 
-test("usage stays unavailable: a session-ready run reports the provider gap, never zero usage", async () => {
-  const result = await runTurn({ scenario: "reply", wake: WAKE });
+// evo §40: usage comes from Kimi's session wire (region appended since the
+// prompt was sent). Fixture regions are the real 0.39.1 wire.
+const WIRE_FIXTURE = fileURLToPath(
+  new URL(
+    "../../../scripts/cli-efficiency/fixtures/kimi-acp-0.39-session/wire.jsonl",
+    import.meta.url,
+  ),
+);
+const wireLines = readFileSync(WIRE_FIXTURE, "utf8").split("\n");
+/** Real turn 2 (two finished steps, completed) and its history before it. */
+const TURN_2 = wireLines.slice(30, 43);
+const HISTORY = wireLines.slice(0, 30);
+function wireTurnFile(lines: string[]) {
+  const directory = mkdtempSync(join(tmpdir(), "rah-kimi-wire-turn-"));
+  const path = join(directory, "turn.jsonl");
+  writeFileSync(path, lines.join("\n") + "\n");
+  return { path, cleanup: () => rmSync(directory, { recursive: true }) };
+}
+const TURN_2_IDS = [
+  "chatcmpl-9GSbwJc98s8Xy6PnRUDVXHUf",
+  "chatcmpl-Ef9ZC0ooBV5HCOfCfJXXrsEw",
+];
+
+test("evo §40: a fresh session's usage is read from its wire, one frame per step with the provider message id", async () => {
+  const turn = wireTurnFile(TURN_2);
+  try {
+    const result = await runTurn({
+      scenario: "reply",
+      wake: WAKE,
+      env: { FAKE_WIRE_TURN: turn.path },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(
+      byProtocol(result.frames, "rah-provider-usage-gap/v1"),
+      [],
+    );
+    const usage = byProtocol(result.frames, "rah-provider-usage/v1");
+    assert.deepEqual(
+      usage.map((frame) => [
+        frame.responseId,
+        frame.inputTokens,
+        frame.outputTokens,
+      ]),
+      [
+        [TURN_2_IDS[0], 223 + 24832, 77],
+        [TURN_2_IDS[1], 596 + 24832, 63],
+      ],
+    );
+  } finally {
+    turn.cleanup();
+  }
+});
+
+test("evo §40: a resumed session counts only this prompt's records, even when the turn end is flushed late", async () => {
+  const turn = wireTurnFile(TURN_2);
+  try {
+    const result = await runTurn({
+      scenario: "reply",
+      wake: WAKE,
+      resume: "kimi-session-history",
+      nativeSession: {
+        sessionId: "kimi-session-history",
+        wire: HISTORY.filter((line) => line.trim()).map((line) =>
+          JSON.parse(line),
+        ),
+      },
+      env: { FAKE_WIRE_TURN: turn.path, FAKE_WIRE_LATE_END_MS: "150" },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(
+      byProtocol(result.frames, "rah-provider-usage-gap/v1"),
+      [],
+    );
+    assert.deepEqual(
+      byProtocol(result.frames, "rah-provider-usage/v1").map(
+        (frame) => frame.responseId,
+      ),
+      TURN_2_IDS,
+    );
+  } finally {
+    turn.cleanup();
+  }
+});
+
+test("evo §40: a resumed session whose wire cannot be found reports a parse gap, never zero usage", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    resume: "kimi-session-unindexed",
+  });
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(
     byProtocol(result.frames, "rah-provider-usage-gap/v1").map(
       (frame) => frame.reason,
     ),
-    ["unsupported_provider"],
+    ["parse_error"],
   );
   assert.deepEqual(byProtocol(result.frames, "rah-provider-usage/v1"), []);
 });
@@ -555,6 +643,23 @@ test("review P1-1: a resumed session whose native goal is paused (or cleared) ru
     assert.equal(sentFrames(result.records, "session/resume").length, 1);
     assert.ok(result.records.some((r) => r.event === "tool-completed"));
   }
+});
+
+// evo §40 B2: a Loom run has no Human at the CLI. kimi-code maps each
+// AskUserQuestion answer to an allow_once option, so an unattended approval
+// policy would silently pick the first answer; the driver dismisses it
+// (reject_once `q0_skip`) and the model continues without an answer.
+test("evo §40: AskUserQuestion is dismissed under full_access, never answered with an option", async () => {
+  const result = await runTurn({ scenario: "askuser+reply", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
+  const [asked, ...more] = result.records.filter(
+    (r) => r.event === "question-permission",
+  );
+  assert.deepEqual(more, []);
+  assert.deepEqual(asked?.outcome, {
+    optionId: "q0_skip",
+    outcome: "selected",
+  });
 });
 
 test("review P1-1: UpdateGoal and SetGoalBudget permissions (resume or reshape a native goal) are rejected under full_access", async () => {

@@ -27,6 +27,7 @@ import {
   boundedServerOutput,
   extractSseData,
   isRecord,
+  OPENCODE_SESSION_PERMISSION,
   openCodeEventError,
   openCodeStepFinishPart,
   preloadOpenCodeChildSessions,
@@ -43,6 +44,7 @@ import {
   runtimeStatusTrajectory,
 } from "./provider-trajectory-normalizer.js";
 import {
+  openCodeStepFinishCost,
   openCodeStepFinishUsage,
   ProviderUsageWriter,
 } from "./provider-usage.js";
@@ -426,7 +428,10 @@ async function handleEvent(event) {
   // usage, which is this run's cost (drivers P2-4).
   if (child) {
     const step = openCodeStepFinishPart(event);
-    if (step !== undefined) usageWriter.emit(openCodeStepFinishUsage(step));
+    if (step !== undefined) {
+      usageWriter.emit(openCodeStepFinishUsage(step));
+      usageWriter.emit(openCodeStepFinishCost(step));
+    }
     if (event.type !== "permission.asked" && event.type !== "question.asked")
       return;
   }
@@ -632,6 +637,7 @@ function projectIdentifiedEvent(event) {
     const partType = stringField(part, "type");
     // Assistant-owned only: the identity filter has already dropped user parts.
     usageWriter.emit(openCodeStepFinishUsage(part));
+    usageWriter.emit(openCodeStepFinishCost(part));
     if (partId !== undefined && partType !== undefined) {
       partTypes.set(partId, partType);
     }
@@ -678,7 +684,7 @@ function projectIdentifiedEvent(event) {
 async function createSession() {
   const created = await requestJson("/session", {
     body: JSON.stringify({
-      permission: [{ action: "allow", pattern: "*", permission: "*" }],
+      permission: OPENCODE_SESSION_PERMISSION,
       title: "RAH OS Agent Activation",
     }),
     method: "POST",

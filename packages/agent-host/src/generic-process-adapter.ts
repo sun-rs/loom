@@ -20,6 +20,7 @@ import type {
   RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
 import {
+  ProviderCostFrameSchema,
   ProviderUsageFrameSchema,
   ProviderUsageGapFrameSchema,
   RuntimeTrajectoryAppendInputSchema,
@@ -350,6 +351,7 @@ export class RuntimeTrajectoryCollector {
     if (
       this.#lifecycle.recordTrajectory !== undefined ||
       this.#lifecycle.recordUsage !== undefined ||
+      this.#lifecycle.recordCost !== undefined ||
       this.#recordProviderSessionEvidence !== undefined ||
       this.#recordDeliveryAcceptance !== undefined ||
       this.#recordProviderCompaction !== undefined
@@ -426,6 +428,27 @@ export class RuntimeTrajectoryCollector {
     } catch (error) {
       this.#diagnostics.append(
         `[rah-os] Provider usage was not recorded: ${errorMessage(error)}\n`,
+      );
+    }
+  }
+
+  /** evo §40: a CLI-reported cost fact; an unprovable frame is dropped. */
+  async #recordCost(frame: Record<string, unknown>): Promise<void> {
+    const parsed = ProviderCostFrameSchema.safeParse(frame);
+    if (!parsed.success) {
+      this.#diagnostics.append("[rah-os] ignored invalid CLI cost frame\n");
+      return;
+    }
+    const { protocol: _protocol, ...cost } = parsed.data;
+    try {
+      await this.#lifecycle.recordCost?.({
+        ...cost,
+        runAttemptId: this.#runAttemptId,
+        runtimeRunId: this.#runtimeRunId,
+      });
+    } catch (error) {
+      this.#diagnostics.append(
+        `[rah-os] CLI cost was not recorded: ${errorMessage(error)}\n`,
       );
     }
   }
@@ -587,6 +610,10 @@ export class RuntimeTrajectoryCollector {
         }
         if (isRecord(frame) && frame.protocol === "rah-provider-usage-gap/v1") {
           await this.#recordUsageGap(frame);
+          return;
+        }
+        if (isRecord(frame) && frame.protocol === "rah-provider-cost/v1") {
+          await this.#recordCost(frame);
           return;
         }
         const activity = RuntimeTrajectoryAppendInputSchema.parse({

@@ -1,6 +1,13 @@
 import type { DatabaseSync } from "node:sqlite";
 
 import {
+  RUN_ATTEMPT_CLI_COST_READ_LIMIT,
+  RunAttemptCliCostSchema,
+  RunAttemptCostRecordInputSchema,
+  type RunAttemptCliCost,
+  type RunAttemptCostRecordInput,
+  type UsageSummaryRequest,
+  type UsageSummaryResponse,
   ClientRunAttemptUsageGetRequestSchema,
   ClientRunAttemptUsageGetResponseSchema,
   RUN_ATTEMPT_USAGE_GENERATION_LIMIT,
@@ -31,6 +38,7 @@ import {
 import { turnExecutionForRunAttempt } from "./instance-runtime.ts";
 import { finalInterruptForRunAttempt } from "./run-attempt-final-reply.ts";
 import { nullableInteger, text, type Row } from "./sqlite-row.ts";
+import { summarizeUsage } from "./usage-summary.ts";
 
 /**
  * Native per-generation Provider token usage for one RunAttempt. Diagnostics
@@ -68,6 +76,18 @@ CREATE TABLE IF NOT EXISTS run_attempt_usage_gaps (
   last_observed_at TEXT NOT NULL,
   recorded_at TEXT NOT NULL,
   PRIMARY KEY (run_attempt_id, reason)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS run_attempt_cli_costs (
+  run_attempt_id TEXT NOT NULL REFERENCES run_attempts(run_attempt_id),
+  cost_id TEXT NOT NULL CHECK (length(cost_id) BETWEEN 1 AND 512),
+  provider TEXT NOT NULL,
+  source TEXT NOT NULL CHECK (source IN ('claude_result_total_cost_usd', 'opencode_step_finish_cost')),
+  reported_total_usd REAL CHECK (reported_total_usd IS NULL OR reported_total_usd >= 0),
+  cost_usd REAL CHECK (cost_usd IS NULL OR cost_usd >= 0),
+  observed_at TEXT NOT NULL,
+  recorded_at TEXT NOT NULL,
+  PRIMARY KEY (run_attempt_id, cost_id)
 ) STRICT;
 `;
 
@@ -185,6 +205,75 @@ export class RunAttemptUsageService {
           .get(input.runAttemptId, input.reason)!,
       );
     });
+  }
+
+  /**
+   * evo §40: one CLI-reported cost fact (never a Loom estimate). A cost id is
+   * recorded once; a replay must repeat the same immutable fact.
+   */
+  recordCost(
+    host: AuthenticatedHostContext,
+    untrustedInput: RunAttemptCostRecordInput,
+  ): RunAttemptCliCost {
+    const input = RunAttemptCostRecordInputSchema.parse(untrustedInput);
+    return this.#transaction(() => {
+      const runAttempt = this.#requireOwnedRunAttempt(host, input.runAttemptId);
+      const select = () =>
+        this.#database
+          .prepare(
+            "SELECT * FROM run_attempt_cli_costs WHERE run_attempt_id = ? AND cost_id = ?",
+          )
+          .get(input.runAttemptId, input.costId);
+      const existing = select();
+      if (existing !== undefined) {
+        const recorded = costFromRow(existing);
+        const same = (
+          [
+            "provider",
+            "source",
+            "reportedTotalUsd",
+            "costUsd",
+            "observedAt",
+          ] as const
+        ).every((field) => recorded[field] === input[field]);
+        if (!same)
+          throw new ConflictError(
+            "CLI cost id conflicts with an existing fact",
+          );
+        return recorded;
+      }
+      this.#requireLiveRuntime(runAttempt, input);
+      this.#database
+        .prepare(
+          `INSERT INTO run_attempt_cli_costs(
+             run_attempt_id, cost_id, provider, source, reported_total_usd,
+             cost_usd, observed_at, recorded_at
+           ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          input.runAttemptId,
+          input.costId,
+          input.provider,
+          input.source,
+          input.reportedTotalUsd,
+          input.costUsd,
+          input.observedAt,
+          this.#now().toISOString(),
+        );
+      return costFromRow(select()!);
+    });
+  }
+
+  /** evo §40: Human usage summary by instance or Channel; read only. */
+  summary(
+    actor: AuthenticatedActorContext,
+    input: UsageSummaryRequest,
+  ): UsageSummaryResponse {
+    return summarizeUsage(
+      this.#database,
+      this.#options.requireActor(actor),
+      input,
+    );
   }
 
   /**
@@ -322,6 +411,13 @@ export class RunAttemptUsageService {
           .get(input.runAttemptId)!,
         "session_resume_ms",
       ),
+      cliCosts: this.#database
+        .prepare(
+          `SELECT * FROM run_attempt_cli_costs WHERE run_attempt_id = ?
+           ORDER BY observed_at, recorded_at, cost_id LIMIT ?`,
+        )
+        .all(input.runAttemptId, RUN_ATTEMPT_CLI_COST_READ_LIMIT)
+        .map(costFromRow),
     });
   }
 
@@ -410,6 +506,24 @@ function usageFromRow(row: Row): RunAttemptUsageRecord {
     reasoningOutputTokens: nullableCount(row, "reasoning_output_tokens"),
     contextWindow: nullableCount(row, "context_window"),
     contextUsedTokens: nullableCount(row, "context_used_tokens"),
+    observedAt: text(row, "observed_at"),
+    recordedAt: text(row, "recorded_at"),
+  });
+}
+
+function nullableNumber(row: Row, column: string): number | null {
+  return row[column] === null || row[column] === undefined
+    ? null
+    : Number(row[column]);
+}
+
+function costFromRow(row: Row): RunAttemptCliCost {
+  return RunAttemptCliCostSchema.parse({
+    provider: text(row, "provider"),
+    costId: text(row, "cost_id"),
+    source: text(row, "source"),
+    reportedTotalUsd: nullableNumber(row, "reported_total_usd"),
+    costUsd: nullableNumber(row, "cost_usd"),
     observedAt: text(row, "observed_at"),
     recordedAt: text(row, "recorded_at"),
   });

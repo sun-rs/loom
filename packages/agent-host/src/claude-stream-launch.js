@@ -2,6 +2,10 @@
 // policy for `claude -p --input-format stream-json --output-format
 // stream-json` (the built-in transport arguments stay in
 // provider-launch-arguments.js).
+// Raft disables plan mode and self-scheduling; evo §40 B2 adds the Claude
+// Code 2.1.282 `RemoteTrigger` (manages scheduled remote routines, a
+// scheduler outside the lane) and `AskUserQuestion` (no Human at the CLI;
+// Multica disallows it for the same reason).
 export const CLAUDE_DISALLOWED_TOOLS = [
   "EnterPlanMode",
   "ExitPlanMode",
@@ -9,6 +13,8 @@ export const CLAUDE_DISALLOWED_TOOLS = [
   "CronCreate",
   "CronList",
   "CronDelete",
+  "RemoteTrigger",
+  "AskUserQuestion",
 ].join(",");
 
 /** Process-only: a nested Claude Code marker must not reach the child CLI. */

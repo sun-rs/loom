@@ -430,7 +430,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 72;
+export const KERNEL_SCHEMA_VERSION = 73;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;

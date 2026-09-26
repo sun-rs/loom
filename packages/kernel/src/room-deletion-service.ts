@@ -80,6 +80,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "role_templates",
   "room_files",
   "rooms",
+  "run_attempt_cli_costs",
   "run_attempt_final_replies",
   "run_attempt_usage",
   "run_attempt_usage_gaps",
@@ -338,6 +339,8 @@ export class RoomDeletionService {
       `DELETE FROM run_attempt_usage WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
       `DELETE FROM run_attempt_usage_gaps WHERE run_attempt_id IN
+         (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
+      `DELETE FROM run_attempt_cli_costs WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
       `DELETE FROM run_attempt_final_replies WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,

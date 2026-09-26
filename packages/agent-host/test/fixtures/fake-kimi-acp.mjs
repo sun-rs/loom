@@ -25,15 +25,27 @@
 // name and the canonical approve_once / approve_always / reject options —
 // kimi-code 0.39.1 `acp-server/src/approval.ts`; the answer is recorded),
 // updategoal / setgoalbudget (the same permission shape for UpdateGoal /
-// SetGoalBudget).
+// SetGoalBudget), askuser (an AskUserQuestion permission, see below).
 // ACP mode: the session starts in FAKE_INITIAL_MODE (default "default");
 // `session/set_config_option` {configId:"mode"} switches it and answers the
 // `configOptions` snapshot (id "mode", currentValue) like kimi-code 0.39.1
 // `acp-server/src/config-options.ts`; FAKE_MODE_LOCKED keeps the initial mode.
+// Session wire (evo §40): with FAKE_WIRE_TURN (a jsonl file of real wire
+// records) every prompt appends those records to the session's main wire,
+// found through KIMI_CODE_HOME/session_index.jsonl like kimi-code 0.39.1
+// (a new session is indexed at session/new), before it answers the prompt;
+// FAKE_WIRE_LATE_END_MS appends the last record that long after the answer.
 // FAKE_RECORD (jsonl) records every frame and event. FAKE_TOOL_COMMAND
 // replaces the derived Worker command. FAKE_FOLLOW_UP_MS bounds the wait for
 // a cancel before the post-reply generation (default 300).
-import { appendFileSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
 import { createInterface } from "node:readline";
 
 const args = process.argv.slice(2);
@@ -124,6 +136,7 @@ input.on("line", (line) => {
     });
   } else if (frame.method === "session/new") {
     sessionId = env.FAKE_SESSION ?? "kimi-session-new";
+    if (env.FAKE_WIRE_TURN) wirePath(true);
     send({
       id: frame.id,
       result: { sessionId, configOptions: configOptions() },
@@ -181,6 +194,43 @@ input.on("line", (line) => {
   }
 });
 
+function wirePath(create) {
+  const home = env.KIMI_CODE_HOME;
+  if (!home) return undefined;
+  const index = join(home, "session_index.jsonl");
+  if (existsSync(index))
+    for (const line of readFileSync(index, "utf8").split("\n")) {
+      if (!line.trim()) continue;
+      const entry = JSON.parse(line);
+      if (entry.sessionId === sessionId)
+        return join(entry.sessionDir, "agents", "main", "wire.jsonl");
+    }
+  if (!create) return undefined;
+  const sessionDir = join(home, "sessions", "wd_fake", sessionId);
+  mkdirSync(join(sessionDir, "agents", "main"), { recursive: true });
+  appendFileSync(index, `${JSON.stringify({ sessionId, sessionDir })}\n`);
+  const path = join(sessionDir, "agents", "main", "wire.jsonl");
+  writeFileSync(
+    path,
+    `${JSON.stringify({ type: "metadata", protocol_version: "1.5" })}\n`,
+  );
+  return path;
+}
+
+function appendTurnWire() {
+  if (!env.FAKE_WIRE_TURN) return;
+  const path = wirePath(false);
+  if (!path) return;
+  const lines = readFileSync(env.FAKE_WIRE_TURN, "utf8")
+    .split("\n")
+    .filter((line) => line.trim());
+  const late = env.FAKE_WIRE_LATE_END_MS;
+  const now = lines.slice(0, late ? -1 : undefined);
+  appendFileSync(path, now.map((line) => `${line}\n`).join(""));
+  if (late)
+    setTimeout(() => appendFileSync(path, `${lines.at(-1)}\n`), Number(late));
+}
+
 function scenarioTokens() {
   const scenario =
     script[promptIndex] ?? env.FAKE_SCENARIO ?? script.at(-1) ?? "reply";
@@ -218,6 +268,7 @@ async function runPrompt(frame) {
     if (current.settled) return;
     current.settled = true;
     record({ event: "settled", stopReason });
+    appendTurnWire();
     send({ id: frame.id, result: { stopReason } });
     // Not turn-scoped: pushed after the turn settled.
     setTimeout(
@@ -299,6 +350,33 @@ async function runPrompt(frame) {
       toolCallId: goalCallId,
       status: answer?.outcome?.optionId === "reject" ? "failed" : "completed",
     });
+  }
+  // askuser: the model calls AskUserQuestion; kimi-code 0.39.1 ACP
+  // (`acp-server/src/session.ts` handleQuestion) asks the client with
+  // `session/request_permission` titled "AskUserQuestion" whose options are
+  // one allow_once per answer (`q0_opt_<i>`) plus reject_once `q0_skip`;
+  // skip or cancel resolves the tool as "user dismissed".
+  if (tokens.has("askuser")) {
+    const askCallId = `${turnId}:call-askuser`;
+    const answer = await request("session/request_permission", {
+      sessionId,
+      toolCall: {
+        toolCallId: askCallId,
+        title: "AskUserQuestion",
+        content: [
+          {
+            type: "content",
+            content: { type: "text", text: "Which option?" },
+          },
+        ],
+      },
+      options: [
+        { optionId: "q0_opt_0", name: "First", kind: "allow_once" },
+        { optionId: "q0_opt_1", name: "Second", kind: "allow_once" },
+        { optionId: "q0_skip", name: "Skip", kind: "reject_once" },
+      ],
+    });
+    record({ event: "question-permission", outcome: answer?.outcome ?? null });
   }
   const command = tokens.has("hang")
     ? `: message-post --based-on-room-seq 7 --final; while [ ! -f "$FAKE_RELEASE" ]; do sleep 0.02; done`

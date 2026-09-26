@@ -3,6 +3,11 @@ type ChildSessions = {
   has(sessionId: unknown): boolean;
   add(sessionId: string): void;
 };
+export const OPENCODE_SESSION_PERMISSION: readonly {
+  action: "allow" | "deny";
+  pattern: string;
+  permission: string;
+}[];
 export function extractSseData(buffer: string): {
   items: string[];
   remainder: string;

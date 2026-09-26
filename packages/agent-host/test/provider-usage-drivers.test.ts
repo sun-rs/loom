@@ -6,7 +6,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { ProviderUsageFrameSchema } from "@rah-os/protocol";
+import {
+  ProviderCostFrameSchema,
+  ProviderUsageFrameSchema,
+} from "@rah-os/protocol";
 
 // Each native driver runs against a Fake CLI that replays recorded-shape
 // Provider payloads; the fd3 channel is read exactly as the Host reads it.
@@ -53,6 +56,21 @@ async function runDriver(
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }
+}
+
+function costFrames(frames: readonly unknown[]) {
+  return frames
+    .filter(
+      (frame) =>
+        typeof frame === "object" &&
+        frame !== null &&
+        (frame as { protocol?: unknown }).protocol === "rah-provider-cost/v1",
+    )
+    .map((frame) => {
+      const { observedAt: _observedAt, ...stable } =
+        ProviderCostFrameSchema.parse(frame);
+      return stable;
+    });
 }
 
 function usageFrames(frames: readonly unknown[]) {
@@ -146,7 +164,7 @@ rl.on("line", (line) => {
   stream({type:"message_delta",delta:{stop_reason:"end_turn"},usage:{output_tokens:42}});
   send({type:"assistant",message:{id:"msg_usage_1",role:"assistant",content:[{type:"text",text:"done"}],usage:{input_tokens:6,output_tokens:1}},session_id});
   stream({type:"message_stop"});
-  send({type:"result",subtype:"success",is_error:false,result:"done",session_id,usage:{input_tokens:6,cache_creation_input_tokens:1200,cache_read_input_tokens:18000,output_tokens:42},modelUsage:{"claude-sonnet":{contextWindow:200000}}});
+  send({type:"result",subtype:"success",is_error:false,result:"done",session_id,uuid:"result-usage-1",total_cost_usd:0.042,usage:{input_tokens:6,cache_creation_input_tokens:1200,cache_read_input_tokens:18000,output_tokens:42},modelUsage:{"claude-sonnet":{contextWindow:200000}}});
 });
 rl.on("close", () => process.exit(0));
 `;
@@ -169,6 +187,35 @@ test("Claude driver emits usage from the streamed message, not the cumulative re
   ]);
 });
 
+// evo §40: the cumulative CLI estimate is copied; a fresh session's first
+// result is the whole value, a resumed process's first result is unknown.
+test("Claude driver copies result.total_cost_usd as a CLI estimate with session-cumulative semantics", async () => {
+  const fresh = await runDriver("claude-stream-json-driver.mjs", fakeClaude);
+  assert.equal(fresh.code, 0, fresh.stderr);
+  assert.deepEqual(costFrames(fresh.frames), [
+    {
+      protocol: "rah-provider-cost/v1",
+      provider: "claude-stream-json/v1",
+      costId: "result-usage-1",
+      source: "claude_result_total_cost_usd",
+      reportedTotalUsd: 0.042,
+      costUsd: 0.042,
+    },
+  ]);
+  const resumed = await runDriver("claude-stream-json-driver.mjs", fakeClaude, [
+    "--resume-session",
+    "claude-usage-session",
+  ]);
+  assert.equal(resumed.code, 0, resumed.stderr);
+  assert.deepEqual(
+    costFrames(resumed.frames).map((frame) => [
+      frame.reportedTotalUsd,
+      frame.costUsd,
+    ]),
+    [[0.042, null]],
+  );
+});
+
 const fakeOpenCode = `#!/usr/bin/env node
 import { createServer } from "node:http";
 const args = process.argv.slice(2);
@@ -178,7 +225,7 @@ const streams = new Set();
 const sessionID = "ses_usage";
 const send = (res,status,body) => { res.writeHead(status,{"content-type":"application/json"}); res.end(JSON.stringify(body)); };
 const event = (value) => { for (const stream of streams) stream.write("data: " + JSON.stringify(value) + "\\n\\n"); };
-const step = (id, messageID, tokens) => event({type:"message.part.updated",properties:{sessionID,part:{id,messageID,sessionID,type:"step-finish",reason:"stop",cost:0,tokens}}});
+const step = (id, messageID, tokens, cost = 0) => event({type:"message.part.updated",properties:{sessionID,part:{id,messageID,sessionID,type:"step-finish",reason:"stop",cost,tokens}}});
 const server = createServer(async (req,res) => {
   const url = new URL(req.url,"http://127.0.0.1");
   let text = "";
@@ -196,8 +243,8 @@ const server = createServer(async (req,res) => {
     event({type:"message.updated",properties:{info:{id:user,sessionID,role:"user"}}});
     step("prt_user_step",user,{total:1,input:1,output:0,reasoning:0,cache:{read:0,write:0}});
     event({type:"message.updated",properties:{info:{id:"msg_a1",parentID:user,sessionID,role:"assistant"}}});
-    step("prt_step_1","msg_a1",{total:15300,input:300,output:80,reasoning:20,cache:{read:14000,write:900}});
-    step("prt_step_1","msg_a1",{total:15300,input:300,output:80,reasoning:20,cache:{read:14000,write:900}});
+    step("prt_step_1","msg_a1",{total:15300,input:300,output:80,reasoning:20,cache:{read:14000,write:900}},0.0125);
+    step("prt_step_1","msg_a1",{total:15300,input:300,output:80,reasoning:20,cache:{read:14000,write:900}},0.0125);
     event({type:"message.updated",properties:{info:{id:"msg_a2",parentID:user,sessionID,role:"assistant"}}});
     step("prt_step_2","msg_a2",{total:15500,input:100,output:30,reasoning:0,cache:{read:15300,write:70}});
     event({type:"session.idle",properties:{sessionID}});
@@ -237,4 +284,16 @@ test("OpenCode driver emits one usage frame per assistant step-finish part", asy
       contextUsedTokens: null,
     },
   ]);
+  // evo §40: each step's CLI cost is copied, including OpenCode's 0.
+  assert.deepEqual(
+    costFrames(result.frames).map((frame) => [
+      frame.costId,
+      frame.source,
+      frame.costUsd,
+    ]),
+    [
+      ["prt_step_1", "opencode_step_finish_cost", 0.0125],
+      ["prt_step_2", "opencode_step_finish_cost", 0],
+    ],
+  );
 });
