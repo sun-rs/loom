@@ -121,13 +121,31 @@ export function provisionWorkspaceAgentTransaction(
       .get(normalized.runtimeOfferId),
     `RuntimeOffer ${normalized.runtimeOfferId} was not found`,
   );
-  const offer = currentRuntimeOfferFromRow(offerRow);
-  if (
-    offer.state !== "available" ||
-    Date.parse(offer.leaseUntil) <= owner.now().getTime()
-  ) {
+  const pinned = currentRuntimeOfferFromRow(offerRow);
+  const live = (candidate: typeof pinned) =>
+    candidate.state === "available" &&
+    Date.parse(candidate.leaseUntil) > owner.now().getTime();
+  // A user-installed CLI that updated itself is published as a new
+  // RuntimeProfile revision (a new Offer). A Role instance follows the
+  // available Offer of the same profile on the same Host — the rule the
+  // daemon applies to existing Agents at startup
+  // (`local-workbench-runtime-bindings.ts`). Exact identity only: another
+  // profile would be another CLI.
+  const offer =
+    live(pinned) || owner.roleInstance === undefined
+      ? pinned
+      : (owner.database
+          .prepare(
+            `SELECT * FROM runtime_offers
+              WHERE host_id = ? AND runtime_profile_id = ? AND runtime_offer_id <> ?
+              ORDER BY observed_at_ms DESC`,
+          )
+          .all(pinned.hostId, pinned.runtimeProfileId, pinned.runtimeOfferId)
+          .map((row) => currentRuntimeOfferFromRow(row))
+          .find(live) ?? pinned);
+  if (!live(offer)) {
     throw new ConflictError(
-      `RuntimeOffer ${offer.runtimeOfferId} is not currently available`,
+      `RuntimeOffer ${pinned.runtimeOfferId} is not currently available`,
     );
   }
   const hostRow = requireRow(

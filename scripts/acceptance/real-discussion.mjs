@@ -21,6 +21,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { isDeepStrictEqual } from "node:util";
 
 import { assertApprovedGateModel } from "../cli-efficiency/approved-models.mjs";
 import { E2E_MODELS, judgePlacementModel } from "./real-e2e-lib.mjs";
@@ -194,8 +195,7 @@ async function setup(stamp) {
       if (
         profile(role.configuration.runtimeOfferId) !==
           profile(offer.runtimeOfferId) ||
-        JSON.stringify(role.configuration.modelIntent) !==
-          JSON.stringify(modelIntent)
+        !isDeepStrictEqual(role.configuration.modelIntent, modelIntent)
       )
         throw new Error(`已有 Role ${spec.handle} 与批准配置不符，拒绝复用`);
     } else {
