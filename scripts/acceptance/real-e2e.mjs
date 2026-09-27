@@ -1376,10 +1376,15 @@ async function restartService() {
       client = await makeClient();
       await client.request("principal.me", {});
       const inventory = await client.request("host.runtime.list", {});
+      // A CLI self-update imports a new profile revision on restart, so the
+      // offer id captured at Role creation may be superseded; readiness is an
+      // available offer for the same CLI profile.
+      const profileOf = (offerId) => offerId.split(":")[0];
       const ready = Object.values(state.instances).every(({ runtimeOfferId }) =>
         inventory.runtimes.some(
           (runtime) =>
-            runtime.available && runtime.runtimeOfferId === runtimeOfferId,
+            runtime.available &&
+            profileOf(runtime.runtimeOfferId) === profileOf(runtimeOfferId),
         ),
       );
       if (ready)
