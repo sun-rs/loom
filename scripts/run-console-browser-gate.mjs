@@ -713,6 +713,8 @@ if (args.join(" ") === "debug models --bundled") {
     active: true,
     instanceId,
   });
+  // Full review 2 A-P2-3: the private box states the shared memory scope.
+  await waitForText("#direct-memory-scope", "私聊中写入的记忆属于频道共享记忆");
   const privateBody = "FIXTURE private-box secret [fake:final]";
   await typeInto("#composer-input", privateBody);
   await pressEnter();
@@ -1341,6 +1343,66 @@ if (args.join(" ") === "debug models --bundled") {
     [beta.entryId],
   );
 
+  // Full review 2 A-P2-1: an unknown entry result stays bound to its entry.
+  // The pin response for beta is dropped after commit; switching to alpha is
+  // refused, and the retry replays beta's request once and reports beta.
+  await click(`${entryRow(beta.entryId)} .memory-open`);
+  await waitForText("#memory-detail-title", beta.name);
+  const betaBefore = await memoryRead(beta.entryId);
+  const alphaBeforePin = await memoryRead(alpha.entryId);
+  const lostPins = [];
+  await intercept(
+    [{ requestStage: "Response", urlPattern: "*/v3/client/memory/pin" }],
+    async (params) => {
+      lostPins.push(JSON.parse(params.request.postData ?? "{}"));
+      await browser.command(
+        lostPins.length === 1 ? "Fetch.failRequest" : "Fetch.continueRequest",
+        lostPins.length === 1
+          ? { errorReason: "ConnectionReset", requestId: params.requestId }
+          : { requestId: params.requestId },
+      );
+    },
+  );
+  await click("#memory-pin");
+  await waitForText("#memory-action-status", "结果未知");
+  assert.equal(
+    (await memoryRead(beta.entryId)).revision,
+    betaBefore.revision + 1,
+    "the server committed the pin whose response was lost",
+  );
+  await click(`${entryRow(alpha.entryId)} .memory-open`);
+  await waitForText("#memory-action-status", "当前条目的操作结果未知");
+  assert.ok(
+    (await textOf("#memory-detail-title")).includes(beta.name),
+    "the detail stays on the entry of the unknown operation",
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelectorAll("#memory-entry-unknown").length`,
+    ),
+    1,
+    "one retry control for the entry, never accumulated",
+  );
+  await click("#memory-entry-retry");
+  await waitForText("#memory-action-status", "重试核实：原请求已执行");
+  await stopIntercept();
+  assert.equal(lostPins.length, 2);
+  assert.deepEqual(lostPins[1], lostPins[0], "identical retry request");
+  assert.equal(lostPins[0].entryId, beta.entryId);
+  const betaAfter = await memoryRead(beta.entryId);
+  assert.equal(betaAfter.revision, betaBefore.revision + 1, "pinned once");
+  assert.equal(betaAfter.pinned, true);
+  assert.ok((await textOf("#memory-detail-title")).includes(beta.name));
+  assert.equal(
+    (await memoryRead(alpha.entryId)).revision,
+    alphaBeforePin.revision,
+    "the other entry is untouched",
+  );
+  // Resolved: switching works again.
+  await click(`${entryRow(alpha.entryId)} .memory-open`);
+  await waitForText("#memory-detail-title", alpha.name);
+
   // Switches: a per-member write override, then back to inherit.
   const policyBefore = await client.request("memory.policy.read", {
     channelId,
@@ -1371,6 +1433,65 @@ if (args.join(" ") === "debug models --bundled") {
   await waitForText(
     "#memory-policy-status",
     `已保存为开关修订 ${String(policyBefore.revision + 2)}`,
+  );
+  policyNow = await client.request("memory.policy.read", { channelId });
+  assert.deepEqual(policyNow.overrides, []);
+  // Full review 2 A-P2-2: while a save is pending or its result is unknown
+  // the form fields are locked (the success rebuild cannot swallow edits).
+  const policyFieldsDisabled = async () =>
+    await evaluate(
+      browser,
+      `(() => { const nodes = [...document.querySelectorAll("#memory-policy-fields select")]; return nodes.length > 0 && nodes.every((node) => node.disabled); })()`,
+    );
+  const policyRequests = [];
+  let releaseHeldPolicy;
+  const heldPolicy = new Promise((resolve) => (releaseHeldPolicy = resolve));
+  await intercept(
+    [
+      {
+        requestStage: "Response",
+        urlPattern: "*/v3/client/memory/policy/update",
+      },
+    ],
+    async (params) => {
+      policyRequests.push(JSON.parse(params.request.postData ?? "{}"));
+      if (policyRequests.length === 1) {
+        await heldPolicy;
+        await browser.command("Fetch.failRequest", {
+          errorReason: "ConnectionReset",
+          requestId: params.requestId,
+        });
+      } else {
+        await browser.command("Fetch.continueRequest", {
+          requestId: params.requestId,
+        });
+      }
+    },
+  );
+  assert.equal(await policyFieldsDisabled(), false);
+  await setValue(`${policyRow} .memory-override-read`, "off");
+  await click("#memory-policy-submit");
+  await waitForText("#memory-policy-status", "保存中");
+  assert.equal(await policyFieldsDisabled(), true, "locked while pending");
+  releaseHeldPolicy();
+  await waitForText("#memory-policy-status", "结果未知");
+  assert.equal(await policyFieldsDisabled(), true, "locked while unknown");
+  await click("#memory-policy-retry");
+  await waitForText("#memory-policy-status", "重试核实：原请求已执行");
+  await stopIntercept();
+  assert.equal(policyRequests.length, 2);
+  assert.deepEqual(policyRequests[1], policyRequests[0]);
+  assert.equal(await policyFieldsDisabled(), false, "unlocked after success");
+  policyNow = await client.request("memory.policy.read", { channelId });
+  assert.deepEqual(policyNow.overrides, [
+    { instanceId, read: false, write: null },
+  ]);
+  await waitForText(`${policyRow} .memory-effective`, "读 关");
+  await setValue(`${policyRow} .memory-override-read`, "inherit");
+  await click("#memory-policy-submit");
+  await waitForText(
+    "#memory-policy-status",
+    `已保存为开关修订 ${String(policyNow.revision + 1)}`,
   );
   policyNow = await client.request("memory.policy.read", { channelId });
   assert.deepEqual(policyNow.overrides, []);
@@ -1462,6 +1583,15 @@ if (args.join(" ") === "debug models --bundled") {
   const beforeReset = await head(channelId);
   await click(`${card} .action-reset`);
   await waitForText(`${card} .confirm-box`, "新的原生 CLI session");
+  // Full review 2 A-P2-4: no "private memory" claim; the S6 Channel memory.
+  const resetText = await textOf(`${card} .confirm-box`);
+  assert.ok(!resetText.includes("私有记忆"), resetText);
+  assert.ok(
+    resetText.includes(
+      "Room 历史与频道记忆保留，新 session 启动时按读开关重新提供频道记忆索引",
+    ),
+    resetText,
+  );
   await click(`${card} .confirm-reset`);
   await waitForText(`${card} .action-result`, "session 已重置");
   await waitForBrowserValue(
@@ -1692,8 +1822,11 @@ if (args.join(" ") === "debug models --bundled") {
     "/v3/client/rooms/create",
     "/v3/client/rooms/members/remove",
     "/v3/client/runtime-settings/update",
-    // The deliberate memory revision conflict (409).
+    // The deliberate memory revision conflict (409) and the dropped pin
+    // response of the entry-binding probe.
     "/v3/client/memory/pin",
+    // The dropped response of the policy-lock probe.
+    "/v3/client/memory/policy/update",
     // Stale refusals and the deliberately dropped responses above.
     "/v3/client/messages/post",
     "/v3/client/roles/instantiate",

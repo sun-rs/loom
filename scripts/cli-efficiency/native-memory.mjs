@@ -215,19 +215,66 @@ export function diffCodexMemoryDb(before, after) {
   };
 }
 
+// Codex 0.156.1 memory workspace skeleton (full review 2 B-P1-1): created
+// when the pipeline starts, before any memory exists. Its own version
+// control directory, the static extension instructions, the phase-2
+// workspace diff, and a placeholder body such as "No raw memories yet."
+// (only when the whole file was recorded; a longer file is not provably a
+// placeholder).
+const CODEX_SKELETON_PATHS = [
+  /^\.git\//u,
+  /^extensions\/[^/]+\/instructions\.md$/u,
+  /^phase2_workspace_diff\.md$/u,
+];
+const CODEX_PLACEHOLDER = /^(#[^\n]*\n\s*)?No [^\n]* yet\.\s*$/u;
+
+function codexSkeletonFile(rel, file) {
+  if (CODEX_SKELETON_PATHS.some((pattern) => pattern.test(rel))) return true;
+  return (
+    file !== undefined &&
+    !file.symlink &&
+    typeof file.excerpt === "string" &&
+    file.size <= Buffer.byteLength(file.excerpt) &&
+    CODEX_PLACEHOLDER.test(file.excerpt)
+  );
+}
+
+// Added or changed files under memories/ that are memory content (not the
+// skeleton above).
+export function codexMemoryContent(before, after) {
+  const d = diffTree(before, after);
+  return [...d.added, ...d.modified]
+    .filter((rel) => !codexSkeletonFile(rel, after.files[rel]))
+    .sort();
+}
+
+// before/after: {memoriesDir: snapshotTree, memoryDb: snapshotCodexMemoryDb}.
+// The same difference feeds the verdict and the control's early stop.
+export function codexMemoryDiff(before, after) {
+  return {
+    memoriesDir: diffTree(before.memoriesDir, after.memoriesDir),
+    memoriesContent: codexMemoryContent(before.memoriesDir, after.memoriesDir),
+    memoryDb: diffCodexMemoryDb(before.memoryDb, after.memoryDb),
+  };
+}
+
 // The arm's memory signal. Claude: any new or changed file in the arm's
-// bucket memory directory. Codex: memory content (new memory files or
-// stage1 rows) versus a pipeline that only started (job rows).
+// bucket memory directory. Codex: memory content (non-skeleton memory files
+// or stage1 rows) versus a pipeline that only started (job rows or the
+// workspace skeleton).
 export function armSignal(provider, diff) {
   if (provider === "claude") {
     const wrote = treeChanged(diff.memoryDir);
     return { wroteMemory: wrote, memoryActivity: wrote };
   }
+  if (!Array.isArray(diff.memoriesContent))
+    throw new Error("Codex diff lacks memoriesContent (use codexMemoryDiff)");
   const content =
-    treeChanged(diff.memoriesDir) || diff.memoryDb.stage1Outputs > 0;
+    diff.memoriesContent.length > 0 || diff.memoryDb.stage1Outputs > 0;
   return {
     wroteMemory: content,
-    memoryActivity: content || diff.memoryDb.jobs > 0,
+    memoryActivity:
+      content || diff.memoryDb.jobs > 0 || treeChanged(diff.memoriesDir),
   };
 }
 
@@ -272,13 +319,41 @@ export function judgeProvider(provider, { control, experiment }) {
   };
 }
 
-export function overallVerdict(verdicts, violations = []) {
+// evidenceGaps: unverifiable facts (e.g. background memory calls whose
+// model no rollout recorded); they turn a pass into missing-evidence.
+export function overallVerdict(verdicts, violations = [], evidenceGaps = []) {
   if (violations.length) return "guard-violation";
   const values = Object.values(verdicts).map((v) => v.verdict);
   if (!values.length) return "inconclusive";
   for (const v of ["fail", "inconclusive", "insensitive"])
     if (values.includes(v)) return v;
-  return "pass";
+  return evidenceGaps.length ? "missing-evidence" : "pass";
+}
+
+// Codex background memory calls (extraction/consolidation jobs) run inside
+// app-server: they never pass the gate's JSON-RPC fence, so their model and
+// effort are known only from rollouts the CLI recorded outside the main
+// sessions (rollout file names carry the thread id). Jobs with no such
+// rollout are missing evidence, never a pass.
+export function codexBackgroundModels({ rolloutModels, sessions, jobs }) {
+  const threadIds = (sessions ?? []).map((s) => s.threadId).filter(Boolean);
+  const rollouts = (rolloutModels ?? []).filter(
+    (r) => !threadIds.some((id) => r.file.includes(id)),
+  );
+  return {
+    fenced: false,
+    note: "Codex background memory calls run inside app-server, outside the gate's JSON-RPC fence; models only from rollouts",
+    jobs,
+    rollouts,
+    status:
+      jobs > 0
+        ? rollouts.length
+          ? "recorded"
+          : "missing"
+        : rollouts.length
+          ? "recorded"
+          : "no-background-jobs",
+  };
 }
 
 // Models/efforts recorded in Codex rollouts under a CODEX_HOME (main turns

@@ -531,6 +531,10 @@ export function summarizeDrift(
   for (const e of evaluated)
     for (const f of EVIDENCE_GAP_FAILURES)
       if (e.failures.includes(f)) evidenceGaps.push(`round${e.round}:${f}`);
+  // Full review 2 B-P2-4: a post-compaction overhead trend that cannot be
+  // computed proves nothing about it (owner B), so it is an evidence gap.
+  if (compactionOverhead.status === "insufficient-data")
+    evidenceGaps.push("compactionOverheadInsufficient");
   const status = evidenceGaps.length
     ? "missing-evidence"
     : Object.values(criteria).every(Boolean)

@@ -6,6 +6,7 @@
 import { errorText, isAbort } from "./api.ts";
 import { subscribe, type ConsoleContext } from "./context.ts";
 import { el, field, present } from "./dom.ts";
+import { DIRECT_MEMORY_SCOPE_NOTE } from "./memory.ts";
 import {
   SYSTEM_PRINCIPAL_ID,
   UNKNOWN,
@@ -82,6 +83,11 @@ export function mountDirect(
               privateBox.active ? "可用" : "已停用（实例已移出频道；历史只读）",
               "direct-active",
             ),
+            el("p", {
+              attrs: { id: "direct-memory-scope" },
+              className: "muted",
+              text: DIRECT_MEMORY_SCOPE_NOTE,
+            }),
             instance?.channelId === undefined
               ? null
               : el("a", {

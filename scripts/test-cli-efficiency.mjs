@@ -14,7 +14,10 @@ import {
   codeProvenance,
   writeEvidence,
 } from "./cli-efficiency/gate-evidence.mjs";
-import { parseEfficiencyEnv } from "./cli-efficiency/efficiency-config.mjs";
+import {
+  parseEfficiencyEnv,
+  unmeasuredDimensions,
+} from "./cli-efficiency/efficiency-config.mjs";
 import { probeLocalModelCatalog } from "../packages/agent-host/src/model-catalog-probe.ts";
 import { rahArm } from "./cli-efficiency/rah.mjs";
 import {
@@ -79,21 +82,6 @@ const result = {
   qualityReview: "required",
   status: "running",
 };
-// Kimi: the product records no usage, and the session wire may be absent;
-// what neither side can measure is reported as unmeasured, never invented.
-// Codex/Claude: nothing is exempt, missing evidence fails the gate.
-function unmeasuredFor({ productUsage }, metrics) {
-  if (productUsage === "required") return [];
-  const all = (key) =>
-    metrics.every((m) => typeof m[key] === "number" && Number.isFinite(m[key]));
-  return [
-    "productUsage",
-    ...(all("input") && all("firstInput") ? [] : ["tokens"]),
-    ...(all("generationsTotal") && all("generationsBeforeReply")
-      ? []
-      : ["generations"]),
-  ];
-}
 let written;
 const save = () => {
   written = writeEvidence(root, result);
@@ -189,7 +177,7 @@ try {
           kind,
           complete
             ? compareArm(nat, rah, {
-                unmeasured: unmeasuredFor(config, [...nat, ...rah]),
+                unmeasured: unmeasuredDimensions(config, [...nat, ...rah]),
               })
             : { status: "missing-evidence", failures: ["metricsMissing"] },
         ];

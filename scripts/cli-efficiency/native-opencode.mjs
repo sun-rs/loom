@@ -16,6 +16,7 @@ import {
   openCodeNativeEnv,
   parseOpenCodeRunRound,
 } from "./opencode-usage.mjs";
+import { resolveOpenCodeMcpNames } from "../../packages/agent-host/src/opencode-user-mcp.js";
 import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
 
 export async function nativeOpenCodeRound({
@@ -32,15 +33,29 @@ export async function nativeOpenCodeRound({
     prompt,
     sessionId,
   });
-  // Same process-only global-config isolation as the product's drivers.
-  const env = openCodeNativeEnv(
-    config,
-    nativeEnvironment(providerLaunchPolicy("opencode").environment),
-  );
-  checkOpenCodeNativeLaunch(args, env, config);
   const executable = execFileSync("which", ["opencode"], {
     encoding: "utf8",
   }).trim();
+  // Same process-only global-config isolation as the product's drivers,
+  // user MCP servers included: OpenCode's own resolution (`debug config
+  // --pure`, no model call) with this launch's environment and cwd, then
+  // each name switched off (full review 2 B-P2-6).
+  const baseEnv = openCodeNativeEnv(
+    config,
+    nativeEnvironment(providerLaunchPolicy("opencode").environment),
+  );
+  const mcpNames = await resolveOpenCodeMcpNames({
+    executable,
+    env: baseEnv,
+    cwd,
+  });
+  const env = openCodeNativeEnv(
+    config,
+    nativeEnvironment(providerLaunchPolicy("opencode").environment),
+    mcpNames,
+  );
+  checkOpenCodeNativeLaunch(args, env, config, mcpNames);
+  round.userMcpDisabled = mcpNames;
   round.startedAt = new Date().toISOString();
   save();
   let run;

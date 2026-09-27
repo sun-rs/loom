@@ -68,6 +68,42 @@ test("native launch fence: other model, variant, fork or config are refused", ()
     );
 });
 
+// Full review 2 B-P2-6: the native arm switches the user's MCP servers off by
+// name exactly like the product (opencode-user-mcp.js), so a user MCP config
+// cannot inflate the native input and flatter the platform.
+test("native env: user MCP servers disabled by name like the product; the fence checks it", () => {
+  const names = ["github", "fixture-db"];
+  const env = openCodeNativeEnv(approved, { PATH: "/bin" }, names);
+  const config = JSON.parse(env.OPENCODE_CONFIG_CONTENT);
+  assert.equal(config.model, approved.model);
+  assert.equal(config.small_model, approved.model);
+  assert.deepEqual(config.mcp, {
+    github: { enabled: false },
+    "fixture-db": { enabled: false },
+  });
+  const args = openCodeNativeArgs({ ...approved, prompt: "q" });
+  assert.doesNotThrow(() =>
+    checkOpenCodeNativeLaunch(args, env, approved, names),
+  );
+  // No names resolved: no mcp section, as in the product.
+  assert.equal(
+    "mcp" in
+      JSON.parse(openCodeNativeEnv(approved, {}, []).OPENCODE_CONFIG_CONTENT),
+    false,
+  );
+  // A resolved server left enabled is refused before launch.
+  assert.throws(
+    () =>
+      checkOpenCodeNativeLaunch(
+        args,
+        openCodeNativeEnv(approved, {}, ["github"]),
+        approved,
+        names,
+      ),
+    /MCP server fixture-db is not disabled/u,
+  );
+});
+
 test("run json round: session, answer, per-step usage like the product, tool calls", () => {
   const ev = (type, fields, at) => ({
     line: JSON.stringify({

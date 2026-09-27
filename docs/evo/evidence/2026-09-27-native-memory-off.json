@@ -41,8 +41,8 @@
         "control": {
           "arm": "control",
           "cwd": "<tmp>/claude-control/cwd",
-          "bucket": "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd",
-          "memoryDir": "~/.claude/projects/-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory",
+          "bucket": "<tmp-encoded>-claude-control-cwd",
+          "memoryDir": "~/.claude/projects/<tmp-encoded>-claude-control-cwd/memory",
           "args": [
             "-p",
             "--output-format",
@@ -71,12 +71,12 @@
           "memoryAfter": {
             "exists": true,
             "files": {
-              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md": {
+              "<tmp-encoded>-claude-control-cwd/memory/MEMORY.md": {
                 "size": 93,
                 "sha256": "c635145ee653abd0e20bdc2883d73dd6009887f8bbb16c947a2e9756468f56aa",
                 "excerpt": "- [Indentation preference](feedback_indentation.md) — Use tabs for indentation, not spaces\n"
               },
-              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md": {
+              "<tmp-encoded>-claude-control-cwd/memory/feedback_indentation.md": {
                 "size": 487,
                 "sha256": "4ee5788f25cc1dcb44fbe48a68891a7b69031ef1cc7915901b2d6076de25668c",
                 "excerpt": "---\nname: indentation-tabs\ndescription: User prefers tabs for indentation in code\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: ce0e7c85-b36"
@@ -95,8 +95,8 @@
           "diff": {
             "memoryDir": {
               "added": [
-                "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md",
-                "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md"
+                "<tmp-encoded>-claude-control-cwd/memory/MEMORY.md",
+                "<tmp-encoded>-claude-control-cwd/memory/feedback_indentation.md"
               ],
               "modified": [],
               "removed": []
@@ -107,8 +107,8 @@
         "experiment": {
           "arm": "experiment",
           "cwd": "<tmp>/claude-experiment/cwd",
-          "bucket": "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-experiment-cwd",
-          "memoryDir": "~/.claude/projects/-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-experiment-cwd/memory",
+          "bucket": "<tmp-encoded>-claude-experiment-cwd",
+          "memoryDir": "~/.claude/projects/<tmp-encoded>-claude-experiment-cwd/memory",
           "args": [
             "-p",
             "--output-format",
@@ -133,12 +133,12 @@
           "memoryBefore": {
             "exists": true,
             "files": {
-              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md": {
+              "<tmp-encoded>-claude-control-cwd/memory/MEMORY.md": {
                 "size": 93,
                 "sha256": "c635145ee653abd0e20bdc2883d73dd6009887f8bbb16c947a2e9756468f56aa",
                 "excerpt": "- [Indentation preference](feedback_indentation.md) — Use tabs for indentation, not spaces\n"
               },
-              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md": {
+              "<tmp-encoded>-claude-control-cwd/memory/feedback_indentation.md": {
                 "size": 487,
                 "sha256": "4ee5788f25cc1dcb44fbe48a68891a7b69031ef1cc7915901b2d6076de25668c",
                 "excerpt": "---\nname: indentation-tabs\ndescription: User prefers tabs for indentation in code\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: ce0e7c85-b36"
@@ -148,12 +148,12 @@
           "memoryAfter": {
             "exists": true,
             "files": {
-              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md": {
+              "<tmp-encoded>-claude-control-cwd/memory/MEMORY.md": {
                 "size": 93,
                 "sha256": "c635145ee653abd0e20bdc2883d73dd6009887f8bbb16c947a2e9756468f56aa",
                 "excerpt": "- [Indentation preference](feedback_indentation.md) — Use tabs for indentation, not spaces\n"
               },
-              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md": {
+              "<tmp-encoded>-claude-control-cwd/memory/feedback_indentation.md": {
                 "size": 487,
                 "sha256": "4ee5788f25cc1dcb44fbe48a68891a7b69031ef1cc7915901b2d6076de25668c",
                 "excerpt": "---\nname: indentation-tabs\ndescription: User prefers tabs for indentation in code\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: ce0e7c85-b36"

@@ -487,7 +487,7 @@ const args = process.argv.slice(2);
 const record = (v) => appendFileSync(process.env.FAKE_OC_RECORD, JSON.stringify(v) + "\\n");
 if (args[0] === "--version") { console.log("1.18.32"); process.exit(0); }
 const port = Number(args[args.indexOf("--port") + 1]);
-record({ kind: "start", args, config: process.env.OPENCODE_CONFIG_CONTENT ?? null });
+record({ kind: "start", pid: process.pid, args, config: process.env.OPENCODE_CONFIG_CONTENT ?? null });
 const clients = new Set();
 const emit = (v) => { for (const c of clients) c.write("data: " + JSON.stringify(v) + "\\n\\n"); };
 let compaction;
@@ -552,6 +552,44 @@ async function until(probe, label, timeoutMs = 10_000) {
   }
 }
 
+// Full review 2 B-P2-1: the fake serve is the shim's child. SIGKILL on the
+// shim alone cannot be forwarded and left one orphaned fake serve per run;
+// the shim runs in its own process group and the whole group is killed, and
+// every fake serve the record names must be gone before the test ends.
+const pidAlive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === "EPERM";
+  }
+};
+function fakeServePids(record) {
+  if (!existsSync(record)) return [];
+  return readFileSync(record, "utf8")
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((l) => JSON.parse(l))
+    .filter((r) => r.kind === "start" && Number.isInteger(r.pid))
+    .map((r) => r.pid);
+}
+async function stopShim(child, record) {
+  if (child?.pid !== undefined) {
+    try {
+      process.kill(-child.pid, "SIGKILL");
+    } catch {
+      // the group is already gone
+    }
+  }
+  const pids = fakeServePids(record);
+  await until(
+    () => pids.every((pid) => !pidAlive(pid)),
+    `fake opencode serve reaped (${pids.join(", ")})`,
+    5000,
+  );
+}
+
 function startShim(directory, env = {}) {
   const fake = join(directory, "fake-opencode.mjs");
   writeFileSync(fake, FAKE_OPENCODE, { mode: 0o700 });
@@ -582,6 +620,7 @@ test("guarded opencode serve: fenced proxy, hidden compaction, fail-closed denia
       {
         cwd: directory,
         env: { ...process.env, FAKE_OC_RECORD: record },
+        detached: true,
         stdio: ["ignore", "pipe", "pipe"],
       },
     );
@@ -669,17 +708,18 @@ test("guarded opencode serve: fenced proxy, hidden compaction, fail-closed denia
       "the denied prompt never reached OpenCode",
     );
   } finally {
-    child?.kill("SIGKILL");
+    await stopShim(child, join(directory, "record.jsonl"));
     rmSync(directory, { recursive: true, force: true });
   }
 });
 
 test("guarded opencode serve: an agent pinned to another model is denied at startup", async () => {
   const directory = mkdtempSync(join(tmpdir(), "loom-og-test-"));
+  let child;
   try {
     const { shim, record } = startShim(directory);
     const port = await freePort();
-    const child = spawn(
+    child = spawn(
       shim,
       ["serve", "--pure", "--hostname", "127.0.0.1", "--port", String(port)],
       {
@@ -689,6 +729,7 @@ test("guarded opencode serve: an agent pinned to another model is denied at star
           FAKE_OC_RECORD: record,
           FAKE_AGENT_MODEL: "anthropic/claude-opus",
         },
+        detached: true,
         stdio: ["ignore", "pipe", "pipe"],
       },
     );
@@ -699,6 +740,7 @@ test("guarded opencode serve: an agent pinned to another model is denied at star
     assert.match(stderr, /Unapproved agent model \(general\)/);
     await assert.rejects(fetch(`http://127.0.0.1:${port}/path`));
   } finally {
+    await stopShim(child, join(directory, "record.jsonl"));
     rmSync(directory, { recursive: true, force: true });
   }
 });
@@ -899,6 +941,7 @@ test("guarded opencode serve: records session permission requests and the standi
           FAKE_OC_RECORD: record,
           OPENCODE_CONFIG_CONTENT: JSON.stringify({ instructions: [rules] }),
         },
+        detached: true,
         stdio: ["ignore", "pipe", "pipe"],
       },
     );
@@ -943,7 +986,7 @@ test("guarded opencode serve: records session permission requests and the standi
       "forwarded",
     );
   } finally {
-    child?.kill("SIGKILL");
+    await stopShim(child, join(directory, "record.jsonl"));
     rmSync(directory, { recursive: true, force: true });
   }
 });

@@ -77,3 +77,41 @@ test("redaction: the canonical form of the temporary root is replaced too", asyn
   assert.ok(text.includes('"a": "<tmp>/attached"'), text);
   assert.ok(text.includes('"b": "<tmp>/state"'), text);
 });
+
+// Full review 2 B-P2-3: Claude Code names a project bucket after the cwd
+// with every non-alphanumeric character replaced by "-", so the temporary
+// root and the Human's home also appear in that encoded form (and a bucket
+// of another repository would name it). Both forms are redacted.
+test("redaction: encoded project-bucket forms of the root and home are replaced", async () => {
+  const { realpathSync } = await import("node:fs");
+  const root = mkdtempSync(join(tmpdir(), "loom-redact-bucket-"));
+  const encode = (p) => p.replace(/[^A-Za-z0-9]/gu, "-");
+  const bucket = `${encode(realpathSync(root))}-claude-control-cwd`;
+  const other = `${encode("/Users/someone")}-Code-private-repo`;
+  const text = redactEvidence(
+    {
+      memoryDir: `/Users/someone/.claude/projects/${bucket}/memory`,
+      files: { [`${bucket}/memory/MEMORY.md`]: 1, [`${other}/memory/x.md`]: 2 },
+    },
+    { root, home: "/Users/someone" },
+  );
+  assert.ok(!text.includes(encode(realpathSync(root))), text);
+  assert.ok(!text.includes(encode(root)), text);
+  assert.ok(!text.includes("-Users-someone"), text);
+  assert.ok(!text.includes("someone"), text);
+  assert.ok(
+    text.includes(
+      '"memoryDir": "~/.claude/projects/<tmp-encoded>-claude-control-cwd/memory"',
+    ),
+    text,
+  );
+  assert.ok(
+    text.includes('"<home-encoded>-Code-private-repo/memory/x.md": 2'),
+    text,
+  );
+  // Values stay untouched.
+  assert.ok(
+    text.includes('"<tmp-encoded>-claude-control-cwd/memory/MEMORY.md": 1'),
+    text,
+  );
+});

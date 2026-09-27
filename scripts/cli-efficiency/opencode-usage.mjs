@@ -10,6 +10,7 @@
 // record per step-finish part id).
 import { existsSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
+import { openCodeConfigContentWithUserMcpDisabled } from "../../packages/agent-host/src/opencode-user-mcp.js";
 import { openCodeStepFinishUsage } from "../../packages/agent-host/src/provider-usage.js";
 import { jsonArgs, workerCall } from "./claude-usage.mjs";
 import { openCodeDatabasePath } from "./drift-opencode-guard.mjs";
@@ -39,14 +40,16 @@ export function openCodeNativeArgs({ model, effort, prompt, sessionId }) {
 }
 
 // Pins OpenCode's default and small model to the approved one (the product's
-// served config is pinned the same way, see assertOpenCodeServerConfig).
-export function openCodeNativeEnv(approved, env) {
+// served config is pinned the same way, see assertOpenCodeServerConfig) and
+// switches off every user MCP server by name with the product's own module
+// (`mcpNames` from resolveOpenCodeMcpNames; full review 2 B-P2-6).
+export function openCodeNativeEnv(approved, env, mcpNames = []) {
   return {
     ...env,
-    OPENCODE_CONFIG_CONTENT: JSON.stringify({
-      model: approved.model,
-      small_model: approved.model,
-    }),
+    OPENCODE_CONFIG_CONTENT: openCodeConfigContentWithUserMcpDisabled(
+      JSON.stringify({ model: approved.model, small_model: approved.model }),
+      mcpNames,
+    ),
   };
 }
 
@@ -66,8 +69,9 @@ const FORBIDDEN = new Set([
   "--interactive",
 ]);
 
-// Fail-closed pre-launch fence for the native run arm.
-export function checkOpenCodeNativeLaunch(args, env, approved) {
+// Fail-closed pre-launch fence for the native run arm. `mcpNames`: the user
+// MCP servers OpenCode resolved for this launch; each must be disabled.
+export function checkOpenCodeNativeLaunch(args, env, approved, mcpNames = []) {
   if (args[0] !== "run")
     throw new Error("Unsupported gate CLI command (run only)");
   const models = [];
@@ -106,6 +110,9 @@ export function checkOpenCodeNativeLaunch(args, env, approved) {
     config?.small_model !== approved.model
   )
     throw new Error("Unapproved OpenCode default or small model");
+  for (const name of mcpNames)
+    if (config?.mcp?.[name]?.enabled !== false)
+      throw new Error(`User MCP server ${name} is not disabled`);
 }
 
 // entries: [{ line, at }] in arrival order.

@@ -21,7 +21,29 @@ import {
   type MemoryRevisionOperation,
 } from "@rah-os/protocol";
 
-import type { Checked } from "./actions.ts";
+import type { Checked, IntentState } from "./actions.ts";
+
+/** Target contract §4: private-box memory writes are Channel-shared. */
+export const DIRECT_MEMORY_SCOPE_NOTE =
+  "私聊中写入的记忆属于频道共享记忆：记在本实例所属频道，频道内有读权限的实例都能读取，不是私有记忆。";
+
+/**
+ * Full review 2 A-P2-1: an entry operation that is still pending or whose
+ * result is unknown stays bound to its entry. Returns why switching to
+ * `nextId` is refused, or undefined when it is allowed.
+ */
+export function memorySelectionBlock(
+  state: IntentState,
+  selectedId: string | undefined,
+  nextId: string,
+): string | undefined {
+  if (state === "idle" || selectedId === undefined || selectedId === nextId) {
+    return undefined;
+  }
+  return state === "pending"
+    ? "当前条目的操作尚未完成，完成后再切换条目"
+    : "当前条目的操作结果未知：请先在本条目“核实/重试原操作”或“放弃”，再切换条目";
+}
 
 /** Target contract §4 deletion boundary, shown before every delete. */
 export const MEMORY_DELETE_BOUNDARY =

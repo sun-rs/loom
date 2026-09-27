@@ -22,6 +22,14 @@ export const SYSTEM_PRINCIPAL_ID = "principal_system";
 export const MESSAGE_WINDOW = 50;
 export const UNKNOWN = "未知";
 
+/**
+ * Session reset consequence (full review 2 A-P2-4): since S6 Role instances
+ * keep no private memory; the Channel memory stays and a new session gets
+ * the index again through the standing prompt, subject to the read switch.
+ */
+export const SESSION_RESET_CONSEQUENCE =
+  "重置后，该实例下一次运行会启动新的原生 CLI session，之前的对话上下文不再延续；Room 历史与频道记忆保留，新 session 启动时按读开关重新提供频道记忆索引。实例有运行中的工作时服务端会拒绝。因会话连续性失败而隔离的激活会在新 session 中重新排队。";
+
 type Signal = { signal?: AbortSignal };
 const options = (signal: AbortSignal | undefined) =>
   signal === undefined ? undefined : { signal };

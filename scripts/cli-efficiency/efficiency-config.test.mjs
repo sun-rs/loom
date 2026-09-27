@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseEfficiencyEnv } from "./efficiency-config.mjs";
+import { readFileSync } from "node:fs";
+import {
+  parseEfficiencyEnv,
+  unmeasuredDimensions,
+} from "./efficiency-config.mjs";
+import { compareArm, gateStatus } from "./metrics.mjs";
 
 test("default provider is codex: the current approved model, role-warm included", () => {
   const c = parseEfficiencyEnv({});
@@ -51,13 +56,15 @@ test("claude: haiku without effort by default; sonnet/low stays selectable", () 
   );
 });
 
-test("kimi: k3-256k/low, per-turn role only, usage not recorded by the product", () => {
+test("kimi: k3-256k/low, per-turn role only, product usage required", () => {
   const c = parseEfficiencyEnv({ RAH_EFFICIENCY_PROVIDER: "kimi" });
   assert.equal(c.model, "kimi-code/k3-256k");
   assert.equal(c.effort, "low");
   assert.equal(c.bindingId, "local:kimi-cli/v1:kimi-code/k3-256k");
   assert.deepEqual(c.order, ["native", "role"]);
-  assert.equal(c.productUsage, "not-recorded");
+  // Full review 2 B-P1-2: the driver records Kimi per-generation usage from
+  // the session wire (evo §40); a gap is missing evidence, never exempt.
+  assert.equal(c.productUsage, "required");
   assert.equal(
     parseEfficiencyEnv({
       RAH_EFFICIENCY_PROVIDER: "kimi",
@@ -184,4 +191,55 @@ test("role-prewarm is an opt-in arm for Codex, Claude and OpenCode", () => {
       `${provider}: not a default arm`,
     );
   }
+});
+
+// Full review 2 B-P1-2: the committed Kimi run recorded complete product
+// usage every round, yet the old exemption forced missing-evidence. With the
+// product usage required nothing is unmeasured and the arm gets a budget
+// verdict; missing product usage fails as evidence.
+test("kimi evidence: complete product usage is judged, a gap is missing evidence", () => {
+  const evidence = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../docs/evo/evidence/2026-09-27-eff-kimi.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const config = parseEfficiencyEnv({ RAH_EFFICIENCY_PROVIDER: "kimi" });
+  const nat = evidence.arms.native.rounds.map((r) => r.metrics);
+  const rah = evidence.arms.role.rounds.map((r) => r.metrics);
+  const unmeasured = unmeasuredDimensions(config, [...nat, ...rah]);
+  assert.deepEqual(unmeasured, []);
+  const arms = { native: { status: "complete" }, role: { status: "complete" } };
+  const judged = compareArm(nat, rah, { unmeasured });
+  assert.deepEqual(judged.unmeasured, []);
+  assert.ok(
+    judged.rounds.every((r) => r.usageEvidence.completeness === "complete"),
+  );
+  // A budget verdict (the recorded latency is over budget), not an exemption.
+  assert.equal(
+    gateStatus({ arms, comparisons: { role: judged } }).status,
+    "over-budget",
+  );
+  // Missing product usage is never exempt: with the latency excess removed
+  // it alone decides the verdict.
+  const gap = compareArm(
+    nat,
+    rah.map((m, i) => ({
+      ...m,
+      productUsage: undefined,
+      replySeconds: nat[i].replySeconds,
+    })),
+    { unmeasured },
+  );
+  assert.ok(
+    gap.rounds.every((r) => r.failures.includes("usageEvidenceMissing")),
+  );
+  assert.equal(gap.measuredStatus, "missing-evidence");
+  assert.equal(
+    gateStatus({ arms, comparisons: { role: gap } }).status,
+    "failed",
+  );
 });

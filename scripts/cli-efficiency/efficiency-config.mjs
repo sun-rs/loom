@@ -15,9 +15,10 @@ export const CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"];
 // Defaults are the current owner-approved gate models (approved-models.mjs).
 // `role-prewarm` (owner 2026-09-27, opt-in via RAH_EFFICIENCY_ORDER): the
 // warm instance prewarmed at creation, reported beside the cold role-warm arm.
-// `productUsage`: whether the product records per-generation usage for this
-// runtime (Kimi ACP reports a capture gap, so its product usage is
-// `not-recorded` by design).
+// `productUsage`: whether the product must have recorded per-generation
+// usage for this runtime. Every runtime is `required` (Kimi since evo §40:
+// the driver reads the session wire; full review 2 B-P1-2); a missing or
+// partial record is `usageEvidenceMissing`, never exempt.
 export const EFFICIENCY_PROVIDERS = {
   codex: {
     catalogKind: "codex-cli/v1",
@@ -53,7 +54,7 @@ export const EFFICIENCY_PROVIDERS = {
     defaults: ["native", "role"],
     warmAppend: false,
     instructionFile: "AGENTS.md",
-    productUsage: "not-recorded",
+    productUsage: "required",
   },
   // OpenCode binding ids are `provider/model`; the reasoning level is the
   // catalog variant. The product runs OpenCode warm by default.
@@ -161,4 +162,20 @@ export function parseEfficiencyEnv(env) {
     instructionFile: profile.instructionFile,
     productUsage: profile.productUsage,
   };
+}
+
+// Dimensions neither side can measure for a runtime whose product usage is
+// not required (none today): reported as unmeasured, never invented. A
+// `required` runtime is exempt from nothing; missing evidence fails.
+export function unmeasuredDimensions({ productUsage }, metrics) {
+  if (productUsage === "required") return [];
+  const all = (key) =>
+    metrics.every((m) => typeof m[key] === "number" && Number.isFinite(m[key]));
+  return [
+    "productUsage",
+    ...(all("input") && all("firstInput") ? [] : ["tokens"]),
+    ...(all("generationsTotal") && all("generationsBeforeReply")
+      ? []
+      : ["generations"]),
+  ];
 }

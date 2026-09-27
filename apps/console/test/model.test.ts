@@ -13,6 +13,7 @@ import type {
 
 import {
   MESSAGE_WINDOW,
+  SESSION_RESET_CONSEQUENCE,
   SYSTEM_PRINCIPAL_ID,
   UNKNOWN,
   assembleInstanceStatuses,
@@ -1099,5 +1100,16 @@ test("RunAttempt lists cut at the read limit: context is the last listed generat
   assert.equal(
     untruncated.rows.find((row) => row.label === "上下文占用")?.value,
     "30,000 / 258,000",
+  );
+});
+
+// Full review 2 A-P2-4: Role instances keep no private memory since S6;
+// the reset text matches the Channel memory semantics.
+test("session reset consequence: Channel memory kept, index offered again", () => {
+  assert.doesNotMatch(SESSION_RESET_CONSEQUENCE, /私有记忆/u);
+  assert.match(SESSION_RESET_CONSEQUENCE, /Room 历史与频道记忆保留/u);
+  assert.match(
+    SESSION_RESET_CONSEQUENCE,
+    /新 session 启动时按读开关重新提供频道记忆索引/u,
   );
 });

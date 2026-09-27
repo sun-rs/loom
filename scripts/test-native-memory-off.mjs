@@ -4,7 +4,12 @@
 // its memory switches) must write native memory first; otherwise the test is
 // insensitive and proves nothing. The experiment arm (the product launch)
 // then must write none. Approved models only (approved-models.mjs), every
-// model process behind the existing guarded shims.
+// model process behind the existing guarded shims. Codex background memory
+// calls (extraction/consolidation jobs) run inside app-server and are NOT
+// under the shim's JSON-RPC fence: the report marks them unfenced, takes
+// their models from rollouts only, and a job with no recorded model is an
+// evidence gap (missing-evidence, never pass). A Codex control counts as
+// sensitive only with memory content (stage1 rows or non-skeleton files).
 //
 //   npm run test:cli:native-memory -- --paid [--provider=claude|codex|all]
 //     [--no-codex-followup] [--codex-wait-seconds=180]
@@ -54,15 +59,17 @@ import {
   ARMS,
   CODEX_FOLLOWUP_PROMPT,
   MEMORY_PROMPT,
+  armSignal,
   checkCodexRolloutModels,
   claudeArmLaunch,
   claudeProjectBucket,
   codexArmLaunch,
   codexAuthLinkState,
+  codexBackgroundModels,
   codexHomeConfigToml,
+  codexMemoryDiff,
   codexRolloutModels,
   controlGate,
-  diffCodexMemoryDb,
   diffTree,
   judgeProvider,
   overallVerdict,
@@ -70,7 +77,6 @@ import {
   plannedTurns,
   snapshotCodexMemoryDb,
   snapshotTree,
-  treeChanged,
 } from "./cli-efficiency/native-memory.mjs";
 import { providerLaunchPolicy } from "../packages/agent-host/src/provider-launch-arguments.js";
 
@@ -87,6 +93,7 @@ const excerpt = (text, n = 200) =>
   typeof text === "string" ? text.slice(0, n) : null;
 const root = realpathSync(mkdtempSync(join(tmpdir(), "loom-nmem-")));
 const violations = [];
+const evidenceGaps = [];
 const result = {
   schemaVersion: 1,
   gate: "native-memory-off",
@@ -105,11 +112,12 @@ const result = {
   ),
   providers: {},
   violations,
+  evidenceGaps,
   status: "running",
 };
 const save = () => writeEvidence(root, result);
 console.log(
-  `Native memory-off gate: ${options.providers.join(", ")}; at most ${result.plannedModelTurns} model turns (plus Codex background memory calls). Evidence: ${root}`,
+  `Native memory-off gate: ${options.providers.join(", ")}; at most ${result.plannedModelTurns} model turns (plus Codex background memory calls, which run outside the gate fence; their models are taken from rollouts only). Evidence: ${root}`,
 );
 save();
 
@@ -399,13 +407,14 @@ async function codexArm(arm) {
     });
     const before = memoryState();
     record.memoryBefore = before;
-    // The control may stop waiting once memory files exist; the experiment
-    // always waits the whole window (absence needs the full window).
+    // The control may stop waiting once memory content exists (the same
+    // signal as the verdict: the workspace skeleton is not content); the
+    // experiment always waits the whole window (absence needs it).
     const hold = {
       ms: options.codexWaitSeconds * 1000,
       until: () =>
         arm === "control" &&
-        treeChanged(diffTree(before.memoriesDir, memoryState().memoriesDir)),
+        armSignal("codex", codexMemoryDiff(before, memoryState())).wroteMemory,
     };
     record.sessions = [];
     const first = await codexSession({
@@ -432,11 +441,18 @@ async function codexArm(arm) {
     const after = memoryState();
     record.memoryAfter = after;
     record.cwdFiles = snapshotTree(cwd);
-    record.diff = {
-      memoriesDir: diffTree(before.memoriesDir, after.memoriesDir),
-      memoryDb: diffCodexMemoryDb(before.memoryDb, after.memoryDb),
-    };
+    record.diff = codexMemoryDiff(before, after);
     record.rolloutModels = codexRolloutModels(codexHome);
+    // Background memory calls are not under the gate's fence (report says so).
+    record.backgroundMemoryModels = codexBackgroundModels({
+      rolloutModels: record.rolloutModels,
+      sessions: record.sessions,
+      jobs: record.diff.memoryDb.jobs,
+    });
+    if (record.backgroundMemoryModels.status === "missing")
+      evidenceGaps.push(
+        `codex ${arm}: ${String(record.diff.memoryDb.jobs)} background memory job(s) without a recorded model (unfenced)`,
+      );
     const models = checkCodexRolloutModels(record.rolloutModels, approved);
     record.otherEfforts = models.otherEfforts;
     for (const v of models.violations)
@@ -482,10 +498,12 @@ result.status = overallVerdict(
     Object.entries(result.providers).map(([p, r]) => [p, r.verdict]),
   ),
   violations,
+  evidenceGaps,
 );
 result.finishedAt = new Date().toISOString();
 const paths = save();
 console.log(`Overall: ${result.status}`);
 for (const v of violations) console.log(`Violation: ${v}`);
+for (const g of evidenceGaps) console.log(`Evidence gap: ${g}`);
 console.log(`Evidence: ${paths.redactedPath}`);
 process.exitCode = result.status === "pass" ? 0 : 1;

@@ -4,7 +4,10 @@ import { spawn } from "node:child_process";
 import { chmodSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createKimiRequestGuard } from "./drift-kimi-guard.mjs";
+import {
+  assertKimiGateArgs,
+  createKimiRequestGuard,
+} from "./drift-kimi-guard.mjs";
 import { createCodexRequestGuard } from "./model-guard.mjs";
 import {
   parseKimiCompaction,
@@ -360,4 +363,28 @@ test("claude transcript fence: sub-agent (sidechain) models must match too", asy
     assertClaudeTranscriptModel({ models: [], efforts: [] }, sonnet),
     0,
   );
+});
+
+// Full review 2 B-P2-5: the Kimi shim admits exactly the product's three
+// invocations (model-catalog-probe.ts, provider-launch-arguments.js), never
+// a configuration-changing subcommand or extra arguments.
+test("kimi shim: exact argv allowlist", () => {
+  for (const args of [["acp"], ["provider", "list", "--json"], ["--version"]])
+    assert.doesNotThrow(() => assertKimiGateArgs(args), JSON.stringify(args));
+  for (const args of [
+    [],
+    ["provider", "add", "x"],
+    ["provider", "remove", "kimi-code"],
+    ["provider", "list"],
+    ["provider", "list", "--json", "--all"],
+    ["acp", "--yolo"],
+    ["acp", "-m", "other"],
+    ["--version", "extra"],
+    ["-p", "hello"],
+  ])
+    assert.throws(
+      () => assertKimiGateArgs(args),
+      /Unsupported gate CLI command/,
+      JSON.stringify(args),
+    );
 });

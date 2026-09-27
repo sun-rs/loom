@@ -40,6 +40,7 @@ import {
   importResultLabel,
   isRevisionConflict,
   memoryOpLabel,
+  memorySelectionBlock,
   memoryStateLabel,
   policyFormFrom,
   provenanceLabel,
@@ -276,6 +277,9 @@ export function memoryPanel(
   let current: MemoryEntryDetail | undefined;
   let history: MemoryHistoryResponse | undefined;
   detailBox.hidden = true;
+  // Full review 2 A-P2-1: one retry/abandon control for the panel's entry
+  // slot (one listener), re-attached by every detail render.
+  const entryControls = intentControls(entrySlot, "memory-entry", actionStatus);
 
   const renderDetailStale = () => {
     const listed = entries.find((entry) => entry.entryId === current?.entryId);
@@ -368,7 +372,7 @@ export function memoryPanel(
         el("div", { className: "form-actions" }, actions),
         deleteArea,
         actionStatus,
-        intentControls(entrySlot, "memory-entry", actionStatus),
+        entryControls,
         el("h4", { text: "修订历史" }),
         history === undefined
           ? el("p", { className: "muted", text: "读取中…" })
@@ -447,6 +451,13 @@ export function memoryPanel(
   );
 
   const select = async (entryId: string) => {
+    // An unresolved operation stays bound to its entry (full review 2
+    // A-P2-1): its retry must never replay onto another selection.
+    const blocked = memorySelectionBlock(entrySlot.state, selectedId, entryId);
+    if (blocked !== undefined) {
+      setStatus(actionStatus, "error", blocked);
+      return;
+    }
     selectedId = entryId;
     deleteArea.replaceChildren();
     actionStatus.textContent = "";
@@ -617,6 +628,14 @@ export function memoryPanel(
     }
   };
 
+  // Full review 2 A-P2-2: while a save is pending or its result is unknown
+  // the fields are locked, so the success rebuild never swallows an edit.
+  const lockPolicyFields = () => {
+    const locked = policySlot.state !== "idle";
+    for (const node of policyFields.querySelectorAll("select")) {
+      node.disabled = locked;
+    }
+  };
   const fillPolicy = (next: MemoryPolicy) => {
     policy = next;
     latestPolicy = next;
@@ -683,6 +702,7 @@ export function memoryPanel(
       ]),
     );
     policyBase.textContent = `开关修订 ${String(next.revision)}（表单基于此修订）`;
+    lockPolicyFields();
     renderPolicyStale();
   };
 
@@ -785,6 +805,7 @@ export function memoryPanel(
   }
   policySlot.onChange((state) => {
     policySubmit.disabled = state !== "idle";
+    lockPolicyFields();
   });
 
   // ---------------------------------------------------------------- import

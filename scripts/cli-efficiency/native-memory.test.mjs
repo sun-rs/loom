@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   symlinkSync,
   unlinkSync,
   writeFileSync,
@@ -17,12 +18,16 @@ import {
   createCodexRequestGuard,
 } from "./model-guard.mjs";
 import {
+  armSignal,
   checkCodexRolloutModels,
   claudeArmLaunch,
   claudeProjectBucket,
   codexArmLaunch,
   codexAuthLinkState,
+  codexBackgroundModels,
   codexHomeConfigToml,
+  codexMemoryContent,
+  codexMemoryDiff,
   codexRolloutModels,
   controlGate,
   diffCodexMemoryDb,
@@ -199,7 +204,11 @@ test("Codex memory database snapshot counts rows read-only", () => {
 const claudeArm = (tree, ok = true) => ({ ok, diff: { memoryDir: tree } });
 const codexArm = (tree, db, ok = true) => ({
   ok,
-  diff: { memoriesDir: tree, memoryDb: db },
+  diff: {
+    memoriesDir: tree,
+    memoriesContent: [...tree.added, ...tree.modified],
+    memoryDb: db,
+  },
 });
 const noDb = { stage1Outputs: 0, jobs: 0 };
 
@@ -364,4 +373,173 @@ test("arguments: --paid required, provider and wait parsed", () => {
     parseNativeMemoryArgs(["--paid", "--codex-wait-seconds=0"]),
   );
   assert.throws(() => parseNativeMemoryArgs(["--paid", "--bogus"]));
+});
+
+// Full review 2 B-P1-1: the committed 2026-09-27 run. The Codex control arm
+// only produced the memory workspace skeleton (its own version-control
+// directory, extension instructions, the phase-2 diff and the "No raw
+// memories yet." placeholder) and one failed consolidation job: no memory
+// content, so the run is insensitive, never a pass.
+const evidence = JSON.parse(
+  readFileSync(
+    new URL(
+      "../../docs/evo/evidence/2026-09-27-native-memory-off.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+
+test("Codex skeleton files are not memory content (committed control arm is insensitive)", () => {
+  const control = evidence.providers.codex.arms.control;
+  const diff = codexMemoryDiff(control.memoryBefore, control.memoryAfter);
+  assert.ok(diff.memoriesDir.added.includes("raw_memories.md"));
+  assert.deepEqual(diff.memoriesContent, []);
+  assert.deepEqual(armSignal("codex", diff), {
+    wroteMemory: false,
+    memoryActivity: true,
+  });
+  assert.equal(
+    judgeProvider("codex", {
+      control: { ok: true, diff },
+      experiment: evidence.providers.codex.arms.experiment,
+    }).verdict,
+    "insensitive",
+  );
+  assert.equal(controlGate("codex", { ok: true, diff }).proceed, false);
+});
+
+const file = (excerpt, size = excerpt.length) => ({
+  size,
+  sha256: excerpt,
+  excerpt,
+});
+const PLACEHOLDER = "# Raw Memories\n\nNo raw memories yet.\n";
+
+test("Codex memory content: real raw memories, summaries and memory files count", () => {
+  const before = { exists: false, files: {} };
+  const skeleton = {
+    [[".git", "HEAD"].join("/")]: file("ref: refs/heads/main\n"),
+    "extensions/ad_hoc/instructions.md": file("# Ad-hoc notes\n"),
+    "phase2_workspace_diff.md": file("# Memory Workspace Diff\n"),
+    "raw_memories.md": file(PLACEHOLDER),
+  };
+  assert.deepEqual(
+    codexMemoryContent(before, { exists: true, files: skeleton }),
+    [],
+  );
+  assert.deepEqual(
+    codexMemoryContent(before, {
+      exists: true,
+      files: {
+        ...skeleton,
+        "raw_memories.md": file("# Raw Memories\n\n- User prefers tabs.\n"),
+      },
+    }),
+    ["raw_memories.md"],
+  );
+  assert.deepEqual(
+    codexMemoryContent(before, {
+      exists: true,
+      files: { ...skeleton, "memory_summary.md": file("tabs") },
+    }),
+    ["memory_summary.md"],
+  );
+  // A placeholder longer than the recorded excerpt cannot be proven empty.
+  assert.deepEqual(
+    codexMemoryContent(before, {
+      exists: true,
+      files: { "raw_memories.md": file(PLACEHOLDER, 400) },
+    }),
+    ["raw_memories.md"],
+  );
+});
+
+test("Codex early stop uses the same content signal as the verdict", () => {
+  const empty = {
+    memoriesDir: { exists: false, files: {} },
+    memoryDb: { exists: false, stage1Outputs: 0, jobs: 0, jobKinds: {} },
+  };
+  const skeletonOnly = {
+    memoriesDir: {
+      exists: true,
+      files: { "raw_memories.md": file(PLACEHOLDER) },
+    },
+    memoryDb: { exists: true, stage1Outputs: 0, jobs: 1, jobKinds: {} },
+  };
+  assert.equal(
+    armSignal("codex", codexMemoryDiff(empty, skeletonOnly)).wroteMemory,
+    false,
+  );
+  const stage1 = {
+    ...skeletonOnly,
+    memoryDb: { ...skeletonOnly.memoryDb, stage1Outputs: 1 },
+  };
+  assert.equal(
+    armSignal("codex", codexMemoryDiff(empty, stage1)).wroteMemory,
+    true,
+  );
+  assert.throws(
+    () => armSignal("codex", { memoriesDir: noTree, memoryDb: noDb }),
+    /memoriesContent/u,
+  );
+});
+
+// Full review 2 B-P2-2: background memory calls run inside app-server,
+// outside the JSON-RPC fence; their models come only from rollouts.
+test("Codex background memory calls: unfenced, models from rollouts, missing when unrecorded", () => {
+  const sessions = [{ threadId: "t-main-1" }, { threadId: "t-main-2" }];
+  const main = [
+    { file: "sessions/rollout-1-t-main-1.jsonl", model: "gpt-6-luna" },
+    { file: "sessions/rollout-2-t-main-2.jsonl", model: "gpt-6-luna" },
+  ];
+  const none = codexBackgroundModels({
+    rolloutModels: main,
+    sessions,
+    jobs: 0,
+  });
+  assert.equal(none.fenced, false);
+  assert.equal(none.status, "no-background-jobs");
+  const missing = codexBackgroundModels({
+    rolloutModels: main,
+    sessions,
+    jobs: 1,
+  });
+  assert.equal(missing.status, "missing");
+  assert.deepEqual(missing.rollouts, []);
+  const recorded = codexBackgroundModels({
+    rolloutModels: [
+      ...main,
+      {
+        file: "sessions/rollout-3-t-bg.jsonl",
+        model: "gpt-6-luna",
+        effort: "medium",
+      },
+    ],
+    sessions,
+    jobs: 1,
+  });
+  assert.equal(recorded.status, "recorded");
+  assert.deepEqual(
+    recorded.rollouts.map((r) => r.effort),
+    ["medium"],
+  );
+  // The committed control arm: one job, no background rollout recorded.
+  const control = evidence.providers.codex.arms.control;
+  assert.equal(
+    codexBackgroundModels({
+      rolloutModels: control.rolloutModels,
+      sessions: control.sessions,
+      jobs: control.memoryAfter.memoryDb.jobs,
+    }).status,
+    "missing",
+  );
+  assert.equal(
+    overallVerdict({ codex: { verdict: "pass" } }, [], ["codex: unrecorded"]),
+    "missing-evidence",
+  );
+  assert.equal(
+    overallVerdict({ codex: { verdict: "fail" } }, [], ["x"]),
+    "fail",
+  );
 });

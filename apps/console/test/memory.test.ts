@@ -10,6 +10,7 @@ import type {
 
 import { WriteIntentSlot, hasUnresolvedIntents } from "../src/actions.ts";
 import {
+  DIRECT_MEMORY_SCOPE_NOTE,
   MEMORY_DELETE_BOUNDARY,
   MEMORY_IMPORT_NOTE,
   buildImportRequest,
@@ -18,6 +19,7 @@ import {
   deleteConfirmText,
   importResultLabel,
   isRevisionConflict,
+  memorySelectionBlock,
   memoryStateLabel,
   policyFormFrom,
   provenanceLabel,
@@ -440,5 +442,39 @@ test("legacy import is an explicit one-off request; per-file paths are optional 
       status: "skipped",
     }),
     "notes/b.md：跳过（memory body is required）",
+  );
+});
+
+// Full review 2 A-P2-3: contract §4, memory written in the private box is
+// the Channel's shared memory.
+test("private box memory scope note states the shared Channel scope", () => {
+  assert.match(DIRECT_MEMORY_SCOPE_NOTE, /私聊中写入的记忆属于频道共享记忆/u);
+  assert.match(DIRECT_MEMORY_SCOPE_NOTE, /不是私有记忆/u);
+});
+
+// Full review 2 A-P2-1: an entry operation that is pending or unknown stays
+// bound to its entry; switching the selection is refused until it is
+// verified or abandoned, so a retry never replays onto another entry.
+test("memory selection is locked to the entry of an unresolved operation", () => {
+  assert.equal(memorySelectionBlock("idle", "memory-a", "memory-b"), undefined);
+  assert.equal(
+    memorySelectionBlock("unknown", "memory-a", "memory-a"),
+    undefined,
+  );
+  assert.equal(
+    memorySelectionBlock("pending", undefined, "memory-b"),
+    undefined,
+  );
+  for (const state of ["pending", "unknown"] as const) {
+    const text = memorySelectionBlock(state, "memory-a", "memory-b");
+    assert.ok(text !== undefined, state);
+  }
+  assert.match(
+    memorySelectionBlock("pending", "memory-a", "memory-b") ?? "",
+    /完成/u,
+  );
+  assert.match(
+    memorySelectionBlock("unknown", "memory-a", "memory-b") ?? "",
+    /核实\/重试原操作.*放弃/u,
   );
 });

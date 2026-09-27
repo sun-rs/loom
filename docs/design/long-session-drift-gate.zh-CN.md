@@ -192,7 +192,7 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
 恰好等于阈值不算）、或协议调用从基线 0 变为正数，即标 `compactionOverheadRising`；未缓存输入与生成数只报告。结果在
 `summary.compactionOverhead`（`status`: `stable`/`rising`/`insufficient-data`/`no-compaction`），并作为 `noDegradation` 的独立子项：
 `summary.degradation = {behavior, compactionOverhead}`，任一为 false 即 `noDegradation` 为 false、gate `violated`。缺用量的窗口为
-`insufficient-data`：不判上升，也不证明平稳。终端逐窗口打印均值、比值与逐次变化。
+`insufficient-data`：不判上升，也不证明平稳，记证据缺口 `compactionOverheadInsufficient`，gate 判 `missing-evidence`（全面审查 2 B-P2-4；`no-compaction` 不受影响）。终端逐窗口打印均值、比值与逐次变化。
 局限：基线窗口含全部题型，压缩后窗口题型构成不同（压缩后三轮固定为 `qa`、`other`、`thread-recall`），窗口长度也不同；上下文随轮数自然增长，
 比值只反映窗口均值，需结合逐轮表人工判读。尚无付费样本。
 

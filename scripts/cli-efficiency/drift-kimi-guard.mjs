@@ -64,12 +64,27 @@ export function createKimiRequestGuard(approved, env = {}) {
   };
 }
 
+// The product's exact invocations (full review 2 B-P2-5): the ACP driver
+// (provider-launch-arguments.js `acp`), the catalog probe
+// (model-catalog-probe.ts `provider list --json`) and the version probe.
+// Anything else, e.g. `provider add/remove` that edits the Human's Kimi
+// configuration, never starts the CLI.
+const KIMI_GATE_ARGS = [["acp"], ["provider", "list", "--json"], ["--version"]];
+
+export function assertKimiGateArgs(args) {
+  assert.ok(
+    KIMI_GATE_ARGS.some(
+      (allowed) =>
+        allowed.length === args.length &&
+        allowed.every((arg, i) => arg === args[i]),
+    ),
+    `Unsupported gate CLI command: ${JSON.stringify(args)}`,
+  );
+}
+
 export async function runGuardedKimi(executable, approved) {
   const args = process.argv.slice(2);
-  assert.ok(
-    ["acp", "provider", "--version"].includes(args[0]),
-    "Unsupported gate CLI command",
-  );
+  assertKimiGateArgs(args);
   const child = spawn(executable, args, { stdio: ["pipe", "pipe", "pipe"] });
   child.stdout.pipe(process.stdout);
   child.stderr.pipe(process.stderr);

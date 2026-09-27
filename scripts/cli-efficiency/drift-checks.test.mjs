@@ -681,6 +681,24 @@ test("owner B: no compaction or missing usage never claims a trend", () => {
   assert.equal(o.compactionOverheadRising, false);
   assert.equal(o.windows[0].ratio.input, null);
 });
+// Full review 2 B-P2-4: an unmeasurable post-compaction trend is a gap in
+// the evidence (missing-evidence), never a pass; no compaction stays as is.
+test("owner B: insufficient post-compaction overhead data is missing evidence, not a pass", () => {
+  const base = passAll();
+  const noUsage = base.map((e) =>
+    e.round > 15 ? { ...e, checks: { ...e.checks, usage: null } } : e,
+  );
+  const sum = summarizeDrift(noUsage, { compactAt: [8, 15], compactions });
+  assert.equal(sum.compactionOverhead.status, "insufficient-data");
+  assert.ok(sum.evidenceGaps.includes("compactionOverheadInsufficient"));
+  assert.equal(sum.status, "missing-evidence");
+  const none = summarizeDrift(
+    base.filter((e) => e.round <= 8),
+    { compactAt: [] },
+  );
+  assert.equal(none.compactionOverhead.status, "no-compaction");
+  assert.ok(!none.evidenceGaps.includes("compactionOverheadInsufficient"));
+});
 test("owner B: rising overhead is an independent sub-item of noDegradation", () => {
   const base = passAll();
   const rising = base.map((e) =>

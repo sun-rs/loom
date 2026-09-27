@@ -25,6 +25,7 @@ import {
   reportOutcome,
 } from "./intent-view.ts";
 import {
+  SESSION_RESET_CONSEQUENCE,
   SYSTEM_PRINCIPAL_ID,
   loadInstanceStatuses,
   summarizeChannels,
@@ -38,8 +39,6 @@ import { runDetailPanel, runList, type RunDetailPanel } from "./view-run.ts";
 
 const CHANNEL_POLL_MS = 3_000;
 
-const RESET_CONSEQUENCE =
-  "重置后，该实例下一次运行会启动新的原生 CLI session，之前的对话上下文不再延续；Room 历史与私有记忆保留。实例有运行中的工作时服务端会拒绝。因会话连续性失败而隔离的激活会在新 session 中重新排队。";
 const REMOVE_CONSEQUENCE =
   "移出后不再向该实例投递，历史保留；需要时只能重新实例化一个新实例。实例在本频道或私聊里仍有未结束的工作时服务端会拒绝。";
 const SOS_CONSEQUENCE =
@@ -195,7 +194,7 @@ function instanceCard(input: {
         confirmBox({
           confirmClass: "confirm-reset",
           confirmLabel: "确认重置",
-          consequence: RESET_CONSEQUENCE,
+          consequence: SESSION_RESET_CONSEQUENCE,
           onCancel: () => confirmArea.replaceChildren(),
           onConfirm: reset,
         }),

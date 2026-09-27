@@ -1170,6 +1170,22 @@ B. 权限收口
 3. **删除时清空早先原因（Kernel P2-3，负责人裁定）**：删除事务把该条目非 delete 修订的 `reason` 置空，只保留删除本身的原因；打开 Kernel 时 `clearDeletedMemoryDescriptions` 对已删除条目幂等清理旧的原因（未删除条目不动）。测试：`channel-memory.test.ts` 删除用例断言早先 6 版原因为空；`channel-memory-index.test.ts` 重开 Kernel 用例断言历史遗留原因被清理、未删除条目保留。
 4. **线程计数测试不再空转（Kernel P2-4）**：`threadMention` 改为被唤醒实例租约 Activation 后经 Worker 执行凭据在 Thread 内发帖（原因 `mention`），并直接断言 `instance_wake_chain` 的行数与 streak：Thread 内 1–5、顶层 6–10、Thread 内第 11 次 `[11, 0]`，Thread 内 Human 回复后顶层下一次为 `[1, 1]`。产品代码未改（审查已确认产品行为正确）。
 
+### 六十四、全面审查 2 批次 3：门禁与控制台
+
+依据 `~/.loom/reviews/2026-09-27-full-review-2-synthesis.md` 批次 3 与 `2026-09-27-claude-full-review-2-console-gates-docs.md`（B-P1-1、B-P1-2、B-P2-1..6、A-P2-1..4）。只改 `scripts/`、`apps/console/`、门禁文档与已提交证据的脱敏；未跑任何付费调用，未重启服务。每项先写失败测试再实现。
+
+1. 原生记忆门禁 Codex 判定（B-P1-1）：`native-memory.mjs` 新增 `codexMemoryContent`/`codexMemoryDiff`。Codex“写入记忆”只认 `stage1Outputs > 0` 或 `memories/` 下非骨架内容；骨架 = 其自带版本库目录、`extensions/*/instructions.md`、`phase2_workspace_diff.md`，以及全文已记录且只有 “No … yet.” 占位句的文件（如内容为 “No raw memories yet.” 的 `raw_memories.md`）。骨架出现只算“流水线已启动”（实验组照常判 fail）。对照组提前结束改用同一判断（`armSignal("codex", codexMemoryDiff(...))`）。单测以已提交证据 `2026-09-27-native-memory-off.json` 的 Codex 对照组快照重算：内容为空、判 `insensitive`、控制门不放行实验组。**因此第五十六补中 Codex 半边的 pass 不成立：对照组只出现记忆骨架与一次失败的整合 job，灵敏度未证明（insensitive）；Claude 半边不受影响。重跑 Codex 半边需负责人另行授权。**
+2. Codex 后台记忆调用（B-P2-2）：`codexBackgroundModels` 在报告中标注 `fenced: false`（后台 job 在 app-server 内部运行，不经门禁 JSON-RPC 围栏），模型只从主会话之外的 rollout 记录；有后台 job 却无对应 rollout 记为证据缺口，`overallVerdict` 据此把 pass 降为 `missing-evidence`。已提交证据的对照组（1 个失败 job、无后台 rollout）按新规则即为 `missing`。
+3. Kimi 效率门禁（B-P1-2）：`efficiency-config.mjs` Kimi 改为 `productUsage: "required"`；`unmeasuredFor` 移为可测的 `unmeasuredDimensions`。单测用已提交 `2026-09-27-eff-kimi.json`：无 unmeasured，门禁得出预算结论（该样本为 over-budget，来自回复耗时），不再恒为 missing-evidence；去掉产品用量后每轮 `usageEvidenceMissing`、门禁 `failed`。门禁文档表格与“用量证据”段去掉“产品用量恒为 unavailable / ACP 不报”的错误表述。第三十四、五十三节“Kimi 产品侧用量（ACP 不报）仍缺”的说法据此作废（产品用量已完整入库，旧结论源于门禁豁免），留待批次 4 文档整理。
+4. fake `opencode serve` 孤儿进程（B-P2-1）：`drift-opencode-guard.test.mjs` 的 serve 测试以独立进程组启动 shim，结束时杀整个进程组，并断言 fake serve 记录的 pid（fake 在 start 记录里写 `pid`）在测试结束前已不存在（改前复现：断言超时，每次运行多一个孤儿）。新增只列不杀的一次性清单脚本 `node scripts/cli-efficiency/fixture-orphans.mjs`（按 `<tmpdir>/loom-og-(record|test)-XXXXXX/fake-opencode.mjs serve` 精确匹配，单测覆盖误匹配）；本机现存孤儿由负责人决定是否清理。
+5. 证据脱敏（B-P2-3）：`redactEvidence` 同时替换临时根与 home 的 Claude 项目桶编码形式（每个非字母数字字符换成 `-`，如 `-Users-<name>-…`），分别记为 `<tmp-encoded>`、`<home-encoded>`。已提交 `2026-09-27-native-memory-off.json` 的 12 处桶名编码路径已替换（只改路径字符串，数值与 `rawResultSha256` 不变）。已知残留：2026-09-24/25 的 7 份早期证据仍有原样的系统临时目录路径（非编码形式、不含用户名），不在本批范围。
+6. 漂移门禁（B-P2-4）：压缩后开销趋势 `insufficient-data` 时推入证据缺口 `compactionOverheadInsufficient`，gate 判 `missing-evidence`；`no-compaction` 不变。漂移门禁文档同步。
+7. Kimi shim（B-P2-5）：`assertKimiGateArgs` 只放行产品的三种精确调用 `acp`、`provider list --json`、`--version`；`provider add/remove`、多余参数等一律拒绝，CLI 不启动。
+8. OpenCode 原生对照组（B-P2-6）：`native-opencode.mjs` 先用产品模块 `resolveOpenCodeMcpNames`（`opencode debug config --pure`，无模型调用）解析用户 MCP 名，再经 `openCodeConfigContentWithUserMcpDisabled` 逐名关闭；`checkOpenCodeNativeLaunch` 检查每个解析到的名字都已关闭，否则启动前失败；轮次记录 `userMcpDisabled`。
+9. 控制台（A-P2-1..4）：记忆条目操作 pending/结果未知时拒绝切换选中（`memorySelectionBlock`，提示先核实/重试或放弃），“核实/重试”控件在面板层只建一次（不再每次渲染累积监听器），浏览器门禁以丢弃 pin 响应复现：切换被拒、重试只重放原条目请求一次、另一条目修订不变；记忆开关表单在保存 pending/结果未知时锁住所有字段，成功后才解锁（浏览器门禁以挂起再丢弃 policy 响应验证，改前“locked while pending”失败）；私聊页头固定显示“私聊中写入的记忆属于频道共享记忆……不是私有记忆”；session 重置确认文案改为“Room 历史与频道记忆保留，新 session 启动时按读开关重新提供频道记忆索引”。
+
+验证：`npm run test:cli:efficiency:unit`、`npm run test:console:unit`、`npm run test:console:browser`（Fake CLI，临时状态）通过；`npm run check`、`npm run format:check`、`git diff --check` 通过。未跑付费门禁，未验证真实 CLI，未重启或部署服务。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

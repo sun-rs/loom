@@ -39,15 +39,33 @@ const canonical = (path) => {
   }
 };
 
+// Claude Code's project-bucket encoding of an absolute path: every
+// non-alphanumeric character becomes "-" (e.g. `-Users-<name>-<repo>`).
+const encoded = (path) =>
+  typeof path === "string" && path.startsWith("/") && path.length > 3
+    ? path.replace(/[^A-Za-z0-9]/gu, "-")
+    : undefined;
+
 // The canonical root first: it may contain the given root as a substring
-// (macOS /private/var/... vs /var/...).
+// (macOS /private/var/... vs /var/...). The encoded forms (full review 2
+// B-P2-3) follow the same order, the root before the home.
 export function redactEvidence(result, { root, home = homedir() }) {
   let text = JSON.stringify(result, null, 2) + "\n";
   const realRoot = root ? canonical(root) : undefined;
+  const realHome = home ? canonical(home) : undefined;
   for (const [from, to] of [
     ...(realRoot && realRoot !== root ? [[realRoot, "<tmp>"]] : []),
     [root, "<tmp>"],
+    ...(realHome && realHome !== home ? [[realHome, "~"]] : []),
     [home, "~"],
+    ...(realRoot && realRoot !== root
+      ? [[encoded(realRoot), "<tmp-encoded>"]]
+      : []),
+    [encoded(root), "<tmp-encoded>"],
+    ...(realHome && realHome !== home
+      ? [[encoded(realHome), "<home-encoded>"]]
+      : []),
+    [encoded(home), "<home-encoded>"],
   ])
     if (from) text = text.split(from).join(to);
   return text;
