@@ -253,32 +253,51 @@ test("the lease names the protocol version the compiled prompt carries, independ
     assert.ok(prompt.includes(section), section.slice(0, 60));
 });
 
-test("a launch carrying the Loom Worker tools gets the tool protocol, its version and the lease marker", async () => {
+// evo §59 (owner 2026-09-27): the OpenCode tool reply was withdrawn. There is
+// one protocol variant again, the CLI form every runtime received before §57
+// (Claude, Codex and Kimi byte for byte unchanged), and no launch carries the
+// tool lease marker. An OpenCode session created on the withdrawn tool
+// variant (`0af8aa7b0fd8`) resumes with one "Protocol updated" line naming
+// the CLI version, through the existing P2-3 mechanism.
+test("§59: every launch carries the CLI protocol; a session created on the withdrawn tool protocol gets one update line back to it", async () => {
   const {
-    RAH_WORKER_TOOLS_ENV,
     STANDING_PROTOCOL_VERSION,
+    SessionProtocolUpgrade,
+    protocolUpdateNotice,
     renderStandingProtocolCard,
-    standingProtocolVersion,
-    workerToolNames,
   } = await import("@rah-os/agent-host");
-  const names = workerToolNames("opencode")!;
-  const agent = agentContext({ role: "review" });
-  const cli = standingPromptLease(envelope(agent))!;
-  const tools = standingPromptLease(envelope(agent), {
-    workerTools: "opencode",
-  })!;
-  assert.equal(cli.env?.[RAH_WORKER_TOOLS_ENV], undefined);
-  assert.equal(tools.env?.[RAH_WORKER_TOOLS_ENV], "opencode");
-  assert.equal(cli.standingProtocolVersion, STANDING_PROTOCOL_VERSION);
-  assert.equal(tools.standingProtocolVersion, standingProtocolVersion(names));
-  assert.notEqual(tools.standingPromptDigest, cli.standingPromptDigest);
-  const prompt = tools.args!.join("\n");
-  for (const section of renderStandingProtocolCard(names)
-    .split("\n\n")
-    .slice(1))
-    assert.ok(prompt.includes(section), section.slice(0, 60));
-  assert.doesNotMatch(prompt, /RAH_MESSAGE_EOF/u);
-  assert.match(prompt, /`loom_message_post`/u);
-  // The startup bootstrap keeps its CLI form (the tools have no --startup).
-  assert.match(prompt, /worker message-check --startup/u);
+  const { createHash } = await import("node:crypto");
+  // Pinned before §57 (evo HEAD 501233a): unchanged for all four CLIs.
+  assert.equal(STANDING_PROTOCOL_VERSION, "8f51ca099de3");
+  assert.equal(
+    createHash("sha256").update(renderStandingProtocolCard()).digest("hex"),
+    "433a401ceff5b4a94ff3d54163bb5baf1617b2266a5f53d3c383810b21e3725a",
+  );
+  const agent = { ...agentContext({ role: "review" }), instanceChannelId: "c" };
+  const lease = standingPromptLease(envelope(agent), options)!;
+  assert.equal(lease.standingProtocolVersion, STANDING_PROTOCOL_VERSION);
+  assert.equal(lease.env?.RAH_WORKER_TOOLS, undefined);
+  const prompt = lease.args!.join("\n");
+  assert.match(prompt, /<<'RAH_MESSAGE_EOF'/u);
+  assert.doesNotMatch(prompt, /loom_message_(post|check)/u);
+  const key = {
+    participantId: agent.participantId,
+    provider: "opencode-server/v1",
+    runtimeProfileRevisionId: "runtime-profile-revision",
+    workspaceMountRevisionId: "workspace-mount-revision",
+  };
+  const notice = new SessionProtocolUpgrade(undefined).prepare(
+    envelope(agent),
+    lease,
+    key,
+    {
+      ...key,
+      providerSessionId: "ses_tool_variant",
+      recordedAt: "2026-09-27T00:00:00.000Z",
+      schemaVersion: 1,
+      standingProtocolVersion: "0af8aa7b0fd8",
+    },
+  );
+  assert.equal(notice, protocolUpdateNotice(STANDING_PROTOCOL_VERSION));
+  assert.match(notice!, /8f51ca099de3/u);
 });

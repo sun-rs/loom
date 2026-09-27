@@ -49,13 +49,7 @@ const RULES = "FAKE standing prompt for the warm OpenCode test";
 
 type Harness = Awaited<ReturnType<typeof harness>>;
 
-async function harness(
-  options: {
-    env?: Record<string, string>;
-    /** The runtime-level lease env (the daemon's standing-prompt lease). */
-    leaseEnv?: Record<string, string>;
-  } = {},
-) {
+async function harness(options: { env?: Record<string, string> } = {}) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-opencode-"));
   chmodSync(directory, 0o700);
   const socketRoot = mkdtempSync("/tmp/lwo-");
@@ -186,7 +180,7 @@ async function harness(
         const previous = sessions.get(input.participantId);
         return {
           args: previous === undefined ? [] : ["--resume-session", previous],
-          env: { ...options.leaseEnv },
+          env: {},
         };
       },
       runtimeKey: () => "fake-key",
@@ -226,8 +220,6 @@ async function harness(
       });
     },
     records: readRecords,
-    messages: () =>
-      kernel.listMessages(actor, { roomId: room.roomId }).messages,
     roomId: room.roomId,
     sessions,
     async cleanup() {
@@ -429,6 +421,54 @@ test("warm OpenCode resume: a failed rule installation ends the runtime with a d
   }
 });
 
+// evo §57/§59: the warm server gets the same user MCP isolation as the
+// per-turn driver: names from `debug config --pure`, each `enabled: false`,
+// and `GET /mcp` before the runtime is ready; a server it could not switch
+// off ends the launch before any prompt.
+test("warm OpenCode user MCP: the user's MCP servers are switched off and verified before the first prompt", async () => {
+  const state = await harness({
+    env: {
+      FAKE_SCENARIO: "nofinal",
+      FAKE_USER_CONFIG: JSON.stringify({
+        mcp: { usermarker: { type: "local", command: ["/usr/bin/false"] } },
+      }),
+    },
+  });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    const records = state.records();
+    const at = (predicate: (r: Record<string, unknown>) => boolean) =>
+      records.findIndex(predicate);
+    const resolved = at((r) => r.event === "debug-config");
+    assert.ok(resolved >= 0 && resolved < at((r) => r.event === "spawn"));
+    assert.deepEqual((spawns(state)[0]!.config as { mcp?: unknown }).mcp, {
+      usermarker: { enabled: false },
+    });
+    const verified = at(
+      (r) => r.event === "request" && r.method === "GET" && r.path === "/mcp",
+    );
+    assert.ok(verified >= 0 && verified < at((r) => r.event === "prompt"));
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode user MCP: a server the launch could not switch off ends the launch before any prompt", async () => {
+  const state = await harness({
+    env: { FAKE_SCENARIO: "nofinal", FAKE_SERVE_EXTRA_MCP: "1" },
+  });
+  try {
+    state.post("question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.notEqual(result.state, "completed", JSON.stringify(result));
+    assert.equal(prompts(state).length, 0, "no input submitted");
+  } finally {
+    await state.cleanup();
+  }
+});
+
 test("warm OpenCode final reply: the committed --final post ends the run with POST /abort, quiesces as success, and the server continues", async () => {
   const state = await harness({ env: { FAKE_SCENARIO: "reply" } });
   try {
@@ -460,75 +500,6 @@ test("warm OpenCode final reply: the committed --final post ends the run with PO
       assert.equal(process.quiesceResult, "success");
     }
     assert.equal(spawns(state).length, 1, "the server survives");
-  } finally {
-    await state.cleanup();
-  }
-});
-
-// evo §57: the Loom Worker tool facade on the warm runtime. One MCP entry per
-// runtime (a child of the one server); each turn's tool call posts through
-// the same Worker route with the turn's own credential, read from the
-// published current turn — the wake carries the tool form and the model
-// passes no handle; the committed `final` post ends the run like the CLI's.
-test("warm OpenCode worker tools: loom_message_post replies through the Worker route, confirms delivery, ends the run and never reuses a turn", async () => {
-  const state = await harness({
-    env: { FAKE_SCENARIO: "tool" },
-    leaseEnv: { RAH_WORKER_TOOLS: "opencode" },
-  });
-  try {
-    for (let turn = 1; turn <= 2; turn += 1) {
-      state.post(`question ${turn}`);
-      const result = await state.current.agentHost.reconcileOnce();
-      assert.equal(result.state, "completed", JSON.stringify(result));
-    }
-    assert.equal(spawns(state).length, 1, "one server");
-    assert.equal(events(state, "mcp-connected").length, 1, "one MCP entry");
-    const config = spawns(state)[0]!.config as {
-      mcp: { loom: { command: string[] } };
-    };
-    assert.equal(config.mcp.loom.command[1], "__worker-mcp");
-    const sent = prompts(state).map((record) => String(record.text));
-    for (const text of sent) {
-      assert.match(
-        text,
-        /\nReply: loom_message_post target="#warm" based_on_room_seq=\d+ final=true · no reply needed: loom_message_check$/u,
-      );
-      // The handle stays available to other Worker CLI commands.
-      assert.match(text, /^Turn handle: --turn [A-Za-z0-9_-]{22}\n/u);
-    }
-    const calls = events(state, "mcp-call");
-    assert.equal(calls.length, 2);
-    for (const call of calls) {
-      assert.equal(call.tool, "loom_message_post");
-      assert.equal(call.isError, false, String(call.output));
-      assert.equal((call.args as { final?: boolean }).final, true);
-    }
-    assert.deepEqual(events(state, "command"), [], "no shell posting");
-    const replies = state
-      .messages()
-      .filter((message) => message.actorId === state.participantId);
-    assert.deepEqual(
-      replies.map((message) => message.body),
-      ["FAKE OPENCODE reply", "FAKE OPENCODE reply"],
-    );
-    assert.deepEqual(events(state, "follow-up-generation"), []);
-    assert.equal(events(state, "abort").length, 2);
-    for (const run of orderedRuns(state)) {
-      const [row] = sql(
-        state,
-        "SELECT interrupt_sent, preempted_follow_up FROM run_attempt_final_replies WHERE run_attempt_id = ?",
-        run.runAttemptId,
-      );
-      assert.deepEqual(
-        { ...row },
-        { interrupt_sent: 1, preempted_follow_up: "true" },
-      );
-    }
-    assert.ok(
-      state.kernel
-        .listActivations({ roomId: state.roomId })
-        .every((activation) => activation.state === "completed"),
-    );
   } finally {
     await state.cleanup();
   }

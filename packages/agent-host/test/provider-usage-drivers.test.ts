@@ -220,6 +220,8 @@ test("Claude driver copies result.total_cost_usd as a CLI estimate with session-
 const fakeOpenCode = `#!/usr/bin/env node
 import { createServer } from "node:http";
 const args = process.argv.slice(2);
+// User MCP isolation (evo §57/§59): no user MCP server resolved.
+if (args[0] === "debug" && args[1] === "config") { process.stdout.write("{}"); process.exit(0); }
 if (args[0] !== "serve") process.exit(64);
 const port = Number(args[args.indexOf("--port") + 1]);
 const streams = new Set();
@@ -233,6 +235,7 @@ const server = createServer(async (req,res) => {
   for await (const chunk of req) text += chunk;
   const body = text === "" ? {} : JSON.parse(text);
   if (req.method === "GET" && url.pathname === "/path") return send(res,200,{directory:process.cwd()});
+  if (req.method === "GET" && url.pathname === "/mcp") return send(res,200,{});
   if (req.method === "GET" && url.pathname === "/event") {
     res.writeHead(200,{"content-type":"text/event-stream"});
     res.write("data: " + JSON.stringify({type:"server.connected",properties:{}}) + "\\n\\n");

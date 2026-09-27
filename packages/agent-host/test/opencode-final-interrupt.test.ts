@@ -75,58 +75,6 @@ test("a recheck that succeeds with no tool in flight still aborts", async () => 
   assert.equal(interrupts, 1);
 });
 
-/**
- * evo §57: a `loom_message_post` tool call with `final: true` is the posting
- * call exactly like a `message-post ... --final` shell command, so an arm
- * while it runs after an earlier tool round stays attributable.
- */
-function secondRoundArm(posting: Record<string, unknown>) {
-  const helper = createOpenCodeFinalInterrupt({ interrupt: () => true });
-  const first = { id: "tool-a", type: "tool", tool: "bash" };
-  helper.observePart({
-    ...first,
-    state: { status: "running", input: { command: "ls" } },
-  });
-  helper.observePart({
-    ...first,
-    state: { status: "completed", input: { command: "ls" } },
-  });
-  helper.observePart({ id: "text-1", type: "text", text: "now replying" });
-  const second = { id: "tool-b", type: "tool", ...posting };
-  helper.observePart({
-    ...second,
-    state: { status: "running", input: posting.input },
-  });
-  helper.arm();
-  helper.observePart({
-    ...second,
-    state: { status: "completed", input: posting.input },
-  });
-  helper.settle(true);
-  return helper.report();
-}
-
-test("the Loom message_post tool call with final is recognized as the posting call", () => {
-  const post = {
-    tool: "loom_message_post",
-    input: { target: "#main", body: "x", based_on_room_seq: 7, final: true },
-  };
-  assert.equal(secondRoundArm(post).preemptedFollowUp, true);
-  assert.equal(
-    secondRoundArm({
-      tool: "bash",
-      input: { command: '"$RAH_WORKER_CLI" worker message-post --final' },
-    }).preemptedFollowUp,
-    true,
-  );
-  // Not the posting call: a progress post, or another server's tool.
-  for (const other of [
-    { ...post, input: { ...post.input, final: false } },
-    { ...post, tool: "other_message_post" },
-  ])
-    assert.equal(secondRoundArm(other).preemptedFollowUp, "unknown");
-});
-
 test("a listing showing the posting tool running waits for its terminal state", async () => {
   let interrupts = 0;
   const running = {

@@ -399,7 +399,17 @@ const RECORDED_ENV = [
   "KIMI_DISABLE_CRON",
   "OPENCODE_DISABLE_CLAUDE_CODE",
   "OPENCODE_DISABLE_EXTERNAL_SKILLS",
+  "OPENCODE_CONFIG_CONTENT",
 ];
+
+// FAKE `opencode debug config --pure` (not OpenCode): the resolved config
+// lists one user MCP server, as the installed 1.18.32 would for a user file.
+const FAKE_OPENCODE_DEBUG_CONFIG = String.raw`
+if (process.argv[2] === "debug" && process.argv[3] === "config") {
+  process.stdout.write(JSON.stringify({ mcp: { user_mcp: { type: "local", command: ["/usr/bin/false"] } } }));
+  process.exit(0);
+}
+`;
 
 function writeRecorder(directory: string, recordPath: string) {
   const path = join(directory, "fake-cli-recorder.mjs");
@@ -407,6 +417,7 @@ function writeRecorder(directory: string, recordPath: string) {
     path,
     `#!${process.execPath}
 ${FAKE_CODEX_MCP_LIST}
+${FAKE_OPENCODE_DEBUG_CONFIG}
 import { appendFileSync as record } from "node:fs";
 const env = {};
 for (const key of ${JSON.stringify(RECORDED_ENV)}) env[key] = process.env[key] ?? null;
@@ -650,6 +661,13 @@ for (const item of drivers)
       assert.ok(mcpListCwds.length >= 2, "listed and verified before launch");
       for (const cwd of mcpListCwds.slice(0, 2))
         assert.equal(cwd, workspace, "listed in the launch cwd");
+    }
+    if (item.runtimeId === "opencode") {
+      // evo §57/§59: user MCP servers switched off by name, process-only.
+      const config = JSON.parse(first.env.OPENCODE_CONFIG_CONTENT ?? "{}") as {
+        mcp?: Record<string, unknown>;
+      };
+      assert.deepEqual(config.mcp, { user_mcp: { enabled: false } });
     }
     if (item.runtimeId === "claude") {
       assert.equal(first.env.ENABLE_CLAUDEAI_MCP_SERVERS, "false");

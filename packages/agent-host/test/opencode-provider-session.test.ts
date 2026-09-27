@@ -428,6 +428,8 @@ if (args[0] === "models") {
   process.stdout.write('deepseek/deepseek-v4-flash\\n{"name":"DeepSeek V4 Flash","variants":{"low":{},"high":{},"max":{}}}\\n');
   process.exit(0);
 }
+// User MCP isolation (evo §57/§59): no user MCP server resolved.
+if (args[0] === "debug" && args[1] === "config") { process.stdout.write("{}"); process.exit(0); }
 if (args[0] !== "serve") process.exit(64);
 const activationId = process.env.RAH_ACTIVATION_ID;
 const record = (value) => appendFileSync(process.env.FAKE_OPENCODE_RECORD_PATH, JSON.stringify({activationId,...value}) + "\\n");
@@ -468,6 +470,7 @@ const server = createServer(async (req,res) => {
   const body = await readBody(req);
   record({method:req.method,path:url.pathname,body,permissionEnv:process.env.OPENCODE_PERMISSION});
   if (req.method === "GET" && url.pathname === "/path") return send(res,200,{directory:process.cwd()});
+  if (req.method === "GET" && url.pathname === "/mcp") return send(res,200,{});
   if (req.method === "GET" && url.pathname === "/event") {
     res.writeHead(200,{"content-type":"text/event-stream","cache-control":"no-cache"});
     res.write("data: " + JSON.stringify({type:"server.connected",properties:{}}) + "\\n\\n");

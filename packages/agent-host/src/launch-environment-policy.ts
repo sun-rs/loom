@@ -60,8 +60,6 @@ export const MANAGED_CARRIER_ENVIRONMENT_KEYS: readonly string[] = [
   "RAH_PROTOCOL_NOTICE",
   // S6 batch B: the launch's channel memory index sequence (Host lease only).
   "RAH_MEMORY_INDEX_SEQ",
-  // evo §57: this launch carries the Loom Worker tools (Host lease only).
-  "RAH_WORKER_TOOLS",
   "RAH_AGENT_CONTEXT_JSON",
   "RAH_AGENT_INBOX_API_URL",
   "RAH_AGENT_INBOX_CLI",

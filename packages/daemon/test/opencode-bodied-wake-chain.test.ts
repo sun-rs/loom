@@ -43,7 +43,7 @@ const FAKE = fileURLToPath(
   ),
 );
 
-async function fixture(options: { workerTools?: boolean } = {}) {
+async function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-opencode-wake-chain-"));
   chmodSync(directory, 0o700);
   const databasePath = join(directory, "room.db");
@@ -58,13 +58,6 @@ async function fixture(options: { workerTools?: boolean } = {}) {
   const actor = kernel.authenticateAccessToken(human.accessToken);
   const room = kernel.createRoom(actor, { name: "Main", slug: "main" });
   kernel.addMember(actor, { roomId: room.roomId, principalId: agentId });
-  // Another Room the agent belongs to: a `final` reply there is refused by
-  // the reply-target guard.
-  const elsewhere = kernel.createRoom(actor, {
-    name: "Elsewhere",
-    slug: "elsewhere",
-  });
-  kernel.addMember(actor, { roomId: elsewhere.roomId, principalId: agentId });
   const host = kernel.authenticateHostAccessToken(
     kernel.provisionHostCredential({
       hostId: "host",
@@ -112,20 +105,6 @@ async function fixture(options: { workerTools?: boolean } = {}) {
             FAKE_RECORD: recordPath,
             FAKE_SCENARIO: scenario,
             FAKE_FOLLOW_UP_MS: "1000",
-            // As the daemon's standing-prompt lease sets it (evo §57).
-            ...(options.workerTools === true
-              ? {
-                  RAH_WORKER_TOOLS: "opencode",
-                  FAKE_USER_CONFIG: JSON.stringify({
-                    mcp: {
-                      usermarker: {
-                        type: "local",
-                        command: ["/usr/bin/false"],
-                      },
-                    },
-                  }),
-                }
-              : {}),
           },
         };
       },
@@ -195,13 +174,6 @@ async function fixture(options: { workerTools?: boolean } = {}) {
     },
     activations() {
       return kernel.listActivations({ roomId: room.roomId });
-    },
-    agentMessages() {
-      return [room, elsewhere].flatMap((each) =>
-        kernel
-          .listMessages(actor, { roomId: each.roomId })
-          .messages.filter((message) => message.actorId === agentId),
-      );
     },
     runs() {
       return kernel.listRunAttempts({ roomId: room.roomId });
@@ -319,111 +291,6 @@ test("bodied wake (OpenCode): a turn that needs no reply completes through messa
       ).length,
       1,
     );
-  } finally {
-    await context.close();
-  }
-});
-
-const mcpCalls = (records: Record<string, unknown>[]) =>
-  records.filter((r) => r.event === "mcp-call") as {
-    tool: string;
-    args: Record<string, unknown>;
-    isError: boolean;
-    output: string;
-  }[];
-
-// evo §57: the Loom Worker tool facade end to end (per-turn driver): the
-// wake names `loom_message_post`, the model's structured call runs the real
-// Worker CLI in the MCP entry with the Activation credential, and the post
-// is the same Worker route — ACK through `basedOnRoomSeq`, the `final`
-// marker ending the run with POST /abort, delivery registered.
-test("worker tools (OpenCode): a loom_message_post final reply completes the Activation through the same Worker route", async () => {
-  const context = await fixture({ workerTools: true });
-  try {
-    context.setScenario("tool");
-    for (let turn = 1; turn <= 2; turn += 1) {
-      const posted = context.post(`question ${turn}`);
-      const result = await context.agentHost.reconcileOnce();
-      assert.equal(result.state, "completed", JSON.stringify(result));
-      const prompt = context
-        .records()
-        .filter((r) => r.event === "prompt")
-        .at(-1)!.text as string;
-      assert.match(
-        prompt,
-        new RegExp(
-          `\\nReply: loom_message_post target="#main" based_on_room_seq=${posted.event.roomSeq} final=true · no reply needed: loom_message_check$`,
-          "u",
-        ),
-      );
-    }
-    const records = context.records();
-    // The user's MCP server was resolved by OpenCode and switched off.
-    const spawn = records.find((r) => r.event === "spawn")!;
-    const mcp = (spawn.config as { mcp: Record<string, unknown> }).mcp;
-    assert.deepEqual(mcp.usermarker, { enabled: false });
-    assert.deepEqual(commands(records), [], "nothing posted through a shell");
-    const calls = mcpCalls(records);
-    assert.equal(calls.length, 2);
-    for (const call of calls) {
-      assert.equal(call.tool, "loom_message_post");
-      assert.equal(call.isError, false, call.output);
-      assert.equal(call.args.final, true);
-    }
-    assert.deepEqual(
-      context.agentMessages().map((message) => message.body),
-      ["FAKE OPENCODE reply", "FAKE OPENCODE reply"],
-    );
-    assert.deepEqual(
-      records.filter((r) => r.event === "follow-up-generation"),
-      [],
-    );
-    for (const run of context.runs()) {
-      assert.equal(run.state, "exited", JSON.stringify(run));
-      assert.ok(context.sentAt(run.runAttemptId) !== null, "sent registered");
-      assert.deepEqual(context.finalReply(run.runAttemptId), {
-        interrupt_sent: 1,
-        preempted_follow_up: "true",
-      });
-    }
-    assert.ok(context.activations().every((a) => a.state === "completed"));
-  } finally {
-    await context.close();
-  }
-});
-
-test("worker tools (OpenCode): the reply-target guard refuses a tool reply elsewhere and nothing is sent", async () => {
-  const context = await fixture({ workerTools: true });
-  try {
-    context.setScenario("tool+wrongtarget");
-    context.post("question");
-    const result = await context.agentHost.reconcileOnce();
-    assert.notEqual(result.state, "completed", JSON.stringify(result));
-    const [call] = mcpCalls(context.records());
-    assert.equal(call!.args.target, "#elsewhere");
-    assert.equal(call!.isError, true);
-    assert.match(call!.output, /reply_target_mismatch/u);
-    assert.match(call!.output, /Effect: not_sent/u);
-    assert.deepEqual(context.agentMessages(), []);
-    assert.notEqual(context.activations()[0]!.state, "completed");
-  } finally {
-    await context.close();
-  }
-});
-
-test("worker tools (OpenCode): a turn that needs no reply completes through loom_message_check", async () => {
-  const context = await fixture({ workerTools: true });
-  try {
-    context.setScenario("tool+check");
-    context.post("FYI, no answer needed");
-    const result = await context.agentHost.reconcileOnce();
-    assert.equal(result.state, "completed", JSON.stringify(result));
-    const calls = mcpCalls(context.records());
-    assert.deepEqual(
-      calls.map((call) => [call.tool, call.isError]),
-      [["loom_message_check", false]],
-    );
-    assert.deepEqual(context.agentMessages(), []);
   } finally {
     await context.close();
   }

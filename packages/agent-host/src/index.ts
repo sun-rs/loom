@@ -155,7 +155,6 @@ export {
   createWorkerTurnRoot,
   issueWorkerTurnHandle,
   RAH_WORKER_TURN_ROOT_ENV,
-  readCurrentWorkerTurn,
   removeWorkerTurnRoot,
   resolveWorkerTurnInvocation,
   WORKER_TURN_SCOPE_KEYS,
@@ -164,14 +163,7 @@ export type {
   WorkerTurnHandle,
   WorkerTurnReleaseOutcome,
 } from "./worker-turn-handle.ts";
-export { runWorkerCliCommand, WORKER_MCP_ARGUMENT } from "./worker-cli.ts";
-export { runWorkerMcpServer } from "./worker-mcp-server.ts";
-export {
-  invokeWorkerTool,
-  WORKER_TOOL_DEFINITIONS,
-  type WorkerToolDefinition,
-  type WorkerToolResult,
-} from "./worker-tool-facade.ts";
+export { runWorkerCliCommand } from "./worker-cli.ts";
 export { WORKER_HELP_TOPIC_NAMES } from "./worker-help-topics.ts";
 export {
   STANDING_PROTOCOL_VERSION,
@@ -183,19 +175,10 @@ export {
   protocolUpdateNotice,
   remindersSection,
   renderStandingProtocolCard,
-  standingProtocolVersion,
   startupRulesSection,
   workerCliSection,
   workerHelpTopic,
 } from "./standing-protocol.ts";
-export {
-  RAH_OPENCODE_WORKER_TOOLS_ENV,
-  RAH_WORKER_TOOLS_ENV,
-  workerToolModeForRuntime,
-  workerToolNames,
-  type WorkerToolMode,
-  type WorkerToolNames,
-} from "./worker-tool-names.ts";
 export type { WorkerHelpTopicName } from "./worker-help-topics.ts";
 export type { WorkerCliRuntime } from "./worker-cli.ts";
 export { createWorkerToolTransportEnvironment } from "./worker-tool-transport.ts";

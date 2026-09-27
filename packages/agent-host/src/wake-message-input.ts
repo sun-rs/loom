@@ -44,7 +44,6 @@ import {
   compactWakeReplyTargets,
   renderCompactWakeEventLines,
 } from "./worker-read-render.ts";
-import type { WorkerToolNames } from "./worker-tool-names.ts";
 
 /** The one-line retry reminder; the Kernel decides when it applies. */
 export const PREVIOUS_ATTEMPT_UNCONFIRMED_LINE =
@@ -59,13 +58,11 @@ export function previousAttemptReplyLine(
   messageId: string,
   turn: string,
   final = false,
-  tools?: WorkerToolNames,
 ) {
   const ref = shortWorkerRef(messageId);
-  const check = tools === undefined ? `message-check${turn}` : tools.check;
   return final
-    ? `Previous attempt posted its final reply msg=${ref}; confirm delivery with ${check}.`
-    : `Previous attempt posted msg=${ref}; inspect it and finish any remaining work (it does not show every target was answered), or ${check} if nothing remains.`;
+    ? `Previous attempt posted its final reply msg=${ref}; confirm delivery with message-check${turn}.`
+    : `Previous attempt posted msg=${ref}; inspect it and finish any remaining work (it does not show every target was answered), or message-check${turn} if nothing remains.`;
 }
 
 /**
@@ -79,21 +76,13 @@ function replyInstruction(
   targets: readonly string[],
   turn: string,
   through: number,
-  tools: WorkerToolNames | undefined,
 ): string {
-  // evo §57: a launch carrying the Loom Worker tools gets the same reply as a
-  // tool call; the tools need no handle (the facade reads the active turn).
-  const post =
-    tools === undefined
-      ? (target: string) =>
-          `message-post --target ${target}${turn} --based-on-room-seq ${through}`
-      : (target: string) =>
-          `${tools.post} target=${target} based_on_room_seq=${through}`;
-  const final = tools === undefined ? "--final" : "final=true";
-  const check = `no reply needed: ${tools === undefined ? `message-check${turn}` : tools.check}`;
+  const post = (target: string) =>
+    `message-post --target ${target}${turn} --based-on-room-seq ${through}`;
+  const check = `no reply needed: message-check${turn}`;
   if (targets.length <= 1)
-    return `Reply: ${post(targets[0] ?? "")} ${final} · ${check}`;
-  return `Reply per target (${final} on your last post only): ${targets
+    return `Reply: ${post(targets[0] ?? "")} --final · ${check}`;
+  return `Reply per target (--final on your last post only): ${targets
     .map(post)
     .join(" · ")} · ${check}`;
 }
@@ -130,10 +119,8 @@ export function formatBodiedWakeInput(input: {
   memory?: BodiedWakeMemory | undefined;
   /** Warm runtimes: this turn's Worker handle, carried on every command. */
   turnHandle?: string | undefined;
-  /** evo §57: the launch carries the Loom Worker tools under these names. */
-  tools?: WorkerToolNames | undefined;
 }): string | undefined {
-  const { present, tools } = input;
+  const { present } = input;
   const through = present.presentedThroughSeq;
   if (through <= 0 || present.events.length === 0) return undefined;
   const turn = turnArgument(input.turnHandle);
@@ -155,14 +142,13 @@ export function formatBodiedWakeInput(input: {
         compactWakeReplyTargets(present.events, present.addressing),
         turn,
         through,
-        tools,
       )
-    : `Shown through seq ${through} of ${present.toSeq}${notice}: ${tools === undefined ? `run message-check${turn}` : `call ${tools.check}`} first, then reply.`;
+    : `Shown through seq ${through} of ${present.toSeq}${notice}: run message-check${turn} first, then reply.`;
   const retry =
     present.previousAttemptUnconfirmed === true
       ? `\n${PREVIOUS_ATTEMPT_UNCONFIRMED_LINE}`
       : present.previousAttemptReplyMessageId !== undefined
-        ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true, tools)}`
+        ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true)}`
         : "";
   const sections = [
     `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,

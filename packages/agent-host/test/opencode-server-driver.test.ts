@@ -671,14 +671,10 @@ test("session binding: a run cancelled after the input was accepted still report
   );
 });
 
-// evo §57: the Loom Worker tool facade. The lease's RAH_WORKER_TOOLS makes
-// the driver resolve the MCP servers with OpenCode's own `debug config
-// --pure`, start the server with `mcp.loom` (the Worker CLI's MCP entry, a
-// command path only) and every other server `enabled: false`, and prove
-// both with `GET /mcp` before any input.
-const WORKER_CLI_ENTRY = fileURLToPath(
-  new URL("../src/worker-cli-entry.ts", import.meta.url),
-);
+// evo §57/§59 (owner 2026-09-27: the tool facade is withdrawn, the user
+// MCP isolation stays): every launch resolves the MCP servers with
+// OpenCode's own `debug config --pure`, starts the server with each of them
+// `enabled: false`, and proves it with `GET /mcp` before any input.
 const USER_MCP = JSON.stringify({
   mcp: {
     usermarker: { type: "local", command: ["/usr/bin/false"] },
@@ -686,119 +682,56 @@ const USER_MCP = JSON.stringify({
   },
 });
 
-function workerCliWrapper() {
-  const directory = mkdtempSync(join(tmpdir(), "rah-opencode-worker-cli-"));
-  chmodSync(directory, 0o700);
-  const path = join(directory, "rah");
-  writeFileSync(
-    path,
-    `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(WORKER_CLI_ENTRY)} "$@"\n`,
-    { mode: 0o700 },
-  );
-  return {
-    path,
-    cleanup: () => rmSync(directory, { force: true, recursive: true }),
-  };
-}
-
-test("worker tools: the Loom MCP entry is injected, user MCP servers are switched off, both verified before the prompt", async () => {
-  const cli = workerCliWrapper();
-  try {
-    const result = await runTurn({
-      scenario: "reply",
-      wake: WAKE,
-      env: {
-        FAKE_USER_CONFIG: USER_MCP,
-        RAH_WORKER_CLI: cli.path,
-        RAH_WORKER_TOOLS: "opencode",
-      },
-    });
-    assert.equal(result.code, 0, result.stderr);
-    const at = (predicate: (r: Record<string, unknown>) => boolean) =>
-      result.records.findIndex(predicate);
-    const resolved = at((r) => r.event === "debug-config");
-    assert.ok(resolved >= 0, "names resolved by OpenCode itself");
-    assert.deepEqual(result.records[resolved]!.args, [
-      "debug",
-      "config",
-      "--pure",
-    ]);
-    assert.ok(resolved < at((r) => r.event === "spawn"), "before the server");
-    const config = spawnConfig(result.records) as {
-      instructions?: string[];
-      mcp?: Record<string, unknown>;
-    };
-    assert.equal(config.instructions?.length, 1, "the rules stay");
-    assert.deepEqual(config.mcp, {
-      usermarker: { enabled: false },
-      projmarker: { enabled: false },
-      loom: {
-        type: "local",
-        command: [cli.path, "__worker-mcp"],
-        enabled: true,
-      },
-    });
-    assert.doesNotMatch(JSON.stringify(config), /token|secret/iu);
-    const connected = result.records.filter((r) => r.event === "mcp-connected");
-    assert.deepEqual(connected, [
-      {
-        ...connected[0],
-        name: "loom",
-        tools: ["message_post", "message_check"],
-      },
-    ]);
-    const verified = at(
-      (r) => r.event === "request" && r.method === "GET" && r.path === "/mcp",
-    );
-    assert.ok(verified >= 0, "GET /mcp checked");
-    assert.ok(verified < at((r) => r.event === "prompt"), "before the prompt");
-  } finally {
-    cli.cleanup();
-  }
-});
-
-test("worker tools: an MCP server the launch could not switch off fails the launch before any prompt", async () => {
-  const cli = workerCliWrapper();
-  try {
-    const result = await runTurn({
-      scenario: "reply",
-      wake: WAKE,
-      env: {
-        FAKE_SERVE_EXTRA_MCP: "1",
-        RAH_WORKER_CLI: cli.path,
-        RAH_WORKER_TOOLS: "opencode",
-      },
-    });
-    assert.equal(result.code, 1);
-    assert.match(result.stderr, /not disabled: pluginmarker/u);
-    assert.equal(result.records.filter((r) => r.event === "prompt").length, 0);
-  } finally {
-    cli.cleanup();
-  }
-});
-
-test("worker tools: without an absolute Worker CLI the launch is refused before the server starts", async () => {
-  const result = await runTurn({
-    scenario: "reply",
-    wake: WAKE,
-    env: { RAH_WORKER_CLI: "", RAH_WORKER_TOOLS: "opencode" },
-  });
-  assert.equal(result.code, 1);
-  assert.match(result.stderr, /RAH_WORKER_CLI/u);
-  assert.equal(result.records.filter((r) => r.event === "spawn").length, 0);
-});
-
-test("worker tools: a launch the lease did not mark keeps the CLI path untouched", async () => {
+test("user MCP: every launch switches the user's MCP servers off and verifies it before the prompt", async () => {
   const result = await runTurn({
     scenario: "reply",
     wake: WAKE,
     env: { FAKE_USER_CONFIG: USER_MCP },
   });
   assert.equal(result.code, 0, result.stderr);
-  assert.equal(
-    result.records.filter((r) => r.event === "debug-config").length,
-    0,
+  const at = (predicate: (r: Record<string, unknown>) => boolean) =>
+    result.records.findIndex(predicate);
+  const resolved = at((r) => r.event === "debug-config");
+  assert.ok(resolved >= 0, "names resolved by OpenCode itself");
+  assert.deepEqual(result.records[resolved]!.args, [
+    "debug",
+    "config",
+    "--pure",
+  ]);
+  assert.ok(resolved < at((r) => r.event === "spawn"), "before the server");
+  const config = spawnConfig(result.records) as {
+    instructions?: string[];
+    mcp?: Record<string, unknown>;
+  };
+  assert.equal(config.instructions?.length, 1, "the rules stay");
+  // Only the user's servers, switched off: no Loom MCP entry.
+  assert.deepEqual(config.mcp, {
+    usermarker: { enabled: false },
+    projmarker: { enabled: false },
+  });
+  const verified = at(
+    (r) => r.event === "request" && r.method === "GET" && r.path === "/mcp",
   );
+  assert.ok(verified >= 0, "GET /mcp checked");
+  assert.ok(verified < at((r) => r.event === "prompt"), "before the prompt");
+  // The reply still goes through the Worker CLI command.
+  assert.ok(result.records.some((r) => r.event === "command"));
+});
+
+test("user MCP: an MCP server the launch could not switch off fails the launch before any prompt", async () => {
+  const result = await runTurn({
+    scenario: "reply",
+    wake: WAKE,
+    env: { FAKE_SERVE_EXTRA_MCP: "1" },
+  });
+  assert.equal(result.code, 1);
+  assert.match(result.stderr, /not disabled: pluginmarker/u);
+  assert.equal(result.records.filter((r) => r.event === "prompt").length, 0);
+});
+
+test("user MCP: without any user MCP server the launch config is unchanged", async () => {
+  const result = await runTurn({ scenario: "reply", wake: WAKE });
+  assert.equal(result.code, 0, result.stderr);
   assert.equal(
     (spawnConfig(result.records) as { mcp?: unknown }).mcp,
     undefined,

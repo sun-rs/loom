@@ -21,23 +21,6 @@ export const PROTOCOL_KINDS = new Set([
   "memory-read",
 ]);
 
-// evo §57: the Loom Worker tool facade's structured tools, by the name each
-// CLI gives them (OpenCode `loom_*`, Claude/Kimi `mcp__loom__*`, Codex
-// dynamic tools bare). They are posts and checks — protocol — whatever
-// their arguments say.
-const TOOL_KINDS = new Map([
-  ["loom_message_post", "box-post"],
-  ["mcp__loom__message_post", "box-post"],
-  ["message_post", "box-post"],
-  ["loom_message_check", "box-check"],
-  ["mcp__loom__message_check", "box-check"],
-  ["message_check", "box-check"],
-]);
-
-export function workerToolCallKind(name) {
-  return typeof name === "string" ? TOOL_KINDS.get(name) : undefined;
-}
-
 export function workerCallKind(args) {
   if (typeof args !== "string" || args.trim() === "") return "unknown";
   if (HELP.test(args)) return "worker-command";

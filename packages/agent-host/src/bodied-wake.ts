@@ -22,7 +22,6 @@ import {
 import { RAH_MEMORY_INDEX_SEQ_ENV } from "./channel-memory-index.ts";
 import { readMemoryIndexAgainstSystemSnapshot } from "./worker-startup-context.ts";
 import { formatBodiedWakeInput } from "./wake-message-input.ts";
-import { RAH_WORKER_TOOLS_ENV, workerToolNames } from "./worker-tool-names.ts";
 
 const PRESENT_TIMEOUT_MS = 10_000;
 
@@ -111,8 +110,6 @@ export async function renderBodiedWake(input: {
   return formatBodiedWakeInput({
     present,
     turnHandle: input.turnHandle,
-    // evo §57: the launch lease says whether this Provider carries the tools.
-    tools: workerToolNames(env[RAH_WORKER_TOOLS_ENV]),
     ...(index === undefined || index.matchesSystem
       ? {}
       : {

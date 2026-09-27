@@ -4,13 +4,10 @@ import { hostname } from "node:os";
 import type { InstanceMemoryIndex } from "@rah-os/protocol";
 import {
   RAH_MEMORY_INDEX_SEQ_ENV,
-  RAH_WORKER_TOOLS_ENV,
   renderChannelMemoryIndex,
-  standingProtocolVersion,
-  workerToolNames,
+  STANDING_PROTOCOL_VERSION,
   type ActivationEnvelope,
   type ActivationEnvironmentLease,
-  type WorkerToolMode,
 } from "@rah-os/agent-host";
 
 import {
@@ -45,14 +42,6 @@ export type StandingPromptLeaseOptions = {
   toolAccessMode?: string;
   workspaceMode?: string;
   workspacePath?: string;
-  /**
-   * evo §57: this launch carries the Loom Worker tool facade. The lease is
-   * the single decision: the prompt states the tools, the protocol version
-   * is the tool variant's, and `RAH_WORKER_TOOLS` tells the driver to inject
-   * the MCP entry (failing the launch when it cannot) and the Host to render
-   * the tool `Reply:` line.
-   */
-  workerTools?: WorkerToolMode;
 };
 
 /**
@@ -78,9 +67,7 @@ export function standingPromptLease(
       : memory.index === undefined
         ? "## Channel memory index\nNot available at launch: use `memory list`."
         : renderChannelMemoryIndex(memory.index);
-  const tools = workerToolNames(options.workerTools);
   const compilerInput = {
-    ...(tools === undefined ? {} : { workerTools: tools }),
     ...(memorySection === undefined
       ? {}
       : { channelMemory: { section: memorySection } }),
@@ -142,9 +129,6 @@ export function standingPromptLease(
     env: Object.freeze({
       RAH_REQUIRE_SESSION_CONTINUITY:
         agent.instanceChannelId === undefined ? "0" : "1",
-      ...(options.workerTools === undefined
-        ? {}
-        : { [RAH_WORKER_TOOLS_ENV]: options.workerTools }),
       ...(memory?.index !== undefined && memory.carryIndexSeq
         ? { [RAH_MEMORY_INDEX_SEQ_ENV]: String(memory.index.throughSeq) }
         : {}),
@@ -158,6 +142,6 @@ export function standingPromptLease(
           }),
         }),
     standingPromptDigest: compiled.deterministicDigest,
-    standingProtocolVersion: standingProtocolVersion(tools),
+    standingProtocolVersion: STANDING_PROTOCOL_VERSION,
   });
 }
