@@ -7,6 +7,8 @@ import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { LEGACY_RECEIPT_GRACE_MS } from "../src/claude-final-interrupt.js";
+
 /**
  * The warm Claude driver's turn boundary against frame orderings the scripted
  * fakes never produce, driven frame by frame (FAKE Claude, no model):
@@ -433,7 +435,7 @@ test("P2-1: a queued notice the final interrupt cancelled (receipt) is not an er
   }
 });
 
-test("P2-4 (warm): a reason-less error_during_execution before the interrupt receipt is not the final end", async () => {
+test("P2-4 (warm): a reason-less error_during_execution whose interrupt receipt comes only beyond the bounded wait is not the final end", async () => {
   const h = await startDriver();
   try {
     const wake = await acceptedWake(h);
@@ -446,12 +448,38 @@ test("P2-4 (warm): a reason-less error_during_execution before the interrupt rec
       }),
     );
     h.claude(lifecycle(wake, "cancelled"));
-    // The receipt arrives only after the result was judged.
-    await h.settle(50);
+    // The receipt arrives only after the result was judged: beyond the
+    // bounded receipt wait (`LEGACY_RECEIPT_GRACE_MS`, 2 s). A receipt within
+    // it is the receipt race, covered below.
+    await h.settle(LEGACY_RECEIPT_GRACE_MS + 300);
     h.claude(answer(interrupt));
     const end = await h.frame((f) => f.type === "turn.drained", "drained");
     assert.equal(end.status, "failed");
     assert.equal(end.endedAfterFinalReply, undefined);
+  } finally {
+    await h.close();
+  }
+});
+
+test("receipt race (warm): a reason-less error_during_execution read before the interrupt's success receipt is the final end once the receipt lands within the bounded wait", async () => {
+  const h = await startDriver();
+  try {
+    const wake = await acceptedWake(h);
+    const interrupt = await finalPostedAndArmed(h, wake);
+    h.claude(
+      result(wake, {
+        subtype: "error_during_execution",
+        is_error: true,
+        errors: [],
+      }),
+    );
+    h.claude(lifecycle(wake, "cancelled"));
+    await h.settle(50);
+    h.claude(answer(interrupt));
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    assert.equal(end.status, "interrupted");
+    assert.equal(end.endedAfterFinalReply, true);
+    assert.equal(end.errorMessage, undefined);
   } finally {
     await h.close();
   }

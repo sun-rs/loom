@@ -1186,6 +1186,10 @@ B. 权限收口
 
 验证：`npm run test:cli:efficiency:unit`、`npm run test:console:unit`、`npm run test:console:browser`（Fake CLI，临时状态）通过；`npm run check`、`npm run format:check`、`git diff --check` 通过。未跑付费门禁，未验证真实 CLI，未重启或部署服务。
 
+### 六十五、Claude 中断回执竞态修复
+
+全量负载下 `claude-final-reply-driver.test.ts`“older CLI … reason-less error_during_execution with the interrupt's success receipt”偶发失败（驱动退出 1，`Claude turn ended with error_during_execution`）。根因：无 `terminal_reason` 的 `error_during_execution` 只在本次中断的成功回执已到时才算 final 结束（第七次审查 P2-4），而判定在读到 result 的同步 `line` 回调里做；回执与 result 同一 stdout 块到达时 readline 先同步派发 result 行，回执的 settle（微任务）尚未执行，于是判 unknown → 失败。热驱动 `claude-warm-driver.mjs` 同样受影响。修法（`claude-final-interrupt.js`）：result 到达时若本中断已发出且回执未定，按 `LEGACY_RECEIPT_GRACE_MS = 2 s` 有界等待回执（依据：回执与 result 同进程相邻写出，负载下也在毫秒级到达；2 s 低于驱动 5 s 控制请求超时，丢失的回执仍迅速失败）；期内成功回执 → final 结束，拒绝、丢失或超时 → 仍按原规则失败，与本次中断无关的错误（如 `terminal_reason: model_error`）不等待、照旧失败。冷驱动在进程退出后取该判定，热驱动 `closeTurn` 在结算前等待它。测试：fake 新增 `FAKE_RECEIPT_AFTER_RESULT=1`（冷）与 `[fake:no-reason]`、`[fake:receipt-after-result]`（热）；两种顺序各一例，改前“result 先于回执”冷热均确定性失败，改后通过；`claude-warm-driver-close.test.ts` 的 P2-4 用例原把“result 后 50 ms 到的回执”定为失败，与本次有界等待直接冲突，改为回执在等待上限后（2.3 s）到达、仍断言 failed，另加 50 ms 回执判 final 结束的竞态用例（改前失败）；`claude-final-interrupt.test.ts` 用假时钟覆盖成功、拒绝、丢失、超时与非中断原因。未跑付费调用，未重启服务。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

@@ -19,6 +19,15 @@
 // intended final end (seventh review P2-4). `sent` = requested and not
 // refused.
 //
+// Receipt race: the receipt and the result can reach the driver in either
+// order — the result first, or both in one stdout chunk, where readline emits
+// the result line before the receipt's settlement (a microtask) has run. So
+// when such a result arrives while this interrupt's receipt is still
+// outstanding, the decision waits for it, bounded by
+// `LEGACY_RECEIPT_GRACE_MS`: a success receipt within the bound makes the
+// result this interrupt's end; a refusal, a lost receipt or one beyond the
+// bound leaves it "unknown" (a failure), as before.
+//
 // `preemptedFollowUp` is observed, never assumed. The follow-up window opens
 // when the posting call completes: the `tool_result` of the Bash `tool_use`
 // whose command's first line is a `message-post ... --final`. With no
@@ -32,6 +41,12 @@
 // interrupt landed is not observable here.
 const FINAL_POST_COMMAND = /message-post\b.*\s--final\b/u;
 const ABORTED_REASONS = new Set(["aborted_tools", "aborted_streaming"]);
+// The receipt is at most one stdout write away from the result the same CLI
+// process wrote, so it lands within milliseconds even under heavy load; 2 s
+// covers scheduling stalls of a loaded host while staying well below the
+// drivers' 5 s control_request timeout, so a receipt that never comes still
+// fails the run promptly.
+export const LEGACY_RECEIPT_GRACE_MS = 2_000;
 
 function contentOf(frame) {
   const content = frame?.message?.content;
@@ -81,6 +96,10 @@ export function createClaudeFinalInterrupt({ interrupt }) {
   let terminal = "unknown";
   let ended = false;
   let pending = Promise.resolve();
+  /** The result whose decision waits for the receipt, and that wait. */
+  let receiptFrame;
+  /** @type {Promise<boolean> | undefined} */
+  let receiptWait;
   let postIdentified = false;
   let window = false;
   let followUp = false;
@@ -153,8 +172,27 @@ export function createClaudeFinalInterrupt({ interrupt }) {
       } else if (frame?.type === "result") {
         ended = true;
         // Decided when the result arrives, exactly as the driver decides it
-        // (`endedByInterrupt`): a later receipt does not rewrite it.
-        if (requested)
+        // (`endedByInterrupt`), or — for a reason-less result while the
+        // receipt is outstanding — within the bounded receipt wait: a later
+        // receipt does not rewrite it.
+        if (!requested) return;
+        if (isLegacyErrorResult(frame) && accepted === "unknown") {
+          receiptFrame = frame;
+          receiptWait = new Promise((resolve) => {
+            const timer = setTimeout(
+              () => resolve(false),
+              LEGACY_RECEIPT_GRACE_MS,
+            );
+            timer.unref?.();
+            void pending.then(() => {
+              clearTimeout(timer);
+              resolve(accepted === true);
+            });
+          }).then((acknowledged) => {
+            terminal = acknowledged ? true : "unknown";
+            return acknowledged;
+          });
+        } else
           terminal = isLegacyErrorResult(frame)
             ? accepted === true
               ? true
@@ -178,6 +216,22 @@ export function createClaudeFinalInterrupt({ interrupt }) {
         })
       );
     },
+    /**
+     * Whether `frame` is a reason-less result whose decision waits for this
+     * interrupt's outstanding receipt (`endedByInterruptAfterReceipt`).
+     */
+    awaitsReceipt(frame) {
+      return receiptWait !== undefined && frame === receiptFrame;
+    },
+    /**
+     * `endedByInterrupt`, except that a result awaiting the receipt is
+     * decided once the receipt settles, within `LEGACY_RECEIPT_GRACE_MS`.
+     */
+    async endedByInterruptAfterReceipt(frame) {
+      if (receiptWait === undefined || frame !== receiptFrame)
+        return this.endedByInterrupt(frame);
+      return await receiptWait;
+    },
     /** The Host's signal; false when already armed or the turn ended. */
     arm() {
       if (armed || ended) return false;
@@ -194,6 +248,7 @@ export function createClaudeFinalInterrupt({ interrupt }) {
     },
     async report() {
       await pending;
+      await receiptWait;
       const sent = requested && accepted !== false;
       return {
         requested,

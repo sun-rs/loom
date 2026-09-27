@@ -318,24 +318,32 @@ test("final reply: a signal after the follow-up began still ends the turn and re
   ]);
 });
 
-test("final reply (older CLI): a reason-less error_during_execution with the interrupt's success receipt is the final end", async () => {
-  const result = await runTurn({
-    wake: WAKE,
-    signal: { runAttemptId: "run-1", turnId: "accepted" },
-    env: { FAKE_NO_TERMINAL_REASON: "1" },
+for (const [order, env] of [
+  ["receipt before result", {}],
+  // Under load the receipt and the result can arrive in one stdout chunk (the
+  // receipt's settlement is still a pending microtask when the result is
+  // read) or the result first: the order must not decide the run.
+  ["result before receipt", { FAKE_RECEIPT_AFTER_RESULT: "1" }],
+] as const) {
+  test(`final reply (older CLI, ${order}): a reason-less error_during_execution with the interrupt's success receipt is the final end`, async () => {
+    const result = await runTurn({
+      wake: WAKE,
+      signal: { runAttemptId: "run-1", turnId: "accepted" },
+      env: { FAKE_NO_TERMINAL_REASON: "1", ...env },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(byProtocol(result.frames, "rah-final-interrupt/v1"), [
+      {
+        protocol: "rah-final-interrupt/v1",
+        requested: true,
+        accepted: true,
+        terminal: true,
+        sent: true,
+        preemptedFollowUp: true,
+      },
+    ]);
   });
-  assert.equal(result.code, 0, result.stderr);
-  assert.deepEqual(byProtocol(result.frames, "rah-final-interrupt/v1"), [
-    {
-      protocol: "rah-final-interrupt/v1",
-      requested: true,
-      accepted: true,
-      terminal: true,
-      sent: true,
-      preemptedFollowUp: true,
-    },
-  ]);
-});
+}
 
 test("final reply (older CLI): a reason-less error_during_execution without a correlated receipt is not taken as the abort", async () => {
   const result = await runTurn({

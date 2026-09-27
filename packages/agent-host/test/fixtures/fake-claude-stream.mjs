@@ -22,7 +22,9 @@
 // FAKE_NO_LIFECYCLE=1 (an older CLI without `msg_lifecycle_v1`),
 // FAKE_NO_TERMINAL_REASON=1 (an older CLI: an interrupted result carries no
 // `terminal_reason`), FAKE_SILENT_INTERRUPT=1 (the interrupt ends the turn but
-// its control_response never arrives), FAKE_INTERRUPT_TERMINAL_REASON (the
+// its control_response never arrives), FAKE_RECEIPT_AFTER_RESULT=1 (the
+// interrupt's success control_response is written right after the aborted
+// result instead of before it), FAKE_INTERRUPT_TERMINAL_REASON (the
 // interrupted turn's result carries this `terminal_reason` instead, e.g. a
 // provider failure that lands while the interrupt is in flight),
 // FAKE_RESULT_ERRORS (JSON array: the interrupted result's `errors[]`, the
@@ -263,6 +265,7 @@ async function runTurn(turn) {
       result_index: resultIndex++,
     });
     lastResultIsError = true;
+    turn.receipt?.();
     lifecycle(input.uuid, "cancelled");
     record({ kind: "turn-interrupted", turn: turnIndex });
     return;
@@ -400,7 +403,7 @@ function control(frame) {
       response = { still_queued: [], cancelled: survivors.map((i) => i.uuid) };
     } else response = { still_queued: survivors.map((i) => i.uuid) };
   }
-  if (env.FAKE_SILENT_INTERRUPT !== "1")
+  const receipt = () =>
     send({
       type: "control_response",
       response: {
@@ -409,6 +412,11 @@ function control(frame) {
         response,
       },
     });
+  if (env.FAKE_SILENT_INTERRUPT === "1") {
+    // No receipt at all.
+  } else if (env.FAKE_RECEIPT_AFTER_RESULT === "1" && running !== undefined)
+    running.receipt = receipt;
+  else receipt();
   if (running !== undefined) {
     running.interrupted = true;
     running.wake();

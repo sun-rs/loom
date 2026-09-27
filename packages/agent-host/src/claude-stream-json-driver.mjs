@@ -223,6 +223,8 @@ async function runTurn(resumeSession) {
   let protocolError;
   let endedAfterFinalReply = false;
   let finalInterruptResult;
+  // A reason-less first result decided once this interrupt's receipt settles.
+  let finalEndAwaitingReceipt;
   const toolNames = new Map();
   // A fresh uuid per turn input: the replay echo of exactly this uuid and
   // text is the only acceptance of this turn (never a resumed session's
@@ -383,6 +385,11 @@ async function runTurn(resumeSession) {
       if (resultCount === 1 && finalInterrupt.endedByInterrupt(frame)) {
         endedAfterFinalReply = true;
         finalInterruptResult = frame;
+      } else if (resultCount === 1 && finalInterrupt.awaitsReceipt(frame)) {
+        finalEndAwaitingReceipt = {
+          frame,
+          decision: finalInterrupt.endedByInterruptAfterReceipt(frame),
+        };
       } else if (frame.subtype !== "success" || frame.is_error === true)
         failedResult = frame;
       resultFrame = frame;
@@ -415,6 +422,12 @@ async function runTurn(resumeSession) {
     pending.reject(new Error("Claude exited"));
   }
   controlRequests.clear();
+  if (finalEndAwaitingReceipt !== undefined) {
+    if (await finalEndAwaitingReceipt.decision) {
+      endedAfterFinalReply = true;
+      finalInterruptResult = finalEndAwaitingReceipt.frame;
+    } else failedResult ??= finalEndAwaitingReceipt.frame;
+  }
   finalReportForRun = finalInterrupt.armed
     ? await finalInterrupt.report()
     : undefined;

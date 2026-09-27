@@ -24,6 +24,9 @@
 //   listed on the receipt `{still_queued:[], cancelled:[...]}`).
 //
 // A turn's behaviour is chosen by `[fake:<directive>]` tokens in its text.
+// Directives for the final interrupt: `no-reason` (an older CLI: the aborted
+// result carries no `terminal_reason`), `receipt-after-result` (the interrupt
+// receipt is written right after the aborted result instead of before it).
 // Env: FAKE_CLAUDE_RECORD_PATH, FAKE_CLAUDE_STATE_DIR, FAKE_NO_LIFECYCLE=1,
 // FAKE_IGNORE_CANCEL_QUEUED=1.
 import { spawn } from "node:child_process";
@@ -261,8 +264,10 @@ async function runTurn(turn) {
       subtype: "error_during_execution",
       is_error: true,
       errors: [],
-      terminal_reason: "aborted_streaming",
+      ...(has("no-reason") ? {} : { terminal_reason: "aborted_streaming" }),
     });
+    // A receipt held back by `receipt-after-result`.
+    if (turn.receipt !== undefined) setTimeout(turn.receipt, 0);
     lifecycle(turn.uuid, "cancelled");
     record({ event: "turn-completed", uuid: turn.uuid, interrupted: true });
     return;
@@ -432,14 +437,18 @@ function control(frame) {
     frame.request.cancel_queued === true &&
     env.FAKE_IGNORE_CANCEL_QUEUED !== "1";
   const survivors = queue.map((input) => input.uuid);
+  let receipt;
   if (cancelQueued) {
     queue.splice(0, queue.length);
     for (const uuid of survivors) {
       lifecycle(uuid, "cancelled");
       record({ event: "cancelled", uuid });
     }
-    respond({ still_queued: [], cancelled: survivors });
-  } else respond({ still_queued: survivors });
+    receipt = { still_queued: [], cancelled: survivors };
+  } else receipt = { still_queued: survivors };
+  if (running?.text.includes("[fake:receipt-after-result]"))
+    running.receipt = () => respond(receipt);
+  else respond(receipt);
   if (running !== undefined) {
     running.interrupted = true;
     running.wake();

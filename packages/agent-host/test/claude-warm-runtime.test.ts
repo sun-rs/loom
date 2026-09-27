@@ -588,6 +588,26 @@ test("warm Claude final reply: a refused interrupt keeps the follow-up generatio
   }
 });
 
+for (const [order, directive] of [
+  ["receipt before result", ""],
+  ["result before receipt", "[fake:receipt-after-result]"],
+] as const) {
+  test(`warm Claude final reply (older CLI, ${order}): a reason-less error_during_execution with the interrupt's success receipt is the final end`, async () => {
+    const state = await harness();
+    try {
+      state.post(`[fake:final] [fake:no-reason] ${directive} question`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+      const [process] = state.kernel.listRuntimeProcesses({
+        roomId: state.roomId,
+      });
+      assert.equal(process?.quiesceResult, "success");
+    } finally {
+      await state.cleanup();
+    }
+  });
+}
+
 test("warm Claude: a crash while idle is recorded; the next message cold-starts and resumes the same session", async () => {
   const state = await harness();
   try {

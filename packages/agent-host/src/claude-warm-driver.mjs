@@ -620,6 +620,28 @@ function observeResult(turn, frame) {
     uuid === turn.wakeUuid && turn.finalInterrupt.endedByInterrupt(frame);
   if (finalEnd) turn.finalEnded = true;
   const failed = frame.subtype !== "success" || frame.is_error === true;
+  if (
+    uuid === turn.wakeUuid &&
+    !finalEnd &&
+    !ownAbort &&
+    turn.finalInterrupt.awaitsReceipt(frame)
+  ) {
+    // A reason-less result read before this interrupt's receipt settled:
+    // decided within the bounded receipt wait; `closeTurn` awaits it.
+    turn.finalDecision = turn.finalInterrupt
+      .endedByInterruptAfterReceipt(frame)
+      .then((ended) => {
+        if (ended) turn.finalEnded = true;
+        emitResult(turn, frame, { failed, finalEnd: ended, ownAbort });
+      });
+  } else emitResult(turn, frame, { failed, finalEnd, ownAbort });
+  settleInput(turn, uuid);
+  // Batch 3 P1-5: every input folded into this native turn ends with it.
+  for (const folded of named.slice(1))
+    if (turn.inputs.has(folded)) settleInput(turn, folded);
+}
+
+function emitResult(turn, frame, { failed, finalEnd, ownAbort }) {
   if (failed && !finalEnd && !ownAbort) turn.errors.push(resultError(frame));
   const aborted = ownAbort;
   turn.writer.emit(
@@ -639,10 +661,6 @@ function observeResult(turn, frame) {
           )
         : normalizeClaudeTrajectoryEvent(frame),
   );
-  settleInput(turn, uuid);
-  // Batch 3 P1-5: every input folded into this native turn ends with it.
-  for (const folded of named.slice(1))
-    if (turn.inputs.has(folded)) settleInput(turn, folded);
 }
 
 function resultBeforeAcceptance(turn, frame) {
@@ -699,6 +717,7 @@ function maybeClose(turn) {
 
 async function closeTurn(turn) {
   turn.closing = true;
+  await turn.finalDecision;
   turn.writer.flush();
   if (turn.finalInterrupt.armed) {
     const report = await turn.finalInterrupt.report();

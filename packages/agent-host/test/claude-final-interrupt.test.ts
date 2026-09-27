@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { mock } from "node:test";
 
 import {
   createClaudeFinalInterrupt,
   isAbortedClaudeResult,
+  LEGACY_RECEIPT_GRACE_MS,
 } from "../src/claude-final-interrupt.js";
 
 /**
@@ -77,4 +78,84 @@ test("a failed interrupt answer (timeout) leaves the legacy result 'unknown'", a
   assert.equal(helper.endedByInterrupt(legacy), false);
   helper.observe(legacy);
   assert.equal((await helper.report()).terminal, "unknown");
+});
+
+/**
+ * Receipt race: under load the result is read before the receipt settles (the
+ * result first on the pipe, or both in one chunk with the settlement still a
+ * pending microtask). The decision waits for this interrupt's receipt, bounded.
+ */
+function outstandingReceipt() {
+  let settle!: (outcome: "success" | "refused" | "lost") => void;
+  const helper = createClaudeFinalInterrupt({
+    interrupt: () =>
+      new Promise((resolve, reject) => {
+        settle = (outcome) =>
+          outcome === "success"
+            ? resolve({})
+            : reject(
+                Object.assign(new Error(outcome), {
+                  providerRejected: outcome === "refused",
+                }),
+              );
+      }),
+  });
+  helper.arm();
+  return {
+    helper,
+    settle: (outcome: "success" | "refused" | "lost") => settle(outcome),
+  };
+}
+
+test("receipt race: a legacy result read before the success receipt is the final end once the receipt lands", async () => {
+  const { helper, settle } = outstandingReceipt();
+  helper.observe(legacy);
+  assert.equal(helper.endedByInterrupt(legacy), false);
+  assert.equal(helper.awaitsReceipt(legacy), true);
+  const decision = helper.endedByInterruptAfterReceipt(legacy);
+  settle("success");
+  assert.equal(await decision, true);
+  assert.equal((await helper.report()).terminal, true);
+});
+
+test("receipt race: a refused or lost receipt after a legacy result is not the final end", async () => {
+  for (const outcome of ["refused", "lost"] as const) {
+    const { helper, settle } = outstandingReceipt();
+    helper.observe(legacy);
+    const decision = helper.endedByInterruptAfterReceipt(legacy);
+    settle(outcome);
+    assert.equal(await decision, false, outcome);
+    assert.equal(
+      (await helper.report()).terminal,
+      outcome === "refused" ? false : "unknown",
+    );
+  }
+});
+
+test("receipt race: a success receipt beyond the bounded wait does not make the legacy result the final end", async () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const { helper, settle } = outstandingReceipt();
+    helper.observe(legacy);
+    const decision = helper.endedByInterruptAfterReceipt(legacy);
+    mock.timers.tick(LEGACY_RECEIPT_GRACE_MS);
+    assert.equal(await decision, false);
+    settle("success");
+    const report = await helper.report();
+    assert.equal(report.accepted, true);
+    assert.equal(
+      report.terminal,
+      "unknown",
+      "a later receipt does not rewrite it",
+    );
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("receipt race: a stated non-abort reason never waits for the receipt", () => {
+  const { helper } = outstandingReceipt();
+  const failure = { ...legacy, terminal_reason: "model_error" };
+  helper.observe(failure);
+  assert.equal(helper.awaitsReceipt(failure), false);
 });
