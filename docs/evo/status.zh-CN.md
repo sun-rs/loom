@@ -12,7 +12,7 @@
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
 - `evo`：后端重建线。前端产品代码（`apps/web/src`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 一致，phase 4 之前不改。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行，所以部署版本 = 重启时的检出 HEAD。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
-- 当前部署提交：`6018f47`（已推送，验收脚本重启部署；重启前备份 `~/.loom/evo-backups/pre-restart-*`，重启时无进行中 RunAttempt；控制台 200，预热仍关闭）。**每次部署重启后必须更新本行。**
+- 当前部署提交：`b280e45`（已推送；重启前备份 `~/.loom/evo-backups/pre-restart-*`，重启时无进行中 RunAttempt；控制台 200，预热仍关闭）。**每次部署重启后必须更新本行。**
 - 数据库 schema 76。运行时设置 `~/.loom/evo/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
 - 旧正式环境（`~/.rah`、4173）已退役，不兼容旧数据。
