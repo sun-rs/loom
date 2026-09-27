@@ -12,7 +12,7 @@
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
 - `evo`：后端重建线。前端产品代码（`apps/web/src`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 一致，phase 4 之前不改。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行，所以部署版本 = 重启时的检出 HEAD。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
-- 当前部署提交：`5c7e82e`（已推送；重启前备份 `~/.loom/evo-backups/pre-restart-*`，重启时无进行中 RunAttempt；控制台 200，预热仍关闭）。**每次部署重启后必须更新本行。**
+- 当前部署提交：`6018f47`（已推送，验收脚本重启部署；重启前备份 `~/.loom/evo-backups/pre-restart-*`，重启时无进行中 RunAttempt；控制台 200，预热仍关闭）。**每次部署重启后必须更新本行。**
 - 数据库 schema 76。运行时设置 `~/.loom/evo/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
 - 旧正式环境（`~/.rah`、4173）已退役，不兼容旧数据。
@@ -77,13 +77,15 @@
 4. OpenCode 热路径是否补 `OPENCODE_PERMISSION` 全局 allow（历史第二十五节偏离）。
 5. Codex `$CODEX_HOME/AGENTS.md` 是否换专用 CODEX_HOME（涉及已有 thread 迁移）。
 6. 本机遗留的 fake `opencode serve` 孤儿进程是否清理（`node scripts/cli-efficiency/fixture-orphans.mjs` 只列不杀）。
+7. Human 顶层消息只 @ 部分实例时其他成员是否也被唤醒：现状全员唤醒，P43 第 7/8 步未被点名的 Codex 回复并替 Claude 作答；先调研上游唤醒语义再定（[P43](paid-runs.zh-CN.md)）。
 
 技术未决（带触发条件）：
 
 - 首轮延迟与首轮纯文本：模型遵守度与服务端波动主导，需交替顺序多样本再判；不以提示词补丁处理。
 - Kimi 延迟：触发条件为下一次 Kimi 效率门禁，按交替顺序与多样本判定。
 - Codex 续轮额外 `message-read`：P41 出现、P42 消失，判模型侧；若复现为稳定行为再评估（会改四家协议版本，需四家付费复验）。
-- 真实 CLI 未覆盖：S3 私聊轮、多 CLI 并发、热模式取消与首轮中断、OpenCode abort 时序、Claude 后台任务轮竞态、第六十二至六十五节修复。触发：下一批付费授权。
+- 真实 CLI 已覆盖（P43，Codex+Claude haiku）：私聊排队与隔离、平台记忆写入/读回与读开关拒绝、重启后原 session 续聊。
+- 真实 CLI 未覆盖：多 CLI 并发、热模式取消与首轮中断、OpenCode abort 时序、Claude 后台任务轮竞态、第六十二至六十五节修复。触发：下一批付费授权。
 - 记忆：已删除条目 Worker 无列举入口；30 条增量上限为有损摘要；Codex/Claude 压缩后增量可能只剩摘要。
 - 控制台：急停状态只看已同步事件窗口；RunAttempt 列表只取最近 20 条活动。触发：phase 4 前端接入。
 
