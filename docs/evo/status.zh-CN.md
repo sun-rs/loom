@@ -1063,6 +1063,10 @@ B. 权限收口
 - 已知限制：Claude 用 `-p` 单轮而非产品的 stream-json 常驻输入方式，开关相同；Claude 对照组生成的 `~/.claude/projects/<临时桶>` 目录不自动删除，路径记录在证据中。
 - 检查：`scripts/cli-efficiency/native-memory.test.mjs` 15 项免费单测（参数构造与守卫放行、快照与差异、sqlite 计数、判定、参数解析），`npm run test:cli:efficiency:unit` 全部通过；`npm run format:check`、`git diff --check` 通过；`npm run check` 在编写时因并行进行中的 daemon 预热改动（`daemon-application.ts` 未定义 `InstanceRuntimeHintDispatcher`、行数超 800 ratchet）失败，与本门禁文件无关，需在该批完成后复跑。单测在实现之后编写（门禁脚本本身不是产品行为改动）。未跑付费 CLI，服务未重启，未 commit/push。
 
+### 五十六补、原生记忆关闭证明：运行结果（2026-09-27，负责人授权）
+
+`npm run test:cli:native-memory -- --paid` 总判定 pass（证据 `docs/evo/evidence/2026-09-27-native-memory-off.json`）。Claude haiku：对照组（仅去掉 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`，其余隔离开关相同）在其唯一项目桶写入原生记忆；实验组（产品启动方式）未写入。Codex gpt-6-luna/low：对照组（用户配置开启记忆，仅去掉三项记忆开关）生成原生记忆；实验组未生成。结论：产品开关在两家上确实阻止原生记忆，且能覆盖用户自行开启的 Codex 记忆配置；Kimi/OpenCode 按负责人判定视为无原生持久记忆。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

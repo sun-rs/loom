@@ -1,0 +1,597 @@
+{
+  "schemaVersion": 1,
+  "gate": "native-memory-off",
+  "root": "<tmp>",
+  "startedAt": "2026-09-26T23:56:49.429Z",
+  "codeCommit": "ab3cfcd9480ed37a60617ac99f31ae876babddd6",
+  "sourceRef": "ab3cfcd9480ed37a60617ac99f31ae876babddd6",
+  "workingTree": {
+    "dirty": true,
+    "changedPaths": 1,
+    "untrackedPaths": 1,
+    "statusSha256": "f9fa0dca937ca5351e6160bcf776b35e7a30632d65dc74bd647378dfe74ea61d",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "prompt": "Please remember for future sessions: I prefer tabs for indentation. Save this to your memory.",
+  "options": {
+    "providers": ["claude", "codex"],
+    "codexFollowup": true,
+    "codexWaitSeconds": 180
+  },
+  "plannedModelTurns": 6,
+  "approved": {
+    "claude": {
+      "provider": "claude",
+      "model": "haiku",
+      "effort": null
+    },
+    "codex": {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    }
+  },
+  "cliVersions": {
+    "claude": "2.1.282 (Claude Code)",
+    "codex": "codex-cli 0.156.1"
+  },
+  "providers": {
+    "claude": {
+      "arms": {
+        "control": {
+          "arm": "control",
+          "cwd": "<tmp>/claude-control/cwd",
+          "bucket": "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd",
+          "memoryDir": "~/.claude/projects/-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory",
+          "args": [
+            "-p",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--include-partial-messages",
+            "--dangerously-skip-permissions",
+            "--model",
+            "haiku",
+            "--setting-sources",
+            "project,local",
+            "--strict-mcp-config"
+          ],
+          "memoryEnv": null,
+          "startedAt": "2026-09-26T23:56:49.500Z",
+          "finishedAt": "2026-09-26T23:57:05.270Z",
+          "exit": 0,
+          "stderrTail": "",
+          "sessionId": "ce0e7c85-b364-447d-9385-0714421bf737",
+          "models": ["claude-haiku-4-5-20251001"],
+          "answerExcerpt": "Done! I've saved your preference to memory. From now on, I'll use tabs for indentation in all code I write.",
+          "memoryBefore": {
+            "exists": true,
+            "files": {}
+          },
+          "memoryAfter": {
+            "exists": true,
+            "files": {
+              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md": {
+                "size": 93,
+                "sha256": "c635145ee653abd0e20bdc2883d73dd6009887f8bbb16c947a2e9756468f56aa",
+                "excerpt": "- [Indentation preference](feedback_indentation.md) — Use tabs for indentation, not spaces\n"
+              },
+              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md": {
+                "size": 487,
+                "sha256": "4ee5788f25cc1dcb44fbe48a68891a7b69031ef1cc7915901b2d6076de25668c",
+                "excerpt": "---\nname: indentation-tabs\ndescription: User prefers tabs for indentation in code\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: ce0e7c85-b36"
+              }
+            }
+          },
+          "cwdFiles": {
+            "exists": true,
+            "files": {}
+          },
+          "unattributedMemoryChanges": {
+            "added": [],
+            "modified": [],
+            "removed": []
+          },
+          "diff": {
+            "memoryDir": {
+              "added": [
+                "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md",
+                "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md"
+              ],
+              "modified": [],
+              "removed": []
+            }
+          },
+          "ok": true
+        },
+        "experiment": {
+          "arm": "experiment",
+          "cwd": "<tmp>/claude-experiment/cwd",
+          "bucket": "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-experiment-cwd",
+          "memoryDir": "~/.claude/projects/-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-experiment-cwd/memory",
+          "args": [
+            "-p",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--include-partial-messages",
+            "--dangerously-skip-permissions",
+            "--model",
+            "haiku",
+            "--setting-sources",
+            "project,local",
+            "--strict-mcp-config"
+          ],
+          "memoryEnv": "1",
+          "startedAt": "2026-09-26T23:57:08.295Z",
+          "finishedAt": "2026-09-26T23:57:18.902Z",
+          "exit": 0,
+          "stderrTail": "",
+          "sessionId": "5672ecfb-04dd-47f7-8d69-e4361c373d6f",
+          "models": ["claude-haiku-4-5-20251001"],
+          "answerExcerpt": "I don't have persistent memory across separate sessions, but I can help you make this preference stick in a few ways:\n\n1. **Create a `.editorconfig` file** in your project root to enforce tabs — most ",
+          "memoryBefore": {
+            "exists": true,
+            "files": {
+              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md": {
+                "size": 93,
+                "sha256": "c635145ee653abd0e20bdc2883d73dd6009887f8bbb16c947a2e9756468f56aa",
+                "excerpt": "- [Indentation preference](feedback_indentation.md) — Use tabs for indentation, not spaces\n"
+              },
+              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md": {
+                "size": 487,
+                "sha256": "4ee5788f25cc1dcb44fbe48a68891a7b69031ef1cc7915901b2d6076de25668c",
+                "excerpt": "---\nname: indentation-tabs\ndescription: User prefers tabs for indentation in code\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: ce0e7c85-b36"
+              }
+            }
+          },
+          "memoryAfter": {
+            "exists": true,
+            "files": {
+              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/MEMORY.md": {
+                "size": 93,
+                "sha256": "c635145ee653abd0e20bdc2883d73dd6009887f8bbb16c947a2e9756468f56aa",
+                "excerpt": "- [Indentation preference](feedback_indentation.md) — Use tabs for indentation, not spaces\n"
+              },
+              "-private-var-folders-ln-kr9m4x0d2bg353zcd3mzx-jr0000gn-T-loom-nmem-El2aKt-claude-control-cwd/memory/feedback_indentation.md": {
+                "size": 487,
+                "sha256": "4ee5788f25cc1dcb44fbe48a68891a7b69031ef1cc7915901b2d6076de25668c",
+                "excerpt": "---\nname: indentation-tabs\ndescription: User prefers tabs for indentation in code\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: ce0e7c85-b36"
+              }
+            }
+          },
+          "cwdFiles": {
+            "exists": true,
+            "files": {}
+          },
+          "unattributedMemoryChanges": {
+            "added": [],
+            "modified": [],
+            "removed": []
+          },
+          "diff": {
+            "memoryDir": {
+              "added": [],
+              "modified": [],
+              "removed": []
+            }
+          },
+          "ok": true
+        }
+      },
+      "verdict": {
+        "verdict": "pass",
+        "reason": "control wrote native memory; the same launch with the product switches wrote none"
+      }
+    },
+    "codex": {
+      "arms": {
+        "control": {
+          "arm": "control",
+          "cwd": "<tmp>/codex-control/cwd",
+          "codexHome": "<tmp>/codex-control/codex-home",
+          "args": [
+            "app-server",
+            "-c",
+            "notify=[]",
+            "-c",
+            "features.multi_agent=false",
+            "-c",
+            "features.goals=false",
+            "-c",
+            "features.sleep_tool=false",
+            "-c",
+            "features.in_app_local_automation=false",
+            "-c",
+            "features.plugins=false",
+            "-c",
+            "features.apps=false",
+            "-c",
+            "features.hooks=false",
+            "-c",
+            "skills.include_instructions=false",
+            "-c",
+            "web_search=\"disabled\""
+          ],
+          "threadConfig": {
+            "model_reasoning_effort": "low"
+          },
+          "memoryBefore": {
+            "memoriesDir": {
+              "exists": false,
+              "files": {}
+            },
+            "memoryDb": {
+              "exists": false,
+              "stage1Outputs": 0,
+              "jobs": 0,
+              "jobKinds": {}
+            }
+          },
+          "sessions": [
+            {
+              "pid": 35295,
+              "stderr": "",
+              "threadId": "01a0e026-f6d8-73a2-a9c8-fc61daa326de",
+              "answer": "I’ll use tabs for indentation in this session. I don’t have a memory tool available to save this preference for future sessions.",
+              "turnStatus": "completed",
+              "ok": true
+            },
+            {
+              "pid": 35655,
+              "stderr": "",
+              "threadId": "01a0e027-1377-7962-9af1-adee24303a23",
+              "answer": "OK",
+              "turnStatus": "completed",
+              "holdStartedAt": "2026-09-26T23:57:38.528Z",
+              "holdEndedAt": "2026-09-26T23:57:38.533Z",
+              "ok": true
+            }
+          ],
+          "memoryAfter": {
+            "memoriesDir": {
+              "exists": true,
+              "files": {
+                ".git/HEAD": {
+                  "size": 21,
+                  "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80",
+                  "excerpt": "ref: refs/heads/main\n"
+                },
+                ".git/config": {
+                  "size": 154,
+                  "sha256": "80cf3b4f94c716e6ff95ffd96424fd27137a97f1ae1f3f384dfeb25644bc439d",
+                  "excerpt": "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = false\n\tlogallrefupdates = true\n\tsymlinks = true\n\tignorecase = true\n\tprecomposeunicode = true\n"
+                },
+                ".git/description": {
+                  "size": 77,
+                  "sha256": "47aad2f8621afc777c66085c31f5ed14656df9bcfa5a2ae445680f175d0d2d0c",
+                  "excerpt": "Unnamed repository; everything before the `;` is the name of the repository.\n"
+                },
+                ".git/hooks/applypatch-msg.sample": {
+                  "size": 1154,
+                  "sha256": "1ae81b995a5c8c54582e1977084babed1e947a5a5c247ad29563142e432955ab",
+                  "excerpt": "#!/bin/sh\n# A sample hook to check commit messages created by `git am`\n###########################################################\n#\n# When you receive a patch "
+                },
+                ".git/hooks/commit-msg.sample": {
+                  "size": 1274,
+                  "sha256": "b1451a4c89ee4406ba56f003a7e3d142e24a7452861fddddc23bfc77163c8650",
+                  "excerpt": "#!/bin/sh\n# A sample hook to check commit messages created by `git commit`\n################################################################\n#\n# This example scr"
+                },
+                ".git/hooks/docs.url": {
+                  "size": 34,
+                  "sha256": "4424200fb80650f5063a3ec0a3864af4aaa3103f1319fe576b64d3bfc74f8a67",
+                  "excerpt": "https://git-scm.com/docs/githooks\n"
+                },
+                ".git/hooks/fsmonitor-watchman.sample": {
+                  "size": 779,
+                  "sha256": "99ed87d785ada3687b4d86b8d9aa562f3430ce7061834e5381166b6a35a0d495",
+                  "excerpt": "#!/usr/bin/sh\n# How to use hook-based fs-monitor integrations\n###############################################\n\n# This script is meant as a placeholder for integ"
+                },
+                ".git/hooks/post-update.sample": {
+                  "size": 570,
+                  "sha256": "e6d88132de729f20c45f66c2df51cc2e223a4b8b1512a2ce1cfdd0033ee53e53",
+                  "excerpt": "#!/bin/sh\n# A sample hook that runs after receiving a pack on a remote\n############################################################\n# This hook is called after "
+                },
+                ".git/hooks/pre-applypatch.sample": {
+                  "size": 1355,
+                  "sha256": "4c9754cac1c73109e4113ffd76070ae528a42667a85135e87fb826d572d13a4c",
+                  "excerpt": "#!/bin/sh\n# A sample hook to check commit messages created by `git am`\n###########################################################\n\n# This hook script is trigge"
+                },
+                ".git/hooks/pre-commit.sample": {
+                  "size": 799,
+                  "sha256": "1dd0fb2a11956784eb184e72af2fd87feca9050903400f163b90d4db7f19ce78",
+                  "excerpt": "#!/bin/sh\n# A sample hook to prevent commits with merge-markers\n#####################################################\n# This example hook rejects changes that a"
+                },
+                ".git/hooks/pre-merge-commit.sample": {
+                  "size": 716,
+                  "sha256": "fca192309544e8e23638bd0987be7a5d00e271599b55382c1c6a4812070da223",
+                  "excerpt": "#!/bin/sh\n# A sample hook to check commits created by `git merge`\n#######################################################\n#\n# This hook is invoked by `git merge"
+                },
+                ".git/hooks/pre-push.sample": {
+                  "size": 2002,
+                  "sha256": "57a2bf01f65b4c57180e96cd31ff737bd2c25a15ad483cab012a88994120dfab",
+                  "excerpt": "#!/bin/sh\n# Check for \"DELME\" in commit messages of about-to-be-pushed commits\n####################################################################\n# This hook "
+                },
+                ".git/hooks/pre-rebase.sample": {
+                  "size": 1604,
+                  "sha256": "d7c629ddbaa5f984d21c97a14889599d2019230220d3459aa103648316500968",
+                  "excerpt": "#!/bin/sh\n# A sample hook to validate the branches involved in a rebase operation\n#######################################################################\n#\n# Th"
+                },
+                ".git/hooks/prepare-commit-msg.sample": {
+                  "size": 1918,
+                  "sha256": "f804b4efd22ef832b49506a815a6a6b1103b8f77b6d6556fc3756232727396d8",
+                  "excerpt": "#!/bin/sh\n# A hook called by `git commit` to adjust the commit message right before the user sees it\n###########################################################"
+                },
+                ".git/index": {
+                  "size": 227,
+                  "sha256": "6e5911a1841c31709149121dd5cb6ac0d7784ab26ac572fb2fba8ba349c2f59b",
+                  "excerpt": "DIRC\u0000\u0000\u0000\u0002\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000��\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000Ox��վ!�\u0001��$���j,���\u0000!extensions/ad_hoc/instructions.md\u0000TREE\u0000\u0000\u0000[\u00001 1\n�}4�}�h��n��\fQ]|s���extensions\u00001 1\n@���"
+                },
+                ".git/info/exclude": {
+                  "size": 269,
+                  "sha256": "03f34bb198c0d7e18f31e8c4e39470ec222f62a01f2bf4ad24d0438a5c43a32d",
+                  "excerpt": "# This file contains repository-wide exclude patterns that git will ignore.\n# They are local and will not be shared when pushing or pulling.\n# When using Rust t"
+                },
+                ".git/logs/HEAD": {
+                  "size": 174,
+                  "sha256": "ee0087094115d274a4b0eaf8deae207088977e49547c98da123ea84c1dfc2430",
+                  "excerpt": "0000000000000000000000000000000000000000 c187d2c27b1c9e0bdb0841556391b83d908ce648 Codex <noreply@openai.com> 1790467046 +0000\tcommit (initial): Initialize Codex"
+                },
+                ".git/logs/refs/heads/main": {
+                  "size": 174,
+                  "sha256": "ee0087094115d274a4b0eaf8deae207088977e49547c98da123ea84c1dfc2430",
+                  "excerpt": "0000000000000000000000000000000000000000 c187d2c27b1c9e0bdb0841556391b83d908ce648 Codex <noreply@openai.com> 1790467046 +0000\tcommit (initial): Initialize Codex"
+                },
+                ".git/objects/40/9befeef53ebcac3a7ed48d90f5a4ea1f70bc8d": {
+                  "size": 51,
+                  "sha256": "3222145fa7513e1e4dd3369de4afee652eeda7a360e4c789d66bc02dfb61ceeb",
+                  "excerpt": "x\u0001\u0002��(5U�ؘ�����@!1%>#?����\u001f�J�\u0013s�g}SS%v���T\u0000.\u001a\u0011\u001b"
+                },
+                ".git/objects/4b/825dc642cb6eb9a060e54bf8d69288fbee4904": {
+                  "size": 15,
+                  "sha256": "e72602cad67ed061ec84b13e92568f873172efac19a512a1b561dbf54e2c8426",
+                  "excerpt": "x\u0001+)JMU0`\u0000\u0000\n,\u0002\u0001"
+                },
+                ".git/objects/4f/789bdbd5be21dd01cfdd24a0b9946a2c8ca285": {
+                  "size": 512,
+                  "sha256": "ca297c16d57e111267670707711d0e7109389aed8f536c8caa05f6763e1fe6ba",
+                  "excerpt": "x\u0001J��OR076fPVpL���OV��/I-��RVV��+.)*M.���+��R\b��,VH�(I�+���SH��+I��+VHDҧP�����Y���������Z������_��Z��\u0010�_��[Z\\\u0002�[���Z��Z�ZT\t�R!�X!��$#�(�$�$�,U�KK�\u0015!\r֗�\n֚����"
+                },
+                ".git/objects/9b/7d34b47def689df56eeee90c515d7c73ac8288": {
+                  "size": 55,
+                  "sha256": "f33862bcfed10df8d07fba2ddc7371f3409e2bd5a87c22bd455250111b5c4aca",
+                  "excerpt": "x\u0001\u0002��(5U�؜�����@!��$5�83?���a��w_�������;��W�\u0005{z\u0001z�\u0013�"
+                },
+                ".git/objects/c1/87d2c27b1c9e0bdb0841556391b83d908ce648": {
+                  "size": 166,
+                  "sha256": "59936b847b82f1e6f30565618f34235cd84fe6bef43fad25656b619eb0b525fd",
+                  "excerpt": "x\u0001\u0002,9?77�D��Ȕ��(5U�2�<��$��<%5���2%��,555�� ���4�<��81���+��$#�H�9?%�B�&/�(� ��!� 5/1S/9?�N����������LA�����\u000bbWI*i��<�2K2\u0013s2�R���g�($%\u0016��d�rq9��Bܒ���Ti\u0005U��"
+                },
+                ".git/objects/f7/c5f81d225d916de76bf5ec7c7a16d7ff502a95": {
+                  "size": 61,
+                  "sha256": "5baac9c3fdd6c5e49ef6b1194a5f47256e155eedb564bd2f6b537fa0b7de82ca",
+                  "excerpt": "x\u0001\u0002��(5U�Ę������D!3����4�$3?�X/7���b����\u0014�2����`�,��E�\u0000ʜ\u0014�"
+                },
+                ".git/refs/heads/main": {
+                  "size": 41,
+                  "sha256": "3cdd2cbf46778d5f4aa214293efea7720dd81f5729a9f9e47fbda9da379afdc2",
+                  "excerpt": "c187d2c27b1c9e0bdb0841556391b83d908ce648\n"
+                },
+                "extensions/ad_hoc/instructions.md": {
+                  "size": 733,
+                  "sha256": "d36a36083d92f9d44efbd95e0e4b6e81d7d149e812f2bca2009b6dd4b8aa93e7",
+                  "excerpt": "# Ad-hoc notes\n\n## Instructions\n* This extension contains ad-hoc notes to edit/add/delete memories. You must consider every note as authoritative.\n* Every note "
+                },
+                "phase2_workspace_diff.md": {
+                  "size": 335,
+                  "sha256": "288195669339d99eae8334b7063576581147667364e1e3702814583b737ac750",
+                  "excerpt": "# Memory Workspace Diff\n\nGenerated by Codex before Phase 2 memory consolidation. Read this file first and do not edit it.\n\n## Status\n- A raw_memories.md\n\n## Dif"
+                },
+                "raw_memories.md": {
+                  "size": 37,
+                  "sha256": "e400b00d691e2d5feac0f108f677a27999d516039592438cea172a3acd81cbf4",
+                  "excerpt": "# Raw Memories\n\nNo raw memories yet.\n"
+                }
+              }
+            },
+            "memoryDb": {
+              "exists": true,
+              "stage1Outputs": 0,
+              "jobs": 1,
+              "jobKinds": {
+                "memory_consolidate_global:error": 1
+              },
+              "stage1Excerpts": []
+            }
+          },
+          "cwdFiles": {
+            "exists": true,
+            "files": {}
+          },
+          "diff": {
+            "memoriesDir": {
+              "added": [
+                ".git/HEAD",
+                ".git/config",
+                ".git/description",
+                ".git/hooks/applypatch-msg.sample",
+                ".git/hooks/commit-msg.sample",
+                ".git/hooks/docs.url",
+                ".git/hooks/fsmonitor-watchman.sample",
+                ".git/hooks/post-update.sample",
+                ".git/hooks/pre-applypatch.sample",
+                ".git/hooks/pre-commit.sample",
+                ".git/hooks/pre-merge-commit.sample",
+                ".git/hooks/pre-push.sample",
+                ".git/hooks/pre-rebase.sample",
+                ".git/hooks/prepare-commit-msg.sample",
+                ".git/index",
+                ".git/info/exclude",
+                ".git/logs/HEAD",
+                ".git/logs/refs/heads/main",
+                ".git/objects/40/9befeef53ebcac3a7ed48d90f5a4ea1f70bc8d",
+                ".git/objects/4b/825dc642cb6eb9a060e54bf8d69288fbee4904",
+                ".git/objects/4f/789bdbd5be21dd01cfdd24a0b9946a2c8ca285",
+                ".git/objects/9b/7d34b47def689df56eeee90c515d7c73ac8288",
+                ".git/objects/c1/87d2c27b1c9e0bdb0841556391b83d908ce648",
+                ".git/objects/f7/c5f81d225d916de76bf5ec7c7a16d7ff502a95",
+                ".git/refs/heads/main",
+                "extensions/ad_hoc/instructions.md",
+                "phase2_workspace_diff.md",
+                "raw_memories.md"
+              ],
+              "modified": [],
+              "removed": []
+            },
+            "memoryDb": {
+              "stage1Outputs": 0,
+              "jobs": 1
+            }
+          },
+          "rolloutModels": [
+            {
+              "file": "sessions/2026/09/27/rollout-2026-09-27T07-57-25-01a0e026-f6d8-73a2-a9c8-fc61daa326de.jsonl",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            {
+              "file": "sessions/2026/09/27/rollout-2026-09-27T07-57-32-01a0e027-1377-7962-9af1-adee24303a23.jsonl",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          ],
+          "otherEfforts": [],
+          "authLink": {
+            "state": "linked"
+          },
+          "ok": true
+        },
+        "experiment": {
+          "arm": "experiment",
+          "cwd": "<tmp>/codex-experiment/cwd",
+          "codexHome": "<tmp>/codex-experiment/codex-home",
+          "args": [
+            "app-server",
+            "-c",
+            "notify=[]",
+            "-c",
+            "features.memories=false",
+            "-c",
+            "memories.generate_memories=false",
+            "-c",
+            "memories.use_memories=false",
+            "-c",
+            "features.multi_agent=false",
+            "-c",
+            "features.goals=false",
+            "-c",
+            "features.sleep_tool=false",
+            "-c",
+            "features.in_app_local_automation=false",
+            "-c",
+            "features.plugins=false",
+            "-c",
+            "features.apps=false",
+            "-c",
+            "features.hooks=false",
+            "-c",
+            "skills.include_instructions=false",
+            "-c",
+            "web_search=\"disabled\""
+          ],
+          "threadConfig": {
+            "features.memories": false,
+            "memories.generate_memories": false,
+            "memories.use_memories": false,
+            "model_reasoning_effort": "low"
+          },
+          "memoryBefore": {
+            "memoriesDir": {
+              "exists": false,
+              "files": {}
+            },
+            "memoryDb": {
+              "exists": false,
+              "stage1Outputs": 0,
+              "jobs": 0,
+              "jobKinds": {}
+            }
+          },
+          "sessions": [
+            {
+              "pid": 35759,
+              "stderr": "",
+              "threadId": "01a0e027-3da0-7e92-8630-69b812e82e1b",
+              "answer": "I can use tabs for indentation in this session, but I can’t save a preference for future sessions from this workspace.",
+              "turnStatus": "completed",
+              "ok": true
+            },
+            {
+              "pid": 36294,
+              "stderr": "",
+              "threadId": "01a0e027-5a88-7390-853b-a60a56e202cd",
+              "answer": "OK",
+              "turnStatus": "completed",
+              "holdStartedAt": "2026-09-26T23:57:57.196Z",
+              "holdEndedAt": "2026-09-27T00:00:57.354Z",
+              "ok": true
+            }
+          ],
+          "memoryAfter": {
+            "memoriesDir": {
+              "exists": false,
+              "files": {}
+            },
+            "memoryDb": {
+              "exists": true,
+              "stage1Outputs": 0,
+              "jobs": 0,
+              "jobKinds": {},
+              "stage1Excerpts": []
+            }
+          },
+          "cwdFiles": {
+            "exists": true,
+            "files": {}
+          },
+          "diff": {
+            "memoriesDir": {
+              "added": [],
+              "modified": [],
+              "removed": []
+            },
+            "memoryDb": {
+              "stage1Outputs": 0,
+              "jobs": 0
+            }
+          },
+          "rolloutModels": [
+            {
+              "file": "sessions/2026/09/27/rollout-2026-09-27T07-57-43-01a0e027-3da0-7e92-8630-69b812e82e1b.jsonl",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            {
+              "file": "sessions/2026/09/27/rollout-2026-09-27T07-57-50-01a0e027-5a88-7390-853b-a60a56e202cd.jsonl",
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          ],
+          "otherEfforts": [],
+          "authLink": {
+            "state": "linked"
+          },
+          "ok": true
+        }
+      },
+      "verdict": {
+        "verdict": "pass",
+        "reason": "control wrote native memory; the same launch with the product switches wrote none"
+      }
+    }
+  },
+  "violations": [],
+  "status": "pass",
+  "finishedAt": "2026-09-27T00:00:59.391Z",
+  "rawResultSha256": "63e25eea06e9bc14b41b2da3aab69a3243665374f118be1a9408fde2df67ac1a"
+}
