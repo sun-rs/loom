@@ -467,6 +467,112 @@ test("the chain limit is live: a changed wakeGuard setting applies to the next w
 type Agents = Record<string, { principalId: string }>;
 type State = ReturnType<typeof fixture>;
 
+test("an instance's @all wakes every other instance through the Worker path, counted per wake", () => {
+  const state = fixture(["alpha", "beta", "gamma"]);
+  try {
+    state.kernel.postRoomMessage(state.humanActor, {
+      body: "@alpha start the discussion",
+      idempotencyKey: "human-start",
+      roomId: state.room.roomId,
+    });
+    for (const [key, body] of [
+      ["all", "@all what does everyone think?"],
+      ["all-zh", "@所有人 请各自说说看法"],
+    ] as const) {
+      const turn = beginNextActivation(state.kernel, state.agents.alpha!);
+      const posted = state.kernel.postWorkerMessage(turn.execution, {
+        basedOnRoomSeq: turn.activation.toSeq,
+        body,
+        idempotencyKey: `alpha-${key}`,
+      });
+      assert.ok("event" in posted, JSON.stringify(posted));
+      assert.deepEqual(
+        [...(posted.event.payload.recipientIds as string[])].sort(),
+        [
+          state.agents.beta!.principalId,
+          state.agents.gamma!.principalId,
+        ].sort(),
+        body,
+      );
+      assert.equal(posted.activationIds.length, 2, body);
+      assert.equal(
+        (posted as { unresolvedMentionHandles?: string[] })
+          .unresolvedMentionHandles,
+        undefined,
+        "a broadcast token is not an unresolved mention",
+      );
+      assert.equal(inboxCount(state, posted.event.eventId), 2, body);
+      turn.finish();
+      if (key === "all")
+        assert.deepEqual(chain(state, posted.event.eventId), [
+          [1, 1],
+          [2, 1],
+        ]);
+      // Let alpha be woken again for the next round.
+      for (const other of ["beta", "gamma"])
+        beginNextActivation(state.kernel, state.agents[other]!).finish();
+      state.kernel.postRoomMessage(state.humanActor, {
+        body: `@alpha next round ${key}`,
+        idempotencyKey: `human-next-${key}`,
+        roomId: state.room.roomId,
+      });
+    }
+  } finally {
+    state.close();
+  }
+});
+
+test("an instance's @all inside code wakes nobody", () => {
+  const state = fixture(["alpha", "beta"]);
+  try {
+    state.kernel.postRoomMessage(state.humanActor, {
+      body: "@alpha go",
+      idempotencyKey: "human-go",
+      roomId: state.room.roomId,
+    });
+    const turn = beginNextActivation(state.kernel, state.agents.alpha!);
+    const posted = state.kernel.postWorkerMessage(turn.execution, {
+      basedOnRoomSeq: turn.activation.toSeq,
+      body: "the token is `@all`, not a call",
+      idempotencyKey: "alpha-code-all",
+    });
+    assert.ok("event" in posted, JSON.stringify(posted));
+    assert.deepEqual(posted.activationIds, []);
+  } finally {
+    state.close();
+  }
+});
+
+test("@all in a Thread wakes every Channel instance, followers or not", () => {
+  const state = fixture(["alpha", "beta", "gamma"]);
+  try {
+    const root = state.kernel.postMessage(state.humanActor, {
+      body: "Thread root",
+      idempotencyKey: "all-root",
+      recipients: [],
+      roomId: state.room.roomId,
+    });
+    const thread = state.kernel.createThread(state.humanActor, {
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "all-thread",
+      recipientIds: [state.agents.alpha!.principalId],
+      roomId: state.room.roomId,
+      rootMessageId: root.event.aggregateId,
+    });
+    const human = state.kernel.replyThread(state.humanActor, {
+      basedOnRoomSeq: currentSeq(state),
+      body: "@all please weigh in here",
+      idempotencyKey: "all-thread-human",
+      recipientIds: [],
+      roomId: state.room.roomId,
+      threadId: thread.thread.threadId,
+    });
+    assert.equal(human.activationIds.length, 3);
+  } finally {
+    state.close();
+  }
+});
+
 function fixture(handles: string[]) {
   const directory = mkdtempSync(join(tmpdir(), "loom-wake-guard-"));
   const databasePath = join(directory, "room.db");

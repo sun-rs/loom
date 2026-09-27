@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import {
   type ActivationReason,
-  messageMentionCandidates,
+  messageHasBroadcastMention,
   type RoomEvent,
 } from "@rah-os/protocol";
 
@@ -94,9 +94,6 @@ export function noteHumanMessageForWakeGuard(
     .run(event.roomId, event.roomSeq, event.createdAt);
 }
 
-/** Explicit broadcast tokens (Slack's @channel convention). */
-const BROADCAST_MENTIONS = ["all", "所有人"];
-
 /**
  * Owner ruling 2026-09-27 (contract §3): the instances a Human message
  * addresses, as a message-level set. It is the canonical mentions bound to the
@@ -105,30 +102,22 @@ const BROADCAST_MENTIONS = ["all", "所有人"];
  * broadcast: not a Human message, no such mention (none, a non-member, a
  * Human, a typo) or an explicit `@all` / `@所有人`.
  */
-export function humanAddressedParticipants(
+export function addressedParticipants(
   database: DatabaseSync,
   event: RoomEvent,
 ): string[] | undefined {
   if (event.type !== "message.posted") return undefined;
-  if (principalKind(database, event.actorId) !== "human") return undefined;
-  const body = (event.payload as { body?: unknown }).body;
-  if (
-    typeof body === "string" &&
-    messageMentionCandidates(body, BROADCAST_MENTIONS).length > 0
-  )
-    return undefined;
-  const members = new Set(
-    database
-      .prepare(
-        `SELECT m.principal_id FROM memberships m
-         JOIN principals p ON p.principal_id = m.principal_id
-         LEFT JOIN agent_definitions a ON a.participant_id = p.principal_id
-         WHERE m.room_id = ? AND p.kind = 'agent'
-           AND (a.state IS NULL OR a.state = 'enabled')`,
-      )
-      .all(event.roomId)
-      .map((row) => text(row, "principal_id")),
-  );
+  const kind = principalKind(database, event.actorId);
+  // `@all` / `@所有人`: every other instance member, for any author (an
+  // instance's broadcast is still counted per wake by the chain guard).
+  if (broadcasts(event) && (kind === "human" || kind === "agent")) {
+    const everyone = channelInstanceMembers(database, event.roomId)
+      .filter((id) => id !== event.actorId)
+      .sort();
+    return everyone.length === 0 ? undefined : everyone;
+  }
+  if (kind !== "human") return undefined;
+  const members = new Set(channelInstanceMembers(database, event.roomId));
   const addressed = [
     ...new Set(
       canonicalMentionIds(event).filter(
@@ -137,6 +126,27 @@ export function humanAddressedParticipants(
     ),
   ].sort();
   return addressed.length === 0 ? undefined : addressed;
+}
+
+function broadcasts(event: RoomEvent): boolean {
+  const body = (event.payload as { body?: unknown }).body;
+  return typeof body === "string" && messageHasBroadcastMention(body);
+}
+
+function channelInstanceMembers(
+  database: DatabaseSync,
+  roomId: string,
+): string[] {
+  return database
+    .prepare(
+      `SELECT m.principal_id FROM memberships m
+       JOIN principals p ON p.principal_id = m.principal_id
+       LEFT JOIN agent_definitions a ON a.participant_id = p.principal_id
+       WHERE m.room_id = ? AND p.kind = 'agent'
+         AND (a.state IS NULL OR a.state = 'enabled')`,
+    )
+    .all(roomId)
+    .map((row) => text(row, "principal_id"));
 }
 
 function canonicalMentionIds(event: RoomEvent): string[] {
@@ -174,7 +184,10 @@ export function decideInstanceWake(
   if (principalKind(database, event.actorId) !== "agent")
     return { kind: "not_instance_wake" };
   if (recipient.reason !== "mention") return { kind: "implicit_route_refused" };
-  if (!canonicallyMentions(event, recipient.participantId))
+  if (
+    !canonicallyMentions(event, recipient.participantId) &&
+    !broadcasts(event)
+  )
     return { kind: "implicit_route_refused" };
   const limit = chainLimit();
   const guard = database

@@ -212,6 +212,18 @@ export function messageMentionCandidates(
   return candidates.sort((left, right) => left.start - right.start);
 }
 
+/**
+ * Explicit broadcast tokens (Slack's `@channel` convention; contract §3, owner
+ * ruling 2026-09-27): `@all` / `@所有人` addresses every instance member of
+ * the Channel, for Human and instance authors alike. Code, links and emails
+ * are excluded like any mention.
+ */
+export const BROADCAST_MENTION_HANDLES: readonly string[] = ["all", "所有人"];
+
+export function messageHasBroadcastMention(source: string): boolean {
+  return messageMentionCandidates(source, BROADCAST_MENTION_HANDLES).length > 0;
+}
+
 export function messageHasMention(source: string, handle: string): boolean {
   return messageMentionCandidates(source, [handle]).length > 0;
 }

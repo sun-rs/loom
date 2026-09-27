@@ -1,6 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
 
 import {
+  BROADCAST_MENTION_HANDLES,
+  messageHasBroadcastMention,
   messageMentionCandidates,
   unresolvedMentionHandles,
   type ActivationCredentialScope,
@@ -65,6 +67,12 @@ export function workerMentionRecipients(input: {
     input.participantId,
   );
   if (byHandle.size === 0) return [];
+  // Contract §3: `@all` / `@所有人` addresses every other instance member.
+  if (messageHasBroadcastMention(input.body))
+    return [...byHandle.values()].map((participantId) => ({
+      participantId,
+      reason: "mention" as const,
+    }));
   const mentioned = new Set<string>();
   for (const candidate of messageMentionCandidates(input.body, [
     ...byHandle.keys(),
@@ -95,6 +103,7 @@ export function workerUnresolvedMentionHandles(input: {
   if (input.body === undefined || input.body.trim().length === 0) return [];
   return unresolvedMentionHandles(input.body, [
     ...mentionableRoomAgentHandles(input.database, input.roomId, "").keys(),
+    ...BROADCAST_MENTION_HANDLES,
   ]);
 }
 

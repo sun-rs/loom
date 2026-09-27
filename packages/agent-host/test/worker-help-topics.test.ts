@@ -79,3 +79,12 @@ test("D1-E: worker help tasks states the same claim rule as the standing protoco
     /Answering a question, brief discussion, searching or reading files is a reply, not a Task/u,
   );
 });
+
+test("contract §3: worker help threads states that @all / @所有人 addresses every other Room instance", () => {
+  const topic = workerHelpTopic("threads");
+  assert.ok(topic);
+  assert.match(
+    topic,
+    /`@all` or `@所有人` addresses every other Agent member/u,
+  );
+});
