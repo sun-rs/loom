@@ -252,3 +252,33 @@ test("the lease names the protocol version the compiled prompt carries, independ
   for (const section of renderStandingProtocolCard().split("\n\n").slice(1))
     assert.ok(prompt.includes(section), section.slice(0, 60));
 });
+
+test("a launch carrying the Loom Worker tools gets the tool protocol, its version and the lease marker", async () => {
+  const {
+    RAH_WORKER_TOOLS_ENV,
+    STANDING_PROTOCOL_VERSION,
+    renderStandingProtocolCard,
+    standingProtocolVersion,
+    workerToolNames,
+  } = await import("@rah-os/agent-host");
+  const names = workerToolNames("opencode")!;
+  const agent = agentContext({ role: "review" });
+  const cli = standingPromptLease(envelope(agent))!;
+  const tools = standingPromptLease(envelope(agent), {
+    workerTools: "opencode",
+  })!;
+  assert.equal(cli.env?.[RAH_WORKER_TOOLS_ENV], undefined);
+  assert.equal(tools.env?.[RAH_WORKER_TOOLS_ENV], "opencode");
+  assert.equal(cli.standingProtocolVersion, STANDING_PROTOCOL_VERSION);
+  assert.equal(tools.standingProtocolVersion, standingProtocolVersion(names));
+  assert.notEqual(tools.standingPromptDigest, cli.standingPromptDigest);
+  const prompt = tools.args!.join("\n");
+  for (const section of renderStandingProtocolCard(names)
+    .split("\n\n")
+    .slice(1))
+    assert.ok(prompt.includes(section), section.slice(0, 60));
+  assert.doesNotMatch(prompt, /RAH_MESSAGE_EOF/u);
+  assert.match(prompt, /`loom_message_post`/u);
+  // The startup bootstrap keeps its CLI form (the tools have no --startup).
+  assert.match(prompt, /worker message-check --startup/u);
+});

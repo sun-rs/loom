@@ -14,6 +14,7 @@ import {
   remindersSection,
   startupRulesSection,
   workerCliSection,
+  type WorkerToolNames,
 } from "@rah-os/agent-host";
 
 export const STANDING_PROMPT_COMPILER_VERSION = 1;
@@ -54,6 +55,11 @@ export type StandingPromptInput = {
    * digest (an edit to memory never keys a different session).
    */
   channelMemory?: { section: string };
+  /**
+   * evo §57: the launch carries the Loom Worker tools under these names, so
+   * posting and checking are stated as tool calls (part of the digest).
+   */
+  workerTools?: WorkerToolNames;
 };
 
 export type CompiledStandingPrompt = {
@@ -124,19 +130,20 @@ ${lines.join("\n")}`;
 function platformLayer(
   agent: StandingPromptAgentLayer | undefined,
   channelMemory: boolean,
+  tools: WorkerToolNames | undefined,
 ): string {
   if (agent && channelMemory)
     return `If the wake lacks your messages, run \`"$RAH_WORKER_CLI" worker message-check --startup\` (identity, scope, messages; validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON). Your role is stated in this prompt; do not duplicate it.
 ${CHANNEL_MEMORY_POINTER}
 
-${workerCliSection()}`;
+${workerCliSection(tools)}`;
   const bootstrap = agent
     ? 'If the wake lacks your messages, run `"$RAH_WORKER_CLI" worker message-check --startup` (identity, scope, memory index, messages; validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON). Your role is stated in this prompt; do not duplicate it.'
     : "First parse process.env.RAH_AGENT_CONTEXT_JSON and process.env.RAH_CONTEXT_MANIFEST_JSON. The first contains the frozen AgentDefinition role and instructions; the second is the Kernel-owned audit record of the exact Room range, instruction/skill/memory content references, RuntimeProfile and Workspace revision selected for this RunAttempt. Follow those instructions unless they conflict with the canonical Worker protocol or system safety. Do not substitute mutable latest files for the manifest references.";
   return `${bootstrap}
 ${buildAgentMemoryInstructions()}
 
-${workerCliSection()}`;
+${workerCliSection(tools)}`;
 }
 
 function workspacePolicyLayer(
@@ -174,10 +181,13 @@ function initialRoleLayer(
 }
 
 /** The launch delivery-mode section, then the constant per-turn rules. */
-function startupLayer(mode?: PromptDeliveryMode): string {
+function startupLayer(
+  mode?: PromptDeliveryMode,
+  tools?: WorkerToolNames,
+): string {
   return `${deliveryInstructions(mode)}
 
-${startupRulesSection()}`;
+${startupRulesSection(tools)}`;
 }
 
 export function standingPromptLayers(
@@ -194,7 +204,10 @@ export function standingPromptLayers(
           text: runtimeContextLayer(input?.runtimeContext)!,
         },
     { id: "authority", text: authoritySection() },
-    { id: "platform", text: platformLayer(agent, channelMemory) },
+    {
+      id: "platform",
+      text: platformLayer(agent, channelMemory, input?.workerTools),
+    },
     { id: "credential-hygiene", text: credentialHygieneSection() },
     { id: "reminders", text: remindersSection() },
     { id: "communication-style", text: communicationStyleSection() },
@@ -208,7 +221,13 @@ export function standingPromptLayers(
     initialRoleLayer(agent) === undefined
       ? undefined
       : { id: "initial-role", text: initialRoleLayer(agent)! },
-    { id: "startup", text: startupLayer(input?.runtimeContext?.deliveryMode) },
+    {
+      id: "startup",
+      text: startupLayer(
+        input?.runtimeContext?.deliveryMode,
+        input?.workerTools,
+      ),
+    },
     input?.channelMemory === undefined
       ? undefined
       : { id: "channel-memory", text: input.channelMemory.section },
@@ -236,6 +255,9 @@ export function compileStandingPrompt(
     ...(input?.channelMemory === undefined
       ? {}
       : { channelMemory: { section: "## Channel memory index" } }),
+    ...(input?.workerTools === undefined
+      ? {}
+      : { workerTools: input.workerTools }),
     runtimeContext: {
       deliveryMode: input?.runtimeContext?.deliveryMode ?? "wait",
     },

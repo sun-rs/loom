@@ -19,6 +19,7 @@ import {
   prepareOpenCodeInstructionsFile,
 } from "./opencode-standing-instructions.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
+import { prepareOpenCodeWorkerTools } from "./opencode-worker-tools.js";
 import {
   isContextOverflowEvent,
   OpenCodeChildSessions,
@@ -55,6 +56,9 @@ import {
 
 const STARTUP_TIMEOUT_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 2_000;
+// `GET /mcp` answers after the MCP connections settled (starting the Loom
+// entry takes about 0.2 s against the real 1.18.32).
+const WORKER_TOOLS_REQUEST_TIMEOUT_MS = 10_000;
 const ABORT_CONFIRM_TIMEOUT_MS = 750;
 const SERVER_TERM_TIMEOUT_MS = 300;
 const TERMINAL_EVENT_TIMEOUT_MS = 5_000;
@@ -292,6 +296,12 @@ try {
 
 async function startServer() {
   const port = await allocatePort();
+  // evo §57: the Loom Worker tools, when the lease asked for them.
+  const workerTools = await prepareOpenCodeWorkerTools({
+    executable: options.executable,
+    env: { ...process.env, ...providerLaunchPolicy("opencode").environment },
+    cwd: process.cwd(),
+  });
   const child = spawn(
     options.executable,
     [
@@ -303,7 +313,7 @@ async function startServer() {
     ],
     {
       cwd: process.cwd(),
-      env: serverEnvironment(),
+      env: serverEnvironment(workerTools),
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -334,8 +344,14 @@ async function startServer() {
           );
         }),
       ]);
+      // Fail closed before any input: the prompt and wake name the tools.
+      if (workerTools !== undefined)
+        await workerTools.verify((path) =>
+          requestJson(path, {}, WORKER_TOOLS_REQUEST_TIMEOUT_MS),
+        );
       return handle;
     } catch (error) {
+      if (error?.workerTools === true) throw error;
       lastError = error;
       if (child.exitCode !== null || child.signalCode !== null) throw error;
       await delay(100);
@@ -552,15 +568,17 @@ function armFinalReply(frame) {
   prompt.finalInterrupt.arm();
 }
 
-function serverEnvironment() {
+function serverEnvironment(workerTools) {
   const rules = prepareOpenCodeInstructionsFile(options.prompt);
+  const content = openCodeConfigContentWithInstructions(
+    process.env.OPENCODE_CONFIG_CONTENT,
+    rules,
+  );
   return {
     ...process.env,
     ...providerLaunchPolicy("opencode").environment,
-    OPENCODE_CONFIG_CONTENT: openCodeConfigContentWithInstructions(
-      process.env.OPENCODE_CONFIG_CONTENT,
-      rules,
-    ),
+    OPENCODE_CONFIG_CONTENT:
+      workerTools === undefined ? content : workerTools.configContent(content),
   };
 }
 

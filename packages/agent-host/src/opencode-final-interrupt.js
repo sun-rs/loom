@@ -24,6 +24,10 @@
 // irreversible); otherwise the abort preempted it (`true`). Stream evidence,
 // not a server-side request audit; a gap in the stream (SSE reconnect) makes
 // a clean window `unknown`.
+// evo §57: a `loom_message_post` tool call with `final: true` (the Loom
+// Worker tool facade) is the posting call too.
+import { isLoomFinalPostPart } from "./opencode-worker-tools.js";
+
 const FINAL_POST_COMMAND = /message-post\b.*\s--final\b/u;
 
 function isRecord(value) {
@@ -39,6 +43,7 @@ function partId(part) {
 }
 
 function postingCommand(part) {
+  if (isLoomFinalPostPart(part)) return true;
   const state = isRecord(part.state) ? part.state : {};
   const input = isRecord(state.input) ? state.input : {};
   return (

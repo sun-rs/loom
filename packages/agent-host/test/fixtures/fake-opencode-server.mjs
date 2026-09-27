@@ -63,6 +63,23 @@
 // once); FAKE_ABORT_DROP=1 cancels the run and drops the connection without
 // any answer (an abort whose outcome the client cannot know).
 // FAKE_TERM_DELAY_MS delays the exit after SIGTERM (default 0).
+//
+// evo §57 (Loom Worker tool facade), shapes from the installed 1.18.32 and a
+// free probe of the real `opencode serve`:
+// - `debug config --pure` prints the resolved config: FAKE_USER_CONFIG (the
+//   user's/project's files, JSON) deep-merged with OPENCODE_CONFIG_CONTENT;
+// - `serve` resolves the same merge; every enabled `type: "local"` MCP entry
+//   is started as a child (stdio JSON-RPC: initialize, initialized,
+//   tools/list), an enabled non-local entry counts as connected, and
+//   `enabled: false` is `disabled`; `GET /mcp` answers `{name: {status}}`
+//   after the connections settled. FAKE_SERVE_EXTRA_MCP=1 adds an enabled
+//   `pluginmarker` that `debug config` does not show (a server the launch
+//   could not have switched off);
+// - scenario token `tool`: the model calls the Loom tool named by the wake's
+//   `Reply: loom_message_post target=... based_on_room_seq=N final=true`
+//   line (else `loom_message_check`) through that MCP connection, as tool
+//   part `loom_message_post` with the structured input; `wrongtarget` posts
+//   to `#elsewhere` instead of the wake's target.
 import { spawn } from "node:child_process";
 import {
   appendFileSync,
@@ -80,25 +97,171 @@ if (args[0] === "models") {
   );
   process.exit(0);
 }
-if (args[0] !== "serve") process.exit(64);
 const record = (value) =>
   env.FAKE_RECORD &&
   appendFileSync(
     env.FAKE_RECORD,
     `${JSON.stringify({ pid: process.pid, activationId: env.RAH_ACTIVATION_ID, at: Date.now(), ...value })}\n`,
   );
-const DEFAULT_PROMPT = "FAKE OPENCODE PROVIDER DEFAULT PROMPT";
-const config = (() => {
+const isObject = (value) =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+const deepMerge = (base, over) => {
+  const out = { ...base };
+  for (const [key, value] of Object.entries(over))
+    out[key] =
+      isObject(value) && isObject(out[key])
+        ? deepMerge(out[key], value)
+        : value;
+  return out;
+};
+const parseConfig = (text, name) => {
   try {
-    return env.OPENCODE_CONFIG_CONTENT === undefined
-      ? {}
-      : JSON.parse(env.OPENCODE_CONFIG_CONTENT);
+    return text === undefined ? {} : JSON.parse(text);
   } catch {
-    process.stderr.write("invalid OPENCODE_CONFIG_CONTENT\n");
+    process.stderr.write(`invalid ${name}\n`);
     process.exit(1);
   }
-})();
+};
+const userConfig = parseConfig(env.FAKE_USER_CONFIG, "FAKE_USER_CONFIG");
+const launchConfig = parseConfig(
+  env.OPENCODE_CONFIG_CONTENT,
+  "OPENCODE_CONFIG_CONTENT",
+);
+if (args[0] === "debug" && args[1] === "config") {
+  record({ event: "debug-config", args });
+  process.stdout.write(
+    `${JSON.stringify(deepMerge(userConfig, launchConfig), null, 2)}\n`,
+  );
+  process.exit(0);
+}
+if (args[0] !== "serve") process.exit(64);
+const DEFAULT_PROMPT = "FAKE OPENCODE PROVIDER DEFAULT PROMPT";
+const config = launchConfig;
 record({ event: "spawn", args, config });
+/** MCP servers of the resolved config (user files + launch content). */
+const mcpStatus = {};
+const mcpClients = new Map();
+const mcpEntries = {
+  ...deepMerge(userConfig, launchConfig).mcp,
+  ...(env.FAKE_SERVE_EXTRA_MCP === "1"
+    ? { pluginmarker: { type: "remote", url: "http://127.0.0.1:9/plugin" } }
+    : {}),
+};
+function connectMcp(name, entry) {
+  const child = spawn(entry.command[0], entry.command.slice(1), {
+    env: { ...process.env, ...(entry.environment ?? {}) },
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  let buffer = "";
+  let nextId = 0;
+  const waiting = new Map();
+  child.stdout.on("data", (chunk) => {
+    buffer += chunk;
+    let index;
+    while ((index = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, index);
+      buffer = buffer.slice(index + 1);
+      if (line.trim() === "") continue;
+      const message = JSON.parse(line);
+      waiting.get(message.id)?.(message);
+      waiting.delete(message.id);
+    }
+  });
+  child.stderr.resume();
+  let gone;
+  const exited = new Promise((resolve) => {
+    child.once("error", (error) => resolve((gone = error)));
+    child.once("exit", (code) => resolve((gone = new Error(`exited ${code}`))));
+  });
+  const request = (method, params) =>
+    new Promise((resolve, reject) => {
+      if (gone !== undefined) return reject(gone);
+      void exited.then(reject);
+      const id = (nextId += 1);
+      waiting.set(id, (message) =>
+        message.error
+          ? reject(new Error(message.error.message))
+          : resolve(message.result),
+      );
+      child.stdin.write(
+        `${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`,
+      );
+    });
+  const client = { child, request };
+  mcpClients.set(name, client);
+  return (async () => {
+    await request("initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "fake-opencode", version: "1.18.32" },
+    });
+    child.stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`,
+    );
+    const listed = await request("tools/list", {});
+    record({
+      event: "mcp-connected",
+      name,
+      tools: listed.tools.map((tool) => tool.name),
+    });
+    mcpStatus[name] = { status: "connected" };
+  })().catch((error) => {
+    mcpStatus[name] = {
+      status: "failed",
+      error: String(error.message ?? error),
+    };
+  });
+}
+const mcpReady = Promise.all(
+  Object.entries(mcpEntries ?? {}).map(([name, entry]) => {
+    if (entry?.enabled === false) {
+      mcpStatus[name] = { status: "disabled" };
+      return undefined;
+    }
+    if (entry?.type === "local" && Array.isArray(entry.command))
+      return connectMcp(name, entry);
+    mcpStatus[name] = { status: "connected" };
+    return undefined;
+  }),
+);
+async function callLoomTool(call) {
+  const client = mcpClients.get("loom");
+  if (client === undefined) return { exitCode: 1, output: "no loom MCP" };
+  const result = await client.request("tools/call", {
+    name: call.tool,
+    arguments: call.args,
+  });
+  const output = result.content.map((part) => part.text).join("");
+  record({
+    event: "mcp-call",
+    tool: call.name,
+    args: call.args,
+    isError: result.isError,
+    output,
+  });
+  return { exitCode: result.isError ? 1 : 0, output };
+}
+function loomToolCall(text, tokens) {
+  const reply =
+    /Reply: loom_message_post target=("[^"]*"|\S+) based_on_room_seq=(\d+)( final=true)?/u.exec(
+      text,
+    );
+  if (tokens.has("check") || !reply)
+    return { name: "loom_message_check", tool: "message_check", args: {} };
+  const target = reply[1].startsWith('"') ? JSON.parse(reply[1]) : reply[1];
+  return {
+    name: "loom_message_post",
+    tool: "message_post",
+    args: {
+      target: tokens.has("wrongtarget") ? "#elsewhere" : target,
+      body: "FAKE OPENCODE reply",
+      based_on_room_seq: Number(reply[2]),
+      ...(reply[3] !== undefined && !tokens.has("nofinal")
+        ? { final: true }
+        : {}),
+    },
+  };
+}
 // FAKE_FAIL_RESPAWN=1: every server after the first (per FAKE_RECORD) fails
 // at startup.
 if (env.FAKE_FAIL_RESPAWN === "1") {
@@ -398,15 +561,20 @@ async function runPrompt(s, body, res) {
     type: "reasoning",
     text: "FAKE OPENCODE thinking",
   });
-  const command = tokens.has("hang")
-    ? `: message-post --based-on-room-seq 7 --final; while [ ! -f "$FAKE_RELEASE" ]; do sleep 0.02; done`
-    : workerCommand(text, tokens);
+  const loomCall = tokens.has("tool") ? loomToolCall(text, tokens) : undefined;
+  const command =
+    loomCall !== undefined
+      ? undefined
+      : tokens.has("hang")
+        ? `: message-post --based-on-room-seq 7 --final; while [ ! -f "$FAKE_RELEASE" ]; do sleep 0.02; done`
+        : workerCommand(text, tokens);
+  const toolInput = loomCall === undefined ? { command } : loomCall.args;
   const toolPart = {
     id: nextId("prt"),
     messageID: first.id,
     type: "tool",
     callID: "call-1",
-    tool: "bash",
+    tool: loomCall === undefined ? "bash" : loomCall.name,
     state: { status: "pending", input: {} },
   };
   if (tokens.has("lagtool")) lagBus(Number(env.FAKE_LAG_MS ?? 400));
@@ -486,16 +654,20 @@ async function runPrompt(s, body, res) {
   }
   updatePart(s, {
     ...toolPart,
-    state: { status: "running", input: { command }, time: { start: 1 } },
+    state: { status: "running", input: toolInput, time: { start: 1 } },
   });
-  record({ event: "tool-running", command });
-  const exit = await runShell(command, run);
-  record({
-    event: "command",
-    command,
-    exit: { exitCode: exit.exitCode },
-    output: exit.output,
-  });
+  record({ event: "tool-running", command, tool: toolPart.tool });
+  let exit;
+  if (loomCall !== undefined) exit = await callLoomTool(loomCall);
+  else {
+    exit = await runShell(command, run);
+    record({
+      event: "command",
+      command,
+      exit: { exitCode: exit.exitCode },
+      output: exit.output,
+    });
+  }
   if (run.cancelled) {
     // The abort interrupted the running tool (`SessionProcessor.cleanup`
     // marks it `error` "Tool execution aborted"); the step's assistant is
@@ -504,7 +676,7 @@ async function runPrompt(s, body, res) {
       ...toolPart,
       state: {
         status: "error",
-        input: { command },
+        input: toolInput,
         error: "Tool execution aborted",
         metadata: { interrupted: true },
         time: { start: 1, end: 2 },
@@ -524,9 +696,9 @@ async function runPrompt(s, body, res) {
     ...toolPart,
     state: {
       status: exit.exitCode === 0 ? "completed" : "error",
-      input: { command },
+      input: toolInput,
       output: exit.output,
-      title: "bash",
+      title: toolPart.tool,
       metadata: {},
       time: { start: 1, end: 2 },
     },
@@ -649,6 +821,10 @@ const server = createServer(async (req, res) => {
   record({ event: "request", method: req.method, path: url.pathname, body });
   if (req.method === "GET" && url.pathname === "/path")
     return send(res, 200, { directory: process.cwd() });
+  if (req.method === "GET" && url.pathname === "/mcp") {
+    await mcpReady;
+    return send(res, 200, mcpStatus);
+  }
   if (req.method === "GET" && url.pathname === "/event") {
     res.writeHead(200, {
       "content-type": "text/event-stream",
@@ -780,6 +956,8 @@ const server = createServer(async (req, res) => {
 });
 process.on("SIGTERM", () => {
   record({ event: "signal", signal: "SIGTERM" });
+  // OpenCode closes its MCP clients; the Loom entry exits on stdin EOF.
+  for (const client of mcpClients.values()) client.child.stdin.end();
   const termDelay = Number(env.FAKE_TERM_DELAY_MS ?? 0);
   setTimeout(() => {
     for (const stream of streams) stream.end();

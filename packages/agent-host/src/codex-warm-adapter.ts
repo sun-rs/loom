@@ -53,6 +53,7 @@ import {
   issueWorkerTurnHandle,
   RAH_WORKER_TURN_ROOT_ENV,
 } from "./worker-turn-handle.ts";
+import { RAH_WORKER_TOOLS_ENV } from "./worker-tool-names.ts";
 import {
   RAH_AGENT_TOOL_BIN_ENV,
   RAH_WORKER_API_URL_ENV,
@@ -313,6 +314,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     });
     const credential = await this.#options.issueWorkerCredential(input);
     turn.handle = await issueWorkerTurnHandle(runtime.layout.turnRoot, {
+      // evo §57: a Provider carrying the Loom Worker tools reads the active
+      // turn (the tools take no handle); set by the launch lease.
+      current: runtime.launchEnvironment?.[RAH_WORKER_TOOLS_ENV] !== undefined,
       revoke: credential.revoke,
       scope: turnScope(input),
       token: credential.accessToken,

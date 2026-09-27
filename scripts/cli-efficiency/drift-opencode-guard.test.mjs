@@ -161,6 +161,12 @@ test("launch: product serve, catalog and version only", () => {
     "catalog",
   );
   assert.equal(classifyOpenCodeLaunch(["models", "--pure"]).kind, "catalog");
+  // evo §57: the drivers resolve the user's MCP server names with OpenCode's
+  // own read-only resolution before `serve` (no model call).
+  assert.equal(
+    classifyOpenCodeLaunch(["debug", "config", "--pure"]).kind,
+    "config",
+  );
   const serve = classifyOpenCodeLaunch([
     "serve",
     "--pure",
@@ -185,6 +191,9 @@ test("launch: product serve, catalog and version only", () => {
     ["serve", "--pure", "--hostname", "127.0.0.1"],
     ["serve", "--hostname", "127.0.0.1", "--port", "1", "--model", "x/y"],
     ["models", "deepseek", "--refresh"],
+    ["debug", "config"],
+    ["debug", "agent", "build", "--pure"],
+    ["debug", "config", "--pure", "--print-logs"],
     [],
   ])
     assert.throws(

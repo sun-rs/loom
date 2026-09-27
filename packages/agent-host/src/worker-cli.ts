@@ -88,6 +88,11 @@ import {
 } from "@rah-os/protocol";
 import { parseAgentAppConfig } from "./agent-app-config-cli.ts";
 import { resolveWorkerTurnInvocation } from "./worker-turn-handle.ts";
+import { runWorkerMcpServer } from "./worker-mcp-server.ts";
+import { RAH_WORKER_TOOLS_ENV, workerToolNames } from "./worker-tool-names.ts";
+
+/** `"$RAH_WORKER_CLI" __worker-mcp`: the stdio MCP entry (evo §57). */
+export const WORKER_MCP_ARGUMENT = "__worker-mcp";
 
 const MAX_TOKEN_BYTES = 65_536;
 const MAX_RESPONSE_BYTES = 512 * 1_024;
@@ -284,6 +289,15 @@ export async function runWorkerCliCommand(
     stdout: process.stdout,
   },
 ): Promise<0 | 1> {
+  // evo §57: the Loom Worker MCP entry the Provider starts for the tool
+  // facade; it runs until the Provider closes its stdin.
+  if (arguments_.length === 1 && arguments_[0] === WORKER_MCP_ARGUMENT)
+    return await runWorkerMcpServer({
+      env: runtime.env,
+      fetch: runtime.fetch,
+      stdin: runtime.stdin ?? process.stdin,
+      stdout: runtime.stdout,
+    });
   if (
     (arguments_.length === 3 &&
       arguments_[0] === "agent" &&
@@ -306,7 +320,10 @@ export async function runWorkerCliCommand(
     arguments_[0] === "worker" &&
     arguments_[1] === "help"
   ) {
-    const topic = workerHelpTopic(arguments_[2]!);
+    const topic = workerHelpTopic(
+      arguments_[2]!,
+      workerToolNames(runtime.env[RAH_WORKER_TOOLS_ENV]),
+    );
     if (topic === undefined) {
       renderWorkerCliError(
         runtime.stderr,

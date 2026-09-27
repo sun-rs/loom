@@ -104,6 +104,7 @@ import {
   providerLaunchPolicy,
 } from "./provider-launch-arguments.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
+import { prepareOpenCodeWorkerTools } from "./opencode-worker-tools.js";
 import {
   normalizeOpenCodeTrajectoryEvent,
   RuntimeTrajectoryWriter,
@@ -118,6 +119,8 @@ import {
 const PROVIDER = "opencode-server/v1";
 const STARTUP_TIMEOUT_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 5_000;
+// `GET /mcp` answers after the MCP connections settled.
+const WORKER_TOOLS_REQUEST_TIMEOUT_MS = 10_000;
 const TAIL_IDLE_TIMEOUT_MS = 5_000;
 const SERVER_TERM_TIMEOUT_MS = 1_000;
 const PROGRESS_THROTTLE_MS = 5_000;
@@ -948,6 +951,16 @@ function responseError(response) {
 async function startServer() {
   const port = await allocatePort();
   const rules = prepareOpenCodeInstructionsFile(options.prompt);
+  // evo §57: the Loom Worker tools, when the lease asked for them.
+  const workerTools = await prepareOpenCodeWorkerTools({
+    executable: options.executable,
+    env: { ...process.env, ...providerLaunchPolicy("opencode").environment },
+    cwd: process.cwd(),
+  });
+  const content = openCodeConfigContentWithInstructions(
+    process.env.OPENCODE_CONFIG_CONTENT,
+    rules,
+  );
   const child = spawn(
     options.executable,
     [
@@ -962,10 +975,10 @@ async function startServer() {
       env: {
         ...process.env,
         ...providerLaunchPolicy("opencode").environment,
-        OPENCODE_CONFIG_CONTENT: openCodeConfigContentWithInstructions(
-          process.env.OPENCODE_CONFIG_CONTENT,
-          rules,
-        ),
+        OPENCODE_CONFIG_CONTENT:
+          workerTools === undefined
+            ? content
+            : workerTools.configContent(content),
       },
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
@@ -998,8 +1011,14 @@ async function startServer() {
       throw new Error("OpenCode server exited during startup");
     try {
       await requestJson("/path", {}, 2_000);
+      // Fail closed before ready: the prompt and wake name the tools.
+      if (workerTools !== undefined)
+        await workerTools.verify((path) =>
+          requestJson(path, {}, WORKER_TOOLS_REQUEST_TIMEOUT_MS),
+        );
       return handle;
     } catch (error) {
+      if (error?.workerTools === true) throw error;
       lastError = error;
       await delay(100);
     }

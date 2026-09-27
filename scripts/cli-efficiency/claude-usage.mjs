@@ -8,11 +8,30 @@
 // independent cross-check (one line per content block, usage repeated per
 // line of a message id, so it is deduplicated by message id).
 import { ClaudeStreamUsageTracker } from "../../packages/agent-host/src/provider-usage.js";
-import { workerCallKind } from "./tool-calls.mjs";
+import { workerCallKind, workerToolCallKind } from "./tool-calls.mjs";
 
 // One tool call → Worker call kind (boolean handle flag only; the handle
 // itself is never recorded). Mirrors common.mjs `measure` for Codex.
 export function workerCall(name, args, at) {
+  // evo §57: a Loom Worker tool call is classified by its name; the facade
+  // supplies the turn itself, so its handle is never missing.
+  const toolKind = workerToolCallKind(name);
+  if (toolKind !== undefined) {
+    let input;
+    try {
+      input = args === undefined ? {} : JSON.parse(args);
+    } catch {
+      input = {};
+    }
+    return {
+      at,
+      name,
+      kind: toolKind,
+      via: "tool",
+      turnHandle: true,
+      ...(toolKind === "box-post" ? { final: input?.final === true } : {}),
+    };
+  }
   // Absent arguments (undefined) are an unclassifiable, `unknown` call.
   const kind = workerCallKind(args);
   return {

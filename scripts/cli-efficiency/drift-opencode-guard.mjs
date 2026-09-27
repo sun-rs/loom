@@ -198,7 +198,7 @@ export function openCodeRequestRecord(
     : { kind: "session-create", at, permission };
 }
 
-// {kind: "version" | "catalog"} or {kind: "serve", port, upstreamArgs(p)}.
+// {kind: "version" | "catalog" | "config"} or {kind: "serve", port, upstreamArgs(p)}.
 export function classifyOpenCodeLaunch(args) {
   if (args.length === 1 && ["--version", "-v"].includes(args[0]))
     return { kind: "version" };
@@ -207,6 +207,15 @@ export function classifyOpenCodeLaunch(args) {
     args.slice(1).every((a) => a === "--verbose" || a === "--pure")
   )
     return { kind: "catalog" };
+  // evo §57: the product drivers resolve MCP server names with OpenCode's
+  // read-only `debug config --pure` before serve; it makes no model call.
+  if (
+    args.length === 3 &&
+    args[0] === "debug" &&
+    args[1] === "config" &&
+    args[2] === "--pure"
+  )
+    return { kind: "config" };
   if (args[0] !== "serve") throw new Error("Unsupported gate CLI command");
   let port;
   let hostname;

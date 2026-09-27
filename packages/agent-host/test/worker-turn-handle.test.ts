@@ -6,6 +6,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,6 +15,7 @@ import test from "node:test";
 import {
   createWorkerTurnRoot,
   issueWorkerTurnHandle,
+  readCurrentWorkerTurn,
   removeWorkerTurnRoot,
   runWorkerCliCommand,
 } from "../src/index.ts";
@@ -225,6 +227,59 @@ test("legacy per-Activation runtimes keep the environment credential path", asyn
       0,
     );
     assert.equal(state.requests[0]?.authorization, "Bearer legacy-token");
+  } finally {
+    cleanup(state.directory);
+  }
+});
+
+test("a tool-facade runtime publishes only the active turn's handle, cleared before revocation", async () => {
+  const state = fixture();
+  try {
+    const root = await createWorkerTurnRoot(join(state.directory, "runtime"));
+    // Without the option nothing names the current turn.
+    const plain = await issueWorkerTurnHandle(root, {
+      revoke: () => undefined,
+      scope: scope("0"),
+      token: "turn-0-token",
+    });
+    assert.equal(await readCurrentWorkerTurn(root), undefined);
+    await plain.release();
+    let pointerAtRevoke: string | undefined = "unread";
+    const first = await issueWorkerTurnHandle(root, {
+      current: true,
+      revoke: async () => {
+        pointerAtRevoke = await readCurrentWorkerTurn(root);
+      },
+      scope: scope("1"),
+      token: "turn-1-token",
+    });
+    assert.equal(await readCurrentWorkerTurn(root), first.handle);
+    assert.equal(statSync(join(root, "current")).mode & 0o777, 0o600);
+    await first.release();
+    assert.equal(pointerAtRevoke, undefined, "cleared before revocation");
+    assert.equal(await readCurrentWorkerTurn(root), undefined);
+    // A late release of an older turn never clears a newer turn's pointer.
+    const older = await issueWorkerTurnHandle(root, {
+      current: true,
+      revoke: () => undefined,
+      scope: scope("2"),
+      token: "turn-2-token",
+    });
+    const newer = await issueWorkerTurnHandle(root, {
+      current: true,
+      revoke: () => undefined,
+      scope: scope("3"),
+      token: "turn-3-token",
+    });
+    await older.release();
+    assert.equal(await readCurrentWorkerTurn(root), newer.handle);
+    await newer.release();
+    // A pointer that is not owner-private is never trusted.
+    writeFileSync(join(root, "current"), newer.handle, { mode: 0o644 });
+    chmodSync(join(root, "current"), 0o644);
+    assert.equal(await readCurrentWorkerTurn(root), undefined);
+    // No turn root (a per-Activation runtime): nothing to read.
+    assert.equal(await readCurrentWorkerTurn(undefined), undefined);
   } finally {
     cleanup(state.directory);
   }

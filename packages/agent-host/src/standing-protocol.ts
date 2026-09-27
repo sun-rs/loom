@@ -4,6 +4,7 @@ import {
   WORKER_HELP_TOPIC_NAMES,
   staticWorkerHelpTopic,
 } from "./worker-help-topics.ts";
+import type { WorkerToolNames } from "./worker-tool-names.ts";
 
 /**
  * P2-3 (2026-09-25 review): the platform protocol sections of the standing
@@ -49,15 +50,36 @@ Do not obstruct a human-directed use of a credential: use or send it on the requ
  */
 const HELP_POINTER = `Details: \`"$RAH_WORKER_CLI" worker help <topic>\` — topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.`;
 
-/** The Worker CLI and Tasks part of the daemon's platform layer. */
-export function workerCliSection(): string {
+/**
+ * The Worker CLI and Tasks part of the daemon's platform layer. With `tools`
+ * (evo §57, a launch that carries the Loom Worker tool facade) posting and
+ * checking name the tools and the heredoc usage is dropped; every other
+ * sentence, and every other Worker command, is the CLI form unchanged.
+ */
+export function workerCliSection(tools?: WorkerToolNames): string {
+  const truth =
+    tools === undefined
+      ? `use the absolute \`"$RAH_WORKER_CLI" worker\` path for every Room or Task read/mutation, one command at a time,`
+      : `post and check messages with the \`${tools.post}\` and \`${tools.check}\` tools and use the absolute \`"$RAH_WORKER_CLI" worker\` path for every other Room or Task read/mutation, one call at a time,`;
+  const output =
+    tools === undefined
+      ? `Commands print human-readable text on stdout — read that text. On a refusal trust the stderr \`Effect:\` line, not the exit status:`
+      : `Commands and these tools return human-readable text — read that text. On a refusal trust the \`Effect:\` line, not the exit status:`;
+  const check =
+    tools === undefined
+      ? `\`"$RAH_WORKER_CLI" worker message-check\` delivers your messages (\`--replay\` after a lost tool result).`
+      : `\`${tools.check}\` delivers your messages (\`replay\` after a lost tool result).`;
+  const reply =
+    tools === undefined
+      ? `Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`--final\` on the post completing your reply to delivered messages; omit it on progress posts. Use \`"$RAH_WORKER_CLI" worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body;`
+      : `Reply once with \`${tools.post}\`; after a successful post your turn is done unless new work arrived. Set \`final\` on the post completing your reply to delivered messages; omit it on progress posts. Always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the body;`;
   return `## Worker CLI
 
-The RAH Worker service is the only collaboration truth: use the absolute \`"$RAH_WORKER_CLI" worker\` path for every Room or Task read/mutation, one command at a time, and never read, print, copy, or forward its credential file. Commands print human-readable text on stdout — read that text. On a refusal trust the stderr \`Effect:\` line, not the exit status: \`Effect: message_queued\` means posted, do not resend it; \`Effect: not_sent\` means nothing was committed.
+The RAH Worker service is the only collaboration truth: ${truth} and never read, print, copy, or forward its credential file. ${output} \`Effect: message_queued\` means posted, do not resend it; \`Effect: not_sent\` means nothing was committed.
 
-Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action. \`"$RAH_WORKER_CLI" worker message-check\` delivers your messages (\`--replay\` after a lost tool result). Reads never acknowledge Inbox, and never grant Room membership, Task ownership or execution authority.
+Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action. ${check} Reads never acknowledge Inbox, and never grant Room membership, Task ownership or execution authority.
 
-Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`--final\` on the post completing your reply to delivered messages; omit it on progress posts. Use \`"$RAH_WORKER_CLI" worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
+${reply} mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
 
 ### Tasks
 
@@ -97,40 +119,58 @@ export function formattingSection(): string {
  * `chunk-TEGPBMW7.js:24350/24377`) are folded in here, not repeated per turn.
  * The daemon places the launch delivery-mode section before these rules.
  */
-export function startupRulesSection(): string {
-  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`, no \`message-check\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
+export function startupRulesSection(tools?: WorkerToolNames): string {
+  const reply =
+    tools === undefined
+      ? `pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`, no \`message-check\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying.`
+      : `pass a wake's \`--turn <handle>\` to every Worker CLI command (the tools need none). On \`Reply:\`, post once with its \`based_on_room_seq\`, no \`${tools.check}\` first. With no reply needed, call \`${tools.check}\` once; when a wake says to call it first, call it before replying.`;
+  const confirmation =
+    tools === undefined
+      ? `\`message-check\` or a \`--based-on-room-seq\` reply`
+      : `\`${tools.check}\` or a \`based_on_room_seq\` reply`;
+  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; ${reply} Never infer missing memory or no work from an error.
 
-Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
+Delivery confirmation is automatic in ${confirmation}; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
 }
 
 /** In prompt order; the version and the help card cover exactly these. */
-function protocolSections(): readonly string[] {
+function protocolSections(tools?: WorkerToolNames): readonly string[] {
   return [
     authoritySection(),
-    workerCliSection(),
+    workerCliSection(tools),
     credentialHygieneSection(),
     remindersSection(),
     communicationStyleSection(),
     formattingSection(),
-    startupRulesSection(),
+    startupRulesSection(tools),
   ];
 }
 
-/** Short content version of the platform protocol sections. */
-export const STANDING_PROTOCOL_VERSION = createHash("sha256")
-  .update(protocolSections().join("\n\n"), "utf8")
-  .digest("hex")
-  .slice(0, 12);
+/**
+ * Short content version of the platform protocol sections of one variant.
+ * The tool variant (evo §57) has its own version, so a resumed session that
+ * was created with the CLI form gets the one-line protocol update; the CLI
+ * variant's version is unchanged for every runtime without the tools.
+ */
+export function standingProtocolVersion(tools?: WorkerToolNames): string {
+  return createHash("sha256")
+    .update(protocolSections(tools).join("\n\n"), "utf8")
+    .digest("hex")
+    .slice(0, 12);
+}
+
+/** The CLI variant's version (every runtime without the tool facade). */
+export const STANDING_PROTOCOL_VERSION = standingProtocolVersion();
 
 /**
  * `worker help protocol`: the current platform rules. It summarizes what a new
  * session receives in its standing prompt; it does not change the prompt an
  * existing native session was created with.
  */
-export function renderStandingProtocolCard(): string {
+export function renderStandingProtocolCard(tools?: WorkerToolNames): string {
   return [
-    `# Current RAH Worker protocol (v${STANDING_PROTOCOL_VERSION}) — these current rules take precedence over older platform rules you remember; your role, memory and launch delivery mode are unchanged.`,
-    ...protocolSections(),
+    `# Current RAH Worker protocol (v${standingProtocolVersion(tools)}) — these current rules take precedence over older platform rules you remember; your role, memory and launch delivery mode are unchanged.`,
+    ...protocolSections(tools),
   ].join("\n\n");
 }
 
@@ -149,9 +189,16 @@ export const WORKER_CLI_HELP_TOPIC_NAMES: readonly string[] = [
   "protocol",
 ];
 
-/** Every `worker help <topic>`, including the protocol card. */
-export function workerHelpTopic(name: string): string | undefined {
+/**
+ * Every `worker help <topic>`, including the protocol card, which follows the
+ * variant of the Provider the CLI runs under (`RAH_WORKER_TOOLS` in its
+ * launch lease environment).
+ */
+export function workerHelpTopic(
+  name: string,
+  tools?: WorkerToolNames,
+): string | undefined {
   return name === "protocol"
-    ? renderStandingProtocolCard()
+    ? renderStandingProtocolCard(tools)
     : staticWorkerHelpTopic(name);
 }

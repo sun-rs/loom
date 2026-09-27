@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { constants } from "node:fs";
-import { chmod, lstat, mkdir, open, rm } from "node:fs/promises";
+import { chmod, lstat, mkdir, open, rename, rm } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 
 /**
@@ -66,9 +66,59 @@ export async function createWorkerTurnRoot(
   return root;
 }
 
+/**
+ * Worker tool facade (evo §57): the Loom Worker MCP entry is a child of the
+ * Provider process, not of one turn, so it cannot receive a handle through a
+ * wake. A runtime whose Provider carries the facade publishes the ACTIVE
+ * turn's handle as `<root>/current` (owner-private, created by name inside
+ * the non-listable root) and clears it before that turn's revocation. The
+ * facade reads it per call and passes it as `--turn`, exactly as a CLI call
+ * would; nothing else reads it.
+ *
+ * Honest limit: a same-UID process that deliberately reads this well-known
+ * name learns the current handle. The threat model is unchanged (it covers
+ * unintended cross-turn use by leftover tools and model confusion, which
+ * still hold only the handle of their own turn); deliberate same-UID reads
+ * of Host state were already out of scope.
+ */
+const CURRENT_TURN_FILE = "current";
+
+export async function readCurrentWorkerTurn(
+  root: string | undefined,
+): Promise<string | undefined> {
+  if (root === undefined || root === "" || !isAbsolute(root)) return undefined;
+  try {
+    const handle = (
+      await readPrivateFile(join(root, CURRENT_TURN_FILE))
+    ).trim();
+    return WORKER_TURN_HANDLE_PATTERN.test(handle) ? handle : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function publishCurrentWorkerTurn(
+  root: string,
+  handle: string,
+): Promise<void> {
+  const temporary = join(root, `.current-${handle}`);
+  await writePrivateFile(temporary, handle);
+  await rename(temporary, join(root, CURRENT_TURN_FILE));
+}
+
+async function clearCurrentWorkerTurn(
+  root: string,
+  handle: string,
+): Promise<void> {
+  if ((await readCurrentWorkerTurn(root)) !== handle) return;
+  await rm(join(root, CURRENT_TURN_FILE), { force: true });
+}
+
 export async function issueWorkerTurnHandle(
   root: string,
   input: {
+    /** Publish this handle as the root's current turn (tool facade). */
+    current?: boolean;
     revoke: () => Promise<void> | void;
     scope: Readonly<Record<string, string>>;
     token: string;
@@ -93,6 +143,7 @@ export async function issueWorkerTurnHandle(
       join(directory, "scope.json"),
       JSON.stringify(input.scope),
     );
+    if (input.current === true) await publishCurrentWorkerTurn(root, handle);
   } catch (error) {
     await rm(directory, { force: true, recursive: true });
     throw error;
@@ -107,6 +158,9 @@ export async function issueWorkerTurnHandle(
           removed: false,
           revoked: false,
         };
+        // The facade stops naming this turn before its credential is revoked.
+        if (input.current === true)
+          await clearCurrentWorkerTurn(root, handle).catch(() => undefined);
         try {
           await input.revoke();
           outcome.revoked = true;

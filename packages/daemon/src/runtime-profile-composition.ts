@@ -1,4 +1,7 @@
-import { withRuntimeExecutionWorkspace } from "@rah-os/agent-host";
+import {
+  withRuntimeExecutionWorkspace,
+  workerToolModeForRuntime,
+} from "@rah-os/agent-host";
 import type { RuntimeRecoveryDescriptor } from "@rah-os/protocol";
 import { join } from "node:path";
 
@@ -191,6 +194,10 @@ export function createConfiguredRuntime(input: {
         const memoryIndex = s6
           ? readMemoryIndex(input, scope.agent.participantId)
           : undefined;
+        const workerTools = workerToolModeForRuntime(
+          runtimeId ?? "unknown",
+          process.env,
+        );
         const promptLease = standingPromptLease(scope, {
           ...(!s6
             ? {}
@@ -212,6 +219,10 @@ export function createConfiguredRuntime(input: {
             ? {}
             : { toolAccessMode: input.toolAccessMode }),
           workspacePath: input.cwd,
+          // evo §57: the one decision that this launch carries the Loom
+          // Worker tools (OpenCode; the daemon-side A/B switch can turn it
+          // off). The lease carries it to the driver, wake and help card.
+          ...(workerTools === undefined ? {} : { workerTools }),
           attachedDirectories: attachedDirectoriesForPrompt(
             input.runtimeProfileRevision.manifest.adapter.kind,
             attachedDirectories,
