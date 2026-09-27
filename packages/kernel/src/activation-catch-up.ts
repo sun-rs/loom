@@ -1,0 +1,152 @@
+import type { DatabaseSync } from "node:sqlite";
+
+import type { RoomEvent } from "@rah-os/protocol";
+
+import { integer, text, type Row } from "./sqlite-row.ts";
+import {
+  executionAuditEventTypes,
+  isExecutionAuditEvent,
+} from "./worker-message-projection.ts";
+
+/**
+ * Owner ruling 2026-09-27 (contract §3): an instance that was not woken for a
+ * Channel message still reads it later. The wake rendering prepends the Room
+ * events after this consumer's cursor and before the Activation range — the
+ * catch-up — so the implicit acknowledgement, which advances through the
+ * presented prefix, no longer crosses events the model was never shown.
+ *
+ * - The Activation range keeps budget priority; the catch-up takes only what
+ *   is left of the shared message/byte budget, newest first, so it is a
+ *   contiguous suffix of the gap. An older part that does not fit is stated as
+ *   a count and a seq range, never listed (it stays readable through
+ *   `message-check`/`room-read`).
+ * - Execution-audit events and this participant's own posts are covered but
+ *   neither rendered nor charged, exactly as the range treats audit events.
+ * - No cursor yet (a first delivery for this consumer) means no catch-up: a
+ *   new consumer is not handed Channel history it never subscribed to.
+ * - The Activation's `from_seq` is untouched: it is the latency anchor and the
+ *   obligation interval. Only the rendering's stored start moves, and a
+ *   re-present in the same RunAttempt reuses that stored start, so a cursor
+ *   that moved meanwhile cannot change the digest.
+ */
+export type CatchUp = {
+  renderFromSeq: number;
+  events: RoomEvent[];
+  presentedSeqs: number[];
+  usedBytes: number;
+  omittedCount: number;
+  omittedFromSeq: number | undefined;
+  omittedToSeq: number | undefined;
+};
+
+export function renderCatchUp(
+  database: DatabaseSync,
+  input: {
+    roomId: string;
+    participantId: string;
+    consumerId: string;
+    fromSeq: number;
+    /** A stored rendering's start: re-presents reproduce it exactly. */
+    storedFromSeq: number | undefined;
+    budget: { messages: number; bytes: number; scanRows: number };
+    eventFromRow: (row: Row) => RoomEvent;
+  },
+): CatchUp {
+  const none: CatchUp = {
+    renderFromSeq: input.fromSeq,
+    events: [],
+    presentedSeqs: [],
+    usedBytes: 0,
+    omittedCount: 0,
+    omittedFromSeq: undefined,
+    omittedToSeq: undefined,
+  };
+  let floor = input.storedFromSeq;
+  if (floor === undefined) {
+    const cursor = database
+      .prepare(
+        "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id=?",
+      )
+      .get(input.roomId, input.participantId, input.consumerId);
+    if (cursor === undefined) return none;
+    floor = integer(cursor, "last_seq") + 1;
+  }
+  if (floor >= input.fromSeq) return none;
+  const rows = database
+    .prepare(
+      `SELECT * FROM room_events
+        WHERE room_id=? AND room_seq >= ? AND room_seq < ?
+        ORDER BY room_seq DESC
+        LIMIT ?`,
+    )
+    .all(input.roomId, floor, input.fromSeq, input.budget.scanRows) as Row[];
+  const covered: Array<{ seq: number; event?: RoomEvent }> = [];
+  let usedBytes = 0;
+  let rendered = 0;
+  let renderFromSeq = rows.length < input.budget.scanRows ? floor : undefined;
+  for (const row of rows) {
+    const seq = integer(row, "room_seq");
+    const type = text(row, "type");
+    if (
+      isExecutionAuditEvent(type) ||
+      (type === "message.posted" &&
+        text(row, "actor_id") === input.participantId)
+    ) {
+      covered.push({ seq });
+      continue;
+    }
+    const size = Buffer.byteLength(text(row, "payload_json"), "utf8");
+    if (
+      rendered >= input.budget.messages ||
+      usedBytes + size > input.budget.bytes
+    ) {
+      renderFromSeq = seq + 1;
+      break;
+    }
+    usedBytes += size;
+    rendered += 1;
+    covered.push({ seq, event: input.eventFromRow(row) });
+  }
+  renderFromSeq ??= covered.at(-1)?.seq ?? input.fromSeq;
+  const shown = covered.filter(({ seq }) => seq >= renderFromSeq!).reverse();
+  const omitted =
+    renderFromSeq > floor
+      ? omittedSummary(database, input, floor, renderFromSeq - 1)
+      : { count: 0, fromSeq: undefined, toSeq: undefined };
+  return {
+    renderFromSeq,
+    events: shown.flatMap(({ event }) => (event ? [event] : [])),
+    presentedSeqs: shown.map(({ seq }) => seq),
+    usedBytes,
+    omittedCount: omitted.count,
+    omittedFromSeq: omitted.fromSeq,
+    omittedToSeq: omitted.toSeq,
+  };
+}
+
+/** Bounded aggregate over what the catch-up would have rendered. */
+function omittedSummary(
+  database: DatabaseSync,
+  input: { roomId: string; participantId: string },
+  fromSeq: number,
+  toSeq: number,
+): { count: number; fromSeq: number | undefined; toSeq: number | undefined } {
+  const audit = executionAuditEventTypes();
+  const row = database
+    .prepare(
+      `SELECT COUNT(*) AS n, MIN(room_seq) AS first_seq, MAX(room_seq) AS last_seq
+         FROM room_events
+        WHERE room_id=? AND room_seq BETWEEN ? AND ?
+          AND type NOT IN (${audit.map(() => "?").join(",")})
+          AND NOT (type='message.posted' AND actor_id=?)`,
+    )
+    .get(input.roomId, fromSeq, toSeq, ...audit, input.participantId) as Row;
+  const count = integer(row, "n");
+  return count === 0
+    ? { count: 0, fromSeq: undefined, toSeq: undefined }
+    : {
+        count,
+        fromSeq: integer(row, "first_seq"),
+        toSeq: integer(row, "last_seq"),
+      };
+}

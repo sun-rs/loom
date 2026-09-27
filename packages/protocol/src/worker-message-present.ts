@@ -67,6 +67,17 @@ export const WorkerMessagePresentResponseSchema = z
     noticeCount: z.number().int().nonnegative(),
     noticeFromSeq: z.number().int().positive().optional(),
     noticeToSeq: z.number().int().positive().optional(),
+    /**
+     * Contract §3 catch-up: present only when the rendering starts before the
+     * Activation range. Events with a seq below `fromSeq` are Channel events
+     * after this consumer's cursor that did not wake it; they are covered by
+     * the presented prefix like any other rendered event. Kernel-derived.
+     */
+    catchUpFromSeq: z.number().int().positive().optional(),
+    /** The older catch-up part that did not fit the budget, stated not listed. */
+    catchUpOmittedCount: z.number().int().nonnegative().optional(),
+    catchUpOmittedFromSeq: z.number().int().positive().optional(),
+    catchUpOmittedToSeq: z.number().int().positive().optional(),
     renderedAt: TimestampSchema,
     sentAt: TimestampSchema.optional(),
     /**
@@ -117,6 +128,12 @@ export const WorkerMessagePresentResponseSchema = z
   .refine((value) => value.toSeq >= value.fromSeq, {
     message: "presented range is inverted",
   })
+  .refine(
+    (value) =>
+      value.catchUpFromSeq === undefined ||
+      value.catchUpFromSeq < value.fromSeq,
+    { message: "a catch-up starts before the Activation range" },
+  )
   .refine(
     (value) => {
       const covered = new Set(value.presentedSeqs);

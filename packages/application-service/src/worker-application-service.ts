@@ -880,6 +880,18 @@ export class WorkerApplicationService {
           ...(presented.noticeToSeq === undefined
             ? {}
             : { noticeToSeq: presented.noticeToSeq }),
+          ...(presented.catchUpFromSeq === undefined
+            ? {}
+            : {
+                catchUpFromSeq: presented.catchUpFromSeq,
+                catchUpOmittedCount: presented.catchUpOmittedCount ?? 0,
+                ...(presented.catchUpOmittedFromSeq === undefined
+                  ? {}
+                  : {
+                      catchUpOmittedFromSeq: presented.catchUpOmittedFromSeq,
+                      catchUpOmittedToSeq: presented.catchUpOmittedToSeq,
+                    }),
+              }),
           renderedAt: presented.renderedAt,
           ...(presented.sentAt === undefined
             ? {}

@@ -31,7 +31,11 @@
  *   refusal and any final reply an earlier attempt committed (with its
  *   Thread) as one fact line (`previousAttemptRefusal`; D1-D 2026-09-27);
  * - a truncated window or one with a notice tail instead ends with one line
- *   asking for `message-check` first.
+ *   asking for `message-check` first;
+ * - a window carrying a catch-up (contract §3: Channel events after this
+ *   consumer's cursor that did not wake it) shows them first under one factual
+ *   label, then `For you:` and the Activation's own events; only the latter
+ *   become `Reply:` targets.
  */
 import {
   shortWorkerRef,
@@ -138,6 +142,18 @@ function memoryLines(memory: BodiedWakeMemory | undefined): string[] {
   ];
 }
 
+/** The catch-up block's one factual label (contract §3). */
+function catchUpLabel(present: WorkerMessagePresentResponse): string {
+  const omitted = present.catchUpOmittedCount ?? 0;
+  if (omitted <= 0) return "Since your last read (did not wake you):";
+  const range =
+    present.catchUpOmittedFromSeq === undefined ||
+    present.catchUpOmittedToSeq === undefined
+      ? ""
+      : `, seq ${present.catchUpOmittedFromSeq}-${present.catchUpOmittedToSeq}`;
+  return `Since your last read (did not wake you; ${omitted} older event${omitted === 1 ? "" : "s"}${range}, not shown):`;
+}
+
 /**
  * Returns undefined when nothing is confirmable (the very first event in the
  * range degraded to notice): the caller then keeps the fixed startup wake.
@@ -165,9 +181,19 @@ export function formatBodiedWakeInput(input: {
             ? ""
             : ` (seq ${present.noticeFromSeq}-${present.noticeToSeq})`
         } not shown`;
+  // Contract §3 catch-up: events before the Activation range did not wake
+  // this instance. They are shown as facts under their own label and never
+  // become reply targets.
+  const catchUp =
+    present.catchUpFromSeq === undefined
+      ? []
+      : present.events.filter((event) => event.roomSeq < present.fromSeq);
+  const own = present.events.filter(
+    (event) => event.roomSeq >= present.fromSeq,
+  );
   const instruction = complete
     ? replyInstruction(
-        compactWakeReplyTargets(present.events, present.addressing),
+        compactWakeReplyTargets(own, present.addressing),
         turn,
         through,
       )
@@ -180,8 +206,17 @@ export function formatBodiedWakeInput(input: {
         : present.previousAttemptReplyMessageId !== undefined
           ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true)}`
           : "";
+  const eventLines =
+    catchUp.length === 0
+      ? renderCompactWakeEventLines(present.events, present.addressing)
+      : [
+          catchUpLabel(present),
+          renderCompactWakeEventLines(catchUp, present.addressing),
+          "For you:",
+          renderCompactWakeEventLines(own, present.addressing),
+        ].join("\n");
   const sections = [
-    `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,
+    `${eventLines}\n${instruction}${retry}`,
     ...memoryLines(input.memory),
     ...(present.memoryDelta === undefined
       ? []

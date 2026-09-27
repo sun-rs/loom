@@ -713,3 +713,64 @@ test("a late request after the Room was stopped acknowledges nothing", async () 
     await context.close();
   }
 });
+
+test("contract §3 catch-up: the route carries Channel messages that did not wake the worker and one reply acknowledges through the head", async () => {
+  const context = await fixture();
+  try {
+    const first = context.post("question one");
+    const turn = context.activate();
+    await turn.call("message-present");
+    turn.markSent();
+    const answered = await turn.call("messages/post", {
+      body: "answer one",
+      basedOnRoomSeq: first.event.roomSeq,
+      idempotencyKey: "catch-up-answer-1",
+    });
+    assert.equal(answered.status, 200);
+    context.kernel.recordRuntimeTermination(context.host, {
+      exit: { code: 0 },
+      runAttemptId: turn.run.runAttemptId,
+      runtimeRunId: turn.runtime.runtimeRunId,
+    });
+    context.kernel.finishRunAttempt(context.host, {
+      exitCode: 0,
+      runAttemptId: turn.run.runAttemptId,
+      state: "exited",
+    });
+    context.kernel.completeActivation(context.host, {
+      activationId: turn.activation.activationId,
+      consumerId: "worker",
+    });
+    // A Channel message that wakes nobody (no recipient), then one for the worker.
+    const side = context.kernel.postMessage(context.actor, {
+      body: "a side remark for the room",
+      idempotencyKey: "catch-up-side",
+      recipients: [],
+      roomId: context.room.roomId,
+    });
+    const second = context.post("question two");
+    const run = context.activate();
+    const presented = await run.call("message-present");
+    assert.equal(presented.status, 200, JSON.stringify(presented.body));
+    assert.equal(presented.body.fromSeq, second.event.roomSeq);
+    assert.ok(presented.body.catchUpFromSeq < second.event.roomSeq);
+    assert.equal(presented.body.catchUpOmittedCount, 0);
+    assert.deepEqual(
+      presented.body.events
+        .filter((event: { type: string }) => event.type === "message.posted")
+        .map((event: { payload: { body: string } }) => event.payload.body),
+      ["a side remark for the room", "question two"],
+    );
+    assert.ok(presented.body.presentedSeqs.includes(side.event.roomSeq));
+    run.markSent();
+    const posted = await run.call("messages/post", {
+      body: "answer two",
+      basedOnRoomSeq: presented.body.presentedThroughSeq,
+      idempotencyKey: "catch-up-answer-2",
+    });
+    assert.equal(posted.status, 200);
+    assert.equal(context.cursor(), second.event.roomSeq);
+  } finally {
+    await context.close();
+  }
+});

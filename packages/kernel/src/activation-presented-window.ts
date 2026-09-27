@@ -12,6 +12,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import { isExecutionAuditEvent } from "./worker-message-projection.ts";
 import { workerAddressing } from "./worker-addressing.ts";
 import { retryReminder } from "./activation-retry-reminder.ts";
+import { renderCatchUp } from "./activation-catch-up.ts";
 
 /**
  * A "presented" window records that the Kernel itself rendered a concrete range
@@ -161,6 +162,16 @@ export type RenderedPresentedWindow = PresentedWindow & {
   presentedThroughSeq: number;
   /** Canonical `#room`/`@handle` names, exactly as `message-check` renders. */
   addressing: WorkerAddressing;
+  /**
+   * The rendering's start when it carries a catch-up (`activation-catch-up.ts`):
+   * events with a smaller seq than `fromSeq` are Channel events after this
+   * consumer's cursor that did not wake it. `fromSeq` stays the Activation's.
+   */
+  catchUpFromSeq?: number;
+  /** The older catch-up part that did not fit, stated not listed. */
+  catchUpOmittedCount?: number;
+  catchUpOmittedFromSeq?: number;
+  catchUpOmittedToSeq?: number;
   /** See `activation-retry-reminder.ts`. */
   previousAttemptUnconfirmed?: true;
   /** See `activation-retry-reminder.ts`. */
@@ -314,8 +325,38 @@ export function renderPresentedWindow(
     // Everything read fit, but the range holds more rows than were read.
     firstNoticeSeq = lastScannedSeq + 1;
   }
-  const contentDigest = canonicalDigest({
+  const existing = readPresentedWindow(database, scope);
+  const catchUp = renderCatchUp(database, {
+    roomId: scope.roomId,
+    participantId: scope.participantId,
+    consumerId: scope.consumerId,
     fromSeq,
+    storedFromSeq: existing?.fromSeq,
+    budget: {
+      messages: WAKE_BODY_MAX_MESSAGES - events.length,
+      bytes: WAKE_BODY_MAX_BYTES - usedBytes,
+      scanRows: WAKE_SCAN_MAX_ROWS,
+    },
+    eventFromRow,
+  });
+  const renderFromSeq = catchUp.renderFromSeq;
+  events.unshift(...catchUp.events);
+  presentedSeqs.unshift(...catchUp.presentedSeqs);
+  const catchUpFields =
+    renderFromSeq < fromSeq
+      ? {
+          catchUpFromSeq: renderFromSeq,
+          catchUpOmittedCount: catchUp.omittedCount,
+          ...(catchUp.omittedFromSeq === undefined
+            ? {}
+            : {
+                catchUpOmittedFromSeq: catchUp.omittedFromSeq,
+                catchUpOmittedToSeq: catchUp.omittedToSeq,
+              }),
+        }
+      : {};
+  const contentDigest = canonicalDigest({
+    fromSeq: renderFromSeq,
     toSeq,
     events: events.map((event) => ({
       eventId: event.eventId,
@@ -324,7 +365,6 @@ export function renderPresentedWindow(
       payload: event.payload,
     })),
   });
-  const existing = readPresentedWindow(database, scope);
   const notice = {
     noticeCount,
     noticeFromSeq: noticeCount > 0 ? firstNoticeSeq : undefined,
@@ -333,7 +373,7 @@ export function renderPresentedWindow(
   };
   if (existing !== undefined) {
     if (
-      existing.fromSeq !== fromSeq ||
+      existing.fromSeq !== renderFromSeq ||
       existing.toSeq !== toSeq ||
       existing.contentDigest !== contentDigest
     )
@@ -342,6 +382,8 @@ export function renderPresentedWindow(
       );
     return {
       ...existing,
+      fromSeq,
+      ...catchUpFields,
       events,
       addressing: workerAddressing(database, scope, events),
       ...notice,
@@ -359,7 +401,7 @@ export function renderPresentedWindow(
       scope.activationId,
       scope.consumerId,
       scope.runAttemptId,
-      fromSeq,
+      renderFromSeq,
       toSeq,
       JSON.stringify(presentedSeqs),
       contentDigest,
@@ -367,7 +409,7 @@ export function renderPresentedWindow(
     );
   const window: PresentedWindow = {
     runAttemptId: scope.runAttemptId,
-    fromSeq,
+    fromSeq: renderFromSeq,
     toSeq,
     presentedSeqs,
     contentDigest,
@@ -378,6 +420,8 @@ export function renderPresentedWindow(
   };
   return {
     ...window,
+    fromSeq,
+    ...catchUpFields,
     events,
     addressing: workerAddressing(database, scope, events),
     ...notice,

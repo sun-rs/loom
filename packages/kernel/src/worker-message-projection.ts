@@ -44,6 +44,11 @@ export function isExecutionAuditEvent(type: string): boolean {
   return EXECUTION_AUDIT_EVENTS.has(type);
 }
 
+/** The same enumeration, for a bounded SQL aggregate. */
+export function executionAuditEventTypes(): readonly string[] {
+  return [...EXECUTION_AUDIT_EVENTS];
+}
+
 export function projectWorkerMessageCheck(
   delivery: WorkerSyncResult,
 ): WorkerSyncResult {

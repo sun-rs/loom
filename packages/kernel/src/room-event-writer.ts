@@ -18,6 +18,7 @@ import type {
 import { ConflictError, NotFoundError } from "./errors.ts";
 import {
   decideInstanceWake,
+  humanAddressedParticipants,
   instanceWakeLimitNotice,
   noteHumanMessageForWakeGuard,
 } from "./instance-wake-guard.ts";
@@ -187,6 +188,19 @@ export class RoomEventWriter {
   ): string[] {
     const activationIds: string[] = [];
     let chainLimitNotice: { humanSeq: number; limit: number } | undefined;
+    // Contract §3: a Human @ of instance members wakes exactly those members;
+    // facade-supplied recipients can neither widen nor drop that set.
+    const addressed = humanAddressedParticipants(this.#database, event);
+    if (addressed !== undefined) {
+      const supplied = new Map(
+        recipients.map((recipient) => [recipient.participantId, recipient]),
+      );
+      recipients = addressed.map((participantId) => ({
+        ...supplied.get(participantId),
+        participantId,
+        reason: "mention",
+      }));
+    }
     for (const recipient of recipients) {
       if (
         !this.#scheduleLegacyPersonas &&

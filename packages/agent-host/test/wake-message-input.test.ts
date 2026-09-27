@@ -390,3 +390,72 @@ test("D1-D: a business refusal without a committed reply is stated as one fact l
     "Previous attempt's completion was refused: activation a contains unfinished Task task_9 in state in_progress.",
   );
 });
+
+test("contract §3 catch-up: Channel events that did not wake the instance ride first, labelled; replies target only its own events", () => {
+  const wake = formatBodiedWakeInput({
+    present: present({
+      fromSeq: 14,
+      toSeq: 14,
+      catchUpFromSeq: 11,
+      catchUpOmittedCount: 0,
+      events: [
+        event(
+          11,
+          "message.posted",
+          { messageId: M12, body: "@bystander what about PIDs?", threadId: T9 },
+          "principal-richard",
+        ),
+        event(14, "message.posted", {
+          messageId: M14,
+          body: "@worker do you agree?",
+        }),
+      ],
+      presentedSeqs: [11, 12, 13, 14],
+      presentedThroughSeq: 14,
+    }),
+  });
+  assert.ok(wake);
+  const lines = wake.split("\n");
+  assert.equal(lines[0], "Since your last read (did not wake you):");
+  assert.match(lines[1]!, /seq 11 .*what about PIDs\?/u);
+  assert.equal(lines[2], "For you:");
+  assert.match(lines[3]!, /^#general seq 14 .*do you agree\?/u);
+  assert.equal(
+    lines[4],
+    'Reply: message-post --target "#general" --based-on-room-seq 14 --final · no reply needed: message-check',
+  );
+});
+
+test("contract §3 catch-up: an older part that did not fit is stated once, not listed", () => {
+  const wake = formatBodiedWakeInput({
+    present: present({
+      fromSeq: 14,
+      toSeq: 14,
+      catchUpFromSeq: 10,
+      catchUpOmittedCount: 3,
+      catchUpOmittedFromSeq: 5,
+      catchUpOmittedToSeq: 9,
+      events: [
+        event(10, "message.posted", { messageId: M12, body: "older note" }),
+        event(14, "message.posted", { messageId: M14, body: "now" }),
+      ],
+      presentedSeqs: [10, 14],
+      presentedThroughSeq: 14,
+    }),
+  });
+  assert.ok(wake);
+  assert.equal(
+    wake.split("\n")[0],
+    "Since your last read (did not wake you; 3 older events, seq 5-9, not shown):",
+  );
+});
+
+test("contract §3 catch-up: a window without catch-up renders exactly as before", () => {
+  assert.equal(
+    formatBodiedWakeInput({ present: present({ catchUpFromSeq: undefined }) }),
+    formatBodiedWakeInput({ present: present() }),
+  );
+  assert.ok(
+    !formatBodiedWakeInput({ present: present() })!.includes("For you:"),
+  );
+});

@@ -1,6 +1,10 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import type { ActivationReason, RoomEvent } from "@rah-os/protocol";
+import {
+  type ActivationReason,
+  messageMentionCandidates,
+  type RoomEvent,
+} from "@rah-os/protocol";
 
 import { integer, nullableInteger, text } from "./sqlite-row.ts";
 
@@ -88,6 +92,63 @@ export function noteHumanMessageForWakeGuard(
          streak = 0, updated_at = excluded.updated_at`,
     )
     .run(event.roomId, event.roomSeq, event.createdAt);
+}
+
+/** Explicit broadcast tokens (Slack's @channel convention). */
+const BROADCAST_MENTIONS = ["all", "所有人"];
+
+/**
+ * Owner ruling 2026-09-27 (contract §3): the instances a Human message
+ * addresses, as a message-level set. It is the canonical mentions bound to the
+ * message (code, links and emails are already excluded by the mention parser)
+ * intersected with the Channel's enabled agent members. `undefined` means
+ * broadcast: not a Human message, no such mention (none, a non-member, a
+ * Human, a typo) or an explicit `@all` / `@所有人`.
+ */
+export function humanAddressedParticipants(
+  database: DatabaseSync,
+  event: RoomEvent,
+): string[] | undefined {
+  if (event.type !== "message.posted") return undefined;
+  if (principalKind(database, event.actorId) !== "human") return undefined;
+  const body = (event.payload as { body?: unknown }).body;
+  if (
+    typeof body === "string" &&
+    messageMentionCandidates(body, BROADCAST_MENTIONS).length > 0
+  )
+    return undefined;
+  const members = new Set(
+    database
+      .prepare(
+        `SELECT m.principal_id FROM memberships m
+         JOIN principals p ON p.principal_id = m.principal_id
+         LEFT JOIN agent_definitions a ON a.participant_id = p.principal_id
+         WHERE m.room_id = ? AND p.kind = 'agent'
+           AND (a.state IS NULL OR a.state = 'enabled')`,
+      )
+      .all(event.roomId)
+      .map((row) => text(row, "principal_id")),
+  );
+  const addressed = [
+    ...new Set(
+      canonicalMentionIds(event).filter(
+        (id) => id !== event.actorId && members.has(id),
+      ),
+    ),
+  ].sort();
+  return addressed.length === 0 ? undefined : addressed;
+}
+
+function canonicalMentionIds(event: RoomEvent): string[] {
+  const mentions = (event.payload as { mentions?: unknown }).mentions;
+  if (!Array.isArray(mentions)) return [];
+  return mentions.flatMap((mention: unknown) => {
+    const id =
+      typeof mention === "object" && mention !== null
+        ? (mention as { principalId?: unknown }).principalId
+        : undefined;
+    return typeof id === "string" ? [id] : [];
+  });
 }
 
 export type InstanceWakeDecision =

@@ -238,30 +238,31 @@ test("a Human Room message wakes every joined Agent by membership", () => {
   kernel.close();
 });
 
-test("a Human mention raises one Room Agent attention without filtering delivery", () => {
+test("a Human mention wakes only the named Room Agent; the message stays readable in the Room", () => {
   const { agent, humanActor, kernel, otherAgent, room } = createFixture();
 
+  // Owner ruling 2026-09-27 (contract §3) deliberately departs from Raft's
+  // "attention signal, not a delivery filter": a Human @ wakes only the named
+  // instance. The message is still an ordinary Room message.
   const result = kernel.postRoomMessage(humanActor, {
-    body: "@codex please lead; opencode should still receive the Room message",
+    body: "@codex please lead; opencode reads this later from the Room",
     idempotencyKey: "room-mention-attention",
     recipients: [{ participantId: agent.principalId, reason: "mention" }],
     roomId: room.roomId,
   });
 
-  assert.equal(result.activationIds.length, 2);
+  assert.equal(result.activationIds.length, 1);
   assert.deepEqual(
     kernel
       .listActivations({ roomId: room.roomId })
-      .map(({ participantId, reason }) => ({ participantId, reason }))
-      .sort((left, right) =>
-        left.participantId.localeCompare(right.participantId),
-      ),
-    [
-      { participantId: agent.principalId, reason: "mention" },
-      { participantId: otherAgent.principalId, reason: "room_policy" },
-    ].sort((left, right) =>
-      left.participantId.localeCompare(right.participantId),
-    ),
+      .map(({ participantId, reason }) => ({ participantId, reason })),
+    [{ participantId: agent.principalId, reason: "mention" }],
+  );
+  assert.notEqual(otherAgent.principalId, agent.principalId);
+  assert.ok(
+    kernel
+      .listMessages(humanActor, { roomId: room.roomId })
+      .messages.some(({ messageId }) => messageId === result.event.aggregateId),
   );
 
   kernel.close();
