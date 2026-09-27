@@ -77,7 +77,8 @@ export function migrateChannelMemoryV75(database: DatabaseSync): void {
 
 /**
  * Owner ruling 2026-09-27: a Human delete leaves only the tombstone (name,
- * time, reason, metadata), so the description goes with the body. This
+ * time, the delete's own reason, metadata), so the description and every
+ * earlier revision's reason go with the body (full review 2 P2-3). This
  * idempotent pass clears what a delete before the ruling left behind; it
  * runs on every open and touches only deleted entries.
  */
@@ -85,6 +86,8 @@ export function clearDeletedMemoryDescriptions(database: DatabaseSync): void {
   database.exec(`
     UPDATE memory_entries SET description='' WHERE state='deleted' AND description<>'';
     UPDATE memory_revisions SET description='' WHERE description<>''
+      AND entry_id IN (SELECT entry_id FROM memory_entries WHERE state='deleted');
+    UPDATE memory_revisions SET reason=NULL WHERE reason IS NOT NULL AND op<>'delete'
       AND entry_id IN (SELECT entry_id FROM memory_entries WHERE state='deleted');
   `);
 }
@@ -297,6 +300,11 @@ type MemoryPresentation = {
   launch?: { seq: number; kind: "index" | "notice" };
   delta?: P.MemoryIndexDelta;
   index?: P.InstanceMemoryIndex;
+  /**
+   * The latest presentation of this RunAttempt withheld the refresh/delta
+   * because reading was no longer allowed; a send then delivers neither.
+   */
+  withheld?: true;
 };
 
 type MarkRow = {
@@ -397,13 +405,7 @@ function computeMemoryPresentation(
     generation,
     ...(launch === undefined ? {} : { launch }),
   };
-  let readable: boolean;
-  try {
-    readable = hasMemoryAccess(database, scope, "read");
-  } catch {
-    readable = false;
-  }
-  if (!readable) return presentation;
+  if (!readableNow(database, scope)) return presentation;
   const holdsOnlyNotice =
     launch !== undefined
       ? launch.kind === "notice"
@@ -426,11 +428,26 @@ function computeMemoryPresentation(
   };
 }
 
+/** Current membership, execution scope and read switch, never cached. */
+function readableNow(
+  database: DatabaseSync,
+  scope: Readonly<P.ActivationCredentialScope>,
+): boolean {
+  try {
+    return hasMemoryAccess(database, scope, "read");
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Attaches the memory part to a presented window. The first presentation of
  * a RunAttempt freezes it on the window record; every later presentation of
  * the same RunAttempt returns exactly that snapshot, so the text the Host
  * sends and the state its registration applies are the same version.
+ * Freezing fixes the version, never the access: each presentation re-checks
+ * reading, and while it is revoked the refresh/delta is withheld and marked
+ * so that a send does not count it as delivered (full review 2 P1-3).
  */
 export function withPresentedMemory<Window extends object>(
   database: DatabaseSync,
@@ -452,6 +469,31 @@ export function withPresentedMemory<Window extends object>(
   const frozen = stored === undefined ? null : stored["memory_json"];
   if (typeof frozen === "string") {
     presentation = JSON.parse(frozen) as MemoryPresentation | undefined;
+    if (
+      presentation !== undefined &&
+      presentation !== null &&
+      (presentation.delta !== undefined || presentation.index !== undefined)
+    ) {
+      const withheld = !readableNow(database, scope);
+      if (withheld !== (presentation.withheld === true)) {
+        presentation = { ...presentation };
+        if (withheld) presentation.withheld = true;
+        else delete presentation.withheld;
+        database
+          .prepare(
+            `UPDATE activation_presented_windows SET memory_json=?
+              WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
+          )
+          .run(JSON.stringify(presentation), ...key);
+      }
+      if (withheld)
+        presentation = {
+          generation: presentation.generation,
+          ...(presentation.launch === undefined
+            ? {}
+            : { launch: presentation.launch }),
+        };
+    }
   } else {
     presentation = computeMemoryPresentation(database, scope, claimedIndexSeq);
     database
@@ -509,7 +551,8 @@ export function applySentMemoryPresentation(
        VALUES(?, ?, ?, NULL, ?) ON CONFLICT(instance_id, session_generation) DO NOTHING`,
     )
     .run(...args, instanceChannel(database, instanceId), now);
-  const { launch, index, delta } = presentation;
+  const { launch } = presentation;
+  const { index, delta } = presentation.withheld === true ? {} : presentation;
   if (launch?.kind === "index")
     database
       .prepare(

@@ -303,15 +303,40 @@ test("the chain count spans every Thread of a Channel, and a Human reply in any 
       rootMessageId: root.event.aggregateId,
     });
     const threadId = thread.thread.threadId;
-    for (let hop = 1; hop <= 5; hop += 1)
-      threadMention(state, "alpha", "beta", threadId, `t-${String(hop)}`);
+    state.kernel.replyThread(state.humanActor, {
+      basedOnRoomSeq: currentSeq(state),
+      body: "@alpha go",
+      idempotencyKey: "cross-thread-go",
+      recipientIds: [state.agents.alpha!.principalId],
+      roomId: state.room.roomId,
+      threadId,
+    });
+    // Each hop is a real Worker turn inside the Thread: the woken instance
+    // leases its Activation and @mentions the other through its execution
+    // credential (reason `mention`), the path the guard counts.
+    for (let hop = 1; hop <= 5; hop += 1) {
+      const [from, to] = hop % 2 === 1 ? ["alpha", "beta"] : ["beta", "alpha"];
+      const key = `t-${String(hop)}`;
+      const posted = threadMention(state, from!, to!, threadId, key);
+      assert.equal(posted.activationIds.length, 1, key);
+    }
+    assert.deepEqual(
+      chain(state),
+      Array.from({ length: 5 }, (_, index) => [index + 1, 1]),
+      "Worker Thread @mentions are counted on the Channel chain",
+    );
     for (let hop = 6; hop <= 10; hop += 1)
       mention(state, "beta", "alpha", `top-${String(hop)}`);
+    // beta's pending Activation is still the Thread one from t-5.
     assert.deepEqual(
-      threadMention(state, "alpha", "beta", threadId, "t-11").activationIds,
+      threadMention(state, "beta", "alpha", threadId, "t-11").activationIds,
       [],
       "Thread and top-level wakes share one Channel count",
     );
+    assert.deepEqual(chain(state), [
+      ...Array.from({ length: 10 }, (_, index) => [index + 1, 1]),
+      [11, 0],
+    ]);
 
     state.kernel.replyThread(state.humanActor, {
       basedOnRoomSeq: currentSeq(state),
@@ -321,10 +346,63 @@ test("the chain count spans every Thread of a Channel, and a Human reply in any 
       roomId: state.room.roomId,
       threadId,
     });
-    assert.equal(
-      mention(state, "alpha", "beta", "top-after-thread-human").activationIds
-        .length,
-      1,
+    const resumed = mention(state, "alpha", "beta", "top-after-thread-human");
+    assert.equal(resumed.activationIds.length, 1);
+    assert.deepEqual(
+      chain(state, resumed.event.eventId),
+      [[1, 1]],
+      "a Human reply inside the Thread resets the Channel count",
+    );
+  } finally {
+    state.close();
+  }
+});
+
+test("full review 2 P2-1: a chain-limit notice does not hold an unrelated instance's top-level reply", () => {
+  const state = fixture(["alpha", "beta", "delta"]);
+  try {
+    state.kernel.runGuards.update({ wakeGuard: { instanceChainLimit: 2 } });
+    const root = state.kernel.postMessage(state.humanActor, {
+      body: "@delta please answer",
+      idempotencyKey: "bystander-root",
+      recipients: [
+        { participantId: state.agents.delta!.principalId, reason: "mention" },
+      ],
+      roomId: state.room.roomId,
+    });
+    const delta = beginNextActivation(state.kernel, state.agents.delta!);
+    const thread = state.kernel.createThread(state.humanActor, {
+      basedOnRoomSeq: currentSeq(state),
+      idempotencyKey: "bystander-thread",
+      recipientIds: [],
+      roomId: state.room.roomId,
+      rootMessageId: root.event.aggregateId,
+    });
+    const threadId = thread.thread.threadId;
+    state.kernel.replyThread(state.humanActor, {
+      basedOnRoomSeq: currentSeq(state),
+      body: "@alpha go",
+      idempotencyKey: "bystander-go",
+      recipientIds: [state.agents.alpha!.principalId],
+      roomId: state.room.roomId,
+      threadId,
+    });
+    threadMention(state, "alpha", "beta", threadId, "b1");
+    threadMention(state, "beta", "alpha", threadId, "b2");
+    assert.deepEqual(
+      threadMention(state, "alpha", "beta", threadId, "b3").activationIds,
+      [],
+    );
+    assert.equal(systemNotices(state).length, 1, "the Thread chain tripped");
+
+    const reply = state.kernel.postWorkerMessage(delta.execution, {
+      basedOnRoomSeq: delta.delivery.cursorAfter,
+      body: "delta's final top-level answer",
+      idempotencyKey: "delta-final",
+    });
+    assert.ok(
+      "event" in reply,
+      `the reply is posted, not held: ${JSON.stringify(reply)}`,
     );
   } finally {
     state.close();
@@ -446,6 +524,10 @@ function mention(
   });
 }
 
+/**
+ * One Worker turn of `from` inside the Thread: lease its next Activation, post
+ * `@to` through the execution credential, then finish the turn.
+ */
 function threadMention(
   state: State,
   from: string,
@@ -453,14 +535,27 @@ function threadMention(
   threadId: string,
   key: string,
 ) {
-  return state.kernel.replyThread(state.agentActors[from]!, {
-    basedOnRoomSeq: currentSeq(state),
+  const turn = beginNextActivation(state.kernel, state.agents[from]!);
+  const posted = state.kernel.postWorkerMessage(turn.execution, {
+    basedOnRoomSeq: turn.activation.toSeq,
     body: `@${to} ${key}`,
     idempotencyKey: `${from}-${key}`,
-    recipientIds: [state.agents[to]!.principalId],
-    roomId: state.room.roomId,
     threadId,
   });
+  assert.ok("event" in posted, JSON.stringify(posted));
+  turn.finish();
+  return posted;
+}
+
+/** `[streak, admitted]` rows of the causal wake chain, oldest first. */
+function chain(state: State, eventId?: string) {
+  return sql(
+    state,
+    `SELECT streak, admitted FROM instance_wake_chain
+      ${eventId === undefined ? "" : "WHERE event_id = ?"}
+      ORDER BY room_seq, participant_id`,
+    ...(eventId === undefined ? [] : [eventId]),
+  ).map((row) => [Number(row.streak), Number(row.admitted)]);
 }
 
 function currentSeq(state: State, roomId = state.room.roomId): number {
@@ -507,12 +602,19 @@ function beginNextActivation(
   kernel: RoomKernel,
   agent: { principalId: string },
 ) {
-  const host: AuthenticatedHostContext = kernel.authenticateHostAccessToken(
-    kernel.provisionHostCredential({
-      hostId: `host-${agent.principalId}`,
-      participantIds: [agent.principalId],
-    }).accessToken,
-  );
+  const kernelHosts =
+    hosts.get(kernel) ?? new Map<string, AuthenticatedHostContext>();
+  hosts.set(kernel, kernelHosts);
+  let host = kernelHosts.get(agent.principalId);
+  if (host === undefined) {
+    host = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: `host-${agent.principalId}`,
+        participantIds: [agent.principalId],
+      }).accessToken,
+    );
+    kernelHosts.set(agent.principalId, host);
+  }
   kernel.heartbeatHost(host);
   const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
   assert.ok(activation);
@@ -539,5 +641,32 @@ function beginNextActivation(
     runAttemptId: run.runAttemptId,
     toSeq: activation.toSeq,
   });
-  return { delivery: kernel.syncWorker(execution, {}), execution };
+  const finish = () => {
+    kernel.acknowledgeWorkerCursor(execution, {
+      throughSeq: activation.toSeq,
+    });
+    kernel.recordRuntimeTermination(host, {
+      exit: { code: 0 },
+      runAttemptId: run.runAttemptId,
+      runtimeRunId: runtime.runtimeRunId,
+    });
+    kernel.finishRunAttempt(host, {
+      exitCode: 0,
+      runAttemptId: run.runAttemptId,
+      state: "exited",
+    });
+    kernel.completeActivation(host, {
+      activationId: activation.activationId,
+      consumerId: `consumer-${agent.principalId}`,
+    });
+  };
+  return {
+    activation,
+    delivery: kernel.syncWorker(execution, {}),
+    execution,
+    finish,
+  };
 }
+
+/** One Host credential per participant and Kernel, reused across turns. */
+const hosts = new WeakMap<RoomKernel, Map<string, AuthenticatedHostContext>>();

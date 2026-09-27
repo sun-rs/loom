@@ -3,6 +3,15 @@ import type { DatabaseSync } from "node:sqlite";
 import type { RoomEvent } from "@rah-os/protocol";
 
 import { integer } from "./sqlite-row.ts";
+import { SYSTEM_PRINCIPAL_ID } from "./system-principal.ts";
+
+/**
+ * Kernel system notices (the wake-chain limit notice, evo §37 A) are not a
+ * collaborator's newer message: they never hold a send or a Task action
+ * (full review 2 P2-1). They stay visible in the Channel and in reads.
+ */
+export const NOT_SYSTEM_NOTICE_SQL = `NOT (messages.actor_id = '${SYSTEM_PRINCIPAL_ID}'
+  AND json_extract(room_events.payload_json, '$.systemNotice') IS NOT NULL)`;
 
 /** Raft shows at most this many held messages and counts the rest as omitted. */
 const MAX_SHOWN_HELD_MESSAGES = 20;
@@ -53,6 +62,7 @@ export function freshnessHoldContext(
           AND room_events.aggregate_id = messages.message_id
           AND room_events.type = 'message.posted'
          WHERE messages.room_id = ? AND ${targetClause}
+           AND ${NOT_SYSTEM_NOTICE_SQL}
            AND room_events.room_seq > ? AND room_events.room_seq <= ?
          ORDER BY room_events.room_seq DESC
          LIMIT ${MAX_SHOWN_HELD_MESSAGES}`,
@@ -67,6 +77,7 @@ export function freshnessHoldContext(
           AND room_events.aggregate_id = messages.message_id
           AND room_events.type = 'message.posted'
          WHERE messages.room_id = ? AND ${targetClause}
+           AND ${NOT_SYSTEM_NOTICE_SQL}
            AND room_events.room_seq > ? AND room_events.room_seq <= ?`,
     )
     .get(...parameters, input.basedOnRoomSeq, input.seenUpToSeq)!;

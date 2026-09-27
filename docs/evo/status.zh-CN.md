@@ -1161,6 +1161,15 @@ B. 权限收口
    - `agent-host/test/provider-launch-arguments.test.ts`：粘连写法在附加与覆盖路径均被拒。
 9. 未解决/限制：config_restart 的运行时行记为 `crash`，且消耗一次重试；Kernel 预留快照取自闸门放行时的计划，与池内实时计数之间仍有小窗口（偏保守或偏少至多一次在途放置）；预热让出时留下一条 `start_failed` 运行时行；预热重新开启与否待负责人决定，重新开启前建议经 Codex 复审本批。
 
+### 六十三、全面审查 2 批次 2：记忆与 Kernel
+
+依据：`~/.loom/reviews/2026-09-27-full-review-2-synthesis.md` 批次 2 与负责人裁定（Codex P1-3；Kernel 审查 P2-1、P2-3、P2-4）。均先写失败测试再改；临时库与 fake Host，未跑付费 CLI，未部署。
+
+1. **撤权后冻结记忆不再重放（Codex P1-3）**：`withPresentedMemory` 每次返回冻结快照前重新检查成员资格、执行范围（频道或仍有效的私聊）与读开关；不可读时不返回 delta/刷新索引，并在冻结记录上标记 `withheld`。`applySentMemoryPresentation` 对带该标记的快照只登记 launch 声明，不推进 `through_seq`/`index_seq`/`delta_seq`，所以撤权期间未输出的变化在重新开启读取后仍会送达；撤权又恢复后再次呈现同一冻结快照（版本不变），该次回执照常登记。竞态限制：若 Host 已发送首次呈现的文本、之后才撤权并重取，回执不登记，后续会重复一次（宁重复不丢失）。测试：`channel-memory-index.test.ts` 频道与私聊各一条 present→关闭→重取→sent→重新开启，外加"送达前恢复读取"一条。
+2. **唤醒上限通知不冻结无关回复（Kernel P2-1）**：选择"新鲜度判定排除系统通知"，不把通知挪进 Thread——链也可能在顶层超限，挪位置只能覆盖 Thread 情形。`freshness-hold-context.ts` 新增 `NOT_SYSTEM_NOTICE_SQL`（`actor_id = principal_system` 且事件带 `systemNotice`），用于冻结上下文的两条查询与 `#latestTargetMessageSeq`（`hasNewerTargetMessages` 同源）。通知仍留在频道和读取结果里。测试：`instance-wake-guard.test.ts` 在 Thread 内经 Worker 凭据触发超限，无关实例 delta 的顶层回复直接发出（修复前为 held，`newerMessages` 只有这条通知）。
+3. **删除时清空早先原因（Kernel P2-3，负责人裁定）**：删除事务把该条目非 delete 修订的 `reason` 置空，只保留删除本身的原因；打开 Kernel 时 `clearDeletedMemoryDescriptions` 对已删除条目幂等清理旧的原因（未删除条目不动）。测试：`channel-memory.test.ts` 删除用例断言早先 6 版原因为空；`channel-memory-index.test.ts` 重开 Kernel 用例断言历史遗留原因被清理、未删除条目保留。
+4. **线程计数测试不再空转（Kernel P2-4）**：`threadMention` 改为被唤醒实例租约 Activation 后经 Worker 执行凭据在 Thread 内发帖（原因 `mention`），并直接断言 `instance_wake_chain` 的行数与 streak：Thread 内 1–5、顶层 6–10、Thread 内第 11 次 `[11, 0]`，Thread 内 Human 回复后顶层下一次为 `[1, 1]`。产品代码未改（审查已确认产品行为正确）。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：

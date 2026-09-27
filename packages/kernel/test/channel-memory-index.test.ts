@@ -5,6 +5,7 @@ import { ForbiddenError, NotFoundError } from "../src/index.ts";
 import {
   roleInstanceFixture,
   startInstanceRun,
+  startInstanceRunFromQueue,
   type RoleInstanceFixture,
 } from "./role-instance-fixture.ts";
 
@@ -767,6 +768,12 @@ test("owner ruling 2026-09-27: opening the Kernel clears descriptions a pre-ruli
     f.db
       .prepare("UPDATE memory_revisions SET description='old' WHERE entry_id=?")
       .run(alpha.entryId);
+    // ...and what a delete before full review 2 P2-3 left: earlier reasons.
+    f.db
+      .prepare(
+        "UPDATE memory_revisions SET reason='old reason' WHERE entry_id IN (?, ?) AND op<>'delete'",
+      )
+      .run(alpha.entryId, beta.entryId);
     const path = String(f.db.prepare("PRAGMA database_list").get()!.file);
     const reopened = new RoomKernel({ databasePath: path });
     reopened.initialize();
@@ -781,6 +788,110 @@ test("owner ruling 2026-09-27: opening the Kernel clears descriptions a pre-ruli
     assert.deepEqual(described("memory_entries", beta.entryId), [
       "what beta is about",
     ]);
+    const reasons = (entryId: string) =>
+      f.db
+        .prepare(
+          "SELECT op, reason FROM memory_revisions WHERE entry_id=? ORDER BY revision",
+        )
+        .all(entryId)
+        .map((row) => [row.op, row.reason]);
+    assert.deepEqual(reasons(alpha.entryId), [
+      ["create", null],
+      ["delete", "privacy"],
+    ]);
+    assert.deepEqual(
+      reasons(beta.entryId),
+      [["create", "old reason"]],
+      "an entry that is not deleted keeps its history",
+    );
+  } finally {
+    f.close();
+  }
+});
+
+/** Starts a fake run for a Human message to the instance in `roomId`. */
+function startRunIn(f: RoleInstanceFixture, roomId: string) {
+  f.kernel.postMessage(f.actor, {
+    roomId,
+    body: "please review",
+    idempotencyKey: `wake-${String(Math.random())}`,
+    recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
+  });
+  return startInstanceRunFromQueue(f);
+}
+
+for (const where of ["channel", "private box"] as const)
+  test(`full review 2 P1-3 (${where}): a frozen memory snapshot is withheld once reading is revoked, its receipt advances nothing, and re-enabled reading still gets the change`, () => {
+    const f = roleInstanceFixture();
+    const roomId = () =>
+      where === "channel" ? f.home.roomId : f.privateBox.roomId;
+    try {
+      const writer = startInstanceRun(f);
+      f.kernel.memory.write(
+        writer.execution,
+        entry("secret-index", "secret-description"),
+      );
+      writer.finish(0);
+
+      const run = startRunIn(f, roomId());
+      assert.deepEqual(
+        f.kernel
+          .presentWorkerMessages(run.execution, {})
+          .memoryDelta?.changes.map((item) => [item.name, item.description]),
+        [["secret-index", "secret-description"]],
+      );
+      humanPolicy(f, { readDefault: false });
+      const revoked = f.kernel.presentWorkerMessages(run.execution, {});
+      assert.equal(revoked.memoryDelta, undefined, "no names after revocation");
+      assert.equal(revoked.memoryIndex, undefined);
+      assert.equal(JSON.stringify(revoked).includes("secret"), false);
+      sent(f, run);
+      assert.equal(
+        markRow(f)?.through_seq ?? null,
+        null,
+        "a withheld snapshot is not delivered",
+      );
+      run.finish(0);
+
+      humanPolicy(f, { readDefault: true });
+      const next = startRunIn(f, roomId());
+      assert.deepEqual(
+        f.kernel
+          .presentWorkerMessages(next.execution, {})
+          .memoryDelta?.changes.map((item) => item.name),
+        ["secret-index"],
+        "the change is still owed once reading is back",
+      );
+      sent(f, next);
+      assert.ok(Number(markRow(f)!.through_seq) > 0);
+      next.finish(0);
+    } finally {
+      f.close();
+    }
+  });
+
+test("full review 2 P1-3: reading restored before the send re-presents the frozen snapshot, and that receipt delivers it", () => {
+  const f = roleInstanceFixture();
+  try {
+    write(f, "alpha");
+    const run = startInstanceRun(f);
+    const first = f.kernel.presentWorkerMessages(
+      run.execution,
+      {},
+    ).memoryDelta!;
+    humanPolicy(f, { readDefault: false });
+    assert.equal(
+      f.kernel.presentWorkerMessages(run.execution, {}).memoryDelta,
+      undefined,
+    );
+    humanPolicy(f, { readDefault: true });
+    assert.deepEqual(
+      f.kernel.presentWorkerMessages(run.execution, {}).memoryDelta,
+      first,
+    );
+    sent(f, run);
+    assert.equal(Number(markRow(f)!.through_seq), first.throughSeq);
+    run.finish(0);
   } finally {
     f.close();
   }

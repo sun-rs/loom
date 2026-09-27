@@ -751,9 +751,14 @@ export class ChannelMemoryService {
           entryId,
         );
     if (next.state === "deleted") {
+      // Owner ruling 2026-09-27: the tombstone keeps only the delete's own
+      // reason; earlier invalidation/restore reasons are free text that can
+      // restate the body (full review 2 P2-3).
       c.database
         .prepare(
-          "UPDATE memory_revisions SET body=NULL, body_sha256=NULL, description='' WHERE entry_id=?",
+          `UPDATE memory_revisions SET body=NULL, body_sha256=NULL, description='',
+             reason=CASE WHEN op='delete' THEN reason ELSE NULL END
+           WHERE entry_id=?`,
         )
         .run(entryId);
       clearPresentedMemoryDescription(c.database, input.channelId, {

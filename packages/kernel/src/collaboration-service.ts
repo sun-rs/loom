@@ -76,7 +76,10 @@ import {
   resolveHeldMessageDrafts,
   resolveOneHeldMessageDraft,
 } from "./held-message-drafts.ts";
-import { freshnessHoldContext } from "./freshness-hold-context.ts";
+import {
+  freshnessHoldContext,
+  NOT_SYSTEM_NOTICE_SQL,
+} from "./freshness-hold-context.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import {
   assertPermanentChannelChange,
@@ -2308,6 +2311,7 @@ export class CollaborationService {
           AND room_events.aggregate_id = messages.message_id
           AND room_events.type = 'message.posted'
          WHERE messages.room_id = ? AND messages.thread_id IS ?
+           AND ${NOT_SYSTEM_NOTICE_SQL}
          ORDER BY room_events.room_seq DESC
          LIMIT 1`,
       )

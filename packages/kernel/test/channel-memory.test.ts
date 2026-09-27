@@ -438,6 +438,22 @@ test("instances and Humans invalidate and restore; only a Human deletes, redacti
       ],
     );
     assert.equal(history.revisions[0]!.reason, "contains a customer name");
+    // Owner ruling 2026-09-27 (full review 2 P2-3): only the delete's own
+    // reason survives; earlier invalidation reasons are free text that often
+    // restates the body.
+    assert.deepEqual(
+      history.revisions.slice(1).map((r) => r.reason ?? null),
+      [null, null, null, null, null, null],
+    );
+    assert.equal(
+      count(
+        f,
+        "SELECT count(*) AS n FROM memory_revisions WHERE entry_id=? AND op<>'delete' AND reason IS NOT NULL",
+        entryId,
+      ),
+      0,
+      "no earlier revision keeps a reason",
+    );
     assert.equal(
       f.kernel.memory.humanRead(f.actor, { entryId }).entry.body,
       null,
