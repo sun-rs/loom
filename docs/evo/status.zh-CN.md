@@ -1093,6 +1093,14 @@ B. 权限收口
     - `worker help message-post` 等按需帮助仍是 CLI heredoc 说明；held draft/目标确认的恢复路径仍是 CLI `--send-draft`（服务端同一份草稿）。
     - 未跑付费 CLI、未重启或部署服务。
 
+### 五十八、OpenCode 工具回帖 A/B 结果（2026-09-27，c2fe703，负责人授权）
+
+`node scripts/test-worker-tool-ab.mjs --paid`，deepseek/deepseek-flash low，三组各 6 个新 session × 3 轮，产品两组交替；送达三组均 18/18。证据 `docs/evo/evidence/2026-09-27-worker-tool-ab-opencode.json`。
+
+- 首轮 reasoning token 中位数：native 1303、cli-post 1277、tool-post 1744；首轮回复中位数：native 10.8 s、cli-post 11.4 s、tool-post 14.2 s。
+- 判定未达通过线（reasoning 反而 +36.6%，首轮延迟 +2.8 s；tool-post 协议生成数未采集，判 missing-evidence）。本样本中 cli-post 与原生几乎持平，“先起草再复制”假设未得到支持。
+- 结论：工具回帖在 OpenCode 上方向为负，不向 Claude/Codex/Kimi 推广；OpenCode 工具模式的去留待负责人裁定。6 个样本只说明方向。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
