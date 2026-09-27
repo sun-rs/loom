@@ -161,6 +161,7 @@ export function parseArgs(argv) {
     dry: false,
     step: 1,
     run: undefined,
+    until: undefined,
     maxRuns: MAX_RUN_ATTEMPTS,
     help: false,
   };
@@ -178,6 +179,7 @@ export function parseArgs(argv) {
     else if (argument === "--help" || argument === "-h") options.help = true;
     else if (argument === "--step") options.step = Number(value());
     else if (argument === "--run") options.run = value();
+    else if (argument === "--until") options.until = Number(value());
     else if (argument === "--max-runs") options.maxRuns = Number(value());
     else throw new Error(`unknown argument ${argument}`);
   }
@@ -187,6 +189,13 @@ export function parseArgs(argv) {
     options.step > STEPS.length
   )
     throw new Error(`--step must be 1..${STEPS.length}`);
+  if (
+    options.until !== undefined &&
+    (!Number.isInteger(options.until) ||
+      options.until < options.step ||
+      options.until > STEPS.length)
+  )
+    throw new Error(`--until must be ${options.step}..${STEPS.length}`);
   if (
     !Number.isInteger(options.maxRuns) ||
     options.maxRuns < 1 ||

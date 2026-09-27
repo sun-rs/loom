@@ -1652,7 +1652,7 @@ const HANDLERS = {
 
 function usage() {
   return [
-    "用法：node scripts/acceptance/real-e2e.mjs (--dry | --paid) [--step N] [--run STAMP] [--max-runs N]",
+    "用法：node scripts/acceptance/real-e2e.mjs (--dry | --paid) [--step N] [--run STAMP] [--until N] [--max-runs N]",
     "  --dry        只打印步骤、提示词模板与判定规则；不访问网络、不调用模型",
     "  --paid       在正式服务上执行（负责人授权的付费运行）",
     "  --step N     从第 N 步继续（默认沿用最近一次状态，或用 --run 指定）",
@@ -1698,6 +1698,7 @@ async function main() {
     client = await makeClient();
     for (const step of STEPS) {
       if (step.n < options.step) continue;
+      if (options.until !== undefined && step.n > options.until) break;
       if (step.n > 3 && state.instances?.claude?.instanceId === undefined)
         throw new StopError("缺少前置状态（频道/实例），请从步骤 1 开始");
       log(`== 步骤 ${step.n}：${step.title}`);

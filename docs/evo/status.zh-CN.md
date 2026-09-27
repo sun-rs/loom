@@ -77,7 +77,7 @@
 4. OpenCode 热路径是否补 `OPENCODE_PERMISSION` 全局 allow（历史第二十五节偏离）。
 5. Codex `$CODEX_HOME/AGENTS.md` 是否换专用 CODEX_HOME（涉及已有 thread 迁移）。
 6. 本机遗留的 fake `opencode serve` 孤儿进程是否清理（`node scripts/cli-efficiency/fixture-orphans.mjs` 只列不杀）。
-7. （已裁定并实现，待真实 CLI 复验）Human @ 只唤醒被点名实例并附补读段（合同 §3；调研 `~/.loom/reviews/2026-09-27-mention-wake-research.md`）；复验需授权重跑 P43 第 7/8 步。
+7. （已裁定、实现并经 P44 真实复验）Human @ 只唤醒被点名实例并附补读段（合同 §3；调研 `~/.loom/reviews/2026-09-27-mention-wake-research.md`）。新观察：实例回复里署名式的 @（如"由 @x 著"）按现有实例 @ 规则会唤醒对方，是否需要处理待负责人裁定。
 
 技术未决（带触发条件）：
 

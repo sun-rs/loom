@@ -63,9 +63,16 @@ test("parseArgs requires explicit modes and bounds the budget", () => {
     dry: true,
     step: 1,
     run: undefined,
+    until: undefined,
     maxRuns: 40,
     help: false,
   });
+  const bounded = parseArgs(["--paid", "--step", "7", "--until", "8"]);
+  assert.equal(bounded.until, 8);
+  assert.throws(
+    () => parseArgs(["--paid", "--step", "8", "--until", "7"]),
+    /--until/u,
+  );
   const resumed = parseArgs([
     "--paid",
     "--step",
