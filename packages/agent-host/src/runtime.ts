@@ -143,6 +143,12 @@ export type RuntimePrewarmLimits = {
    */
   reserved?: number;
   reservedForDriver?: number;
+  /**
+   * Review of the review-2 fixes P2-1: the capacity owner's (Kernel) caps
+   * and reservations now, read again for the final admission right before
+   * spawn. A throw or undefined skips the prewarm.
+   */
+  current?: () => Omit<RuntimePrewarmLimits, "current"> | undefined;
 };
 
 export type RuntimePrewarmOutcome =
@@ -188,6 +194,8 @@ export interface RuntimeAdapter {
   prewarm?(
     input: ActivationEnvelope,
     limits: RuntimePrewarmLimits,
+    /** Cancels an in-flight prewarm (the Host stops prewarming). */
+    signal?: AbortSignal,
   ): Promise<RuntimePrewarmOutcome>;
   /**
    * S2-a: called once per claimed RunAttempt after its Activation outcome is

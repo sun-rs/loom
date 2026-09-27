@@ -41,6 +41,11 @@ export type InstancePrewarmerOptions = {
   ) => Promise<{ blocked: false } | { blocked: true; reason: string }>;
   host: AuthenticatedHostContext;
   kernel: Pick<RoomKernel, "instancePrewarm">;
+  /**
+   * Review of the review-2 fixes P1-1: `close` waits at most this long for
+   * the prewarm in flight (which it cancels) before returning.
+   */
+  closeTimeoutMs?: number;
   /** The warm pool (retire); starts go through the resolved adapter. */
   pool: Pick<InstanceRuntimePool, "retire">;
   /** The Host's placement resolver (the same adapter a claimed turn gets). */
@@ -87,13 +92,31 @@ export class InstancePrewarmer {
   }
 
   /**
-   * The Host is stopping: no new prewarm starts, and one in flight finishes
-   * (registered in the pool) before the pool stops every runtime.
+   * The Host is stopping: no new prewarm starts, and the one in flight is
+   * cancelled — the pool abandons it and reclaims what it spawned — before
+   * the pool stops every runtime. Review of the review-2 fixes P1-1: the
+   * wait is bounded; a prewarm step that does not return in time is left to
+   * its own abandonment (it can no longer spawn or register as ready).
    */
   async close(): Promise<void> {
     this.#open = false;
     this.#closing.abort(new Error("instance prewarming stopped"));
-    await this.#queue;
+    let timer: NodeJS.Timeout | undefined;
+    const bounded = await Promise.race([
+      this.#queue.then(() => true),
+      new Promise<false>((resolve) => {
+        timer = setTimeout(
+          () => resolve(false),
+          this.#options.closeTimeoutMs ?? DEFAULT_CLOSE_TIMEOUT_MS,
+        );
+        timer.unref?.();
+      }),
+    ]);
+    clearTimeout(timer);
+    if (!bounded)
+      this.#diagnostic(
+        "close did not wait for a prewarm step still running; it is abandoned",
+      );
   }
 
   get settings(): Readonly<InstancePrewarmSettings> {
@@ -275,15 +298,28 @@ export class InstancePrewarmer {
       runAttemptId: plan.runAttemptId,
       toSeq: plan.toSeq,
     };
+    const toLimits = (current: typeof plan.limits) => ({
+      maxLive: current.hostMaxConcurrent,
+      maxLiveForDriver: current.runtimeProfileMaxConcurrent,
+      reserved: current.hostReserved,
+      reservedForDriver: current.runtimeProfileReserved,
+    });
+    const runtimeOfferId = plan.placement.runtimeOfferId;
     const limits = {
-      maxLive: plan.limits.hostMaxConcurrent,
-      maxLiveForDriver: plan.limits.runtimeProfileMaxConcurrent,
-      reserved: plan.limits.hostReserved,
-      reservedForDriver: plan.limits.runtimeProfileReserved,
+      ...toLimits(plan.limits),
+      // Review of the review-2 fixes P2-1: the final admission before spawn
+      // reads the Kernel's caps and reservations again.
+      current: () => {
+        const current = kernel.instancePrewarm.limits(host, {
+          runtimeOfferId,
+        });
+        return current === undefined ? undefined : toLimits(current);
+      },
     };
+    const signal = this.#closing.signal;
     return {
       kind: "ready",
-      start: async () => await prewarm(envelope, limits),
+      start: async () => await prewarm(envelope, limits, signal),
     };
   }
 
@@ -299,6 +335,9 @@ export class InstancePrewarmer {
     }
   }
 }
+
+/** Longer than one proven kill of a spawned prewarm (grace plus wait). */
+const DEFAULT_CLOSE_TIMEOUT_MS = 10_000;
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

@@ -53,6 +53,11 @@ type HarnessOptions = {
   profileCap?: number;
   maxWarm?: number;
   perTurn?: boolean;
+  /** The claimed Activation's lease and its renewal cadence. */
+  leaseMs?: number;
+  leaseRenewIntervalMs?: number;
+  /** The pool's bound on one in-flight prewarm start. */
+  prewarmTimeoutMs?: number;
 };
 
 async function prewarmHarness(options: HarnessOptions = {}) {
@@ -223,6 +228,9 @@ async function prewarmHarness(options: HarnessOptions = {}) {
     ...(options.maxWarm === undefined
       ? {}
       : { policy: { maxWarm: options.maxWarm } }),
+    ...(options.prewarmTimeoutMs === undefined
+      ? {}
+      : { prewarmTimeoutMs: options.prewarmTimeoutMs }),
     socketRoot,
     stateDirectory: join(directory, "warm-runtimes"),
   });
@@ -270,7 +278,10 @@ async function prewarmHarness(options: HarnessOptions = {}) {
     host,
     instanceRuntimePool: pool,
     kernel,
-    leaseMs: 30_000,
+    leaseMs: options.leaseMs ?? 30_000,
+    ...(options.leaseRenewIntervalMs === undefined
+      ? {}
+      : { leaseRenewIntervalMs: options.leaseRenewIntervalMs }),
     placementRuntimeResolver: () => createAdapter(),
     pollIntervalMs: 20,
     retryAfterMs: 0,
@@ -981,6 +992,256 @@ test("a prewarm queued in the gate is admitted against the caps current when it 
       "the failed start released its reservation",
     );
     assert.equal(state.starts().length, 2);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+/**
+ * Review of the review-2 fixes P1-1: a real start that waits on the
+ * instance's in-flight prewarm (the pool's participant start ownership) waits
+ * under the same supervision as a start-gate wait — its lease is renewed, a
+ * drain stops it without starting anything — and the prewarm itself is
+ * bounded and cancellable: a timed-out or cancelled prewarm is abandoned, its
+ * late continuation never spawns or registers a ready runtime, and anything
+ * it spawned is reclaimed with proof.
+ */
+test("a real start waiting on a prewarm slower than its lease keeps the lease renewed and takes the runtime over", async () => {
+  const state = await prewarmHarness({
+    leaseMs: 400,
+    leaseRenewIntervalMs: 50,
+  });
+  try {
+    const launch = gate();
+    state.hooks.beforeLaunch = async () => await launch.promise;
+    const prewarming = state.prewarmer.prewarm(state.instanceId);
+    await waitFor(
+      () => state.runtimeRow(state.instanceId)?.state === "starting",
+      "the prewarm registered",
+    );
+    state.post(state.instanceId, "[fake:ack] first message");
+    const first = state.agentHost.reconcileOnce();
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    launch.open();
+    assert.equal((await prewarming).kind, "started");
+    const result = await first;
+    assert.equal(
+      result.state,
+      "completed",
+      JSON.stringify(result) + state.diagnostics.join("\n"),
+    );
+    const run = state.db
+      .prepare("SELECT execution_mode FROM run_attempts WHERE participant_id=?")
+      .get(state.instanceId)!;
+    assert.equal(run.execution_mode, "warm");
+    assert.equal(state.starts().length, 1, "one process");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("a daemon drain while the real start waits on the prewarm cancels the attempt; the late release never sends the turn", async () => {
+  const state = await prewarmHarness({
+    leaseMs: 2_000,
+    leaseRenewIntervalMs: 50,
+  });
+  try {
+    const launch = gate();
+    state.hooks.beforeLaunch = async () => await launch.promise;
+    const prewarming = state.prewarmer.prewarm(state.instanceId);
+    await waitFor(
+      () => state.runtimeRow(state.instanceId)?.state === "starting",
+      "the prewarm registered",
+    );
+    const stop = new AbortController();
+    const running = state.agentHost.run({ signal: stop.signal });
+    state.post(state.instanceId, "[fake:ack] first message");
+    await waitFor(
+      () =>
+        state.db
+          .prepare("SELECT 1 FROM run_attempts WHERE participant_id=?")
+          .get(state.instanceId) !== undefined,
+      "the real start claimed its attempt",
+    );
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    stop.abort();
+    const stopped = await Promise.race([
+      running.then(() => "stopped"),
+      new Promise((resolve) =>
+        setTimeout(() => resolve("still waiting"), 3_000),
+      ),
+    ]);
+    assert.equal(stopped, "stopped", "the drain does not wait for the prewarm");
+    const attempt = state.db
+      .prepare("SELECT state FROM run_attempts WHERE participant_id=?")
+      .get(state.instanceId)!;
+    assert.equal(attempt.state, "cancelled");
+    launch.open();
+    await prewarming;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(state.requests("turn/start").length, 0, "no turn was sent");
+  } finally {
+    await state.cleanup();
+  }
+});
+
+for (const barrier of ["registered", "spawned"] as const)
+  test(`a prewarm ${barrier} past its bound is abandoned: the real start runs cold and the late continuation starts nothing`, async () => {
+    const state = await prewarmHarness({ prewarmTimeoutMs: 300 });
+    try {
+      const launch = gate();
+      // Only the prewarm's launch preparation hangs; the real start's not.
+      let held = false;
+      if (barrier === "registered")
+        state.hooks.beforeLaunch = async () => {
+          if (held) return;
+          held = true;
+          await launch.promise;
+        };
+      else writeFileSync(state.readyGate, "");
+      const prewarming = state.prewarmer.prewarm(state.instanceId);
+      await waitFor(() => {
+        const row = state.runtimeRow(state.instanceId);
+        return (
+          row?.state === "starting" &&
+          (barrier === "registered" || row.pid !== null)
+        );
+      }, `the prewarm ${barrier}`);
+      state.post(state.instanceId, "[fake:ack] first message");
+      const first = state.agentHost.reconcileOnce();
+      const outcome = await prewarming;
+      assert.equal(outcome.kind, "skipped", JSON.stringify(outcome));
+      assert.match(
+        outcome.kind === "skipped" ? outcome.reason : "",
+        /prewarm_timeout/u,
+      );
+      if (barrier === "spawned") rmSync(state.readyGate);
+      const result = await first;
+      assert.equal(
+        result.state,
+        "completed",
+        JSON.stringify(result) + state.diagnostics.join("\n"),
+      );
+      const run = state.db
+        .prepare(
+          "SELECT execution_mode FROM run_attempts WHERE participant_id=?",
+        )
+        .get(state.instanceId)!;
+      assert.equal(run.execution_mode, "cold");
+      // The late continuation: released now, it must not spawn or hold.
+      launch.open();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      assert.equal(state.starts().length, 1, "only the real start ran");
+      assert.equal(state.requests("thread/start").length, 1, "one session");
+      assert.deepEqual(
+        runtimeRows(state, state.instanceId).map((row) => [
+          row.state,
+          row.terminated_reason,
+        ]),
+        [
+          ["terminated", "start_failed"],
+          ["idle", null],
+        ],
+      );
+    } finally {
+      await state.cleanup();
+    }
+  });
+
+test("closing the prewarmer while a prewarm prepares returns promptly, and the late preparation starts nothing", async () => {
+  const state = await prewarmHarness();
+  try {
+    const launch = gate();
+    state.hooks.beforeLaunch = async () => await launch.promise;
+    const prewarming = state.prewarmer.prewarm(state.instanceId);
+    await waitFor(
+      () => state.runtimeRow(state.instanceId)?.state === "starting",
+      "the prewarm registered",
+    );
+    const closedAt = Date.now();
+    await state.prewarmer.close();
+    assert.ok(Date.now() - closedAt < 1_000, "close is bounded");
+    const outcome = await prewarming;
+    assert.equal(outcome.kind, "skipped");
+    launch.open();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(state.starts().length, 0);
+    assert.deepEqual(
+      runtimeRows(state, state.instanceId).map((row) => [
+        row.state,
+        row.terminated_reason,
+      ]),
+      [["terminated", "start_failed"]],
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+/**
+ * Review of the review-2 fixes P2-1: the final admission before spawn reads
+ * the Kernel's current caps and reserved placements again, not the plan's
+ * snapshot — a cold (per-turn) placement claimed, or a cap lowered, while
+ * the prewarm prepared its launch is seen.
+ */
+test("a cold placement claimed after the prewarm plan is counted before spawn", async () => {
+  const state = await prewarmHarness({ hostCap: 1 });
+  try {
+    const cold = state.instantiate();
+    const launch = gate();
+    state.hooks.beforeLaunch = async (participantId) => {
+      if (participantId === state.instanceId) await launch.promise;
+    };
+    const prewarming = state.prewarmer.prewarm(state.instanceId);
+    await waitFor(
+      () => state.runtimeRow(state.instanceId)?.state === "starting",
+      "the prewarm registered",
+    );
+    state.post(cold, "[fake:ack] per-turn work");
+    assert.ok(state.kernel.scheduleNextPlacement({ leaseMs: 60_000 }));
+    assert.ok(
+      state.kernel.claimNextPlacement(state.host, { leaseMs: 60_000 }),
+      "the per-turn run holds the only placement",
+    );
+    launch.open();
+    assert.deepEqual(await prewarming, {
+      kind: "skipped",
+      participantId: state.instanceId,
+      reason: "host_cap",
+    });
+    assert.equal(state.starts().length, 0);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("a Host cap lowered while the prewarm prepares its launch is applied before spawn", async () => {
+  const state = await prewarmHarness({ hostCap: 4 });
+  try {
+    const second = state.instantiate();
+    assert.equal(
+      (await state.prewarmer.prewarm(state.instanceId)).kind,
+      "started",
+    );
+    const launch = gate();
+    state.hooks.beforeLaunch = async (participantId) => {
+      if (participantId === second) await launch.promise;
+    };
+    const prewarming = state.prewarmer.prewarm(second);
+    await waitFor(
+      () => state.runtimeRow(second)?.state === "starting",
+      "the prewarm registered",
+    );
+    state.kernel.placementCapacity.update({
+      hostLimits: [{ hostId: "prewarm-host", maxConcurrent: 1 }],
+    });
+    launch.open();
+    assert.deepEqual(await prewarming, {
+      kind: "skipped",
+      participantId: second,
+      reason: "host_cap",
+    });
+    assert.equal(state.starts().length, 1);
   } finally {
     await state.cleanup();
   }

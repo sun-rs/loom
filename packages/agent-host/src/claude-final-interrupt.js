@@ -45,7 +45,8 @@ const ABORTED_REASONS = new Set(["aborted_tools", "aborted_streaming"]);
 // process wrote, so it lands within milliseconds even under heavy load; 2 s
 // covers scheduling stalls of a loaded host while staying well below the
 // drivers' 5 s control_request timeout, so a receipt that never comes still
-// fails the run promptly.
+// fails the run promptly: the decision and the report (hence the warm turn's
+// drain) both settle within this bound.
 export const LEGACY_RECEIPT_GRACE_MS = 2_000;
 
 function contentOf(frame) {
@@ -246,9 +247,24 @@ export function createClaudeFinalInterrupt({ interrupt }) {
       if (tools.size === 0) fire();
       return true;
     },
+    /**
+     * The facts as observed at a bounded deadline (review of the review-2
+     * fixes P2-2): the legacy result's receipt wait, else at most
+     * `LEGACY_RECEIPT_GRACE_MS` for the receipt — never the driver's longer
+     * control timeout. A receipt that has not come by then stays "unknown";
+     * a later one is diagnostic only and changes no report already given.
+     */
     async report() {
-      await pending;
-      await receiptWait;
+      if (receiptWait !== undefined) await receiptWait;
+      else
+        await new Promise((resolve) => {
+          const timer = setTimeout(resolve, LEGACY_RECEIPT_GRACE_MS);
+          timer.unref?.();
+          void pending.then(() => {
+            clearTimeout(timer);
+            resolve(undefined);
+          });
+        });
       const sent = requested && accepted !== false;
       return {
         requested,

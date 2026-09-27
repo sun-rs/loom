@@ -38,23 +38,54 @@ test("a reason-less error_during_execution is an abort only with a correlated re
   );
 });
 
-test("without an interrupt answer the legacy result is terminal 'unknown', not the final end", async () => {
-  const helper = createClaudeFinalInterrupt({
-    interrupt: () => new Promise(() => undefined),
-  });
-  helper.arm();
-  assert.equal(helper.issued, true);
-  assert.equal(helper.endedByInterrupt(legacy), false);
-  helper.observe(legacy);
-  const report = await Promise.race([
-    helper.report(),
-    new Promise<undefined>((resolve) =>
-      setTimeout(() => resolve(undefined), 50),
-    ),
-  ]);
-  // The receipt never arrives, so report() stays pending: the caller's own
-  // control timeout bounds it. The decision above is what counts.
-  assert.equal(report, undefined);
+test("without an interrupt answer the legacy result is terminal 'unknown', not the final end, and the report settles within the bounded wait", async () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const helper = createClaudeFinalInterrupt({
+      interrupt: () => new Promise(() => undefined),
+    });
+    helper.arm();
+    assert.equal(helper.issued, true);
+    assert.equal(helper.endedByInterrupt(legacy), false);
+    helper.observe(legacy);
+    let settled: Awaited<ReturnType<typeof helper.report>> | undefined;
+    const reporting = helper.report().then((report) => (settled = report));
+    await Promise.resolve();
+    assert.equal(settled, undefined, "the receipt wait is still open");
+    // Review of the review-2 fixes P2-2: the report is the snapshot at the
+    // bound, not a wait for the driver's longer control timeout.
+    mock.timers.tick(LEGACY_RECEIPT_GRACE_MS);
+    const report = await reporting;
+    assert.equal(report.accepted, "unknown");
+    assert.equal(report.terminal, "unknown");
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("review-2 fixes P2-2: a lost receipt after a stated abort leaves acceptance unknown at the bound; a late receipt changes no settled report", async () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const { helper, settle } = outstandingReceipt();
+    const abortedResult = { ...legacy, terminal_reason: "aborted_tools" };
+    assert.equal(helper.endedByInterrupt(abortedResult), true);
+    helper.observe(abortedResult);
+    const reporting = helper.report();
+    mock.timers.tick(LEGACY_RECEIPT_GRACE_MS);
+    const report = await reporting;
+    assert.equal(report.accepted, "unknown");
+    assert.equal(report.terminal, true);
+    settle("refused");
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(
+      report.terminal,
+      true,
+      "the settled snapshot is not rewritten",
+    );
+  } finally {
+    mock.timers.reset();
+  }
 });
 
 test("with the interrupt's success receipt the legacy result is the final end", async () => {

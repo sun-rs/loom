@@ -76,6 +76,15 @@ export function instanceRuntimeHint(
   return undefined;
 }
 
+/** The run caps a prewarm is admitted against, and what is reserved now. */
+export type InstancePrewarmLimits = {
+  hostMaxConcurrent: number;
+  runtimeProfileMaxConcurrent: number;
+  /** Placements reserved now on the Host / this RuntimeProfile. */
+  hostReserved: number;
+  runtimeProfileReserved: number;
+};
+
 export type InstancePrewarmPlan =
   | {
       kind: "ready";
@@ -89,13 +98,7 @@ export type InstancePrewarmPlan =
       contextManifest: ContextManifest;
       placement: PlacementDecision;
       /** The run caps the placement was checked against. */
-      limits: {
-        hostMaxConcurrent: number;
-        runtimeProfileMaxConcurrent: number;
-        /** Placements reserved now on the Host / this RuntimeProfile. */
-        hostReserved: number;
-        runtimeProfileReserved: number;
-      };
+      limits: InstancePrewarmLimits;
     }
   | { kind: "skipped"; reason: string };
 
@@ -135,6 +138,23 @@ export class InstancePrewarmService {
       readAgentRevision: (id) => readAgentDefinitionRevision(database, id),
       readExecutionPolicy: (id) => readExecutionPolicyRevision(database, id),
     });
+  }
+
+  /**
+   * Review of the review-2 fixes P2-1: the current caps and reserved
+   * placements for a planned offer, read again by the Host right before it
+   * spawns a prewarm (the plan's copy may be stale by then). Undefined when
+   * the offer is no longer published.
+   */
+  limits(
+    host: AuthenticatedHostContext,
+    input: { runtimeOfferId: string },
+  ): InstancePrewarmLimits | undefined {
+    this.#options.requireHost(host);
+    return prewarmLimits(
+      this.#plannerInput(this.#options.now()),
+      input.runtimeOfferId,
+    );
   }
 
   /** This Host's Role instances with a RunAttempt since `since` (ISO). */
@@ -248,10 +268,30 @@ export function planInstancePrewarm(input: {
     placement,
     runAttemptId,
   });
-  const capacities = input.plannerInput.capacities;
-  const offer = input.plannerInput.offers.find(
-    (candidate) => candidate.runtimeOfferId === placement.runtimeOfferId,
-  )!;
+  return {
+    activationId,
+    agent,
+    contextManifest,
+    fromSeq: toSeq,
+    kind: "ready",
+    limits: prewarmLimits(input.plannerInput, placement.runtimeOfferId)!,
+    placement,
+    roomId,
+    runAttemptId,
+    toSeq,
+  };
+}
+
+/** The offer's Host and RuntimeProfile caps and reservations, now. */
+function prewarmLimits(
+  plannerInput: PlacementPlannerInput,
+  runtimeOfferId: string,
+): InstancePrewarmLimits | undefined {
+  const capacities = plannerInput.capacities;
+  const offer = plannerInput.offers.find(
+    (candidate) => candidate.runtimeOfferId === runtimeOfferId,
+  );
+  if (offer === undefined) return undefined;
   const profileKey = capacityProfileResourceId(
     offer.hostId,
     offer.runtimeProfileId,
@@ -265,21 +305,10 @@ export function planInstancePrewarm(input: {
       profileKey,
   );
   return {
-    activationId,
-    agent,
-    contextManifest,
-    fromSeq: toSeq,
-    kind: "ready",
-    limits: {
-      hostMaxConcurrent: hostCapacity?.adminMaxConcurrent ?? 1,
-      hostReserved: hostCapacity?.reserved ?? 0,
-      runtimeProfileMaxConcurrent: profileCapacity?.adminMaxConcurrent ?? 1,
-      runtimeProfileReserved: profileCapacity?.reserved ?? 0,
-    },
-    placement,
-    roomId,
-    runAttemptId,
-    toSeq,
+    hostMaxConcurrent: hostCapacity?.adminMaxConcurrent ?? 1,
+    hostReserved: hostCapacity?.reserved ?? 0,
+    runtimeProfileMaxConcurrent: profileCapacity?.adminMaxConcurrent ?? 1,
+    runtimeProfileReserved: profileCapacity?.reserved ?? 0,
   };
 }
 

@@ -870,29 +870,69 @@ for (const where of ["channel", "private box"] as const)
     }
   });
 
-test("full review 2 P1-3: reading restored before the send re-presents the frozen snapshot, and that receipt delivers it", () => {
-  const f = roleInstanceFixture();
-  try {
-    write(f, "alpha");
-    const run = startInstanceRun(f);
-    const first = f.kernel.presentWorkerMessages(
-      run.execution,
-      {},
-    ).memoryDelta!;
-    humanPolicy(f, { readDefault: false });
-    assert.equal(
-      f.kernel.presentWorkerMessages(run.execution, {}).memoryDelta,
-      undefined,
-    );
-    humanPolicy(f, { readDefault: true });
-    assert.deepEqual(
-      f.kernel.presentWorkerMessages(run.execution, {}).memoryDelta,
-      first,
-    );
-    sent(f, run);
-    assert.equal(Number(markRow(f)!.through_seq), first.throughSeq);
-    run.finish(0);
-  } finally {
-    f.close();
-  }
-});
+/**
+ * Review of the review-2 fixes P1-2: a receipt names a window, never the
+ * version of it the Host actually sent. Once a window was withheld it stays
+ * withheld for its whole life, so every version of it the Host may have sent
+ * after that carries no memory and its receipt advances nothing; the change
+ * is presented again in the next window (a duplicate, never an omission).
+ */
+for (const order of [
+  "withheld sent, restored unsent",
+  "delta sent, receipt after revocation",
+] as const)
+  test(`review-2 fixes P1-2 (${order}): a withheld window stays withheld once reading is restored and a late receipt never delivers its delta`, () => {
+    const f = roleInstanceFixture();
+    try {
+      write(f, "alpha");
+      const run = startInstanceRun(f);
+      const first = f.kernel.presentWorkerMessages(
+        run.execution,
+        {},
+      ).memoryDelta!;
+      assert.deepEqual(
+        first.changes.map((item) => item.name),
+        ["alpha"],
+      );
+      humanPolicy(f, { readDefault: false });
+      assert.equal(
+        f.kernel.presentWorkerMessages(run.execution, {}).memoryDelta,
+        undefined,
+        "B0: no memory while revoked",
+      );
+      if (order === "withheld sent, restored unsent") {
+        humanPolicy(f, { readDefault: true });
+        const restored = f.kernel.presentWorkerMessages(run.execution, {});
+        assert.equal(
+          restored.memoryDelta,
+          undefined,
+          "the same window is not un-withheld",
+        );
+        assert.equal(restored.memoryIndex, undefined);
+      }
+      // The late receipt (of B0, or of the first version) arrives now.
+      sent(f, run);
+      assert.equal(
+        markRow(f)?.through_seq ?? null,
+        null,
+        "a receipt of a withheld window delivers nothing",
+      );
+      run.finish(0);
+
+      if (order === "delta sent, receipt after revocation")
+        humanPolicy(f, { readDefault: true });
+      const next = startInstanceRun(f);
+      assert.deepEqual(
+        f.kernel
+          .presentWorkerMessages(next.execution, {})
+          .memoryDelta?.changes.map((item) => item.name),
+        ["alpha"],
+        "the next window presents the change again",
+      );
+      sent(f, next);
+      assert.equal(Number(markRow(f)!.through_seq), first.throughSeq);
+      next.finish(0);
+    } finally {
+      f.close();
+    }
+  });

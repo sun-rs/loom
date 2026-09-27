@@ -196,6 +196,12 @@ export type InstanceRuntimePoolOptions = {
   onDiagnostic?: (message: string) => void;
   processTable?: ProcessTable;
   readyTimeoutMs?: number;
+  /**
+   * Review of the review-2 fixes P1-1: the bound on one prewarm start (from
+   * the participant lock to ready). Past it the prewarm is abandoned, so a
+   * real start waiting on it proceeds.
+   */
+  prewarmTimeoutMs?: number;
   stopTimeoutMs?: number;
   /** SIGTERM grace, then the wait for a real close after SIGKILL. */
   killGraceMs?: number;
@@ -723,10 +729,7 @@ export class InstanceRuntimePool {
    * fence and janitor never treat them as leftovers, and prewarm admission
    * counts them with the live runtimes.
    */
-  readonly #starting = new Map<
-    string,
-    { driver: string; instanceRuntimeId: string; prewarm: boolean }
-  >();
+  readonly #starting = new Map<string, ColdStart>();
   readonly #locks = new Map<string, Promise<unknown>>();
   readonly #stateDirectory: string;
   readonly #socketRoot: string;
@@ -761,6 +764,7 @@ export class InstanceRuntimePool {
   readonly #now: () => number;
   readonly #onDiagnostic: (message: string) => void;
   readonly #readyTimeoutMs: number;
+  readonly #prewarmTimeoutMs: number;
   readonly #stopTimeoutMs: number;
   readonly #killGraceMs: number;
   readonly #killWaitMs: number;
@@ -800,6 +804,9 @@ export class InstanceRuntimePool {
       ((message) => process.stderr.write(`[loom warm-runtime] ${message}\n`));
     this.#processTable = options.processTable;
     this.#readyTimeoutMs = options.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS;
+    this.#prewarmTimeoutMs =
+      options.prewarmTimeoutMs ??
+      this.#readyTimeoutMs + DEFAULT_PREWARM_PREPARATION_MS;
     this.#stopTimeoutMs = options.stopTimeoutMs ?? DEFAULT_STOP_TIMEOUT_MS;
     this.#killGraceMs = options.killGraceMs ?? DEFAULT_KILL_GRACE_MS;
     this.#killWaitMs = options.killWaitMs ?? DEFAULT_KILL_WAIT_MS;
@@ -1011,7 +1018,10 @@ export class InstanceRuntimePool {
           }
           await this.#stop(runtime, restart);
         }
-        const cold = await this.#coldStart(input);
+        const cold = await this.#coldStart(
+          input,
+          this.#beginColdStart(input, false),
+        );
         if (abandoned()) {
           // Ready and registered: kept idle for the next turn.
           this.#abandonAcquired(cold);
@@ -1053,6 +1063,17 @@ export class InstanceRuntimePool {
     this.#releaseSlot(participantId);
     // A waiter for a busy slot may be the abandoned turn: let it notice.
     for (const waiter of [...this.#admissionWaiters]) waiter();
+    // Review of the review-2 fixes P1-1: a turn that never reached a
+    // runtime (stopped while its start waited on this participant's
+    // in-flight start) has nothing to release under the participant lock
+    // and does not wait for that start; one still acquiring sees the
+    // released mark above and gives back what it takes.
+    const holder = this.#runtimes.get(participantId);
+    if (
+      holder?.current?.runAttemptId !== runAttemptId &&
+      holder?.unreleasedRunAttemptId !== runAttemptId
+    )
+      return;
     await this.#serialize(participantId, async () => {
       const runtime = this.#runtimes.get(participantId);
       if (runtime === undefined) return;
@@ -1087,11 +1108,15 @@ export class InstanceRuntimePool {
     limits: PrewarmLimits;
     participantId: string;
     cliFingerprint?: () => Promise<string | undefined>;
+    /** Cancels the prewarm (the Host stops prewarming). */
+    signal?: AbortSignal;
   }): Promise<
     | { kind: "started"; runtime: WarmRuntime }
     | { kind: "skipped"; reason: string }
   > {
     return await this.#serialize(input.participantId, async () => {
+      if (input.signal?.aborted)
+        return { kind: "skipped" as const, reason: "prewarm_cancelled" };
       const existing = this.#runtimes.get(input.participantId);
       if (existing !== undefined && existing.state !== "dead")
         return { kind: "skipped" as const, reason: "already_live" };
@@ -1099,17 +1124,79 @@ export class InstanceRuntimePool {
       if (reason !== undefined) return { kind: "skipped" as const, reason };
       // No await between the check and the reservation: `#coldStart`
       // records this start in `#starting` synchronously.
-      try {
-        return {
-          kind: "started" as const,
-          runtime: await this.#coldStart(input, input.limits),
-        };
-      } catch (error) {
-        if (error instanceof PrewarmYield)
-          return { kind: "skipped" as const, reason: error.reason };
-        throw error;
+      const start = this.#beginColdStart(input, true);
+      const job = this.#coldStart(input, start, input.limits);
+      // Review of the review-2 fixes P1-1: bounded and cancellable. The
+      // participant lock (which a real start's fence waits on) is held at
+      // most until the deadline or the cancellation, plus a proven kill.
+      const stop = await boundedStart(
+        job,
+        this.#prewarmTimeoutMs,
+        input.signal,
+      );
+      if (stop.kind === "settled") {
+        if (stop.error === undefined)
+          return { kind: "started" as const, runtime: stop.runtime! };
+        if (stop.error instanceof PrewarmYield)
+          return { kind: "skipped" as const, reason: stop.error.reason };
+        throw stop.error;
       }
+      await this.#abandonPrewarm(input.participantId, start, stop.reason);
+      return { kind: "skipped" as const, reason: stop.reason };
     });
+  }
+
+  /**
+   * Review of the review-2 fixes P1-1: a prewarm past its bound or
+   * cancelled. From here its continuation can no longer spawn, register a
+   * ready runtime or be reused (it checks `abandoned` synchronously before
+   * each), and the participant is released to the real start. What it
+   * already spawned is killed with proof now; unproven, it stays suspect and
+   * blocks the participant. A registered row that never spawned is recorded
+   * as not started — this pool owns the only spawn and has forbidden it.
+   */
+  async #abandonPrewarm(
+    participantId: string,
+    start: ColdStart,
+    reason: string,
+  ): Promise<void> {
+    start.abandoned = true;
+    if (this.#starting.get(participantId) === start)
+      this.#starting.delete(participantId);
+    this.diagnostic(
+      `[${start.instanceRuntimeId}] prewarm of ${participantId} abandoned: ${reason}`,
+    );
+    const runtime = start.runtime;
+    if (runtime !== undefined && runtime.pid !== undefined) {
+      start.recorded = true;
+      runtime.state = "stopping";
+      const proof = await this.#kill(runtime);
+      if (!proof.proven) {
+        this.#runtimes.set(participantId, runtime);
+        await this.#markSuspect(runtime, "start_failed", proof.reason);
+        return;
+      }
+      await this.#recordEnd(runtime, proof.exit, "start_failed");
+      return;
+    }
+    if (start.registered && !start.recorded) {
+      start.recorded = true;
+      await this.#recordNotStarted(start.instanceRuntimeId);
+    }
+  }
+
+  async #recordNotStarted(instanceRuntimeId: string): Promise<void> {
+    try {
+      await this.#control.instanceRuntimes!.recordExit({
+        exit: { code: null, signal: "RAH_NOT_STARTED" },
+        instanceRuntimeId,
+        reason: "start_failed",
+      });
+    } catch (error) {
+      this.diagnostic(
+        `start failure of ${instanceRuntimeId} was not recorded: ${errorMessage(error)}`,
+      );
+    }
   }
 
   /**
@@ -1446,6 +1533,26 @@ export class InstanceRuntimePool {
     if (typeof turn !== "string") turn.integrityWrites.push(write);
   }
 
+  /**
+   * Synchronously, before any await: the reservation prewarm admission
+   * counts and the ownership the start fence and janitor respect.
+   */
+  #beginColdStart(
+    input: { driver: string; participantId: string },
+    prewarm: boolean,
+  ): ColdStart {
+    const start: ColdStart = {
+      abandoned: false,
+      driver: input.driver,
+      instanceRuntimeId: `instrt_${randomUUID()}`,
+      prewarm,
+      recorded: false,
+      registered: false,
+    };
+    this.#starting.set(input.participantId, start);
+    return start;
+  }
+
   async #coldStart(
     input: {
       driver: string;
@@ -1454,20 +1561,12 @@ export class InstanceRuntimePool {
       participantId: string;
       cliFingerprint?: () => Promise<string | undefined>;
     },
+    start: ColdStart,
     /** A prewarm: checked again before spawn, and left idle when ready. */
     prewarm?: PrewarmLimits,
   ): Promise<WarmRuntime> {
-    const instanceRuntimeId = `instrt_${randomUUID()}`;
-    // Synchronously, before any await: the reservation prewarm admission
-    // counts and the ownership the start fence and janitor respect.
-    const start = {
-      driver: input.driver,
-      instanceRuntimeId,
-      prewarm: prewarm !== undefined,
-    };
-    this.#starting.set(input.participantId, start);
     try {
-      return await this.#coldStartOwned(input, instanceRuntimeId, prewarm);
+      return await this.#coldStartOwned(input, start, prewarm);
     } finally {
       if (this.#starting.get(input.participantId) === start)
         this.#starting.delete(input.participantId);
@@ -1482,10 +1581,16 @@ export class InstanceRuntimePool {
       participantId: string;
       cliFingerprint?: () => Promise<string | undefined>;
     },
-    instanceRuntimeId: string,
+    start: ColdStart,
     prewarm: PrewarmLimits | undefined,
   ): Promise<WarmRuntime> {
     const control = this.#control.instanceRuntimes!;
+    const { instanceRuntimeId } = start;
+    // Review of the review-2 fixes P1-1: an abandoned prewarm stops at its
+    // next step; checked synchronously before every side effect.
+    const live = () => {
+      if (start.abandoned) throw new PrewarmAbandoned(instanceRuntimeId);
+    };
     let cliFingerprint: string | undefined;
     try {
       cliFingerprint = await input.cliFingerprint?.();
@@ -1494,6 +1599,7 @@ export class InstanceRuntimePool {
         `CLI fingerprint unavailable at cold start: ${errorMessage(error)}`,
       );
     }
+    live();
     const registration = {
       ...(cliFingerprint === undefined ? {} : { cliFingerprint }),
       driver: input.driver,
@@ -1503,18 +1609,22 @@ export class InstanceRuntimePool {
     try {
       await control.register(registration);
     } catch (error) {
+      live();
       // An older runtime row (another generation, or a crash) blocks: prove
       // it gone first, then try once more.
       await this.janitor(input.participantId);
+      live();
       await control.register(registration);
       this.diagnostic(
         `cold start for ${input.participantId} waited for an older runtime: ${errorMessage(error)}`,
       );
     }
+    start.registered = true;
     const directory = join(this.#stateDirectory, instanceRuntimeId);
     const socketDirectory = this.#socketDirectoryFor(instanceRuntimeId);
     let runtime: WarmRuntime | undefined;
     try {
+      live();
       await mkdir(this.#socketRoot, { mode: 0o700, recursive: true });
       await mkdir(socketDirectory, { mode: 0o700 });
       const turnRoot = await createWorkerTurnRoot(directory);
@@ -1538,17 +1648,29 @@ export class InstanceRuntimePool {
         pool: this,
       });
       runtime.cliFingerprint = cliFingerprint;
+      start.runtime = runtime;
+      live();
       const launch = await input.launch(layout);
       // Full review 2 batch 1 #5: real execution first — a prewarm that has
       // not spawned yet yields to starts that took the capacity meanwhile.
-      const yieldReason =
-        prewarm === undefined
-          ? undefined
-          : this.#prewarmCapReason({
-              driver: input.driver,
-              limits: prewarm,
-              participantId: input.participantId,
-            });
+      // Review of the review-2 fixes P2-1: against the Kernel's caps and
+      // reservations read now, not the plan's copy; synchronous from this
+      // read to the spawn, with this pool's in-flight starts counted.
+      let yieldReason: string | undefined;
+      if (start.abandoned) yieldReason = "prewarm_abandoned";
+      else if (prewarm !== undefined)
+        try {
+          yieldReason = this.#prewarmCapReason({
+            driver: input.driver,
+            limits: currentPrewarmLimits(prewarm),
+            participantId: input.participantId,
+          });
+        } catch (error) {
+          yieldReason =
+            error instanceof PrewarmYield
+              ? error.reason
+              : `limits_unavailable: ${errorMessage(error)}`;
+        }
       if (yieldReason !== undefined) {
         try {
           await launch.release?.();
@@ -1557,6 +1679,7 @@ export class InstanceRuntimePool {
             `[${instanceRuntimeId}] runtime environment release failed: ${errorMessage(error)}`,
           );
         }
+        live();
         throw new PrewarmYield(yieldReason);
       }
       runtime.spawn(launch);
@@ -1567,6 +1690,7 @@ export class InstanceRuntimePool {
       // Review P1-3: the physical identity is durable before native ready,
       // so a crash in the startup window never looks like "never started".
       const identity = (await this.processTable.identities([pid])).get(pid);
+      live();
       if (identity === undefined)
         throw new Error("warm runtime identity could not be read");
       runtime.setProcessStartedAt(identity.startedAt);
@@ -1576,7 +1700,9 @@ export class InstanceRuntimePool {
         pid,
         processStartedAt: identity.startedAt,
       });
+      live();
       const ready = await runtime.waitReady(this.#readyTimeoutMs);
+      live();
       if (ready.kind === "failed") throw new Error(ready.error);
       runtime.nativeSessionId = ready.threadId;
       runtime.sessionResumeMs = ready.sessionResumeMs;
@@ -1592,11 +1718,26 @@ export class InstanceRuntimePool {
           ? {}
           : { sessionResumeMs: ready.sessionResumeMs }),
       });
+      // Never reused once abandoned: ready is not proof it may serve.
+      live();
       runtime.state = prewarm === undefined ? "busy" : "idle";
       runtime.lastActivityMs = this.#now();
       this.#runtimes.set(input.participantId, runtime);
       return runtime;
     } catch (error) {
+      if (start.abandoned) {
+        // The abandonment owns the spawned process and its record; the
+        // participant may already run a newer start. Only local leftovers.
+        if (!start.recorded) {
+          start.recorded = true;
+          await this.#recordNotStarted(instanceRuntimeId);
+        }
+        if (runtime === undefined || runtime.pid === undefined) {
+          await runtime?.releaseLaunch();
+          await this.#removeDirectories(directory, socketDirectory);
+        }
+        throw error;
+      }
       if (runtime !== undefined) runtime.state = "stopping";
       const proof =
         runtime === undefined || runtime.pid === undefined
@@ -2052,7 +2193,84 @@ type PrewarmLimits = {
   maxLiveForDriver: number;
   reserved?: number;
   reservedForDriver?: number;
+  /** Review of the review-2 fixes P2-1: the capacity owner's caps now. */
+  current?: () => Omit<PrewarmLimits, "current"> | undefined;
 };
+
+/** One cold start in flight (Kernel row registered, not ready yet). */
+type ColdStart = {
+  driver: string;
+  instanceRuntimeId: string;
+  prewarm: boolean;
+  /** Review of the review-2 fixes P1-1: past its bound or cancelled. */
+  abandoned: boolean;
+  /** Its Kernel row exists. */
+  registered: boolean;
+  /** Its end is recorded (or owned by the abandonment). */
+  recorded: boolean;
+  runtime?: WarmRuntime;
+};
+
+/** Longer than a normal launch preparation; added to the ready timeout. */
+const DEFAULT_PREWARM_PREPARATION_MS = 15_000;
+
+/** The Kernel's current caps for the final admission; the plan's if unread. */
+function currentPrewarmLimits(limits: PrewarmLimits): PrewarmLimits {
+  if (limits.current === undefined) return limits;
+  let current: Omit<PrewarmLimits, "current"> | undefined;
+  try {
+    current = limits.current();
+  } catch (error) {
+    throw new PrewarmYield(`limits_unavailable: ${errorMessage(error)}`);
+  }
+  if (current === undefined) throw new PrewarmYield("limits_unavailable");
+  return current;
+}
+
+/**
+ * A prewarm start raced against its bound and its cancellation. The start
+ * itself keeps running when it loses; the caller abandons it.
+ */
+async function boundedStart(
+  job: Promise<WarmRuntime>,
+  timeoutMs: number,
+  signal: AbortSignal | undefined,
+): Promise<
+  | { kind: "settled"; runtime?: WarmRuntime; error?: unknown }
+  | { kind: "stopped"; reason: string }
+> {
+  let timer: NodeJS.Timeout | undefined;
+  let onAbort: (() => void) | undefined;
+  try {
+    return await Promise.race([
+      job.then(
+        (runtime) => ({ kind: "settled" as const, runtime }),
+        (error: unknown) => ({ error, kind: "settled" as const }),
+      ),
+      new Promise<{ kind: "stopped"; reason: string }>((resolve) => {
+        timer = setTimeout(
+          () => resolve({ kind: "stopped", reason: "prewarm_timeout" }),
+          timeoutMs,
+        );
+        timer.unref?.();
+        onAbort = () =>
+          resolve({ kind: "stopped", reason: "prewarm_cancelled" });
+        if (signal?.aborted) onAbort();
+        else signal?.addEventListener("abort", onAbort, { once: true });
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    if (onAbort !== undefined) signal?.removeEventListener("abort", onAbort);
+  }
+}
+
+/** The continuation of a prewarm that was abandoned. */
+class PrewarmAbandoned extends Error {
+  constructor(instanceRuntimeId: string) {
+    super(`prewarm ${instanceRuntimeId} was abandoned`);
+  }
+}
 
 /** A prewarm that gave its capacity to real execution before spawning. */
 class PrewarmYield extends Error {

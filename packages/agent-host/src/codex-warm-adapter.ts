@@ -453,6 +453,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   async prewarm(
     input: ActivationEnvelope,
     limits: RuntimePrewarmLimits,
+    signal?: AbortSignal,
   ): Promise<RuntimePrewarmOutcome> {
     if (!this.#warm(input)) return { kind: "skipped", reason: "not_warm" };
     const launched: LaunchCapture = {};
@@ -463,6 +464,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       launch: async (layout) => await this.#launch(input, layout, launched),
       limits,
       participantId: input.participantId,
+      ...(signal === undefined ? {} : { signal }),
     });
     if (outcome.kind === "skipped") return outcome;
     outcome.runtime.standingPromptDigest = launched.standingPromptDigest;

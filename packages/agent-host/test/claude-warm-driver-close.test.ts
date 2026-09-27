@@ -461,6 +461,46 @@ test("P2-4 (warm): a reason-less error_during_execution whose interrupt receipt 
   }
 });
 
+test("review-2 fixes P2-2 (warm): with no interrupt receipt at all the turn drains within the bounded receipt wait, well before the control timeout; a late receipt changes nothing", async () => {
+  const h = await startDriver();
+  try {
+    const wake = await acceptedWake(h);
+    const interrupt = await finalPostedAndArmed(h, wake);
+    const sentAt = Date.now();
+    h.claude(
+      result(wake, {
+        subtype: "error_during_execution",
+        is_error: true,
+        errors: ["FAKE provider failure"],
+      }),
+    );
+    h.claude(lifecycle(wake, "cancelled"));
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    const elapsed = Date.now() - sentAt;
+    assert.ok(
+      elapsed < LEGACY_RECEIPT_GRACE_MS + 1_500,
+      `drained ${String(elapsed)} ms after the result (bound ${String(LEGACY_RECEIPT_GRACE_MS)} ms, control timeout 5000 ms)`,
+    );
+    assert.equal(end.status, "failed");
+    assert.equal(end.endedAfterFinalReply, undefined);
+    const report = h.frames.find(
+      (f) =>
+        f.type === "frame" && f.frame?.protocol === "rah-final-interrupt/v1",
+    );
+    assert.equal(report?.frame.accepted, "unknown");
+    assert.equal(report?.frame.terminal, "unknown");
+    h.claude(answer(interrupt));
+    await h.settle(200);
+    assert.equal(
+      h.frames.filter((f) => f.type === "turn.drained").length,
+      1,
+      "a late receipt reopens nothing",
+    );
+  } finally {
+    await h.close();
+  }
+});
+
 test("receipt race (warm): a reason-less error_during_execution read before the interrupt's success receipt is the final end once the receipt lands within the bounded wait", async () => {
   const h = await startDriver();
   try {

@@ -446,8 +446,9 @@ function readableNow(
  * the same RunAttempt returns exactly that snapshot, so the text the Host
  * sends and the state its registration applies are the same version.
  * Freezing fixes the version, never the access: each presentation re-checks
- * reading, and while it is revoked the refresh/delta is withheld and marked
- * so that a send does not count it as delivered (full review 2 P1-3).
+ * reading, and once it is revoked the refresh/delta is withheld and marked
+ * so that a send does not count it as delivered (full review 2 P1-3). The
+ * mark is never lifted for the window (review of the review-2 fixes P1-2).
  */
 export function withPresentedMemory<Window extends object>(
   database: DatabaseSync,
@@ -474,11 +475,15 @@ export function withPresentedMemory<Window extends object>(
       presentation !== null &&
       (presentation.delta !== undefined || presentation.index !== undefined)
     ) {
-      const withheld = !readableNow(database, scope);
-      if (withheld !== (presentation.withheld === true)) {
-        presentation = { ...presentation };
-        if (withheld) presentation.withheld = true;
-        else delete presentation.withheld;
+      // Review of the review-2 fixes P1-2: withholding is one-way for the
+      // window. A receipt names the window, not the version of it the Host
+      // sent, so a window once withheld never presents its memory again;
+      // restored reading gets the change in the next window (a duplicate,
+      // never an omission).
+      const withheld =
+        presentation.withheld === true || !readableNow(database, scope);
+      if (withheld && presentation.withheld !== true) {
+        presentation = { ...presentation, withheld: true };
         database
           .prepare(
             `UPDATE activation_presented_windows SET memory_json=?

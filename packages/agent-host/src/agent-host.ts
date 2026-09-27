@@ -716,9 +716,13 @@ export class AgentHost {
     // watchdog of runs no adapter supervises; stdout text never counts.
     let lastProgressMs = this.#now();
     try {
-      const startRuntime = async () => {
-        await this.#instanceRuntimePool?.fenceStart?.(activation.participantId);
-        return await withDeadline(
+      const startRuntime = async (): Promise<GatedRuntimeStart> => {
+        // Review of the review-2 fixes P1-1: the fence may wait on this
+        // instance's in-flight prewarm; that wait is supervised like a
+        // start-gate wait, and a lane it stopped never reaches the runtime.
+        const fenced = await this.#fenceUnderSupervision(activation);
+        if (fenced !== undefined) return fenced;
+        const started = await withDeadline(
           runtime.start(envelope, {
             recordTrajectory: async (activity) => {
               lastProgressMs = this.#now();
@@ -780,6 +784,7 @@ export class AgentHost {
           this.#runtimeStartTimeoutMs,
           "runtime start",
         );
+        return { kind: "started", run: started };
       };
       // Upstream Raft bounds how many Agents may be *starting* at once — never
       // how many may be running — with AgentStartCoordinator. The gate is the
@@ -788,7 +793,7 @@ export class AgentHost {
       // supervision while it waits (see `#startBehindGate`).
       const gated: GatedRuntimeStart =
         this.#startGate === undefined
-          ? { kind: "started", run: await startRuntime() }
+          ? await startRuntime()
           : await this.#startBehindGate(
               this.#startGate,
               activation,
@@ -799,7 +804,7 @@ export class AgentHost {
       }
       if (gated.kind === "draining") {
         const failure =
-          "daemon draining: the runtime was not started (it waited in the start gate)";
+          "daemon draining: the runtime was not started (it waited to start)";
         await this.#control.finishRunAttempt({
           error: failure,
           runAttemptId: runAttempt.runAttemptId,
@@ -1422,7 +1427,7 @@ export class AgentHost {
   async #startBehindGate(
     gate: AgentStartGate,
     activation: Activation,
-    startRuntime: () => Promise<RunHandle>,
+    startRuntime: () => Promise<GatedRuntimeStart>,
   ): Promise<GatedRuntimeStart> {
     const waiting = new AbortController();
     let stopped: GatedRuntimeStart | undefined;
@@ -1449,7 +1454,7 @@ export class AgentHost {
           } catch (error) {
             return { error, kind: "lease-lost" };
           }
-          return { kind: "started", run: await startRuntime() };
+          return await startRuntime();
         },
         waiting.signal,
       );
@@ -1461,6 +1466,42 @@ export class AgentHost {
       waiting.abort();
       await supervision;
     }
+  }
+
+  /**
+   * Review of the review-2 fixes P1-1: the pool's start fence waits for this
+   * instance's start in flight (a prewarm, itself bounded). The wait runs
+   * under `#superviseStartWait`: the lease is renewed on the run cadence, and
+   * a cancellation, lost lease or drain returns at once — the fence keeps
+   * running in the pool and its late result is ignored, so nothing is
+   * started for this lane. A fence failure is thrown as before.
+   */
+  async #fenceUnderSupervision(
+    activation: Activation,
+  ): Promise<GatedRuntimeStart | undefined> {
+    const pool = this.#instanceRuntimePool;
+    if (pool?.fenceStart === undefined) return undefined;
+    const fencing = pool.fenceStart(activation.participantId).then(
+      () => ({ failed: false as const }),
+      (error: unknown) => ({ error, failed: true as const }),
+    );
+    const waiting = new AbortController();
+    const supervision = this.#superviseStartWait(
+      activation.activationId,
+      waiting.signal,
+    );
+    const first = await Promise.race([
+      fencing.then((fence) => ({ fence, kind: "fenced" as const })),
+      supervision.then((stopped) => ({ kind: "supervised" as const, stopped })),
+    ]);
+    if (first.kind === "supervised" && first.stopped !== undefined)
+      return first.stopped;
+    waiting.abort();
+    const stopped = await supervision;
+    if (stopped !== undefined) return stopped;
+    const fence = first.kind === "fenced" ? first.fence : await fencing;
+    if (fence.failed) throw fence.error;
+    return undefined;
   }
 
   async #superviseStartWait(
