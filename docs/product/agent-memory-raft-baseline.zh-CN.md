@@ -1,6 +1,6 @@
 # Agent Memory：Raft 基线优先与增强准入
 
-> evo 分支说明（2026-09-27，S6 批次 B）：本文描述 `main` 基线的每实例记忆。evo 中 Role 实例改用 Kernel 频道记忆，新 session 不再物化或加载每实例 `MEMORY.md`，旧目录只读保留，Human 可显式导入；仅遗留 persona Agent 仍按本文运行。见 [evo 状态第五十一节](../evo/status.zh-CN.md)。
+> evo 分支说明（2026-09-27，S6 批次 B）：本文描述 `main` 基线的每实例记忆。evo 中 Role 实例改用 Kernel 频道记忆，新 session 不再物化或加载每实例 `MEMORY.md`，旧目录只读保留，Human 可显式导入；仅遗留 persona Agent 仍按本文运行。见 [evo 状态历史第五十一节](../evo/log/status-history-2026-09.zh-CN.md) 与 [evo 现状](../evo/status.zh-CN.md)。
 
 状态：默认恢复 Raft 原文件读取；两个 memory prompt builder 已 byte-exact 纳入源码并接入共享 Worker prompt。未完成整个 Raft 记忆功能 100% 移植，未部署到用户在线实例。
 

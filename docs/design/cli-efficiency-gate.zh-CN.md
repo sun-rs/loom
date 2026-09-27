@@ -74,13 +74,13 @@ Role 指令，与 Codex 口径相同）。
   思考环境变量等于许可档位、禁止 `--continue/--agent/--plan` 等），事后 wire 中每个 `llm.request` 的别名与思考档位须等于许可值；
   wire 缺失时 `modelEvidence: launch-guard-only`。
 
-局限：Claude/Kimi/OpenCode 效率门禁均未付费运行（Codex 见 status 效率节）。Kimi print 模式下 `llm.request.thinkingEffort` 是否反映环境变量覆盖未实测（若只反映 config 默认，
+局限：四家效率门禁均已付费运行，运行、提交与结论见 [付费运行台账](../evo/paid-runs.zh-CN.md)（全面审查 2 之后修正的门禁代码尚未付费运行）。Kimi print 模式下 `llm.request.thinkingEffort` 是否反映环境变量覆盖未实测（若只反映 config 默认，
 不一致会使门禁失败而非放行）；Kimi 子 agent 的 wire 不计入。Claude 子 agent（sidechain）生成：产品按
 `parent_tool_use_id` 计入、transcript 复核的用量不计入（模型仍核对），若出现会表现为复核不一致；result `modelUsage`
-若含 Claude Code 自己的后台小模型（其他模型族）会判越权，是否出现未经付费实测。Claude warm 组仍套用
-`warmExecutionFailures`（含每个 box-post 带 `--turn`），真实 Claude 是否按轮带句柄待首跑确认。OpenCode 原生组使用
+若含 Claude Code 自己的后台小模型（其他模型族）会判越权；已有 Haiku 付费运行未出现越权记录，Sonnet 未运行。Claude warm 组套用
+`warmExecutionFailures`（含每个 box-post 带 `--turn`），2026-09-25/27 两次 Haiku 付费运行的 role-warm 组均未触发该失败。OpenCode 原生组使用
 `opencode run` 内置服务，RAH 组使用 `serve` + HTTP 驱动，入口差异属于平台开销；`--format json` 事件格式依据
-1.18.32 二进制内嵌源码，未付费实测；缺失的维度按既有规则记 `missing-evidence`。
+1.18.32 二进制内嵌源码，已在 OpenCode 效率门禁付费运行中使用（台账）；缺失的维度按既有规则记 `missing-evidence`。
 
 ## 指标和裁决
 
@@ -196,7 +196,7 @@ RAH_EFFICIENCY_ORDER=native,role-warm,role-prewarm npm run test:cli:efficiency -
 
 模型用 `message-post --final` 发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，
 不是 ACK），Host 读到后由驱动在下一个工具边界发原生 `turn/interrupt`，省掉工具结果回灌后只说"已发送"的整轮生成。
-Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `interrupt` 控制请求）；Kimi/OpenCode 未接，行为不变。
+Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `interrupt` 控制请求）；Kimi 由 S2-c2 接入（无工具在途时 ACP `session/cancel`，`kimi-final-interrupt.js`）；OpenCode 由 S2-c3 接入（发帖工具结束后 `POST /session/:id/abort`，`opencode-final-interrupt.js`）。2026-09-27 Kimi 效率证据每轮 `finalInterrupt.sent/accepted = true`。
 
 - 用量接口 `finalInterrupt`：`null` 表示本轮没有 `--final` 回复；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
   `sent` 为驱动确认已发出中断（被拒绝或未上报为 false，此时本轮按原行为多一次生成）；`preemptedFollowUp`
@@ -219,10 +219,10 @@ Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `i
 快照（均为 main 里程碑 `5122795`），不是被测代码版本；它们测的是各自阶段的 evo 代码，单看文件无法确定具体版本。
 原生 session 文件保留于 CLI 自己的目录，只提取用量和必要诊断摘要；正式频道与正式库不动。
 不同付费 Provider 必须各自和其原生 CLI 比，不能以 Codex 通过代替 Claude/Kimi/OpenCode。
-Claude/Kimi/OpenCode 已有各自原生对照臂代码（见上文“多 Provider”，均未付费运行）；长期压缩、忙时消息与多频道串行压力是后续场景，不伪称覆盖。
+Claude/Kimi/OpenCode 各有原生对照臂（见上文“多 Provider”），均已付费运行（见台账）；长期压缩、忙时消息与多频道串行压力是后续场景，不伪称覆盖。
 当前私聊排队业务验收继续使用独立纵向证据，不把有意排队时间混入本 gate 的纯续聊对照。
 
 门禁脚本与用量汇总由 `scripts/cli-efficiency/` 所有；不新增产品队列或上下文状态。
 确定性汇总/预算测试可免费随批执行：`npm run test:cli:efficiency:unit`。
 
-首次执行结果与基线数字见 [evo 现状](../evo/status.zh-CN.md)的"效率基线"一节。
+首次执行结果与基线数字见 [状态历史日志](../evo/log/status-history-2026-09.zh-CN.md)的"效率基线"一节；全部付费运行见 [付费运行台账](../evo/paid-runs.zh-CN.md)。

@@ -1,6 +1,6 @@
 # S1 每轮效率：施工计划
 
-日期：2026-09-24。依据：[目标合同](target-contract.zh-CN.md) §6、[现状](status.zh-CN.md) 效率基线、S1 代码测绘（本页"现状"一节）。
+日期：2026-09-24。依据：[目标合同](target-contract.zh-CN.md) §6、[状态历史日志](log/status-history-2026-09.zh-CN.md) 效率基线、S1 代码测绘（本页"现状"一节）。
 
 ## 现状（evo 代码测绘）
 

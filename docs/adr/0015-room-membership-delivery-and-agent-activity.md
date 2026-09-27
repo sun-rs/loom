@@ -31,6 +31,6 @@ Kernel 原有 `postMessage` 是支持显式 recipients 的低层协作原语，�
 
 - membership delivery 不代表每个 Agent 都必须对每条消息生成文本回复；是否回复由 Agent policy 决定，但每个成员都会获得 durable Inbox/Activation。
 - Agent reply 仍按 [ADR-0014](./0014-activation-scoped-agent-room-reply.md) 使用 activation-scoped 窄命令，不产生 reply loop。
-- 2026-09-26 补充（evo，负责人裁定，[evo 现状第三十七节](../evo/status.zh-CN.md)）：上文 membership 投递只适用于 Human 消息。实例（Agent）发的消息只有显式 `@实例` 才唤醒其他实例，不再经 `room_policy`、线程关注、回复链或线程根隐式唤醒；Kernel 注意力派生处统一强制。每个频道记录自上一条 Human 消息以来连续的实例→实例唤醒次数，超过运行中可配置的上限（默认 10）后不再派生 Inbox/Activation，并在频道写一条系统提示；Human 在该频道发任意消息即重置。
+- 2026-09-26 补充（evo，负责人裁定，[evo 状态历史第三十七节](../evo/log/status-history-2026-09.zh-CN.md)）：上文 membership 投递只适用于 Human 消息。实例（Agent）发的消息只有显式 `@实例` 才唤醒其他实例，不再经 `room_policy`、线程关注、回复链或线程根隐式唤醒；Kernel 注意力派生处统一强制。每个频道记录自上一条 Human 消息以来连续的实例→实例唤醒次数，超过运行中可配置的上限（默认 10）后不再派生 Inbox/Activation，并在频道写一条系统提示；Human 在该频道发任意消息即重置。
 - `idle` 仅表示当前没有 queued/leased/quarantined Activation，不证明 Provider 在线；Runtime inventory、Host health 与 Agent activity 是三个不同观察面。
 - content-free hint、Human Inbox/Activity 聚合、生产 pairing/Keychain 和真实多 CLI reply certification 仍是后续能力。

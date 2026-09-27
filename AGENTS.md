@@ -10,10 +10,14 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
   `packages/ui-web`, `packages/ui-tokens/specs`) stays identical to `main` until
   phase 4; test files may differ only where `main` is corrected first.
   Acceptance uses the throwaway `apps/console` (served by the local gateway at
-  `/_rah/console/`) plus API and tests. It is deleted in phase 4 together with
+  `/_rah/console/`) plus API and tests. The console shows channels, instance
+  state and queueing, usage, runtime settings, RunAttempt drill-down, the
+  private box and the channel-memory panel, and performs Human interventions
+  through the same client contract (unknown-result writes are verified or
+  abandoned, never silently resent). It is deleted in phase 4 together with
   `scripts/run-console-browser-gate.mjs`, the gateway `consoleDirectory` branch
-  and the `build:console`/`test:console:*` scripts; the full deletion list is in
-  `docs/evo/status.zh-CN.md` §44–§46.
+  and the `build:console`/`test:console:*` scripts; the full list is the
+  "phase 4 删除清单" in `docs/evo/status.zh-CN.md`.
 - `docs/evo/target-contract.zh-CN.md` is the single target contract and takes
   precedence; `docs/evo/status.zh-CN.md` records the evo-vs-main delta; code
   proves current behavior but never overrides owner goals or safety
@@ -23,9 +27,11 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
 
 ## Reading map
 
-- Target contract: `docs/evo/target-contract.zh-CN.md`; current evo state and
-  known defects: `docs/evo/status.zh-CN.md`; efficiency gate:
-  `docs/design/cli-efficiency-gate.zh-CN.md`.
+- Target contract: `docs/evo/target-contract.zh-CN.md`; current evo state,
+  contract deviations and open items: `docs/evo/status.zh-CN.md`; paid and
+  real-CLI runs: `docs/evo/paid-runs.zh-CN.md`; construction history (sections
+  1–65, cited as "status §N"): `docs/evo/log/status-history-2026-09.zh-CN.md`;
+  efficiency gate: `docs/design/cli-efficiency-gate.zh-CN.md`.
 
 Main-baseline references (valid unless superseded by the evo documents):
 
@@ -114,7 +120,8 @@ invariants, not hypothetical completeness.
 Phase-3 slice order (contract §8): S1 per-turn efficiency -> S2 session
 lifecycle plus usage/context/compaction visibility -> S3 private box gaps -> S4
 fork -> S5 side -> S6 platform memory. Each slice: tests first, implementation,
-visible in the console, commit and push to `evo`. After S1, measure against
+visible in the console, status table and paid-run ledger updated, commit and
+push to `evo`. After S1, measure against
 contract §6; if far from target, stop and re-evaluate the architecture.
 
 ## TDD is mandatory
@@ -277,22 +284,36 @@ neither an old reference fixture nor a visible tab proves product completeness.
 
 ## Memory boundary
 
-Target (contract §4): platform-managed long-term memory whose lifecycle is
-independent of instances and sessions. Role/model/session/Channel/time are
-automatic provenance metadata, not the ownership boundary. Permission decides
-readable scope, then relevance retrieval: light index plus on-demand bodies,
-never full loading. Memory has revisions, invalidation and deletion; provenance
-proves authorship, not correctness. Separate read and write switches default per
-Channel, can be overridden per member, and are enforced by underlying permission
-on both tool and file paths. Sharing scope, concurrent writes and deletion
-semantics need an evidence-backed decision before S6.
+Target and decided semantics: contract §4 (owner-approved 2026-09-26/27).
+Platform-managed long-term memory whose lifecycle is independent of instances
+and sessions; Role/model/session/Channel/time are automatic provenance
+metadata. Provenance proves authorship, not correctness.
 
-Until S6 the existing per-instance isolated memory (`MEMORY.md` index plus
-`notes/`) stays unchanged; do not add splitting, fragment stores, truncation or
-silent idle maintenance to it. A materialization receipt proves file
-preparation, not that a model read it. Prompt-only requests cannot be advertised
-as enforced isolation. Reset/restart honors the existing fence and active-work
-checks.
+Current S6 state (status table, history §48–§54 and §63): Role instances use
+Kernel channel memory. Scope is the Channel; entries written from an instance's
+private box also belong to the Channel's shared memory, not private memory.
+Writes happen only through explicit Worker tools (`memory write/update`); the
+platform never extracts memory from conversations or transcripts and never
+materializes it as files. Mutations return receipts only; bodies,
+descriptions and provenance come only through reads gated by the read switch.
+Update/invalidate/restore/delete carry `expectedRevision`; instances and the
+Human may invalidate/restore, only the Human (channel manager) deletes, and
+deletion clears bodies, descriptions and earlier reasons from online reads but
+does not scrub provider sessions, diagnostics, backups or SQLite residue. Read
+and write switches default per Channel with per-member overrides, enforced by
+the Kernel on the authenticated Worker path. New sessions receive a light index
+(3 KiB, pinned first) plus per-turn deltas; bodies are read on demand. Side
+sessions are read-only by design, but side credentials are not issued yet (S5).
+
+The per-instance `MEMORY.md` plus `notes/` is no longer loaded or materialized
+for Role instances; old directories stay read-only and can be imported only by
+an explicit Human `memory.import.legacy`. That path remains only for the legacy
+persona Agent, which is being removed; do not extend it. Not strong isolation:
+CLIs run full-access under the same UID and could read the database directly.
+Turning reading off does not recall an index already delivered into a session.
+A materialization or delivery receipt proves transport, not that a model read
+it. Prompt-only requests cannot be advertised as enforced isolation.
+Reset/restart honors the existing fence and active-work checks.
 
 ## Verification and evidence
 
@@ -351,7 +372,12 @@ run. This instruction does not authorize paid-provider tests.
 ## Documentation and handoff
 
 Update `docs/evo/status.zh-CN.md` with every change to the evo-vs-main delta,
-and the target contract only with owner approval. Update owner documents/ADRs
+and the target contract only with owner approval. Every completed batch
+rewrites the affected rows of the status table (implemented / fake-verified /
+real-CLI / paid-gate verdict / uncovered, with evidence links), updates the
+current-deployment line after a restart, and appends each paid or real-CLI run
+to `docs/evo/paid-runs.zh-CN.md`; a batch without these updates is not complete.
+Construction logs go to `docs/evo/log/`, not into the status page. Update owner documents/ADRs
 together with changes to protocol, lifecycle, authority, memory policy,
 deployment or release gates. Keep this guide durable: no live PIDs, private
 credentials, signed attachment URLs, temporary ports or volatile pass counts.

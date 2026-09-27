@@ -1,4 +1,4 @@
-[evo 分支现状](./evo/status.zh-CN.md)：evo 相对 main 里程碑的唯一差异说明、已知缺陷与效率基线。
+[evo 分支现状](./evo/status.zh-CN.md)：evo 相对 main 里程碑的唯一现状说明（环境与部署、带证据的状态表、偏离合同清单、未决项、phase 4 删除清单）；[付费运行台账](./evo/paid-runs.zh-CN.md)；[状态历史日志](./evo/log/status-history-2026-09.zh-CN.md)（第一至六十五节，含效率基线）。
 
 [长会话漂移测试](./design/long-session-drift-gate.zh-CN.md)：多轮与强制压缩后是否仍遵守规则、正确回复（opt-in 付费）。
 

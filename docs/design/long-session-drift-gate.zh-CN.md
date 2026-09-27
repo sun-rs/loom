@@ -194,7 +194,7 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
 `summary.degradation = {behavior, compactionOverhead}`，任一为 false 即 `noDegradation` 为 false、gate `violated`。缺用量的窗口为
 `insufficient-data`：不判上升，也不证明平稳，记证据缺口 `compactionOverheadInsufficient`，gate 判 `missing-evidence`（全面审查 2 B-P2-4；`no-compaction` 不受影响）。终端逐窗口打印均值、比值与逐次变化。
 局限：基线窗口含全部题型，压缩后窗口题型构成不同（压缩后三轮固定为 `qa`、`other`、`thread-recall`），窗口长度也不同；上下文随轮数自然增长，
-比值只反映窗口均值，需结合逐轮表人工判读。尚无付费样本。
+比值只反映窗口均值，需结合逐轮表人工判读。付费样本：2026-09-25 Codex 常驻 20 轮、第 5/10/15 轮后压缩（`docs/evo/evidence/2026-09-25-recheck-drift-codex-20r-3c.json`），`compactionOverhead.status = stable`，压缩后窗口平均输入为基线的 0.63/0.67/0.78 倍（台账 P28）。
 
 ## 通过标准（违规退出码 2，证据缺失/运行失败退出码 1）
 
@@ -210,13 +210,13 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
 
 ## 局限
 
-- 已有 7 份付费证据（`docs/evo/evidence/2026-09-25-drift-*.json`，结论见 status 漂移结论表与第十三、十八、二十二、
-  二十三节）：Codex warm（`gpt-6-luna/low`，20 轮）、Kimi cold 两次（`k3-256k/low`，20 轮）、Claude Haiku cold/warm
-  与 OpenCode cold/warm（10 轮，第 5 轮后压缩）。这些证据由批次 4 之前的代码产生：当时没有 Codex/Kimi 事后模型核对，
+- 已有 17 份漂移付费证据（全部运行与结论见 [付费运行台账](../evo/paid-runs.zh-CN.md)）：`2026-09-25-drift-*.json` 7 份（Codex warm 20 轮、Kimi cold 两次 20 轮、Claude Haiku cold/warm 与 OpenCode cold/warm 10 轮）、
+  `2026-09-25-acc-drift-*.json` 5 份（10 轮，第 5 轮后压缩）、`2026-09-25-recheck-drift-codex-20r-3c.json` 1 份（20 轮三次压缩）、
+  `2026-09-26-smoke-attach-*.json` 4 份（附加目录冒烟 6 轮）。其中最早 7 份由批次 4 之前的代码产生：当时没有 Codex/Kimi 事后模型核对，
   也没有“无模型记录判证据缺失”，但提交证据中无读取错误、工具调用与 OpenCode assistant 记录非空，说明当次核对确实执行。
   Claude Sonnet、Codex 每轮模式与 OpenCode/Claude 20 轮尚无漂移证据。
 - `thread/compact/start` 在热连接上无需先 resume、通知是否广播给非订阅连接未单独实测，因此仍以 rollout 记录数兜底。
-- Kimi 的 `--final` 仅由 Kernel 记录标记，Host 不中断回合；Kimi 无工具调用轨迹，不检查 `--turn`。
+- Kimi 的 `--final` 由驱动在无工具在途时发 ACP `session/cancel` 结束本轮（S2-c2，`kimi-final-interrupt.js`）；Kimi 无工具调用轨迹，不检查 `--turn`。
 - 引导代码（隔离 daemon、shim、每轮/热开关、API）与效率 Gate 共用 `gate-daemon.mjs`。
 - Claude：warm 注入以“上一 user 帧后已见 result”判空闲，自主后台回合可能使注入被拒（重试 30 次后记错误）。
   热 Claude 不检查 `--turn`（判定仍只对热 Codex）。Haiku 冷/热冒烟的 effort 围栏均未触发（status 第二十二节，Claude Code 2.1.282），即该版本 transcript 窗口内没有 effort 记录，围栏无需放宽。
@@ -226,6 +226,6 @@ Codex 取 rollout 窗口内 `compacted` 记录与 `run_trajectory_entries` 的 `
   CLI 私有格式，版本变化导致缺字段时判证据缺失，而不是通过。
 - 附加目录冒烟：附带方式证据只证明“参数/文件/提示行已交给 CLI”，是否被模型实际使用只由 `attached-read` 轮判定；Codex 每轮
   压缩客户端恢复线程时带实例 cwd 但不带 `runtimeWorkspaceRoots`（附加目录冒烟默认不压缩）；OpenCode 提示行证据在 serve 启动时读
-  instructions 文件，驱动之后换文件（规则变化）不再记录；启动记录只覆盖实例创建之后的 CLI 进程。尚无付费样本。
+  instructions 文件，驱动之后换文件（规则变化）不再记录；启动记录只覆盖实例创建之后的 CLI 进程。付费样本：2026-09-26 四家各一份（`docs/evo/evidence/2026-09-26-smoke-attach-*.json`，台账 P29–P32），附加目录读取 4/4 通过。
 - OpenCode 热压缩的 SSE 隐藏按 session id 过滤；OpenCode 手动压缩不带 variant，gate 靠注入 compaction agent 选项
   保持许可档位，压缩 assistant 的 `variant` 字段因此仍为空（证据如实记录）。
