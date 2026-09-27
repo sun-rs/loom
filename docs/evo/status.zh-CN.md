@@ -1114,6 +1114,22 @@ B. 权限收口
 5. 测试（先失败后通过）：`agent-host/test/opencode-user-mcp.test.ts`（按名关闭与合并、无名单不变、名单来自 `debug config --pure`、`GET /mcp` 复核）；`opencode-server-driver.test.ts`（无任何租约标记时也关闭用户 MCP 且 `GET /mcp` 在首个 prompt 前、无 `loom` 条目、回帖仍走 Worker CLI；无法关闭的服务使启动失败；无用户 MCP 时配置不变）；`opencode-warm-runtime.test.ts`（常驻同样关闭并在首个 prompt 前复核；无法关闭时不发输入）；`provider-global-isolation.test.ts`（两个 OpenCode 驱动的 serve 配置逐名关闭用户 MCP）；`daemon/test/standing-prompt-lease.test.ts`（版本钉住 `8f51ca099de3` 与协议卡哈希、租约无 `RAH_WORKER_TOOLS`、提示词为 heredoc CLI 形式；工具版 session 收到回到 CLI 版本的更新行）。假 opencode（fixture、`provider-usage-drivers`、`opencode-provider-session`）补 `debug config` 与 `GET /mcp` 应答。
 6. 未做：未跑付费 CLI，未重启或部署服务；真实 opencode 上无条件关闭只有第五十七节的免费探针证据。
 
+### 六十、续轮额外 message-read 回归修复（调查结论：非 Loom 改动，本节未改代码）
+
+触发：2026-09-27 付费门禁（Codex `gpt-6-luna/low`，d384715，临时目录 `rah-cli-efficiency-arYA0j`）中 `role-warm` 与 `role-prewarm` 每一轮（含第 1 轮）都先执行 `worker message-read --target "#efficiency" --turn …` 再 `message-post`，协议额外生成 +1；此前[证据](evidence/2026-09-27-eff-codex.json)（8ea005a，临时目录 `rah-cli-efficiency-6rncn1`）续轮为 0。
+
+调查（免费，只读本机 rollout 与日志，未调用模型）：
+
+1. 前提更正：8ea005a 已在记忆批次 B（862d955、9aab5cd）之后，两次运行都带 `## Channel memory index` 段（`No entries yet.`）。8ea005a..d384715 之间常驻提示词、常驻协议、记忆注入与唤醒文本源码无改动（`STANDING_PROTOCOL_VERSION` 仍钉住 `8f51ca099de3`，协议卡 SHA-256 由第五十九节测试钉住）；`codex-warm-adapter.ts` 的改动是把启动逻辑抽成 `#launch` 供预热复用，启动参数与环境逐项相同。
+2. 模型输入逐项对比（旧 `rollout-…T05-41-47-01a0dfaa…`，新 `rollout-…T09-39-33-01a0e084…` 与 `…T09-40-18-01a0e085…`）：base instructions（MD5 相同，18037 字符）、三条 developer 消息、AGENTS.md 用户块、`environment_context`、第 1 轮唤醒正文与 `Reply:` 行，在去掉 handle、participant/host/room ID 与临时目录名后逐字节相同；Codex 0.156.1、`loom-codex-warm`、model/effort/personality/collaboration_mode/approval 相同；首个请求输入 10695 vs 10688 token（差 7，对应 ID 分词），工具定义无增减。
+3. 行为差异发生在输入相同的第 1 轮：新运行第一条工具调用即 `message-read`，此后续轮照抄同一顺序；旧运行 9 个同类 session（09-25 至 09-27 的 role/role-warm/legacy 组）第 1 轮均无 `message-read`。新 role-warm 的命令写法也首次出现单引号 JS 字符串（此前 18 个效率 session 均为 `{cmd:"…"}`）。两次运行之间 Codex 的模型目录在 01:39 UTC 重新拉取（本机 `logs_2.sqlite`：`cache version mismatch` 后 `GET /backend-api/codex/models` 200，新 etag）。
+
+结论：Loom 侧没有引起该行为的提示词、唤醒或启动差异，不存在可恢复的被删说明或可调整的段落；差异来自模型侧（服务端模型/服务漂移，或低 effort 下第 1 轮的采样差异经会话内自我模仿扩散到续轮），两者只能靠付费复测区分。按“证据先于改动”与“不靠提示词打补丁”，本节不改代码、不改协议版本；若复测确认是模型侧稳定行为，再单独评估（例如把 `message-read` 的用法从常驻“Message Notifications”段移到内容无关通知自身，这会改变四家的协议版本，需四家付费复验）。
+
+建议复测（需负责人授权）：先在 d384715 上跑 `RAH_EFFICIENCY_PROVIDER=codex RAH_EFFICIENCY_MODEL=gpt-6-luna RAH_EFFICIENCY_EFFORT=low RAH_EFFICIENCY_ORDER=native,role-warm,role-prewarm node scripts/test-cli-efficiency.mjs --paid`（9 轮）；若仍出现，同一时段在 8ea005a 的 worktree 以 `native,role-warm` 对照一次（6 轮），8ea005a 也出现即确认模型侧。
+
+未做：未跑付费 CLI、未重启或部署服务；无代码与测试改动。
+
 ## 当前状态（2026-09-26，控制台批次 3 后）
 
 本表取代原“已知缺陷”表，只记现在的状态；各节历史结论保留原样，证据以所引 commit 与证据文件为准。四列相互独立：
