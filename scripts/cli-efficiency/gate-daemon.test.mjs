@@ -35,8 +35,8 @@ test("gate daemon config: channel homes under the gate root, warm switch per arm
   }
 });
 
-// Owner 2026-09-27: the product prewarms instances at creation by default.
-// Every gate arm measures a cold first round unless it opts in explicitly.
+// Owner 2026-09-27: instance prewarming is off by default; the gate states it
+// explicitly, so every arm measures a cold first round unless it opts in.
 test("gate runtime settings switch instance prewarming off unless the arm opts in", () => {
   assert.deepEqual(gateRuntimeSettings({}), {
     revision: 0,

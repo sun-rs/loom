@@ -9,19 +9,21 @@ import {
   firstRoundReport,
 } from "./warm.mjs";
 
-test("arm order keeps the historical default and appends role-warm only on opt-in", () => {
-  assert.deepEqual(parseArmOrder({}), ["native", "legacy", "role"]);
+test("arm order defaults to native and role, appends role-warm only on opt-in, and has no legacy persona arm", () => {
+  assert.deepEqual(parseArmOrder({}), ["native", "role"]);
   assert.deepEqual(parseArmOrder({ RAH_EFFICIENCY_WARM: "0" }), [
     "native",
-    "legacy",
     "role",
   ]);
   assert.deepEqual(parseArmOrder({ RAH_EFFICIENCY_WARM: "1" }), [
     "native",
-    "legacy",
     "role",
     "role-warm",
   ]);
+  assert.throws(
+    () => parseArmOrder({ RAH_EFFICIENCY_ORDER: "native,legacy" }),
+    /unknown legacy/,
+  );
   assert.deepEqual(
     parseArmOrder({ RAH_EFFICIENCY_ORDER: "native,role,role-warm" }),
     ["native", "role", "role-warm"],

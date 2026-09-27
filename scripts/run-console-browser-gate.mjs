@@ -553,6 +553,11 @@ if (args.join(" ") === "debug models --bundled") {
     timeoutMs: 20_000,
   });
   assert.equal(await textOf(`${card} .instance-queued .field-value`), "排队 0");
+  // Contract §5: no run yet, so the session's compaction count is unknown.
+  assert.equal(
+    await textOf(`${card} .instance-compactions .field-value`),
+    "未知（本 session 尚无运行轨迹）",
+  );
 
   // --- 4b. Revise the Role (binding only from the Host catalog). ---
   await navigateHash("#/roles");
@@ -2069,6 +2074,15 @@ async function checkRunDetail(client, agentId, runAttemptId) {
     context === undefined
       ? "未知"
       : `${count(context.contextUsedTokens)} / ${count(context.contextWindow)}`,
+  );
+  // Contract §5: the run's observed compactions, as the API reports them.
+  assert.equal(
+    view.rows["压缩次数（本轮）"],
+    raw.compactionCount === undefined
+      ? "未知"
+      : raw.compactionCount === null
+        ? "未知（本轮无运行轨迹）"
+        : String(raw.compactionCount),
   );
   if (raw.execution === undefined) assert.equal(view.rows["执行方式"], "未知");
   else if (raw.execution === null) {

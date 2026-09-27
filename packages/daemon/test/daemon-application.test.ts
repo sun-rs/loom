@@ -403,7 +403,10 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
         workspaceDefinitionId: productWorkspace.workspace.workspaceId,
       },
     });
-    let application = new DaemonApplication({ config });
+    let application = new DaemonApplication({
+      config,
+      legacyPersonaScheduling: true,
+    });
     activeShutdown = new AbortController();
     running = application.run({ signal: activeShutdown.signal });
     observer = new RoomKernel({ databasePath });
@@ -785,7 +788,10 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     activeShutdown = undefined;
     assert.equal(application.health().state, "offline");
 
-    application = new DaemonApplication({ config });
+    application = new DaemonApplication({
+      config,
+      legacyPersonaScheduling: true,
+    });
     activeShutdown = new AbortController();
     running = application.run({ signal: activeShutdown.signal });
     await waitUntil(() => application.clientOrigin() !== undefined);

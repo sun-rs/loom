@@ -237,6 +237,40 @@ test("no recorded usage is unavailable with unknown totals, never zero", () => {
   }
 });
 
+test("contract §5: the usage read counts the run's observed native compactions; no trajectory is unknown, never zero", () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      read(state).compactionCount,
+      null,
+      "a run without any runtime trajectory has an unknown compaction count",
+    );
+    let producerSequence = 0;
+    const append = (entry: Record<string, unknown>) =>
+      state.kernel.appendRunTrajectory(state.host, {
+        entry: entry as never,
+        observedAt: "2026-09-24T01:00:07.000Z",
+        producerSequence: (producerSequence += 1),
+        runAttemptId: state.runAttemptId,
+        runtimeRunId: state.runtimeRunId,
+      });
+    append({ activity: "working", detailKind: "starting", kind: "status" });
+    assert.equal(
+      read(state).compactionCount,
+      0,
+      "an observed run with no compaction fact reports zero",
+    );
+    append({ kind: "compaction_started" });
+    append({ kind: "compaction_finished" });
+    append({ kind: "compaction_finished", producerFactId: "second" });
+    // A subagent's own context is not this session's compaction.
+    append({ kind: "compaction_finished", subagent: {} });
+    assert.equal(read(state).compactionCount, 2);
+  } finally {
+    state.cleanup();
+  }
+});
+
 test("review sequence: a gap between recorded generations makes usage partial", () => {
   const state = fixture();
   try {

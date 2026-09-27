@@ -207,7 +207,10 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
         workspaceDefinitionId: workspace.workspace.workspaceId,
       },
     });
-    const application = new DaemonApplication({ config });
+    const application = new DaemonApplication({
+      config,
+      legacyPersonaScheduling: true,
+    });
     running = application.run({ signal: shutdown.signal });
     observer = new RoomKernel({ databasePath });
     observer.initialize();

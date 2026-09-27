@@ -508,7 +508,10 @@ async function startSameCliDaemon(caps: {
         workspaceMountRevisionId: "workspace-mount-same-cli-v1",
       },
     });
-    const application = new DaemonApplication({ config });
+    const application = new DaemonApplication({
+      config,
+      legacyPersonaScheduling: true,
+    });
     running = application.run({ signal: shutdown.signal });
     observer = new RoomKernel({ databasePath });
     observer.initialize();

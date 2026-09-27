@@ -30,7 +30,10 @@ import type {
   AuthenticatedHostContext,
 } from "./auth.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
-import type { RuntimeTrajectoryServiceOptions } from "./runtime-trajectory.ts";
+import {
+  observedCompactionCount,
+  type RuntimeTrajectoryServiceOptions,
+} from "./runtime-trajectory.ts";
 import {
   migrateRuntimeCleanupV66,
   RuntimeProcessCleanupService,
@@ -418,6 +421,10 @@ export class RunAttemptUsageService {
         )
         .all(input.runAttemptId, RUN_ATTEMPT_CLI_COST_READ_LIMIT)
         .map(costFromRow),
+      compactionCount: observedCompactionCount(this.#database, {
+        sql: "?",
+        parameters: [input.runAttemptId],
+      }),
     });
   }
 

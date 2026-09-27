@@ -26,9 +26,10 @@ const LegacyHostSchema = z
   })
   .strict();
 
+// May be empty (contract §2): a new local data home seeds no persona Agent,
+// so its Host starts with no participant until Role instances are created.
 const UniqueIdentifierListSchema = z
   .array(z.string().min(1))
-  .min(1)
   .max(256)
   .superRefine((values, context) => {
     const seen = new Set<string>();
@@ -70,10 +71,11 @@ const ProcessHygieneConfigSchema = z
   .strict();
 
 /**
- * S2-a warm instance runtimes. Off by default: the fake-driver gate cannot
- * prove the real Codex (or, S2-c1, Claude; S2-c3, OpenCode) multi-turn
- * protocol, and the owner-authorized real smoke gate (S2 spec §8) precedes
- * default enablement.
+ * S2-a warm instance runtimes, per CLI: Codex and OpenCode run warm unless
+ * `enabled: false` (on by default since their real smoke gates); Claude runs
+ * warm only with `claude.enabled: true`; Kimi has no warm runtime (per-turn,
+ * contract §6a exception). Instance prewarming is a separate Human runtime
+ * setting (`prewarm`, off by default).
  *
  * S2-b: the driver-neutral policy thresholds (see agent-host
  * `warm-runtime-policy.ts` for defaults and semantics). They configure a
@@ -103,10 +105,11 @@ const WarmRuntimesConfigSchema = z
       })
       .strict()
       .optional(),
-    // S2-c1: a separate opt-in. It shares the pool's policy (and a
-    // `codex.idleTtlMs` override) because the pool is one per Host.
+    // S2-c1: a separate opt-in (off unless `enabled: true`). It shares the
+    // pool's policy (and a `codex.idleTtlMs` override) because the pool is one
+    // per Host.
     claude: z.object({ enabled: z.boolean().optional() }).strict().optional(),
-    // S2-c3: a separate opt-in, sharing the pool's policy like Claude.
+    // S2-c3: on unless `enabled: false`, sharing the pool's policy.
     opencode: z.object({ enabled: z.boolean().optional() }).strict().optional(),
   })
   .strict()

@@ -15,12 +15,11 @@ test("default provider is codex: the current approved model, role-warm included"
   assert.equal(c.bindingId, "local:codex-cli/v1:gpt-6-luna");
   assert.equal(c.catalogKind, "codex-cli/v1");
   // The product runs Codex warm by default, so the default gate measures it.
-  assert.deepEqual(c.order, ["native", "legacy", "role", "role-warm"]);
+  assert.deepEqual(c.order, ["native", "role", "role-warm"]);
   assert.equal(c.instructionFile, "AGENTS.md");
   assert.equal(c.productUsage, "required");
   assert.deepEqual(parseEfficiencyEnv({ RAH_EFFICIENCY_WARM: "1" }).order, [
     "native",
-    "legacy",
     "role",
     "role-warm",
   ]);
@@ -156,10 +155,11 @@ test("fails closed on unknown providers, foreign bindings and unsupported arms",
       RAH_EFFICIENCY_MODEL: "sonnet",
       RAH_EFFICIENCY_EFFORT: "none",
     },
-    {
-      RAH_EFFICIENCY_PROVIDER: "opencode",
+    // The legacy persona arm is retired (contract §2) for every provider.
+    ...["codex", "claude", "kimi", "opencode"].map((provider) => ({
+      RAH_EFFICIENCY_PROVIDER: provider,
       RAH_EFFICIENCY_ORDER: "native,legacy",
-    },
+    })),
   ];
   for (const env of bad)
     assert.throws(

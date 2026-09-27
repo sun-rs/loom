@@ -48,7 +48,18 @@ export const RoleInstanceSchema = z
 export const RoleListResponseSchema = z
   .object({
     roles: z.array(RoleTemplateSchema),
-    instances: z.array(RoleInstanceSchema.extend({ isCurrent: z.boolean() })),
+    instances: z.array(
+      RoleInstanceSchema.extend({
+        isCurrent: z.boolean(),
+        /**
+         * Contract §5: native compactions observed in the instance's current
+         * session (since its last Human reset), summed over its RunAttempts'
+         * `compaction_finished` trajectory facts. `null`: no run of this
+         * session recorded any trajectory, so unknown (never zero).
+         */
+        sessionCompactionCount: z.number().int().nonnegative().nullable(),
+      }),
+    ),
   })
   .strict();
 export const RoleReviseRequestSchema = RoleCreateRequestSchema.omit({

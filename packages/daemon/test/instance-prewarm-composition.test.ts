@@ -30,7 +30,8 @@ const fakeServerPath = fileURLToPath(
 );
 
 /**
- * Owner 2026-09-27 through the composed daemon: creating a Role instance with
+ * Owner 2026-09-27 through the composed daemon: prewarming is off by default;
+ * once the Human switches it on, creating a Role instance with
  * the Human API makes the Host start its warm Codex runtime (FAKE app-server:
  * no model, no paid CLI) before any message — the process and its readiness
  * handshake, no turn. The first message then runs on that same process
@@ -40,10 +41,36 @@ const fakeServerPath = fileURLToPath(
  * switching prewarm off in the runtime settings starts nothing for a new
  * instance. Evidence is room.db plus the FAKE server's own record.
  */
-test("the composed daemon prewarms a created instance, reuses it on the first turn, prewarms after a restart and retires on removal", async () => {
+test("the composed daemon prewarms nothing by default; switched on, it prewarms a created instance, reuses it on the first turn, prewarms after a restart and retires on removal", async () => {
   if (process.platform !== "darwin" && process.platform !== "linux") return;
   const state = await startPrewarmDaemon();
   try {
+    // Owner 2026-09-27: without a runtime-settings file prewarming is off, so
+    // a created instance starts nothing until the Human switches it on.
+    const unwarmed = await state.createInstance("default-off");
+    // The Host took the creation hint (it is published only once the pool
+    // accepts prewarms), then decided against starting anything.
+    await state.waitFor(
+      () => state.pendingRuntimeHints() === 0,
+      "the creation hint taken by the Host",
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    assert.equal(state.liveRuntime(unwarmed), undefined);
+    assert.equal(state.processStarts(), 0, "default settings never prewarm");
+    // Leaves the Channel so later Human messages do not wake it.
+    await state.humanMutation(state.roomId, "/v3/client/rooms/members/remove", {
+      idempotencyKey: "remove-default-off",
+      principalId: unwarmed,
+      roomId: state.roomId,
+    });
+    const initial = await state.request<{ revision: number }>(
+      "/v3/client/runtime-settings/read",
+      {},
+    );
+    await state.request("/v3/client/runtime-settings/update", {
+      expectedRevision: initial.revision,
+      prewarm: { enabled: true },
+    });
     const instanceId = await state.createInstance("first");
     const runtime = await state.waitFor(
       () => state.liveRuntime(instanceId),
@@ -357,6 +384,14 @@ async function startPrewarmDaemon() {
     requests: (method: string) =>
       records().filter(
         (record) => record.event === "request" && record.method === method,
+      ),
+    pendingRuntimeHints: () =>
+      Number(
+        db
+          .prepare(
+            "SELECT count(*) AS n FROM outbox WHERE topic='instance.runtime' AND published_at IS NULL",
+          )
+          .get()!.n,
       ),
     processStarts: () =>
       records().filter((record) => record.event === "start").length,

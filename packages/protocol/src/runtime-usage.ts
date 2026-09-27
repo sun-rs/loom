@@ -426,6 +426,13 @@ export const ClientRunAttemptUsageGetResponseSchema = z
       .array(RunAttemptCliCostSchema)
       .max(RUN_ATTEMPT_CLI_COST_READ_LIMIT)
       .optional(),
+    /**
+     * Contract §5: native compactions the CLI reported during this RunAttempt
+     * (its `compaction_finished` runtime-trajectory facts, subagents
+     * excluded). `null`: no runtime trajectory was recorded, so unknown.
+     * Compactions outside a Loom-managed turn are not observed.
+     */
+    compactionCount: z.number().int().nonnegative().nullable().optional(),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

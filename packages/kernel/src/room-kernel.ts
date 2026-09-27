@@ -602,6 +602,7 @@ export class RoomKernel {
       database: this.#database,
       now: this.#now,
       obligations: this.#activationObligations,
+      scheduleLegacyPersonas: options.scheduleLegacyPersonas ?? true,
       wakeChainLimit: () => this.runGuards.wakeGuard().instanceChainLimit,
     });
     this.workerChannelAttention = new AgentChannelAttentionService({
@@ -1270,10 +1271,9 @@ export class RoomKernel {
   }): ProvisionedHostCredential {
     const hostId = input.hostId.trim();
     if (hostId.length === 0) throw new Error("hostId is required");
+    // May start empty (contract §2: no seeded persona Agent); provisioning a
+    // Role instance grants it to the Host's credential.
     const participantIds = [...new Set(input.participantIds)].sort();
-    if (participantIds.length === 0) {
-      throw new Error("Host credential requires at least one participant");
-    }
     const accessToken = createHostAccessToken();
     const credentialId = this.#createId("host_credential");
     this.#transaction(() => {

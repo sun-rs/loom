@@ -7,10 +7,9 @@ import {
 } from "./warm.mjs";
 import { DatabaseSync } from "node:sqlite";
 import assert from "node:assert/strict";
-import { readFileSync, globSync, mkdirSync, copyFileSync } from "node:fs";
+import { readFileSync, globSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { agentExecutionWorkspacePath } from "../../packages/agent-host/src/agent-execution-workspace.ts";
 import { RoomKernel } from "@rah-os/kernel";
 import { instructions, wait, measure } from "./common.mjs";
 import { prepareGateDaemon } from "./gate-daemon.mjs";
@@ -36,11 +35,6 @@ export async function rahArm({
 }) {
   assert.ok(config?.provider && config.model, "rahArm needs the gate config");
   const { provider, model, effort, bindingId } = config;
-  const workspaceFiles = [
-    config.instructionFile,
-    "scripts/workbench-launch-receipt.mjs",
-    "scripts/workbench-launch-receipt.test.mjs",
-  ];
   // role-warm: the S2-a warm Codex / S2-c1 warm Claude / S2-c3 warm OpenCode
   // runtime (Codex and OpenCode are warm by default in the product, Claude
   // is opt-in); the per-turn arms switch warm runtimes off explicitly.
@@ -48,7 +42,7 @@ export async function rahArm({
   // RAH_EFFICIENCY_WARM_RESTART=1, which instead expects a measured cold
   // resume at round 3; the per-turn arms keep the restart.
   // role-prewarm (owner 2026-09-27): the same warm runtime, prewarmed at
-  // instance creation (the product default); round 1 must reuse it. Every
+  // instance creation (opt-in; off by default); round 1 must reuse it. Every
   // other arm runs with prewarming off, so role-warm keeps measuring the cold
   // first round. No daemon restart in this arm.
   const prewarmed = kind === "role-prewarm";
@@ -182,71 +176,39 @@ export async function rahArm({
         idempotencyKey: randomUUID(),
       })
     ).room.roomId;
-    if (kind === "role" || warm) {
-      const createdAt = Date.now();
-      const role = (
-        await post("/v3/client/roles/create", {
-          controlRoomId: control,
-          basedOnRoomSeq: await head(control),
-          idempotencyKey: randomUUID(),
-          configuration,
-        })
-      ).role;
-      const created = await post("/v3/client/roles/instantiate", {
-        roleId: role.roleId,
-        channelId: roomId,
-        basedOnRoomSeq: await head(roomId),
-        idempotencyKey: randomUUID(),
-      });
-      participantId = created.instance.instanceId;
-      agentId = created.agent.definition.agentId;
-      if (prewarmed) {
-        // Readiness of the prewarmed runtime before round 1: an idle row
-        // with no turn and no RunAttempt (process start only, no model).
-        await wait(() => liveRuntimeOf(participantId)?.state === "idle", 60000);
-        const runtime = liveRuntimeOf(participantId);
-        assert.equal(runtime.turn_count, 0, "Prewarm ran a turn");
-        assert.deepEqual(
-          observer.listRunAttempts({ roomId }),
-          [],
-          "Prewarm created a RunAttempt",
-        );
-        arm.prewarmed = {
-          instanceRuntimeId: runtime.instance_runtime_id,
-          readyAfterMs: Date.now() - createdAt,
-        };
-        save();
-      }
-    } else {
-      const agent = (
-        await post("/v3/client/agents/list", { controlRoomId: control })
-      ).agents.find((a) => a.handle === spec.agentHandle);
-      assert.ok(agent);
-      await post("/v3/client/agents/manage", {
-        ...configuration,
-        action: "configure",
-        agentId: agent.definition.agentId,
+    const createdAt = Date.now();
+    const role = (
+      await post("/v3/client/roles/create", {
+        controlRoomId: control,
         basedOnRoomSeq: await head(control),
         idempotencyKey: randomUUID(),
-      });
-      participantId = agent.definition.participantId;
-      agentId = agent.definition.agentId;
-      const actualCwd = agentExecutionWorkspacePath(
-        join(stateDirectory, "agent-workspaces"),
-        participantId,
+        configuration,
+      })
+    ).role;
+    const created = await post("/v3/client/roles/instantiate", {
+      roleId: role.roleId,
+      channelId: roomId,
+      basedOnRoomSeq: await head(roomId),
+      idempotencyKey: randomUUID(),
+    });
+    participantId = created.instance.instanceId;
+    agentId = created.agent.definition.agentId;
+    if (prewarmed) {
+      // Readiness of the prewarmed runtime before round 1: an idle row
+      // with no turn and no RunAttempt (process start only, no model).
+      await wait(() => liveRuntimeOf(participantId)?.state === "idle", 60000);
+      const runtime = liveRuntimeOf(participantId);
+      assert.equal(runtime.turn_count, 0, "Prewarm ran a turn");
+      assert.deepEqual(
+        observer.listRunAttempts({ roomId }),
+        [],
+        "Prewarm created a RunAttempt",
       );
-      mkdirSync(join(actualCwd, "scripts"), { recursive: true });
-      for (const file of workspaceFiles)
-        copyFileSync(join(cwd, file), join(actualCwd, file));
-      arm.actualCwd = actualCwd;
-
-      await post("/v3/client/rooms/members/add", {
-        roomId,
-        basedOnRoomSeq: await head(roomId),
-        principalId: participantId,
-        role: "member",
-        idempotencyKey: randomUUID(),
-      });
+      arm.prewarmed = {
+        instanceRuntimeId: runtime.instance_runtime_id,
+        readyAfterMs: Date.now() - createdAt,
+      };
+      save();
     }
     Object.assign(arm, { participantId, roomId });
     save();
@@ -406,13 +368,6 @@ export async function rahArm({
       save();
       console.log(`${kind} round ${i + 1}: ${round.replySeconds}s`);
     }
-    if (arm.actualCwd)
-      for (const file of workspaceFiles)
-        assert.deepEqual(
-          readFileSync(join(arm.actualCwd, file)),
-          readFileSync(join(cwd, file)),
-          "Actual workspace changed",
-        );
     if (warm) {
       const first = arm.rounds[0].execution?.instanceRuntimeId;
       arm.instanceRuntimes = first ? runtimeRows(first) : [];

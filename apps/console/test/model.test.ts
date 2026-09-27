@@ -348,6 +348,7 @@ test("instance status joins role.list, room activity, private boxes and recent f
           isCurrent: true,
           roleId: "role-1",
           roleRevisionId: "revision-1",
+          sessionCompactionCount: null,
         },
         {
           agentId: "agent-2",
@@ -356,6 +357,7 @@ test("instance status joins role.list, room activity, private boxes and recent f
           isCurrent: false,
           roleId: "role-1",
           roleRevisionId: "revision-0",
+          sessionCompactionCount: null,
         },
         {
           agentId: "agent-4",
@@ -364,6 +366,7 @@ test("instance status joins role.list, room activity, private boxes and recent f
           isCurrent: true,
           roleId: "role-1",
           roleRevisionId: "revision-1",
+          sessionCompactionCount: null,
         },
         {
           agentId: "agent-3",
@@ -372,6 +375,7 @@ test("instance status joins role.list, room activity, private boxes and recent f
           isCurrent: true,
           roleId: "role-1",
           roleRevisionId: "revision-1",
+          sessionCompactionCount: null,
         },
       ],
       roles: [
@@ -462,6 +466,7 @@ test("instance status loads through role.list, room.agent.activity.list and agen
             isCurrent: true,
             roleId: "role-1",
             roleRevisionId: "revision-1",
+            sessionCompactionCount: null,
           },
         ],
         roles: [
@@ -969,6 +974,51 @@ test("RunAttempt drill-down shows recorded facts and unknown (never 0) for what 
   assert.equal(
     costField("已记录费用小计（CLI 自报）"),
     "≥ $0.0123（另有 1 条增量未知，未计入）",
+  );
+});
+
+test("contract §5: compaction counts are shown as recorded, unknown (never 0) when the server has none", () => {
+  const counted = runUsageDetail(usageResponse({ compactionCount: 2 }));
+  const none = runUsageDetail(usageResponse({ compactionCount: 0 }));
+  const unobserved = runUsageDetail(usageResponse({ compactionCount: null }));
+  const older = runUsageDetail(usageResponse({}));
+  const compactions = (detail: ReturnType<typeof runUsageDetail>) =>
+    detail.rows.find((row) => row.label === "压缩次数（本轮）")?.value;
+  assert.equal(compactions(counted), "2");
+  assert.equal(compactions(none), "0");
+  assert.equal(compactions(unobserved), "未知（本轮无运行轨迹）");
+  assert.equal(compactions(older), "未知");
+
+  const role = {
+    agentId: "agent-1",
+    channelId: "room-a",
+    isCurrent: true,
+    roleId: "role-1",
+    roleRevisionId: "revision-1",
+  };
+  const statuses = assembleInstanceStatuses({
+    agentActivities: new Map(),
+    agentHandles: new Map(),
+    privateActivities: new Map(),
+    roleList: {
+      instances: [
+        { ...role, instanceId: "instance-1", sessionCompactionCount: 3 },
+        { ...role, instanceId: "instance-2", sessionCompactionCount: 0 },
+        { ...role, instanceId: "instance-3", sessionCompactionCount: null },
+      ],
+      roles: [],
+    },
+    roomActivities: [],
+    roomId: "room-a",
+    rooms: [],
+  });
+  assert.deepEqual(
+    statuses.map(({ compactionLabel }) => compactionLabel),
+    [
+      "3（本 session，Loom 托管轮次内观测）",
+      "0（本 session，Loom 托管轮次内观测）",
+      "未知（本 session 尚无运行轨迹）",
+    ],
   );
 });
 

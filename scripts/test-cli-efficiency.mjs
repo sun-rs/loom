@@ -32,8 +32,8 @@ assert.ok(
   "Requires explicit --paid and user authorization",
 );
 // RAH_EFFICIENCY_PROVIDER=codex|claude|kimi|opencode (default codex): each
-// runtime is compared with its own native CLI. Codex default
-// native,legacy,role,role-warm; Claude and OpenCode native,role,role-warm;
+// runtime is compared with its own native CLI. Codex, Claude and OpenCode
+// default native,role,role-warm;
 // Kimi native,role. role-prewarm (instance prewarmed at creation) is opt-in
 // through RAH_EFFICIENCY_ORDER and requires role-warm (the cold first round). The model/effort must be in approved-models.mjs, checked
 // here before any process starts. See efficiency-config.mjs.

@@ -8,12 +8,17 @@ import { agentRuntimeContextFromPlacement } from "../src/run-agent-context.ts";
 
 // S1-f/S3: Role instance isolation and lifecycle invariants. Fake Host, no
 // provider process; every assertion reads durable Kernel state.
-export function roleInstanceFixture(options: { now?: () => Date } = {}) {
+export function roleInstanceFixture(
+  options: { now?: () => Date; scheduleLegacyPersonas?: boolean } = {},
+) {
   const directory = mkdtempSync(join(tmpdir(), "rah-role-lifecycle-"));
   const databasePath = join(directory, "room.db");
   const kernel = new RoomKernel({
     databasePath,
     ...(options.now === undefined ? {} : { now: options.now }),
+    ...(options.scheduleLegacyPersonas === undefined
+      ? {}
+      : { scheduleLegacyPersonas: options.scheduleLegacyPersonas }),
   });
   kernel.initialize();
   const owner = kernel.provisionPrincipal({ handle: "owner", kind: "human" });

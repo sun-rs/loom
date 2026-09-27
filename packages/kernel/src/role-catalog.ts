@@ -17,6 +17,7 @@ import {
   StaleContextError,
 } from "./errors.ts";
 import { advanceInstanceSessionGeneration } from "./instance-session.ts";
+import { observedCompactionCount } from "./runtime-trajectory.ts";
 import {
   resumeBlockedActivationRetryFences,
   SESSION_CONTINUITY_FAILURE_MARKER,
@@ -153,6 +154,9 @@ export class RoleCatalog {
           roleRevisionId: text(row, "role_revision_id"),
           channelId: text(row, "channel_id"),
           isCurrent: row.role_revision_id === row.current_revision_id,
+          sessionCompactionCount: this.sessionCompactionCount(
+            text(row, "instance_id"),
+          ),
         })),
       roles: this.context.database
         .prepare(
@@ -161,6 +165,19 @@ export class RoleCatalog {
         .all(controlRoomId)
         .map((row) => this.role(row)),
     };
+  }
+  /**
+   * The current session starts at the instance's latest Human reset (a reset
+   * refuses while a run is live, so no run straddles it).
+   */
+  private sessionCompactionCount(instanceId: string): number | null {
+    return observedCompactionCount(this.context.database, {
+      sql: `SELECT run_attempt_id FROM run_attempts WHERE participant_id=?
+        AND started_at >= COALESCE((SELECT MAX(created_at) FROM room_events
+          WHERE aggregate_type='instance' AND aggregate_id=?
+            AND type='instance.session_reset'), '')`,
+      parameters: [instanceId, instanceId],
+    });
   }
   private replay(
     actorId: string,

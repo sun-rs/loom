@@ -33,6 +33,23 @@ test("Codex reasoning has start/end activity without requiring reasoning text", 
   assert.doesNotMatch(JSON.stringify([start, end]), /PRIVATE/);
 });
 
+test("one Codex compaction yields exactly one compaction_finished fact (the item, not the deprecated notice)", () => {
+  // Codex app-server 0.156.1 schema: `thread/compacted` is "Deprecated: Use
+  // `ContextCompaction` item type instead" and may still accompany the item.
+  // The console counts compaction_finished facts, so one compaction must not
+  // count twice.
+  const item = { id: "compact-1", type: "contextCompaction" };
+  const facts = [
+    { method: "item/started", params: { item, threadId: "t", turnId: "u" } },
+    { method: "item/completed", params: { item, threadId: "t", turnId: "u" } },
+    { method: "thread/compacted", params: { threadId: "t", turnId: "u" } },
+  ].flatMap((frame) => normalizeCodexTrajectoryNotification(frame, now));
+  assert.deepEqual(
+    facts.map(({ entry }) => entry.kind),
+    ["compaction_started", "compaction_finished"],
+  );
+});
+
 test("current activity is emitted before text debounce and is not a copied transcript", () => {
   const frames: any[] = [];
   const writer = new RuntimeTrajectoryWriter((value) =>

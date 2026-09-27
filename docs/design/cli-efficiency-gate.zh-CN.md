@@ -23,17 +23,17 @@ npm run test:cli:efficiency -- --paid
 这项入口差异属于实际平台开销，但结果不能独自证明差异均来自调度。
 
 固定 Git 提交的两份真实网络重启源/测试文件，三组内容哈希和 AGENTS.md 一致，
-Role 显式选现有 mount；旧 Agent 将相同文件准备到实际私有 cwd，避免目录不一致。三轮依次是限定审查、质疑并修正、
+Role 显式选现有 mount。三轮依次是限定审查、质疑并修正、
 重启后结论与测试标准；不改文件、记忆，不建 Task。模型回答须人工审查证据与连续性。
-各组串行避免本 gate 竞争账号，Codex 默认顺序 native/legacy/role/role-warm；用
-`RAH_EFFICIENCY_ORDER=role,native,legacy` 在未来独立样本轮换顺序，
+各组串行避免本 gate 竞争账号，Codex 默认顺序 native/role/role-warm；用
+`RAH_EFFICIENCY_ORDER=role,native` 在未来独立样本轮换顺序，
 不丢弃失败样本、不为了好看重复跑。`RAH_EFFICIENCY_REF` 可指定固定源版本（题目快照）。
 用户其他应用仍可能使用同一账号，缓存冷热无法完全控制，单次时间不作统计显著性结论。
 
 ## 多 Provider（`RAH_EFFICIENCY_PROVIDER`，合同 §6“各运行时对照自身原生 CLI”）
 
 ```sh
-npm run test:cli:efficiency -- --paid                                    # codex：native,legacy,role,role-warm
+npm run test:cli:efficiency -- --paid                                    # codex：native,role,role-warm
 RAH_EFFICIENCY_PROVIDER=claude npm run test:cli:efficiency -- --paid     # native,role,role-warm
 RAH_EFFICIENCY_PROVIDER=kimi npm run test:cli:efficiency -- --paid       # native,role
 RAH_EFFICIENCY_PROVIDER=opencode npm run test:cli:efficiency -- --paid   # native,role,role-warm
@@ -44,7 +44,7 @@ RAH_EFFICIENCY_PROVIDER=opencode npm run test:cli:efficiency -- --paid   # nativ
 缺省即 `none`，启动与 Role 均不带 effort）、Kimi `kimi-code/k3-256k/low`、OpenCode `deepseek/deepseek-flash/low`；
 2026-09-09 矩阵（Claude `sonnet/low`、Codex `gpt-5.6-luna/low`、Kimi `kimi-code/k3/high`）用覆盖变量选择。
 其他组合启动前失败。`RAH_EFFICIENCY_ORDER` 只接受该 provider 支持的组：Kimi 无 `role-warm`（`RAH_EFFICIENCY_WARM=1`
-启动前即失败），OpenCode 无 `legacy`。配置解析见 `efficiency-config.mjs`（binding/effort 解析与漂移门禁共用），单测覆盖。
+启动前即失败）。旧 persona Agent 的 `legacy` 组已删除（合同 §2，owner 2026-09-27），历史证据保留在 `docs/evo/evidence`。配置解析见 `efficiency-config.mjs`（binding/effort 解析与漂移门禁共用），单测覆盖。
 指令文件用各 CLI 原生读取的文件：Codex/Kimi/OpenCode 写 `AGENTS.md`，Claude 写 `CLAUDE.md`（两组都原生读取，RAH 组另有
 Role 指令，与 Codex 口径相同）。
 

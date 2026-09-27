@@ -56,15 +56,9 @@ export function normalizeCodexTrajectoryNotification(frame, now = Date.now) {
       timestampFrom(params, now),
     );
   }
-  if (method === "thread/compacted") {
-    return trajectory(
-      {
-        kind: "compaction_finished",
-        producerFactId: fact(params.threadId, method),
-      },
-      timestampFrom(params, now),
-    );
-  }
+  // `thread/compacted` is deprecated in favour of the `contextCompaction` item
+  // (app-server 0.156.1 schema) and may accompany it; the item alone is the
+  // compaction fact, so a counted compaction is never doubled.
   if (method !== "item/started" && method !== "item/completed") return [];
   const item = record(params.item);
   const itemId = string(item.id);

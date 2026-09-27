@@ -686,6 +686,25 @@ export function createDaemonHumanClientService(input: {
   });
 }
 
+/** The Host credential's participants; v4 config must be a subset, v2/v3 equal. */
+export function authorizedParticipantScope(
+  config: DaemonConfig,
+  hostParticipantIds: readonly string[],
+): string[] {
+  const configured = configuredParticipantIds(config);
+  const authorized = [...hostParticipantIds].sort();
+  const scopeMatches =
+    config.schemaVersion === 4
+      ? configured.every((participantId) => authorized.includes(participantId))
+      : JSON.stringify(authorized) === JSON.stringify(configured);
+  if (!scopeMatches) {
+    throw new Error(
+      "configured participant scope does not match the authenticated Host credential",
+    );
+  }
+  return authorized;
+}
+
 export function configuredParticipantIds(config: DaemonConfig): string[] {
   return config.schemaVersion === 4
     ? [...config.host.participantIds].sort()

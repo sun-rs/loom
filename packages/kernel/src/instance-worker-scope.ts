@@ -39,6 +39,26 @@ export function isRoleInstance(
   );
 }
 
+/**
+ * Contract §2: a legacy persona Agent (an Agent definition that is not a Role
+ * instance) takes no part in evo scheduling — no Inbox item, no Activation.
+ * A bare Agent principal without a definition is not a persona.
+ */
+export function isLegacyPersonaAgent(
+  database: DatabaseSync,
+  participantId: string,
+): boolean {
+  return (
+    database
+      .prepare(
+        `SELECT 1 FROM agent_definitions a WHERE a.participant_id=?
+         AND NOT EXISTS (SELECT 1 FROM role_instances i WHERE i.instance_id=a.participant_id)
+         LIMIT 1`,
+      )
+      .get(participantId) !== undefined
+  );
+}
+
 export function requireInstanceReplyTarget(
   database: DatabaseSync,
   participantId: string,

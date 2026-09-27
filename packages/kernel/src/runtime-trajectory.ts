@@ -30,6 +30,36 @@ export function readAgentTrajectoryVersion(
   return row ? Number(row.server_sequence) : 0;
 }
 
+/**
+ * Contract §5: native compactions the CLI reported, counted from the
+ * `compaction_finished` runtime-trajectory facts of the given RunAttempts
+ * (subagent contexts excluded). `null` when none of those runs recorded any
+ * trajectory: the count is unknown, never zero. Compactions outside a
+ * Loom-managed turn are not observed. Reads go through each run's runtime
+ * run id, so the count uses the presence partial index (same predicate) and
+ * never scans unrelated trajectory text.
+ */
+export function observedCompactionCount(
+  database: DatabaseSync,
+  runAttemptFilter: { sql: string; parameters: Array<number | string> },
+): number | null {
+  const runtimeRuns = `SELECT runtime_run_id FROM runtime_processes
+    WHERE run_attempt_id IN (${runAttemptFilter.sql})`;
+  const row = database
+    .prepare(
+      `SELECT
+         EXISTS (SELECT 1 FROM run_trajectory_entries
+           WHERE runtime_run_id IN (${runtimeRuns})) AS observed,
+         (SELECT COUNT(*) FROM run_trajectory_entries
+           WHERE runtime_run_id IN (${runtimeRuns})
+             AND json_extract(entry_json, '$.subagent') IS NULL
+             AND json_extract(entry_json, '$.kind') IN ('thinking','tool_start','compaction_started','compaction_finished','status')
+             AND json_extract(entry_json, '$.kind') = 'compaction_finished') AS compactions`,
+    )
+    .get(...runAttemptFilter.parameters, ...runAttemptFilter.parameters)!;
+  return Number(row.observed) === 0 ? null : Number(row.compactions);
+}
+
 export type AgentTrajectoryListInput = {
   agentId: string;
   beforeActivityId?: string;

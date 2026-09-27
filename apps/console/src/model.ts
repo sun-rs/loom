@@ -280,6 +280,8 @@ export type InstanceStatus = {
   recentProblems: ProblemRecord[];
   roleId: string;
   roleName: string;
+  /** Contract §5: native compactions observed in the current session. */
+  compactionLabel: string;
   /** This Room's recent RunAttempts (from the recent activity page). */
   runs: RunAttemptEntry[];
   state: RoomAgentActivityState | undefined;
@@ -317,6 +319,13 @@ function queuedSummary(
         ? "排队 0"
         : `排队 ${String(count)}（频道 ${String(channelQueued)}，私聊 ${String(privateQueued)}）`,
   };
+}
+
+/** Unknown (never 0) until a run of the current session is observed. */
+function compactionLabel(count: number | null | undefined): string {
+  return count === null || count === undefined
+    ? `${UNKNOWN}（本 session 尚无运行轨迹）`
+    : `${String(count)}（本 session，Loom 托管轮次内观测）`;
 }
 
 export function assembleInstanceStatuses(input: {
@@ -362,6 +371,7 @@ export function assembleInstanceStatuses(input: {
       const queued = queuedSummary(current, privateEntry);
       return {
         agentId: instance.agentId,
+        compactionLabel: compactionLabel(instance.sessionCompactionCount),
         handle:
           input.agentHandles.get(instance.agentId) ??
           role?.configuration.handle ??
@@ -799,6 +809,15 @@ export function runUsageDetail(
         value: tokens(response.totals.reasoningOutputTokens),
       },
       { label: "上下文占用", value: lastContextText },
+      {
+        label: "压缩次数（本轮）",
+        value:
+          response.compactionCount === undefined
+            ? UNKNOWN
+            : response.compactionCount === null
+              ? `${UNKNOWN}（本轮无运行轨迹）`
+              : String(response.compactionCount),
+      },
       { label: "已记录费用小计（CLI 自报）", value: costText },
     ],
     truncated: response.truncated,

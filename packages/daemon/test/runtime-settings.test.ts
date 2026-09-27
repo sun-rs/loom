@@ -65,7 +65,8 @@ test("concurrency settings default to the Host cap, a conservative per-CLI cap a
         noProgressWarnMs: 15 * 60_000,
         queuedStallTerminateMs: 15 * 60_000,
       },
-      prewarm: { enabled: true, recentActiveHours: 24 },
+      // Owner 2026-09-27: prewarming is off unless the Human turns it on.
+      prewarm: { enabled: false, recentActiveHours: 24 },
     });
   } finally {
     rmSync(directory, { force: true, recursive: true });
@@ -309,7 +310,7 @@ test("attaching the settings pushes the wakeGuard and watchdog groups into the K
   }
 });
 
-test("the prewarm group is on by default, updates partially at runtime, persists, and reaches the Host lanes now and on every update", () => {
+test("the prewarm group is off by default (owner 2026-09-27), updates partially at runtime, persists, and reaches the Host lanes now and on every update", () => {
   const directory = mkdtempSync(join(tmpdir(), "loom-prewarm-settings-"));
   const path = join(directory, "runtime-settings.json");
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -331,21 +332,23 @@ test("the prewarm group is on by default, updates partially at runtime, persists
       },
       pool: undefined,
     });
-    assert.deepEqual(applied, [
-      { enabled: true, recentActiveWindowMs: 24 * 3_600_000 },
-    ]);
-    const off = settings.update({
+    assert.deepEqual(
+      applied,
+      [{ enabled: false, recentActiveWindowMs: 24 * 3_600_000 }],
+      "no settings file: the Host lanes never prewarm",
+    );
+    const on = settings.update({
       expectedRevision: 0,
-      prewarm: { enabled: false },
+      prewarm: { enabled: true },
     });
-    assert.deepEqual(off.prewarm, { enabled: false, recentActiveHours: 24 });
+    assert.deepEqual(on.prewarm, { enabled: true, recentActiveHours: 24 });
     assert.deepEqual(applied.at(-1), {
-      enabled: false,
+      enabled: true,
       recentActiveWindowMs: 24 * 3_600_000,
     });
     settings.update({ expectedRevision: 1, prewarm: { recentActiveHours: 2 } });
     assert.deepEqual(applied.at(-1), {
-      enabled: false,
+      enabled: true,
       recentActiveWindowMs: 2 * 3_600_000,
     });
     for (const bad of [
@@ -363,7 +366,7 @@ test("the prewarm group is on by default, updates partially at runtime, persists
       );
     assert.deepEqual(
       new RuntimeSettings({ defaults, path, runtimes }).read().prewarm,
-      { enabled: false, recentActiveHours: 2 },
+      { enabled: true, recentActiveHours: 2 },
       "survives a restart",
     );
   } finally {

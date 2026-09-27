@@ -95,16 +95,32 @@ never installs them or configures their accounts.
 - **Channel** is the collaboration record and message box; its members are
   instances, not Roles. A Channel owns one platform-created home directory (the
   CLI cwd and default artifact directory of its instances, private box
-  included) plus optional Human-attached directories, both fixed at creation;
-  memory homes stay per instance (owner approved 2026-09-26). Channels created
-  before that keep their instances' private cwds.
+  included) plus optional Human-attached directories, both fixed at creation
+  (owner approved 2026-09-26). Platform memory is shared per Channel and never
+  materialized as instance or Channel files (contract §4, "Memory boundary").
+  Channels created before the home directory keep their instances' private cwds.
 
 Instances run in parallel; each has one serial lane. A Channel `@instance` is a
 public directed request. The private box shares the instance session (so it
 affects later context), queues while busy, never steers Channel work and is
 invisible to other instances. Only Human messages steer; other instances'
 replies are read when idle. The legacy persona-Agent path is being removed from
-the evo backend; old data is not migrated.
+the evo backend; old data is not migrated. A new data home seeds no persona
+Agent, and in the product daemon the Kernel creates no Inbox item or Activation
+for a persona Agent (an Agent definition that is not a Role instance); the
+frozen frontend's `POST /v3/client/agents/provision` stays only until phase 4
+(retiring).
+
+Loom builds only the Channel foundation, never scenario-specific features: users
+reach discussion, collaborative development, planned tasks and similar goals by
+talking with instances in a Channel (owner ruling 2026-09-26). Do not add
+per-scenario workflows, roles, prompts or endpoints.
+
+The remote-Computer mechanism (Computer protocol, k-carrier, remote AgentHost
+control, release/upgrade) is frozen and kept, not deleted (owner ruling
+2026-09-27): it is the planned basis for OAuth account-pool load balancing and
+single-machine multi-container deployments of several CLI subscriptions. It is
+outside current review scope; do not extend or remove it.
 
 ## Vertical MVP first
 
@@ -119,10 +135,12 @@ invariants, not hypothetical completeness.
 
 Phase-3 slice order (contract §8): S1 per-turn efficiency -> S2 session
 lifecycle plus usage/context/compaction visibility -> S3 private box gaps -> S4
-fork -> S5 side -> S6 platform memory. Each slice: tests first, implementation,
-visible in the console, status table and paid-run ledger updated, commit and
-push to `evo`. After S1, measure against
-contract §6; if far from target, stop and re-evaluate the architecture.
+fork -> S5 side -> S6 platform memory. The owner approved implementing S6
+before S4/S5; the current stage is close-out plus a real end-to-end acceptance,
+after which the owner chooses between a narrow phase-4 UI slice and S4
+(contract §8). Each slice: tests first, implementation, visible in the console,
+commit and push to `evo`. After S1, measure against contract §6; if far from
+target, stop and re-evaluate the architecture.
 
 ## TDD is mandatory
 
@@ -218,12 +236,10 @@ roles. CLI exit or a collaborator reply does not complete the Task.
 ## Native-CLI benchmark
 
 The native CLI running the same session, model and effort is the efficiency
-baseline. Budgets (contract §6): at most 2 model generations before the reply;
-first-request fixed overhead at most native + 3k tokens; ordinary follow-up total
-input at most 2x native; extra reply latency at most max(5 s, 15% of native);
-100% final-answer delivery within gate samples; no silent session replacement.
-Per-turn usage, context-window occupancy and compaction count are shown per
-instance; data a CLI does not provide is shown as unknown, never estimated.
+baseline. The budgets and their measurement rules live only in contract §6;
+do not restate the numbers elsewhere. Per-turn usage, context-window occupancy
+and compaction count are shown per instance; data a CLI does not provide is
+shown as unknown, never estimated.
 
 Raft source is reference only, not the default port source; keep the verified
 ledger, authentication, idempotency and execution-fence foundations. Rules code
@@ -371,13 +387,14 @@ run. This instruction does not authorize paid-provider tests.
 
 ## Documentation and handoff
 
-Update `docs/evo/status.zh-CN.md` with every change to the evo-vs-main delta,
-and the target contract only with owner approval. Every completed batch
-rewrites the affected rows of the status table (implemented / fake-verified /
-real-CLI / paid-gate verdict / uncovered, with evidence links), updates the
-current-deployment line after a restart, and appends each paid or real-CLI run
-to `docs/evo/paid-runs.zh-CN.md`; a batch without these updates is not complete.
-Construction logs go to `docs/evo/log/`, not into the status page. Update owner documents/ADRs
+Write back documentation only when it changes (owner ruling 2026-09-27): when
+a capability's state changes, rewrite the affected rows of the status table
+(implemented / fake-verified / real-CLI / paid-gate verdict / uncovered, with
+evidence links); after a restart, update the current-deployment line; after a
+paid or real-CLI run, append it to `docs/evo/paid-runs.zh-CN.md`. Batches that
+change none of these need no status or ledger edit. Change the target contract
+only with owner approval. The status page stays a current-state page; do not
+append history sections to it. Update owner documents/ADRs
 together with changes to protocol, lifecycle, authority, memory policy,
 deployment or release gates. Keep this guide durable: no live PIDs, private
 credentials, signed attachment URLs, temporary ports or volatile pass counts.

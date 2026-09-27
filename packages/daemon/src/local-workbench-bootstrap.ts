@@ -28,7 +28,11 @@ import { protectKernelSchemaMigration } from "./state-backup.ts";
 
 const LocalWorkbenchMetadataSchema = z
   .object({
-    bootstrapParticipantIds: z.array(z.string().min(1)).min(1),
+    /**
+     * Historical: the legacy persona Agents an older data home seeded. A new
+     * data home seeds none (contract §2, owner 2026-09-27) and records [].
+     */
+    bootstrapParticipantIds: z.array(z.string().min(1)),
     controlRoomId: z.string().min(1),
     defaultRoomId: z.string().min(1),
     hostId: z.string().min(1),
@@ -194,79 +198,15 @@ async function initializeState(input: {
       slug: "agent-council",
       workspaceId: workspace.workspace.workspaceId,
     });
-    const participantIds: string[] = [];
-    for (const [index, spec] of input.runtimeSpecs.entries()) {
-      const agent = kernel.provisionPrincipal({
-        handle: spec.agentHandle,
-        kind: "agent",
-      });
-      participantIds.push(agent.principal.principalId);
-      kernel.addMember(actor, {
-        principalId: agent.principal.principalId,
-        roomId: workspace.controlRoom.roomId,
-      });
-      const policy = kernel.createExecutionPolicy(actor, {
-        basedOnRoomSeq: latestRoomSeq(
-          kernel,
-          actor,
-          workspace.controlRoom.roomId,
-        ),
-        controlRoomId: workspace.controlRoom.roomId,
-        idempotencyKey: `local-workbench-policy-${spec.cliId}-v1`,
-        modelIntent: {
-          fallback: "disabled",
-          reasoning: spec.reasoning,
-          serviceTier: "default",
-        },
-        preferred: [],
-        required: {
-          allowedOfferIds: [runtimeOfferId(spec.cliId)],
-          allowedProtocolFamilies: ["rah-worker-process/v1"],
-          capabilities: [],
-          minimumIsolation: "none",
-          workspaceMode: "in_place",
-        },
-        retryPolicyRef: contentRef(
-          `local-workbench-retry-${spec.cliId}`,
-          "retry-v1",
-        ),
-        sessionPolicy: "fresh",
-        toolAccessMode: spec.toolAccessMode,
-      }).policy;
-      kernel.createAgentDefinition(actor, {
-        executionWorkspace: { kind: "agent_private" },
-        avatarKey: spec.avatarKey,
-        basedOnRoomSeq: latestRoomSeq(
-          kernel,
-          actor,
-          workspace.controlRoom.roomId,
-        ),
-        controlRoomId: workspace.controlRoom.roomId,
-        description: spec.description,
-        displayName: spec.displayName,
-        executionPolicyRevisionId: policy.executionPolicyRevisionId,
-        idempotencyKey: `local-workbench-definition-${spec.cliId}-v1`,
-        instructionRefs: [],
-        instructions: spec.instructions,
-        memoryPolicyRef: contentRef(
-          `local-workbench-memory-${spec.cliId}`,
-          "room-private-v1",
-        ),
-        participantId: agent.principal.principalId,
-        role: spec.role,
-        skillRefs: [],
-      });
-      if (index >= 63) {
-        throw new Error("local workbench supports at most 64 runtimes");
-      }
-    }
     const hostId = `local-workbench-host-${randomUUID()}`;
+    // Contract §2: no persona Agent is seeded. The Host scope starts empty
+    // and each Role instance is granted when it is created.
     const host = kernel.provisionHostCredential({
       hostId,
-      participantIds,
+      participantIds: [],
     });
     const metadata = LocalWorkbenchMetadataSchema.parse({
-      bootstrapParticipantIds: participantIds,
+      bootstrapParticipantIds: [],
       controlRoomId: workspace.controlRoom.roomId,
       defaultRoomId: defaultRoom.room.roomId,
       hostId,
@@ -617,29 +557,6 @@ function validateRuntimeSpecs(
       );
     }
   }
-}
-
-function latestRoomSeq(
-  kernel: RoomKernel,
-  actor: ReturnType<RoomKernel["authenticateHumanAccessToken"]>,
-  roomId: string,
-): number {
-  return kernel.sync(actor, {
-    consumerId: `local-workbench-bootstrap-${roomId}`,
-    roomId,
-  }).latestRoomSeq;
-}
-
-function runtimeOfferId(cliId: string): string {
-  return `local-workbench-offer-${cliId}`;
-}
-
-function contentRef(artifactId: string, versionId: string) {
-  return {
-    artifactId,
-    contentDigest: digest(`${artifactId}:${versionId}`),
-    versionId,
-  };
 }
 
 function digest(value: string): `sha256:${string}` {

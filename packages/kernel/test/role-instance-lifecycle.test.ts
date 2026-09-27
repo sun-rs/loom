@@ -700,6 +700,71 @@ test("a Role instance run without recorded usage reads as unavailable, not zero"
   }
 });
 
+test("contract §5: role.list shows each instance's observed compactions in its current session, unknown until a run is observed and again after a reset", async () => {
+  const f = roleInstanceFixture();
+  const service = new ClientApplicationService({
+    human: createHumanApplicationPort(f.kernel),
+    health: () => {
+      throw new Error("health not used by this test");
+    },
+  });
+  try {
+    await service.start();
+    const client = new HttpRahClient({
+      baseUrl: service.origin,
+      accessToken: () => f.owner.accessToken,
+    });
+    const count = async () =>
+      (
+        await client.request("role.list", { controlRoomId: f.controlRoomId })
+      ).instances.find(({ instanceId }) => instanceId === f.instance.instanceId)
+        ?.sessionCompactionCount;
+    assert.equal(await count(), null, "no observed run: unknown, not zero");
+    const trajectory = (
+      work: ReturnType<typeof startInstanceRun>,
+      entries: Array<Record<string, unknown>>,
+    ) =>
+      entries.forEach((entry, index) =>
+        f.kernel.appendRunTrajectory(f.host, {
+          entry: entry as never,
+          observedAt: new Date().toISOString(),
+          producerSequence: index + 1,
+          runAttemptId: work.run.runAttemptId,
+          runtimeRunId: work.runtime.runtimeRunId,
+        }),
+      );
+    const first = startInstanceRun(f);
+    trajectory(first, [
+      { kind: "compaction_started" },
+      { kind: "compaction_finished" },
+    ]);
+    first.finish(0);
+    const second = startInstanceRun(f);
+    trajectory(second, [{ kind: "compaction_finished" }]);
+    second.finish(0);
+    assert.equal(await count(), 2, "summed over the session's runs");
+    f.kernel.roles.resetInstanceSession(f.actor, {
+      instanceId: f.instance.instanceId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "compaction-reset",
+    });
+    assert.equal(
+      await count(),
+      null,
+      "a new session has no observed run yet: unknown again",
+    );
+    const next = startInstanceRun(f);
+    trajectory(next, [
+      { activity: "working", detailKind: "starting", kind: "status" },
+    ]);
+    next.finish(0);
+    assert.equal(await count(), 0);
+  } finally {
+    await service.close();
+    f.close();
+  }
+});
+
 test("instance session reset is Human-only and rejects non-instances", async () => {
   const f = roleInstanceFixture();
   try {

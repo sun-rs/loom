@@ -3,8 +3,10 @@
 // role-prewarm (owner 2026-09-27): the warm Role instance whose runtime was
 // prewarmed at instance creation, reported beside role-warm (cold first
 // round), never instead of it.
-export const ARMS = ["native", "legacy", "role", "role-warm", "role-prewarm"];
-const DEFAULT_ORDER = ["native", "legacy", "role"];
+// The legacy persona-Agent arm is retired (contract §2; owner 2026-09-27);
+// its historical evidence stays in docs/evo/evidence.
+export const ARMS = ["native", "role", "role-warm", "role-prewarm"];
+const DEFAULT_ORDER = ["native", "role"];
 
 // RAH_EFFICIENCY_ORDER wins; otherwise the historical order, with role-warm
 // appended only for RAH_EFFICIENCY_WARM=1 so earlier runs stay reproducible.

@@ -3,7 +3,6 @@ import { mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
 import { tmpdir, hostname } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { DatabaseSync } from "node:sqlite";
 
 import {
   buildRuntimeOfferFromProfile,
@@ -46,9 +45,11 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
       250,
       "the local durable wake bridge should stay responsive without scanning SQLite ten times per second",
     );
-    assert.deepEqual(first.config.host.participantIds, [
-      first.metadata.bootstrapParticipantIds[0],
-    ]);
+    // Contract §2 (owner 2026-09-27): a new data home seeds no legacy persona
+    // Agent; the Host scope starts empty and grows as Role instances are
+    // created.
+    assert.deepEqual(first.metadata.bootstrapParticipantIds, []);
+    assert.deepEqual(first.config.host.participantIds, []);
     const initializedRegistry = new RuntimeProfileRegistry({
       databasePath: first.registryDatabasePath,
       hostId: first.metadata.hostId,
@@ -75,25 +76,20 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
       recipients: [],
       roomId: first.metadata.defaultRoomId,
     });
-    assert.equal(
+    assert.deepEqual(
       kernel.listAgentCatalog(human, {
         controlRoomId: first.metadata.controlRoomId,
-      })[0]?.currentRevision.instructions,
-      spec.instructions,
+        includeDeleted: true,
+      }),
+      [],
+      "no persona Agent definition is seeded",
     );
-    const catalogEntry = kernel.listAgentCatalog(human, {
-      controlRoomId: first.metadata.controlRoomId,
-    })[0];
-    assert.ok(catalogEntry);
-    assert.deepEqual(catalogEntry.currentRevision.executionWorkspace, {
-      kind: "agent_private",
-    });
-    assert.equal(
-      kernel.getExecutionPolicyRevision(
-        catalogEntry.currentRevision.executionPolicyRevisionId,
-      ).toolAccessMode,
-      "full_access",
-      "bootstrap must freeze the Raft-compatible unattended policy",
+    assert.deepEqual(
+      kernel
+        .listRoomMemberships(human, { roomId: first.metadata.defaultRoomId })
+        .map(({ principalId }) => principalId),
+      [human.principalId],
+      "the default Channel holds only the Human",
     );
     kernel.close();
 
@@ -122,7 +118,7 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
     assert.deepEqual(
       reopened.authenticateHostAccessToken(second.hostAccessToken)
         .participantIds,
-      second.metadata.bootstrapParticipantIds,
+      [],
     );
     reopened.close();
 
@@ -237,73 +233,6 @@ function fakeRuntimeSpec(workspaceCwd: string): LocalWorkbenchRuntimeSpec {
   };
 }
 
-test("restart preserves deletion of a bootstrap Agent without restoring its Host scope", async () => {
-  const parent = mkdtempSync(join(tmpdir(), "rah-deleted-bootstrap-"));
-  const stateDirectory = join(parent, "state");
-  const workspaceCwd = join(parent, "workspace");
-  mkdirSync(workspaceCwd);
-  const spec = fakeRuntimeSpec(workspaceCwd);
-  const input = {
-    runtimeSpecs: [
-      spec,
-      {
-        ...spec,
-        agentHandle: "OtherAgent",
-        cliId: "other",
-        runtimeProfileId: "local-workbench-profile-other",
-      },
-    ],
-    stateDirectory,
-    workspaceCwd,
-  };
-  try {
-    const first = await prepareLocalWorkbench(input);
-    const kernel = new RoomKernel({
-      databasePath: join(stateDirectory, "room.db"),
-    });
-    const actor = kernel.authenticateHumanAccessToken(first.humanAccessToken);
-    const agent = kernel.listAgentCatalog(actor)[0]!;
-    const db = new DatabaseSync(join(stateDirectory, "room.db"), {
-      readOnly: true,
-    });
-    const seq = Number(
-      db
-        .prepare("SELECT next_seq - 1 AS seq FROM rooms WHERE room_id = ?")
-        .get(first.metadata.controlRoomId)!.seq,
-    );
-    db.close();
-    const disabled = kernel.manageWorkspaceAgent(actor, {
-      action: "set_state",
-      agentId: agent.definition.agentId,
-      state: "disabled",
-      basedOnRoomSeq: seq,
-      idempotencyKey: "disable-bootstrap",
-    });
-    kernel.manageWorkspaceAgent(actor, {
-      action: "set_state",
-      agentId: agent.definition.agentId,
-      state: "tombstoned",
-      basedOnRoomSeq: disabled.event.roomSeq,
-      idempotencyKey: "delete-bootstrap",
-    });
-    kernel.close();
-    const second = await prepareLocalWorkbench(input);
-    assert.deepEqual(
-      second.config.host.participantIds,
-      first.metadata.bootstrapParticipantIds.filter(
-        (id) => id !== agent.definition.participantId,
-      ),
-    );
-    assert.deepEqual(
-      second.metadata.bootstrapParticipantIds,
-      first.metadata.bootstrapParticipantIds,
-    );
-    assert.equal(second.hostAccessToken, first.hostAccessToken);
-  } finally {
-    rmSync(parent, { recursive: true, force: true });
-  }
-});
-
 test("a role edit changes the compiled standing prompt digest without minting a RuntimeProfile revision", async () => {
   const parent = mkdtempSync(join(tmpdir(), "rah-memory-prompt-revision-"));
   const workspaceCwd = join(parent, "workspace");
@@ -344,7 +273,7 @@ test("a role edit changes the compiled standing prompt digest without minting a 
       rootDirectory: join(parent, "provider-sessions"),
     });
     const oldKey = {
-      participantId: old.metadata.bootstrapParticipantIds[0]!,
+      participantId: "participant-under-test",
       provider: "codex-app-server/v1" as const,
       runtimeProfileRevisionId: oldRevision.runtimeProfileRevisionId,
       standingPromptDigest: digestFor("Persistent test Agent"),
@@ -441,6 +370,67 @@ test("profile upgrades rotate immutable Offers and migrate only managed policy r
         state: "available",
       }),
     );
+    // An Agent definition as an older data home's bootstrap seeded it (a
+    // legacy persona), whose policy names the managed Offer.
+    const controlRoomId = first.metadata.controlRoomId;
+    const controlSeq = () =>
+      kernel!.sync(human, {
+        consumerId: "upgrade-test-seed",
+        roomId: controlRoomId,
+      }).latestRoomSeq;
+    const older = kernel.provisionPrincipal({
+      handle: spec.agentHandle,
+      kind: "agent",
+    });
+    kernel.addMember(human, {
+      principalId: older.principal.principalId,
+      roomId: controlRoomId,
+    });
+    const seededPolicy = kernel.createExecutionPolicy(human, {
+      basedOnRoomSeq: controlSeq(),
+      controlRoomId,
+      idempotencyKey: "older-home-policy",
+      modelIntent: {
+        fallback: "disabled",
+        reasoning: spec.reasoning,
+        serviceTier: "default",
+      },
+      preferred: [],
+      required: {
+        allowedOfferIds: [legacyId],
+        allowedProtocolFamilies: ["rah-worker-process/v1"],
+        capabilities: [],
+        minimumIsolation: "none",
+        workspaceMode: "in_place",
+      },
+      retryPolicyRef: {
+        artifactId: "older-home-retry",
+        contentDigest: `sha256:${"b".repeat(64)}`,
+        versionId: "retry-v1",
+      },
+      sessionPolicy: "fresh",
+      toolAccessMode: spec.toolAccessMode,
+    }).policy;
+    kernel.createAgentDefinition(human, {
+      avatarKey: spec.avatarKey,
+      basedOnRoomSeq: controlSeq(),
+      controlRoomId,
+      description: spec.description,
+      displayName: spec.displayName,
+      executionPolicyRevisionId: seededPolicy.executionPolicyRevisionId,
+      executionWorkspace: { kind: "agent_private" },
+      idempotencyKey: "older-home-definition",
+      instructionRefs: [],
+      instructions: spec.instructions,
+      memoryPolicyRef: {
+        artifactId: "older-home-memory",
+        contentDigest: `sha256:${"c".repeat(64)}`,
+        versionId: "room-private-v1",
+      },
+      participantId: older.principal.principalId,
+      role: spec.role,
+      skillRefs: [],
+    });
     const entry = kernel.listAgentCatalog(human)[0]!;
     const basePolicy = kernel.getExecutionPolicyRevision(
       entry.currentRevision.executionPolicyRevisionId,

@@ -281,6 +281,7 @@ function instanceCard(input: {
         field("实例", next.instanceId, "instance-id"),
         field("状态", next.stateLabel, "instance-state"),
         field("排队", next.queuedLabel, "instance-queued"),
+        field("压缩次数", next.compactionLabel, "instance-compactions"),
         next.updatedAt === null
           ? null
           : field("状态更新", localTime(next.updatedAt)),

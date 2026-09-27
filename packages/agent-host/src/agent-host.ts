@@ -215,10 +215,9 @@ export class AgentHost {
     if (!Number.isInteger(options.leaseMs) || options.leaseMs <= 0) {
       throw new Error("leaseMs must be a positive integer");
     }
-    const participantIds = [...options.host.participantIds];
-    if (participantIds.length === 0) {
-      throw new Error("AgentHost requires at least one participant");
-    }
+    // The startup scope may be empty (contract §2: a new data home seeds no
+    // persona Agent); the Kernel authorizes each Role instance per call once
+    // its creation grants it to this Host.
     const retryAfterMs =
       options.retryAfterMs ?? DEFAULT_ACTIVATION_RETRY_DELAY_MS;
     if (!Number.isInteger(retryAfterMs) || retryAfterMs < 0) {

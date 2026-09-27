@@ -24,9 +24,9 @@ export const EFFICIENCY_PROVIDERS = {
     catalogKind: "codex-cli/v1",
     model: "gpt-6-luna",
     effort: "low",
-    arms: ["native", "legacy", "role", "role-warm", "role-prewarm"],
+    arms: ["native", "role", "role-warm", "role-prewarm"],
     // The product runs Codex warm by default; role-warm measures that path.
-    defaults: ["native", "legacy", "role", "role-warm"],
+    defaults: ["native", "role", "role-warm"],
     warmAppend: true,
     instructionFile: "AGENTS.md",
     productUsage: "required",
@@ -39,7 +39,7 @@ export const EFFICIENCY_PROVIDERS = {
     // Bindings the installed Claude Code catalog publishes without effort
     // levels (probed 2026-09-25: `haiku`, supportsEffort false).
     effortless: ["haiku"],
-    arms: ["native", "legacy", "role", "role-warm", "role-prewarm"],
+    arms: ["native", "role", "role-warm", "role-prewarm"],
     defaults: ["native", "role", "role-warm"],
     warmAppend: true,
     // Claude Code reads CLAUDE.md natively (the others read AGENTS.md).
@@ -50,7 +50,7 @@ export const EFFICIENCY_PROVIDERS = {
     catalogKind: "kimi-cli/v1",
     model: "kimi-code/k3-256k",
     effort: "low",
-    arms: ["native", "legacy", "role"],
+    arms: ["native", "role"],
     defaults: ["native", "role"],
     warmAppend: false,
     instructionFile: "AGENTS.md",

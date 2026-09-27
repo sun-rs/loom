@@ -26,10 +26,10 @@ export function gateWarmRuntimes(provider, warm) {
     : { codex: { enabled: false }, opencode: { enabled: false } };
 }
 
-// Owner 2026-09-27: the product prewarms a Role instance's warm runtime at
-// creation by default. The gate daemon's Human runtime settings switch that
-// off unless the arm opts in (role-prewarm), so every other arm keeps
-// measuring a cold first round and restart.
+// Owner 2026-09-27: prewarming a Role instance's warm runtime at creation is
+// off by default. The gate daemon's Human runtime settings still state it
+// explicitly: on only when the arm opts in (role-prewarm), so every other arm
+// keeps measuring a cold first round and restart.
 export function gateRuntimeSettings({ prewarm = false } = {}) {
   return { revision: 0, prewarm: { enabled: prewarm } };
 }
