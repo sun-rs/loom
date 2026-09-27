@@ -278,6 +278,8 @@ export type InstanceStatus = {
   queuedCount: number;
   queuedLabel: string;
   recentProblems: ProblemRecord[];
+  /** D2-3: an Activation a blocked retry fence stopped (channel or box). */
+  blocked: { activationId: string; label: string } | null;
   roleId: string;
   roleName: string;
   /** Contract §5: native compactions observed in the current session. */
@@ -318,6 +320,23 @@ function queuedSummary(
       count === 0
         ? "排队 0"
         : `排队 ${String(count)}（频道 ${String(channelQueued)}，私聊 ${String(privateQueued)}）`,
+  };
+}
+
+/** D2-3: the blocked Activation reported by the channel or private box. */
+function blockedSummary(
+  channel: RoomAgentActivity | undefined,
+  privateBox: RoomAgentActivity | undefined,
+): { activationId: string; label: string } | null {
+  const blocked = channel?.blocked ?? privateBox?.blocked;
+  if (blocked === undefined) return null;
+  return {
+    activationId: blocked.activationId,
+    label: `被阻塞：${blocked.reason}（${
+      blocked.holdsLane
+        ? "占用执行通道：该实例的排队工作被它阻塞，需 Human 处理"
+        : "不占用执行通道，需 Human 处理"
+    }）`,
   };
 }
 
@@ -371,6 +390,7 @@ export function assembleInstanceStatuses(input: {
       const queued = queuedSummary(current, privateEntry);
       return {
         agentId: instance.agentId,
+        blocked: member ? blockedSummary(current, privateEntry) : null,
         compactionLabel: compactionLabel(instance.sessionCompactionCount),
         handle:
           input.agentHandles.get(instance.agentId) ??

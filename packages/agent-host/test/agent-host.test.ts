@@ -1782,3 +1782,90 @@ test("the Host loop starts the retry of a clean exit that neither posted nor ack
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("D2-1: a business-obligation completion refusal after a committed final reply is not re-executed; it needs Human action", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-agent-host-final-obligation-"),
+  );
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  kernel.initialize();
+  const worker = new WorkerApplicationService({ kernel });
+  await worker.start();
+  try {
+    const human = kernel.provisionPrincipal({ handle: "h", kind: "human" });
+    const agent = kernel.provisionPrincipal({ handle: "a", kind: "agent" });
+    const agentId = agent.principal.principalId;
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(humanActor, { name: "F", slug: "f" });
+    kernel.addMember(humanActor, { principalId: agentId, roomId: room.roomId });
+    const assigned = kernel.createTask(humanActor, {
+      assigneeId: agentId,
+      idempotencyKey: "assigned-obligation",
+      roomId: room.roomId,
+      title: "Assigned work",
+    });
+    const host = authenticateHost(kernel, "final-obligation-host", [agentId]);
+    let starts = 0;
+    const call = async (token: string, path: string, body: unknown = {}) => {
+      const response = await fetch(`${worker.origin}/v1/worker/${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const parsed = (await response.json()) as Record<string, any>;
+      assert.equal(response.status, 200, JSON.stringify(parsed));
+      return parsed;
+    };
+    const runtime = new FakeRuntimeAdapter({
+      onStart: async (input) => {
+        starts += 1;
+        const { accessToken } = worker.issueActivationCredential(host, input);
+        const check = await call(accessToken, "message-check");
+        await call(accessToken, "acknowledge", {
+          throughSeq: check.delivery.cursorAfter,
+        });
+        await call(accessToken, "messages/post", {
+          body: "FAKE final reply",
+          channel: "#f",
+          final: true,
+          threadId: assigned.task.threadId,
+        });
+      },
+    });
+    runtime.enqueueExit({ code: 0 });
+    const agentHost = new AgentHost({
+      host,
+      kernel,
+      leaseMs: 30_000,
+      retryAfterMs: 0,
+      runtime,
+    });
+    const first = await agentHost.reconcileOnce();
+    assert.equal(first.state, "failed", JSON.stringify(first));
+    const [activation] = kernel.listActivations({ roomId: room.roomId });
+    assert.match(String(activation?.lastError), /unfinished Task/u);
+    assert.equal(activation?.state, "quarantined");
+    const events = kernel.sync(humanActor, {
+      consumerId: "audit",
+      roomId: room.roomId,
+    }).events;
+    const blocked = events.find(
+      (event) => event.type === "activation.retry_blocked",
+    );
+    assert.equal(blocked?.payload.retryDisposition, "action_required");
+    assert.equal(
+      events.some((event) => event.type === "activation.retry_scheduled"),
+      false,
+    );
+    const idle = await agentHost.reconcileOnce();
+    assert.equal(idle.state, "idle", JSON.stringify(idle));
+    assert.equal(starts, 1, "the turn is never re-executed");
+  } finally {
+    await worker.close();
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

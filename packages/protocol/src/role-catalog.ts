@@ -140,3 +140,34 @@ export type InstanceSessionResetRequest = z.infer<
 export type InstanceSessionResetResponse = z.infer<
   typeof InstanceSessionResetResponseSchema
 >;
+
+/**
+ * D2-2 Human recovery exit: abandon one Activation of a Role instance that a
+ * blocked retry fence stopped (for example an assigned Task the instance never
+ * submitted, or a repeated Runtime failure). The Activation is cancelled and
+ * its fence resolved, releasing the lane; history, finished RunAttempts and
+ * Tasks are kept unchanged. Recorded in the instance's channel.
+ */
+export const InstanceActivationAbandonRequestSchema = z
+  .object({
+    instanceId: IdentifierSchema,
+    activationId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict();
+export const InstanceActivationAbandonResponseSchema = z
+  .object({
+    instanceId: IdentifierSchema,
+    channelId: IdentifierSchema,
+    activationId: IdentifierSchema,
+    event: RoomEventSchema,
+    deduplicated: z.boolean(),
+  })
+  .strict();
+export type InstanceActivationAbandonRequest = z.infer<
+  typeof InstanceActivationAbandonRequestSchema
+>;
+export type InstanceActivationAbandonResponse = z.infer<
+  typeof InstanceActivationAbandonResponseSchema
+>;

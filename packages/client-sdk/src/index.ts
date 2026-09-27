@@ -44,6 +44,8 @@ import {
   type RoleListResponse,
   type RoleInstantiateRequest,
   type RoleInstantiateResponse,
+  type InstanceActivationAbandonRequest,
+  type InstanceActivationAbandonResponse,
   type InstanceSessionResetRequest,
   type InstanceSessionResetResponse,
 } from "@rah-os/protocol";
@@ -55,6 +57,8 @@ import {
   RoleListResponseSchema,
   RoleInstantiateRequestSchema,
   RoleInstantiateResponseSchema,
+  InstanceActivationAbandonRequestSchema,
+  InstanceActivationAbandonResponseSchema,
   InstanceSessionResetRequestSchema,
   InstanceSessionResetResponseSchema,
 } from "@rah-os/protocol";
@@ -468,6 +472,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     "instance.session.reset": {
       input: InstanceSessionResetRequest;
       output: InstanceSessionResetResponse;
+    };
+    "instance.activation.abandon": {
+      input: InstanceActivationAbandonRequest;
+      output: InstanceActivationAbandonResponse;
     };
     "memory.list": {
       input: ClientMemoryListRequest;
@@ -959,6 +967,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: InstanceSessionResetResponseSchema,
     method: "POST",
     path: "/v3/client/instances/session/reset",
+  },
+  "instance.activation.abandon": {
+    authenticated: true,
+    input: InstanceActivationAbandonRequestSchema,
+    output: InstanceActivationAbandonResponseSchema,
+    method: "POST",
+    path: "/v3/client/instances/activation/abandon",
   },
   "memory.list": {
     authenticated: true,

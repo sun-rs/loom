@@ -17,6 +17,7 @@ import {
   StaleContextError,
 } from "./errors.ts";
 import { advanceInstanceSessionGeneration } from "./instance-session.ts";
+import { abandonBlockedActivation } from "./blocked-activation-abandon.ts";
 import { observedCompactionCount } from "./runtime-trajectory.ts";
 import {
   resumeBlockedActivationRetryFences,
@@ -500,6 +501,89 @@ export class RoleCatalog {
         instanceId: input.instanceId,
         channelId,
         sessionGeneration,
+        event,
+        deduplicated: false,
+      });
+    });
+  }
+
+  /**
+   * D2-2 Human recovery exit: abandon one Activation of this instance that a
+   * blocked retry fence stopped (`blocked-activation-abandon.ts`), releasing
+   * the lane. Recorded in the instance's channel; replay returns that event.
+   */
+  abandonBlockedActivation(
+    auth: AuthenticatedActorContext,
+    raw: P.InstanceActivationAbandonRequest,
+  ) {
+    const input = P.InstanceActivationAbandonRequestSchema.parse(raw),
+      c = this.context;
+    return c.transaction(() => {
+      const actorId = c.requireActor(auth);
+      const instance = c.database
+        .prepare(
+          "SELECT ri.channel_id, rt.control_room_id FROM role_instances ri JOIN role_templates rt ON rt.role_id=ri.role_id WHERE ri.instance_id=?",
+        )
+        .get(input.instanceId);
+      if (!instance) throw new NotFoundError("Role instance not found");
+      const channelId = text(instance, "channel_id");
+      requireHumanControlRoomManager(
+        c.database,
+        text(instance, "control_room_id"),
+        actorId,
+      );
+      requireRoomManager(c.database, channelId, actorId);
+      const requestDigest = canonicalDigest({
+        activationId: input.activationId,
+        instanceId: input.instanceId,
+      });
+      const prior = this.replay(
+        actorId,
+        channelId,
+        input.idempotencyKey,
+        "instance.activation_abandoned",
+        requestDigest,
+      );
+      if (prior)
+        return P.InstanceActivationAbandonResponseSchema.parse({
+          instanceId: input.instanceId,
+          channelId,
+          activationId: input.activationId,
+          event: prior,
+          deduplicated: true,
+        });
+      this.fresh(channelId, input.basedOnRoomSeq);
+      const abandoned = abandonBlockedActivation({
+        actorId,
+        activationId: input.activationId,
+        database: c.database,
+        events: c.events,
+        idempotencyKey: input.idempotencyKey,
+        now: c.now().toISOString(),
+        participantId: input.instanceId,
+      });
+      const event = c.events.append({
+        actorId,
+        aggregateId: input.instanceId,
+        aggregateType: "instance",
+        roomId: channelId,
+        idempotencyKey: input.idempotencyKey,
+        type: "instance.activation_abandoned",
+        payload: {
+          activationId: input.activationId,
+          activationRoomId: abandoned.roomId,
+          cancelledEventId: abandoned.event.eventId,
+          instanceId: input.instanceId,
+          ...(abandoned.lastError === null
+            ? {}
+            : { blockedError: abandoned.lastError.slice(0, 2_000) }),
+          requestDigest,
+        },
+      });
+      return P.InstanceActivationAbandonResponseSchema.parse({
+        instanceId: input.instanceId,
+        channelId,
+        activationId: input.activationId,
         event,
         deduplicated: false,
       });

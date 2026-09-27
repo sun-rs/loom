@@ -88,6 +88,17 @@ export const WorkerMessagePresentResponseSchema = z
      */
     previousAttemptReplyFinal: z.literal(true).optional(),
     /**
+     * Present only beside a final `previousAttemptReplyMessageId` posted in a
+     * Thread: that Thread's id. Kernel-derived.
+     */
+    previousAttemptReplyThreadId: IdentifierSchema.optional(),
+    /**
+     * Present only on a retry caused by a business-obligation completion
+     * refusal: the Kernel's refusal text (marker removed). A fact, not a
+     * behaviour rule. Kernel-derived; never client-supplied.
+     */
+    previousAttemptRefusal: z.string().trim().min(1).max(2_000).optional(),
+    /**
      * S6 batch B: channel memory entries changed since the index this session
      * last received (a Role instance with memory read on only). Frozen with
      * this RunAttempt's window: a re-present returns the same snapshot.

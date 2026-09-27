@@ -31,6 +31,14 @@
 
 7. CLI stdout、JSONL、thinking 与 tool stream 不参与 Task 判定。gate 只查询 Task projection 与 durable Room events。
 
+### 补充（2026-09-27，evo 验收缺陷 D1/D2）
+
+- 决策 2 的完成义务只来自 Activation `toSeq` 之前已经存在的事实。经 `message.posted` 来源关联的 Task，只有其 `task.created` 的 `room_seq <= toSeq` 才构成义务；Agent 在本 Activation 运行期间用 `task-claim-message` 自建的 Task 不给本 Activation 追加义务，Task 停在 `in_progress` 合法，Activation 完成也不改变它。Human 显式分配、Agent 只 ACK 的原用例不变。
+- 义务拒绝的错误文本带 `RAH_BUSINESS_OBLIGATION_UNMET` 标记（`packages/protocol/src/runtime-failure.ts`）。它不是 Runtime 故障：AgentHost 在本轮 `final` 回复已落账时不再重跑，直接以 `action_required` 进入隔离；未落账时仍按 recoverable 重试并计入同错 fence。带该标记、fence 为 blocked 且无存活运行的隔离不占用该参与者的执行 lane（`activationHoldsLanePredicate`），其他房间和私聊照常放置；Runtime 类 fence 仍占 lane。
+- 重跑窗口陈述事实：此前尝试已提交的 final 回复（message、所在 Thread）与拒绝原因（`previousAttemptReplyMessageId/ReplyFinal/ReplyThreadId/Refusal`），不增加行为规则。
+- Human 出口：`instance.activation.abandon` 取消一个被 blocked fence 停住的 Role 实例 Activation 并解除 fence，写 `instance.activation_abandoned` 与 `activation.cancelled`，不改写已结束的 RunAttempt，不改变 Task；也处置修复前留下的无标记 retry_blocked 隔离。
+- 后续（未做）：删除 legacy SQL，改为 Human `createTask(assignee)`/assign 时冻结 typed `task_owner_follow_up`（2026-09-02 审计的原意），需迁移与回填。
+
 ## 证据
 
 - protocol conformance 覆盖 strict Task projection、窄 query 和四种 Worker command request/response；

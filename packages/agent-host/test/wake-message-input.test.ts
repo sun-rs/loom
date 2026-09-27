@@ -357,3 +357,36 @@ test("only a previous post carrying the final-reply marker is named as the final
     "Previous attempt posted its final reply msg=1f2e3d4c; confirm delivery with message-check --turn t1.",
   );
 });
+
+test("D1-D: a retry after a committed final reply whose completion was refused names the reply, its Thread and the refusal as facts", () => {
+  const messageId = "message_1f2e3d4c-0000-4000-8000-000000000000";
+  const threadId = "thread_21f55c4b-0000-4000-8000-000000000000";
+  const retried = formatBodiedWakeInput({
+    present: present({
+      previousAttemptReplyMessageId: messageId,
+      previousAttemptReplyFinal: true,
+      previousAttemptReplyThreadId: threadId,
+      previousAttemptRefusal:
+        "activation a contains unfinished Task task_9 in state in_progress",
+    }),
+    turnHandle: "t1",
+  })!;
+  assert.equal(
+    retried.split("\n").at(-1),
+    "Previous attempt posted its final reply msg=1f2e3d4c in thread=21f55c4b; completion was refused: activation a contains unfinished Task task_9 in state in_progress.",
+  );
+});
+
+test("D1-D: a business refusal without a committed reply is stated as one fact line", () => {
+  const retried = formatBodiedWakeInput({
+    present: present({
+      previousAttemptRefusal:
+        "activation a contains unfinished Task task_9 in state in_progress",
+    }),
+    turnHandle: "t1",
+  })!;
+  assert.equal(
+    retried.split("\n").at(-1),
+    "Previous attempt's completion was refused: activation a contains unfinished Task task_9 in state in_progress.",
+  );
+});

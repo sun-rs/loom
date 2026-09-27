@@ -167,6 +167,10 @@ export type RenderedPresentedWindow = PresentedWindow & {
   previousAttemptReplyMessageId?: string;
   /** See `activation-retry-reminder.ts`. */
   previousAttemptReplyFinal?: true;
+  /** See `activation-retry-reminder.ts`. */
+  previousAttemptReplyThreadId?: string;
+  /** See `activation-retry-reminder.ts`. */
+  previousAttemptRefusal?: string;
   /** S6 batch B: see `channel-memory-index.ts` (frozen per RunAttempt). */
   memoryDelta?: MemoryIndexDelta;
   /** Review P2-1: an index refresh (see `channel-memory-index.ts`). */

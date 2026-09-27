@@ -825,3 +825,63 @@ test("schema v30 backfills business obligations for an already active reviewer A
   );
   migrated.close();
 });
+
+test("D1-A: a Task the Agent claims from the head message during its own Activation adds no obligation to that Activation", () => {
+  const { humanActor, kernel, owner, room } = fixture();
+  const posted = kernel.postRoomMessage(humanActor, {
+    body: "Review the retry path read-only and summarize in the channel",
+    idempotencyKey: "self-claim-head",
+    recipients: [{ participantId: owner.principalId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+  const ownerHost = authenticateHost(
+    kernel,
+    "self-claim-owner-host",
+    owner.principalId,
+  );
+  const running = beginNextActivation(
+    kernel,
+    ownerHost,
+    owner.principalId,
+    "self-claim",
+  );
+  assert.equal(running.activation.toSeq, posted.event.roomSeq);
+  const claimed = kernel.claimMessageAsTask(running.execution, {
+    basedOnRoomSeq: posted.event.roomSeq,
+    idempotencyKey: "self-claim-claim",
+    leaseMs: 30_000,
+    messageId: posted.event.aggregateId,
+    rationale: "multi-step review",
+  });
+  assert.ok(claimed.event.roomSeq > running.activation.toSeq);
+  const started = kernel.startTask(running.execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "self-claim-start",
+    leaseMs: 30_000,
+    taskId: claimed.task.taskId,
+  });
+  kernel.progressTask(running.execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "self-claim-progress",
+    leaseMs: 30_000,
+    progress: "read the files",
+    taskId: claimed.task.taskId,
+  });
+  kernel.postWorkerMessage(running.execution, {
+    body: "summary",
+    final: true,
+  });
+  finishRun(kernel, ownerHost, running);
+  assert.equal(
+    kernel.completeActivation(ownerHost, {
+      activationId: running.activation.activationId,
+      consumerId: running.consumerId,
+    }).state,
+    "completed",
+  );
+  assert.equal(
+    taskState(kernel, humanActor, room.roomId, claimed.task.taskId),
+    "in_progress",
+  );
+  kernel.close();
+});

@@ -69,3 +69,13 @@ test("help topics carry no credential transport detail", () => {
     assert.doesNotMatch(text, /inspect every delivered/u, topic);
   }
 });
+
+test("D1-E: worker help tasks states the same claim rule as the standing protocol (read-only review/investigation is a reply)", () => {
+  const tasks = workerHelpTopic("tasks")!;
+  assert.doesNotMatch(tasks, /review a change/u);
+  assert.doesNotMatch(tasks, /investigate an issue/u);
+  assert.match(
+    tasks,
+    /Answering a question, brief discussion, searching or reading files is a reply, not a Task/u,
+  );
+});

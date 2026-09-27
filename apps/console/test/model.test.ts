@@ -1163,3 +1163,102 @@ test("session reset consequence: Channel memory kept, index offered again", () =
     /新 session 启动时按读开关重新提供频道记忆索引/u,
   );
 });
+
+test("D2-3: an instance card reports a blocked Activation, its reason and whether it holds the lane", () => {
+  const base = {
+    agentActivities: new Map(),
+    agentHandles: new Map(),
+    roleList: {
+      instances: [
+        {
+          agentId: "agent-1",
+          channelId: "room-a",
+          instanceId: "instance-1",
+          isCurrent: true,
+          roleId: "role-1",
+          roleRevisionId: "revision-1",
+          sessionCompactionCount: null,
+        },
+      ],
+      roles: [
+        {
+          configuration: roleConfiguration,
+          controlRoomId: "room-control",
+          createdAt: NOW,
+          roleId: "role-1",
+          roleRevisionId: "revision-1",
+        },
+      ],
+    },
+    roomId: "room-a",
+    rooms: [
+      room({
+        instancePrivateBox: { active: true, instanceId: "instance-1" },
+        kind: "direct",
+        roomId: "room-private-1",
+      }),
+    ],
+  };
+  const [business] = assembleInstanceStatuses({
+    ...base,
+    privateActivities: new Map(),
+    roomActivities: [
+      {
+        blocked: {
+          activationId: "activation-fixture-1",
+          holdsLane: false,
+          reason:
+            "fixture activation contains unfinished Task in state in_progress",
+          roomId: "room-a",
+        },
+        participantId: "instance-1",
+        queued: true,
+        roomId: "room-a",
+        state: "waking",
+        updatedAt: NOW,
+      },
+    ],
+  });
+  assert.deepEqual(business?.blocked, {
+    activationId: "activation-fixture-1",
+    label:
+      "被阻塞：fixture activation contains unfinished Task in state in_progress（不占用执行通道，需 Human 处理）",
+  });
+  const [runtime] = assembleInstanceStatuses({
+    ...base,
+    privateActivities: new Map([
+      [
+        "instance-1",
+        [
+          {
+            blocked: {
+              activationId: "activation-fixture-2",
+              holdsLane: true,
+              reason: "fixture AuthError",
+              roomId: "room-private-1",
+            },
+            participantId: "instance-1",
+            queued: true,
+            roomId: "room-private-1",
+            state: "error",
+            updatedAt: NOW,
+          },
+        ],
+      ],
+    ]),
+    roomActivities: [
+      {
+        participantId: "instance-1",
+        queued: false,
+        roomId: "room-a",
+        state: "idle",
+        updatedAt: NOW,
+      },
+    ],
+  });
+  assert.deepEqual(runtime?.blocked, {
+    activationId: "activation-fixture-2",
+    label:
+      "被阻塞：fixture AuthError（占用执行通道：该实例的排队工作被它阻塞，需 Human 处理）",
+  });
+});

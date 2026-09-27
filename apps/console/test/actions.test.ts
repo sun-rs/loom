@@ -546,3 +546,27 @@ test("a Role revision keeps configuration fields the console does not edit and o
     false,
   );
 });
+
+test("D2-2: the lifecycle list names a Human abandon of a blocked Activation", () => {
+  const events = lifecycleEvents([
+    {
+      actorId: "principal-human-fixture",
+      aggregateId: "instance-fixture",
+      aggregateType: "instance",
+      createdAt: "2026-09-27T00:00:00.000Z",
+      eventId: "event-fixture-abandon",
+      idempotencyKey: "abandon-fixture",
+      payload: {
+        activationId: "activation-fixture",
+        instanceId: "instance-fixture",
+      },
+      roomId: "room-fixture",
+      roomSeq: 7,
+      schemaVersion: 1,
+      type: "instance.activation_abandoned",
+    },
+  ]);
+  assert.equal(events.length, 1);
+  assert.equal(events[0]?.label, "Human 放弃了被阻塞的激活（执行通道已释放）");
+  assert.equal(events[0]?.subject, "instance-fixture");
+});

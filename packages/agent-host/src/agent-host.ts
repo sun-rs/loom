@@ -16,10 +16,12 @@ import {
   type RoomKernel,
   type RunAttempt,
 } from "@rah-os/kernel";
-import type {
-  PlacementDecision,
-  RuntimeFailure,
-  RuntimeRecoveryDescriptor,
+import {
+  BUSINESS_OBLIGATION_UNMET_MARKER,
+  type PlacementDecision,
+  type RuntimeFailure,
+  type RuntimeRecoveryDescriptor,
+  type RuntimeRetryDisposition,
 } from "@rah-os/protocol";
 
 import type {
@@ -1282,13 +1284,29 @@ export class AgentHost {
       // refusal (for example delivery not acknowledged, which the next wake
       // turns into the "previous attempt posted" fact); the run failure is
       // kept after it for diagnosis and still decides the retry disposition.
-      return runFailure === undefined
-        ? this.#retryFailedActivation(activation, errorMessage(error))
-        : this.#retryFailedActivation(
-            activation,
-            `${errorMessage(error)}; run failure: ${runFailure.message}`,
-            runFailure.failure,
-          );
+      const refusal = errorMessage(error);
+      const reason =
+        runFailure === undefined
+          ? refusal
+          : `${refusal}; run failure: ${runFailure.message}`;
+      // D2-1: a business-obligation refusal after this turn's `final` reply
+      // committed is not re-executed (a rerun would repeat the reply); it
+      // waits for Human action without holding the lane.
+      if (
+        refusal.includes(BUSINESS_OBLIGATION_UNMET_MARKER) &&
+        (await this.#finalReplyCommitted(runAttempt.runAttemptId))
+      )
+        return this.#retryFailedActivation(
+          activation,
+          reason,
+          runFailure?.failure,
+          "action_required",
+        );
+      return this.#retryFailedActivation(
+        activation,
+        reason,
+        runFailure?.failure,
+      );
     }
   }
 
@@ -1543,6 +1561,7 @@ export class AgentHost {
     activation: Pick<Activation, "activationId" | "attemptCount">,
     failure: string,
     runtimeFailure?: RuntimeFailure,
+    retryDisposition?: RuntimeRetryDisposition,
   ): Promise<HostCycleResult> {
     const { activationId } = activation;
     // Startup binding failures happen before a driver can emit a structured exit.
@@ -1562,9 +1581,11 @@ export class AgentHost {
           this.#retryJitterRatio,
           this.#retryJitterRandom,
         ),
-        ...(runtimeFailure === undefined
-          ? {}
-          : { retryDisposition: runtimeFailure.retryDisposition }),
+        ...(retryDisposition !== undefined
+          ? { retryDisposition }
+          : runtimeFailure === undefined
+            ? {}
+            : { retryDisposition: runtimeFailure.retryDisposition }),
       });
       return { activationId, error: failure, state: "failed" };
     } catch (retryError) {

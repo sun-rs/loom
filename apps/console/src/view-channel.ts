@@ -41,6 +41,8 @@ const CHANNEL_POLL_MS = 3_000;
 
 const REMOVE_CONSEQUENCE =
   "移出后不再向该实例投递，历史保留；需要时只能重新实例化一个新实例。实例在本频道或私聊里仍有未结束的工作时服务端会拒绝。";
+const ABANDON_CONSEQUENCE =
+  "放弃后该激活被取消并释放执行通道，不再重跑；已结束的运行记录、Task 状态和历史保持不变（Task 需要另行处理）。仍有运行未终止时服务端会拒绝。";
 const SOS_CONSEQUENCE =
   "急停会终止本频道正在运行的实例（需要运行终止证明），恢复前不会开始新的运行。恢复时需要写给实例的指引。";
 
@@ -119,6 +121,40 @@ function instanceCard(input: {
               result,
               "ok",
               `session 已重置：代数 ${String(response.sessionGeneration)}，事件 #${String(response.event.roomSeq)}${response.deduplicated ? "（重试核实：原请求已执行）" : ""}`,
+            );
+            input.refresh();
+          }),
+      })
+      .catch(() => undefined);
+  };
+  const abandon = () => {
+    if (refusedWhileUnknown()) return;
+    const blocked = status.blocked;
+    if (blocked === null) return;
+    confirmArea.replaceChildren();
+    hint.textContent = "";
+    setStatus(result, "info", "放弃中…");
+    void slot
+      .submit({
+        action: "activation-abandon",
+        payload: {
+          activationId: blocked.activationId,
+          instanceId: status.instanceId,
+        },
+        session: roomSession(context.client, roomId),
+        send: (payload, basedOnRoomSeq, idempotencyKey) =>
+          context.client.request("instance.activation.abandon", {
+            activationId: payload.activationId,
+            basedOnRoomSeq,
+            idempotencyKey,
+            instanceId: payload.instanceId,
+          }),
+        onSettled: (outcome) =>
+          reportOutcome(result, outcome, "放弃被拒绝", (response) => {
+            setStatus(
+              result,
+              "ok",
+              `已放弃被阻塞的激活：事件 #${String(response.event.roomSeq)}${response.deduplicated ? "（重试核实：原请求已执行）" : ""}`,
             );
             input.refresh();
           }),
@@ -219,12 +255,29 @@ function instanceCard(input: {
     },
     { className: "secondary action-remove" },
   );
+  const abandonButton = button(
+    "放弃被阻塞的激活…",
+    () => {
+      confirmArea.replaceChildren(
+        confirmBox({
+          confirmClass: "confirm-abandon",
+          confirmLabel: "确认放弃",
+          consequence: ABANDON_CONSEQUENCE,
+          onCancel: () => confirmArea.replaceChildren(),
+          onConfirm: abandon,
+        }),
+      );
+      renderSlot(slot.state);
+    },
+    { className: "secondary action-abandon" },
+  );
   const openBoxButton = button("打开私聊", openPrivateBox, {
     className: "secondary action-open-direct",
   });
   const boxLink = el("a", { className: "open-direct-link", text: "查看私聊" });
   const actions = el("div", { className: "form-actions instance-actions" }, [
     resetButton,
+    abandonButton,
     removeButton,
     openBoxButton,
     boxLink,
@@ -232,6 +285,7 @@ function instanceCard(input: {
   const renderSlot = (state: IntentState) => {
     const busy = state !== "idle";
     resetButton.disabled = busy;
+    abandonButton.disabled = busy;
     removeButton.disabled = busy;
     openBoxButton.disabled = busy;
     for (const node of confirmArea.querySelectorAll("button")) {
@@ -257,6 +311,7 @@ function instanceCard(input: {
     root.className = `instance-card state-${next.member ? (next.state ?? "none") : "removed"}`;
     actions.hidden = !next.member;
     if (!next.member) confirmArea.replaceChildren();
+    abandonButton.hidden = next.blocked === null;
     openBoxButton.hidden = next.privateBoxRoomId !== null;
     boxLink.hidden = next.privateBoxRoomId === null;
     if (next.privateBoxRoomId !== null) {
@@ -285,6 +340,9 @@ function instanceCard(input: {
         next.updatedAt === null
           ? null
           : field("状态更新", localTime(next.updatedAt)),
+        next.blocked === null
+          ? null
+          : field("阻塞", next.blocked.label, "instance-blocked"),
         next.lastError === null
           ? null
           : field("最近错误", next.lastError, "last-error"),
@@ -761,6 +819,7 @@ export function mountChannel(
           .filter(({ instanceId }) => !listed.has(instanceId))
           .map((previous) => ({
             ...previous,
+            blocked: null,
             lastError: null,
             member: false,
             queuedCount: 0,

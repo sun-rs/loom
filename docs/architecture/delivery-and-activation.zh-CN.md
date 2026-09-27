@@ -199,7 +199,7 @@ Task／Review domain 在派生 attention 的同一事务中，把需要强制完
 - `task_review`：绑定 `taskId + submissionId + reviewer participantId + sourceEventId`；只有该 reviewer 对当前 submission 写入 canonical Review，或该 submission 已被后续状态取代，Activation 才可结束；
 - `task_owner_follow_up`：绑定 `taskId + owner participantId + sourceEventId`；复开、改派或 `changes_requested` 后，当前负责人必须把 Task 推进到 `waiting_input`、`blocked`、`submitted`、`completed` 或 `cancelled`，失去该 Task 所有权也可解除旧义务。
 
-`completeActivation` 的顺序固定为 delivery cursor proof → Runtime terminal proof → typed obligations → 兼容旧 Task 入口的 legacy proof。schema 升级会为仍处于 `queued / leased / quarantined` 的旧 Activation 回填可确定的 reviewer／返工义务；已经结束的历史 Activation 不被伪造重开，正式迁移前必须检查是否存在未完成 Task。普通 Room 对话没有业务义务，允许读后静默。
+`completeActivation` 的顺序固定为 delivery cursor proof → Runtime terminal proof → typed obligations → 兼容旧 Task 入口的 legacy proof。legacy proof 只认 `toSeq` 之前已存在的 Task（2026-09-27 起，见 ADR-0006 补充）：Agent 在本 Activation 内自行 claim 的 Task 不构成本 Activation 的义务。义务拒绝带 `RAH_BUSINESS_OBLIGATION_UNMET` 标记，其 blocked fence 不占执行 lane，由 Human 经 `instance.activation.abandon` 处置。schema 升级会为仍处于 `queued / leased / quarantined` 的旧 Activation 回填可确定的 reviewer／返工义务；已经结束的历史 Activation 不被伪造重开，正式迁移前必须检查是否存在未完成 Task。普通 Room 对话没有业务义务，允许读后静默。
 
 ## 8. Task claim 恢复
 

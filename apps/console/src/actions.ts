@@ -67,6 +67,8 @@ function isStaleContext(error: unknown): boolean {
  * replay. Evidence (packages/kernel/src; replay line -> freshness line):
  */
 export const REPLAY_BEFORE_FRESHNESS: Readonly<Record<string, string>> = {
+  "activation-abandon":
+    "instance.activation.abandon: role-catalog.ts abandonBlockedActivation replay :540-554 -> fresh :555 (added 2026-09-27, D2-2)",
   "channel-create":
     "room.create: collaboration-service.ts createWorkspaceRoomAtomically replay :479-503 -> basedOnControlRoomSeq check :504-508",
   "direct-open":
@@ -729,6 +731,7 @@ export function sosState(events: readonly RoomEvent[]): SosState {
 }
 
 const LIFECYCLE_LABELS: Record<string, string> = {
+  "instance.activation_abandoned": "Human 放弃了被阻塞的激活（执行通道已释放）",
   "instance.created": "实例加入频道",
   "instance.session_reset": "实例 session 已重置（之后的运行使用新 session）",
   "membership.added": "成员加入",

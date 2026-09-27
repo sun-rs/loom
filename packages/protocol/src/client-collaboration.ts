@@ -408,9 +408,32 @@ export type RoomAgentActivityState = z.infer<
   typeof RoomAgentActivityStateSchema
 >;
 
+/**
+ * D2-3: an Activation of this participant stopped by a blocked retry fence,
+ * waiting for Human action. `holdsLane` is false for a business-obligation
+ * refusal (it no longer blocks other work) and true for a Runtime-class fence.
+ */
+export const RoomAgentBlockedActivationSchema = z
+  .object({
+    activationId: IdentifierSchema,
+    holdsLane: z.boolean(),
+    reason: z.string().min(1).max(2_000),
+    roomId: IdentifierSchema,
+  })
+  .strict();
+export type RoomAgentBlockedActivation = z.infer<
+  typeof RoomAgentBlockedActivationSchema
+>;
+
 export const RoomAgentActivitySchema = z
   .object({
     activationId: IdentifierSchema.optional(),
+    /**
+     * D2-3: the participant's oldest blocked Activation in a Room the reader
+     * is a member of (this Room or the instance's private box). Optional for
+     * older servers.
+     */
+    blocked: RoomAgentBlockedActivationSchema.optional(),
     lastError: z.string().min(1).optional(),
     participantId: IdentifierSchema,
     /**

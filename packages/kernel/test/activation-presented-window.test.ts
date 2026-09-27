@@ -651,3 +651,65 @@ test("a delivery-unproven retry whose previous attempt did post carries no remin
     f.close();
   }
 });
+
+test("D1-D: a retry after an attempt whose final reply committed but completion was refused by a business obligation names that reply and the refusal", () => {
+  const f = fixture();
+  try {
+    f.kernel.createTask(f.actor, {
+      assigneeId: f.agentId,
+      idempotencyKey: "assigned-task",
+      roomId: f.room.roomId,
+      title: "Assigned work",
+    });
+    const first = f.activate();
+    const delivery = f.kernel.syncWorker(first.execution, {});
+    f.kernel.acknowledgeWorkerCursor(first.execution, {
+      throughSeq: delivery.cursorAfter,
+    });
+    const posted = f.kernel.postWorkerMessage(first.execution, {
+      body: "done, summary here",
+      final: true,
+    });
+    assert.ok("event" in posted);
+    f.kernel.recordRuntimeTermination(f.host, {
+      exit: { code: 0 },
+      runAttemptId: first.run.runAttemptId,
+      runtimeRunId: "runtime",
+    });
+    f.kernel.finishRunAttempt(f.host, {
+      runAttemptId: first.run.runAttemptId,
+      state: "exited",
+      exitCode: 0,
+    });
+    let failure = "";
+    try {
+      f.kernel.completeActivation(f.host, {
+        activationId: first.activation.activationId,
+        consumerId: "worker",
+      });
+    } catch (error) {
+      failure = (error as Error).message;
+    }
+    assert.match(failure, /unfinished Task/u);
+    f.kernel.retryActivation(f.host, {
+      activationId: first.activation.activationId,
+      error: failure,
+      retryAfterMs: 0,
+    });
+    const second = f.activate();
+    const rendered = f.kernel.presentWorkerMessages(second.execution);
+    assert.equal(rendered.previousAttemptUnconfirmed, undefined);
+    assert.equal(
+      rendered.previousAttemptReplyMessageId,
+      posted.event.aggregateId,
+    );
+    assert.equal(rendered.previousAttemptReplyFinal, true);
+    assert.match(rendered.previousAttemptRefusal ?? "", /unfinished Task/u);
+    assert.doesNotMatch(
+      rendered.previousAttemptRefusal ?? "",
+      /RAH_BUSINESS_OBLIGATION_UNMET/u,
+    );
+  } finally {
+    f.close();
+  }
+});

@@ -113,6 +113,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
     assert.equal(runner.capacity, 2);
     assert.equal(Object.isFrozen(core.human), true);
     assert.deepEqual(Object.keys(core.human).sort(), [
+      "abandonBlockedActivation",
       "acknowledgeCursor",
       "addRoomMember",
       "amendTask",

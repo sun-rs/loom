@@ -250,6 +250,58 @@ if (mode === "trajectory") {
   process.stdout.write(
     JSON.stringify({ deliveredThrough, marker: "worker-sync-finished" }) + "\n",
   );
+} else if (mode === "worker-self-claim") {
+  // FAKE CLI FIXTURE (D1 regression): claims the delivered head message as its
+  // own Task, starts and progresses it, posts one final reply in the Task
+  // Thread and never submits, like the 2026-09-27 acceptance trajectory.
+  const baseUrl = process.env.RAH_WORKER_API_URL;
+  const token = readWorkerAccessToken();
+  const requiredThrough = Number(process.env.RAH_TO_SEQ);
+  if (!baseUrl || !token || !Number.isInteger(requiredThrough)) {
+    throw new Error("worker API environment is incomplete");
+  }
+  const request = async (path, body) => {
+    const response = await fetch(`${baseUrl}${path}`, {
+      body: JSON.stringify(body),
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+    const result = await response.json();
+    if (!response.ok)
+      throw new Error(
+        `worker command ${path} failed with HTTP ${response.status}: ${JSON.stringify(result)}`,
+      );
+    return result;
+  };
+  const delivery = await request("/v1/worker/sync", {});
+  if (delivery.cursorAfter < requiredThrough)
+    throw new Error("worker sync did not reach the Activation range");
+  const head = delivery.events.find(
+    (event) =>
+      event.type === "message.posted" && event.roomSeq === requiredThrough,
+  );
+  if (!head) throw new Error("the Activation head is not a message");
+  await request("/v1/worker/acknowledge", { throughSeq: delivery.cursorAfter });
+  const claimed = await request("/v1/worker/tasks/claim-message", {
+    messageId: head.aggregateId,
+    rationale: "[Fake CLI fixture] multi-step read-only review",
+  });
+  await request("/v1/worker/tasks/start", { taskId: claimed.task.taskId });
+  await request("/v1/worker/tasks/progress", {
+    progress: "[Fake CLI fixture] read the files",
+    taskId: claimed.task.taskId,
+  });
+  await request("/v1/worker/messages/post", {
+    body: "[Fake CLI fixture] review summary",
+    final: true,
+    threadId: claimed.task.threadId,
+  });
+  process.stdout.write(
+    JSON.stringify({ marker: "worker-self-claim-finished" }) + "\n",
+  );
 } else if (mode === "worker-cli-sync") {
   if (process.env.RAH_AGENT_TOOL_BIN !== undefined) {
     throw new Error("internal Worker tool directory hint leaked to Runtime");

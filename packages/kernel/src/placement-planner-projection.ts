@@ -13,6 +13,7 @@ import { projectPlacementCandidates } from "./placement-candidate-projection.ts"
 import { memoryHomeAuthorizedHosts } from "./agent-memory-home.ts";
 import { activeAgentExclusiveOperationParticipantIds } from "./agent-exclusive-operation-lease.ts";
 import { busyWorkspaceMountRevisionIds } from "./workspace-lease.ts";
+import { activationHoldsLanePredicate } from "./activation-retry-fence.ts";
 
 /** Read-only scheduler projection. Caller retains the scheduling transaction,
  * authentication, evidence trust, reservation mutations and execution fencing. */
@@ -200,7 +201,7 @@ export function projectPlacementPlannerInput(input: {
       ...new Set([
         ...input.database
           .prepare(
-            "SELECT DISTINCT participant_id FROM activations WHERE state = 'quarantined' OR (state = 'leased' AND lease_until_ms > ?) ORDER BY participant_id",
+            `SELECT DISTINCT participant_id FROM activations AS lane_holder WHERE ${activationHoldsLanePredicate("lane_holder")} ORDER BY participant_id`,
           )
           .all(now.getTime())
           .map((row) => text(row, "participant_id")),

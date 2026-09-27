@@ -1,3 +1,5 @@
+import { BUSINESS_OBLIGATION_UNMET_MARKER } from "@rah-os/protocol";
+
 export class KernelError extends Error {
   readonly code: string;
 
@@ -100,7 +102,10 @@ export class RuntimeTerminationProofError extends KernelError {
 
 export class TaskSubmissionProofError extends KernelError {
   constructor(message: string) {
-    super(message, "task_not_submitted");
+    super(
+      `${BUSINESS_OBLIGATION_UNMET_MARKER}: ${message}`,
+      "task_not_submitted",
+    );
   }
 }
 

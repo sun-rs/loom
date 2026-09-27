@@ -1,4 +1,5 @@
 import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
+import { activationHoldsLanePredicate } from "./activation-retry-fence.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -242,10 +243,7 @@ export function nextUnfencedActivation(
          AND NOT EXISTS (
            SELECT 1 FROM activations AS active
            WHERE active.participant_id = candidate.participant_id
-             AND (
-               active.state = 'quarantined'
-               OR (active.state = 'leased' AND active.lease_until_ms > ?)
-             )
+             AND ${activationHoldsLanePredicate("active")}
          )
        ORDER BY candidate.created_at, candidate.activation_id
        LIMIT 1`,

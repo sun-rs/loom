@@ -1532,6 +1532,219 @@ test("the daemon retries rather than losing a Task when a Worker only acknowledg
   }
 });
 
+test("D2 end to end: an ACK-only Worker on an assigned Task is fenced after three refusals, the fence does not hold the lane, and a new message's Activation completes", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-task-fence-"));
+  const stateDirectory = join(directory, "state");
+  mkdirSync(stateDirectory, { mode: 0o700 });
+  const databasePath = join(stateDirectory, "room.db");
+  const secretPath = join(stateDirectory, "host.token");
+  const seed = new RoomKernel({ databasePath });
+  const shutdown = new AbortController();
+  let running: Promise<void> | undefined;
+  let observer: RoomKernel | undefined;
+  try {
+    seed.initialize();
+    const human = seed.provisionPrincipal({
+      handle: "daemon-task-fence-human",
+      kind: "human",
+    });
+    const agent = seed.provisionPrincipal({
+      handle: "daemon-task-fence-agent",
+      kind: "agent",
+    });
+    const agentId = agent.principal.principalId;
+    const humanActor = seed.authenticateAccessToken(human.accessToken);
+    const room = seed.createRoom(humanActor, {
+      name: "Daemon Task fence",
+      slug: "daemon-task-fence",
+    });
+    seed.addMember(humanActor, { principalId: agentId, roomId: room.roomId });
+    seed.createTask(humanActor, {
+      assigneeId: agentId,
+      idempotencyKey: "daemon-fenced-task-created",
+      roomId: room.roomId,
+      title: "Remain durable when the Worker does not submit",
+    });
+    const hostCredential = seed.provisionHostCredential({
+      hostId: "daemon-task-fence-host",
+      participantIds: [agentId],
+    });
+    writeFileSync(secretPath, `${hostCredential.accessToken}\n`, {
+      mode: 0o600,
+    });
+    seed.close();
+
+    const config = DaemonConfigSchema.parse({
+      ...validConfig(stateDirectory, secretPath),
+      host: {
+        credential: { path: secretPath, source: "file" },
+        hostId: "daemon-task-fence-host",
+        participantId: agentId,
+      },
+      retryAfterMs: 0,
+    });
+    const application = new DaemonApplication({ config });
+    running = application.run({ signal: shutdown.signal });
+    observer = new RoomKernel({ databasePath });
+    observer.initialize();
+    const activeObserver = observer;
+    await waitUntil(
+      () =>
+        activeObserver.listActivations({ roomId: room.roomId })[0]?.state ===
+        "quarantined",
+      10_000,
+    );
+    const fenced = activeObserver.listActivations({ roomId: room.roomId })[0]!;
+    assert.equal(fenced.attemptCount, 3);
+    const blocked = activeObserver
+      .listRoomAgentActivity(humanActor, { roomId: room.roomId })
+      .find((entry) => entry.participantId === agentId)?.blocked;
+    assert.equal(blocked?.activationId, fenced.activationId);
+    assert.equal(blocked?.holdsLane, false);
+    assert.match(blocked?.reason ?? "", /unfinished Task/u);
+
+    activeObserver.postMessage(humanActor, {
+      body: "a new question",
+      idempotencyKey: "daemon-fence-new-message",
+      recipients: [{ participantId: agentId, reason: "mention" }],
+      roomId: room.roomId,
+    });
+    await waitUntil(
+      () =>
+        activeObserver
+          .listActivations({ roomId: room.roomId })
+          .some(
+            (activation) =>
+              activation.activationId !== fenced.activationId &&
+              activation.state === "completed",
+          ),
+      10_000,
+    );
+    assert.equal(
+      activeObserver
+        .listActivations({ roomId: room.roomId })
+        .find((activation) => activation.activationId === fenced.activationId)
+        ?.state,
+      "quarantined",
+    );
+    assert.equal(
+      activeObserver.listTasks(humanActor, { roomId: room.roomId })[0]?.state,
+      "todo",
+    );
+  } finally {
+    shutdown.abort("task-fence-test-complete");
+    await running?.catch(() => undefined);
+    observer?.close();
+    try {
+      seed.close();
+    } catch {
+      // The seed connection was already closed before daemon startup.
+    }
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("D1 end to end: a Worker that claims the head message as its own Task and posts one final reply completes its Activation with a single reply", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-self-claim-"));
+  const stateDirectory = join(directory, "state");
+  mkdirSync(stateDirectory, { mode: 0o700 });
+  const databasePath = join(stateDirectory, "room.db");
+  const secretPath = join(stateDirectory, "host.token");
+  const seed = new RoomKernel({ databasePath });
+  const shutdown = new AbortController();
+  let running: Promise<void> | undefined;
+  let observer: RoomKernel | undefined;
+  try {
+    seed.initialize();
+    const human = seed.provisionPrincipal({
+      handle: "daemon-self-claim-human",
+      kind: "human",
+    });
+    const agent = seed.provisionPrincipal({
+      handle: "daemon-self-claim-agent",
+      kind: "agent",
+    });
+    const agentId = agent.principal.principalId;
+    const humanActor = seed.authenticateAccessToken(human.accessToken);
+    const room = seed.createRoom(humanActor, {
+      name: "Daemon self claim",
+      slug: "daemon-self-claim",
+    });
+    seed.addMember(humanActor, { principalId: agentId, roomId: room.roomId });
+    seed.postMessage(humanActor, {
+      body: "New task: review these files read-only and summarize in the channel",
+      idempotencyKey: "daemon-self-claim-request",
+      recipients: [{ participantId: agentId, reason: "mention" }],
+      roomId: room.roomId,
+    });
+    const hostCredential = seed.provisionHostCredential({
+      hostId: "daemon-self-claim-host",
+      participantIds: [agentId],
+    });
+    writeFileSync(secretPath, `${hostCredential.accessToken}\n`, {
+      mode: 0o600,
+    });
+    seed.close();
+
+    const base = validConfig(stateDirectory, secretPath);
+    const config = DaemonConfigSchema.parse({
+      ...base,
+      host: {
+        credential: { path: secretPath, source: "file" },
+        hostId: "daemon-self-claim-host",
+        participantId: agentId,
+      },
+      retryAfterMs: 0,
+      runtime: { ...base.runtime, env: { RAH_FAKE_MODE: "worker-self-claim" } },
+    });
+    const application = new DaemonApplication({ config });
+    running = application.run({ signal: shutdown.signal });
+    observer = new RoomKernel({ databasePath });
+    observer.initialize();
+    const activeObserver = observer;
+    await waitUntil(() => {
+      const state = activeObserver.listActivations({ roomId: room.roomId })[0]
+        ?.state;
+      return state === "completed" || state === "quarantined";
+    }, 10_000);
+    const [activation] = activeObserver.listActivations({
+      roomId: room.roomId,
+    });
+    assert.equal(activation?.state, "completed", activation?.lastError);
+    assert.equal(activation?.attemptCount, 1);
+    const events = activeObserver.sync(humanActor, {
+      consumerId: "daemon-self-claim-verifier",
+      roomId: room.roomId,
+    }).events;
+    assert.equal(
+      events.filter(
+        (event) => event.type === "message.posted" && event.actorId === agentId,
+      ).length,
+      1,
+      "exactly one reply",
+    );
+    assert.equal(
+      events.some((event) => event.type.startsWith("activation.retry")),
+      false,
+    );
+    assert.equal(
+      activeObserver.listTasks(humanActor, { roomId: room.roomId })[0]?.state,
+      "in_progress",
+      "the Agent's own Task stays open; Activation completion does not touch it",
+    );
+  } finally {
+    shutdown.abort("self-claim-test-complete");
+    await running?.catch(() => undefined);
+    observer?.close();
+    try {
+      seed.close();
+    } catch {
+      // The seed connection was already closed before daemon startup.
+    }
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("the daemon resumes a partially progressed Task in a new RunAttempt without duplicate business events", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-daemon-task-resume-"));
   const stateDirectory = join(directory, "state");

@@ -1,5 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { ActivationCredentialScope } from "@rah-os/protocol";
+import {
+  BUSINESS_OBLIGATION_UNMET_MARKER,
+  type ActivationCredentialScope,
+} from "@rah-os/protocol";
 
 import { ACTIVATION_DELIVERY_NOT_ACKNOWLEDGED } from "./errors.ts";
 import { nullableText, text } from "./sqlite-row.ts";
@@ -116,10 +119,67 @@ export function previousAttemptReply(
   };
 }
 
+/**
+ * The business-obligation completion refusal that caused this retry (the
+ * durable retry record carries `BUSINESS_OBLIGATION_UNMET_MARKER`), without
+ * the marker. A fact the wake states once; never a behaviour rule.
+ */
+export function previousAttemptRefusal(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+): string | undefined {
+  const row = database
+    .prepare(
+      "SELECT last_error FROM activations WHERE activation_id=? AND participant_id=?",
+    )
+    .get(scope.activationId, scope.participantId);
+  const lastError = row === undefined ? null : nullableText(row, "last_error");
+  const index = lastError?.indexOf(BUSINESS_OBLIGATION_UNMET_MARKER) ?? -1;
+  if (lastError === null || lastError === undefined || index < 0)
+    return undefined;
+  const reason = lastError
+    .slice(index + BUSINESS_OBLIGATION_UNMET_MARKER.length)
+    .replace(/^:\s*/u, "")
+    .trim()
+    .slice(0, 2_000)
+    .trim();
+  return reason.length === 0 ? undefined : reason;
+}
+
+/**
+ * The final reply an earlier RunAttempt of this Activation committed (its
+ * durable final-reply marker), whatever the retry reason. Read-only.
+ */
+export function previousAttemptFinalReply(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+): { messageId: string; threadId?: string } | undefined {
+  const row = database
+    .prepare(
+      `SELECT room_events.aggregate_id,
+              json_extract(room_events.payload_json, '$.threadId') AS thread_id
+       FROM run_attempt_final_replies
+       JOIN room_events ON room_events.event_id = run_attempt_final_replies.event_id
+       WHERE run_attempt_final_replies.activation_id = ?
+         AND run_attempt_final_replies.run_attempt_id <> ?
+       ORDER BY run_attempt_final_replies.room_seq DESC LIMIT 1`,
+    )
+    .get(scope.activationId, scope.runAttemptId);
+  if (row === undefined) return undefined;
+  const threadId = nullableText(row, "thread_id");
+  return {
+    messageId: text(row, "aggregate_id"),
+    ...(threadId === null ? {} : { threadId }),
+  };
+}
+
 /** The rendered window's optional retry facts: either the previous attempt
  * posted nothing (`previousAttemptUnconfirmed`) or it already committed a
  * post that was never acknowledged (`previousAttemptReplyMessageId`, plus
- * `previousAttemptReplyFinal` only when that post was the final reply). */
+ * `previousAttemptReplyFinal` only when that post was the final reply). Any
+ * earlier attempt's committed final reply is named whatever the retry reason,
+ * with its Thread; a business-obligation refusal is stated as
+ * `previousAttemptRefusal`. */
 export function retryReminder(
   database: DatabaseSync,
   scope: ActivationCredentialScope,
@@ -127,14 +187,29 @@ export function retryReminder(
   previousAttemptUnconfirmed?: true;
   previousAttemptReplyMessageId?: string;
   previousAttemptReplyFinal?: true;
+  previousAttemptReplyThreadId?: string;
+  previousAttemptRefusal?: string;
 } {
   if (previousAttemptUnconfirmed(database, scope))
     return { previousAttemptUnconfirmed: true };
+  const refusal = previousAttemptRefusal(database, scope);
+  const refusalFact =
+    refusal === undefined ? {} : { previousAttemptRefusal: refusal };
   const reply = previousAttemptReply(database, scope);
-  return reply === undefined
-    ? {}
-    : {
-        previousAttemptReplyMessageId: reply.messageId,
-        ...(reply.final ? { previousAttemptReplyFinal: true as const } : {}),
-      };
+  if (reply !== undefined)
+    return {
+      previousAttemptReplyMessageId: reply.messageId,
+      ...(reply.final ? { previousAttemptReplyFinal: true as const } : {}),
+      ...refusalFact,
+    };
+  const final = previousAttemptFinalReply(database, scope);
+  if (final === undefined) return refusalFact;
+  return {
+    previousAttemptReplyMessageId: final.messageId,
+    previousAttemptReplyFinal: true,
+    ...(final.threadId === undefined
+      ? {}
+      : { previousAttemptReplyThreadId: final.threadId }),
+    ...refusalFact,
+  };
 }

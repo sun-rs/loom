@@ -896,6 +896,15 @@ export class WorkerApplicationService {
           ...(presented.previousAttemptReplyFinal === true
             ? { previousAttemptReplyFinal: true }
             : {}),
+          ...(presented.previousAttemptReplyThreadId === undefined
+            ? {}
+            : {
+                previousAttemptReplyThreadId:
+                  presented.previousAttemptReplyThreadId,
+              }),
+          ...(presented.previousAttemptRefusal === undefined
+            ? {}
+            : { previousAttemptRefusal: presented.previousAttemptRefusal }),
           ...(presented.memoryDelta === undefined
             ? {}
             : { memoryDelta: presented.memoryDelta }),

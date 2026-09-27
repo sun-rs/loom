@@ -163,6 +163,16 @@ export class ActivationObligationService {
            OR room_events.type = 'message.posted'
            AND room_events.aggregate_type = 'message'
            AND tasks.source_message_id = room_events.aggregate_id
+           -- Only a Task that already existed at the head: a Task claimed
+           -- from this message during the Activation adds no obligation.
+           AND EXISTS (
+             SELECT 1 FROM room_events AS task_created
+             WHERE task_created.room_id = room_events.room_id
+               AND task_created.aggregate_type = 'task'
+               AND task_created.aggregate_id = tasks.task_id
+               AND task_created.type = 'task.created'
+               AND task_created.room_seq <= ?
+           )
            OR room_events.type = 'input.resolved'
            AND tasks.task_id = json_extract(room_events.payload_json, '$.taskId')
            OR room_events.type = 'task.completed'
@@ -192,6 +202,7 @@ export class ActivationObligationService {
          LIMIT 1`,
       )
       .get(
+        integer(activation, "to_seq"),
         text(activation, "room_id"),
         integer(activation, "from_seq"),
         integer(activation, "to_seq"),

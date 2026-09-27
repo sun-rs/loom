@@ -70,6 +70,7 @@ export type HumanApplicationPort = Pick<
   listRoles: RoomKernel["roles"]["list"];
   instantiateRole: RoomKernel["roles"]["instantiate"];
   resetInstanceSession: RoomKernel["roles"]["resetInstanceSession"];
+  abandonBlockedActivation: RoomKernel["roles"]["abandonBlockedActivation"];
   listChannelMemory: RoomKernel["memory"]["humanList"];
   readChannelMemory: RoomKernel["memory"]["humanRead"];
   searchChannelMemory: RoomKernel["memory"]["humanSearch"];
@@ -133,6 +134,8 @@ export function createHumanApplicationPort(
     instantiateRole: (actor, input) => kernel.roles.instantiate(actor, input),
     resetInstanceSession: (actor, input) =>
       kernel.roles.resetInstanceSession(actor, input),
+    abandonBlockedActivation: (actor, input) =>
+      kernel.roles.abandonBlockedActivation(actor, input),
     listChannelMemory: (actor, input) => kernel.memory.humanList(actor, input),
     readChannelMemory: (actor, input) => kernel.memory.humanRead(actor, input),
     searchChannelMemory: (actor, input) =>

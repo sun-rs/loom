@@ -27,6 +27,9 @@
  *   fact — inspect it, finish what remains — and calls it the final reply
  *   only when the Kernel says it carried the final marker
  *   (`previousAttemptReplyFinal`; seventh review P2-3);
+ * - a retry after a business-obligation completion refusal states that
+ *   refusal and any final reply an earlier attempt committed (with its
+ *   Thread) as one fact line (`previousAttemptRefusal`; D1-D 2026-09-27);
  * - a truncated window or one with a notice tail instead ends with one line
  *   asking for `message-check` first.
  */
@@ -63,6 +66,31 @@ export function previousAttemptReplyLine(
   return final
     ? `Previous attempt posted its final reply msg=${ref}; confirm delivery with message-check${turn}.`
     : `Previous attempt posted msg=${ref}; inspect it and finish any remaining work (it does not show every target was answered), or message-check${turn} if nothing remains.`;
+}
+
+/**
+ * D1-D: the retry fact after a business-obligation completion refusal: the
+ * Kernel's refusal and, when an earlier attempt's final reply committed, that
+ * reply (and its Thread). Facts only; what to do next stays the model's call.
+ */
+export function previousAttemptRefusalLine(
+  present: Pick<
+    WorkerMessagePresentResponse,
+    | "previousAttemptRefusal"
+    | "previousAttemptReplyFinal"
+    | "previousAttemptReplyMessageId"
+    | "previousAttemptReplyThreadId"
+  >,
+): string {
+  const reason = (present.previousAttemptRefusal ?? "").replace(/\.$/u, "");
+  const messageId = present.previousAttemptReplyMessageId;
+  if (messageId === undefined || present.previousAttemptReplyFinal !== true)
+    return `Previous attempt's completion was refused: ${reason}.`;
+  const thread =
+    present.previousAttemptReplyThreadId === undefined
+      ? ""
+      : ` in thread=${shortWorkerRef(present.previousAttemptReplyThreadId)}`;
+  return `Previous attempt posted its final reply msg=${shortWorkerRef(messageId)}${thread}; completion was refused: ${reason}.`;
 }
 
 /**
@@ -147,9 +175,11 @@ export function formatBodiedWakeInput(input: {
   const retry =
     present.previousAttemptUnconfirmed === true
       ? `\n${PREVIOUS_ATTEMPT_UNCONFIRMED_LINE}`
-      : present.previousAttemptReplyMessageId !== undefined
-        ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true)}`
-        : "";
+      : present.previousAttemptRefusal !== undefined
+        ? `\n${previousAttemptRefusalLine(present)}`
+        : present.previousAttemptReplyMessageId !== undefined
+          ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true)}`
+          : "";
   const sections = [
     `${renderCompactWakeEventLines(present.events, present.addressing)}\n${instruction}${retry}`,
     ...memoryLines(input.memory),

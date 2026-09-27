@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import { WakeHintSchema, type RuntimeRetryDisposition } from "@rah-os/protocol";
+import {
+  BUSINESS_OBLIGATION_UNMET_MARKER,
+  WakeHintSchema,
+  type RuntimeRetryDisposition,
+} from "@rah-os/protocol";
 
 import { previousAttemptCleanExitUnconfirmed } from "./activation-retry-reminder.ts";
 import { integer, nullableText, text } from "./sqlite-row.ts";
@@ -309,6 +313,38 @@ export type ResumedActivationRetryFence = Readonly<{
   roomId: string;
   sameErrorCount: number;
 }>;
+
+/**
+ * SQL predicate over an `activations` row alias: the row holds its
+ * participant's execution lane. A leased row holds it while its lease lasts;
+ * a quarantined row holds it unless (D2-1) its blocked retry fence records a
+ * business-obligation refusal (`BUSINESS_OBLIGATION_UNMET_MARKER`) and none of
+ * its runs or runtime processes is still live: that refusal is not a Runtime
+ * failure, and no process of it remains. `?` binds the current time in ms.
+ */
+export function activationHoldsLanePredicate(alias: string): string {
+  return `(
+    ${alias}.state = 'leased' AND ${alias}.lease_until_ms > ?
+    OR ${alias}.state = 'quarantined' AND NOT (
+      instr(COALESCE(${alias}.last_error, ''), '${BUSINESS_OBLIGATION_UNMET_MARKER}') > 0
+      AND EXISTS (
+        SELECT 1 FROM activation_retry_fences AS lane_fence
+        WHERE lane_fence.activation_id = ${alias}.activation_id
+          AND lane_fence.state = 'blocked'
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM runtime_processes AS lane_process
+        WHERE lane_process.activation_id = ${alias}.activation_id
+          AND lane_process.state <> 'terminated'
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM run_attempts AS lane_run
+        WHERE lane_run.activation_id = ${alias}.activation_id
+          AND lane_run.state IN ('starting', 'running', 'orphaned')
+      )
+    )
+  )`;
+}
 
 /**
  * The Host's marker for a failure that only a new native session can clear

@@ -6,6 +6,8 @@ import {
   RoleListResponseSchema,
   RoleInstantiateRequestSchema,
   RoleInstantiateResponseSchema,
+  InstanceActivationAbandonRequestSchema,
+  InstanceActivationAbandonResponseSchema,
   InstanceSessionResetRequestSchema,
   InstanceSessionResetResponseSchema,
 } from "@rah-os/protocol";
@@ -427,6 +429,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/roles/list",
   "/roles/instantiate",
   "/instances/session/reset",
+  "/instances/activation/abandon",
   "/messages/forward",
   "/messages/forward/targets",
   "/messages/reference-read-states",
@@ -1339,6 +1342,20 @@ export class ClientApplicationService {
         200,
         InstanceSessionResetResponseSchema.parse(
           this.#human.resetInstanceSession(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/instances/activation/abandon") {
+      const command = parseClientRequest(
+        InstanceActivationAbandonRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        InstanceActivationAbandonResponseSchema.parse(
+          this.#human.abandonBlockedActivation(actor, command),
         ),
       );
       return;

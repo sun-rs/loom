@@ -5,6 +5,7 @@ import {
   AgentCatalogEntrySchema,
   AgentDefinitionRevisionSchema,
   AgentDefinitionSchema,
+  BUSINESS_OBLIGATION_UNMET_MARKER,
   RoomAgentActivitySchema,
   type AgentCatalogEntry,
   type AgentActivityRecord,
@@ -12,7 +13,10 @@ import {
   type ClientAgentActivityListResponse,
   type Room,
   type RoomAgentActivity,
+  type RoomAgentBlockedActivation,
 } from "@rah-os/protocol";
+
+import { activationHoldsLanePredicate } from "./activation-retry-fence.ts";
 
 import { roomProjectionFromRow } from "./collaboration-projection.ts";
 import { ForbiddenError, NotFoundError } from "./errors.ts";
@@ -641,14 +645,64 @@ export function listRoomAgentActivity(
        ORDER BY principals.principal_id`,
     )
     .all(roomId)
-    .map((memberRow) =>
-      agentActivity(
+    .map((memberRow) => {
+      const participantId = text(memberRow, "principal_id");
+      const activity = agentActivity(
         database,
         roomId,
-        text(memberRow, "principal_id"),
+        participantId,
         memberRow,
-      ),
-    );
+      );
+      const blocked = blockedActivation(database, actorId, participantId);
+      return blocked === undefined
+        ? activity
+        : RoomAgentActivitySchema.parse({ ...activity, blocked });
+    });
+}
+
+/**
+ * D2-3: the participant's oldest Activation held by a blocked retry fence, in
+ * a Room the reader is a member of. The reason is the fence's last error with
+ * the business marker removed; `holdsLane` mirrors
+ * `activationHoldsLanePredicate`.
+ */
+function blockedActivation(
+  database: DatabaseSync,
+  actorId: string,
+  participantId: string,
+): RoomAgentBlockedActivation | undefined {
+  const row = database
+    .prepare(
+      `SELECT a.activation_id, a.room_id, f.last_error,
+              ${activationHoldsLanePredicate("a")} AS holds_lane
+       FROM activations AS a
+       JOIN activation_retry_fences AS f ON f.activation_id = a.activation_id
+       WHERE a.participant_id = ? AND a.state = 'quarantined'
+         AND f.state = 'blocked'
+         AND EXISTS (
+           SELECT 1 FROM memberships AS reader
+           WHERE reader.room_id = a.room_id AND reader.principal_id = ?
+         )
+       ORDER BY f.blocked_at, a.activation_id
+       LIMIT 1`,
+    )
+    // The predicate's lease-time bind only matters for leased rows; these
+    // rows are quarantined, so no clock is read.
+    .get(0, participantId, actorId);
+  if (row === undefined) return undefined;
+  const lastError = nullableText(row, "last_error") ?? "blocked retry fence";
+  const reason =
+    lastError
+      .replace(`${BUSINESS_OBLIGATION_UNMET_MARKER}: `, "")
+      .replace(BUSINESS_OBLIGATION_UNMET_MARKER, "")
+      .trim()
+      .slice(0, 2_000) || "blocked retry fence";
+  return {
+    activationId: text(row, "activation_id"),
+    holdsLane: row.holds_lane === 1,
+    reason,
+    roomId: text(row, "room_id"),
+  };
 }
 
 function agentActivity(
@@ -667,9 +721,12 @@ function agentActivity(
       .get(roomId, participantId)?.queued === 1;
   const activationRow = database
     .prepare(
-      `SELECT * FROM activations
+      // D2-3: a quarantine that no longer holds the lane (a business
+      // refusal) is reported as `blocked`, not as this Room's current work.
+      `SELECT * FROM activations AS current
        WHERE room_id = ? AND participant_id = ?
-         AND state IN ('queued', 'leased', 'quarantined')
+         AND (state IN ('queued', 'leased')
+           OR state = 'quarantined' AND ${activationHoldsLanePredicate("current")})
        ORDER BY CASE state
          WHEN 'quarantined' THEN 0
          WHEN 'leased' THEN 1
@@ -677,7 +734,7 @@ function agentActivity(
        END, created_at DESC, activation_id DESC
        LIMIT 1`,
     )
-    .get(roomId, participantId);
+    .get(roomId, participantId, 0);
   if (activationRow === undefined) {
     // Idle since the last Activation in this Room settled, or since joining.
     const lastSettledAt = nullableText(
