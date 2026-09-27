@@ -44,12 +44,25 @@ const State = z
       .record(z.string().min(1), z.number().int().min(1).max(64))
       .optional(),
     // evo §37: only the fields the Human set; the rest keep their defaults.
-    wakeGuard: WakeGuardSettingsUpdateSchema.optional(),
-    watchdog: RunWatchdogSettingsUpdateSchema.optional(),
+    wakeGuard: WakeGuardSettingsUpdateSchema.loose().optional(),
+    watchdog: RunWatchdogSettingsUpdateSchema.loose().optional(),
     // Owner 2026-09-27: instance runtime prewarming (only the set fields).
-    prewarm: InstancePrewarmSettingsUpdateSchema.optional(),
+    prewarm: InstancePrewarmSettingsUpdateSchema.loose().optional(),
   })
-  .strict();
+  // Full review 2 batch 1 #6: keys a newer build wrote (a group, or a field
+  // inside a known group) are tolerated and written back unchanged, so a
+  // rolled-back build still starts; only known fields are validated and read.
+  .loose();
+
+/** The fields of a persisted group this build knows (the rest are kept). */
+function known<T extends Record<string, unknown>>(
+  schema: { shape: Record<string, unknown> },
+  value: T | undefined,
+): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value ?? {}).filter(([key]) => key in schema.shape),
+  ) as Partial<T>;
+}
 
 export type RuntimeSettingsRuntime = {
   offerMaxConcurrent: number;
@@ -128,9 +141,18 @@ export class RuntimeSettings {
           state.runtimeMaxConcurrentRuns?.[runtime.runtimeProfileId] ??
           DEFAULT_PER_CLI_MAX_CONCURRENT_RUNS,
       })),
-      wakeGuard: { ...RUN_GUARD_DEFAULTS.wakeGuard, ...state.wakeGuard },
-      watchdog: { ...RUN_GUARD_DEFAULTS.watchdog, ...state.watchdog },
-      prewarm: { ...INSTANCE_PREWARM_DEFAULTS, ...state.prewarm },
+      wakeGuard: {
+        ...RUN_GUARD_DEFAULTS.wakeGuard,
+        ...known(WakeGuardSettingsUpdateSchema, state.wakeGuard),
+      },
+      watchdog: {
+        ...RUN_GUARD_DEFAULTS.watchdog,
+        ...known(RunWatchdogSettingsUpdateSchema, state.watchdog),
+      },
+      prewarm: {
+        ...INSTANCE_PREWARM_DEFAULTS,
+        ...known(InstancePrewarmSettingsUpdateSchema, state.prewarm),
+      },
     });
   }
 

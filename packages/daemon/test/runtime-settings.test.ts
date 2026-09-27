@@ -371,3 +371,59 @@ test("the prewarm group is on by default, updates partially at runtime, persists
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+/**
+ * Full review 2 batch 1 #6 (lifecycle P2-3): a settings file written by a
+ * newer build (an extra group, or an extra field inside a known group) still
+ * opens, updates, and keeps the keys this build does not know, so rolling a
+ * build back never stops the daemon from starting.
+ */
+test("a settings file with keys this build does not know opens, updates and keeps them", () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-runtime-settings-"));
+  const path = join(directory, "runtime-settings.json");
+  try {
+    writeFileSync(
+      path,
+      JSON.stringify({
+        futureGroup: { knob: 3 },
+        maxConcurrentRuns: 5,
+        prewarm: { enabled: false, futureField: "x" },
+        revision: 2,
+      }),
+      { mode: 0o600 },
+    );
+    const settings = new RuntimeSettings({
+      defaults: {
+        maxConcurrentRuns: 20,
+        maxConcurrentStarts: 5,
+        minStartIntervalMs: 500,
+      },
+      path,
+      runtimes,
+    });
+    const view = settings.read();
+    assert.equal(view.revision, 2);
+    assert.equal(view.maxConcurrentRuns, 5);
+    assert.deepEqual(view.prewarm, { enabled: false, recentActiveHours: 24 });
+    assert.equal(
+      "futureGroup" in view,
+      false,
+      "unknown keys stay out of the view",
+    );
+
+    const updated = settings.update({
+      expectedRevision: 2,
+      prewarm: { recentActiveHours: 6 },
+    });
+    assert.deepEqual(updated.prewarm, { enabled: false, recentActiveHours: 6 });
+    assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), {
+      futureGroup: { knob: 3 },
+      maxConcurrentRuns: 5,
+      prewarm: { enabled: false, futureField: "x", recentActiveHours: 6 },
+      revision: 3,
+      runtimeMaxConcurrentRuns: {},
+    });
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

@@ -20,8 +20,30 @@ import { join } from "node:path";
 import { acceptUnixWebSocket } from "../../src/unix-websocket.mjs";
 
 if (process.argv[2] === "mcp") {
-  // FAKE `codex mcp list --json`: no user MCP servers.
-  process.stdout.write("[]");
+  // FAKE `codex mcp list --json`: no user MCP servers, unless the test wrote
+  // `mcp.json` (server names) into the FAKE state directory; `-c
+  // mcp_servers.<name>.enabled=false` disables one. `mcp-fail` makes the
+  // listing fail like an unparsable user config.
+  const state = process.env.FAKE_CODEX_STATE_DIR ?? "";
+  if (state && existsSync(join(state, "mcp-fail"))) {
+    process.stderr.write("FAKE bad toml in config.toml\n");
+    process.exit(1);
+  }
+  const names =
+    state && existsSync(join(state, "mcp.json"))
+      ? JSON.parse(readFileSync(join(state, "mcp.json"), "utf8"))
+      : [];
+  const disabled = new Set(
+    process.argv
+      .slice(3)
+      .map((arg) => /^mcp_servers\.([^.=]+)\.enabled=false$/u.exec(arg)?.[1])
+      .filter(Boolean),
+  );
+  process.stdout.write(
+    JSON.stringify(
+      names.map((name) => ({ enabled: !disabled.has(name), name })),
+    ),
+  );
   process.exit(0);
 }
 

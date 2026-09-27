@@ -28,6 +28,8 @@ export function providerLaunchPolicy(
   options?: { codexExecutable?: string; cwd?: string },
 ): {
   args: string[];
+  /** Codex only: the user MCP server names disabled by this launch. */
+  codexMcpServerNames?: string[];
   environment: Record<string, string>;
 };
 

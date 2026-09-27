@@ -31,6 +31,14 @@ export type InstancePrewarmOutcome =
   | { kind: "skipped"; participantId: string; reason: string };
 
 export type InstancePrewarmerOptions = {
+  /**
+   * Full review 2 batch 1 #2: the Host's start admission (leftover cleanup
+   * hygiene) that real execution passes; checked after the start gate and
+   * before any spawn. Blocked or failing: the prewarm is skipped.
+   */
+  admit?: (
+    participantId: string,
+  ) => Promise<{ blocked: false } | { blocked: true; reason: string }>;
   host: AuthenticatedHostContext;
   kernel: Pick<RoomKernel, "instancePrewarm">;
   /** The warm pool (retire); starts go through the resolved adapter. */
@@ -54,6 +62,10 @@ export class InstancePrewarmer {
   #queue: Promise<unknown> = Promise.resolve();
   /** Closed until the Host's pool is started, and again from its stop. */
   #open: boolean;
+  /** Takes prewarms still queued in the start gate out when closing. */
+  #closing = new AbortController();
+  /** Removed instances (ids are never reused): never prewarmed again. */
+  readonly #retired = new Set<string>();
 
   constructor(options: InstancePrewarmerOptions) {
     this.#options = options;
@@ -66,6 +78,12 @@ export class InstancePrewarmer {
   /** The Host started its pool (after the start janitor). */
   open(): void {
     this.#open = true;
+    if (this.#closing.signal.aborted) this.#closing = new AbortController();
+  }
+
+  /** The Host takes prewarms now (its pool started and it is not stopping). */
+  get accepting(): boolean {
+    return this.#open;
   }
 
   /**
@@ -74,6 +92,7 @@ export class InstancePrewarmer {
    */
   async close(): Promise<void> {
     this.#open = false;
+    this.#closing.abort(new Error("instance prewarming stopped"));
     await this.#queue;
   }
 
@@ -133,6 +152,8 @@ export class InstancePrewarmer {
 
   /** The instance left its Channel: end its runtime (never mid-turn). */
   async retire(participantId: string): Promise<void> {
+    // Full review 2 batch 1 #4: a prewarm of it still queued never spawns.
+    this.#retired.add(participantId);
     await this.#options.pool.retire(participantId);
   }
 
@@ -142,23 +163,105 @@ export class InstancePrewarmer {
       participantId,
       reason,
     });
-    if (!this.#open) return skipped("host_not_running");
-    if (!this.#settings.enabled) return skipped("disabled");
+    // Cheap early skips; every check is repeated once the gate admits it.
+    const early = this.#prepare(participantId);
+    if (early.kind === "skipped") return skipped(early.reason);
+    // Full review 2 batch 1 #2/#4/#5: after the gate the instance, the
+    // Host, the cleanup admission and the caps are read again — a queued
+    // prewarm may have waited behind other starts.
+    const start = async (): Promise<
+      | { kind: "started"; instanceRuntimeId: string }
+      | { kind: "skipped"; reason: string }
+    > => {
+      if (this.#stopped(participantId) !== undefined)
+        return { kind: "skipped", reason: this.#stopped(participantId)! };
+      if (this.#options.admit !== undefined) {
+        let admission: Awaited<
+          ReturnType<NonNullable<InstancePrewarmerOptions["admit"]>>
+        >;
+        try {
+          admission = await this.#options.admit(participantId);
+        } catch (error) {
+          admission = {
+            blocked: true,
+            reason: `RAH_RUNTIME_CLEANUP_BLOCKED: admission check failed: ${message(error)}`,
+          };
+        }
+        if (admission.blocked)
+          return { kind: "skipped", reason: admission.reason };
+      }
+      const prepared = this.#prepare(participantId);
+      if (prepared.kind === "skipped") return prepared;
+      // Synchronous from here to the pool's participant lock: a retire
+      // arriving now finds the runtime (or this start) and ends it.
+      return await prepared.start();
+    };
+    try {
+      // A distinct gate key: a real start of this instance never collides
+      // with its prewarm in the gate; the pool serializes the two.
+      const outcome =
+        this.#options.startGate === undefined
+          ? await start()
+          : await this.#options.startGate.runStart(
+              `prewarm:${participantId}`,
+              start,
+              this.#closing.signal,
+            );
+      return outcome.kind === "started"
+        ? {
+            instanceRuntimeId: outcome.instanceRuntimeId,
+            kind: "started",
+            participantId,
+          }
+        : skipped(outcome.reason);
+    } catch (error) {
+      if (this.#stopped(participantId) !== undefined)
+        return skipped(this.#stopped(participantId)!);
+      return skipped(`start_failed: ${message(error)}`);
+    }
+  }
+
+  /** Why this instance may not be prewarmed now, if it may not. */
+  #stopped(participantId: string): string | undefined {
+    if (!this.#open) return "host_not_running";
+    if (!this.#settings.enabled) return "disabled";
+    return undefined;
+  }
+
+  /** The Kernel's current plan and its adapter; nothing is started. */
+  #prepare(participantId: string):
+    | { kind: "skipped"; reason: string }
+    | {
+        kind: "ready";
+        start: () => Promise<
+          | { kind: "started"; instanceRuntimeId: string }
+          | { kind: "skipped"; reason: string }
+        >;
+      } {
+    const stopped = this.#stopped(participantId);
+    if (stopped !== undefined) return { kind: "skipped", reason: stopped };
     const { host, kernel } = this.#options;
     let plan;
     try {
       plan = kernel.instancePrewarm.plan(host, { participantId });
     } catch (error) {
-      return skipped(`plan_failed: ${message(error)}`);
+      return { kind: "skipped", reason: `plan_failed: ${message(error)}` };
     }
-    if (plan.kind === "skipped") return skipped(plan.reason);
+    if (plan.kind === "skipped") return plan;
+    if (this.#retired.has(participantId))
+      return { kind: "skipped", reason: "instance_retired" };
     let runtime: RuntimeAdapter;
     try {
       runtime = this.#options.resolveRuntime(plan.placement);
     } catch (error) {
-      return skipped(`runtime_unavailable: ${message(error)}`);
+      return {
+        kind: "skipped",
+        reason: `runtime_unavailable: ${message(error)}`,
+      };
     }
-    if (runtime.prewarm === undefined) return skipped("per_turn_runtime");
+    const prewarm = runtime.prewarm?.bind(runtime);
+    if (prewarm === undefined)
+      return { kind: "skipped", reason: "per_turn_runtime" };
     const envelope: ActivationEnvelope = {
       activationId: plan.activationId,
       agent: plan.agent,
@@ -175,28 +278,13 @@ export class InstancePrewarmer {
     const limits = {
       maxLive: plan.limits.hostMaxConcurrent,
       maxLiveForDriver: plan.limits.runtimeProfileMaxConcurrent,
+      reserved: plan.limits.hostReserved,
+      reservedForDriver: plan.limits.runtimeProfileReserved,
     };
-    const start = async () => await runtime.prewarm!(envelope, limits);
-    try {
-      // A distinct gate key: a real start of this instance never collides
-      // with its prewarm in the gate; the pool serializes the two.
-      const outcome =
-        this.#options.startGate === undefined
-          ? await start()
-          : await this.#options.startGate.runStart(
-              `prewarm:${participantId}`,
-              start,
-            );
-      return outcome.kind === "started"
-        ? {
-            instanceRuntimeId: outcome.instanceRuntimeId,
-            kind: "started",
-            participantId,
-          }
-        : skipped(outcome.reason);
-    } catch (error) {
-      return skipped(`start_failed: ${message(error)}`);
-    }
+    return {
+      kind: "ready",
+      start: async () => await prewarm(envelope, limits),
+    };
   }
 
   #diagnostic(text: string): void {

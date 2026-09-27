@@ -256,6 +256,23 @@ export class InstanceRuntimeService {
           `instance runtime ${input.instanceRuntimeId} already exists`,
         );
       }
+      // Full review 2 batch 1 #4 (kernel P2-2): a prewarm spawns without a
+      // leased Activation, so a Role instance must still be a member of its
+      // unarchived Channel. The Host grant stays (retire and termination
+      // proofs still write with it).
+      const instance = this.#options.database
+        .prepare(
+          `SELECT ri.channel_id,
+                  (SELECT 1 FROM memberships m JOIN rooms r ON r.room_id = m.room_id
+                    WHERE m.room_id = ri.channel_id AND m.principal_id = ri.instance_id
+                      AND r.archived_at IS NULL) AS active
+             FROM role_instances ri WHERE ri.instance_id = ?`,
+        )
+        .get(input.participantId);
+      if (instance !== undefined && instance.active === null)
+        throw new ConflictError(
+          `Role instance ${input.participantId} is no longer an active member of Channel ${text(instance, "channel_id")}; no runtime may start for it`,
+        );
       const live = this.#options.database
         .prepare(
           "SELECT * FROM instance_runtimes WHERE participant_id = ? AND state <> 'terminated'",

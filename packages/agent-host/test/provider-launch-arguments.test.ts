@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   providerLaunchArguments,
   validateProviderLaunchArgs,
+  validateProviderLaunchOverride,
 } from "../src/provider-launch-arguments.js";
 
 test("all four launchers preserve argv boundaries and isolate provider settings", () => {
@@ -168,6 +169,34 @@ test("permission, approval, sandbox and tool-policy switches cannot be added by 
       /managed/,
       `rejects ${args.join(" ")}`,
     );
+});
+
+// Full review 2 batch 1 #7 (drivers P2-1): Codex accepts a managed
+// single-letter option glued to its value (`-cKEY=VAL`), so the glued form
+// is refused like the separate one, in additions and in full overrides.
+test("glued single-letter managed options are refused in additions and full overrides", () => {
+  for (const glued of [
+    "-cfeatures.memories=true",
+    "-cmcp_servers.x.command=y",
+    "-sdanger-full-access",
+    "-aon-request",
+    "-mgpt-other",
+    "-pprofile",
+  ]) {
+    assert.throws(
+      () => validateProviderLaunchArgs([glued]),
+      /managed/,
+      `rejects ${glued}`,
+    );
+    assert.throws(
+      () => validateProviderLaunchOverride("codex", ["app-server", glued]),
+      /managed/,
+      `override rejects ${glued}`,
+    );
+  }
+  assert.deepEqual(validateProviderLaunchArgs(["--example=-c"]), [
+    "--example=-c",
+  ]);
 });
 
 // evo §40 B2: native tools that take scheduling or the Human's attention away

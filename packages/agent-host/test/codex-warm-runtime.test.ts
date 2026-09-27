@@ -3,6 +3,7 @@ import {
   chmodSync,
   realpathSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -849,6 +850,101 @@ test("an unloaded thread is resumed by id in the same process, never replaced", 
     assert.equal(
       (resume!.params as { excludeTurns?: unknown }).excludeTurns,
       true,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+/**
+ * Full review 2 batch 1 #7 (drivers P2-2): the warm driver's isolation
+ * preflight (the user's MCP servers, resolved by `codex mcp list`) refusing
+ * a launch reports its reason through the fd3 `fatal` envelope, so the pool
+ * and the run carry it instead of only "exited before ready".
+ */
+test("a refused user MCP preflight reaches the pool as a fatal with its reason", async () => {
+  const state = await harness();
+  try {
+    mkdirSync(state.stateDirectory, { recursive: true });
+    writeFileSync(join(state.stateDirectory, "mcp-fail"), "");
+    state.post("[fake:ack] first");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.notEqual(result.state, "completed");
+    assert.ok(
+      state.diagnostics.some((line) =>
+        /\] fatal: Codex user MCP servers could not be resolved/u.test(line),
+      ),
+      state.diagnostics.join("\n"),
+    );
+    assert.equal(
+      state.records().filter((record) => record.event === "start").length,
+      0,
+      "no app-server is started",
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+/**
+ * Full review 2 batch 1 #7 (drivers P2-3): Codex reloads config.toml when a
+ * thread is (re)loaded, so before resuming an unloaded thread the driver
+ * lists the user's MCP servers again; a server added while it ran restarts
+ * the runtime (the turn is refused, nothing started) and the next cold start
+ * disables it by name and resumes the same thread.
+ */
+test("a user MCP server added while the runtime ran restarts it before the thread is reloaded", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:ack] [fake:unload-after] first");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    writeFileSync(join(state.stateDirectory, "mcp.json"), '["added"]');
+    state.post("[fake:ack] second");
+    const refused = await state.current.agentHost.reconcileOnce();
+    assert.notEqual(refused.state, "completed");
+    const retried = await state.current.agentHost.reconcileOnce();
+    assert.equal(
+      retried.state,
+      "completed",
+      JSON.stringify(retried) + state.diagnostics.join("\n"),
+    );
+    const records = state.records();
+    const starts = records.filter((record) => record.event === "start");
+    assert.equal(starts.length, 2, "the runtime restarted once");
+    assert.equal(
+      (starts[0]!.argv as string[]).includes("mcp_servers.added.enabled=false"),
+      false,
+    );
+    assert.equal(
+      (starts[1]!.argv as string[]).includes("mcp_servers.added.enabled=false"),
+      true,
+      "the new process disables the added server by name",
+    );
+    const firstPid = starts[0]!.pid;
+    const ofFirst = records.filter((record) => record.pid === firstPid);
+    assert.equal(
+      ofFirst.filter(
+        (record) =>
+          record.event === "request" && record.method === "thread/resume",
+      ).length,
+      0,
+      "the old process never reloads the thread with the added server",
+    );
+    assert.equal(
+      ofFirst.filter((record) => record.event === "turn").length,
+      1,
+      "the old process never runs the second turn",
+    );
+    assert.equal(
+      records.filter(
+        (record) =>
+          record.event === "request" && record.method === "thread/start",
+      ).length,
+      1,
+      "the same thread is resumed, never replaced",
     );
   } finally {
     await state.cleanup();

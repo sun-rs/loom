@@ -113,11 +113,13 @@ export function validateProviderLaunchArgs(args) {
   validateShape(args);
   if (args.length && !args[0].startsWith("-"))
     throw new Error("Provider additions must start with an option");
-  for (const arg of args)
-    if (managed.has(arg.split("=")[0]))
-      throw new Error(
-        `RAH managed argument cannot be overridden: ${arg.split("=")[0]}`,
-      );
+  for (const arg of args) {
+    // Full review 2 batch 1 #7: a managed single-letter option glued to its
+    // value (`-cKEY=VAL`, accepted by Codex) is the same option.
+    const key = /^-[A-Za-z]./u.test(arg) ? arg.slice(0, 2) : arg.split("=")[0];
+    if (managed.has(key))
+      throw new Error(`RAH managed argument cannot be overridden: ${key}`);
+  }
   return [...args];
 }
 export function providerLaunchDefaults(runtimeId) {
@@ -378,16 +380,14 @@ export function providerLaunchPolicy(
 ) {
   const switches = providerLaunchSwitches(runtimeId);
   if (runtimeId !== "codex") return switches;
+  const codexMcpServerNames = codexUserMcpServerNames(environment, {
+    executable: codexExecutable,
+    cwd,
+  });
   return {
-    args: [
-      ...switches.args,
-      ...codexMcpDisableArgs(
-        codexUserMcpServerNames(environment, {
-          executable: codexExecutable,
-          cwd,
-        }),
-      ),
-    ],
+    args: [...switches.args, ...codexMcpDisableArgs(codexMcpServerNames)],
+    // The names disabled at launch (a warm driver re-checks before reload).
+    codexMcpServerNames,
     environment: switches.environment,
   };
 }

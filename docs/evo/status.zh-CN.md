@@ -1042,7 +1042,7 @@ B. 权限收口
    - `daemon/test/instance-prewarm-composition.test.ts`（组合 daemon + FAKE Codex，Human API）：创建实例后出现 idle 运行时且无轮次；首条消息 `warm` 复用；daemon 重启后预热并恢复同一 session；移除后 `removed`；经设置 API 关闭后新实例不预热。`daemon/test/instance-runtime-hints.test.ts`：提示按序投递、Host 未启动时延后重投、只处理一次。`runtime-settings.test.ts` 新增 prewarm 组；控制台 `actions/model` 测试更新；门禁 `warm/gate-daemon/efficiency-config` 单测新增。
 7. 偏离与限制：
    - Codex、OpenCode 驱动的就绪握手本来就包含 `thread/start|resume`（或 serve 的 session 创建/恢复），不调用模型；预热沿用该握手而不是只到进程启动。首轮前 session 不绑定：从未有过轮次的实例若预热后在首轮前被回收，CLI 自己的会话存储里会留下一个未绑定、无内容的原生 thread，之后首轮新建并绑定新的 thread，这不是静默替换（没有被绑定过的 session）。
-   - 每 CLI 上限按驱动种类计数（本地每家 CLI 一个 RuntimeProfile）；预热计入 Host 上限只看存活热进程数，冷路径进程不计。
+   - 每 CLI 上限按驱动种类计数（本地每家 CLI 一个 RuntimeProfile）；预热计入 Host 上限只看存活热进程数，冷路径进程不计（第六十二节起改为计入冷路径进程，见该节第 5 项）。
    - 为守住 `room-kernel.ts` 行数上限（6925），调度器读取 AgentDefinition/执行策略修订改为 `placement-candidate-projection.ts` 导出的模块函数（行为不变），Kernel 只增加一个服务字段。
    - `session_resume_ms` 只在 cold 轮记在 RunAttempt 上；预热首轮为 warm，恢复耗时留在运行时行。
    - v2/v3 单 lane daemon 没有提示消费者，`instance.runtime` Outbox 行会保留未发布。
@@ -1137,6 +1137,29 @@ B. 权限收口
 - 第 1 次：预热首轮 17.2 s vs 冷首轮 20.6 s（−3.4 s），预热后进程就绪约 0.6 s；但两组每轮都先执行一次 `message-read`（协议 +1），调查确认模型输入逐字节相同、属模型侧差异（第六十节）。
 - 第 2 次（复测）：role-warm 三轮协议额外生成均为 0，第 1 次的额外 `message-read` 未再出现，印证模型侧漂移/采样差异；预热首轮 23.5 s vs 冷首轮 17.2 s（预热组首轮模型多读一次文件，业务路径 +1，另有回复后的一次 worker 命令）。
 - 结论：预热可稳定省去进程启动（就绪约 0.5–0.6 s），但单样本首轮延迟被模型行为差异主导，不能据此宣称固定的秒级收益；要量化需多样本交替。不改代码。
+
+### 六十二、全面审查 2 批次 1：预热交汇修复
+
+来源：`~/.loom/reviews/2026-09-27-full-review-2-synthesis.md` 批次 1（Codex P1-1/P1-2/P2-1，lifecycle P1-1/P2-1/P2-2/P2-3，drivers P2-1/P2-2/P2-3，kernel P2-2）。预热当前已由负责人临时关闭（runtime-settings revision 1）；本批修复后是否重新开启，待负责人决定。本批未跑付费 CLI、未重启服务。
+
+1. 提示分发（`daemon/src/instance-runtime-hint-dispatcher.ts`）：租到提示后先问 Host 是否可接收（`MultiLaneAgentHost.acceptsPrewarm()`，即预热器已打开）；未就绪则 `retryOutbox` 延后，就绪则立即确认，再尽力执行刷新挂载与预热/retire。确认或重试的租约错误只写诊断，不让 `run()` reject（此前慢预热/retire 超过 5 s 租约会让 daemon 全部组件停止，提示也不发布，重启后重演）；确认失败时不执行，留给下次租约。daemon 启动时最近活跃预热排长队也不再影响提示确认。
+2. 启动准入（`InstancePrewarmer` 新选项 `admit`，`MultiLaneAgentHost` 接到 `RuntimeProcessHygiene.admit`，与 AgentHost 真实执行同一检查）：在启动闸门放行后、调用 adapter 预热（登记/spawn）之前检查；未落库清扫结果、进程扫描不可用、Kernel pending/blocked 清扫，或检查本身抛错 → 跳过（原因 `RAH_RUNTIME_CLEANUP_BLOCKED: …`，写诊断），不创建行、不 spawn；清扫恢复后可再预热。
+3. 启动所有权（`InstanceRuntimePool`）：新增池内在途启动登记 `#starting`（`#coldStart` 在第一个 await 前同步登记实例运行时 id，finally 清除）；`fenceStart` 改在该参与者的池锁内执行，等在途的预热完成（就绪并持有，或失败并记录）再判断，janitor/fence 的“外来”判定排除本池持有与本池在途的行（只排除显式登记的 id，不对当前代数的所有 starting 行免检）。`#coldStart` 内部调用的 janitor 不取参与者锁，避免重入死锁。首条消息落在预热“已登记未 spawn”与“已 spawn 未就绪”两个时点，都不再误杀、不重复 `thread/start`，首轮 `warm` 接管预热的运行时；预热失败后真实启动正常走冷启动。
+4. 闸门后复核：放行后重新检查预热器打开/开关，重新取 Kernel 只读计划（实例已移出、频道归档 → `instance_inactive`）；`retire` 把实例记入已退役集合（实例 id 不复用），排队中的预热不再 spawn（`instance_retired`）；`close()` 用 AbortSignal 把闸门中排队的预热移出，不再在停机中 spawn。Kernel `instanceRuntimes.register` 对 Role 实例校验仍是所属频道成员且频道未归档，否则 Conflict（不撤销 Host 参与者授权，retire 与终止证明仍用它写记录）；池把它当作预热启动失败。
+5. 资源计数（合同 §6a “预热计入全局与每 CLI 上限”）：预热准入改为统一口径——本 Host 其他参与者的热进程（idle、busy、在途启动，含真实执行的冷启动）加上 Kernel 已预留但没有热进程持有的 placement（每轮 CLI 的冷进程，如 Kimi、默认 Claude），分别与 Host 上限、本驱动每 CLI 上限比较；`maxWarm` 软上限照旧只数热进程。Kernel 预热计划的 `limits` 新增 `hostReserved`/`runtimeProfileReserved`。检查与在途登记之间没有 await（原子预留），失败在 finally 释放，就绪后转为存活热进程。真实执行优先：真实启动从不因预热计数被拒（Kernel placement 上限准入它们）；尚未 spawn 的预热在 spawn 前按当前占用复查，被真实启动占满时让出（记 `start_failed`/`RAH_NOT_STARTED` 行后跳过，原因 `host_cap`/`cli_cap`）。计划在闸门放行后重取，排队期间调低的上限立即生效。上限因此包含冷 CLI 物理进程，第五十五节第 7 项“冷路径进程不计”已不成立。
+6. 运行时设置文件（`daemon/src/runtime-settings.ts`）：读取容忍并原样保留未知键（顶层分组与已知分组内的未知字段），只校验、读取已知字段；更新回写时保留。此前 `.strict()` 使回滚构建遇到新键无法启动。已在旧构建（ab3cfcd 之前）上写过的文件不受本修复影响——修复只对今后的新增键生效。
+7. 热 Codex 驱动：
+   - `providerLaunchPolicy` 移入 try，用户 MCP 预检失败先经 fd3 发 `fatal`（原因原文）再退出 1，池与首轮失败信息带“Codex user MCP servers could not be resolved …”，不再只有 “exited before ready”。冷 `codex-app-server-driver.mjs` 未改（其 stderr 由 BoundedOutput 保留）。
+   - reload（`thread/resume` 已卸载的 thread）前重新 `codex mcp list` 列名单；出现启动时没有的名字（或列举 fail-closed 失败）→ 本轮以 `config_restart: …` 被拒（`turn.failed rejected`，未开始任何轮次），随后驱动 `fatal` 退出；Activation 按可恢复失败重试，下一次冷启动按全部现有名字关闭并 `thread/resume` 同一 thread。选此法而非 thread 级 `config` 合并关闭项的依据：进程级 `-c` 关闭已由二次列举免费核实，thread 级 `config` 对 `mcp_servers.*` 的效果未核实；代价是一次失败的尝试，运行时行终止原因记为 `crash`（非 `config_restart`）。`providerLaunchPolicy` 返回值新增 `codexMcpServerNames`。
+   - `validateProviderLaunchArgs` 对集合内的单字母托管短选项拒绝粘连写法（`-cKEY=VAL`、`-sdanger-full-access` 等，取前两个字符判定），附加参数与完整覆盖两条路径都拒绝。已保存的 Role 若含此写法，启动时会被拒。
+8. 测试（先失败再实现；FAKE Codex app-server，无模型调用）：
+   - `daemon/test/instance-runtime-hints.test.ts`：新增“租约 50 ms、预热/retire 各 150 ms：`run()` 不 reject，每条提示确认一次、各处理一次，确认失去租约只写诊断且不执行”（实现前 `run()` 以 `LeaseConflictError` reject）；原用例改为经 `acceptsPrewarm` 判断就绪，未就绪时不再先刷新挂载。
+   - `agent-host/test/instance-prewarm.test.ts` 新增 8 项：首条消息在“已登记”“已 spawn 未就绪”两个屏障下首轮 `warm` 接管、单进程单 thread、无 crash/start_failed 行；预热失败时首轮冷启动完成；pending 清扫、扫描不可用、清扫结果写入失败三态下预热跳过且无行无进程、恢复后可预热；闸门排队中 retire、仅移除、close 三种情况不 spawn；未 spawn 的预热让出给占用最后一个 Host 名额的真实启动；无热进程持有的 placement（每轮 CLI）计入预热上限（去掉 reserved 计数时该测试失败，已验证）；闸门排队期间调低上限后按新上限跳过、启动失败释放名额。实现前 8 项均失败（close 一项挂起至超时）。
+   - `kernel/test/instance-prewarm.test.ts`：移除后、频道归档后 `register` 被拒，恢复归档后可登记；计划 `limits` 断言新增两字段。
+   - `daemon/test/runtime-settings.test.ts`：含未知分组与分组内未知字段的文件能打开、更新并原样保留。
+   - `agent-host/test/codex-warm-runtime.test.ts`：预检失败时池诊断含 fd3 `fatal` 原因且未起 app-server；卸载后新增 MCP → 旧进程不 reload、不跑第二轮，重启后的进程带 `mcp_servers.added.enabled=false` 并恢复同一 thread。FAKE `codex mcp list` 可读 `mcp.json`/`mcp-fail`（默认仍为空）。
+   - `agent-host/test/provider-launch-arguments.test.ts`：粘连写法在附加与覆盖路径均被拒。
+9. 未解决/限制：config_restart 的运行时行记为 `crash`，且消耗一次重试；Kernel 预留快照取自闸门放行时的计划，与池内实时计数之间仍有小窗口（偏保守或偏少至多一次在途放置）；预热让出时留下一条 `start_failed` 运行时行；预热重新开启与否待负责人决定，重新开启前建议经 Codex 复审本批。
 
 ## 当前状态（2026-09-26，控制台批次 3 后）
 

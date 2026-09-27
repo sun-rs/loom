@@ -92,6 +92,9 @@ export type InstancePrewarmPlan =
       limits: {
         hostMaxConcurrent: number;
         runtimeProfileMaxConcurrent: number;
+        /** Placements reserved now on the Host / this RuntimeProfile. */
+        hostReserved: number;
+        runtimeProfileReserved: number;
       };
     }
   | { kind: "skipped"; reason: string };
@@ -253,6 +256,14 @@ export function planInstancePrewarm(input: {
     offer.hostId,
     offer.runtimeProfileId,
   );
+  const hostCapacity = capacities.hosts.find(
+    (host) => host.hostId === offer.hostId,
+  );
+  const profileCapacity = capacities.profiles.find(
+    (profile) =>
+      capacityProfileResourceId(profile.hostId, profile.runtimeProfileId) ===
+      profileKey,
+  );
   return {
     activationId,
     agent,
@@ -260,17 +271,10 @@ export function planInstancePrewarm(input: {
     fromSeq: toSeq,
     kind: "ready",
     limits: {
-      hostMaxConcurrent:
-        capacities.hosts.find((host) => host.hostId === offer.hostId)
-          ?.adminMaxConcurrent ?? 1,
-      runtimeProfileMaxConcurrent:
-        capacities.profiles.find(
-          (profile) =>
-            capacityProfileResourceId(
-              profile.hostId,
-              profile.runtimeProfileId,
-            ) === profileKey,
-        )?.adminMaxConcurrent ?? 1,
+      hostMaxConcurrent: hostCapacity?.adminMaxConcurrent ?? 1,
+      hostReserved: hostCapacity?.reserved ?? 0,
+      runtimeProfileMaxConcurrent: profileCapacity?.adminMaxConcurrent ?? 1,
+      runtimeProfileReserved: profileCapacity?.reserved ?? 0,
     },
     placement,
     roomId,

@@ -3,6 +3,8 @@ import { INSTANCE_RUNTIME_HINT_TOPIC } from "@rah-os/kernel";
 
 /** The Host operations a Kernel `instance.runtime` hint asks for. */
 export type InstanceRuntimeHintTarget = {
+  /** The Host can take a prewarm now (its pool started); else kept. */
+  acceptsPrewarm(): boolean;
   prewarmInstance(participantId: string): Promise<unknown>;
   retireInstance(participantId: string): Promise<void>;
 };
@@ -57,7 +59,14 @@ export class InstanceRuntimeHintDispatcher {
         process.stderr.write(`[loom instance-runtime-hint] ${message}\n`));
   }
 
-  /** Handles one pending hint; false when there was none. */
+  /**
+   * Handles one pending hint; false when there was none. Full review 2 batch
+   * 1 #1 (lifecycle P1-1): the hint is confirmed as soon as the Host can
+   * take it, and only then prewarmed or retired best effort — a slow start,
+   * gate queue or retire can outlive the Outbox lease. A lease error of the
+   * confirm or retry is a diagnostic, never a failure of this component
+   * (which would stop the daemon).
+   */
   async dispatchOnce(): Promise<boolean> {
     const entry = this.#kernel.leaseNextOutbox({
       dispatcherId: this.#dispatcherId,
@@ -69,35 +78,67 @@ export class InstanceRuntimeHintDispatcher {
       action?: unknown;
       participantId?: unknown;
     };
+    const prewarm = typeof participantId === "string" && action === "prewarm";
+    let ready: boolean;
     try {
-      if (typeof participantId === "string" && action === "prewarm") {
-        await this.#beforePrewarm();
-        const outcome = (await this.#target.prewarmInstance(participantId)) as
-          { reason?: unknown } | undefined;
-        if (outcome?.reason === "host_not_running") {
-          // The Host has not started its pool yet (daemon start): keep it.
-          this.#kernel.retryOutbox({
-            dispatcherId: this.#dispatcherId,
-            error: "host not running yet",
-            outboxId: entry.outboxId,
-            retryAfterMs: this.#retryAfterMs,
-          });
-          return true;
-        }
-      } else if (typeof participantId === "string" && action === "retire")
-        await this.#target.retireInstance(participantId);
-    } catch (error) {
-      this.#onDiagnostic(
-        `${String(action)} of ${String(participantId)} failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      ready = !prewarm || this.#target.acceptsPrewarm();
+    } catch {
+      ready = false;
+    }
+    if (!ready) {
+      // The Host has not started its pool yet (daemon start): keep it.
+      try {
+        this.#kernel.retryOutbox({
+          dispatcherId: this.#dispatcherId,
+          error: "host not running yet",
+          outboxId: entry.outboxId,
+          retryAfterMs: this.#retryAfterMs,
+        });
+      } catch (error) {
+        this.#diagnostic(`retry of hint ${entry.outboxId} failed`, error);
+      }
+      return true;
     }
     // Best effort: never retried (a retry could prewarm a busy instance
     // later for nothing); durable state already covers every outcome.
-    this.#kernel.acknowledgeOutboxPublished({
-      dispatcherId: this.#dispatcherId,
-      outboxId: entry.outboxId,
-    });
+    try {
+      this.#kernel.acknowledgeOutboxPublished({
+        dispatcherId: this.#dispatcherId,
+        outboxId: entry.outboxId,
+      });
+    } catch (error) {
+      // Not ours any more (or not confirmed): its next lease handles it.
+      this.#diagnostic(`confirm of hint ${entry.outboxId} failed`, error);
+      return true;
+    }
+    try {
+      if (prewarm) {
+        await this.#beforePrewarm();
+        // The Host records its own outcome (started / skipped with reason).
+        await this.#target.prewarmInstance(participantId);
+      } else if (typeof participantId === "string" && action === "retire")
+        await this.#target.retireInstance(participantId);
+    } catch (error) {
+      this.#diagnostic(
+        `${String(action)} of ${String(participantId)} failed`,
+        error,
+      );
+    }
     return true;
+  }
+
+  #diagnostic(text: string, error: unknown): void {
+    this.#onDiagnosticSafe(
+      `${text}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  #onDiagnosticSafe(text: string): void {
+    try {
+      this.#onDiagnostic(text);
+    } catch {
+      // Diagnostics never own lifecycle.
+    }
   }
 
   async run(input: { signal: AbortSignal }): Promise<void> {

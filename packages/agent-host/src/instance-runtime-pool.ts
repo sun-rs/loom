@@ -717,6 +717,16 @@ export class InstanceRuntimePool {
   readonly hostGeneration: string;
   readonly #control: AgentHostControlPort;
   readonly #runtimes = new Map<string, WarmRuntime>();
+  /**
+   * Full review 2 batch 1 #3/#5: cold starts in flight (Kernel row
+   * registered, not ready yet), by participant. Owned by this pool: the start
+   * fence and janitor never treat them as leftovers, and prewarm admission
+   * counts them with the live runtimes.
+   */
+  readonly #starting = new Map<
+    string,
+    { driver: string; instanceRuntimeId: string; prewarm: boolean }
+  >();
   readonly #locks = new Map<string, Promise<unknown>>();
   readonly #stateDirectory: string;
   readonly #socketRoot: string;
@@ -885,20 +895,34 @@ export class InstanceRuntimePool {
    * row. They are proven gone first; one that cannot be blocks the start.
    */
   async fenceStart(participantId: string): Promise<void> {
-    const foreign = async () =>
-      (await this.#control.instanceRuntimes!.list()).filter(
-        (row) =>
-          row.participantId === participantId &&
-          this.#runtimes.get(participantId)?.instanceRuntimeId !==
-            row.instanceRuntimeId,
-      );
-    if ((await foreign()).length === 0) return;
-    await this.janitor(participantId);
-    const remaining = await foreign();
-    if (remaining.length > 0)
-      throw new Error(
-        `instance runtime ${remaining.map((row) => row.instanceRuntimeId).join(", ")} of ${participantId} is not proven terminated; new execution stays blocked`,
-      );
+    // Full review 2 batch 1 #3 (Codex P1-2): the fence shares the
+    // participant's start ownership. It waits for this pool's own start in
+    // flight (a prewarm) to finish — ready and held, or failed and recorded —
+    // instead of taking its starting row for a leftover. The janitor it
+    // calls takes no participant lock (the cold start calls it inside one).
+    await this.#serialize(participantId, async () => {
+      const foreign = async () =>
+        (await this.#control.instanceRuntimes!.list()).filter(
+          (row) => row.participantId === participantId && !this.#ownsRow(row),
+        );
+      if ((await foreign()).length === 0) return;
+      await this.janitor(participantId);
+      const remaining = await foreign();
+      if (remaining.length > 0)
+        throw new Error(
+          `instance runtime ${remaining.map((row) => row.instanceRuntimeId).join(", ")} of ${participantId} is not proven terminated; new execution stays blocked`,
+        );
+    });
+  }
+
+  /** A live row this pool holds or is starting itself (never a leftover). */
+  #ownsRow(row: { participantId: string; instanceRuntimeId: string }): boolean {
+    return (
+      this.#runtimes.get(row.participantId)?.instanceRuntimeId ===
+        row.instanceRuntimeId ||
+      this.#starting.get(row.participantId)?.instanceRuntimeId ===
+        row.instanceRuntimeId
+    );
   }
 
   /** Periodic idle eviction; resolves nothing and never blocks shutdown. */
@@ -1060,7 +1084,7 @@ export class InstanceRuntimePool {
     driver: string;
     key: string;
     launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
-    limits: { maxLive: number; maxLiveForDriver: number };
+    limits: PrewarmLimits;
     participantId: string;
     cliFingerprint?: () => Promise<string | undefined>;
   }): Promise<
@@ -1071,24 +1095,72 @@ export class InstanceRuntimePool {
       const existing = this.#runtimes.get(input.participantId);
       if (existing !== undefined && existing.state !== "dead")
         return { kind: "skipped" as const, reason: "already_live" };
-      const live = [...this.#runtimes.values()].filter(
-        (runtime) => runtime.state !== "dead",
-      );
-      const reason =
-        live.length >= this.policy.maxWarm
-          ? "warm_cap"
-          : live.length >= input.limits.maxLive
-            ? "host_cap"
-            : live.filter((runtime) => runtime.driver === input.driver)
-                  .length >= input.limits.maxLiveForDriver
-              ? "cli_cap"
-              : undefined;
+      const reason = this.#prewarmCapReason(input);
       if (reason !== undefined) return { kind: "skipped" as const, reason };
-      const runtime = await this.#coldStart(input);
-      runtime.state = "idle";
-      runtime.lastActivityMs = this.#now();
-      return { kind: "started" as const, runtime };
+      // No await between the check and the reservation: `#coldStart`
+      // records this start in `#starting` synchronously.
+      try {
+        return {
+          kind: "started" as const,
+          runtime: await this.#coldStart(input, input.limits),
+        };
+      } catch (error) {
+        if (error instanceof PrewarmYield)
+          return { kind: "skipped" as const, reason: error.reason };
+        throw error;
+      }
     });
+  }
+
+  /**
+   * Full review 2 batch 1 #5 (Codex P2-1, contract §6a): one count of this
+   * Host's live CLI processes for prewarm admission — every warm runtime of
+   * another participant (idle, busy, or still starting, by a prewarm or a
+   * real turn) plus the Kernel placements no warm runtime holds (per-turn
+   * cold CLI processes). Real starts are never refused here; the Kernel
+   * placement caps admit them.
+   */
+  #prewarmCapReason(input: {
+    driver: string;
+    limits: PrewarmLimits;
+    participantId: string;
+  }): string | undefined {
+    const others = new Map<string, { attached: boolean; driver: string }>();
+    for (const runtime of this.#runtimes.values())
+      if (
+        runtime.state !== "dead" &&
+        runtime.participantId !== input.participantId
+      )
+        others.set(runtime.participantId, {
+          // Holding a placement: counted by the Kernel's reserved total too.
+          attached:
+            runtime.state === "busy" ||
+            runtime.current !== undefined ||
+            runtime.unreleasedRunAttemptId !== undefined,
+          driver: runtime.driver,
+        });
+    for (const [participantId, start] of this.#starting)
+      if (participantId !== input.participantId)
+        others.set(participantId, {
+          attached:
+            (others.get(participantId)?.attached ?? false) || !start.prewarm,
+          driver: start.driver,
+        });
+    const count = (driver?: string) => {
+      const warm = [...others.values()].filter(
+        (entry) => driver === undefined || entry.driver === driver,
+      );
+      const reserved =
+        (driver === undefined
+          ? input.limits.reserved
+          : input.limits.reservedForDriver) ?? 0;
+      const attached = warm.filter((entry) => entry.attached).length;
+      return warm.length + Math.max(0, reserved - attached);
+    };
+    if (others.size >= this.policy.maxWarm) return "warm_cap";
+    if (count() >= input.limits.maxLive) return "host_cap";
+    if (count(input.driver) >= input.limits.maxLiveForDriver) return "cli_cap";
+    return undefined;
   }
 
   /**
@@ -1287,8 +1359,7 @@ export class InstanceRuntimePool {
       (row) =>
         (onlyParticipantId === undefined ||
           row.participantId === onlyParticipantId) &&
-        this.#runtimes.get(row.participantId)?.instanceRuntimeId !==
-          row.instanceRuntimeId,
+        !this.#ownsRow(row),
     );
     for (const row of rows) {
       const killed = await this.#killForeign(row);
@@ -1375,15 +1446,46 @@ export class InstanceRuntimePool {
     if (typeof turn !== "string") turn.integrityWrites.push(write);
   }
 
-  async #coldStart(input: {
-    driver: string;
-    key: string;
-    launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
-    participantId: string;
-    cliFingerprint?: () => Promise<string | undefined>;
-  }): Promise<WarmRuntime> {
-    const control = this.#control.instanceRuntimes!;
+  async #coldStart(
+    input: {
+      driver: string;
+      key: string;
+      launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
+      participantId: string;
+      cliFingerprint?: () => Promise<string | undefined>;
+    },
+    /** A prewarm: checked again before spawn, and left idle when ready. */
+    prewarm?: PrewarmLimits,
+  ): Promise<WarmRuntime> {
     const instanceRuntimeId = `instrt_${randomUUID()}`;
+    // Synchronously, before any await: the reservation prewarm admission
+    // counts and the ownership the start fence and janitor respect.
+    const start = {
+      driver: input.driver,
+      instanceRuntimeId,
+      prewarm: prewarm !== undefined,
+    };
+    this.#starting.set(input.participantId, start);
+    try {
+      return await this.#coldStartOwned(input, instanceRuntimeId, prewarm);
+    } finally {
+      if (this.#starting.get(input.participantId) === start)
+        this.#starting.delete(input.participantId);
+    }
+  }
+
+  async #coldStartOwned(
+    input: {
+      driver: string;
+      key: string;
+      launch: (layout: WarmRuntimeLayout) => Promise<WarmRuntimeLaunch>;
+      participantId: string;
+      cliFingerprint?: () => Promise<string | undefined>;
+    },
+    instanceRuntimeId: string,
+    prewarm: PrewarmLimits | undefined,
+  ): Promise<WarmRuntime> {
+    const control = this.#control.instanceRuntimes!;
     let cliFingerprint: string | undefined;
     try {
       cliFingerprint = await input.cliFingerprint?.();
@@ -1437,6 +1539,26 @@ export class InstanceRuntimePool {
       });
       runtime.cliFingerprint = cliFingerprint;
       const launch = await input.launch(layout);
+      // Full review 2 batch 1 #5: real execution first — a prewarm that has
+      // not spawned yet yields to starts that took the capacity meanwhile.
+      const yieldReason =
+        prewarm === undefined
+          ? undefined
+          : this.#prewarmCapReason({
+              driver: input.driver,
+              limits: prewarm,
+              participantId: input.participantId,
+            });
+      if (yieldReason !== undefined) {
+        try {
+          await launch.release?.();
+        } catch (error) {
+          this.diagnostic(
+            `[${instanceRuntimeId}] runtime environment release failed: ${errorMessage(error)}`,
+          );
+        }
+        throw new PrewarmYield(yieldReason);
+      }
       runtime.spawn(launch);
       const spawned = runtime;
       void spawned.exited.then((exit) => this.#onExit(spawned, exit));
@@ -1470,7 +1592,8 @@ export class InstanceRuntimePool {
           ? {}
           : { sessionResumeMs: ready.sessionResumeMs }),
       });
-      runtime.state = "busy";
+      runtime.state = prewarm === undefined ? "busy" : "idle";
+      runtime.lastActivityMs = this.#now();
       this.#runtimes.set(input.participantId, runtime);
       return runtime;
     } catch (error) {
@@ -1920,6 +2043,23 @@ export class InstanceRuntimePool {
       if (this.#locks.get(participantId) === tail)
         this.#locks.delete(participantId);
     }
+  }
+}
+
+/** Prewarm admission: the Kernel plan's run caps and reserved placements. */
+type PrewarmLimits = {
+  maxLive: number;
+  maxLiveForDriver: number;
+  reserved?: number;
+  reservedForDriver?: number;
+};
+
+/** A prewarm that gave its capacity to real execution before spawning. */
+class PrewarmYield extends Error {
+  readonly reason: string;
+  constructor(reason: string) {
+    super(`prewarm yielded before spawn: ${reason}`);
+    this.reason = reason;
   }
 }
 

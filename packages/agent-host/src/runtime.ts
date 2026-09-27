@@ -136,6 +136,13 @@ export type RuntimePrewarmLimits = {
   maxLive: number;
   /** Live warm runtimes of this driver (the per-CLI run cap). */
   maxLiveForDriver: number;
+  /**
+   * Full review 2 batch 1 #5: the Kernel's reserved placements (Host / this
+   * RuntimeProfile) when planned; those no warm runtime holds are per-turn
+   * CLI processes and count against both caps.
+   */
+  reserved?: number;
+  reservedForDriver?: number;
 };
 
 export type RuntimePrewarmOutcome =

@@ -121,7 +121,9 @@ test("the prewarm plan is read-only and names the placement, agent context and s
     assert.equal(plan.contextManifest.activationId, plan.activationId);
     assert.deepEqual(plan.limits, {
       hostMaxConcurrent: 1,
+      hostReserved: 0,
       runtimeProfileMaxConcurrent: 1,
+      runtimeProfileReserved: 0,
     });
 
     // The first real turn: every launch identity the Host keys a warm
@@ -252,6 +254,62 @@ test("removing an instance records the retire hint and ends its prewarm eligibil
     assert.deepEqual(leaseHints(f.kernel), []);
   } finally {
     f.close();
+  }
+});
+
+test("full review 2 batch 1 #4: a removed instance or one in an archived Channel cannot register a warm runtime", () => {
+  const register = (f: RoleInstanceFixture, id: string) =>
+    f.kernel.instanceRuntimes.register(f.host, {
+      driver: "codex",
+      instanceRuntimeId: id,
+      participantId: f.instance.instanceId,
+    });
+  const removed = roleInstanceFixture();
+  try {
+    removed.kernel.removeRoomMember(removed.actor, {
+      basedOnRoomSeq: removed.head(removed.home.roomId),
+      idempotencyKey: "remove",
+      principalId: removed.instance.instanceId,
+      roomId: removed.home.roomId,
+    });
+    assert.throws(
+      () => register(removed, "instrt_after_removal"),
+      /no longer an active member/u,
+    );
+    assert.equal(
+      Number(
+        removed.db.prepare("SELECT COUNT(*) AS n FROM instance_runtimes").get()!
+          .n,
+      ),
+      0,
+      "no runtime row for a removed instance",
+    );
+  } finally {
+    removed.close();
+  }
+  const archived = roleInstanceFixture();
+  try {
+    archived.kernel.archiveWorkspaceRoom(archived.actor, {
+      basedOnRoomSeq: archived.head(archived.home.roomId),
+      idempotencyKey: "archive",
+      roomId: archived.home.roomId,
+    });
+    assert.throws(
+      () => register(archived, "instrt_after_archive"),
+      /no longer an active member/u,
+    );
+    archived.kernel.unarchiveWorkspaceRoom(archived.actor, {
+      basedOnRoomSeq: archived.head(archived.home.roomId),
+      idempotencyKey: "unarchive",
+      roomId: archived.home.roomId,
+    });
+    assert.equal(
+      register(archived, "instrt_active_again").state,
+      "starting",
+      "an active member registers as before",
+    );
+  } finally {
+    archived.close();
   }
 });
 

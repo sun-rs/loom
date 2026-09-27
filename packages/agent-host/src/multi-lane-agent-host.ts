@@ -65,10 +65,23 @@ export class MultiLaneAgentHost {
     this.#instanceRuntimePool = options.instanceRuntimePool;
     const pool = options.instanceRuntimePool;
     const retire = pool?.retire?.bind(pool);
+    const hygiene = options.processHygiene;
+    const hygieneControl = createKernelAgentHostControlPort(
+      options.kernel,
+      options.host,
+    );
     this.#prewarmer =
       retire === undefined
         ? undefined
         : new InstancePrewarmer({
+            // Full review 2 batch 1 #2: the same cleanup admission as a
+            // claimed turn (AgentHost), checked after the start gate.
+            ...(hygiene === undefined
+              ? {}
+              : {
+                  admit: async (participantId: string) =>
+                    await hygiene.admit(hygieneControl, participantId),
+                }),
             host: options.host,
             kernel: options.kernel,
             open: false,
@@ -120,6 +133,11 @@ export class MultiLaneAgentHost {
   /** Runtime prewarm setting; applies to the next prewarm. */
   updatePrewarmSettings(settings: Partial<InstancePrewarmSettings>): void {
     this.#prewarmer?.updateSettings(settings);
+  }
+
+  /** The Host can take a prewarm hint now (its pool started). */
+  acceptsPrewarm(): boolean {
+    return this.#prewarmer?.accepting ?? true;
   }
 
   /** Kernel `instance.runtime` hint: prewarm a newly created instance. */

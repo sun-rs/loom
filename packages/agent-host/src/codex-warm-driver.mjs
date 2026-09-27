@@ -47,6 +47,7 @@ import {
 } from "./codex-unattended-approval.js";
 import { assertSessionReplacementAllowed } from "./provider-activation-input.js";
 import {
+  codexUserMcpServerNames,
   providerLaunchArguments,
   providerLaunchPolicy,
   providerMemoryConfig as memoryConfig,
@@ -103,14 +104,28 @@ let shuttingDown = false;
 let threadLoaded = false;
 let threadResumeParams;
 
+// Full review 2 batch 1 #7 (drivers P2-2): the isolation preflight (the
+// user's MCP servers, fail-closed) refusing the launch is a `fatal` with its
+// reason, so the pool and the run carry it, not only "exited before ready".
+let launchPolicy;
+try {
+  launchPolicy = providerLaunchPolicy("codex", process.env, {
+    codexExecutable: options.executable,
+  });
+} catch (error) {
+  emit("fatal", { error: errorMessage(error).slice(0, 2048) });
+  process.stderr.write(`[loom codex-warm] ${errorMessage(error)}\n`);
+  process.exit(1);
+}
+// The user MCP servers this process disabled by name at launch.
+const launchMcpServerNames = new Set(launchPolicy.codexMcpServerNames ?? []);
+
 const codex = spawn(
   options.executable,
   [
     ...providerLaunchArguments("codex"),
     ...options.codexConfigArgs,
-    ...providerLaunchPolicy("codex", process.env, {
-      codexExecutable: options.executable,
-    }).args,
+    ...launchPolicy.args,
     "--listen",
     `unix://${socketPath}`,
   ],
@@ -389,6 +404,26 @@ function createTurn(runAttemptId, nativeTurnId) {
 }
 
 async function reloadThread() {
+  // Full review 2 batch 1 #7 (drivers P2-3): Codex re-reads config.toml when
+  // a thread is loaded (a new thread measured with 0.156.1; an unloaded
+  // thread's resume is treated the same), and this process disabled the
+  // user's MCP servers by name only at launch. A server added since (or a
+  // listing that fails closed) restarts the runtime before the thread is
+  // loaded: the turn is refused with nothing started, and the next cold
+  // start disables every current name and resumes this same thread.
+  let added;
+  try {
+    added = codexUserMcpServerNames(process.env, {
+      cwd: process.cwd(),
+      executable: options.executable,
+    }).filter((name) => !launchMcpServerNames.has(name));
+  } catch (error) {
+    configRestart(errorMessage(error));
+  }
+  if (added.length > 0)
+    configRestart(
+      `Codex user MCP servers added while this runtime ran: ${added.join(", ")}`,
+    );
   const resumed = await request(
     "thread/resume",
     { threadId, ...threadResumeParams },
@@ -721,6 +756,15 @@ async function waitForSocket() {
       throw new Error("codex app-server did not open its socket");
     await delay(20);
   }
+}
+
+/** The runtime must restart before its thread is loaded again. */
+function configRestart(reason) {
+  const error = new Error(`config_restart: ${reason}`);
+  error.providerRejected = true;
+  // After the refused turn is reported, the process ends (a fatal).
+  setImmediate(() => fatal(error.message));
+  throw error;
 }
 
 function fatal(message) {
