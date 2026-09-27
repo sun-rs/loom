@@ -1,0 +1,1567 @@
+{
+  "schemaVersion": 1,
+  "root": "<tmp>",
+  "startedAt": "2026-09-27T02:24:54.327Z",
+  "provider": "codex",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "bindingId": "local:codex-cli/v1:gpt-6-luna",
+  "cliVersion": "codex-cli 0.156.1",
+  "codeCommit": "e7f322b3272a41897b691ee06608f788e2bda5fd",
+  "sourceRef": "e7f322b3272a41897b691ee06608f788e2bda5fd",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "order": ["native", "role-warm", "role-prewarm"],
+  "questions": [
+    "只读审查当前工作目录的 scripts/workbench-launch-receipt.mjs 和 scripts/workbench-launch-receipt.test.mjs（已提供的固定 Git 快照，无需 git 命令）。仅分析网络配置在重启时的保留，列出已保证的行为、至多两项有行号依据的条件性风险；不能从两份文件证明的明确列出，不强凑漏洞。不要读其他项目文件，不修改文件、记忆或创建任务。最多400中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续上一轮：PID一致是否足以证明配置可信？区分函数级保证与整个重启流程的保证，纠正上一轮可能过强的结论，提出两条回归测试。只依赖已读内容，不重新读文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续此前审查：给出最终接受或拒绝修改的判断、保留和撤回的观点，以及前轮两条回归测试的验收标准。不要重新审查或读取文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。"
+  ],
+  "budgets": {
+    "maxExtraGenerations": 1,
+    "maxExtraGenerationsBeforeReply": 0,
+    "fixedOverheadTokens": 3000,
+    "inputRatio": 2,
+    "inputAllowanceTokens": 3000,
+    "replyAllowanceSeconds": 5,
+    "replyAllowanceRatio": 0.15
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "arms": {
+    "native": {
+      "kind": "native",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-27T02:24:56.869Z",
+          "pid": 47382,
+          "exit": 0,
+          "finishedAt": "2026-09-27T02:25:15.548Z",
+          "sessionId": "01a0e0ae-086e-7e82-8de6-b284f2fbfc26",
+          "answer": "审查结论：**已保证的行为**：重启要求版本为 1 且 PID 匹配的回执；否则报错。代码先清除继承环境中的 7 个网络变量，再按回执模式重建网络配置（[workbench-launch-receipt.mjs](<tmp>/native/workspace/scripts/workbench-launch-receipt.mjs:15)）。Tailnet 回执保留端口、Tailnet 地址和显式可信 LAN 地址；未记录可信 LAN 地址时不会从继承环境或接口扫描重新加入。LAN 回执保留 HTTPS 来源、绑定地址及可选证书和密钥路径；loopback 回执清除远程配置。测试覆盖这些情况及无效地址拒绝重启。\n\n**条件性风险**：回执中的 LAN `bindHost` 仅检查非空字符串（第33行），本文件无法证明它一定经过适当的地址校验；需依赖启动模式生成或下游校验。LAN 回执只保存 `publicOrigin`、绑定地址和可选证书/密钥路径（第35–46行），不保存端口字段；若 LAN 模式重启需要额外端口配置，本文件无法证明其会保留。\n\n本文件无法证明回执写入与重启流程的调用时序，以及 `assertTrustedLanHosts`、`assertTailnetHost` 的完整校验规则；这些不据此认定为漏洞。",
+          "stderr": "Reading additional input from stdin...\n",
+          "replySeconds": 14.039,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 21985,
+            "cached": 15872,
+            "uncached": 6113,
+            "output": 412,
+            "reasoning": 0,
+            "firstInput": 8873,
+            "peakInput": 13112,
+            "replySeconds": 14.039,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:25:03.193Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          }
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-27T02:25:15.559Z",
+          "pid": 47578,
+          "exit": 0,
+          "finishedAt": "2026-09-27T02:25:30.032Z",
+          "sessionId": "01a0e0ae-086e-7e82-8de6-b284f2fbfc26",
+          "answer": "审查结论：PID 一致只证明回执中的 PID 与调用方传入值相等；函数本身无法证明回执来源可信，也无法证明该 PID 当前仍对应原进程。上一轮“要求 PID 匹配”是函数级事实，不能据此推断整个重启流程已验证配置可信。\n\n更正：函数会校验部分模式字段，并清除指定网络变量后从回执重建配置；但完整地址校验依赖未审查的函数，调用时序与回执文件保护也无法从这两份文件证明。故“无效地址拒绝重启”仅限测试覆盖的输入，不能泛化为完整校验保证。\n\n建议两条回归测试：\n\n1. 回执 PID 与传入 PID 相同但模式字段畸形，断言重启拒绝，避免 PID 匹配被当作配置校验。\n2. Tailnet 回执含已覆盖的显式可信 LAN 地址，shell 环境另含不同可信 LAN 地址，断言输出只保留回执集合，不受继承配置影响。",
+          "stderr": "",
+          "replySeconds": 11.096,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 13567,
+            "cached": 12032,
+            "uncached": 1535,
+            "output": 242,
+            "reasoning": 0,
+            "firstInput": 13567,
+            "peakInput": 13567,
+            "replySeconds": 11.096,
+            "toolCalls": []
+          }
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-09-27T02:25:30.040Z",
+          "pid": 47703,
+          "exit": 0,
+          "finishedAt": "2026-09-27T02:25:42.631Z",
+          "sessionId": "01a0e0ae-086e-7e82-8de6-b284f2fbfc26",
+          "answer": "审查结论：**接受此前不修改代码的判断**：现有内容不足以证明存在需修复的缺陷，不能仅因 PID 匹配就认定配置可信。\n\n**保留**：函数检查回执版本和 PID 相等，清除指定网络变量并依据回执重建环境。**撤回**：将这些函数级行为表述成整个重启流程已验证回执来源、进程身份或所有地址输入；这些结论无法由已读内容证明。\n\n回归测试验收标准：\n\n1. PID 匹配但模式字段畸形时，重启必须抛错；不得把 PID 匹配视为模式有效的证明。\n2. 环境中的可信 LAN 地址与 Tailnet 回执记录不同时，输出及重建模式必须只含回执记录的地址，不得沿用环境地址。",
+          "stderr": "2026-09-27T02:25:35.108262Z ERROR codex_models_manager::manager: failed to refresh available models: request timed out\n",
+          "replySeconds": 9.001,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 13899,
+            "cached": 13056,
+            "uncached": 843,
+            "output": 193,
+            "reasoning": 0,
+            "firstInput": 13899,
+            "peakInput": 13899,
+            "replySeconds": 9.001,
+            "toolCalls": []
+          }
+        }
+      ],
+      "processes": [],
+      "status": "complete"
+    },
+    "role-warm": {
+      "kind": "role-warm",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-27T02:25:44.891Z",
+          "finishedAt": "2026-09-27T02:26:02.194Z",
+          "firstMessageSeconds": 17.243,
+          "replySeconds": 17.243,
+          "runs": [
+            {
+              "runAttemptId": "run_5eb038c4-8523-4c8a-9e56-e947f0653723",
+              "startedAt": "2026-09-27T02:25:44.974Z",
+              "finishedAt": "2026-09-27T02:26:02.159Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8dd4801e-d5b0-407c-8de3-16a38b66702b",
+            "mode": "cold",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.083,
+          "sessionId": "01a0e0ae-c561-7cf0-8e1e-0a12682afe43",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 25605,
+            "cached": 9984,
+            "uncached": 15621,
+            "output": 508,
+            "reasoning": 0,
+            "firstInput": 10683,
+            "peakInput": 14922,
+            "replySeconds": 17.243,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:25:51.916Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-27T02:26:01.701Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ],
+            "replyAt": "2026-09-27T02:26:02.134Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 25605,
+                "cachedInputTokens": 9984,
+                "outputTokens": 508,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 9,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": true,
+          "answer": "审查结论：\n已保证（限这两份文件的逻辑）：重启要求 schemaVersion=1 且 receipt.pid 与 incumbentPid 一致；清除继承环境中的七个网络变量，再按 receipt.mode 生成网络配置，同时保留其他环境变量（mjs:15–23、87–100）。loopback 写入指定端口并移除旧远程变量；Tailnet 重放绑定地址、端口及显式可信 LAN 地址，不扫描接口；LAN 重放 HTTPS origin、绑定地址及可选证书/私钥路径（mjs:29–62；test:68–76、108–149）。不受支持/无效的模式、Tailnet 地址或可信 LAN 列表会失败关闭；写 receipt 前也验证模式（mjs:24–85、111–113；test:47–66、151–199）。\n条件性风险：1) LAN 分支不验证 bindHost 是否地址、路径是否存在/可读，只验证非空及路径绝对（mjs:29–46）；若后续消费者依赖这些性质，坏 receipt 可能导致重启失败。2) Tailnet/loopback 分支忽略 receipt 中 LAN/TLS 字段（mjs:49–62）；若 receipt 误标 mode.kind，网络配置将按该 kind 重放。两项均为条件性，文件未证明实际消费者行为或 receipt 被篡改。\n无法由这两份文件证明：重启调用链是否实际使用返回环境、服务绑定/防火墙与证书加载结果、receipt 写入原子替换在异常中断时的行为。"
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-27T02:26:02.214Z",
+          "finishedAt": "2026-09-27T02:26:10.184Z",
+          "firstMessageSeconds": 7.859,
+          "replySeconds": 7.859,
+          "runs": [
+            {
+              "runAttemptId": "run_d62b6ae5-ff1b-461f-bbbf-b682bae6ab5c",
+              "startedAt": "2026-09-27T02:26:02.280Z",
+              "finishedAt": "2026-09-27T02:26:10.093Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8dd4801e-d5b0-407c-8de3-16a38b66702b",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.066,
+          "sessionId": "01a0e0ae-c561-7cf0-8e1e-0a12682afe43",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 15624,
+            "cached": 14080,
+            "uncached": 1544,
+            "output": 316,
+            "reasoning": 0,
+            "firstInput": 15624,
+            "peakInput": 15624,
+            "replySeconds": 7.859,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:26:09.828Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ],
+            "replyAt": "2026-09-27T02:26:10.073Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 15624,
+                "cachedInputTokens": 14080,
+                "outputTokens": 316,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 18,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": true,
+          "answer": "审查结论：\nPID 一致只证明 receipt 声称属于当前 incumbent；本身不能证明其内容可信、未被篡改或与进程实际配置一致。函数级保证仅限于校验版本及 PID、清除指定网络变量、依据 receipt.mode 生成环境并校验部分字段；测试也只验证这些函数行为。整个重启流程是否读取正确 receipt、如何保护其完整性、是否实际采用返回环境，均不能由两文件证明。故此前“保留 incumbent 配置”的说法应限缩为“按匹配 PID 的 receipt 重放”，不能据此断言真实配置得以保留。\n建议回归测试：1) 匹配 PID 但 receipt.mode 与实际 incumbent 配置不符，明确验证当前函数会重放 receipt；流程层测试另验证不一致时拒绝。2) receipt 缺失、PID 不匹配或网络字段无效时，重启调用方拒绝重启且不启动服务。"
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-09-27T02:26:10.198Z",
+          "finishedAt": "2026-09-27T02:26:20.022Z",
+          "firstMessageSeconds": 9.715,
+          "replySeconds": 9.715,
+          "runs": [
+            {
+              "runAttemptId": "run_a1c34981-d99d-4d05-beb9-a902c877e5c4",
+              "startedAt": "2026-09-27T02:26:10.377Z",
+              "finishedAt": "2026-09-27T02:26:19.933Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8dd4801e-d5b0-407c-8de3-16a38b66702b",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.179,
+          "sessionId": "01a0e0ae-c561-7cf0-8e1e-0a12682afe43",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 16177,
+            "cached": 15104,
+            "uncached": 1073,
+            "output": 279,
+            "reasoning": 0,
+            "firstInput": 16177,
+            "peakInput": 16177,
+            "replySeconds": 9.715,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:26:19.572Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ],
+            "replyAt": "2026-09-27T02:26:19.913Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 16177,
+                "cachedInputTokens": 15104,
+                "outputTokens": 279,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 27,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": true,
+          "answer": "审查结论：拒绝按“PID 一致即配置可信”接受修改；仅接受“按匹配 PID 的 receipt 重放配置”这一函数级描述。保留：函数检查版本/PID、清理列明的网络环境变量并校验部分配置；撤回：据此认定整个重启流程保留 incumbent 真实配置或 receipt 内容可信，调用链与完整性无法从已读文件判断。\n回归测试验收标准：1) 匹配 PID、但 receipt.mode 与 incumbent 实际配置不同，函数应明确重放 receipt；流程测试应检测不一致并拒绝启动（若产品要求绑定实际配置）。2) 缺失/错 PID/无效网络字段时，调用方不得启动服务，且原服务配置保持不变。当前两文件无法证明这些流程级标准已满足。"
+        }
+      ],
+      "processes": [
+        {
+          "pid": 47804,
+          "startedAt": "2026-09-27T02:25:44.791Z",
+          "finishedAt": "2026-09-27T02:26:20.233Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "status": "complete",
+      "warmRuntimes": true,
+      "firstRound": "cold",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "participantId": "principal_aa8f94c9-b2bb-4cde-97da-b9438db0fd20",
+      "roomId": "room_a1fd2ebe-ab76-48d7-b4ec-84654447cd09",
+      "instanceRuntimes": [
+        {
+          "instance_runtime_id": "instrt_8dd4801e-d5b0-407c-8de3-16a38b66702b",
+          "pid": 47893,
+          "native_session_id": "01a0e0ae-c561-7cf0-8e1e-0a12682afe43",
+          "session_resume_ms": null,
+          "state": "idle",
+          "turn_count": 3,
+          "terminated_reason": null,
+          "started_at": "2026-09-27T02:25:44.981Z"
+        }
+      ],
+      "warmFailures": []
+    },
+    "role-prewarm": {
+      "kind": "role-prewarm",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-27T02:26:22.317Z",
+          "finishedAt": "2026-09-27T02:26:45.929Z",
+          "firstMessageSeconds": 23.481,
+          "replySeconds": 23.481,
+          "runs": [
+            {
+              "runAttemptId": "run_dc73e5ac-08b4-4712-a645-12ed749d9271",
+              "startedAt": "2026-09-27T02:26:22.386Z",
+              "finishedAt": "2026-09-27T02:26:45.873Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_984ed963-ba30-4575-8571-419abfbf3fc6",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.069,
+          "sessionId": "01a0e0af-5591-7e62-88ad-5965c22c3192",
+          "metrics": {
+            "generations": 4,
+            "generationsTotal": 4,
+            "generationsBeforeReply": 3,
+            "generationsAfterReply": 1,
+            "input": 61146,
+            "cached": 40192,
+            "uncached": 20954,
+            "output": 715,
+            "reasoning": 0,
+            "firstInput": 10692,
+            "peakInput": 18371,
+            "replySeconds": 23.481,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:26:30.146Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-27T02:26:33.022Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-27T02:26:35.804Z",
+                "name": "exec",
+                "kind": "worker-command"
+              },
+              {
+                "at": "2026-09-27T02:26:45.067Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ],
+            "replyAt": "2026-09-27T02:26:45.798Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 4,
+                "inputTokens": 61146,
+                "cachedInputTokens": 40192,
+                "outputTokens": 715,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 9,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": true,
+          "answer": "审查结论：已保证：重启要求 schemaVersion=1 且 receipt.pid 匹配 incumbent；移除继承环境中的七个网络变量，再按记录模式生成配置（mjs 15–23、87–99）。Tailnet 保留端口、Tailnet 地址及显式可信 LAN 地址，不重扫网卡；无可信 LAN 时清除旧值；非法模式/地址及缺失或过期 receipt 失败关闭（mjs 24–85；test 108–222）。LAN 保留 HTTPS origin、绑定地址和可选证书/密钥路径；loopback 清除远程变量（test 28–76）。\n条件性风险：1) 若 receipt 文件可被非可信方改写，PID/schema 校验不认证其内容；合法但被篡改的 LAN origin/bindHost 可直接恢复（mjs 87–99）。2) LAN 模式只校验绑定地址为非空字符串，未在本文件限制其地址范围（mjs 29–47）；是否造成访问面扩大取决于下游解释。\n两文件不能证明：调用方确实使用返回环境启动重启进程、receipt 文件权限/目录信任边界、下游实际绑定行为及 LAN 地址合法性规则。"
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-27T02:26:45.964Z",
+          "finishedAt": "2026-09-27T02:26:55.151Z",
+          "firstMessageSeconds": 9.046,
+          "replySeconds": 9.046,
+          "runs": [
+            {
+              "runAttemptId": "run_7ead8c85-5337-4f50-8dd2-03efe5f01201",
+              "startedAt": "2026-09-27T02:26:46.125Z",
+              "finishedAt": "2026-09-27T02:26:55.127Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_984ed963-ba30-4575-8571-419abfbf3fc6",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.161,
+          "sessionId": "01a0e0af-5591-7e62-88ad-5965c22c3192",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 19039,
+            "cached": 18176,
+            "uncached": 863,
+            "output": 357,
+            "reasoning": 0,
+            "firstInput": 19039,
+            "peakInput": 19039,
+            "replySeconds": 9.046,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:26:54.551Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ],
+            "replyAt": "2026-09-27T02:26:55.010Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 19039,
+                "cachedInputTokens": 18176,
+                "outputTokens": 357,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 18,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": true,
+          "answer": "审查结论：PID 一致只证明 receipt 声称归属该 incumbent；函数不验证 receipt 来源、完整性或签名，因此不足以证明配置可信。函数级可保证：对通过 schema/PID 与模式校验的输入，清除继承的七个网络变量，并按 receipt 模式生成值；非法输入抛错。整个重启流程是否读取可信 receipt、采用该返回环境启动并保持对应监听，单凭这两文件不能证明。上一轮把“非法地址失败关闭”泛化过头：明确验证只覆盖 Tailnet 与可信 LAN 条目；LAN bindHost 在此仅要求非空字符串。\n建议回归测试：1) 修改 receipt 中 Tailnet 地址但保留匹配 PID，断言函数按修改值输出，明确 PID 非完整性校验。2) LAN receipt 使用非空但异常 bindHost，断言函数行为，以固定其现有函数级边界（或待明确预期后断言拒绝）。"
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-09-27T02:26:55.171Z",
+          "finishedAt": "2026-09-27T02:27:03.486Z",
+          "firstMessageSeconds": 8.209,
+          "replySeconds": 8.209,
+          "runs": [
+            {
+              "runAttemptId": "run_6f73c52a-91b7-4d93-9669-6354d99eb96e",
+              "startedAt": "2026-09-27T02:26:55.210Z",
+              "finishedAt": "2026-09-27T02:27:03.399Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_984ed963-ba30-4575-8571-419abfbf3fc6",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.039,
+          "sessionId": "01a0e0af-5591-7e62-88ad-5965c22c3192",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 19630,
+            "cached": 18176,
+            "uncached": 1454,
+            "output": 358,
+            "reasoning": 0,
+            "firstInput": 19630,
+            "peakInput": 19630,
+            "replySeconds": 8.209,
+            "toolCalls": [
+              {
+                "at": "2026-09-27T02:27:03.134Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ],
+            "replyAt": "2026-09-27T02:27:03.380Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 19630,
+                "cachedInputTokens": 18176,
+                "outputTokens": 358,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 27,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": true,
+          "answer": "审查结论：拒绝据现有证据要求修改；未证明有缺陷，可信性属于流程待核事项。保留：PID 匹配仅核对 receipt.pid 与 incumbentPid，不认证配置来源或完整性；函数对有效 receipt 重建网络环境。撤回：把所有非法地址均称为失败关闭，以及将可能篡改直接断言为漏洞；本文件只明确校验 Tailnet/可信 LAN 条目，LAN bindHost 仅检非空，真实风险取决于外部信任边界及下游行为。\n测试验收标准：1) receipt PID 匹配但改 Tailnet 地址时，函数应输出 receipt 地址且测试明确不将 PID 校验视为防篡改。2) 非空异常 LAN bindHost 的测试需先明确预期；如要求拒绝，断言抛错；如记录现状，断言函数接受并保留该值。不要把该条件性测试当作已证实缺陷。"
+        }
+      ],
+      "processes": [
+        {
+          "pid": 48534,
+          "startedAt": "2026-09-27T02:26:21.719Z",
+          "finishedAt": "2026-09-27T02:27:03.697Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "status": "complete",
+      "warmRuntimes": true,
+      "firstRound": "prewarmed",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "prewarmed": {
+        "instanceRuntimeId": "instrt_984ed963-ba30-4575-8571-419abfbf3fc6",
+        "readyAfterMs": 526
+      },
+      "participantId": "principal_55b77fdd-8d27-4038-9bc5-1d5dc0285135",
+      "roomId": "room_ffc39a8a-4407-4c12-a70f-a5c8f35bd381",
+      "instanceRuntimes": [
+        {
+          "instance_runtime_id": "instrt_984ed963-ba30-4575-8571-419abfbf3fc6",
+          "pid": 48618,
+          "native_session_id": "01a0e0af-5591-7e62-88ad-5965c22c3192",
+          "session_resume_ms": null,
+          "state": "idle",
+          "turn_count": 3,
+          "terminated_reason": null,
+          "started_at": "2026-09-27T02:26:21.882Z"
+        }
+      ],
+      "warmFailures": []
+    }
+  },
+  "qualityReview": "required",
+  "status": "over-budget",
+  "catalogVerifiedAt": "2026-09-27T02:24:56.863Z",
+  "comparisons": {
+    "role-warm": {
+      "status": "within-budget",
+      "measuredStatus": "within-budget",
+      "failures": [],
+      "unmeasured": [],
+      "finalInterrupt": {
+        "rounds": 3,
+        "committed": 3,
+        "requested": 3,
+        "accepted": 3,
+        "terminal": 3,
+        "sent": 3,
+        "preempted": 3,
+        "notPreempted": 0,
+        "unknown": 0,
+        "noFinalPost": 0,
+        "evidenceMissing": 0
+      },
+      "retriedRounds": [],
+      "fixedOverhead": {
+        "rah": 10683,
+        "native": 8873,
+        "tokens": 1810,
+        "budget": 3000
+      },
+      "perRoundResidue": [
+        {
+          "fromRound": 2,
+          "toRound": 3,
+          "rahGrowth": 553,
+          "nativeGrowth": 332,
+          "tokens": 221
+        }
+      ],
+      "workPathVariance": {
+        "round1HistoryDelta": {
+          "rahGrowth": 4941,
+          "nativeGrowth": 4694,
+          "tokens": 247
+        },
+        "rounds": [
+          {
+            "round": 1,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 2,
+                "business": 1,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1,
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 2,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          },
+          {
+            "round": 3,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 2,
+                "business": 1,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1,
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 25605,
+            "workPath": 0,
+            "judged": 25605,
+            "budget": 49970
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "inputRatio": 1.1646577211735274,
+          "inputRatioJudged": 1.1646577211735274,
+          "uncachedRatio": 2.5553737935547196,
+          "replyRatio": 1.228221383289408,
+          "inputDecomposition": {
+            "rah": 25605,
+            "native": 21985,
+            "budget": 49970,
+            "delta": 3620,
+            "fixedOverhead": 3620,
+            "round1History": 0,
+            "residue": 0,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 15624,
+            "workPath": 0,
+            "judged": 15624,
+            "budget": 33134
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "inputRatio": 1.1516178963661827,
+          "inputRatioJudged": 1.1516178963661827,
+          "uncachedRatio": 1.0058631921824104,
+          "replyRatio": 0.7082732516222062,
+          "inputDecomposition": {
+            "rah": 15624,
+            "native": 13567,
+            "budget": 33134,
+            "delta": 2057,
+            "fixedOverhead": 1810,
+            "round1History": 247,
+            "residue": 0,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 16177,
+            "workPath": 0,
+            "judged": 16177,
+            "budget": 33798
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "inputRatio": 1.1638966832146198,
+          "inputRatioJudged": 1.1638966832146198,
+          "uncachedRatio": 1.272835112692764,
+          "replyRatio": 1.0793245194978336,
+          "inputDecomposition": {
+            "rah": 16177,
+            "native": 13899,
+            "budget": 33798,
+            "delta": 2278,
+            "fixedOverhead": 1810,
+            "round1History": 247,
+            "residue": 221,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        }
+      ]
+    },
+    "role-prewarm": {
+      "status": "over-budget",
+      "measuredStatus": "over-budget",
+      "failures": [],
+      "unmeasured": [],
+      "finalInterrupt": {
+        "rounds": 3,
+        "committed": 3,
+        "requested": 3,
+        "accepted": 3,
+        "terminal": 3,
+        "sent": 3,
+        "preempted": 3,
+        "notPreempted": 0,
+        "unknown": 0,
+        "noFinalPost": 0,
+        "evidenceMissing": 0
+      },
+      "retriedRounds": [],
+      "fixedOverhead": {
+        "rah": 10692,
+        "native": 8873,
+        "tokens": 1819,
+        "budget": 3000
+      },
+      "perRoundResidue": [
+        {
+          "fromRound": 2,
+          "toRound": 3,
+          "rahGrowth": 591,
+          "nativeGrowth": 332,
+          "tokens": 259
+        }
+      ],
+      "workPathVariance": {
+        "round1HistoryDelta": {
+          "rahGrowth": 8347,
+          "nativeGrowth": 4694,
+          "tokens": 3653
+        },
+        "rounds": [
+          {
+            "round": 1,
+            "businessToolCalls": {
+              "rah": 2,
+              "native": 1,
+              "delta": 1
+            },
+            "generations": {
+              "rah": 4,
+              "native": 2,
+              "delta": 2
+            },
+            "extraGenerations": {
+              "raw": 2,
+              "workPath": 1,
+              "protocol": 1
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 4,
+                "business": 2,
+                "protocol": 2,
+                "unknown": 0,
+                "byKind": {
+                  "other": 2,
+                  "worker-command": 1,
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 2,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          },
+          {
+            "round": 3,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "status": "over-budget",
+          "measuredStatus": "over-budget",
+          "failures": ["input", "replySeconds"],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 4,
+              "beforeReply": 3,
+              "afterReply": 1
+            }
+          },
+          "extraGenerations": 2,
+          "extraGenerationsBeforeReply": 1,
+          "workPathExtraGenerations": 1,
+          "workPathExtraGenerationsBeforeReply": 1,
+          "extraProtocolGenerations": 1,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 2,
+              "native": 1,
+              "delta": 1
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 2,
+              "native": 1,
+              "delta": 1,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 4,
+                "business": 2,
+                "protocol": 2,
+                "unknown": 0,
+                "byKind": {
+                  "other": 2,
+                  "worker-command": 1,
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 1,
+            "extraGenerationsBeforeReply": 1
+          },
+          "input": {
+            "raw": 61146,
+            "workPath": 8873,
+            "judged": 52273,
+            "budget": 49970
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "inputRatio": 2.781259949965886,
+          "inputRatioJudged": 2.3776665908574026,
+          "uncachedRatio": 3.4277768689677734,
+          "replyRatio": 1.6725550252867014,
+          "inputDecomposition": {
+            "rah": 61146,
+            "native": 21985,
+            "budget": 49970,
+            "delta": 39161,
+            "fixedOverhead": 7276,
+            "round1History": 0,
+            "residue": 0,
+            "extraGenerations": 17746,
+            "workPathGenerations": 8873,
+            "protocolGenerations": 8873,
+            "intraRound": 14139
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 19039,
+            "workPath": 0,
+            "judged": 19039,
+            "budget": 33134
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "inputRatio": 1.4033316134738705,
+          "inputRatioJudged": 1.4033316134738705,
+          "uncachedRatio": 0.5622149837133551,
+          "replyRatio": 0.8152487382840663,
+          "inputDecomposition": {
+            "rah": 19039,
+            "native": 13567,
+            "budget": 33134,
+            "delta": 5472,
+            "fixedOverhead": 1819,
+            "round1History": 3653,
+            "residue": 0,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 0,
+                "protocol": 1,
+                "unknown": 0,
+                "byKind": {
+                  "box-post": 1
+                }
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 19630,
+            "workPath": 0,
+            "judged": 19630,
+            "budget": 33798
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "inputRatio": 1.4123318224332686,
+          "inputRatioJudged": 1.4123318224332686,
+          "uncachedRatio": 1.7247924080664294,
+          "replyRatio": 0.9120097766914788,
+          "inputDecomposition": {
+            "rah": 19630,
+            "native": 13899,
+            "budget": 33798,
+            "delta": 5731,
+            "fixedOverhead": 1819,
+            "round1History": 3653,
+            "residue": 259,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        }
+      ]
+    }
+  },
+  "firstRound": {
+    "cold": {
+      "mode": "cold",
+      "replySeconds": 17.243,
+      "queueSeconds": 0.083,
+      "input": 25605
+    },
+    "prewarmed": {
+      "mode": "warm",
+      "replySeconds": 23.481,
+      "queueSeconds": 0.069,
+      "input": 61146,
+      "readyAfterMs": 526
+    },
+    "replySecondsDelta": 6.238000000000003
+  },
+  "measuredStatus": "over-budget",
+  "finishedAt": "2026-09-27T02:27:03.702Z",
+  "rawResultSha256": "82dfd06ac6a21fc9d18583a8a266ba9ad40cff3c98aa473c128b1f46137c04fb"
+}
