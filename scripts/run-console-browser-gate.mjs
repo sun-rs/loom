@@ -23,6 +23,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:net";
+import { DatabaseSync } from "node:sqlite";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -195,6 +196,53 @@ if (args.join(" ") === "debug models --bundled") {
     (await client.request("room.agent.activity.list", { roomId })).agents.find(
       ({ participantId }) => participantId === instanceId,
     );
+  // The instance is idle with nothing queued and the Room head has not moved
+  // across consecutive reads: no reply of a finished turn is still landing.
+  const waitForRoomSettled = async (roomId, participantId) => {
+    let lastSeq;
+    let quietReads = 0;
+    await waitUntil(async () => {
+      const entry = await activityOf(roomId, participantId);
+      const seq = await head(roomId);
+      const quiet = entry?.state === "idle" && entry.queued === false;
+      quietReads = quiet && seq === lastSeq ? quietReads + 1 : 0;
+      lastSeq = seq;
+      return quietReads >= 3;
+    }, 60_000);
+  };
+  // S2-0: removal refuses while a runtime of the participant has an
+  // unconfirmed leftover-process sweep. The client API does not expose the
+  // per-runtime sweep state, so this reads the fixture Kernel ledger
+  // (read-only) with the same predicates the removal fence applies: idle with
+  // nothing queued, no live runtime process in the Room and no unresolved
+  // runtime cleanup of the participant.
+  const waitForRuntimeCleanup = async (roomId, participantId) => {
+    const ledger = new DatabaseSync(join(dataHome, "state", "room.db"), {
+      readOnly: true,
+    });
+    try {
+      await waitUntil(async () => {
+        const entry = await activityOf(roomId, participantId);
+        if (entry?.state !== "idle" || entry.queued !== false) return false;
+        const liveProcess = ledger
+          .prepare(
+            `SELECT 1 AS present FROM runtime_processes
+             WHERE room_id = ? AND participant_id = ?
+               AND state IN ('prepared', 'active', 'orphaned') LIMIT 1`,
+          )
+          .get(roomId, participantId);
+        const unresolvedCleanup = ledger
+          .prepare(
+            `SELECT 1 AS present FROM runtime_cleanup_states
+             WHERE participant_id = ? AND state <> 'resolved' LIMIT 1`,
+          )
+          .get(participantId);
+        return liveProcess === undefined && unresolvedCleanup === undefined;
+      }, 60_000);
+    } finally {
+      ledger.close();
+    }
+  };
 
   const chromeExecutable = await findChromeExecutable();
   chrome = spawn(
@@ -657,10 +705,19 @@ if (args.join(" ") === "debug models --bundled") {
     `[...document.querySelectorAll('#message-list .message[data-actor-id=${JSON.stringify(instanceId)}] .message-body')].some((node) => node.textContent.startsWith("FAKE final answer"))`,
     { description: "fake CLI reply in the channel", timeoutMs: 120_000 },
   );
-  await waitForBrowserValue(browser, `${stateText} === "空闲"`, {
-    description: "instance back to idle",
-    timeoutMs: 30_000,
-  });
+  // The reply can render while the card still holds the pre-lease snapshot
+  // ("idle" with one queued); back to idle means nothing queued either, and
+  // the 50 ms panel sampler has recorded what the card now shows.
+  await waitForBrowserValue(
+    browser,
+    `(() => {
+      const state = ${stateText};
+      const queued = document.querySelector('${card} .instance-queued .field-value')?.textContent;
+      return state === "空闲" && queued === "排队 0" &&
+        window.__stateLog.at(-1) === state && window.__queuedLog.at(-1) === queued;
+    })()`,
+    { description: "instance back to idle", timeoutMs: 30_000 },
+  );
   sampling = false;
   await sampler;
   const uiStates = await evaluate(
@@ -851,6 +908,10 @@ if (args.join(" ") === "debug models --bundled") {
     ),
     true,
   );
+
+  // The 5d post wakes the instance; its reply must land before the next Human
+  // post, or that post is based on a stale Room seq and refused.
+  await waitForRoomSettled(channelId, instanceId);
 
   // --- 5d-2. Unknown -> the verification gets 401 -> access restored ->
   // the original key replays once. Request 1 commits and its response is
@@ -1616,6 +1677,9 @@ if (args.join(" ") === "debug models --bundled") {
   assert.equal(resetEvent.actorId, humanId);
 
   // --- 10. Removal: refused with active work (reason + hint), then done. ---
+  // Only the probe below may hold the removal back: earlier turns' leftover
+  // sweeps are confirmed first.
+  await waitForRuntimeCleanup(channelId, instanceId);
   await click(`${card} .action-remove`);
   await waitForText(`${card} .confirm-box`, "移出后不再向该实例投递");
   await client.request("message.post", {
@@ -1630,10 +1694,7 @@ if (args.join(" ") === "debug models --bundled") {
   const refusalText = await textOf(`${card} .action-result`);
   assert.match(refusalText, /active collaboration work/u);
   assert.match(await textOf(`${card} .action-hint`), /急停/u);
-  await waitUntil(async () => {
-    const entry = await activityOf(channelId, instanceId);
-    return entry?.state === "idle" && entry.queued === false;
-  }, 60_000);
+  await waitForRuntimeCleanup(channelId, instanceId);
   await click(`${card} .action-remove`);
   await click(`${card} .confirm-remove`);
   await waitForText(`${card} .action-result`, "已移出频道");
@@ -1746,10 +1807,14 @@ if (args.join(" ") === "debug models --bundled") {
   // --- 13. 390x844: key controls fit and work with real pointer input. ---
   await viewport(390, 844, true);
   await navigateHash(`#/channel/${encodeURIComponent(channelId)}`);
+  const channelInstances = (
+    await client.request("role.list", { controlRoomId })
+  ).instances.filter(({ channelId: id }) => id === channelId).length;
+  assert.ok(channelInstances > 0, "the channel still lists an instance");
   await waitForBrowserValue(
     browser,
-    `document.querySelector("#message-list .message") !== null && document.querySelector("#instance-list") !== null`,
-    { description: "channel at 390x844" },
+    `document.querySelector("#message-list .message") !== null && document.querySelectorAll("#instance-list .instance-card").length >= ${String(channelInstances)}`,
+    { description: "channel with its instance cards at 390x844" },
   );
   const mobileLayout = await evaluate(
     browser,
