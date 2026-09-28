@@ -1,5 +1,5 @@
 import type { WorkbenchServiceControl } from "./workbench-service-control.ts";
-import { existsSync, lstatSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, statSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 
 import type { ProvisionedLanCertificate } from "./lan-certificate-provisioning.ts";
@@ -75,6 +75,9 @@ export type LocalCoreLanDescriptor = LocalCoreLoopbackDescriptor & {
 export type RunningLocalCoreWorkbench = {
   /** Launcher → pinned file per CLI for this generation (update watcher). */
   cliExecutables?: readonly CliExecutableIdentity[];
+  /** Stop/restart claiming new work (update restart barrier). */
+  pauseAdmission?: () => Promise<void>;
+  resumeAdmission?: () => void;
   descriptor: LocalCoreLoopbackDescriptor | LocalCoreLanDescriptor;
   /** Terminal background failure after the local gateway has been closed. */
   failed?: Promise<Error>;
@@ -121,10 +124,17 @@ export async function startLocalCoreWorkbench(input: {
         const launcherPath =
           (await resolveLauncherPath(candidate.executable, environment)) ??
           candidate.resolvedExecutablePath;
+        const metadata = statSync(candidate.resolvedExecutablePath);
         cliExecutables.push({
           cliId: spec.cliId,
           launcherPath,
           resolvedPath: candidate.resolvedExecutablePath,
+          fingerprint: {
+            dev: metadata.dev,
+            ino: metadata.ino,
+            size: metadata.size,
+            mtimeMs: metadata.mtimeMs,
+          },
         });
         return [{ ...spec, executable: launcherPath }];
       }),
@@ -211,6 +221,7 @@ export async function startLocalCoreWorkbench(input: {
           gateway,
           shutdown,
         }),
+        application,
       );
     }
 
@@ -256,6 +267,7 @@ export async function startLocalCoreWorkbench(input: {
         gateway,
         shutdown,
       }),
+      application,
     );
   } catch (error) {
     await gateway?.stop().catch(() => undefined);
@@ -335,8 +347,14 @@ export function runningWorkbench(input: {
 function withCliExecutables(
   cliExecutables: readonly CliExecutableIdentity[],
   running: RunningLocalCoreWorkbench,
+  application?: DaemonApplication,
 ): RunningLocalCoreWorkbench {
   running.cliExecutables = cliExecutables;
+  if (application !== undefined) {
+    running.pauseAdmission = async () =>
+      await application.admission?.pauseAdmission();
+    running.resumeAdmission = () => application.admission?.resumeAdmission();
+  }
   return running;
 }
 

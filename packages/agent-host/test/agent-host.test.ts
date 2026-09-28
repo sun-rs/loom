@@ -1869,3 +1869,61 @@ test("D2-1: a business-obligation completion refusal after a committed final rep
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("review round 2 P1-2: paused admission claims nothing until resumed", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-pause-"));
+  try {
+    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "pause-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "pause-agent",
+      kind: "agent",
+    });
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(humanActor, {
+      name: "Pause",
+      slug: "pause",
+    });
+    kernel.addMember(humanActor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    kernel.postMessage(humanActor, {
+      body: "queued while an update restart prepares",
+      idempotencyKey: "pause-message",
+      recipients: [
+        { participantId: agent.principal.principalId, reason: "mention" },
+      ],
+      roomId: room.roomId,
+    });
+    const runtime = new FakeRuntimeAdapter({});
+    const host = new AgentHost({
+      host: authenticateHost(kernel, "pause-host", [
+        agent.principal.principalId,
+      ]),
+      kernel,
+      leaseMs: 30_000,
+      runtime,
+    });
+    await host.pauseAdmission();
+    assert.equal((await host.reconcileOnce()).state, "idle");
+    assert.equal(runtime.starts.length, 0);
+    assert.equal(
+      kernel.listActivations({ roomId: room.roomId })[0]?.state,
+      "queued",
+    );
+    host.resumeAdmission();
+    await host.reconcileOnce();
+    assert.equal(
+      runtime.starts.length,
+      1,
+      "resumed admission claims the queued work",
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

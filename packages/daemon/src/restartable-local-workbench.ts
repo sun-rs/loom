@@ -61,6 +61,17 @@ export async function startRestartableLocalCoreWorkbench(
     // The operation belongs to the launcher, never to the HTTP connection.
     pending = new Promise<void>((resolve) => setImmediate(resolve))
       .then(async () => {
+        if (idle === "nothing-running") {
+          // Review round 2 P1-2: close admission first, then re-check. Work
+          // claimed in between keeps running; this update restart waits.
+          await running.pauseAdmission?.();
+          if (!workbenchIsIdle(running.descriptor.stateDirectory, idle)) {
+            running.resumeAdmission?.();
+            state = "online";
+            armWatcher();
+            return;
+          }
+        }
         await running.stop();
         for (let attempt = 0; attempt < 2 && !stopped; attempt += 1) {
           try {
@@ -77,13 +88,16 @@ export async function startRestartableLocalCoreWorkbench(
           } catch (error) {
             // startLocalCoreWorkbench rolls back every partially started owner.
             // Recheck durable execution evidence; never retry past an orphan or hold.
+            // Same guard as the one that admitted this restart (review
+            // round 2 P1-1): queued work an update restart allowed must not
+            // then forbid its one bounded recovery.
             if (
               attempt > 0 ||
-              !workbenchIsIdle(running.descriptor.stateDirectory)
+              !workbenchIsIdle(running.descriptor.stateDirectory, idle)
             )
               throw error;
             await lifecycle.wait();
-            if (!workbenchIsIdle(running.descriptor.stateDirectory))
+            if (!workbenchIsIdle(running.descriptor.stateDirectory, idle))
               throw error;
           }
         }

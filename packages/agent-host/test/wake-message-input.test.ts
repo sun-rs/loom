@@ -514,3 +514,13 @@ test("review P2-1: omitted history is stated even when no catch-up event fitted"
   assert.equal(lines[1], "For you:");
   assert.match(lines[2]!, /^#general seq 14 .*now/u);
 });
+
+test("review round 2: an explicit empty directedSeqs makes every event background with no reply target", () => {
+  const wake = formatBodiedWakeInput({
+    present: present({ directedSeqs: [] }),
+  });
+  assert.ok(wake);
+  assert.ok(!wake.includes("message-post --target"), wake);
+  assert.match(wake, /^Since your last read \(did not wake you\):/u);
+  assert.match(wake, /No message here woke you: message-check/u);
+});

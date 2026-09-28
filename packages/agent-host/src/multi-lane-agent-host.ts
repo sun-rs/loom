@@ -52,6 +52,7 @@ export class MultiLaneAgentHost {
   readonly #createWorker: () => AgentHost;
   #launchWorker: ((worker: AgentHost) => void) | undefined;
   #running = false;
+  #admissionPaused = false;
 
   constructor(options: MultiLaneAgentHostOptions) {
     if (!Number.isInteger(options.capacity) || options.capacity <= 0) {
@@ -92,12 +93,15 @@ export class MultiLaneAgentHost {
               : { settings: options.instancePrewarm }),
             startGate: this.#startGate,
           });
-    this.#createWorker = () =>
-      new AgentHost({
+    this.#createWorker = () => {
+      const worker = new AgentHost({
         ...options,
         manageHostLifecycle: false,
         startGate: this.#startGate,
       });
+      if (this.#admissionPaused) void worker.pauseAdmission();
+      return worker;
+    };
     this.#workers = Array.from({ length: options.capacity }, () =>
       this.#createWorker(),
     );
@@ -105,6 +109,17 @@ export class MultiLaneAgentHost {
 
   get capacity(): number {
     return this.#capacity;
+  }
+
+  /** Review round 2 P1-2: every lane (and any lane added later) stops claiming. */
+  async pauseAdmission(): Promise<void> {
+    this.#admissionPaused = true;
+    await Promise.all(this.#workers.map((worker) => worker.pauseAdmission()));
+  }
+
+  resumeAdmission(): void {
+    this.#admissionPaused = false;
+    for (const worker of this.#workers) worker.resumeAdmission();
   }
 
   /**

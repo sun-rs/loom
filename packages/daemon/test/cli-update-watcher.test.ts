@@ -157,3 +157,48 @@ test("the real resolver follows a repointed symlink", async () => {
     rmSync(root, { force: true, recursive: true });
   }
 });
+
+test("review round 2 P2-1: an in-place replacement of the same target path is an update", async () => {
+  const { statSync } = await import("node:fs");
+  const root = realpathSync(
+    mkdtempSync(join(tmpdir(), "loom-launcher-inplace-")),
+  );
+  try {
+    const target = join(root, "codex");
+    writeFileSync(target, "#!/bin/sh\necho 1\n", { mode: 0o755 });
+    const before = statSync(target);
+    let restarts = 0;
+    const watcher = startCliUpdateWatcher({
+      identities: [
+        {
+          cliId: "codex",
+          launcherPath: target,
+          resolvedPath: target,
+          fingerprint: {
+            dev: before.dev,
+            ino: before.ino,
+            size: before.size,
+            mtimeMs: before.mtimeMs,
+          },
+        },
+      ],
+      intervalMs: 0,
+      requestRestart: () => {
+        restarts += 1;
+        return "accepted";
+      },
+    });
+    try {
+      assert.equal(await watcher.tick(), "unchanged");
+      // Same path, same size, new content and mtime.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      writeFileSync(target, "#!/bin/sh\necho 2\n", { mode: 0o755 });
+      assert.equal(await watcher.tick(), "accepted");
+      assert.equal(restarts, 1);
+    } finally {
+      watcher.stop();
+    }
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+  }
+});

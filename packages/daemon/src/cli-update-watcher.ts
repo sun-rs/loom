@@ -1,4 +1,4 @@
-import { realpath } from "node:fs/promises";
+import { realpath, stat } from "node:fs/promises";
 
 /**
  * Owner ruling 2026-09-28: Loom follows the user's stable CLI command. A CLI
@@ -16,6 +16,18 @@ export type CliExecutableIdentity = {
   launcherPath: string;
   /** The file it resolved to when this generation started. */
   resolvedPath: string;
+  /**
+   * Review round 2 P2-1: that file's metadata at start, so an update that
+   * rewrites or renames over the same target path is noticed too.
+   */
+  fingerprint?: FileFingerprint;
+};
+
+export type FileFingerprint = {
+  dev: number;
+  ino: number;
+  size: number;
+  mtimeMs: number;
 };
 
 export type CliUpdateTick = "unchanged" | "busy" | "accepted" | "stopped";
@@ -26,6 +38,7 @@ export function startCliUpdateWatcher(input: {
   intervalMs: number;
   requestRestart: () => "accepted" | "busy" | "stale";
   resolve?: (launcherPath: string) => Promise<string | undefined>;
+  fingerprintOf?: (path: string) => Promise<FileFingerprint | undefined>;
   onChange?: (cliId: string, from: string, to: string) => void;
 }): { tick(): Promise<CliUpdateTick>; stop(): void } {
   const resolve =
@@ -33,6 +46,21 @@ export function startCliUpdateWatcher(input: {
     (async (path: string) => {
       try {
         return await realpath(path);
+      } catch {
+        return undefined;
+      }
+    });
+  const fingerprintOf =
+    input.fingerprintOf ??
+    (async (path: string) => {
+      try {
+        const metadata = await stat(path);
+        return {
+          dev: metadata.dev,
+          ino: metadata.ino,
+          size: metadata.size,
+          mtimeMs: metadata.mtimeMs,
+        };
       } catch {
         return undefined;
       }
@@ -45,7 +73,13 @@ export function startCliUpdateWatcher(input: {
     for (const identity of input.identities) {
       const now = await resolve(identity.launcherPath);
       // A launcher briefly missing mid-update is not yet a new target.
-      if (now === undefined || now === identity.resolvedPath) continue;
+      if (now === undefined) continue;
+      if (now === identity.resolvedPath) {
+        if (identity.fingerprint === undefined) continue;
+        const current = await fingerprintOf(now);
+        if (current === undefined || sameFile(current, identity.fingerprint))
+          continue;
+      }
       changed = true;
       input.onChange?.(identity.cliId, identity.resolvedPath, now);
     }
@@ -75,4 +109,13 @@ export function startCliUpdateWatcher(input: {
       clear();
     },
   };
+}
+
+function sameFile(left: FileFingerprint, right: FileFingerprint): boolean {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.size === right.size &&
+    left.mtimeMs === right.mtimeMs
+  );
 }

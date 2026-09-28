@@ -115,6 +115,11 @@ export class DaemonApplication {
     };
   }
 
+  // Review round 2 P1-2: the admission owner an update restart pauses.
+  #runner: AgentHost | MultiLaneAgentHost | undefined;
+  get admission() {
+    return this.#runner;
+  }
   health(): DaemonHealthSnapshot {
     return structuredClone(this.#health);
   }
@@ -639,7 +644,7 @@ export class DaemonApplication {
         instanceRuntimePool,
         wait: async (delayMs, signal) => await wakeSignal.wait(delayMs, signal),
       } satisfies AgentHostOptions;
-      const runner =
+      const runner = (this.#runner =
         placementRuntimeResolver === undefined
           ? new AgentHost(runnerOptions)
           : new MultiLaneAgentHost({
@@ -649,7 +654,7 @@ export class DaemonApplication {
               ...(runtimeSettings
                 ? { runtimeStartScheduler: runtimeSettings.startScheduler() }
                 : {}),
-            });
+            }));
       runtimeSettings?.attach({
         kernel,
         lanes: runner instanceof MultiLaneAgentHost ? runner : undefined,

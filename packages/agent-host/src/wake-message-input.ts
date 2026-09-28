@@ -187,8 +187,10 @@ export function formatBodiedWakeInput(input: {
   // Review P1-2: inside the range, only the events that woke this instance
   // (Kernel `directedSeqs`) are its own; a merged range can carry a Human @
   // of someone else, which is background like the catch-up.
+  // Absent = an older Kernel (treat the range as before); an explicit empty
+  // set = nothing in this window woke the instance (review round 2).
   const directed =
-    present.directedSeqs === undefined || present.directedSeqs.length === 0
+    present.directedSeqs === undefined
       ? undefined
       : new Set(present.directedSeqs);
   const isOwn = (event: { roomSeq: number }) =>
@@ -197,11 +199,13 @@ export function formatBodiedWakeInput(input: {
   const catchUp = present.events.filter((event) => !isOwn(event));
   const own = present.events.filter(isOwn);
   const instruction = complete
-    ? replyInstruction(
-        compactWakeReplyTargets(own, present.addressing),
-        turn,
-        through,
-      )
+    ? own.length === 0
+      ? `No message here woke you: message-check${turn}`
+      : replyInstruction(
+          compactWakeReplyTargets(own, present.addressing),
+          turn,
+          through,
+        )
     : `Shown through seq ${through} of ${present.toSeq}${notice}: run message-check${turn} first, then reply.`;
   const retry =
     present.previousAttemptUnconfirmed === true
@@ -219,8 +223,12 @@ export function formatBodiedWakeInput(input: {
           ...(catchUp.length === 0
             ? []
             : [renderCompactWakeEventLines(catchUp, present.addressing)]),
-          "For you:",
-          renderCompactWakeEventLines(own, present.addressing),
+          ...(own.length === 0
+            ? []
+            : [
+                "For you:",
+                renderCompactWakeEventLines(own, present.addressing),
+              ]),
         ].join("\n");
   const sections = [
     `${eventLines}\n${instruction}${retry}`,

@@ -258,3 +258,173 @@ for (const scenario of ["queued-only", "running"] as const) {
     }
   });
 }
+
+test("review round 2 P1-1: an update restart with queued work recovers from one transient successor failure", async () => {
+  const { realpathSync, symlinkSync, unlinkSync, writeFileSync } =
+    await import("node:fs");
+  const directory = realpathSync(
+    mkdtempSync(join(tmpdir(), "rah-cli-update-recover-")),
+  );
+  const db = new DatabaseSync(join(directory, "room.db"));
+  for (const table of [
+    "activations",
+    "run_attempts",
+    "runtime_processes",
+    "placements",
+    "agent_exclusive_operation_leases",
+  ])
+    db.exec(`CREATE TABLE ${table} (state TEXT)`);
+  db.exec("INSERT INTO activations VALUES ('queued')");
+  const v1 = join(directory, "1.0.0");
+  const v2 = join(directory, "1.0.1");
+  const launcher = join(directory, "claude");
+  writeFileSync(v1, "#!/bin/sh\n", { mode: 0o755 });
+  writeFileSync(v2, "#!/bin/sh\n", { mode: 0o755 });
+  symlinkSync(v1, launcher);
+  let starts = 0;
+  let waits = 0;
+  try {
+    const running = await startRestartableLocalCoreWorkbench(
+      {
+        mode: { kind: "loopback", port: 0 },
+        staticDirectory: directory,
+        workbenchHome: directory,
+        workspaceCwd: directory,
+      },
+      {
+        async start() {
+          starts += 1;
+          if (starts === 2) throw new Error("temporary probe failure");
+          return {
+            cliExecutables: [
+              {
+                cliId: "claude",
+                launcherPath: launcher,
+                resolvedPath: realpathSync(launcher),
+              },
+            ],
+            descriptor: {
+              defaultRoomId: "room",
+              persistent: true,
+              runtimes: [],
+              stateDirectory: directory,
+              webOrigin: "http://127.0.0.1:4199",
+              workspaceCwd: directory,
+              workspaceId: "workspace",
+            },
+            async stop() {},
+          };
+        },
+        async wait() {
+          waits += 1;
+        },
+        watchIntervalMs: 5,
+      },
+    );
+    unlinkSync(launcher);
+    symlinkSync(v2, launcher);
+    for (let turn = 0; turn < 80 && starts < 3; turn += 1)
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    assert.equal(starts, 3, "one failed successor, then one recovery attempt");
+    assert.equal(waits, 1);
+    await running.stop();
+  } finally {
+    db.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("review round 2 P1-2: work claimed between the idle check and the stop cancels the update restart instead of being interrupted", async () => {
+  const { realpathSync, symlinkSync, unlinkSync, writeFileSync } =
+    await import("node:fs");
+  const directory = realpathSync(
+    mkdtempSync(join(tmpdir(), "rah-cli-update-barrier-")),
+  );
+  const db = new DatabaseSync(join(directory, "room.db"));
+  for (const table of [
+    "activations",
+    "run_attempts",
+    "runtime_processes",
+    "placements",
+    "agent_exclusive_operation_leases",
+  ])
+    db.exec(`CREATE TABLE ${table} (state TEXT)`);
+  const v1 = join(directory, "1.0.0");
+  const v2 = join(directory, "1.0.1");
+  const launcher = join(directory, "claude");
+  writeFileSync(v1, "#!/bin/sh\n", { mode: 0o755 });
+  writeFileSync(v2, "#!/bin/sh\n", { mode: 0o755 });
+  symlinkSync(v1, launcher);
+  let starts = 0;
+  let stops = 0;
+  let pauses = 0;
+  let resumes = 0;
+  let raceOnce = true;
+  try {
+    const running = await startRestartableLocalCoreWorkbench(
+      {
+        mode: { kind: "loopback", port: 0 },
+        staticDirectory: directory,
+        workbenchHome: directory,
+        workspaceCwd: directory,
+      },
+      {
+        async start() {
+          starts += 1;
+          return {
+            cliExecutables: [
+              {
+                cliId: "claude",
+                launcherPath: launcher,
+                resolvedPath: realpathSync(v1),
+              },
+            ],
+            descriptor: {
+              defaultRoomId: "room",
+              persistent: true,
+              runtimes: [],
+              stateDirectory: directory,
+              webOrigin: "http://127.0.0.1:4199",
+              workspaceCwd: directory,
+              workspaceId: "workspace",
+            },
+            async pauseAdmission() {
+              pauses += 1;
+              // A claim that raced the idle check lands before admission closes.
+              if (raceOnce) {
+                raceOnce = false;
+                db.exec("INSERT INTO run_attempts VALUES ('running')");
+              }
+            },
+            resumeAdmission() {
+              resumes += 1;
+            },
+            async stop() {
+              stops += 1;
+            },
+          };
+        },
+        async wait() {},
+        watchIntervalMs: 5,
+      },
+    );
+    unlinkSync(launcher);
+    symlinkSync(v2, launcher);
+    for (let turn = 0; turn < 60 && resumes < 1; turn += 1)
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    assert.equal(resumes, 1, "the raced claim reopened admission");
+    assert.equal(stops, 0, "the running work was not interrupted");
+    assert.equal(starts, 1);
+    // The raced run finishes; the next tick performs the update restart.
+    db.exec("DELETE FROM run_attempts");
+    for (let turn = 0; turn < 80 && starts < 2; turn += 1)
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    assert.equal(starts, 2);
+    assert.equal(stops, 1);
+    assert.ok(pauses >= 2);
+    await running.stop();
+  } finally {
+    db.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

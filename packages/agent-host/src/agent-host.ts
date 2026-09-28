@@ -209,6 +209,9 @@ export class AgentHost {
   readonly #processHygiene: RuntimeProcessHygiene | undefined;
   readonly #instanceRuntimePool: InstanceRuntimeLifecycle | undefined;
   #draining = false;
+  /** Review round 2 P1-2: an update restart closes admission before it re-checks. */
+  #admissionPaused = false;
+  #claimStep: Promise<unknown> | undefined;
   #drainDeadlineAtMs: number | undefined;
   #runSignal: AbortSignal | undefined;
 
@@ -428,23 +431,44 @@ export class AgentHost {
     }
   }
 
+  /**
+   * Stop claiming new work and wait for a claim already in flight, so a
+   * caller can re-check durable activity knowing nothing new will start
+   * (review round 2 P1-2). Running work is untouched.
+   */
+  async pauseAdmission(): Promise<void> {
+    this.#admissionPaused = true;
+    await this.#claimStep?.catch(() => undefined);
+  }
+
+  resumeAdmission(): void {
+    this.#admissionPaused = false;
+  }
+
   async reconcileOnce(): Promise<HostCycleResult> {
     await this.#heartbeat();
+    if (this.#admissionPaused) return { state: "idle" };
     let activation: Activation;
     let runAttempt: RunAttempt | undefined;
     let agentContext: ActivationEnvelope["agent"];
     let runtime = this.#runtime;
     if (this.#placementRuntimeResolver === undefined) {
-      const leased = await this.#control.leaseNextActivation({
+      const step = this.#control.leaseNextActivation({
         leaseMs: this.#leaseMs,
       });
+      this.#claimStep = step;
+      const leased = await step;
       if (leased === null) return { state: "idle" };
       activation = leased;
     } else {
-      await this.#control.scheduleNextPlacement({ leaseMs: this.#leaseMs });
-      const claim = await this.#control.claimNextPlacement({
-        leaseMs: this.#leaseMs,
-      });
+      const step = (async () => {
+        await this.#control.scheduleNextPlacement({ leaseMs: this.#leaseMs });
+        return await this.#control.claimNextPlacement({
+          leaseMs: this.#leaseMs,
+        });
+      })();
+      this.#claimStep = step;
+      const claim = await step;
       if (claim === null) return { state: "idle" };
       activation = claim.activation;
       agentContext = claim.agentContext;
