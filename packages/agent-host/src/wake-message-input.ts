@@ -184,13 +184,18 @@ export function formatBodiedWakeInput(input: {
   // Contract §3 catch-up: events before the Activation range did not wake
   // this instance. They are shown as facts under their own label and never
   // become reply targets.
-  const catchUp =
-    present.catchUpFromSeq === undefined
-      ? []
-      : present.events.filter((event) => event.roomSeq < present.fromSeq);
-  const own = present.events.filter(
-    (event) => event.roomSeq >= present.fromSeq,
-  );
+  // Review P1-2: inside the range, only the events that woke this instance
+  // (Kernel `directedSeqs`) are its own; a merged range can carry a Human @
+  // of someone else, which is background like the catch-up.
+  const directed =
+    present.directedSeqs === undefined || present.directedSeqs.length === 0
+      ? undefined
+      : new Set(present.directedSeqs);
+  const isOwn = (event: { roomSeq: number }) =>
+    event.roomSeq >= present.fromSeq &&
+    (directed === undefined || directed.has(event.roomSeq));
+  const catchUp = present.events.filter((event) => !isOwn(event));
+  const own = present.events.filter(isOwn);
   const instruction = complete
     ? replyInstruction(
         compactWakeReplyTargets(own, present.addressing),
@@ -207,11 +212,13 @@ export function formatBodiedWakeInput(input: {
           ? `\n${previousAttemptReplyLine(present.previousAttemptReplyMessageId, turn, present.previousAttemptReplyFinal === true)}`
           : "";
   const eventLines =
-    catchUp.length === 0
+    catchUp.length === 0 && (present.catchUpOmittedCount ?? 0) <= 0
       ? renderCompactWakeEventLines(present.events, present.addressing)
       : [
           catchUpLabel(present),
-          renderCompactWakeEventLines(catchUp, present.addressing),
+          ...(catchUp.length === 0
+            ? []
+            : [renderCompactWakeEventLines(catchUp, present.addressing)]),
           "For you:",
           renderCompactWakeEventLines(own, present.addressing),
         ].join("\n");

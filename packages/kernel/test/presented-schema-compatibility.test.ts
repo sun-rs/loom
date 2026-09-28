@@ -74,6 +74,7 @@ for (const unexpected of [false, true]) {
             sent_by_host_id: null,
             pending_ack_seq: null,
             memory_json: null,
+            catch_up_json: null,
           },
         );
         assert.equal(RoomKernel.inspectSchemaState(path).pending.length, 0);

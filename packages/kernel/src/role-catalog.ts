@@ -569,14 +569,21 @@ export class RoleCatalog {
         roomId: channelId,
         idempotencyKey: input.idempotencyKey,
         type: "instance.activation_abandoned",
+        // Review P1-1: this lifecycle fact lands in the Channel, which the
+        // instance's siblings read. Work blocked in another Room (the private
+        // box) keeps its error and location in that Room's own cancellation.
         payload: {
           activationId: input.activationId,
-          activationRoomId: abandoned.roomId,
-          cancelledEventId: abandoned.event.eventId,
           instanceId: input.instanceId,
-          ...(abandoned.lastError === null
-            ? {}
-            : { blockedError: abandoned.lastError.slice(0, 2_000) }),
+          ...(abandoned.roomId === channelId
+            ? {
+                activationRoomId: abandoned.roomId,
+                cancelledEventId: abandoned.event.eventId,
+                ...(abandoned.lastError === null
+                  ? {}
+                  : { blockedError: abandoned.lastError.slice(0, 2_000) }),
+              }
+            : { elsewhere: true }),
           requestDigest,
         },
       });

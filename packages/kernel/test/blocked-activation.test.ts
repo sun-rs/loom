@@ -363,3 +363,57 @@ test("D2-2: the abandon is reachable only through the authenticated Human client
     f.close();
   }
 });
+
+test("review P1-1: abandoning a private-box Activation keeps its error and location out of the Channel", () => {
+  const f = roleInstanceFixture();
+  try {
+    f.kernel.postMessage(f.actor, {
+      roomId: f.privateBox.roomId,
+      body: "private question SECRET_ONLY_DM",
+      idempotencyKey: "private-wake",
+      recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
+    });
+    const running = claimInstanceRun(f);
+    assert.equal(running.activation.roomId, f.privateBox.roomId);
+    f.kernel.recordRuntimeTermination(f.host, {
+      runAttemptId: running.run.runAttemptId,
+      runtimeRunId: running.runtime.runtimeRunId,
+      exit: { code: 1 },
+    });
+    f.kernel.finishRunAttempt(f.host, {
+      runAttemptId: running.run.runAttemptId,
+      state: "failed",
+      exitCode: 1,
+    });
+    f.kernel.retryActivation(f.host, {
+      activationId: running.activation.activationId,
+      error: "private failure: SECRET_ONLY_DM",
+      retryAfterMs: 0,
+      retryDisposition: "action_required",
+    });
+    const result = f.kernel.roles.abandonBlockedActivation(f.actor, {
+      instanceId: f.instance.instanceId,
+      activationId: running.activation.activationId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "abandon-private",
+    });
+    assert.equal(result.event.roomId, f.home.roomId);
+    const channelEvents = f.db
+      .prepare("SELECT payload_json FROM room_events WHERE room_id=?")
+      .all(f.home.roomId)
+      .map((row) => String(row.payload_json));
+    for (const payload of channelEvents) {
+      assert.doesNotMatch(payload, /SECRET_ONLY_DM/u);
+      assert.ok(
+        !payload.includes(f.privateBox.roomId),
+        "the private box location is not written into the Channel",
+      );
+    }
+    const cancelled = f.db
+      .prepare("SELECT state FROM activations WHERE activation_id=?")
+      .get(running.activation.activationId)!;
+    assert.equal(cancelled.state, "cancelled");
+  } finally {
+    f.close();
+  }
+});

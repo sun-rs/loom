@@ -30,6 +30,8 @@ import {
  *   that moved meanwhile cannot change the digest.
  */
 export type CatchUp = {
+  /** The frozen lower bound (cursor + 1 at first render); null = no catch-up. */
+  floor: number | null;
   renderFromSeq: number;
   events: RoomEvent[];
   presentedSeqs: number[];
@@ -46,13 +48,19 @@ export function renderCatchUp(
     participantId: string;
     consumerId: string;
     fromSeq: number;
-    /** A stored rendering's start: re-presents reproduce it exactly. */
-    storedFromSeq: number | undefined;
+    /**
+     * Review P2-1: the bound frozen by this RunAttempt's first rendering
+     * (`catch_up_json`); undefined on the first rendering. A re-present uses it
+     * so neither the shown suffix nor the omitted summary depends on a cursor
+     * that moved meanwhile.
+     */
+    frozenFloor: number | null | undefined;
     budget: { messages: number; bytes: number; scanRows: number };
     eventFromRow: (row: Row) => RoomEvent;
   },
 ): CatchUp {
-  const none: CatchUp = {
+  const none = (floor: number | null): CatchUp => ({
+    floor,
     renderFromSeq: input.fromSeq,
     events: [],
     presentedSeqs: [],
@@ -60,18 +68,18 @@ export function renderCatchUp(
     omittedCount: 0,
     omittedFromSeq: undefined,
     omittedToSeq: undefined,
-  };
-  let floor = input.storedFromSeq;
+  });
+  let floor = input.frozenFloor;
   if (floor === undefined) {
     const cursor = database
       .prepare(
         "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id=?",
       )
       .get(input.roomId, input.participantId, input.consumerId);
-    if (cursor === undefined) return none;
-    floor = integer(cursor, "last_seq") + 1;
+    floor = cursor === undefined ? null : integer(cursor, "last_seq") + 1;
   }
-  if (floor >= input.fromSeq) return none;
+  if (floor === null) return none(null);
+  if (floor >= input.fromSeq) return none(floor);
   const rows = database
     .prepare(
       `SELECT * FROM room_events
@@ -114,6 +122,7 @@ export function renderCatchUp(
       ? omittedSummary(database, input, floor, renderFromSeq - 1)
       : { count: 0, fromSeq: undefined, toSeq: undefined };
   return {
+    floor,
     renderFromSeq,
     events: shown.flatMap(({ event }) => (event ? [event] : [])),
     presentedSeqs: shown.map(({ seq }) => seq),
@@ -149,4 +158,41 @@ function omittedSummary(
         fromSeq: integer(row, "first_seq"),
         toSeq: integer(row, "last_seq"),
       };
+}
+
+/** Schema 77: the per-rendering frozen catch-up bound (review P2-1). */
+export function migrateCatchUpV77(database: DatabaseSync): void {
+  const columns = new Set(
+    database
+      .prepare("PRAGMA table_info(activation_presented_windows)")
+      .all()
+      .map((row) => text(row, "name")),
+  );
+  if (!columns.has("catch_up_json"))
+    database.exec(
+      "ALTER TABLE activation_presented_windows ADD COLUMN catch_up_json TEXT",
+    );
+}
+
+/**
+ * The bound a stored rendering froze. A window written before schema 77 has
+ * none; its stored start stands in for it (the pre-77 behaviour).
+ */
+export function storedCatchUpFloor(
+  database: DatabaseSync,
+  key: { activationId: string; consumerId: string; runAttemptId: string },
+  legacy: { storedFromSeq: number; fromSeq: number },
+): number | null {
+  const row = database
+    .prepare(
+      `SELECT catch_up_json FROM activation_presented_windows
+        WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
+    )
+    .get(key.activationId, key.consumerId, key.runAttemptId);
+  const raw = row?.["catch_up_json"];
+  if (typeof raw === "string") {
+    const floor = (JSON.parse(raw) as { floor?: unknown }).floor;
+    return typeof floor === "number" ? floor : null;
+  }
+  return legacy.storedFromSeq < legacy.fromSeq ? legacy.storedFromSeq : null;
 }

@@ -174,6 +174,67 @@ test("another Room's messages never enter the catch-up", () => {
   }
 });
 
+test("review P1-2: a merged Activation names only the events that woke this instance as directed", () => {
+  const f = fixture();
+  try {
+    const first = f.human("@worker question one");
+    const other = f.human("@bystander a question only for you");
+    const second = f.human("@worker question two");
+    const run = f.activate("worker");
+    assert.equal(run.scope.toSeq, second, "the queued Activation merged");
+    const rendered = f.kernel.presentWorkerMessages(run.execution);
+    assert.ok(rendered.presentedSeqs.includes(other));
+    assert.deepEqual(rendered.directedSeqs, [first, second]);
+  } finally {
+    f.close();
+  }
+});
+
+test("review P2-1: a re-present keeps the omitted-history summary after the cursor moved", () => {
+  const f = fixture();
+  try {
+    f.human("Everyone, hello");
+    f.finishTurn(f.activate("worker"), "worker: hi");
+    for (let index = 0; index < WAKE_BODY_MAX_MESSAGES + 5; index++)
+      f.human(`@bystander note ${String(index)}`);
+    const now = f.human("@worker summarise");
+    const run = f.activate("worker");
+    const first = f.kernel.presentWorkerMessages(run.execution);
+    assert.equal(first.catchUpOmittedCount, 6);
+    f.kernel.acknowledgeWorkerCursor(run.execution, { throughSeq: now });
+    const again = f.kernel.presentWorkerMessages(run.execution);
+    assert.equal(again.contentDigest, first.contentDigest);
+    assert.equal(again.catchUpFromSeq, first.catchUpFromSeq);
+    assert.equal(again.catchUpOmittedCount, 6);
+    assert.equal(again.catchUpOmittedFromSeq, first.catchUpOmittedFromSeq);
+    assert.equal(again.catchUpOmittedToSeq, first.catchUpOmittedToSeq);
+  } finally {
+    f.close();
+  }
+});
+
+test("review P2-1: when no catch-up body fits, the omitted history is still stated, first and on replay", () => {
+  const f = fixture();
+  try {
+    f.human("Everyone, hello");
+    f.finishTurn(f.activate("worker"), "worker: hi");
+    const gap: number[] = [];
+    for (let index = 0; index < 3; index++)
+      gap.push(f.human(`@bystander note ${String(index)}`));
+    f.human(`@worker ${"x".repeat(65_000)}`);
+    const run = f.activate("worker");
+    const first = f.kernel.presentWorkerMessages(run.execution);
+    assert.equal(first.catchUpFromSeq, undefined, "no catch-up body fits");
+    assert.equal(first.catchUpOmittedCount, 3);
+    assert.equal(first.catchUpOmittedFromSeq, gap[0]);
+    assert.equal(first.catchUpOmittedToSeq, gap[2]);
+    const again = f.kernel.presentWorkerMessages(run.execution);
+    assert.equal(again.catchUpOmittedCount, 3);
+  } finally {
+    f.close();
+  }
+});
+
 function messageBodies(
   events: readonly { type: string; payload: unknown }[],
 ): string[] {
@@ -344,3 +405,37 @@ function fixture() {
     sent,
   };
 }
+
+test("schema 77 upgrades a schema 76 database: presented windows gain the frozen catch-up bound", () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-catch-up-v77-"));
+  const path = join(directory, "room.db");
+  try {
+    let kernel = new RoomKernel({ databasePath: path });
+    kernel.initialize();
+    kernel.close();
+    const db = new DatabaseSync(path);
+    db.exec(`
+      ALTER TABLE activation_presented_windows DROP COLUMN catch_up_json;
+      PRAGMA user_version = 76;
+    `);
+    db.close();
+    kernel = new RoomKernel({ databasePath: path });
+    kernel.initialize();
+    kernel.close();
+    const read = new DatabaseSync(path, { readOnly: true });
+    try {
+      assert.equal(read.prepare("PRAGMA user_version").get()!.user_version, 77);
+      assert.ok(
+        read
+          .prepare("PRAGMA table_info(activation_presented_windows)")
+          .all()
+          .some((column) => column.name === "catch_up_json"),
+      );
+      assert.equal(RoomKernel.inspectSchemaState(path).pending.length, 0);
+    } finally {
+      read.close();
+    }
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

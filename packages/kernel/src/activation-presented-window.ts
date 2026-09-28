@@ -12,7 +12,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import { isExecutionAuditEvent } from "./worker-message-projection.ts";
 import { workerAddressing } from "./worker-addressing.ts";
 import { retryReminder } from "./activation-retry-reminder.ts";
-import { renderCatchUp } from "./activation-catch-up.ts";
+import { renderCatchUp, storedCatchUpFloor } from "./activation-catch-up.ts";
 
 /**
  * A "presented" window records that the Kernel itself rendered a concrete range
@@ -168,6 +168,13 @@ export type RenderedPresentedWindow = PresentedWindow & {
    * consumer's cursor that did not wake it. `fromSeq` stays the Activation's.
    */
   catchUpFromSeq?: number;
+  /**
+   * Review P1-2: the rendered sequences in the Activation range that this
+   * participant was actually woken for (it has a durable Inbox item for
+   * them). A merged range can hold other events — a Human @ of someone
+   * else — which are background facts, never reply targets.
+   */
+  directedSeqs: readonly number[];
   /** The older catch-up part that did not fit, stated not listed. */
   catchUpOmittedCount?: number;
   catchUpOmittedFromSeq?: number;
@@ -331,7 +338,13 @@ export function renderPresentedWindow(
     participantId: scope.participantId,
     consumerId: scope.consumerId,
     fromSeq,
-    storedFromSeq: existing?.fromSeq,
+    frozenFloor:
+      existing === undefined
+        ? undefined
+        : storedCatchUpFloor(database, scope, {
+            storedFromSeq: existing.fromSeq,
+            fromSeq,
+          }),
     budget: {
       messages: WAKE_BODY_MAX_MESSAGES - events.length,
       bytes: WAKE_BODY_MAX_BYTES - usedBytes,
@@ -342,19 +355,32 @@ export function renderPresentedWindow(
   const renderFromSeq = catchUp.renderFromSeq;
   events.unshift(...catchUp.events);
   presentedSeqs.unshift(...catchUp.presentedSeqs);
-  const catchUpFields =
-    renderFromSeq < fromSeq
-      ? {
-          catchUpFromSeq: renderFromSeq,
-          catchUpOmittedCount: catchUp.omittedCount,
-          ...(catchUp.omittedFromSeq === undefined
-            ? {}
-            : {
-                catchUpOmittedFromSeq: catchUp.omittedFromSeq,
-                catchUpOmittedToSeq: catchUp.omittedToSeq,
-              }),
-        }
-      : {};
+  // Review P2-1: the omitted summary stands on its own — it is stated even
+  // when not one catch-up event fitted beside the Activation range.
+  const catchUpFields = {
+    ...(renderFromSeq < fromSeq ? { catchUpFromSeq: renderFromSeq } : {}),
+    ...(renderFromSeq < fromSeq || catchUp.omittedCount > 0
+      ? { catchUpOmittedCount: catchUp.omittedCount }
+      : {}),
+    ...(catchUp.omittedFromSeq === undefined ||
+    catchUp.omittedToSeq === undefined
+      ? {}
+      : {
+          catchUpOmittedFromSeq: catchUp.omittedFromSeq,
+          catchUpOmittedToSeq: catchUp.omittedToSeq,
+        }),
+  };
+  const directedSeqs = (
+    database
+      .prepare(
+        `SELECT event_seq FROM inbox_items
+          WHERE room_id=? AND participant_id=? AND event_seq BETWEEN ? AND ?
+          ORDER BY event_seq`,
+      )
+      .all(scope.roomId, scope.participantId, fromSeq, toSeq) as Row[]
+  )
+    .map((row) => integer(row, "event_seq"))
+    .filter((seq) => presentedSeqs.includes(seq));
   const contentDigest = canonicalDigest({
     fromSeq: renderFromSeq,
     toSeq,
@@ -384,6 +410,7 @@ export function renderPresentedWindow(
       ...existing,
       fromSeq,
       ...catchUpFields,
+      directedSeqs,
       events,
       addressing: workerAddressing(database, scope, events),
       ...notice,
@@ -394,8 +421,8 @@ export function renderPresentedWindow(
   }
   database
     .prepare(
-      `INSERT INTO activation_presented_windows(activation_id, consumer_id, run_attempt_id, from_seq, to_seq, presented_seqs_json, content_digest, rendered_at, sent_at, sent_by_host_id, pending_ack_seq)
-       VALUES(?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)`,
+      `INSERT INTO activation_presented_windows(activation_id, consumer_id, run_attempt_id, from_seq, to_seq, presented_seqs_json, content_digest, rendered_at, sent_at, sent_by_host_id, pending_ack_seq, catch_up_json)
+       VALUES(?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?)`,
     )
     .run(
       scope.activationId,
@@ -406,6 +433,7 @@ export function renderPresentedWindow(
       JSON.stringify(presentedSeqs),
       contentDigest,
       renderedAt,
+      JSON.stringify({ floor: catchUp.floor }),
     );
   const window: PresentedWindow = {
     runAttemptId: scope.runAttemptId,
@@ -422,6 +450,7 @@ export function renderPresentedWindow(
     ...window,
     fromSeq,
     ...catchUpFields,
+    directedSeqs,
     events,
     addressing: workerAddressing(database, scope, events),
     ...notice,

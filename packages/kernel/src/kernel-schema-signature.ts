@@ -15,6 +15,7 @@ export function isPresentedWindowMigration(
           "sent_by_host_id",
           "pending_ack_seq",
           "memory_json",
+          "catch_up_json",
         ].includes(column.name),
     )
     .map((column) => ({

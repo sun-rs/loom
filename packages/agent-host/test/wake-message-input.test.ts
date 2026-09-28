@@ -459,3 +459,58 @@ test("contract §3 catch-up: a window without catch-up renders exactly as before
     !formatBodiedWakeInput({ present: present() })!.includes("For you:"),
   );
 });
+
+test("review P1-2: a merged range's event that did not wake the instance is background, never a reply target", () => {
+  const wake = formatBodiedWakeInput({
+    present: present({
+      fromSeq: 12,
+      toSeq: 14,
+      directedSeqs: [12, 14],
+      events: [
+        event(12, "message.posted", { messageId: M12, body: "@worker one" }),
+        event(13, "message.posted", {
+          messageId: "message_0c13cccc-1111-4222-8333-444455556666",
+          body: "@bystander only for you",
+          threadId: T9,
+        }),
+        event(14, "message.posted", { messageId: M14, body: "@worker two" }),
+      ],
+      presentedSeqs: [12, 13, 14],
+      presentedThroughSeq: 14,
+    }),
+  });
+  assert.ok(wake);
+  const lines = wake.split("\n");
+  assert.equal(lines[0], "Since your last read (did not wake you):");
+  assert.match(lines[1]!, /seq 13 .*only for you/u);
+  assert.equal(lines[2], "For you:");
+  assert.match(lines[3]!, /seq 12 .*@worker one/u);
+  assert.match(lines[4]!, /seq 14 .*@worker two/u);
+  assert.equal(
+    lines[5],
+    'Reply: message-post --target "#general" --based-on-room-seq 14 --final · no reply needed: message-check',
+  );
+});
+
+test("review P2-1: omitted history is stated even when no catch-up event fitted", () => {
+  const wake = formatBodiedWakeInput({
+    present: present({
+      fromSeq: 14,
+      toSeq: 14,
+      catchUpOmittedCount: 3,
+      catchUpOmittedFromSeq: 9,
+      catchUpOmittedToSeq: 11,
+      events: [event(14, "message.posted", { messageId: M14, body: "now" })],
+      presentedSeqs: [14],
+      presentedThroughSeq: 14,
+    }),
+  });
+  assert.ok(wake);
+  const lines = wake.split("\n");
+  assert.equal(
+    lines[0],
+    "Since your last read (did not wake you; 3 older events, seq 9-11, not shown):",
+  );
+  assert.equal(lines[1], "For you:");
+  assert.match(lines[2]!, /^#general seq 14 .*now/u);
+});

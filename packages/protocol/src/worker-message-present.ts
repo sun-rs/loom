@@ -74,6 +74,13 @@ export const WorkerMessagePresentResponseSchema = z
      * the presented prefix like any other rendered event. Kernel-derived.
      */
     catchUpFromSeq: z.number().int().positive().optional(),
+    /**
+     * Review P1-2: the rendered sequences in the Activation range this
+     * participant was woken for (it holds a durable Inbox item for them). A
+     * merged range can carry other events, which are background facts and
+     * never reply targets. Kernel-derived.
+     */
+    directedSeqs: z.array(z.number().int().positive()).max(256).optional(),
     /** The older catch-up part that did not fit the budget, stated not listed. */
     catchUpOmittedCount: z.number().int().nonnegative().optional(),
     catchUpOmittedFromSeq: z.number().int().positive().optional(),
