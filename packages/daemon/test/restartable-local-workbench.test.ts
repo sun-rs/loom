@@ -177,3 +177,84 @@ test("running daemon failure reaches the outer launcher and marks service failed
   assert.equal(control?.restart(control.status().generation), "stale");
   await running.stop();
 });
+
+for (const scenario of ["queued-only", "running"] as const) {
+  test(`a repointed CLI launcher restarts the workbench only when nothing runs (${scenario})`, async () => {
+    const { realpathSync, symlinkSync, unlinkSync, writeFileSync } =
+      await import("node:fs");
+    const directory = realpathSync(
+      mkdtempSync(join(tmpdir(), "rah-cli-update-")),
+    );
+    const db = new DatabaseSync(join(directory, "room.db"));
+    for (const table of [
+      "activations",
+      "run_attempts",
+      "runtime_processes",
+      "placements",
+      "agent_exclusive_operation_leases",
+    ])
+      db.exec(`CREATE TABLE ${table} (state TEXT)`);
+    // Durable queued work never blocks an update restart; running work does.
+    db.exec("INSERT INTO activations VALUES ('queued')");
+    if (scenario === "running")
+      db.exec("INSERT INTO run_attempts VALUES ('running')");
+    const v1 = join(directory, "1.0.0");
+    const v2 = join(directory, "1.0.1");
+    const launcher = join(directory, "claude");
+    writeFileSync(v1, "#!/bin/sh\n", { mode: 0o755 });
+    writeFileSync(v2, "#!/bin/sh\n", { mode: 0o755 });
+    symlinkSync(v1, launcher);
+    let starts = 0;
+    try {
+      const running = await startRestartableLocalCoreWorkbench(
+        {
+          mode: { kind: "loopback", port: 0 },
+          staticDirectory: directory,
+          workbenchHome: directory,
+          workspaceCwd: directory,
+        },
+        {
+          async start() {
+            starts += 1;
+            return {
+              cliExecutables: [
+                {
+                  cliId: "claude",
+                  launcherPath: launcher,
+                  resolvedPath: realpathSync(launcher),
+                },
+              ],
+              descriptor: {
+                defaultRoomId: "room",
+                persistent: true,
+                runtimes: [],
+                stateDirectory: directory,
+                webOrigin: "http://127.0.0.1:4199",
+                workspaceCwd: directory,
+                workspaceId: "workspace",
+              },
+              async stop() {},
+            };
+          },
+          async wait() {},
+          watchIntervalMs: 5,
+        },
+      );
+      unlinkSync(launcher);
+      symlinkSync(v2, launcher);
+      for (let turn = 0; turn < 60 && starts < 2; turn += 1)
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      assert.equal(
+        starts,
+        scenario === "running" ? 1 : 2,
+        scenario === "running"
+          ? "running work defers the update restart"
+          : "the update restart picked up the new launcher target",
+      );
+      await running.stop();
+    } finally {
+      db.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}

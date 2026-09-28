@@ -335,11 +335,31 @@ export async function discoverKnownLocalClis(
   );
 }
 
-async function resolveExecutable(
+/**
+ * The PATH entry the user's shell would run (the stable launcher, often a
+ * symlink to a versioned file), without resolving it. Owner ruling
+ * 2026-09-28: Loom follows this command; the resolved file is pinned per run.
+ */
+export async function resolveLauncherPath(
   executable: string,
   environment: NodeJS.ProcessEnv,
 ): Promise<string | undefined> {
-  const candidates = isAbsolute(executable)
+  for (const candidate of executableCandidates(executable, environment)) {
+    try {
+      await access(candidate, constants.X_OK);
+      if ((await stat(await realpath(candidate))).isFile()) return candidate;
+    } catch {
+      // Continue through PATH.
+    }
+  }
+  return undefined;
+}
+
+function executableCandidates(
+  executable: string,
+  environment: NodeJS.ProcessEnv,
+): string[] {
+  return isAbsolute(executable)
     ? [executable]
     : (environment.PATH ?? "")
         .split(delimiter)
@@ -357,7 +377,13 @@ async function resolveExecutable(
               ]
             : [join(directory, executable)],
         );
-  for (const candidate of candidates) {
+}
+
+async function resolveExecutable(
+  executable: string,
+  environment: NodeJS.ProcessEnv,
+): Promise<string | undefined> {
+  for (const candidate of executableCandidates(executable, environment)) {
     try {
       await access(candidate, constants.X_OK);
       const resolved = await realpath(candidate);

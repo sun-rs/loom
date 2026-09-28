@@ -8,7 +8,11 @@ import { DaemonApplication } from "./daemon-application.ts";
 import { LanWorkbenchAccessStore } from "./lan-workbench-access-store.ts";
 import { LanWorkbenchGateway } from "./lan-workbench-gateway.ts";
 import { localCliRuntimeSpec } from "./local-cli-runtime-spec.ts";
-import { discoverKnownLocalClis } from "./local-runtime-inventory.ts";
+import {
+  discoverKnownLocalClis,
+  resolveLauncherPath,
+} from "./local-runtime-inventory.ts";
+import type { CliExecutableIdentity } from "./cli-update-watcher.ts";
 import { prepareLocalWorkbench } from "./local-workbench-bootstrap.ts";
 import { LocalWorkbenchGateway } from "./local-workbench-gateway.ts";
 import { loadOrCreateLocalWorkbenchSessionToken } from "./local-workbench-session.ts";
@@ -69,6 +73,8 @@ export type LocalCoreLanDescriptor = LocalCoreLoopbackDescriptor & {
 };
 
 export type RunningLocalCoreWorkbench = {
+  /** Launcher → pinned file per CLI for this generation (update watcher). */
+  cliExecutables?: readonly CliExecutableIdentity[];
   descriptor: LocalCoreLoopbackDescriptor | LocalCoreLanDescriptor;
   /** Terminal background failure after the local gateway has been closed. */
   failed?: Promise<Error>;
@@ -97,18 +103,33 @@ export async function startLocalCoreWorkbench(input: {
   }
 
   const discovered = await discoverKnownLocalClis({ environment });
-  const runtimeSpecs = discovered.flatMap((candidate) => {
-    if (
-      !candidate.available ||
-      candidate.resolvedExecutablePath === undefined
-    ) {
-      return [];
-    }
-    const spec = localCliRuntimeSpec(candidate.executable, workspaceCwd);
-    return spec === undefined
-      ? []
-      : [{ ...spec, executable: candidate.resolvedExecutablePath }];
-  });
+  // Owner ruling 2026-09-28: the runtime follows the user's stable command
+  // (the PATH launcher). The file it resolves to is still pinned and verified
+  // per run by the probe identity; a CLI update no longer changes the profile.
+  const cliExecutables: CliExecutableIdentity[] = [];
+  const runtimeSpecs = (
+    await Promise.all(
+      discovered.map(async (candidate) => {
+        if (
+          !candidate.available ||
+          candidate.resolvedExecutablePath === undefined
+        ) {
+          return [];
+        }
+        const spec = localCliRuntimeSpec(candidate.executable, workspaceCwd);
+        if (spec === undefined) return [];
+        const launcherPath =
+          (await resolveLauncherPath(candidate.executable, environment)) ??
+          candidate.resolvedExecutablePath;
+        cliExecutables.push({
+          cliId: spec.cliId,
+          launcherPath,
+          resolvedPath: candidate.resolvedExecutablePath,
+        });
+        return [{ ...spec, executable: launcherPath }];
+      }),
+    )
+  ).flat();
   if (runtimeSpecs.length === 0) {
     throw new Error(
       "No supported local Agent CLI was found. Install and sign in to Codex, Kimi, OpenCode, or Claude Code.",
@@ -174,20 +195,23 @@ export async function startLocalCoreWorkbench(input: {
         port: validatePort(input.mode.port, true),
       });
       await gateway.start();
-      return runningWorkbench({
-        applicationRun,
-        descriptor: {
-          ...baseDescriptor({
-            prepared,
-            runtimeSpecs,
-            stateDirectory,
-            webOrigin: gateway.origin,
-            workspaceCwd,
-          }),
-        },
-        gateway,
-        shutdown,
-      });
+      return withCliExecutables(
+        cliExecutables,
+        runningWorkbench({
+          applicationRun,
+          descriptor: {
+            ...baseDescriptor({
+              prepared,
+              runtimeSpecs,
+              stateDirectory,
+              webOrigin: gateway.origin,
+              workspaceCwd,
+            }),
+          },
+          gateway,
+          shutdown,
+        }),
+      );
     }
 
     const lan = prepareLanMode(input.mode, workbenchHome);
@@ -207,29 +231,32 @@ export async function startLocalCoreWorkbench(input: {
     });
     await gateway.start();
     const pairing = gateway.issuePairingCode();
-    return runningWorkbench({
-      applicationRun,
-      descriptor: {
-        ...baseDescriptor({
-          prepared,
-          runtimeSpecs,
-          stateDirectory,
-          webOrigin: gateway.origin,
-          workspaceCwd,
-        }),
-        pairedDevices: accessStore.activeDeviceCount(),
-        pairingCode: pairing.code,
-        pairingExpiresAt: pairing.expiresAt,
-        pairingUrl: `${gateway.origin}/_rah/pair`,
-        tls: true,
-        tlsIdentity:
-          lan.provisioned === undefined
-            ? { managed: false }
-            : managedTlsIdentity(lan.provisioned),
-      },
-      gateway,
-      shutdown,
-    });
+    return withCliExecutables(
+      cliExecutables,
+      runningWorkbench({
+        applicationRun,
+        descriptor: {
+          ...baseDescriptor({
+            prepared,
+            runtimeSpecs,
+            stateDirectory,
+            webOrigin: gateway.origin,
+            workspaceCwd,
+          }),
+          pairedDevices: accessStore.activeDeviceCount(),
+          pairingCode: pairing.code,
+          pairingExpiresAt: pairing.expiresAt,
+          pairingUrl: `${gateway.origin}/_rah/pair`,
+          tls: true,
+          tlsIdentity:
+            lan.provisioned === undefined
+              ? { managed: false }
+              : managedTlsIdentity(lan.provisioned),
+        },
+        gateway,
+        shutdown,
+      }),
+    );
   } catch (error) {
     await gateway?.stop().catch(() => undefined);
     shutdown.abort("local-core-startup-failed");
@@ -303,6 +330,14 @@ export function runningWorkbench(input: {
       await input.applicationRun.catch(() => undefined);
     },
   };
+}
+
+function withCliExecutables(
+  cliExecutables: readonly CliExecutableIdentity[],
+  running: RunningLocalCoreWorkbench,
+): RunningLocalCoreWorkbench {
+  running.cliExecutables = cliExecutables;
+  return running;
 }
 
 function prepareLanMode(
