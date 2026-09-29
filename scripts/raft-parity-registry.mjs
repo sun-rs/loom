@@ -72,14 +72,20 @@ export function parseWorkerCliCommands(source) {
           .slice(1)
           .join("`");
   for (const line of body.split("\n")) {
-    const inbox = /^rah agent inbox ([a-z0-9-]+)/u.exec(line);
+    const inbox = /^loom-worker agent inbox ([a-z0-9-]+)/u.exec(line);
     if (inbox) {
       commands.add(`agent inbox ${inbox[1]}`);
       continue;
     }
-    const named = /^rah (app|reminder|worker) ([a-z0-9|-]+)(?: |$)/u.exec(line);
+    const named =
+      /^(?:rah|loom-worker) (app|reminder|worker) ([a-z0-9|-]+)(?: |$)/u.exec(
+        line,
+      ) ??
+      // `loom-worker <command>` is `rah worker <command>` (owner 2026-09-29).
+      /^loom-worker ()([a-z0-9|-]+)(?: |$)/u.exec(line);
     if (!named) continue;
-    for (const sub of named[2].split("|")) commands.add(`${named[1]} ${sub}`);
+    for (const sub of named[2].split("|"))
+      commands.add(`${named[1] || "worker"} ${sub}`);
   }
   for (const [, label] of source.matchAll(/case "([a-z0-9-]+)":/gu))
     commands.add(`worker ${label}`);

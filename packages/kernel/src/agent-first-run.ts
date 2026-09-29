@@ -59,7 +59,7 @@ export function requestAgentFirstRun(
       greetingEnabled,
       messageKey,
       body: greetingEnabled
-        ? `First-run request (system-triggered): Read your identity and MEMORY.md index. You have just joined #all, the Workspace-wide channel. Read the room, then post one short, natural self-introduction in your own voice, one or two sentences, so the team knows who you are and what you can help with. Do not paste a fixed template. This is a one-time greeting; afterward return to normal work. Do not create or claim a Task for onboarding. Use "$RAH_WORKER_CLI" worker message-post --top-level --idempotency-key ${messageKey} with your greeting on stdin. Keep this key on retry; a committed greeting is returned without posting again.`
+        ? `First-run request (system-triggered): Read your identity and MEMORY.md index. You have just joined #all, the Workspace-wide channel. Read the room, then post one short, natural self-introduction in your own voice, one or two sentences, so the team knows who you are and what you can help with. Do not paste a fixed template. This is a one-time greeting; afterward return to normal work. Do not create or claim a Task for onboarding. Use loom-worker message-post --top-level --idempotency-key ${messageKey} with your greeting on stdin. Keep this key on retry; a committed greeting is returned without posting again.`
         : "First-run request (system-triggered): Read your identity and MEMORY.md index. Automatic #all greeting is disabled. Do not send a greeting or create a Task; acknowledge this delivery and return to normal work.",
     },
   });

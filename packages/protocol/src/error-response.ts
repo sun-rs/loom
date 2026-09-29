@@ -43,7 +43,7 @@ export type WorkerErrorResponse = z.infer<typeof WorkerErrorResponseSchema>;
  * not weigh whether to run it.
  */
 export const WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION =
-  "Use rah worker message-search to find the message, or rah worker message-read --around only when you want nearby context rather than proof that this id exists.";
+  "Use loom-worker message-search to find the message, or loom-worker message-read --around only when you want nearby context rather than proof that this id exists.";
 
 export const ClientErrorResponseSchema = ErrorResponseSchema;
 export type ClientErrorResponse = z.infer<typeof ClientErrorResponseSchema>;

@@ -2069,7 +2069,7 @@ test("a Worker error body may carry a recovery instruction, and parses without o
   );
   assert.match(
     WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
-    /^Use rah worker message-search to find the message, or rah worker message-read --around only when you want nearby context rather than proof that this id exists\.$/u,
+    /^Use loom-worker message-search to find the message, or loom-worker message-read --around only when you want nearby context rather than proof that this id exists\.$/u,
   );
   assert.throws(() =>
     WorkerErrorResponseSchema.parse({

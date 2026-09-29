@@ -166,7 +166,8 @@ export function settle(
  AND NOT EXISTS(SELECT 1 FROM placements p WHERE p.activation_id=a.activation_id)
  AND NOT EXISTS(SELECT 1 FROM run_attempts r WHERE r.activation_id=a.activation_id)
  AND NOT EXISTS(SELECT 1 FROM activation_retry_fences f WHERE f.activation_id=a.activation_id AND f.state <> 'resolved')
- AND NOT EXISTS(SELECT 1 FROM room_agent_sos_holds h WHERE h.room_id=a.room_id)`,
+ AND NOT EXISTS(SELECT 1 FROM room_agent_sos_holds h WHERE h.room_id=a.room_id)
+ AND EXISTS(SELECT 1 FROM worker_run_read_receipts x WHERE x.participant_id=a.participant_id AND x.room_id=a.room_id AND x.confirmed=1)`,
     )
     .all();
   for (const candidate of candidates) {

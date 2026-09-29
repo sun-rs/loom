@@ -1137,11 +1137,11 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
     );
     assert.match(
       state.stdout(),
-      /rah worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+      /loom-worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
     );
     assert.match(
       state.stdout(),
-      /rah worker message-post --send-draft --target '#room:thread-1'/u,
+      /loom-worker message-post --send-draft --target '#room:thread-1'/u,
     );
     assert.match(state.stdout(), /You can also choose not to send anything\./u);
     assert.doesNotMatch(state.stdout(), /--anyway/u);
@@ -1187,7 +1187,7 @@ test("repeated holds surface Raft's --anyway paragraph only when the server sugg
     assert.doesNotMatch(state.stdout(), /omitted from this notice/u);
     assert.match(
       state.stdout(),
-      /If repeated updates keep blocking the same draft and this is still the right reply, you may use:\n {2}rah worker message-post --send-draft --anyway --target '#room'/u,
+      /If repeated updates keep blocking the same draft and this is still the right reply, you may use:\n {2}loom-worker message-post --send-draft --anyway --target '#room'/u,
     );
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
@@ -1246,7 +1246,7 @@ test("Raft-shaped draft recovery needs only a target and rejects stdin content",
       state.stderr(),
       /--send-draft sends the saved draft unchanged and must not read message content from stdin/u,
     );
-    assert.match(state.stderr(), /rah worker message-post --target "#ops"/u);
+    assert.match(state.stderr(), /loom-worker message-post --target "#ops"/u);
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }
@@ -1355,18 +1355,18 @@ test("A possible thread target mismatch is an unsuccessful send offering exactly
     );
     assert.match(
       state.stderr(),
-      /If this reply belongs in the thread, send the message to the thread target instead:\n {2}rah worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+      /If this reply belongs in the thread, send the message to the thread target instead:\n {2}loom-worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
     );
     assert.match(
       state.stderr(),
-      /If the top-level channel message is intentional, send the saved draft unchanged:\n {2}rah worker message-post --send-draft --target '#room'/u,
+      /If the top-level channel message is intentional, send the saved draft unchanged:\n {2}loom-worker message-post --send-draft --target '#room'/u,
     );
     // The composition survived, and Raft carries the two paths as the error's
     // `suggestedNextAction`, not as a second copy of the body.
     assert.match(state.stderr(), /\nDraft saved: yes\n/u);
     assert.match(
       state.stderr(),
-      /\nNext action: No message was sent\. Send to '#room:thread-1' if this belongs in the thread, or confirm the saved top-level draft with `rah worker message-post --send-draft --target '#room'`\.\n$/u,
+      /\nNext action: No message was sent\. Send to '#room:thread-1' if this belongs in the thread, or confirm the saved top-level draft with `loom-worker message-post --send-draft --target '#room'`\.\n$/u,
     );
     assert.doesNotMatch(state.stderr(), /SEND_HELD_AS_DRAFT/u);
     assert.doesNotMatch(state.stderr(), /--held-draft-id/u);
@@ -2182,7 +2182,7 @@ test("help no longer presents the causal parameters as required on Task commands
     await runWorkerCliCommand(["worker", "help"], state.runtime);
     const help = state.stdout();
     for (const line of help.split("\n"))
-      if (/^rah worker task-/u.test(line))
+      if (/^loom-worker task-/u.test(line))
         assert.ok(
           !line.includes("--based-on-room-seq") &&
             !line.includes("--idempotency-key"),
@@ -2569,8 +2569,8 @@ test("the CLI help never asks the Agent for a cursor, a key or a paging receipt"
         // still names the receipt its complete target read issued; neither row
         // is part of this batch.
         if (
-          line.startsWith("rah worker artifact-publish") ||
-          line.startsWith("rah worker attachment-publish")
+          line.startsWith("loom-worker artifact-publish") ||
+          line.startsWith("loom-worker attachment-publish")
         )
           continue;
         assert.ok(

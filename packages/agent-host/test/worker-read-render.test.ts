@@ -51,11 +51,40 @@ test("message-read renders Raft's formatHistory window, header and cursors", () 
       "Read window: 2 returned, seq 4-7, oldest to newest. Older exist: --before message-1. No newer.",
       "",
       "[1/2 target=room-1 seq=4 msg=message-1 time=2026-09-09 01:02:03] @participant-a: first [task #3 status=in_progress]",
-      "[2/2 target=room-1 seq=7 msg=message-2 time=2026-09-09 01:04:05 threadId=thread-1] @participant-b: second [1 attachment: log.txt (id:att-1) — use rah worker attachment-download to download]",
+      "[2/2 target=room-1 seq=7 msg=message-2 time=2026-09-09 01:04:05 threadId=thread-1] @participant-b: second [1 attachment: log.txt (id:att-1) — use loom-worker attachment-download to download]",
       "",
       "End of window: 2/2 shown.",
     ].join("\n"),
   );
+});
+
+test("message-read shows a reference, not the body, for messages this run's wake already delivered", () => {
+  const text = render("/v1/worker/messages/history", {
+    frozenThroughRoomSeq: 9,
+    deliveredInWakeSeqs: [7],
+    messages: [
+      {
+        actorId: "participant-a",
+        body: "older context the wake did not carry",
+        createdAt: "2026-09-09T01:02:03.000Z",
+        messageId: "message-1",
+        roomId: "room-1",
+        roomSeq: 4,
+      },
+      {
+        actorId: "participant-b",
+        body: "SECRET_ALREADY_IN_WAKE",
+        createdAt: "2026-09-09T01:04:05.000Z",
+        messageId: "message-2",
+        roomId: "room-1",
+        roomSeq: 7,
+      },
+    ],
+  });
+  assert.ok(text);
+  assert.match(text, /older context the wake did not carry/u);
+  assert.doesNotMatch(text, /SECRET_ALREADY_IN_WAKE/u);
+  assert.match(text, /seq=7 .*\(delivered in this wake\)/u);
 });
 
 test("message-read with no messages renders Raft's empty-window sentence", () => {
@@ -180,7 +209,7 @@ test("message-search follows the RAH paging cursor the read family already print
   ) as string;
   assert.ok(
     text.endsWith(
-      'before answering.\nMore: rah worker message-search --cursor "c-2"',
+      'before answering.\nMore: loom-worker message-search --cursor "c-2"',
     ),
     text,
   );
@@ -339,7 +368,7 @@ test("sync renders the delivered window and Raft's drain terminator", () => {
       "seq=7 time=2026-09-09T01:03:03.000Z actor=@participant-a type=task.created",
       '  {"taskId":"task-1"}',
       "",
-      "More messages are pending. Run `rah worker sync` again.",
+      "More messages are pending. Run `loom-worker sync` again.",
     ].join("\n"),
   );
 });
@@ -508,7 +537,7 @@ test("room-list renders the Raft channel-line shape and its page footer", () => 
       "",
       "  - #build [public, joined, muted] id=room-1",
       "",
-      'More: rah worker room-list --cursor "next"',
+      'More: loom-worker room-list --cursor "next"',
     ].join("\n"),
   );
 });
@@ -748,7 +777,7 @@ test("task-create renders Raft's formatTasksCreated block and thread hint", () =
       '#4 [todo] assignee=unassigned claimUntil=null msg=message-9 "Ship the port"',
       "",
       "To follow up in each task's thread:",
-      "#4 → rah worker message-post --thread-id thread-9",
+      "#4 → loom-worker message-post --thread-id thread-9",
     ].join("\n"),
   );
 });
@@ -780,7 +809,7 @@ test("task-claim and task-claim-message render Raft's formatClaimResults block",
         "#4 (msg:message-9): claimed",
         "",
         "Follow up in each task's thread:",
-        "#4 → rah worker message-post --thread-id thread-9",
+        "#4 → loom-worker message-post --thread-id thread-9",
       ].join("\n"),
     );
   }
@@ -798,8 +827,8 @@ test("a repeated --number claim renders one block covering every Task", () => {
       "#5 (msg:message-10): claimed",
       "",
       "Follow up in each task's thread:",
-      "#4 → rah worker message-post --thread-id thread-9",
-      "#5 → rah worker message-post --thread-id thread-9",
+      "#4 → loom-worker message-post --thread-id thread-9",
+      "#5 → loom-worker message-post --thread-id thread-9",
     ].join("\n"),
   );
 });
@@ -868,7 +897,7 @@ test("task-convert and task-delete render Raft's acknowledgements", () => {
       'Converted msg=message-9 to task #4 [todo] assignee=unassigned "Ship the port"',
       "",
       "To follow up in the task's thread:",
-      "rah worker message-post --thread-id thread-9",
+      "loom-worker message-post --thread-id thread-9",
     ].join("\n"),
   );
   assert.equal(
@@ -898,7 +927,7 @@ test("reminder schedule, snooze and update render Raft's confirmation block", ()
       [
         `${headline}: #reminder-1 (one-time) "Check the deploy"`,
         "Next: 2126-09-09T03:00:00.000Z",
-        "(to modify: snooze/update/cancel; rah reminder --help)",
+        "(to modify: snooze/update/cancel; loom-worker reminder --help)",
       ].join("\n"),
     );
   }
@@ -1002,7 +1031,7 @@ test("thread-unfollow renders Raft's three-line notice", () => {
     ),
     [
       "Unfollowed #build:thread-9. Ordinary delivery for this thread has stopped.",
-      'A later personal @mention arrives and re-follows you; that delivery reminds you to run: rah worker thread-unfollow --target "#build:thread-9"',
+      'A later personal @mention arrives and re-follows you; that delivery reminds you to run: loom-worker thread-unfollow --target "#build:thread-9"',
       "Posting in this thread re-follows you automatically.",
     ].join("\n"),
   );
@@ -1231,7 +1260,7 @@ test("profile-show renders formatHumanProfile and the created-Agent list with it
       "- Created Agents (2):",
       "  - @alice (Codex CLI, enabled) id=participant-a",
       "  - @bob (no runtime, tombstoned) id=participant-b",
-      'More created agents: rah worker profile-show --target participant-h --created-agents-cursor "cursor-1"',
+      'More created agents: loom-worker profile-show --target participant-h --created-agents-cursor "cursor-1"',
     ].join("\n"),
   );
 });
@@ -1352,7 +1381,7 @@ test("attachment-comments renders Raft's comment block, its anchors and check ma
       "[msg=message-11 time=2026-09-09T03:00:00.000Z type=human] @sun: Looks right",
       "[msg=message-12 time=2026-09-09T03:01:00.000Z type=agent] ✅ [anchor: L12–20] @alice: Fix this range",
       "(full conversation lives in thread thread-1)",
-      'More: rah worker attachment-comments --attachment-id "att-1" --before-room-seq 12',
+      'More: loom-worker attachment-comments --attachment-id "att-1" --before-room-seq 12',
     ].join("\n"),
   );
 });
@@ -1419,7 +1448,7 @@ test("attachment-publish renders Raft's upload block with the RAH command that c
       "File uploaded: evidence.txt (2.0KB)",
       "Attachment ID: att-1",
       "",
-      "Use this ID with rah worker message-post --attachment-ids att-1 to include it in a message.",
+      "Use this ID with loom-worker message-post --attachment-ids att-1 to include it in a message.",
     ].join("\n"),
   );
   assert.equal(
@@ -1437,7 +1466,7 @@ test("attachment-publish renders Raft's upload block with the RAH command that c
       "File uploaded: result.txt (0.5KB)",
       "Attachment ID: att-2",
       "",
-      "rah worker task-submit binds this artifact to task task-1; it takes no attachment id.",
+      "loom-worker task-submit binds this artifact to task task-1; it takes no attachment id.",
     ].join("\n"),
   );
 });
@@ -1534,7 +1563,7 @@ test("channel attention conditionally renders upstream guidance and preserves le
         stillArrives: ["Personal mentions", "Followed Threads"],
         threadBoundary: "Thread controls are independent.",
         catchUp: "Read history to catch up.",
-        unmuteCommand: 'rah worker channel-unmute --target "#channel"',
+        unmuteCommand: 'loom-worker channel-unmute --target "#channel"',
       },
     },
     body,
@@ -1545,7 +1574,7 @@ test("channel attention conditionally renders upstream guidance and preserves le
   );
   assert.match(
     text,
-    /Thread controls are independent\.\nRead history to catch up\.\nTo unmute: rah worker channel-unmute/,
+    /Thread controls are independent\.\nRead history to catch up\.\nTo unmute: loom-worker channel-unmute/,
   );
   assert.ok(!text.includes("Agent API:"));
   const restored = render(

@@ -37,6 +37,11 @@ export type WorkerHistoryRequest = z.input<typeof WorkerHistoryRequestSchema>;
 export const WorkerHistoryResponseSchema = z
   .object({
     readReceiptId: z.string().uuid().optional(),
+    /** Messages whose bodies this run's sent wake already delivered. */
+    deliveredInWakeSeqs: z
+      .array(z.number().int().positive())
+      .max(100)
+      .optional(),
     messages: z.array(MessageSchema).max(100),
     addressing: WorkerAddressingSchema.optional(),
     frozenThroughRoomSeq: z.number().int().nonnegative(),

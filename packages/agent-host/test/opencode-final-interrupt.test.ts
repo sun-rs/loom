@@ -82,7 +82,7 @@ test("a listing showing the posting tool running waits for its terminal state", 
     type: "tool",
     state: {
       status: "running",
-      input: { command: 'rah worker message-post --target "#main" --final' },
+      input: { command: 'loom-worker message-post --target "#main" --final' },
     },
   };
   const helper = createOpenCodeFinalInterrupt({

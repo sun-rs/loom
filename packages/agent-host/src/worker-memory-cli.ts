@@ -12,7 +12,7 @@ import {
 } from "@rah-os/protocol";
 
 /**
- * evo S6 batch A: `rah worker memory <action>`. The command carries only the
+ * evo S6 batch A: `loom-worker memory <action>`. The command carries only the
  * entry fields; the channel, author, Role, model, session and RunAttempt are
  * derived by the Kernel from the Worker credential, so no option for them
  * exists. There is no delete: deleting memory is Human-only.
@@ -56,7 +56,7 @@ export async function parseWorkerMemoryCommand(
   const action = arguments_[2];
   if (action === undefined || !Object.hasOwn(ACTIONS, action))
     throw new Error(
-      `usage: rah worker memory <${Object.keys(ACTIONS).join("|")}> [options]`,
+      `usage: loom-worker memory <${Object.keys(ACTIONS).join("|")}> [options]`,
     );
   const spec = ACTIONS[action as Action];
   const options = parseMemoryOptions(

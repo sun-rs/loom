@@ -47,3 +47,20 @@ test("counts by category and kind; absent evidence stays null", () => {
     },
   );
 });
+
+test("the collision-free loom-worker command is classified like the RAH_WORKER_CLI form", () => {
+  assert.equal(
+    workerCallKind("loom-worker message-post --target '#x'"),
+    "box-post",
+  );
+  assert.equal(workerCallKind("loom-worker message-check"), "box-check");
+  assert.equal(workerCallKind("loom-worker help tasks"), "worker-command");
+  assert.equal(
+    workerCallKind("loom-worker task-claim --number 3"),
+    "task-command",
+  );
+  assert.equal(
+    workerCallKind("loom-worker room-read --target '#x'"),
+    "worker-command",
+  );
+});

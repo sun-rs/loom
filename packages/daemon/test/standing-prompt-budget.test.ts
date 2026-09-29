@@ -71,9 +71,7 @@ test("the prompt no longer drives an extra turn after a successful reply", () =>
 test("the prompt points at every on-demand help topic it relies on", () => {
   const { prompt } = compileStandingPrompt(minimalInputs[0]);
   const pointer =
-    /Details: `"\$RAH_WORKER_CLI" worker help <topic>` — topics: ([a-z, ]+)\./u.exec(
-      prompt,
-    );
+    /Details: `loom-worker help <topic>` — topics: ([a-z, ]+)\./u.exec(prompt);
   assert.ok(pointer, "prompt carries the help pointer line");
   assert.deepEqual(
     pointer[1]!.split(", ").sort(),
@@ -97,7 +95,7 @@ test("the prompt keeps the Human-decides-Tasks rule crisp", () => {
  */
 const MOVED_RULES: readonly RegExp[] = [
   /use the current environment, never a previous turn's Room, range or Worker path/giu,
-  /Wake commands omit the CLI prefix/giu,
+  /Wake commands omit the `loom-worker` prefix/giu,
   /`msg=<ref>` is a short message id/giu,
   /pass a wake's `--turn <handle>` to every Worker command/giu,
   /On `Reply:`, post once with its `--based-on-room-seq`, no `message-check` first/giu,
@@ -228,9 +226,10 @@ test("the prompt does not restate the MEMORY.md read rule the memory binding own
   }
 });
 
-test("complete wake bodies avoid redundant reads without forbidding needed history", () => {
+test("redundant reads are handled by tool behaviour, not by prompt rules (owner ruling 2026-09-29)", () => {
+  // message-read references bodies the sent wake already delivered instead of
+  // repeating them (worker-read-tools deliveredInWakeSeqs).
   const { prompt } = compileStandingPrompt(minimalInputs[0]);
-  assert.match(prompt, /Do not re-fetch delivered bodies with `message-read`/u);
-  assert.match(prompt, /read older context only when needed/u);
-  assert.match(prompt, /Do not inspect the Worker executable/u);
+  assert.doesNotMatch(prompt, /re-fetch delivered bodies/u);
+  assert.doesNotMatch(prompt, /inspect the Worker executable/u);
 });

@@ -267,12 +267,13 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     renderStandingProtocolCard,
   } = await import("@rah-os/agent-host");
   const { createHash } = await import("node:crypto");
-  // 2026-09-29: the shared CLI protocol avoids re-reading delivered bodies.
+  // 2026-09-29: the Worker command is the collision-free `loom-worker`, and
+  // redundant reads are handled by message-read, not by prompt rules.
   // Pin the new card; both withdrawn-tool and preceding CLI sessions upgrade.
-  assert.equal(STANDING_PROTOCOL_VERSION, "34be49a3198f");
+  assert.equal(STANDING_PROTOCOL_VERSION, "faa029fe55d5");
   assert.equal(
     createHash("sha256").update(renderStandingProtocolCard()).digest("hex"),
-    "8e6f909bf635d980f18753c2006b7a1bdb80368ca37b72e3f8fffba43ebaf2af",
+    "ebfabccc32a8400bdf12b854c1f7fa3e0fa53caab1708d976889b7b36758d870",
   );
   const agent = { ...agentContext({ role: "review" }), instanceChannelId: "c" };
   const lease = standingPromptLease(envelope(agent), options)!;
@@ -310,5 +311,5 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     protocolUpdateNotice(STANDING_PROTOCOL_VERSION),
   );
   assert.equal(notice, protocolUpdateNotice(STANDING_PROTOCOL_VERSION));
-  assert.match(notice!, /34be49a3198f/u);
+  assert.match(notice!, /faa029fe55d5/u);
 });

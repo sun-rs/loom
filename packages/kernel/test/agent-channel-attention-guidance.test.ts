@@ -6,9 +6,9 @@ import { join } from "node:path";
 import test from "node:test";
 import { channelAttentionGuidance } from "../src/agent-channel-attention-guidance.ts";
 
-test("mute guidance shell command preserves literal targets and uses the supplied Worker entry", () => {
+test("mute guidance shell command preserves literal targets and uses the collision-free loom-worker command", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah attention quote "));
-  const executable = join(directory, "rah");
+  const executable = join(directory, "loom-worker");
   // Controlled marker substitutions only print text, never perform filesystem
   // or network actions. The red test safely exposes incorrect double quoting.
   const target = "#$(printf SUBSTITUTED)`printf BACKTICK`'\" room";
@@ -22,16 +22,15 @@ test("mute guidance shell command preserves literal targets and uses the supplie
       const guidance = channelAttentionGuidance(muted, target);
       const command = (muted ? guidance.unmuteCommand : guidance.muteCommand)!;
       const output = execFileSync("/bin/sh", ["-c", command], {
-        env: { PATH: directory, RAH_WORKER_CLI: executable },
+        env: { PATH: directory },
         encoding: "utf8",
       });
       assert.deepEqual(JSON.parse(output), [
-        "worker",
         muted ? "channel-unmute" : "channel-mute",
         "--target",
         target,
       ]);
-      assert.ok(command.startsWith('"$RAH_WORKER_CLI" worker '), command);
+      assert.ok(command.startsWith("loom-worker "), command);
     }
   } finally {
     rmSync(directory, { recursive: true, force: true });

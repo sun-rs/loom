@@ -98,7 +98,7 @@ export function workerTaskHoldOutput(
     omittedMessageCount > 0
       ? ` ${String(omittedMessageCount)} earlier same-target message${
           omittedMessageCount === 1 ? "" : "s"
-        } omitted from this notice and no longer block this action; use rah worker message-read explicitly if you need earlier context.`
+        } omitted from this notice and no longer block this action; use loom-worker message-read explicitly if you need earlier context.`
       : "";
   const taskEventCount =
     typeof value.newerTaskEventCount === "number"
@@ -111,7 +111,7 @@ export function workerTaskHoldOutput(
     taskEventCount > 0
       ? ` ${String(taskEventCount)} newer Task event${
           taskEventCount === 1 ? "" : "s"
-        } in this Room also moved the position; use rah worker task-history for them.`
+        } in this Room also moved the position; use loom-worker task-history for them.`
       : "";
   const opening =
     newMessageCount === 0

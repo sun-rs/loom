@@ -16,5 +16,5 @@ export function deliveryInstructions(
         : "The daemon does not proactively inject new Room notices while you are busy; pending work is retained for a follow-up Activation.";
   return `## Message Notifications
 
-Delivery mode at launch: ${mode}. ${behavior} A notice names pending targets only: it does not acknowledge Inbox, prove you read a message, complete work or widen this Activation, and never derive "no work" from a content-free notice alone. At a natural breakpoint read it with \`"$RAH_WORKER_CLI" worker message-read --target TARGET\`.`;
+Delivery mode at launch: ${mode}. ${behavior} A notice names pending targets only: it does not acknowledge Inbox, prove you read a message, complete work or widen this Activation, and never derive "no work" from a content-free notice alone. At a natural breakpoint read it with \`loom-worker message-read --target TARGET\`.`;
 }

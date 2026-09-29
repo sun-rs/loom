@@ -43,7 +43,7 @@ function publishPidFile(pidFile, value) {
 }
 
 /**
- * `rah worker sync` renders Raft's drained window as text; its header states
+ * `loom-worker sync` renders Raft's drained window as text; its header states
  * the delivered cursor because RAH's Agent, unlike Raft's, has to pass that
  * cursor back to `acknowledge --through-seq`.
  */

@@ -1,4 +1,5 @@
 import * as ReadCoverage from "./activation-read-coverage.ts";
+import { readPresentedWindow } from "./activation-presented-window.ts";
 import { workerAddressing } from "./worker-addressing.ts";
 import { freshnessHoldContext } from "./freshness-hold-context.ts";
 import type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";
@@ -330,8 +331,19 @@ export class WorkerReadService {
         ),
         updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
       });
+      // Owner ruling 2026-09-29 (tool contract, not a prompt rule): bodies this
+      // run's sent wake already put in front of the model are marked, so the
+      // CLI shows a reference instead of repeating them into the session.
+      const window = readPresentedWindow(this.#db, origin);
+      const deliveredInWakeSeqs =
+        window?.sentAt === undefined || origin.roomId !== scope.roomId
+          ? []
+          : rows
+              .map((row) => integer(row, "event_order"))
+              .filter((seq) => window.presentedSeqs.includes(seq));
       return P.WorkerHistoryResponseSchema.parse({
         ...(readReceiptId ? { readReceiptId } : {}),
+        ...(deliveredInWakeSeqs.length ? { deliveredInWakeSeqs } : {}),
         addressing: workerAddressing(
           this.#db,
           origin,

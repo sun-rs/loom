@@ -333,7 +333,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     onDemand,
     /RAH records no preset reviewer or auditor role, so `task-review` applies only to a Task whose reviewerIds a Human explicitly selected/u,
   );
-  assert.match(onDemand, /RAH_WORKER_CLI.*worker task-create/u);
+  assert.match(onDemand, /loom-worker task-create/u);
   assert.match(onDemand, /task-create.*unassigned.*todo/isu);
   assert.match(onDemand, /cannot assign another participant/isu);
   assert.match(onDemand, /Prefer independent subtasks/iu);
@@ -386,8 +386,8 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     /never (judge from|rely on) the owner's prose alone/iu,
   );
   assert.match(prompt, /canonical Room/u);
-  assert.match(prompt, /RAH_WORKER_CLI.*worker message-check/u);
-  assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
+  assert.match(prompt, /loom-worker message-check/u);
+  assert.match(prompt, /loom-worker message-post/u);
   assert.match(onDemand, /Respect ongoing conversations/iu);
   assert.match(onDemand, /Only the person doing the work should report/iu);
   assert.match(prompt, /Claim before you start.*concurrency lock/isu);
@@ -429,7 +429,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.doesNotMatch(withHelp(prompt), /- Or send nothing\./u);
   assert.match(
     onDemand,
-    /possible thread target mismatch, nothing was sent: either send the message to the named thread target, or.*confirm the saved top-level draft with `"\$RAH_WORKER_CLI" worker message-post --send-draft --target <parent target>` and no stdin/isu,
+    /possible thread target mismatch, nothing was sent: either send the message to the named thread target, or.*confirm the saved top-level draft with `loom-worker message-post --send-draft --target <parent target>` and no stdin/isu,
   );
   assert.match(
     prompt,
@@ -521,7 +521,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     withHelp(prompt),
     /goal.*already complete.*remain silent/isu,
   );
-  assert.match(onDemand, /RAH_WORKER_CLI.*worker task-submit/u);
+  assert.match(onDemand, /loom-worker task-submit/u);
   assert.match(onDemand, /task\.reassigned/u);
   // The self-invented key rules are gone: no stable-key recipe, and no rework
   // round rule folding a triggering roomSeq into a key.

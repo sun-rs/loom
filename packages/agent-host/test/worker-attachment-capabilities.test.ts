@@ -33,5 +33,5 @@ test("the capability CLI exposes only an empty read command and advertises it in
     }),
     0,
   );
-  assert.match(output, /rah worker attachment-capabilities/u);
+  assert.match(output, /loom-worker attachment-capabilities/u);
 });

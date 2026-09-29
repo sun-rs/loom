@@ -113,7 +113,7 @@ function formatAttachmentSuffix(attachments: unknown): string {
     .join(", ");
   return ` [${items.length} attachment${
     items.length > 1 ? "s" : ""
-  }: ${rendered} — use rah worker attachment-download to download]`;
+  }: ${rendered} — use loom-worker attachment-download to download]`;
 }
 
 function attachmentCommentSuffix(message: Json): string {
@@ -144,7 +144,12 @@ function addressed(message: Json, addressing: unknown): Json {
 }
 
 /** `formatHistoryMessageLine` (`main.js@675977`). */
-function historyLine(message: Json, index: number, total: number): string {
+function historyLine(
+  message: Json,
+  index: number,
+  total: number,
+  deliveredInWake = false,
+): string {
   const header = [
     `${index + 1}/${total}`,
     `target=${asString(message.target) ?? asString(message.roomId) ?? "-"}`,
@@ -154,9 +159,11 @@ function historyLine(message: Json, index: number, total: number): string {
   ];
   const threadId = asString(message.threadId);
   if (threadId !== undefined) header.push(`threadId=${threadId}`);
-  return `[${header.join(" ")}] @${
+  const author = `[${header.join(" ")}] @${
     asString(message.senderHandle) ?? asString(message.actorId) ?? "unknown"
-  }: ${asString(message.body) ?? ""}${attachmentCommentSuffix(message)}${formatAttachmentSuffix(
+  }`;
+  if (deliveredInWake) return `${author}: (delivered in this wake)`;
+  return `${author}: ${asString(message.body) ?? ""}${attachmentCommentSuffix(message)}${formatAttachmentSuffix(
     message.attachments,
   )}`;
 }
@@ -216,9 +223,20 @@ function renderHistory(result: Json): string {
     "before",
     oldest,
   )} ${cursorText("Newer", result.newerCursor !== undefined, "after", newest)}`;
+  // Bodies this run's wake already delivered are referenced, not repeated.
+  const delivered = new Set(
+    asArray(result.deliveredInWakeSeqs).flatMap((seq) =>
+      typeof seq === "number" ? [seq] : [],
+    ),
+  );
   const body = messages
     .map((message, index) =>
-      historyLine(addressed(message, result.addressing), index, count),
+      historyLine(
+        addressed(message, result.addressing),
+        index,
+        count,
+        delivered.has(asNumber(message.roomSeq) ?? -1),
+      ),
     )
     .join("\n");
   return `${header}\n\n${body}\n\nEnd of window: ${count}/${count} shown.`;
@@ -448,7 +466,7 @@ function renderMessageSearch(body: Json, result: Json): string {
     "",
     "If a result may be relevant but its preview is not enough, read the surrounding context for that result before answering.",
   ].join("\n")}${formatPageFooter(
-    "rah worker message-search",
+    "loom-worker message-search",
     result.nextCursor,
   )}`;
 }
@@ -655,7 +673,7 @@ function renderSync(result: Json): string {
   if (presented.length > 0) sections.push(presented.join("\n"));
   sections.push(
     cursorAfter !== undefined && latest !== undefined && cursorAfter < latest
-      ? "More messages are pending. Run `rah worker sync` again."
+      ? "More messages are pending. Run `loom-worker sync` again."
       : "No more new inbox messages.",
   );
   return sections.join("\n\n");
@@ -763,7 +781,7 @@ function renderMembers(result: Json): string {
   text += "Members means join/post authority for this surface.\n\n";
   text += memberSections(asArray(result.members).map(asRecord));
   return `${text.trimEnd()}\n${formatPageFooter(
-    "rah worker room-members",
+    "loom-worker room-members",
     result.nextCursor,
   )}`;
 }
@@ -828,7 +846,7 @@ function renderServerInfo(result: Json): string {
   text += `${roomLine(asRecord(result.room), {}, true)}\n\n`;
   text += memberSections(asArray(result.members).map(asRecord));
   return `${text.trimEnd()}\n${formatPageFooter(
-    "rah worker server-info",
+    "loom-worker server-info",
     result.nextCursor,
   )}`;
 }
@@ -845,7 +863,7 @@ function renderRoomList(result: Json): string {
           .join("\n")
       : "  (none)";
   return `## Rooms\n\n${body}\n${formatPageFooter(
-    "rah worker room-list",
+    "loom-worker room-list",
     result.nextCursor,
   )}`;
 }
@@ -905,7 +923,7 @@ function renderTaskList(body: Json, result: Json): string {
         .map((task) => taskBoardLine(task))
         .join("\n")}`;
   return `${listing}${formatPageFooter(
-    "rah worker task-list",
+    "loom-worker task-list",
     result.nextCursor,
   )}`;
 }
@@ -927,7 +945,7 @@ function renderTaskHistory(result: Json): string {
     })
     .join("\n");
   return `${header}\n\n${rendered}${formatPageFooter(
-    "rah worker task-history",
+    "loom-worker task-history",
     result.nextCursor,
   )}`;
 }
@@ -1065,7 +1083,7 @@ function createdTaskLine(task: Json): string {
  * `message-post` addresses the same Thread by its canonical id.
  */
 function threadHintLine(task: Json): string {
-  return `#${asNumber(task.taskNumber) ?? "?"} → rah worker message-post --thread-id ${
+  return `#${asNumber(task.taskNumber) ?? "?"} → loom-worker message-post --thread-id ${
     asString(task.threadId) ?? "-"
   }`;
 }
@@ -1213,7 +1231,7 @@ function renderTaskConverted(result: Json): string {
     } "${asString(task.title) ?? ""}"`,
     "",
     "To follow up in the task's thread:",
-    `rah worker message-post --thread-id ${asString(task.threadId) ?? "-"}`,
+    `loom-worker message-post --thread-id ${asString(task.threadId) ?? "-"}`,
   ].join("\n");
 }
 
@@ -1226,7 +1244,7 @@ function renderTaskDeleted(result: Json): string {
 
 /** `MODIFY_HINT` (`main.js@32736620`), with RAH's command name. */
 const REMINDER_MODIFY_HINT =
-  "(to modify: snooze/update/cancel; rah reminder --help)";
+  "(to modify: snooze/update/cancel; loom-worker reminder --help)";
 
 /** `formatReminderType` (`main.js@30421062`). */
 function reminderType(reminder: Json): string {
@@ -1356,7 +1374,7 @@ function renderThreadUnfollow(body: Json, result: Json): string {
     asString(body.channel) ?? asString(result.threadId) ?? "this thread";
   return [
     `Unfollowed ${target}. Ordinary delivery for this thread has stopped.`,
-    `A later personal @mention arrives and re-follows you; that delivery reminds you to run: rah worker thread-unfollow --target ${JSON.stringify(
+    `A later personal @mention arrives and re-follows you; that delivery reminds you to run: loom-worker thread-unfollow --target ${JSON.stringify(
       target,
     )}`,
     "Posting in this thread re-follows you automatically.",
@@ -1406,7 +1424,7 @@ function createdAgentLines(profile: Json): string[] {
   const cursor = asString(profile.createdAgentsNextCursor);
   if (cursor !== undefined)
     lines.push(
-      `More created agents: rah worker profile-show --target ${
+      `More created agents: loom-worker profile-show --target ${
         asString(asRecord(profile.principal).principalId) ?? "-"
       } --created-agents-cursor ${JSON.stringify(cursor)}`,
     );
@@ -1735,7 +1753,7 @@ function renderAttachmentComments(body: Json, result: Json): string {
   const before = asNumber(result.nextBeforeRoomSeq);
   if (before !== undefined)
     lines.push(
-      `More: rah worker attachment-comments --attachment-id ${JSON.stringify(
+      `More: loom-worker attachment-comments --attachment-id ${JSON.stringify(
         attachmentId,
       )} --before-room-seq ${before}`,
     );
@@ -1787,8 +1805,8 @@ export function renderWorkerAttachmentPublish(
     `Attachment ID: ${attachmentId}`,
     "",
     messageAttachment
-      ? `Use this ID with rah worker message-post --attachment-ids ${attachmentId} to include it in a message.`
-      : `rah worker task-submit binds this artifact to task ${
+      ? `Use this ID with loom-worker message-post --attachment-ids ${attachmentId} to include it in a message.`
+      : `loom-worker task-submit binds this artifact to task ${
           asString(result.taskId) ?? "-"
         }; it takes no attachment id.`,
   ].join("\n");

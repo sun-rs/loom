@@ -207,8 +207,8 @@ async function runTurn(turn) {
   if (tool !== "none") {
     const command =
       tool === "final"
-        ? `rah worker message-post --target "#main" --final <<'EOF'\nreply --final quoted\nEOF`
-        : "rah worker message-check";
+        ? `loom-worker message-post --target "#main" --final <<'EOF'\nreply --final quoted\nEOF`
+        : "loom-worker message-check";
     const id = `tool-${String(turnIndex)}`;
     send({
       type: "assistant",

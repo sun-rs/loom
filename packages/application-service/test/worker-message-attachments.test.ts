@@ -252,7 +252,7 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
       const published = await publish(command);
       assert.match(
         published.stdout,
-        /^Use this ID with rah worker message-post --attachment-ids .+ to include it in a message\.$/mu,
+        /^Use this ID with loom-worker message-post --attachment-ids .+ to include it in a message\.$/mu,
       );
       ids.push(published.attachmentId);
       assert.deepEqual(await publish(command), published);

@@ -774,3 +774,25 @@ test("contract §3 catch-up: the route carries Channel messages that did not wak
     await context.close();
   }
 });
+
+test("a message-read in the same run marks the bodies its sent wake already delivered", async () => {
+  const context = await fixture();
+  try {
+    const first = context.post("question one");
+    const run = context.activate();
+    await run.call("message-present");
+    const before = await run.call("messages/history", {});
+    assert.equal(before.status, 200);
+    assert.equal(
+      before.body.deliveredInWakeSeqs,
+      undefined,
+      "an unsent rendering proves nothing was delivered",
+    );
+    run.markSent();
+    const after = await run.call("messages/history", {});
+    assert.equal(after.status, 200);
+    assert.deepEqual(after.body.deliveredInWakeSeqs, [first.event.roomSeq]);
+  } finally {
+    await context.close();
+  }
+});

@@ -76,12 +76,12 @@ export function workerTargetConfirmationBody(
     "This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once.",
     "",
     "If this reply belongs in the thread, send the message to the thread target instead:",
-    `  rah worker message-post${turn} --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
+    `  loom-worker message-post${turn} --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
     "  message body",
     `  ${MESSAGE_HEREDOC_DELIMITER}`,
     "",
     "If the top-level channel message is intentional, send the saved draft unchanged:",
-    `  rah worker message-post --send-draft${turn} --target ${parent}`,
+    `  loom-worker message-post --send-draft${turn} --target ${parent}`,
   ].join("\n");
 }
 
@@ -92,7 +92,7 @@ export function workerTargetConfirmationNextAction(
 ): string | undefined {
   const targets = confirmationTargets(result);
   if (targets === undefined) return undefined;
-  return `No message was sent. Send to ${targets.thread} if this belongs in the thread, or confirm the saved top-level draft with \`rah worker message-post --send-draft${turn} --target ${targets.parent}\`.`;
+  return `No message was sent. Send to ${targets.thread} if this belongs in the thread, or confirm the saved top-level draft with \`loom-worker message-post --send-draft${turn} --target ${targets.parent}\`.`;
 }
 
 export function workerHeldSendGuidance(
@@ -129,7 +129,7 @@ export function workerHeldSendGuidance(
     omittedMessageCount > 0
       ? ` ${String(omittedMessageCount)} earlier same-target message${
           omittedMessageCount === 1 ? "" : "s"
-        } omitted from this notice and no longer block this action; use rah worker message-read explicitly if you need earlier context.`
+        } omitted from this notice and no longer block this action; use loom-worker message-read explicitly if you need earlier context.`
       : "";
   const intent = value.replyIntent as
     { basedOnRoomSeq?: unknown; final?: unknown } | undefined;
@@ -140,7 +140,7 @@ export function workerHeldSendGuidance(
   const continueAnyway =
     value.continueAnywaySuggested === true
       ? `If repeated updates keep blocking the same draft and this is still the right reply, you may use:
-  rah worker message-post --send-draft --anyway${turn} --target ${target}
+  loom-worker message-post --send-draft --anyway${turn} --target ${target}
 `
       : "";
   return `SEND_HELD_AS_DRAFT: message was NOT sent; no target delivery occurred.
@@ -150,11 +150,11 @@ Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
 Your message has been saved as a draft. Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
 To update the draft, send revised content normally:
-  rah worker message-post${turn}${replySuffix} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
+  loom-worker message-post${turn}${replySuffix} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
   revised message
   ${MESSAGE_HEREDOC_DELIMITER}
 To send the current draft unchanged:
-  rah worker message-post --send-draft${turn} --target ${target}
+  loom-worker message-post --send-draft${turn} --target ${target}
 You can also choose not to send anything.
 ${continueAnyway}`;
 }
@@ -301,7 +301,7 @@ export function formatUnresolvedMentionSection(
   return [
     "Undelivered mentions — partial result",
     "Message effect: status=queued. Queue acceptance is the only message proof.",
-    "Do not rerun `rah worker message-post`; the message is already queued and a retry could duplicate it.",
+    "Do not rerun `loom-worker message-post`; the message is already queued and a retry could duplicate it.",
     "Each row below is bound to the literal @token from your message.",
     "For a literal name rather than a recipient, wrap the @handle in inline or fenced code.",
     rows,

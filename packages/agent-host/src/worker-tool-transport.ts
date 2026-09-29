@@ -66,15 +66,28 @@ export async function writeWorkerCliWrapper(
   const invocation = isSea()
     ? [process.execPath, "__worker-cli"]
     : [process.execPath, WORKER_CLI_ENTRY_PATH];
-  const wrapper = `#!/bin/sh\nexec ${invocation.map(shellQuote).join(" ")} "$@"\n`;
-  const file = await open(wrapperPath, "wx", 0o700);
+  const command = invocation.map(shellQuote).join(" ");
+  await writeWrapper(wrapperPath, `#!/bin/sh\nexec ${command} "$@"\n`);
+  // Owner ruling 2026-09-29, Raft's per-launch PATH wrapper
+  // (daemon chunk-TEGPBMW7.js:5780-5915) under a collision-free name: a legacy
+  // `/opt/homebrew/bin/rah` can shadow the bare `rah` in login shells.
+  // `loom-worker <command>` is `rah worker <command>`; the other top-level
+  // groups (reminder, agent inbox, app config) pass through unchanged.
+  await writeWrapper(
+    join(directory, "loom-worker"),
+    `#!/bin/sh\ncase "$1" in reminder|agent|app) exec ${command} "$@" ;; esac\nexec ${command} worker "$@"\n`,
+  );
+  return wrapperPath;
+}
+
+async function writeWrapper(path: string, body: string): Promise<void> {
+  const file = await open(path, "wx", 0o700);
   try {
-    await file.writeFile(wrapper, "utf8");
+    await file.writeFile(body, "utf8");
     await file.sync();
   } finally {
     await file.close();
   }
-  return wrapperPath;
 }
 
 function shellQuote(value: string): string {
