@@ -31,15 +31,15 @@ test("hold guidance carries the invocation's --turn on every recovery command", 
   const text = workerHeldSendGuidance(held, " --turn t1")!;
   assert.match(
     text,
-    /loom-worker message-post --send-draft --turn t1 --target '#drift'\n/u,
+    /"\$RAH_WORKER_CLI" worker message-post --send-draft --turn t1 --target '#drift'\n/u,
   );
   assert.match(
     text,
-    /loom-worker message-post --send-draft --anyway --turn t1 --target '#drift'/u,
+    /"\$RAH_WORKER_CLI" worker message-post --send-draft --anyway --turn t1 --target '#drift'/u,
   );
   assert.match(
     text,
-    /loom-worker message-post --turn t1 --target '#drift' <</u,
+    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --target '#drift' <</u,
   );
   assert.doesNotMatch(workerHeldSendGuidance(held)!, /--turn/u);
 });
@@ -48,11 +48,11 @@ test("thread-target confirmation carries the invocation's --turn", () => {
   const body = workerTargetConfirmationBody(confirmation, " --turn t1")!;
   assert.match(
     body,
-    /loom-worker message-post --send-draft --turn t1 --target '#drift'$/u,
+    /"\$RAH_WORKER_CLI" worker message-post --send-draft --turn t1 --target '#drift'$/u,
   );
   assert.match(
     body,
-    /loom-worker message-post --turn t1 --target '#drift:abcd1234' <</u,
+    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --target '#drift:abcd1234' <</u,
   );
   assert.match(
     workerTargetConfirmationNextAction(confirmation, " --turn t1")!,

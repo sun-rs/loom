@@ -739,7 +739,7 @@ if (args.includes("--input-format") && args.includes("stream-json") && !activati
     process.stdout.write(JSON.stringify({...input,session_id:sessionId}) + "\\n");
     process.stdout.write(JSON.stringify({type:"system",subtype:"init",session_id:identityDrift ? "claude-session-identity-b" : sessionId}) + "\\n");
     if (cancelled) { setInterval(() => {}, 1_000); return; }
-    process.stdout.write(JSON.stringify({type:"assistant",session_id:sessionId,message:{content:[{type:"thinking",thinking:"正在读取 Room 状态"},{type:"tool_use",id:"tool-1",name:"Bash",input:{command:"loom-worker sync"}}]}}) + "\\n");
+    process.stdout.write(JSON.stringify({type:"assistant",session_id:sessionId,message:{content:[{type:"thinking",thinking:"正在读取 Room 状态"},{type:"tool_use",id:"tool-1",name:"Bash",input:{command:"rah worker sync"}}]}}) + "\\n");
     process.stdout.write(JSON.stringify({type:"user",session_id:sessionId,message:{content:[{type:"tool_result",tool_use_id:"tool-1",content:"PRIVATE TOOL OUTPUT"}]}}) + "\\n");
     process.stdout.write(JSON.stringify({type:"assistant",session_id:sessionId,message:{content:[{type:"text",text:"已完成"}]}}) + "\\n");
     process.stdout.write(JSON.stringify({type:"result",subtype:"success",is_error:false,result:"已完成",session_id:sessionId}) + "\\n");

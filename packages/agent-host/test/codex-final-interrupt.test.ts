@@ -203,7 +203,7 @@ const post = (method: string) => ({
     item: {
       id: "post",
       type: "commandExecution",
-      command: "loom-worker message-post --target '#c' --final",
+      command: "\"$RAH_WORKER_CLI\" worker message-post --target '#c' --final",
     },
   },
 });
@@ -302,7 +302,7 @@ test("a --final inside the heredoc body does not identify the posting call", asy
         id: "note",
         type: "commandExecution",
         command:
-          "loom-worker message-post --target '#c' <<'EOF'\nuse --final last\nEOF",
+          "\"$RAH_WORKER_CLI\" worker message-post --target '#c' <<'EOF'\nuse --final last\nEOF",
       },
     },
   });

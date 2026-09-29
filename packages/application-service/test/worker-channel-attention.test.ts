@@ -854,7 +854,7 @@ test("mute response guidance matches canonical delivery and unmute does not repl
     ]);
     assert.equal(
       mute.body.attention.unmuteCommand,
-      `loom-worker channel-unmute --target '#channel'`,
+      `"$RAH_WORKER_CLI" worker channel-unmute --target '#channel'`,
     );
     assert.equal(mute.body.attention.unmuteApi, undefined);
     assert.match(mute.body.attention.threadBoundary, /independent/);
@@ -865,7 +865,7 @@ test("mute response guidance matches canonical delivery and unmute does not repl
     assert.equal(unmute.body.attention.state, "unmuted");
     assert.equal(
       unmute.body.attention.muteCommand,
-      `loom-worker channel-mute --target '#channel'`,
+      `"$RAH_WORKER_CLI" worker channel-mute --target '#channel'`,
     );
     assert.equal(unmute.body.attention.unmuteCommand, undefined);
     assert.match(unmute.body.attention.catchUp, /not replayed/);

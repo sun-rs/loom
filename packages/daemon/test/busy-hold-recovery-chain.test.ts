@@ -355,7 +355,7 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
     );
     assert.match(
       transcript[0]?.stdout ?? "",
-      /loom-worker message-post --send-draft --target '#busy-hold-room'/u,
+      /"\$RAH_WORKER_CLI" worker message-post --send-draft --target '#busy-hold-room'/u,
     );
     // Raft's `renderError` block: the code, whether a retry is allowed, what
     // effect the refusal had, whether the content survived, and the one next

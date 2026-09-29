@@ -27,7 +27,7 @@ import type { ActivationEnvironmentLease } from "./generic-process-adapter.ts";
 
 /** The single standing-prompt line about channel memory. */
 export const CHANNEL_MEMORY_POINTER =
-  "Channel memory: its index is the last section of this prompt; before reading or writing memory see `loom-worker help memory`.";
+  'Channel memory: its index is the last section of this prompt; before reading or writing memory see `"$RAH_WORKER_CLI" worker help memory`.';
 
 /**
  * The launch's channel memory sequence: the index this session holds. The

@@ -263,7 +263,7 @@ function workerCommand(text, tokens) {
     /Reply: message-post --target "[^"]+"(?: --turn \S+)? --based-on-room-seq (\d+)( --final)?/u.exec(
       text,
     );
-  const cli = "loom-worker";
+  const cli = '"$RAH_WORKER_CLI" worker';
   if (tokens.has("check") || !reply || /message-check --startup/u.test(text))
     return `${cli} message-check${/message-check --startup/u.test(text) ? " --startup" : ""}${turnArg}`;
   const final = reply[2] !== undefined && !tokens.has("nofinal");

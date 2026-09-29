@@ -897,7 +897,7 @@ async function downloadWorkerArtifact(
 
 function parseAgentInboxCommand(arguments_: readonly string[]) {
   if (arguments_[1] !== "inbox")
-    throw new Error("usage: loom-worker agent inbox check|ack");
+    throw new Error('usage: "$RAH_WORKER_CLI" agent inbox check|ack');
   const options = parseOptions(arguments_.slice(3));
   if (arguments_[2] === "check" || arguments_[2] === "recheck") {
     assertAllowed(options, []);
@@ -913,7 +913,7 @@ function parseAgentInboxCommand(arguments_: readonly string[]) {
       }),
     };
   }
-  throw new Error("usage: loom-worker agent inbox check|ack");
+  throw new Error('usage: "$RAH_WORKER_CLI" agent inbox check|ack');
 }
 
 function parseCommand(
@@ -926,7 +926,7 @@ function parseCommand(
   path: string;
 } {
   if (arguments_[0] !== "worker" || arguments_[1] === undefined) {
-    throw new Error("usage: loom-worker <command> [options]");
+    throw new Error('usage: "$RAH_WORKER_CLI" worker <command> [options]');
   }
   const command = arguments_[1];
   const options = parseOptions(
@@ -1115,7 +1115,7 @@ function parseCommand(
           throw cliError(
             "SEND_DRAFT_STDIN_UNSUPPORTED",
             `--send-draft sends the saved draft unchanged and must not read message content from stdin. To send revised content, send it normally:
-  loom-worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
+  "$RAH_WORKER_CLI" worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
   message body
   ${MESSAGE_HEREDOC_DELIMITER}`,
           );
@@ -1156,7 +1156,7 @@ function parseCommand(
         throw cliError(
           "MISSING_CONTENT",
           `message content is required: pipe the body on stdin, or pass --body TEXT.
-  loom-worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
+  "$RAH_WORKER_CLI" worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
   message body
   ${MESSAGE_HEREDOC_DELIMITER}`,
         );
@@ -1383,7 +1383,7 @@ function parseReminderCommand(arguments_: readonly string[]): {
 } {
   const action = arguments_[1];
   if (arguments_[0] !== "reminder" || action === undefined) {
-    throw new Error("usage: loom-worker reminder <command> [options]");
+    throw new Error('usage: "$RAH_WORKER_CLI" reminder <command> [options]');
   }
   const options = parseOptions(arguments_.slice(2), ["all"]);
   const idempotencyKey = () =>
@@ -1947,84 +1947,84 @@ function workerOrigin(value: string | undefined): string {
 }
 
 function help(): string {
-  return `loom-worker app config --app system.cleaner [--set key=value] [--unset key]
-loom-worker agent inbox check
-loom-worker agent inbox recheck
-loom-worker agent inbox ack --item-id ID --version N
+  return `"$RAH_WORKER_CLI" app config --app system.cleaner [--set key=value] [--unset key]
+"$RAH_WORKER_CLI" agent inbox check
+"$RAH_WORKER_CLI" agent inbox recheck
+"$RAH_WORKER_CLI" agent inbox ack --item-id ID --version N
 App Inbox ack confirms a notification, not successful memory cleanup or a Room/Task action.
-loom-worker reminder schedule --title TEXT (--delay-seconds N|--fire-at ISO|--repeat RULE) --message-id ID [--channel #ROOM] [--tz IANA]
-loom-worker reminder list [--status scheduled,fired,canceled|--all]
-loom-worker reminder cancel --id ID
-loom-worker reminder snooze --id ID --by 30m
-loom-worker reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT) [--tz IANA]
-loom-worker reminder log --id ID
-loom-worker message-check [--replay] [--startup]
-loom-worker memory list [--include-invalidated] [--limit N]
-loom-worker memory read --name NAME
-loom-worker memory search --query TEXT [--limit N]
-loom-worker memory history --name NAME
-loom-worker memory write --name NAME --type user|feedback|project|reference --description TEXT <<'${MESSAGE_HEREDOC_DELIMITER}'
-loom-worker memory update --name NAME --expected-revision N [--type TYPE] [--description TEXT] [--body-stdin]
-loom-worker memory invalidate --name NAME --expected-revision N --reason TEXT
-loom-worker memory restore --name NAME --expected-revision N
+"$RAH_WORKER_CLI" reminder schedule --title TEXT (--delay-seconds N|--fire-at ISO|--repeat RULE) --message-id ID [--channel #ROOM] [--tz IANA]
+"$RAH_WORKER_CLI" reminder list [--status scheduled,fired,canceled|--all]
+"$RAH_WORKER_CLI" reminder cancel --id ID
+"$RAH_WORKER_CLI" reminder snooze --id ID --by 30m
+"$RAH_WORKER_CLI" reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT) [--tz IANA]
+"$RAH_WORKER_CLI" reminder log --id ID
+"$RAH_WORKER_CLI" worker message-check [--replay] [--startup]
+"$RAH_WORKER_CLI" worker memory list [--include-invalidated] [--limit N]
+"$RAH_WORKER_CLI" worker memory read --name NAME
+"$RAH_WORKER_CLI" worker memory search --query TEXT [--limit N]
+"$RAH_WORKER_CLI" worker memory history --name NAME
+"$RAH_WORKER_CLI" worker memory write --name NAME --type user|feedback|project|reference --description TEXT <<'${MESSAGE_HEREDOC_DELIMITER}'
+"$RAH_WORKER_CLI" worker memory update --name NAME --expected-revision N [--type TYPE] [--description TEXT] [--body-stdin]
+"$RAH_WORKER_CLI" worker memory invalidate --name NAME --expected-revision N --reason TEXT
+"$RAH_WORKER_CLI" worker memory restore --name NAME --expected-revision N
 Channel memory is shared by this channel's instances; the channel and author come from your credential. See worker help memory.
-loom-worker sync [--after-seq N]
-loom-worker acknowledge --through-seq N
-loom-worker room-list [--limit N] [--cursor CURSOR]
-loom-worker room-read --target TARGET [--limit N]
-loom-worker room-resolve --target ROOM_ID|#CHANNEL|dm:@HANDLE[:THREAD_ID]
-loom-worker message-read [--target TARGET] [--before ID|--after ID|--around ID] [--thread-id ID|--top-level] [--limit N] [--cursor CURSOR]
-loom-worker message-resolve --message-id ID [--target TARGET]
-loom-worker room-members [--target TARGET] [--limit N] [--cursor CURSOR]
-loom-worker version [--json]
-loom-worker whoami
-loom-worker server-info [--target TARGET] [--limit N] [--cursor CURSOR]
-loom-worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|image/gif|image/webp
-loom-worker profile-self-get
-loom-worker profile-update [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] [--json]
-loom-worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR] [--json]
-loom-worker task-assign TASK (--assignee AGENT_ID | --unassign)
-loom-worker channel-mute [--target #CHANNEL]
-loom-worker channel-unmute [--target #CHANNEL]
-loom-worker task-delete TASK
-loom-worker task-amend TASK [--title TEXT] [--description TEXT | --clear-description]
-loom-worker task-unblock TASK
-loom-worker task-convert --message-id ID
-loom-worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
-loom-worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker sync [--after-seq N]
+"$RAH_WORKER_CLI" worker acknowledge --through-seq N
+"$RAH_WORKER_CLI" worker room-list [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker room-read --target TARGET [--limit N]
+"$RAH_WORKER_CLI" worker room-resolve --target ROOM_ID|#CHANNEL|dm:@HANDLE[:THREAD_ID]
+"$RAH_WORKER_CLI" worker message-read [--target TARGET] [--before ID|--after ID|--around ID] [--thread-id ID|--top-level] [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker message-resolve --message-id ID [--target TARGET]
+"$RAH_WORKER_CLI" worker room-members [--target TARGET] [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker version [--json]
+"$RAH_WORKER_CLI" worker whoami
+"$RAH_WORKER_CLI" worker server-info [--target TARGET] [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|image/gif|image/webp
+"$RAH_WORKER_CLI" worker profile-self-get
+"$RAH_WORKER_CLI" worker profile-update [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] [--json]
+"$RAH_WORKER_CLI" worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR] [--json]
+"$RAH_WORKER_CLI" worker task-assign TASK (--assignee AGENT_ID | --unassign)
+"$RAH_WORKER_CLI" worker channel-mute [--target #CHANNEL]
+"$RAH_WORKER_CLI" worker channel-unmute [--target #CHANNEL]
+"$RAH_WORKER_CLI" worker task-delete TASK
+"$RAH_WORKER_CLI" worker task-amend TASK [--title TEXT] [--description TEXT | --clear-description]
+"$RAH_WORKER_CLI" worker task-unblock TASK
+"$RAH_WORKER_CLI" worker task-convert --message-id ID
+"$RAH_WORKER_CLI" worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
 Routine Room and Task mutations resolve their read position and operation identity automatically. message-check drains the current Activation and confirms only its delivered pages; --replay re-reads that Activation without completing any Task. Legacy sync/acknowledge remain available for diagnostics. Artifact publication derives its retry identity from the Run and file content; an explicit key remains an optional legacy override.
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
-loom-worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
-loom-worker message-react --message-id ID --emoji EMOJI [--remove]
-loom-worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level] [--final]
-loom-worker message-post --send-draft --target TARGET [--anyway]
+"$RAH_WORKER_CLI" worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
+"$RAH_WORKER_CLI" worker message-react --message-id ID --emoji EMOJI [--remove]
+"$RAH_WORKER_CLI" worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level] [--final]
+"$RAH_WORKER_CLI" worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
 Commands print human-readable text on stdout: read it. Only message-post, version, profile-show and profile-update accept --json, and only when you need the machine-readable object; whoami answers in JSON and takes no flag.
-loom-worker thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]
-loom-worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE]
-loom-worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]
-loom-worker attachment-capabilities
-loom-worker attachment-cancel --attachment-id ID
-loom-worker attachment-download --attachment-id ID --output FILE
-loom-worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] [--idempotency-key KEY]
-loom-worker artifact-download --attachment-id ID --output FILE
-loom-worker task-get TASK
-loom-worker task-submission TASK
-loom-worker task-trajectory TASK [--limit N] [--before-sequence N]
+"$RAH_WORKER_CLI" worker thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]
+"$RAH_WORKER_CLI" worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE]
+"$RAH_WORKER_CLI" worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]
+"$RAH_WORKER_CLI" worker attachment-capabilities
+"$RAH_WORKER_CLI" worker attachment-cancel --attachment-id ID
+"$RAH_WORKER_CLI" worker attachment-download --attachment-id ID --output FILE
+"$RAH_WORKER_CLI" worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] [--idempotency-key KEY]
+"$RAH_WORKER_CLI" worker artifact-download --attachment-id ID --output FILE
+"$RAH_WORKER_CLI" worker task-get TASK
+"$RAH_WORKER_CLI" worker task-submission TASK
+"$RAH_WORKER_CLI" worker task-trajectory TASK [--limit N] [--before-sequence N]
 Reviewers read the owner's recorded commands and file edits before recording a Review.
-loom-worker task-input-status TASK
-loom-worker task-create --title TEXT [--title TEXT ...] [--target TARGET] [--assignee @HANDLE|PARTICIPANT_ID]
-loom-worker task-claim-message --message-id ID --rationale TEXT
-loom-worker task-claim --target TARGET --number N [--number N ...] [--message-id ID ...]
-loom-worker task-start|task-release TASK
-loom-worker task-progress TASK --progress TEXT
-loom-worker task-block TASK --reason TEXT
-loom-worker task-request-input TASK --question TEXT
-loom-worker task-update TASK --status todo|in_progress|in_review|done|closed [--summary TEXT]
-loom-worker task-submit TASK --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
-loom-worker task-review TASK --disposition approved|changes_requested --summary TEXT
+"$RAH_WORKER_CLI" worker task-input-status TASK
+"$RAH_WORKER_CLI" worker task-create --title TEXT [--title TEXT ...] [--target TARGET] [--assignee @HANDLE|PARTICIPANT_ID]
+"$RAH_WORKER_CLI" worker task-claim-message --message-id ID --rationale TEXT
+"$RAH_WORKER_CLI" worker task-claim --target TARGET --number N [--number N ...] [--message-id ID ...]
+"$RAH_WORKER_CLI" worker task-start|task-release TASK
+"$RAH_WORKER_CLI" worker task-progress TASK --progress TEXT
+"$RAH_WORKER_CLI" worker task-block TASK --reason TEXT
+"$RAH_WORKER_CLI" worker task-request-input TASK --question TEXT
+"$RAH_WORKER_CLI" worker task-update TASK --status todo|in_progress|in_review|done|closed [--summary TEXT]
+"$RAH_WORKER_CLI" worker task-submit TASK --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
+"$RAH_WORKER_CLI" worker task-review TASK --disposition approved|changes_requested --summary TEXT
 TASK addresses one Task as --target "#channel" --number N, or as --task-id ID.
-Guidance on demand: loom-worker help <topic>, topics: ${WORKER_CLI_HELP_TOPIC_NAMES.join(", ")}.
+Guidance on demand: "$RAH_WORKER_CLI" worker help <topic>, topics: ${WORKER_CLI_HELP_TOPIC_NAMES.join(", ")}.
 `;
 }
 

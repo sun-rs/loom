@@ -1,5 +1,5 @@
 /**
- * evo S6 batch A: text rendering of `loom-worker memory <action>` results.
+ * evo S6 batch A: text rendering of `"$RAH_WORKER_CLI" worker memory <action>` results.
  * The index line mirrors the future standing index:
  * `- name [type] (rN[, pinned][, invalidated]) — description`.
  */

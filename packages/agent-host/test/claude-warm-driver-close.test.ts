@@ -242,7 +242,10 @@ async function finalPostedAndArmed(h: Driver, wake: string) {
           type: "tool_use",
           id: "tool-post",
           name: "Bash",
-          input: { command: "loom-worker message-post --final --body done" },
+          input: {
+            command:
+              '"$RAH_WORKER_CLI" worker message-post --final --body done',
+          },
         },
       ],
     },

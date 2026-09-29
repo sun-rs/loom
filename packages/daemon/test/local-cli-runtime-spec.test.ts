@@ -110,7 +110,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /@<handle>.*message-post/isu);
   assert.match(prompt, /Mention others, not yourself/iu);
   assert.match(prompt, /Room is the isolation boundary/iu);
-  assert.match(onDemand, /loom-worker task-create/u);
+  assert.match(onDemand, /"\$RAH_WORKER_CLI" worker task-create/u);
   assert.match(onDemand, /task-create.*unassigned.*todo/isu);
   assert.match(onDemand, /cannot assign another participant/isu);
   assert.match(onDemand, /Prefer independent subtasks/iu);
@@ -135,8 +135,8 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     /task\.submitted.*task-review.*approved.*changes_requested/isu,
   );
   assert.match(prompt, /canonical Room/u);
-  assert.match(prompt, /loom-worker message-check/u);
-  assert.match(prompt, /loom-worker message-post/u);
+  assert.match(prompt, /"\$RAH_WORKER_CLI" worker message-check/u);
+  assert.match(prompt, /"\$RAH_WORKER_CLI" worker message-post/u);
   assert.match(onDemand, /Respect ongoing conversations/iu);
   assert.match(onDemand, /Only the person doing the work should report/iu);
   assert.match(prompt, /Claim before you start.*concurrency lock/isu);
@@ -166,7 +166,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(onDemand, /send-draft.*rechecks freshness/isu);
   assert.match(onDemand, /--anyway.*continueAnywaySuggested/isu);
   assert.doesNotMatch(everything, /goal.*already complete.*remain silent/isu);
-  assert.match(onDemand, /loom-worker task-submit/u);
+  assert.match(onDemand, /"\$RAH_WORKER_CLI" worker task-submit/u);
   assert.match(onDemand, /task\.reassigned/u);
   // Raft has no such recipe, and the server now derives the key itself.
   assert.doesNotMatch(

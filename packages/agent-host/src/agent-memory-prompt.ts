@@ -23,5 +23,5 @@ ${buildCompactionSafetySection()}
 
 ## RAH memory bindings (not upstream Raft code)
 
-This memory persists across Rooms, RuntimeProfiles, models and provider sessions and is not shared with another Agent; the frozen AgentDefinition outranks older notes and canonical Room/Task/ACL state remains authoritative. Never copy credentials, access tokens, private keys into memory. For RAH_AGENT_MEMORY_BOOTSTRAP_JSON, RAH_AGENT_MEMORY_SOURCE_FILE and RAH_AGENT_APP_INBOX_JSON (parse it before Room work when set), see \`loom-worker help memory\`.`;
+This memory persists across Rooms, RuntimeProfiles, models and provider sessions and is not shared with another Agent; the frozen AgentDefinition outranks older notes and canonical Room/Task/ACL state remains authoritative. Never copy credentials, access tokens, private keys into memory. For RAH_AGENT_MEMORY_BOOTSTRAP_JSON, RAH_AGENT_MEMORY_SOURCE_FILE and RAH_AGENT_APP_INBOX_JSON (parse it before Room work when set), see \`"$RAH_WORKER_CLI" worker help memory\`.`;
 }

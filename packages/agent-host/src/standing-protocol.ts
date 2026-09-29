@@ -47,21 +47,21 @@ Do not obstruct a human-directed use of a credential: use or send it on the requ
  * rules, and the wake inputs (`provider-activation-input.js`,
  * `wake-message-input.ts`) do not repeat them.
  */
-const HELP_POINTER = `Details: \`loom-worker help <topic>\` — topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.`;
+const HELP_POINTER = `Details: \`"$RAH_WORKER_CLI" worker help <topic>\` — topics: ${WORKER_HELP_TOPIC_NAMES.join(", ")}.`;
 
 /** The Worker CLI and Tasks part of the daemon's platform layer. */
 export function workerCliSection(): string {
   return `## Worker CLI
 
-The RAH Worker service is the only collaboration truth: use \`loom-worker\` for every Room or Task read/mutation, one command at a time, and never read, print, copy, or forward its credential file. Commands print human-readable text on stdout — read that text. On a refusal trust the stderr \`Effect:\` line, not the exit status: \`Effect: message_queued\` means posted, do not resend it; \`Effect: not_sent\` means nothing was committed.
+The RAH Worker service is the only collaboration truth: use the absolute \`"$RAH_WORKER_CLI" worker\` path for every Room or Task read/mutation, one command at a time, and never read, print, copy, or forward its credential file. Commands print human-readable text on stdout — read that text. On a refusal trust the stderr \`Effect:\` line, not the exit status: \`Effect: message_queued\` means posted, do not resend it; \`Effect: not_sent\` means nothing was committed.
 
-Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action. \`loom-worker message-check\` delivers your messages (\`--replay\` after a lost tool result). Reads never acknowledge Inbox, and never grant Room membership, Task ownership or execution authority.
+Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action. \`"$RAH_WORKER_CLI" worker message-check\` delivers your messages (\`--replay\` after a lost tool result). Reads never acknowledge Inbox, and never grant Room membership, Task ownership or execution authority.
 
-Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`--final\` on the post completing your reply to delivered messages; omit it on progress posts. Use \`loom-worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
+Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`--final\` on the post completing your reply to delivered messages; omit it on progress posts. Use \`"$RAH_WORKER_CLI" worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
 
 ### Tasks
 
-The Human decides what becomes a Task. Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it. If fulfilling a top-level message requires you to take action beyond just replying (writing code, making changes, deploying), claim before you start with \`loom-worker task-claim-message --message-id <id> --rationale <why>\`, then \`task-start\`, do the work, and \`task-progress\` and \`task-submit\` with honest evidence; only top-level Room messages can become Tasks. A failed claim is a concurrency lock: do not start conflicting execution. On a Task event, act as owner only when \`task-get\` shows it assigned to you or unassigned and open. Do not mark work done before Human approval.
+The Human decides what becomes a Task. Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it. If fulfilling a top-level message requires you to take action beyond just replying (writing code, making changes, deploying), claim before you start with \`"$RAH_WORKER_CLI" worker task-claim-message --message-id <id> --rationale <why>\`, then \`task-start\`, do the work, and \`task-progress\` and \`task-submit\` with honest evidence; only top-level Room messages can become Tasks. A failed claim is a concurrency lock: do not start conflicting execution. On a Task event, act as owner only when \`task-get\` shows it assigned to you or unassigned and open. Do not mark work done before Human approval.
 
 ${HELP_POINTER}`;
 }
@@ -70,7 +70,7 @@ ${HELP_POINTER}`;
 export function remindersSection(): string {
   return `### Reminders
 
-For follow-up that depends on future state, schedule \`loom-worker reminder schedule\` (wakes only you) instead of a long sleep, cron or native wake tools.`;
+For follow-up that depends on future state, schedule \`"$RAH_WORKER_CLI" reminder schedule\` (wakes only you) instead of a long sleep, cron or native wake tools.`;
 }
 
 /**
@@ -98,7 +98,7 @@ export function formattingSection(): string {
  * The daemon places the launch delivery-mode section before these rules.
  */
 export function startupRulesSection(): string {
-  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the \`loom-worker\` prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`, no \`message-check\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
+  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`: the wake already carries the new messages, so no \`message-check\` or \`message-read\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
 
 Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
 }

@@ -267,13 +267,13 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     renderStandingProtocolCard,
   } = await import("@rah-os/agent-host");
   const { createHash } = await import("node:crypto");
-  // 2026-09-29: the Worker command is the collision-free `loom-worker`, and
-  // redundant reads are handled by message-read, not by prompt rules.
+  // 2026-09-29: no prompt behaviour rules; the Reply contract names both
+  // message-check and message-read as unnecessary before posting.
   // Pin the new card; both withdrawn-tool and preceding CLI sessions upgrade.
-  assert.equal(STANDING_PROTOCOL_VERSION, "faa029fe55d5");
+  assert.equal(STANDING_PROTOCOL_VERSION, "38cdb5f62423");
   assert.equal(
     createHash("sha256").update(renderStandingProtocolCard()).digest("hex"),
-    "ebfabccc32a8400bdf12b854c1f7fa3e0fa53caab1708d976889b7b36758d870",
+    "b75b1d6913fc83a50f5a98767873f5aa94d72b9a081755ab402e8d8613705759",
   );
   const agent = { ...agentContext({ role: "review" }), instanceChannelId: "c" };
   const lease = standingPromptLease(envelope(agent), options)!;
@@ -311,5 +311,5 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     protocolUpdateNotice(STANDING_PROTOCOL_VERSION),
   );
   assert.equal(notice, protocolUpdateNotice(STANDING_PROTOCOL_VERSION));
-  assert.match(notice!, /faa029fe55d5/u);
+  assert.match(notice!, /38cdb5f62423/u);
 });

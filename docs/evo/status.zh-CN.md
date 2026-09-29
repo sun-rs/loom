@@ -12,7 +12,7 @@
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
 - `evo`：后端重建线。前端产品代码（`apps/web/src`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 一致，phase 4 之前不改。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
-- 当前部署：`94c2dd7` + 既有未提交修复及本次验收修复（2026-09-29 16:45 CST，launchd `com.loom.evo` 优雅重启，schema 79）。备份 `~/.loom/evo-backups/pre-restart-acceptance-repair-2026-09-29T08-45-11.170Z` 校验通过；11 张业务表含记忆与权限哈希不变，冻结前端和预热关闭保留，旧暂停/隔离工作未恢复。P56 正式同 session 重启续聊通过，另有真实热 runtime idle 时的备份证据；P58 三实例 7 次运行零重试。P57 效率首轮失败，后两轮达预算；正式浏览器仍被策略验证阻塞。未提交、未推送。**每次部署重启后必须更新本行。**
+- 当前部署：`fix(evo): revert the model-facing Worker command` 那一批（2026-09-29 重启，schema 79；部署行随批次提交）。此前 `13d4c8a`（19:33）与 `0ee7c16`（16:45，Codex 会话 01a0bf68 的验收修复，经 Claude 审查后原样提交）。
 - 数据库 schema 79（79：逐 Run 精确读取、输出收据与消费凭据；78：频道 `channel_steer_enabled`；77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/state/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
 - 旧正式环境（`~/.rah`、4173）已退役，不兼容旧数据。
@@ -91,6 +91,7 @@ Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户
 
 技术未决（带触发条件）：
 
+- Worker 命令写法：面向模型的命令统一为绝对路径 `"$RAH_WORKER_CLI" worker …`（原 116 处裸 `rah …` 已改；本机 `/opt/homebrew/bin/rah` 是旧项目 CLI，登录 shell 中会遮蔽裸 `rah`）。曾改为 `loom-worker`，P61/P62 新旧交替对照显示它诱发每轮先重读/检查（+1 次生成）与 2/7 样本的残缺最终回复，已回退；`loom-worker` 包装脚本保留但不对模型宣传。`message-read` 对本轮已送达正文只给引用；两条提示词行为规则已删，`Reply:` 契约补全为“不要先 message-check 或 message-read”。效率仍 over-budget（首轮查路径 +1 次生成）。
 - P45 重复通知修复已实现、免费检查通过并部署：按成功 Run 的精确消费凭据取消未执行通知，不以最高已读位置完成候选；详见[设计与验证](read-covered-activation-plan.zh-CN.md)。P46 真实样本验证 Codex 重复通知被取消，但 Claude 账号禁用阻塞整体验收；效率对照仍未复跑。见[本轮证据](evidence/2026-09-29-discussion-recheck.md)。
 - 首轮延迟与首轮纯文本：模型遵守度与服务端波动主导，需交替顺序多样本再判；不以提示词补丁处理。
 - Kimi 延迟：触发条件为下一次 Kimi 效率门禁，按交替顺序与多样本判定。

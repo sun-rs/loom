@@ -49,12 +49,12 @@ export async function drainWorkerMessages(input: {
           "No more deliveries in the current Activation. Later work remains queued.",
         )
         .replaceAll(
-          "More messages are pending. Run `loom-worker sync` again.",
-          "More deliveries remain in the current Activation; continue with `loom-worker message-check`.",
+          'More messages are pending. Run `"$RAH_WORKER_CLI" worker sync` again.',
+          'More deliveries remain in the current Activation; continue with `"$RAH_WORKER_CLI" worker message-check`.',
         ) + "\n";
     if (bytes + Buffer.byteLength(text) > maxBytes) {
       await input.write(
-        "Message-check output budget reached; remaining deliveries are unacknowledged. Run `loom-worker message-check` again.\n",
+        'Message-check output budget reached; remaining deliveries are unacknowledged. Run `"$RAH_WORKER_CLI" worker message-check` again.\n',
       );
       return;
     }
@@ -77,7 +77,7 @@ export async function drainWorkerMessages(input: {
     if (Date.now() >= deadline) break;
   }
   await input.write(
-    "Message-check drain limit reached; more deliveries remain in the current Activation. Run `loom-worker message-check` again.\n",
+    'Message-check drain limit reached; more deliveries remain in the current Activation. Run `"$RAH_WORKER_CLI" worker message-check` again.\n',
   );
 }
 

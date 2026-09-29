@@ -9,7 +9,7 @@ export function parseAgentAppConfig(
 ): Omit<AgentMemoryConfigPatch, "expectedRevision"> | undefined {
   if (arguments_[1] !== "config" || arguments_.length > 16)
     throw new Error(
-      "usage: loom-worker app config --app system.cleaner [--set key=value] [--unset key]",
+      'usage: "$RAH_WORKER_CLI" app config --app system.cleaner [--set key=value] [--unset key]',
     );
   let app: string | undefined;
   const set: Record<string, unknown> = {};

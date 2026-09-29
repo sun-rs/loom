@@ -177,14 +177,14 @@ function parseGate(value: string): RealCliGateName {
 function workerPrompt(): string {
   return `You are running only as a RAH OS Worker Task protocol gate.
 Do not edit files, inspect the credential file, call the Worker HTTP endpoints directly, or expose credentials in output. Provider tool shells may rebuild PATH, so invoke the exact absolute path in process.env.RAH_WORKER_CLI. Use one bounded \`loom-worker\` command per tool call and parse its JSON response:
-1. Run \`loom-worker sync\`, require cursorAfter >= Number(process.env.RAH_TO_SEQ), and find the event whose type is "task.created". Its aggregateId is taskId. Preserve this original cursorAfter for acknowledgement.
-2. Run \`loom-worker task-get --task-id <taskId>\` and treat response.task as canonical. If it is already submitted or completed, skip to acknowledgement.
+1. Run \`"$RAH_WORKER_CLI" worker sync\`, require cursorAfter >= Number(process.env.RAH_TO_SEQ), and find the event whose type is "task.created". Its aggregateId is taskId. Preserve this original cursorAfter for acknowledgement.
+2. Run \`"$RAH_WORKER_CLI" worker task-get --task-id <taskId>\` and treat response.task as canonical. If it is already submitted or completed, skip to acknowledgement.
 3. Starting with basedOnRoomSeq=cursorAfter, run these commands in order. After each command, replace basedOnRoomSeq with response.event.roomSeq only when response.deduplicated is false, because a replayed event may belong to an earlier RunAttempt:
-   - \`loom-worker task-claim --task-id <taskId> --idempotency-key real:<taskId>:claim --based-on-room-seq <seq>\`
-   - \`loom-worker task-start --task-id <taskId> --idempotency-key real:<taskId>:start --based-on-room-seq <seq>\`
-   - \`loom-worker task-progress --task-id <taskId> --progress "Real CLI exercised the durable Task protocol" --idempotency-key real:<taskId>:progress --based-on-room-seq <seq>\`
-   - \`loom-worker task-submit --task-id <taskId> --summary "Real CLI completed the durable Task protocol gate" --idempotency-key real:<taskId>:submit --based-on-room-seq <seq>\`
-4. Run \`loom-worker acknowledge --through-seq <original-cursorAfter>\`.
+   - \`"$RAH_WORKER_CLI" worker task-claim --task-id <taskId> --idempotency-key real:<taskId>:claim --based-on-room-seq <seq>\`
+   - \`"$RAH_WORKER_CLI" worker task-start --task-id <taskId> --idempotency-key real:<taskId>:start --based-on-room-seq <seq>\`
+   - \`"$RAH_WORKER_CLI" worker task-progress --task-id <taskId> --progress "Real CLI exercised the durable Task protocol" --idempotency-key real:<taskId>:progress --based-on-room-seq <seq>\`
+   - \`"$RAH_WORKER_CLI" worker task-submit --task-id <taskId> --summary "Real CLI completed the durable Task protocol gate" --idempotency-key real:<taskId>:submit --based-on-room-seq <seq>\`
+4. Run \`"$RAH_WORKER_CLI" worker acknowledge --through-seq <original-cursorAfter>\`.
 5. Exit successfully. Only the durable Task projection and Room events are authoritative; prose and tool output are diagnostics.`;
 }
 

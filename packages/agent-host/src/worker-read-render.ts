@@ -113,7 +113,7 @@ function formatAttachmentSuffix(attachments: unknown): string {
     .join(", ");
   return ` [${items.length} attachment${
     items.length > 1 ? "s" : ""
-  }: ${rendered} — use loom-worker attachment-download to download]`;
+  }: ${rendered} — use "$RAH_WORKER_CLI" worker attachment-download to download]`;
 }
 
 function attachmentCommentSuffix(message: Json): string {
@@ -466,7 +466,7 @@ function renderMessageSearch(body: Json, result: Json): string {
     "",
     "If a result may be relevant but its preview is not enough, read the surrounding context for that result before answering.",
   ].join("\n")}${formatPageFooter(
-    "loom-worker message-search",
+    '"$RAH_WORKER_CLI" worker message-search',
     result.nextCursor,
   )}`;
 }
@@ -673,7 +673,7 @@ function renderSync(result: Json): string {
   if (presented.length > 0) sections.push(presented.join("\n"));
   sections.push(
     cursorAfter !== undefined && latest !== undefined && cursorAfter < latest
-      ? "More messages are pending. Run `loom-worker sync` again."
+      ? 'More messages are pending. Run `"$RAH_WORKER_CLI" worker sync` again.'
       : "No more new inbox messages.",
   );
   return sections.join("\n\n");
@@ -781,7 +781,7 @@ function renderMembers(result: Json): string {
   text += "Members means join/post authority for this surface.\n\n";
   text += memberSections(asArray(result.members).map(asRecord));
   return `${text.trimEnd()}\n${formatPageFooter(
-    "loom-worker room-members",
+    '"$RAH_WORKER_CLI" worker room-members',
     result.nextCursor,
   )}`;
 }
@@ -846,7 +846,7 @@ function renderServerInfo(result: Json): string {
   text += `${roomLine(asRecord(result.room), {}, true)}\n\n`;
   text += memberSections(asArray(result.members).map(asRecord));
   return `${text.trimEnd()}\n${formatPageFooter(
-    "loom-worker server-info",
+    '"$RAH_WORKER_CLI" worker server-info',
     result.nextCursor,
   )}`;
 }
@@ -863,7 +863,7 @@ function renderRoomList(result: Json): string {
           .join("\n")
       : "  (none)";
   return `## Rooms\n\n${body}\n${formatPageFooter(
-    "loom-worker room-list",
+    '"$RAH_WORKER_CLI" worker room-list',
     result.nextCursor,
   )}`;
 }
@@ -923,7 +923,7 @@ function renderTaskList(body: Json, result: Json): string {
         .map((task) => taskBoardLine(task))
         .join("\n")}`;
   return `${listing}${formatPageFooter(
-    "loom-worker task-list",
+    '"$RAH_WORKER_CLI" worker task-list',
     result.nextCursor,
   )}`;
 }
@@ -945,7 +945,7 @@ function renderTaskHistory(result: Json): string {
     })
     .join("\n");
   return `${header}\n\n${rendered}${formatPageFooter(
-    "loom-worker task-history",
+    '"$RAH_WORKER_CLI" worker task-history',
     result.nextCursor,
   )}`;
 }
@@ -1083,7 +1083,7 @@ function createdTaskLine(task: Json): string {
  * `message-post` addresses the same Thread by its canonical id.
  */
 function threadHintLine(task: Json): string {
-  return `#${asNumber(task.taskNumber) ?? "?"} → loom-worker message-post --thread-id ${
+  return `#${asNumber(task.taskNumber) ?? "?"} → "$RAH_WORKER_CLI" worker message-post --thread-id ${
     asString(task.threadId) ?? "-"
   }`;
 }
@@ -1231,7 +1231,7 @@ function renderTaskConverted(result: Json): string {
     } "${asString(task.title) ?? ""}"`,
     "",
     "To follow up in the task's thread:",
-    `loom-worker message-post --thread-id ${asString(task.threadId) ?? "-"}`,
+    `"$RAH_WORKER_CLI" worker message-post --thread-id ${asString(task.threadId) ?? "-"}`,
   ].join("\n");
 }
 
@@ -1244,7 +1244,7 @@ function renderTaskDeleted(result: Json): string {
 
 /** `MODIFY_HINT` (`main.js@32736620`), with RAH's command name. */
 const REMINDER_MODIFY_HINT =
-  "(to modify: snooze/update/cancel; loom-worker reminder --help)";
+  '(to modify: snooze/update/cancel; "$RAH_WORKER_CLI" reminder --help)';
 
 /** `formatReminderType` (`main.js@30421062`). */
 function reminderType(reminder: Json): string {
@@ -1374,7 +1374,7 @@ function renderThreadUnfollow(body: Json, result: Json): string {
     asString(body.channel) ?? asString(result.threadId) ?? "this thread";
   return [
     `Unfollowed ${target}. Ordinary delivery for this thread has stopped.`,
-    `A later personal @mention arrives and re-follows you; that delivery reminds you to run: loom-worker thread-unfollow --target ${JSON.stringify(
+    `A later personal @mention arrives and re-follows you; that delivery reminds you to run: "$RAH_WORKER_CLI" worker thread-unfollow --target ${JSON.stringify(
       target,
     )}`,
     "Posting in this thread re-follows you automatically.",
@@ -1424,7 +1424,7 @@ function createdAgentLines(profile: Json): string[] {
   const cursor = asString(profile.createdAgentsNextCursor);
   if (cursor !== undefined)
     lines.push(
-      `More created agents: loom-worker profile-show --target ${
+      `More created agents: "$RAH_WORKER_CLI" worker profile-show --target ${
         asString(asRecord(profile.principal).principalId) ?? "-"
       } --created-agents-cursor ${JSON.stringify(cursor)}`,
     );
@@ -1753,7 +1753,7 @@ function renderAttachmentComments(body: Json, result: Json): string {
   const before = asNumber(result.nextBeforeRoomSeq);
   if (before !== undefined)
     lines.push(
-      `More: loom-worker attachment-comments --attachment-id ${JSON.stringify(
+      `More: "$RAH_WORKER_CLI" worker attachment-comments --attachment-id ${JSON.stringify(
         attachmentId,
       )} --before-room-seq ${before}`,
     );
@@ -1805,8 +1805,8 @@ export function renderWorkerAttachmentPublish(
     `Attachment ID: ${attachmentId}`,
     "",
     messageAttachment
-      ? `Use this ID with loom-worker message-post --attachment-ids ${attachmentId} to include it in a message.`
-      : `loom-worker task-submit binds this artifact to task ${
+      ? `Use this ID with "$RAH_WORKER_CLI" worker message-post --attachment-ids ${attachmentId} to include it in a message.`
+      : `"$RAH_WORKER_CLI" worker task-submit binds this artifact to task ${
           asString(result.taskId) ?? "-"
         }; it takes no attachment id.`,
   ].join("\n");

@@ -54,8 +54,8 @@ try {
   );
   if (
     workerCli.exitCode !== 0 ||
-    !workerCli.stdout.includes("loom-worker sync") ||
-    !workerCli.stdout.includes("loom-worker task-submit")
+    !workerCli.stdout.includes('"$RAH_WORKER_CLI" worker sync') ||
+    !workerCli.stdout.includes('"$RAH_WORKER_CLI" worker task-submit')
   ) {
     throw new Error(
       `Computer SEA did not execute its embedded Worker CLI: exit=${String(workerCli.exitCode)} stdout=${JSON.stringify(workerCli.stdout)} stderr=${JSON.stringify(workerCli.stderr)}`,

@@ -12,7 +12,7 @@ export function channelAttentionGuidance(
 ): NonNullable<WorkerChannelAttentionResponse["attention"]> {
   // POSIX shell quoting: JSON escaping would still allow $() and backticks.
   const quotedTarget = "'" + target.replaceAll("'", "'\"'\"'") + "'";
-  const command = `loom-worker ${muted ? "channel-unmute" : "channel-mute"} --target ${quotedTarget}`;
+  const command = `"$RAH_WORKER_CLI" worker ${muted ? "channel-unmute" : "channel-mute"} --target ${quotedTarget}`;
   return {
     state: muted ? "muted" : "unmuted",
     ordinaryActivity: muted

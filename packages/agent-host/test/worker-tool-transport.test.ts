@@ -41,7 +41,7 @@ test("Worker tool transport creates a token-free per-launch rah wrapper", async 
     );
     assert.match(
       execFileSync(wrapperPath, ["worker", "help"], { encoding: "utf8" }),
-      /loom-worker sync/u,
+      /"\$RAH_WORKER_CLI" worker sync/u,
     );
 
     await lease.release?.();
@@ -74,12 +74,12 @@ test("owner ruling 2026-09-29: a collision-free loom-worker command sits beside 
     // bare `rah` name (a legacy /opt/homebrew/bin/rah can shadow it).
     assert.match(
       execFileSync(loomWorker, ["help"], { encoding: "utf8" }),
-      /loom-worker sync/u,
+      /"\$RAH_WORKER_CLI" worker sync/u,
     );
     // Top-level groups pass through instead of being prefixed with `worker`.
     assert.match(
       execFileSync(loomWorker, ["reminder", "help"], { encoding: "utf8" }),
-      /loom-worker reminder/u,
+      /"\$RAH_WORKER_CLI" reminder/u,
     );
     await lease.release?.();
   } finally {

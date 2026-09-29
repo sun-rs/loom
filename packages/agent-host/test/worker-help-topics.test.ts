@@ -52,7 +52,7 @@ test("an unknown help topic is an argument error that lists the topics", async (
 test("bare worker help advertises the topic list", async () => {
   const state = runtime();
   assert.equal(await runWorkerCliCommand(["worker", "help"], state.runtime), 0);
-  assert.ok(state.stdout().includes("loom-worker help <topic>"));
+  assert.ok(state.stdout().includes('"$RAH_WORKER_CLI" worker help <topic>'));
   for (const topic of WORKER_HELP_TOPIC_NAMES)
     assert.ok(state.stdout().includes(topic), topic);
 });

@@ -71,7 +71,9 @@ test("the prompt no longer drives an extra turn after a successful reply", () =>
 test("the prompt points at every on-demand help topic it relies on", () => {
   const { prompt } = compileStandingPrompt(minimalInputs[0]);
   const pointer =
-    /Details: `loom-worker help <topic>` — topics: ([a-z, ]+)\./u.exec(prompt);
+    /Details: `"\$RAH_WORKER_CLI" worker help <topic>` — topics: ([a-z, ]+)\./u.exec(
+      prompt,
+    );
   assert.ok(pointer, "prompt carries the help pointer line");
   assert.deepEqual(
     pointer[1]!.split(", ").sort(),
@@ -95,10 +97,10 @@ test("the prompt keeps the Human-decides-Tasks rule crisp", () => {
  */
 const MOVED_RULES: readonly RegExp[] = [
   /use the current environment, never a previous turn's Room, range or Worker path/giu,
-  /Wake commands omit the `loom-worker` prefix/giu,
+  /Wake commands omit the CLI prefix/giu,
   /`msg=<ref>` is a short message id/giu,
   /pass a wake's `--turn <handle>` to every Worker command/giu,
-  /On `Reply:`, post once with its `--based-on-room-seq`, no `message-check` first/giu,
+  /On `Reply:`, post once with its `--based-on-room-seq`: the wake already carries the new messages, so no `message-check` or `message-read` first/giu,
   /With no reply needed, run `message-check` once/giu,
   /when a wake says `message-check first`, run it before replying/giu,
   /Never infer missing memory or no work from an error/giu,
