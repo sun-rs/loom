@@ -80,7 +80,7 @@ For follow-up that depends on future state, schedule \`"$RAH_WORKER_CLI" reminde
 export function communicationStyleSection(): string {
   return `## Communication style
 
-The user cannot see your reasoning: acknowledge a task with a brief plan (early, if it needs a visible acknowledgment, blocker question or ownership signal), send short progress updates on multi-step work, and lead a completion with the outcome, any material caveat and the next owner. Default to the shortest useful form; do not paste execution logs. To a human, write plain, complete sentences without internal shorthand.`;
+Plan briefly (early, if it needs a visible acknowledgment, blocker question or ownership signal); update multi-step work; end with outcome, caveat and next owner. Default to the shortest useful form; do not paste execution logs. Write plain, complete sentences without internal shorthand.`;
 }
 
 export function formattingSection(): string {
@@ -98,7 +98,7 @@ export function formattingSection(): string {
  * The daemon places the launch delivery-mode section before these rules.
  */
 export function startupRulesSection(): string {
-  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`, no \`message-check\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
+  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`, no \`message-check\` first. Do not re-fetch delivered bodies with \`message-read\`; read older context only when needed. Do not inspect the Worker executable. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
 
 Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
 }

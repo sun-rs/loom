@@ -100,7 +100,7 @@ function fixture() {
 }
 
 test("schema 67 carries the final-reply marker table", () => {
-  assert.equal(KERNEL_SCHEMA_VERSION, 77);
+  assert.equal(KERNEL_SCHEMA_VERSION, 79);
   const context = fixture();
   try {
     const columns = context.database
@@ -383,5 +383,108 @@ test("P2-1: a schema 67 database without the interrupt fact columns gains them o
       assert.ok(columns.includes(column), column);
   } finally {
     rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+for (const explicitTarget of [false, true]) {
+  test(`held revision guidance preserves explicit confirmation while progress remains nonfinal (target=${explicitTarget})`, () => {
+    const context = fixture();
+    try {
+      context.post("please answer");
+      const run = context.activate();
+      context.kernel.presentWorkerMessages(run.execution);
+      context.kernel.markPresentedDeliverySent(context.host, {
+        activationId: run.activation.activationId,
+        consumerId: "worker",
+        runAttemptId: run.run.runAttemptId,
+      });
+      context.post("new fact while preparing the reply");
+      const target = explicitTarget ? { channel: "#main" } : {};
+      const held = context.kernel.postWorkerMessage(run.execution, {
+        ...target,
+        body: "original answer",
+        basedOnRoomSeq: run.activation.toSeq,
+        final: true,
+      });
+      assert.ok("state" in held && held.state === "held");
+      assert.equal(
+        context.kernel.finalReplies.read(context.host, {
+          runAttemptId: run.run.runAttemptId,
+        }),
+        null,
+      );
+      assert.deepEqual(held.replyIntent, {
+        basedOnRoomSeq: run.activation.toSeq,
+        final: true,
+      });
+      let revised = context.kernel.postWorkerMessage(run.execution, {
+        ...target,
+        body: "revised answer after reading the hold",
+        basedOnRoomSeq: held.replyIntent?.basedOnRoomSeq,
+        ...(held.replyIntent?.final ? { final: true } : {}),
+      });
+      if ("state" in revised && revised.state === "held") {
+        // Explicit original sequence can rehold against newer facts. The
+        // confirmed resend retains intent without bypassing freshness.
+        revised = context.kernel.postWorkerMessage(run.execution, {
+          channel: "#main",
+          sendDraft: true,
+        });
+      }
+      assert.ok("event" in revised, JSON.stringify(revised));
+      assert.ok(
+        context.kernel.finalReplies.read(context.host, {
+          runAttemptId: run.run.runAttemptId,
+        }),
+        "replacement retains final intent",
+      );
+      const cursor = context.database
+        .prepare(
+          "SELECT last_seq FROM subscription_cursors WHERE participant_id=? AND room_id=? AND consumer_id='worker'",
+        )
+        .get(run.activation.participantId, context.room.roomId);
+      assert.equal(
+        Number(cursor?.last_seq),
+        run.activation.toSeq,
+        "only the original delivered range is confirmed, never the newer message",
+      );
+    } finally {
+      context.close();
+    }
+  });
+}
+
+test("a progress post after a held final reply must not inherit final or ACK", () => {
+  const context = fixture();
+  try {
+    context.post("please answer");
+    const run = context.activate();
+    context.kernel.presentWorkerMessages(run.execution);
+    context.kernel.markPresentedDeliverySent(context.host, {
+      activationId: run.activation.activationId,
+      consumerId: "worker",
+      runAttemptId: run.run.runAttemptId,
+    });
+    context.post("new fact");
+    const held = context.kernel.postWorkerMessage(run.execution, {
+      channel: "#main",
+      body: "final answer",
+      basedOnRoomSeq: run.activation.toSeq,
+      final: true,
+    });
+    assert.ok("state" in held && held.state === "held");
+    const progress = context.kernel.postWorkerMessage(run.execution, {
+      channel: "#main",
+      body: "I need to investigate the new fact before finishing",
+    });
+    assert.ok("event" in progress);
+    assert.equal(
+      context.kernel.finalReplies.read(context.host, {
+        runAttemptId: run.run.runAttemptId,
+      }),
+      null,
+    );
+  } finally {
+    context.close();
   }
 });

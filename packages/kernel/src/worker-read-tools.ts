@@ -1,3 +1,4 @@
+import * as ReadCoverage from "./activation-read-coverage.ts";
 import { workerAddressing } from "./worker-addressing.ts";
 import { freshnessHoldContext } from "./freshness-hold-context.ts";
 import type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";
@@ -310,6 +311,12 @@ export class WorkerReadService {
       // last showed this participant for this target, so the Agent never has to
       // carry it back on a send. MAX() semantics mean an older page never
       // rewinds the position, and a Thread page never advances its Room.
+      const readReceiptId = ReadCoverage.record(
+        this.#db,
+        origin,
+        scope.roomId,
+        rows.map((row) => integer(row, "event_order")),
+      );
       recordWorkerTargetReadPosition(this.#db, {
         messageSeqs: rows.map((row) => integer(row, "event_order")),
         participantId: scope.participantId,
@@ -324,6 +331,7 @@ export class WorkerReadService {
         updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
       });
       return P.WorkerHistoryResponseSchema.parse({
+        ...(readReceiptId ? { readReceiptId } : {}),
         addressing: workerAddressing(
           this.#db,
           origin,
@@ -598,6 +606,19 @@ export class WorkerReadService {
       },
       P.TASK_CARD_TRANSPORT_MAX_BYTES,
     );
+  }
+
+  acknowledgeReadDelivery(
+    execution: AuthenticatedWorkerExecutionContext,
+    raw: unknown,
+  ): { received: boolean } {
+    return this.#read(execution, (scope) => ({
+      received: ReadCoverage.received(
+        this.#db,
+        scope,
+        P.WorkerReadReceivedRequestSchema.parse(raw).readReceiptId,
+      ),
+    }));
   }
 
   #read<T>(

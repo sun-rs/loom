@@ -211,13 +211,18 @@ function messagesSince(rooms, since) {
   return query(
     `SELECT m.message_id AS messageId, m.room_id AS roomId, m.actor_id AS actorId,
             m.thread_id AS threadId, m.body AS body, m.created_at AS createdAt,
-            e.room_seq AS roomSeq
+            e.room_seq AS roomSeq,
+            json_extract(e.payload_json, '$.activationId') AS activationId,
+            json_extract(e.payload_json, '$.recipientIds') AS recipientIdsJson
        FROM messages m JOIN room_events e
          ON e.room_id=m.room_id AND e.aggregate_id=m.message_id AND e.type='message.posted'
       WHERE m.room_id IN (${r.sql}) AND m.created_at >= :since
       ORDER BY e.room_seq`,
     { ...r.params, since },
-  );
+  ).map(({ recipientIdsJson, ...message }) => ({
+    ...message,
+    recipientIds: JSON.parse(recipientIdsJson ?? "[]"),
+  }));
 }
 
 function activationsSince(rooms, since) {
@@ -643,6 +648,7 @@ async function collectStep({
         label: `${label(item.participantId)}@${roomLabel(item.roomId)}`,
       })),
       messages,
+      activations,
       instanceIds: instanceIds(),
       afterSeq,
     }),

@@ -57,3 +57,24 @@ test("thread-target confirmation carries the invocation's --turn", () => {
   );
   assert.doesNotMatch(workerTargetConfirmationBody(confirmation)!, /--turn/u);
 });
+
+test("revision guidance explicitly preserves the model's original reply intent", () => {
+  const text = workerHeldSendGuidance(
+    {
+      ...held,
+      basedOnRoomSeq: 99,
+      replyIntent: { basedOnRoomSeq: 8, final: true },
+    },
+    " --turn t1",
+  );
+  assert.match(
+    text!,
+    /message-post --turn t1 --based-on-room-seq 8 --final --target '#drift' <</u,
+  );
+  assert.doesNotMatch(text!, /--based-on-room-seq 99/u);
+  const progress = workerHeldSendGuidance({
+    ...held,
+    replyIntent: { final: false },
+  });
+  assert.doesNotMatch(progress!, /--final|--based-on-room-seq/u);
+});

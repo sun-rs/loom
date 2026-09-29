@@ -1,3 +1,4 @@
+import { writeWorkerReadResult } from "./worker-read-output.ts";
 import { WorkerTaskUpdateRequestSchema } from "@rah-os/protocol";
 import { workerStartupContext } from "./worker-startup-context.ts";
 import { parseWorkerTaskBatchCommand } from "./worker-task-batch-cli.ts";
@@ -56,9 +57,7 @@ import { parseWorkerMemoryCommand } from "./worker-memory-cli.ts";
 import {
   renderWorkerAttachmentDownload,
   renderWorkerAttachmentPublish,
-  renderWorkerReadResult,
   renderWorkerTaskClaimResults,
-  workerReadCommandOffersJson,
 } from "./worker-read-render.ts";
 import { constants } from "node:fs";
 import { open, unlink } from "node:fs/promises";
@@ -555,15 +554,13 @@ export async function runWorkerCliCommand(
         );
         return 0;
       }
-      const rendered =
-        jsonOutput && workerReadCommandOffersJson(request.path)
-          ? undefined
-          : renderWorkerReadResult(request.path, request.body, result);
-      runtime.stdout.write(
-        rendered === undefined
-          ? `${JSON.stringify(result)}\n`
-          : `${rendered}\n`,
-      );
+      await writeWorkerReadResult({
+        request,
+        result,
+        jsonOutput,
+        stdout: runtime.stdout,
+        send,
+      });
       return 0;
     }
     const sendTarget = (request.body as { channel?: unknown }).channel;

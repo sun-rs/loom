@@ -63,7 +63,12 @@ export async function drainWorkerMessages(input: {
     const ack = WorkerAcknowledgeResponseSchema.parse(
       await input.send({
         path: "/v1/worker/acknowledge",
-        body: { throughSeq: page.delivery.cursorAfter },
+        body: {
+          throughSeq: page.delivery.cursorAfter,
+          ...(page.readConfirmationId === undefined
+            ? {}
+            : { readConfirmationId: page.readConfirmationId }),
+        },
       }),
     );
     if (ack.acknowledgedThrough !== page.delivery.cursorAfter)

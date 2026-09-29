@@ -94,8 +94,10 @@ test("Role is inert configuration; two channel instances receive independent con
         hostId: host.hostId,
         hostInstanceId: host.instanceId,
         runtimeOfferId: offerId,
-        runtimeProfileId: "profile",
-        runtimeProfileRevisionId: "profile-v1",
+        // A different CLI/profile, not another observation of the same one.
+        runtimeProfileId: offerId === "offer" ? "profile" : "other-profile",
+        runtimeProfileRevisionId:
+          offerId === "offer" ? "profile-v1" : "other-profile-v1",
         revisionDigest: digest,
         protocolFamily: "rah-worker-process/v1",
         state: "available",

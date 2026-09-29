@@ -221,7 +221,7 @@ Before adding state or behavior, name its single owner. Do not create a second q
 - Idempotency keys prevent duplicate events and all derived Inbox/Activation effects.
 - Business mutations carry `basedOnRoomSeq`; relevant newer facts trigger a stale-context hold instead of a silent stale write.
 - A wake hint, process spawn, PTY write, RPC response, or exit code never proves that an agent read or completed work.
-- Completing an Activation requires the assigned runtime consumer to acknowledge Room delivery through that Activation's `toSeq`; it still does not acknowledge Inbox or complete a Task.
+- Completing an Activation requires the assigned runtime consumer to acknowledge Room delivery through that Activation's `toSeq`; it still does not acknowledge Inbox or complete a Task. A never-started duplicate message notification may instead be cancelled with exact same-instance/Room/session-generation consumption proof from a successfully completed Run; this is not a synthetic completion or ACK. See `docs/evo/read-covered-activation-plan.zh-CN.md`.
 - One Instance (participant) has at most one active execution lane. New events while busy produce or extend durable follow-up work.
 - Task completion is explicit and independent from RunAttempt termination.
 - RunAttempt records actual runtime execution and exit provenance; retrying or completing an Activation never rewrites a finished RunAttempt.

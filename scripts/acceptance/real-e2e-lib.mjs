@@ -9,23 +9,23 @@
 
 export const MAX_RUN_ATTEMPTS = 40;
 
-/** Exact models for this acceptance (owner approval 2026-09-25 rows). */
+/** Exact models for this acceptance (owner approval: Sonnet/low reconfirmed 2026-09-29). */
 export const E2E_MODELS = Object.freeze({
   codex: Object.freeze({
     provider: "codex",
     offerPrefix: "local-workbench-offer-codex",
     model: "gpt-6-luna",
     effort: "low",
-    handle: "e2e-codex",
+    handle: "e2e-codex-0929",
     displayName: "E2E Codex 审查员",
   }),
   claude: Object.freeze({
     provider: "claude",
     offerPrefix: "local-workbench-offer-claude",
-    model: "haiku",
-    effort: null,
-    handle: "e2e-claude",
-    displayName: "E2E Claude 审查员",
+    model: "sonnet",
+    effort: "low",
+    handle: "e2e-claude-sonnet",
+    displayName: "E2E Claude Sonnet 审查员",
   }),
 });
 
@@ -55,9 +55,9 @@ export const STEPS = Object.freeze([
     n: 3,
     key: "roles",
     title: "Role 与实例",
-    plan: "host.runtime.list 取 codex / claude offer；codex 绑定 gpt-6-luna + low，claude 绑定 haiku（目录不发布 effort）；先经 approved-models 校验，失败即中止。同 handle 的 Role 已存在则复用，但其 runtimeOfferId 与 modelIntent 必须与预期完全一致，否则中止。role.instantiate 两者进频道。",
+    plan: "host.runtime.list 取 codex / claude offer；codex 绑定 gpt-6-luna + low，claude 绑定 sonnet + low；先经 approved-models 校验，失败即中止。同 handle 的 Role 已存在则复用，但其 runtimeOfferId 与 modelIntent 必须与预期完全一致，否则中止。role.instantiate 两者进频道。",
     rules: [
-      "approved-models 接受 (codex, gpt-6-luna, low) 与 (claude, haiku, 无 effort)。",
+      "approved-models 接受 (codex, gpt-6-luna, low) 与 (claude, sonnet, low)。",
       "服务端回显 modelIntent 精确：exactBindingIds 单一、fallback=disabled、reasoning 与表一致。",
     ],
     paid: false,
@@ -324,17 +324,59 @@ export function combine(verdicts) {
 
 /**
  * Exactly one reply per expected (participant, room) after the step's Human
- * message(s); any reply by a watched instance elsewhere, or a second reply,
- * fails. `messages` are ledger rows created during the step window.
+ * message(s), plus proven distinct peer handoffs in those same targets.
+ * Replies elsewhere and unproven extra replies fail. `messages` are ledger rows created during the step window.
  */
-export function judgeDelivery({ expected, messages, instanceIds, afterSeq }) {
+export function judgeDelivery({
+  expected,
+  messages,
+  instanceIds,
+  afterSeq,
+  activations = [],
+}) {
   const watched = new Set(instanceIds);
-  const replies = messages.filter(
+  const allReplies = messages.filter(
     (message) =>
       watched.has(message.actorId) &&
       (afterSeq?.[message.roomId] === undefined ||
         message.roomSeq > afterSeq[message.roomId]),
   );
+  // Only a distinct, completed, single-message peer activation is exempt.
+  // Missing/merged attribution stays conservative; repeated replies in that
+  // same activation are still duplicates, not another handoff.
+  const peerHandoffs = allReplies.filter((reply) => {
+    if (
+      !expected.some(
+        (target) =>
+          target.participantId === reply.actorId &&
+          target.roomId === reply.roomId,
+      )
+    )
+      return false;
+    const activation = activations.find(
+      (a) => a.activationId === reply.activationId,
+    );
+    if (
+      !activation ||
+      activation.state !== "completed" ||
+      activation.participantId !== reply.actorId ||
+      activation.roomId !== reply.roomId ||
+      activation.fromSeq !== activation.toSeq ||
+      allReplies.filter((m) => m.activationId === reply.activationId).length !==
+        1
+    )
+      return false;
+    return messages.some(
+      (trigger) =>
+        trigger.roomId === reply.roomId &&
+        trigger.roomSeq === activation.fromSeq &&
+        trigger.roomSeq < reply.roomSeq &&
+        watched.has(trigger.actorId) &&
+        trigger.actorId !== reply.actorId &&
+        trigger.recipientIds?.includes(reply.actorId),
+    );
+  });
+  const replies = allReplies.filter((reply) => !peerHandoffs.includes(reply));
   const key = (participantId, roomId) => `${participantId}\u0000${roomId}`;
   const wanted = new Set(
     expected.map(({ participantId, roomId }) => key(participantId, roomId)),
@@ -371,6 +413,7 @@ export function judgeDelivery({ expected, messages, instanceIds, afterSeq }) {
     problems.push(`${unexpected.length} 条不在预期房间/实例的回复`);
   return {
     verdict: problems.length === 0 ? PASS : FAIL,
+    peerHandoffs,
     perTarget,
     unexpected,
     problems,
@@ -710,7 +753,7 @@ export function renderPlan({ maxRuns }) {
   const lines = [
     "Loom 正式服务真实贯通验收（计划，--dry 不访问网络、不调用模型）",
     "",
-    `模型：codex ${E2E_MODELS.codex.model} / ${E2E_MODELS.codex.effort}；claude ${E2E_MODELS.claude.model} / 无 effort（均经 approved-models 校验）`,
+    `模型：codex ${E2E_MODELS.codex.model} / ${E2E_MODELS.codex.effort}；claude ${E2E_MODELS.claude.model} / ${E2E_MODELS.claude.effort}（均经 approved-models 校验）`,
     `上限：总 RunAttempt ≤ ${maxRuns}（超出即急停频道并停止）`,
     "预计：最少 11 个 RunAttempt（a 2、b 2、c 2、d 2、e 1、f 2），约 25–45 次模型生成；实例互相 @ 触发的追加轮会增加 RunAttempt 并记为交付失败。",
     "鉴权：网关 trusted-proxy（占位 bearer trusted-proxy-auth + Origin http://127.0.0.1:4176），写操作 RoomSession + runRoomMutationAtLatest，每个意图一个持久化幂等键。",
@@ -821,6 +864,6 @@ export const LIMITATIONS = Object.freeze([
   "私聊排队依赖时序：若 codex 频道轮在私聊入账前已结束，判“未覆盖”，需重跑该步（--step 6）。",
   "原生 session id 来自 Host 绑定文件 supervisors/provider-sessions 与 instance_runtimes；只证明 Loom 传给 CLI 的续聊 id 未变，不证明 provider 侧上下文完整。",
   "实例回复中互相 @ 会触发追加轮，按“额外回复”判失败并计入预算；这是产品行为发现，不是脚本错误。",
-  "Claude 使用 haiku（负责人 2026-09-25 批准行），不是 AGENTS.md 2026-09-09 矩阵中的 sonnet；Codex 使用 gpt-6-luna。",
+  "Claude 使用 sonnet / low（负责人 2026-09-29 确认可用），创建独立验收 Role，不改旧 Haiku 实例；Codex 沿用 gpt-6-luna / low。",
   "不是效率门禁：没有原生 CLI 对照，逐轮 usage 只作记录。",
 ]);

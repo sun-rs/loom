@@ -1,3 +1,4 @@
+import { confirmCheck } from "./activation-read-coverage.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type { ActivationCredentialScope } from "@rah-os/protocol";
 import { integer } from "./sqlite-row.ts";
@@ -6,6 +7,7 @@ import { ForbiddenError } from "./errors.ts";
 
 export type WorkerDeliveryAcknowledgement = {
   throughSeq: number;
+  readConfirmationId?: string | undefined;
   /** Server-retained message-check page, never accepted from HTTP input. */
   messageSeqs?: readonly number[] | undefined;
 };
@@ -19,6 +21,7 @@ export function recordCheckedWorkerMessages(
 ): void {
   if (input.throughSeq > scope.toSeq)
     throw new ForbiddenError("acknowledgement exceeds the Activation range");
+  confirmCheck(database, scope, input.readConfirmationId);
   if (!input.messageSeqs?.length) return;
   const seqs = [...new Set(input.messageSeqs)];
   if (

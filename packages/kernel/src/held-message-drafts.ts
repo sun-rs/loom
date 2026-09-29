@@ -314,15 +314,24 @@ export function settleHeldDraftReplyIntent<
   database: DatabaseSync;
   scope: Scope;
   intent: HeldDraftReplyIntent;
-  result: { heldDraftId?: unknown; state?: unknown } | { event: Event };
+  result:
+    | { heldDraftId?: unknown; state?: unknown }
+    | { event: Event; deduplicated?: boolean };
   acknowledge: (
     scope: Scope,
     input: { postedRoomId: string; modelBasedOnRoomSeq: number | undefined },
+  ) => void;
+  confirmReadCoverage?: (
+    scope: Scope,
+    event: Event,
+    basedOn: number | undefined,
   ) => void;
   recordFinal: (scope: Scope, event: Event) => void;
 }): void {
   const { result, intent, scope } = context;
   if ("event" in result) {
+    if (!result.deduplicated)
+      context.confirmReadCoverage?.(scope, result.event, intent.basedOnRoomSeq);
     context.acknowledge(scope, {
       postedRoomId: result.event.roomId,
       modelBasedOnRoomSeq: intent.basedOnRoomSeq,
@@ -336,8 +345,19 @@ export function settleHeldDraftReplyIntent<
     (result.state === "held" ||
       result.state === "target_confirmation_required") &&
     typeof result.heldDraftId === "string"
-  )
+  ) {
     recordHeldDraftReplyIntent(context.database, result.heldDraftId, intent);
+    // Explicit recovery metadata, never inferred on a later ordinary post.
+    if (result.state === "held")
+      Object.assign(result, {
+        replyIntent: {
+          ...(intent.basedOnRoomSeq === undefined
+            ? {}
+            : { basedOnRoomSeq: intent.basedOnRoomSeq }),
+          final: intent.final,
+        },
+      });
+  }
 }
 
 /** Raft's `SEND_DRAFT_NOT_FOUND` text, minus the CLI's own command spelling. */

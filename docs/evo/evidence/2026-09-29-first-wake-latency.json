@@ -1,0 +1,255 @@
+{
+  "startedAt": "2026-09-29T05:51:27.293Z",
+  "transport": "Claude CLI",
+  "requestedBinding": "sonnet",
+  "effort": "low",
+  "configuredMapping": "kimi-k3",
+  "turns": [
+    {
+      "elapsedMs": 16029,
+      "messageId": "message_63f7ec02-a326-4d74-b3c7-6a4a619afa68",
+      "replies": [
+        {
+          "message_id": "message_4b70ca16-b0f9-4ef0-abab-0a8ac85d0422",
+          "body": "收到梭子927",
+          "created_at": "2026-09-29T05:51:42.310Z"
+        }
+      ],
+      "runs": [
+        {
+          "run_attempt_id": "run_cbb94c4e-ac87-47f2-a0f5-cd760d49165e",
+          "state": "exited",
+          "started_at": "2026-09-29T05:51:27.679Z",
+          "finished_at": "2026-09-29T05:51:43.059Z",
+          "error": null
+        }
+      ],
+      "activations": [
+        {
+          "state": "completed",
+          "attempt_count": 1,
+          "last_error": null
+        }
+      ],
+      "binding": [
+        {
+          "instance_id": "principal_f0cb89af-37ba-4d18-b8b8-92ae06ddea5d",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_cbb94c4e-ac87-47f2-a0f5-cd760d49165e",
+          "bound_at": "2026-09-29T05:51:39.516Z",
+          "updated_at": "2026-09-29T05:51:39.516Z"
+        }
+      ],
+      "usage": [
+        {
+          "run_attempt_id": "run_cbb94c4e-ac87-47f2-a0f5-cd760d49165e",
+          "response_id": "msg_HKpskKMdjctuwB9yZSU5Puh4",
+          "provider": "claude-stream-json/v1",
+          "input_tokens": 17645,
+          "cached_input_tokens": 1280,
+          "output_tokens": 122,
+          "reasoning_output_tokens": null,
+          "context_window": null,
+          "context_used_tokens": null,
+          "observed_at": "2026-09-29T05:51:41.732Z",
+          "recorded_at": "2026-09-29T05:51:41.736Z"
+        }
+      ]
+    },
+    {
+      "elapsedMs": 14055,
+      "messageId": "message_1be1ae1d-3347-4961-83be-5134a3bc7ee3",
+      "replies": [
+        {
+          "message_id": "message_1d7fe5fa-e46c-4aed-bfcc-63dfa1e7beb0",
+          "body": "验收代号是“梭子927”。",
+          "created_at": "2026-09-29T05:51:56.242Z"
+        }
+      ],
+      "runs": [
+        {
+          "run_attempt_id": "run_cbb94c4e-ac87-47f2-a0f5-cd760d49165e",
+          "state": "exited",
+          "started_at": "2026-09-29T05:51:27.679Z",
+          "finished_at": "2026-09-29T05:51:43.059Z",
+          "error": null
+        },
+        {
+          "run_attempt_id": "run_65c8ff43-ec2b-4dc5-bfb4-2a866ae6c538",
+          "state": "exited",
+          "started_at": "2026-09-29T05:51:43.595Z",
+          "finished_at": "2026-09-29T05:51:57.011Z",
+          "error": null
+        }
+      ],
+      "activations": [
+        {
+          "state": "completed",
+          "attempt_count": 1,
+          "last_error": null
+        },
+        {
+          "state": "completed",
+          "attempt_count": 1,
+          "last_error": null
+        }
+      ],
+      "binding": [
+        {
+          "instance_id": "principal_f0cb89af-37ba-4d18-b8b8-92ae06ddea5d",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_cbb94c4e-ac87-47f2-a0f5-cd760d49165e",
+          "bound_at": "2026-09-29T05:51:39.516Z",
+          "updated_at": "2026-09-29T05:51:53.730Z"
+        }
+      ],
+      "usage": [
+        {
+          "run_attempt_id": "run_cbb94c4e-ac87-47f2-a0f5-cd760d49165e",
+          "response_id": "msg_HKpskKMdjctuwB9yZSU5Puh4",
+          "provider": "claude-stream-json/v1",
+          "input_tokens": 17645,
+          "cached_input_tokens": 1280,
+          "output_tokens": 122,
+          "reasoning_output_tokens": null,
+          "context_window": null,
+          "context_used_tokens": null,
+          "observed_at": "2026-09-29T05:51:41.732Z",
+          "recorded_at": "2026-09-29T05:51:41.736Z"
+        },
+        {
+          "run_attempt_id": "run_65c8ff43-ec2b-4dc5-bfb4-2a866ae6c538",
+          "response_id": "msg_g6JI9sBTmN46vQheJmuRsi8F",
+          "provider": "claude-stream-json/v1",
+          "input_tokens": 18105,
+          "cached_input_tokens": 17408,
+          "output_tokens": 122,
+          "reasoning_output_tokens": null,
+          "context_window": null,
+          "context_used_tokens": null,
+          "observed_at": "2026-09-29T05:51:55.706Z",
+          "recorded_at": "2026-09-29T05:51:55.708Z"
+        }
+      ]
+    }
+  ],
+  "roomId": "room_79829e41-6d96-4d0d-8bfa-6511b8b4ff6f",
+  "instanceId": "principal_f0cb89af-37ba-4d18-b8b8-92ae06ddea5d",
+  "result": "two_turns_completed",
+  "events": [
+    {
+      "room_seq": 1,
+      "type": "room.created",
+      "created_at": "2026-09-29T05:51:27.352Z"
+    },
+    {
+      "room_seq": 2,
+      "type": "membership.added",
+      "created_at": "2026-09-29T05:51:27.378Z"
+    },
+    {
+      "room_seq": 3,
+      "type": "instance.created",
+      "created_at": "2026-09-29T05:51:27.380Z"
+    },
+    {
+      "room_seq": 4,
+      "type": "message.posted",
+      "created_at": "2026-09-29T05:51:27.391Z"
+    },
+    {
+      "room_seq": 5,
+      "type": "placement.reserved",
+      "created_at": "2026-09-29T05:51:27.658Z"
+    },
+    {
+      "room_seq": 6,
+      "type": "run.created",
+      "created_at": "2026-09-29T05:51:27.681Z"
+    },
+    {
+      "room_seq": 7,
+      "type": "run.runtime_prepared",
+      "created_at": "2026-09-29T05:51:28.000Z"
+    },
+    {
+      "room_seq": 8,
+      "type": "run.started",
+      "created_at": "2026-09-29T05:51:28.015Z"
+    },
+    {
+      "room_seq": 9,
+      "type": "message.posted",
+      "created_at": "2026-09-29T05:51:42.311Z"
+    },
+    {
+      "room_seq": 10,
+      "type": "run.termination_proven",
+      "created_at": "2026-09-29T05:51:42.865Z"
+    },
+    {
+      "room_seq": 11,
+      "type": "run.finished",
+      "created_at": "2026-09-29T05:51:43.059Z"
+    },
+    {
+      "room_seq": 12,
+      "type": "activation.finished",
+      "created_at": "2026-09-29T05:51:43.064Z"
+    },
+    {
+      "room_seq": 13,
+      "type": "message.posted",
+      "created_at": "2026-09-29T05:51:43.436Z"
+    },
+    {
+      "room_seq": 14,
+      "type": "placement.reserved",
+      "created_at": "2026-09-29T05:51:43.574Z"
+    },
+    {
+      "room_seq": 15,
+      "type": "run.created",
+      "created_at": "2026-09-29T05:51:43.595Z"
+    },
+    {
+      "room_seq": 16,
+      "type": "run.runtime_prepared",
+      "created_at": "2026-09-29T05:51:43.906Z"
+    },
+    {
+      "room_seq": 17,
+      "type": "run.started",
+      "created_at": "2026-09-29T05:51:43.918Z"
+    },
+    {
+      "room_seq": 18,
+      "type": "message.posted",
+      "created_at": "2026-09-29T05:51:56.243Z"
+    },
+    {
+      "room_seq": 19,
+      "type": "run.termination_proven",
+      "created_at": "2026-09-29T05:51:56.816Z"
+    },
+    {
+      "room_seq": 20,
+      "type": "run.finished",
+      "created_at": "2026-09-29T05:51:57.011Z"
+    },
+    {
+      "room_seq": 21,
+      "type": "activation.finished",
+      "created_at": "2026-09-29T05:51:57.012Z"
+    }
+  ],
+  "nativeVerification": {
+    "model": "kimi-k3",
+    "sameTranscriptBothTurns": true,
+    "apiErrorCount": 0
+  },
+  "placementLatencyMs": [267, 138],
+  "previousFirstPlacementLatencyMs": 30239
+}

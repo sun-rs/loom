@@ -1,0 +1,148 @@
+{
+  "startedAt": "2026-09-29T05:20:18.350Z",
+  "transport": "Claude CLI",
+  "requestedBinding": "sonnet",
+  "effort": "low",
+  "configuredMapping": "kimi-k3",
+  "turns": [
+    {
+      "elapsedMs": 37985,
+      "messageId": "message_86c6f082-4f90-4293-8161-edcbed590b71",
+      "replies": [
+        {
+          "message_id": "message_266df29e-1f12-47f0-b317-f86e694dfbd7",
+          "body": "收到梭子927",
+          "created_at": "2026-09-29T05:20:55.313Z"
+        }
+      ],
+      "runs": [
+        {
+          "run_attempt_id": "run_ba66fd2d-01f4-472a-843d-f299968c3c2a",
+          "state": "exited",
+          "started_at": "2026-09-29T05:20:48.678Z",
+          "finished_at": "2026-09-29T05:20:56.050Z",
+          "error": null
+        }
+      ],
+      "activations": [
+        {
+          "state": "completed",
+          "attempt_count": 1,
+          "last_error": null
+        }
+      ],
+      "binding": [
+        {
+          "instance_id": "principal_0e6c80a9-e2ae-49c0-b4ec-529a434536e6",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_ba66fd2d-01f4-472a-843d-f299968c3c2a",
+          "bound_at": "2026-09-29T05:20:52.762Z",
+          "updated_at": "2026-09-29T05:20:52.762Z"
+        }
+      ],
+      "usage": [
+        {
+          "run_attempt_id": "run_ba66fd2d-01f4-472a-843d-f299968c3c2a",
+          "response_id": "msg_JIPLvcugAp79HCpJUGf6Ltvp",
+          "provider": "claude-stream-json/v1",
+          "input_tokens": 17630,
+          "cached_input_tokens": 1280,
+          "output_tokens": 127,
+          "reasoning_output_tokens": null,
+          "context_window": null,
+          "context_used_tokens": null,
+          "observed_at": "2026-09-29T05:20:54.459Z",
+          "recorded_at": "2026-09-29T05:20:54.461Z"
+        }
+      ]
+    },
+    {
+      "elapsedMs": 8038,
+      "messageId": "message_2efc5c1f-2d18-4fdc-97ac-ee1d6cad5406",
+      "replies": [
+        {
+          "message_id": "message_ad803d5c-c75e-43dc-9db8-2e254fde1aba",
+          "body": "刚才的验收代号是“梭子927”。",
+          "created_at": "2026-09-29T05:21:02.425Z"
+        }
+      ],
+      "runs": [
+        {
+          "run_attempt_id": "run_ba66fd2d-01f4-472a-843d-f299968c3c2a",
+          "state": "exited",
+          "started_at": "2026-09-29T05:20:48.678Z",
+          "finished_at": "2026-09-29T05:20:56.050Z",
+          "error": null
+        },
+        {
+          "run_attempt_id": "run_a50b9f85-c897-4f05-bc5a-0afb29e5c5be",
+          "state": "exited",
+          "started_at": "2026-09-29T05:20:56.561Z",
+          "finished_at": "2026-09-29T05:21:03.187Z",
+          "error": null
+        }
+      ],
+      "activations": [
+        {
+          "state": "completed",
+          "attempt_count": 1,
+          "last_error": null
+        },
+        {
+          "state": "completed",
+          "attempt_count": 1,
+          "last_error": null
+        }
+      ],
+      "binding": [
+        {
+          "instance_id": "principal_0e6c80a9-e2ae-49c0-b4ec-529a434536e6",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_ba66fd2d-01f4-472a-843d-f299968c3c2a",
+          "bound_at": "2026-09-29T05:20:52.762Z",
+          "updated_at": "2026-09-29T05:21:00.626Z"
+        }
+      ],
+      "usage": [
+        {
+          "run_attempt_id": "run_ba66fd2d-01f4-472a-843d-f299968c3c2a",
+          "response_id": "msg_JIPLvcugAp79HCpJUGf6Ltvp",
+          "provider": "claude-stream-json/v1",
+          "input_tokens": 17630,
+          "cached_input_tokens": 1280,
+          "output_tokens": 127,
+          "reasoning_output_tokens": null,
+          "context_window": null,
+          "context_used_tokens": null,
+          "observed_at": "2026-09-29T05:20:54.459Z",
+          "recorded_at": "2026-09-29T05:20:54.461Z"
+        },
+        {
+          "run_attempt_id": "run_a50b9f85-c897-4f05-bc5a-0afb29e5c5be",
+          "response_id": "msg_GViVtCwkM5xDd9WiXN2Zn7NI",
+          "provider": "claude-stream-json/v1",
+          "input_tokens": 18088,
+          "cached_input_tokens": 17664,
+          "output_tokens": 129,
+          "reasoning_output_tokens": null,
+          "context_window": null,
+          "context_used_tokens": null,
+          "observed_at": "2026-09-29T05:21:01.943Z",
+          "recorded_at": "2026-09-29T05:21:01.945Z"
+        }
+      ]
+    }
+  ],
+  "roomId": "room_8dc5af0f-fd9a-4793-9314-1e33fbe1a700",
+  "instanceId": "principal_0e6c80a9-e2ae-49c0-b4ec-529a434536e6",
+  "result": "two_turns_completed",
+  "nativeVerification": {
+    "model": "kimi-k3",
+    "sameTranscriptBothTurns": true,
+    "apiErrorCount": 0,
+    "activeRunsAfter": 0,
+    "limitation": "low is requested CLI effort; gateway/model interpretation not independently verified"
+  }
+}

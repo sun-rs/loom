@@ -59,6 +59,7 @@ export function pendingRuntimeNotice(
     LEFT JOIN worker_message_presentations read ON read.participant_id=i.participant_id
       AND read.room_id=i.room_id AND read.thread_key=COALESCE(m.thread_id,'') AND read.room_seq=i.event_seq
     WHERE i.participant_id=? AND i.state='pending'
+      AND (r.kind <> 'channel' OR r.channel_steer_enabled = 1)
       AND (NOT EXISTS (SELECT 1 FROM role_instances ri WHERE ri.instance_id=i.participant_id)
         OR (i.room_id=? AND sender.kind='human'))
       AND NOT (i.room_id=? AND i.event_seq<=?)

@@ -1,15 +1,10 @@
+import * as ReadCoverage from "./activation-read-coverage.ts";
 import * as MemoryIndex from "./channel-memory-index.ts";
 import { migratePlacementAndProcessColumns } from "./placement-column-migration.ts";
 import { migrateIdentityAccounts } from "./identity-accounts.ts";
 import { withInstancePrivateBox } from "./instance-worker-scope.ts";
-import { assertAgentFirstRunSatisfied } from "./agent-first-run.ts";
 import { reconcileDeletedAgentTaskOwners } from "./task-agent-deletion.ts";
 import { editHumanTask } from "./human-task-edit.ts";
-import type {
-  AgentDeletionDiagnostics,
-  SystemChannelVisibilityRead,
-  SystemChannelVisibilityUpdate,
-} from "@rah-os/protocol";
 import { requestAgentDeletion, finishAgentDeletion } from "./agent-deletion.ts";
 import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { completeTaskTransaction } from "./task-completion.ts";
@@ -32,6 +27,7 @@ import {
   renderPresentedWindow,
   type RenderedPresentedWindow,
 } from "./activation-presented-window.ts";
+import { migrateChannelSteerV78 } from "./channel-steer.ts";
 import { migrateCatchUpV77 } from "./activation-catch-up.ts";
 import { claimTaskTransaction, type TaskClaimInput } from "./task-claim.ts";
 import { projectPlacementPlannerInput } from "./placement-planner-projection.ts";
@@ -133,6 +129,9 @@ import {
   RuntimeOfferSchema,
   RuntimeCertificationSchema,
   RuntimeOfferProjectionSchema,
+  type AgentDeletionDiagnostics,
+  type SystemChannelVisibilityRead,
+  type SystemChannelVisibilityUpdate,
   type Activation,
   type ActivationCredentialScope,
   type ActivationReason,
@@ -434,7 +433,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 77;
+export const KERNEL_SCHEMA_VERSION = 79;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1095,6 +1094,8 @@ export class RoomKernel {
       MemoryIndex.migrateChannelMemoryV75(this.#database);
       MemoryIndex.migrateChannelMemoryV76(this.#database);
       migrateCatchUpV77(this.#database);
+      migrateChannelSteerV78(this.#database);
+      ReadCoverage.migrate(this.#database);
       MemoryIndex.clearDeletedMemoryDescriptions(this.#database);
       RunAttemptUsageService.migrateCleanupV66(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
@@ -1114,6 +1115,12 @@ export class RoomKernel {
         this.#quarantineExpiredActiveRuns(participantIds, now);
         finishProvenOrphanedRuns(this.#database, this.#roomEvents);
         this.#reconcileProvenActivationQuarantines(participantIds);
+        ReadCoverage.settle(
+          this.#database,
+          this.#roomEvents,
+          this.#activationObligations,
+          now.toISOString(),
+        );
       }),
     );
     if (compactedRuntimeOfferObservationCount > 0) {
@@ -3653,6 +3660,12 @@ export class RoomKernel {
       this.#reconcileUnownedRuntimeProcesses(participantIds, now);
       this.#quarantineExpiredActiveRuns(participantIds, now);
       this.#reconcileProvenActivationQuarantines(participantIds);
+      ReadCoverage.settle(
+        this.#database,
+        this.#roomEvents,
+        this.#activationObligations,
+        now.toISOString(),
+      );
       this.#releaseExpiredReservedPlacements(now);
       const plannerInput = this.#buildPlacementPlannerInput(
         now,
@@ -4683,6 +4696,12 @@ export class RoomKernel {
       this.#reconcileUnownedRuntimeProcesses(participantIds, now);
       this.#quarantineExpiredActiveRuns(participantIds, now);
       this.#reconcileProvenActivationQuarantines(participantIds);
+      ReadCoverage.settle(
+        this.#database,
+        this.#roomEvents,
+        this.#activationObligations,
+        now.toISOString(),
+      );
       const candidate = nextUnfencedActivation(
         this.#database,
         memoryHomeEligibleParticipants(this.#database, hostId, participantIds),
@@ -5051,44 +5070,14 @@ export class RoomKernel {
       if (acknowledgedThrough < requiredThrough) {
         throw DeliveryProofError.notAcknowledgedThrough(requiredThrough);
       }
-      const unverifiedRuntime = this.#database
-        .prepare(
-          "SELECT runtime_process_id FROM runtime_processes WHERE activation_id = ? AND state <> 'terminated' LIMIT 1",
-        )
-        .get(input.activationId);
-      if (unverifiedRuntime) {
-        throw new RuntimeTerminationProofError(
-          `activation ${input.activationId} has a runtime without terminal proof`,
-        );
-      }
-      this.#activationObligations.assertSatisfied(input.activationId);
-      assertAgentFirstRunSatisfied(this.#database, row);
-      const updatedAt = this.#timestamp();
-      resolveActivationRetryFence(this.#database, {
-        activationId: input.activationId,
-        resolutionKind: "progress",
-        resolvedAt: updatedAt,
-      });
-      this.#database
-        .prepare(
-          "UPDATE activations SET state = 'completed', lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, updated_at = ? WHERE activation_id = ?",
-        )
-        .run(updatedAt, input.activationId);
-      this.#appendEvent({
-        actorId: SYSTEM_PRINCIPAL_ID,
-        aggregateId: input.activationId,
-        aggregateType: "activation",
-        idempotencyKey: `activation.complete:${input.activationId}`,
-        payload: {
-          activationId: input.activationId,
-          consumerId: input.consumerId,
-          hostId: authenticatedHost.hostId,
-        },
-        roomId: text(row, "room_id"),
-        type: "activation.finished",
-      });
-      return activationProjectionFromRow(
-        this.#requireActivationRow(input.activationId),
+      return ReadCoverage.complete(
+        this.#database,
+        this.#roomEvents,
+        this.#activationObligations,
+        row,
+        input.consumerId,
+        authenticatedHost.hostId,
+        this.#timestamp(),
       );
     });
   }
@@ -5133,6 +5122,17 @@ export class RoomKernel {
       const participantId = this.#requireAuthenticatedActor(actor);
       this.#acknowledgeCursorForParticipant(participantId, input);
     });
+  }
+
+  freezeWorkerReadConfirmation(
+    execution: AuthenticatedWorkerExecutionContext,
+  ): string | undefined {
+    return this.#transaction(() =>
+      ReadCoverage.freeze(
+        this.#database,
+        this.#requireAuthenticatedWorkerExecution(execution),
+      ),
+    );
   }
 
   acknowledgeWorkerCursor(

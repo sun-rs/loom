@@ -1,3 +1,4 @@
+import * as ReadCoverage from "./activation-read-coverage.ts";
 import type { AttachmentCommentsService } from "./attachment-comments.ts";
 import type { DatabaseSync } from "node:sqlite";
 import {
@@ -173,12 +174,14 @@ export function postWorkerMessageTransaction(context: {
   // the same evidence, so it no longer needs a separate check turn. Only the
   // presented prefix is acknowledged; a notice-degraded sequence stops the
   // cursor and still requires an explicit `message-check`. A held send keeps
-  // its intent on the draft for `--send-draft`.
+  // its intent on the draft for resend or same-target revision.
   settleHeldDraftReplyIntent({
     database,
     scope,
     intent,
     result,
+    confirmReadCoverage: (s, e, seq) =>
+      ReadCoverage.confirmPost(database, s, e, seq),
     acknowledge: context.acknowledge,
     recordFinal: context.recordFinal,
   });

@@ -104,6 +104,7 @@ export type MessageRecipient = {
 };
 
 export type WorkspaceRoomCreateInput = {
+  steerEnabled?: boolean | undefined;
   basedOnControlRoomSeq: number;
   description?: string | undefined;
   idempotencyKey: string;
@@ -118,6 +119,7 @@ export type WorkspaceRoomCreateInput = {
 };
 
 export type WorkspaceRoomUpdateInput = {
+  steerEnabled?: boolean | undefined;
   basedOnRoomSeq: number;
   description?: string | undefined;
   idempotencyKey: string;
@@ -492,6 +494,7 @@ export class CollaborationService {
         event.payload.slug !== slug ||
         event.payload.description !== description ||
         event.payload.visibility !== visibility ||
+        (event.payload.steerEnabled ?? true) !== (input.steerEnabled ?? true) ||
         JSON.stringify(event.payload.initialAgentParticipantIds) !==
           JSON.stringify(initialAgentParticipantIds) ||
         JSON.stringify(
@@ -574,7 +577,7 @@ export class CollaborationService {
     }
     this.#database
       .prepare(
-        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json, channel_workspace_state_json) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)",
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json, channel_workspace_state_json, channel_steer_enabled) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
       )
       .run(
         roomId,
@@ -590,6 +593,7 @@ export class CollaborationService {
         recordedWorkspace.primaryDirectory === undefined
           ? null
           : JSON.stringify({ state: "ready", updatedAt: createdAt }),
+        input.steerEnabled === false ? 0 : 1,
       );
     this.#database
       .prepare(
@@ -602,6 +606,7 @@ export class CollaborationService {
       aggregateType: "room",
       idempotencyKey: `room.bootstrap:${idempotencyKey}`,
       payload: {
+        steerEnabled: input.steerEnabled ?? true,
         channelWorkspace: recordedWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
@@ -661,6 +666,7 @@ export class CollaborationService {
       idempotencyKey,
       payload: {
         basedOnControlRoomSeq: input.basedOnControlRoomSeq,
+        steerEnabled: input.steerEnabled ?? true,
         channelWorkspace: recordedWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
@@ -712,7 +718,8 @@ export class CollaborationService {
         event.aggregateId !== input.roomId ||
         event.payload.name !== name ||
         event.payload.description !== description ||
-        event.payload.visibility !== visibility
+        event.payload.visibility !== visibility ||
+        event.payload.steerEnabled !== input.steerEnabled
       ) {
         throw this.#idempotencyConflict(idempotencyKey);
       }
@@ -733,9 +740,15 @@ export class CollaborationService {
     );
     this.#database
       .prepare(
-        "UPDATE rooms SET name = ?, description = ?, visibility = ? WHERE room_id = ?",
+        "UPDATE rooms SET name = ?, description = ?, visibility = ?, channel_steer_enabled = COALESCE(?, channel_steer_enabled) WHERE room_id = ?",
       )
-      .run(name, description ?? null, visibility, input.roomId);
+      .run(
+        name,
+        description ?? null,
+        visibility,
+        input.steerEnabled === undefined ? null : Number(input.steerEnabled),
+        input.roomId,
+      );
 
     const addedHumanParticipantIds: string[] = [];
     if (previousVisibility !== "public" && visibility === "public") {
@@ -799,6 +812,9 @@ export class CollaborationService {
         ...(previousDescription === undefined ? {} : { previousDescription }),
         previousName,
         previousVisibility,
+        ...(input.steerEnabled === undefined
+          ? {}
+          : { steerEnabled: input.steerEnabled }),
         visibility,
       },
       roomId: input.roomId,

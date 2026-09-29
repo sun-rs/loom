@@ -720,7 +720,7 @@ test("current schema preserves a schema v40 reclaimed file receipt while adding 
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      77,
+      79,
     );
     assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
@@ -793,7 +793,7 @@ test("current schema atomically replaces the schema v41 GC scan index", () => {
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      77,
+      79,
     );
     assert.deepEqual(
       audit
@@ -1505,6 +1505,58 @@ test("Room erasure removes delivery windows and batch receipts atomically and pr
       [1, 1],
     ]);
     assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
+  } finally {
+    db.close();
+    f.close();
+  }
+});
+
+test("the explicit Room eraser also removes read-coverage bookkeeping, without touching another Room", () => {
+  const f = fixture();
+  const db = new DatabaseSync(f.databasePath);
+  try {
+    // Bookkeeping fixture: production currently refuses deletion of Channels with Role instances.
+    // The eraser must still cover its complete Room graph independently of that MVP guard.
+    const insert = db.prepare(
+      "INSERT INTO worker_run_read_receipts(run_attempt_id,participant_id,room_id,room_seq,thread_key,generation) VALUES(?,?,?,?,?,?)",
+    );
+    insert.run(
+      "run-deletion-fixture",
+      "participant-fixture",
+      f.channel.room.roomId,
+      1,
+      "",
+      0,
+    );
+    insert.run(
+      "run-keep-fixture",
+      "participant-fixture",
+      f.workspace.controlRoom.roomId,
+      1,
+      "",
+      0,
+    );
+    f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+      roomId: f.channel.room.roomId,
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "delete-coverage",
+    });
+    assert.equal(
+      db
+        .prepare(
+          "SELECT count(*) n FROM worker_run_read_receipts WHERE room_id=?",
+        )
+        .get(f.channel.room.roomId)?.n,
+      0,
+    );
+    assert.equal(
+      db
+        .prepare(
+          "SELECT count(*) n FROM worker_run_read_receipts WHERE room_id=?",
+        )
+        .get(f.workspace.controlRoom.roomId)?.n,
+      1,
+    );
   } finally {
     db.close();
     f.close();

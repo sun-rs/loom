@@ -267,11 +267,12 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     renderStandingProtocolCard,
   } = await import("@rah-os/agent-host");
   const { createHash } = await import("node:crypto");
-  // Pinned before §57 (evo HEAD 501233a): unchanged for all four CLIs.
-  assert.equal(STANDING_PROTOCOL_VERSION, "8f51ca099de3");
+  // 2026-09-29: the shared CLI protocol avoids re-reading delivered bodies.
+  // Pin the new card; both withdrawn-tool and preceding CLI sessions upgrade.
+  assert.equal(STANDING_PROTOCOL_VERSION, "34be49a3198f");
   assert.equal(
     createHash("sha256").update(renderStandingProtocolCard()).digest("hex"),
-    "433a401ceff5b4a94ff3d54163bb5baf1617b2266a5f53d3c383810b21e3725a",
+    "8e6f909bf635d980f18753c2006b7a1bdb80368ca37b72e3f8fffba43ebaf2af",
   );
   const agent = { ...agentContext({ role: "review" }), instanceChannelId: "c" };
   const lease = standingPromptLease(envelope(agent), options)!;
@@ -298,6 +299,16 @@ test("§59: every launch carries the CLI protocol; a session created on the with
       standingProtocolVersion: "0af8aa7b0fd8",
     },
   );
+  assert.equal(
+    new SessionProtocolUpgrade(undefined).prepare(envelope(agent), lease, key, {
+      ...key,
+      providerSessionId: "ses_previous_cli",
+      recordedAt: "2026-09-27T00:00:00.000Z",
+      schemaVersion: 1,
+      standingProtocolVersion: "8f51ca099de3",
+    }),
+    protocolUpdateNotice(STANDING_PROTOCOL_VERSION),
+  );
   assert.equal(notice, protocolUpdateNotice(STANDING_PROTOCOL_VERSION));
-  assert.match(notice!, /8f51ca099de3/u);
+  assert.match(notice!, /34be49a3198f/u);
 });

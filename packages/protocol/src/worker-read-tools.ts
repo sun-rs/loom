@@ -36,6 +36,7 @@ export const WorkerHistoryRequestSchema = z
 export type WorkerHistoryRequest = z.input<typeof WorkerHistoryRequestSchema>;
 export const WorkerHistoryResponseSchema = z
   .object({
+    readReceiptId: z.string().uuid().optional(),
     messages: z.array(MessageSchema).max(100),
     addressing: WorkerAddressingSchema.optional(),
     frozenThroughRoomSeq: z.number().int().nonnegative(),

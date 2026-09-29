@@ -314,6 +314,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/reminders/update",
   "/v1/worker/sync",
   "/v1/worker/message-check",
+  "/v1/worker/read-received",
   "/v1/worker/message-present",
   "/v1/worker/threads/unfollow",
   "/v1/worker/channels/mute",
@@ -802,6 +803,14 @@ export class WorkerApplicationService {
       );
       return;
     }
+    if (route === "/v1/worker/read-received") {
+      writeJson(
+        response,
+        200,
+        this.#kernel.workerReads.acknowledgeReadDelivery(grant.execution, body),
+      );
+      return;
+    }
     if (route === "/v1/worker/message-check") {
       const { replay } = parseWorkerRequest(
         WorkerMessageCheckRequestSchema,
@@ -811,6 +820,9 @@ export class WorkerApplicationService {
         replay || grant.messageCheck === undefined
           ? (grant.messageCheck = { pending: new Map<number, number[]>() })
           : grant.messageCheck;
+      const readConfirmationId = this.#kernel.freezeWorkerReadConfirmation(
+        grant.execution,
+      );
       const delivery = projectWorkerMessageCheck(
         this.#kernel.syncWorker(grant.execution, {
           ...(check.cursor === undefined
@@ -830,6 +842,7 @@ export class WorkerApplicationService {
         response,
         200,
         WorkerMessageCheckResponseSchema.parse({
+          readConfirmationId,
           delivery,
           throughSeq: grant.scope.toSeq,
         }),
@@ -1275,7 +1288,7 @@ export class WorkerApplicationService {
       return;
     }
 
-    const { throughSeq } = parseWorkerRequest(
+    const { throughSeq, readConfirmationId } = parseWorkerRequest(
       WorkerAcknowledgeRequestSchema,
       body,
     );
@@ -1296,6 +1309,7 @@ export class WorkerApplicationService {
     this.#kernel.acknowledgeWorkerCursor(grant.execution, {
       throughSeq,
       messageSeqs: grant.messageCheck?.pending.get(throughSeq),
+      readConfirmationId,
     });
     if (grant.messageCheck?.pending.has(throughSeq)) {
       grant.messageCheck.cursor = throughSeq;

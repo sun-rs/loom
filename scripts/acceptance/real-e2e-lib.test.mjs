@@ -53,8 +53,10 @@ test("the acceptance models are exactly approved rows", () => {
     );
   assert.equal(E2E_MODELS.codex.model, "gpt-6-luna");
   assert.equal(E2E_MODELS.codex.effort, "low");
-  assert.equal(E2E_MODELS.claude.model, "haiku");
-  assert.equal(E2E_MODELS.claude.effort, null);
+  assert.equal(E2E_MODELS.codex.handle, "e2e-codex-0929");
+  assert.equal(E2E_MODELS.claude.model, "sonnet");
+  assert.equal(E2E_MODELS.claude.effort, "low");
+  assert.equal(E2E_MODELS.claude.handle, "e2e-claude-sonnet");
 });
 
 test("parseArgs requires explicit modes and bounds the budget", () => {
@@ -648,7 +650,7 @@ test("renderPlan lists every step, rule and the budget", () => {
   for (const step of STEPS) assert.ok(plan.includes(step.title), step.title);
   assert.match(plan, /RunAttempt ≤ 40/u);
   assert.match(plan, /gpt-6-luna/u);
-  assert.match(plan, /haiku/u);
+  assert.match(plan, /sonnet/u);
 });
 
 test("renderReport shows verdicts, replies for review and limitations", () => {
@@ -761,5 +763,86 @@ test("the stop reason is this run's: an emergency stop recorded in this run wins
       isStopError: false,
     }),
     /^异常：TypeError: boom/u,
+  );
+});
+
+test("delivery distinguishes a proven peer handoff from a duplicate or an unproven extra reply", () => {
+  const messages = [
+    message("human", HUMAN, CHANNEL, 10),
+    message("cx", CODEX, CHANNEL, 14),
+    { ...message("cc", CLAUDE, CHANNEL, 16), recipientIds: [CODEX] },
+    { ...message("handoff", CODEX, CHANNEL, 20), activationId: "peer" },
+  ];
+  const input = {
+    expected: [
+      { participantId: CODEX, roomId: CHANNEL },
+      { participantId: CLAUDE, roomId: CHANNEL },
+    ],
+    messages,
+    instanceIds: [CODEX, CLAUDE],
+    afterSeq: { [CHANNEL]: 10 },
+    activations: [
+      {
+        activationId: "peer",
+        participantId: CODEX,
+        roomId: CHANNEL,
+        fromSeq: 16,
+        toSeq: 16,
+        state: "completed",
+      },
+    ],
+  };
+  const result = judgeDelivery(input);
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.peerHandoffs.length, 1);
+  assert.equal(
+    judgeDelivery({
+      ...input,
+      messages: [
+        ...messages,
+        { ...messages[3], messageId: "duplicate", roomSeq: 21 },
+      ],
+    }).verdict,
+    "fail",
+  );
+  assert.equal(judgeDelivery({ ...input, activations: [] }).verdict, "fail");
+  assert.equal(
+    judgeDelivery({
+      ...input,
+      messages: messages.map((m) =>
+        m.messageId === "cc" ? { ...m, recipientIds: [] } : m,
+      ),
+    }).verdict,
+    "fail",
+  );
+});
+
+test("peer handoff evidence cannot excuse a reply in an unexpected room", () => {
+  const result = judgeDelivery({
+    expected: [{ participantId: CODEX, roomId: CHANNEL }],
+    instanceIds: [CODEX, CLAUDE],
+    messages: [
+      message("ok", CODEX, CHANNEL, 12),
+      {
+        ...message("trigger", CLAUDE, "wrong-room", 16),
+        recipientIds: [CODEX],
+      },
+      { ...message("leak", CODEX, "wrong-room", 20), activationId: "peer" },
+    ],
+    activations: [
+      {
+        activationId: "peer",
+        participantId: CODEX,
+        roomId: "wrong-room",
+        fromSeq: 16,
+        toSeq: 16,
+        state: "completed",
+      },
+    ],
+  });
+  assert.equal(result.peerHandoffs.length, 0);
+  assert.equal(
+    result.unexpected.some((m) => m.messageId === "leak"),
+    true,
   );
 });

@@ -97,11 +97,19 @@ export type WorkerMessageMutationResponse = z.infer<
   typeof WorkerMessageMutationResponseSchema
 >;
 
+const HeldReplyIntentSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative().optional(),
+    final: z.boolean(),
+  })
+  .strict();
+
 export const WorkerMessageHeldResponseSchema = z
   .object({
     activationIds: z.array(IdentifierSchema),
     basedOnRoomSeq: z.number().int().nonnegative(),
     heldDraftId: IdentifierSchema,
+    replyIntent: HeldReplyIntentSchema.optional(),
     recoveryTarget: WorkerReadChannelSchema.optional(),
     newMessageCount: z.number().int().positive(),
     newerMessages: z.array(RoomEventSchema),

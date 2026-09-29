@@ -1516,6 +1516,7 @@ export type WorkerSyncRequest = z.infer<typeof WorkerSyncRequestSchema>;
 
 export const WorkerAcknowledgeRequestSchema = z
   .object({
+    readConfirmationId: z.string().uuid().optional(),
     throughSeq: z.number().int().nonnegative(),
   })
   .strict();

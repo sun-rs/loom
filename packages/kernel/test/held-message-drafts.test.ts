@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   HELD_MESSAGE_DRAFT_TTL_MS,
+  heldDraftReplyIntent,
   expireHeldMessageDrafts,
   migrateHeldMessageDraftLifecycle,
   requireActiveHeldMessageDraft,
@@ -81,4 +82,28 @@ test("legacy held drafts gain Raft's ten-minute local draft lifetime and expire 
   } finally {
     database.close();
   }
+});
+
+test("held reply intent belongs only to its Activation and never invents a newer cursor", () => {
+  const draft = {
+    activation_id: "a",
+    reply_based_on_room_seq: 8,
+    reply_final: 1,
+  };
+  assert.deepEqual(heldDraftReplyIntent(draft, "a", {}), {
+    basedOnRoomSeq: 8,
+    final: true,
+  });
+  assert.deepEqual(heldDraftReplyIntent(draft, "b", {}), {
+    basedOnRoomSeq: undefined,
+    final: false,
+  });
+  assert.deepEqual(heldDraftReplyIntent(undefined, "a", {}), {
+    basedOnRoomSeq: undefined,
+    final: false,
+  });
+  assert.deepEqual(heldDraftReplyIntent(draft, "a", { basedOnRoomSeq: 12 }), {
+    basedOnRoomSeq: 12,
+    final: true,
+  });
 });

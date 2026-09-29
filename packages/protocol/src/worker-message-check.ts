@@ -6,6 +6,7 @@ export const WorkerMessageCheckRequestSchema = z
   .strict();
 export const WorkerMessageCheckResponseSchema = z
   .object({
+    readConfirmationId: z.string().uuid().optional(),
     delivery: WorkerSyncResponseSchema,
     throughSeq: z.number().int().nonnegative(),
   })
@@ -13,3 +14,7 @@ export const WorkerMessageCheckResponseSchema = z
   .refine((value) => value.delivery.cursorAfter <= value.throughSeq, {
     message: "check cursor exceeds frozen Activation",
   });
+
+export const WorkerReadReceivedRequestSchema = z
+  .object({ readReceiptId: z.string().uuid() })
+  .strict();

@@ -227,3 +227,10 @@ test("the prompt does not restate the MEMORY.md read rule the memory binding own
     assert.doesNotMatch(prompt, /you do not need to poll/iu);
   }
 });
+
+test("complete wake bodies avoid redundant reads without forbidding needed history", () => {
+  const { prompt } = compileStandingPrompt(minimalInputs[0]);
+  assert.match(prompt, /Do not re-fetch delivered bodies with `message-read`/u);
+  assert.match(prompt, /read older context only when needed/u);
+  assert.match(prompt, /Do not inspect the Worker executable/u);
+});

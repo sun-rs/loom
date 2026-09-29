@@ -141,7 +141,19 @@ export function createOutboxDispatcherRunners(input: {
     kernel,
     leaseMs: config.outboxLeaseMs,
     pollIntervalMs: config.outboxPollIntervalMs,
-    publisher: input.wakeSignal,
+    publisher: {
+      publish: async () => {
+        // New instances may have no published channel-home mount yet. A wake
+        // before this observation can be consumed by an idle lane, leaving
+        // the durable Activation waiting for the coarse reconciliation poll.
+        // Keep preparation on the Host; a failure retries the Outbox hint.
+        for (const publisher of input.publishers) {
+          await publisher.refreshWorkspaceMounts();
+          publisher.publishAvailable();
+        }
+        await input.wakeSignal.publish();
+      },
+    },
     retryAfterMs: config.outboxRetryAfterMs,
   });
   const runners = [async (signal: AbortSignal) => await wake.run({ signal })];

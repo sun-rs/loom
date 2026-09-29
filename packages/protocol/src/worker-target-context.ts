@@ -21,6 +21,7 @@ export type WorkerRoomContextRequest = z.input<
 >;
 export const WorkerRoomContextResponseSchema = z
   .object({
+    readReceiptId: z.string().uuid().optional(),
     roomId: IdentifierSchema,
     addressing: WorkerAddressingSchema.optional(),
     threadId: IdentifierSchema.optional(),

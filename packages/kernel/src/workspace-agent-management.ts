@@ -376,8 +376,22 @@ function configureAgent(
   const sessionPolicy = "prefer_resume" as const;
   assertRuntimeOfferSupportsToolAccess(offerBinding.offer, toolAccessMode);
   const currentOfferId = currentPolicy.required.allowedOfferIds?.[0];
+  const currentOfferRow =
+    currentOfferId === undefined
+      ? undefined
+      : owner.database
+          .prepare(
+            "SELECT host_id, runtime_profile_id FROM runtime_offers WHERE runtime_offer_id = ?",
+          )
+          .get(currentOfferId);
+  // CLI upgrades publish new Offer IDs. Match the same Host/profile identity
+  // used by Role instantiation, never an entry name or executable path.
   if (
     currentOfferId !== input.runtimeOfferId &&
+    (currentOfferRow === undefined ||
+      text(currentOfferRow, "host_id") !== offerBinding.hostId ||
+      text(currentOfferRow, "runtime_profile_id") !==
+        offerBinding.offer.runtimeProfileId) &&
     owner.database
       .prepare("SELECT 1 FROM role_instances WHERE agent_id=?")
       .get(input.agentId)
@@ -388,9 +402,6 @@ function configureAgent(
   }
   let hostChanged = false;
   if (currentOfferId !== undefined) {
-    const currentOfferRow = owner.database
-      .prepare("SELECT host_id FROM runtime_offers WHERE runtime_offer_id = ?")
-      .get(currentOfferId);
     if (
       currentOfferRow !== undefined &&
       text(currentOfferRow, "host_id") !== offerBinding.hostId

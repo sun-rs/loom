@@ -1,0 +1,689 @@
+{
+  "kind": "formal-restart-followup-and-idle-native-runtime-backup",
+  "actualClaudeModel": "kimi-k3 (user mapping of sonnet alias)",
+  "deploy": {
+    "root": "/Users/sun/.loom/evo-backups/pre-restart-acceptance-repair-2026-09-29T08-45-11.170Z",
+    "pidBefore": 6292,
+    "pidAfter": 37669,
+    "at": "2026-09-29T08:45:20.216Z",
+    "restartMs": 8086,
+    "deployedHead": "94c2dd7d43d1bb979482e64cc7ffaef63d02a02f",
+    "sourceDirty": true,
+    "omittedRuntimeCredentials": [],
+    "tables": {
+      "messages": {
+        "count": 82,
+        "hash": "baccfd30fb29aae2ff8c9c0b1a98cb1f7719f7934babef36b57c878f985738a4"
+      },
+      "run_attempts": {
+        "count": 71,
+        "hash": "fc0d018f5ed890e8df8f63b6b4f91c6f8c37549732073f47762725cc1a3ab128"
+      },
+      "role_instance_sessions": {
+        "count": 20,
+        "hash": "055c18eae7644f916a934f330f5e060cd7680930ab7650b3f573d43c99406146"
+      },
+      "role_instances": {
+        "count": 21,
+        "hash": "abdaeee471b510efba69c3e976d9e6aab6a65f8b6a15caa77f3f440bfede1219"
+      },
+      "role_templates": {
+        "count": 6,
+        "hash": "cdcb20b9e469bc969f605bb41fa2e4f52edc0d8c01e3795d9e1e904d6b468585"
+      },
+      "role_revisions": {
+        "count": 6,
+        "hash": "c40844b35fb538648803b86a0b0328a239d8a8938379ad2271e6b5d0c780a5f4"
+      },
+      "agent_definitions": {
+        "count": 25,
+        "hash": "2181a786c9fdff3d38ad0df2c2555f5ac78082bfdd9f6a951033ba4c6d72bab6"
+      },
+      "memory_entries": {
+        "count": 3,
+        "hash": "6d4a8f0470b5f9005b058c059233b6a6478efef222e0b55dd830c09a3100517c"
+      },
+      "memory_revisions": {
+        "count": 3,
+        "hash": "96086751e3c76d85d3f9c477d5956d36de79854c60325b049a01afd6abdc0353"
+      },
+      "memory_access_policies": {
+        "count": 2,
+        "hash": "2280cf5a4b28a6ed7986d248ddaae76512f4f76b4484f15f5c4e6c84a7e1e4ab"
+      },
+      "memory_access_overrides": {
+        "count": 0,
+        "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "hotRuntimeBackup": {
+    "root": "/Users/sun/.loom/evo-backups/hot-runtime-proof-2026-09-29T08-47-43.112Z",
+    "idle": [
+      {
+        "driver": "codex-app-server-warm/v1",
+        "state": "idle",
+        "participant_id": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca"
+      }
+    ],
+    "omittedRuntimeCredentials": [
+      "warm-runtimes/instrt_e1bc1b89-da5d-4902-8287-6122ea208a0f/turns"
+    ],
+    "at": "2026-09-29T08:47:44.002Z"
+  },
+  "step": {
+    "n": 9,
+    "key": "restart",
+    "title": "f. daemon 重启后续聊",
+    "since": "2026-09-29T08:46:06.058Z",
+    "until": "2026-09-29T08:47:21.320Z",
+    "durationMs": 75262,
+    "humanMessages": [
+      {
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "body": "@e2e-codex-0929-5b1c486eb233666ae06f965d @e2e-claude-sonnet-221c48679b1594730ba16368 服务已重启。请继续上次的讨论：不要重新读取文件，各用一两句话复述你在重启前给出的结论，并指出对方结论中你同意或不同意的一点。",
+        "attemptedAt": "2026-09-29T08:46:06.059Z",
+        "messageId": "message_0c7aca4e-37bf-4810-852b-26c8fc48fc09",
+        "roomSeq": 113,
+        "createdAt": "2026-09-29T08:46:06.090Z",
+        "deduplicated": false,
+        "roomLabel": "频道"
+      }
+    ],
+    "replies": [
+      {
+        "messageId": "message_6d75441c-e3a4-44ab-af1b-107b235ea97e",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "actorId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "threadId": null,
+        "body": "复述我的结论（测试覆盖审查）：主路径与 fail-closed 分支覆盖充分——PID 不匹配、缺失/非法 mode、原子写入 0600 与 round-trip、非法网络集拒绝均有测；缺口在 writeLaunchReceipt 非正整数 PID、schemaVersion≠1（如版本 2）、损坏 JSON rethrow、以及临时文件清理失败这四条边界路径。\n\n对 @e2e-codex-0929-5b1c486eb233666ae06f965d 的结论，我同意的一点：restartNetworkEnvironment 不独立校验 incumbentPid 的类型与存活性，正确性依赖调用方传入可信 PID——这与我的\"写入 PID 校验无测试\"缺口互补，共同刻画了 PID 信任链的边界。",
+        "createdAt": "2026-09-29T08:46:21.184Z",
+        "roomSeq": 122,
+        "activationId": "activation_46937896-a3d4-4bf0-814b-c723b846532e",
+        "recipientIds": ["principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca"],
+        "label": "claude",
+        "roomLabel": "频道",
+        "latencyMs": 15094
+      },
+      {
+        "messageId": "message_891b3ecd-e60b-48c5-a96b-cbe9b1f44ee5",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "actorId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "threadId": null,
+        "body": "我的结论是 receipt 写入用随机临时文件以 `wx`/0600 创建后 rename，并校验写入 PID 为正整数；重启只核对 receipt PID 与 incumbentPid 相等（workbench-launch-receipt.mjs L111–124、87–99）。我同意 @e2e-claude-sonnet-221c48679b1594730ba16368 指出的非法写入 PID 缺少测试；这与 incumbentPid 依赖调用方担保的实现边界互补。",
+        "createdAt": "2026-09-29T08:46:41.547Z",
+        "roomSeq": 126,
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "recipientIds": ["principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101"],
+        "label": "codex",
+        "roomLabel": "频道",
+        "latencyMs": 35457
+      }
+    ],
+    "activations": [
+      {
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "fromSeq": 113,
+        "toSeq": 113,
+        "reason": "mention",
+        "state": "completed",
+        "attemptCount": 1,
+        "lastError": null,
+        "createdAt": "2026-09-29T08:46:06.090Z",
+        "updatedAt": "2026-09-29T08:46:41.568Z"
+      },
+      {
+        "activationId": "activation_46937896-a3d4-4bf0-814b-c723b846532e",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "fromSeq": 113,
+        "toSeq": 113,
+        "reason": "mention",
+        "state": "completed",
+        "attemptCount": 1,
+        "lastError": null,
+        "createdAt": "2026-09-29T08:46:06.090Z",
+        "updatedAt": "2026-09-29T08:46:21.939Z"
+      },
+      {
+        "activationId": "activation_c68bd827-267d-4450-8a1b-cdf9a18204dd",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "fromSeq": 122,
+        "toSeq": 122,
+        "reason": "mention",
+        "state": "cancelled",
+        "attemptCount": 0,
+        "lastError": null,
+        "createdAt": "2026-09-29T08:46:21.184Z",
+        "updatedAt": "2026-09-29T08:46:41.568Z"
+      },
+      {
+        "activationId": "activation_a79cd352-de45-41cf-80b2-a0e1307bb469",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "fromSeq": 126,
+        "toSeq": 126,
+        "reason": "mention",
+        "state": "completed",
+        "attemptCount": 1,
+        "lastError": null,
+        "createdAt": "2026-09-29T08:46:41.547Z",
+        "updatedAt": "2026-09-29T08:46:59.609Z"
+      }
+    ],
+    "runs": [
+      {
+        "runAttemptId": "run_9306f8c4-2e90-4963-8e97-3cdf5ac0bdb2",
+        "activationId": "activation_46937896-a3d4-4bf0-814b-c723b846532e",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "exited",
+        "attemptNumber": 1,
+        "exitCode": 0,
+        "exitSignal": null,
+        "error": null,
+        "startedAt": "2026-09-29T08:46:06.258Z",
+        "finishedAt": "2026-09-29T08:46:21.938Z",
+        "executionMode": null,
+        "sessionResumeMs": null,
+        "instanceRuntimeId": null,
+        "resolvedModel": {
+          "source": "explicit_binding",
+          "modelBindingId": "local:claude-cli/v1:sonnet",
+          "provider": "anthropic",
+          "modelId": "sonnet",
+          "reasoning": "low"
+        },
+        "label": "claude",
+        "roomLabel": "频道",
+        "usage": {
+          "generations": 1,
+          "inputTokens": 29818,
+          "cachedInputTokens": 1280,
+          "outputTokens": 306,
+          "reasoningOutputTokens": null,
+          "contextUsedTokens": null,
+          "contextWindow": null
+        },
+        "compactionCount": 0,
+        "api": {
+          "completeness": "complete",
+          "compactionCount": 0,
+          "execution": null,
+          "finalInterrupt": {
+            "committedRoomSeq": 122,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "gaps": [],
+          "totals": {
+            "generations": 1,
+            "inputTokens": 29818,
+            "cachedInputTokens": 1280,
+            "outputTokens": 306,
+            "reasoningOutputTokens": null
+          }
+        }
+      },
+      {
+        "runAttemptId": "run_1ddbeb4b-f595-4346-93b2-fa63b9789482",
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "exited",
+        "attemptNumber": 1,
+        "exitCode": null,
+        "exitSignal": null,
+        "error": null,
+        "startedAt": "2026-09-29T08:46:06.260Z",
+        "finishedAt": "2026-09-29T08:46:41.568Z",
+        "executionMode": "cold",
+        "sessionResumeMs": 2506,
+        "instanceRuntimeId": "instrt_e1bc1b89-da5d-4902-8287-6122ea208a0f",
+        "resolvedModel": {
+          "source": "explicit_binding",
+          "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+          "provider": "openai",
+          "modelId": "gpt-6-luna",
+          "reasoning": "low"
+        },
+        "label": "codex",
+        "roomLabel": "频道",
+        "usage": {
+          "generations": 4,
+          "inputTokens": 171868,
+          "cachedInputTokens": 124160,
+          "outputTokens": 975,
+          "reasoningOutputTokens": 141,
+          "contextUsedTokens": 46016,
+          "contextWindow": 258400
+        },
+        "compactionCount": 0,
+        "api": {
+          "completeness": "complete",
+          "compactionCount": 0,
+          "execution": {
+            "instanceRuntimeId": "instrt_e1bc1b89-da5d-4902-8287-6122ea208a0f",
+            "mode": "cold",
+            "sessionResumeMs": 2506,
+            "lateFrameCount": 0
+          },
+          "finalInterrupt": {
+            "committedRoomSeq": 126,
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": false
+          },
+          "gaps": [],
+          "totals": {
+            "generations": 4,
+            "inputTokens": 171868,
+            "cachedInputTokens": 124160,
+            "outputTokens": 975,
+            "reasoningOutputTokens": 141
+          }
+        }
+      },
+      {
+        "runAttemptId": "run_bd4fb00c-7c78-4938-8754-d3c453c79ba1",
+        "activationId": "activation_a79cd352-de45-41cf-80b2-a0e1307bb469",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "exited",
+        "attemptNumber": 1,
+        "exitCode": 0,
+        "exitSignal": null,
+        "error": null,
+        "startedAt": "2026-09-29T08:46:41.587Z",
+        "finishedAt": "2026-09-29T08:46:59.608Z",
+        "executionMode": null,
+        "sessionResumeMs": null,
+        "instanceRuntimeId": null,
+        "resolvedModel": {
+          "source": "explicit_binding",
+          "modelBindingId": "local:claude-cli/v1:sonnet",
+          "provider": "anthropic",
+          "modelId": "sonnet",
+          "reasoning": "low"
+        },
+        "label": "claude",
+        "roomLabel": "频道",
+        "usage": {
+          "generations": 2,
+          "inputTokens": 61764,
+          "cachedInputTokens": 60160,
+          "outputTokens": 140,
+          "reasoningOutputTokens": null,
+          "contextUsedTokens": null,
+          "contextWindow": null
+        },
+        "compactionCount": 0,
+        "api": {
+          "completeness": "complete",
+          "compactionCount": 0,
+          "execution": null,
+          "finalInterrupt": null,
+          "gaps": [],
+          "totals": {
+            "generations": 2,
+            "inputTokens": 61764,
+            "cachedInputTokens": 60160,
+            "outputTokens": 140,
+            "reasoningOutputTokens": null
+          }
+        }
+      }
+    ],
+    "generations": 7,
+    "stateSequence": [
+      {
+        "at": "2026-09-29T08:46:06.108Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "waking",
+        "queued": true,
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "runAttemptId": null,
+        "lastError": null,
+        "label": "codex",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:06.108Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "waking",
+        "queued": true,
+        "activationId": "activation_46937896-a3d4-4bf0-814b-c723b846532e",
+        "runAttemptId": null,
+        "lastError": null,
+        "label": "claude",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:06.108Z",
+        "roomId": "room_3f06b8b0-3ed3-46ee-978b-81d36a400595",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "idle",
+        "queued": false,
+        "activationId": null,
+        "runAttemptId": null,
+        "lastError": null,
+        "label": "codex",
+        "roomLabel": "codex 私聊"
+      },
+      {
+        "at": "2026-09-29T08:46:08.128Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "waking",
+        "queued": false,
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "runAttemptId": "run_1ddbeb4b-f595-4346-93b2-fa63b9789482",
+        "lastError": null,
+        "label": "codex",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:08.128Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "working",
+        "queued": false,
+        "activationId": "activation_46937896-a3d4-4bf0-814b-c723b846532e",
+        "runAttemptId": "run_9306f8c4-2e90-4963-8e97-3cdf5ac0bdb2",
+        "lastError": null,
+        "label": "claude",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:10.153Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "working",
+        "queued": false,
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "runAttemptId": "run_1ddbeb4b-f595-4346-93b2-fa63b9789482",
+        "lastError": null,
+        "label": "codex",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:22.361Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "working",
+        "queued": true,
+        "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+        "runAttemptId": "run_1ddbeb4b-f595-4346-93b2-fa63b9789482",
+        "lastError": null,
+        "label": "codex",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:22.361Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "idle",
+        "queued": false,
+        "activationId": null,
+        "runAttemptId": null,
+        "lastError": null,
+        "label": "claude",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:42.626Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+        "state": "idle",
+        "queued": false,
+        "activationId": null,
+        "runAttemptId": null,
+        "lastError": null,
+        "label": "codex",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:46:42.626Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "working",
+        "queued": false,
+        "activationId": "activation_a79cd352-de45-41cf-80b2-a0e1307bb469",
+        "runAttemptId": "run_bd4fb00c-7c78-4938-8754-d3c453c79ba1",
+        "lastError": null,
+        "label": "claude",
+        "roomLabel": "频道"
+      },
+      {
+        "at": "2026-09-29T08:47:00.940Z",
+        "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+        "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+        "state": "idle",
+        "queued": false,
+        "activationId": null,
+        "runAttemptId": null,
+        "lastError": null,
+        "label": "claude",
+        "roomLabel": "频道"
+      }
+    ],
+    "sessionBefore": {
+      "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca": {
+        "generation": 0,
+        "bound": true,
+        "boundRunAttemptId": "run_2a78d6e1-c7e9-4fd9-afe1-40f56eb03c43",
+        "bindings": [
+          {
+            "provider": "codex-app-server/v1",
+            "providerSessionId": "01a0ebc4-70fa-7b82-9428-bfd7797329a3",
+            "recordedAt": "2026-09-29T06:05:17.581Z"
+          }
+        ],
+        "runtimes": [
+          {
+            "instanceRuntimeId": "instrt_c6a8d6d0-c19e-40d9-857e-fbde31ed633e",
+            "driver": "codex-app-server-warm/v1",
+            "state": "idle",
+            "nativeSessionId": "01a0ebc4-70fa-7b82-9428-bfd7797329a3",
+            "terminatedReason": null,
+            "startedAt": "2026-09-29T06:05:14.609Z"
+          }
+        ],
+        "providerSessionIds": ["01a0ebc4-70fa-7b82-9428-bfd7797329a3"]
+      },
+      "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101": {
+        "generation": 0,
+        "bound": true,
+        "boundRunAttemptId": "run_4454f88d-d6c6-4798-8a2c-f45b67be8e5f",
+        "bindings": [
+          {
+            "provider": "claude-stream-json/v1",
+            "providerSessionId": "0aff3e06-c168-449d-a10f-48e8862c5fe3",
+            "recordedAt": "2026-09-29T06:12:07.467Z"
+          }
+        ],
+        "runtimes": [],
+        "providerSessionIds": ["0aff3e06-c168-449d-a10f-48e8862c5fe3"]
+      }
+    },
+    "sessionAfter": {
+      "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca": {
+        "generation": 0,
+        "bound": true,
+        "boundRunAttemptId": "run_2a78d6e1-c7e9-4fd9-afe1-40f56eb03c43",
+        "bindings": [
+          {
+            "provider": "codex-app-server/v1",
+            "providerSessionId": "01a0ebc4-70fa-7b82-9428-bfd7797329a3",
+            "recordedAt": "2026-09-29T08:46:41.570Z"
+          }
+        ],
+        "runtimes": [
+          {
+            "instanceRuntimeId": "instrt_c6a8d6d0-c19e-40d9-857e-fbde31ed633e",
+            "driver": "codex-app-server-warm/v1",
+            "state": "terminated",
+            "nativeSessionId": "01a0ebc4-70fa-7b82-9428-bfd7797329a3",
+            "terminatedReason": "idle_ttl",
+            "startedAt": "2026-09-29T06:05:14.609Z"
+          },
+          {
+            "instanceRuntimeId": "instrt_e1bc1b89-da5d-4902-8287-6122ea208a0f",
+            "driver": "codex-app-server-warm/v1",
+            "state": "idle",
+            "nativeSessionId": "01a0ebc4-70fa-7b82-9428-bfd7797329a3",
+            "terminatedReason": null,
+            "startedAt": "2026-09-29T08:46:07.060Z"
+          }
+        ],
+        "providerSessionIds": ["01a0ebc4-70fa-7b82-9428-bfd7797329a3"]
+      },
+      "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101": {
+        "generation": 0,
+        "bound": true,
+        "boundRunAttemptId": "run_4454f88d-d6c6-4798-8a2c-f45b67be8e5f",
+        "bindings": [
+          {
+            "provider": "claude-stream-json/v1",
+            "providerSessionId": "0aff3e06-c168-449d-a10f-48e8862c5fe3",
+            "recordedAt": "2026-09-29T08:46:48.601Z"
+          }
+        ],
+        "runtimes": [],
+        "providerSessionIds": ["0aff3e06-c168-449d-a10f-48e8862c5fe3"]
+      }
+    },
+    "judgments": {
+      "交付": {
+        "verdict": "pass",
+        "peerHandoffs": [],
+        "perTarget": [
+          {
+            "label": "codex@频道",
+            "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+            "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+            "count": 1,
+            "messageIds": ["message_891b3ecd-e60b-48c5-a96b-cbe9b1f44ee5"],
+            "roomSeqs": [126]
+          },
+          {
+            "label": "claude@频道",
+            "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+            "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+            "count": 1,
+            "messageIds": ["message_6d75441c-e3a4-44ab-af1b-107b235ea97e"],
+            "roomSeqs": [122]
+          }
+        ],
+        "unexpected": [],
+        "problems": []
+      },
+      "ACK": {
+        "verdict": "pass",
+        "rows": [
+          {
+            "activationId": "activation_b5fbcc49-2374-4d8a-b7be-b918ab13cc73",
+            "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+            "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+            "state": "completed",
+            "toSeq": 113,
+            "cursorLastSeq": 113,
+            "acked": true
+          },
+          {
+            "activationId": "activation_46937896-a3d4-4bf0-814b-c723b846532e",
+            "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+            "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+            "state": "completed",
+            "toSeq": 113,
+            "cursorLastSeq": 126,
+            "acked": true
+          },
+          {
+            "activationId": "activation_c68bd827-267d-4450-8a1b-cdf9a18204dd",
+            "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+            "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+            "state": "cancelled",
+            "toSeq": 122,
+            "cursorLastSeq": 113,
+            "acked": false
+          },
+          {
+            "activationId": "activation_a79cd352-de45-41cf-80b2-a0e1307bb469",
+            "roomId": "room_826fd131-a964-4b80-8d9c-49783e3bf42b",
+            "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+            "state": "completed",
+            "toSeq": 126,
+            "cursorLastSeq": 126,
+            "acked": true
+          }
+        ],
+        "cancelled": 1,
+        "problems": []
+      },
+      "session": {
+        "verdict": "pass",
+        "rows": [
+          {
+            "label": "codex",
+            "participantId": "principal_210262c9-9fa2-487d-b7c8-b2d2c5d36dca",
+            "generationBefore": 0,
+            "generationAfter": 0,
+            "providerSessionIdsBefore": [
+              "01a0ebc4-70fa-7b82-9428-bfd7797329a3"
+            ],
+            "providerSessionIdsAfter": ["01a0ebc4-70fa-7b82-9428-bfd7797329a3"]
+          },
+          {
+            "label": "claude",
+            "participantId": "principal_a30377e2-f9bf-4e09-8f2b-5d12ce481101",
+            "generationBefore": 0,
+            "generationAfter": 0,
+            "providerSessionIdsBefore": [
+              "0aff3e06-c168-449d-a10f-48e8862c5fe3"
+            ],
+            "providerSessionIdsAfter": ["0aff3e06-c168-449d-a10f-48e8862c5fe3"]
+          }
+        ],
+        "problems": []
+      },
+      "模型": {
+        "verdict": "pass",
+        "problems": []
+      },
+      "预算": {
+        "verdict": "pass",
+        "runAttempts": 16,
+        "maxRuns": 20,
+        "problems": []
+      },
+      "重启": {
+        "verdict": "pass",
+        "problems": []
+      }
+    },
+    "verdict": "pass",
+    "problems": [],
+    "extra": {
+      "pidBefore": 6292,
+      "pidAfter": 37669,
+      "restartMs": 8086,
+      "backupDir": "~/.loom/evo-backups/pre-restart-acceptance-repair-2026-09-29T08-45-11.170Z",
+      "deployedHead": "94c2dd7d43d1bb979482e64cc7ffaef63d02a02f",
+      "sourceDirty": true,
+      "externalOperator": true,
+      "method": "verified backup, assertWorkbenchRestartable, launchctl kill SIGTERM; frozen assets and 11 durable table hashes unchanged"
+    }
+  },
+  "priorOverallVerdictRetained": "fail"
+}

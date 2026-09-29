@@ -1,0 +1,131 @@
+{
+  "room": "room_25cc4f4c-1712-423c-9900-94711b399aa7",
+  "runs": [
+    {
+      "run_attempt_id": "run_899b9023-ce9a-4aa9-b979-52e99059da38",
+      "participant_id": "principal_a067b057-fbec-4ee8-8f65-56943a037f4f",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 8,
+      "to_seq": 8,
+      "activation_state": "completed",
+      "final_reply_seq": 21,
+      "generations": 3
+    },
+    {
+      "run_attempt_id": "run_85891718-7f13-474b-89c5-4613f924eed0",
+      "participant_id": "principal_1392cde4-5b11-401c-a98f-3ff218268470",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 8,
+      "to_seq": 8,
+      "activation_state": "completed",
+      "final_reply_seq": 25,
+      "generations": 2
+    },
+    {
+      "run_attempt_id": "run_da2eafdc-66f6-40a2-be5e-f065d732a897",
+      "participant_id": "principal_aa7f65ba-74b1-4f5f-940d-e387c5480cb0",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 8,
+      "to_seq": 8,
+      "activation_state": "completed",
+      "final_reply_seq": 52,
+      "generations": 5
+    },
+    {
+      "run_attempt_id": "run_35df6730-6c62-4ea4-927d-e8f7809b82f7",
+      "participant_id": "principal_1392cde4-5b11-401c-a98f-3ff218268470",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 21,
+      "to_seq": 21,
+      "activation_state": "completed",
+      "final_reply_seq": 37,
+      "generations": 1
+    },
+    {
+      "run_attempt_id": "run_ad53aecf-69dc-421e-bce6-01c584d31872",
+      "participant_id": "principal_a067b057-fbec-4ee8-8f65-56943a037f4f",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 25,
+      "to_seq": 25,
+      "activation_state": "completed",
+      "final_reply_seq": 41,
+      "generations": 2
+    },
+    {
+      "run_attempt_id": "run_4232936f-b2e5-4bca-a77c-c1bc8ccfa8f5",
+      "participant_id": "principal_a067b057-fbec-4ee8-8f65-56943a037f4f",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 37,
+      "to_seq": 37,
+      "activation_state": "completed",
+      "final_reply_seq": null,
+      "generations": 2
+    },
+    {
+      "run_attempt_id": "run_55619aee-6496-4992-8176-f5f42358c3d1",
+      "participant_id": "principal_aa7f65ba-74b1-4f5f-940d-e387c5480cb0",
+      "state": "exited",
+      "attempt_number": 1,
+      "error": null,
+      "from_seq": 25,
+      "to_seq": 25,
+      "activation_state": "completed",
+      "final_reply_seq": null,
+      "generations": 2
+    }
+  ],
+  "drafts": [
+    {
+      "held_draft_id": "held_draft_9cd04fa4-f9f9-41d1-8f09-3ab75083bd84",
+      "participant_id": "principal_1392cde4-5b11-401c-a98f-3ff218268470",
+      "activation_id": "activation_c92baaf1-7157-4c41-9575-4da13674d0a6",
+      "state": "replaced",
+      "resolution_kind": "sent_unchanged",
+      "reply_based_on_room_seq": 8,
+      "reply_final": 1,
+      "rehold_count": 1
+    },
+    {
+      "held_draft_id": "held_draft_17daa055-1f14-445c-bb9c-ef1146301955",
+      "participant_id": "principal_aa7f65ba-74b1-4f5f-940d-e387c5480cb0",
+      "activation_id": "activation_aaf33536-5687-4105-9429-2bdbdc7f466e",
+      "state": "replaced",
+      "resolution_kind": "sent_unchanged",
+      "reply_based_on_room_seq": 8,
+      "reply_final": 1,
+      "rehold_count": 1
+    },
+    {
+      "held_draft_id": "held_draft_a509a46f-2227-4bfb-ae6f-52cac6daee66",
+      "participant_id": "principal_aa7f65ba-74b1-4f5f-940d-e387c5480cb0",
+      "activation_id": "activation_aaf33536-5687-4105-9429-2bdbdc7f466e",
+      "state": "replaced",
+      "resolution_kind": "sent_unchanged",
+      "reply_based_on_room_seq": 8,
+      "reply_final": 1,
+      "rehold_count": 1
+    },
+    {
+      "held_draft_id": "held_draft_5d0f75a5-4ad3-4bf9-8397-3453352d432e",
+      "participant_id": "principal_a067b057-fbec-4ee8-8f65-56943a037f4f",
+      "activation_id": "activation_880e435a-3b5c-4758-a35b-5f73d8519afb",
+      "state": "replaced",
+      "resolution_kind": "revised",
+      "reply_based_on_room_seq": 25,
+      "reply_final": 1,
+      "rehold_count": 1
+    }
+  ]
+}

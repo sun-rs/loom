@@ -131,6 +131,12 @@ export function workerHeldSendGuidance(
           omittedMessageCount === 1 ? "" : "s"
         } omitted from this notice and no longer block this action; use rah worker message-read explicitly if you need earlier context.`
       : "";
+  const intent = value.replyIntent as
+    { basedOnRoomSeq?: unknown; final?: unknown } | undefined;
+  const replySuffix =
+    intent && typeof intent === "object"
+      ? `${typeof intent.basedOnRoomSeq === "number" && Number.isSafeInteger(intent.basedOnRoomSeq) && intent.basedOnRoomSeq >= 0 ? ` --based-on-room-seq ${String(intent.basedOnRoomSeq)}` : ""}${intent.final === true ? " --final" : ""}`
+      : "";
   const continueAnyway =
     value.continueAnywaySuggested === true
       ? `If repeated updates keep blocking the same draft and this is still the right reply, you may use:
@@ -144,7 +150,7 @@ Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
 Your message has been saved as a draft. Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
 To update the draft, send revised content normally:
-  rah worker message-post${turn} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
+  rah worker message-post${turn}${replySuffix} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
   revised message
   ${MESSAGE_HEREDOC_DELIMITER}
 To send the current draft unchanged:

@@ -1,0 +1,80 @@
+{
+  "runAttemptId": "run_0e376c20-fda0-45e3-8000-233e1c0aa61c",
+  "cliVersion": "2.1.284",
+  "source": "native session transcript system/api_error; sanitized extraction",
+  "errors": [
+    {
+      "timestamp": "2026-09-29T03:18:42.208Z",
+      "retryAttempt": 1,
+      "maxRetries": 10,
+      "retryInMs": 608,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:18:46.100Z",
+      "retryAttempt": 2,
+      "maxRetries": 10,
+      "retryInMs": 1232,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:18:50.369Z",
+      "retryAttempt": 3,
+      "maxRetries": 10,
+      "retryInMs": 2387,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:18:55.649Z",
+      "retryAttempt": 4,
+      "maxRetries": 10,
+      "retryInMs": 4360,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:19:02.991Z",
+      "retryAttempt": 5,
+      "maxRetries": 10,
+      "retryInMs": 9436,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:19:15.124Z",
+      "retryAttempt": 6,
+      "maxRetries": 10,
+      "retryInMs": 19295,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:19:37.409Z",
+      "retryAttempt": 7,
+      "maxRetries": 10,
+      "retryInMs": 34326,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:20:15.010Z",
+      "retryAttempt": 8,
+      "maxRetries": 10,
+      "retryInMs": 32955,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    },
+    {
+      "timestamp": "2026-09-29T03:20:50.684Z",
+      "retryAttempt": 9,
+      "maxRetries": 10,
+      "retryInMs": 38940,
+      "httpStatus": 502,
+      "message": "Upstream service temporarily unavailable"
+    }
+  ],
+  "outcome": "Human SOS cancelled; no assistant response; usage unknown"
+}

@@ -154,3 +154,24 @@ test("round budget stops after the acknowledged page without swallowing later de
   ]);
   assert.match(output, /drain limit/);
 });
+
+test("check echoes server read confirmation only after output, without rendering the token", async () => {
+  const readConfirmationId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  let output = "";
+  let ack: unknown;
+  await drainWorkerMessages({
+    send: async (request) => {
+      if (request.path.endsWith("message-check"))
+        return { ...page(3), readConfirmationId };
+      assert.ok(output.length > 0);
+      ack = request.body;
+      return { acknowledgedThrough: 3 };
+    },
+    write: async (text) => {
+      output += text;
+    },
+    replay: false,
+  });
+  assert.deepEqual(ack, { throughSeq: 3, readConfirmationId });
+  assert.ok(!output.includes(readConfirmationId));
+});

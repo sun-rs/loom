@@ -75,6 +75,8 @@ export const RoomSchema = z
     directParticipantIds: z
       .tuple([IdentifierSchema, IdentifierSchema])
       .optional(),
+    // Channel busy-input policy; absent on non-channel Rooms.
+    steerEnabled: z.boolean().optional(),
     // S3: present only on a Role instance's private box, in room.list and
     // room.direct.open. `active` is false once new private work is refused
     // (the instance or the Human left the instance's channel).

@@ -2710,6 +2710,22 @@
       "note": "§2.12: the explicit ACK the Activation fence requires."
     },
     {
+      "id": "route.read-received",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/read-received"
+      },
+      "raft": {
+        "anchor": "GET /events",
+        "location": "agentApiContract.ts@1354"
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "client-contract",
+      "constraint": "activation-fence",
+      "note": "evo: Loom-only hidden output receipt for explicit history/context reads. Does not advance a Room cursor or acknowledge Inbox. Required before later consumption confirmation can cancel a duplicate notification; not a Raft source port. See docs/evo/read-covered-activation-plan.zh-CN.md."
+    },
+    {
       "id": "route.artifacts.prepare",
       "kind": "route",
       "rah": {

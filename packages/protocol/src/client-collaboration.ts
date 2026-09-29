@@ -272,6 +272,7 @@ export type ClientAgentActivityListResponse = z.infer<
 
 export const ClientRoomCreateRequestSchema = z
   .object({
+    steerEnabled: z.boolean().optional(),
     additionalDirectories: ChannelAttachedDirectoriesSchema.optional(),
     basedOnControlRoomSeq: z.number().int().nonnegative(),
     description: z.string().trim().max(2_000).optional(),
@@ -292,6 +293,7 @@ export type ClientRoomCreateRequest = z.infer<
 
 export const ClientRoomUpdateRequestSchema = z
   .object({
+    steerEnabled: z.boolean().optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),
     description: z.string().trim().max(2_000).optional(),
     idempotencyKey: IdentifierSchema,

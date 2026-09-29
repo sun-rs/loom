@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { roleInstanceFixture } from "./role-instance-fixture.ts";
+import {
+  roleInstanceFixture,
+  startInstanceRun,
+} from "./role-instance-fixture.ts";
 
 /**
  * A user-installed CLI updates itself (evidence: Claude Code 2.1.282 →
@@ -131,6 +134,158 @@ test("an available pinned Offer is used as is", () => {
       created.agent.currentRevision.executionPolicyRevisionId,
     );
     assert.deepEqual(policy.required.allowedOfferIds, ["offer"]);
+  } finally {
+    f.close();
+  }
+});
+
+function configureInput(
+  f: ReturnType<typeof roleInstanceFixture>,
+  runtimeOfferId: string,
+) {
+  const current = f.kernel.getWorkspaceAgentManagementView(f.actor, f.agentId);
+  return {
+    action: "configure" as const,
+    agentId: f.agentId,
+    basedOnRoomSeq: f.head(f.controlRoomId),
+    idempotencyKey: "configure-successor",
+    handle: current.agent.handle,
+    displayName: "Reviewer",
+    instructions: "Review only.",
+    role: "Review",
+    runtimeOfferId,
+    modelIntent: {
+      exactBindingIds: ["model-v2"],
+      reasoning: "low" as const,
+      fallback: "disabled" as const,
+    },
+  };
+}
+
+test("instance model and effort edits accept a same-Host same-profile successor without resetting the bound session", () => {
+  const f = roleInstanceFixture();
+  try {
+    const work = startInstanceRun(f);
+    f.kernel.instanceSessions.record(f.host, {
+      runAttemptId: work.run.runAttemptId,
+      runtimeRunId: work.runtime.runtimeRunId,
+    });
+    work.finish(0);
+    const binding = () =>
+      f.db
+        .prepare("SELECT * FROM role_instance_sessions WHERE instance_id=?")
+        .get(f.instance.instanceId);
+    const before = binding();
+    publish(f, {
+      runtimeOfferId: "offer-v2",
+      runtimeProfileId: "profile",
+      runtimeProfileRevisionId: "profile-v2",
+      state: "available",
+    });
+    publish(f, {
+      runtimeOfferId: "offer",
+      runtimeProfileId: "profile",
+      runtimeProfileRevisionId: "profile-v1",
+      state: "unavailable",
+    });
+    const input = configureInput(f, "offer-v2");
+    const result = f.kernel.manageWorkspaceAgent(f.actor, input);
+    assert.deepEqual(result.policy?.required.allowedOfferIds, ["offer-v2"]);
+    assert.deepEqual(result.policy?.modelIntent, input.modelIntent);
+    assert.deepEqual(binding(), before);
+    assert.equal(result.agent.definition.participantId, f.instance.instanceId);
+    assert.equal(
+      f.kernel.manageWorkspaceAgent(f.actor, input).deduplicated,
+      true,
+    );
+    assert.throws(
+      () =>
+        f.kernel.manageWorkspaceAgent(f.actor, {
+          ...input,
+          modelIntent: { ...input.modelIntent, reasoning: "high" },
+        }),
+      /idempotency/i,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("instance configuration still refuses a different runtime profile", () => {
+  const f = roleInstanceFixture();
+  try {
+    publish(f, {
+      runtimeOfferId: "other-offer",
+      runtimeProfileId: "other-cli",
+      runtimeProfileRevisionId: "other-v1",
+      state: "available",
+    });
+    assert.throws(
+      () =>
+        f.kernel.manageWorkspaceAgent(
+          f.actor,
+          configureInput(f, "other-offer"),
+        ),
+      /instance cannot switch runtime/i,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("instance configuration refuses the same profile on another Host", () => {
+  const f = roleInstanceFixture();
+  try {
+    const host = f.kernel.authenticateHostAccessToken(
+      f.kernel.provisionHostCredential({
+        hostId: "other-host",
+        participantIds: [f.instance.instanceId],
+      }).accessToken,
+    );
+    f.kernel.heartbeatHost(host);
+    publish(
+      { ...f, host },
+      {
+        runtimeOfferId: "other-host-offer",
+        runtimeProfileId: "profile",
+        runtimeProfileRevisionId: "profile-v2",
+        state: "available",
+      },
+    );
+    const before = f.kernel.getWorkspaceAgentManagementView(f.actor, f.agentId)
+      .agent.currentRevision;
+    assert.throws(
+      () =>
+        f.kernel.manageWorkspaceAgent(
+          f.actor,
+          configureInput(f, "other-host-offer"),
+        ),
+      /instance cannot switch runtime/i,
+    );
+    assert.deepEqual(
+      f.kernel.getWorkspaceAgentManagementView(f.actor, f.agentId).agent
+        .currentRevision,
+      before,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("instance configuration never bypasses successor availability checks", () => {
+  const f = roleInstanceFixture();
+  try {
+    publish(f, {
+      runtimeOfferId: "offer-v2",
+      runtimeProfileId: "profile",
+      runtimeProfileRevisionId: "profile-v2",
+      state: "unavailable",
+    });
+    assert.throws(
+      () =>
+        f.kernel.manageWorkspaceAgent(f.actor, configureInput(f, "offer-v2")),
+      /not currently available/i,
+    );
   } finally {
     f.close();
   }

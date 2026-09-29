@@ -1,3 +1,13 @@
+[纵向验收缺口修复](./evo/acceptance-repair-2026-09-29.zh-CN.md)：热运行时备份、held 正文修改确认、接力因果判定与重复读取。
+
+[2026-09-29 纵向验收与效率缺口](./evo/evidence/2026-09-29-vertical-acceptance.md)：正式业务子项结果、热运行时备份阻塞与原生效率未达标。
+
+[首轮唤醒顺序修复](./evo/first-activation-wake-order.zh-CN.md)：先发布 Host 工作区再唤醒，避免新实例等待 30 秒兜底轮询。
+
+[Claude 认证与个人配置隔离修复](./evo/claude-connection-isolation.zh-CN.md)：保留 CLI 连接配置，继续隔离个人行为设置。
+
+[重复唤醒／回复修复设计](./evo/read-covered-activation-plan.zh-CN.md)：同一成功运行的精确消费凭据取消未执行的重复通知，保持 ACK、Inbox 与 Task 边界。
+
 [evo 分支现状](./evo/status.zh-CN.md)：evo 相对 main 里程碑的唯一现状说明（环境与部署、带证据的状态表、偏离合同清单、未决项、phase 4 删除清单）；[付费运行台账](./evo/paid-runs.zh-CN.md)；[状态历史日志](./evo/log/status-history-2026-09.zh-CN.md)（第一至六十五节，含效率基线）。
 
 [长会话漂移测试](./design/long-session-drift-gate.zh-CN.md)：多轮与强制压缩后是否仍遵守规则、正确回复（opt-in 付费）。

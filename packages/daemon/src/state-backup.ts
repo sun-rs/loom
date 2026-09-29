@@ -24,6 +24,7 @@ import { databaseContentDigest } from "./state-restore-proof.ts";
 export type FileInventory = {
   files: Record<string, string>;
   omittedSockets: string[];
+  omittedRuntimeCredentials?: string[];
 };
 
 export type BackupReceipt = FileInventory & {
@@ -70,15 +71,35 @@ async function sync(path: string): Promise<void> {
   }
 }
 
-export async function fileInventory(root: string): Promise<FileInventory> {
+// Host-owned per-turn capabilities are process state, never restorable data.
+// Keep provider-sessions and all other files in the verified backup.
+function runtimeCredentialDirectory(name: string): boolean {
+  return /^warm-runtimes\/instrt_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/turns$/u.test(
+    name,
+  );
+}
+
+export async function fileInventory(
+  root: string,
+  allowRuntimeCredentials = true,
+): Promise<FileInventory> {
   const files: Record<string, string> = {};
   const omittedSockets: string[] = [];
+  const omittedRuntimeCredentials: string[] = [];
   async function walk(directory: string, prefix = ""): Promise<void> {
     for (const entry of (await readdir(directory)).sort()) {
       const name = prefix + entry,
         path = join(directory, entry);
       const stat = await lstat(path);
       assert.ok(!stat.isSymbolicLink(), `State symlink refused: ${name}`);
+      if (runtimeCredentialDirectory(name)) {
+        assert.ok(
+          stat.isDirectory() && allowRuntimeCredentials,
+          "Runtime credentials must not be restored from backup",
+        );
+        omittedRuntimeCredentials.push(name);
+        continue;
+      }
       if (stat.isDirectory()) await walk(path, `${name}/`);
       else if (stat.isSocket()) omittedSockets.push(name);
       else {
@@ -89,7 +110,11 @@ export async function fileInventory(root: string): Promise<FileInventory> {
     }
   }
   await walk(root);
-  return { files, omittedSockets };
+  return {
+    files,
+    omittedSockets,
+    ...(omittedRuntimeCredentials.length ? { omittedRuntimeCredentials } : {}),
+  };
 }
 
 async function databaseInventory(root: string): Promise<string[]> {
@@ -100,6 +125,7 @@ async function databaseInventory(root: string): Promise<string[]> {
         path = join(directory, entry);
       const stat = await lstat(path);
       assert.ok(!stat.isSymbolicLink(), `State symlink refused: ${name}`);
+      if (runtimeCredentialDirectory(name) && stat.isDirectory()) continue;
       if (stat.isDirectory()) await walk(path, `${name}/`);
       else if (stat.isSocket() || /\.db-(?:wal|shm|journal)$/.test(name)) {
         // Same exclusions as backupState/fileInventory.
@@ -141,6 +167,7 @@ export async function backupState(
         dest = join(target, name);
       const stat = await lstat(source);
       assert.ok(!stat.isSymbolicLink(), `State symlink refused: ${name}`);
+      if (runtimeCredentialDirectory(name) && stat.isDirectory()) continue;
       if (stat.isDirectory()) {
         await mkdir(dest, { mode: 0o700 });
         await walk(source, `${name}/`);
@@ -222,7 +249,7 @@ export async function verifyStateBackup(
     );
   }
   assert.deepEqual(
-    (await fileInventory(target)).files,
+    (await fileInventory(target, false)).files,
     receipt.files,
     "Backup file digest mismatch",
   );

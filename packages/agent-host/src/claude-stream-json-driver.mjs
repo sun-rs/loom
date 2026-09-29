@@ -1,3 +1,4 @@
+import { claudeConnectionEnvironment } from "./claude-connection-environment.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
   claudeAttachedDirectoryArgs,
@@ -181,7 +182,7 @@ async function runTurn(resumeSession) {
     cwd: process.cwd(),
     // Process-only override: preserve user auth/config and RAH-owned memory.
     env: {
-      ...withoutNestedClaudeCode(process.env),
+      ...claudeConnectionEnvironment(withoutNestedClaudeCode(process.env)),
       ...providerLaunchPolicy("claude").environment,
     },
     shell: false,

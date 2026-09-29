@@ -1,6 +1,6 @@
 # evo 分支现状
 
-更新：2026-09-27（验收缺陷修复：Activation 业务义务、阻塞不占 lane、Human 放弃被阻塞激活；此前收口批次：压缩次数可见、旧 persona 围栏、预热默认关闭）。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`）的唯一现状说明：环境与部署、带证据的能力状态、偏离合同清单、未决项与 phase 4 删除清单。目标以 [目标合同](target-contract.zh-CN.md) 为准；代码只证明当前行为。
+更新：2026-09-29（纵向验收修复：热运行时备份、草稿修改恢复指引、接力因果判定与重复正文读取）。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`）的唯一现状说明：环境与部署、带证据的能力状态、偏离合同清单、未决项与 phase 4 删除清单。目标以 [目标合同](target-contract.zh-CN.md) 为准；代码只证明当前行为。
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
@@ -11,13 +11,23 @@
 
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
 - `evo`：后端重建线。前端产品代码（`apps/web/src`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 一致，phase 4 之前不改。
-- 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行，所以部署版本 = 重启时的检出 HEAD。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
-- 当前部署提交：`fix(evo): review round 2` 那一批（2026-09-28 重启，schema 77，已推送；部署行随批次提交，不再单独提交；重启前备份 `~/.loom/evo-backups/pre-restart-*`，重启时无进行中 RunAttempt；控制台 200，预热仍关闭）。**每次部署重启后必须更新本行。**
-- 数据库 schema 77（77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
+- 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
+- 当前部署：`94c2dd7` + 既有未提交修复及本次验收修复（2026-09-29 16:45 CST，launchd `com.loom.evo` 优雅重启，schema 79）。备份 `~/.loom/evo-backups/pre-restart-acceptance-repair-2026-09-29T08-45-11.170Z` 校验通过；11 张业务表含记忆与权限哈希不变，冻结前端和预热关闭保留，旧暂停/隔离工作未恢复。P56 正式同 session 重启续聊通过，另有真实热 runtime idle 时的备份证据；P58 三实例 7 次运行零重试。P57 效率首轮失败，后两轮达预算；正式浏览器仍被策略验证阻塞。未提交、未推送。**每次部署重启后必须更新本行。**
+- 数据库 schema 79（79：逐 Run 精确读取、输出收据与消费凭据；78：频道 `channel_steer_enabled`；77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/state/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
 - 旧正式环境（`~/.rah`、4173）已退役，不兼容旧数据。
 
 ## 2. 当前状态
+
+本批验收修复（2026-09-29）：[设计、完整验证与剩余项](acceptance-repair-2026-09-29.zh-CN.md)。只跳过 Host 临时 turns 凭据的安全备份已通过真实热运行时验证；修改草稿指引显式保留模型 ACK/final 参数，普通进度不会继承 final；原接力误报按真实 Activation 归属修复。完整免费检查通过，正式重启续聊通过。效率累计输入由上次原生的 2.64 倍降为本次 2.00 倍，续轮生成已与原生相同，但首轮仍 over-budget，未缓存输入未明显降低；尚不能宣称整体验收完成。
+
+Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户 settings.json 的认证、API 地址与三种模型别名白名单，继续隔离个人 hooks/插件等配置；显式环境优先且连接源不混配，不写入凭据。完整免费检查通过，P49 隔离原生 Sonnet/low 约 7 秒成功；P50 原生日志确认连续 9 次上游 502 与 CLI 退避重试，Loom 轨迹未展示错误；无回复或用量，已 SOS 停止，续聊未验。502 的具体上游诱因尚未确定。详见[设计、边界和证据](claude-connection-isolation.zh-CN.md)。
+
+重复唤醒修复（2026-09-28）：[设计与验证](read-covered-activation-plan.zh-CN.md)先于实现。Kernel 只在同实例、同 Room、同 session generation 的成功 Run 有精确读取、CLI 输出收据与后续消费确认时，取消尚未执行的重复消息通知；不使用最高已读位置、不伪造完成/ACK、不修改 Inbox 或 Task。专项 29 项免费测试通过；最终 `npm run check` 完整通过（核心 2,682 通过、22 跳过；Web 481、控制台 59、效率门禁单测 235 等均通过），类型、格式及 diff 检查通过。schema 78→79 临时副本迁移通过；正式部署见 §1。P46 已复跑三实例讨论：Codex 精确覆盖 #24 后取消重复通知、仅运行一次；Claude 组织禁用订阅导致三次失败后隔离，整体业务验收阻塞。P46 曾复现首轮约 30 秒等待，P52 已修复唤醒顺序；当前效率结论见本批 P57，仍不能宣称全面零重复或性能已验收。
+
+实例配置升级兼容（2026-09-28）：`agent.manage configure` 允许同 Host、同 RuntimeProfile 的新入口，保留新入口的有效期、在线认证、工作区与工具权限检查；不同 Host / Profile 继续拒绝。回归覆盖模型/effort 更新、已绑定 session 不重置、幂等重放与冲突，以及错误入口拒绝。旧“禁止切换 CLI”测试夹具改为真正不同 Profile，拒绝断言保留。本批 `npm run check` 完整通过（核心 2,659 通过、22 跳过；Web、控制台及门禁单测通过），格式与 diff 检查通过。未跑付费 CLI，部署以 §1 为准。
+
+频道级 Steer（2026-09-28）：Kernel 持久化 `steerEnabled`，创建/更新频道的 Human API 与 Room 投影已接通，schema 78 为旧频道默认开启。关闭只过滤忙时通知，不改变消息投递、ACK 或排队执行。免费测试覆盖开关、幂等、API、旧库列迁移与既有私聊隔离；本批未跑付费 CLI，也未改冻结前端，UI 开关留待 phase 4 接入。部署状态以 §1 为准。 首轮曾因 RoomKernel 超过源码上限 1 行失败，合并重复类型导入后复测通过，上限未改；本次实例配置修复批次已完整重跑 `npm run check`，包括本开关在内全部通过。
 
 五列相互独立：“已实现”不代表已验证；“fake/免费验证”不代表真实 CLI；“真实 CLI”只指所列样本；“付费门禁结论”是门禁输出，不等于效率验收或部署验收。节号指 [历史日志](log/status-history-2026-09.zh-CN.md)。
 
@@ -81,7 +91,7 @@
 
 技术未决（带触发条件）：
 
-- 已读消息仍触发后续轮次（P45：7 次运行中 2 次多余，含一次重复作答）：不能用已读高水位直接完成；修法需来源运行的精确消费凭据、在来源成功结算时由 Kernel 覆盖完成并在领取前补偿，且要写入合同（Codex 评估 `~/.loom/reviews/2026-09-28-codex-read-covered-activation.md`）。触发：phase 4 第一刀之后（待负责人确认排期）。
+- P45 重复通知修复已实现、免费检查通过并部署：按成功 Run 的精确消费凭据取消未执行通知，不以最高已读位置完成候选；详见[设计与验证](read-covered-activation-plan.zh-CN.md)。P46 真实样本验证 Codex 重复通知被取消，但 Claude 账号禁用阻塞整体验收；效率对照仍未复跑。见[本轮证据](evidence/2026-09-29-discussion-recheck.md)。
 - 首轮延迟与首轮纯文本：模型遵守度与服务端波动主导，需交替顺序多样本再判；不以提示词补丁处理。
 - Kimi 延迟：触发条件为下一次 Kimi 效率门禁，按交替顺序与多样本判定。
 - Codex 续轮额外 `message-read`：P41 出现、P42 消失，判模型侧；若复现为稳定行为再评估（会改四家协议版本，需四家付费复验）。
@@ -101,3 +111,9 @@
 - 旧 persona 创建端点 `POST /v3/client/agents/provision`（冻结前端 `createAgent` 使用，随 phase 4 退休）；以 persona 定义作夹具的测试迁移到 Role 实例后，同时删除 Kernel `scheduleLegacyPersonas` 选项与 `DaemonApplication` 的 `legacyPersonaScheduling` 接缝。
 
 保留：client-sdk `runtime.settings.*` 操作、`RoomAgentActivitySchema.queued`/`.blocked`、`instance.activation.abandon` 与 Kernel 实现（产品界面可用）。phase 4 另需处理：冻结的 `apps/web` 对技能 issue `isolated_by_loom` 的文案不准确（历史第四十九节第 5 项）。
+
+2026-09-29 P51：负责人修复 Claude 路由后，实际 kimi-k3 两轮正式频道调用成功，同 session 续聊、无 502 或重试。首轮启动前约 30 秒等待仍存在；仅此路径通过，不代表整体或效率验收完成。见[证据](evidence/2026-09-29-claude-kimi-two-turns.md)。
+
+2026-09-29 首轮等待修复：工作区 Offer 刷新发布完成后才发送激活唤醒，刷新失败保留 Outbox 重试。完整检查通过，正式 P52 将新实例首轮放置等待从 30.24 秒降到 0.267 秒。见[设计与验收](first-activation-wake-order.zh-CN.md)。
+
+2026-09-29 P53–P55 纵向验收：整体未通过；分工、私聊排队/隔离、记忆及开关子项成立。新增阻塞为热运行时 turns 0300 与完整备份冲突（未停服务）、held 修改正文丢原回复意图；E2E 两个重复判定是显式 @ 交接被按阶段总数误报。Codex 三轮原生对照 over-budget（输入 2.64 倍、未缓存 1.52 倍），暂不接里程碑前端。详见[完整报告](evidence/2026-09-29-vertical-acceptance.md)。

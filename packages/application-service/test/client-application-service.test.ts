@@ -1132,6 +1132,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       {
         basedOnControlRoomSeq: workspaceCreated.event.roomSeq,
         idempotencyKey: "client-room-create-v3",
+        steerEnabled: false,
         kind: "channel",
         name: "Managed Room",
         slug: "managed-room",
@@ -1141,6 +1142,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(roomCreateResponse.status, 200);
     const managedRoom = await jsonObject(roomCreateResponse);
+    assert.equal(managedRoom.room.steerEnabled, false);
     assert.equal(
       managedRoom.room.workspaceId,
       workspaceCreated.workspace.workspaceId,
@@ -1168,6 +1170,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         basedOnRoomSeq: 1,
         description: "Updated through the Human client API.",
         idempotencyKey: "client-room-update-v3",
+        steerEnabled: true,
         name: "Managed Room Updated",
         roomId: managedRoom.room.roomId,
         visibility: "private",
@@ -1176,6 +1179,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(roomUpdateResponse.status, 200);
     const updatedManagedRoom = await jsonObject(roomUpdateResponse);
+    assert.equal(updatedManagedRoom.room.steerEnabled, true);
     assert.equal(updatedManagedRoom.room.name, "Managed Room Updated");
     assert.equal(
       updatedManagedRoom.room.description,
@@ -1673,6 +1677,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
           {
             basedOnControlRoomSeq: workspaceCreated.event.roomSeq,
             idempotencyKey: "client-room-create-v3",
+            steerEnabled: false,
             kind: "channel",
             name: "Managed Room",
             slug: "managed-room",

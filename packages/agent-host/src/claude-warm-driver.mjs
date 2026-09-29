@@ -1,3 +1,4 @@
+import { claudeConnectionEnvironment } from "./claude-connection-environment.js";
 // S2-c1 warm Claude driver (S2 spec §2/§4, contract §6a): one long-lived
 // `claude -p --input-format stream-json --output-format stream-json
 // --replay-user-messages` per Role instance, `--resume <id>` or, for a fresh
@@ -159,7 +160,7 @@ const args = [
 const claude = spawn(options.executable, args, {
   cwd: process.cwd(),
   env: {
-    ...withoutNestedClaudeCode(process.env),
+    ...claudeConnectionEnvironment(withoutNestedClaudeCode(process.env)),
     ...providerLaunchPolicy("claude").environment,
   },
   shell: false,

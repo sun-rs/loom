@@ -1,3 +1,4 @@
+import * as ReadCoverage from "./activation-read-coverage.ts";
 import { assertWorkerReplyTarget } from "./worker-reply-target-guard.ts";
 import { requireInstanceReplyTarget } from "./instance-worker-scope.ts";
 import {
@@ -289,6 +290,14 @@ export class WorkerTargetContextService {
       );
       // Raft's read commands record the consumed sequence for the target so the
       // send never has to carry it. This is the same fact, kept server-side.
+      const readReceiptId = ReadCoverage.record(
+        this.#context.database,
+        origin,
+        target.roomId,
+        window.events
+          .filter((e) => e.type === "message.posted")
+          .map((e) => e.roomSeq),
+      );
       recordWorkerTargetReadPosition(this.#context.database, {
         messageSeqs: window.events
           .filter((event) => event.type === "message.posted")
@@ -300,6 +309,7 @@ export class WorkerTargetContextService {
         updatedAt: this.#context.now().toISOString(),
       });
       const response = P.WorkerRoomContextResponseSchema.parse({
+        ...(readReceiptId ? { readReceiptId } : {}),
         ...envelope,
         addressing: workerAddressing(
           this.#context.database,
@@ -479,6 +489,8 @@ export class WorkerTargetContextService {
       scope: origin,
       intent,
       result,
+      confirmReadCoverage: (s, e, seq) =>
+        ReadCoverage.confirmPost(this.#context.database, s, e, seq),
       acknowledge: (scope, input) =>
         this.#context.acknowledgePresentedDelivery(scope, input),
       recordFinal: (scope, event) =>
