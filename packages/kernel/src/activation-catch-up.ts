@@ -22,15 +22,17 @@ import {
  *   `message-check`/`room-read`).
  * - Execution-audit events and this participant's own posts are covered but
  *   neither rendered nor charged, exactly as the range treats audit events.
- * - No cursor yet (a first delivery for this consumer) means no catch-up: a
- *   new consumer is not handed Channel history it never subscribed to.
+ * - Without a cursor, a Role instance starts after its atomic creation/join
+ *   event in its own Channel. Already being a member is distinct from having
+ *   run before. Private boxes and legacy consumers keep their existing path;
+ *   no pre-membership history is injected.
  * - The Activation's `from_seq` is untouched: it is the latency anchor and the
  *   obligation interval. Only the rendering's stored start moves, and a
  *   re-present in the same RunAttempt reuses that stored start, so a cursor
  *   that moved meanwhile cannot change the digest.
  */
 export type CatchUp = {
-  /** The frozen lower bound (cursor + 1 at first render); null = no catch-up. */
+  /** Frozen cursor + 1 or instance creation + 1; null = no catch-up. */
   floor: number | null;
   renderFromSeq: number;
   events: RoomEvent[];
@@ -76,7 +78,10 @@ export function renderCatchUp(
         "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id=?",
       )
       .get(input.roomId, input.participantId, input.consumerId);
-    floor = cursor === undefined ? null : integer(cursor, "last_seq") + 1;
+    floor =
+      cursor === undefined
+        ? firstInstanceChannelFloor(database, input)
+        : integer(cursor, "last_seq") + 1;
   }
   if (floor === null) return none(null);
   if (floor >= input.fromSeq) return none(floor);
@@ -131,6 +136,23 @@ export function renderCatchUp(
     omittedFromSeq: omitted.fromSeq,
     omittedToSeq: omitted.toSeq,
   };
+}
+
+/** The ledger owns the subscription origin; never fabricate a read cursor. */
+function firstInstanceChannelFloor(
+  database: DatabaseSync,
+  input: { roomId: string; participantId: string },
+): number | null {
+  const created = database
+    .prepare(
+      `SELECT e.room_seq FROM room_events e
+       JOIN role_instances i ON i.instance_id=e.aggregate_id AND i.channel_id=e.room_id
+       JOIN memberships m ON m.room_id=i.channel_id AND m.principal_id=i.instance_id
+       WHERE e.room_id=? AND e.type='instance.created' AND e.aggregate_id=?
+       LIMIT 1`,
+    )
+    .get(input.roomId, input.participantId);
+  return created === undefined ? null : integer(created, "room_seq") + 1;
 }
 
 /** Bounded aggregate over what the catch-up would have rendered. */
