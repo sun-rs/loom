@@ -16,10 +16,10 @@
  *   Room seq, short message ref, author and body; a non-message business fact
  *   keeps a compact type and payload;
  * - a window whose contiguous `presentedThroughSeq` reaches the Activation
- *   head ends with one `Reply:` line: a complete command naming the exact
- *   `--target` of the delivered messages (one command per target when the
- *   window spans several) and `--based-on-room-seq` (RAH's only implicit
- *   acknowledgement evidence), plus the no-reply `message-check` exit;
+ *   head ends with Reply context metadata: exact targets, the shared
+ *   --based-on-room-seq and optional turn handle. It supplies no command
+ *   template or competing check option; ordinary handling lives in the
+ *   standing protocol. No-directed-message windows still request a check.
  * - a retry after an attempt that neither posted nor confirmed delivery adds
  *   one reminder line (Kernel-decided `previousAttemptUnconfirmed`); a retry
  *   after an attempt that committed a post but never confirmed delivery
@@ -35,7 +35,7 @@
  * - a window carrying a catch-up (contract §3: Channel events after this
  *   consumer's cursor that did not wake it) shows them first under one factual
  *   label, then `For you:` and the Activation's own events; only the latter
- *   become `Reply:` targets.
+ *   become `Reply context:` targets.
  */
 import {
   shortWorkerRef,
@@ -98,25 +98,16 @@ export function previousAttemptRefusalLine(
 }
 
 /**
- * The complete reply command(s). The model always copies an explicit target,
- * so the target is stated rather than left to memory that compaction rewrites.
- * Any one post citing the head confirms the whole window (the implicit ACK is
- * per Room), so a multi-target window lists one command per target and
- * `--final` moves to the model's last post.
+ * Reply metadata, not an action menu. Preserve each exact directed target
+ * across compaction; the shared seq confirms the Room window, not completion.
+ * No-reply and truncated windows retain their explicit check path below.
  */
 function replyInstruction(
   targets: readonly string[],
   turn: string,
   through: number,
 ): string {
-  const post = (target: string) =>
-    `message-post --target ${target}${turn} --based-on-room-seq ${through}`;
-  const check = `no reply needed: message-check${turn}`;
-  if (targets.length <= 1)
-    return `Reply: ${post(targets[0] ?? "")} --final · ${check}`;
-  return `Reply per target (--final on your last post only): ${targets
-    .map(post)
-    .join(" · ")} · ${check}`;
+  return `Reply context: ${targets.map((target) => `--target ${target}`).join(" · ")}${turn} --based-on-room-seq ${through}`;
 }
 
 export type BodiedWakeMemory = {

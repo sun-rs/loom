@@ -93,7 +93,7 @@ test("channel mute guidance distinguishes ordinary Activity, direct obligations,
 });
 
 test("joined-target reads and search guidance never confer cross-Room write authority", () => {
-  const prompt = help("history", "messages");
+  const prompt = help("history", "messages", "messages-advanced");
   for (const command of [
     "room-list",
     "room-resolve",

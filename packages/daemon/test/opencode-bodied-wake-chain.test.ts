@@ -258,7 +258,7 @@ test("bodied wake (OpenCode): one --final reply completes the Activation without
   }
 });
 
-test("bodied wake (OpenCode): a reply without --final keeps the follow-up generation and still completes", async () => {
+test("bodied wake (OpenCode): explicit progress keeps the follow-up generation and still completes", async () => {
   const context = await fixture();
   try {
     context.setScenario("nofinal");

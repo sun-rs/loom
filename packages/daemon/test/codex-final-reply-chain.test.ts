@@ -31,7 +31,7 @@ import { deliveryAcceptanceRegistration } from "../src/delivery-acceptance-regis
  * like the real tool loop, requests one more generation that only says
  * "sent" unless the turn was interrupted first. No paid provider runs.
  */
-type Mode = "final" | "nofinal";
+type Mode = "final" | "nofinal" | "progress";
 
 async function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-final-reply-chain-"));
@@ -173,76 +173,82 @@ async function fixture() {
   };
 }
 
-test("final reply (per-turn): the committed --final post ends the turn with one generation and the Activation completes", async () => {
-  const context = await fixture();
-  try {
-    for (let turn = 1; turn <= 2; turn += 1) {
-      context.post(`question ${turn}`);
+for (const mode of ["final"] as const)
+  test(`final reply (per-turn): ${mode} post ends the turn without polling and the Activation completes`, async () => {
+    const context = await fixture();
+    try {
+      context.setMode(mode);
+      for (let turn = 1; turn <= 2; turn += 1) {
+        context.post(`question ${turn}`);
+        const result = await context.agentHost.reconcileOnce();
+        assert.equal(result.state, "completed", JSON.stringify(result));
+      }
+      const records = context.records();
+      assert.deepEqual(
+        records.filter((r) => r.event === "follow-up-generation"),
+        [],
+        "the post-reply generation never ran",
+      );
+      const posts = records.filter((r) => r.event === "command");
+      assert.equal(posts.length, 2);
+      for (const post of posts) {
+        assert.equal(post.status, 0, JSON.stringify(post));
+        assert.equal(
+          (post.command as string[]).includes("--final"),
+          mode === "final",
+        );
+      }
+      assert.equal(records.filter((r) => r.event === "interrupted").length, 2);
+      const runs = context.kernel.listRunAttempts({
+        roomId: context.room.roomId,
+      });
+      assert.equal(runs.length, 2);
+      for (const run of runs) {
+        assert.equal(run.state, "exited", JSON.stringify(run));
+        assert.deepEqual(context.finalReply(run.runAttemptId), {
+          interrupt_sent: 1,
+          preempted_follow_up: "true",
+        });
+      }
+      for (const process of context.kernel.listRuntimeProcesses({
+        roomId: context.room.roomId,
+      }))
+        assert.equal(process.exitCode, 0);
+      assert.ok(
+        context.kernel
+          .listActivations({ roomId: context.room.roomId })
+          .every((activation) => activation.state === "completed"),
+      );
+    } finally {
+      await context.close();
+    }
+  });
+
+for (const mode of ["progress", "nofinal"] as const)
+  test(`final reply (per-turn): ${mode} preserves execution after publishing`, async () => {
+    const context = await fixture();
+    try {
+      context.setMode(mode);
+      context.post("question");
       const result = await context.agentHost.reconcileOnce();
       assert.equal(result.state, "completed", JSON.stringify(result));
-    }
-    const records = context.records();
-    assert.deepEqual(
-      records.filter((r) => r.event === "follow-up-generation"),
-      [],
-      "the post-reply generation never ran",
-    );
-    const posts = records.filter((r) => r.event === "command");
-    assert.equal(posts.length, 2);
-    for (const post of posts) {
-      assert.equal(post.status, 0, JSON.stringify(post));
-      assert.ok((post.command as string[]).includes("--final"));
-    }
-    assert.equal(records.filter((r) => r.event === "interrupted").length, 2);
-    const runs = context.kernel.listRunAttempts({
-      roomId: context.room.roomId,
-    });
-    assert.equal(runs.length, 2);
-    for (const run of runs) {
-      assert.equal(run.state, "exited", JSON.stringify(run));
-      assert.deepEqual(context.finalReply(run.runAttemptId), {
-        interrupt_sent: 1,
-        preempted_follow_up: "true",
+      const records = context.records();
+      assert.equal(
+        records.filter((r) => r.event === "follow-up-generation").length,
+        1,
+      );
+      assert.deepEqual(
+        records.filter((r) => r.event === "interrupted"),
+        [],
+      );
+      const [run] = context.kernel.listRunAttempts({
+        roomId: context.room.roomId,
       });
+      assert.equal(context.finalReply(run!.runAttemptId), undefined);
+    } finally {
+      await context.close();
     }
-    for (const process of context.kernel.listRuntimeProcesses({
-      roomId: context.room.roomId,
-    }))
-      assert.equal(process.exitCode, 0);
-    assert.ok(
-      context.kernel
-        .listActivations({ roomId: context.room.roomId })
-        .every((activation) => activation.state === "completed"),
-    );
-  } finally {
-    await context.close();
-  }
-});
-
-test("final reply (per-turn): a reply without --final keeps today's behaviour — the follow-up generation runs", async () => {
-  const context = await fixture();
-  try {
-    context.setMode("nofinal");
-    context.post("question");
-    const result = await context.agentHost.reconcileOnce();
-    assert.equal(result.state, "completed", JSON.stringify(result));
-    const records = context.records();
-    assert.equal(
-      records.filter((r) => r.event === "follow-up-generation").length,
-      1,
-    );
-    assert.deepEqual(
-      records.filter((r) => r.event === "interrupted"),
-      [],
-    );
-    const [run] = context.kernel.listRunAttempts({
-      roomId: context.room.roomId,
-    });
-    assert.equal(context.finalReply(run!.runAttemptId), undefined);
-  } finally {
-    await context.close();
-  }
-});
+  });
 
 test("S2-b: a per-turn (cold) run that resumes its thread records the measured resume duration", async () => {
   const context = await fixture();
@@ -318,11 +324,11 @@ const cli = (command, input) => new Promise((resolve) => {
   child.once("close", (status) => { record({ event: "command", command, status, stdout, stderr }); resolve(); });
 });
 async function act(wake_) {
-  const reply = /Reply: message-post --target "[^"]+"(?: --turn \\S+)? --based-on-room-seq (\\d+)( --final)?/.exec(wake_);
+  const reply = /(?:Reply: message-post|Reply context:) --target "[^"]+"(?: --turn \\S+)? --based-on-room-seq (\\d+)( --final)?/.exec(wake_);
   if (!reply) throw new Error("FAKE model found no Reply line in the wake");
   const item = { id: "post-" + activationId, type: "commandExecution" };
   notify("item/started", { item });
-  const final = process.env.FAKE_MODE === "final" && reply[2] ? ["--final"] : [];
+  const final = process.env.FAKE_MODE === "progress" ? ["--progress"] : process.env.FAKE_MODE === "final" ? ["--final"] : [];
   await cli(["worker", "message-post", "--based-on-room-seq", reply[1], ...final], "FAKE CODEX reply");
   notify("item/completed", { item: { ...item, status: "completed" } });
   await new Promise((resolve) => { wake = resolve; setTimeout(resolve, 1000); });

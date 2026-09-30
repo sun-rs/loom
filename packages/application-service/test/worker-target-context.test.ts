@@ -268,6 +268,7 @@ test("cross-target posts require a complete signed latest-window receipt without
     const threadPosted = P.WorkerMessagePostResponseSchema.parse(
       await cliJson([
         "message-post",
+        "--progress",
         "--json",
         "--target",
         threadTarget,
@@ -307,6 +308,7 @@ test("cross-target posts require a complete signed latest-window receipt without
     const dmPosted = P.WorkerMessagePostResponseSchema.parse(
       await cliJson([
         "message-post",
+        "--progress",
         "--json",
         "--target",
         "dm:@human",
@@ -369,6 +371,7 @@ test("cross-target posts require a complete signed latest-window receipt without
     const completedPost = P.WorkerMessagePostResponseSchema.parse(
       await cliJson([
         "message-post",
+        "--progress",
         "--json",
         "--target",
         "#other",

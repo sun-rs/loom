@@ -267,13 +267,14 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     renderStandingProtocolCard,
   } = await import("@rah-os/agent-host");
   const { createHash } = await import("node:crypto");
-  // 2026-09-29: no prompt behaviour rules; the Reply contract names both
-  // message-check and message-read as unnecessary before posting.
+  // 2026-09-30: complete wakes carry data-only reply context; task mechanics
+  // are on demand. Reads, no-reply ACK and explicit final remain distinct.
   // Pin the new card; both withdrawn-tool and preceding CLI sessions upgrade.
-  assert.equal(STANDING_PROTOCOL_VERSION, "38cdb5f62423");
+  // 2026-09-30: publication and completion are separate; final is explicit.
+  assert.equal(STANDING_PROTOCOL_VERSION, "3b363cd93914");
   assert.equal(
     createHash("sha256").update(renderStandingProtocolCard()).digest("hex"),
-    "b75b1d6913fc83a50f5a98767873f5aa94d72b9a081755ab402e8d8613705759",
+    "aa8a0bf09c1798a26fab7c696143935229f46021cf553e8383846429e186ca59",
   );
   const agent = { ...agentContext({ role: "review" }), instanceChannelId: "c" };
   const lease = standingPromptLease(envelope(agent), options)!;
@@ -311,5 +312,5 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     protocolUpdateNotice(STANDING_PROTOCOL_VERSION),
   );
   assert.equal(notice, protocolUpdateNotice(STANDING_PROTOCOL_VERSION));
-  assert.match(notice!, /38cdb5f62423/u);
+  assert.match(notice!, /3b363cd93914/u);
 });

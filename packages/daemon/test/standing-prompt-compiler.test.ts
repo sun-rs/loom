@@ -276,10 +276,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     withHelp(prompt),
     /A Task is reserved for long-running or multi-step execution/isu,
   );
-  assert.match(
-    prompt,
-    /claim before you start.*task-claim-message.*task-start.*task-progress.*task-submit/isu,
-  );
+  assert.match(prompt, /claim before you start; read.*worker help tasks/isu);
   assert.match(
     onDemand,
     // The claim acknowledges in Raft's text, so the guidance points at the
@@ -391,7 +388,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(onDemand, /Respect ongoing conversations/iu);
   assert.match(onDemand, /Only the person doing the work should report/iu);
   assert.match(prompt, /Claim before you start.*concurrency lock/isu);
-  assert.match(prompt, /Join others' back-and-forth only when addressed/u);
+  assert.match(prompt, /Join only when addressed/u);
   assert.match(onDemand, /Before stopping.*blockers you own/isu);
   assert.match(onDemand, /Skip idle narration.*actionable content/isu);
   // prompt.standing.aa: the self-authored turn-taking script and its silence
@@ -406,10 +403,11 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     withHelp(prompt),
     /review newerMessages, acknowledge the original sync cursor, and exit successfully/u,
   );
-  // Raft's send contract: a target plus content on stdin, nothing else. S1-g:
-  // the prompt keeps one heredoc form; Raft's variants live in `worker help
-  // messages`.
-  assert.match(prompt, /message-post --target <target> <<'RAH_MESSAGE_EOF'/u);
+  // The send form names the complete wake arguments, not target alone.
+  assert.match(
+    prompt,
+    /message-post <Reply context arguments> <<'RAH_MESSAGE_EOF'/u,
+  );
   assert.match(
     onDemand,
     /message-post --target "#room-slug" <<'RAH_MESSAGE_EOF'/u,
@@ -468,7 +466,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   // Raft has neither parameter on any Task command, and the server now
   // resolves both, so the prompt no longer teaches the Agent to carry them.
-  assert.match(prompt, /task-claim-message --message-id <id>/u);
+  assert.match(onDemand, /task-claim-message --message-id <id>/u);
   const taskCommand =
     "task-(?:claim-message|claim|start|release|progress|block|request-input|submit|review|create|assign|amend|unblock|convert|delete)";
   for (const invocation of prompt.matchAll(
@@ -577,10 +575,10 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
 test("S1-g: the startup sequence keeps only what no wake input already states", () => {
   const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
   assert.doesNotMatch(prompt, /## Startup sequence/u);
-  // Raft step 1 (early acknowledgment) survives in the communication summary.
+  // P67/P68: an early acknowledgment must not be mistaken for completed work.
   assert.match(
     prompt,
-    /early, if it needs a visible acknowledgment, blocker question or ownership signal/u,
+    /Publish substantive results or necessary blocker questions; do not post plans or acknowledgments before doing the work/u,
   );
   // Step 2 is the memory binding's own startup read.
   assert.match(
@@ -667,22 +665,26 @@ test("ported Raft channel awareness becomes Room awareness", () => {
   assert.match(onDemand, /Don't scatter messages across unrelated Rooms\./u);
 });
 
-test("ported Raft communication style keeps every upstream bullet", () => {
+test("communication help follows current delivery rules while preserving style guidance", () => {
   // S1-g: the prompt carries a summary; `worker help style` the upstream text.
   const { prompt: standing } = compileStandingPrompt({ agent: fixtureAgent });
   assert.match(standing, /## Communication style/u);
   assert.match(
     standing,
-    /Default to the shortest useful form; do not paste execution logs\./u,
+    /Be concise; use plain sentences, not execution logs\./u,
   );
-  assert.match(standing, /plain, complete sentences/u);
+  assert.match(standing, /plain sentences/u);
   assert.match(standing, /worker help <topic>.*style/u);
   const prompt = workerHelpTopic("style")!;
+  assert.doesNotMatch(
+    prompt,
+    /acknowledge it and briefly outline your plan before starting|Working on step/u,
+  );
   assert.match(
     prompt,
-    /When you receive a task, acknowledge it and briefly outline your plan before starting\./u,
+    /Publish substantive results or necessary blocker questions/u,
   );
-  assert.match(prompt, /Working on step 2\/3…/u);
+  assert.doesNotMatch(onDemand, /after a successful post your turn is done/u);
   assert.match(prompt, /Default every message to the shortest useful form\./u);
   assert.match(prompt, /Do not paste execution logs into chat\./u);
   assert.match(

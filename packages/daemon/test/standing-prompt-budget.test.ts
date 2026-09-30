@@ -61,17 +61,14 @@ test("the prompt no longer drives an extra turn after a successful reply", () =>
     assert.doesNotMatch(prompt, /and then acknowledge/u);
     assert.doesNotMatch(prompt, /separate obligation/u);
     assert.doesNotMatch(prompt, /inspect every delivered/u);
-    assert.match(
-      prompt,
-      /Reply once with `message-post`; after a successful post your turn is done unless new work arrived\./u,
-    );
+    assert.match(prompt, /`message-post` publishes without ending execution/u);
   }
 });
 
 test("the prompt points at every on-demand help topic it relies on", () => {
   const { prompt } = compileStandingPrompt(minimalInputs[0]);
   const pointer =
-    /Details: `"\$RAH_WORKER_CLI" worker help <topic>` — topics: ([a-z, ]+)\./u.exec(
+    /Details: `"\$RAH_WORKER_CLI" worker help <topic>` — topics: ([a-z, -]+)\./u.exec(
       prompt,
     );
   assert.ok(pointer, "prompt carries the help pointer line");
@@ -97,10 +94,9 @@ test("the prompt keeps the Human-decides-Tasks rule crisp", () => {
  */
 const MOVED_RULES: readonly RegExp[] = [
   /use the current environment, never a previous turn's Room, range or Worker path/giu,
-  /Wake commands omit the CLI prefix/giu,
   /`msg=<ref>` is a short message id/giu,
   /pass a wake's `--turn <handle>` to every Worker command/giu,
-  /On `Reply:`, post once with its `--based-on-room-seq`: the wake already carries the new messages, so no `message-check` or `message-read` first/giu,
+  /publish the answer with `message-post` using its `Reply context:` arguments/giu,
   /With no reply needed, run `message-check` once/giu,
   /when a wake says `message-check first`, run it before replying/giu,
   /Never infer missing memory or no work from an error/giu,
@@ -121,13 +117,13 @@ test("each rule moved out of the wake is stated exactly once in the standing pro
   }
 });
 
-test("the final-reply rule is one sentence in the standing prompt and --final rides the wake's Reply line", () => {
+test("final is an explicit completion choice and wake commands never preselect it", () => {
   for (const input of [...minimalInputs, {}]) {
     const { prompt } = compileStandingPrompt(input);
     assert.equal(
       [
         ...prompt.matchAll(
-          /Use `--final` on the post completing your reply to delivered messages; omit it on progress posts\./gu,
+          /Only after completing all current work may you explicitly add `--final`/gu,
         ),
       ].length,
       1,
@@ -137,9 +133,11 @@ test("the final-reply rule is one sentence in the standing prompt and --final ri
   const [wake, warmWake] = wakeSamples();
   assert.match(
     wake!,
-    /^Reply: message-post --target "#[a-z-]+" --based-on-room-seq 14 --final · /mu,
+    /^Reply context: --target "#[a-z-]+" --based-on-room-seq 14/mu,
   );
-  assert.match(warmWake!, /--based-on-room-seq 14 --final · /u);
+  assert.match(warmWake!, /--based-on-room-seq 14/u);
+  assert.doesNotMatch(wake!, /--final|--progress/u);
+  assert.doesNotMatch(warmWake!, /--final|--progress/u);
 });
 
 const HANDLE = "AbCdEfGhIjKlMnOpQrStUv";
@@ -234,4 +232,20 @@ test("redundant reads are handled by tool behaviour, not by prompt rules (owner 
   const { prompt } = compileStandingPrompt(minimalInputs[0]);
   assert.doesNotMatch(prompt, /re-fetch delivered bodies/u);
   assert.doesNotMatch(prompt, /inspect the Worker executable/u);
+});
+
+test("ordinary Role protocol keeps task mechanics on demand", () => {
+  for (const input of minimalInputs) {
+    const { prompt } = compileStandingPrompt({
+      ...input,
+      channelMemory: { section: "" },
+    });
+    assert.ok(prompt.length <= 5800, `Role prompt is ${prompt.length} chars`);
+    assert.match(prompt, /worker help tasks/u);
+    assert.doesNotMatch(prompt, /task-start|task-progress|task-submit/u);
+    assert.match(
+      prompt,
+      /For multiple targets, post separately with each target and the shared seq\/turn/u,
+    );
+  }
 });

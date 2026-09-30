@@ -135,7 +135,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     /task\.submitted.*task-review.*approved.*changes_requested/isu,
   );
   assert.match(prompt, /canonical Room/u);
-  assert.match(prompt, /"\$RAH_WORKER_CLI" worker message-check/u);
+  assert.match(onDemand, /"\$RAH_WORKER_CLI" worker message-check/u);
   assert.match(prompt, /"\$RAH_WORKER_CLI" worker message-post/u);
   assert.match(onDemand, /Respect ongoing conversations/iu);
   assert.match(onDemand, /Only the person doing the work should report/iu);
@@ -147,7 +147,10 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     onDemand,
     /state.*held.*not published.*delivery confirmation.*follow-up Activation/isu,
   );
-  assert.match(prompt, /message-post --target <target> <<'RAH_MESSAGE_EOF'/u);
+  assert.match(
+    prompt,
+    /message-post <Reply context arguments> <<'RAH_MESSAGE_EOF'/u,
+  );
   assert.match(
     onDemand,
     /message-post --target "#room-slug" <<'RAH_MESSAGE_EOF'/u,

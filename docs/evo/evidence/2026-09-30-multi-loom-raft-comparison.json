@@ -1,0 +1,388 @@
+{
+  "batch": "P77",
+  "at": "2026-09-30T13:47:53.227Z",
+  "plan": {
+    "batch": "P77",
+    "models": "two Codex gpt-6-luna / low per arm",
+    "arms": ["Loom", "Raft"],
+    "maxAgentPostsPerArm": 6,
+    "timeoutSeconds": 360,
+    "automaticRetry": false,
+    "authorization": "Owner async answer 授权这个有界对照",
+    "task": "6-message bounded peer review; same project snapshots, roles and content; Human only opening",
+    "limits": "Raft startup welcome costs must be retained separately; session/prompt defaults differ"
+  },
+  "code": {
+    "head": "8be0c77",
+    "dirty": true,
+    "protocol": "3b363cd93914"
+  },
+  "model": {
+    "provider": "codex",
+    "model": "gpt-6-luna",
+    "effort": "low"
+  },
+  "loom": {
+    "roomId": "room_415ff98a-0175-493c-bbbd-8ea45685ba71",
+    "runs": [
+      {
+        "runAttemptId": "run_3c1f8e12-46e5-46dc-a19e-d059f5399bec",
+        "participantId": "principal_26943fa2-d063-4c59-bff4-2d0a574a748c",
+        "state": "exited",
+        "startedAt": "2026-09-30T13:41:11.328Z",
+        "finishedAt": "2026-09-30T13:41:40.674Z",
+        "resolvedModel": {
+          "source": "explicit_binding",
+          "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+          "provider": "openai",
+          "modelId": "gpt-6-luna",
+          "reasoning": "low"
+        },
+        "sessionId": "01a0f28c-3bca-7553-b0e8-b17a0e3986f5",
+        "generations": 5,
+        "generationsTotal": 5,
+        "generationsBeforeReply": 5,
+        "generationsAfterReply": 0,
+        "input": 70849,
+        "cached": 50944,
+        "uncached": 19905,
+        "output": 801,
+        "reasoning": 304,
+        "firstInput": 10676,
+        "peakInput": 19222,
+        "toolCalls": [
+          {
+            "at": "2026-09-30T13:41:21.382Z",
+            "name": "exec",
+            "kind": "worker-command"
+          },
+          {
+            "at": "2026-09-30T13:41:24.166Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-09-30T13:41:27.473Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-09-30T13:41:36.333Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      },
+      {
+        "runAttemptId": "run_74b1e60b-78c3-4c35-9e34-bd78906e38ee",
+        "participantId": "principal_faf70515-807b-48e4-91fd-f9dd96131c81",
+        "state": "exited",
+        "startedAt": "2026-09-30T13:41:36.784Z",
+        "finishedAt": "2026-09-30T13:42:15.255Z",
+        "resolvedModel": {
+          "source": "explicit_binding",
+          "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+          "provider": "openai",
+          "modelId": "gpt-6-luna",
+          "reasoning": "low"
+        },
+        "sessionId": "01a0f28c-9f36-7650-a8da-4d98e441315a",
+        "generations": 7,
+        "generationsTotal": 7,
+        "generationsBeforeReply": 7,
+        "generationsAfterReply": 0,
+        "input": 117950,
+        "cached": 93440,
+        "uncached": 24510,
+        "output": 1233,
+        "reasoning": 0,
+        "firstInput": 10486,
+        "peakInput": 22484,
+        "toolCalls": [
+          {
+            "at": "2026-09-30T13:41:48.011Z",
+            "name": "exec",
+            "kind": "worker-command"
+          },
+          {
+            "at": "2026-09-30T13:41:50.521Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-09-30T13:41:53.992Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-09-30T13:42:00.312Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-09-30T13:42:04.607Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-09-30T13:42:12.463Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      }
+    ],
+    "messages": [
+      {
+        "seq": 11,
+        "at": "2026-09-30T13:41:36.611Z",
+        "author": "a",
+        "wakes": ["b"],
+        "threadId": null,
+        "body": "条件性风险：state-backup.ts:95-102 按路径名直接整目录跳过 turns，既不检查其是否仅含临时凭据，也不检查权限；若该目录混入其他需恢复数据也会被省略。当前生产约束称仅存临时凭据，因此这不是已证实缺陷。@p77-codex-b-8b62462399487ea19f071cb3 请独立核查这项边界及其他假设。"
+      },
+      {
+        "seq": 19,
+        "at": "2026-09-30T13:42:13.006Z",
+        "author": "b",
+        "wakes": [],
+        "threadId": null,
+        "body": "独立核查：确认该路径在 fileInventory:95-101、databaseInventory:128、backupState:170 按精确名称整目录省略；无需遍历内容或检查目录权限（根目录 lstat/可遍历祖先仍需可达）。真实备份遍历中的子项若是 symlink 会先被 lstat 拒绝，但不查看普通文件内容。生产约束（UUID instrt、0300、仅临时凭据、绑定在 provider-sessions）来自审查说明，测试也覆盖“凭据目录不可读仍成功、持久 session 被保留、同形 symlink 拒绝”；故混入需恢复数据会漏备份是条件性风险，当前无实证缺陷。另 receipt 明记 omittedRuntimeCredentials 且 verify 按相同白名单跳过其子树，恢复不带回该目录；符合约束时属预期。快照未含真实 CLI/生产目录创建者，未核实该部署契约；不建议仅以目录可读性作为判断，因为临时凭据目录本来就是 0300。当前测试是 backupState/verify 的单元行为，未证明真实 CLI 恢复端到端。无其他确认问题。"
+      }
+    ],
+    "gaps": [],
+    "queue": [
+      {
+        "activation_id": "activation_9d3bc926-e703-46cf-b4f4-54e88de00a41",
+        "state": "completed",
+        "from_seq": 6,
+        "to_seq": 6
+      },
+      {
+        "activation_id": "activation_3a65073a-1e8a-4b68-a78f-8cbf372d0c4a",
+        "state": "completed",
+        "from_seq": 11,
+        "to_seq": 11
+      }
+    ],
+    "stop": {
+      "reason": "early-idle",
+      "posts": 2
+    },
+    "totals": {
+      "input": 188799,
+      "cached": 144384,
+      "uncached": 44415,
+      "generations": 12
+    }
+  },
+  "raft": {
+    "channelId": "15e7de8a-9094-438d-b25d-06caf4224790",
+    "agents": [
+      {
+        "agentId": "c24b6c52-68b9-4a8c-ab45-49c2b19ce605",
+        "name": "LoomP77A",
+        "sessionId": "01a0f28e-759e-7f31-aad8-cafd043dbfa7",
+        "status": "stopped",
+        "turns": [
+          {
+            "turnId": "01a0f28e-8455-7411-ace3-d5488a19904b",
+            "startedAt": "2026-09-30T13:43:41.400Z",
+            "finishedAt": "2026-09-30T13:44:17.708Z",
+            "generations": 5,
+            "input": 129402,
+            "cached": 108288,
+            "uncached": 21114,
+            "firstInput": 22213
+          },
+          {
+            "turnId": "01a0f28f-4fb4-7ac2-929c-9d4614a866c0",
+            "startedAt": "2026-09-30T13:44:33.464Z",
+            "finishedAt": "2026-09-30T13:45:01.404Z",
+            "generations": 4,
+            "input": 129000,
+            "cached": 123904,
+            "uncached": 5096,
+            "firstInput": 31204
+          },
+          {
+            "turnId": "01a0f28f-e94c-7ae1-b5ed-348f8f5e95e3",
+            "startedAt": "2026-09-30T13:45:12.783Z",
+            "finishedAt": "2026-09-30T13:45:38.241Z",
+            "generations": 4,
+            "input": 138148,
+            "cached": 133120,
+            "uncached": 5028,
+            "firstInput": 33191
+          }
+        ]
+      },
+      {
+        "agentId": "109aab67-51b3-4e24-8f52-775514a45daa",
+        "name": "LoomP77B",
+        "sessionId": "01a0f28e-772c-7e41-911e-be92fdf59fbe",
+        "status": "stopped",
+        "turns": [
+          {
+            "turnId": "01a0f28e-8b25-7db1-8944-76009067664e",
+            "startedAt": "2026-09-30T13:43:43.145Z",
+            "finishedAt": "2026-09-30T13:46:03.301Z",
+            "generations": 16,
+            "input": 474441,
+            "cached": 444416,
+            "uncached": 30025,
+            "firstInput": 22205
+          }
+        ]
+      }
+    ],
+    "messages": [
+      {
+        "id": "5fd8b467-7fd6-4097-8096-fc04f1ba60ab",
+        "author": "c24b6c52-68b9-4a8c-ab45-49c2b19ce605",
+        "at": "2026-09-30T13:44:12.521Z",
+        "body": "条件风险：[state-backup.ts:76](<test-root>/project/state-backup.ts:76) 的排除只认 instrt_UUID/turns；若旧/非规范实例目录仍含临时凭据，会被备份并恢复。按当前生产创建者约束，这需依赖无遗留实例名假设。@LoomP77B 请独立核查。\n"
+      },
+      {
+        "id": "805dfc5d-ed83-43d9-b4a7-83faa4db6250",
+        "author": "109aab67-51b3-4e24-8f52-775514a45daa",
+        "at": "2026-09-30T13:44:33.241Z",
+        "body": "独立核查：生产端固定命名不能证明现存状态里没有旧名实例；非匹配目录会继续递归，0300 可能令备份失败，若可读则凭据会被复制。现有测试仅覆盖规范名、无关目录和符号链接，没覆盖旧名凭据。@LoomP77A\n"
+      },
+      {
+        "id": "d3fc9145-1903-4da1-8f3f-832fd368dad2",
+        "author": "c24b6c52-68b9-4a8c-ab45-49c2b19ce605",
+        "at": "2026-09-30T13:44:57.517Z",
+        "body": "反驳成立，收窄假设：生产命名约束不足以排除已有旧名实例；非匹配路径若可读会被复制，若目录为0300则遍历失败并中止备份。建议补测旧名 turns 含哨兵凭据时备份策略（明确拒绝或排除），并测restore产物中凭据不存在；当前指定测试只证规范路径。\n"
+      },
+      {
+        "id": "1f18e233-999e-47df-90a5-8ff7b39e8558",
+        "author": "109aab67-51b3-4e24-8f52-775514a45daa",
+        "at": "2026-09-30T13:45:12.554Z",
+        "body": "当前测试只调用 backupState/verifyStateBackup，断言凭据排除及篡改检测；未调用 snapshotStateBeforeMigration 或 restoreStateSnapshot，也未走真实 CLI 重启/恢复路径，故不能证明恢复产物无旧名凭据。建议CLI级用旧名快照恢复验证，并核查恢复后残留。@LoomP77A\n"
+      },
+      {
+        "id": "6d1c7864-945d-44d4-81c4-6c0bda97c039",
+        "author": "c24b6c52-68b9-4a8c-ab45-49c2b19ce605",
+        "at": "2026-09-30T13:45:34.661Z",
+        "body": "取舍：规范 instrt_UUID 路径的单元测试显示 turns 凭据省略、provider-sessions保留；但不足以证明旧名状态或真实CLI恢复安全。若部署含遗留实例名，应视为恢复边界缺口，补旧名路径与CLI恢复覆盖。@LoomP77B\n"
+      },
+      {
+        "id": "ebd791cb-7b47-46da-ab8c-d4a4b0997653",
+        "author": "109aab67-51b3-4e24-8f52-775514a45daa",
+        "at": "2026-09-30T13:46:01.359Z",
+        "body": "共识：规范 instrt_UUID/turns 的排除和 provider-sessions 保留有单测支持；旧名实例仍可能泄露或令备份失败，真实 CLI 恢复未覆盖。未决仅是部署状态是否含旧名目录；需旧名路径及端到端恢复测试确认。审查结束。\n"
+      }
+    ],
+    "totals": {
+      "input": 870991,
+      "cached": 809728,
+      "uncached": 61263,
+      "generations": 29
+    },
+    "stop": "six-post-limit",
+    "stopResults": [
+      {
+        "id": "c24b6c52-68b9-4a8c-ab45-49c2b19ce605",
+        "ok": true
+      },
+      {
+        "id": "109aab67-51b3-4e24-8f52-775514a45daa",
+        "ok": true
+      }
+    ],
+    "openingAt": "2026-09-30T13:43:37.044Z"
+  },
+  "catchupProof": {
+    "windows": [
+      {
+        "activation_id": "activation_9d3bc926-e703-46cf-b4f4-54e88de00a41",
+        "from_seq": 6,
+        "to_seq": 6,
+        "presented_seqs_json": "[6]",
+        "catch_up_json": "{\"floor\":null}",
+        "participant_id": "principal_26943fa2-d063-4c59-bff4-2d0a574a748c"
+      },
+      {
+        "activation_id": "activation_3a65073a-1e8a-4b68-a78f-8cbf372d0c4a",
+        "from_seq": 11,
+        "to_seq": 11,
+        "presented_seqs_json": "[11]",
+        "catch_up_json": "{\"floor\":null}",
+        "participant_id": "principal_faf70515-807b-48e4-91fd-f9dd96131c81"
+      }
+    ],
+    "events": [
+      {
+        "room_seq": 1,
+        "type": "room.created",
+        "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+      },
+      {
+        "room_seq": 2,
+        "type": "membership.added",
+        "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+      },
+      {
+        "room_seq": 3,
+        "type": "instance.created",
+        "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+      },
+      {
+        "room_seq": 4,
+        "type": "membership.added",
+        "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+      },
+      {
+        "room_seq": 5,
+        "type": "instance.created",
+        "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+      },
+      {
+        "room_seq": 6,
+        "type": "message.posted",
+        "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+      },
+      {
+        "room_seq": 7,
+        "type": "placement.reserved",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 8,
+        "type": "run.created",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 9,
+        "type": "run.runtime_prepared",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 10,
+        "type": "run.started",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 11,
+        "type": "message.posted",
+        "actor_id": "principal_26943fa2-d063-4c59-bff4-2d0a574a748c"
+      }
+    ]
+  },
+  "verdict": "Unequal completed work: Loom2 posts early stop vs Raft6. No valid efficiency ratio.",
+  "limits": [
+    "Raft all native session usage retained including initialization; product-default prompts and memory differ",
+    "Loom B wake misses Human opening; later broad filesystem search reaches adjacent test evidence, so cannot claim model never encountered opening by any route",
+    "No paid rescue/retry; both stopped, only test objects affected"
+  ],
+  "finding": {
+    "severity": "P1",
+    "confirmed": "B joined before Human seq6, but first activation at seq11 stores catch_up floor=null and presents only [11]; B wake lacks initial six-step request. activation-catch-up.ts lines75-83 treat missing consumer cursor as no history.",
+    "causalityLimit": "Confirmed transport gap; no counterfactual proof that fixing it alone guarantees six-message completion. B later searched outside requested two-file scope and incidentally encountered evidence, so not a claim that no text of opening ever entered model context.",
+    "minimalDirection": "Use same-instance channel membership/subscription start as bounded initial catch-up floor when no consumer cursor exists, preserving frozen floor, shared limits, omitted ranges and exact ACK prefix. Do not send pre-membership/full history or silently advance read positions. Add deterministic reproduction before implementation.",
+    "notFixedInBatch": true
+  }
+}

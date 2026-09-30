@@ -192,13 +192,33 @@ RAH_EFFICIENCY_ORDER=native,role-warm,role-prewarm npm run test:cli:efficiency -
 
 两组各自对原生判定；`result.firstRound` 另外并列报告冷首轮与预热首轮（回复耗时、排队、输入、预热就绪耗时）。
 
+## 已送达正文的 check 展示
+
+2026-09-30：Kernel 在 Worker sync 的可选 `deliveredInWakeSeqs` 中标注当前 Activation/consumer/Run 精确且已确认发送的消息序号。普通 `message-check` 仅将这些正文显示为引用，保留目标、消息 ID、序号；未送达/仅通知的正文、其他业务事件仍完整显示。`message-check --replay` 和显式 sync 保留全文。原始事件和分页范围不变，CLI 仍在输出成功后确认原范围；Host 送达事实不能单独 ACK、完成 Activation 或 Task。不是新队列、游标或持久状态，无 schema 迁移。
+
+这一批减少重复正文体积，不保证模型不调用 check，也不是生成次数或 token 预算达标的证据。付费门禁需另行授权后复测。
+
+## 普通唤醒的最小读写协议
+
+2026-10-01 P78 交接说明收口：原生输入已有完整接力要求，但模型读取的 `help messages` 精简卡遗漏了唤醒语义，随后发帖只称呼 B、未带 @。只在普通帮助卡补齐既有常驻协议的裸 `@<handle>` 语义，不修改常驻协议版本，不让旧 session 为此触发升级读帮助；保留原提示词和帮助卡长度预算。Kernel 不从自然语言称呼推断收件人，不强制每条回复有收件人，不添加自动救场、额外确认轮或场景专用状态机。此改动修正文档缺口，不保证模型遵从；应以新批有界真实接力验证，失败如实保留。
+
+2026-09-30 P77 首次协作补读修复：首次消费没有 cursor，不等于实例刚入频道。Kernel 对仍在所属频道的 Role 实例以同事务创建/入频道的 `instance.created` 序号 + 1 作为首次补读下界；已有 cursor 仍优先，旧 Agent 与私聊路径不变。下界仍冻结到当前 Run 的展示窗口，不改 Activation 的业务区间、定向消息集合，也不创建 Inbox、ACK 或新队列。先前已冻结的窗口不重写。沿用原共享条数/字节预算、当前消息优先及省略范围提示，确认后不逐轮重复开场。
+
+P77 的两条早停不能作为修复后完整六条讨论的成本上限。验收先确认开场实际进入 B 的唤醒、六条协作能收束、无多余运行，再对等比较生成数与用量；必要的开场补读成本单列，不靠少交付制造低成本。确定性覆盖见 `packages/kernel/test/instance-first-wake-catch-up.test.ts`；真实效果以新批次证据为准。
+
+2026-09-30：完整 wake 用 `Reply context` 提供精确目标、确认序号和轮次句柄，不再附发帖／检查命令菜单。常驻说明保留正文已送达、独立目标分别回复、无回复确认、Task 认领边界和完成语义；Task 操作链移至按需帮助，错误恢复以工具输出为准。截断／首条过大和无定向消息的 check 路径保持原状，不能为了减少一次生成跳过尚未送达的正文。
+
+验证分开报告：确定性测试证明目标、送达范围与 ACK 不变量；真实对照才判断提示变化是否减少冗余 check、重复读文件或空调用。两组必须完成同一业务交付（原生组确实写入要求的 Markdown、Loom 组确实发布实质答复），漏交付时不计算“达标”结论，不用补跑成功样本覆盖失败。分别列首请求输入、业务/协议工具轮次、回复后生成、累计/未缓存输入，以及旧 session 首次升级帮助成本。普通 post 的自然收尾计入全程；会话不因协议升级而重建。
+
 ## 最终回复收尾（`--final`，仅报告不设预算）
 
-模型用 `message-post --final` 发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，
+P67/P68 暴露提前 final 会把开场白/占位消息放大为工作中断。本批最小修法：普通 `message-post` 只发布，不默认携带 `final: true`；唤醒保留精确目标和因果序号，但不预填 `--final`（多目标也不替模型决定最后一条）。显式 `--final` 是完成全部当前工作后主动选择的终止声明，仍走现有 Kernel 标记与 Host 中断；`--progress` 兼容，重发 `--send-draft` 保留已存意图。HTTP、ACK、Task、执行围栏均不变，不按正文关键词猜完成度。普通发帖后的自然收尾成本须计入，不用提前中断制造省 token 的假象。旧 session 通过协议升级卡获知新规则，不重建会话。仍存在模型主动误用显式 final 的边界，需真实验收，不宣称由本批根除。
+
+模型发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，
 不是 ACK），Host 读到后由驱动在下一个工具边界发原生 `turn/interrupt`，省掉工具结果回灌后只说"已发送"的整轮生成。
 Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `interrupt` 控制请求）；Kimi 由 S2-c2 接入（无工具在途时 ACP `session/cancel`，`kimi-final-interrupt.js`）；OpenCode 由 S2-c3 接入（发帖工具结束后 `POST /session/:id/abort`，`opencode-final-interrupt.js`）。2026-09-27 Kimi 效率证据每轮 `finalInterrupt.sent/accepted = true`。
 
-- 用量接口 `finalInterrupt`：`null` 表示本轮没有 `--final` 回复；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
+- 用量接口 `finalInterrupt`：`null` 表示本轮没有完成回复标记；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
   `sent` 为驱动确认已发出中断（被拒绝或未上报为 false，此时本轮按原行为多一次生成）；`preemptedFollowUp`
   按证据判定（S2-b 修正，此前真实运行即使回复后生成数为 0 也总报 false）：最终回复的工具结束后观察到模型输出、
   新的工具调用，或用量帧使线程累计用量超过已观察到的全部生成 → false；原样重复的用量帧不是生成，
@@ -211,6 +231,16 @@ Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `i
   中断落地与后续请求发出的先后在真实 CLI 上须用付费门禁实测。
 
 ## 证据与后续范围
+
+### 多轮审查题的语义有效性（P73/P74 复核）
+
+累计输入接近原生不等于业务质量通过。P73/P74 的追问“基于补充约束撤回不成立的假设”有引导性：session 绑定只在 `provider-sessions`、`turns` 只存临时凭据，均不能推出运行时目录名称永远符合排除正则。原生与 Loom 都有不充分撤回，不能据此归因于 Loom 会话丢失。
+
+免费临时目录反例使用与题目 SHA 相同的 `state-backup.ts`：小写 UUID 的 `turns` 被排除，大写 UUID 且目录可读时，合成凭据被复制；两种情况均满足追问给定约束。当前生产创建者使用 `instrt_${randomUUID()}`，因此反例仅证明推理条件不足，不证明生产正在泄漏，也不要求为此扩大备份排除范围。临时数据已删除，未访问正式凭据。
+
+后续同题对照须在运行前冻结中性追问：“逐条说明上一轮结论应保留、修订或撤回，并说明新增事实是否足以改变它；区分文件保留和同一原生 session 的实际恢复。”单独核对是否凭空新增上一轮结论、是否保留未被排除的条件、是否提出真实恢复验收。文件存在不能代替同 session 续聊证明。旧批次保留原题与原结论，不以修改后的标准追认达标。
+
+P73 的 `cat "$RAH_WORKER_CLI" >/dev/null` 无有效输出、非协议要求，计为冗余协议工具调用；不应算业务读取。单次轨迹不能证明该调用由哪句提示引起，不为它追加禁止空读的产品提示词。后续继续分开报告首请求增量、必要读写、冗余工具调用及 `--final` 省掉的收尾生成，避免用累计比例掩盖不同执行路径。
 
 证据写入打印的隔离目录 `result.json`，包含失败轮次，不包含账户凭证或完整工具输出。批次 4 起证据分别记录被测代码
 `codeCommit`（HEAD）与 `workingTree`（`git status --porcelain` 含未跟踪文件的摘要、`git diff HEAD` 摘要、变更与未跟踪数），

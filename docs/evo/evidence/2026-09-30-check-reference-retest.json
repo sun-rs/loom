@@ -1,0 +1,297 @@
+{
+  "date": "2026-09-30T03:30:24.447Z",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "codeCommit": "8be0c77",
+  "dirty": true,
+  "roomId": "room_e8d33a39-2871-4bb1-b348-00a1b646d2d9",
+  "native": [
+    {
+      "who": "a",
+      "stage": "1",
+      "sessionId": "01a0f057-c0a7-7541-aed8-025c58f48fed",
+      "replySeconds": 38.638,
+      "startedAt": "2026-09-30T03:24:37.805Z",
+      "finishedAt": "2026-09-30T03:25:21.055Z",
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 2,
+      "generationsAfterReply": 0,
+      "input": 25149,
+      "cached": 15872,
+      "uncached": 9277,
+      "output": 415,
+      "reasoning": 0,
+      "firstInput": 8808,
+      "peakInput": 16341,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T03:24:59.960Z",
+          "name": "exec",
+          "kind": "other"
+        }
+      ]
+    },
+    {
+      "who": "b",
+      "stage": "2",
+      "sessionId": "01a0f058-ee42-79e1-a3e8-bf602037deae",
+      "replySeconds": 18.422,
+      "startedAt": "2026-09-30T03:25:54.979Z",
+      "finishedAt": "2026-09-30T03:26:16.934Z",
+      "generations": 1,
+      "generationsTotal": 1,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 0,
+      "input": 9100,
+      "cached": 0,
+      "uncached": 9100,
+      "output": 293,
+      "reasoning": 0,
+      "firstInput": 9100,
+      "peakInput": 9100,
+      "toolCalls": []
+    },
+    {
+      "who": "a",
+      "stage": "3",
+      "sessionId": "01a0f057-c0a7-7541-aed8-025c58f48fed",
+      "replySeconds": 9.944,
+      "startedAt": "2026-09-30T03:26:43.336Z",
+      "finishedAt": "2026-09-30T03:26:56.701Z",
+      "generations": 1,
+      "generationsTotal": 1,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 0,
+      "input": 17068,
+      "cached": 16128,
+      "uncached": 940,
+      "output": 223,
+      "reasoning": 0,
+      "firstInput": 17068,
+      "peakInput": 17068,
+      "toolCalls": []
+    },
+    {
+      "who": "a",
+      "stage": "4",
+      "sessionId": "01a0f057-c0a7-7541-aed8-025c58f48fed",
+      "replySeconds": 8.749,
+      "startedAt": "2026-09-30T03:27:16.204Z",
+      "finishedAt": "2026-09-30T03:27:28.432Z",
+      "generations": 1,
+      "generationsTotal": 1,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 0,
+      "input": 17403,
+      "cached": 16128,
+      "uncached": 1275,
+      "output": 107,
+      "reasoning": 0,
+      "firstInput": 17403,
+      "peakInput": 17403,
+      "toolCalls": []
+    }
+  ],
+  "loom": [
+    {
+      "who": "a",
+      "runAttemptId": "run_12b92ef5-410f-4519-bce8-12fec31a9b2e",
+      "sessionId": "01a0f05a-a02a-7990-ba56-37c6d8786068",
+      "state": "exited",
+      "startedAt": "2026-09-30T03:27:45.751Z",
+      "finishedAt": "2026-09-30T03:28:40.081Z",
+      "replySeconds": 44.712,
+      "runSeconds": 54.33,
+      "generations": 7,
+      "generationsTotal": 7,
+      "generationsBeforeReply": 5,
+      "generationsAfterReply": 2,
+      "input": 108053,
+      "cached": 83456,
+      "uncached": 24597,
+      "output": 1190,
+      "reasoning": 331,
+      "firstInput": 10883,
+      "peakInput": 20595,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T03:27:56.257Z",
+          "name": "exec",
+          "kind": "box-check",
+          "turnHandle": true
+        },
+        {
+          "at": "2026-09-30T03:28:10.074Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T03:28:12.312Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T03:28:15.635Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T03:28:30.167Z",
+          "name": "exec",
+          "kind": "box-post",
+          "turnHandle": true
+        },
+        {
+          "at": "2026-09-30T03:28:33.926Z",
+          "name": "exec",
+          "kind": "box-check",
+          "turnHandle": true
+        }
+      ],
+      "postModes": [
+        {
+          "at": "2026-09-30T03:28:30.167Z",
+          "progress": true,
+          "final": false
+        }
+      ]
+    },
+    {
+      "who": "b",
+      "runAttemptId": "run_07f87a31-937e-4ad4-bb67-31bf3675ebd7",
+      "sessionId": "01a0f05b-4ffe-7211-b8bb-3c47634d2f88",
+      "state": "exited",
+      "startedAt": "2026-09-30T03:28:30.758Z",
+      "finishedAt": "2026-09-30T03:28:41.731Z",
+      "replySeconds": 10.954,
+      "runSeconds": 10.973,
+      "generations": 1,
+      "generationsTotal": 1,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 0,
+      "input": 10827,
+      "cached": 6912,
+      "uncached": 3915,
+      "output": 138,
+      "reasoning": 0,
+      "firstInput": 10827,
+      "peakInput": 10827,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T03:28:41.061Z",
+          "name": "exec",
+          "kind": "box-post",
+          "turnHandle": true
+        }
+      ],
+      "postModes": [
+        {
+          "at": "2026-09-30T03:28:41.061Z",
+          "progress": false,
+          "final": true
+        }
+      ]
+    },
+    {
+      "who": "a",
+      "runAttemptId": "run_1cbcf9f8-2e4c-49fb-b9a1-6ac113ca833b",
+      "sessionId": "01a0f05a-a02a-7990-ba56-37c6d8786068",
+      "state": "exited",
+      "startedAt": "2026-09-30T03:29:40.039Z",
+      "finishedAt": "2026-09-30T03:29:57.574Z",
+      "replySeconds": 17.514,
+      "runSeconds": 17.535,
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 2,
+      "generationsAfterReply": 0,
+      "input": 42574,
+      "cached": 40448,
+      "uncached": 2126,
+      "output": 331,
+      "reasoning": 41,
+      "firstInput": 21082,
+      "peakInput": 21492,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T03:29:48.817Z",
+          "name": "exec",
+          "kind": "box-check",
+          "turnHandle": true
+        },
+        {
+          "at": "2026-09-30T03:29:57.271Z",
+          "name": "exec",
+          "kind": "box-post",
+          "turnHandle": true
+        }
+      ],
+      "postModes": [
+        {
+          "at": "2026-09-30T03:29:57.271Z",
+          "progress": false,
+          "final": true
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "native": {
+      "generations": 5,
+      "input": 68720,
+      "cached": 48128,
+      "uncached": 20592,
+      "output": 1038
+    },
+    "loom": {
+      "generations": 10,
+      "input": 161454,
+      "cached": 130816,
+      "uncached": 30638,
+      "output": 1659
+    },
+    "totalBatchInput": 230174
+  },
+  "gaps": [],
+  "activations": [
+    {
+      "activation_id": "activation_4f04f13e-691b-4f7f-9d7c-a9118a109c58",
+      "state": "completed",
+      "from_seq": 6,
+      "to_seq": 6
+    },
+    {
+      "activation_id": "activation_47619492-98e4-4a25-87da-ff2213316fdc",
+      "state": "completed",
+      "from_seq": 11,
+      "to_seq": 11
+    },
+    {
+      "activation_id": "activation_ac42856b-b3ae-4066-846b-d3573a7625b6",
+      "state": "completed",
+      "from_seq": 23,
+      "to_seq": 23
+    }
+  ],
+  "retireProof": {
+    "at": "2026-09-30T03:29:39.670Z",
+    "instanceRuntimeId": "instrt_d9f544e6-60b7-46ab-ab74-35dd6cdac9e3",
+    "sessionId": "01a0f05a-a02a-7990-ba56-37c6d8786068",
+    "participantId": "principal_7f384557-8d8d-449a-9e3d-008a278a29bd",
+    "state": "idle",
+    "signal": "SIGTERM",
+    "scope": "only idle A runtime in test room"
+  },
+  "verdict": "failed-business-acceptance",
+  "comparisonWarning": "原生4轮，Loom3轮且B仅开场白导致缺A修订；不得以总量比率声称改进。原生B无读文件工具，独立审查质量也未通过。",
+  "checks": {
+    "wakeBodyReferenceObserved": true,
+    "sameSessionAfterRuntimeRestart": true,
+    "relayCompleted": false,
+    "kernelUsageMatchesProvider": true
+  },
+  "cliVersion": "0.158.0",
+  "authorization": "owner: 那就应该使用真实session测试",
+  "failedReply": "我会只读核对指定快照的实现与测试，再按已证实缺陷和条件性风险区分结论。"
+}

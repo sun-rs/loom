@@ -1474,14 +1474,29 @@ test("final reply (warm): the turn ends after the committed post, quiesces as su
   }
 });
 
-test("final reply (warm): a post without --final is unchanged — the follow-up generation runs and nothing is interrupted", async () => {
+test("final reply (warm): explicit progress keeps the follow-up generation and is not interrupted", async () => {
+  const state = await harness();
+  try {
+    state.post("[fake:post-progress] question");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(followUps(state).length, 1);
+    assert.deepEqual(interruptRequests(state), []);
+    const [run] = orderedRuns(state);
+    assert.equal(finalInterruptOf(state, run!.runAttemptId), undefined);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("final reply (warm): omitting --final publishes without interrupting remaining work", async () => {
   const state = await harness();
   try {
     state.post("[fake:post-nofinal] question");
     const result = await state.current.agentHost.reconcileOnce();
     assert.equal(result.state, "completed", JSON.stringify(result));
     assert.equal(followUps(state).length, 1);
-    assert.deepEqual(interruptRequests(state), []);
+    assert.equal(interruptRequests(state).length, 0);
     const [run] = orderedRuns(state);
     assert.equal(finalInterruptOf(state, run!.runAttemptId), undefined);
   } finally {

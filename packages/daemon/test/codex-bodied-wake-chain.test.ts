@@ -273,7 +273,7 @@ test("bodied wake: one reply with the stated seq completes the Activation withou
     assert.match(
       result.wake,
       new RegExp(
-        `^Reply: message-post --target "#main" --based-on-room-seq ${second.event.roomSeq} --final · no reply needed: message-check$`,
+        `^Reply context: --target "#main" --based-on-room-seq ${second.event.roomSeq}$`,
         "mu",
       ),
     );
@@ -317,7 +317,8 @@ test("bodied wake: a turn that needs no reply completes through message-check", 
     context.post("FYI, no answer needed");
     context.setMode("check");
     const result = await context.runActivation();
-    assert.match(result.wake, /no reply needed: message-check$/mu);
+    assert.match(result.wake, /^Reply context:/mu);
+    assert.doesNotMatch(result.wake, /message-check/u);
     assert.equal(checkCommands(result.commands).length, 1);
     assert.equal(context.cursor(), result.activation.toSeq);
     assert.doesNotThrow(() => result.complete());
@@ -563,9 +564,9 @@ const act = (wake) => {
     if (mode !== "check") cli(["worker", "message-post", "--target", "#main"], "FAKE CODEX reply after check");
     return;
   }
-  const bodied = /Reply: message-post --target "[^"]+" --based-on-room-seq (\\d+)/.exec(wake);
+  const bodied = /(?:Reply: message-post|Reply context:) --target "[^"]+" --based-on-room-seq (\\d+)/.exec(wake);
   if (bodied) {
-    cli(["worker", "message-post", ...(mode === "wrong-room" ? ["--target", "#away"] : []), "--based-on-room-seq", bodied[1]], "FAKE CODEX reply");
+    cli(["worker", "message-post", ...(mode === "wrong-room" ? ["--target", "#away", "--progress"] : []), "--based-on-room-seq", bodied[1]], "FAKE CODEX reply");
     return;
   }
   const prefix = /Shown through seq (\\d+)/.exec(wake);

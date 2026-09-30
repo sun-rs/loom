@@ -1,0 +1,312 @@
+{
+  "batch": "P74",
+  "date": "2026-09-30T10:59:57.512Z",
+  "config": {
+    "provider": "kimi",
+    "model": "kimi-code/k3-256k",
+    "effort": "low"
+  },
+  "plan": {
+    "batch": "P74",
+    "provider": "kimi",
+    "model": "kimi-code/k3-256k",
+    "effort": "low",
+    "authorization": "owner: 同意,还有kimi; native and Loom one continuous session each, two rounds each, no paid retries",
+    "sourceHashes": {
+      "state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+      "state-backup-runtime-credentials.test.ts": "ba902f73eafe7baf9f8bf0d2361de03d84e82b6bceb1f705ad42fa2697ad4905"
+    }
+  },
+  "code": {
+    "head": "8be0c77",
+    "dirty": true,
+    "protocol": "3b363cd93914"
+  },
+  "roomId": "room_e3e11ab2-05da-4c3b-a971-c32d1ada7315",
+  "native": [
+    {
+      "round": 1,
+      "sessionId": "session_63f9096c-2c8d-47fb-a09c-665c9ef41828",
+      "startedAt": "2026-09-30T10:56:34.775Z",
+      "finishedAt": "2026-09-30T10:57:23.207Z",
+      "status": "completed",
+      "answer": "# 审查结论：临时凭据排除机制\n\n排除机制总体成立：`warm-runtimes/instrt_<uuid>/turns` 在备份与校验中被一致跳过（state-backup.ts:95-102、170、128），`provider-sessions` 等持久文件保留在受验证备份中，测试也覆盖了伪造凭据注入与符号链接拒绝。\n\n**条件性风险**（state-backup.ts:77）：排除正则硬编码 UUID 十六进制小写格式。若实例 ID 改用非 UUID 形态（如 ULID、大写十六进制），`turns` 目录不再匹配，会作为普通目录被复制进备份并可被恢复，造成热凭据泄漏。建议对 `warm-runtimes/*/turns` 形态兜底拒绝或在匹配失败时显式告警。\n\n**测试建议**：\n1. 增加非 UUID 实例 ID（如 `instrt_01J…ULID`）的用例，断言其行为符合预期（拒绝备份或排除），锁定当前格式假设。\n2. 增加快照后活体新建 `turns` 目录再执行 restore 的用例，验证 `verifyUnchanged`（state-backup.ts:548-565）不因新增热凭据误拒恢复。\n",
+      "generations": 3,
+      "generationsTotal": 3,
+      "generationsBeforeReply": 3,
+      "generationsAfterReply": 0,
+      "input": 77504,
+      "cached": 48896,
+      "uncached": 28608,
+      "output": 1098,
+      "reasoning": null,
+      "firstInput": 21343,
+      "peakInput": 28516,
+      "replySeconds": 40.70303369140625,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T10:56:47.416Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:56:47.416Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:57:15.477Z",
+          "name": "Write",
+          "kind": "other"
+        }
+      ],
+      "harnessError": "Missing effective final answer; retain cost evidence",
+      "commands": [
+        {
+          "at": "2026-09-30T10:56:47.416Z",
+          "name": "Read",
+          "args": "{\"path\":\"/private/tmp/loom-kimi-p74-20260930/project/state-backup.ts\"}"
+        },
+        {
+          "at": "2026-09-30T10:56:47.416Z",
+          "name": "Read",
+          "args": "{\"path\":\"/private/tmp/loom-kimi-p74-20260930/project/state-backup-runtime-credentials.test.ts\"}"
+        },
+        {
+          "at": "2026-09-30T10:57:15.477Z",
+          "name": "Write",
+          "args": "{\"path\":\"/private/tmp/loom-kimi-p74-20260930/native-home/answer-1.md\",\"content\":\"# 审查结论：临时凭据排除机制\\n\\n排除机制总体成立：`warm-runtimes/instrt_<uuid>/turns` 在备份与校验中被一致跳过（state-backup.ts:95-102、170、128），`provider-sessions` 等持久文件保留在受验证备份中，测试也覆盖了伪造凭据注入与符号链接拒绝。\\n\\n**条件性风险**（state-backup.ts:77）：排除正则硬编码 UUID 十六进制小写格式。若实例 ID 改用非 UUID 形态（如 ULID、大写十六进制），`turns` 目录不再匹配，会作为普通目录被复制进备份并可被恢复，造成热凭据泄漏。建议对 `warm-runtimes/*/turns` 形态兜底拒绝或在匹配失败时显式告警。\\n\\n**测试建议**：\\n1. 增加非 UUID 实例 ID（如 `instrt_01J…ULID`）的用例，断言其行为符合预期（拒绝备份或排除），锁定当前格式假设。\\n2. 增加快照后活体新建 `turns` 目录再执行 restore 的用例，验证 `verifyUnchanged`（state-backup.ts:548-565）不因新增热凭据误拒恢复。\\n\"}"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "sessionId": "session_63f9096c-2c8d-47fb-a09c-665c9ef41828",
+      "startedAt": "2026-09-30T10:57:23.234Z",
+      "finishedAt": "2026-09-30T10:57:40.424Z",
+      "status": "completed",
+      "answer": "# 复审结论：接受\n\n在新约束下撤回上一轮风险定性：`provider-sessions/` 独立于 `turns` 路径，正则（state-backup.ts:77）格式漂移不影响会话绑定保留，仅可能漏排临时凭据，属可接受的假设锁定而非泄漏缺陷。\n\n区分两层：文件保留已由备份摘要与 verifyStateBackup 覆盖；真实恢复走 staging + copyTree + 二次校验（state-backup.ts:567-583），会话文件随快照完整回迁。\n\n最小剩余验收：跑一次端到端 restore，确认恢复后 `supervisors/provider-sessions/session.json` 存在且哈希一致、`turns` 不存在；外加一个非 UUID 实例 ID 用例锁定格式假设。\n",
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 2,
+      "generationsAfterReply": 0,
+      "input": 57430,
+      "cached": 40192,
+      "uncached": 17238,
+      "output": 437,
+      "reasoning": null,
+      "firstInput": 28105,
+      "peakInput": 29325,
+      "replySeconds": 13.7411103515625,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T10:57:36.969Z",
+          "name": "Write",
+          "kind": "other"
+        }
+      ],
+      "harnessError": "Missing effective final answer; retain cost evidence",
+      "commands": [
+        {
+          "at": "2026-09-30T10:57:36.969Z",
+          "name": "Write",
+          "args": "{\"path\":\"/private/tmp/loom-kimi-p74-20260930/native-home/answer-2.md\",\"content\":\"# 复审结论：接受\\n\\n在新约束下撤回上一轮风险定性：`provider-sessions/` 独立于 `turns` 路径，正则（state-backup.ts:77）格式漂移不影响会话绑定保留，仅可能漏排临时凭据，属可接受的假设锁定而非泄漏缺陷。\\n\\n区分两层：文件保留已由备份摘要与 verifyStateBackup 覆盖；真实恢复走 staging + copyTree + 二次校验（state-backup.ts:567-583），会话文件随快照完整回迁。\\n\\n最小剩余验收：跑一次端到端 restore，确认恢复后 `supervisors/provider-sessions/session.json` 存在且哈希一致、`turns` 不存在；外加一个非 UUID 实例 ID 用例锁定格式假设。\\n\"}"
+        }
+      ]
+    }
+  ],
+  "loom": [
+    {
+      "runAttemptId": "run_3ef872c9-2cc3-4e8e-bc77-ca5a85fe59e6",
+      "participantId": "principal_efa4e545-0808-40ff-889a-a189529e499a",
+      "state": "exited",
+      "startedAt": "2026-09-30T10:58:26.843Z",
+      "finishedAt": "2026-09-30T10:59:11.899Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+        "provider": "kimi-code",
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      "modelEvidence": "wire",
+      "wireUsageRecords": 3,
+      "round": 1,
+      "sessionId": "session_feba12ef-ec49-43b2-8a8c-ef196713b51d",
+      "answer": "@owner 结论：机制成立，无已证实缺陷。\n\n排除发生在 fileInventory/backupState/databaseInventory(state-backup.ts:95-102,128,170)，仅跳过精确匹配 warm-runtimes/instrt_<小写UUID>/turns 的目录；provider-sessions 等其余文件照常复制(:189-193)，测试证实 session.json 保留、turns 未进备份、receipt 记录省略项。防漏关键在 verifyStateBackup 用 allowRuntimeCredentials=false 复检(:252)，向备份塞入凭据目录即抛错，测试已覆盖。\n\n1条条件性风险：state-backup.ts:77 正则只认小写 UUID。若运行时实例 id 出现大写十六进制或非规范形态，turns 目录不匹配即被当作普通目录备份，热凭据会静默进入快照。属条件性（取决于实例 id 生成方永不出此形态），建议要么对不匹配 instrt_ 前缀的 turns 目录断言拒绝，要么放宽匹配。\n\n2条测试建议：\n1) 构造大写/非规范 UUID 的 instrt 目录，断言其不会被静默包含或按预期拒绝，锁定正则边界。\n2) 直接以 allowRuntimeCredentials=false 调 fileInventory 指向含凭据目录的 state，断言抛错，固化恢复侧绝不接受凭据的语义。",
+      "generations": 3,
+      "generationsTotal": 3,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 2,
+      "input": 82531,
+      "cached": 71168,
+      "uncached": 11363,
+      "output": 1163,
+      "reasoning": null,
+      "firstInput": 22994,
+      "peakInput": 30242,
+      "replySeconds": 36.081,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T10:58:34.292Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:58:34.293Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:59:02.325Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "commands": [
+        {
+          "at": "2026-09-30T10:58:34.292Z",
+          "name": "Read",
+          "args": "{\"path\":\"/private/tmp/loom-kimi-p74-20260930/project/state-backup.ts\"}"
+        },
+        {
+          "at": "2026-09-30T10:58:34.293Z",
+          "name": "Read",
+          "args": "{\"path\":\"/private/tmp/loom-kimi-p74-20260930/project/state-backup-runtime-credentials.test.ts\"}"
+        },
+        {
+          "at": "2026-09-30T10:59:02.325Z",
+          "name": "Bash",
+          "args": "{\"command\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#e2e-discuss-value-0930-1790765670635\\\" --based-on-room-seq 4 <<'RAH_MESSAGE_EOF'\\n@owner 结论：机制成立，无已证实缺陷。\\n\\n排除发生在 fileInventory/backupState/databaseInventory(state-backup.ts:95-102,128,170)，仅跳过精确匹配 warm-runtimes/instrt_<小写UUID>/turns 的目录；provider-sessions 等其余文件照常复制(:189-193)，测试证实 session.json 保留、turns 未进备份、receipt 记录省略项。防漏关键在 verifyStateBackup 用 allowRuntimeCredentials=false 复检(:252)，向备份塞入凭据目录即抛错，测试已覆盖。\\n\\n1条条件性风险：state-backup.ts:77 正则只认小写 UUID。若运行时实例 id 出现大写十六进制或非规范形态，turns 目录不匹配即被当作普通目录备份，热凭据会静默进入快照。属条件性（取决于实例 id 生成方永不出此形态），建议要么对不匹配 instrt_ 前缀的 turns 目录断言拒绝，要么放宽匹配。\\n\\n2条测试建议：\\n1) 构造大写/非规范 UUID 的 instrt 目录，断言其不会被静默包含或按预期拒绝，锁定正则边界。\\n2) 直接以 allowRuntimeCredentials=false 调 fileInventory 指向含凭据目录的 state，断言抛错，固化恢复侧绝不接受凭据的语义。\\nRAH_MESSAGE_EOF\"}"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_d3367823-ba0d-423b-9ef2-3614f944fb9b",
+      "participantId": "principal_efa4e545-0808-40ff-889a-a189529e499a",
+      "state": "exited",
+      "startedAt": "2026-09-30T10:59:26.066Z",
+      "finishedAt": "2026-09-30T10:59:50.046Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+        "provider": "kimi-code",
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      "modelEvidence": "wire",
+      "wireUsageRecords": 2,
+      "round": 2,
+      "sessionId": "session_feba12ef-ec49-43b2-8a8c-ef196713b51d",
+      "answer": "@owner 撤回对 instrt 目录其他兄弟文件的顾虑：凭据边界仅限 turns，排除面正确。接受结论：机制成立——turns 排除、provider-sessions 保留并经校验，备份侧注入凭据会被拒绝。\n\n区分两层：文件保留已被测试证实（session.json 内容一致）；真实恢复链未覆盖，restoreStateSnapshot 依赖 receipt/摘要校验与目录置换，缺端到端用例。\n\n最小剩余验收：一条恢复测试——快照后恢复，断言 supervisors/provider-sessions/session.json 在位且内容不变、turns 缺失、写入新凭据目录后 restore 不报错。",
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 0,
+      "generationsAfterReply": 2,
+      "input": 61604,
+      "cached": 60672,
+      "uncached": 932,
+      "output": 466,
+      "reasoning": null,
+      "firstInput": 30572,
+      "peakInput": 31032,
+      "replySeconds": 17.587,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T10:59:43.088Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "commands": [
+        {
+          "at": "2026-09-30T10:59:43.088Z",
+          "name": "Bash",
+          "args": "{\"command\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#e2e-discuss-value-0930-1790765670635\\\" --based-on-room-seq 13 <<'RAH_MESSAGE_EOF'\\n@owner 撤回对 instrt 目录其他兄弟文件的顾虑：凭据边界仅限 turns，排除面正确。接受结论：机制成立——turns 排除、provider-sessions 保留并经校验，备份侧注入凭据会被拒绝。\\n\\n区分两层：文件保留已被测试证实（session.json 内容一致）；真实恢复链未覆盖，restoreStateSnapshot 依赖 receipt/摘要校验与目录置换，缺端到端用例。\\n\\n最小剩余验收：一条恢复测试——快照后恢复，断言 supervisors/provider-sessions/session.json 在位且内容不变、turns 缺失、写入新凭据目录后 restore 不报错。\\nRAH_MESSAGE_EOF\"}"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "native": {
+      "input": 134934,
+      "cached": 89088,
+      "uncached": 45846,
+      "generations": 5
+    },
+    "loom": {
+      "input": 144135,
+      "cached": 131840,
+      "uncached": 12295,
+      "generations": 5
+    },
+    "inputRatio": 1.06818889234737,
+    "uncachedRatio": 0.2681804301356716,
+    "batchInput": 279069
+  },
+  "queue": {
+    "busy": false,
+    "runCount": 2,
+    "activations": [
+      {
+        "activation_id": "activation_b53a9f8e-f4cd-4801-a024-be3a8fbf29d4",
+        "state": "completed",
+        "from_seq": 4,
+        "to_seq": 4
+      },
+      {
+        "activation_id": "activation_e31f1697-f5e6-4814-a975-cc67347afd13",
+        "state": "completed",
+        "from_seq": 13,
+        "to_seq": 13
+      }
+    ],
+    "selfMessageInboxCount": 0,
+    "observedAt": "2026-09-30T10:59:50.930Z",
+    "idleRecheckedAt": "2026-09-30T11:02:05.518Z",
+    "runCountAtRecheck": 2
+  },
+  "gaps": [],
+  "limits": [
+    "Single sample with two rounds per arm, not full section 6 acceptance",
+    "Native Markdown delivery vs explicit Room post, same direct question and source snapshot; prompts/tool environment are not byte-identical",
+    "No automatic paid retry; all actual generation costs retained",
+    "Fixed native-first order, no cache-cold reset or randomized repetition; no general caching or latency claim"
+  ],
+  "initialContext": {
+    "firstRequest": {
+      "native": {
+        "systemPromptHash": "d8a64037cbd085776ded17f0ed5dfb9aa0f6ccbd23748ac5547301abd6c55e2e",
+        "toolsHash": "2984eeba03ae993f7c7f4eaa1217d9288f06bf6e35a53d74d5f97e07e5c0249a",
+        "messageCount": 3,
+        "thinkingEffort": "low",
+        "thinkingKeep": "all",
+        "modelAlias": "kimi-code/k3-256k"
+      },
+      "loom": {
+        "systemPromptHash": "8530b3186c06797324fef1c89fdaa55ca70d147b85f5c6eec661df8ca2f7de9d",
+        "toolsHash": "2984eeba03ae993f7c7f4eaa1217d9288f06bf6e35a53d74d5f97e07e5c0249a",
+        "messageCount": 2,
+        "thinkingEffort": "low",
+        "thinkingKeep": "all",
+        "modelAlias": "kimi-code/k3-256k"
+      }
+    },
+    "toolsEqual": true,
+    "systemEqual": false,
+    "firstInputDelta": 1651
+  },
+  "noPaidRetries": true,
+  "findings": [
+    "Both arms three then two generations; read source, deliver, natural final; no help/check overhead in Loom",
+    "First request toolsHash is identical; systemPromptHash differs; Loom first input +1651 tokens",
+    "Loom did not use --final and both turns preserve the same session; exactly two Runs, no self-message Inbox, wire matches product usage",
+    "Native ran first and Loom second; cache warmth uncontrolled, 0.268 uncached ratio is not a causal performance claim",
+    "Loom second reply retracts a concern not present in its first reply and omits a real CLI resume check; native second reply also weakens credential leakage risk without justification"
+  ],
+  "verdict": "delivery-and-session-continuity-confirmed; raw usage measured; semantic-quality gaps; not full section 6 acceptance"
+}

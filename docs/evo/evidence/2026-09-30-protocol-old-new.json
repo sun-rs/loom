@@ -1,0 +1,380 @@
+{
+  "batch": "P71",
+  "date": "2026-09-30",
+  "kind": "real-cli-isolated-box-protocol-comparison",
+  "authorization": "owner: 授权（同一批重复确认，不是两批）",
+  "config": {
+    "provider": "codex",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "cliVersion": "codex-cli 0.158.0",
+    "binarySha256": "788a818fbb9596869c7a487554507cb8bdca17584b8671112b23f9e225ba35c8"
+  },
+  "code": {
+    "head": "8be0c77ae0a1ee6f17d91c889bef7cc667cedebf",
+    "workingTreeDiffSha256BeforeRun": "dbfac1a266519cc4b695640a9fa00641f61f8f141d7315e8ae3eb31913b01ffd"
+  },
+  "sourceSnapshot": {
+    "state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+    "state-backup-runtime-credentials.test.ts": "ba902f73eafe7baf9f8bf0d2361de03d84e82b6bceb1f705ad42fa2697ad4905"
+  },
+  "harness": {
+    "runnerSha256": "a7230523fec655cc8663edcab9c02731959c13e5d5c79c7927ab0576ef137ed6",
+    "boxSha256": "92c797b8e03f920aaf89c6f7f95ac1d73bbd64252bf6ba4752bb9ea5eab1a498",
+    "preflight": "free round 0 excluded from all paid totals",
+    "behavior": "same local file box for both arms; posts append receipts and never trigger input; help returns arm-specific protocol documentation; no Kernel, scheduler, final interruption or formal service writes"
+  },
+  "arms": {
+    "old": {
+      "sessionId": "01a0f1bd-4615-73a2-9076-6da8453ae982",
+      "protocolVersion": "09cbeea75d1f",
+      "instructionChars": 6472,
+      "instructionSha256": "134cc033417ae083fb6e4cb70e7c82a365d27bf312ca60d03115115851c31768",
+      "totals": {
+        "generations": 10,
+        "input": 164639,
+        "cached": 139008,
+        "uncached": 25631,
+        "output": 784
+      },
+      "usageMatchesNativeCumulative": true,
+      "modelEffortVerified": true,
+      "rounds": [
+        {
+          "round": 1,
+          "status": "completed",
+          "turnId": "01a0f1bd-4667-78b2-ae3b-0b41b93e674d",
+          "startedAt": "2026-09-30T09:55:08.519Z",
+          "finishedAt": "2026-09-30T09:55:31.738Z",
+          "replySeconds": 21.95,
+          "durationSeconds": 23.219,
+          "answer": "结论：未发现已证实缺陷。 [state-backup.ts:76] 精确匹配 runtime UUID 下的 turns 目录，先 lstat 拒绝符号链接，再跳过该目录；provider-sessions 不匹配且照常复制。测试也检查凭据不入备份、provider session 保留及备份后注入凭据会被验证拒绝。\n条件性风险：[state-backup.ts:76-80] 若热凭据未来迁至不同目录命名，该精确规则不会排除；需同步更新规则与覆盖用例。\n测试建议：1) 参数化合法/非法 UUID 和近似目录边界；2) 通过快照恢复路径确认 provider session 保留而 turns 凭据不恢复。",
+          "posts": 1,
+          "explicitFinal": false,
+          "metrics": {
+            "generations": 7,
+            "generationsTotal": 7,
+            "generationsBeforeReply": 6,
+            "generationsAfterReply": 1,
+            "input": 105314,
+            "cached": 81408,
+            "uncached": 23906,
+            "output": 529,
+            "reasoning": 0,
+            "firstInput": 10256,
+            "peakInput": 19479,
+            "replySeconds": 21.95,
+            "toolCalls": [
+              {
+                "at": "2026-09-30T09:55:14.758Z",
+                "name": "exec",
+                "kind": "box-check",
+                "turnHandle": true
+              },
+              {
+                "at": "2026-09-30T09:55:17.074Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-30T09:55:19.097Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-30T09:55:21.310Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-30T09:55:22.708Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-30T09:55:30.369Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ]
+          },
+          "boxCommands": [
+            {
+              "cmd": "message-check"
+            },
+            {
+              "cmd": "message-check"
+            },
+            {
+              "cmd": "message-post"
+            }
+          ],
+          "tools": [
+            {
+              "name": "exec",
+              "args": "const { output = \"\", ...meta } = await tools.exec_command({\"cmd\":\"\\\"$RAH_WORKER_CLI\\\" worker message-check --startup --turn <turn> && \\\"$RAH_WORKER_CLI\\\" worker message-check --turn <turn>\",\"max_output_tokens\":1200});\ntext(meta);\ntext(output);"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"pwd; rg --files -g 'state-backup.ts' -g 'state-backup-runtime-credentials.test.ts'\",\"max_output_tokens\":1200});\ntext(r.output);"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"nl -ba state-backup.ts; nl -ba state-backup-runtime-credentials.test.ts\",\"max_output_tokens\":5000});\ntext(r.output);"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"nl -ba state-backup.ts | sed -n '250,430p'; nl -ba state-backup-runtime-credentials.test.ts\",\"max_output_tokens\":3200});\ntext(r.output);"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"pwd\"});\ntext(r.output);"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#audit\\\" --turn <turn> --based-on-room-seq 1 <<'RAH_MESSAGE_EOF'\\n结论：未发现已证实缺陷。 [state-backup.ts:76] 精确匹配 runtime UUID 下的 turns 目录，先 lstat 拒绝符号链接，再跳过该目录；provider-sessions 不匹配且照常复制。测试也检查凭据不入备份、provider session 保留及备份后注入凭据会被验证拒绝。\\n条件性风险：[state-backup.ts:76-80] 若热凭据未来迁至不同目录命名，该精确规则不会排除；需同步更新规则与覆盖用例。\\n测试建议：1) 参数化合法/非法 UUID 和近似目录边界；2) 通过快照恢复路径确认 provider session 保留而 turns 凭据不恢复。\\nRAH_MESSAGE_EOF\",\"max_output_tokens\":700});\ntext(r.output);"
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "status": "completed",
+          "turnId": "01a0f1bd-a125-78a2-af71-3964dbb73962",
+          "startedAt": "2026-09-30T09:55:31.748Z",
+          "finishedAt": "2026-09-30T09:55:41.229Z",
+          "replySeconds": 7.763,
+          "durationSeconds": 9.481,
+          "answer": "接受。先前“凭据路径若迁移则可能漏排除”与当前约束无关，撤回。代码和测试证实备份保留 supervisors/provider-sessions 文件、排除 turns 内容；这只证明文件层恢复条件，不能证明真实 CLI 会重建/使用 provider session。最小剩余验收：用真实 CLI 从恢复状态启动，确认原 session 绑定可用且 turns 凭据未恢复。",
+          "posts": 1,
+          "explicitFinal": false,
+          "metrics": {
+            "generations": 3,
+            "generationsTotal": 3,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 1,
+            "input": 59325,
+            "cached": 57600,
+            "uncached": 1725,
+            "output": 255,
+            "reasoning": 0,
+            "firstInput": 19627,
+            "peakInput": 19951,
+            "replySeconds": 7.763,
+            "toolCalls": [
+              {
+                "at": "2026-09-30T09:55:33.936Z",
+                "name": "exec",
+                "kind": "box-check",
+                "turnHandle": true
+              },
+              {
+                "at": "2026-09-30T09:55:39.407Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ]
+          },
+          "boxCommands": [
+            {
+              "cmd": "message-check"
+            },
+            {
+              "cmd": "message-post"
+            }
+          ],
+          "tools": [
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"\\\"$RAH_WORKER_CLI\\\" worker message-check --turn <turn>\",\"max_output_tokens\":500});\ntext(r.output);"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({\"cmd\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#audit\\\" --turn <turn> --based-on-room-seq 2 <<'RAH_MESSAGE_EOF'\\n接受。先前“凭据路径若迁移则可能漏排除”与当前约束无关，撤回。代码和测试证实备份保留 supervisors/provider-sessions 文件、排除 turns 内容；这只证明文件层恢复条件，不能证明真实 CLI 会重建/使用 provider session。最小剩余验收：用真实 CLI 从恢复状态启动，确认原 session 绑定可用且 turns 凭据未恢复。\\nRAH_MESSAGE_EOF\",\"max_output_tokens\":300});\ntext(r.output);"
+            }
+          ]
+        }
+      ]
+    },
+    "new": {
+      "sessionId": "01a0f1be-04e0-75c0-ae2a-a59170ab8ad4",
+      "protocolVersion": "f6a0e0e34179",
+      "instructionChars": 5867,
+      "instructionSha256": "2e3201b502182d07c8b8f5f248c0ef4a9d15dec531ae2917afa6c33ef83dbc20",
+      "totals": {
+        "generations": 7,
+        "input": 113259,
+        "cached": 88576,
+        "uncached": 24683,
+        "output": 639
+      },
+      "usageMatchesNativeCumulative": true,
+      "modelEffortVerified": true,
+      "rounds": [
+        {
+          "round": 1,
+          "status": "completed",
+          "turnId": "01a0f1be-0530-7252-8c0e-089fa9678eda",
+          "startedAt": "2026-09-30T09:55:57.359Z",
+          "finishedAt": "2026-09-30T09:56:14.366Z",
+          "replySeconds": 15.757,
+          "durationSeconds": 17.007,
+          "answer": "审查结论：已证实排除机制针对精确匹配的 warm-runtimes/instrt_UUID/turns 目录，备份与文件清单均跳过其内容；符号链接仍被拒绝。supervisors/provider-sessions 不匹配该规则，会照常复制并进入校验清单。未发现确认缺陷。条件性风险：UUID 正则限定小写十六进制及标准分组，若生产目录命名不符，则凭据会作为普通文件备份（state-backup.ts:76-80）。\n测试建议：1) 给 turns 加嵌套文件及相似但不匹配的目录，断言仅目标目录排除。2) 加 provider session 多文件/权限断言，覆盖整目录保留及权限语义。",
+          "posts": 1,
+          "explicitFinal": false,
+          "metrics": {
+            "generations": 5,
+            "generationsTotal": 5,
+            "generationsBeforeReply": 4,
+            "generationsAfterReply": 1,
+            "input": 73217,
+            "cached": 50176,
+            "uncached": 23041,
+            "output": 460,
+            "reasoning": 0,
+            "firstInput": 10087,
+            "peakInput": 19791,
+            "replySeconds": 15.757,
+            "toolCalls": [
+              {
+                "at": "2026-09-30T09:56:02.982Z",
+                "name": "exec",
+                "kind": "worker-command"
+              },
+              {
+                "at": "2026-09-30T09:56:05.041Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-30T09:56:07.361Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-09-30T09:56:13.012Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ]
+          },
+          "boxCommands": [
+            {
+              "cmd": "help",
+              "topic": "messages"
+            },
+            {
+              "cmd": "help",
+              "topic": "tasks"
+            },
+            {
+              "cmd": "message-post"
+            }
+          ],
+          "tools": [
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({cmd:\"cat \\\"$RAH_WORKER_CLI\\\" >/dev/null; \\\"$RAH_WORKER_CLI\\\" worker help messages --turn <turn> && \\\"$RAH_WORKER_CLI\\\" worker help tasks --turn <turn>\",max_output_tokens:2000}); text(r.output)\n"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({cmd:\"pwd && rg --files -g 'state-backup.ts' -g 'state-backup-runtime-credentials.test.ts'\",\"max_output_tokens\":2000}); text(r.output)\n"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({cmd:\"nl -ba state-backup.ts && nl -ba state-backup-runtime-credentials.test.ts\",\"max_output_tokens\":7000}); text(r.output)\n"
+            },
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#audit\\\" --turn <turn> --based-on-room-seq 1 <<'RAH_MESSAGE_EOF'\\n审查结论：已证实排除机制针对精确匹配的 warm-runtimes/instrt_UUID/turns 目录，备份与文件清单均跳过其内容；符号链接仍被拒绝。supervisors/provider-sessions 不匹配该规则，会照常复制并进入校验清单。未发现确认缺陷。条件性风险：UUID 正则限定小写十六进制及标准分组，若生产目录命名不符，则凭据会作为普通文件备份（state-backup.ts:76-80）。\\n测试建议：1) 给 turns 加嵌套文件及相似但不匹配的目录，断言仅目标目录排除。2) 加 provider session 多文件/权限断言，覆盖整目录保留及权限语义。\\nRAH_MESSAGE_EOF\",\"max_output_tokens\":1000}); text(r.output)\n"
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "status": "completed",
+          "turnId": "01a0f1be-47b6-79e3-bbc8-d72d05777724",
+          "startedAt": "2026-09-30T09:56:14.389Z",
+          "finishedAt": "2026-09-30T09:56:20.410Z",
+          "replySeconds": 4.695,
+          "durationSeconds": 6.021,
+          "answer": "接受。按补充约束，turns 精确排除可避免临时凭据入备份；provider-sessions 文件仍被复制并校验。文件保留不等于 CLI 已能恢复 provider session。最小验收：用真实 CLI 从备份恢复后，确认原 provider 绑定可用，且临时 turns 凭据未恢复。",
+          "posts": 1,
+          "explicitFinal": false,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 1,
+            "input": 40042,
+            "cached": 38400,
+            "uncached": 1642,
+            "output": 179,
+            "reasoning": 0,
+            "firstInput": 19927,
+            "peakInput": 20115,
+            "replySeconds": 4.695,
+            "toolCalls": [
+              {
+                "at": "2026-09-30T09:56:18.985Z",
+                "name": "exec",
+                "kind": "box-post",
+                "turnHandle": true
+              }
+            ]
+          },
+          "boxCommands": [
+            {
+              "cmd": "message-post"
+            }
+          ],
+          "tools": [
+            {
+              "name": "exec",
+              "args": "const r = await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#audit\\\" --turn <turn> --based-on-room-seq 2 <<'RAH_MESSAGE_EOF'\\n接受。按补充约束，turns 精确排除可避免临时凭据入备份；provider-sessions 文件仍被复制并校验。文件保留不等于 CLI 已能恢复 provider session。最小验收：用真实 CLI 从备份恢复后，确认原 provider 绑定可用，且临时 turns 凭据未恢复。\\nRAH_MESSAGE_EOF\",\"max_output_tokens\":1000}); text(r.output)\n"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "input": {
+      "newOverOld": 0.687923274558276,
+      "reductionPercent": 31.207672544172404
+    },
+    "uncached": {
+      "newOverOld": 0.9630135382934727,
+      "reductionPercent": 3.6986461706527307
+    },
+    "generations": {
+      "newOverOld": 0.7,
+      "reductionPercent": 30.000000000000004
+    }
+  },
+  "batchTotalInput": 277898,
+  "batchTotalUncached": 50314,
+  "quality": {
+    "delivery": "Both arms posted one substantive answer per round and retained the same native session.",
+    "codeReview": "Both correctly identify the exact UUID turns exclusion, provider-session file preservation and the distinction from real CLI recovery; both propose two tests. Conditional naming risks are not confirmed production defects.",
+    "followup": "Old explicitly withdraws the prior path-change concern. New accepts under the constraint and distinguishes file preservation from CLI recovery, but does not explicitly enumerate a withdrawal.",
+    "noSourceMutation": true
+  },
+  "interpretation": [
+    "Old first round: startup check + check in one generation, path discovery, two source reads (truncated first output), redundant pwd, post, natural final. Old second: check, post, final.",
+    "New first round: CLI path read + messages/tasks help in one generation, path discovery, one source read, post, natural final. New second: post, final.",
+    "Only 169 input tokens less on the first generation. Generation count and tool choices dominate cumulative input; new peak context is not smaller.",
+    "The three-generation difference includes two first-round tool-strategy differences and one second-round check. This sample does not isolate the wake formatting from the standing-prompt/help changes or prove all savings were caused by protocol simplification."
+  ],
+  "limitations": [
+    "One session per arm, two turns each; old then new, no replicated or counterbalanced samples.",
+    "Real Codex, isolated box: not formal Loom scheduling or Kernel acceptance; no native Markdown arm, so not a §6 efficiency pass.",
+    "Both kept one natural generation after each post. No final interruption or self-message-triggered input.",
+    "Usage is not a dollar estimate; most of the saved input was cached.",
+    "New still unnecessarily loads messages/tasks help and inspects paths; the underlying overhead issue is not fully resolved."
+  ],
+  "noPaidRetries": true,
+  "noServiceRestart": true
+}

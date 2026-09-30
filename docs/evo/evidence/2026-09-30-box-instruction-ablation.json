@@ -1,0 +1,504 @@
+{
+  "date": "2026-09-30T03:45:50.551Z",
+  "authorization": "owner 开始: 单实例 Markdown / 最小 box / 完整指令归因对照；补充去除 Reply 命令模板的一组",
+  "codeCommit": "8be0c77",
+  "dirty": true,
+  "provider": "codex",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cliVersion": "0.158.0",
+  "mode": "real-provider, isolated local box fixture, same app-server harness; not production Loom gate",
+  "order": ["minimal", "md", "full", "minimal-plain"],
+  "controls": [
+    "same source snapshot and cwd",
+    "same two user tasks",
+    "same app-server entry and launch isolation policy",
+    "one new native session per arm, reused for round two",
+    "no scheduler, no final interrupt, natural turn completion in every arm",
+    "full Loom developer prompt extracted from P67, environment identity normalized; 6941 chars, excluding CLI-added permission block"
+  ],
+  "limitations": [
+    "n=1 session per arm; order/cache/provider variance uncontrolled",
+    "full prompt versus minimal changes multiple instructions, not a single-factor proof",
+    "local fixture omits Kernel ACL/idempotency/freshness/task checks and scheduling",
+    "first output is not necessarily a valid answer; totals include failures",
+    "not all generated analysis is correct: round-two withdrawal may be overbroad because constraints do not prove directory naming",
+    "model-chosen read size/truncation and tool batching differ"
+  ],
+  "sources": [
+    {
+      "name": "state-backup.ts",
+      "sha256": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436"
+    },
+    {
+      "name": "state-backup-runtime-credentials.test.ts",
+      "sha256": "ba902f73eafe7baf9f8bf0d2361de03d84e82b6bceb1f705ad42fa2697ad4905"
+    }
+  ],
+  "harnessSha256": "045a57cacbf8343642f56f8aab0a0989ecb4e10864ff025cdc5cceca1d5733f2",
+  "boxSha256": "4efb775f6f84071f31434f3c16bdc24eb96d2f18ef21ddd6260e9123936db413",
+  "receipts": [
+    {
+      "at": "2026-09-30T03:41:57.008Z",
+      "arm": "minimal",
+      "round": 1,
+      "chars": 2,
+      "progress": false,
+      "final": true
+    },
+    {
+      "at": "2026-09-30T03:42:02.726Z",
+      "arm": "minimal",
+      "round": 2,
+      "chars": 181,
+      "progress": false,
+      "final": true
+    },
+    {
+      "at": "2026-09-30T03:43:08.951Z",
+      "arm": "full",
+      "round": 1,
+      "chars": 15,
+      "progress": false,
+      "final": true
+    },
+    {
+      "at": "2026-09-30T03:43:24.650Z",
+      "arm": "full",
+      "round": 1,
+      "chars": 403,
+      "progress": false,
+      "final": true
+    },
+    {
+      "at": "2026-09-30T03:43:31.657Z",
+      "arm": "full",
+      "round": 2,
+      "chars": 188,
+      "progress": false,
+      "final": true
+    },
+    {
+      "at": "2026-09-30T03:44:28.905Z",
+      "arm": "minimal-plain",
+      "round": 1,
+      "chars": 333,
+      "progress": false,
+      "final": false
+    },
+    {
+      "at": "2026-09-30T03:44:35.887Z",
+      "arm": "minimal-plain",
+      "round": 2,
+      "chars": 199,
+      "progress": false,
+      "final": false
+    }
+  ],
+  "arms": [
+    {
+      "arm": "md",
+      "instructionChars": 34,
+      "instructionSha256": "05213d0f488529fe82715087921ea112ac9a69a92c4c627a43f4602d8a9c7925",
+      "sessionId": "01a0f068-01d7-7c61-bd88-bc4ba2e9e37a",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-30T03:42:23.253Z",
+          "finishedAt": "2026-09-30T03:42:40.602Z",
+          "turnId": "01a0f068-0216-71f0-bbc7-4b32bed1e7a4",
+          "status": "completed",
+          "durationSeconds": 17.349,
+          "firstWriteAt": "2026-09-30T03:42:38.586Z",
+          "firstWriteIsEffectiveAnswer": true,
+          "answer": "结论：排除规则只跳过精确匹配的 `warm-runtimes/instrt_<UUID>/turns` 目录；备份遍历和清单都应用该规则，验证备份时则关闭凭据豁免，因此新增凭据会使校验失败。provider-sessions 未被排除，测试证实其 session.json 内容被保留。\n\n条件性风险（state-backup.ts:76-79）：规则依赖目录命名及完整相对路径；若运行时凭据落在别的路径/命名下，它会按普通文件复制并纳入备份，可能泄漏。当前测试仅覆盖指定路径。\n\n测试建议：\n1. 对其他 instrt UUID 与嵌套凭据目录验证规则边界，并断言不匹配路径按预期处理。\n2. 验证多个 provider-sessions 文件（含嵌套文件）均保留且哈希匹配。\n",
+          "generations": 3,
+          "generationsTotal": 3,
+          "generationsBeforeReply": 1,
+          "generationsAfterReply": 2,
+          "input": 41706,
+          "cached": 24064,
+          "uncached": 17642,
+          "output": 353,
+          "reasoning": 0,
+          "firstInput": 8781,
+          "peakInput": 16605,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:42:29.580Z",
+              "name": "exec",
+              "kind": "other"
+            },
+            {
+              "at": "2026-09-30T03:42:38.556Z",
+              "name": "exec",
+              "kind": "other"
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:42:29.580Z",
+              "command": "const r = await tools.exec_command({cmd:\"nl -ba state-backup.ts && nl -ba state-backup-runtime-credentials.test.ts\",yield_time_ms:10000,max_output_tokens:12000});\ntext(r.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:42:38.556Z",
+              "command": "const r = await tools.exec_command({cmd:\"cat > <experiment>/md-1-answer.md <<'EOF'\\n结论：排除规则只跳过精确匹配的 `warm-runtimes/instrt_<UUID>/turns` 目录；备份遍历和清单都应用该规则，验证备份时则关闭凭据豁免，因此新增凭据会使校验失败。provider-sessions 未被排除，测试证实其 session.json 内容被保留。\\n\\n条件性风险（state-backup.ts:76-79）：规则依赖目录命名及完整相对路径；若运行时凭据落在别的路径/命名下，它会按普通文件复制并纳入备份，可能泄漏。当前测试仅覆盖指定路径。\\n\\n测试建议：\\n1. 对其他 instrt UUID 与嵌套凭据目录验证规则边界，并断言不匹配路径按预期处理。\\n2. 验证多个 provider-sessions 文件（含嵌套文件）均保留且哈希匹配。\\nEOF\"});\ntext(r.output);\n"
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-30T03:42:40.613Z",
+          "finishedAt": "2026-09-30T03:42:47.237Z",
+          "turnId": "01a0f068-45e6-7f20-938b-6a7c6f37a893",
+          "status": "completed",
+          "durationSeconds": 6.624,
+          "firstWriteAt": "2026-09-30T03:42:45.420Z",
+          "firstWriteIsEffectiveAnswer": true,
+          "answer": "接受。既定路径约束下，turns 排除临时凭据，provider-sessions 文件在备份中保留；撤回“凭据可能存于其他路径”的条件性风险。文件保留不等于真实 CLI 已恢复登录或可用。最小剩余验收：从该备份恢复后，启动真实 CLI 并验证其读取 provider session、成功完成一次认证操作。\n",
+          "generations": 2,
+          "generationsTotal": 2,
+          "generationsBeforeReply": 0,
+          "generationsAfterReply": 2,
+          "input": 33676,
+          "cached": 32256,
+          "uncached": 1420,
+          "output": 173,
+          "reasoning": 0,
+          "firstInput": 16757,
+          "peakInput": 16919,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:42:45.377Z",
+              "name": "exec",
+              "kind": "other"
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:42:45.377Z",
+              "command": "const r = await tools.exec_command({cmd:\"cat > <experiment>/md-2-answer.md <<'EOF'\\n接受。既定路径约束下，turns 排除临时凭据，provider-sessions 文件在备份中保留；撤回“凭据可能存于其他路径”的条件性风险。文件保留不等于真实 CLI 已恢复登录或可用。最小剩余验收：从该备份恢复后，启动真实 CLI 并验证其读取 provider session、成功完成一次认证操作。\\nEOF\"});\ntext(r.output);\n"
+            }
+          ]
+        }
+      ],
+      "totals": {
+        "input": 75382,
+        "uncached": 19062,
+        "generations": 5
+      }
+    },
+    {
+      "arm": "minimal",
+      "instructionChars": 158,
+      "instructionSha256": "0309f6506d86778f76bf734f690991c2defab9378b89c07b5036f1f5e8c29ecd",
+      "sessionId": "01a0f067-67ec-78e1-84fc-4b48a717e3fc",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-30T03:41:46.321Z",
+          "finishedAt": "2026-09-30T03:41:58.320Z",
+          "turnId": "01a0f067-71d2-7a93-ac7d-5c455b1865b5",
+          "status": "completed",
+          "durationSeconds": 11.999,
+          "firstWriteAt": "2026-09-30T03:41:57.008Z",
+          "firstWriteIsEffectiveAnswer": false,
+          "answer": "检查\n",
+          "generations": 4,
+          "generationsTotal": 4,
+          "generationsBeforeReply": 3,
+          "generationsAfterReply": 1,
+          "input": 50165,
+          "cached": 32000,
+          "uncached": 18165,
+          "output": 313,
+          "reasoning": 0,
+          "firstInput": 8855,
+          "peakInput": 16045,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:41:51.606Z",
+              "name": "exec",
+              "kind": "other"
+            },
+            {
+              "at": "2026-09-30T03:41:53.647Z",
+              "name": "exec",
+              "kind": "other"
+            },
+            {
+              "at": "2026-09-30T03:41:56.905Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": true
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:41:51.606Z",
+              "command": "const x = await tools.exec_command({cmd:\"sed -n '1,240p' state-backup.ts && printf '\\\\n--- TEST ---\\\\n' && sed -n '1,260p' state-backup-runtime-credentials.test.ts\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":4000}); text(x.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:41:53.647Z",
+              "command": "const x = await tools.exec_command({cmd:\"sed -n '240,520p' state-backup.ts\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":4000}); text(x.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:41:56.905Z",
+              "command": "const x = await tools.exec_command({cmd:\"sed -n '520,680p' state-backup.ts; nl -ba state-backup.ts | sed -n '55,115p'; nl -ba state-backup-runtime-credentials.test.ts | sed -n '1,100p'; printf '%s' '检查' | \\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#audit\\\" --turn test-turn --based-on-room-seq 1 --final\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":2000}); text(x.output);\n"
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-30T03:41:58.345Z",
+          "finishedAt": "2026-09-30T03:42:04.690Z",
+          "turnId": "01a0f067-a0ca-7822-8040-9bbfd4cac6d3",
+          "status": "completed",
+          "durationSeconds": 6.345,
+          "firstWriteAt": "2026-09-30T03:42:02.726Z",
+          "firstWriteIsEffectiveAnswer": true,
+          "answer": "接受：前轮关于排除 turns 会丢失 provider session 绑定的担忧撤回；session 文件位于 supervisors/provider-sessions，按既有审查其备份文件保留。此结论只覆盖文件备份/校验，不证明真实 CLI 恢复可用。最小验收：用真实 CLI 从备份恢复后确认 session 绑定可用，且 turns 临时凭据未复制。\n",
+          "generations": 2,
+          "generationsTotal": 2,
+          "generationsBeforeReply": 1,
+          "generationsAfterReply": 1,
+          "input": 32609,
+          "cached": 15104,
+          "uncached": 17505,
+          "output": 221,
+          "reasoning": 0,
+          "firstInput": 16201,
+          "peakInput": 16408,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:42:02.628Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": true
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:42:02.628Z",
+              "command": "const r=await tools.exec_command({cmd:\"printf '%s' '接受：前轮关于排除 turns 会丢失 provider session 绑定的担忧撤回；session 文件位于 supervisors/provider-sessions，按既有审查其备份文件保留。此结论只覆盖文件备份/校验，不证明真实 CLI 恢复可用。最小验收：用真实 CLI 从备份恢复后确认 session 绑定可用，且 turns 临时凭据未复制。' | \\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#audit\\\" --turn test-turn --based-on-room-seq 2 --final\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":1000}); text(r.output);\n"
+            }
+          ]
+        }
+      ],
+      "totals": {
+        "input": 82774,
+        "uncached": 35670,
+        "generations": 6
+      }
+    },
+    {
+      "arm": "full",
+      "instructionChars": 6941,
+      "instructionSha256": "1832f22bf236dc5e144c9740a65f34441ac9726e577cbbe0b54bdfeb87a35f73",
+      "sessionId": "01a0f068-93f1-7290-8207-6c74b6a3a898",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-30T03:43:03.372Z",
+          "finishedAt": "2026-09-30T03:43:26.140Z",
+          "turnId": "01a0f068-9ecd-7870-b1b6-3736a1875dc2",
+          "status": "completed",
+          "durationSeconds": 22.768,
+          "firstWriteAt": "2026-09-30T03:43:08.951Z",
+          "firstWriteIsEffectiveAnswer": false,
+          "answer": "РАH_MESSAGE_EOF\n审查结论：未见已证实缺陷。临时凭据仅在精确路径 `warm-runtimes/instrt_<小写 UUID>/turns` 被跳过（state-backup.ts:76-80、163-171）；验证时禁用该排除，若备份中出现该目录会失败（95-100、251-255）。其他目录照常遍历，因此 `supervisors/provider-sessions` 会复制并校验，测试已覆盖（state-backup-runtime-credentials.test.ts:28-47）。条件性风险：若生产 instrt ID 格式含大写或不符合此 UUID 正则，凭据目录会被复制（state-backup.ts:77）；现有夹具仅测小写 UUID（测试:21-23）。\n测试建议：1. 用生产实际 ID 格式验证凭据确实排除。2. 加覆盖恢复流程的用例，确认 provider session 文件仍保留。\n\n",
+          "generations": 4,
+          "generationsTotal": 4,
+          "generationsBeforeReply": 1,
+          "generationsAfterReply": 3,
+          "input": 54001,
+          "cached": 36864,
+          "uncached": 17137,
+          "output": 852,
+          "reasoning": 397,
+          "firstInput": 10432,
+          "peakInput": 16836,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:43:08.842Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": true
+            },
+            {
+              "at": "2026-09-30T03:43:12.372Z",
+              "name": "exec",
+              "kind": "other"
+            },
+            {
+              "at": "2026-09-30T03:43:24.421Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": true
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:43:08.842Z",
+              "command": "const r = await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target '#audit' --turn test-turn --based-on-room-seq 1 --final <<'RAH_MESSAGE_EOF'\\nРАH_MESSAGE_EOF\", max_output_tokens:1000});\ntext(r.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:43:12.372Z",
+              "command": "const r = await tools.exec_command({cmd:\"nl -ba state-backup.ts && nl -ba state-backup-runtime-credentials.test.ts\", workdir:\"<experiment>/project\", max_output_tokens:5000});\ntext(r.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:43:24.421Z",
+              "command": "const r = await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target '#audit' --turn test-turn --based-on-room-seq 1 --final <<'RAH_MESSAGE_EOF'\\n审查结论：未见已证实缺陷。临时凭据仅在精确路径 `warm-runtimes/instrt_<小写 UUID>/turns` 被跳过（state-backup.ts:76-80、163-171）；验证时禁用该排除，若备份中出现该目录会失败（95-100、251-255）。其他目录照常遍历，因此 `supervisors/provider-sessions` 会复制并校验，测试已覆盖（state-backup-runtime-credentials.test.ts:28-47）。条件性风险：若生产 instrt ID 格式含大写或不符合此 UUID 正则，凭据目录会被复制（state-backup.ts:77）；现有夹具仅测小写 UUID（测试:21-23）。\\n测试建议：1. 用生产实际 ID 格式验证凭据确实排除。2. 加覆盖恢复流程的用例，确认 provider session 文件仍保留。\\nRAH_MESSAGE_EOF\", max_output_tokens:1000});\ntext(r.output);\n"
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-30T03:43:26.152Z",
+          "finishedAt": "2026-09-30T03:43:35.273Z",
+          "turnId": "01a0f068-f7c9-73d1-a926-a1b781b91ab0",
+          "status": "completed",
+          "durationSeconds": 9.121,
+          "firstWriteAt": "2026-09-30T03:43:31.657Z",
+          "firstWriteIsEffectiveAnswer": true,
+          "answer": "接受本轮代码结论：已确认 backup 保留 `supervisors/provider-sessions/` 文件，测试验证了备份文件字节内容，但这不等于真实 CLI 能恢复会话。撤回“turns ID 格式不符会泄漏”的条件性风险；按补充约束，turns 仅临时凭据。最小剩余验收：用真实 CLI 从备份恢复一次，确认 provider session 绑定可继续使用。\n\n",
+          "generations": 2,
+          "generationsTotal": 2,
+          "generationsBeforeReply": 1,
+          "generationsAfterReply": 1,
+          "input": 34179,
+          "cached": 32256,
+          "uncached": 1923,
+          "output": 218,
+          "reasoning": 0,
+          "firstInput": 16985,
+          "peakInput": 17194,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:43:31.572Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": true
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:43:31.572Z",
+              "command": "const r = await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target '#audit' --turn test-turn --based-on-room-seq 2 --final <<'RAH_MESSAGE_EOF'\\n接受本轮代码结论：已确认 backup 保留 `supervisors/provider-sessions/` 文件，测试验证了备份文件字节内容，但这不等于真实 CLI 能恢复会话。撤回“turns ID 格式不符会泄漏”的条件性风险；按补充约束，turns 仅临时凭据。最小剩余验收：用真实 CLI 从备份恢复一次，确认 provider session 绑定可继续使用。\\nRAH_MESSAGE_EOF\", max_output_tokens:1000});\ntext(r.output);\n"
+            }
+          ]
+        }
+      ],
+      "totals": {
+        "input": 88180,
+        "uncached": 19060,
+        "generations": 6
+      }
+    },
+    {
+      "arm": "minimal-plain",
+      "instructionChars": 158,
+      "instructionSha256": "0309f6506d86778f76bf734f690991c2defab9378b89c07b5036f1f5e8c29ecd",
+      "sessionId": "01a0f069-aa09-7702-841d-bc8ecf69e3bb",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-09-30T03:44:14.502Z",
+          "finishedAt": "2026-09-30T03:44:30.536Z",
+          "turnId": "01a0f069-b4a6-7e30-af28-278a7fd76eba",
+          "status": "completed",
+          "durationSeconds": 16.034,
+          "firstWriteAt": "2026-09-30T03:44:28.905Z",
+          "firstWriteIsEffectiveAnswer": true,
+          "answer": "审查结论：机制在匹配目录上排除了临时凭据，并保留 provider session 文件。已证实：代码仅跳过符合 instrt UUID/turns 路径的目录（state-backup.ts:76-80），测试验证 token 未入备份且 session.json 原样保留（测试:28-51）；验证阶段也拒绝备份中新增该目录。\n\n条件性风险：若临时凭据写在其他目录名或 turns 路径之外，不会被排除并可能进入备份（state-backup.ts:95-103, 163-）。\n\n建议测试：\n1. 覆盖多个合法 UUID 与大小写边界，确认匹配范围精确。\n2. 在 turns 下放置深层凭据文件及并行 provider session，分别断言排除与保留。\n\n",
+          "generations": 4,
+          "generationsTotal": 4,
+          "generationsBeforeReply": 3,
+          "generationsAfterReply": 1,
+          "input": 49491,
+          "cached": 33024,
+          "uncached": 16467,
+          "output": 463,
+          "reasoning": 0,
+          "firstInput": 8821,
+          "peakInput": 14675,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:44:20.159Z",
+              "name": "exec",
+              "kind": "other"
+            },
+            {
+              "at": "2026-09-30T03:44:23.261Z",
+              "name": "exec",
+              "kind": "other"
+            },
+            {
+              "at": "2026-09-30T03:44:28.841Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": false
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:44:20.159Z",
+              "command": "const r = await tools.exec_command({cmd:\"sed -n '1,260p' state-backup.ts && sed -n '1,260p' state-backup-runtime-credentials.test.ts\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":6000}); text(r.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:44:23.261Z",
+              "command": "const r = await tools.exec_command({cmd:\"nl -ba state-backup.ts | sed -n '48,165p'; nl -ba state-backup-runtime-credentials.test.ts | sed -n '1,130p'; rg 'provider-sessions|runtimeCredentialDirectory|warm-runtimes' state-backup.ts state-backup-runtime-credentials.test.ts\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":4000}); text(r.output);\n"
+            },
+            {
+              "at": "2026-09-30T03:44:28.841Z",
+              "command": "const cmd = `cat <<'EOF' | \"$RAH_WORKER_CLI\" worker message-post --target \"#audit\"\n审查结论：机制在匹配目录上排除了临时凭据，并保留 provider session 文件。已证实：代码仅跳过符合 instrt UUID/turns 路径的目录（state-backup.ts:76-80），测试验证 token 未入备份且 session.json 原样保留（测试:28-51）；验证阶段也拒绝备份中新增该目录。\n\n条件性风险：若临时凭据写在其他目录名或 turns 路径之外，不会被排除并可能进入备份（state-backup.ts:95-103, 163-）。\n\n建议测试：\n1. 覆盖多个合法 UUID 与大小写边界，确认匹配范围精确。\n2. 在 turns 下放置深层凭据文件及并行 provider session，分别断言排除与保留。\nEOF`;\nconst r = await tools.exec_command({cmd,workdir:\"<experiment>/project\",max_output_tokens:1000}); text(r.output);\n"
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-09-30T03:44:30.560Z",
+          "finishedAt": "2026-09-30T03:44:37.424Z",
+          "turnId": "01a0f069-f361-76a0-8f40-cf617da17061",
+          "status": "completed",
+          "durationSeconds": 6.864,
+          "firstWriteAt": "2026-09-30T03:44:35.887Z",
+          "firstWriteIsEffectiveAnswer": true,
+          "answer": "接受。撤回“凭据可能在 turns 外”的条件风险：已知 session 仅在 supervisors/provider-sessions，临时凭据仅在 turns，当前排除规则符合约束；备份文件测试证实 session 文件保留。真实 CLI 恢复未由这两份文件验证，仍需最小验收：用备份执行实际恢复并启动 CLI，确认原 provider session 绑定可用、旧 turn 凭据不恢复。\n\n",
+          "generations": 2,
+          "generationsTotal": 2,
+          "generationsBeforeReply": 1,
+          "generationsAfterReply": 1,
+          "input": 29776,
+          "cached": 28160,
+          "uncached": 1616,
+          "output": 194,
+          "reasoning": 0,
+          "firstInput": 14787,
+          "peakInput": 14989,
+          "toolCalls": [
+            {
+              "at": "2026-09-30T03:44:35.825Z",
+              "name": "exec",
+              "kind": "box-post",
+              "turnHandle": false
+            }
+          ],
+          "tools": [
+            {
+              "at": "2026-09-30T03:44:35.825Z",
+              "command": "const cmd = `cat <<'EOF' | \"$RAH_WORKER_CLI\" worker message-post --target \"#audit\"\n接受。撤回“凭据可能在 turns 外”的条件风险：已知 session 仅在 supervisors/provider-sessions，临时凭据仅在 turns，当前排除规则符合约束；备份文件测试证实 session 文件保留。真实 CLI 恢复未由这两份文件验证，仍需最小验收：用备份执行实际恢复并启动 CLI，确认原 provider session 绑定可用、旧 turn 凭据不恢复。\nEOF`;\nconst r = await tools.exec_command({cmd,workdir:\"<experiment>/project\",max_output_tokens:500}); text(r.output);\n"
+            }
+          ]
+        }
+      ],
+      "totals": {
+        "input": 79267,
+        "uncached": 18083,
+        "generations": 6
+      }
+    }
+  ],
+  "totalInput": 325603,
+  "totalGenerations": 23
+}

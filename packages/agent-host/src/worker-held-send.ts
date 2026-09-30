@@ -76,7 +76,7 @@ export function workerTargetConfirmationBody(
     "This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once.",
     "",
     "If this reply belongs in the thread, send the message to the thread target instead:",
-    `  "$RAH_WORKER_CLI" worker message-post${turn} --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
+    `  "$RAH_WORKER_CLI" worker message-post${turn} --progress --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
     "  message body",
     `  ${MESSAGE_HEREDOC_DELIMITER}`,
     "",
@@ -135,8 +135,8 @@ export function workerHeldSendGuidance(
     { basedOnRoomSeq?: unknown; final?: unknown } | undefined;
   const replySuffix =
     intent && typeof intent === "object"
-      ? `${typeof intent.basedOnRoomSeq === "number" && Number.isSafeInteger(intent.basedOnRoomSeq) && intent.basedOnRoomSeq >= 0 ? ` --based-on-room-seq ${String(intent.basedOnRoomSeq)}` : ""}${intent.final === true ? " --final" : ""}`
-      : "";
+      ? `${typeof intent.basedOnRoomSeq === "number" && Number.isSafeInteger(intent.basedOnRoomSeq) && intent.basedOnRoomSeq >= 0 ? ` --based-on-room-seq ${String(intent.basedOnRoomSeq)}` : ""}${intent.final === true ? " --final" : " --progress"}`
+      : " --progress";
   const continueAnyway =
     value.continueAnywaySuggested === true
       ? `If repeated updates keep blocking the same draft and this is still the right reply, you may use:
@@ -254,14 +254,8 @@ function sendReceipt(
   const sentStatusLine =
     target === undefined ? `Message ${verb}.` : `Message ${verb} to ${target}.`;
   if (messageId === undefined) return `${sentStatusLine}\n`;
-  const shortId = messageId.slice(0, 8);
-  const replyHint =
-    target === undefined
-      ? ""
-      : ` (to reply in this message's thread, use target "${
-          target.includes(":") ? target : `${target}:${shortId}`
-        }")`;
-  return `${sentStatusLine} Message ID: ${messageId}${replyHint}\n`;
+  // A message ID is not a Thread ID; a successful post need not create a thread.
+  return `${sentStatusLine} Message ID: ${messageId}\n`;
 }
 
 /** Raft's `SEND_HELD_AS_DRAFT` message and `suggestedNextAction`, verbatim. */

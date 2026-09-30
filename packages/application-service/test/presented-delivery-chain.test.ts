@@ -7,6 +7,8 @@ import test from "node:test";
 
 import { RoomKernel } from "@rah-os/kernel";
 
+import { drainWorkerMessages } from "../../agent-host/src/worker-message-check.ts";
+
 import { WorkerApplicationService } from "../src/index.ts";
 
 /**
@@ -796,3 +798,61 @@ test("a message-read in the same run marks the bodies its sent wake already deli
     await context.close();
   }
 });
+
+for (const sent of [false, true]) {
+  test(`check references only this Run's sent wake bodies (sent=${sent}), replay restores text`, async () => {
+    const context = await fixture();
+    try {
+      const source = context.post("UNIQUE_ALREADY_DELIVERED_BODY");
+      const oversized = "UNIQUE_NOTICE_BODY" + "z".repeat(66_000);
+      context.post(oversized);
+      const run = context.activate();
+      const wake = await run.call("message-present");
+      assert.ok(wake.body.presentedSeqs.includes(source.event.roomSeq));
+      assert.ok(wake.body.noticeCount > 0);
+      if (sent) run.markSent();
+      assert.equal(context.cursor(), 0, "Host receipt is not an ACK");
+      const check = async (replay: boolean) => {
+        let output = "";
+        await drainWorkerMessages({
+          replay,
+          send: async ({ path, body }) => {
+            const response = await run.call(
+              path.replace("/v1/worker/", ""),
+              body,
+            );
+            assert.equal(response.status, 200);
+            return response.body;
+          },
+          write: async (text) => {
+            output += text;
+          },
+        });
+        return output;
+      };
+      const text = await check(false);
+      assert.equal(text.includes("UNIQUE_ALREADY_DELIVERED_BODY"), !sent);
+      assert.equal(text.includes("(delivered in this wake)"), sent);
+      assert.ok(
+        text.includes(oversized),
+        "notice-only body must still be delivered whole",
+      );
+      assert.equal(context.cursor(), run.activation.toSeq);
+      const replay = await check(true);
+      assert.ok(replay.includes("UNIQUE_ALREADY_DELIVERED_BODY"));
+      assert.ok(replay.includes(oversized));
+      assert.doesNotMatch(replay, /\(delivered in this wake\)/);
+      const raw = await run.call("sync");
+      assert.equal(raw.status, 200);
+      // Explicit diagnostic replay remains an unmodified ledger window.
+      const rawReplay = await run.call("message-check", { replay: true });
+      assert.ok(
+        JSON.stringify(rawReplay.body).includes(
+          "UNIQUE_ALREADY_DELIVERED_BODY",
+        ),
+      );
+    } finally {
+      await context.close();
+    }
+  });
+}

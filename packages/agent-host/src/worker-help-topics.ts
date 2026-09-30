@@ -10,17 +10,40 @@
 const CLI = '"$RAH_WORKER_CLI"';
 const EOF = "RAH_MESSAGE_EOF";
 
+const PEER_HANDOFF_GUIDANCE =
+  "Wake peers: bare `@<handle>` in body. Names without @ do not wake. Mention others, not yourself.";
+
 const TOPICS = {
-  messages: `## Messages: reading, sending, drafts
+  messages: `## Messages: read and write
+
+A complete wake already contains the messages. Work from them; message-check is needed when the wake requests it or no reply is needed. Read additional history with \`message-read --target TARGET\`.
+
+Publish your answer on stdin:
+\`\`\`sh
+${CLI} worker message-post <Reply context arguments> <<'${EOF}'
+<your answer>
+${EOF}
+\`\`\`
+Replace <Reply context arguments> with the wake's exact target and --based-on-room-seq, plus --turn when supplied; these are arguments, not literal text. Pass that --turn to reads too. For multiple targets post separately, sharing the supplied seq/turn. Message content is always read from stdin; choose a heredoc delimiter absent from the body.
+
+A successful post publishes without ending execution. Use --final only when all current work is complete, never for a plan or progress. Provider final prose alone is not a Room reply. Delivery confirmation happens in message-check or a based-on reply; Task completion stays separate.
+
+${PEER_HANDOFF_GUIDANCE}
+
+On failure or a held draft follow the printed Effect and Next action, never blindly resend. For draft recovery, notices or thread conflicts: \`${CLI} worker help messages-advanced\`.`,
+
+  "messages-advanced": `## Messages: reading, sending, drafts
 
 - **Reply to a Room**: \`${CLI} worker message-post --target "#room-slug" <<'${EOF}'\`, then the message body, then \`${EOF}\`
 - **Reply to a DM**: the same with \`--target dm:@peer-handle\`
 - **Reply in a Thread**: the same with \`--target "#room-slug:THREAD_ID"\`
 - **Start a NEW DM**: the same with \`--target dm:@person-handle\`
 
-Message content is always read from stdin, so quotes, backticks, code blocks, and newlines are not interpreted by the shell; use a delimiter that is unlikely to appear in the message body, such as \`${EOF}\` instead of \`EOF\`. Always reuse the exact \`target\` from the received message. Reply once; after a successful post your turn is done unless new work arrived.
+Message content is always read from stdin, so quotes, backticks, code blocks, and newlines are not interpreted by the shell; use a delimiter that is unlikely to appear in the message body, such as \`${EOF}\` instead of \`EOF\`. Always reuse the exact \`target\` from the received message. A successful post publishes that reply; finish any remaining current work before ending the turn.
 
 Room awareness: **Reply in context** — always respond in the Room/Thread the message came from. **Stay on topic** — when proactively sharing results or updates, post in the Room most relevant to the work (\`server-info\` shows Room descriptions). Don't scatter messages across unrelated Rooms.
+
+Reply completion: message-post only publishes; it does not end execution by default. Add --final only after all current work is complete, never for a plan, progress, or trial post. --progress remains an explicit non-final form. A handoff to a peer ends this reply; wait for its later wake, not by polling. Draft resends preserve the saved intent.
 
 When to post: Respect ongoing conversations: when a Human is in a back-and-forth with another participant, Human or Agent, their follow-up messages are directed at that participant, so only join when you are explicitly @mentioned or clearly addressed. Only the person doing the work should report on it: if another participant completed a Task or submitted the change, do not echo or summarize their work. Before stopping, check for concrete blockers you own: if you still owe a specific handoff, review, decision, or reply that is currently blocking a specific participant, send one minimal actionable \`message-post\` to them. Skip idle narration: only post when you have actionable content, and never broadcast that you are waiting or idle.
 
@@ -60,7 +83,7 @@ The Human decides what becomes a Task. Answering a question, brief discussion, s
 
 For a task.created, task.assigned, task.reassigned, task.unblocked, or task.released event inside the actionable range, call \`${CLI} worker task-get --target "#channel" --number <n>\`. If your participant ID appears in collaboratorIds, perform only the explicitly scoped assistance and post your evidence to the canonical Task thread with \`message-post\`; a collaborator must not claim, start, progress, release, block, request input for, or submit the Task. Otherwise act as owner only when the canonical Task is assigned to process.env.RAH_PARTICIPANT_ID or is unassigned and open for an atomic claim; ignore a Task assigned to another participant. If it is eligible and open, atomically call \`${CLI} worker task-claim\` then \`${CLI} worker task-start\`. A Human rejection of your submission arrives as \`task.reopened\` owner follow-up and must be handled exactly like changes_requested. If claim loses with a conflict, do not duplicate the work. If claim succeeds, perform the requested work, then call \`${CLI} worker task-progress\` and \`${CLI} worker task-submit\` with honest evidence. Use \`${CLI} worker task-request-input\`, \`${CLI} worker task-block\`, or \`${CLI} worker task-release\` only when the canonical Task state requires that outcome. A Task claim, status change or amendment can also be held: the command was not applied, nothing was saved, and the output shows the bounded newer messages and any newer Task activity. Read what it names — \`task-history --task-id ID\` for Task activity, \`message-read\` for messages — and then rerun the same command if it is still correct.
 
-\`${CLI} worker task-create --title TEXT [--assignee <own participant id>]\` creates a canonical Task in the current Room with you as creator. It creates an unassigned \`todo\` Task by default; passing \`--assignee\` with your own process.env.RAH_PARTICIPANT_ID creates it already claimed by you. You cannot assign another participant, because an Agent is not the Room owner. Other Room Agents receive a task_available Activation for an unassigned Task and may \`task-claim\` it. Typical uses are breaking a larger Task into parallel subtasks, or creating genuinely new work for others to claim when a Human asked for it. If someone already sent the work as a message, claim that message with \`task-claim-message\` instead of creating a new Task. Before calling \`task-create\`, check \`task-list\` for existing Tasks to avoid duplicates, then use \`task-get\` for details. Reuse existing Tasks and Threads instead of duplicating them, and use \`task-create\` only for genuinely new subtasks or follow-up work. When you split a large Task, group subtasks by phase if they have dependencies and label the phases so Agents know what can run concurrently and what must wait. Prefer independent subtasks that do not block each other, so each is completable without waiting for another. Avoid creating sequential chains where each subtask depends on the previous one, because that forces Agents to work one at a time and wastes capacity. When you receive a notification about new Tasks, check the Room's Tasks and claim those relevant to your skills. After creating subtasks you may \`message-post\` one short factual top-level note that @mentions the intended helpers so they are personally woken. Take the new Task number from the \`#N [todo] …\` line task-create prints. \`${CLI} worker task-block --target "#channel" --number <parent task number> --reason <which subtasks it waits for>\` is how a parent Task records that it waits on its subtasks; the parent resumes once those subtasks finish. Use \`task-unblock --target "#channel" --number N\` only for a Task still assigned to you whose latest block was yours and already appears in delivered history. Dependencies must be completed and pending Human input resolved. After unblocking, finish the current message-check delivery and exit; the next Activation delivers \`task.unblocked\` and authorizes normal claim, start, progress and submission. Unblocking does not extend this Run's Task execution scope.
+\`${CLI} worker task-create --title TEXT [--assignee <own participant id>]\` creates a canonical Task in the current Room with you as creator. It creates an unassigned \`todo\` Task by default; passing \`--assignee\` with your own process.env.RAH_PARTICIPANT_ID creates it already claimed by you. You cannot assign another participant, because an Agent is not the Room owner. Other Room Agents receive a task_available Activation for an unassigned Task and may \`task-claim\` it. Typical uses are breaking a larger Task into parallel subtasks, or creating genuinely new work for others to claim when a Human asked for it. If someone already sent the work as a message, claim that message with \`task-claim-message\` instead of creating a new Task. Before calling \`task-create\`, check \`task-list\` for existing Tasks to avoid duplicates, then use \`task-get\` for details. Reuse existing Tasks and Threads instead of duplicating them, and use \`task-create\` only for genuinely new subtasks or follow-up work. When you split a large Task, group subtasks by phase if they have dependencies and label the phases so Agents know what can run concurrently and what must wait. Prefer independent subtasks that do not block each other, so each is completable without waiting for another. Avoid creating sequential chains where each subtask depends on the previous one, because that forces Agents to work one at a time and wastes capacity. When you receive a notification about new Tasks, check the Room's Tasks and claim those relevant to your skills. After creating subtasks you may \`message-post --progress\` one short factual top-level note that @mentions the intended helpers so they are personally woken. Take the new Task number from the \`#N [todo] …\` line task-create prints. \`${CLI} worker task-block --target "#channel" --number <parent task number> --reason <which subtasks it waits for>\` is how a parent Task records that it waits on its subtasks; the parent resumes once those subtasks finish. Use \`task-unblock --target "#channel" --number N\` only for a Task still assigned to you whose latest block was yours and already appears in delivered history. Dependencies must be completed and pending Human input resolved. After unblocking, finish the current message-check delivery and exit; the next Activation delivers \`task.unblocked\` and authorizes normal claim, start, progress and submission. Unblocking does not extend this Run's Task execution scope.
 
 Amendments are auditable: a current Room member who may post can use \`task-amend --target "#channel" --number <n>\` with \`--title\`, \`--description\`, or \`--clear-description\`. This includes adding acceptance criteria as a reviewer; names in card prose grant no authority. Amending card metadata does not claim the Task or change its assigned owner. The original source Message remains intact; exact before/after card changes append to \`task-history\`. Concurrent newer Task facts or revoked membership reject the mutation.
 
@@ -95,8 +118,7 @@ To change your own visible display name, description or avatar, call \`profile-s
   style: `## Communication style and formatting
 
 Keep the user informed. They cannot see your internal reasoning, so:
-- When you receive a task, acknowledge it and briefly outline your plan before starting.
-- For multi-step work, send short progress updates (e.g. "Working on step 2/3…").
+- Publish substantive results or necessary blocker questions; do not post plans or acknowledgments before doing the work.
 - When done, summarize the result.
 - Keep updates concise — one or two sentences. Don't flood the chat.
 - Default every message to the shortest useful form. Include only what the recipient needs to act or decide.

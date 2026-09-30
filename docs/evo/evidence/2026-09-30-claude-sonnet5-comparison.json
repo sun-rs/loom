@@ -1,0 +1,259 @@
+{
+  "batch": "P75",
+  "at": "2026-09-30T11:29:20.394Z",
+  "plan": {
+    "batch": "P75",
+    "provider": "claude",
+    "model": "sonnet",
+    "actualRequired": "claude-sonnet-5",
+    "effort": "low",
+    "arms": ["native", "loom"],
+    "roundsEach": 2,
+    "paidRetry": false,
+    "authorization": "User requests Sonnet5 low real retest; four turns bounded",
+    "followup": "neutral wording revised before execution; no direct cross-provider ranking"
+  },
+  "code": {
+    "head": "8be0c77",
+    "dirty": true,
+    "protocol": "3b363cd93914"
+  },
+  "cliVersion": "2.1.285",
+  "sourceHashes": {
+    "state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+    "state-backup-runtime-credentials.test.ts": "ba902f73eafe7baf9f8bf0d2361de03d84e82b6bceb1f705ad42fa2697ad4905"
+  },
+  "roomId": "room_16c79ab1-7b2b-4c8e-8b9b-b01b4ce4cd2e",
+  "native": [
+    {
+      "round": 1,
+      "sessionId": "08b0d004-fcad-4990-8879-1890d8a9e74a",
+      "models": ["claude-sonnet-5"],
+      "efforts": ["low"],
+      "transcriptMismatches": [],
+      "generations": 4,
+      "generationsTotal": 4,
+      "generationsBeforeReply": 4,
+      "generationsAfterReply": 0,
+      "input": 185514,
+      "cached": 125550,
+      "uncached": 59964,
+      "output": 11240,
+      "reasoning": null,
+      "firstInput": 37882,
+      "peakInput": 59958,
+      "replySeconds": 178.79222314453125,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T11:18:20.724Z",
+          "name": "Bash",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:18:23.921Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:18:23.962Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:21:15.654Z",
+          "name": "Write",
+          "kind": "other"
+        }
+      ],
+      "finalSeconds": 189.319,
+      "answer": "# state-backup 临时凭据排除机制审查\n\n**结论**：机制成立。`warm-runtimes/instrt_*/turns` 在备份时跳过（state-backup.ts:170），校验时反向拒绝（:96-99，配合 :252 的 `allowRuntimeCredentials=false`），凭据不落入快照；`supervisors/provider-sessions/` 不匹配该正则，正常复制保留，provider session 文件不受影响（测试 :28-44 已覆盖）。\n\n**条件性风险（state-backup.ts:77）**：排除按完整路径 + 小写十六进制精确匹配，属白名单式，fail-open。凭据目录形态一旦漂移（大写 UUID、多一层父目录、id 前缀不同），既不排除也不报错，token 会被当普通文件复制进快照并可被还原。建议改为匹配 `instrt_*/turns` 路径段，或对任意以 `/turns` 结尾的目录一律拒绝。\n\n**测试建议**：\n\n1. 断言收据 `files` 中不含 turns 下任一 hash（而非只查 `omittedRuntimeCredentials`），并补一条\"目录形态不匹配时仍应拒绝\"的负例。\n2. 收据经 JSON 往返后再跑 `verifyStateBackup` 与 `restoreStateSnapshot`，确认排除项既不参与校验、也不会因缺项而误判失败。\n",
+      "harnessError": "Missing effective final answer; retain cost evidence"
+    },
+    {
+      "round": 2,
+      "sessionId": "08b0d004-fcad-4990-8879-1890d8a9e74a",
+      "models": ["claude-sonnet-5"],
+      "efforts": ["low"],
+      "transcriptMismatches": [],
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 2,
+      "generationsAfterReply": 0,
+      "input": 123771,
+      "cached": 120579,
+      "uncached": 3192,
+      "output": 2663,
+      "reasoning": null,
+      "firstInput": 60625,
+      "peakInput": 63146,
+      "replySeconds": 36.282087158203126,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T11:22:03.028Z",
+          "name": "Write",
+          "kind": "other"
+        }
+      ],
+      "finalSeconds": 44.555,
+      "answer": "保留：turns 为临时凭据，备份已排除，无泄漏。修订：\"provider-sessions 不受影响\"降为仅文件保留；同一原生 session 的实际恢复无证据，两者须分开表述。无撤回。新增事实契合设计，但未消除上轮条件性风险：白名单正则漂移仍可漏排凭据，影响收窄为凭据入快照，不涉绑定丢失。结论：接受。最小验收：快照不含 turns、provider-sessions 逐字节一致，并做一次真实 restore 确认同 session 复用；否则须显式声明不承诺 session 级恢复。\n",
+      "harnessError": "Missing effective final answer; retain cost evidence"
+    }
+  ],
+  "loom": [
+    {
+      "runAttemptId": "run_dd0e885c-8f80-484f-97b3-4faa84f2fcc1",
+      "participantId": "principal_c825534c-5700-4a9c-a89f-df44bbc4ca19",
+      "state": "exited",
+      "startedAt": "2026-09-30T11:23:42.560Z",
+      "finishedAt": "2026-09-30T11:27:29.292Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:claude-cli/v1:sonnet",
+        "provider": "anthropic",
+        "modelId": "sonnet",
+        "reasoning": "low"
+      },
+      "round": 1,
+      "sessionId": "4f5dddf2-1d5d-4890-9e13-bbb5ce96960a",
+      "models": ["claude-sonnet-5"],
+      "efforts": ["low"],
+      "input": 241108,
+      "cached": 181209,
+      "uncached": 59899,
+      "output": 11760,
+      "generations": 5,
+      "firstInput": 36858,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T11:23:46.609Z",
+          "name": "Bash",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:23:46.760Z",
+          "name": "Bash",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:23:51.658Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:23:51.954Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T11:27:05.942Z",
+          "name": "Bash",
+          "kind": "worker-command"
+        },
+        {
+          "at": "2026-09-30T11:27:24.062Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "replySeconds": 222.164,
+      "answer": "@p75-claude-a-74cb461991abc7e7411c3efc 判定：机制有效。turns 目录在 fileInventory L95-102、backupState L170 被排除（comment L74-75 亦声明），provider-sessions 正常入备（L106-108，测试 L28-44 佐证），L251-255 能发现回填（测试 L49-51）。无已证实泄漏。\n\n条件性风险（非缺陷）：L76-80 靠目录名精确匹配 instrt_<UUID>/turns，L95 仅对匹配者 continue。命名一旦偏移（大写 UUID、后缀版本、更深嵌套），该目录会落入 L103-109 被哈希并复制，静默泄漏；L128 有同一假设。\n\n测试建议：1) 用非规范名（大写 UUID、instrt_<UUID>-v2/turns）断言备份不含 token 且 receipt.omittedRuntimeCredentials 为空，锁死命名契约；2) 在深层同名目录验证 L91 前缀拼接，确认只有顶层被排除。"
+    },
+    {
+      "runAttemptId": "run_e6055d77-60a4-46a5-8cbb-2d688a5fb0be",
+      "participantId": "principal_c825534c-5700-4a9c-a89f-df44bbc4ca19",
+      "state": "exited",
+      "startedAt": "2026-09-30T11:27:42.674Z",
+      "finishedAt": "2026-09-30T11:28:24.568Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:claude-cli/v1:sonnet",
+        "provider": "anthropic",
+        "modelId": "sonnet",
+        "reasoning": "low"
+      },
+      "round": 2,
+      "sessionId": "4f5dddf2-1d5d-4890-9e13-bbb5ce96960a",
+      "models": ["claude-sonnet-5"],
+      "efforts": ["low"],
+      "input": 122256,
+      "cached": 120215,
+      "uncached": 2041,
+      "output": 1827,
+      "generations": 2,
+      "firstInput": 60328,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T11:28:10.379Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "replySeconds": 28.386,
+      "answer": "@p75-claude-a-74cb461991abc7e7411c3efc 结论：接受。逐条：\n无泄漏判定——保留，新约束只强化它：turns 仅存临时凭据，排除它不动会话绑定。\n条件性风险（L76-80 命名漂移）——修订：后果仅凭据泄漏，非绑定丢失；严重度未降，理由变。\n文件保留≠同一原生 session 恢复：还原只回 session.json，临时凭据按设计不还原，能否续用同一原生会话未经证实。\n最小验收：一条非规范目录名测试，断言未复制 token 且 omittedRuntimeCredentials 为空。"
+    }
+  ],
+  "summary": {
+    "native": {
+      "input": 309285,
+      "cached": 246129,
+      "uncached": 63156,
+      "output": 13903,
+      "generations": 6
+    },
+    "loom": {
+      "input": 363364,
+      "cached": 301424,
+      "uncached": 61940,
+      "output": 13587,
+      "generations": 7
+    },
+    "inputRatio": 1.1748516740223418,
+    "uncachedRatio": 0.9807460890493381,
+    "batchInput": 672649
+  },
+  "queue": {
+    "busy": false,
+    "runCount": 2,
+    "activations": [
+      {
+        "activation_id": "activation_6b6a572f-eae3-4395-a88b-3dfcb97ad8b6",
+        "state": "completed",
+        "from_seq": 4,
+        "to_seq": 4
+      },
+      {
+        "activation_id": "activation_e02acfd2-8a01-4d5b-9559-514191828728",
+        "state": "completed",
+        "from_seq": 13,
+        "to_seq": 13
+      }
+    ],
+    "selfMessageInboxCount": 0
+  },
+  "gaps": [],
+  "limits": [
+    "Two rounds each; not long-context, compaction, restart or complete section 6 gate",
+    "Native first then Loom: cache warmth and provider load not controlled",
+    "Native writes Markdown; Loom publishes Room message; prompts and tool environments differ",
+    "Neutral followup frozen before paid calls; differs from P72-P74",
+    "Native harness fixed final-prefix assertion is not applicable to this workload; actual Markdown delivery verified, no paid retry",
+    "First-request input is 1,024 lower in Loom; no byte-identical request capture, so do not attribute baseline difference to platform optimization."
+  ],
+  "quality": {
+    "native": "Delivered twice; retains conditional naming risk, separates file preservation from native same-session restore. Over word limits; broader exclusions proposed without production producer evidence.",
+    "loom": "Delivered twice; retains conditional risk and acknowledges missing real restore evidence. Self-mention in both replies. Proposed malformed-name test expects current implementation not to copy despite regex mismatch; minimum acceptance omits performing real same-session restore. Over word limits.",
+    "verdict": "Not full semantic-quality acceptance"
+  },
+  "verdict": {
+    "delivery": "pass for two-round sample",
+    "continuity": "same session both rounds per arm; no restart tested",
+    "usage": "complete; transcript totals match per-generation Room usage; actual claude-sonnet-5 / low",
+    "latency": "round1 fails: 222.164 - 178.792 > max(5, 178.792 * 0.15); round2 within budget",
+    "fullSection6": "not passed",
+    "paidRetries": 0
+  }
+}

@@ -297,7 +297,7 @@ const judgmentRow = (id, needle) => ({
   classification: "judgment",
   note: "synthetic fixture",
 });
-const JUDGMENT_NEEDLE = "never post idle narration";
+const JUDGMENT_NEEDLE = "Join only when addressed";
 
 test("exceeding the standing prompt judgment ratchet fails", () => {
   const mutated = registry();

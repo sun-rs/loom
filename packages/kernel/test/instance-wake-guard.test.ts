@@ -75,6 +75,53 @@ test("an instance's explicit @ in a Worker reply wakes exactly the mentioned ins
   }
 });
 
+test("box writes never schedule the writer; a subsequent Human message still does", () => {
+  for (const body of ["My result", "@alpha my result", "@all my result"]) {
+    const state = fixture(["alpha", "beta"]);
+    try {
+      const alpha = state.agents.alpha!;
+      state.kernel.postRoomMessage(state.humanActor, {
+        body: "@alpha review",
+        idempotencyKey: "start",
+        roomId: state.room.roomId,
+      });
+      const turn = beginNextActivation(state.kernel, alpha);
+      const posted = state.kernel.postWorkerMessage(turn.execution, {
+        basedOnRoomSeq: turn.activation.toSeq,
+        body,
+        idempotencyKey: "answer",
+      });
+      assert.ok("event" in posted);
+      assert.equal(
+        sql(
+          state,
+          "SELECT * FROM inbox_items WHERE event_id = ? AND participant_id = ?",
+          posted.event.eventId,
+          alpha.principalId,
+        ).length,
+        0,
+      );
+      turn.finish();
+      const host = hosts.get(state.kernel)!.get(alpha.principalId)!;
+      assert.equal(
+        state.kernel.leaseNextActivation(host, { leaseMs: 30_000 }),
+        null,
+        body,
+      );
+      const external = state.kernel.postRoomMessage(state.humanActor, {
+        body: "@alpha follow up",
+        idempotencyKey: "follow-up",
+        roomId: state.room.roomId,
+      });
+      const next = state.kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+      assert.ok(next);
+      assert.equal(next.toSeq, external.event.roomSeq);
+    } finally {
+      state.close();
+    }
+  }
+});
+
 test("an instance's Thread reply wakes neither Thread followers nor the Thread root author without @", () => {
   const state = fixture(["alpha", "beta"]);
   try {

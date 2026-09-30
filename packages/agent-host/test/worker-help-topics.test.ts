@@ -57,6 +57,25 @@ test("bare worker help advertises the topic list", async () => {
     assert.ok(state.stdout().includes(topic), topic);
 });
 
+test("static help accepts the wake's turn option without credentials or network", async () => {
+  for (const tail of [[], ["attachments"], ["protocol"]]) {
+    const plain = runtime();
+    assert.equal(
+      await runWorkerCliCommand(["worker", "help", ...tail], plain.runtime),
+      0,
+    );
+    for (const args of [
+      ["worker", "help", ...tail, "--turn", "expired-handle"],
+      ["worker", "help", "--turn", "expired-handle", ...tail],
+    ]) {
+      const state = runtime();
+      assert.equal(await runWorkerCliCommand(args, state.runtime), 0);
+      assert.equal(state.stdout(), plain.stdout());
+      assert.equal(state.stderr(), "");
+    }
+  }
+});
+
 test("help topics carry no credential transport detail", () => {
   for (const topic of WORKER_HELP_TOPIC_NAMES) {
     const text = workerHelpTopic(topic)!;
@@ -87,4 +106,24 @@ test("contract §3: worker help threads states that @all / @所有人 addresses 
     topic,
     /`@all` or `@所有人` addresses every other Agent member/u,
   );
+});
+
+test("ordinary message help is a bounded read/write card with complete wake arguments", () => {
+  const text = workerHelpTopic("messages")!;
+  assert.ok(text.length <= 1800, `ordinary help is ${text.length} characters`);
+  assert.match(text, /Reply context/u);
+  assert.match(text, /--based-on-room-seq/u);
+  assert.match(text, /--turn/u);
+  assert.match(text, /stdin/u);
+  assert.match(text, /message-check/u);
+  assert.match(text, /message-read/u);
+  assert.match(text, /help messages-advanced/u);
+  assert.doesNotMatch(
+    text,
+    /task-claim|Live inbox notices|continueAnywaySuggested/u,
+  );
+  const detail = workerHelpTopic("messages-advanced")!;
+  assert.ok(detail);
+  assert.match(detail, /continueAnywaySuggested/u);
+  assert.match(detail, /--send-draft/u);
 });

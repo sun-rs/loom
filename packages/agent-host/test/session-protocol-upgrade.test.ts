@@ -115,7 +115,7 @@ test("worker help protocol renders the current compact rules card", async () => 
   assert.equal(status, 0);
   assert.equal(stdout, `${renderStandingProtocolCard()}\n`);
   assert.ok(stdout.includes(`v${STANDING_PROTOCOL_VERSION}`));
-  assert.match(stdout, /message-post --target/u);
+  assert.match(stdout, /message-post <Reply context arguments>/u);
   assert.match(stdout, /--based-on-room-seq/u);
   // It summarizes the rules; it never claims the native system prompt changed.
   assert.doesNotMatch(stdout, /system prompt (was |has been )?replaced/iu);
@@ -127,6 +127,10 @@ test("worker help protocol renders the current compact rules card", async () => 
     ),
   );
   assert.equal(protocolUpdateNotice("x").includes("\n"), false);
+  assert.match(
+    protocolUpdateNotice("x"),
+    /message-post publishes without ending execution.*--final remains explicit for completed work only/u,
+  );
 });
 
 test("S2-c2: a resumed Kimi instance session gets the protocol card (no system layer) until a carrying turn is accepted", async () => {

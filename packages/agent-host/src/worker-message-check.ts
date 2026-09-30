@@ -38,7 +38,11 @@ export async function drainWorkerMessages(input: {
       renderWorkerReadResult(
         "/v1/worker/sync",
         {},
-        { ...page.delivery, latestRoomSeq: page.throughSeq },
+        {
+          ...page.delivery,
+          latestRoomSeq: page.throughSeq,
+          compactWake: !input.replay,
+        },
       )!
         .replaceAll(
           "No new inbox messages.",

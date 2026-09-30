@@ -260,14 +260,14 @@ function workerCommand(text, tokens) {
   const turnMatch = /--turn (\S+)/u.exec(text);
   const turnArg = turnMatch ? ` --turn ${turnMatch[1]}` : "";
   const reply =
-    /Reply: message-post --target "[^"]+"(?: --turn \S+)? --based-on-room-seq (\d+)( --final)?/u.exec(
+    /(?:Reply: message-post|Reply context:) --target "[^"]+"(?: --turn \S+)? --based-on-room-seq (\d+)( --final)?/u.exec(
       text,
     );
   const cli = '"$RAH_WORKER_CLI" worker';
   if (tokens.has("check") || !reply || /message-check --startup/u.test(text))
     return `${cli} message-check${/message-check --startup/u.test(text) ? " --startup" : ""}${turnArg}`;
-  const final = reply[2] !== undefined && !tokens.has("nofinal");
-  return `${cli} message-post${turnArg} --based-on-room-seq ${reply[1]}${final ? " --final" : ""} <<'EOF'\nFAKE KIMI reply\nEOF`;
+  const final = !tokens.has("nofinal");
+  return `${cli} message-post${turnArg} --based-on-room-seq ${reply[1]}${final ? " --final" : " --progress"} <<'EOF'\nFAKE KIMI reply\nEOF`;
 }
 
 async function runPrompt(frame) {

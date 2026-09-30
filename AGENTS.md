@@ -167,16 +167,17 @@ asserts the exact catalog binding id and reasoning level and fails rather than
 silently substituting another model. Change the table and that module together,
 and only with owner approval.
 
-| CLI         | Model binding id             | Reasoning | Approved   |
-| ----------- | ---------------------------- | --------- | ---------- |
-| Claude Code | `sonnet`                     | `low`     | 2026-09-09 |
-| Claude Code | `haiku`                      | none      | 2026-09-25 |
-| Codex       | `gpt-5.6-luna`               | `low`     | 2026-09-09 |
-| Codex       | `gpt-6-luna`                 | `low`     | 2026-09-25 |
-| OpenCode    | `deepseek/deepseek-v4-flash` | `low`     | 2026-09-09 |
-| OpenCode    | `deepseek/deepseek-flash`    | `low`     | 2026-09-25 |
-| Kimi CLI    | `kimi-code/k3`               | `high`    | 2026-09-09 |
-| Kimi CLI    | `kimi-code/k3-256k`          | `low`     | 2026-09-25 |
+| CLI         | Model binding id               | Reasoning | Approved   |
+| ----------- | ------------------------------ | --------- | ---------- |
+| Claude Code | `sonnet`                       | `low`     | 2026-09-09 |
+| Claude Code | `haiku`                        | none      | 2026-09-25 |
+| Codex       | `gpt-5.6-luna`                 | `low`     | 2026-09-09 |
+| Codex       | `gpt-6-luna`                   | `low`     | 2026-09-25 |
+| OpenCode    | `deepseek/deepseek-v4-flash`   | `low`     | 2026-09-09 |
+| OpenCode    | `deepseek/deepseek-flash`      | `low`     | 2026-09-25 |
+| OpenCode    | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-09-30 |
+| Kimi CLI    | `kimi-code/k3`                 | `high`    | 2026-09-09 |
+| Kimi CLI    | `kimi-code/k3-256k`            | `low`     | 2026-09-25 |
 
 Binding ids are the ones the installed CLIs actually publish (verified with
 `probeLocalModelCatalog`); do not invent version-suffixed ids. The Claude Code

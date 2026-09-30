@@ -1033,15 +1033,15 @@ test("Worker message CLI exposes explicit Thread and top-level targets without a
   }
 });
 
-test("message-post --final marks the committing reply; the default post stays non-final", async () => {
+test("message-post publishes without ending work; only explicit final ends it and drafts retain intent", async () => {
   const state = fixture();
   try {
     const base = ["worker", "message-post", "--body", "answer"];
     assert.equal(await runWorkerCliCommand(base, state.runtime), 0);
     assert.equal(
-      Object.hasOwn(state.requests[0]?.body as object, "final"),
-      false,
-      "a progress post never ends the turn",
+      (state.requests[0]?.body as Record<string, unknown>).final,
+      undefined,
+      "publishing alone must not request interruption of unfinished work",
     );
     assert.equal(
       await runWorkerCliCommand([...base, "--final"], state.runtime),
@@ -1061,6 +1061,50 @@ test("message-post --final marks the committing reply; the default post stays no
     assert.equal(
       (state.requests[2]?.body as Record<string, unknown>).final,
       true,
+    );
+    assert.equal(
+      await runWorkerCliCommand([...base, "--progress"], state.runtime),
+      0,
+    );
+    assert.equal(
+      Object.hasOwn(state.requests[3]?.body as object, "final"),
+      false,
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--send-draft"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      Object.hasOwn(state.requests[4]?.body as object, "final"),
+      false,
+      "resend preserves the draft's stored intent",
+    );
+    const count = state.requests.length;
+    for (const flags of [
+      ["--final", "--progress"],
+      ["--progress", "false"],
+      ["--send-draft", "--progress"],
+    ]) {
+      assert.notEqual(
+        await runWorkerCliCommand(
+          [
+            "worker",
+            "message-post",
+            ...flags,
+            ...(flags.includes("--send-draft") ? [] : ["--body", "x"]),
+          ],
+          state.runtime,
+        ),
+        0,
+      );
+    }
+    assert.equal(
+      state.requests.length,
+      count,
+      "invalid intent never reaches the server",
     );
     // A flag, never a value: `--final false` is rejected, not silently final.
     assert.notEqual(
@@ -1137,7 +1181,7 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
     );
     assert.match(
       state.stdout(),
-      /"\$RAH_WORKER_CLI" worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+      /"\$RAH_WORKER_CLI" worker message-post --progress --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
     );
     assert.match(
       state.stdout(),
@@ -1358,7 +1402,7 @@ test("A possible thread target mismatch is an unsuccessful send offering exactly
     );
     assert.match(
       state.stderr(),
-      /If this reply belongs in the thread, send the message to the thread target instead:\n {2}"\$RAH_WORKER_CLI" worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+      /If this reply belongs in the thread, send the message to the thread target instead:\n {2}"\$RAH_WORKER_CLI" worker message-post --progress --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
     );
     assert.match(
       state.stderr(),
@@ -1867,7 +1911,7 @@ test("a server error under --json keeps Raft's text error block on stderr", asyn
   }
 });
 
-test("a successful send prints Raft's sent line and thread reply hint on stdout", async () => {
+test("a successful send does not invent a thread from a message id", async () => {
   const state = fixture();
   try {
     state.runtime.fetch = async () =>
@@ -1887,7 +1931,7 @@ test("a successful send prints Raft's sent line and thread reply hint on stdout"
     );
     assert.equal(
       state.stdout(),
-      'Message sent to #ops. Message ID: message_ab12cd34ef56 (to reply in this message\'s thread, use target "#ops:message_")\n',
+      "Message sent to #ops. Message ID: message_ab12cd34ef56\n",
     );
     assert.equal(state.stderr(), "");
   } finally {
@@ -1922,7 +1966,7 @@ test("a send to a thread target repeats that target and adds no second hint", as
     );
     assert.equal(
       state.stdout(),
-      'Message sent to #ops:thread-1. Message ID: message_ffffffff0000 (to reply in this message\'s thread, use target "#ops:thread-1")\n',
+      "Message sent to #ops:thread-1. Message ID: message_ffffffff0000\n",
     );
   } finally {
     rmSync(state.directory, { force: true, recursive: true });

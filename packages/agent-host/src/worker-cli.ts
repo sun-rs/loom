@@ -283,6 +283,23 @@ export async function runWorkerCliCommand(
     stdout: process.stdout,
   },
 ): Promise<0 | 1> {
+  // Static documentation has no execution scope. Accept the wake's uniform
+  // --turn option without opening credentials (including an expired turn).
+  if (
+    arguments_[0] === "worker" &&
+    ["help", "--help"].includes(arguments_[1] ?? "")
+  ) {
+    const index = arguments_.indexOf("--turn");
+    if (
+      index >= 2 &&
+      arguments_[index + 1] !== undefined &&
+      !arguments_[index + 1]!.startsWith("--")
+    )
+      arguments_ = [
+        ...arguments_.slice(0, index),
+        ...arguments_.slice(index + 2),
+      ];
+  }
   if (
     (arguments_.length === 3 &&
       arguments_[0] === "agent" &&
@@ -932,7 +949,7 @@ function parseCommand(
   const options = parseOptions(
     arguments_.slice(2),
     command === "message-post"
-      ? ["anyway", "final", "json", "send-draft", "top-level"]
+      ? ["anyway", "final", "progress", "json", "send-draft", "top-level"]
       : // Raft puts `--json` on 19 of its 80 commands; `version`
         // (`main.js@32534037`), `profile show` (`main.js@32682200`) and
         // `profile update` (`main.js@32599200`) are the three of those in this
@@ -1053,6 +1070,7 @@ function parseCommand(
         "body",
         // The post completes the reply; the Host may then end the turn.
         "final",
+        "progress",
         "held-draft-id",
         "idempotency-key",
         // `--json` selects the output stream only; it never reaches the server.
@@ -1089,6 +1107,15 @@ function parseCommand(
           ? {}
           : { idempotencyKey: boundedText(options, "idempotency-key", 512) }),
       };
+      if (
+        options.progress !== undefined &&
+        (options.final !== undefined || options["send-draft"] !== undefined)
+      )
+        throw new Error(
+          "--progress cannot be combined with --final or --send-draft; a saved draft retains its original intent",
+        );
+      // Publishing is not a declaration that all current work is complete.
+      // Only explicit final requests interruption; resends retain draft intent.
       const finalReply = options.final === "true" ? { final: true } : {};
       const replyTarget =
         options["top-level"] === "true"
@@ -1996,9 +2023,10 @@ Routine Room and Task mutations resolve their read position and operation identi
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
 "$RAH_WORKER_CLI" worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
 "$RAH_WORKER_CLI" worker message-react --message-id ID --emoji EMOJI [--remove]
-"$RAH_WORKER_CLI" worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level] [--final]
+"$RAH_WORKER_CLI" worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level] [--final | --progress]
 "$RAH_WORKER_CLI" worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
+message-post only publishes; add --final explicitly only after completing all current work. --progress is non-final; --send-draft retains the saved intent.
 Commands print human-readable text on stdout: read it. Only message-post, version, profile-show and profile-update accept --json, and only when you need the machine-readable object; whoami answers in JSON and takes no flag.
 "$RAH_WORKER_CLI" worker thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]
 "$RAH_WORKER_CLI" worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE]

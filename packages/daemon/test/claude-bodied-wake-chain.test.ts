@@ -254,7 +254,7 @@ test("bodied wake (Claude): one --final reply completes the Activation without m
   }
 });
 
-test("bodied wake (Claude): a reply without --final keeps the follow-up generation and still completes", async () => {
+test("bodied wake (Claude): explicit progress keeps the follow-up generation and still completes", async () => {
   const context = await fixture();
   try {
     context.setMode("nofinal");
@@ -395,11 +395,11 @@ const cli = (command, input) => new Promise((resolve) => {
   child.once("close", (status) => { record({ event: "command", command, status, stdout, stderr }); resolve(); });
 });
 async function act(text) {
-  const reply = /Reply: message-post --target "[^"]+"(?: --turn \\S+)? --based-on-room-seq (\\d+)( --final)?/.exec(text);
+  const reply = /(?:Reply: message-post|Reply context:) --target "[^"]+"(?: --turn \\S+)? --based-on-room-seq (\\d+)( --final)?/.exec(text);
   const startup = /message-check --startup/.test(text);
   let command;
   if (mode === "check" || startup || !reply) command = ["worker", "message-check", ...(startup ? ["--startup"] : [])];
-  else command = ["worker", "message-post", ...(mode === "wrong-room" ? ["--target", "#away"] : []), "--based-on-room-seq", reply[1], ...(mode !== "nofinal" && reply[2] ? ["--final"] : [])];
+  else command = ["worker", "message-post", ...(mode === "wrong-room" ? ["--target", "#away"] : []), "--based-on-room-seq", reply[1], ...(mode !== "nofinal" ? ["--final"] : ["--progress"])];
   const final = command.includes("--final");
   const id = "tool-" + activationId;
   send({type:"assistant",message:{role:"assistant",content:[{type:"tool_use",id,name:"Bash",input:{command:"rah " + command.join(" ") + (final ? " <<'EOF'\\nFAKE CLAUDE reply\\nEOF" : "")}}]}});

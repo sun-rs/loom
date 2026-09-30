@@ -53,15 +53,15 @@ const HELP_POINTER = `Details: \`"$RAH_WORKER_CLI" worker help <topic>\` — top
 export function workerCliSection(): string {
   return `## Worker CLI
 
-The RAH Worker service is the only collaboration truth: use the absolute \`"$RAH_WORKER_CLI" worker\` path for every Room or Task read/mutation, one command at a time, and never read, print, copy, or forward its credential file. Commands print human-readable text on stdout — read that text. On a refusal trust the stderr \`Effect:\` line, not the exit status: \`Effect: message_queued\` means posted, do not resend it; \`Effect: not_sent\` means nothing was committed.
+Use \`"$RAH_WORKER_CLI" worker\` for Room/Task reads and writes, one command at a time, and never read, print, copy, or forward its credential file. Commands print human-readable text on stdout — read that text. On errors follow the printed Effect and Next action; never blindly resend.
 
-Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action. \`"$RAH_WORKER_CLI" worker message-check\` delivers your messages (\`--replay\` after a lost tool result). Reads never acknowledge Inbox, and never grant Room membership, Task ownership or execution authority.
+Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action.
 
-Reply once with \`message-post\`; after a successful post your turn is done unless new work arrived. Use \`--final\` on the post completing your reply to delivered messages; omit it on progress posts. Use \`"$RAH_WORKER_CLI" worker message-post --target <target> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message (\`#room-slug\`, \`dm:@handle\`, \`#room-slug:THREAD_ID\`). A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join others' back-and-forth only when addressed; never post idle narration.
+\`message-post\` publishes without ending execution. Only after completing all current work may you explicitly add \`--final\` to end the turn; never use it for a plan, progress, or a trial post. After a peer handoff, stop and await its next wake. Use \`"$RAH_WORKER_CLI" worker message-post <Reply context arguments> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message. A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join only when addressed.
 
 ### Tasks
 
-The Human decides what becomes a Task. Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it. If fulfilling a top-level message requires you to take action beyond just replying (writing code, making changes, deploying), claim before you start with \`"$RAH_WORKER_CLI" worker task-claim-message --message-id <id> --rationale <why>\`, then \`task-start\`, do the work, and \`task-progress\` and \`task-submit\` with honest evidence; only top-level Room messages can become Tasks. A failed claim is a concurrency lock: do not start conflicting execution. On a Task event, act as owner only when \`task-get\` shows it assigned to you or unassigned and open. Do not mark work done before Human approval.
+The Human decides what becomes a Task. Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it. If fulfilling a top-level message requires you to take action beyond just replying (writing code, making changes, deploying), claim before you start; read \`"$RAH_WORKER_CLI" worker help tasks\` for the claim and execution commands. Only top-level Room messages can become Tasks. A failed claim is a concurrency lock: do not start conflicting execution. On a Task event, act as owner only when \`task-get\` shows it assigned to you or unassigned and open. Do not mark work done before Human approval.
 
 ${HELP_POINTER}`;
 }
@@ -80,7 +80,7 @@ For follow-up that depends on future state, schedule \`"$RAH_WORKER_CLI" reminde
 export function communicationStyleSection(): string {
   return `## Communication style
 
-Plan briefly (early, if it needs a visible acknowledgment, blocker question or ownership signal); update multi-step work; end with outcome, caveat and next owner. Default to the shortest useful form; do not paste execution logs. Write plain, complete sentences without internal shorthand.`;
+Publish substantive results or necessary blocker questions; do not post plans or acknowledgments before doing the work. Be concise; use plain sentences, not execution logs.`;
 }
 
 export function formattingSection(): string {
@@ -98,7 +98,7 @@ export function formattingSection(): string {
  * The daemon places the launch delivery-mode section before these rules.
  */
 export function startupRulesSection(): string {
-  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. Wake commands omit the CLI prefix; \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. On \`Reply:\`, post once with its \`--based-on-room-seq\`: the wake already carries the new messages, so no \`message-check\` or \`message-read\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
+  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. Do the requested work, then publish the answer with \`message-post\` using its \`Reply context:\` arguments. For multiple targets, post separately with each target and the shared seq/turn. Complete wakes already supply the messages; no \`message-check\` or \`message-read\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
 
 Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
 }
@@ -136,7 +136,7 @@ export function renderStandingProtocolCard(): string {
 
 /** The ONE wake line a resumed session gets when its protocol is outdated. */
 export function protocolUpdateNotice(version: string): string {
-  return `Protocol updated (v${version}): help protocol summarizes the current rules.`;
+  return `Protocol updated (v${version}): Complete wakes carry messages and Reply context arguments, not commands; message-post publishes without ending execution. --final remains explicit for completed work only. Read help protocol for the updated rules.`;
 }
 
 /**

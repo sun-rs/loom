@@ -17,6 +17,7 @@ test("admits exactly the owner-approved provider/model/effort combinations", () 
     ["kimi", "kimi-code/k3-256k", "low"],
     ["claude", "haiku", null],
     ["opencode", "deepseek/deepseek-flash", "low"],
+    ["opencode", "aihubmix/deepseek-v4.1-flash", "low"],
   ];
   for (const [provider, model, effort] of admitted)
     assert.doesNotThrow(

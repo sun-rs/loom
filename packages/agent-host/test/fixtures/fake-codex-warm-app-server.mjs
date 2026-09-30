@@ -223,13 +223,19 @@ const server = createServer(async (socket) => {
       has("final-noack") ||
       has("final-late") ||
       has("post-nofinal") ||
+      has("post-progress") ||
       has("final-wait") ||
       has("final-hang");
     if (finalReply) {
       usage(turn); // the generation that decided to post
       if (!has("final-noack"))
         await toolItem(turn, handle, "check", ["worker", "message-check"]);
-      const flag = has("post-nofinal") || has("final-wait") ? [] : ["--final"];
+      const flag =
+        has("post-progress") || has("final-wait")
+          ? ["--progress"]
+          : has("post-nofinal")
+            ? []
+            : ["--final"];
       await toolItem(turn, handle, "post", [
         "worker",
         "message-post",

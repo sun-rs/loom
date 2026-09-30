@@ -39,7 +39,7 @@ test("hold guidance carries the invocation's --turn on every recovery command", 
   );
   assert.match(
     text,
-    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --target '#drift' <</u,
+    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --progress --target '#drift' <</u,
   );
   assert.doesNotMatch(workerHeldSendGuidance(held)!, /--turn/u);
 });
@@ -52,7 +52,7 @@ test("thread-target confirmation carries the invocation's --turn", () => {
   );
   assert.match(
     body,
-    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --target '#drift:abcd1234' <</u,
+    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --progress --target '#drift:abcd1234' <</u,
   );
   assert.match(
     workerTargetConfirmationNextAction(confirmation, " --turn t1")!,
@@ -80,4 +80,5 @@ test("revision guidance explicitly preserves the model's original reply intent",
     replyIntent: { final: false },
   });
   assert.doesNotMatch(progress!, /--final|--based-on-room-seq/u);
+  assert.match(progress!, /message-post --progress --target/u);
 });

@@ -57,6 +57,8 @@ export const WorkerSyncResponseSchema = refineRoomSyncWindow(
   z
     .object({
       ...roomSyncResponseShape,
+      // Exact current-Run sent-wake bodies. Presentation only, not ACK.
+      deliveredInWakeSeqs: z.array(z.number().int().positive()).optional(),
       addressing: WorkerAddressingSchema.optional(),
       presentedContext: WorkerPresentedContextSchema.optional(),
     })

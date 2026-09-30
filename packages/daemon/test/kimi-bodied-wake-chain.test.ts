@@ -247,7 +247,7 @@ test("bodied wake (Kimi): one --final reply completes the Activation without mes
   }
 });
 
-test("bodied wake (Kimi): a reply without --final keeps the follow-up generation and still completes", async () => {
+test("bodied wake (Kimi): explicit progress keeps the follow-up generation and still completes", async () => {
   const context = await fixture();
   try {
     context.setScenario("nofinal");

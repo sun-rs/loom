@@ -1,0 +1,321 @@
+{
+  "batch": "P72",
+  "date": "2026-09-30T10:49:17.450Z",
+  "config": {
+    "provider": "opencode",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low"
+  },
+  "plan": {
+    "batch": "P72",
+    "provider": "opencode",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low",
+    "authorization": "owner selected AIHubMix V4.1 Flash / low; native and Loom one session each, two turns each; no paid retries",
+    "sourceHashes": {
+      "state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+      "state-backup-runtime-credentials.test.ts": "ba902f73eafe7baf9f8bf0d2361de03d84e82b6bceb1f705ad42fa2697ad4905"
+    }
+  },
+  "roomId": "room_d0abb0b4-04b0-4cec-854f-f848c88e0414",
+  "native": [
+    {
+      "round": 1,
+      "sessionId": "ses_f0e2dafd5ffe5YK05Qe964O3Rq",
+      "status": "file-delivered",
+      "fileDelivered": true,
+      "answer": "# 审查结论\n\n机制有效：排除以路径正则（L76-80）为唯一判据，在 `fileInventory`（L95-101）、`backupState`（L170）、`databaseInventory`（L128）三处一致生效并记录回执；`verifyStateBackup` 用 `allowRuntimeCredentials=false` 反查（L251-255），备份内出现该目录即抛错。provider session 按普通文件被哈希与复制保留（L105-109、L189-194），测试 1 已覆盖。\n\n条件性风险：排除仅靠路径名，且 L94/L169 只拒绝符号链接。硬链接、拷贝出的同名凭据文件，或非小写 UUID、非根级 `warm-runtimes` 的路径不会被识别，将作为普通文件进入备份并通过 L251 校验，形成泄漏；是否成立取决于真实实例目录命名与凭据是否会重复落盘。\n\n测试建议：\n1. 补 restore 往返用例：`restoreStateSnapshot` 后断言 provider-sessions 内容一致、turns 未被重新引入。\n2. 补硬链接/拷贝凭据落在普通路径的用例，断言被拒或计入 omitted，锁定边界。\n",
+      "generations": 4,
+      "generationsTotal": 4,
+      "generationsBeforeReply": 4,
+      "generationsAfterReply": 0,
+      "input": 87703,
+      "cached": 62464,
+      "uncached": 25239,
+      "output": 6231,
+      "reasoning": 5635,
+      "firstInput": 13474,
+      "peakInput": 26897,
+      "replySeconds": 46.59101806640625,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T10:18:11.453Z",
+          "name": "read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:18:11.531Z",
+          "name": "read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:18:49.741Z",
+          "name": "bash",
+          "kind": "other"
+        },
+        {
+          "at": "2026-09-30T10:18:53.392Z",
+          "name": "write",
+          "kind": "other"
+        }
+      ],
+      "harnessError": "Missing effective final answer; retain cost evidence",
+      "startedAt": "2026-09-30T10:18:06.799Z",
+      "finishedAt": "2026-09-30T10:18:56.844Z",
+      "providerFrames": [
+        {
+          "input": 13474,
+          "cached": 1792,
+          "output": 113,
+          "reasoning": 7
+        },
+        {
+          "input": 20795,
+          "cached": 13440,
+          "output": 58,
+          "reasoning": 5624
+        },
+        {
+          "input": 26537,
+          "cached": 20736,
+          "output": 340,
+          "reasoning": 4
+        },
+        {
+          "input": 26897,
+          "cached": 26496,
+          "output": 85,
+          "reasoning": 0
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "sessionId": "ses_f0e2dafd5ffe5YK05Qe964O3Rq",
+      "status": "completed",
+      "fileDelivered": true,
+      "answer": "# 补充结论\n\n撤回上一轮硬链接泄漏假设：turns 只存临时凭据、绑定仅在 provider-sessions，故不存在同名凭据落普通路径的误判风险。机制可接受。\n\n区分两点：文件保留已由测试证明（provider-sessions 字节级哈希复制，turns 整体排除，L251-255 反查）。真实 CLI 恢复未被证明——文件在，不等于该 session 仍可被 CLI resume；这属真实 provider 门，非本文件职责。\n\n最小剩余验收：一条 restore 往返用例，断言还原后 provider-sessions 字节一致、turns 未被重新引入；真实 CLI resume 另开 opt-in 门。\n",
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 2,
+      "generationsAfterReply": 0,
+      "input": 54629,
+      "cached": 53888,
+      "uncached": 741,
+      "output": 470,
+      "reasoning": 198,
+      "firstInput": 27096,
+      "peakInput": 27533,
+      "replySeconds": 7.75334619140625,
+      "toolCalls": [
+        {
+          "at": "2026-09-30T10:19:53.249Z",
+          "name": "write",
+          "kind": "other"
+        }
+      ],
+      "harnessError": "Missing effective final answer; retain cost evidence",
+      "startedAt": "2026-09-30T10:19:45.494Z",
+      "finishedAt": "2026-09-30T10:19:56.799Z",
+      "providerFrames": [
+        {
+          "input": 27096,
+          "cached": 26880,
+          "output": 223,
+          "reasoning": 198
+        },
+        {
+          "input": 27533,
+          "cached": 27008,
+          "output": 49,
+          "reasoning": 0
+        }
+      ]
+    }
+  ],
+  "loom": [
+    {
+      "round": 1,
+      "runAttemptId": "run_f7f27049-b453-4138-a30b-db7b051cd279",
+      "participantId": "principal_7b35ec72-d4fd-4591-813c-cb4a15e2d0a6",
+      "state": "exited",
+      "startedAt": "2026-09-30T10:47:29.402Z",
+      "finishedAt": "2026-09-30T10:48:23.587Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+        "provider": "aihubmix",
+        "modelId": "aihubmix/deepseek-v4.1-flash",
+        "reasoning": "low"
+      },
+      "sessionId": "ses_f0e12c84cffeeOhuinBEy37Gsd",
+      "modelProof": {
+        "assistants": 4,
+        "compactions": 0
+      },
+      "answer": "@p72 只读结论：\n\n机制有效。排除点由 state-backup.ts:76-80 的 runtimeCredentialDirectory 定义；fileInventory:95-102 与 backupState:170 跳过该目录；provider session 属普通文件，经 :103、:189-193 复制保留。测试 :28-44 验证保留、:45-51 验证排除且拒绝重新注入，均成立。\n\n条件性风险1个：正则(:77)硬编码 warm-runtimes/instrt_<uuid-v4>/turns。若运行时 ID 大小写或格式变化、或 turns 层级改变即失配，凭据目录会被当普通文件读取并复制，可读时静默泄漏（仅不可读时靠 EACCES 兜底）。属条件性风险，非当前确认缺陷。\n\n测试建议2条：\n1. 用大写/非UUID ID 或更深层级路径，断言备份仍拒绝或显式告警，防正则失配静默泄漏。\n2. 端到端 restore 后断言 provider-sessions/session.json 内容不变、turns 未恢复，并校验 receipt.omittedRuntimeCredentials（verifyStateBackup 现未校验该字段）。",
+      "input": 58839,
+      "cached": 37376,
+      "uncached": 21463,
+      "generations": 4,
+      "replySeconds": 50.518,
+      "fullSeconds": 54.185,
+      "providerFrames": [
+        {
+          "input": 9357,
+          "cached": 1792,
+          "output": 56,
+          "reasoning": 7
+        },
+        {
+          "input": 9539,
+          "cached": 9344,
+          "output": 113,
+          "reasoning": 0
+        },
+        {
+          "input": 16853,
+          "cached": 9472,
+          "output": 370,
+          "reasoning": 5808
+        },
+        {
+          "input": 23090,
+          "cached": 16768,
+          "output": 8,
+          "reasoning": 0
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "runAttemptId": "run_0338e9ea-1938-4a85-9e89-b1ec911a5457",
+      "participantId": "principal_7b35ec72-d4fd-4591-813c-cb4a15e2d0a6",
+      "state": "exited",
+      "startedAt": "2026-09-30T10:48:56.899Z",
+      "finishedAt": "2026-09-30T10:49:06.548Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+        "provider": "aihubmix",
+        "modelId": "aihubmix/deepseek-v4.1-flash",
+        "reasoning": "low"
+      },
+      "sessionId": "ses_f0e12c84cffeeOhuinBEy37Gsd",
+      "modelProof": {
+        "assistants": 2,
+        "compactions": 0
+      },
+      "answer": "@p72 接受。撤回上轮\"正则失配静默泄漏\"假设：绑定只在 supervisors/provider-sessions/，turns 仅存临时凭据，格式耦合不构成风险。\n\n须区分：备份/恢复只保证 provider-sessions 文件被复制保留，不等于 CLI 真能凭它恢复会话。已证实的是文件保留（:28-44、:189-193），未证的是恢复后 CLI 实际复用同一 session。\n\n最小剩余验收：备份→restore→启动 CLI，断言 session.json 内容一致且 CLI 复用该 session（而非新建），turns 不恢复。",
+      "input": 46891,
+      "cached": 46208,
+      "uncached": 683,
+      "generations": 2,
+      "replySeconds": 5.681,
+      "fullSeconds": 9.649,
+      "providerFrames": [
+        {
+          "input": 23267,
+          "cached": 23040,
+          "output": 237,
+          "reasoning": 58
+        },
+        {
+          "input": 23624,
+          "cached": 23168,
+          "output": 20,
+          "reasoning": 0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "native": {
+      "input": 142332,
+      "cached": 116352,
+      "uncached": 25980,
+      "generations": 6
+    },
+    "loom": {
+      "input": 105730,
+      "cached": 83584,
+      "uncached": 22146,
+      "generations": 6
+    },
+    "inputRatio": 0.7428406823483124,
+    "uncachedRatio": 0.8524249422632795,
+    "batchInput": 248062
+  },
+  "queue": {
+    "busy": false,
+    "activations": [
+      {
+        "activation_id": "activation_be5d01be-790a-40c9-a6df-3a99dd15ac49",
+        "state": "completed",
+        "from_seq": 4,
+        "to_seq": 4
+      },
+      {
+        "activation_id": "activation_46358b76-01c5-45a7-9196-1fda1967a0d9",
+        "state": "completed",
+        "from_seq": 13,
+        "to_seq": 13
+      }
+    ],
+    "selfMessageInboxCount": 0,
+    "idleRecheckedAt": "2026-09-30T10:51:10.234Z",
+    "runCountAtRecheck": 2
+  },
+  "usageGaps": [],
+  "limits": [
+    "One session per arm, two rounds; no statistical or causal estimate",
+    "Native uses run processes and Markdown delivery; Loom uses warm serve and Room delivery; explicit source paths and identical snapshots",
+    "Native helper expected a fixed final-answer prefix from another workload; actual file delivery and model/usage evidence checked without rerunning round 1",
+    "Native round 2 withdrawal of hardlink risk is not fully justified; neither file presence nor successful replies proves semantic quality",
+    "Not the full contract section 6 workload; all raw input retained"
+  ],
+  "code": {
+    "head": "8be0c77",
+    "dirty": true,
+    "standingProtocol": "3b363cd93914",
+    "cli": "OpenCode 1.18.32"
+  },
+  "findings": [
+    "Both arms delivered twice, four generations then two, each preserving its own session",
+    "Loom has only two completed Activations and no self-message Inbox; no help/check/read of its own message",
+    "Native first model input 13474 vs Loom 9357: baseline prompt/tool environment is not byte-identical, origin not isolated",
+    "Native reads source before listing output directory; Loom lists project before source reads; repeated context cost depends on that order",
+    "Both round 2 withdrawals are inadequately justified: binding location does not establish UUID shape or absence of credential copies",
+    "Loom posts an invented @p72 handle and exceeds requested concision; delivered answers are not a blanket quality pass"
+  ],
+  "verdict": "real-delivery-and-continuity-pass; single-sample raw accounting below native, not full section 6 efficiency or semantic-quality acceptance",
+  "loomTools": [
+    {
+      "tool": "bash",
+      "status": "completed",
+      "command": "ls -la /private/tmp/loom-opencode-p72-20260930/project"
+    },
+    {
+      "tool": "read",
+      "status": "completed",
+      "file": "/private/tmp/loom-opencode-p72-20260930/project/state-backup.ts"
+    },
+    {
+      "tool": "read",
+      "status": "completed",
+      "file": "/private/tmp/loom-opencode-p72-20260930/project/state-backup-runtime-credentials.test.ts"
+    },
+    {
+      "tool": "bash",
+      "status": "completed",
+      "command": "\"$RAH_WORKER_CLI\" worker message-post --target \"#e2e-discuss-value-0930-1790763612880\" --turn <redacted> --based-on-room-seq 4 <<'RAH_MESSAGE_EOF'\n@p72 只读结论：\n\n机制有效。排除点由 state-backup.ts:76-80 的 runtimeCredentialDirectory 定义；fileInventory:95-102 与 backupState:170 跳过该目录；provider session 属普通文件，经 :103、:189-193 复制保留。测试 :28-44 验证保留、:45-51 验证排除且拒绝重新注入，均成立。\n\n条件性风险1个：正则(:77)硬编码 warm-runtimes/instrt_<uuid-v4>/turns。若运行时 ID 大小写或格式变化、或 turns 层级改变即失配，凭据目录会被当普通文件读取并复制，可读时静默泄漏（仅不可读时靠 EACCES 兜底）。属条件性风险，非当前确认缺陷。\n\n测试建议2条：\n1. 用大写/非UUID ID 或更深层级路径，断言备份仍拒绝或显式告警，防正则失配静默泄漏。\n2. 端到端 restore 后断言 provider-sessions/session.json 内容不变、turns 未恢复，并校验 receipt.omittedRuntimeCredentials（verifyStateBackup 现未校验该字段）。\nRAH_MESSAGE_EOF"
+    },
+    {
+      "tool": "bash",
+      "status": "completed",
+      "command": "\"$RAH_WORKER_CLI\" worker message-post --target \"#e2e-discuss-value-0930-1790763612880\" --turn <redacted> --based-on-room-seq 13 <<'RAH_MESSAGE_EOF'\n@p72 接受。撤回上轮\"正则失配静默泄漏\"假设：绑定只在 supervisors/provider-sessions/，turns 仅存临时凭据，格式耦合不构成风险。\n\n须区分：备份/恢复只保证 provider-sessions 文件被复制保留，不等于 CLI 真能凭它恢复会话。已证实的是文件保留（:28-44、:189-193），未证的是恢复后 CLI 实际复用同一 session。\n\n最小剩余验收：备份→restore→启动 CLI，断言 session.json 内容一致且 CLI 复用该 session（而非新建），turns 不恢复。\nRAH_MESSAGE_EOF"
+    }
+  ],
+  "noPaidRetries": true,
+  "authorization": "owner: AIHubMix V4.1 Flash / low; native and formal Loom each one session and two rounds"
+}

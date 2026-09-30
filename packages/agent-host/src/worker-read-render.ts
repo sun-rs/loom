@@ -478,7 +478,11 @@ function renderMessageSearch(body: Json, result: Json): string {
  * event, and the `formatMessageLine` shape for `message.posted`, so a delivered
  * message body is text on the line rather than a field inside JSON.
  */
-function eventLines(rawEvent: Json, addressing?: unknown): string[] {
+function eventLines(
+  rawEvent: Json,
+  addressing?: unknown,
+  deliveredInWake = false,
+): string[] {
   const event = addressed(rawEvent, addressing);
   const payload = asRecord(event.payload);
   const actor =
@@ -493,6 +497,8 @@ function eventLines(rawEvent: Json, addressing?: unknown): string[] {
       `type=${asString(event.type) ?? "-"}`,
     ];
     if (threadId !== undefined) header.push(`threadId=${threadId}`);
+    if (deliveredInWake)
+      return [`[${header.join(" ")}] @${actor}: (delivered in this wake)`];
     const lines = [
       `[${header.join(" ")}] @${actor}: ${
         asString(payload.body) ?? ""
@@ -666,9 +672,23 @@ function renderSync(result: Json): string {
     events.length === 0
       ? "No new inbox messages."
       : events
-          .flatMap((event) => eventLines(event, result.addressing))
+          .flatMap((event) =>
+            eventLines(
+              event,
+              result.addressing,
+              result.compactWake === true &&
+                asArray(result.deliveredInWakeSeqs).includes(event.roomSeq),
+            ),
+          )
           .join("\n"),
   ];
+  if (
+    result.compactWake === true &&
+    asArray(result.deliveredInWakeSeqs).length > 0
+  )
+    sections.push(
+      "Already delivered bodies are referenced above; use message-check --replay to restore their full text.",
+    );
   const presented = presentedContextLines(result.presentedContext);
   if (presented.length > 0) sections.push(presented.join("\n"));
   sections.push(

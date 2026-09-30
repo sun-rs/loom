@@ -250,6 +250,7 @@ export type SyncResult = {
  * already shown to this participant.
  */
 export type WorkerSyncResult = SyncResult & {
+  deliveredInWakeSeqs?: number[];
   addressing?: WorkerAddressing;
   presentedContext?: WorkerPresentedContext;
 };

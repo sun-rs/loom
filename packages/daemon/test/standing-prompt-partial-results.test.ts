@@ -11,7 +11,7 @@ import { compileStandingPrompt } from "../src/standing-prompt-compiler.ts";
  * clear. A tool that reports partial success is worthless if the prompt tells
  * the model to read it as total failure.
  */
-test("the prompt explains a result by effect and code, never by exit status alone", () => {
+test("the prompt follows error recovery output; on-demand help explains partial results", () => {
   const prompt = compileStandingPrompt().prompt;
   // S1-c: the standing prompt keeps the rule; the full error contract lives in
   // `worker help errors`, which the prompt names.
@@ -22,11 +22,14 @@ test("the prompt explains a result by effect and code, never by exit status alon
       /a nonzero exit is never a delivery/u,
       "MENTION_DELIVERY_FAILED exits nonzero with the message already queued",
     );
-    assert.match(text, /Effect: message_queued/u);
-    assert.match(text, /do not resend it/u);
-    // S1-b: a definite server rejection is reported as not sent and correctable.
-    assert.match(text, /Effect: not_sent/u);
   }
+  assert.match(
+    prompt,
+    /On errors follow the printed Effect and Next action; never blindly resend/u,
+  );
+  assert.match(errors, /Effect: message_queued/u);
+  assert.match(errors, /do not resend it/u);
+  assert.match(errors, /Effect: not_sent/u);
   assert.match(prompt, /worker help <topic>.*errors/u);
   assert.match(errors, /MENTION_DELIVERY_FAILED/u);
   // --json prints nothing on stdout for a partial result, so silence there
@@ -37,12 +40,9 @@ test("the prompt explains a result by effect and code, never by exit status alon
   );
 });
 
-test("the prompt states what reading clears and what it never grants", () => {
+test("on-demand reading help states what reading clears and what it never grants", () => {
   const prompt = compileStandingPrompt().prompt;
-  assert.match(
-    prompt,
-    /never grant Room membership, Task ownership or execution authority/u,
-  );
+  assert.match(prompt, /worker help <topic>.*history/u);
   // S1-c: the hold-clearing mechanics are served by `worker help history`
   // and `worker help tasks`; the held command output itself names what to read.
   const history = workerHelpTopic("history")!;
