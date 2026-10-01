@@ -28,6 +28,11 @@ async function fixture() {
   const agent = kernel.provisionPrincipal({ handle: "worker", kind: "agent" });
   const actor = kernel.authenticateAccessToken(human.accessToken);
   const room = kernel.createRoom(actor, { name: "Hold", slug: "hold" });
+  const policyDb = new DatabaseSync(join(directory, "room.db"));
+  policyDb
+    .prepare("UPDATE rooms SET allow_instance_task_creation=1 WHERE room_id=?")
+    .run(room.roomId);
+  policyDb.close();
   kernel.addMember(actor, {
     principalId: agent.principal.principalId,
     roomId: room.roomId,

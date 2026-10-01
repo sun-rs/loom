@@ -151,7 +151,7 @@ export function messagePanel(input: {
               }),
               el("span", {
                 className: "muted",
-                text: ` · #${String(message.roomSeq)} · ${localTime(message.createdAt)}`,
+                text: ` · #${String(message.roomSeq)} · ${localTime(message.createdAt)} · ${message.messageId}`,
               }),
             ]),
             el("div", { className: "message-body", text: message.body }),

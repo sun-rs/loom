@@ -67,6 +67,12 @@ function createFixture() {
     name: "Kernel test",
     slug: "kernel-test",
   });
+  // These lifecycle fixtures explicitly exercise the autonomous Channel policy.
+  const policyDb = new DatabaseSync(databasePath);
+  policyDb
+    .prepare("UPDATE rooms SET allow_instance_task_creation=1 WHERE room_id=?")
+    .run(room.roomId);
+  policyDb.close();
   kernel.addMember(humanActor, {
     principalId: agent.principalId,
     roomId: room.roomId,

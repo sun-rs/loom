@@ -276,7 +276,10 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     withHelp(prompt),
     /A Task is reserved for long-running or multi-step execution/isu,
   );
-  assert.match(prompt, /claim before you start; read.*worker help tasks/isu);
+  assert.match(
+    prompt,
+    /Existing open Tasks may be claimed.*worker help tasks/isu,
+  );
   assert.match(
     onDemand,
     // The claim acknowledges in Raft's text, so the guidance points at the
@@ -303,10 +306,10 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
-    /requires you to take action beyond just replying.*claim/isu,
+    /Task is optional durable tracking, not a prerequisite for ordinary work or code changes/isu,
   );
-  assert.match(prompt, /Only top-level.*can become Tasks/isu);
-  assert.match(onDemand, /from a Human or another Agent/isu);
+  assert.match(onDemand, /Only top-level.*can become Tasks/isu);
+  assert.match(onDemand, /explicit autonomous-creation permission/isu);
   assert.match(prompt, /@<handle>.*message-post/isu);
   assert.match(prompt, /Mention others, not yourself/iu);
   assert.match(prompt, /Room is the isolation boundary/iu);
@@ -387,7 +390,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(prompt, /"\$RAH_WORKER_CLI" worker message-post/u);
   assert.match(onDemand, /Respect ongoing conversations/iu);
   assert.match(onDemand, /Only the person doing the work should report/iu);
-  assert.match(prompt, /Claim before you start.*concurrency lock/isu);
+  assert.match(prompt, /A failed claim is a concurrency lock/isu);
   assert.match(prompt, /Join only when addressed/u);
   assert.match(onDemand, /Before stopping.*blockers you own/isu);
   assert.match(onDemand, /Skip idle narration.*actionable content/isu);

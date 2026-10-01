@@ -864,6 +864,8 @@ function renderServerInfo(result: Json): string {
   text +=
     "Use the room reference as `--target`. Private rooms are shown only when you are a member; do not disclose private-room names, membership, or content outside that room. Run any subcommand with `--help` for syntax.\n";
   text += `${roomLine(asRecord(result.room), {}, true)}\n\n`;
+  const policy = asRecord(result.room).allowInstanceTaskCreation;
+  text += `Task creation: ${policy === true ? "allowed" : policy === false ? "Human confirmation required" : "unknown"}\n\n`;
   text += memberSections(asArray(result.members).map(asRecord));
   return `${text.trimEnd()}\n${formatPageFooter(
     '"$RAH_WORKER_CLI" worker server-info',

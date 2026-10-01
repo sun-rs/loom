@@ -1643,3 +1643,23 @@ test("Agent sync includes the delivered comment file name and identity", () => {
   assert.ok(text);
   assert.match(text, /Comment on file: "index.html" \(attachmentId:html-id\)/);
 });
+
+test("server-info exposes explicit Task creation policy and does not invent absent policy", () => {
+  for (const [value, expected] of [
+    [true, "allowed"],
+    [false, "Human confirmation required"],
+    [undefined, "unknown"],
+  ] as const) {
+    const result = render("/v1/worker/server/info", {
+      room: {
+        roomId: "r",
+        kind: "channel",
+        slug: "c",
+        ...(value === undefined ? {} : { allowInstanceTaskCreation: value }),
+      },
+      members: [],
+      selfParticipantId: "p",
+    });
+    assert.ok(result?.includes(`Task creation: ${expected}`));
+  }
+});

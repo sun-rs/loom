@@ -232,10 +232,15 @@ Before adding state or behavior, name its single owner. Do not create a second q
   transcript or model summary never automatically becomes either one.
 - Unknown provider output stays diagnostic; do not expand the canonical protocol merely to mirror it.
 
-Task is explicit durable work, not a synonym for tool use. Human can mark a Task;
-otherwise brief discussion/search/file reading must not automatically claim one.
-Retain atomic single-winner ownership while allowing explicit helper/reviewer
-roles. CLI exit or a collaborator reply does not complete the Task.
+Task is explicit durable work, not a prerequisite for tools or code changes.
+A Channel's Human-managed `allowInstanceTaskCreation` defaults to false:
+instances suggest work in ordinary messages and Human creates/converts Tasks.
+When enabled, instances may autonomously create/convert Tasks; this accepts
+misclassification risk and does not expand work authorization. Existing open
+Tasks may always be claimed under the usual single-owner and execution fences.
+There is no proposal queue or semantic authorizer. Preserve existing Tasks and
+exact successful idempotent replays when the switch changes. CLI exit or a
+collaborator reply does not complete a Task. See target contract §3a.
 
 ## Native-CLI benchmark
 

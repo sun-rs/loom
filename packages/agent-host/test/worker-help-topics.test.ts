@@ -127,3 +127,14 @@ test("ordinary message help is a bounded read/write card with complete wake argu
   assert.match(detail, /continueAnywaySuggested/u);
   assert.match(detail, /--send-draft/u);
 });
+
+test("Task help separates Channel creation permission from existing Task claims", () => {
+  const topic = workerHelpTopic("tasks")!;
+  assert.match(topic, /explicit autonomous-creation permission/);
+  assert.match(
+    topic,
+    /Claiming an existing open Task does not require creation permission/,
+  );
+  assert.match(topic, /do not retry or poll for approval/);
+  assert.doesNotMatch(topic, /claim the message first, whether/);
+});

@@ -245,6 +245,7 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       {
         basedOnControlRoomSeq: controlDelivery.latestRoomSeq,
         idempotencyKey: "split-room-created",
+        allowInstanceTaskCreation: true,
         kind: "channel",
         name: "Agent Split Room",
         slug: "agent-split-room",

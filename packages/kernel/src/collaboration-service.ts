@@ -105,6 +105,7 @@ export type MessageRecipient = {
 
 export type WorkspaceRoomCreateInput = {
   steerEnabled?: boolean | undefined;
+  allowInstanceTaskCreation?: boolean | undefined;
   basedOnControlRoomSeq: number;
   description?: string | undefined;
   idempotencyKey: string;
@@ -120,6 +121,7 @@ export type WorkspaceRoomCreateInput = {
 
 export type WorkspaceRoomUpdateInput = {
   steerEnabled?: boolean | undefined;
+  allowInstanceTaskCreation?: boolean | undefined;
   basedOnRoomSeq: number;
   description?: string | undefined;
   idempotencyKey: string;
@@ -495,6 +497,8 @@ export class CollaborationService {
         event.payload.description !== description ||
         event.payload.visibility !== visibility ||
         (event.payload.steerEnabled ?? true) !== (input.steerEnabled ?? true) ||
+        (event.payload.allowInstanceTaskCreation ?? false) !==
+          (input.allowInstanceTaskCreation ?? false) ||
         JSON.stringify(event.payload.initialAgentParticipantIds) !==
           JSON.stringify(initialAgentParticipantIds) ||
         JSON.stringify(
@@ -577,7 +581,7 @@ export class CollaborationService {
     }
     this.#database
       .prepare(
-        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json, channel_workspace_state_json, channel_steer_enabled) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at, channel_workspace_json, channel_workspace_state_json, channel_steer_enabled, allow_instance_task_creation) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)",
       )
       .run(
         roomId,
@@ -594,6 +598,7 @@ export class CollaborationService {
           ? null
           : JSON.stringify({ state: "ready", updatedAt: createdAt }),
         input.steerEnabled === false ? 0 : 1,
+        input.allowInstanceTaskCreation === true ? 1 : 0,
       );
     this.#database
       .prepare(
@@ -607,6 +612,7 @@ export class CollaborationService {
       idempotencyKey: `room.bootstrap:${idempotencyKey}`,
       payload: {
         steerEnabled: input.steerEnabled ?? true,
+        allowInstanceTaskCreation: input.allowInstanceTaskCreation ?? false,
         channelWorkspace: recordedWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
@@ -667,6 +673,7 @@ export class CollaborationService {
       payload: {
         basedOnControlRoomSeq: input.basedOnControlRoomSeq,
         steerEnabled: input.steerEnabled ?? true,
+        allowInstanceTaskCreation: input.allowInstanceTaskCreation ?? false,
         channelWorkspace: recordedWorkspace,
         ...(description === undefined ? {} : { description }),
         initialAgentParticipantIds,
@@ -719,7 +726,9 @@ export class CollaborationService {
         event.payload.name !== name ||
         event.payload.description !== description ||
         event.payload.visibility !== visibility ||
-        event.payload.steerEnabled !== input.steerEnabled
+        event.payload.steerEnabled !== input.steerEnabled ||
+        event.payload.allowInstanceTaskCreation !==
+          input.allowInstanceTaskCreation
       ) {
         throw this.#idempotencyConflict(idempotencyKey);
       }
@@ -740,13 +749,16 @@ export class CollaborationService {
     );
     this.#database
       .prepare(
-        "UPDATE rooms SET name = ?, description = ?, visibility = ?, channel_steer_enabled = COALESCE(?, channel_steer_enabled) WHERE room_id = ?",
+        "UPDATE rooms SET name = ?, description = ?, visibility = ?, channel_steer_enabled = COALESCE(?, channel_steer_enabled), allow_instance_task_creation = COALESCE(?, allow_instance_task_creation) WHERE room_id = ?",
       )
       .run(
         name,
         description ?? null,
         visibility,
         input.steerEnabled === undefined ? null : Number(input.steerEnabled),
+        input.allowInstanceTaskCreation === undefined
+          ? null
+          : Number(input.allowInstanceTaskCreation),
         input.roomId,
       );
 
@@ -812,6 +824,9 @@ export class CollaborationService {
         ...(previousDescription === undefined ? {} : { previousDescription }),
         previousName,
         previousVisibility,
+        ...(input.allowInstanceTaskCreation === undefined
+          ? {}
+          : { allowInstanceTaskCreation: input.allowInstanceTaskCreation }),
         ...(input.steerEnabled === undefined
           ? {}
           : { steerEnabled: input.steerEnabled }),

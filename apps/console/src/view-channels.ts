@@ -63,6 +63,9 @@ function createChannelForm(context: ConsoleContext): {
   const slug = el("input", {
     attrs: { autocomplete: "off", id: "create-channel-slug", required: "" },
   });
+  const autonomous = el("input", {
+    attrs: { id: "create-channel-autonomous-tasks", type: "checkbox" },
+  });
   const directories = el("textarea", {
     attrs: {
       id: "create-channel-directories",
@@ -107,12 +110,13 @@ function createChannelForm(context: ConsoleContext): {
   slot.onChange((state) => {
     submit.disabled = state !== "idle";
     submit.textContent = state === "pending" ? "创建中…" : "创建频道";
-    for (const input of [name, slug, directories]) {
+    for (const input of [name, slug, directories, autonomous]) {
       input.disabled = state !== "idle";
     }
   });
   const form = el("form", { attrs: { id: "create-channel-form" } }, [
     labelled("名称", name),
+    labelled("允许实例自主创建任务（默认关闭）", autonomous),
     labelled("slug", slug, "频道的稳定短名，创建后不可改"),
     labelled(
       "附加目录（每行一个绝对路径，可留空）",
@@ -152,6 +156,7 @@ function createChannelForm(context: ConsoleContext): {
         action: "channel-create",
         payload: {
           additionalDirectories: attached.value,
+          allowInstanceTaskCreation: autonomous.checked,
           name: name.value.trim(),
           slug: slug.value.trim(),
           workspaceId: identity.workspaceId,
@@ -165,6 +170,7 @@ function createChannelForm(context: ConsoleContext): {
             basedOnControlRoomSeq,
             idempotencyKey,
             kind: "channel",
+            allowInstanceTaskCreation: payload.allowInstanceTaskCreation,
             name: payload.name,
             slug: payload.slug,
             workspaceId: payload.workspaceId,

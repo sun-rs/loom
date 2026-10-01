@@ -513,6 +513,71 @@ if (args.join(" ") === "debug models --bundled") {
     true,
   );
 
+  // Task policy and Human creation use the real client API, with no instances yet.
+  await waitForText("#task-policy", "实例自主创建已关闭");
+  await click("#task-policy-toggle");
+  await waitForText("#task-policy", "允许实例自主创建任务");
+  assert.equal(
+    (await listChannels()).find((room) => room.roomId === channelId)
+      .allowInstanceTaskCreation,
+    true,
+  );
+  await click("#task-policy-toggle");
+  await waitForText("#task-policy", "实例自主创建已关闭");
+  await setValue("#task-title", "Human authorized fixture task");
+  await click("#task-create");
+  await waitForText("#tasks-panel", "任务 #1 Human authorized fixture task");
+  const taskRows = await client.request("task.list", { roomId: channelId });
+  assert.equal(taskRows.tasks.length, 1);
+  assert.ok(taskRows.tasks[0].creatorId);
+  await click("#tasks-panel .task-row button");
+  await setValue("#task-thread-reply", "Human task clarification fixture");
+  await evaluate(
+    browser,
+    `document.querySelector("#task-thread-reply").dispatchEvent(new KeyboardEvent("keydown", {key:"Enter", bubbles:true}))`,
+  );
+  await waitForText("#tasks-panel", "Human task clarification fixture");
+  const taskMessages = await client.request("message.list", {
+    roomId: channelId,
+    threadId: taskRows.tasks[0].threadId,
+    limit: 50,
+  });
+  assert.equal(
+    taskMessages.messages.filter(
+      (message) => message.body === "Human task clarification fixture",
+    ).length,
+    1,
+  );
+
+  const topMessages = await client.request("message.list", {
+    roomId: channelId,
+    limit: 50,
+  });
+  const conversionSource = topMessages.messages.find(
+    (message) => message.body === xssBody,
+  );
+  assert.ok(conversionSource);
+  await setValue("#task-source", conversionSource.messageId);
+  await click("#task-create");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelectorAll("#tasks-panel .task-row").length === 2`,
+    { description: "Human conversion creates exactly one Task" },
+  );
+  const convertedTasks = await client.request("task.list", {
+    roomId: channelId,
+  });
+  assert.equal(
+    convertedTasks.tasks.filter(
+      (task) => task.sourceMessageId === conversionSource.messageId,
+    ).length,
+    1,
+  );
+  assert.equal(
+    await evaluate(browser, `window.__consoleXss === undefined`),
+    true,
+  );
+
   // --- 3. Create a Role through the UI from the Host catalog. ---
   await navigateHash("#/roles");
   await waitForBrowserValue(

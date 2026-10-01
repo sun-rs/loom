@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { migrateChannelSteerV78 } from "../src/channel-steer.ts";
+import { migrateChannelPolicies } from "../src/channel-steer.ts";
 import {
   ClientRoomCreateRequestSchema,
   ClientRoomUpdateRequestSchema,
@@ -151,7 +151,7 @@ test("schema 78 preserves channel data, defaults migrated channels on, and keeps
   const f = roleInstanceFixture();
   try {
     f.db.exec("ALTER TABLE rooms DROP COLUMN channel_steer_enabled");
-    migrateChannelSteerV78(f.db);
+    migrateChannelPolicies(f.db);
     assert.equal(
       f.db
         .prepare("SELECT channel_steer_enabled FROM rooms WHERE room_id=?")
@@ -161,7 +161,7 @@ test("schema 78 preserves channel data, defaults migrated channels on, and keeps
     f.db
       .prepare("UPDATE rooms SET channel_steer_enabled=0 WHERE room_id=?")
       .run(f.home.roomId);
-    migrateChannelSteerV78(f.db);
+    migrateChannelPolicies(f.db);
     assert.equal(
       f.db
         .prepare("SELECT channel_steer_enabled FROM rooms WHERE room_id=?")

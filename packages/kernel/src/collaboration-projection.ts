@@ -52,7 +52,10 @@ export function roomProjectionFromRow(row: Row): Room {
       : undefined;
   return {
     ...(text(row, "kind") === "channel"
-      ? { steerEnabled: row.channel_steer_enabled !== 0 }
+      ? {
+          steerEnabled: row.channel_steer_enabled !== 0,
+          allowInstanceTaskCreation: row.allow_instance_task_creation === 1,
+        }
       : {}),
     ...(archivedAt === null ? {} : { archivedAt }),
     ...(channelWorkspace === undefined ? {} : { channelWorkspace }),

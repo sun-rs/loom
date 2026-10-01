@@ -27,7 +27,7 @@ import {
   renderPresentedWindow,
   type RenderedPresentedWindow,
 } from "./activation-presented-window.ts";
-import { migrateChannelSteerV78 } from "./channel-steer.ts";
+import { migrateChannelPolicies } from "./channel-steer.ts";
 import { migrateCatchUpV77 } from "./activation-catch-up.ts";
 import { claimTaskTransaction, type TaskClaimInput } from "./task-claim.ts";
 import { projectPlacementPlannerInput } from "./placement-planner-projection.ts";
@@ -433,7 +433,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 79;
+export const KERNEL_SCHEMA_VERSION = 80;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1094,7 +1094,7 @@ export class RoomKernel {
       MemoryIndex.migrateChannelMemoryV75(this.#database);
       MemoryIndex.migrateChannelMemoryV76(this.#database);
       migrateCatchUpV77(this.#database);
-      migrateChannelSteerV78(this.#database);
+      migrateChannelPolicies(this.#database);
       ReadCoverage.migrate(this.#database);
       MemoryIndex.clearDeletedMemoryDescriptions(this.#database);
       RunAttemptUsageService.migrateCleanupV66(this.#database);

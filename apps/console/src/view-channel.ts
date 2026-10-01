@@ -1,3 +1,4 @@
+import { taskPanel } from "./view-tasks.ts";
 import type { RoleListResponse } from "@rah-os/protocol";
 
 import {
@@ -402,6 +403,7 @@ export function mountChannel(
   });
   const runDetail = runDetailPanel(context);
   const memory = memoryPanel(context, roomId);
+  const tasks = taskPanel(context, roomId);
 
   const actorLabel = (actorId: string): string => {
     if (actorId === SYSTEM_PRINCIPAL_ID) return "Loom 系统";
@@ -651,6 +653,7 @@ export function mountChannel(
     ]),
     runDetail.element,
     memory.element,
+    tasks.element,
     el("section", { className: "panel" }, [
       el("h2", { text: "最近生命周期事件（已同步的事件窗口）" }),
       lifecycleList,
@@ -868,5 +871,6 @@ export function mountChannel(
     unsubscribe();
     poller.stop();
     memory.stop();
+    tasks.stop();
   };
 }

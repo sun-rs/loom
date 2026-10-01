@@ -1,3 +1,4 @@
+import { assertTaskCreationAllowed } from "./task-creation-policy.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import type { ActivationCredentialScope, RoomEvent } from "@rah-os/protocol";
@@ -139,6 +140,7 @@ export function createTaskMutationTransaction(
     };
   }
 
+  assertTaskCreationAllowed(context.database, input.roomId, actorId);
   context.assertFreshContext(input.roomId, actorId, input.basedOnRoomSeq);
   assertTaskAnchorAvailable(context.database, input.sourceMessageId);
   const taskId = context.createId("task");
@@ -263,6 +265,11 @@ export function createWorkerTaskTransaction(
     };
   }
 
+  assertTaskCreationAllowed(
+    context.database,
+    scope.roomId,
+    scope.participantId,
+  );
   assertWorkerTaskCreationFreshContext(
     context.database,
     scope,
@@ -402,6 +409,11 @@ export function claimMessageAsTaskTransaction(
     };
   }
 
+  assertTaskCreationAllowed(
+    context.database,
+    scope.roomId,
+    scope.participantId,
+  );
   const activation = context.database
     .prepare("SELECT * FROM activations WHERE activation_id = ?")
     .get(scope.activationId);

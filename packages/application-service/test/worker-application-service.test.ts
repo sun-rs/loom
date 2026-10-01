@@ -1028,6 +1028,14 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       name: "Worker Task API",
       slug: "worker-task-api",
     });
+    const policyDb = new DatabaseSync(join(directory, "room.db"));
+    policyDb
+      .prepare(
+        "UPDATE rooms SET allow_instance_task_creation=1 WHERE room_id=?",
+      )
+      .run(room.roomId);
+    policyDb.close();
+
     kernel.addMember(humanActor, {
       principalId: agent.principal.principalId,
       roomId: room.roomId,

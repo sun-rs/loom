@@ -1670,6 +1670,14 @@ test("D1 end to end: a Worker that claims the head message as its own Task and p
       name: "Daemon self claim",
       slug: "daemon-self-claim",
     });
+    seed.updateWorkspaceRoom(humanActor, {
+      roomId: room.roomId,
+      name: room.name,
+      visibility: "private",
+      allowInstanceTaskCreation: true,
+      basedOnRoomSeq: 1,
+      idempotencyKey: "allow-task-creation",
+    });
     seed.addMember(humanActor, { principalId: agentId, roomId: room.roomId });
     seed.postMessage(humanActor, {
       body: "New task: review these files read-only and summarize in the channel",

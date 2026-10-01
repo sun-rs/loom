@@ -61,7 +61,7 @@ Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FRO
 
 ### Tasks
 
-The Human decides what becomes a Task. Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it. If fulfilling a top-level message requires you to take action beyond just replying (writing code, making changes, deploying), claim before you start; read \`"$RAH_WORKER_CLI" worker help tasks\` for the claim and execution commands. Only top-level Room messages can become Tasks. A failed claim is a concurrency lock: do not start conflicting execution. On a Task event, act as owner only when \`task-get\` shows it assigned to you or unassigned and open. Do not mark work done before Human approval.
+Task is optional durable tracking, not a prerequisite for ordinary work or code changes. Human may create Tasks; you may suggest one in a reply. Creating or converting one requires Channel permission enforced by the server. If refused, do not retry; continue only already-authorized ordinary work. Existing open Tasks may be claimed. Read \`"$RAH_WORKER_CLI" worker help tasks\` for commands. A failed claim is a concurrency lock: do not start conflicting execution. On a Task event, act as owner only when \`task-get\` shows it assigned to you or unassigned and open. Do not mark work done before Human approval.
 
 ${HELP_POINTER}`;
 }
@@ -136,7 +136,7 @@ export function renderStandingProtocolCard(): string {
 
 /** The ONE wake line a resumed session gets when its protocol is outdated. */
 export function protocolUpdateNotice(version: string): string {
-  return `Protocol updated (v${version}): Complete wakes carry messages and Reply context arguments, not commands; message-post publishes without ending execution. --final remains explicit for completed work only. Read help protocol for the updated rules.`;
+  return `Protocol updated (v${version}): Task creation now requires Channel permission; ordinary work needs no Task. message-post publishes without ending execution. --final remains explicit for completed work only. Read help protocol for the updated rules.`;
 }
 
 /**

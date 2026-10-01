@@ -67,6 +67,9 @@ function isStaleContext(error: unknown): boolean {
  * replay. Evidence (packages/kernel/src; replay line -> freshness line):
  */
 export const REPLAY_BEFORE_FRESHNESS: Readonly<Record<string, string>> = {
+  "task-policy":
+    "room.update: replay before assertFreshContext in collaboration-service",
+  "task-create": "task.create/convert: task-intent replay before freshness",
   "activation-abandon":
     "instance.activation.abandon: role-catalog.ts abandonBlockedActivation replay :540-554 -> fresh :555 (added 2026-09-27, D2-2)",
   "channel-create":

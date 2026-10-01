@@ -96,6 +96,7 @@ async function fixture() {
     visibility: "public",
     basedOnControlRoomSeq: created.event.roomSeq,
     idempotencyKey: "work-room",
+    allowInstanceTaskCreation: true,
   }).room;
   kernel.addMember(actor, {
     roomId: room.roomId,

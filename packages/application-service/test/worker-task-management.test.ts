@@ -29,6 +29,11 @@ async function fixture(
     name: "Management",
     slug: "management",
   });
+  // Fixture explicitly opts into autonomous Task creation.
+  database
+    .prepare("UPDATE rooms SET allow_instance_task_creation=1 WHERE room_id=?")
+    .run(room.roomId);
+
   for (const principalId of [
     agent.principal.principalId,
     helper.principal.principalId,

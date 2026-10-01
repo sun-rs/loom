@@ -78,12 +78,15 @@ test("the prompt points at every on-demand help topic it relies on", () => {
   );
 });
 
-test("the prompt keeps the Human-decides-Tasks rule crisp", () => {
+test("the prompt keeps Channel-authorized Task creation separate from ordinary work", () => {
   const { prompt } = compileStandingPrompt(minimalInputs[0]);
-  assert.match(prompt, /The Human decides what becomes a Task\./u);
   assert.match(
     prompt,
-    /Answering a question, brief discussion, searching or reading files is a reply, not a Task: do not claim or create one for it\./u,
+    /Creating or converting one requires Channel permission enforced by the server\./u,
+  );
+  assert.match(
+    prompt,
+    /not a prerequisite for ordinary work or code changes\./u,
   );
 });
 

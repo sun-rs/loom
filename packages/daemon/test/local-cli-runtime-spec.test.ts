@@ -103,10 +103,10 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   );
   assert.match(
     prompt,
-    /requires you to take action beyond just replying.*claim/isu,
+    /Task is optional durable tracking, not a prerequisite for ordinary work or code changes/isu,
   );
-  assert.match(prompt, /Only top-level.*can become Tasks/isu);
-  assert.match(onDemand, /from a Human or another Agent/isu);
+  assert.match(onDemand, /Only top-level.*can become Tasks/isu);
+  assert.match(onDemand, /explicit autonomous-creation permission/isu);
   assert.match(prompt, /@<handle>.*message-post/isu);
   assert.match(prompt, /Mention others, not yourself/iu);
   assert.match(prompt, /Room is the isolation boundary/iu);
@@ -139,7 +139,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /"\$RAH_WORKER_CLI" worker message-post/u);
   assert.match(onDemand, /Respect ongoing conversations/iu);
   assert.match(onDemand, /Only the person doing the work should report/iu);
-  assert.match(prompt, /Claim before you start.*concurrency lock/isu);
+  assert.match(prompt, /A failed claim is a concurrency lock/isu);
   assert.match(onDemand, /Before stopping.*blockers you own/isu);
   assert.match(onDemand, /Skip idle narration.*actionable content/isu);
   assert.doesNotMatch(everything, /turn-taking/iu);

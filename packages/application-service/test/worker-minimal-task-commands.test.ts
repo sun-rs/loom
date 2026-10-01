@@ -23,6 +23,11 @@ async function fixture(options: { reviewerSeat?: boolean } = {}) {
   const helper = kernel.provisionPrincipal({ kind: "agent", handle: "helper" });
   const actor = kernel.authenticateAccessToken(human.accessToken);
   const room = kernel.createRoom(actor, { name: "Minimal", slug: "minimal" });
+  // Fixture explicitly opts into autonomous Task creation.
+  database
+    .prepare("UPDATE rooms SET allow_instance_task_creation=1 WHERE room_id=?")
+    .run(room.roomId);
+
   for (const principalId of [
     agent.principal.principalId,
     helper.principal.principalId,
