@@ -538,3 +538,37 @@ test("usage writer emits one valid cost frame per cost id", () => {
     ...fact,
   });
 });
+
+test("P90: unfinished Claude generation marks a gap at the turn boundary without inventing usage or leaking into next turn", () => {
+  const tracker = new ClaudeStreamUsageTracker({ now: at });
+  tracker.observe(
+    claudeStream({
+      type: "message_start",
+      message: {
+        id: "interrupted",
+        usage: { input_tokens: 64650, output_tokens: 1 },
+      },
+    }),
+  );
+  assert.deepEqual(
+    tracker.finish(),
+    gap("claude-stream-json/v1", "parse_error"),
+  );
+  assert.equal(tracker.finish(), undefined);
+  assert.equal(
+    tracker.observe(claudeStream({ type: "message_stop" })),
+    undefined,
+  );
+  tracker.observe(
+    claudeStream({
+      type: "message_start",
+      message: { id: "next", usage: { input_tokens: 10, output_tokens: 2 } },
+    }),
+  );
+  assert.equal(
+    generation(tracker.observe(claudeStream({ type: "message_stop" })))
+      ?.responseId,
+    "next",
+  );
+  assert.equal(tracker.finish(), undefined);
+});

@@ -719,6 +719,7 @@ function maybeClose(turn) {
 async function closeTurn(turn) {
   turn.closing = true;
   await turn.finalDecision;
+  turn.usageWriter.emit(usageTracker.finish());
   turn.writer.flush();
   if (turn.finalInterrupt.armed) {
     const report = await turn.finalInterrupt.report();
@@ -873,6 +874,7 @@ async function shutdown(exitCode) {
       }
     }
   }
+  if (active !== undefined) active.usageWriter.emit(usageTracker.finish());
   rmSync(promptDirectory, { force: true, recursive: true });
   process.exit(exitCode);
 }

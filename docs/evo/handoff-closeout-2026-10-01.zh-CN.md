@@ -446,3 +446,23 @@ Enter 回复；环境为临时库和 fake CLI，无付费调用。正式部署�
 旧行哈希保持不变。正式 Chrome 在 `task-policy-acceptance-20261001`
 （无实例）验证默认关闭、开关开启/关闭保存、Human 创建 Task 和消息列 Enter 回复。
 验收频道 `room_b8fd84f0-594a-4a3e-8a1b-1074bca25b9d` 留存，无模型调用。
+
+## P90 后修复：Task 投递与中断用量（2026-10-02）
+
+P90 的 Task 业务操作成功，但没有确认触发它的 task.created 投递，导致完成
+Activation 时拒绝、随后补跑。完整正文唤醒错误地给 Task 事件套用了普通消息的
+回复指引，而 Task 命令并不携带普通回帖的模型回复标记。最小修法是：仅当当前
+行动范围含 Task / review.submitted 事件时，唤醒要求先调用已有 message-check；
+纯补读中的 Task 事件不触发这个分支。Kernel、业务义务、Task 状态与 ACK 所有权
+均不改变，不把 task-submit 当作已读证明。按需 Task 帮助补齐 progress/summary
+参数示例，明确 progress/submit 已发布至任务消息列，无需再复制同一正文。
+
+Claude 的不完整 message_start 在取消后没有 message_stop，旧 tracker 静默丢弃。
+现在冷进程退出、热轮结束或关闭时清理未闭合记录并发出既有 parse_error 用量缺口；
+不猜测输出 token，不以 result 累计用量补成单条生成。缺口意味着累计用量不完整，
+不是零费用。测试覆盖冷驱动真实 SIGTERM 取消、热轮结束、迟到 stop 不串入下一轮。
+
+新增测试先红后绿；完整 `npm run check` 通过（后端 2741 通过、22 跳过，
+Web 481、控制台 59、门禁单测 236 通过），格式与 diff 检查通过。
+本批尚无付费复测，不宣称模型一定遵循指引或 P90 已验收通过。
+Task 成果的正确性、真实竞争认领、开启自主创建与关闭后继续仍需有界真实验收。

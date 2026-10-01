@@ -135,7 +135,7 @@ test("golden: a business fact keeps a compact type and its payload", () => {
       "#general seq 12 msg=0c12aaaa @richard: one",
       '#general seq 13 task.cancelled @richard {"taskId":"task-7","number":7}',
       "#general seq 14 msg=0c14bbbb @richard: two",
-      'Reply context: --target "#general" --based-on-room-seq 14',
+      "Task delivery: run message-check first, then handle the Task events. Task commands do not acknowledge delivery.",
     ].join("\n"),
   );
 });
@@ -532,4 +532,37 @@ test("complete ordinary wakes supply data, not a competing command menu", () => 
   })!;
   assert.doesNotMatch(wake, /message-post|message-check|message-read|--final/u);
   assert.equal(wake.split(HANDLE).length - 1, 1);
+});
+
+test("P90: actionable Task delivery uses explicit check before business commands, not a top-level reply", () => {
+  for (const type of [
+    "task.created",
+    "task.reopened",
+    "task.assigned",
+    "review.submitted",
+  ]) {
+    const output = formatBodiedWakeInput({
+      turnHandle: HANDLE,
+      present: present({
+        events: [event(14, type, { taskId: "task-7", threadId: T9 })],
+      }),
+    })!;
+    assert.match(output, new RegExp(`message-check --turn ${HANDLE} first`));
+    assert.doesNotMatch(output, /Reply context:/u);
+  }
+});
+
+test("P90: catch-up Task facts do not add a check to an ordinary message wake", () => {
+  const output = formatBodiedWakeInput({
+    present: present({
+      fromSeq: 14,
+      directedSeqs: [14],
+      events: [
+        event(12, "task.created", { taskId: "task-7" }),
+        event(14, "message.posted", { messageId: M14, body: "hello" }),
+      ],
+    }),
+  })!;
+  assert.match(output, /Reply context:/u);
+  assert.doesNotMatch(output, /run message-check/u);
 });

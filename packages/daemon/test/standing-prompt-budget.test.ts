@@ -133,7 +133,7 @@ test("final is an explicit completion choice and wake commands never preselect i
     );
     assert.equal([...prompt.matchAll(/--final/gu)].length, 1);
   }
-  const [wake, warmWake] = wakeSamples();
+  const [wake, warmWake] = wakeSamples(false);
   assert.match(
     wake!,
     /^Reply context: --target "#[a-z-]+" --based-on-room-seq 14/mu,
@@ -141,10 +141,14 @@ test("final is an explicit completion choice and wake commands never preselect i
   assert.match(warmWake!, /--based-on-room-seq 14/u);
   assert.doesNotMatch(wake!, /--final|--progress/u);
   assert.doesNotMatch(warmWake!, /--final|--progress/u);
+  for (const taskWake of wakeSamples().slice(0, 2)) {
+    assert.match(taskWake, /Task delivery: run message-check/u);
+    assert.doesNotMatch(taskWake, /--final|--progress/u);
+  }
 });
 
 const HANDLE = "AbCdEfGhIjKlMnOpQrStUv";
-function wakeSamples(): string[] {
+function wakeSamples(withTask = true): string[] {
   const event = (
     roomSeq: number,
     type: string,
@@ -171,7 +175,12 @@ function wakeSamples(): string[] {
         messageId: "message_eb064ecc-1111-4222-8333-444455556666",
         body: "hello",
       }),
-      event(13, "task.cancelled", { taskId: "task-7" }),
+      withTask
+        ? event(13, "task.cancelled", { taskId: "task-7" })
+        : event(13, "message.posted", {
+            messageId: "message-13",
+            body: "more",
+          }),
       event(14, "message.posted", { messageId: "message-14", body: "hi" }),
     ].filter((item) => item.roomSeq <= through),
     presentedSeqs: [12, 13, 14].filter((seq) => seq <= through),

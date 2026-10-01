@@ -418,6 +418,7 @@ async function runTurn(resumeSession) {
   const terminal = await exited.finally(() => busyInput.close());
   if (activeChild === child) activeChild = undefined;
   lines.close();
+  usageWriter.emit(usageTracker.finish());
   for (const pending of controlRequests.values()) {
     clearTimeout(pending.timer);
     pending.reject(new Error("Claude exited"));

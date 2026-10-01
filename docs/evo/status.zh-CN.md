@@ -15,7 +15,7 @@
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
 - 当前部署：2026-10-01，产品提交 `a1576c4`（后续仅部署记录），schema 80，协议 `43b49986b67f`。完整免费检查通过；备份 `pre-restart-task-policy-deed3c63-bc57-4686-a4c2-cd801f878b64` 并验证迁移副本后安全重启 `com.loom.evo`，SQLite quick_check 为 ok。原消息191、Task3、Role/修订29/29、实例55、记忆/修订4/4、Room事件1699条旧行哈希均保留；34个旧频道自主创建默认关闭。正式 Chrome 在无实例验收频道验证默认关闭、开关保存、Human 建 Task 与 Task 消息列 Enter 回复，无付费调用；不构成新的模型效率验收。
 - 临时监听调整：本机 Tailscale 为 `Stopped`，原 `100.101.107.87` 已不在接口上，重启曾因 `EADDRNOTAVAIL` 退出；现仅监听 `127.0.0.1:4176`，未开启 VPN、未开放所有网卡。原 launchd plist 保存在 `~/.loom/evo/backups/pre-restart-reply-default-b1409937-1f57-48ae-93ac-72f32da8aaf1/com.loom.evo.before-loopback.plist`；恢复原 Tailnet/LAN 入口需先恢复对应网络，再恢复此配置。
-- 数据库 schema 79（79：逐 Run 精确读取、输出收据与消费凭据；78：频道 `channel_steer_enabled`；77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/state/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
+- 数据库 schema 80（80：频道实例自主创建 Task 开关；79：逐 Run 精确读取、输出收据与消费凭据；78：频道 `channel_steer_enabled`；77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/state/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
 - 旧正式环境（`~/.rah`、4173）已退役，不兼容旧数据。
 
@@ -25,8 +25,7 @@
 任务/转换历史消息；开启后实例可自主创建，已有任务领取不受开关影响。Kernel
 统一拦截单项、批量、转换及 Agent token 创建；旧成功请求幂等重放保留。无审批
 队列，无 Jev。控制台可切换政策、创建/转换、查看和回复任务消息列、验收/关闭。
-完整 check 通过（后端2733/22跳过、Web481、控制台59、门禁236），真实 Chrome
-隔离门禁通过。P90已做Codex/Claude同频道续聊：默认创建拒绝和Human Task领取/提交有效，但Task缺ACK导致额外补跑；取消Claude时用量账本少一条且未标缺口。开启自主创建/关闭后继续、竞争claim与正确成果验收未覆盖，**真实整体验收未通过**，不宣称效率达标。见[P90报告](evidence/2026-10-02-task-policy-p90.md)及[Task 实施记录](handoff-closeout-2026-10-01.zh-CN.md#task-最终简化裁定与实施2026-10-01替代上方候选)。
+Task 政策批完整 check 与真实 Chrome 隔离门禁通过。P90已做Codex/Claude同频道续聊：默认创建拒绝和Human Task领取/提交有效，但Task缺ACK导致额外补跑；取消Claude时用量账本少一条且未标缺口。本批已修正 Task 唤醒的先确认指引、补齐按需帮助参数，并在 Claude 中断未闭合用量时记录缺口（不估算补账）；修复尚待真实复测。开启自主创建/关闭后继续、竞争claim与正确成果验收未覆盖，**真实整体验收未通过**，不宣称效率达标。见[P90报告](evidence/2026-10-02-task-policy-p90.md)及[Task 实施记录](handoff-closeout-2026-10-01.zh-CN.md#task-最终简化裁定与实施2026-10-01替代上方候选)。
 
 本批实现：共享 Worker 新增 `message-post --revise-draft <heldDraftId>`，只修订同实例/Activation/原目标、带原回复标记的草稿。无新消息时直接发布；更新的消息仍触发 hold；原 ACK/final/附件保持，幂等重放不重复发布。不增加常驻提示或新队列，无数据库迁移。100 项专项测试、完整 `npm run check` 通过：后端2728通过/22跳过、Web481、控制台59、门禁单测236通过。已备份重启并验证真实页面；P89已观察到Codex一次hold后直接修订发布，Claude/OpenCode原样恢复成功，Kimi未遇到hold。无原生对照，不宣称token收益。见[设计与实施](handoff-closeout-2026-10-01.zh-CN.md#实施收口明确修订原回复草稿)。
 

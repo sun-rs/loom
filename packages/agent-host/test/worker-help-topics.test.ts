@@ -138,3 +138,16 @@ test("Task help separates Channel creation permission from existing Task claims"
   assert.match(topic, /do not retry or poll for approval/);
   assert.doesNotMatch(topic, /claim the message first, whether/);
 });
+
+test("P90: Task help supplies exact minimal progress and submission arguments", () => {
+  const help = workerHelpTopic("tasks")!;
+  assert.match(
+    help,
+    /task-progress --target "#channel" --number N --progress TEXT/u,
+  );
+  assert.match(
+    help,
+    /task-submit --target "#channel" --number N --summary TEXT/u,
+  );
+  assert.match(help, /Task commands do not acknowledge delivery/u);
+});

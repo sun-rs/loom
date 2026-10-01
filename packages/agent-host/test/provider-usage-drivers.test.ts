@@ -301,3 +301,47 @@ test("OpenCode driver emits one usage frame per assistant step-finish part", asy
     ],
   );
 });
+
+test("P90: Claude driver ending with an incomplete stream emits a usage gap", async () => {
+  const result = await runDriver(
+    "claude-stream-json-driver.mjs",
+    fakeClaude.replace('stream({type:"message_stop"});', ""),
+  );
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(usageFrames(result.frames).length, 0);
+  assert.ok(
+    result.frames.some(
+      (f: any) =>
+        f.protocol === "rah-provider-usage-gap/v1" &&
+        f.provider === "claude-stream-json/v1" &&
+        f.reason === "parse_error",
+    ),
+  );
+});
+
+test("P90: cancelling the cold Claude driver preserves its incomplete usage gap", async () => {
+  const start = fakeClaude.indexOf('  stream({type:"content_block_start"');
+  const end = fakeClaude.indexOf("\n});", start);
+  const source =
+    fakeClaude.slice(0, start) +
+    `
+  // Exact test parent only: imitate Host cancellation after an incomplete frame.
+  process.once("SIGINT", () => process.exit(0));
+  setTimeout(() => process.kill(process.ppid, "SIGTERM"), 50);
+` +
+    fakeClaude.slice(end);
+  const result = await runDriver("claude-stream-json-driver.mjs", source);
+  // Graceful cancellation exits zero; interruption provenance is explicit.
+  assert.ok(
+    JSON.stringify(result.frames).includes("claude:result:interrupted"),
+  );
+  assert.equal(usageFrames(result.frames).length, 0);
+  assert.equal(
+    result.frames.filter(
+      (f: any) =>
+        f.protocol === "rah-provider-usage-gap/v1" &&
+        f.reason === "parse_error",
+    ).length,
+    1,
+  );
+});

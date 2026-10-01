@@ -777,3 +777,31 @@ test("batch 3 P2-3: a missing-session result (no init, num_turns 0) before accep
     await h.close();
   }
 });
+
+test("P90: incomplete Claude usage is reported before the warm turn drains", async () => {
+  const h = await startDriver();
+  try {
+    const wake = await acceptedWake(h);
+    h.claude({
+      type: "stream_event",
+      event: {
+        type: "message_start",
+        message: {
+          id: "partial",
+          usage: { input_tokens: 64650, output_tokens: 1 },
+        },
+      },
+    });
+    h.claude(result(wake, aborted));
+    await h.frame((f) => f.type === "turn.drained", "drained");
+    const gapIndex = h.frames.findIndex(
+      (f) =>
+        f.type === "frame" && f.frame?.protocol === "rah-provider-usage-gap/v1",
+    );
+    assert.ok(gapIndex >= 0, "unfinished generation must mark usage partial");
+    assert.ok(gapIndex < h.frames.findIndex((f) => f.type === "turn.drained"));
+    assert.equal(h.frames[gapIndex]?.runAttemptId, "run-1");
+  } finally {
+    await h.close();
+  }
+});

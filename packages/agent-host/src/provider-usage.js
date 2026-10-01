@@ -131,7 +131,8 @@ function codexBreakdown(value) {
  * `message_delta` (cumulative output usage) and `message_stop`. The whole
  * `assistant` frames repeat message_start usage with stale output counts, and
  * `result.usage` is a whole-query cumulative, so neither is used. A message
- * that never reaches `message_stop` (interrupted) yields no record. Claude does
+ * that never reaches `message_stop` (interrupted) yields a gap at finish,
+ * never an estimated record. Claude does
  * not split thinking tokens out of output, so reasoning stays null.
  */
 export class ClaudeStreamUsageTracker {
@@ -140,6 +141,15 @@ export class ClaudeStreamUsageTracker {
 
   constructor({ now = Date.now } = {}) {
     this.#now = now;
+  }
+
+  /** End one attributed turn/process; incomplete frames are not zero usage. */
+  finish() {
+    const incomplete = this.#open.size > 0;
+    this.#open.clear();
+    return incomplete
+      ? providerUsageGap(CLAUDE_PROVIDER, "parse_error", this.#now)
+      : undefined;
   }
 
   observe(frame) {

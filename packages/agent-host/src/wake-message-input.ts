@@ -19,7 +19,8 @@
  *   head ends with Reply context metadata: exact targets, the shared
  *   --based-on-room-seq and optional turn handle. It supplies no command
  *   template or competing check option; ordinary handling lives in the
- *   standing protocol. No-directed-message windows still request a check.
+ *   standing protocol. No-directed-message and actionable Task windows request
+ *   a check: Task mutations do not acknowledge delivery.
  * - a retry after an attempt that neither posted nor confirmed delivery adds
  *   one reminder line (Kernel-decided `previousAttemptUnconfirmed`); a retry
  *   after an attempt that committed a post but never confirmed delivery
@@ -189,14 +190,23 @@ export function formatBodiedWakeInput(input: {
     (directed === undefined || directed.has(event.roomSeq));
   const catchUp = present.events.filter((event) => !isOwn(event));
   const own = present.events.filter(isOwn);
+  // Business commands do not ACK delivery: unlike message-post, they may
+  // never carry the model's reply marker. Confirm before acting, not in a
+  // second Run after the Task was already submitted (P90). Catch-up is inert.
+  const taskDelivery = own.some(
+    (event) =>
+      event.type.startsWith("task.") || event.type === "review.submitted",
+  );
   const instruction = complete
     ? own.length === 0
       ? `No message here woke you: message-check${turn}`
-      : replyInstruction(
-          compactWakeReplyTargets(own, present.addressing),
-          turn,
-          through,
-        )
+      : taskDelivery
+        ? `Task delivery: run message-check${turn} first, then handle the Task events. Task commands do not acknowledge delivery.`
+        : replyInstruction(
+            compactWakeReplyTargets(own, present.addressing),
+            turn,
+            through,
+          )
     : `Shown through seq ${through} of ${present.toSeq}${notice}: run message-check${turn} first, then reply.`;
   const retry =
     present.previousAttemptUnconfirmed === true

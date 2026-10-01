@@ -32,6 +32,7 @@ export class CodexTokenUsageTracker {
 
 export class ClaudeStreamUsageTracker {
   constructor(options?: { now?: () => number });
+  finish(): ProviderUsageGap | undefined;
   observe(frame: unknown): ProviderUsage | ProviderUsageGap | undefined;
 }
 
