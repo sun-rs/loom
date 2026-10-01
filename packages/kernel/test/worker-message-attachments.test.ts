@@ -644,3 +644,58 @@ test("membership revocation during a discussion upload prevents completion and l
     f.kernel.close();
   }
 });
+
+test("an explicit revision retains attachments and replays without republishing", async () => {
+  const f = attachmentExecution();
+  try {
+    const file = f.kernel.files.prepareWorkerMessage(f.execution, {
+      filename: "held.txt",
+      mimeType: "text/plain",
+      size: 5,
+      idempotencyKey: "file",
+    });
+    await f.kernel.files.uploadWorkerMessage(
+      f.execution,
+      file.attachmentId,
+      bytes("hello"),
+    );
+    f.kernel.postMessage(f.humanActor, {
+      roomId: f.room.roomId,
+      body: "Newer context",
+      recipients: [{ participantId: f.agent.principalId, reason: "mention" }],
+      idempotencyKey: "newer",
+    });
+    const held = f.kernel.postWorkerMessage(f.execution, {
+      body: "Draft",
+      attachmentIds: [file.attachmentId],
+      basedOnRoomSeq: f.activation.toSeq,
+      idempotencyKey: "draft",
+    });
+    assert.ok("heldDraftId" in held);
+    await assert.rejects(
+      f.kernel.files.downloadWorkerTaskArtifact(f.execution, file.attachmentId),
+      /not attached/,
+    );
+    const request = {
+      reviseDraftId: held.heldDraftId,
+      body: "revised attachment reply",
+    };
+    const sent = f.kernel.postWorkerMessage(f.execution, request);
+    const replay = f.kernel.postWorkerMessage(f.execution, request);
+    assert.ok("event" in sent && "event" in replay);
+    assert.equal(sent.event.eventId, replay.event.eventId);
+    assert.equal(sent.event.payload.body, "revised attachment reply");
+    assert.ok("event" in sent);
+    assert.equal(
+      (sent.event.payload.attachments as Array<{ attachmentId: string }>)[0]
+        ?.attachmentId,
+      file.attachmentId,
+    );
+    assert.equal(
+      f.kernel.files.list(f.humanActor, { roomId: f.room.roomId }).files.length,
+      1,
+    );
+  } finally {
+    f.kernel.close();
+  }
+});

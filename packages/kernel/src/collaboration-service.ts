@@ -1935,6 +1935,7 @@ export class CollaborationService {
       activationId: string;
       basedOnRoomSeq: number;
       body?: string;
+      revisedBody?: string;
       continueAnyway?: boolean;
       freshnessFloorSeq?: number;
       heldDraftId?: string;
@@ -2001,10 +2002,12 @@ export class CollaborationService {
           JSON.stringify(input.attachmentComment ?? null) ||
         event.payload.activationId !== input.activationId ||
         event.payload.basedOnRoomSeq !== input.basedOnRoomSeq ||
-        (input.heldDraftId === undefined &&
-          event.payload.body !== input.body?.trim()) ||
+        ((input.heldDraftId === undefined || input.revisedBody !== undefined) &&
+          event.payload.body !== (input.revisedBody ?? input.body)?.trim()) ||
         JSON.stringify(event.payload.attachments ?? []) !==
           JSON.stringify(attachments) ||
+        event.payload.revisedDraft !==
+          (input.revisedBody === undefined ? undefined : true) ||
         event.payload.heldDraftId !== input.heldDraftId ||
         event.payload.continueAnyway !==
           (input.continueAnyway === true ? true : undefined)
@@ -2031,8 +2034,9 @@ export class CollaborationService {
         text(previousHeld, "activation_id") !== input.activationId ||
         (nullableText(previousHeld, "thread_id") ?? undefined) !==
           input.threadId ||
-        (input.heldDraftId === undefined &&
-          text(previousHeld, "body") !== input.body?.trim()) ||
+        ((input.heldDraftId === undefined || input.revisedBody !== undefined) &&
+          text(previousHeld, "body") !==
+            (input.revisedBody ?? input.body)?.trim()) ||
         integer(previousHeld, "based_on_room_seq") !== freshnessFloorSeq ||
         (nullableText(previousHeld, "source_held_draft_id") ?? undefined) !==
           input.heldDraftId
@@ -2117,7 +2121,7 @@ export class CollaborationService {
     const body =
       sourceHeldDraft === undefined
         ? input.body?.trim()
-        : text(sourceHeldDraft, "body");
+        : (input.revisedBody?.trim() ?? text(sourceHeldDraft, "body"));
     if (body === undefined || (body.length === 0 && attachments.length === 0)) {
       throw new Error("message body or attachment is required");
     }
@@ -2230,6 +2234,7 @@ export class CollaborationService {
         ...(input.attachmentComment
           ? { attachmentComment: input.attachmentComment }
           : {}),
+        ...(input.revisedBody === undefined ? {} : { revisedDraft: true }),
         ...(input.heldDraftId === undefined
           ? {}
           : {
@@ -2247,7 +2252,7 @@ export class CollaborationService {
     resolveHeldMessageDrafts(this.#database, {
       participantId: actor.principalId,
       resolution:
-        input.heldDraftId === undefined
+        input.heldDraftId === undefined || input.revisedBody !== undefined
           ? "revised"
           : input.continueAnyway === true
             ? "sent_anyway"

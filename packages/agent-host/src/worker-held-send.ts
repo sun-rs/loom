@@ -1,8 +1,7 @@
-/** Raft 1.0.18: a freshness-held send saves a draft, returns a nonzero exit,
- * and offers exactly three paths — update the draft with a normal send, send
- * the current draft unchanged, or send nothing. Ported structurally from
- * `formatFreshnessHoldOutput` + `formatHeldSendOutput`: the model supplies a
- * target and content, never a cursor, receipt, idempotency key or draft id. */
+/** Base hold guidance structurally ported from Raft 1.0.18. Loom adds an
+ * explicit revision of the exact saved draft: confirmation scope remains the
+ * original model intent while freshness uses that draft's frozen notice.
+ * Neither revisions nor unchanged resends are automatic. */
 
 /** Raft uses an unlikely delimiter so shell snippets cannot close the heredoc. */
 export const MESSAGE_HEREDOC_DELIMITER = "RAH_MESSAGE_EOF";
@@ -133,10 +132,13 @@ export function workerHeldSendGuidance(
       : "";
   const intent = value.replyIntent as
     { basedOnRoomSeq?: unknown; final?: unknown } | undefined;
-  const replySuffix =
-    intent && typeof intent === "object"
-      ? `${typeof intent.basedOnRoomSeq === "number" && Number.isSafeInteger(intent.basedOnRoomSeq) && intent.basedOnRoomSeq >= 0 ? ` --based-on-room-seq ${String(intent.basedOnRoomSeq)}` : ""}${intent.final === true ? " --final" : " --progress"}`
-      : " --progress";
+  const marked =
+    typeof intent?.basedOnRoomSeq === "number" &&
+    Number.isSafeInteger(intent.basedOnRoomSeq) &&
+    intent.basedOnRoomSeq >= 0;
+  const revise = marked
+    ? ` --revise-draft ${shellQuote(value.heldDraftId)}${turn}`
+    : `${turn}${intent?.final === true ? " --final" : " --progress"}`;
   const continueAnyway =
     value.continueAnywaySuggested === true
       ? `If repeated updates keep blocking the same draft and this is still the right reply, you may use:
@@ -149,8 +151,8 @@ Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
   )} newer message${newMessageCount === 1 ? "" : "s"}.${omittedNote}
 Your message has been saved as a draft. Saving a draft does not confirm delivery or complete this work. Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
-To update the draft, send revised content normally:
-  "$RAH_WORKER_CLI" worker message-post${turn}${replySuffix} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
+${marked ? "To revise this saved draft after review (preserving its original reply confirmation):" : "To replace this unmarked draft, send revised content normally:"}
+  "$RAH_WORKER_CLI" worker message-post${revise} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
   revised message
   ${MESSAGE_HEREDOC_DELIMITER}
 If the revision is held again, review that new notice before using --send-draft.

@@ -1124,6 +1124,7 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
         JSON.stringify({
           state: "held",
           heldDraftId: "held-original",
+          replyIntent: { basedOnRoomSeq: 8, final: false },
           recoveryTarget: "#room:thread-1",
           seenUpToSeq: 12,
           newMessageCount: 3,
@@ -1181,7 +1182,7 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
     );
     assert.match(
       state.stdout(),
-      /"\$RAH_WORKER_CLI" worker message-post --progress --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+      /"\$RAH_WORKER_CLI" worker message-post --revise-draft 'held-original' --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
     );
     assert.match(
       state.stdout(),
@@ -1193,7 +1194,7 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
     );
     assert.match(state.stdout(), /"\$RAH_WORKER_CLI" worker message-check\n/u);
     assert.doesNotMatch(state.stdout(), /--anyway/u);
-    // The whole point of the port: no receipt, cursor, key or draft id.
+    // Revision names its draft; cursors, keys and the legacy resend flag stay hidden.
     assert.doesNotMatch(state.stdout(), /--context-receipt/u);
     assert.doesNotMatch(state.stdout(), /--held-draft-id/u);
     assert.doesNotMatch(state.stdout(), /--idempotency-key/u);
@@ -2843,5 +2844,66 @@ test("message-check accepts the full sync budget plus its bounded outer envelope
     assert.equal(acknowledged, true);
   } finally {
     rmSync(state.directory, { recursive: true, force: true });
+  }
+});
+
+test("explicit draft revision sends new text and an exact draft identity without a new ACK marker", async () => {
+  const f = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "message-post",
+          "--target",
+          "#main",
+          "--revise-draft",
+          "draft-1",
+          "--body",
+          "revised",
+        ],
+        f.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(f.requests[0]!.body, {
+      channel: "#main",
+      reviseDraftId: "draft-1",
+      body: "revised",
+    });
+    for (const extra of [
+      ["--based-on-room-seq", "99"],
+      ["--final"],
+      ["--progress"],
+      ["--send-draft"],
+      ["--anyway"],
+      ["--attachment-ids", "file-1"],
+    ]) {
+      const before = f.requests.length;
+      assert.notEqual(
+        await runWorkerCliCommand(
+          [
+            "worker",
+            "message-post",
+            "--target",
+            "#main",
+            "--revise-draft",
+            "draft-1",
+            "--body",
+            "revised",
+            ...extra,
+          ],
+          f.runtime,
+        ),
+        0,
+      );
+      assert.equal(
+        f.requests.length,
+        before,
+        "conflicting revision arguments never reach the server",
+      );
+    }
+  } finally {
+    rmSync(f.directory, { recursive: true, force: true });
   }
 });

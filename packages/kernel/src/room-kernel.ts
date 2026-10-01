@@ -1798,7 +1798,7 @@ export class RoomKernel {
     input: WorkerMessagePostRequest,
   ) {
     return this.finalReplies.hinting(() => {
-      if (input.channel !== undefined)
+      if (input.channel !== undefined || input.reviseDraftId !== undefined)
         return this.workerTargetContext.post(execution, input);
       return this.#transaction(() => {
         const scope = this.#requireAuthenticatedWorkerExecution(execution);

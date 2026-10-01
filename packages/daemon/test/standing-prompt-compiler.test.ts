@@ -435,8 +435,9 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     onDemand,
-    /never carry a receipt, cursor, idempotency key or draft id/u,
+    /use only the draft id supplied in the hold notice for a revision; do not replace the saved confirmation with a new cursor/u,
   );
+  assert.match(onDemand, /--revise-draft <heldDraftId>/u);
   assert.match(prompt, /saved draft is never a delivery/u);
   // F0909G: the blanket "parse its JSON response" told the model the send
   // output was machine data, so it never read the hold guidance. Scope it.

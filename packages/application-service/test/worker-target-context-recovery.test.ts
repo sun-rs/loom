@@ -264,3 +264,36 @@ test("Busy follow-up hold exposes a usable recovery target without widening Acti
     await f.close();
   }
 });
+
+test("authenticated Worker HTTP revision publishes once without widening frozen delivery", async () => {
+  const f = await fixture();
+  try {
+    const seq = (await f.call("sync")).body.cursorAfter;
+    f.k.postMessage(f.actor, {
+      roomId: f.origin.roomId,
+      body: "new fact",
+      idempotencyKey: "http-revision-fact",
+      recipients: [],
+    });
+    const held = await f.call("messages/post", {
+      body: "original",
+      basedOnRoomSeq: seq,
+    });
+    assert.equal(held.body.state, "held");
+    const request = {
+      channel: held.body.recoveryTarget,
+      reviseDraftId: held.body.heldDraftId,
+      body: "revised",
+    };
+    const sent = await f.call("messages/post", request);
+    assert.equal(sent.status, 200, JSON.stringify(sent.body));
+    assert.equal(sent.body.event.payload.body, "revised");
+    assert.equal(
+      (await f.call("messages/post", request)).body.event.eventId,
+      sent.body.event.eventId,
+    );
+    assert.equal((await f.call("sync")).body.cursorAfter, seq);
+  } finally {
+    await f.close();
+  }
+});

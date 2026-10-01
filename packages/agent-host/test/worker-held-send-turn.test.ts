@@ -20,6 +20,7 @@ const held = {
   newMessageCount: 1,
   newerMessages: [],
   continueAnywaySuggested: true,
+  replyIntent: { basedOnRoomSeq: 8, final: false },
 };
 const confirmation = {
   state: "target_confirmation_required",
@@ -39,7 +40,7 @@ test("hold guidance carries the invocation's --turn on every recovery command", 
   );
   assert.match(
     text,
-    /"\$RAH_WORKER_CLI" worker message-post --turn t1 --progress --target '#drift' <</u,
+    /"\$RAH_WORKER_CLI" worker message-post --revise-draft 'held_draft_1' --turn t1 --target '#drift' <</u,
   );
   assert.doesNotMatch(workerHeldSendGuidance(held)!, /--turn/u);
 });
@@ -72,15 +73,18 @@ test("revision guidance explicitly preserves the model's original reply intent",
   );
   assert.match(
     text!,
-    /message-post --turn t1 --based-on-room-seq 8 --final --target '#drift' <</u,
+    /message-post --revise-draft 'held_draft_1' --turn t1 --target '#drift' <</u,
   );
-  assert.doesNotMatch(text!, /--based-on-room-seq 99/u);
+  assert.doesNotMatch(text!, /--based-on-room-seq|--final/u);
   const progress = workerHeldSendGuidance({
     ...held,
-    replyIntent: { final: false },
+    replyIntent: { basedOnRoomSeq: 8, final: false },
   });
   assert.doesNotMatch(progress!, /--final|--based-on-room-seq/u);
-  assert.match(progress!, /message-post --progress --target/u);
+  assert.match(
+    progress!,
+    /message-post --revise-draft 'held_draft_1' --target/u,
+  );
 });
 
 test("held recovery distinguishes an unsent reply from a deliberate no-reply decision", () => {
@@ -106,4 +110,21 @@ test("held recovery distinguishes an unsent reply from a deliberate no-reply dec
     workerHeldSendGuidance({ ...held, continueAnywaySuggested: false })!,
     /--anyway/u,
   );
+});
+
+test("on-demand advanced help agrees with exact-draft revision recovery", async () => {
+  const { staticWorkerHelpTopic } =
+    await import("../src/worker-help-topics.ts");
+  const text = staticWorkerHelpTopic("messages-advanced")!;
+  assert.match(text, /--revise-draft <heldDraftId>/);
+  assert.doesNotMatch(
+    text,
+    /send revised content normally|never carry.*draft id/,
+  );
+});
+
+test("unmarked holds retain ordinary compose recovery rather than claiming a confirmed reply notice", () => {
+  const text = workerHeldSendGuidance({ ...held, replyIntent: undefined })!;
+  assert.doesNotMatch(text, /--revise-draft/);
+  assert.match(text, /message-post --progress --target/);
 });

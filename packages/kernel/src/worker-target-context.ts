@@ -1,3 +1,4 @@
+import { heldRevisionWindow } from "./held-draft-revision.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import { assertWorkerReplyTarget } from "./worker-reply-target-guard.ts";
 import { requireInstanceReplyTarget } from "./instance-worker-scope.ts";
@@ -345,12 +346,12 @@ export class WorkerTargetContextService {
     return this.#context.transaction(() => {
       const origin = this.#authorize(execution),
         input = P.WorkerMessagePostRequestSchema.parse(raw);
-      if (input.channel === undefined)
+      if (input.channel === undefined && input.reviseDraftId === undefined)
         throw new ForbiddenError("target post requires a target channel");
       const target = resolveWorkerReadTarget(
         this.#context.database,
         origin,
-        input.channel,
+        input.channel ?? origin.roomId,
         this.#context.openDirect,
       );
       requireInstanceReplyTarget(
@@ -359,7 +360,22 @@ export class WorkerTargetContextService {
         origin.roomId,
         target.roomId,
       );
-      const threadId = workerReadThread(target, input.threadId) ?? undefined;
+      const revisionRow =
+        input.reviseDraftId === undefined
+          ? undefined
+          : this.#context.database
+              .prepare(
+                "SELECT * FROM held_message_drafts WHERE held_draft_id=?",
+              )
+              .get(input.reviseDraftId);
+      const threadId =
+        input.channel === undefined &&
+        input.threadId === undefined &&
+        revisionRow
+          ? typeof revisionRow.thread_id === "string"
+            ? revisionRow.thread_id
+            : undefined
+          : (workerReadThread(target, input.threadId) ?? undefined);
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);
       // `--send-draft` resends the held send's own causal marker and `--final`
       // (same Activation only), so it acknowledges delivery and records the
@@ -373,7 +389,7 @@ export class WorkerTargetContextService {
       // A saved draft keeps the verdict of its held send; a resend that newly
       // makes it this turn's reply is judged on the draft's own target.
       const judgement =
-        input.sendDraft === true
+        input.sendDraft === true || input.reviseDraftId !== undefined
           ? heldDraftResendJudgement(draft?.row, origin, intent)
           : {
               roomId: target.roomId,
@@ -384,13 +400,16 @@ export class WorkerTargetContextService {
       const judgedReply =
         judgement !== undefined &&
         assertWorkerReplyTarget(this.#context.database, origin, judgement);
-      const window = this.#resolveSendWindow(
-        origin,
-        target,
-        threadId,
-        input,
-        draft,
-      );
+      const window =
+        input.reviseDraftId !== undefined
+          ? heldRevisionWindow(
+              origin,
+              target.roomId,
+              threadId,
+              input,
+              draft?.row,
+            )
+          : this.#resolveSendWindow(origin, target, threadId, input, draft);
       const principal = principalFromRow(
         this.#context.database
           .prepare("SELECT * FROM principals WHERE principal_id=?")
@@ -400,6 +419,9 @@ export class WorkerTargetContextService {
       // and the draft the server itself looked up for this target.
       const resolved = {
         ...input,
+        ...(input.reviseDraftId === undefined
+          ? {}
+          : { sendDraft: true as const }),
         basedOnRoomSeq: window.basedOnRoomSeq,
         idempotencyKey: window.idempotencyKey,
         ...(draft === undefined ? {} : { heldDraftId: draft.heldDraftId }),
@@ -457,8 +479,11 @@ export class WorkerTargetContextService {
           freshnessFloorSeq: window.freshnessFloorSeq,
           idempotencyKey: window.idempotencyKey,
           attachments,
-          ...(input.sendDraft === true
+          ...(input.sendDraft === true || input.reviseDraftId !== undefined
             ? {
+                ...(input.reviseDraftId === undefined
+                  ? {}
+                  : { revisedBody: input.body! }),
                 heldDraftId: draft!.heldDraftId,
                 ...(input.anyway ? { continueAnyway: true } : {}),
               }
@@ -521,7 +546,12 @@ export class WorkerTargetContextService {
     attachments: unknown[],
     attachmentComment: { attachmentId: string; anchor: null } | undefined,
   ): P.WorkerMessageTargetConfirmationResponse | undefined {
-    if (input.sendDraft === true || threadId !== undefined) return undefined;
+    if (
+      input.sendDraft === true ||
+      input.reviseDraftId !== undefined ||
+      threadId !== undefined
+    )
+      return undefined;
     const detected = detectThreadContextParentSend(this.#context.database, {
       participantId: origin.participantId,
       roomId: target.roomId,
@@ -576,8 +606,10 @@ export class WorkerTargetContextService {
     threadId: string | undefined,
     input: P.WorkerMessagePostRequest,
   ): { heldDraftId: string; row: Row } | undefined {
-    if (input.sendDraft !== true) return undefined;
+    if (input.sendDraft !== true && input.reviseDraftId === undefined)
+      return undefined;
     const heldDraftId =
+      input.reviseDraftId ??
       input.heldDraftId ??
       (() => {
         const saved = findActiveHeldMessageDraftForTarget(

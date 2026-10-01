@@ -1072,6 +1072,7 @@ function parseCommand(
         "final",
         "progress",
         "held-draft-id",
+        "revise-draft",
         "idempotency-key",
         // `--json` selects the output stream only; it never reaches the server.
         "json",
@@ -1123,6 +1124,39 @@ function parseCommand(
           : options["thread-id"] === undefined
             ? {}
             : { threadId: boundedText(options, "thread-id", 512) };
+      if (options["revise-draft"] !== undefined) {
+        if (
+          [
+            "send-draft",
+            "held-draft-id",
+            "anyway",
+            "attachment-ids",
+            "comment-attachment-id",
+            "context-receipt",
+            "based-on-room-seq",
+            "final",
+            "progress",
+          ].some((key) => options[key] !== undefined)
+        )
+          throw new Error(
+            "--revise-draft preserves the saved attachments and reply intent; incompatible override",
+          );
+        const body =
+          options.body === undefined
+            ? stdinContent.trim()
+            : boundedText(options, "body");
+        if (!body) throw new Error("--revise-draft requires revised content");
+        return {
+          path: "/v1/worker/messages/post",
+          body: {
+            ...replyTarget,
+            ...targetContext,
+            ...causalContext,
+            reviseDraftId: boundedText(options, "revise-draft", 512),
+            body,
+          },
+        };
+      }
       if (options["send-draft"] === "true") {
         if (options["comment-attachment-id"] !== undefined)
           throw cliError(

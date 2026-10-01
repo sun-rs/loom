@@ -23,6 +23,7 @@ export const WorkerMessagePostRequestSchema = z
     heldDraftId: IdentifierSchema.optional(),
     idempotencyKey: IdentifierSchema.optional(),
     sendDraft: z.literal(true).optional(),
+    reviseDraftId: IdentifierSchema.optional(),
     threadId: IdentifierSchema.nullable().optional(),
   })
   .strict()
@@ -35,6 +36,29 @@ export const WorkerMessagePostRequestSchema = z
         message: "contextReceipt requires the channel it was minted for",
         path: ["channel"],
       });
+    if (value.reviseDraftId !== undefined) {
+      const forbidden = [
+        "sendDraft",
+        "heldDraftId",
+        "anyway",
+        "attachmentIds",
+        "commentAttachmentId",
+        "contextReceipt",
+        "basedOnRoomSeq",
+        "final",
+      ] as const;
+      if (
+        value.body === undefined ||
+        forbidden.some((key) => value[key] !== undefined)
+      )
+        context.addIssue({
+          code: "custom",
+          message:
+            "draft revision requires body and preserves the saved target, attachments and reply intent",
+          path: ["reviseDraftId"],
+        });
+      return;
+    }
     if (value.sendDraft === true) {
       if (
         value.body !== undefined ||
