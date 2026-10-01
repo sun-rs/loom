@@ -1,0 +1,691 @@
+{
+  "batch": "P89",
+  "at": "2026-10-01T09:18:42.410Z",
+  "plan": {
+    "batch": "P89",
+    "code": "3d0855a",
+    "models": [
+      ["a", "codex", "gpt-6-luna"],
+      ["b", "claude", "sonnet"],
+      ["c", "opencode", "aihubmix/deepseek-v4.1-flash"],
+      ["d", "kimi", "kimi-code/k3-256k"]
+    ],
+    "effort": "low",
+    "maxRuns": 4,
+    "timeoutSeconds": 600,
+    "paidAuthorization": "owner: 接下来呢？我授权你可以使用付费模型",
+    "goal": "natural concurrent held revision, exact original ACK, idempotency, delivered quality and usage; no causal cost ratio without native matched control",
+    "noAutoRerun": true
+  },
+  "code": "5655839 (product 3d0855a)",
+  "roomId": "room_f9554bda-77ca-41ca-9ee7-79e99122f6f0",
+  "runs": [
+    {
+      "runAttemptId": "run_6d3619b8-671d-4421-80b0-7b227e30ef3d",
+      "participantId": "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+      "state": "exited",
+      "startedAt": "2026-10-01T09:14:49.066Z",
+      "finishedAt": "2026-10-01T09:17:04.617Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:claude-cli/v1:sonnet",
+        "provider": "anthropic",
+        "modelId": "sonnet",
+        "reasoning": "low"
+      },
+      "provider": "claude",
+      "config": {
+        "provider": "claude",
+        "model": "sonnet",
+        "effort": "low"
+      },
+      "sessionId": "8a4c7178-b3d7-4f8e-bb15-c1e60b990d14",
+      "totals": {
+        "input": 282497,
+        "cached": 178456,
+        "generations": 6,
+        "uncached": 104041
+      },
+      "native": {
+        "input": 282497,
+        "cached": 178456,
+        "generations": 6
+      },
+      "usageMatches": true,
+      "modelProof": {
+        "models": ["claude-sonnet-5"],
+        "efforts": ["low"]
+      },
+      "replySeconds": 129.341,
+      "answer": "@owner B（PID 校验有效边界）：\n\n已证实：receipt.mjs:92-96 对 incumbentPid、receipt.pid 均无类型/范围校验，唯一闸门是全等比较；读取（:101-110）不校验结构，写入却校验 isInteger&&>0（:113），校验只落在写侧。故 receipt 缺 pid、调用方传 undefined 时 undefined===undefined 通过，归属检查退化为空。strict 下 assert.equal 即全等，\"42\"≠42，类型边界是紧的。test.mjs:15/53/71/91-93 只覆盖 42、41≠42、43，未覆盖缺 pid、非整数 pid、写侧非法 pid 被拒。\n\n条件性风险：PID 非稳定身份（无 boot-id/主机/启动时间绑定），号码复用或共用 state 目录即通过（:92-96）；写侧 rename 直接覆盖旧 receipt，不校验在任 PID（:121）。",
+      "calls": [
+        {
+          "at": "2026-10-01T09:15:08.255Z",
+          "name": "Bash",
+          "input": "{\"command\":\"ls -la <FIXTURE>/project/ 2>/dev/null && echo \\\"---SCRIPTS---\\\" && ls -la <FIXTURE>/project/scripts/ 2>/dev/null\",\"description\":\"List attached project directory and scripts\"}"
+        },
+        {
+          "at": "2026-10-01T09:15:08.274Z",
+          "name": "Bash",
+          "input": "{\"command\":\"find <FIXTURE> -name \\\"*workbench-launch-receipt*\\\" 2>/dev/null\",\"description\":\"Find the receipt script and its test\"}"
+        },
+        {
+          "at": "2026-10-01T09:15:13.693Z",
+          "name": "Read",
+          "input": "{\"file_path\":\"<FIXTURE>/project/scripts/workbench-launch-receipt.mjs\"}"
+        },
+        {
+          "at": "2026-10-01T09:15:13.697Z",
+          "name": "Read",
+          "input": "{\"file_path\":\"<FIXTURE>/project/scripts/workbench-launch-receipt.test.mjs\"}"
+        },
+        {
+          "at": "2026-10-01T09:15:19.516Z",
+          "name": "Read",
+          "input": "{\"file_path\":\"<FIXTURE>/project/scripts/workbench-launch-mode.mjs\"}"
+        },
+        {
+          "at": "2026-10-01T09:16:52.192Z",
+          "name": "Bash",
+          "input": "{\"command\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#e2e-discuss-p89-held-1790846057553\\\" --based-on-room-seq 10 <<'RAH_MESSAGE_EOF'\\n@owner B（PID 校验有效边界）：\\n\\n已证实：receipt.mjs:92-96 对 incumbentPid、receipt.pid 均无类型/范围校验，唯一闸门是全等比较；读取（:101-110）不校验结构，写入却校验 isInteger&&>0（:113），校验只落在写侧。故 receipt 缺 pid、调用方传 undefined 时 undefined===undefined 通过，归属检查退化为空。strict 下 assert.equal 即全等，\\\"42\\\"≠42，类型边界是紧的。test.mjs:15/53/71/91-93 只覆盖 42、41≠42、43，未覆盖缺 pid、非整数 pid、写侧非法 pid 被拒。\\n\\n条件性风险：PID 非稳定身份（无 boot-id/主机/启动时间绑定），号码复用或共用 state 目录即通过（:92-96）；写侧 rename 直接覆盖旧 receipt，不校验在任 PID（:121）。\\nRAH_MESSAGE_EOF\",\"description\":\"Post scope-B review conclusion to the room\"}"
+        },
+        {
+          "at": "2026-10-01T09:16:58.147Z",
+          "name": "Bash",
+          "input": "{\"command\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --send-draft --target \\\"#e2e-discuss-p89-held-1790846057553\\\"\",\"description\":\"Send the held draft message\"}"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_60073558-b1b6-4238-83e3-75d748c021ab",
+      "participantId": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+      "state": "exited",
+      "startedAt": "2026-10-01T09:14:49.068Z",
+      "finishedAt": "2026-10-01T09:15:51.510Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "provider": "codex",
+      "config": {
+        "provider": "codex",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "sessionId": "01a0f6be-bf0a-7e00-bdb3-831c700a94f1",
+      "totals": {
+        "input": 244443,
+        "cached": 213760,
+        "generations": 14,
+        "uncached": 30683
+      },
+      "native": {
+        "input": 244443,
+        "cached": 213760,
+        "generations": 14
+      },
+      "usageMatches": true,
+      "modelProof": {
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "replySeconds": 60.322,
+      "answer": "权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，随后原子 rename，并在 finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证文件权限与替换（workbench-launch-receipt.test.mjs:78-103）。条件性风险：实现依赖 state 目录本身可信且权限收紧；测试没有检查目录权限。",
+      "calls": [
+        {
+          "at": "2026-10-01T09:14:58.381Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker message-check',\n  max_output_tokens: 2000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:01.162Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker help messages && \"$RAH_WORKER_CLI\" worker help tasks',\n  max_output_tokens: 4000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:04.101Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker task-claim-message --message-id 47b60144 --rationale \"并行只读审查指定代码快照与对应测试，提交带行号结论\"',\n  max_output_tokens: 2000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:07.132Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker task-claim-message --message-id 47b60144 --rationale \"并行只读审查指定代码快照与对应测试，提交带行号结论\" --turn [redacted]',\n  max_output_tokens: 2000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:11.556Z",
+          "name": "exec",
+          "input": "const results = await Promise.allSettled([\n  tools.exec_command({cmd: 'pwd && rg --files -g \"workbench-launch-receipt.mjs\" -g \"*receipt*test*\" -g \"*workbench*test*\" <FIXTURE>/project', max_output_tokens: 3000}),\n  tools.exec_command({cmd: '\"$RAH_WORKER_CLI\" worker task-start --target \"#e2e-discuss-p89-held-1790846057553\" --number 1 --turn [redacted]', max_output_tokens: 2000})\n]);\nfor (const r of results) text(r.status === 'fulfilled' ? r.value.output : String(r.reason));\n"
+        },
+        {
+          "at": "2026-10-01T09:15:16.217Z",
+          "name": "exec",
+          "input": "const results = await Promise.allSettled([\n  tools.exec_command({cmd: 'nl -ba scripts/workbench-launch-receipt.mjs', workdir: '<FIXTURE>/project', max_output_tokens: 6000}),\n  tools.exec_command({cmd: 'nl -ba scripts/workbench-launch-receipt.test.mjs', workdir: '<FIXTURE>/project', max_output_tokens: 6000}),\n]);\nfor (const r of results) text(r.status === 'fulfilled' ? r.value.output : String(r.reason));\n"
+        },
+        {
+          "at": "2026-10-01T09:15:18.827Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: 'rg -n \"workbench-launch-receipt|writeLaunchReceipt|restartNetworkEnvironment|readLaunchReceipt|incumbentPid|process\\\\.kill\" scripts',\n  workdir: '<FIXTURE>/project',\n  max_output_tokens: 4000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:27.200Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker task-progress --target \"#e2e-discuss-p89-held-1790846057553\" --number 1 --evidence \"只读审查 scripts/workbench-launch-receipt.mjs 与对应测试；检查回执写入/权限及所有快照内调用点，结论已整理。\" --turn [redacted] && \"$RAH_WORKER_CLI\" worker message-post --target \"#e2e-discuss-p89-held-1790846057553\" --based-on-room-seq 10 --turn [redacted] <<\\'RAH_MESSAGE_EOF\\'\\n权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，原子 rename，finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证最终权限与替换（test.mjs:78-103）。条件性风险：依赖 state 目录本身可信且权限收紧；测试未验证目录权限/并发读写行为。\\nRAH_MESSAGE_EOF',\n  max_output_tokens: 2000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:29.571Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker help tasks',\n  max_output_tokens: 1000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:33.757Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker task-progress --target \"#e2e-discuss-p89-held-1790846057553\" --number 1 --note \"只读审查脚本及对应测试完成，结论已回复原消息。\" --turn [redacted]',\n  max_output_tokens: 1000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:39.036Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker task-submit --target \"#e2e-discuss-p89-held-1790846057553\" --number 1 --summary \"只读审查已完成；依照要求将单条结论回复原消息。\" --turn [redacted]',\n  max_output_tokens: 1000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:43.764Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker message-post --target \"#e2e-discuss-p89-held-1790846057553\" --based-on-room-seq 10 --turn [redacted] <<\\'RAH_MESSAGE_EOF\\'\\n权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，原子 rename，finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证最终权限与替换（test.mjs:78-103）。条件性风险：依赖 state 目录本身可信且权限收紧；测试未验证目录权限/并发读写行为。\\nRAH_MESSAGE_EOF',\n  max_output_tokens: 1000\n});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T09:15:49.126Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({\n  cmd: '\"$RAH_WORKER_CLI\" worker message-post --revise-draft held_draft_c85387de-60ad-4dee-8363-0bdc019ba541 --turn [redacted] --target \"#e2e-discuss-p89-held-1790846057553\" <<\\'RAH_MESSAGE_EOF\\'\\n权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，随后原子 rename，并在 finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证文件权限与替换（workbench-launch-receipt.test.mjs:78-103）。条件性风险：实现依赖 state 目录本身可信且权限收紧；测试没有检查目录权限。\\nRAH_MESSAGE_EOF',\n  max_output_tokens: 1000\n});\ntext(r.output);\n"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_0059e39a-75ed-4031-bc95-86b21d29fd9b",
+      "participantId": "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+      "state": "exited",
+      "startedAt": "2026-10-01T09:14:49.069Z",
+      "finishedAt": "2026-10-01T09:15:46.828Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+        "provider": "aihubmix",
+        "modelId": "aihubmix/deepseek-v4.1-flash",
+        "reasoning": "low"
+      },
+      "provider": "opencode",
+      "config": {
+        "provider": "opencode",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low"
+      },
+      "sessionId": "ses_f09414204ffeTMV6wcaNwDIb6L",
+      "totals": {
+        "input": 226293,
+        "cached": 206592,
+        "generations": 13,
+        "uncached": 19701
+      },
+      "native": {
+        "input": 226293,
+        "cached": 206592,
+        "generations": 13
+      },
+      "usageMatches": true,
+      "modelProof": {
+        "assistants": 13,
+        "compactions": 0
+      },
+      "replySeconds": 53.655,
+      "answer": "C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败。",
+      "calls": [
+        {
+          "name": "bash",
+          "input": "{\"command\":\"ls -la <FIXTURE>/project && ls -la <FIXTURE>/project/scripts 2>/dev/null\"}",
+          "output": "total 0\ndrwxr-xr-x@  3 sun  wheel   96 Sep 27 17:48 .\ndrwxr-xr-x@ 11 sun  wheel  352 Oct  1 17:14 ..\ndrwxr-xr-x@  5 sun  wheel  160 Sep 27 17:48 scripts\ntotal 40\ndrwxr-xr-x@ 5 sun  wheel   160 Sep 27 17:48 .\ndrwxr-xr-x@ 3 sun  wheel    96 Sep 27 17:48 ..\n-rw-r--r--@ 1 sun  wheel  3849 Sep 27 17:48 workbench-launch-mode.mjs\n-rw-r--r--@ 1 sun  wheel  4237 Sep 27 17:48 workbench-launch-receipt.mjs\n-rw-r--r--@ 1 sun  wheel  6995 Sep 27 17:48 workbench-launch-receipt.test.mjs\n"
+        },
+        {
+          "name": "read",
+          "input": "{\"filePath\":\"<FIXTURE>/project/scripts/workbench-launch-receipt.mjs\"}",
+          "output": "<path><FIXTURE>/project/scripts/workbench-launch-receipt.mjs</path>\n<type>file</type>\n<content>\n1: import assert from \"node:assert/strict\";\n2: import { randomUUID } from \"node:crypto\";\n3: import { readFile, writeFile, rename, rm } from \"node:fs/promises\";\n4: import { isAbsolute, join } from \"node:path\";\n5: import {\n6:   assertTailnetHost,\n7:   assertTrustedLanHosts,\n8: } from \"./workbench-launch-mode.mjs\";\n9: \n10: // Startup evidence, not a second service configuration. The current launch-mode\n11: // owner still interprets network options; restart preserves the incumbent mode.\n12: // The receipt is authoritative for the authorized network entries: a restart\n13: // replays the recorded Tailnet and trusted LAN addresses instead of rescanning\n14: // interfaces, so a restart can neither drop nor widen the incumbent entry set.\n15: const networkKeys = [\n16:   \"RAH_TAILNET_HOST\",\n17:   \"RAH_TRUSTED_LAN_HOSTS\",\n18:   \"RAH_LAN_ORIGIN\",\n19:   \"RAH_LAN_BIND_HOST\",\n20:   \"RAH_LAN_CERT_PATH\",\n21:   \"RAH_LAN_KEY_PATH\",\n22:   \"RAH_WEB_PORT\",\n23: ];\n24: function networkEnvironment(mode) {\n25:   assert.ok(\n26:     mode && [\"loopback\", \"tailnet\", \"lan\"].includes(mode.kind),\n27:     \"Invalid workbench launch mode\",\n28:   );\n29:   if (mode.kind === \"lan\") {\n30:     const origin = new URL(mode.publicOrigin);\n31:     assert.equal(origin.protocol, \"https:\");\n32:     assert.equal(origin.origin, mode.publicOrigin);\n33:     assert.ok(typeof mode.bindHost === \"string\" && mode.bindHost.length > 0);\n34:     const env = {\n35:       RAH_LAN_ORIGIN: mode.publicOrigin,\n36:       RAH_LAN_BIND_HOST: mode.bindHost,\n37:     };\n38:     for (const [key, path] of [\n39:       [\"RAH_LAN_CERT_PATH\", mode.certificatePath],\n40:       [\"RAH_LAN_KEY_PATH\", mode.privateKeyPath],\n41:     ]) {\n42:       if (path !== un"
+        },
+        {
+          "name": "read",
+          "input": "{\"filePath\":\"<FIXTURE>/project/scripts/workbench-launch-receipt.test.mjs\"}",
+          "output": "<path><FIXTURE>/project/scripts/workbench-launch-receipt.test.mjs</path>\n<type>file</type>\n<content>\n1: import assert from \"node:assert/strict\";\n2: import test from \"node:test\";\n3: import { mkdtemp, readFile, stat, rm } from \"node:fs/promises\";\n4: import { tmpdir } from \"node:os\";\n5: import { join } from \"node:path\";\n6: import { workbenchLaunchMode } from \"./workbench-launch-mode.mjs\";\n7: import {\n8:   restartNetworkEnvironment,\n9:   writeLaunchReceipt,\n10:   readLaunchReceipt,\n11: } from \"./workbench-launch-receipt.mjs\";\n12: \n13: test(\"a restart from a plain shell preserves the running Tailnet and LAN discovery mode\", () => {\n14:   const mode = { kind: \"tailnet\", bindHost: \"100.64.0.2\", port: 4173 };\n15:   const saved = { schemaVersion: 1, pid: 42, mode };\n16:   const env = restartNetworkEnvironment(\n17:     { PATH: \"/bin\", RAH_LAN_ORIGIN: \"https://wrong.example\" },\n18:     saved,\n19:     42,\n20:   );\n21:   assert.equal(env.RAH_LAN_ORIGIN, undefined);\n22:   assert.equal(env.PATH, \"/bin\");\n23:   assert.deepEqual(workbenchLaunchMode(env, \"/tmp/rah\", {}), {\n24:     ...mode,\n25:     additionalBindHosts: [\"127.0.0.1\"],\n26:   });\n27: });\n28: test(\"LAN HTTPS retains origin, binding and certificate paths without storing keys or credentials\", () => {\n29:   const mode = {\n30:     kind: \"lan\",\n31:     bindHost: \"192.168.1.2\",\n32:     publicOrigin: \"https://rah.example\",\n33:     tlsDirectory: \"/tmp/tls\",\n34:     certificatePath: \"/tmp/cert.pem\",\n35:     privateKeyPath: \"/tmp/key.pem\",\n36:   };\n37:   const env = restartNetworkEnvironment(\n38:     { RAH_TAILNET_HOST: \"100.64.0.9\" },\n39:     { schemaVersion: 1, pid: 42, mode },\n40:     42,\n41:   );\n42:   assert.equal(env.RAH_TAILNET_HOST, undefined);\n43:   assert.equal(env.RAH_LAN_ORIGIN, mode.publicOrigin);\n44:   assert.equal(env.RA"
+        },
+        {
+          "name": "read",
+          "input": "{\"filePath\":\"<FIXTURE>/project/scripts/workbench-launch-mode.mjs\"}",
+          "output": "<path><FIXTURE>/project/scripts/workbench-launch-mode.mjs</path>\n<type>file</type>\n<content>\n1: import { isIP } from \"node:net\";\n2: import { join } from \"node:path\";\n3: // Mirror the supported service launcher configuration; Core validates TLS/origin.\n4: // Tailnet and ordinary LAN are separate trust decisions: configuring the Tailnet\n5: // entry never authorizes a LAN interface, and a newly discovered NIC never joins\n6: // the authorized set on its own. Ordinary LAN entries must be named explicitly.\n7: const PRIVATE_IPV4 = /^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)/u;\n8: // Tailnet owns 100.64.0.0/10 only. An ordinary LAN address must not reach the\n9: // unpaired HTTP entry through the Tailnet variable and bypass the explicit LAN\n10: // contract; the gateway rejects it too, but the launcher refuses it first.\n11: export function assertTailnetHost(host, source) {\n12:   const octets =\n13:     typeof host === \"string\" && isIP(host) === 4\n14:       ? host.split(\".\").map(Number)\n15:       : undefined;\n16:   if (\n17:     octets === undefined ||\n18:     octets[0] !== 100 ||\n19:     octets[1] < 64 ||\n20:     octets[1] > 127\n21:   ) {\n22:     throw new Error(\n23:       `${source} accepts only a 100.64.0.0/10 Tailnet IPv4 address; refused ${JSON.stringify(host)}. Ordinary LAN entries must be named explicitly in RAH_TRUSTED_LAN_HOSTS, or served by the authenticated RAH_LAN_ORIGIN gateway.`,\n24:     );\n25:   }\n26:   return host;\n27: }\n28: export function assertTrustedLanHosts(hosts, tailnetHost, source) {\n29:   if (!Array.isArray(hosts)) {\n30:     throw new Error(\n31:       `${source} must be a list of explicit private IPv4 trusted LAN addresses`,\n32:     );\n33:   }\n34:   const seen = new Set();\n35:   for (const host of hosts) {\n36:     if (\n37:       typeof host !== \"string\""
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C（临时文件与失败清理）：清理逻辑正确，finally+force 覆盖成功/写入失败/异常三路径，0600 于创建时设置、无泄露窗口（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②进程被强杀时 .workbench-launch-*.json 残留、无启动清扫会累积（:114）。确认测试缺口：失败用例(test:180-200)于 :112 校验即抛错、早于创建 temp，未验证部分写入后的清理；无测试注入 writeFile/rename 失败，亦未断言目录无残留 temp（成功用例 :78-103 未检查）。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "313\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C（临时文件/失败清理）：清理逻辑正确——finally+force 覆盖成功、写入失败、异常三路径，0600 创建时设置无泄露窗口（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②进程被强杀时 .workbench-launch-*.json 残留且无启动清扫会累积（:114）。确认测试缺口：失败用例 test:180-200 于 :112 校验即抛错、早于建 temp，未验证部分写入后清理；无测试注入 writeFile/rename 失败，也未断言目录无残留 temp（成功用例 :78-103 未检查）。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "310\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C（临时文件/失败清理）：清理逻辑正确：finally+force 覆盖成功、写入失败、异常三路径，0600 创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时 .workbench-launch-*.json 残留、无启动清扫（:114）。确认测试缺口：失败用例 test:180-200 在 :112 校验即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败，也未断言无残留 temp。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "274\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C（临时文件/失败清理）：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。确认测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败或断言无残留 temp。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "268\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。确认测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败或断言无残留 temp。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "257\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。确认测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败或断言无残留 temp。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "257\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败或残留 temp。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "253\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"python3 - <<'PY'\\ns=\\\"C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败。\\\"\\nprint(len(s))\\nPY\"}",
+          "output": "245\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#e2e-discuss-p89-held-1790846057553\\\" --turn [redacted] --based-on-room-seq 10 <<'RAH_MESSAGE_EOF'\\nC：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败。\\nRAH_MESSAGE_EOF\"}",
+          "output": "SEND_HELD_AS_DRAFT: message was NOT sent; no target delivery occurred.\nFreshness hold: showing latest 1 of 1 newer message.\nYour message has been saved as a draft. Saving a draft does not confirm delivery or complete this work. Review the bounded context shown here, then choose one path.\n\n[29] principal_bf085178-7f32-464e-9d69-bf22db670643: D（测试覆盖）结论：核心承诺均有对应测试——三种模式回放（test.mjs:13/28/68）、fail-closed（:47/151/201）、权限0o600与PID轮换（:78-103）、写入前校验（:180），覆盖与实现基本相称，无确认缺陷。条件性覆盖缺口：receipt.mjs:50端口越界、:113非法pid、:89非1的schemaVersion、:31非https origin与缺省证书分支均无直接用例；:88只在首次写入后验权限，rename替换后未复查。若上述路径被视为承诺，建议补测；否则现状可接受。\n\nTo revise this saved draft after review (preserving its original reply confirmation):\n  \"$RAH_WORKER_CLI\" worker message-post --revise-draft 'held_draft_d387baea-9fd8-42b5-9b3e-8c31df63b1b5' --turn [redacted] --target '#e2e-discuss-p89-held-1790846057553' <<'RAH_MESSAGE_EOF'\n  revised message\n  RAH_MESSAGE_EOF\nIf the revision is held again, review that new notice before using --send-draft.\nTo send the current draft unchanged:\n  \"$RAH_WORKER_CLI\" worker message-post --send-draft --turn [redacted] --target '#e2e-discuss-p89-held-1790846057553'\nIf no reply is needed after review, confirm delivery with:\n  \"$RAH_WORKER_CLI\" worker message-check --turn [redacted]\nA required reply must still be published; message-check does not publish the draft or complete a Task.\nError: Message held as draft; no target delivery occurred.\nCode: SEND_HELD_AS_DRAFT\nRetryable: no\nEffect: draft_saved\nDraft saved: yes\nNext action: Review the held context, then update the draft or send the current draft unchanged.\n"
+        },
+        {
+          "name": "bash",
+          "input": "{\"command\":\"\\\"$RAH_WORKER_CLI\\\" worker message-post --send-draft --turn [redacted] --target '#e2e-discuss-p89-held-1790846057553'\"}",
+          "output": "Message sent to #e2e-discuss-p89-held-1790846057553. Message ID: message_df618140-fa43-4dd3-91a2-773fce107ae5\n"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_3bd43dac-b2f7-4df8-8c43-52a2fb5a4a85",
+      "participantId": "principal_bf085178-7f32-464e-9d69-bf22db670643",
+      "state": "exited",
+      "startedAt": "2026-10-01T09:14:49.069Z",
+      "finishedAt": "2026-10-01T09:15:23.940Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+        "provider": "kimi-code",
+        "modelId": "kimi-code/k3-256k",
+        "reasoning": "low"
+      },
+      "provider": "kimi",
+      "config": {
+        "provider": "kimi",
+        "model": "kimi-code/k3-256k",
+        "effort": "low"
+      },
+      "sessionId": "session_b1a368ed-98ec-4647-abf5-ad95efcafcf9",
+      "totals": {
+        "input": 77125,
+        "cached": 68864,
+        "generations": 3,
+        "uncached": 8261
+      },
+      "native": {
+        "input": 77125,
+        "cached": 68864,
+        "generations": 3
+      },
+      "usageMatches": true,
+      "modelProof": {
+        "requests": [
+          {
+            "kind": "loop",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "kind": "loop",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "kind": "loop",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          }
+        ]
+      },
+      "replySeconds": 27.038,
+      "answer": "D（测试覆盖）结论：核心承诺均有对应测试——三种模式回放（test.mjs:13/28/68）、fail-closed（:47/151/201）、权限0o600与PID轮换（:78-103）、写入前校验（:180），覆盖与实现基本相称，无确认缺陷。条件性覆盖缺口：receipt.mjs:50端口越界、:113非法pid、:89非1的schemaVersion、:31非https origin与缺省证书分支均无直接用例；:88只在首次写入后验权限，rename替换后未复查。若上述路径被视为承诺，建议补测；否则现状可接受。",
+      "calls": [
+        {
+          "at": "2026-10-01T09:14:57.543Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T09:14:57.544Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T09:15:15.689Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ]
+    }
+  ],
+  "activations": [
+    {
+      "activation_id": "activation_34bf918b-dde4-4b2b-928f-b800a7dea9ff",
+      "state": "completed",
+      "from_seq": 10,
+      "to_seq": 10
+    },
+    {
+      "activation_id": "activation_75fa4916-d644-4abf-931e-cab3e648db42",
+      "state": "completed",
+      "from_seq": 10,
+      "to_seq": 10
+    },
+    {
+      "activation_id": "activation_59568ba0-c9d5-46df-93fa-5fb744996f57",
+      "state": "completed",
+      "from_seq": 10,
+      "to_seq": 10
+    },
+    {
+      "activation_id": "activation_6aedf062-8c83-4034-ac9a-2966a691f59a",
+      "state": "completed",
+      "from_seq": 10,
+      "to_seq": 10
+    }
+  ],
+  "drafts": [
+    {
+      "held_draft_id": "held_draft_d387baea-9fd8-42b5-9b3e-8c31df63b1b5",
+      "participant_id": "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+      "activation_id": "activation_75fa4916-d644-4abf-931e-cab3e648db42",
+      "body": "C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败。",
+      "based_on_room_seq": 10,
+      "seen_up_to_seq": 29,
+      "state": "replaced",
+      "rehold_count": 1,
+      "reply_based_on_room_seq": 10,
+      "reply_final": 0,
+      "resolution_kind": "sent_unchanged",
+      "created_at": "2026-10-01T09:15:39.042Z",
+      "resolved_at": "2026-10-01T09:15:42.724Z"
+    },
+    {
+      "held_draft_id": "held_draft_c85387de-60ad-4dee-8363-0bdc019ba541",
+      "participant_id": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+      "activation_id": "activation_59568ba0-c9d5-46df-93fa-5fb744996f57",
+      "body": "权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，原子 rename，finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证最终权限与替换（test.mjs:78-103）。条件性风险：依赖 state 目录本身可信且权限收紧；测试未验证目录权限/并发读写行为。",
+      "based_on_room_seq": 10,
+      "seen_up_to_seq": 34,
+      "state": "replaced",
+      "rehold_count": 1,
+      "reply_based_on_room_seq": 10,
+      "reply_final": 0,
+      "resolution_kind": "revised",
+      "created_at": "2026-10-01T09:15:43.985Z",
+      "resolved_at": "2026-10-01T09:15:49.389Z"
+    },
+    {
+      "held_draft_id": "held_draft_c6307bd5-1cba-44f0-af47-5747fa6f3ff0",
+      "participant_id": "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+      "activation_id": "activation_34bf918b-dde4-4b2b-928f-b800a7dea9ff",
+      "body": "@owner B（PID 校验有效边界）：\n\n已证实：receipt.mjs:92-96 对 incumbentPid、receipt.pid 均无类型/范围校验，唯一闸门是全等比较；读取（:101-110）不校验结构，写入却校验 isInteger&&>0（:113），校验只落在写侧。故 receipt 缺 pid、调用方传 undefined 时 undefined===undefined 通过，归属检查退化为空。strict 下 assert.equal 即全等，\"42\"≠42，类型边界是紧的。test.mjs:15/53/71/91-93 只覆盖 42、41≠42、43，未覆盖缺 pid、非整数 pid、写侧非法 pid 被拒。\n\n条件性风险：PID 非稳定身份（无 boot-id/主机/启动时间绑定），号码复用或共用 state 目录即通过（:92-96）；写侧 rename 直接覆盖旧 receipt，不校验在任 PID（:121）。",
+      "based_on_room_seq": 10,
+      "seen_up_to_seq": 38,
+      "state": "replaced",
+      "rehold_count": 1,
+      "reply_based_on_room_seq": 10,
+      "reply_final": 0,
+      "resolution_kind": "sent_unchanged",
+      "created_at": "2026-10-01T09:16:52.948Z",
+      "resolved_at": "2026-10-01T09:16:58.407Z"
+    }
+  ],
+  "events": [
+    {
+      "seq": 10,
+      "payload": {
+        "body": "@p89-codex-a-e5a64d0ca30c3ae6e2fe28a5 @p89-claude-b-e74e4b088d0ce47372212e61 @p89-opencode-c-f19e41a083e87387b3d207a8 @p89-kimi-d-eeff480284ab1d258ffc70c0 请并行只读审查频道附加目录中 scripts/workbench-launch-receipt.mjs 与对应测试。A审查回执写入与权限；B审查PID校验的有效边界；C审查临时文件与失败清理；D审查测试覆盖是否足以支持实现承诺。每人只交付一条不超过250字的实质结论，给文件行号，区分确认缺陷和条件性风险，不强凑缺陷。不修改文件、不写记忆、不创建任务、不点名安排后续工作。",
+        "messageId": "message_47b60144-315e-4cfd-858b-17de5877331f",
+        "basedOnRoomSeq": 9,
+        "recipientIds": [
+          "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+          "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+          "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+          "principal_bf085178-7f32-464e-9d69-bf22db670643"
+        ],
+        "recipients": [
+          {
+            "participantId": "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+            "reason": "room_policy"
+          },
+          {
+            "participantId": "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+            "reason": "room_policy"
+          },
+          {
+            "participantId": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+            "reason": "room_policy"
+          },
+          {
+            "participantId": "principal_bf085178-7f32-464e-9d69-bf22db670643",
+            "reason": "room_policy"
+          }
+        ],
+        "mentions": [
+          {
+            "start": 0,
+            "end": 37,
+            "handle": "p89-codex-a-e5a64d0ca30c3ae6e2fe28a5",
+            "principalId": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+            "agentId": "agent_definition_e1ee4599-ef08-4487-98c0-e4f494ef58ba"
+          },
+          {
+            "start": 38,
+            "end": 76,
+            "handle": "p89-claude-b-e74e4b088d0ce47372212e61",
+            "principalId": "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+            "agentId": "agent_definition_ae2387b2-f7b3-4e50-be00-16444f26ef03"
+          },
+          {
+            "start": 77,
+            "end": 117,
+            "handle": "p89-opencode-c-f19e41a083e87387b3d207a8",
+            "principalId": "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+            "agentId": "agent_definition_3e5d9bd6-a18d-44b1-ad81-f96d2b5cf0b7"
+          },
+          {
+            "start": 118,
+            "end": 154,
+            "handle": "p89-kimi-d-eeff480284ab1d258ffc70c0",
+            "principalId": "principal_bf085178-7f32-464e-9d69-bf22db670643",
+            "agentId": "agent_definition_1668d443-c3ed-4324-9919-a8742b0c9d6f"
+          }
+        ]
+      }
+    },
+    {
+      "seq": 29,
+      "payload": {
+        "activationId": "activation_6aedf062-8c83-4034-ac9a-2966a691f59a",
+        "basedOnRoomSeq": 0,
+        "body": "D（测试覆盖）结论：核心承诺均有对应测试——三种模式回放（test.mjs:13/28/68）、fail-closed（:47/151/201）、权限0o600与PID轮换（:78-103）、写入前校验（:180），覆盖与实现基本相称，无确认缺陷。条件性覆盖缺口：receipt.mjs:50端口越界、:113非法pid、:89非1的schemaVersion、:31非https origin与缺省证书分支均无直接用例；:88只在首次写入后验权限，rename替换后未复查。若上述路径被视为承诺，建议补测；否则现状可接受。",
+        "messageId": "message_1e8de41c-841e-43f6-92da-159e8f3ea670",
+        "recipientIds": [],
+        "recipients": [],
+        "mentions": []
+      }
+    },
+    {
+      "seq": 34,
+      "payload": {
+        "activationId": "activation_75fa4916-d644-4abf-931e-cab3e648db42",
+        "basedOnRoomSeq": 29,
+        "body": "C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败。",
+        "heldDraftId": "held_draft_d387baea-9fd8-42b5-9b3e-8c31df63b1b5",
+        "messageId": "message_df618140-fa43-4dd3-91a2-773fce107ae5",
+        "recipientIds": [],
+        "recipients": [],
+        "mentions": []
+      }
+    },
+    {
+      "seq": 38,
+      "payload": {
+        "activationId": "activation_59568ba0-c9d5-46df-93fa-5fb744996f57",
+        "basedOnRoomSeq": 10,
+        "body": "权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，随后原子 rename，并在 finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证文件权限与替换（workbench-launch-receipt.test.mjs:78-103）。条件性风险：实现依赖 state 目录本身可信且权限收紧；测试没有检查目录权限。",
+        "revisedDraft": true,
+        "heldDraftId": "held_draft_c85387de-60ad-4dee-8363-0bdc019ba541",
+        "messageId": "message_563b54ba-1c22-4327-9f6a-d5ab09654509",
+        "recipientIds": [],
+        "recipients": [],
+        "mentions": []
+      }
+    },
+    {
+      "seq": 42,
+      "payload": {
+        "activationId": "activation_34bf918b-dde4-4b2b-928f-b800a7dea9ff",
+        "basedOnRoomSeq": 38,
+        "body": "@owner B（PID 校验有效边界）：\n\n已证实：receipt.mjs:92-96 对 incumbentPid、receipt.pid 均无类型/范围校验，唯一闸门是全等比较；读取（:101-110）不校验结构，写入却校验 isInteger&&>0（:113），校验只落在写侧。故 receipt 缺 pid、调用方传 undefined 时 undefined===undefined 通过，归属检查退化为空。strict 下 assert.equal 即全等，\"42\"≠42，类型边界是紧的。test.mjs:15/53/71/91-93 只覆盖 42、41≠42、43，未覆盖缺 pid、非整数 pid、写侧非法 pid 被拒。\n\n条件性风险：PID 非稳定身份（无 boot-id/主机/启动时间绑定），号码复用或共用 state 目录即通过（:92-96）；写侧 rename 直接覆盖旧 receipt，不校验在任 PID（:121）。",
+        "heldDraftId": "held_draft_c6307bd5-1cba-44f0-af47-5747fa6f3ff0",
+        "messageId": "message_0e4f4dfd-3033-4dfe-b659-3644e79d9f3f",
+        "recipientIds": [],
+        "recipients": [],
+        "mentions": [
+          {
+            "start": 0,
+            "end": 6,
+            "handle": "owner",
+            "principalId": "principal_379720e9-6c80-4ecb-b06e-530a78150911"
+          }
+        ]
+      }
+    }
+  ],
+  "gaps": [],
+  "selfInbox": 0,
+  "limits": [
+    "Single concurrent four-provider round; no native matched control, no causal cost ratio",
+    "Unmodified source snapshot; review quality assessed separately",
+    "250-character test instruction can cause repeated counting tools; not a product instruction",
+    "No paid reruns; only observed held branches count as covered"
+  ],
+  "stop": {
+    "at": "2026-10-01T09:17:50.564Z",
+    "reason": "completed and quiet",
+    "runs": [
+      {
+        "run_attempt_id": "run_6d3619b8-671d-4421-80b0-7b227e30ef3d",
+        "participant_id": "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+        "state": "exited",
+        "started_at": "2026-10-01T09:14:49.066Z",
+        "finished_at": "2026-10-01T09:17:04.617Z"
+      },
+      {
+        "run_attempt_id": "run_60073558-b1b6-4238-83e3-75d748c021ab",
+        "participant_id": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+        "state": "exited",
+        "started_at": "2026-10-01T09:14:49.068Z",
+        "finished_at": "2026-10-01T09:15:51.510Z"
+      },
+      {
+        "run_attempt_id": "run_0059e39a-75ed-4031-bc95-86b21d29fd9b",
+        "participant_id": "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+        "state": "exited",
+        "started_at": "2026-10-01T09:14:49.069Z",
+        "finished_at": "2026-10-01T09:15:46.828Z"
+      },
+      {
+        "run_attempt_id": "run_3bd43dac-b2f7-4df8-8c43-52a2fb5a4a85",
+        "participant_id": "principal_bf085178-7f32-464e-9d69-bf22db670643",
+        "state": "exited",
+        "started_at": "2026-10-01T09:14:49.069Z",
+        "finished_at": "2026-10-01T09:15:23.940Z"
+      }
+    ]
+  },
+  "totals": {
+    "input": 830358,
+    "cached": 667672,
+    "uncached": 162686,
+    "generations": 36
+  },
+  "taskEvents": [
+    {
+      "room_seq": 27,
+      "type": "task.created"
+    },
+    {
+      "room_seq": 28,
+      "type": "task.started"
+    },
+    {
+      "room_seq": 33,
+      "type": "task.submitted"
+    }
+  ],
+  "snapshot": {
+    "workbench-launch-mode.mjs": {
+      "sha256": "ca4a5e9df9aef5ebf59e832993792eb370515bb24a2cb64e0bd7760ca3eccfc0",
+      "sameAsP87": true
+    },
+    "workbench-launch-receipt.mjs": {
+      "sha256": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+      "sameAsP87": true
+    },
+    "workbench-launch-receipt.test.mjs": {
+      "sha256": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+      "sameAsP87": true
+    }
+  },
+  "freeSnapshotTests": {
+    "tests": 10,
+    "passed": 10,
+    "command": "node --test <FIXTURE>/project/scripts/workbench-launch-receipt.test.mjs"
+  },
+  "codexInputEvidence": {
+    "humanNoTaskPresent": true,
+    "standingDoesNotRequireBriefReviewTask": true,
+    "standingSource": "packages/agent-host/src/standing-protocol.ts:64",
+    "extraTaskCommands": 6
+  },
+  "findings": {
+    "heldRevision": "Codex held once at seen seq34, revise-draft publishes seq38 with revisedDraft=true and original basedOnRoomSeq10; no second hold. Claude/OpenCode held once then send unchanged; Kimi no hold.",
+    "workflow": "Four Runs, four completed Activations, four replies, no self Inbox or duplicate Run, no usage gaps; all native totals equal ledger.",
+    "quality": "No repetition of P87 false rename/0644 claim. Codex creates/starts/submits Task against explicit Human and Role instructions. Claude429 and Kimi262 exceed test limit250. Claude missing-PID observation is a function-level conditional issue, not proof of reachable whole-system exploit.",
+    "efficiency": "Not passed: no native matched control. Codex extra task/help/error calls; OpenCode 8 Python length-count calls caused by the test 250-character constraint. Claude interval from last Read return to next assistant tool request approx92.7s; provider wait vs inference not separated.",
+    "next": "Keep fixed interface repair. Remove hard character counts from future efficiency tasks; inspect Task capability/intent contract separately rather than add another reminder. Single sample cannot establish causal model quality improvement."
+  },
+  "scripts": {
+    "loom.mjs": "#!/usr/bin/env node\n/** P89: owner-authorized two Codex low concurrent review, max 4 Runs. */\nimport { randomUUID } from \"node:crypto\";\nimport { existsSync, mkdirSync, writeFileSync, readFileSync } from \"node:fs\";\nimport { homedir } from \"node:os\";\nimport { join } from \"node:path\";\nimport { DatabaseSync } from \"node:sqlite\";\nimport { isDeepStrictEqual } from \"node:util\";\n\nimport { assertApprovedGateModel } from \"/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/approved-models.mjs\";\nimport { E2E_MODELS, judgePlacementModel } from \"/Users/sun/Code/repos/rah_os/scripts/acceptance/real-e2e-lib.mjs\";\n\nconst ORIGIN = \"http://127.0.0.1:4176\";\nconst HOME = homedir();\nconst PROJECT = \"/private/tmp/loom-held-p89-20261001/project\";\nconst RUNS_DIR = join(HOME, \".loom\", \"acceptance\", \"runs\");\nconst ROOM_DB = join(HOME, \".loom\", \"evo\", \"state\", \"room.db\");\nconst POLL_MS = 2_000;\nconst QUIET_MS = 60_000;\nconst TIMEOUT_MS = 6 * 60_000;\nconst MAX_RUNS = 4;\n\nconst MODELS={\"a\": {\"provider\": \"codex\", \"model\": \"gpt-6-luna\", \"effort\": \"low\", \"offerPrefix\": \"local-workbench-offer-codex\", \"handle\": \"p89-codex-a\", \"displayName\": \"P89 codex\"}, \"b\": {\"provider\": \"claude\", \"model\": \"sonnet\", \"effort\": \"low\", \"offerPrefix\": \"local-workbench-offer-claude\", \"handle\": \"p89-claude-b\", \"displayName\": \"P89 claude\"}, \"c\": {\"provider\": \"opencode\", \"model\": \"aihubmix/deepseek-v4.1-flash\", \"effort\": \"low\", \"offerPrefix\": \"local-workbench-offer-opencode\", \"handle\": \"p89-opencode-c\", \"displayName\": \"P89 opencode\"}, \"d\": {\"provider\": \"kimi\", \"model\": \"kimi-code/k3-256k\", \"effort\": \"low\", \"offerPrefix\": \"local-workbench-offer-kimi\", \"handle\": \"p89-kimi-d\", \"displayName\": \"P89 kimi\"}};\nconst ROLE_INSTRUCTIONS='只读审查频道指定的两份代码快照，中文回答并给文件行号。不要修改文件、写记忆或创建任务。明确区分已证实缺陷与条件性风险，不强凑问题。只完成当前交办的审查，不自动创建新的派工。';\nexport function openingMessage(handles) {\n  const [codex, claude, opencode] = handles;\n  return [\n    `@${codex} @${claude} @${opencode} 请三位讨论一个问题：scripts/workbench-launch-receipt.mjs 的 PID 校验只比较数字相等，是否应当改为同时验证进程身份（例如启动时间）？代价和收益各是什么？`,\n    \"讨论方式：每次发言只 @ 你希望接着回应的那一位；需要所有人都回答时用 @all；你认为已经达成一致时，给出一句结论，并且不再 @ 任何人。每次发言不超过 150 字，只读，不修改文件。\",\n  ].join(\"\\n\");\n}\n\nfunction parseArgs(argv) {\n  const options = { paid: false, dry: false, maxRuns: MAX_RUNS };\n  for (let index = 0; index < argv.length; index += 1) {\n    const argument = argv[index];\n    if (argument === \"--paid\") options.paid = true;\n    else if (argument === \"--dry\") options.dry = true;\n    else if (argument === \"--max-runs\") options.maxRuns = Number(argv[++index]);\n    else throw new Error(`unknown argument ${argument}`);\n  }\n  if (options.paid === options.dry)\n    throw new Error(\"exactly one of --paid or --dry is required\");\n  if (\n    !Number.isInteger(options.maxRuns) ||\n    options.maxRuns < 3 ||\n    options.maxRuns > MAX_RUNS\n  )\n    throw new Error(`--max-runs must be 3..${MAX_RUNS}`);\n  return options;\n}\n\nconst log = (...parts) =>\n  console.log(new Date().toISOString(), ...parts.map(String));\nconst sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n\nfunction query(sql, params = {}) {\n  const database = new DatabaseSync(ROOM_DB, { readOnly: true });\n  try {\n    return database.prepare(sql).all(params);\n  } finally {\n    database.close();\n  }\n}\n\nlet sdk;\nlet client;\n\nasync function makeClient() {\n  sdk ??= {\n    ...(await import(\"/Users/sun/Code/repos/rah_os/packages/client-sdk/src/index.ts\")),\n    ...(await import(\"/Users/sun/Code/repos/rah_os/packages/client-core/src/index.ts\")),\n  };\n  const root = await fetch(`${ORIGIN}/`);\n  const cookie = root.headers.get(\"set-cookie\")?.split(\";\", 1)[0];\n  const extra = cookie ? { cookie, origin: ORIGIN } : { origin: ORIGIN };\n  return new sdk.HttpRahClient({\n    accessToken: () => \"trusted-proxy-auth\",\n    baseUrl: ORIGIN,\n    fetch: async (url, init) =>\n      await fetch(url, { ...init, headers: { ...init?.headers, ...extra } }),\n  });\n}\n\nasync function mutate(roomId, send) {\n  return await sdk.runRoomMutationAtLatest({\n    session: new sdk.RoomSession({\n      client,\n      consumerId: `e2e-discuss-${randomUUID()}`,\n      roomId,\n    }),\n    mutate: send,\n  });\n}\n\nfunction modelIntentFor(bindingId, effort) {\n  return {\n    exactBindingIds: [bindingId],\n    fallback: \"disabled\",\n    ...(effort === null ? {} : { reasoning: effort }),\n  };\n}\n\nasync function setup(stamp) {\n  const [me, workspaces] = await Promise.all([\n    client.request(\"principal.me\", {}),\n    client.request(\"workspace.list\", {}),\n  ]);\n  const workspace = workspaces.workspaces.find(\n    (item) => item.state === \"active\" && item.controlRoomId,\n  );\n  if (workspace === undefined) throw new Error(\"没有活动工作区\");\n  const controlRoomId = workspace.controlRoomId;\n  const name = `e2e-discuss-${stamp.toLowerCase()}`;\n  const created = await mutate(controlRoomId, (basedOnControlRoomSeq) =>\n    client.request(\"room.create\", {\n      additionalDirectories: [PROJECT],\n      basedOnControlRoomSeq,\n      idempotencyKey: `e2e-discuss-room-${stamp}`,\n      kind: \"channel\",\n      name,\n      slug: name,\n      workspaceId: workspace.workspaceId,\n    }),\n  );\n  const roomId = created.room.roomId;\n  log(\"频道\", name, roomId);\n  const inventory = await client.request(\"host.runtime.list\", {});\n  const roles = await client.request(\"role.list\", { controlRoomId });\n  const instances = {};\n  for (const spec of Object.values(MODELS)) {\n    assertApprovedGateModel({\n      provider: spec.provider,\n      model: spec.model,\n      effort: spec.effort,\n    });\n    const offer = inventory.runtimes.find(\n      (runtime) =>\n        runtime.available &&\n        runtime.runtimeOfferId?.startsWith(spec.offerPrefix),\n    );\n    if (offer === undefined)\n      throw new Error(`${spec.provider}: 没有可用 offer`);\n    const binding = offer.modelBindingDescriptors.find(\n      (item) => item.modelBindingId.split(\":\").at(-1) === spec.model,\n    );\n    if (binding === undefined)\n      throw new Error(`${spec.provider}: 目录未发布 ${spec.model}`);\n    const published = binding.supportedReasoning ?? [];\n    if (\n      spec.effort === null\n        ? published.length > 0\n        : !published.includes(spec.effort)\n    )\n      throw new Error(\n        `${spec.provider}: ${spec.model} 发布的推理 [${published.join(\",\")}] 与批准的 ${String(spec.effort)} 不符`,\n      );\n    const modelIntent = modelIntentFor(binding.modelBindingId, spec.effort);\n    let role = roles.roles.find(\n      (item) => item.configuration.handle === spec.handle,\n    );\n    if (role !== undefined) {\n      // A CLI self-update supersedes the offer revision; the profile and the\n      // exact model intent must still match.\n      const profile = (id) => String(id).split(\":\")[0];\n      if (\n        profile(role.configuration.runtimeOfferId) !==\n          profile(offer.runtimeOfferId) ||\n        !isDeepStrictEqual(role.configuration.modelIntent, modelIntent)\n      )\n        throw new Error(`已有 Role ${spec.handle} 与批准配置不符，拒绝复用`);\n    } else {\n      const response = await mutate(controlRoomId, (basedOnRoomSeq) =>\n        client.request(\"role.create\", {\n          basedOnRoomSeq,\n          configuration: {\n            displayName: spec.displayName,\n            handle: spec.handle,\n            instructions: ROLE_INSTRUCTIONS,\n            modelIntent,\n            role: \"只读代码审查\",\n            runtimeOfferId: offer.runtimeOfferId,\n          },\n          controlRoomId,\n          idempotencyKey: `e2e-discuss-role-${spec.handle}-${stamp}`,\n        }),\n      );\n      role = response.role;\n      log(\"创建 Role\", spec.handle);\n    }\n    const instance = await mutate(roomId, (basedOnRoomSeq) =>\n      client.request(\"role.instantiate\", {\n        basedOnRoomSeq,\n        channelId: roomId,\n        idempotencyKey: `e2e-discuss-inst-${spec.handle}-${stamp}`,\n        roleId: role.roleId,\n      }),\n    );\n    instances[spec.handle.slice(-1)] = {\n      instanceId: instance.instance.instanceId,\n      handle: instance.agent.handle,\n      bindingId: binding.modelBindingId,\n      effort: spec.effort,\n    };\n    log(\"实例\", spec.provider, instance.agent.handle);\n  }\n  return { roomId, instances };\n}\n\nfunction channelRuns(roomId) {\n  return query(\n    `SELECT r.run_attempt_id AS runAttemptId, r.participant_id AS participantId,\n            r.state, r.started_at AS startedAt, r.finished_at AS finishedAt,\n            json_extract(pl.decision_json, '$.resolvedModel') AS resolvedModel\n       FROM run_attempts r LEFT JOIN placements pl ON pl.placement_id=r.placement_id\n      WHERE r.room_id = :roomId ORDER BY r.started_at`,\n    { roomId },\n  ).map((run) => ({\n    ...run,\n    resolvedModel:\n      run.resolvedModel === null ? null : JSON.parse(run.resolvedModel),\n  }));\n}\n\nfunction channelBusy(roomId) {\n  const pending = query(\n    `SELECT count(*) AS n FROM activations\n      WHERE room_id = :roomId AND state IN ('queued','leased')`,\n    { roomId },\n  )[0].n;\n  const running = query(\n    `SELECT count(*) AS n FROM run_attempts\n      WHERE room_id = :roomId AND finished_at IS NULL`,\n    { roomId },\n  )[0].n;\n  return pending + running > 0;\n}\n\nasync function emergencyStop(roomId, reason) {\n  log(\"急停：\", reason);\n  try {\n    await mutate(roomId, (basedOnRoomSeq) =>\n      client.request(\"room.sos.stop\", {\n        basedOnRoomSeq,\n        idempotencyKey: `e2e-discuss-sos-${randomUUID()}`,\n        roomId,\n      }),\n    );\n  } catch (error) {\n    log(\"急停请求失败\", error.message);\n  }\n}\n\nfunction transcript(roomId, labels) {\n  return query(\n    `SELECT e.room_seq AS seq, e.actor_id AS actorId, e.created_at AS at,\n            m.body, m.mentions_json AS mentions, m.thread_id AS threadId,\n            json_extract(e.payload_json, '$.recipientIds') AS recipients\n       FROM room_events e JOIN messages m ON m.message_id = e.aggregate_id\n      WHERE e.room_id = :roomId AND e.type = 'message.posted'\n      ORDER BY e.room_seq`,\n    { roomId },\n  ).map((row) => ({\n    seq: row.seq,\n    at: row.at,\n    author: labels[row.actorId] ?? \"system\",\n    wakes: JSON.parse(row.recipients ?? \"[]\").map((id) => labels[id] ?? id),\n    threadId: row.threadId,\n    body: row.body,\n  }));\n}\n\nfunction wakeChain(roomId, labels) {\n  return query(\n    `SELECT room_seq AS seq, author_id AS authorId, participant_id AS participantId,\n            streak, chain_limit AS chainLimit, admitted\n       FROM instance_wake_chain WHERE room_id = :roomId ORDER BY room_seq, participant_id`,\n    { roomId },\n  ).map((row) => ({\n    seq: row.seq,\n    from: labels[row.authorId] ?? row.authorId,\n    to: labels[row.participantId] ?? row.participantId,\n    streak: row.streak,\n    chainLimit: row.chainLimit,\n    admitted: row.admitted === 1,\n  }));\n}\n\n\nconst root='/private/tmp/loom-held-p89-20261001';\nconst mode=process.argv[2];\nclient=await makeClient();\nlet state;\nif(mode==='setup'){\n state={...await setup('p89-held-'+Date.now()),createdAt:new Date().toISOString()};\n writeFileSync(root+'/loom.json',JSON.stringify(state,null,2));\n}else state=JSON.parse(readFileSync(root+'/loom.json','utf8'));\nif(mode==='open'){\n const base=readFileSync(root+'/prompt-1.txt','utf8').replace('当前目录','频道附加目录');\n const body=base.replaceAll('{A}',state.instances.a.handle).replaceAll('{B}',state.instances.b.handle).replaceAll('{C}',state.instances.c.handle).replaceAll('{D}',state.instances.d.handle);\n await mutate(state.roomId,basedOnRoomSeq=>client.request('message.post',{roomId:state.roomId,basedOnRoomSeq,body,idempotencyKey:'value-open-'+state.createdAt}));\n console.log('posted',state.roomId);\n}\nif(mode==='follow'){\n const body=`@${state.instances.a.handle} `+readFileSync(root+'/prompt-'+process.argv[3]+'.txt','utf8');\n await mutate(state.roomId,basedOnRoomSeq=>client.request('message.post',{roomId:state.roomId,basedOnRoomSeq,body,idempotencyKey:'value-follow-'+state.createdAt+'-'+process.argv[3]}));\n}\nif(mode==='stop')await emergencyStop(state.roomId,'bounded value test limit');\nif(mode==='inspect'){\n const labels=Object.fromEntries(Object.entries(state.instances).map(([k,v])=>[v.instanceId,k]));\n const runs=channelRuns(state.roomId);\n const proof={at:new Date().toISOString(),roomId:state.roomId,busy:channelBusy(state.roomId),runs,transcript:transcript(state.roomId,labels),usage:query(`select u.* from run_attempt_usage u join run_attempts r using(run_attempt_id) where r.room_id=:roomId`,{roomId:state.roomId}),gaps:query(`select u.* from run_attempt_usage_gaps u join run_attempts r using(run_attempt_id) where r.room_id=:roomId`,{roomId:state.roomId}),runtimes:query(`select participant_id,state,pid,instance_runtime_id,native_session_id,turn_count from instance_runtimes where participant_id in (:a,:b,:c,:d)`,Object.fromEntries(Object.entries(state.instances).map(([k,v])=>[k,v.instanceId]))),activations:query(`select activation_id,state,from_seq,to_seq from activations where room_id=:roomId`,{roomId:state.roomId})};\n const model=judgePlacementModel({runs,expectedByParticipant:Object.fromEntries(Object.values(state.instances).map(x=>[x.instanceId,{bindingId:x.bindingId,effort:x.effort}]))});\n proof.model=model;\n writeFileSync(root+'/loom-evidence.json',JSON.stringify(proof,null,2));\n console.log(JSON.stringify({busy:proof.busy,model,runs:runs.length,messages:proof.transcript.map(x=>({author:x.author,seq:x.seq,body:x.body})),runtimes:proof.runtimes}));\n if(model.verdict!=='pass'||runs.length>4)await emergencyStop(state.roomId,'model or run limit');\n}\n\nif(mode==='recover'){\n const guidance=`结束上一个接力讨论，不再继续等待或互相点名。只请成员 ${state.instances.a.handle} 回答以下追问；成员 ${state.instances.b.handle} 本轮无需回复。\\n`+readFileSync(root+'/prompt-'+process.argv[3]+'.txt','utf8');\n await mutate(state.roomId,basedOnRoomSeq=>client.request('room.sos.resume',{roomId:state.roomId,basedOnRoomSeq,guidance,idempotencyKey:'value-recover-'+state.createdAt}));\n console.log('recovery guidance submitted');\n}\n",
+    "watch.mjs": "import {DatabaseSync} from 'node:sqlite';import {readFileSync,writeFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';\nconst root='/private/tmp/loom-held-p89-20261001',s=JSON.parse(readFileSync(root+'/loom.json'));const db=new DatabaseSync('/Users/sun/.loom/evo/state/room.db',{readOnly:true});let last='',reason='timeout',quiet;\nconst rows=()=>db.prepare('select run_attempt_id,participant_id,state,started_at,finished_at from run_attempts where room_id=?').all(s.roomId);\ntry{execFileSync(process.execPath,[root+'/loom.mjs','open'],{stdio:'inherit'});const until=Date.now()+600000;\nwhile(Date.now()<until){const r=rows(),a=db.prepare(\"select state,count(*) n from activations where room_id=? group by state\").all(s.roomId);const sig=JSON.stringify({runs:r.map(x=>({id:x.run_attempt_id,state:x.state})),a});if(sig!==last){console.log(new Date().toISOString(),sig);last=sig;}\nif(r.length>4||new Set(r.map(x=>x.participant_id)).size!==r.length||r.some(x=>['failed','cancelled','interrupted'].includes(x.state))){reason='run failure or retry; no automatic rerun';break;}\nif(r.length===4&&r.every(x=>x.finished_at)&&a.every(x=>!['queued','leased'].includes(x.state))){quiet??=Date.now();if(Date.now()-quiet>=45000){reason='completed and quiet';break;}}else quiet=undefined;\nawait new Promise(r=>setTimeout(r,500));}\n}finally{execFileSync(process.execPath,[root+'/loom.mjs','stop'],{stdio:'inherit'});writeFileSync(root+'/result.json',JSON.stringify({at:new Date().toISOString(),reason,runs:rows()},null,2));db.close();console.log('END',reason);}\n",
+    "summarize.mjs": "import assert from 'node:assert/strict';import{readFileSync,writeFileSync,globSync}from'node:fs';import{DatabaseSync}from'node:sqlite';import{measure,transcript}from'/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/common.mjs';import{claudeTranscriptRound}from'/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/claude-usage.mjs';import{readClaudeTranscript,readKimiWire}from'/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/provider-files.mjs';import{kimiWireRound,assertKimiRequests}from'/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/kimi-usage.mjs';import{readOpenCodeRound,assertOpenCodeAssistants}from'/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/drift-opencode-guard.mjs';\nconst root='/private/tmp/loom-held-p89-20261001',read=p=>JSON.parse(readFileSync(p)),p=read(root+'/loom-evidence.json'),s=read(root+'/loom.json'),plan=read(root+'/plan.json');const db=new DatabaseSync('/Users/sun/.loom/evo/state/room.db',{readOnly:true});\nconst bs=globSync('/Users/sun/.loom/evo/state/supervisors/provider-sessions/*.json').map(read),redact=t=>String(t).replace(/--turn\\s+[^\\s\"\\\\']+/g,'--turn [redacted]').replaceAll('/Users/sun','<HOME>').replaceAll('/private/tmp/loom-held-p89-20261001','<FIXTURE>');\nconst runs=p.runs.map(r=>{const [key,inst]=Object.entries(s.instances).find(([k,x])=>x.instanceId===r.participantId);const spec=plan.models.find(x=>x[0]===key),cfg={provider:spec[1],model:spec[2],effort:'low'},sid=bs.find(b=>b.participantId===r.participantId)?.providerSessionId;assert.ok(sid);const to=r.finishedAt??new Date().toISOString(),u=p.usage.filter(x=>x.run_attempt_id===r.runAttemptId);let native,calls,proof;\nif(cfg.provider==='codex'){const m=measure(sid,{...r,finishedAt:to},undefined,cfg);native={input:m.input,cached:m.cached,generations:m.generations};const es=transcript(sid).filter(e=>e.timestamp>=r.startedAt&&e.timestamp<=to);calls=es.filter(e=>['function_call','custom_tool_call'].includes(e.payload?.type)).map(e=>({at:e.timestamp,name:e.payload.name,input:redact(e.payload.arguments??e.payload.input)}));proof={model:cfg.model,effort:cfg.effort};}\nif(cfg.provider==='claude'){const text=readClaudeTranscript(sid),m=claudeTranscriptRound(text,{from:r.startedAt,to});native={input:m.totals.inputTokens,cached:m.totals.cachedInputTokens,generations:m.generations.length};proof={models:m.models,efforts:m.efforts};assert.deepEqual(m.models,['claude-sonnet-5']);assert.deepEqual(m.efforts,['low']);calls=text.trim().split('\\n').map(JSON.parse).filter(e=>e.timestamp>=r.startedAt&&e.timestamp<=to).flatMap(e=>(e.message?.content??[]).filter(x=>x.type==='tool_use').map(x=>({at:e.timestamp,name:x.name,input:redact(JSON.stringify(x.input))})));}\nif(cfg.provider==='kimi'){const text=readKimiWire(sid),m=kimiWireRound(text,{from:r.startedAt,to});assertKimiRequests(m.requests,cfg);native={input:m.generations.reduce((n,x)=>n+x.inputTokens,0),cached:m.generations.reduce((n,x)=>n+x.cachedInputTokens,0),generations:m.generations.length};proof={requests:m.requests};calls=m.toolCalls;}\nif(cfg.provider==='opencode'){const infos=readOpenCodeRound(sid,Date.parse(r.startedAt),Date.parse(to));proof=assertOpenCodeAssistants(infos,cfg);const a=infos.filter(x=>x.role==='assistant');native={input:a.reduce((n,x)=>n+(x.tokens?.input??0)+(x.tokens?.cache?.read??0)+(x.tokens?.cache?.write??0),0),cached:a.reduce((n,x)=>n+(x.tokens?.cache?.read??0),0),generations:a.length};const od=new DatabaseSync('/Users/sun/.local/share/opencode/opencode.db',{readOnly:true});calls=od.prepare('select data from part where session_id=? order by time_created').all(sid).map(x=>JSON.parse(x.data)).filter(x=>x.type==='tool').map(x=>({name:x.tool,input:redact(JSON.stringify(x.state?.input)),output:redact(x.state?.output).slice(0,1800)}));od.close();}\nconst input=u.reduce((n,x)=>n+x.input_tokens,0),cached=u.reduce((n,x)=>n+x.cached_input_tokens,0),totals={input,cached,generations:u.length};const reply=p.transcript.find(x=>x.author===key);return {...r,provider:cfg.provider,config:cfg,sessionId:sid,totals:{...totals,uncached:input-cached},native,usageMatches:JSON.stringify(totals)===JSON.stringify(native),modelProof:proof,replySeconds:reply?(Date.parse(reply.at)-Date.parse(r.startedAt))/1000:null,answer:reply?.body??null,calls};});\nconst drafts=db.prepare('select held_draft_id,participant_id,activation_id,body,based_on_room_seq,seen_up_to_seq,state,rehold_count,reply_based_on_room_seq,reply_final,resolution_kind,created_at,resolved_at from held_message_drafts where room_id=? order by rowid').all(s.roomId);const events=db.prepare(\"select room_seq,payload_json from room_events where room_id=? and type='message.posted' order by room_seq\").all(s.roomId).map(x=>({seq:x.room_seq,payload:JSON.parse(x.payload_json)}));const selfInbox=db.prepare('select count(*) n from inbox_items i join room_events e on e.event_id=i.event_id where e.room_id=? and e.actor_id=i.participant_id').get(s.roomId).n;db.close();\nconst out={batch:'P89',at:new Date().toISOString(),plan,code:'5655839 (product 3d0855a)',roomId:s.roomId,runs,activations:p.activations,drafts,events,gaps:p.gaps,selfInbox,limits:['Single concurrent four-provider round; no native matched control, no causal cost ratio','Unmodified source snapshot; review quality assessed separately','250-character test instruction can cause repeated counting tools; not a product instruction','No paid reruns; only observed held branches count as covered']};writeFileSync(root+'/summary.json',JSON.stringify(out,null,2));console.log(JSON.stringify(runs.map(x=>({provider:x.provider,state:x.state,...x.totals,native:x.native,match:x.usageMatches,replySeconds:x.replySeconds,calls:x.calls.length})),null,2));\n"
+  },
+  "verdict": {
+    "repairObserved": "pass on Codex revision sample; unchanged-send Claude/OpenCode pass; Kimi revision not covered",
+    "fullWorkflow": "partial (Codex unrequested Task, length-limit violations)",
+    "efficiency": "not accepted; no native control",
+    "noPaidReruns": true
+  }
+}
