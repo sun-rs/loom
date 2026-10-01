@@ -1,0 +1,506 @@
+{
+  "batch": "P85",
+  "at": "2026-10-01T05:28:21.374Z",
+  "plan": {
+    "batch": "P85",
+    "purpose": "Same P79 six-post handoff; normal help also explains asynchronous re-wake/no polling",
+    "model": "codex/gpt-6-luna",
+    "effort": "low",
+    "maxRuns": 6,
+    "maxPosts": 6,
+    "maxSeconds": 360,
+    "naturalIdleSeconds": 20,
+    "finalDrainSeconds": 60,
+    "retry": false,
+    "noNativeComparison": true,
+    "scope": "two fixed state-backup snapshots, read-only",
+    "codeCommit": "137186a"
+  },
+  "code": {
+    "head": "137186a",
+    "dirty": false,
+    "protocol": "3b363cd93914",
+    "repair": "common help explains asynchronous peer re-wake; no scheduler change"
+  },
+  "model": {
+    "provider": "codex",
+    "model": "gpt-6-luna",
+    "effort": "low"
+  },
+  "roomId": "room_51d35c51-5bcb-4eff-b8cb-818ee33d3100",
+  "runs": [
+    {
+      "runAttemptId": "run_fecf5066-ce45-466b-88f3-3523e28b788c",
+      "participantId": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a",
+      "state": "exited",
+      "startedAt": "2026-10-01T05:26:11.334Z",
+      "finishedAt": "2026-10-01T05:26:43.526Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "sessionId": "01a0f5ed-687f-7ba2-8736-cbc1a5920769",
+      "generations": 8,
+      "generationsTotal": 8,
+      "generationsBeforeReply": 8,
+      "generationsAfterReply": 0,
+      "input": 133962,
+      "cached": 106752,
+      "uncached": 27210,
+      "output": 815,
+      "reasoning": 0,
+      "firstInput": 11014,
+      "peakInput": 21400,
+      "toolCalls": [
+        {
+          "at": "2026-10-01T05:26:20.294Z",
+          "name": "exec",
+          "kind": "worker-command"
+        },
+        {
+          "at": "2026-10-01T05:26:23.695Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:26:25.793Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:26:27.931Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:26:29.703Z",
+          "name": "exec",
+          "kind": "worker-command"
+        },
+        {
+          "at": "2026-10-01T05:26:34.056Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:26:41.601Z",
+          "name": "exec",
+          "kind": "box-post",
+          "turnHandle": true
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_acf35b33-f69c-474d-a88d-35ff617eff0e",
+      "participantId": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed",
+      "state": "exited",
+      "startedAt": "2026-10-01T05:26:42.165Z",
+      "finishedAt": "2026-10-01T05:27:11.564Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "sessionId": "01a0f5ed-e0b5-7b72-9e77-01048a4e4c7d",
+      "generations": 7,
+      "generationsTotal": 7,
+      "generationsBeforeReply": 7,
+      "generationsAfterReply": 0,
+      "input": 134536,
+      "cached": 111872,
+      "uncached": 22664,
+      "output": 809,
+      "reasoning": 0,
+      "firstInput": 10906,
+      "peakInput": 24639,
+      "toolCalls": [
+        {
+          "at": "2026-10-01T05:26:51.219Z",
+          "name": "exec",
+          "kind": "worker-command"
+        },
+        {
+          "at": "2026-10-01T05:26:55.272Z",
+          "name": "exec",
+          "kind": "worker-command"
+        },
+        {
+          "at": "2026-10-01T05:26:58.350Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:27:00.711Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:27:03.878Z",
+          "name": "exec",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-01T05:27:09.429Z",
+          "name": "exec",
+          "kind": "box-post",
+          "turnHandle": true
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "seq": 11,
+      "at": "2026-10-01T05:26:41.887Z",
+      "author": "a",
+      "wakes": ["b"],
+      "threadId": null,
+      "body": "条件性风险：snapshot 的 receipt 明确排除 turns（state-backup.ts:74-79、95-100），而 restore 的 verifyUnchanged 只比文件清单、数据库清单/内容（548-564）；若迁移期间 turns 凭据新增/改变，仍可能恢复旧快照并抛弃它们。需确认此期间凭据目录是否可写；测试覆盖备份排除及收据验证（测试:18-51），未覆盖完整恢复。@p85-codex-b-b76447d28439aa435a9e0097"
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-01T05:27:09.713Z",
+      "author": "b",
+      "wakes": [],
+      "threadId": null,
+      "body": "当前快照不能判定该风险为已证实缺陷：生产 turns 是 0300 且只存临时凭据（按给定前提），在 quiesced/offline 恢复约束下没有已知正常写者。条件仍是恢复期间若有进程能写 turns，548-564 的校验会忽略其变化，restore 最终整体替换目录；生产权限降低可能性但不是完整锁。应验证 CLI 恢复路径确保进程/host 停止；覆盖建议测试改动 turns 后 restore 拒绝或说明此目录允许丢弃。当前测试只断言 backup 排除与 receipt 校验。"
+    }
+  ],
+  "gaps": [],
+  "activations": [
+    {
+      "activation_id": "activation_a6c65443-6502-4e5d-832d-c6a9fb71713f",
+      "state": "completed",
+      "from_seq": 6,
+      "to_seq": 6
+    },
+    {
+      "activation_id": "activation_9a15fb3a-ff17-48d6-b62a-3699c7e74206",
+      "state": "completed",
+      "from_seq": 11,
+      "to_seq": 11
+    }
+  ],
+  "stop": {
+    "reason": "early-idle",
+    "posts": 2
+  },
+  "totals": {
+    "input": 268498,
+    "cached": 218624,
+    "uncached": 49874,
+    "generations": 15
+  },
+  "windows": [
+    {
+      "from_seq": 4,
+      "to_seq": 6,
+      "presented_seqs_json": "[4,5,6]",
+      "catch_up_json": "{\"floor\":4}",
+      "sent_at": "2026-10-01T05:26:14.353Z",
+      "participant_id": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a",
+      "run_attempt_id": "run_fecf5066-ce45-466b-88f3-3523e28b788c"
+    },
+    {
+      "from_seq": 6,
+      "to_seq": 11,
+      "presented_seqs_json": "[6,7,8,9,10,11]",
+      "catch_up_json": "{\"floor\":6}",
+      "sent_at": "2026-10-01T05:26:45.181Z",
+      "participant_id": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed",
+      "run_attempt_id": "run_acf35b33-f69c-474d-a88d-35ff617eff0e"
+    }
+  ],
+  "events": [
+    {
+      "room_seq": 1,
+      "type": "room.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "room_51d35c51-5bcb-4eff-b8cb-818ee33d3100"
+    },
+    {
+      "room_seq": 2,
+      "type": "membership.added",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a"
+    },
+    {
+      "room_seq": 3,
+      "type": "instance.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a"
+    },
+    {
+      "room_seq": 4,
+      "type": "membership.added",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed"
+    },
+    {
+      "room_seq": 5,
+      "type": "instance.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed"
+    },
+    {
+      "room_seq": 6,
+      "type": "message.posted",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "message_02e93318-8d24-4584-832f-aba585f2351b"
+    },
+    {
+      "room_seq": 7,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_0162b3bb-460d-48e9-ba4b-49c5f388aadf"
+    },
+    {
+      "room_seq": 8,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_fecf5066-ce45-466b-88f3-3523e28b788c"
+    },
+    {
+      "room_seq": 9,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_fecf5066-ce45-466b-88f3-3523e28b788c"
+    },
+    {
+      "room_seq": 10,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_fecf5066-ce45-466b-88f3-3523e28b788c"
+    },
+    {
+      "room_seq": 11,
+      "type": "message.posted",
+      "actor_id": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a",
+      "aggregate_id": "message_05f7e977-5441-4fb5-830c-864aab870bff"
+    },
+    {
+      "room_seq": 12,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_16baca9d-76be-4a79-a990-b9afe5f205b3"
+    },
+    {
+      "room_seq": 13,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_acf35b33-f69c-474d-a88d-35ff617eff0e"
+    },
+    {
+      "room_seq": 14,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_fecf5066-ce45-466b-88f3-3523e28b788c"
+    },
+    {
+      "room_seq": 15,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_fecf5066-ce45-466b-88f3-3523e28b788c"
+    },
+    {
+      "room_seq": 16,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_a6c65443-6502-4e5d-832d-c6a9fb71713f"
+    },
+    {
+      "room_seq": 17,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_acf35b33-f69c-474d-a88d-35ff617eff0e"
+    },
+    {
+      "room_seq": 18,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_acf35b33-f69c-474d-a88d-35ff617eff0e"
+    },
+    {
+      "room_seq": 19,
+      "type": "message.posted",
+      "actor_id": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed",
+      "aggregate_id": "message_6e66c31b-7b3d-4016-aee0-1b79f4d67d80"
+    },
+    {
+      "room_seq": 20,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_acf35b33-f69c-474d-a88d-35ff617eff0e"
+    },
+    {
+      "room_seq": 21,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_acf35b33-f69c-474d-a88d-35ff617eff0e"
+    },
+    {
+      "room_seq": 22,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_9a15fb3a-ff17-48d6-b62a-3699c7e74206"
+    },
+    {
+      "room_seq": 23,
+      "type": "room.agent_sos_requested",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "room_sos_73784b3d-8d38-4fbc-aa3a-ae0013b0596f"
+    },
+    {
+      "room_seq": 24,
+      "type": "room.agent_sos_stopped",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "room_sos_73784b3d-8d38-4fbc-aa3a-ae0013b0596f"
+    }
+  ],
+  "selfInbox": {
+    "n": 0
+  },
+  "nativeTurns": [
+    {
+      "participantId": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a",
+      "sessionId": "01a0f5ed-687f-7ba2-8736-cbc1a5920769",
+      "turns": [
+        {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnId": "01a0f5ed-724c-7ce2-9767-c28adc11709e"
+        }
+      ],
+      "allGenerations": 8
+    },
+    {
+      "participantId": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed",
+      "sessionId": "01a0f5ed-e0b5-7b72-9e77-01048a4e4c7d",
+      "turns": [
+        {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnId": "01a0f5ed-eab8-7190-a05e-a38c0ca4d1eb"
+        }
+      ],
+      "allGenerations": 7
+    }
+  ],
+  "verdict": "fail",
+  "limitations": [
+    "Only two of six required replies; not comparable to P79 six-post totals",
+    "One uncontrolled low-effort sample; no native/Raft arm",
+    "No polling observed does not prove text-change causality"
+  ],
+  "diagnosis": {
+    "completeOpeningDeliveredToB": true,
+    "secondPostOmittedRequiredMention": true,
+    "selfInbox": 0,
+    "duplicateRun": 0,
+    "pollingCalls": 0
+  },
+  "calls": [
+    {
+      "participantId": "principal_3cf7efa4-a8a1-4d6b-a98d-63da5bfa069a",
+      "calls": [
+        "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker help messages',max_output_tokens:2000});\ntext(r.output);\n",
+        "const r = await tools.exec_command({cmd:'rg --files /private/tmp/loom-multi-p77-20260930/project | rg \"(state-backup\\\\.ts|state-backup-runtime-credentials\\\\.test\\\\.ts)$\"',max_output_tokens:1000});\ntext(r.output);\n",
+        "const r = await tools.exec_command({cmd:\"nl -ba state-backup.ts\",workdir:\"/private/tmp/loom-multi-p77-20260930/project\",max_output_tokens:6000});\ntext(r.output);\n",
+        "const r = await tools.exec_command({cmd:\"nl -ba state-backup-runtime-credentials.test.ts\",workdir:\"/private/tmp/loom-multi-p77-20260930/project\",max_output_tokens:6000});\ntext(r.output);\n",
+        "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker help tasks',max_output_tokens:1200});\ntext(r.output);\n",
+        "const r = await tools.exec_command({cmd:\"rg -n \\\"state-backup|turns|runtimeCredential|restoreStateSnapshot|copyTree\\\" state-backup.ts state-backup-runtime-credentials.test.ts\",workdir:\"/private/tmp/loom-multi-p77-20260930/project\",max_output_tokens:1500});\ntext(r.output);\n",
+        "const r = await tools.exec_command({cmd:\"cat <<'RAH_MESSAGE_EOF' | \\\"$RAH_WORKER_CLI\\\" worker message-post --target \\\"#e2e-discuss-value-0930-1790832365228\\\" --turn [redacted] --based-on-room-seq 6\\n条件性风险：snapshot 的 receipt 明确排除 turns（state-backup.ts:74-79、95-100），而 restore 的 verifyUnchanged 只比文件清单、数据库清单/内容（548-564）；若迁移期间 turns 凭据新增/改变，仍可能恢复旧快照并抛弃它们。需确认此期间凭据目录是否可写；测试覆盖备份排除及收据验证（测试:18-51），未覆盖完整恢复。@p85-codex-b-b76447d28439aa435a9e0097\\nRAH_MESSAGE_EOF\",workdir:\"/private/tmp/loom-multi-p77-20260930/project\",max_output_tokens:1000});\ntext(r.output);\n"
+      ]
+    },
+    {
+      "participantId": "principal_e4fc0f0d-ca86-4139-9242-3523d4d783ed",
+      "calls": [
+        "const r = await tools.exec_command({cmd:\"printf '%s\\\\n' \\\"$RAH_WORKER_CLI\\\"; \\\"$RAH_WORKER_CLI\\\" worker help messages-advanced --turn [redacted] \\\"$RAH_WORKER_CLI\\\" worker help history --turn [redacted] text(r.output);\n",
+        "const r=await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker room-read --target '#e2e-discuss-value-0930-1790832365228' --turn [redacted]\n",
+        "const r=await tools.exec_command({cmd:\"nl -ba /private/tmp/loom-multi-p77-20260930/project/state-backup.ts | sed -n '1,130p;500,590p'; nl -ba /private/tmp/loom-multi-p77-20260930/project/state-backup-runtime-credentials.test.ts | sed -n '1,180p'\",\"yield_time_ms\":10000,\"max_output_tokens\":8000});text(r.output);\n",
+        "const r=await tools.exec_command({cmd:\"nl -ba /private/tmp/loom-multi-p77-20260930/project/state-backup.ts | sed -n '120,230p;270,365p;400,500p'\",\"yield_time_ms\":10000,\"max_output_tokens\":5000});text(r.output);\n",
+        "const r=await tools.exec_command({cmd:\"rg -n \\\"\\\\.(turns|token)|turns/|writeFile.*turn|randomUUID|mode: 0o300\\\" /private/tmp/loom-multi-p77-20260930/project/state-backup.ts /private/tmp/loom-multi-p77-20260930/project/state-backup-runtime-credentials.test.ts\",\"yield_time_ms\":10000,\"max_output_tokens\":1000});text(r.output);\n",
+        "const r=await tools.exec_command({cmd:\"\\\"$RAH_WORKER_CLI\\\" worker message-post --target '#e2e-discuss-value-0930-1790832365228' --turn [redacted] --based-on-room-seq 11 <<'RAH_MESSAGE_EOF'\\n当前快照不能判定该风险为已证实缺陷：生产 turns 是 0300 且只存临时凭据（按给定前提），在 quiesced/offline 恢复约束下没有已知正常写者。条件仍是恢复期间若有进程能写 turns，548-564 的校验会忽略其变化，restore 最终整体替换目录；生产权限降低可能性但不是完整锁。应验证 CLI 恢复路径确保进程/host 停止；覆盖建议测试改动 turns 后 restore 拒绝或说明此目录允许丢弃。当前测试只断言 backup 排除与 receipt 校验。\\nRAH_MESSAGE_EOF\",\"yield_time_ms\":10000,\"max_output_tokens\":2000});text(r.output);\n"
+      ]
+    }
+  ],
+  "artifactScope": "Tool calls sanitized; provider system prompt and live handles not archived",
+  "scripts": {
+    "loom.mjs": "#!/usr/bin/env node\n/**\n * Opt-in PAID acceptance: can three Role instances hold an unattended Channel\n * discussion under contract §3 (a Human opens once; instances hand off by\n * mentioning the next speaker, `@all` asks everyone; wakes bounded by the\n * Channel chain limit)? Owner-authorized per run batch only.\n *\n * - Creates a fresh Channel attached to ~/.loom/acceptance/e2e-project and\n *   three instances: the e2e Codex and Claude Roles (reused) and an e2e\n *   OpenCode Role (created once), each on an approved gate model with an\n *   exact binding and fallback disabled.\n * - Posts one Human opening, then only observes. Stops when the Channel has\n *   been quiet for QUIET_MS, at the run cap (emergency stop), or at the\n *   timeout. Verdicts come from room.db (read-only) only; answer quality is\n *   left for manual review.\n *\n * `--dry` prints the plan and touches nothing; `--paid` is required to run.\n */\nimport { randomUUID } from \"node:crypto\";\nimport { existsSync, mkdirSync, writeFileSync, readFileSync } from \"node:fs\";\nimport { homedir } from \"node:os\";\nimport { join } from \"node:path\";\nimport { DatabaseSync } from \"node:sqlite\";\nimport { isDeepStrictEqual } from \"node:util\";\n\nimport { assertApprovedGateModel } from \"~/Code/repos/rah_os/scripts/cli-efficiency/approved-models.mjs\";\nimport { E2E_MODELS, judgePlacementModel } from \"~/Code/repos/rah_os/scripts/acceptance/real-e2e-lib.mjs\";\n\nconst ORIGIN = \"http://127.0.0.1:4176\";\nconst HOME = homedir();\nconst PROJECT = \"/private/tmp/loom-multi-p77-20260930/project\";\nconst RUNS_DIR = join(HOME, \".loom\", \"acceptance\", \"runs\");\nconst ROOM_DB = join(HOME, \".loom\", \"evo\", \"state\", \"room.db\");\nconst POLL_MS = 2_000;\nconst QUIET_MS = 60_000;\nconst TIMEOUT_MS = 20 * 60_000;\nconst MAX_RUNS = 15;\n\nconst MODELS=Object.fromEntries(['a','b'].map(k=>[k,{provider:'codex',model:'gpt-6-luna',effort:'low',offerPrefix:'local-workbench-offer-codex',handle:`p85-codex-${k}`,displayName:`P85 codex ${k.toUpperCase()}`} ]));\nconst ROLE_INSTRUCTIONS='只读审查频道指定的两份代码快照，中文回答并给文件行号。不要修改文件、写记忆或创建任务。明确区分已证实缺陷与条件性风险，不强凑问题。根据用户给的讨论次序接力，结束时不再点名其他实例。';\nexport function openingMessage(handles) {\n  const [codex, claude, opencode] = handles;\n  return [\n    `@${codex} @${claude} @${opencode} 请三位讨论一个问题：scripts/workbench-launch-receipt.mjs 的 PID 校验只比较数字相等，是否应当改为同时验证进程身份（例如启动时间）？代价和收益各是什么？`,\n    \"讨论方式：每次发言只 @ 你希望接着回应的那一位；需要所有人都回答时用 @all；你认为已经达成一致时，给出一句结论，并且不再 @ 任何人。每次发言不超过 150 字，只读，不修改文件。\",\n  ].join(\"\\n\");\n}\n\nfunction parseArgs(argv) {\n  const options = { paid: false, dry: false, maxRuns: MAX_RUNS };\n  for (let index = 0; index < argv.length; index += 1) {\n    const argument = argv[index];\n    if (argument === \"--paid\") options.paid = true;\n    else if (argument === \"--dry\") options.dry = true;\n    else if (argument === \"--max-runs\") options.maxRuns = Number(argv[++index]);\n    else throw new Error(`unknown argument ${argument}`);\n  }\n  if (options.paid === options.dry)\n    throw new Error(\"exactly one of --paid or --dry is required\");\n  if (\n    !Number.isInteger(options.maxRuns) ||\n    options.maxRuns < 3 ||\n    options.maxRuns > MAX_RUNS\n  )\n    throw new Error(`--max-runs must be 3..${MAX_RUNS}`);\n  return options;\n}\n\nconst log = (...parts) =>\n  console.log(new Date().toISOString(), ...parts.map(String));\nconst sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n\nfunction query(sql, params = {}) {\n  const database = new DatabaseSync(ROOM_DB, { readOnly: true });\n  try {\n    return database.prepare(sql).all(params);\n  } finally {\n    database.close();\n  }\n}\n\nlet sdk;\nlet client;\n\nasync function makeClient() {\n  sdk ??= {\n    ...(await import(\"~/Code/repos/rah_os/packages/client-sdk/src/index.ts\")),\n    ...(await import(\"~/Code/repos/rah_os/packages/client-core/src/index.ts\")),\n  };\n  const root = await fetch(`${ORIGIN}/`);\n  const cookie = root.headers.get(\"set-cookie\")?.split(\";\", 1)[0];\n  const extra = cookie ? { cookie, origin: ORIGIN } : { origin: ORIGIN };\n  return new sdk.HttpRahClient({\n    accessToken: () => \"trusted-proxy-auth\",\n    baseUrl: ORIGIN,\n    fetch: async (url, init) =>\n      await fetch(url, { ...init, headers: { ...init?.headers, ...extra } }),\n  });\n}\n\nasync function mutate(roomId, send) {\n  return await sdk.runRoomMutationAtLatest({\n    session: new sdk.RoomSession({\n      client,\n      consumerId: `e2e-discuss-${randomUUID()}`,\n      roomId,\n    }),\n    mutate: send,\n  });\n}\n\nfunction modelIntentFor(bindingId, effort) {\n  return {\n    exactBindingIds: [bindingId],\n    fallback: \"disabled\",\n    ...(effort === null ? {} : { reasoning: effort }),\n  };\n}\n\nasync function setup(stamp) {\n  const [me, workspaces] = await Promise.all([\n    client.request(\"principal.me\", {}),\n    client.request(\"workspace.list\", {}),\n  ]);\n  const workspace = workspaces.workspaces.find(\n    (item) => item.state === \"active\" && item.controlRoomId,\n  );\n  if (workspace === undefined) throw new Error(\"没有活动工作区\");\n  const controlRoomId = workspace.controlRoomId;\n  const name = `e2e-discuss-${stamp.toLowerCase()}`;\n  const created = await mutate(controlRoomId, (basedOnControlRoomSeq) =>\n    client.request(\"room.create\", {\n      additionalDirectories: [PROJECT],\n      basedOnControlRoomSeq,\n      idempotencyKey: `e2e-discuss-room-${stamp}`,\n      kind: \"channel\",\n      name,\n      slug: name,\n      workspaceId: workspace.workspaceId,\n    }),\n  );\n  const roomId = created.room.roomId;\n  log(\"频道\", name, roomId);\n  const inventory = await client.request(\"host.runtime.list\", {});\n  const roles = await client.request(\"role.list\", { controlRoomId });\n  const instances = {};\n  for (const spec of Object.values(MODELS)) {\n    assertApprovedGateModel({\n      provider: spec.provider,\n      model: spec.model,\n      effort: spec.effort,\n    });\n    const offer = inventory.runtimes.find(\n      (runtime) =>\n        runtime.available &&\n        runtime.runtimeOfferId?.startsWith(spec.offerPrefix),\n    );\n    if (offer === undefined)\n      throw new Error(`${spec.provider}: 没有可用 offer`);\n    const binding = offer.modelBindingDescriptors.find(\n      (item) => item.modelBindingId.split(\":\").at(-1) === spec.model,\n    );\n    if (binding === undefined)\n      throw new Error(`${spec.provider}: 目录未发布 ${spec.model}`);\n    const published = binding.supportedReasoning ?? [];\n    if (\n      spec.effort === null\n        ? published.length > 0\n        : !published.includes(spec.effort)\n    )\n      throw new Error(\n        `${spec.provider}: ${spec.model} 发布的推理 [${published.join(\",\")}] 与批准的 ${String(spec.effort)} 不符`,\n      );\n    const modelIntent = modelIntentFor(binding.modelBindingId, spec.effort);\n    let role = roles.roles.find(\n      (item) => item.configuration.handle === spec.handle,\n    );\n    if (role !== undefined) {\n      // A CLI self-update supersedes the offer revision; the profile and the\n      // exact model intent must still match.\n      const profile = (id) => String(id).split(\":\")[0];\n      if (\n        profile(role.configuration.runtimeOfferId) !==\n          profile(offer.runtimeOfferId) ||\n        !isDeepStrictEqual(role.configuration.modelIntent, modelIntent)\n      )\n        throw new Error(`已有 Role ${spec.handle} 与批准配置不符，拒绝复用`);\n    } else {\n      const response = await mutate(controlRoomId, (basedOnRoomSeq) =>\n        client.request(\"role.create\", {\n          basedOnRoomSeq,\n          configuration: {\n            displayName: spec.displayName,\n            handle: spec.handle,\n            instructions: ROLE_INSTRUCTIONS,\n            modelIntent,\n            role: \"只读代码审查\",\n            runtimeOfferId: offer.runtimeOfferId,\n          },\n          controlRoomId,\n          idempotencyKey: `e2e-discuss-role-${spec.handle}-${stamp}`,\n        }),\n      );\n      role = response.role;\n      log(\"创建 Role\", spec.handle);\n    }\n    const instance = await mutate(roomId, (basedOnRoomSeq) =>\n      client.request(\"role.instantiate\", {\n        basedOnRoomSeq,\n        channelId: roomId,\n        idempotencyKey: `e2e-discuss-inst-${spec.handle}-${stamp}`,\n        roleId: role.roleId,\n      }),\n    );\n    instances[spec.handle.slice(-1)] = {\n      instanceId: instance.instance.instanceId,\n      handle: instance.agent.handle,\n      bindingId: binding.modelBindingId,\n      effort: spec.effort,\n    };\n    log(\"实例\", spec.provider, instance.agent.handle);\n  }\n  return { roomId, instances };\n}\n\nfunction channelRuns(roomId) {\n  return query(\n    `SELECT r.run_attempt_id AS runAttemptId, r.participant_id AS participantId,\n            r.state, r.started_at AS startedAt, r.finished_at AS finishedAt,\n            json_extract(pl.decision_json, '$.resolvedModel') AS resolvedModel\n       FROM run_attempts r LEFT JOIN placements pl ON pl.placement_id=r.placement_id\n      WHERE r.room_id = :roomId ORDER BY r.started_at`,\n    { roomId },\n  ).map((run) => ({\n    ...run,\n    resolvedModel:\n      run.resolvedModel === null ? null : JSON.parse(run.resolvedModel),\n  }));\n}\n\nfunction channelBusy(roomId) {\n  const pending = query(\n    `SELECT count(*) AS n FROM activations\n      WHERE room_id = :roomId AND state IN ('queued','leased')`,\n    { roomId },\n  )[0].n;\n  const running = query(\n    `SELECT count(*) AS n FROM run_attempts\n      WHERE room_id = :roomId AND finished_at IS NULL`,\n    { roomId },\n  )[0].n;\n  return pending + running > 0;\n}\n\nasync function emergencyStop(roomId, reason) {\n  log(\"急停：\", reason);\n  try {\n    await mutate(roomId, (basedOnRoomSeq) =>\n      client.request(\"room.sos.stop\", {\n        basedOnRoomSeq,\n        idempotencyKey: `e2e-discuss-sos-${randomUUID()}`,\n        roomId,\n      }),\n    );\n  } catch (error) {\n    log(\"急停请求失败\", error.message);\n  }\n}\n\nfunction transcript(roomId, labels) {\n  return query(\n    `SELECT e.room_seq AS seq, e.actor_id AS actorId, e.created_at AS at,\n            m.body, m.mentions_json AS mentions, m.thread_id AS threadId,\n            json_extract(e.payload_json, '$.recipientIds') AS recipients\n       FROM room_events e JOIN messages m ON m.message_id = e.aggregate_id\n      WHERE e.room_id = :roomId AND e.type = 'message.posted'\n      ORDER BY e.room_seq`,\n    { roomId },\n  ).map((row) => ({\n    seq: row.seq,\n    at: row.at,\n    author: labels[row.actorId] ?? \"system\",\n    wakes: JSON.parse(row.recipients ?? \"[]\").map((id) => labels[id] ?? id),\n    threadId: row.threadId,\n    body: row.body,\n  }));\n}\n\nfunction wakeChain(roomId, labels) {\n  return query(\n    `SELECT room_seq AS seq, author_id AS authorId, participant_id AS participantId,\n            streak, chain_limit AS chainLimit, admitted\n       FROM instance_wake_chain WHERE room_id = :roomId ORDER BY room_seq, participant_id`,\n    { roomId },\n  ).map((row) => ({\n    seq: row.seq,\n    from: labels[row.authorId] ?? row.authorId,\n    to: labels[row.participantId] ?? row.participantId,\n    streak: row.streak,\n    chainLimit: row.chainLimit,\n    admitted: row.admitted === 1,\n  }));\n}\n\n\nconst root='/private/tmp/loom-closeout-p85-20261001';\nconst mode=process.argv[2];\nclient=await makeClient();\nlet state;\nif(mode==='setup'){\n state={...await setup('value-0930-'+Date.now()),createdAt:new Date().toISOString()};\n writeFileSync(root+'/loom.json',JSON.stringify(state,null,2));\n}else state=JSON.parse(readFileSync(root+'/loom.json','utf8'));\nif(mode==='open'){\n const base=readFileSync(root+'/prompt-1.txt','utf8').replace('当前目录','频道附加目录');\n const body=base.replaceAll('{A}',state.instances.a.handle).replaceAll('{B}',state.instances.b.handle);\n await mutate(state.roomId,basedOnRoomSeq=>client.request('message.post',{roomId:state.roomId,basedOnRoomSeq,body,idempotencyKey:'value-open-'+state.createdAt}));\n console.log('posted',state.roomId);\n}\nif(mode==='follow'){\n const body=`@${state.instances.a.handle} `+readFileSync(root+'/prompt-'+process.argv[3]+'.txt','utf8');\n await mutate(state.roomId,basedOnRoomSeq=>client.request('message.post',{roomId:state.roomId,basedOnRoomSeq,body,idempotencyKey:'value-follow-'+state.createdAt+'-'+process.argv[3]}));\n}\nif(mode==='stop')await emergencyStop(state.roomId,'bounded value test limit');\nif(mode==='inspect'){\n const labels=Object.fromEntries(Object.entries(state.instances).map(([k,v])=>[v.instanceId,k]));\n const runs=channelRuns(state.roomId);\n const proof={at:new Date().toISOString(),roomId:state.roomId,busy:channelBusy(state.roomId),runs,transcript:transcript(state.roomId,labels),usage:query(`select u.* from run_attempt_usage u join run_attempts r using(run_attempt_id) where r.room_id=:roomId`,{roomId:state.roomId}),gaps:query(`select u.* from run_attempt_usage_gaps u join run_attempts r using(run_attempt_id) where r.room_id=:roomId`,{roomId:state.roomId}),runtimes:query(`select participant_id,state,pid,instance_runtime_id,native_session_id,turn_count from instance_runtimes where participant_id in (:a,:b)`,{a:state.instances.a.instanceId,b:state.instances.b.instanceId}),activations:query(`select activation_id,state,from_seq,to_seq from activations where room_id=:roomId`,{roomId:state.roomId})};\n const model=judgePlacementModel({runs,expectedByParticipant:Object.fromEntries(Object.values(state.instances).map(x=>[x.instanceId,{bindingId:x.bindingId,effort:x.effort}]))});\n proof.model=model;\n writeFileSync(root+'/loom-evidence.json',JSON.stringify(proof,null,2));\n console.log(JSON.stringify({busy:proof.busy,model,runs:runs.length,messages:proof.transcript.map(x=>({author:x.author,seq:x.seq,body:x.body})),runtimes:proof.runtimes}));\n if(model.verdict!=='pass'||runs.length>6)await emergencyStop(state.roomId,'model or run limit');\n}\n\nif(mode==='recover'){\n const guidance=`结束上一个接力讨论，不再继续等待或互相点名。只请成员 ${state.instances.a.handle} 回答以下追问；成员 ${state.instances.b.handle} 本轮无需回复。\\n`+readFileSync(root+'/prompt-'+process.argv[3]+'.txt','utf8');\n await mutate(state.roomId,basedOnRoomSeq=>client.request('room.sos.resume',{roomId:state.roomId,basedOnRoomSeq,guidance,idempotencyKey:'value-recover-'+state.createdAt}));\n console.log('recovery guidance submitted');\n}\n",
+    "loom-watch.mjs": "import{execFileSync}from'node:child_process';import{readFileSync,writeFileSync,existsSync}from'node:fs';\nconst root='/private/tmp/loom-closeout-p85-20261001';if(existsSync(root+'/loom-started'))throw Error('No repeat');writeFileSync(root+'/loom-started',new Date().toISOString());\nexecFileSync(process.execPath,[root+'/loom.mjs','open'],{stdio:'inherit'});\nlet idleAt; let sixAt;try{for(let i=0;i<180;i++){\n execFileSync(process.execPath,[root+'/loom.mjs','inspect'],{stdio:'ignore'});const p=JSON.parse(readFileSync(root+'/loom-evidence.json'));const posts=p.transcript.filter(x=>['a','b'].includes(x.author));\n if(p.model.verdict!=='pass'||p.runs.some(x=>x.state==='failed')||p.runs.length>6)throw Error('Run/model/failure limit');\n if(posts.length>6)throw Error('extra-post'); if(posts.length===6){sixAt??=Date.now();if(!p.busy){idleAt??=Date.now();if(Date.now()-idleAt>=20000){writeFileSync(root+'/loom-result.json',JSON.stringify({reason:'six-posts-naturally-idle',at:new Date().toISOString()}));break;}}else if(posts.length<6)idleAt=undefined;if(Date.now()-sixAt>60000)throw Error('not-idle-after-final');}\n if(posts.length<6&&!p.busy){idleAt??=Date.now();if(Date.now()-idleAt>45000){writeFileSync(root+'/loom-result.json',JSON.stringify({reason:'early-idle',posts:posts.length}));break;}}else if(posts.length<6)idleAt=undefined;\n if(i===179)throw Error('timeout');await new Promise(r=>setTimeout(r,2000));\n}}catch(e){writeFileSync(root+'/loom-result.json',JSON.stringify({reason:e.message}));}finally{execFileSync(process.execPath,[root+'/loom.mjs','stop'],{stdio:'inherit'});execFileSync(process.execPath,[root+'/loom.mjs','inspect'],{stdio:'ignore'});}\n",
+    "prompt-1.txt": "@{A} 请与成员 {B} 就附加目录 /private/tmp/loom-multi-p77-20260930/project 的 state-backup.ts 和 state-backup-runtime-credentials.test.ts 开展一次有界代码审查。只有这两份快照属于范围；只读，不修改文件、不写记忆、不创建任务、不发进度。当前生产创建者固定使用 instrt_ 加 randomUUID()，turns 权限0300且只存临时凭据，provider session绑定只存supervisors/provider-sessions/。\n按如下顺序在本频道顶层交接，最多共6条实质回复，每条<=220中文字：A第1条指出最多一个有行号的确认问题或条件性风险；B第2条独立读码核查并反驳不充分假设；A第3条回应反驳并给测试建议；B第4条区分当前测试覆盖与真实CLI恢复；A第5条给最终取舍；B第6条总结共识与未决点并结束。A就是 {A}，B就是 {B}。只在需要对方下一条接力时@对方；第6条不再@任何人，不要@自己。不需要Human继续追问。如果无问题，不强凑。"
+  },
+  "deployment": {
+    "at": "2026-10-01T05:25:31.269Z",
+    "pid": 43802,
+    "target": "~/.loom/evo/backups/pre-restart-handoff-ebd5ead7-fb5b-40f0-9e6a-c11b106eebf5",
+    "before": {
+      "messages": {
+        "count": 160,
+        "sha256": "431e9ba0de099464dee0727e8b726c257f03923f3729f2628d052e59d640ba69"
+      },
+      "role_templates": {
+        "count": 19,
+        "sha256": "dfd515d3e81a4ddff6df4debf22b60b7f5510875036822d7cf05646f1f9b16c9"
+      },
+      "role_revisions": {
+        "count": 19,
+        "sha256": "3fdb5e112be4730588b484ab6a7a1b8e91d1dd38db05e4924c727747a5cb4ea9"
+      },
+      "role_instances": {
+        "count": 45,
+        "sha256": "08b7b5e63242609f675d5963dcdd486a509e9e97101672ba8e619303f8210460"
+      },
+      "memory_entries": {
+        "count": 3,
+        "sha256": "be5f95194e9c1df4eb521e0aa6a576cae939f7138fb97df217db93423eb1168d"
+      },
+      "memory_revisions": {
+        "count": 3,
+        "sha256": "a135d674c32e3ae3ab47c5d8c722a48a8f12506edab6300a7e0e8a384be5a823"
+      },
+      "room_events": {
+        "count": 1437,
+        "sha256": "eba7f9d18eeb3922ea9da939caf2fa3a92a06f3fdeceba0406650722ca9843bd"
+      }
+    },
+    "after": {
+      "messages": {
+        "count": 160,
+        "sha256": "431e9ba0de099464dee0727e8b726c257f03923f3729f2628d052e59d640ba69"
+      },
+      "role_templates": {
+        "count": 19,
+        "sha256": "dfd515d3e81a4ddff6df4debf22b60b7f5510875036822d7cf05646f1f9b16c9"
+      },
+      "role_revisions": {
+        "count": 19,
+        "sha256": "3fdb5e112be4730588b484ab6a7a1b8e91d1dd38db05e4924c727747a5cb4ea9"
+      },
+      "role_instances": {
+        "count": 45,
+        "sha256": "08b7b5e63242609f675d5963dcdd486a509e9e97101672ba8e619303f8210460"
+      },
+      "memory_entries": {
+        "count": 3,
+        "sha256": "be5f95194e9c1df4eb521e0aa6a576cae939f7138fb97df217db93423eb1168d"
+      },
+      "memory_revisions": {
+        "count": 3,
+        "sha256": "a135d674c32e3ae3ab47c5d8c722a48a8f12506edab6300a7e0e8a384be5a823"
+      },
+      "room_events": {
+        "count": 1437,
+        "sha256": "eba7f9d18eeb3922ea9da939caf2fa3a92a06f3fdeceba0406650722ca9843bd"
+      }
+    },
+    "pidAfter": 13430,
+    "pageStatus": 200,
+    "unchanged": true
+  }
+}
