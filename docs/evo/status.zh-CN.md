@@ -4,6 +4,7 @@
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
+- Jev 研究与取舍：[P80–P84 结论及经验](jev-research-decision.zh-CN.md)：不引入核心调度或默认上下文过滤；按需检索仅保留为实验。
 - 效率门禁合同：[cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)；漂移门禁：[long-session-drift-gate](../design/long-session-drift-gate.zh-CN.md)。
 - 维护规则：只在能力状态变化时改写本页相应行，部署重启后更新部署行，付费或真实 CLI 运行后追加台账（负责人 2026-09-27 裁定，AGENTS.md“Documentation and handoff”）；本页只记当前状态，不追加历史长节。
 

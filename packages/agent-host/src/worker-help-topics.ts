@@ -11,7 +11,7 @@ const CLI = '"$RAH_WORKER_CLI"';
 const EOF = "RAH_MESSAGE_EOF";
 
 const PEER_HANDOFF_GUIDANCE =
-  "Wake peers: bare `@<handle>` in body. Names without @ do not wake. Mention others, not yourself.";
+  "Wake peers: bare `@<handle>` in body. Names without @ do not wake. Mention others, not yourself. After a handoff, finish other current work, then end this turn. Addressed replies wake you automatically; do not poll for them.";
 
 const TOPICS = {
   messages: `## Messages: read and write
