@@ -147,15 +147,18 @@ export function workerHeldSendGuidance(
 Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
     newMessageCount,
   )} newer message${newMessageCount === 1 ? "" : "s"}.${omittedNote}
-Your message has been saved as a draft. Review the bounded context shown here, then choose one path.
+Your message has been saved as a draft. Saving a draft does not confirm delivery or complete this work. Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
 To update the draft, send revised content normally:
   "$RAH_WORKER_CLI" worker message-post${turn}${replySuffix} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
   revised message
   ${MESSAGE_HEREDOC_DELIMITER}
+If the revision is held again, review that new notice before using --send-draft.
 To send the current draft unchanged:
   "$RAH_WORKER_CLI" worker message-post --send-draft${turn} --target ${target}
-You can also choose not to send anything.
+If no reply is needed after review, confirm delivery with:
+  "$RAH_WORKER_CLI" worker message-check${turn}
+A required reply must still be published; message-check does not publish the draft or complete a Task.
 ${continueAnyway}`;
 }
 

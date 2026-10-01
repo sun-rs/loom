@@ -1173,7 +1173,7 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
     );
     assert.match(
       state.stdout(),
-      /Your message has been saved as a draft\. Review the bounded context shown here, then choose one path\./u,
+      /Saving a draft does not confirm delivery or complete this work\. Review the bounded context shown here, then choose one path\./u,
     );
     assert.match(
       state.stdout(),
@@ -1187,7 +1187,11 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
       state.stdout(),
       /"\$RAH_WORKER_CLI" worker message-post --send-draft --target '#room:thread-1'/u,
     );
-    assert.match(state.stdout(), /You can also choose not to send anything\./u);
+    assert.match(
+      state.stdout(),
+      /If no reply is needed after review, confirm delivery with:/u,
+    );
+    assert.match(state.stdout(), /"\$RAH_WORKER_CLI" worker message-check\n/u);
     assert.doesNotMatch(state.stdout(), /--anyway/u);
     // The whole point of the port: no receipt, cursor, key or draft id.
     assert.doesNotMatch(state.stdout(), /--context-receipt/u);

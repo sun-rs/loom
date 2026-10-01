@@ -82,3 +82,28 @@ test("revision guidance explicitly preserves the model's original reply intent",
   assert.doesNotMatch(progress!, /--final|--based-on-room-seq/u);
   assert.match(progress!, /message-post --progress --target/u);
 });
+
+test("held recovery distinguishes an unsent reply from a deliberate no-reply decision", () => {
+  const text = workerHeldSendGuidance(held, " --turn t1")!;
+  assert.match(
+    text,
+    /Saving a draft does not confirm delivery or complete this work/u,
+  );
+  assert.match(
+    text,
+    /If no reply is needed after review, confirm delivery with:/u,
+  );
+  assert.match(text, /"\$RAH_WORKER_CLI" worker message-check --turn t1\n/u);
+  assert.match(
+    text,
+    /A required reply must still be published; message-check does not publish the draft or complete a Task/u,
+  );
+  assert.match(
+    text,
+    /If the revision is held again, review that new notice before using --send-draft/u,
+  );
+  assert.doesNotMatch(
+    workerHeldSendGuidance({ ...held, continueAnywaySuggested: false })!,
+    /--anyway/u,
+  );
+});
