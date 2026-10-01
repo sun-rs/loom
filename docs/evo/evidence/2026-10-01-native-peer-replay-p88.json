@@ -1,0 +1,336 @@
+{
+  "plan": {
+    "batch": "P88",
+    "authorization": "owner explicitly requested native CLI comparison and try it in this turn",
+    "config": {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    "maxPaidTurns": 4,
+    "mode": "two native CLI sessions, independent review then historical peer replay through local Markdown",
+    "snapshot": {
+      "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+      "scripts/workbench-launch-mode.mjs": "ca4a5e9df9aef5ebf59e832993792eb370515bb24a2cb64e0bd7760ca3eccfc0",
+      "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059"
+    },
+    "limits": [
+      "No automatic repeat",
+      "No product daemon, no box tools, no fork",
+      "Not an efficiency gate; explicit replay turn differs from P87 busy hold",
+      "One sample per role; shared model/base CLI and source, not identical complete prompt"
+    ]
+  },
+  "startedAt": "2026-10-01T06:43:44.042Z",
+  "pid": 86211,
+  "rounds": [
+    {
+      "label": "a-independent",
+      "sessionId": "01a0f634-6f25-7d00-92da-809f634b98f5",
+      "startedAt": "2026-10-01T06:43:46.745Z",
+      "turnId": "01a0f634-6fb9-74c3-8b87-05d7a8726e02",
+      "status": "completed",
+      "error": null,
+      "finishedAt": "2026-10-01T06:44:24.887Z",
+      "metrics": {
+        "generations": 7,
+        "generationsTotal": 7,
+        "generationsBeforeReply": 7,
+        "generationsAfterReply": 0,
+        "input": 97303,
+        "cached": 83200,
+        "uncached": 14103,
+        "output": 1020,
+        "reasoning": 0,
+        "firstInput": 8995,
+        "peakInput": 16411,
+        "toolCalls": [
+          {
+            "at": "2026-10-01T06:43:54.104Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:43:57.393Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:44:02.747Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:44:07.929Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:44:11.673Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:44:22.837Z",
+            "name": "exec",
+            "kind": "other"
+          }
+        ]
+      },
+      "answer": "我会先读取 `box/human.md` 和其中指定的快照，再按要求把审查结论写入 `box/a-independent.md`。\n快照里有个需要核实的写入语义：临时文件的权限选项在文件已存在时可能受进程 umask 影响；我正在对照 Node API 与当前实现判断它是否构成可确认缺陷。\n当前实现没有发现可证实的 PID 或原子替换缺陷：receipt 写入先校验模式与正整数 PID，再用独占创建的临时文件替换目标；重启时要求 receipt PID 与 incumbent PID 相等。需要注意的条件是，PID 相等只是身份线索，PID 被操作系统复用时可能指向另一进程。\n已将审查结论写入 [box/a-independent.md](<snapshot>/box/a-independent.md)。",
+      "elapsedSeconds": 38.142,
+      "calls": [
+        {
+          "at": "2026-10-01T06:43:54.104Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"cat box/human.md && printf '\\\\n--- files ---\\\\n' && rg --files\",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:12000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:43:57.393Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"nl -ba scripts/workbench-launch-receipt.mjs && printf '\\\\n--- related mode ---\\\\n' && nl -ba scripts/workbench-launch-mode.mjs && printf '\\\\n--- test context maybe needed ---\\\\n' && nl -ba scripts/workbench-launch-receipt.test.mjs\",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:16000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:44:02.747Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"rg -n \\\"writeLaunchReceipt|readLaunchReceipt|restartNetworkEnvironment|workbench-launch.json\\\" scripts\",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:6000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:44:07.929Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"node -e 'const assert=require(\\\"node:assert/strict\\\"); const {writeFile,rename,stat,mkdtemp,rm}=require(\\\"node:fs/promises\\\"); const {join}=require(\\\"node:path\\\"); const {tmpdir}=require(\\\"node:os\\\"); (async()=>{ const d=await mkdtemp(join(tmpdir(),\\\"receipt-mode-\\\")); const t=join(d,\\\"t\\\"); const f=join(d,\\\"f\\\"); await writeFile(t,\\\"x\\\",{flag:\\\"wx\\\",mode:0o600}); await rename(t,f); console.log((await stat(f)).mode&0o777); await rm(d,{recursive:true}); })()' \",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:2000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:44:11.673Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"git status --short\",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:2000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:44:22.837Z",
+          "name": "exec",
+          "input": "const patch = \"*** Begin Patch\\n*** Add File: <snapshot>/box/a-independent.md\\n+未发现可确认的 receipt 写入或 PID 校验缺陷。`writeLaunchReceipt` 在写文件前验证网络模式和正整数 PID，以 `wx` 创建随机临时文件、设为 `0600`，再 rename 替换目标，并在 `finally` 清理临时文件（[scripts/workbench-launch-receipt.mjs](<snapshot>/scripts/workbench-launch-receipt.mjs:111)）。重启校验要求 schema 为 1 且 receipt PID 等于传入的 incumbent PID（同文件第 87–99 行）。\\n+\\n+条件性风险：若 incumbent PID 在旧进程退出后被系统复用，单凭 PID 相等不能证明 receipt 对应当前进程（同文件第 92–96 行）；需有 PID 复用且调用方无法另行确认进程身份的情形才会误认。当前快照未显示这点已造成缺陷。\\n*** End Patch\";\ntext(await tools.apply_patch(patch));\n"
+        }
+      ],
+      "delivery": "未发现可确认的 receipt 写入或 PID 校验缺陷。`writeLaunchReceipt` 在写文件前验证网络模式和正整数 PID，以 `wx` 创建随机临时文件、设为 `0600`，再 rename 替换目标，并在 `finally` 清理临时文件（[scripts/workbench-launch-receipt.mjs](<snapshot>/scripts/workbench-launch-receipt.mjs:111)）。重启校验要求 schema 为 1 且 receipt PID 等于传入的 incumbent PID（同文件第 87–99 行）。\n\n条件性风险：若 incumbent PID 在旧进程退出后被系统复用，单凭 PID 相等不能证明 receipt 对应当前进程（同文件第 92–96 行）；需有 PID 复用且调用方无法另行确认进程身份的情形才会误认。当前快照未显示这点已造成缺陷。\n"
+    },
+    {
+      "label": "b-independent",
+      "sessionId": "01a0f634-6f79-7972-b1b4-330883b10344",
+      "startedAt": "2026-10-01T06:44:24.903Z",
+      "turnId": "01a0f635-04c8-7b51-910d-43261fbb40d8",
+      "status": "completed",
+      "error": null,
+      "finishedAt": "2026-10-01T06:44:45.940Z",
+      "metrics": {
+        "generations": 4,
+        "generationsTotal": 4,
+        "generationsBeforeReply": 4,
+        "generationsAfterReply": 0,
+        "input": 45415,
+        "cached": 29952,
+        "uncached": 15463,
+        "output": 454,
+        "reasoning": 0,
+        "firstInput": 8995,
+        "peakInput": 13756,
+        "toolCalls": [
+          {
+            "at": "2026-10-01T06:44:35.939Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:44:38.997Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:44:44.378Z",
+            "name": "exec",
+            "kind": "other"
+          }
+        ]
+      },
+      "answer": "我会只读检查测试快照与相关实现，确认测试是否覆盖 receipt 写入和 PID 校验，并把一条带行号的结论写入指定回复文件。\n审查结论已写入 [box/b-independent.md](<snapshot>/box/b-independent.md)。",
+      "elapsedSeconds": 21.037,
+      "calls": [
+        {
+          "at": "2026-10-01T06:44:35.939Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"cat box/human.md\",\"workdir\":\"<experiment>/project\"});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:44:38.997Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"nl -ba scripts/workbench-launch-receipt.test.mjs && nl -ba scripts/workbench-launch-receipt.mjs\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":10000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:44:44.378Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"cat > box/b-independent.md <<'EOF'\\n确认缺陷：`restartNetworkEnvironment` 以严格相等比较 receipt.pid 与 incumbentPid（[workbench-launch-receipt.mjs:92-96](<snapshot>/scripts/workbench-launch-receipt.mjs:92)），但测试只覆盖两个普通、不同正整数 41/42（[workbench-launch-receipt.test.mjs:47-66](<snapshot>/scripts/workbench-launch-receipt.test.mjs:47)），没有验证 incumbentPid 缺失、非正数或非整数时是否拒绝。实现本身未校验 incumbentPid；当 incumbentPid 和 receipt.pid 同为 `undefined` 时，schemaVersion=1 的伪 receipt 会通过 PID 校验并进入模式重建。这是校验路径的确认缺陷，测试缺少该失败用例。\\nEOF\",\"workdir\":\"<experiment>/project\"});\ntext(r.output);\n"
+        }
+      ],
+      "delivery": "确认缺陷：`restartNetworkEnvironment` 以严格相等比较 receipt.pid 与 incumbentPid（[workbench-launch-receipt.mjs:92-96](<snapshot>/scripts/workbench-launch-receipt.mjs:92)），但测试只覆盖两个普通、不同正整数 41/42（[workbench-launch-receipt.test.mjs:47-66](<snapshot>/scripts/workbench-launch-receipt.test.mjs:47)），没有验证 incumbentPid 缺失、非正数或非整数时是否拒绝。实现本身未校验 incumbentPid；当 incumbentPid 和 receipt.pid 同为 `undefined` 时，schemaVersion=1 的伪 receipt 会通过 PID 校验并进入模式重建。这是校验路径的确认缺陷，测试缺少该失败用例。\n"
+    },
+    {
+      "label": "a-peer-replay",
+      "sessionId": "01a0f634-6f25-7d00-92da-809f634b98f5",
+      "startedAt": "2026-10-01T06:44:45.965Z",
+      "turnId": "01a0f635-570e-7910-8f8d-c67c371c5a93",
+      "status": "completed",
+      "error": null,
+      "finishedAt": "2026-10-01T06:45:18.502Z",
+      "metrics": {
+        "generations": 4,
+        "generationsTotal": 4,
+        "generationsBeforeReply": 4,
+        "generationsAfterReply": 0,
+        "input": 72304,
+        "cached": 67584,
+        "uncached": 4720,
+        "output": 866,
+        "reasoning": 0,
+        "firstInput": 16535,
+        "peakInput": 19016,
+        "toolCalls": [
+          {
+            "at": "2026-10-01T06:44:58.329Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:45:03.374Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:45:16.514Z",
+            "name": "exec",
+            "kind": "other"
+          }
+        ]
+      },
+      "answer": "我会读取同伴意见并对照已审查的 receipt 源码复核，只写 `box/a-reviewed.md`。\n同伴意见指出的权限问题不成立：在 POSIX rename 替换场景中，目标路径会指向临时文件 inode，因此权限来自临时文件；我用临时目录复现“旧目标 0644、临时文件 0600、rename 替换”，替换后权限为 0600。原结论可以保留，PID 复用仍只是条件性风险。\n已将复核结论写入 [box/a-reviewed.md](<snapshot>/box/a-reviewed.md)。",
+      "elapsedSeconds": 32.537,
+      "calls": [
+        {
+          "at": "2026-10-01T06:44:58.329Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"cat box/peer-for-a.md && printf '\\\\n--- source ---\\\\n' && nl -ba scripts/workbench-launch-receipt.mjs\",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:10000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:45:03.374Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"node -e 'const {writeFile,rename,stat,mkdtemp,chmod,rm}=require(\\\"node:fs/promises\\\"); const {join}=require(\\\"node:path\\\"); const {tmpdir}=require(\\\"node:os\\\"); (async()=>{ const d=await mkdtemp(join(tmpdir(),\\\"receipt-replace-\\\")); const target=join(d,\\\"workbench-launch.json\\\"); const temp=join(d,\\\".tmp\\\"); await writeFile(target,\\\"old\\\"); await chmod(target,0o644); await writeFile(temp,\\\"new\\\",{flag:\\\"wx\\\",mode:0o600}); await rename(temp,target); console.log((await stat(target)).mode&0o777); await rm(d,{recursive:true}); })()' \",workdir:\"<experiment>/project\",yield_time_ms:10000,max_output_tokens:2000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:45:16.514Z",
+          "name": "exec",
+          "input": "const patch = \"*** Begin Patch\\n*** Add File: <snapshot>/box/a-reviewed.md\\n+复核结论：保留原审查结论，不采纳同伴提出的“替换后仍保留旧目标宽权限”缺陷判断。\\n+\\n+依据：写入逻辑以 `wx` 创建随机临时文件并请求 `0600` 权限，之后将临时文件 rename 到正式路径（[scripts/workbench-launch-receipt.mjs](<snapshot>/scripts/workbench-launch-receipt.mjs:114)–121）。rename 替换后目标路径指向临时文件的 inode，权限随临时文件；本地复现旧目标为 `0644`、临时文件为 `0600` 后替换，结果仍为 `0600`。因此同伴所称风险不是此代码的已证实缺陷。该权限模式按创建权限仍受进程 umask 限制，但 umask 只会进一步收紧权限。\\n+\\n+确认缺陷：未发现 receipt 写入或 PID 校验的确认缺陷。函数验证模式及正整数 PID后才写入；重启要求 schemaVersion 为 1 且 receipt.pid 与 incumbentPid 相等（同文件第 111–121 行、第 87–99 行）。\\n+\\n+条件性风险：若 incumbent PID 被系统复用，PID 相等本身不能证明 receipt 属于当前进程（同文件第 92–96 行）；需出现 PID 复用且调用方没有其他进程身份核验时才可能误认。当前快照未证实该条件已发生。\\n*** End Patch\";\ntext(await tools.apply_patch(patch));\n"
+        }
+      ],
+      "delivery": "复核结论：保留原审查结论，不采纳同伴提出的“替换后仍保留旧目标宽权限”缺陷判断。\n\n依据：写入逻辑以 `wx` 创建随机临时文件并请求 `0600` 权限，之后将临时文件 rename 到正式路径（[scripts/workbench-launch-receipt.mjs](<snapshot>/scripts/workbench-launch-receipt.mjs:114)–121）。rename 替换后目标路径指向临时文件的 inode，权限随临时文件；本地复现旧目标为 `0644`、临时文件为 `0600` 后替换，结果仍为 `0600`。因此同伴所称风险不是此代码的已证实缺陷。该权限模式按创建权限仍受进程 umask 限制，但 umask 只会进一步收紧权限。\n\n确认缺陷：未发现 receipt 写入或 PID 校验的确认缺陷。函数验证模式及正整数 PID后才写入；重启要求 schemaVersion 为 1 且 receipt.pid 与 incumbentPid 相等（同文件第 111–121 行、第 87–99 行）。\n\n条件性风险：若 incumbent PID 被系统复用，PID 相等本身不能证明 receipt 属于当前进程（同文件第 92–96 行）；需出现 PID 复用且调用方没有其他进程身份核验时才可能误认。当前快照未证实该条件已发生。\n"
+    },
+    {
+      "label": "b-peer-replay",
+      "sessionId": "01a0f634-6f79-7972-b1b4-330883b10344",
+      "startedAt": "2026-10-01T06:45:18.526Z",
+      "turnId": "01a0f635-d63f-7780-9d69-33f886900bc9",
+      "status": "completed",
+      "error": null,
+      "finishedAt": "2026-10-01T06:45:33.385Z",
+      "metrics": {
+        "generations": 3,
+        "generationsTotal": 3,
+        "generationsBeforeReply": 3,
+        "generationsAfterReply": 0,
+        "input": 43574,
+        "cached": 40192,
+        "uncached": 3382,
+        "output": 669,
+        "reasoning": 0,
+        "firstInput": 13879,
+        "peakInput": 15093,
+        "toolCalls": [
+          {
+            "at": "2026-10-01T06:45:21.976Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-01T06:45:31.343Z",
+            "name": "exec",
+            "kind": "other"
+          }
+        ]
+      },
+      "answer": "我会读取同伴意见，并对照已审查的实现与测试行号复核原结论；只写最终复核文件。\n最终复核已写入 [box/b-reviewed.md](<snapshot>/box/b-reviewed.md)，将原 PID 结论降为条件性风险，并说明同伴指出的权限风险及其适用条件。",
+      "elapsedSeconds": 14.859,
+      "calls": [
+        {
+          "at": "2026-10-01T06:45:21.976Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"cat box/peer-for-b.md && nl -ba scripts/workbench-launch-receipt.mjs | sed -n '87,100p' && nl -ba scripts/workbench-launch-receipt.test.mjs | sed -n '47,67p'\",\"workdir\":\"<experiment>/project\",\"max_output_tokens\":2000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-01T06:45:31.343Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"cat > box/b-reviewed.md <<'EOF'\\n复核后修正原结论：我此前指出 `incumbentPid` 未单独校验，导致两边同为 `undefined` 时相等通过。这是调用前置条件下的条件性风险，不应作为已证实缺陷：`restartNetworkEnvironment` 确实只做 `receipt.pid === incumbentPid` 的断言（[scripts/workbench-launch-receipt.mjs:92-96](<snapshot>/scripts/workbench-launch-receipt.mjs:92)），但本快照没有调用方，无法确认该参数可能缺失；已有测试覆盖 receipt PID 与传入 incumbent PID 不匹配（[scripts/workbench-launch-receipt.test.mjs:47-57](<snapshot>/scripts/workbench-launch-receipt.test.mjs:47)）。\\n\\n同伴意见指出的权限问题有依据：写入用权限 0600 创建临时文件后以 rename 替换目标（[scripts/workbench-launch-receipt.mjs:111-123](<snapshot>/scripts/workbench-launch-receipt.mjs:111)），测试仅断言首次创建的文件权限为 0600，并未先放宽旧目标权限再覆盖验证（[scripts/workbench-launch-receipt.test.mjs:78-103](<snapshot>/scripts/workbench-launch-receipt.test.mjs:78)）。但“旧目标权限较宽”这个状态依赖于文件此前被改动或由其他来源创建；在这两份快照内没有证据表明正常写入能产生该状态，因此应标记为条件性风险，而非确认缺陷。PID 与当前真实进程的绑定同样取决于上游传值，本快照无法验证。\\nEOF\",\"workdir\":\"<experiment>/project\"});\ntext(r.output);\n"
+        }
+      ],
+      "delivery": "复核后修正原结论：我此前指出 `incumbentPid` 未单独校验，导致两边同为 `undefined` 时相等通过。这是调用前置条件下的条件性风险，不应作为已证实缺陷：`restartNetworkEnvironment` 确实只做 `receipt.pid === incumbentPid` 的断言（[scripts/workbench-launch-receipt.mjs:92-96](<snapshot>/scripts/workbench-launch-receipt.mjs:92)），但本快照没有调用方，无法确认该参数可能缺失；已有测试覆盖 receipt PID 与传入 incumbent PID 不匹配（[scripts/workbench-launch-receipt.test.mjs:47-57](<snapshot>/scripts/workbench-launch-receipt.test.mjs:47)）。\n\n同伴意见指出的权限问题有依据：写入用权限 0600 创建临时文件后以 rename 替换目标（[scripts/workbench-launch-receipt.mjs:111-123](<snapshot>/scripts/workbench-launch-receipt.mjs:111)），测试仅断言首次创建的文件权限为 0600，并未先放宽旧目标权限再覆盖验证（[scripts/workbench-launch-receipt.test.mjs:78-103](<snapshot>/scripts/workbench-launch-receipt.test.mjs:78)）。但“旧目标权限较宽”这个状态依赖于文件此前被改动或由其他来源创建；在这两份快照内没有证据表明正常写入能产生该状态，因此应标记为条件性风险，而非确认缺陷。PID 与当前真实进程的绑定同样取决于上游传值，本快照无法验证。\n"
+    }
+  ],
+  "requestedTurns": 4,
+  "sessions": {
+    "a": "01a0f634-6f25-7d00-92da-809f634b98f5",
+    "b": "01a0f634-6f79-7972-b1b4-330883b10344"
+  },
+  "at": "2026-10-01T06:46:16.475Z",
+  "codeCommit": "43c90d9",
+  "cliVersion": "0.158.0",
+  "snapshotUnchanged": {
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+    "scripts/workbench-launch-mode.mjs": "ca4a5e9df9aef5ebf59e832993792eb370515bb24a2cb64e0bd7760ca3eccfc0",
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059"
+  },
+  "totals": {
+    "generations": 18,
+    "input": 258596,
+    "cached": 220928,
+    "uncached": 37668,
+    "output": 3009
+  },
+  "facts": {
+    "permission": {
+      "before": "644",
+      "after": "600"
+    },
+    "undefinedPid": {
+      "accepted": true,
+      "result": {
+        "RAH_WEB_PORT": "4176"
+      },
+      "limitation": "Function-level reproduction, no proof of reachable production caller"
+    }
+  },
+  "peerReplay": {
+    "a": "已证实缺陷：[scripts/workbench-launch-receipt.mjs](scripts/workbench-launch-receipt.mjs:111)–121 每次都创建权限为 0600 的临时文件后 rename 覆盖目标，但 rename 保留的是临时文件权限，不能收紧已有回执权限；若旧 `workbench-launch.json` 被放宽为 0644，更新后仍是 0644。测试只检查首次创建的权限（[scripts/workbench-launch-receipt.test.mjs](scripts/workbench-launch-receipt.test.mjs:78)–90），未覆盖宽权限旧文件被替换后的权限。",
+    "b": "已证实缺陷：[scripts/workbench-launch-receipt.mjs](scripts/workbench-launch-receipt.mjs:111) 到 121 写入时以 `{ mode: 0o600 }` 创建临时文件，再 `rename` 覆盖旧回执；POSIX rename 会让目标路径继承临时文件的权限。因此如果旧 `workbench-launch.json` 权限已较宽（例如 0644），第二次写入后回执仍可被其他本机用户读取，尽管测试仅验证首次创建权限为 0600（[scripts/workbench-launch-receipt.test.mjs](scripts/workbench-launch-receipt.test.mjs:78)–90）。这是可复现的权限保持缺陷；PID 比较覆盖了传入 incumbent PID 不匹配的分支，但这两份快照无法证明上游传入的 PID 本身对应当前实际进程。"
+  },
+  "quality": {
+    "a": "Rejected false peer permission claim; native tool probe printed 384 decimal = 0600",
+    "b": "Accepted false permission mechanism as conditional risk, despite absence of the claim in independent reply; also corrected overclaim about undefined PID reachability",
+    "scope": "Permission counterexample only; not a full security audit or overall accuracy score"
+  },
+  "verdict": {
+    "sameFailureWithoutLoom": true,
+    "deterministicPeerContamination": false,
+    "efficiencyGate": "not-run; historical comparison has unequal turns and hold/replay mechanics",
+    "productChanges": false,
+    "serviceOperations": false
+  },
+  "scripts": {
+    "run": "import {spawn} from 'node:child_process';\nimport {readFileSync,writeFileSync,existsSync,appendFileSync} from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {providerLaunchPolicy,providerLaunchSwitches,providerMemoryConfig} from '/Users/sun/Code/repos/rah_os/packages/agent-host/src/provider-launch-arguments.js';\nimport {measure,transcript} from '/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/common.mjs';\nimport {assertApprovedGateModel} from '/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/approved-models.mjs';\nconst root='<experiment>',cwd=root+'/project';\nconst config={provider:'codex',model:'gpt-6-luna',effort:'low'};\nassertApprovedGateModel(config);\nconst role='只读审查指定的代码快照，中文回答并给文件行号。不要修改被审查文件、写记忆或创建任务。明确区分已证实缺陷与条件性风险，不强凑问题。只完成当前交办的审查，不自动创建新的派工。';\nconst plan={batch:'P88',authorization:'owner explicitly requested native CLI comparison and try it in this turn',config,maxPaidTurns:4,mode:'two native CLI sessions, independent review then historical peer replay through local Markdown',snapshot:JSON.parse(readFileSync('/private/tmp/loom-held-p87-20261001/plan.json')).snapshot,limits:['No automatic repeat','No product daemon, no box tools, no fork','Not an efficiency gate; explicit replay turn differs from P87 busy hold','One sample per role; shared model/base CLI and source, not identical complete prompt']};\nif(process.argv[2]==='--dry'){console.log(JSON.stringify(plan,null,2));process.exit(0);}\nassert.equal(process.argv[2],'--paid');\nassert.ok(!existsSync(root+'/started'),'No paid repeat');writeFileSync(root+'/started',new Date().toISOString(),{flag:'wx',mode:0o600});\nconst env={...Object.fromEntries(Object.entries(process.env).filter(([k])=>!['RAH_','LOOM_','JEV_','TYPESAFE_'].some(p=>k.startsWith(p)))),...providerLaunchSwitches('codex').environment};\nconst child=spawn('codex',['app-server',...providerLaunchPolicy('codex',env,{cwd}).args],{cwd,env,stdio:['pipe','pipe','pipe']});\nconst state={plan,startedAt:new Date().toISOString(),pid:child.pid,rounds:[],requestedTurns:0};\nconst save=()=>writeFileSync(root+'/result.json',JSON.stringify(state,null,2),{mode:0o600});save();\nlet buffer='',seq=0,pending=new Map(),active,nativeError;\nconst send=m=>child.stdin.write(JSON.stringify(m)+'\\n');\nfunction request(method,params){return new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>{pending.delete(id);reject(Error('RPC timeout '+method))},45000);pending.set(id,{resolve:x=>{clearTimeout(timer);resolve(x)},reject:e=>{clearTimeout(timer);reject(e)}});send({id,method,params});});}\nchild.stdout.on('data',b=>{buffer+=b;let n;while((n=buffer.indexOf('\\n'))>=0){let f;try{f=JSON.parse(buffer.slice(0,n))}catch{buffer=buffer.slice(n+1);continue}buffer=buffer.slice(n+1);if(f.id!==undefined&&pending.has(f.id)){const p=pending.get(f.id);pending.delete(f.id);f.error?p.reject(Error(JSON.stringify(f.error))):p.resolve(f.result);}else if(f.method==='turn/completed'&&f.params.threadId===active?.threadId){active.resolve(f.params);}else if(f.id!==undefined&&f.method){nativeError='Unexpected server request '+f.method;send({id:f.id,error:{code:-32601,message:'Unattended approval denied'}});}}});\nchild.stderr.on('data',b=>appendFileSync(root+'/stderr.log',b));\nchild.on('error',e=>{nativeError=e.message;active?.reject(e);for(const p of pending.values())p.reject(e);});\nchild.on('exit',()=>{const e=Error('app-server exited');active?.reject(e);for(const p of pending.values())p.reject(e);});\nasync function turn(label,threadId,text){assert.ok(state.requestedTurns<4);state.requestedTurns++;const r={label,sessionId:threadId,startedAt:new Date().toISOString()};state.rounds.push(r);save();let timer;const done=new Promise((resolve,reject)=>{active={threadId,resolve,reject};timer=setTimeout(()=>reject(Error('Turn timeout')),240000)});\ntry{done.catch(()=>{});const res=await request('turn/start',{threadId,input:[{type:'text',text}],effort:'low'});r.turnId=res.turn.id;const end=await done;assert.equal(end.turn.id,r.turnId);r.status=end.turn.status;r.error=end.turn.error;assert.equal(r.status,'completed');assert.ok(!nativeError,nativeError);}finally{clearTimeout(timer);active=undefined;r.finishedAt=new Date().toISOString();save();}\nr.metrics=measure(threadId,r,undefined,config);r.answer=transcript(threadId).filter(e=>e.timestamp>=r.startedAt&&e.timestamp<=r.finishedAt&&e.type==='response_item'&&e.payload?.type==='message'&&e.payload?.role==='assistant').flatMap(e=>e.payload.content??[]).filter(c=>c.type==='output_text').map(c=>c.text).join('\\n');save();console.log(JSON.stringify({label,metrics:r.metrics,answer:r.answer}));}\ntry{\nawait request('initialize',{clientInfo:{name:'loom-peer-context-diagnostic',version:'1.0.0'},capabilities:{experimentalApi:true}});send({method:'initialized',params:{}});\nconst catalog=await request('model/list',{});const model=catalog.data.find(m=>m.model===config.model);assert.ok(model,'Approved model absent');assert.ok(model.supportedReasoningEfforts?.some(x=>x.reasoningEffort==='low'),'Approved effort absent');\nconst args={cwd,model:config.model,approvalPolicy:'never',sandbox:'workspace-write',developerInstructions:role+' 交流使用本地 Markdown：只读取 box 中本轮指定消息，只写自己本轮的回复文件。不得访问网络或个人文件。无需轮询；写完结束，不读自己的回帖。',config:{...providerMemoryConfig('codex'),model_reasoning_effort:'low'},experimentalRawEvents:true};\nstate.sessions={};\nfor(const who of ['a','b']){const start=await request('thread/start',args);state.sessions[who]=start.thread.id;save();}\nfor(const who of ['a','b']){await turn(who+'-independent',state.sessions[who],`你是审查者 ${who.toUpperCase()}。读取 box/human.md，完成其中分配给你的工作。将实质结论写入 box/${who}-independent.md；仅该回复文件可写。完成后结束本轮。`);assert.ok(existsSync(cwd+'/box/'+who+'-independent.md'),'Missing Markdown delivery');}\nfor(const who of ['a','b']){\n const other=who==='a'?'b':'a';\n writeFileSync(cwd+'/box/peer-for-'+who+'.md',readFileSync(root+'/peer-'+other+'.md'));\n await turn(who+'-peer-replay',state.sessions[who],`box/peer-for-${who}.md 有一条同伴审查意见。请读取，结合已经审查的源码决定是否保留或修正你自己的结论，说明依据，区分确认缺陷和条件性风险。将最终复核写入 box/${who}-reviewed.md；不要修改其他文件、写记忆、创建任务或接力。写完结束本轮。`);\n assert.ok(existsSync(cwd+'/box/'+who+'-reviewed.md'),'Missing Markdown delivery');\n}\n\n}catch(e){state.error=e.message;save();console.error(e.message);process.exitCode=1;}finally{child.stdin.end();child.kill('SIGTERM');setTimeout(()=>{if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL')},2000).unref();}\n"
+  }
+}
