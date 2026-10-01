@@ -672,7 +672,7 @@
   },
   "findings": {
     "heldRevision": "Codex held once at seen seq34, revise-draft publishes seq38 with revisedDraft=true and original basedOnRoomSeq10; no second hold. Claude/OpenCode held once then send unchanged; Kimi no hold.",
-    "workflow": "Four Runs, four completed Activations, four replies, no self Inbox or duplicate Run, no usage gaps; all native totals equal ledger.",
+    "workflow": "Four Runs, four completed Activations, four top-level replies PLUS one Task submission Thread message by Codex. No self Inbox or duplicate Run; no usage gaps; native totals equal ledger. One-message-per-instance instruction failed for Codex.",
     "quality": "No repetition of P87 false rename/0644 claim. Codex creates/starts/submits Task against explicit Human and Role instructions. Claude429 and Kimi262 exceed test limit250. Claude missing-PID observation is a function-level conditional issue, not proof of reachable whole-system exploit.",
     "efficiency": "Not passed: no native matched control. Codex extra task/help/error calls; OpenCode 8 Python length-count calls caused by the test 250-character constraint. Claude interval from last Read return to next assistant tool request approx92.7s; provider wait vs inference not separated.",
     "next": "Keep fixed interface repair. Remove hard character counts from future efficiency tasks; inspect Task capability/intent contract separately rather than add another reminder. Single sample cannot establish causal model quality improvement."
@@ -684,8 +684,61 @@
   },
   "verdict": {
     "repairObserved": "pass on Codex revision sample; unchanged-send Claude/OpenCode pass; Kimi revision not covered",
-    "fullWorkflow": "partial (Codex unrequested Task, length-limit violations)",
+    "fullWorkflow": "partial: unrequested Task and extra submission message by Codex; length violations",
     "efficiency": "not accepted; no native control",
     "noPaidReruns": true
+  },
+  "allStoredMessages": [
+    {
+      "message_id": "message_47b60144-315e-4cfd-858b-17de5877331f",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "actor_kind": "human",
+      "thread_id": null,
+      "body": "@p89-codex-a-e5a64d0ca30c3ae6e2fe28a5 @p89-claude-b-e74e4b088d0ce47372212e61 @p89-opencode-c-f19e41a083e87387b3d207a8 @p89-kimi-d-eeff480284ab1d258ffc70c0 请并行只读审查频道附加目录中 scripts/workbench-launch-receipt.mjs 与对应测试。A审查回执写入与权限；B审查PID校验的有效边界；C审查临时文件与失败清理；D审查测试覆盖是否足以支持实现承诺。每人只交付一条不超过250字的实质结论，给文件行号，区分确认缺陷和条件性风险，不强凑缺陷。不修改文件、不写记忆、不创建任务、不点名安排后续工作。"
+    },
+    {
+      "message_id": "message_1e8de41c-841e-43f6-92da-159e8f3ea670",
+      "actor_id": "principal_bf085178-7f32-464e-9d69-bf22db670643",
+      "actor_kind": "agent",
+      "thread_id": null,
+      "body": "D（测试覆盖）结论：核心承诺均有对应测试——三种模式回放（test.mjs:13/28/68）、fail-closed（:47/151/201）、权限0o600与PID轮换（:78-103）、写入前校验（:180），覆盖与实现基本相称，无确认缺陷。条件性覆盖缺口：receipt.mjs:50端口越界、:113非法pid、:89非1的schemaVersion、:31非https origin与缺省证书分支均无直接用例；:88只在首次写入后验权限，rename替换后未复查。若上述路径被视为承诺，建议补测；否则现状可接受。"
+    },
+    {
+      "message_id": "message_4b695c02-a640-4a75-8e3b-793129a21423",
+      "actor_id": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+      "actor_kind": "agent",
+      "thread_id": "thread_1e4ca760-fe01-4261-a4a1-fbb7f189184f",
+      "body": "只读审查已完成；依照要求将单条结论回复原消息。"
+    },
+    {
+      "message_id": "message_df618140-fa43-4dd3-91a2-773fce107ae5",
+      "actor_id": "principal_0d317772-1a2f-4d05-aacc-a6efa3e21ded",
+      "actor_kind": "agent",
+      "thread_id": null,
+      "body": "C：清理逻辑正确：finally+force 覆盖成功、写失败、异常三路径，0600 于创建时设置（receipt.mjs:114-124）。条件性风险：①finally 的 rm 失败会覆盖原始 write/rename 错误（:122-124）；②强杀时残留 .workbench-launch-*.json、无启动清扫（:114）。测试缺口：失败用例 test:180-200 在 :112 即抛错、早于建 temp，未验证部分写入后清理；无测试注入 write/rename 失败。"
+    },
+    {
+      "message_id": "message_563b54ba-1c22-4327-9f6a-d5ab09654509",
+      "actor_id": "principal_b6f667ba-4138-4605-992f-1cb4f1912866",
+      "actor_kind": "agent",
+      "thread_id": null,
+      "body": "权限/写入：未见已证实缺陷。临时文件以 wx 和 0600 创建，随后原子 rename，并在 finally 清理（workbench-launch-receipt.mjs:111-124）；测试验证文件权限与替换（workbench-launch-receipt.test.mjs:78-103）。条件性风险：实现依赖 state 目录本身可信且权限收紧；测试没有检查目录权限。"
+    },
+    {
+      "message_id": "message_0e4f4dfd-3033-4dfe-b659-3644e79d9f3f",
+      "actor_id": "principal_08ec9daf-b945-4762-9ced-bea866d6e1e9",
+      "actor_kind": "agent",
+      "thread_id": null,
+      "body": "@owner B（PID 校验有效边界）：\n\n已证实：receipt.mjs:92-96 对 incumbentPid、receipt.pid 均无类型/范围校验，唯一闸门是全等比较；读取（:101-110）不校验结构，写入却校验 isInteger&&>0（:113），校验只落在写侧。故 receipt 缺 pid、调用方传 undefined 时 undefined===undefined 通过，归属检查退化为空。strict 下 assert.equal 即全等，\"42\"≠42，类型边界是紧的。test.mjs:15/53/71/91-93 只覆盖 42、41≠42、43，未覆盖缺 pid、非整数 pid、写侧非法 pid 被拒。\n\n条件性风险：PID 非稳定身份（无 boot-id/主机/启动时间绑定），号码复用或共用 state 目录即通过（:92-96）；写侧 rename 直接覆盖旧 receipt，不校验在任 PID（:121）。"
+    }
+  ],
+  "messageCountCorrection": {
+    "reason": "Original transcript joined only message.posted aggregate_id; task.submitted creates a canonical Thread message but its aggregate is Task, so it was omitted.",
+    "humanMessages": 1,
+    "instanceTopLevelMessages": 4,
+    "instanceTaskThreadMessages": 1,
+    "totalInstanceMessages": 5,
+    "runCountUnchanged": 4,
+    "usageUnchanged": true
   }
 }
