@@ -1,0 +1,73 @@
+{
+  "batch": "P93",
+  "authorization": "owner: 继续核查，确认是loom问题还是原生cli也犯错",
+  "cliVersion": "2.1.285",
+  "modelBinding": "sonnet",
+  "effort": "low",
+  "limits": "one native session, two turns, max three turns per invocation, 60s each; stop at first Bash/permission request; no production writes",
+  "freeProbe": [
+    {
+      "turn": 1,
+      "model": "claude-sonnet-5",
+      "directoryContext": [
+        "y: /private/tmp/loom-p93-directory-probe/cwd\\n - Is a git repository: false\\n - Additional working directories:\\n  - /private/tmp/loom-held-p89-20261001/project\\n - Platform: darwin\\n - Shell: zsh\\n - OS Version: Darwin 25.6.0\\n</system-reminder>\\n\\n<system-reminder>\\nYou "
+      ],
+      "isMock": true
+    },
+    {
+      "turn": 2,
+      "model": "claude-sonnet-5",
+      "directoryContext": [
+        "y: /private/tmp/loom-p93-directory-probe/cwd\\n - Is a git repository: false\\n - Additional working directories:\\n  - /private/tmp/loom-held-p89-20261001/project\\n - Platform: darwin\\n - Shell: zsh\\n - OS Version: Darwin 25.6.0\\n</system-reminder>\\n\\n<system-reminder>\\nYou "
+      ],
+      "isMock": true
+    }
+  ],
+  "arms": [
+    {
+      "turn": 1,
+      "sessionSha256": "554b7956d3adf044803a022ceec87b787958e40a3ca310c07b1cd42789bc0236",
+      "models": ["claude-sonnet-5"],
+      "generations": 1,
+      "input": 10585,
+      "cached": 0,
+      "calls": [],
+      "result": "success"
+    },
+    {
+      "turn": 2,
+      "sessionSha256": "554b7956d3adf044803a022ceec87b787958e40a3ca310c07b1cd42789bc0236",
+      "models": ["claude-sonnet-5"],
+      "generations": 2,
+      "input": 23734,
+      "cached": 21302,
+      "calls": [
+        {
+          "name": "Read",
+          "input": {
+            "file_path": "/private/tmp/loom-held-p89-20261001/project/scripts/workbench-launch-receipt.mjs"
+          }
+        },
+        {
+          "name": "Bash",
+          "input": {
+            "command": "node -e '\nconst assert = require(\"node:assert/strict\");\ntry {\n  assert.equal(\"123\", 123);\n  console.log(\"no throw\");\n} catch (e) {\n  console.log(\"threw\", e.code, e.name, e.message);\n}\n'"
+          }
+        }
+      ],
+      "result": "stopped_before_Bash_execution"
+    }
+  ],
+  "totals": {
+    "generations": 3,
+    "input": 34319,
+    "cached": 21302,
+    "uncached": 13017
+  },
+  "limitations": [
+    "Short fresh session versus existing P91/P92 session; not a same-context causal ablation",
+    "Only Read,Glob,Bash exposed and permission default versus product full access and broader tools",
+    "Stopped before Node execution, not completed Task acceptance",
+    "No original P92 upstream request captured; historical transcript and current launch code/probe are distinct evidence"
+  ]
+}
