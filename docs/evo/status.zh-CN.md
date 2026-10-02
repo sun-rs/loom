@@ -1,6 +1,6 @@
 # evo 分支现状
 
-更新：2026-10-02（Task 政策已部署；P90双实例真实验收未通过，见下）。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`）的唯一现状说明：环境与部署、带证据的能力状态、偏离合同清单、未决项与 phase 4 删除清单。目标以 [目标合同](target-contract.zh-CN.md) 为准；代码只证明当前行为。
+更新：2026-10-02（Task 政策已部署；P91复测确认 ACK 路径改善，但跨轮 Task 续办仍被范围校验拒绝，见下）。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`）的唯一现状说明：环境与部署、带证据的能力状态、偏离合同清单、未决项与 phase 4 删除清单。目标以 [目标合同](target-contract.zh-CN.md) 为准；代码只证明当前行为。
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
@@ -13,7 +13,7 @@
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
 - `evo`：后端重建线。前端产品代码（`apps/web/src`、`packages/ui-web`、`packages/ui-tokens/specs`）与 main 一致，phase 4 之前不改。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
-- 当前部署：2026-10-02，产品提交 `c0fad75`（后续仅部署记录），schema 80，协议 `43b49986b67f`。完整免费检查通过（后端2741通过/22跳过、Web481、控制台59、门禁236）；备份 `pre-restart-p90-fix-6687010a-7243-4f57-b4fb-60659b1ee5a2` 验证后安全重启 `com.loom.evo`，SQLite quick_check 为 ok。原消息200、Task5、Role/修订31/31、实例57、记忆/修订4/4、Room事件1767条旧行哈希保留，原生 session 绑定表未变；P90频道仍为 stopped，没有恢复付费工作。正式 Chrome 刷新已连接并显示原频道与 Task；本批没有付费调用，真实改善待复测。
+- 当前部署：2026-10-02，产品提交 `c0fad75`（后续仅部署记录），schema 80，协议 `43b49986b67f`。完整免费检查通过（后端2741通过/22跳过、Web481、控制台59、门禁236）；备份 `pre-restart-p90-fix-6687010a-7243-4f57-b4fb-60659b1ee5a2` 验证后安全重启 `com.loom.evo`，SQLite quick_check 为 ok。原消息200、Task5、Role/修订31/31、实例57、记忆/修订4/4、Room事件1767条旧行哈希保留，原生 session 绑定表未变；P90频道仍为 stopped，没有恢复付费工作。正式 Chrome 刷新已连接并显示原频道与 Task；随后 P91 已完成5次真实运行，结果见下；未再次更改产品或重启。
 - 临时监听调整：本机 Tailscale 为 `Stopped`，原 `100.101.107.87` 已不在接口上，重启曾因 `EADDRNOTAVAIL` 退出；现仅监听 `127.0.0.1:4176`，未开启 VPN、未开放所有网卡。原 launchd plist 保存在 `~/.loom/evo/backups/pre-restart-reply-default-b1409937-1f57-48ae-93ac-72f32da8aaf1/com.loom.evo.before-loopback.plist`；恢复原 Tailnet/LAN 入口需先恢复对应网络，再恢复此配置。
 - 数据库 schema 80（80：频道实例自主创建 Task 开关；79：逐 Run 精确读取、输出收据与消费凭据；78：频道 `channel_steer_enabled`；77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/state/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
@@ -25,7 +25,7 @@
 任务/转换历史消息；开启后实例可自主创建，已有任务领取不受开关影响。Kernel
 统一拦截单项、批量、转换及 Agent token 创建；旧成功请求幂等重放保留。无审批
 队列，无 Jev。控制台可切换政策、创建/转换、查看和回复任务消息列、验收/关闭。
-Task 政策批完整 check 与真实 Chrome 隔离门禁通过。P90已做Codex/Claude同频道续聊：默认创建拒绝和Human Task领取/提交有效，但Task缺ACK导致额外补跑；取消Claude时用量账本少一条且未标缺口。本批已修正 Task 唤醒的先确认指引、补齐按需帮助参数，并在 Claude 中断未闭合用量时记录缺口（不估算补账）；修复尚待真实复测。开启自主创建/关闭后继续、竞争claim与正确成果验收未覆盖，**真实整体验收未通过**，不宣称效率达标。见[P90报告](evidence/2026-10-02-task-policy-p90.md)及[Task 实施记录](handoff-closeout-2026-10-01.zh-CN.md#task-最终简化裁定与实施2026-10-01替代上方候选)。
+Task 政策批完整 check 与真实 Chrome 隔离门禁通过。P90已做Codex/Claude同频道续聊：默认创建拒绝和Human Task领取/提交有效，但Task缺ACK导致额外补跑；取消Claude时用量账本少一条且未标缺口。P91复测：默认关闭拒绝、Human Task正确交付/验收、开启自主创建通过，Task事件运行无补ACK重试；但关闭后跨轮继续已有Task被旧Activation范围校验403拒绝，**真实整体验收仍未通过**。5 Run/29生成、611,287输入/82,892未缓存，逐轮原生核账一致，零gap/自身Inbox/重试；Codex四轮同session，Claude仅一轮。真实claim竞争、Claude续聊/中断缺口分支未覆盖；无独立原生对照，不宣称效率达标。[P91报告与根因](evidence/2026-10-02-task-policy-p91.md)。见[P90报告](evidence/2026-10-02-task-policy-p90.md)及[Task 实施记录](handoff-closeout-2026-10-01.zh-CN.md#task-最终简化裁定与实施2026-10-01替代上方候选)。
 
 本批实现：共享 Worker 新增 `message-post --revise-draft <heldDraftId>`，只修订同实例/Activation/原目标、带原回复标记的草稿。无新消息时直接发布；更新的消息仍触发 hold；原 ACK/final/附件保持，幂等重放不重复发布。不增加常驻提示或新队列，无数据库迁移。100 项专项测试、完整 `npm run check` 通过：后端2728通过/22跳过、Web481、控制台59、门禁单测236通过。已备份重启并验证真实页面；P89已观察到Codex一次hold后直接修订发布，Claude/OpenCode原样恢复成功，Kimi未遇到hold。无原生对照，不宣称token收益。见[设计与实施](handoff-closeout-2026-10-01.zh-CN.md#实施收口明确修订原回复草稿)。
 
