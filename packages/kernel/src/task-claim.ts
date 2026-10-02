@@ -1,3 +1,4 @@
+import { followAgentThreadParticipants } from "./agent-thread-subscriptions.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type { ActivationCredentialScope } from "@rah-os/protocol";
 import { ConflictError, LeaseConflictError } from "./errors.ts";
@@ -114,6 +115,12 @@ export function claimTaskTransaction(
       updatedAt,
       input.taskId,
     );
+  followAgentThreadParticipants(context.database, {
+    participantIds: [scope.participantId],
+    threadId: text(taskRow, "thread_id"),
+    source: "participation",
+    updatedAt: updatedAt,
+  });
   const event = append(context, scope, {
     basedOnRoomSeq: input.basedOnRoomSeq,
     eventType: "task.claimed",

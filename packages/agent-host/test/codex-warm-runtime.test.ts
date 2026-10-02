@@ -1745,13 +1745,14 @@ test("evo §37 B warm duration cap: a turn that ignores the native interrupt is 
 
 test("review batch 1 #2: a start that outlives the Host deadline during cold start leaves the lane usable; the retry runs warm", async () => {
   let slowLaunches = 1;
+  const lateEnvironment = Promise.withResolvers<void>();
   const state = await harness({
     runtimeStartTimeoutMs: 300,
     perAdapter: () => ({
       runtimeEnvironment: async () => {
         if (slowLaunches > 0) {
           slowLaunches -= 1;
-          await new Promise((resolve) => setTimeout(resolve, 900));
+          await lateEnvironment.promise;
         }
         return { env: {} };
       },
@@ -1762,12 +1763,22 @@ test("review batch 1 #2: a start that outlives the Host deadline during cold sta
     const first = await state.current.agentHost.reconcileOnce();
     assert.equal(first.state, "failed", JSON.stringify(first));
     assert.match(String(first.error), /timed out/u);
+    assert.equal(
+      state.records().filter((record) => record.event === "start").length,
+      0,
+    );
+    // Release only after timeout, then wait for actual readiness, not a sleep.
+    lateEnvironment.resolve();
     // The abandoned cold start finishes in the background.
     await waitFor(
       () => state.records().some((record) => record.event === "start"),
       "the late cold start",
     );
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await waitFor(
+      () =>
+        sql(state, "SELECT state FROM instance_runtimes")[0]?.state === "idle",
+      "the abandoned runtime becoming reusable",
+    );
     const retried = await state.current.agentHost.reconcileOnce();
     assert.equal(retried.state, "completed", JSON.stringify(retried));
     const records = state.records();
@@ -1784,6 +1795,7 @@ test("review batch 1 #2: a start that outlives the Host deadline during cold sta
       1,
     );
   } finally {
+    lateEnvironment.resolve();
     await state.cleanup();
   }
 });

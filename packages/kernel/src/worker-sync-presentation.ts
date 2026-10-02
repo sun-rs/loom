@@ -1,3 +1,4 @@
+import { storedBodySeqs } from "./conversation-delivery.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type { SyncResult, WorkerSyncResult } from "./types.ts";
 import type { ActivationCredentialScope } from "@rah-os/protocol";
@@ -25,6 +26,7 @@ export function presentWorkerSync(
   });
   // Exact current-Run receipt, never a participant high-water mark or ACK.
   const wake = readPresentedWindow(database, scope);
+  const wakeBodies = storedBodySeqs(database, scope);
   const deliveredInWakeSeqs =
     wake?.sentAt === undefined
       ? []
@@ -32,7 +34,8 @@ export function presentWorkerSync(
           .filter(
             (event) =>
               event.type === "message.posted" &&
-              wake.presentedSeqs.includes(event.roomSeq),
+              wake.presentedSeqs.includes(event.roomSeq) &&
+              (wakeBodies === undefined || wakeBodies.includes(event.roomSeq)),
           )
           .map((event) => event.roomSeq);
   return {

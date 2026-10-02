@@ -1,3 +1,4 @@
+import { followAgentThreadParticipants } from "./agent-thread-subscriptions.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { requireRoomMember } from "./collaboration-policy.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
@@ -96,6 +97,12 @@ export function assignTaskTransaction(
       "UPDATE tasks SET assignee_id = ?, updated_at = ? WHERE task_id = ?",
     )
     .run(input.assigneeId, assignedAt, input.taskId);
+  followAgentThreadParticipants(database, {
+    participantIds: [input.assigneeId],
+    threadId: text(taskRow, "thread_id"),
+    source: "participation",
+    updatedAt: assignedAt,
+  });
   const event = events.append({
     actorId,
     aggregateId: input.taskId,

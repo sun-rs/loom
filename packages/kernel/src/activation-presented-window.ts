@@ -1,3 +1,8 @@
+import {
+  conversationDelivery,
+  selectConversationEvents,
+  storedBodySeqs,
+} from "./conversation-delivery.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type {
   ActivationCredentialScope,
@@ -285,6 +290,7 @@ export function renderPresentedWindow(
 ): RenderedPresentedWindow {
   requireLiveRunAttempt(database, scope);
   const { fromSeq, toSeq } = activationRange(database, scope);
+  const conversations = conversationDelivery(database, scope);
   // Bounded read: at most one row past the message budget ever leaves SQLite,
   // so neither the scan nor the response tracks the size of the range. What
   // lies beyond is summarised by two aggregates, never enumerated.
@@ -311,7 +317,11 @@ export function renderPresentedWindow(
   for (const row of rows) {
     const roomSeq = integer(row, "room_seq");
     lastScannedSeq = roomSeq;
-    if (isExecutionAuditEvent(text(row, "type"))) {
+    if (
+      isExecutionAuditEvent(text(row, "type")) ||
+      !selectConversationEvents(database, conversations, [eventFromRow(row)])
+        .length
+    ) {
       presentedSeqs.push(roomSeq);
       continue;
     }
@@ -338,6 +348,7 @@ export function renderPresentedWindow(
     participantId: scope.participantId,
     consumerId: scope.consumerId,
     fromSeq,
+    conversations,
     frozenFloor:
       existing === undefined
         ? undefined
@@ -433,7 +444,13 @@ export function renderPresentedWindow(
       JSON.stringify(presentedSeqs),
       contentDigest,
       renderedAt,
-      JSON.stringify({ floor: catchUp.floor }),
+      JSON.stringify({
+        floor: catchUp.floor,
+        conversations,
+        bodySeqs: events
+          .filter((e) => e.type === "message.posted")
+          .map((e) => e.roomSeq),
+      }),
     );
   const window: PresentedWindow = {
     runAttemptId: scope.runAttemptId,
@@ -635,6 +652,7 @@ function presentedPrefix(
     }
   | undefined {
   const presented = new Set(window.presentedSeqs);
+  const bodies = storedBodySeqs(database, scope);
   const rows = database
     .prepare(
       `SELECT room_seq, type FROM room_events
@@ -658,7 +676,11 @@ function presentedPrefix(
       break;
     }
     presentedSeqs.push(roomSeq);
-    if (text(row, "type") === "message.posted") messageSeqs.push(roomSeq);
+    if (
+      text(row, "type") === "message.posted" &&
+      (bodies === undefined || bodies.includes(roomSeq))
+    )
+      messageSeqs.push(roomSeq);
   }
   if (presentedSeqs.length === 0) return undefined;
   if (throughSeq < presentedSeqs[presentedSeqs.length - 1]!) return undefined;

@@ -59,6 +59,8 @@ export function syncRoomEventWindow(
   owners: {
     eventFromRow: (row: Row) => RoomEvent;
     snapshot: (roomId: string) => RoomSnapshot;
+    /** Kernel-only automatic conversation selection, never supplied by a client. */
+    eventPredicate?: { sql: string; params: string[] };
     responseOverheadBytes?: number;
     eventOverheadBytes?: (event: RoomEvent) => number;
   },
@@ -121,11 +123,19 @@ export function syncRoomEventWindow(
       "Room sync snapshot exceeds the complete JSON limit",
     );
   let eventBytes = 0;
+  const predicate = owners.eventPredicate;
   const rows = database
     .prepare(
-      "SELECT * FROM room_events WHERE room_id=? AND room_seq>? AND room_seq<=? ORDER BY room_seq LIMIT ?",
+      `SELECT * FROM room_events WHERE room_id=? AND room_seq>? AND room_seq<=? AND (${predicate?.sql ?? "1"}) ORDER BY room_seq LIMIT ?`,
     )
-    .iterate(input.roomId, afterSeq, throughSeq, limit);
+    .iterate(
+      input.roomId,
+      afterSeq,
+      throughSeq,
+      ...(predicate?.params ?? []),
+      limit,
+    );
+  let truncated = false;
   for (const row of rows) {
     const event = owners.eventFromRow(row),
       size =
@@ -141,11 +151,14 @@ export function syncRoomEventWindow(
         throw new ForbiddenError(
           "one Room event exceeds the complete sync response limit",
         );
+      truncated = true;
       break;
     }
     result.events.push(event);
     eventBytes += size;
     result.cursorAfter = event.roomSeq;
   }
+  if (predicate && !truncated && result.events.length < limit)
+    result.cursorAfter = throughSeq;
   return result;
 }

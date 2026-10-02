@@ -103,8 +103,10 @@ never installs them or configures their accounts.
 Instances run in parallel; each has one serial lane. A Channel `@instance` is a
 public directed request; when a Human message's canonical @ names enabled
 instance members, only those are woken (message-level set; no such @
-broadcasts; `@all`/`@所有人` broadcasts for Human and instance authors alike), and a woken instance's wake carries the Channel events
-since its last read (contract §3, owner ruling 2026-09-27). The private box shares the instance session (so it
+broadcasts; `@all`/`@所有人` broadcasts for Human and instance authors alike), and a woken instance reads the delta for channel posts, followed threads and
+explicitly delivered targets, using independent target positions (contract §3,
+owner ruling 2026-10-02). Unfollowed Task bodies are not automatic catch-up;
+explicit history reads retain Channel membership permissions. The private box shares the instance session (so it
 affects later context), queues while busy, never steers Channel work and is
 invisible to other instances. Only Human messages steer; other instances'
 replies are read when idle. The legacy persona-Agent path is being removed from

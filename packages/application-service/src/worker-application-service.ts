@@ -825,6 +825,7 @@ export class WorkerApplicationService {
       );
       const delivery = projectWorkerMessageCheck(
         this.#kernel.syncWorker(grant.execution, {
+          automatic: true,
           ...(check.cursor === undefined
             ? { replayDelivery: true }
             : { afterSeq: check.cursor }),

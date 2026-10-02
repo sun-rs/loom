@@ -1,3 +1,4 @@
+import { backfillTaskThreadFollows } from "./task-thread-follow-backfill.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import * as MemoryIndex from "./channel-memory-index.ts";
 import { migratePlacementAndProcessColumns } from "./placement-column-migration.ts";
@@ -14,7 +15,6 @@ import {
 } from "./task-execution-transitions.ts";
 import {
   recordCheckedWorkerMessages,
-  workerDeliveryReplayStart,
   type WorkerDeliveryAcknowledgement,
 } from "./worker-delivery-window.ts";
 import {
@@ -71,7 +71,10 @@ import type {
 import { GlobalDiscovery } from "./global-discovery.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
-import { presentWorkerSync } from "./worker-sync-presentation.ts";
+import {
+  syncAutomaticWorker,
+  type AutomaticWorkerSyncInput,
+} from "./worker-automatic-sync.ts";
 import { migrateWorkerTargetReadPositions } from "./worker-target-read-position.ts";
 import {
   expireHeldMessageDraftsAt,
@@ -433,7 +436,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 80;
+export const KERNEL_SCHEMA_VERSION = 81;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -928,6 +931,9 @@ export class RoomKernel {
         this.#database,
         this.#timestamp(),
       ),
+    );
+    unit("task-thread-follow-backfill-v81", "transactional", () =>
+      backfillTaskThreadFollows(this.#database),
     );
     unit("host-and-offer-columns", "transactional", () => {
       this.#database.exec(
@@ -5173,29 +5179,22 @@ export class RoomKernel {
 
   syncWorker(
     execution: AuthenticatedWorkerExecutionContext,
-    input: { afterSeq?: number; limit?: number; replayDelivery?: boolean },
+    input: AutomaticWorkerSyncInput,
   ): WorkerSyncResult {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      const replayStart = input.replayDelivery
-        ? workerDeliveryReplayStart(this.#database, scope)
-        : undefined;
-      const delivery = this.#syncForParticipant(
-        scope.participantId,
-        {
-          ...(input.limit === undefined ? {} : { limit: input.limit }),
-          ...(replayStart === undefined
-            ? input.afterSeq === undefined
-              ? {}
-              : { afterSeq: input.afterSeq }
-            : { afterSeq: replayStart }),
-          consumerId: scope.consumerId,
-          roomId: scope.roomId,
-          throughSeq: scope.toSeq,
-        },
-        workerAddressingBudget(this.#database, scope),
+      return syncAutomaticWorker(
+        this.#database,
+        scope,
+        input,
+        (options, predicate) =>
+          this.#syncForParticipant(
+            scope.participantId,
+            options,
+            workerAddressingBudget(this.#database, scope),
+            predicate,
+          ),
       );
-      return presentWorkerSync(this.#database, scope, delivery);
     });
   }
 
@@ -5224,12 +5223,14 @@ export class RoomKernel {
       throughSeq?: number;
     },
     eventOverheadBytes?: (event: RoomEvent) => number,
+    eventPredicate?: { sql: string; params: string[] },
   ): SyncResult {
     this.#requireMember(input.roomId, participantId);
     return syncRoomEventWindow(this.#database, participantId, input, {
       ...(eventOverheadBytes
         ? { eventOverheadBytes, responseOverheadBytes: 48 }
         : {}),
+      ...(eventPredicate ? { eventPredicate } : {}),
       eventFromRow: (row) => this.#eventFromRow(row),
       snapshot: (roomId) => this.#snapshot(roomId),
     });

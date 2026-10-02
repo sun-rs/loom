@@ -1,3 +1,4 @@
+import { followAgentThreadParticipants } from "./agent-thread-subscriptions.ts";
 import { bindMessageMentions } from "./identity-accounts.ts";
 import type { DatabaseSync } from "node:sqlite";
 import type { Attachment } from "@rah-os/protocol";
@@ -145,6 +146,17 @@ export function createAnchoredTaskProjection(
       input.createdAt,
     );
   }
+  followAgentThreadParticipants(database, {
+    participantIds: [
+      input.actorId,
+      ...(command.assigneeId ? [command.assigneeId] : []),
+      ...command.collaboratorIds,
+      ...command.reviewerIds,
+    ],
+    threadId,
+    source: "participation",
+    updatedAt: input.createdAt,
+  });
   return {
     eventPayload: {
       ...(command.assigneeId === undefined

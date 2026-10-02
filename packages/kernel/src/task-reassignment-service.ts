@@ -1,3 +1,4 @@
+import { followAgentThreadParticipants } from "./agent-thread-subscriptions.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -251,6 +252,12 @@ export class TaskReassignmentService {
            WHERE operation_id = ?`,
         )
         .run(completedAt, completedAt, operation.operationId);
+      followAgentThreadParticipants(this.#database, {
+        participantIds: [operation.nextAssigneeId],
+        threadId: text(taskRow, "thread_id"),
+        source: "participation",
+        updatedAt: completedAt,
+      });
       const event = this.#events.append({
         actorId,
         aggregateId: operation.taskId,

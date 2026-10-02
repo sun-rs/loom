@@ -1,3 +1,8 @@
+import {
+  conversationFloor,
+  conversationPredicate,
+  type ConversationDelivery,
+} from "./conversation-delivery.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import type { RoomEvent } from "@rah-os/protocol";
@@ -49,6 +54,7 @@ export function renderCatchUp(
     roomId: string;
     participantId: string;
     consumerId: string;
+    conversations?: ConversationDelivery | undefined;
     fromSeq: number;
     /**
      * Review P2-1: the bound frozen by this RunAttempt's first rendering
@@ -84,6 +90,8 @@ export function renderCatchUp(
         : integer(cursor, "last_seq") + 1;
   }
   if (floor === null) return none(null);
+  floor = conversationFloor(input.conversations, floor);
+  const selection = conversationPredicate(input.conversations);
   if (floor >= input.fromSeq) return none(floor);
   const rows = database
     .prepare(
@@ -100,7 +108,15 @@ export function renderCatchUp(
   for (const row of rows) {
     const seq = integer(row, "room_seq");
     const type = text(row, "type");
+    const relevant =
+      !input.conversations ||
+      database
+        .prepare(
+          `SELECT 1 FROM room_events WHERE room_id=? AND room_seq=? AND ${selection.sql}`,
+        )
+        .get(input.roomId, seq, ...selection.params);
     if (
+      !relevant ||
       isExecutionAuditEvent(type) ||
       (type === "message.posted" &&
         text(row, "actor_id") === input.participantId)
@@ -158,20 +174,32 @@ function firstInstanceChannelFloor(
 /** Bounded aggregate over what the catch-up would have rendered. */
 function omittedSummary(
   database: DatabaseSync,
-  input: { roomId: string; participantId: string },
+  input: {
+    roomId: string;
+    participantId: string;
+    conversations?: ConversationDelivery | undefined;
+  },
   fromSeq: number,
   toSeq: number,
 ): { count: number; fromSeq: number | undefined; toSeq: number | undefined } {
   const audit = executionAuditEventTypes();
+  const selection = conversationPredicate(input.conversations);
   const row = database
     .prepare(
       `SELECT COUNT(*) AS n, MIN(room_seq) AS first_seq, MAX(room_seq) AS last_seq
          FROM room_events
         WHERE room_id=? AND room_seq BETWEEN ? AND ?
           AND type NOT IN (${audit.map(() => "?").join(",")})
-          AND NOT (type='message.posted' AND actor_id=?)`,
+          AND NOT (type='message.posted' AND actor_id=?) AND ${selection.sql}`,
     )
-    .get(input.roomId, fromSeq, toSeq, ...audit, input.participantId) as Row;
+    .get(
+      input.roomId,
+      fromSeq,
+      toSeq,
+      ...audit,
+      input.participantId,
+      ...selection.params,
+    ) as Row;
   const count = integer(row, "n");
   return count === 0
     ? { count: 0, fromSeq: undefined, toSeq: undefined }
