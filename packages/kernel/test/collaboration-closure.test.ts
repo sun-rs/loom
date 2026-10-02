@@ -270,7 +270,11 @@ test("an explicit old Task Thread is addressable without Task delivery in this A
           leaseMs: 30000,
           idempotencyKey: "steal",
         }),
-      ForbiddenError,
+      { code: "conflict", message: /owned by another Agent/ },
+    );
+    assert.equal(
+      f.kernel.getWorkerTask(execution, { taskId: read.taskId }).assigneeId,
+      f.otherAgent.principalId,
     );
   } finally {
     f.kernel.close();
@@ -678,7 +682,11 @@ test("a Human-invited ordinary Room Agent reads frozen submission bytes and repl
           summary: "steal",
           idempotencyKey: "steal-submit",
         }),
-      ForbiddenError,
+      { code: "conflict", message: /must be in_progress/ },
+    );
+    assert.equal(
+      f.kernel.getWorkerTask(auditor.execution, { taskId: read.taskId }).state,
+      "submitted",
     );
   } finally {
     f.kernel.close();

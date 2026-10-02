@@ -6,7 +6,7 @@ import type { Row } from "./sqlite-row.ts";
 import { requireWorkerTaskVisibility } from "./worker-task-scope.ts";
 
 /**
- * Durable evidence for an explicit old-Task-Thread reply: `task-get` of that
+ * Durable input evidence for old-Task operations and Thread replies: `task-get` of that
  * Task in this Activation. Written by the read itself; idempotent.
  */
 export const ACTIVATION_TASK_READS_SCHEMA = `

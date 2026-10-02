@@ -219,7 +219,7 @@ test("a channel turn cannot read or write the private box, and never opens a new
   }
 });
 
-test("steer: other members' channel messages never interrupt a channel turn; a Human @ does", () => {
+test("steer: while A owns Task work, B can reply independently and only a Human @ interrupts A", () => {
   const f = roleInstanceFixture();
   try {
     const helper = provisionMember(f, "helper", "agent", [f.home.roomId]);
@@ -229,7 +229,27 @@ test("steer: other members' channel messages never interrupt a channel turn; a H
       basedOnRoomSeq: f.head(f.home.roomId),
       idempotencyKey: "second-instance",
     }).instance;
+    const task = f.kernel.createTask(f.actor, {
+      roomId: f.home.roomId,
+      title: "A owns ongoing work",
+      assigneeId: f.instance.instanceId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "ongoing-task",
+    }).task;
     const work = startChannelTurn(f);
+    f.kernel.workerReads.history(work.execution, { channel: "#home" });
+    const claim = f.kernel.claimTask(work.execution, {
+      taskId: task.taskId,
+      basedOnRoomSeq: work.activation.toSeq,
+      leaseMs: 600000,
+      idempotencyKey: "claim-ongoing",
+    });
+    f.kernel.startTask(work.execution, {
+      taskId: task.taskId,
+      basedOnRoomSeq: claim.event.roomSeq,
+      leaseMs: 600000,
+      idempotencyKey: "start-ongoing",
+    });
     f.kernel.postMessage(helper.actor, {
       roomId: f.home.roomId,
       body: `@${handleOf(f, f.instance.instanceId)} agent reply`,

@@ -466,3 +466,35 @@ Claude 的不完整 message_start 在取消后没有 message_stop，旧 tracker 
 Web 481、控制台 59、门禁单测 236 通过），格式与 diff 检查通过。
 本批尚无付费复测，不宣称模型一定遵循指引或 P90 已验收通过。
 Task 成果的正确性、真实竞争认领、开启自主创建与关闭后继续仍需有界真实验收。
+
+## P91 后修复：旧 Task 跨轮续办与频道并行（2026-10-02）
+
+负责人确认：Task 是频道里的持久工作，不占有整个频道。A 执行 Task 时，B 和
+Human 仍可在频道对话；Human 可以向 A 插话。A 仍只有一条串行 session/lane，
+按频道的 Human steer 设置及运行时能力插入通知或排队；不新建 Task session。
+私聊继续隔离排队，不借此跨入频道 Task。
+
+根因：`requireWorkerTaskDelivery` 只认当前 Activation 区间的 Task 关联事件或
+本 Run 创建的 Task。P91 旧 Task 已经 `task-get`，仍因不在新区间被拒；创建
+开关并非续办拒绝的原因。最小方案复用现有 `activation_task_reads`：认证过的
+本轮显式 Task 读取可作为旧 Task 的输入凭据，随后仍执行单 owner、有效 claim、
+状态、新鲜度和执行围栏校验。读取不扩张业务义务，不替代 ACK，不创建第二状态源。
+无 schema、CLI 指令或协议摘要变更，也不自动替模型补 `task-start`。
+
+测试先复现范围拒绝，再覆盖跨轮 start/progress/submit/幂等/验收、历史消息转换
+后另轮读取领取、旧读取不能跨 Activation 冒用、私聊拒绝、其他 owner 拒绝和
+新事实仍 hold；既有并行测试加入 A 正在执行 Task 的前提，验证 B 可运行回复，
+仅 Human 插话产生 steer。均用临时数据库和 fake runtime，不代表真实 CLI 已复测。
+
+参考本地留存 Raft 1.0.32 发布源码 `packages/daemon/dist/chunk-TEGPBMW7.js`
+3030–3086：Task 属于同一聊天流程、进度进入任务消息列。本批为 Loom 本地修复，
+未复制上游代码，不宣称已核实当前线上 Raft 的所有调度行为。P91 真实缺陷及费用
+仍保留原报告；修复后真实跨轮续办、竞争认领与 Claude 续聊待有界复测。
+
+首次完整检查发现两处旧测试仍期待“未在投递区间”的 ForbiddenError；明确读过
+旧 Task 后应进入原 owner/state 校验，实际分别为负责人冲突和 submitted 状态
+拒绝。现精确断言这些业务错误，并追加负责人/状态未变检查，拒绝要求未放宽。
+另一个新测试同时排了两个 Room 的消息却假设相同时间戳下的先后，已移除无关
+频道唤醒，保留私聊执行范围拒绝断言。32 项相关测试通过，新跨轮回归连续五次通过。完整 `npm run check` 重跑通过：
+后端2746通过/22跳过、Web481、控制台59、门禁236；类型、格式和diff检查通过。
+真实CLI尚未再次调用，部署结果以状态页为准。

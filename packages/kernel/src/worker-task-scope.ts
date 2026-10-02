@@ -83,6 +83,17 @@ export function requireWorkerTaskDelivery(
     // A Task explicitly created by this running Worker is also a proven input;
     // it cannot appear in the Activation's earlier frozen delivery range.
     if (wasTaskCreatedByWorkerRun(database, scope, taskId)) return taskRow;
+    // An authenticated task-get makes an older Task an explicit input to this
+    // Activation. This grants no ownership/state/freshness exemption and does
+    // not turn unrelated channel work into a Task completion obligation.
+    if (
+      database
+        .prepare(
+          "SELECT 1 FROM activation_task_reads WHERE activation_id = ? AND task_id = ?",
+        )
+        .get(scope.activationId, taskId) !== undefined
+    )
+      return taskRow;
     throw new ForbiddenError(
       `Task ${taskId} was not linked in this Activation range`,
     );
