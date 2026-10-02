@@ -1,0 +1,886 @@
+{
+  "batch": "P95",
+  "authorization": "owner: 我授权 (two Codex gpt-6-luna/low, max 4 Runs, stop on anomaly)",
+  "codeCommit": "526b712c3f469881bba1d76d192379e87cb5c7c7",
+  "productCommit": "7456a81",
+  "roomId": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "maxRuns": 4,
+  "actualRuns": 4,
+  "start": "2026-10-02T12:41:48.259Z",
+  "end": "2026-10-02T12:43:53.178Z",
+  "verdict": {
+    "flow": "pass within tested scope",
+    "automaticConversationDelta": "pass",
+    "nativeSessionContinuity": "pass",
+    "usageReconciliation": "4/4 exact",
+    "answerQuality": "partial: A confused thread marker with channel marker; B described task-update as description/priority editing",
+    "efficiency": "not adjudicated: no matched native arm, incomplete code snapshot affected tool count",
+    "p94ExpiredClaimRealRetry": "not exercised; deterministic regression only"
+  },
+  "snapshots": [
+    {
+      "file": "task-claim.ts",
+      "sha256": "3223068a1d3d0a2f869aa075569e37371854afdb31e6ea8691c799a27d806c8f"
+    },
+    {
+      "file": "worker-task-command-identity.ts",
+      "sha256": "89260776fa2254491e3aaab924d12326aaa8f7e0d32aee6ba09330369fdf337b"
+    }
+  ],
+  "runs": [
+    {
+      "runAttemptId": "run_ce757214-fd76-4320-ae95-954ef0861acc",
+      "participantId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "state": "exited",
+      "startedAt": "2026-10-02T12:41:48.514Z",
+      "finishedAt": "2026-10-02T12:42:43.072Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "stage": 1,
+      "sessionId": "01a0fca2-96b0-7c40-9ab9-ed026084f9e6",
+      "native": {
+        "input": 212696,
+        "cached": 185344,
+        "generations": 13
+      },
+      "totals": {
+        "input": 212696,
+        "cached": 185344,
+        "generations": 13,
+        "uncached": 27352
+      },
+      "nativeMatches": true,
+      "seconds": 54.558,
+      "calls": [
+        {
+          "at": "2026-10-02T12:41:57.314Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker message-check --turn [redacted]',yield_time_ms:10000,max_output_tokens:2000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:00.064Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker help tasks',yield_time_ms:10000,max_output_tokens:4000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:02.790Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker task-get --target \"#p95-task-continuation-20261002\" --number 1 --turn [redacted]',yield_time_ms:10000,max_output_tokens:2000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:08.217Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker task-claim --target \"#p95-task-continuation-20261002\" --number 1 --turn [redacted]',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:10.819Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker task-start --target \"#p95-task-continuation-20261002\" --number 1 --turn [redacted]',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:14.488Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'rg --files <EVIDENCE>/project | rg \\'(^|/)(task-claim|worker-task-command-identity)\\\\.ts$\\'',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:17.686Z",
+          "name": "exec",
+          "input": "const rs = await Promise.all([tools.exec_command({cmd:'nl -ba task-claim.ts',workdir:'<EVIDENCE>/project',yield_time_ms:10000,max_output_tokens:5000}),tools.exec_command({cmd:'nl -ba worker-task-command-identity.ts',workdir:'<EVIDENCE>/project',yield_time_ms:10000,max_output_tokens:5000})]); for (const r of rs) text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:21.780Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'rg -n \"executionRunId|function deriveWorkerTaskIdempotencyKey|deriveWorkerTaskIdempotencyKey\" worker-message-identity.ts worker-task-command-identity.ts',workdir:'<EVIDENCE>/project',yield_time_ms:10000,max_output_tokens:1500}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:24.085Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'rg --files <EVIDENCE>/project | rg \\'worker-message-identity\\'',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:29.968Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker task-progress --target \"#p95-task-continuation-20261002\" --number 1 --progress \"已只读核对指定两文件：task-claim.ts 的 assignee 和有效租约条件阻止外部或并行 Run 抢占；结束 Run 的替代 Run 可在原租约内重新领取。worker-task-command-identity.ts 将领取键纳入 runAttemptId，使新 Run 获得新领取凭证。正在提交带行号结论。\"',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:34.168Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker task-progress --target \"#p95-task-continuation-20261002\" --number 1 --progress \"已只读核对指定两文件：task-claim.ts 的 assignee 和有效租约条件阻止外部或并行 Run 抢占；结束 Run 的替代 Run 可在原租约内重新领取。worker-task-command-identity.ts 将领取键纳入 runAttemptId，使新 Run 获得新领取凭证。正在提交带行号结论。\" --turn [redacted]',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:40.412Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker task-submit --target \"#p95-task-continuation-20261002\" --number 1 --summary \"Task 的长期归属（assignee_id）与短期执行租约（claimed_by/claim_until）分开：claim 成功时均写入，但租约控制当前 Run 权限（task-claim.ts:125-139）。其他实例即使租约已过期，仍因 assignee 不匹配被拒（:52-56）；有效租约也阻止同一实例的并行 Run（:86-95,119-123）。续办例外仅限原领取 Run 属于同一 participant、不同于当前 runAttemptId，且状态为 exited/failed/cancelled（:97-118）。命令身份为 task-claim 等操作把 executionRunId 纳入派生键（worker-task-command-identity.ts:116-137），跨 Run 可生成新领取键；同 Run 重试仍保持一致（:128-136）。\" --turn [redacted]',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        }
+      ],
+      "userInputMarkers": {
+        "channelCedar": false,
+        "taskMaple": false,
+        "channelBirch": false
+      }
+    },
+    {
+      "runAttemptId": "run_dc24b843-9d82-4769-98cc-c06849d8397a",
+      "participantId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "state": "exited",
+      "startedAt": "2026-10-02T12:42:46.087Z",
+      "finishedAt": "2026-10-02T12:43:23.996Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "stage": 2,
+      "sessionId": "01a0fca3-77b9-7521-b7e4-76f63d4c0bcb",
+      "native": {
+        "input": 99067,
+        "cached": 80128,
+        "generations": 8
+      },
+      "totals": {
+        "input": 99067,
+        "cached": 80128,
+        "generations": 8,
+        "uncached": 18939
+      },
+      "nativeMatches": true,
+      "seconds": 37.909,
+      "calls": [
+        {
+          "at": "2026-10-02T12:42:53.966Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"pwd && rg --files -g 'worker-task-command-identity.ts' -g 'task-claim.ts'\",\"max_output_tokens\":2000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:56.386Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"rg --files <EVIDENCE>/project | rg 'worker-task-command-identity\\\\.ts$|task-claim\\\\.ts$'\",\"max_output_tokens\":2000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:42:58.601Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"nl -ba worker-task-command-identity.ts\",\"workdir\":\"<EVIDENCE>/project\",\"max_output_tokens\":6000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:43:01.923Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"rg -n 'deriveWorkerTaskIdempotencyKey|executionRunId|task-claim|task-start|task-batch-claim|task-update' worker-task-command-identity.ts\",\"workdir\":\"<EVIDENCE>/project\",\"max_output_tokens\":2000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:43:04.591Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"nl -ba worker-message-identity.ts | sed -n '1,180p'\",\"workdir\":\"<EVIDENCE>/project\",\"max_output_tokens\":3000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:43:09.998Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"rg --files | rg 'worker-message-identity\\\\.ts$'\",\"workdir\":\"<EVIDENCE>/project\",\"max_output_tokens\":1000});\ntext(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:43:21.380Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"$RAH_WORKER_CLI worker message-post --target '#p95-task-continuation-20261002' --turn [redacted] --based-on-room-seq 18 <<'RAH_MESSAGE_EOF'\\n频道标记 CHANNEL_P95_CEDAR：默认派生身份不随 Run 改变的命令包括 task-create 和一般 task-update（非 in_progress）；键输入为参与者、Activation、Room、操作、Task/主题、重开轮次及内容，没有 runAttemptId（worker-task-command-identity.ts:114-127、131-137）。例如创建 Task 与修改描述/优先级的更新，换 Run 后仍代表同一持久业务意图，便可用同一身份去重；相反 claim/start/batch-claim 及转为 in_progress 的更新加入当前 Run 身份，让新 Run 可重新取得执行租约（131-137）。\\nRAH_MESSAGE_EOF\",\"workdir\":\"<HOME>/.loom/channel-workspaces/room_78e77838-44be-4e19-a2fe-39b4ea156984\",\"max_output_tokens\":2000});\ntext(r.output);\n"
+        }
+      ],
+      "userInputMarkers": {
+        "channelCedar": true,
+        "taskMaple": false,
+        "channelBirch": false
+      }
+    },
+    {
+      "runAttemptId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e",
+      "participantId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "state": "exited",
+      "startedAt": "2026-10-02T12:43:26.750Z",
+      "finishedAt": "2026-10-02T12:43:38.090Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "stage": 3,
+      "sessionId": "01a0fca2-96b0-7c40-9ab9-ed026084f9e6",
+      "native": {
+        "input": 69165,
+        "cached": 63744,
+        "generations": 3
+      },
+      "totals": {
+        "input": 69165,
+        "cached": 63744,
+        "generations": 3,
+        "uncached": 5421
+      },
+      "nativeMatches": true,
+      "seconds": 11.34,
+      "calls": [
+        {
+          "at": "2026-10-02T12:43:30.997Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker message-check --turn [redacted]',yield_time_ms:10000,max_output_tokens:3500}); text(r.output);\n"
+        },
+        {
+          "at": "2026-10-02T12:43:36.030Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:'\"$RAH_WORKER_CLI\" worker message-post --target \"#p95-task-continuation-20261002:1e877cce\" --turn [redacted] --based-on-room-seq 28 <<\\'RAH_MESSAGE_EOF\\'\\n不能。同一 Run 换幂等键只会避开 replay（37-41），但有效租约仍由 claimIsActive 判定；若不是结束旧 Run 的替代 Run，119-123 行照样报已有 active claim。唯一例外需旧领取属于同一 participant、runAttemptId 不同且旧 Run 已 exited/failed/cancelled（97-118）。频道最新标记：TASK_ONLY_P95_MAPLE。\\nRAH_MESSAGE_EOF',yield_time_ms:10000,max_output_tokens:1000}); text(r.output);\n"
+        }
+      ],
+      "userInputMarkers": {
+        "channelCedar": true,
+        "taskMaple": true,
+        "channelBirch": false
+      }
+    },
+    {
+      "runAttemptId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6",
+      "participantId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "state": "exited",
+      "startedAt": "2026-10-02T12:43:40.946Z",
+      "finishedAt": "2026-10-02T12:43:50.448Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "stage": 4,
+      "sessionId": "01a0fca3-77b9-7521-b7e4-76f63d4c0bcb",
+      "native": {
+        "input": 28318,
+        "cached": 26112,
+        "generations": 2
+      },
+      "totals": {
+        "input": 28318,
+        "cached": 26112,
+        "generations": 2,
+        "uncached": 2206
+      },
+      "nativeMatches": true,
+      "seconds": 9.502,
+      "calls": [
+        {
+          "at": "2026-10-02T12:43:48.497Z",
+          "name": "exec",
+          "input": "const r = await tools.exec_command({cmd:\"$RAH_WORKER_CLI worker message-post --target '#p95-task-continuation-20261002' --turn [redacted] --based-on-room-seq 37 <<'RAH_MESSAGE_EOF'\\n频道追问标记 CHANNEL_P95_BIRCH：task-create 与 task-submit 表达的是持久业务意图，不是短期执行租约。若换 Run 就生成新身份，重试可能重复创建 Task，或重复提交同一结果，破坏幂等。代码仅对 claim/start/batch-claim 及转为 in_progress 的更新加入 runAttemptId；默认键按参与者、Activation、Room、操作、主题、重开轮次和内容派生（worker-task-command-identity.ts:114-137）。\\nRAH_MESSAGE_EOF\",\"workdir\":\"<HOME>/.loom/channel-workspaces/room_78e77838-44be-4e19-a2fe-39b4ea156984\",\"max_output_tokens\":1000});\ntext(r.output);\n"
+        }
+      ],
+      "userInputMarkers": {
+        "channelCedar": false,
+        "taskMaple": false,
+        "channelBirch": true
+      }
+    }
+  ],
+  "totals": {
+    "input": 409246,
+    "cached": 355328,
+    "uncached": 53918,
+    "generations": 26
+  },
+  "task": {
+    "taskId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d",
+    "threadId": "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf",
+    "state": "completed",
+    "submissionSummary": "Task 的长期归属（assignee_id）与短期执行租约（claimed_by/claim_until）分开：claim 成功时均写入，但租约控制当前 Run 权限（task-claim.ts:125-139）。其他实例即使租约已过期，仍因 assignee 不匹配被拒（:52-56）；有效租约也阻止同一实例的并行 Run（:86-95,119-123）。续办例外仅限原领取 Run 属于同一 participant、不同于当前 runAttemptId，且状态为 exited/failed/cancelled（:97-118）。命令身份为 task-claim 等操作把 executionRunId 纳入派生键（worker-task-command-identity.ts:116-137），跨 Run 可生成新领取键；同 Run 重试仍保持一致（:128-136）。"
+  },
+  "messages": [
+    {
+      "seq": 18,
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "threadId": null,
+      "body": "@p95-codex-b-4fea4bdcb79327b111463794 请只读审查附加目录 worker-task-command-identity.ts：哪些业务命令的默认幂等身份不随 Run 改变？举两个例子并解释原因，约 120 字，附行号。频道标记 CHANNEL_P95_CEDAR；仅在频道回复，不参与其他 Task。"
+    },
+    {
+      "seq": 23,
+      "actorId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "threadId": null,
+      "body": "频道标记 CHANNEL_P95_CEDAR：默认派生身份不随 Run 改变的命令包括 task-create 和一般 task-update（非 in_progress）；键输入为参与者、Activation、Room、操作、Task/主题、重开轮次及内容，没有 runAttemptId（worker-task-command-identity.ts:114-127、131-137）。例如创建 Task 与修改描述/优先级的更新，换 Run 后仍代表同一持久业务意图，便可用同一身份去重；相反 claim/start/batch-claim 及转为 in_progress 的更新加入当前 Run 身份，让新 Run 可重新取得执行租约（131-137）。"
+    },
+    {
+      "seq": 28,
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "threadId": "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf",
+      "body": "继续本 Task 的讨论（无需重新打开或提交任务）：假如同一 Run 仅换一个新幂等键，能否重新认领自己的有效租约？结合 task-claim.ts 回答并引用行号。如本轮已看到最新频道标记，也请附上。此消息列标记 TASK_ONLY_P95_MAPLE；回复留在本消息列，约 120 字，不 @ 他人。"
+    },
+    {
+      "seq": 33,
+      "actorId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "threadId": "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf",
+      "body": "不能。同一 Run 换幂等键只会避开 replay（37-41），但有效租约仍由 claimIsActive 判定；若不是结束旧 Run 的替代 Run，119-123 行照样报已有 active claim。唯一例外需旧领取属于同一 participant、runAttemptId 不同且旧 Run 已 exited/failed/cancelled（97-118）。频道最新标记：TASK_ONLY_P95_MAPLE。"
+    },
+    {
+      "seq": 37,
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "threadId": null,
+      "body": "@p95-codex-b-4fea4bdcb79327b111463794 承接你上一轮审查，只回答：为什么 task-create 与 task-submit 不应该因换 Run 就被当成全新业务请求？无需读其他 Task，约 100 字，沿用上轮依据。频道追问标记 CHANNEL_P95_BIRCH。"
+    },
+    {
+      "seq": 42,
+      "actorId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "threadId": null,
+      "body": "频道追问标记 CHANNEL_P95_BIRCH：task-create 与 task-submit 表达的是持久业务意图，不是短期执行租约。若换 Run 就生成新身份，重试可能重复创建 Task，或重复提交同一结果，破坏幂等。代码仅对 claim/start/batch-claim 及转为 in_progress 的更新加入 runAttemptId；默认键按参与者、Activation、Room、操作、主题、重开轮次和内容派生（worker-task-command-identity.ts:114-137）。"
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "type": "room.created",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "room_78e77838-44be-4e19-a2fe-39b4ea156984"
+    },
+    {
+      "seq": 2,
+      "type": "membership.added",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "principal_3515972f-816c-4c6b-a970-75080ede42eb"
+    },
+    {
+      "seq": 3,
+      "type": "instance.created",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "principal_3515972f-816c-4c6b-a970-75080ede42eb"
+    },
+    {
+      "seq": 4,
+      "type": "membership.added",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e"
+    },
+    {
+      "seq": 5,
+      "type": "instance.created",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e"
+    },
+    {
+      "seq": 6,
+      "type": "task.created",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d"
+    },
+    {
+      "seq": 7,
+      "type": "placement.reserved",
+      "actorId": "principal_system",
+      "aggregateId": "placement_dd0f0680-7b6c-49c0-9936-aa7bd4d0e0d0"
+    },
+    {
+      "seq": 8,
+      "type": "run.created",
+      "actorId": "principal_system",
+      "aggregateId": "run_ce757214-fd76-4320-ae95-954ef0861acc"
+    },
+    {
+      "seq": 9,
+      "type": "run.runtime_prepared",
+      "actorId": "principal_system",
+      "aggregateId": "run_ce757214-fd76-4320-ae95-954ef0861acc"
+    },
+    {
+      "seq": 10,
+      "type": "run.started",
+      "actorId": "principal_system",
+      "aggregateId": "run_ce757214-fd76-4320-ae95-954ef0861acc"
+    },
+    {
+      "seq": 11,
+      "type": "task.claimed",
+      "actorId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "aggregateId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d"
+    },
+    {
+      "seq": 12,
+      "type": "task.started",
+      "actorId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "aggregateId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d"
+    },
+    {
+      "seq": 13,
+      "type": "task.progressed",
+      "actorId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "aggregateId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d"
+    },
+    {
+      "seq": 14,
+      "type": "task.submitted",
+      "actorId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "aggregateId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d"
+    },
+    {
+      "seq": 15,
+      "type": "run.turn_quiesced",
+      "actorId": "principal_system",
+      "aggregateId": "run_ce757214-fd76-4320-ae95-954ef0861acc"
+    },
+    {
+      "seq": 16,
+      "type": "run.finished",
+      "actorId": "principal_system",
+      "aggregateId": "run_ce757214-fd76-4320-ae95-954ef0861acc"
+    },
+    {
+      "seq": 17,
+      "type": "activation.finished",
+      "actorId": "principal_system",
+      "aggregateId": "activation_4886d077-8b98-4567-b2b3-40877a15fb8e"
+    },
+    {
+      "seq": 18,
+      "type": "message.posted",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "message_93c7d9fa-7dc7-4bbf-80af-c1c66ae02df4"
+    },
+    {
+      "seq": 19,
+      "type": "placement.reserved",
+      "actorId": "principal_system",
+      "aggregateId": "placement_294f1aa1-9540-43c6-980e-7c5a9ce5693d"
+    },
+    {
+      "seq": 20,
+      "type": "run.created",
+      "actorId": "principal_system",
+      "aggregateId": "run_dc24b843-9d82-4769-98cc-c06849d8397a"
+    },
+    {
+      "seq": 21,
+      "type": "run.runtime_prepared",
+      "actorId": "principal_system",
+      "aggregateId": "run_dc24b843-9d82-4769-98cc-c06849d8397a"
+    },
+    {
+      "seq": 22,
+      "type": "run.started",
+      "actorId": "principal_system",
+      "aggregateId": "run_dc24b843-9d82-4769-98cc-c06849d8397a"
+    },
+    {
+      "seq": 23,
+      "type": "message.posted",
+      "actorId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "aggregateId": "message_6fa28be7-2d48-4f4c-923d-1358cacca9b0"
+    },
+    {
+      "seq": 24,
+      "type": "run.turn_quiesced",
+      "actorId": "principal_system",
+      "aggregateId": "run_dc24b843-9d82-4769-98cc-c06849d8397a"
+    },
+    {
+      "seq": 25,
+      "type": "run.finished",
+      "actorId": "principal_system",
+      "aggregateId": "run_dc24b843-9d82-4769-98cc-c06849d8397a"
+    },
+    {
+      "seq": 26,
+      "type": "activation.finished",
+      "actorId": "principal_system",
+      "aggregateId": "activation_8838864a-7fc7-4a6f-85fa-a278fd93ff6b"
+    },
+    {
+      "seq": 27,
+      "type": "task.completed",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "task_c3c055fe-2e60-4d4b-a572-6cd58122bc2d"
+    },
+    {
+      "seq": 28,
+      "type": "message.posted",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "message_2079469f-edbb-4f93-b91c-babae0ca3e3a"
+    },
+    {
+      "seq": 29,
+      "type": "placement.reserved",
+      "actorId": "principal_system",
+      "aggregateId": "placement_ba8af17c-6bb6-42c0-95ee-ac7053ede656"
+    },
+    {
+      "seq": 30,
+      "type": "run.created",
+      "actorId": "principal_system",
+      "aggregateId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e"
+    },
+    {
+      "seq": 31,
+      "type": "run.runtime_prepared",
+      "actorId": "principal_system",
+      "aggregateId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e"
+    },
+    {
+      "seq": 32,
+      "type": "run.started",
+      "actorId": "principal_system",
+      "aggregateId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e"
+    },
+    {
+      "seq": 33,
+      "type": "message.posted",
+      "actorId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "aggregateId": "message_c7e4f198-4fd8-418f-a556-d8c4c497cb4c"
+    },
+    {
+      "seq": 34,
+      "type": "run.turn_quiesced",
+      "actorId": "principal_system",
+      "aggregateId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e"
+    },
+    {
+      "seq": 35,
+      "type": "run.finished",
+      "actorId": "principal_system",
+      "aggregateId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e"
+    },
+    {
+      "seq": 36,
+      "type": "activation.finished",
+      "actorId": "principal_system",
+      "aggregateId": "activation_7f0cd011-3506-448a-833a-3eb6b25cae37"
+    },
+    {
+      "seq": 37,
+      "type": "message.posted",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "message_d5f37c71-f4c8-48b0-8c61-5e490a72c0c5"
+    },
+    {
+      "seq": 38,
+      "type": "placement.reserved",
+      "actorId": "principal_system",
+      "aggregateId": "placement_f6799382-a6e1-48d9-bfda-f5771f7a0c8b"
+    },
+    {
+      "seq": 39,
+      "type": "run.created",
+      "actorId": "principal_system",
+      "aggregateId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6"
+    },
+    {
+      "seq": 40,
+      "type": "run.runtime_prepared",
+      "actorId": "principal_system",
+      "aggregateId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6"
+    },
+    {
+      "seq": 41,
+      "type": "run.started",
+      "actorId": "principal_system",
+      "aggregateId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6"
+    },
+    {
+      "seq": 42,
+      "type": "message.posted",
+      "actorId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "aggregateId": "message_363e303d-cb9c-4f90-a42d-8a2a0b9a3f40"
+    },
+    {
+      "seq": 43,
+      "type": "run.turn_quiesced",
+      "actorId": "principal_system",
+      "aggregateId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6"
+    },
+    {
+      "seq": 44,
+      "type": "run.finished",
+      "actorId": "principal_system",
+      "aggregateId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6"
+    },
+    {
+      "seq": 45,
+      "type": "activation.finished",
+      "actorId": "principal_system",
+      "aggregateId": "activation_425a1964-964e-4ca1-81c8-40bb5ca50985"
+    },
+    {
+      "seq": 46,
+      "type": "room.agent_sos_requested",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "room_sos_67c1a9a3-3a69-4744-8bce-35a32a28c8fc"
+    },
+    {
+      "seq": 47,
+      "type": "room.agent_sos_stopped",
+      "actorId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregateId": "room_sos_67c1a9a3-3a69-4744-8bce-35a32a28c8fc"
+    }
+  ],
+  "activations": [
+    {
+      "activationId": "activation_4886d077-8b98-4567-b2b3-40877a15fb8e",
+      "participantId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "fromSeq": 6,
+      "toSeq": 6,
+      "state": "completed"
+    },
+    {
+      "activationId": "activation_8838864a-7fc7-4a6f-85fa-a278fd93ff6b",
+      "participantId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "fromSeq": 18,
+      "toSeq": 18,
+      "state": "completed"
+    },
+    {
+      "activationId": "activation_7f0cd011-3506-448a-833a-3eb6b25cae37",
+      "participantId": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "fromSeq": 28,
+      "toSeq": 28,
+      "state": "completed"
+    },
+    {
+      "activationId": "activation_425a1964-964e-4ca1-81c8-40bb5ca50985",
+      "participantId": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "fromSeq": 37,
+      "toSeq": 37,
+      "state": "completed"
+    }
+  ],
+  "windows": [
+    {
+      "runAttemptId": "run_84c772ac-e1ca-49a2-8901-da11e5a4f1e6",
+      "fromSeq": 19,
+      "toSeq": 37,
+      "scanSeqs": [
+        19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+        37
+      ],
+      "catchUp": {
+        "floor": 19,
+        "conversations": {
+          "floors": {
+            "": 18
+          },
+          "directed": [37],
+          "eventFloor": 18
+        },
+        "bodySeqs": [37]
+      },
+      "sent": true
+    },
+    {
+      "runAttemptId": "run_ce757214-fd76-4320-ae95-954ef0861acc",
+      "fromSeq": 4,
+      "toSeq": 6,
+      "scanSeqs": [4, 5, 6],
+      "catchUp": {
+        "floor": 4,
+        "conversations": {
+          "floors": {
+            "": 3,
+            "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf": 3
+          },
+          "directed": [6],
+          "eventFloor": 3
+        },
+        "bodySeqs": []
+      },
+      "sent": true
+    },
+    {
+      "runAttemptId": "run_727b3c1e-84e3-4c8e-8d30-aa5bb5ff108e",
+      "fromSeq": 4,
+      "toSeq": 28,
+      "scanSeqs": [
+        4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+        23, 24, 25, 26, 27, 28
+      ],
+      "catchUp": {
+        "floor": 4,
+        "conversations": {
+          "floors": {
+            "": 3,
+            "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf": 3
+          },
+          "directed": [28],
+          "eventFloor": 6
+        },
+        "bodySeqs": [18, 23, 28]
+      },
+      "sent": true
+    },
+    {
+      "runAttemptId": "run_dc24b843-9d82-4769-98cc-c06849d8397a",
+      "fromSeq": 6,
+      "toSeq": 18,
+      "scanSeqs": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+      "catchUp": {
+        "floor": 6,
+        "conversations": {
+          "floors": {
+            "": 5
+          },
+          "directed": [18],
+          "eventFloor": 5
+        },
+        "bodySeqs": [18]
+      },
+      "sent": true
+    }
+  ],
+  "targetReads": [
+    {
+      "participant_id": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "",
+      "through_room_seq": 37,
+      "read_order": 224,
+      "updated_at": "2026-10-02T12:43:48.749Z"
+    },
+    {
+      "participant_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "",
+      "through_room_seq": 23,
+      "read_order": 222,
+      "updated_at": "2026-10-02T12:43:36.297Z"
+    },
+    {
+      "participant_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf",
+      "through_room_seq": 28,
+      "read_order": 223,
+      "updated_at": "2026-10-02T12:43:36.297Z"
+    }
+  ],
+  "presentations": [
+    {
+      "participant_id": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "",
+      "room_seq": 18
+    },
+    {
+      "participant_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "",
+      "room_seq": 18
+    },
+    {
+      "participant_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "",
+      "room_seq": 23
+    },
+    {
+      "participant_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "thread_1e877cce-6c15-4cb8-8ceb-71686fd08faf",
+      "room_seq": 28
+    },
+    {
+      "participant_id": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+      "room_id": "room_78e77838-44be-4e19-a2fe-39b4ea156984",
+      "thread_key": "",
+      "room_seq": 37
+    }
+  ],
+  "sessionSnapshots": [
+    {
+      "stage": 1,
+      "sessions": [
+        {
+          "instance_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_ce757214-fd76-4320-ae95-954ef0861acc",
+          "bound_at": "2026-10-02T12:41:51.730Z",
+          "updated_at": "2026-10-02T12:41:51.730Z"
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "sessions": [
+        {
+          "instance_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_ce757214-fd76-4320-ae95-954ef0861acc",
+          "bound_at": "2026-10-02T12:41:51.730Z",
+          "updated_at": "2026-10-02T12:41:51.730Z"
+        },
+        {
+          "instance_id": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_dc24b843-9d82-4769-98cc-c06849d8397a",
+          "bound_at": "2026-10-02T12:42:46.920Z",
+          "updated_at": "2026-10-02T12:42:46.920Z"
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "sessions": [
+        {
+          "instance_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_ce757214-fd76-4320-ae95-954ef0861acc",
+          "bound_at": "2026-10-02T12:41:51.730Z",
+          "updated_at": "2026-10-02T12:41:51.730Z"
+        },
+        {
+          "instance_id": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_dc24b843-9d82-4769-98cc-c06849d8397a",
+          "bound_at": "2026-10-02T12:42:46.920Z",
+          "updated_at": "2026-10-02T12:42:46.920Z"
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "sessions": [
+        {
+          "instance_id": "principal_3515972f-816c-4c6b-a970-75080ede42eb",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_ce757214-fd76-4320-ae95-954ef0861acc",
+          "bound_at": "2026-10-02T12:41:51.730Z",
+          "updated_at": "2026-10-02T12:41:51.730Z"
+        },
+        {
+          "instance_id": "principal_f01b6e25-8970-4bf6-b991-42c8e6b8cf8e",
+          "generation": 0,
+          "bound": 1,
+          "bound_run_attempt_id": "run_dc24b843-9d82-4769-98cc-c06849d8397a",
+          "bound_at": "2026-10-02T12:42:46.920Z",
+          "updated_at": "2026-10-02T12:42:46.920Z"
+        }
+      ]
+    }
+  ],
+  "selfInbox": 0,
+  "usageGaps": [],
+  "activeRunsAtEnd": [],
+  "limitations": [
+    "No forced expiry or same-Activation crash in paid batch; deterministic tests cover P94",
+    "No matched native CLI efficiency arm",
+    "No late-join or daemon restart in this four-run batch",
+    "Sequential four-stage workflow; does not prove simultaneous contention",
+    "Harness snapshot omitted imported worker-message-identity.ts: each instance tried reading and locating it, increasing first-round generation count",
+    "A omitted --turn on task-progress once; rejection was enforced and its next call corrected it",
+    "Human completion was a scripted lifecycle checkpoint, not independent approval of every review claim",
+    "Task follow-up arrived minutes later, not ten days later; fake-clock tests cover the long interval",
+    "Transport evidence proves presented context, not model comprehension; channel-marker answer was wrong despite correct input",
+    "No rescue or additional paid rerun; test channel stopped with room.sos.stop"
+  ],
+  "rawLocalEvidence": "Private local test directory loom-task-p95-20261002; raw native transcripts not published"
+}

@@ -135,3 +135,5 @@ P09、P14、P15、P34 没有提交证据文件，只有历史节中的文字记�
 | P93 | 10-02 | f7e11a3，产品/服务未改 | owner“继续核查，确认是loom问题还是原生cli也犯错”；有界原生定位对照 | Claude sonnet（实际claude-sonnet-5）/ low | 一session两轮、3生成；第二轮在Bash批准前停止 | **原生未复现全盘find**：直接读取正确附加目录文件；免费真实CLI探针确认新建/resume都携带目录。34319输入/21302缓存/13017未缓存。不是同历史消融，不能唯一归因Loom提示或模型，不判效率；Task整体仍未验收。 | [报告与边界](evidence/2026-10-02-claude-directory-p93.md) |
 
 | P94 | 10-02 | c05f941，产品c33b828/服务未改 | owner要求同样对话重试一次；原频道恢复、无路径纠错 | Claude sonnet（claude-sonnet-5）/low；Codex gpt-6-luna/low | 首次测试止损2启动记录零用量；实际复测2Run/19生成 | **文件定位和实验成功，Task提交失败**。同Activation重试的claim/start命中旧幂等收据，租约仍过期，progress/submit409。Claude17生成/1102460输入，Codex2/65904；合计1168364输入/75726未缓存，原生账本一致。恢复API广播导致Codex也运行；频道已停止，不追加付费重测。 | [结果及根因](evidence/2026-10-02-task-retry-p94.md) |
+
+| P95 | 10-02 | 526b712，产品7456a81，服务未改 | owner“我授权”；两 Codex、最多4 Run，异常即停 | Codex gpt-6-luna / low | 两实例各两轮；实际4 Run、26生成，无补跑 | **所测功能路径通过，非完整验收**：Task认领/start/submit→Human完成→原消息列追问；独立频道续聊；无关Task不唤醒/不自动补正文；两session连续、0重试/自Inbox/gap。409246累计输入/53918未缓存，原生4/4核账一致。A混淆频道/Task标记；B有命令语义错误；测试快照缺依赖造成多次查找。无原生效率对照，未真实复现过期租约或重启，频道已停止。 | [报告及证据](evidence/2026-10-02-task-conversation-p95.md) |
