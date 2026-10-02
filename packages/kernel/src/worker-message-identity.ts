@@ -38,6 +38,12 @@ import { createHash } from "node:crypto";
  * only when a real reopening event is appended, so an ordinary retry inside one
  * round still hashes identically and still deduplicates.
  *
+ * Acquisition (claim/start/batch-claim and status in_progress) additionally
+ * carries the authenticated executionRunId: replacing a failed Run is a new
+ * lease acquisition, not a replay of its old authority. Durable creation,
+ * progress and submission keep their original cross-Run identity. Explicit
+ * caller keys are resolved unchanged by the caller.
+ *
  * The Activation's read position is deliberately NOT an input: unlike a send,
  * a committed Task command advances that position, so including it would make
  * an identical retry look new. Two genuinely distinct operations that differ in
@@ -52,6 +58,7 @@ export function deriveWorkerTaskIdempotencyKey(input: {
   operation: string;
   subjectId: string | null;
   roundSeq: number;
+  executionRunId?: string;
   content: readonly (string | null)[];
 }): string {
   const digest = createHash("sha256")
@@ -65,6 +72,7 @@ export function deriveWorkerTaskIdempotencyKey(input: {
         input.subjectId,
         input.roundSeq,
         [...input.content],
+        ...(input.executionRunId === undefined ? [] : [input.executionRunId]),
       ]),
     )
     .digest("hex");

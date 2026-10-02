@@ -305,3 +305,59 @@ test("Human reopen-to-progress and assignee edits advance the Worker command rou
     f.close();
   }
 });
+
+test("execution acquisition is scoped to a Run, business mutations stay stable across retries", () => {
+  const f = fixture();
+  try {
+    const next = { ...f.scope, runAttemptId: "run_retry" };
+    for (const operation of ["task-claim", "task-start", "task-batch-claim"]) {
+      const input = { operation, subjectId: f.task.task.taskId };
+      assert.notEqual(
+        f.key(input),
+        resolveWorkerTaskCommandCausality(f.database, next, input)
+          .idempotencyKey,
+      );
+    }
+    for (const operation of [
+      "task-create",
+      "task-convert",
+      "task-submit",
+      "task-progress",
+      "task-batch-create",
+    ]) {
+      const input = { operation, subjectId: f.task.task.taskId };
+      assert.equal(
+        f.key(input),
+        resolveWorkerTaskCommandCausality(f.database, next, input)
+          .idempotencyKey,
+      );
+    }
+    for (const status of ["in_progress", "in_review", "done", "todo"]) {
+      const input = {
+        operation: "task-update",
+        subjectId: f.task.task.taskId,
+        content: [status],
+      };
+      const same =
+        f.key(input) ===
+        resolveWorkerTaskCommandCausality(f.database, next, input)
+          .idempotencyKey;
+      assert.equal(
+        same,
+        status !== "in_progress",
+        `only acquisition changes identity: ${status}`,
+      );
+    }
+    const input = {
+      operation: "task-claim",
+      subjectId: f.task.task.taskId,
+      idempotencyKey: "explicit",
+    };
+    assert.equal(
+      resolveWorkerTaskCommandCausality(f.database, next, input).idempotencyKey,
+      "explicit",
+    );
+  } finally {
+    f.close();
+  }
+});

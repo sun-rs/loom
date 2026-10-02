@@ -125,6 +125,16 @@ export function resolveWorkerTaskCommandCausality(
         input.subjectId,
       ),
       content: input.content ?? [],
+      // Acquisition receipts renew execution authority, not durable Task intent.
+      // A replacement Run must not replay the prior Run's expired lease. Within
+      // a Run (or for an explicit key), transport retries remain exact receipts.
+      ...(["task-claim", "task-start", "task-batch-claim"].includes(
+        input.operation,
+      ) ||
+      (input.operation === "task-update" &&
+        input.content?.[0] === "in_progress")
+        ? { executionRunId: scope.runAttemptId }
+        : {}),
     });
   return {
     basedOnRoomSeq:

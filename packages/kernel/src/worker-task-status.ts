@@ -7,7 +7,7 @@ import type { AuthenticatedWorkerExecutionContext } from "./auth.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import type { TaskMutationResult, TaskCreateMutationResult } from "./types.ts";
 import { ConflictError, ForbiddenError } from "./errors.ts";
-import { text, nullableText } from "./sqlite-row.ts";
+import { text, nullableText, nullableInteger } from "./sqlite-row.ts";
 import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
 import { assertWorkerTaskFreshContext } from "./task-intent.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
@@ -54,6 +54,8 @@ export function updateWorkerTaskStatus(
     const scope = context.requireWorker(execution),
       db = context.database;
     const task = requireWorkerTaskDelivery(db, scope, input.taskId);
+    const claimActive =
+      (nullableInteger(task, "claim_until_ms") ?? 0) > context.now().getTime();
     const state = text(task, "state"),
       owner = nullableText(task, "assignee_id");
     if (owner !== null && owner !== scope.participantId)
@@ -98,6 +100,7 @@ export function updateWorkerTaskStatus(
     if (
       (input.status === "in_progress" &&
         state === "in_progress" &&
+        claimActive &&
         nullableText(task, "claimed_by") === scope.participantId) ||
       (input.status === "todo" && state === "todo")
     ) {
@@ -129,7 +132,7 @@ export function updateWorkerTaskStatus(
     let basedOnRoomSeq = input.basedOnRoomSeq;
     if (
       state === "todo" ||
-      (state === "in_progress" && nullableText(task, "claimed_by") === null)
+      ((state === "claimed" || state === "in_progress") && !claimActive)
     ) {
       const claim = claimTaskTransaction(context, scope, {
         ...input,

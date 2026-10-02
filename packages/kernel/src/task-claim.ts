@@ -94,7 +94,29 @@ export function claimTaskTransaction(
       );
     }
   }
-  if (claimIsActive) {
+  // A replacement Run may reacquire its own still-live Task lease after the
+  // previous attempt ended. Do not force it to wait for expiry, and do not
+  // silently replay authority from that attempt. Same-Run and foreign claims
+  // retain the original conflict behavior.
+  const replacesEndedClaim =
+    claimIsActive &&
+    previousClaimedBy === scope.participantId &&
+    context.database
+      .prepare(
+        `SELECT 1 FROM run_attempts r WHERE r.run_attempt_id = (
+         SELECT json_extract(e.payload_json, '$.runAttemptId') FROM room_events e
+         WHERE e.room_id=? AND e.aggregate_id=? AND e.type='task.claimed'
+         ORDER BY e.room_seq DESC LIMIT 1
+       ) AND r.activation_id=? AND r.run_attempt_id<>?
+         AND r.state IN ('exited','failed','cancelled')`,
+      )
+      .get(
+        scope.roomId,
+        input.taskId,
+        scope.activationId,
+        scope.runAttemptId,
+      ) !== undefined;
+  if (claimIsActive && !replacesEndedClaim) {
     throw new LeaseConflictError(
       `Task ${input.taskId} already has an active claim`,
     );

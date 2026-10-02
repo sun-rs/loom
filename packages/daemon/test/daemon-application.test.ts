@@ -1753,7 +1753,7 @@ test("D1 end to end: a Worker that claims the head message as its own Task and p
   }
 });
 
-test("the daemon resumes a partially progressed Task in a new RunAttempt without duplicate business events", async () => {
+test("the daemon reacquires Task execution in a replacement Run without duplicate progress or delivery", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-daemon-task-resume-"));
   const stateDirectory = join(directory, "state");
   mkdirSync(stateDirectory, { mode: 0o700 });
@@ -1860,9 +1860,28 @@ test("the daemon resumes a partially progressed Task in a new RunAttempt without
       "task.created",
       "task.claimed",
       "task.started",
+      // Execution acquisition belongs to each Run; durable work stays singular.
+      "task.claimed",
+      "task.started",
       "task.progressed",
       "task.submitted",
     ]);
+    const acquisitionRuns = activeObserver
+      .sync(humanActor, {
+        consumerId: "daemon-task-resume-identity-verifier",
+        roomId: room.roomId,
+      })
+      .events.filter(
+        (event) =>
+          event.aggregateId === created.task.taskId &&
+          event.type === "task.claimed",
+      )
+      .map((event) => event.payload.runAttemptId);
+    assert.equal(
+      new Set(acquisitionRuns).size,
+      2,
+      "each claim belongs to a different real execution attempt",
+    );
     assert.equal(
       activeObserver.listRunAttempts({ roomId: room.roomId }).length,
       2,
