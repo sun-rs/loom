@@ -219,7 +219,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentDialogs, /useDialogProtocol/u);
   assert.match(
     agentDialogs,
-    /roleConfiguration \? "创建 Role" : "创建 AGENT"/u,
+    /initialConfiguration\s*\? "编辑 Role 配置"\s*:\s*roleConfiguration\s*\? "创建 Role"\s*:\s*"创建 AGENT"/u,
   );
   assert.match(agentDialogs, /计算机 <em>/u);
   assert.match(

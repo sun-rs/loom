@@ -1,7 +1,12 @@
+import { RoleRevisionEditor } from "./role-revision-editor.tsx";
 import { RuntimePicker } from "./runtime-picker.tsx";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { RoleListResponse, Room } from "@rah-os/protocol";
+import type {
+  LocalRuntimeInventoryEntry,
+  RoleListResponse,
+  Room,
+} from "@rah-os/protocol";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
@@ -14,6 +19,9 @@ import { RoleWrite } from "../role-write.ts";
 export function RoleDirectoryPane({
   client,
   write,
+  revisionWrite,
+  runtimes,
+  onRefreshModels,
   controlRoomId,
   rooms,
   revision,
@@ -25,6 +33,9 @@ export function RoleDirectoryPane({
 }: {
   client: RahClient;
   write: RoleWrite;
+  revisionWrite: RoleWrite;
+  runtimes: readonly LocalRuntimeInventoryEntry[];
+  onRefreshModels: (offerId: string) => Promise<void>;
   controlRoomId: string | undefined;
   rooms: readonly Room[];
   revision: number;
@@ -153,6 +164,17 @@ export function RoleDirectoryPane({
           </PanelHeader>
           <section className="rah-agent-profile-pane rah-scroll-main rah-role-profile">
             {error && <p role="alert">{error}</p>}
+            {canCreate && (
+              <RoleRevisionEditor
+                role={role}
+                write={revisionWrite}
+                client={client}
+                runtimes={runtimes}
+                readHead={readHead}
+                onRefreshModels={onRefreshModels}
+                onSaved={() => setRefresh((value) => value + 1)}
+              />
+            )}
             {unknown && (
               <div role="status">
                 <p>

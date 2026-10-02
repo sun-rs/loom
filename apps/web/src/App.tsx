@@ -298,6 +298,17 @@ function WorkspaceScreen({
     useState(false);
   const [earlierMessagesLoading, setEarlierMessagesLoading] = useState(false);
   const [earlierTasksLoading, setEarlierTasksLoading] = useState(false);
+  const roomUpdateWrites = useRef(new Map<string, RoleWrite>());
+  const roomUpdateWriteFor = (roomId: string) => {
+    let write = roomUpdateWrites.current.get(roomId);
+    if (!write) {
+      write = new RoleWrite();
+      roomUpdateWrites.current.set(roomId, write);
+    }
+    return write;
+  };
+  const roomCreateWrite = useRef(new RoleWrite());
+  const [roomCreateUnknown, setRoomCreateUnknown] = useState(false);
   const taskCreateCommandLedger = useRef(createTaskCreateCommandLedger());
   const [tab, setTab] = useState<Tab>(() =>
     roomTabFromSearch(window.location.search),
@@ -2466,6 +2477,8 @@ function WorkspaceScreen({
 
   const updateRoom = useCallback(
     async (input: {
+      steerEnabled?: boolean;
+      allowInstanceTaskCreation?: boolean;
       description?: string;
       name: string;
       visibility: "private" | "public";
@@ -2481,20 +2494,15 @@ function WorkspaceScreen({
       if (session === undefined) {
         throw new Error("当前 Room 尚未建立 canonical session");
       }
-      const result = await runRoomMutationAtLatest({
-        mutate: (basedOnRoomSeq) =>
-          client.request("room.update", {
-            basedOnRoomSeq,
-            ...(input.description === undefined
-              ? {}
-              : { description: input.description }),
-            idempotencyKey: `web-room-update-${browserOpaqueId()}`,
-            name: input.name,
-            roomId: activeRoom.roomId,
-            visibility: input.visibility,
-          }),
-        session,
-      });
+      const result = await roomUpdateWriteFor(activeRoom.roomId).run(
+        { ...input, roomId: activeRoom.roomId },
+        async () => {
+          const synced = await session.syncUntilCurrent({ maxPages: 10 });
+          if (!synced.caughtUp) throw new Error("频道尚未同步完成");
+          return synced.state.latestRoomSeq;
+        },
+        (request) => client.request("room.update", request),
+      );
       setRooms((current) =>
         current.map((room) =>
           room.roomId === result.room.roomId ? result.room : room,
@@ -2873,12 +2881,17 @@ function WorkspaceScreen({
 
   const createRoom = useCallback(
     async (input: {
+      additionalDirectories?: string[];
+      steerEnabled?: boolean;
+      allowInstanceTaskCreation?: boolean;
       description?: string;
       initialAgentParticipantIds: string[];
       name: string;
       slug: string;
       visibility: "private" | "public";
     }) => {
+      if (roomCreateWrite.current.state === "pending")
+        throw new Error("频道创建正在进行");
       if (!canCreateCurrentWorkspaceRoom) {
         throw new Error("当前 Human 没有在此 Workspace 创建 Room 的权限");
       }
@@ -2893,25 +2906,31 @@ function WorkspaceScreen({
         consumerPrefix,
         controlRoomId,
       );
-      const idempotencyKey = `web-room-create-${browserOpaqueId()}`;
       const navigationIntent = invalidateNavigation();
-      const result = await runRoomMutationAtLatest({
-        mutate: (basedOnControlRoomSeq) =>
-          client.request("room.create", {
-            basedOnControlRoomSeq,
-            ...(input.description === undefined
-              ? {}
-              : { description: input.description }),
-            idempotencyKey,
-            initialAgentParticipantIds: input.initialAgentParticipantIds,
-            kind: "channel",
-            name: input.name,
-            slug: input.slug,
-            visibility: input.visibility,
+      let result;
+      try {
+        result = await roomCreateWrite.current.run(
+          {
+            ...input,
             workspaceId: workspace.workspaceId,
-          }),
-        session: controlSession,
-      });
+            kind: "channel" as const,
+          },
+          async () => {
+            const synced = await controlSession.syncUntilCurrent({
+              maxPages: 10,
+            });
+            if (!synced.caughtUp) throw new Error("工作区尚未同步完成");
+            return synced.state.latestRoomSeq;
+          },
+          ({ basedOnRoomSeq, ...request }) =>
+            client.request("room.create", {
+              ...request,
+              basedOnControlRoomSeq: basedOnRoomSeq,
+            }),
+        );
+      } finally {
+        setRoomCreateUnknown(roomCreateWrite.current.unknown);
+      }
       setRooms((current) =>
         current.some(({ roomId }) => roomId === result.room.roomId)
           ? current
@@ -3013,16 +3032,22 @@ function WorkspaceScreen({
   const roleJoinWrite = useRef(new RoleWrite());
   // Keep unresolved instance intents across SPA navigation, scoped to workspace.
   const roleInstanceWrites = useRef(new Map<string, RoleWrite>());
+  const roleRevisionWrites = useRef(new Map<string, RoleWrite>());
   const roleScope = activeWorkspace?.controlRoomId ?? "unselected";
+  if (!roleRevisionWrites.current.has(roleScope))
+    roleRevisionWrites.current.set(roleScope, new RoleWrite());
   if (!roleInstanceWrites.current.has(roleScope))
     roleInstanceWrites.current.set(roleScope, new RoleWrite());
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (
         [
+          roomCreateWrite.current,
+          ...roomUpdateWrites.current.values(),
           roleCreateWrite.current,
           roleJoinWrite.current,
           ...roleInstanceWrites.current.values(),
+          ...roleRevisionWrites.current.values(),
         ].some((write) => write.state !== "idle")
       ) {
         event.preventDefault();
@@ -4084,6 +4109,17 @@ function WorkspaceScreen({
                         key={activeWorkspace?.controlRoomId}
                         client={client}
                         write={roleInstanceWrites.current.get(roleScope)!}
+                        revisionWrite={roleRevisionWrites.current.get(
+                          roleScope,
+                        )!}
+                        runtimes={localRuntimes}
+                        onRefreshModels={async (refreshOfferId) => {
+                          const result = await client.request(
+                            "host.runtime.list",
+                            { refreshOfferId },
+                          );
+                          setLocalRuntimes(result.runtimes);
+                        }}
                         controlRoomId={activeWorkspace?.controlRoomId}
                         rooms={rooms}
                         revision={reload}
@@ -4753,6 +4789,20 @@ function WorkspaceScreen({
                   <RoomCreateDialog
                     agents={[]}
                     roleInstancesOnly
+                    resultUnknown={roomCreateUnknown}
+                    savedInput={roomCreateWrite.current.payload}
+                    onDiscard={() => {
+                      if (
+                        window.confirm(
+                          "放弃核实不会撤销可能已创建的频道；请先查看频道列表。",
+                        )
+                      ) {
+                        roomCreateWrite.current.discard();
+                        setRoomCreateUnknown(false);
+                        setRoomCreateOpen(false);
+                        setReload((value) => value + 1);
+                      }
+                    }}
                     archivedRooms={archivedRooms.filter(
                       ({ workspaceId }) =>
                         workspaceId === activeWorkspace?.workspaceId,
@@ -4948,6 +4998,11 @@ function WorkspaceScreen({
                       setTab("chat");
                     }}
                     onUpdate={updateRoom}
+                    settingsWrite={
+                      activeRoom
+                        ? roomUpdateWriteFor(activeRoom.roomId)
+                        : undefined
+                    }
                     leaveUnavailableReason={currentRoomLeave.reason}
                     room={
                       activeRoom && activeConversationName

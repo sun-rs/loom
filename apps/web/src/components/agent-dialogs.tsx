@@ -86,6 +86,7 @@ export function AgentCreateDialog({
   computerLabel,
   autoJoinChannelName,
   roleConfiguration = false,
+  initialConfiguration,
   resultUnknown = false,
   onCreated,
   onClose,
@@ -97,6 +98,7 @@ export function AgentCreateDialog({
   computerLabel: string | undefined;
   autoJoinChannelName?: string | undefined;
   roleConfiguration?: boolean;
+  initialConfiguration?: AgentCreateInput;
   resultUnknown?: boolean;
   onCreated?: ((agentId: string) => Promise<void>) | undefined;
   onClose: () => void;
@@ -115,14 +117,24 @@ export function AgentCreateDialog({
       ),
     [runtimes],
   );
-  const [displayName, setDisplayName] = useState("");
-  const [description, setDescription] = useState("");
-  const [runtimeOfferId, setRuntimeOfferId] = useState("");
-  const [modelBindingId, setModelBindingId] = useState("");
-  const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
+  const [displayName, setDisplayName] = useState(
+    initialConfiguration?.displayName ?? "",
+  );
+  const [description, setDescription] = useState(
+    initialConfiguration?.instructions ?? "",
+  );
+  const [runtimeOfferId, setRuntimeOfferId] = useState(
+    initialConfiguration?.runtimeOfferId ?? "",
+  );
+  const [modelBindingId, setModelBindingId] = useState(
+    initialConfiguration?.modelIntent?.exactBindingIds?.[0] ?? "",
+  );
+  const [reasoning, setReasoning] = useState<ReasoningLevel>(
+    initialConfiguration?.modelIntent?.reasoning ?? "default",
+  );
   const [serviceTier, setServiceTier] = useState<
     "default" | "fast" | "priority"
-  >("default");
+  >(initialConfiguration?.modelIntent?.serviceTier ?? "default");
   const [environmentRows, setEnvironmentRows] = useState<
     Record<string, EnvironmentRow[]>
   >({});
@@ -176,28 +188,41 @@ export function AgentCreateDialog({
     runtimeOfferId !== "" &&
     modelOptions.some((option) => option.modelBindingId === modelBindingId);
   async function submit() {
-    if (!valid || saving.current || refreshLock.current) return;
+    if (
+      (!valid && !(initialConfiguration && resultUnknown)) ||
+      saving.current ||
+      refreshLock.current
+    )
+      return;
     saving.current = true;
     setPending(true);
     setActionError(undefined);
     try {
       if (!created.current) {
         created.current = await onCreate({
-          ...(description.trim() ? { description: description.trim() } : {}),
+          ...initialConfiguration,
+          ...(!initialConfiguration && description.trim()
+            ? { description: description.trim() }
+            : {}),
           displayName: displayName.trim(),
-          handle,
-          instructions:
-            description.trim() ||
-            "作为通用 Agent，遵循用户指令并清晰报告执行结果。",
-          role: roleConfiguration
-            ? displayName.trim()
-            : `${displayName.trim()} Agent`,
+          handle: initialConfiguration?.handle ?? handle,
+          instructions: initialConfiguration
+            ? description
+            : description.trim() ||
+              "作为通用 Agent，遵循用户指令并清晰报告执行结果。",
+          role:
+            initialConfiguration?.role ??
+            (roleConfiguration
+              ? displayName.trim()
+              : `${displayName.trim()} Agent`),
           modelIntent: {
+            ...initialConfiguration?.modelIntent,
             ...modelIntent(modelBindingId, reasoning),
             serviceTier: fastTier ? serviceTier : "default",
           },
           runtimeOfferId,
-          toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
+          toolAccessMode:
+            initialConfiguration?.toolAccessMode ?? DEFAULT_TOOL_ACCESS_MODE,
         });
         setCreatedAgentId(created.current);
       }
@@ -249,7 +274,11 @@ export function AgentCreateDialog({
       >
         <header>
           <h2 id="rah-agent-create-title">
-            {roleConfiguration ? "创建 Role" : "创建 AGENT"}
+            {initialConfiguration
+              ? "编辑 Role 配置"
+              : roleConfiguration
+                ? "创建 Role"
+                : "创建 AGENT"}
           </h2>
           <button
             aria-label="关闭"
@@ -331,7 +360,11 @@ export function AgentCreateDialog({
             <RuntimePicker
               label="运行时"
               required
-              disabled={pending || createdAgentId !== undefined}
+              disabled={
+                pending ||
+                (initialConfiguration !== undefined && resultUnknown) ||
+                createdAgentId !== undefined
+              }
               options={runtimeOptions.map((runtime) => ({
                 id: runtime.runtimeOfferId!,
                 label: runtimeProductLabel(runtime),
@@ -422,7 +455,11 @@ export function AgentCreateDialog({
                 <b>模式</b>
                 <RuntimeFastMode
                   checked={serviceTier === fastTier}
-                  disabled={pending || createdAgentId !== undefined}
+                  disabled={
+                    pending ||
+                    (initialConfiguration !== undefined && resultUnknown) ||
+                    createdAgentId !== undefined
+                  }
                   onChange={(checked) =>
                     setServiceTier(checked ? fastTier : "default")
                   }
@@ -434,7 +471,11 @@ export function AgentCreateDialog({
                 <summary>更多</summary>
                 <RuntimeEnvironmentEditor
                   rows={rows}
-                  disabled={pending || createdAgentId !== undefined}
+                  disabled={
+                    pending ||
+                    (initialConfiguration !== undefined && resultUnknown) ||
+                    createdAgentId !== undefined
+                  }
                   onChange={setRows}
                 />
               </details>
@@ -458,7 +499,11 @@ export function AgentCreateDialog({
             </button>
             <button
               className="btn btn-pink"
-              disabled={pending || refreshing || !valid}
+              disabled={
+                pending ||
+                refreshing ||
+                (!valid && !(initialConfiguration && resultUnknown))
+              }
             >
               {pending
                 ? "正在保存…"
@@ -468,9 +513,11 @@ export function AgentCreateDialog({
                     : "重试保存配置"
                   : resultUnknown
                     ? "核实保存结果"
-                    : roleConfiguration
-                      ? "保存 Role"
-                      : "创建 Agent"}
+                    : initialConfiguration
+                      ? "保存修订"
+                      : roleConfiguration
+                        ? "保存 Role"
+                        : "创建 Agent"}
             </button>
           </footer>
         </form>

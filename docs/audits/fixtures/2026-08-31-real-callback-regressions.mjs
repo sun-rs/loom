@@ -1,3 +1,4 @@
+import { RoleWrite } from "../../../apps/web/src/role-write.ts";
 // Independent audit harness. Extracts actual TS/TSX callbacks; never mounts a
 // browser, builds, calls a server, or writes production data.
 // Run from the repository: node --test docs/audits/fixtures/2026-08-31-real-callback-regressions.mjs
@@ -479,10 +480,18 @@ function mutationScope() {
     health: { capabilities: { roomWrite: true, threadRead: true } },
     workspaceMembershipRole: "owner",
     canCreateCurrentWorkspaceRoom: true,
-    roomSessionFor: noop,
+    roomSessionFor: () => ({
+      syncUntilCurrent: async () => ({
+        caughtUp: true,
+        state: { latestRoomSeq: 10 },
+      }),
+    }),
+    roomCreateWrite: { current: new RoleWrite() },
+    setRoomCreateUnknown: noop,
     sessions: { current: new Map() },
     client: {
       request: async (operation, input) => {
+        if (operation === "room.create") return response.promise;
         assert.equal(operation, "navigation.resolve");
         return { target: input.target };
       },

@@ -1,3 +1,9 @@
+import { RoleWrite } from "../role-write.ts";
+import {
+  ChannelPolicyFields,
+  ChannelWorkspaceView,
+} from "./channel-policy-fields.tsx";
+import { parseChannelDirectories } from "../channel-settings-input.ts";
 import { DialogLayer } from "@rah-os/ui-web/neo-brutalist/dialog-layer";
 import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
@@ -8,7 +14,7 @@ import { useOverlayDrawerMotion } from "../use-overlay-drawer-motion.ts";
 import type { ReactNode } from "react";
 import { RoomMemberRemoveConfirmation } from "./room-member-remove-confirmation.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import type { Principal, Room, RoomMembership } from "@rah-os/protocol";
 import {
@@ -36,6 +42,9 @@ export type AgentMembershipIdentity = Pick<
 export function RoomCreateDialog({
   agents,
   roleInstancesOnly = false,
+  resultUnknown = false,
+  savedInput,
+  onDiscard,
   archivedRooms,
   canUnarchive,
   onClose,
@@ -44,10 +53,16 @@ export function RoomCreateDialog({
 }: {
   agents: readonly WorkspaceAgentView[];
   roleInstancesOnly?: boolean;
+  resultUnknown?: boolean;
+  savedInput?: Record<string, unknown> | undefined;
+  onDiscard?: () => void;
   archivedRooms: readonly Room[];
   canUnarchive: boolean;
   onClose: () => void;
   onCreate: (input: {
+    additionalDirectories?: string[];
+    steerEnabled?: boolean;
+    allowInstanceTaskCreation?: boolean;
     description?: string;
     initialAgentParticipantIds: string[];
     name: string;
@@ -56,12 +71,29 @@ export function RoomCreateDialog({
   }) => Promise<void>;
   onUnarchive: (room: Room) => Promise<void>;
 }) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState<"private" | "public">("public");
+  const [directories, setDirectories] = useState(
+    (savedInput?.additionalDirectories as string[] | undefined)?.join("\n") ??
+      "",
+  );
+  const [steer, setSteer] = useState(
+    (savedInput?.steerEnabled as boolean | undefined) ?? true,
+  );
+  const [tasks, setTasks] = useState(
+    (savedInput?.allowInstanceTaskCreation as boolean | undefined) ?? false,
+  );
+  const [name, setName] = useState(
+    (savedInput?.name as string | undefined) ?? "",
+  );
+  const [description, setDescription] = useState(
+    (savedInput?.description as string | undefined) ?? "",
+  );
+  const [visibility, setVisibility] = useState<"private" | "public">(
+    (savedInput?.visibility as "private" | "public" | undefined) ?? "public",
+  );
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
   const [actionError, setActionError] = useState<string>();
   const [archivedCollision, setArchivedCollision] = useState<Room>();
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -112,15 +144,26 @@ export function RoomCreateDialog({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (pending || !valid) return;
+            if (pending || submitting.current || !valid) return;
+            let additionalDirectories: string[];
+            try {
+              additionalDirectories = parseChannelDirectories(directories);
+            } catch (error) {
+              setActionError(errorMessage(error));
+              return;
+            }
             const collision = archivedRooms.find((room) => room.slug === slug);
-            if (collision !== undefined) {
+            if (!resultUnknown && collision !== undefined) {
               setArchivedCollision(collision);
               setActionError(undefined);
               return;
             }
+            submitting.current = true;
             setPending(true);
             void onCreate({
+              additionalDirectories,
+              steerEnabled: steer,
+              allowInstanceTaskCreation: tasks,
               ...(description.trim() === ""
                 ? {}
                 : { description: description.trim() }),
@@ -131,161 +174,202 @@ export function RoomCreateDialog({
             })
               .then(() => setActionError(undefined))
               .catch((caught) => setActionError(errorMessage(caught)))
-              .finally(() => setPending(false));
+              .finally(() => {
+                submitting.current = false;
+                setPending(false);
+              });
           }}
         >
-          {archivedCollision === undefined ? null : (
-            <section className="rah-room-create-archived-warning" role="status">
-              <p>
-                名称 <b>#{archivedCollision.name}</b> 已被一个已归档的频道占用。
-              </p>
-              <small>
-                {canUnarchive
-                  ? "取消归档可保留其历史记录，或者改用其他名称。"
-                  : "请改用其他名称，或请管理员取消归档。"}
-              </small>
-              <div>
-                {canUnarchive ? (
+          <fieldset
+            className="rah-agent-create-fields"
+            disabled={pending || resultUnknown}
+          >
+            {archivedCollision === undefined ? null : (
+              <section
+                className="rah-room-create-archived-warning"
+                role="status"
+              >
+                <p>
+                  名称 <b>#{archivedCollision.name}</b>{" "}
+                  已被一个已归档的频道占用。
+                </p>
+                <small>
+                  {canUnarchive
+                    ? "取消归档可保留其历史记录，或者改用其他名称。"
+                    : "请改用其他名称，或请管理员取消归档。"}
+                </small>
+                <div>
+                  {canUnarchive ? (
+                    <button
+                      className="btn btn-green"
+                      disabled={pending}
+                      onClick={() => {
+                        setPending(true);
+                        void onUnarchive(archivedCollision)
+                          .catch((caught) =>
+                            setActionError(errorMessage(caught)),
+                          )
+                          .finally(() => setPending(false));
+                      }}
+                      type="button"
+                    >
+                      {pending ? "正在取消归档…" : "取消归档"}
+                    </button>
+                  ) : null}
                   <button
-                    className="btn btn-green"
+                    className="btn"
                     disabled={pending}
                     onClick={() => {
-                      setPending(true);
-                      void onUnarchive(archivedCollision)
-                        .catch((caught) => setActionError(errorMessage(caught)))
-                        .finally(() => setPending(false));
+                      setArchivedCollision(undefined);
+                      setName("");
+                      requestAnimationFrame(() =>
+                        nameInputRef.current?.focus(),
+                      );
                     }}
                     type="button"
                   >
-                    {pending ? "正在取消归档…" : "取消归档"}
+                    修改名称
                   </button>
-                ) : null}
+                </div>
+              </section>
+            )}
+            <label>
+              <span>
+                名称 <em>*</em>
+              </span>
+              <input
+                autoFocus
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setArchivedCollision(undefined);
+                }}
+                placeholder="例如 ai-research"
+                data-dialog-initial-focus
+                ref={nameInputRef}
+                required
+                value={name}
+              />
+            </label>
+            <label>
+              <span>
+                描述 <small>可选</small>
+              </span>
+              <textarea
+                maxLength={2000}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="这个频道是做什么的？"
+                rows={2}
+                value={description}
+              />
+            </label>
+            <fieldset className="rah-room-visibility">
+              <legend>可见性</legend>
+              <div>
                 <button
-                  className="btn"
-                  disabled={pending}
-                  onClick={() => {
-                    setArchivedCollision(undefined);
-                    setName("");
-                    requestAnimationFrame(() => nameInputRef.current?.focus());
-                  }}
+                  aria-checked={visibility === "public"}
+                  className={visibility === "public" ? "is-selected" : ""}
+                  onClick={() => setVisibility("public")}
+                  role="radio"
                   type="button"
                 >
-                  修改名称
+                  <Icon name="hash" /> 公开
+                </button>
+                <button
+                  aria-checked={visibility === "private"}
+                  className={visibility === "private" ? "is-selected" : ""}
+                  onClick={() => setVisibility("private")}
+                  role="radio"
+                  type="button"
+                >
+                  <Icon name="lock" /> 私密
                 </button>
               </div>
-            </section>
-          )}
-          <label>
-            <span>
-              名称 <em>*</em>
-            </span>
-            <input
-              autoFocus
-              onChange={(event) => {
-                setName(event.target.value);
-                setArchivedCollision(undefined);
-              }}
-              placeholder="例如 ai-research"
-              data-dialog-initial-focus
-              ref={nameInputRef}
-              required
-              value={name}
+            </fieldset>
+            <label>
+              附加目录（每行一个绝对路径）
+              <textarea
+                value={directories}
+                onChange={(event) => setDirectories(event.target.value)}
+                rows={3}
+                placeholder="/Users/you/project"
+              />
+              <small>最多 16 个；创建后不可修改。目录须已存在。</small>
+            </label>
+            <ChannelPolicyFields
+              steer={steer}
+              tasks={tasks}
+              disabled={pending || resultUnknown}
+              onSteer={setSteer}
+              onTasks={setTasks}
             />
-          </label>
-          <label>
-            <span>
-              描述 <small>可选</small>
-            </span>
-            <textarea
-              maxLength={2000}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="这个频道是做什么的？"
-              rows={2}
-              value={description}
-            />
-          </label>
-          <fieldset className="rah-room-visibility">
-            <legend>可见性</legend>
-            <div>
-              <button
-                aria-checked={visibility === "public"}
-                className={visibility === "public" ? "is-selected" : ""}
-                onClick={() => setVisibility("public")}
-                role="radio"
-                type="button"
-              >
-                <Icon name="hash" /> 公开
-              </button>
-              <button
-                aria-checked={visibility === "private"}
-                className={visibility === "private" ? "is-selected" : ""}
-                onClick={() => setVisibility("private")}
-                role="radio"
-                type="button"
-              >
-                <Icon name="lock" /> 私密
-              </button>
-            </div>
+            {!roleInstancesOnly && (
+              <section className="rah-room-create-members">
+                <h3>
+                  成员 <small>可选</small>
+                </h3>
+                <div className="rah-room-create-member-search">
+                  <Icon name="search" />
+                  <input
+                    aria-label="搜索成员"
+                    onChange={(event) => setMemberSearch(event.target.value)}
+                    placeholder="按名称搜索成员"
+                    type="search"
+                    value={memberSearch}
+                  />
+                </div>
+                <div className="rah-room-create-agent-list rah-scroll-main">
+                  <h4>AGENT</h4>
+                  {visibleAgents.length === 0 ? (
+                    <p>没有匹配的 Agent。</p>
+                  ) : (
+                    visibleAgents.map((agent) => {
+                      const selected = selectedAgentIds.includes(
+                        agent.participantId,
+                      );
+                      return (
+                        <ChoiceRow
+                          profile="member-selection"
+                          selection="tint"
+                          selected={selected}
+                          aria-pressed={selected}
+                          className={selected ? "is-selected" : ""}
+                          key={agent.participantId}
+                          onClick={() =>
+                            setSelectedAgentIds((current) =>
+                              current.includes(agent.participantId)
+                                ? current.filter(
+                                    (participantId) =>
+                                      participantId !== agent.participantId,
+                                  )
+                                : [...current, agent.participantId],
+                            )
+                          }
+                          type="button"
+                        >
+                          <AgentAvatar
+                            agent={agent}
+                            size="sidebar"
+                            showStatus={false}
+                          />
+                          <span>
+                            <b>{agent.displayName}</b>
+                          </span>
+                          {selected ? <Icon name="check" /> : null}
+                        </ChoiceRow>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            )}
           </fieldset>
-          {!roleInstancesOnly && (
-            <section className="rah-room-create-members">
-              <h3>
-                成员 <small>可选</small>
-              </h3>
-              <div className="rah-room-create-member-search">
-                <Icon name="search" />
-                <input
-                  aria-label="搜索成员"
-                  onChange={(event) => setMemberSearch(event.target.value)}
-                  placeholder="按名称搜索成员"
-                  type="search"
-                  value={memberSearch}
-                />
-              </div>
-              <div className="rah-room-create-agent-list rah-scroll-main">
-                <h4>AGENT</h4>
-                {visibleAgents.length === 0 ? (
-                  <p>没有匹配的 Agent。</p>
-                ) : (
-                  visibleAgents.map((agent) => {
-                    const selected = selectedAgentIds.includes(
-                      agent.participantId,
-                    );
-                    return (
-                      <ChoiceRow
-                        profile="member-selection"
-                        selection="tint"
-                        selected={selected}
-                        aria-pressed={selected}
-                        className={selected ? "is-selected" : ""}
-                        key={agent.participantId}
-                        onClick={() =>
-                          setSelectedAgentIds((current) =>
-                            current.includes(agent.participantId)
-                              ? current.filter(
-                                  (participantId) =>
-                                    participantId !== agent.participantId,
-                                )
-                              : [...current, agent.participantId],
-                          )
-                        }
-                        type="button"
-                      >
-                        <AgentAvatar
-                          agent={agent}
-                          size="sidebar"
-                          showStatus={false}
-                        />
-                        <span>
-                          <b>{agent.displayName}</b>
-                        </span>
-                        {selected ? <Icon name="check" /> : null}
-                      </ChoiceRow>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+          {resultUnknown && (
+            <p role="status">
+              创建结果未知；请核实原请求，不要重复创建。
+              <button className="btn" type="button" onClick={onDiscard}>
+                放弃核实
+              </button>
+            </p>
           )}
           {actionError === undefined ? null : (
             <p className="rah-dialog-error">{actionError}</p>
@@ -300,7 +384,11 @@ export function RoomCreateDialog({
               取消
             </button>
             <button className="btn btn-pink" disabled={pending || !valid}>
-              {pending ? "正在创建…" : "创建频道"}
+              {pending
+                ? "正在创建…"
+                : resultUnknown
+                  ? "核实创建结果"
+                  : "创建频道"}
             </button>
           </footer>
         </form>
@@ -334,6 +422,7 @@ export function RoomMembersDialog({
   onStopAgents,
   onUnarchive,
   onUpdate,
+  settingsWrite,
   room,
 }: {
   canAdd: boolean;
@@ -364,13 +453,21 @@ export function RoomMembersDialog({
   onStopAgents: () => Promise<void>;
   onUnarchive: () => Promise<void>;
   onUpdate: (input: {
+    steerEnabled?: boolean;
+    allowInstanceTaskCreation?: boolean;
     description?: string;
     name: string;
     visibility: "private" | "public";
   }) => Promise<void>;
+  settingsWrite?: RoleWrite | undefined;
   room: Room | undefined;
   leaveUnavailableReason?: string | undefined;
 }) {
+  const settingsPhase = useSyncExternalStore(
+    settingsWrite?.subscribe ?? (() => () => {}),
+    () => settingsWrite?.state ?? "idle",
+  );
+  const settingsUnknown = settingsPhase === "unknown";
   const { closing, close: onClose } = useOverlayDrawerMotion(onClosed);
   const [profile, setProfile] = useState<{
     kind: "agent" | "human";
@@ -405,6 +502,8 @@ export function RoomMembersDialog({
   const [sosResuming, setSosResuming] = useState(false);
   const sosTriggerRef = useRef<HTMLButtonElement>(null);
   const [actionError, setActionError] = useState<string>();
+  const [steer, setSteer] = useState(room?.steerEnabled ?? true);
+  const [tasks, setTasks] = useState(room?.allowInstanceTaskCreation ?? false);
   const [description, setDescription] = useState(room?.description ?? "");
   const [view, setView] = useState<"settings" | "members" | "add">("settings");
   const addOrigin = useRef<"settings" | "members">("settings");
@@ -415,6 +514,7 @@ export function RoomMembersDialog({
   );
   const mutationPendingRef = useRef(false);
   const mutationBlocked =
+    settingsPhase !== "idle" ||
     pendingAgentId !== undefined ||
     settingsPending ||
     lifecyclePending ||
@@ -432,16 +532,27 @@ export function RoomMembersDialog({
           : back(),
   });
   useEffect(() => {
+    setSteer(room?.steerEnabled ?? true);
+    setTasks(room?.allowInstanceTaskCreation ?? false);
     setDescription(room?.description ?? "");
     setName(room?.name ?? "");
     setVisibility(room?.visibility ?? "private");
-  }, [room?.description, room?.name, room?.roomId, room?.visibility]);
+  }, [
+    room?.description,
+    room?.name,
+    room?.roomId,
+    room?.visibility,
+    room?.steerEnabled,
+    room?.allowInstanceTaskCreation,
+  ]);
   const entities = useWorkspaceEntities();
   const humans = members
     .filter(({ kind }) => kind === "human")
     .map((person) => ({ ...person, ...entities?.resolvePerson(person) }));
   const joinedAgents = candidates.filter(({ joined }) => joined);
   const settingsDirty =
+    steer !== (room?.steerEnabled ?? true) ||
+    tasks !== (room?.allowInstanceTaskCreation ?? false) ||
     name.trim() !== (room?.name ?? "") ||
     description.trim() !== (room?.description ?? "") ||
     visibility !== (room?.visibility ?? "private");
@@ -541,6 +652,8 @@ export function RoomMembersDialog({
     mutationPendingRef.current = true;
     setSettingsPending(true);
     void onUpdate({
+      steerEnabled: steer,
+      allowInstanceTaskCreation: tasks,
       ...(description.trim() === "" ? {} : { description: description.trim() }),
       name: name.trim(),
       visibility,
@@ -820,11 +933,61 @@ export function RoomMembersDialog({
                     value={description}
                   />
                 </div>
+                {settingsUnknown && (
+                  <div role="status">
+                    <p>设置保存结果未知；核实会重发同键同内容。</p>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={settingsPending}
+                      onClick={() => {
+                        if (!room) return;
+                        setSettingsPending(true);
+                        void onUpdate({
+                          name: room.name,
+                          visibility: room.visibility ?? "private",
+                        })
+                          .then(() => setActionError(undefined))
+                          .catch((error) => setActionError(errorMessage(error)))
+                          .finally(() => setSettingsPending(false));
+                      }}
+                    >
+                      核实设置结果
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={settingsPending}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            "放弃核实不会撤销可能已保存的设置，请重新读取频道设置后再编辑。",
+                          )
+                        ) {
+                          settingsWrite?.discard();
+                          onClose();
+                        }
+                      }}
+                    >
+                      放弃核实
+                    </button>
+                  </div>
+                )}
+                <ChannelWorkspaceView room={room} />
+                <ChannelPolicyFields
+                  steer={steer}
+                  tasks={tasks}
+                  disabled={!canUpdate || roomArchived || mutationBlocked}
+                  onSteer={setSteer}
+                  onTasks={setTasks}
+                />
                 <footer>
                   <button
                     className="btn"
                     disabled={mutationBlocked || !settingsDirty}
                     onClick={() => {
+                      setSteer(room?.steerEnabled ?? true);
+                      setTasks(room?.allowInstanceTaskCreation ?? false);
                       setDescription(room?.description ?? "");
                       setName(room?.name ?? "");
                       setVisibility(room?.visibility ?? "private");

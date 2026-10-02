@@ -139,7 +139,8 @@
     "test:cli:native-memory": "node scripts/test-native-memory-off.mjs",
     "measure:s6-memory": "LOOM_S6_OVERHEAD_REPORT=1 node --test packages/daemon/test/channel-memory-overhead.test.ts",
     "test:cli:drift": "node scripts/test-long-session-drift.mjs",
-    "test:cli:drift:unit": "node --test scripts/cli-efficiency/drift-*.test.mjs scripts/cli-efficiency/model-guard.test.mjs scripts/cli-efficiency/claude-*.test.mjs scripts/cli-efficiency/guarded-shim.test.mjs scripts/cli-efficiency/approved-models.test.mjs scripts/cli-efficiency/gate-evidence.test.mjs scripts/cli-efficiency/tool-calls.test.mjs scripts/cli-efficiency/gate-daemon.test.mjs"
+    "test:cli:drift:unit": "node --test scripts/cli-efficiency/drift-*.test.mjs scripts/cli-efficiency/model-guard.test.mjs scripts/cli-efficiency/claude-*.test.mjs scripts/cli-efficiency/guarded-shim.test.mjs scripts/cli-efficiency/approved-models.test.mjs scripts/cli-efficiency/gate-evidence.test.mjs scripts/cli-efficiency/tool-calls.test.mjs scripts/cli-efficiency/gate-daemon.test.mjs",
+    "test:web:phase4-slice2": "node scripts/test-phase4-slice2-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
