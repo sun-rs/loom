@@ -2,6 +2,8 @@
 
 更新：2026-10-02（Task 政策已部署；P92真实复测确认旧Task跨轮续办与频道交互通过；Claude全盘找文件止损；P93原生两轮未复现，目录传输未见缺陷，归因仍有限，整体验收未通过，见下）。本页是 evo 相对 `main`（`milestone-ui-raft` = `f1bc8c9`）的唯一现状说明：环境与部署、带证据的能力状态、偏离合同清单、未决项与 phase 4 删除清单。目标以 [目标合同](target-contract.zh-CN.md) 为准；代码只证明当前行为。
 
+P94 同会话重试：Claude直接定位文件并完成实验，全盘find未复现；但同Activation恢复后，claim/start重放过期租约的旧成功收据，progress/submit持续409，Task仍in_progress。确定性幂等/续租交互缺陷待修，非模型搜索错误；[证据与边界](evidence/2026-10-02-task-retry-p94.md)。未改产品或部署。
+
 P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-directory-p93.md)。当前原生CLI在新建/resume中都会呈现附加目录，同模型原生续轮直接读取正确路径；P92长期会话亦曾收到路径、未压缩。尚未做同历史消融，不宣称Loom协议或模型单方根因。
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
