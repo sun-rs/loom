@@ -35,6 +35,7 @@ export type AgentMembershipIdentity = Pick<
 
 export function RoomCreateDialog({
   agents,
+  roleInstancesOnly = false,
   archivedRooms,
   canUnarchive,
   onClose,
@@ -42,6 +43,7 @@ export function RoomCreateDialog({
   onUnarchive,
 }: {
   agents: readonly WorkspaceAgentView[];
+  roleInstancesOnly?: boolean;
   archivedRooms: readonly Room[];
   canUnarchive: boolean;
   onClose: () => void;
@@ -104,6 +106,9 @@ export function RoomCreateDialog({
             </span>
           </button>
         </header>
+        {roleInstancesOnly && (
+          <p>频道创建后，请在 Role 管理中选择配置，为此频道创建独立实例。</p>
+        )}
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -222,64 +227,66 @@ export function RoomCreateDialog({
               </button>
             </div>
           </fieldset>
-          <section className="rah-room-create-members">
-            <h3>
-              成员 <small>可选</small>
-            </h3>
-            <div className="rah-room-create-member-search">
-              <Icon name="search" />
-              <input
-                aria-label="搜索成员"
-                onChange={(event) => setMemberSearch(event.target.value)}
-                placeholder="按名称搜索成员"
-                type="search"
-                value={memberSearch}
-              />
-            </div>
-            <div className="rah-room-create-agent-list rah-scroll-main">
-              <h4>AGENT</h4>
-              {visibleAgents.length === 0 ? (
-                <p>没有匹配的 Agent。</p>
-              ) : (
-                visibleAgents.map((agent) => {
-                  const selected = selectedAgentIds.includes(
-                    agent.participantId,
-                  );
-                  return (
-                    <ChoiceRow
-                      profile="member-selection"
-                      selection="tint"
-                      selected={selected}
-                      aria-pressed={selected}
-                      className={selected ? "is-selected" : ""}
-                      key={agent.participantId}
-                      onClick={() =>
-                        setSelectedAgentIds((current) =>
-                          current.includes(agent.participantId)
-                            ? current.filter(
-                                (participantId) =>
-                                  participantId !== agent.participantId,
-                              )
-                            : [...current, agent.participantId],
-                        )
-                      }
-                      type="button"
-                    >
-                      <AgentAvatar
-                        agent={agent}
-                        size="sidebar"
-                        showStatus={false}
-                      />
-                      <span>
-                        <b>{agent.displayName}</b>
-                      </span>
-                      {selected ? <Icon name="check" /> : null}
-                    </ChoiceRow>
-                  );
-                })
-              )}
-            </div>
-          </section>
+          {!roleInstancesOnly && (
+            <section className="rah-room-create-members">
+              <h3>
+                成员 <small>可选</small>
+              </h3>
+              <div className="rah-room-create-member-search">
+                <Icon name="search" />
+                <input
+                  aria-label="搜索成员"
+                  onChange={(event) => setMemberSearch(event.target.value)}
+                  placeholder="按名称搜索成员"
+                  type="search"
+                  value={memberSearch}
+                />
+              </div>
+              <div className="rah-room-create-agent-list rah-scroll-main">
+                <h4>AGENT</h4>
+                {visibleAgents.length === 0 ? (
+                  <p>没有匹配的 Agent。</p>
+                ) : (
+                  visibleAgents.map((agent) => {
+                    const selected = selectedAgentIds.includes(
+                      agent.participantId,
+                    );
+                    return (
+                      <ChoiceRow
+                        profile="member-selection"
+                        selection="tint"
+                        selected={selected}
+                        aria-pressed={selected}
+                        className={selected ? "is-selected" : ""}
+                        key={agent.participantId}
+                        onClick={() =>
+                          setSelectedAgentIds((current) =>
+                            current.includes(agent.participantId)
+                              ? current.filter(
+                                  (participantId) =>
+                                    participantId !== agent.participantId,
+                                )
+                              : [...current, agent.participantId],
+                          )
+                        }
+                        type="button"
+                      >
+                        <AgentAvatar
+                          agent={agent}
+                          size="sidebar"
+                          showStatus={false}
+                        />
+                        <span>
+                          <b>{agent.displayName}</b>
+                        </span>
+                        {selected ? <Icon name="check" /> : null}
+                      </ChoiceRow>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          )}
           {actionError === undefined ? null : (
             <p className="rah-dialog-error">{actionError}</p>
           )}

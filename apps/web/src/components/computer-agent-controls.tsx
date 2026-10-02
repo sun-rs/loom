@@ -135,7 +135,7 @@ export function ComputerAgentControls({
             <button
               className="btn btn-pink"
               type="button"
-              aria-label="创建 Agent"
+              aria-label="创建 Role"
               disabled={!onCreate || pending}
               onClick={onCreate}
             >

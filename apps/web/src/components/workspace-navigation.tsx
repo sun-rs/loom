@@ -115,7 +115,7 @@ export function Rail({
         <RailButton
           active={active === "agents"}
           icon="members"
-          label="Agent 与成员"
+          label="Role 管理"
           onClick={() => onSelect?.("agents")}
         />
         <RailButton

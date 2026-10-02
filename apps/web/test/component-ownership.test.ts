@@ -92,7 +92,11 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.doesNotMatch(app, /function TaskPane/u);
   assert.match(app, /from "\.\/components\/room-dialogs\.tsx"/u);
   assert.match(app, /from "\.\/components\/agent-dialogs\.tsx"/u);
-  assert.match(app, /client\.request\("agent\.provision"/u);
+  // Phase 4: Role config is not a live persona. Instance creation is a
+  // separate authoritative operation, never a second-channel member add.
+  assert.match(app, /client\.request\("role\.create"/u);
+  assert.match(app, /client\.request\("role\.instantiate"/u);
+  assert.doesNotMatch(app, /client\.request\("agent\.provision"/u);
   assert.match(app, /client\.request\("room\.direct\.open"/u);
   assert.match(app, /from "\.\/components\/workspace-catalog-panes\.tsx"/u);
   assert.match(app, /from "\.\/components\/workspace-navigation\.tsx"/u);
@@ -213,7 +217,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     "textarea baseline cannot add hidden space; real browser gate verifies the 18.5px footer gap",
   );
   assert.match(agentDialogs, /useDialogProtocol/u);
-  assert.match(agentDialogs, />创建 AGENT</u);
+  assert.match(
+    agentDialogs,
+    /roleConfiguration \? "创建 Role" : "创建 AGENT"/u,
+  );
   assert.match(agentDialogs, /计算机 <em>/u);
   assert.match(
     agentDialogs,

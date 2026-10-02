@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:web:roles": "node scripts/test-role-first-slice-browser.mjs",
     "test:web:agent-first-run": "node scripts/test-agent-first-run-browser.mjs",
     "test:web:agent-start": "node scripts/test-agent-direct-start-browser.mjs",
     "check:repository-identity": "node scripts/repository-identity.mjs",

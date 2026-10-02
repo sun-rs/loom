@@ -85,6 +85,8 @@ export function AgentCreateDialog({
   client,
   computerLabel,
   autoJoinChannelName,
+  roleConfiguration = false,
+  resultUnknown = false,
   onCreated,
   onClose,
   onCreate,
@@ -94,6 +96,8 @@ export function AgentCreateDialog({
   client: RahClient;
   computerLabel: string | undefined;
   autoJoinChannelName?: string | undefined;
+  roleConfiguration?: boolean;
+  resultUnknown?: boolean;
   onCreated?: ((agentId: string) => Promise<void>) | undefined;
   onClose: () => void;
   onCreate: (input: AgentCreateInput) => Promise<string>;
@@ -185,7 +189,9 @@ export function AgentCreateDialog({
           instructions:
             description.trim() ||
             "作为通用 Agent，遵循用户指令并清晰报告执行结果。",
-          role: `${displayName.trim()} Agent`,
+          role: roleConfiguration
+            ? displayName.trim()
+            : `${displayName.trim()} Agent`,
           modelIntent: {
             ...modelIntent(modelBindingId, reasoning),
             serviceTier: fastTier ? serviceTier : "default",
@@ -195,7 +201,7 @@ export function AgentCreateDialog({
         });
         setCreatedAgentId(created.current);
       }
-      if (Object.keys(environment).length) {
+      if (!roleConfiguration && Object.keys(environment).length) {
         const runtimeId = RuntimeGuideIdSchema.parse(selectedRuntime?.cliId);
         const current = await client.request("runtime.guide.read", {
           agentId: created.current,
@@ -212,7 +218,9 @@ export function AgentCreateDialog({
     } catch (error) {
       setActionError(
         (created.current
-          ? "Agent 已创建，后续设置或加入频道尚未完成；重试不会重复创建。"
+          ? roleConfiguration
+            ? "Role 已保存，实例创建尚未完成；重试不会重复保存。"
+            : "Agent 已创建，后续设置或加入频道尚未完成；重试不会重复创建。"
           : "") + errorMessage(error),
       );
     } finally {
@@ -224,7 +232,9 @@ export function AgentCreateDialog({
   return (
     <DialogLayer className="rah-dialog-layer" role="presentation">
       <button
-        aria-label="关闭创建 Agent 窗口"
+        aria-label={
+          roleConfiguration ? "关闭创建 Role 窗口" : "关闭创建 Agent 窗口"
+        }
         className="rah-dialog-backdrop"
         disabled={pending}
         onClick={onClose}
@@ -238,7 +248,9 @@ export function AgentCreateDialog({
         tabIndex={-1}
       >
         <header>
-          <h2 id="rah-agent-create-title">创建 AGENT</h2>
+          <h2 id="rah-agent-create-title">
+            {roleConfiguration ? "创建 Role" : "创建 AGENT"}
+          </h2>
           <button
             aria-label="关闭"
             className="sq-btn rah-card-dialog-close"
@@ -256,7 +268,10 @@ export function AgentCreateDialog({
         >
           {autoJoinChannelName && (
             <p className="rah-agent-create-channel">
-              创建完成后将自动加入 #{autoJoinChannelName}
+              {roleConfiguration
+                ? "保存后创建独立实例，加入"
+                : "创建完成后将自动加入"}{" "}
+              #{autoJoinChannelName}
             </p>
           )}
           {actionError === undefined ? null : (
@@ -266,7 +281,12 @@ export function AgentCreateDialog({
           )}
           <fieldset
             className="rah-agent-create-fields"
-            disabled={pending || refreshing || createdAgentId !== undefined}
+            disabled={
+              pending ||
+              refreshing ||
+              resultUnknown ||
+              createdAgentId !== undefined
+            }
           >
             <label>
               <span>
@@ -296,7 +316,7 @@ export function AgentCreateDialog({
               />
             </label>
             <label>
-              描述
+              {roleConfiguration ? "角色指令" : "描述"}
               <textarea
                 maxLength={2_000}
                 onChange={(event) => setDescription(event.target.value)}
@@ -409,16 +429,23 @@ export function AgentCreateDialog({
                 />
               </div>
             )}
-            <details className="rah-agent-launch-settings">
-              <summary>更多</summary>
-              <RuntimeEnvironmentEditor
-                rows={rows}
-                disabled={pending || createdAgentId !== undefined}
-                onChange={setRows}
-              />
-            </details>
+            {!roleConfiguration && (
+              <details className="rah-agent-launch-settings">
+                <summary>更多</summary>
+                <RuntimeEnvironmentEditor
+                  rows={rows}
+                  disabled={pending || createdAgentId !== undefined}
+                  onChange={setRows}
+                />
+              </details>
+            )}
           </fieldset>
           {environmentError && <p role="alert">{environmentError}</p>}
+          {resultUnknown && (
+            <p role="status">
+              保存结果未知；输入已锁定，再次提交只核实原请求。
+            </p>
+          )}
 
           <footer>
             <button
@@ -439,7 +466,11 @@ export function AgentCreateDialog({
                   ? autoJoinChannelName
                     ? "重试完成创建"
                     : "重试保存配置"
-                  : "创建 Agent"}
+                  : resultUnknown
+                    ? "核实保存结果"
+                    : roleConfiguration
+                      ? "保存 Role"
+                      : "创建 Agent"}
             </button>
           </footer>
         </form>

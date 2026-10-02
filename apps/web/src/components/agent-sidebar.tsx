@@ -118,7 +118,7 @@ export function AgentSidebar({
                 disabled={!canCreate}
                 onClick={() => setCreateMenuOpen((current) => !current)}
                 title={
-                  canCreate ? "添加 Agent" : "当前 Workspace 不允许创建 Agent"
+                  canCreate ? "添加 Agent" : "当前 Workspace 不允许创建 Role"
                 }
               >
                 +
@@ -134,7 +134,7 @@ export function AgentSidebar({
                     type="button"
                   >
                     <Icon name="bot" />
-                    创建 Agent
+                    创建 Role
                   </button>
                   <button
                     disabled

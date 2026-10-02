@@ -1,0 +1,41 @@
+.rah-role-choice {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.rah-role-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rah-role-profile dl,
+.rah-role-profile label,
+.rah-role-profile select,
+.rah-role-profile small {
+  max-width: 100%;
+}
+.rah-role-profile dd {
+  margin: 8px 0 16px;
+}
+.rah-role-profile label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rah-role-profile .rah-runtime-edit-field {
+  width: 100%;
+  max-width: 440px;
+}
+@media (max-width: 767px) {
+  .rah-role-profile {
+    padding: 16px;
+  }
+}

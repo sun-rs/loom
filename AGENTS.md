@@ -141,9 +141,9 @@ invariants, not hypothetical completeness.
 Phase-3 slice order (contract §8): S1 per-turn efficiency -> S2 session
 lifecycle plus usage/context/compaction visibility -> S3 private box gaps -> S4
 fork -> S5 side -> S6 platform memory. The owner approved implementing S6
-before S4/S5; the current stage is close-out plus a real end-to-end acceptance,
-after which the owner chooses between a narrow phase-4 UI slice and S4
-(contract §8). Each slice: tests first, implementation, visible in the console,
+before S4/S5; the owner has now authorized a narrow phase-4 UI slice after close-out
+acceptance (2026-10-02); S4/S5 remain deferred. Keep the console until its
+working capabilities have product UI replacements (contract §8). Each slice: tests first, implementation, visible in the console,
 commit and push to `evo`. After S1, measure against contract §6; if far from
 target, stop and re-evaluate the architecture.
 

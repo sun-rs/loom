@@ -1,3 +1,5 @@
+import { RoleDirectoryPane } from "./components/role-directory-pane.tsx";
+import { RoleWrite } from "./role-write.ts";
 import { LoadingState } from "@rah-os/ui-web/neo-brutalist/loading-state";
 import { runtimeProductName } from "./agent-runtime-presentation.ts";
 import { ChatTaskApproval } from "./components/chat-task-approval.tsx";
@@ -2304,6 +2306,11 @@ function WorkspaceScreen({
 
   const onboardAgent = useCallback(
     async (binding: AgentMembershipIdentity) => {
+      if (activeRoom?.kind === "channel") {
+        throw new Error(
+          "请在 Role 管理选择配置并创建新实例，已有实例不能复用到另一频道。",
+        );
+      }
       if (activeRoom === undefined || roomData === undefined) return;
       if (!canOnboardCurrentRoomAgent) {
         throw new Error("当前 Human 没有在此 Room 添加 Agent 的权限");
@@ -3002,64 +3009,62 @@ function WorkspaceScreen({
     ],
   );
 
-  const createAgent = useCallback(
-    async (input: AgentCreateInput) => {
-      if (!canCreateCurrentWorkspaceAgent) {
-        throw new Error("需要 Workspace 管理员权限和已验证的可用 Runtime");
+  const roleCreateWrite = useRef(new RoleWrite());
+  const roleJoinWrite = useRef(new RoleWrite());
+  // Keep unresolved instance intents across SPA navigation, scoped to workspace.
+  const roleInstanceWrites = useRef(new Map<string, RoleWrite>());
+  const roleScope = activeWorkspace?.controlRoomId ?? "unselected";
+  if (!roleInstanceWrites.current.has(roleScope))
+    roleInstanceWrites.current.set(roleScope, new RoleWrite());
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (
+        [
+          roleCreateWrite.current,
+          roleJoinWrite.current,
+          ...roleInstanceWrites.current.values(),
+        ].some((write) => write.state !== "idle")
+      ) {
+        event.preventDefault();
+        event.returnValue = "";
       }
-      const controlRoomId = activeWorkspace?.controlRoomId;
-      if (controlRoomId === undefined) {
-        throw new Error("当前 Workspace 没有可写 control Room");
-      }
-      const controlSession = roomSessionFor(
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
+  const [roleWriteUnknown, setRoleWriteUnknown] = useState(false);
+  const readRoleHead = useCallback(
+    async (roomId: string) => {
+      const session = roomSessionFor(
         sessions.current,
         client,
         consumerPrefix,
-        controlRoomId,
+        roomId,
       );
-      const idempotencyKey = `web-agent-provision-${browserOpaqueId()}`;
-      const result = await runRoomMutationAtLatest({
-        mutate: (basedOnRoomSeq) =>
-          client.request("agent.provision", {
-            ...input,
-            basedOnRoomSeq,
-            controlRoomId,
-            idempotencyKey,
-          }),
-        session: controlSession,
-      });
-      setAgentCatalog((current) =>
-        current.some(
-          ({ definition }) =>
-            definition.agentId === result.agent.definition.agentId,
-        )
-          ? current
-          : [...current, result.agent],
-      );
-      setAgentCatalogControlRoomId(controlRoomId);
-      setLocalRuntimes((current) =>
-        current.map((runtime) =>
-          runtime.runtimeOfferId !== result.hostBinding.runtimeOfferId ||
-          runtime.agentBindings.some(
-            ({ agentId }) => agentId === result.agent.definition.agentId,
-          )
-            ? runtime
-            : {
-                ...runtime,
-                agentBindings: [
-                  ...runtime.agentBindings,
-                  {
-                    agentId: result.agent.definition.agentId,
-                    handle: result.agent.handle,
-                    participantId: result.agent.definition.participantId,
-                  },
-                ],
-              },
-        ),
-      );
-      return result.agent.definition.agentId;
+      const synced = await session.syncUntilCurrent({ maxPages: 10 });
+      if (!synced.caughtUp) throw new Error("频道尚未同步完成");
+      return synced.state.latestRoomSeq;
     },
-    [activeWorkspace, canCreateCurrentWorkspaceAgent, client, consumerPrefix],
+    [client, consumerPrefix],
+  );
+  const createAgent = useCallback(
+    async (configuration: AgentCreateInput) => {
+      const controlRoomId = activeWorkspace?.controlRoomId;
+      if (!canCreateCurrentWorkspaceAgent || !controlRoomId)
+        throw new Error("当前工作区不允许创建 Role");
+      try {
+        const result = await roleCreateWrite.current.run(
+          { controlRoomId, configuration },
+          () => readRoleHead(controlRoomId),
+          (request) => client.request("role.create", request),
+        );
+        setReload((value) => value + 1);
+        return result.role.roleId;
+      } finally {
+        setRoleWriteUnknown(roleCreateWrite.current.unknown);
+      }
+    },
+    [activeWorkspace, canCreateCurrentWorkspaceAgent, client, readRoleHead],
   );
 
   const openAgentManagement = useCallback(
@@ -4063,8 +4068,36 @@ function WorkspaceScreen({
                     />
                   </SurfaceErrorBoundary>
                 ) : surface === "agents" ? (
-                  <SurfaceErrorBoundary surface="成员目录">
-                    <AgentDirectoryPane {...agentDetailProps} />
+                  <SurfaceErrorBoundary surface="Role 管理">
+                    {agentRoute.agentId || agentRoute.view === "human" ? (
+                      <AgentDirectoryPane
+                        {...agentDetailProps}
+                        onPanelBack={() =>
+                          navigateAgentRoute({
+                            agentId: undefined,
+                            tab: "profile",
+                          })
+                        }
+                      />
+                    ) : (
+                      <RoleDirectoryPane
+                        key={activeWorkspace?.controlRoomId}
+                        client={client}
+                        write={roleInstanceWrites.current.get(roleScope)!}
+                        controlRoomId={activeWorkspace?.controlRoomId}
+                        rooms={rooms}
+                        revision={reload}
+                        canCreate={canCreateCurrentWorkspaceAgent}
+                        onCreate={() => setAgentCreateOpen(true)}
+                        readHead={readRoleHead}
+                        onInstantiated={() => setReload((value) => value + 1)}
+                        onOpenRoom={(roomId) => {
+                          void openDiscoveryLocation({
+                            target: { kind: "room", roomId },
+                          });
+                        }}
+                      />
+                    )}
                   </SurfaceErrorBoundary>
                 ) : surface === "computers" ? (
                   <SurfaceErrorBoundary surface="Computer 运行时">
@@ -4718,9 +4751,8 @@ function WorkspaceScreen({
                 ) : null}
                 {roomCreateOpen ? (
                   <RoomCreateDialog
-                    agents={agentDirectory.filter(
-                      ({ state }) => state === "enabled",
-                    )}
+                    agents={[]}
+                    roleInstancesOnly
                     archivedRooms={archivedRooms.filter(
                       ({ workspaceId }) =>
                         workspaceId === activeWorkspace?.workspaceId,
@@ -4742,6 +4774,8 @@ function WorkspaceScreen({
                 ) : null}
                 {agentCreateOpen && activeWorkspace !== undefined ? (
                   <AgentCreateDialog
+                    roleConfiguration
+                    resultUnknown={roleWriteUnknown}
                     client={client}
                     onRefreshModels={async (refreshOfferId) => {
                       const result = await client.request("host.runtime.list", {
@@ -4755,35 +4789,36 @@ function WorkspaceScreen({
                     autoJoinChannelName={agentCreateChannel?.name}
                     onCreated={
                       agentCreateChannel
-                        ? async (agentId) => {
+                        ? async (roleId) => {
                             const target = agentCreateChannel;
-                            const detail = await client.request("agent.get", {
-                              agentId,
-                            });
-                            const session = roomSessionFor(
-                              sessions.current,
-                              client,
-                              consumerPrefix,
-                              target.roomId,
-                            );
-                            const idempotencyKey = `web-created-agent-join-${agentId}-${target.roomId}`;
-                            await runRoomMutationAtLatest({
-                              session,
-                              mutate: (basedOnRoomSeq) =>
-                                ensureRoomMembership(client, {
-                                  agentId,
-                                  participantId:
-                                    detail.agent.definition.participantId,
-                                  roomId: target.roomId,
-                                  basedOnRoomSeq,
-                                  idempotencyKey,
-                                }),
-                            });
-                            setReload((value) => value + 1);
+                            try {
+                              await roleJoinWrite.current.run(
+                                { roleId, channelId: target.roomId },
+                                () => readRoleHead(target.roomId),
+                                (request) =>
+                                  client.request("role.instantiate", request),
+                              );
+                              setReload((value) => value + 1);
+                            } finally {
+                              setRoleWriteUnknown(
+                                roleJoinWrite.current.unknown,
+                              );
+                            }
                           }
                         : undefined
                     }
                     onClose={() => {
+                      if (
+                        (roleCreateWrite.current.unknown ||
+                          roleJoinWrite.current.unknown) &&
+                        !window.confirm(
+                          "结果未知。离开不会撤销可能已保存的 Role 或实例；请先查看列表，避免重复创建。",
+                        )
+                      )
+                        return;
+                      roleCreateWrite.current.discard();
+                      roleJoinWrite.current.discard();
+                      setRoleWriteUnknown(false);
                       setAgentCreateOpen(false);
                       setAgentCreateChannel(undefined);
                     }}
@@ -4865,6 +4900,7 @@ function WorkspaceScreen({
                     )}
                     key={`${currentPrincipal?.principalId}:${activeRoom?.roomId}`}
                     canAdd={
+                      activeRoom?.kind !== "channel" &&
                       canOnboardCurrentRoomAgent &&
                       roomData?.caughtUp === true &&
                       activeRoom?.archivedAt === undefined
