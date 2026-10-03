@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium, expect } from "playwright/test";
+import { roleBrowserFixture } from "./role-browser-fixture.mjs";
 import { startShellFixture } from "./ui-shell-browser-scenarios.mjs";
 const fixture = await startShellFixture();
 const browser = await chromium.launch({ headless: true });
@@ -19,9 +20,11 @@ try {
         }
       await route.fulfill({ response, json: data });
     });
+    const f = await roleBrowserFixture(page, fixture);
+    const role = await f.createRole(`Custom${cli}`);
     let saved;
-    await page.route("**/v3/client/agents/manage", async (route) => {
-      saved = route.request().postDataJSON();
+    await page.route("**/v3/client/roles/revise", async (route) => {
+      saved = route.request().postDataJSON().configuration;
       await route.fulfill({
         status: 400,
         json: {
@@ -30,11 +33,14 @@ try {
       });
     });
     await page.goto(fixture.origin + "/?surface=agents");
-    await page.locator(".rah-agent-member-row").first().click();
     await page
-      .getByRole("button", { name: "编辑运行时配置", exact: true })
+      .getByRole("button", {
+        name: role.configuration.displayName,
+        exact: true,
+      })
       .click();
-    const dialog = page.getByRole("dialog", { name: "编辑运行时配置" });
+    await page.getByRole("button", { name: "编辑配置", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "编辑 Role 配置" });
     if (cli === "claude") {
       await dialog.getByRole("button", { name: /^模型：/ }).click();
       await expect(
@@ -51,7 +57,7 @@ try {
         ),
       ).toBeVisible();
       await dialog
-        .getByRole("button", { name: "保存运行时配置", exact: true })
+        .getByRole("button", { name: "保存修订", exact: true })
         .click();
       await expect
         .poll(() => saved?.modelIntent?.customModel?.modelId)
@@ -59,9 +65,7 @@ try {
       assert.equal(saved.modelIntent.exactBindingIds, undefined);
       assert.equal(saved.modelIntent.reasoning, "high");
       await dialog.getByRole("button", { name: "取消", exact: true }).click();
-      await page
-        .getByRole("button", { name: "编辑运行时配置", exact: true })
-        .click();
+      await page.getByRole("button", { name: "编辑配置", exact: true }).click();
     }
     await dialog.getByRole("button", { name: /^模型：/ }).click();
     await page
@@ -70,9 +74,7 @@ try {
     await dialog
       .getByRole("textbox", { name: "自定义模型 ID", exact: true })
       .fill(`vendor/${cli}-special-v2`);
-    await dialog
-      .getByRole("button", { name: "保存运行时配置", exact: true })
-      .click();
+    await dialog.getByRole("button", { name: "保存修订", exact: true }).click();
 
     await expect
       .poll(() => saved?.modelIntent?.customModel?.modelId)
@@ -82,17 +84,14 @@ try {
     if (cli === "claude") {
       await dialog.getByRole("button", { name: "取消", exact: true }).click();
       await page
-        .getByRole("button", { name: "添加 Agent", exact: true })
-        .click();
-      await page
-        .getByRole("menuitem", { name: "创建 Agent", exact: true })
+        .getByRole("button", { name: "创建 Role", exact: true })
         .click();
       const create = page.getByRole("dialog", {
-        name: "创建 AGENT",
+        name: "创建 Role",
         exact: true,
       });
       let created;
-      await page.route("**/v3/client/agents/provision", async (route) => {
+      await page.route("**/v3/client/roles/create", async (route) => {
         created = route.request().postDataJSON();
         await route.fulfill({
           status: 400,
@@ -149,10 +148,15 @@ try {
         await page.keyboard.press("Escape");
       }
       await create
-        .getByRole("button", { name: "创建 Agent", exact: true })
+        .getByRole("button", { name: "保存 Role", exact: true })
         .click();
-      await expect.poll(() => created?.modelIntent?.reasoning).toBe("high");
-      assert.equal(created.modelIntent.customModel.modelId, "claude-sonnet-5");
+      await expect
+        .poll(() => created?.configuration?.modelIntent?.reasoning)
+        .toBe("high");
+      assert.equal(
+        created.configuration.modelIntent.customModel.modelId,
+        "claude-sonnet-5",
+      );
     }
     await page.close();
   }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium, webkit, expect } from "playwright/test";
+import { roleBrowserFixture } from "./role-browser-fixture.mjs";
 import { startShellFixture } from "./ui-shell-browser-scenarios.mjs";
 
 const fixture = await startShellFixture();
@@ -10,29 +11,14 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 900 },
   });
-  const post = async (path, data) => {
-    const response = await page.request.post(
-      `${fixture.origin}/v3/client/${path}`,
-      { data },
-    );
-    assert.equal(response.status(), 200, await response.text());
-    return response.json();
-  };
-  const workspace = (await post("workspaces/list", {})).workspaces[0];
-  const head = async () =>
-    (
-      await post("rooms/sync", {
-        roomId: workspace.controlRoomId,
-        consumerId: "recreate-gate",
-        bootstrap: "latest",
-      })
-    ).latestRoomSeq;
-  const old = (
-    await post("agents/list", { controlRoomId: workspace.controlRoomId })
-  ).agents[0];
+  const { post, workspace, head, channel, createRole, instantiate } =
+    await roleBrowserFixture(page, fixture);
+  const room = await channel("fake-recreate");
+  const role = await createRole("RecreatedFixture");
+  const first = await instantiate(role, room);
+  const old = (await post("agents/get", { agentId: first.agentId })).agent;
   const oldId = old.definition.agentId;
-  const detail = await post("agents/get", { agentId: oldId });
-  const name = old.currentRevision.displayName ?? old.handle;
+  const name = old.currentRevision.displayName;
   const direct = async (peerPrincipalId) =>
     (
       await post("rooms/direct/open", {
@@ -70,30 +56,12 @@ try {
     basedOnRoomSeq: await head(),
     idempotencyKey: crypto.randomUUID(),
   });
-  const input = {
-    controlRoomId: workspace.controlRoomId,
-    basedOnRoomSeq: await head(),
-    displayName: name,
-    handle: old.handle,
-    role: "Fixture recreated Agent",
-    instructions: "Fixture only.",
-    runtimeOfferId: detail.policy.required.allowedOfferIds[0],
-    modelIntent: detail.policy.modelIntent,
-    sessionPolicy: "prefer_resume",
-    idempotencyKey: crypto.randomUUID(),
-  };
-  const created = await post("agents/provision", input);
-  assert.notEqual(created.agent.definition.agentId, oldId);
-  assert.notEqual(
-    created.agent.definition.participantId,
-    old.definition.participantId,
-  );
+  const second = await instantiate(role, room);
+  const created = await post("agents/get", { agentId: second.agentId });
+  assert.notEqual(second.agentId, oldId);
+  assert.notEqual(second.instanceId, first.instanceId);
   assert.notEqual(created.agent.handle, old.handle);
   assert.equal(created.agent.currentRevision.displayName, name);
-  assert.equal(
-    (await post("agents/provision", input)).agent.definition.agentId,
-    created.agent.definition.agentId,
-  );
   const newRoom = await direct(created.agent.definition.participantId);
   assert.notEqual(newRoom.roomId, oldRoom.roomId);
   for (const width of [1440, 390]) {
@@ -111,7 +79,7 @@ try {
     );
     const oldMention = page
       .locator(".rah-rich-agent-reference")
-      .filter({ hasText: `@${old.handle}` })
+      .filter({ hasText: `@${name}` })
       .first();
     await oldMention.click();
     await expect(page.locator(".rah-agent-unavailable")).toBeVisible();

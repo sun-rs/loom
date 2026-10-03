@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { chromium, firefox } from "playwright";
+import { chromium, firefox, expect } from "playwright/test";
+import { roleBrowserFixture } from "./role-browser-fixture.mjs";
 import { startShellFixture } from "./ui-shell-browser-scenarios.mjs";
 import { findChromeExecutable } from "./real-browser-gate-support.mjs";
 
@@ -22,26 +23,29 @@ for (const engine of ["chrome", "firefox"]) {
     await page.addInitScript(() =>
       localStorage.setItem("rah:web-push-desired:v1", "disabled"),
     );
-    const post = async (path, data) => {
-      const response = await page.request.post(
-        `${fixture.origin}/v3/client/${path}`,
-        { data },
-      );
-      assert.equal(response.status(), 200, await response.text());
-      return response.json();
-    };
-    const workspace = (await post("workspaces/list", {})).workspaces[0];
-    const agent = (
-      await post("agents/list", { controlRoomId: workspace.controlRoomId })
-    ).agents[0];
-    const id = agent.definition.agentId;
+    const { post, workspace, channel, createRole, instantiate } =
+      await roleBrowserFixture(page, fixture);
+    const home = await channel(`fake-parity-${engine}`);
+    const role = await createRole(`ParityFixture${engine}`);
+    const instance = await instantiate(role, home);
+    const id = instance.agentId;
     for (const width of [1440, 390]) {
+      console.log(`Checking ${engine} ${width}`);
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.goto(`${fixture.origin}/?surface=computers`);
+      await page.locator(".rah-computer-row").click();
       await page
         .locator(".rah-computer-runtime-chips button")
         .first()
-        .waitFor();
+        .waitFor({ timeout: 30000 })
+        .catch(async (error) => {
+          writeFileSync(
+            join(output, `${engine}-${width}-failure.txt`),
+            await page.locator("body").innerText(),
+          );
+          console.error("Failure evidence", output);
+          throw error;
+        });
       for (const chip of await page
         .locator(".rah-computer-runtime-chips button")
         .all())
@@ -53,9 +57,18 @@ for (const engine of ["chrome", "firefox"]) {
         `${fixture.origin}/?surface=agents&agent=${id}&agentTab=profile`,
       );
       const head = page.locator(".rah-agent-detail-head");
-      await head
-        .getByRole("button", { name: "停止 Agent", exact: true })
-        .click();
+      const headerAction = async (name) => {
+        await head.waitFor();
+        const button = head.getByRole("button", { name, exact: true });
+        if (await button.isVisible()) await button.click();
+        else {
+          await head
+            .getByRole("button", { name: "更多操作", exact: true })
+            .click();
+          await page.getByRole("menuitem", { name, exact: true }).click();
+        }
+      };
+      await headerAction("停止 Agent");
       const stop = page.getByRole("dialog", {
         name: "停止 Agent",
         exact: true,
@@ -94,25 +107,18 @@ for (const engine of ["chrome", "firefox"]) {
         (await post("agents/get", { agentId: id })).agent.definition.state,
         "disabled",
       );
-      await head
-        .getByRole("button", { name: "启动 Agent", exact: true })
-        .click();
-      const start = page.getByRole("dialog", {
-        name: "启动 Agent",
-        exact: true,
-      });
-      await start
-        .getByRole("button", { name: "启动 Agent", exact: true })
-        .click();
-      await start.waitFor({ state: "hidden" });
-      assert.equal(
-        (await post("agents/get", { agentId: id })).agent.definition.state,
-        "enabled",
-      );
-      await head
-        .getByRole("button", { name: "重启 / 重置", exact: true })
-        .click();
-      await page.getByRole("dialog", { name: /^重启/ }).waitFor();
+      await headerAction("启动 Agent");
+      await expect(
+        page.getByRole("dialog", { name: "启动 Agent", exact: true }),
+      ).toHaveCount(0);
+      await expect
+        .poll(
+          async () =>
+            (await post("agents/get", { agentId: id })).agent.definition.state,
+        )
+        .toBe("enabled");
+      await headerAction("重启 / 重置");
+      await page.getByRole("dialog", { name: /^重新启动/ }).waitFor();
       await page.keyboard.press("Escape");
       const actions = page.locator(".rah-agent-actions-section");
       await actions
@@ -122,20 +128,20 @@ for (const engine of ["chrome", "firefox"]) {
         name: "删除 Agent",
         exact: true,
       });
-      await remove.getByText("请先停止 Agent，再确认删除。").waitFor();
-      assert.equal(
-        await remove
-          .getByRole("button", { name: "删除 Agent", exact: true })
-          .isDisabled(),
-        true,
-      );
+      await expect(remove).toContainText("这会移除 Agent 身份及关联权限");
+      await expect(
+        remove.getByRole("button", { name: "删除 Agent", exact: true }),
+      ).toBeEnabled();
       await page.keyboard.press("Escape");
+      assert.equal(
+        (await post("agents/get", { agentId: id })).agent.definition.state,
+        "enabled",
+        "cancel deletion preserves the instance",
+      );
       await page.screenshot({
         path: join(output, `${engine}-${width}-agent.png`),
       });
-      await page.goto(
-        `${fixture.origin}/?room=${fixture.roomId}&roomTab=tasks`,
-      );
+      await page.goto(`${fixture.origin}/?room=${home.roomId}&roomTab=tasks`);
       await page.getByRole("button", { name: "新建任务", exact: true }).click();
       await page
         .getByRole("textbox", { name: "任务 1", exact: true })
@@ -188,34 +194,13 @@ for (const engine of ["chrome", "firefox"]) {
         pngRoutes: true,
       });
     }
-    // A disposable, Room-less Agent proves direct deletion without disturbing
-    // the legacy Review fixture or treating an active task as disposable data.
-    const inventoryResponse = await page.request.post(
-      `${fixture.origin}/v1/local/runtimes/list`,
-      { data: {} },
-    );
-    assert.equal(inventoryResponse.status(), 200);
-    const runtime = (await inventoryResponse.json()).runtimes.find(
-      (runtime) => runtime.available && runtime.runtimeOfferId,
-    );
-    const detail = await post("agents/get", { agentId: id });
-    const head = await post("rooms/sync", {
-      roomId: workspace.controlRoomId,
-      consumerId: `delete-fixture-${engine}`,
-      limit: 1,
-    });
-    const disposable = await post("agents/provision", {
-      controlRoomId: workspace.controlRoomId,
-      basedOnRoomSeq: head.latestRoomSeq,
-      displayName: "Disposable UI Agent",
-      handle: `disposable-${engine}`,
-      instructions: "Isolated lifecycle fixture",
-      role: "assistant",
-      runtimeOfferId: runtime.runtimeOfferId,
-      modelIntent: detail.policy.modelIntent,
-      idempotencyKey: `disposable-ui-agent-${engine}`,
-    });
-    const disposableId = disposable.agent.definition.agentId;
+    // Role instances always belong to a channel; use a separate disposable
+    // channel to exercise the existing lifecycle without touching task history.
+    const disposableHome = await channel(`fake-disposable-${engine}`);
+    const disposableRole = await createRole(`Disposable${engine}`);
+    const disposable = await instantiate(disposableRole, disposableHome);
+    const disposableId = disposable.agentId;
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(
       `${fixture.origin}/?surface=agents&agent=${disposableId}&agentTab=profile`,
     );

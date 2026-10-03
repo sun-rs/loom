@@ -1,124 +1,88 @@
 import assert from "node:assert/strict";
 import { chromium, expect } from "playwright/test";
 import { startShellFixture } from "./ui-shell-browser-scenarios.mjs";
-const f = await startShellFixture(),
-  b = await chromium.launch({ headless: true });
+import {
+  roleBrowserFixture,
+  selectRoleChannel,
+} from "./role-browser-fixture.mjs";
+const fixture = await startShellFixture();
+const browser = await chromium.launch();
 try {
-  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
-  await p.goto(f.origin + "/?room=" + f.roomId);
-  await p.getByRole("button", { name: "频道详情与设置", exact: true }).click();
-  await p.getByRole("button", { name: "管理成员", exact: true }).click();
-  const row = p.locator(".rah-member-row").first();
-  await row.hover();
-  await row.getByRole("button", { name: /移出/ }).click();
-  const confirmation = p.getByRole("dialog", { name: "移除成员", exact: true });
-  await confirmation.getByRole("button", { name: "移除", exact: true }).click();
-  await confirmation.waitFor({ state: "hidden" });
-  await p.getByRole("button", { name: "添加成员", exact: true }).click();
-  const candidates = p.locator(".rah-room-member-page.is-add");
-  const candidate = candidates.locator(".rah-room-add-candidate").first();
-  await candidate.click();
-  assert.equal(
-    await candidate
-      .locator(".rah-room-member-checkbox")
-      .evaluate((el) => getComputedStyle(el).backgroundColor),
-    "oklch(0 0 0)",
-  );
-  assert.equal(await candidates.locator(".rah-room-selected-chip").count(), 1);
-  await candidates.locator(".rah-room-selected-chip button").click();
-  assert.equal(await candidate.getAttribute("aria-pressed"), "false");
-  const createEntry = candidates.getByRole("button", {
-    name: /创建一个新 Agent/,
+  const page = await browser.newPage();
+  const f = await roleBrowserFixture(page, fixture);
+  const role = await f.createRole("MemberFixture");
+  let retiredRequests = 0;
+  page.on("request", (r) => {
+    if (
+      /\/(agents\/provision|agents\/onboard|rooms\/members\/add)$/.test(r.url())
+    )
+      retiredRequests++;
   });
-  await createEntry.click();
-  const createDialog = p.getByRole("dialog", {
-    name: "创建 AGENT",
-    exact: true,
-  });
-  await createDialog.waitFor();
-  assert.match(
-    await createDialog.locator(".rah-agent-create-channel").innerText(),
-    /创建完成后将自动加入 #/,
-  );
   for (const width of [1440, 390]) {
-    await p.setViewportSize({ width, height: 844 });
-    const banner = createDialog.locator(".rah-agent-create-channel");
+    await page.setViewportSize({ width, height: 844 });
+    const room = await f.channel(`fake-members-${width}`);
+    const requests = [];
+    const replies = [];
+    await page.route("**/v3/client/roles/instantiate", async (route) => {
+      requests.push(route.request().postDataJSON());
+      if (requests.length === 1 && width === 390) {
+        await route.fulfill({
+          status: 503,
+          json: {
+            error: { code: "unavailable", message: "Fake pre-commit failure" },
+          },
+        });
+        return;
+      }
+      const response = await route.fetch();
+      assert.equal(response.status(), 200, await response.text());
+      replies.push(await response.json());
+      if (requests.length === 1) await route.abort("failed");
+      else await route.fulfill({ response });
+    });
+    await selectRoleChannel(page, fixture.origin, role, room);
+    await page
+      .getByRole("button", { name: "创建实例并打开频道", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "核实创建结果", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "核实创建结果", exact: true })
+      .click();
+    await expect(page.locator(".rah-conversation-head")).toBeVisible();
+    assert.equal(requests.length, 2);
     assert.deepEqual(
-      await banner.evaluate((el) => {
-        const css = getComputedStyle(el);
-        return [
-          css.fontSize,
-          css.lineHeight,
-          css.paddingTop,
-          css.paddingRight,
-          css.borderTopWidth,
-        ];
-      }),
-      ["12px", "16px", "8px", "12px", "2px"],
+      requests[0],
+      requests[1],
+      "exact frozen payload, basis and idempotency key",
     );
-    await p.screenshot({ path: `/tmp/create-channel-banner-${width}.png` });
+    const instances = (await f.catalog()).instances.filter(
+      (i) => i.roleId === role.roleId && i.channelId === room.roomId,
+    );
+    assert.equal(instances.length, 1);
+    assert.equal(replies.at(-1).deduplicated, width === 1440);
+    await page.unroute("**/v3/client/roles/instantiate");
+    await page
+      .getByRole("button", { name: "频道详情与设置", exact: true })
+      .click();
+    await page.getByRole("button", { name: "管理成员", exact: true }).click();
+    await expect(
+      page.locator(".rah-member-row").filter({ hasText: "MemberFixture" }),
+    ).toHaveCount(1);
+    await selectRoleChannel(page, fixture.origin, role, room);
+    await expect(
+      page.getByRole("button", { name: "创建实例并打开频道", exact: true }),
+    ).toBeEnabled();
+    assert.equal(retiredRequests, 0);
+    await page.screenshot({
+      path: `/private/tmp/loom-role-members-${width}.png`,
+    });
   }
-  await p.setViewportSize({ width: 1440, height: 900 });
-  await createDialog.getByRole("button", { name: "关闭", exact: true }).click();
-  await candidates.waitFor();
-
-  for (const width of [1440, 390]) {
-    await p.setViewportSize({ width, height: 844 });
-    await candidate.click();
-    await p.screenshot({ path: `/tmp/add-member-parity-${width}.png` });
-    await candidate.click();
-  }
-  await p.setViewportSize({ width: 1440, height: 900 });
-  await createEntry.click();
-  let provisionCount = 0,
-    joinCount = 0;
-  p.on("request", (request) => {
-    if (request.url().endsWith("/agents/provision")) provisionCount++;
-  });
-  await p.route("**/v3/client/agents/onboard", async (route) => {
-    joinCount++;
-    if (joinCount === 1)
-      await route.fulfill({
-        status: 503,
-        json: {
-          error: { code: "unavailable", message: "Fixture join failed" },
-        },
-      });
-    else await route.continue();
-  });
-  await createDialog.locator("input").first().fill("NewChannelAgent");
-  await createDialog.getByRole("button", { name: /^运行时：/ }).click();
-  await p.getByRole("menuitemradio").first().click();
-  const model = createDialog.getByRole("button", { name: /^模型：/ });
-  await model.click();
-  await p
-    .getByRole("menuitemradio")
-    .filter({ hasNotText: "自定义" })
-    .first()
-    .click();
-  await createDialog
-    .getByRole("button", { name: "创建 Agent", exact: true })
-    .click();
-  await expect(createDialog.getByRole("alert")).toContainText(
-    "Fixture join failed",
-  );
-  assert.equal(provisionCount, 1);
-  await createDialog
-    .getByRole("button", { name: "重试完成创建", exact: true })
-    .click();
-  await expect(createDialog).toHaveCount(0);
-  assert.equal(provisionCount, 1);
-  assert.equal(joinCount, 2);
-  await expect(
-    candidates.getByRole("button", {
-      name: "选择 NewChannelAgent",
-      exact: true,
-    }),
-  ).toHaveCount(0);
   console.log(
-    "PASS member selection, chips, reused create dialog and failed join retry without duplicate creation",
+    "PASS desktop lost committed response / mobile pre-commit failure: exact retry, one instance, visible member, Role reusable, no retired writes",
   );
 } finally {
-  await b.close();
-  await f.close();
+  await browser.close();
+  await fixture.close();
 }

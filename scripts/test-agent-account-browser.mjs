@@ -9,26 +9,23 @@ try {
       viewport: { width: 1440, height: 844 },
     });
     let command;
-    await page.route("**/v3/client/agents/provision", async (route) => {
+    await page.route("**/v3/client/roles/create", async (route) => {
       command = route.request().postDataJSON();
       await route.fulfill({
         status: 409,
         json: {
           error: {
             code: "conflict",
-            message: `Agent name "${command.handle}" is already taken`,
+            message: `Agent name "${command.configuration.handle}" is already taken`,
           },
         },
       });
     });
     await page.goto(fixture.origin + "/?surface=agents");
-    await page.getByRole("button", { name: "添加 Agent", exact: true }).click();
-    await page
-      .getByRole("menuitem", { name: "创建 Agent", exact: true })
-      .click();
+    await page.getByRole("button", { name: "创建 Role", exact: true }).click();
     await page.setViewportSize({ width, height: 844 });
     const dialog = page.getByRole("dialog", {
-      name: "创建 AGENT",
+      name: "创建 Role",
       exact: true,
     });
     await dialog.locator("input").first().fill("KiMi");
@@ -45,12 +42,12 @@ try {
         .click();
     }
     await dialog
-      .getByRole("button", { name: "创建 Agent", exact: true })
+      .getByRole("button", { name: "保存 Role", exact: true })
       .click();
     await expect(dialog.getByRole("alert")).toContainText(
       'Agent name "KiMi" is already taken',
     );
-    assert.equal(command.handle, "KiMi");
+    assert.equal(command.configuration.handle, "KiMi");
     const error = await dialog.getByRole("alert").boundingBox();
     const fields = await dialog.locator("fieldset label").first().boundingBox();
     assert.ok(error.y + error.height <= fields.y);
