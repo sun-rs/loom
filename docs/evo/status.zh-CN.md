@@ -131,7 +131,7 @@ Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户
 
 待负责人裁定：
 
-1. 预热是否重新开启（历史第六十二节建议重开前经 Codex 复审批次 1）。
+1. 预热（已裁定 2026-10-03，待实现）：**机制保留，规模由频道级设置控制**。负责人指出预热的本质是"完成任务后等一会用户，用户再问就能快速回应"，因此对交互式频道有价值；但夜间任务、定时任务完成后不应 spin，直接休眠即可（用户不会立即回复）。所以正确的落点是**创建频道时的高级选项**，不是全局开关。现有五个回收数字（TTL 30 min、软 12/硬 20、RSS 2 GiB、12 h、无进展 15 min）作为这之后的兜底仍待正式签字。
 2. 授权重跑原生记忆关闭门禁的 Codex 半边（判定已修正，历史第六十四节）。
 3. s2-spec §9 四问：默认值（TTL 30 min、软 12/硬 20、RSS 2 GiB、12 h、无进展 15 min）是否接受；第 2 问已按 Kimi 选项 A 与 Claude 默认关闭执行但未正式签字；轮中压缩丢句柄重试成本；Codex 冒烟关口授权时机。s2-spec 本身未正式签字。
 4. OpenCode 热路径是否补 `OPENCODE_PERMISSION` 全局 allow（历史第二十五节偏离）。
@@ -142,7 +142,7 @@ Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户
 技术未决（带触发条件）：
 
 - 远端 Role session 绑定缺口：远端控制口缺少 `recordInstanceSessionBinding`，Role 实例被 `RAH_INSTANCE_HOST_UNSUPPORTED` 拒绝（`packages/agent-host/src/agent-host.ts:485–496`）；机制冻结，本刀只登记，需要单独裁定后续范围。
-- `agents/onboard` 同属已退休门面，application-service 仍保留路由与处理（`packages/application-service/src/client-application-service.ts:423,1283`）；Web/console 无活调用方，本刀不删、不改行为，留待专门一刀清理。
+- `agents/onboard`（`agent.onboard`）**不是死代码，是待退役的旧入口**：application-service 保留路由与处理（`packages/application-service/src/client-application-service.ts:423,1283`），且产品前端仍在 `RoomMembersDialog` 的 `onAdd` 上接线（`apps/web/src/App.tsx:4987`）。频道场景下 `canAdd` 已禁用（`App.tsx:4952` 的 `kind !== "channel"`），点击会抛出"请在 Role 管理创建新实例"，因此该路径对频道不可达，但仍对非频道 Room 可达。真正退役它需要同时改前端接线与端点，属专门一刀。此前把它记为"无活调用方"不准确。
 
 - Worker 命令写法：面向模型的命令统一为绝对路径 `"$RAH_WORKER_CLI" worker …`（原 116 处裸 `rah …` 已改；本机 `/opt/homebrew/bin/rah` 是旧项目 CLI，登录 shell 中会遮蔽裸 `rah`）。曾改为 `loom-worker`，P61/P62 新旧交替对照显示它诱发每轮先重读/检查（+1 次生成）与 2/7 样本的残缺最终回复，已回退；`loom-worker` 包装脚本保留但不对模型宣传。`message-read` 对本轮已送达正文只给引用；两条提示词行为规则已删，`Reply:` 契约补全为“不要先 message-check 或 message-read”。效率仍 over-budget（首轮查路径 +1 次生成）。
 - P45 重复通知修复已实现、免费检查通过并部署：按成功 Run 的精确消费凭据取消未执行通知，不以最高已读位置完成候选；详见[设计与验证](read-covered-activation-plan.zh-CN.md)。P46 真实样本验证 Codex 重复通知被取消，但 Claude 账号禁用阻塞整体验收；效率对照仍未复跑。见[本轮证据](evidence/2026-09-29-discussion-recheck.md)。
