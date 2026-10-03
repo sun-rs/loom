@@ -180,7 +180,7 @@ TDD反证在独立副本进行：只去掉 AgentHost围栏仍被 GenericProcessA
 
 `~/.loom/evo/backups/pre-restart-backend-closeout-bf2e7f9d-6e37-41f3-9cd8-753628751fbf`
 
-优雅bootout旧com.loom.evo（PID5231），确认旧进程退出再bootstrap同一plist，新PID35927监听127.0.0.1:4176。没有强杀。沿用已验证前端snapshot/buildId 30db8e5d1da11648；服务由Node运行本次通过check的TS源码，部署时记录并核对packages/scripts逐文件SHA，未另造二进制构建结论。正式数据目录未搬迁，4条SOS保留队列未启动，预热仍关闭。产品提交号在status当前部署行回填。
+优雅bootout旧com.loom.evo（PID5231），确认旧进程退出再bootstrap同一plist，新PID35927监听127.0.0.1:4176。没有强杀。沿用已验证前端snapshot/buildId 30db8e5d1da11648；服务由Node运行本次通过check的TS源码，部署时记录并核对packages/scripts逐文件SHA，未另造二进制构建结论。正式数据目录未搬迁，4条SOS保留队列未启动，预热仍关闭。产品提交 `2beb097`；先部署和验证同一工作树，再提交。status回填仅文档变化，不改变已验证部署代码。
 
 ### 未覆盖与遗留风险
 
