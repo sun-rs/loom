@@ -7,6 +7,8 @@ import {
 
 test("admits exactly the owner-approved provider/model/effort combinations", () => {
   const admitted = [
+    ["codex", "gpt-6-sol", "low"],
+    ["codex", "gpt-6-astra", "low"],
     // 2026-09-09 matrix
     ["claude", "sonnet", "low"],
     ["codex", "gpt-5.6-luna", "low"],
@@ -29,12 +31,13 @@ test("admits exactly the owner-approved provider/model/effort combinations", () 
 
 test("rejects every combination outside the table before any paid call", () => {
   const rejected = [
-    ["codex", "gpt-6-sol", "low"],
+    ["codex", "gpt-6.1-sol", "low"],
+    ["codex", "gpt-6-sol", "high"],
     ["codex", "gpt-6-luna", "ultra"],
     ["codex", "gpt-6-luna", "high"],
     ["codex", "gpt-5.6-sol", "ultra"],
     ["codex", "gpt-5.6-ultra", "low"],
-    ["codex", "gpt-6-astra", "low"],
+    ["codex", "gpt-6-astra", "high"],
     ["claude", "opus", "max"],
     ["claude", "opus", "low"],
     ["claude", "sonnet", "max"],

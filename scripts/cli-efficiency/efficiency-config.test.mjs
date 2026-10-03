@@ -87,7 +87,7 @@ test("opencode: deepseek-flash/low against its own native CLI, warm and per-turn
 
 test("fails closed on combinations outside the approval table", () => {
   const bad = [
-    { RAH_EFFICIENCY_MODEL: "gpt-6-sol" },
+    { RAH_EFFICIENCY_MODEL: "gpt-6.1-sol" },
     { RAH_EFFICIENCY_MODEL: "gpt-6-sol", RAH_EFFICIENCY_EFFORT: "ultra" },
     { RAH_EFFICIENCY_EFFORT: "ultra" },
     { RAH_EFFICIENCY_EFFORT: "high" },

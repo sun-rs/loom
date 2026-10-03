@@ -176,11 +176,15 @@ and only with owner approval.
 | Claude Code | `haiku`                        | none      | 2026-09-25 |
 | Codex       | `gpt-5.6-luna`                 | `low`     | 2026-09-09 |
 | Codex       | `gpt-6-luna`                   | `low`     | 2026-09-25 |
+| Codex       | `gpt-6-sol`                    | `low`     | 2026-10-03 |
+| Codex       | `gpt-6-astra`                  | `low`     | 2026-10-03 |
 | OpenCode    | `deepseek/deepseek-v4-flash`   | `low`     | 2026-09-09 |
 | OpenCode    | `deepseek/deepseek-flash`      | `low`     | 2026-09-25 |
 | OpenCode    | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-09-30 |
 | Kimi CLI    | `kimi-code/k3`                 | `high`    | 2026-09-09 |
 | Kimi CLI    | `kimi-code/k3-256k`            | `low`     | 2026-09-25 |
+
+The 2026-10-03 additions are owner-approved for the Loom advantage discussion test.
 
 Binding ids are the ones the installed CLIs actually publish (verified with
 `probeLocalModelCatalog`); do not invent version-suffixed ids. The Claude Code

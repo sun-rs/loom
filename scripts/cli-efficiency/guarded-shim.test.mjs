@@ -74,7 +74,7 @@ test("each provider's shim calls its own guard with the exact model/effort", () 
 
 test("a shim is never written for a combination outside the approval table", () => {
   for (const [provider, pair] of [
-    ["codex", ["gpt-6-sol", "low"]],
+    ["codex", ["gpt-6.1-sol", "low"]],
     ["codex", ["gpt-6-luna", "ultra"]],
     ["claude", ["opus", "max"]],
     ["claude", ["fable", "low"]],

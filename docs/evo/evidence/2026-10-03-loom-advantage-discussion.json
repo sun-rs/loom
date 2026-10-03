@@ -1,0 +1,1264 @@
+{
+  "batch": "P96",
+  "maxRuns": 12,
+  "instances": {
+    "solA": {
+      "instanceId": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "handle": "disc-sol-a-20261003t051608z-a8c849dbb9dd2c278569c9b5",
+      "bindingId": "local:codex-cli/v1:gpt-6-sol",
+      "effort": "low"
+    },
+    "solB": {
+      "instanceId": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "handle": "disc-sol-b-20261003t051608z-4f6247acbdf82a2e5f921231",
+      "bindingId": "local:codex-cli/v1:gpt-6-sol",
+      "effort": "low"
+    },
+    "astra": {
+      "instanceId": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "handle": "disc-astra-20261003t051608z-0de84be7ac282e00fc8f7a1d",
+      "bindingId": "local:codex-cli/v1:gpt-6-astra",
+      "effort": "low"
+    }
+  },
+  "stamp": "20261003T051608Z",
+  "roomId": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+  "startedAt": "2026-10-03T05:16:08.434Z",
+  "finishedAt": "2026-10-03T05:19:23.491Z",
+  "stopReason": "quiet",
+  "models": {
+    "solA": {
+      "bindingId": "local:codex-cli/v1:gpt-6-sol",
+      "effort": "low"
+    },
+    "solB": {
+      "bindingId": "local:codex-cli/v1:gpt-6-sol",
+      "effort": "low"
+    },
+    "astra": {
+      "bindingId": "local:codex-cli/v1:gpt-6-astra",
+      "effort": "low"
+    }
+  },
+  "runs": [
+    {
+      "runAttemptId": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "participantId": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "state": "exited",
+      "startedAt": "2026-10-03T05:16:08.745Z",
+      "finishedAt": "2026-10-03T05:17:20.907Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-astra",
+        "provider": "openai",
+        "modelId": "gpt-6-astra",
+        "reasoning": "low"
+      },
+      "sessionId": "01a10030-f1f5-7a11-ae87-c0720148009a",
+      "seconds": 72.162,
+      "totals": {
+        "generations": 6,
+        "input": 137793,
+        "cached": 107520,
+        "uncached": 30273
+      },
+      "native": {
+        "generations": 6,
+        "generationsTotal": 6,
+        "generationsBeforeReply": 6,
+        "generationsAfterReply": 0,
+        "input": 137793,
+        "cached": 107520,
+        "uncached": 30273,
+        "output": 1299,
+        "reasoning": 59,
+        "firstInput": 11285,
+        "peakInput": 29453,
+        "toolCalls": [
+          {
+            "at": "2026-10-03T05:16:21.113Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:27.629Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:37.577Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:51.726Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          },
+          {
+            "at": "2026-10-03T05:17:06.272Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          },
+          {
+            "at": "2026-10-03T05:17:20.560Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true,
+      "nativeContexts": [
+        {
+          "at": "2026-10-03T05:16:15.247Z",
+          "model": "gpt-6-astra",
+          "effort": "low"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "participantId": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "state": "exited",
+      "startedAt": "2026-10-03T05:16:08.748Z",
+      "finishedAt": "2026-10-03T05:16:55.506Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-sol",
+        "provider": "openai",
+        "modelId": "gpt-6-sol",
+        "reasoning": "low"
+      },
+      "sessionId": "01a10030-efe7-7c43-813c-fb49c9f78b65",
+      "seconds": 46.758,
+      "totals": {
+        "generations": 7,
+        "input": 161430,
+        "cached": 132736,
+        "uncached": 28694
+      },
+      "native": {
+        "generations": 7,
+        "generationsTotal": 7,
+        "generationsBeforeReply": 7,
+        "generationsAfterReply": 0,
+        "input": 161430,
+        "cached": 132736,
+        "uncached": 28694,
+        "output": 1000,
+        "reasoning": 197,
+        "firstInput": 11463,
+        "peakInput": 27713,
+        "toolCalls": [
+          {
+            "at": "2026-10-03T05:16:21.433Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:27.498Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:31.455Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": false
+          },
+          {
+            "at": "2026-10-03T05:16:35.105Z",
+            "name": "exec",
+            "kind": "worker-command"
+          },
+          {
+            "at": "2026-10-03T05:16:44.347Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          },
+          {
+            "at": "2026-10-03T05:16:51.019Z",
+            "name": "exec",
+            "kind": "box-check",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true,
+      "nativeContexts": [
+        {
+          "at": "2026-10-03T05:16:16.035Z",
+          "model": "gpt-6-sol",
+          "effort": "low"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "participantId": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "state": "exited",
+      "startedAt": "2026-10-03T05:16:08.749Z",
+      "finishedAt": "2026-10-03T05:16:38.536Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-sol",
+        "provider": "openai",
+        "modelId": "gpt-6-sol",
+        "reasoning": "low"
+      },
+      "sessionId": "01a10030-fb07-7c10-bb88-f117b7accbc2",
+      "seconds": 29.787,
+      "totals": {
+        "generations": 4,
+        "input": 75793,
+        "cached": 51456,
+        "uncached": 24337
+      },
+      "native": {
+        "generations": 4,
+        "generationsTotal": 4,
+        "generationsBeforeReply": 4,
+        "generationsAfterReply": 0,
+        "input": 75793,
+        "cached": 51456,
+        "uncached": 24337,
+        "output": 690,
+        "reasoning": 39,
+        "firstInput": 11161,
+        "peakInput": 23789,
+        "toolCalls": [
+          {
+            "at": "2026-10-03T05:16:21.292Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:25.862Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:16:36.084Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true,
+      "nativeContexts": [
+        {
+          "at": "2026-10-03T05:16:16.486Z",
+          "model": "gpt-6-sol",
+          "effort": "low"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "participantId": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "state": "exited",
+      "startedAt": "2026-10-03T05:17:20.912Z",
+      "finishedAt": "2026-10-03T05:17:29.511Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-astra",
+        "provider": "openai",
+        "modelId": "gpt-6-astra",
+        "reasoning": "low"
+      },
+      "sessionId": "01a10030-f1f5-7a11-ae87-c0720148009a",
+      "seconds": 8.599,
+      "totals": {
+        "generations": 2,
+        "input": 60794,
+        "cached": 59392,
+        "uncached": 1402
+      },
+      "native": {
+        "generations": 2,
+        "generationsTotal": 2,
+        "generationsBeforeReply": 2,
+        "generationsAfterReply": 0,
+        "input": 60794,
+        "cached": 59392,
+        "uncached": 1402,
+        "output": 112,
+        "reasoning": 11,
+        "firstInput": 30200,
+        "peakInput": 30594,
+        "toolCalls": [
+          {
+            "at": "2026-10-03T05:17:25.034Z",
+            "name": "exec",
+            "kind": "box-check",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true,
+      "nativeContexts": [
+        {
+          "at": "2026-10-03T05:17:21.295Z",
+          "model": "gpt-6-astra",
+          "effort": "low"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "participantId": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "state": "exited",
+      "startedAt": "2026-10-03T05:17:21.056Z",
+      "finishedAt": "2026-10-03T05:17:38.795Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-sol",
+        "provider": "openai",
+        "modelId": "gpt-6-sol",
+        "reasoning": "low"
+      },
+      "sessionId": "01a10030-efe7-7c43-813c-fb49c9f78b65",
+      "seconds": 17.739,
+      "totals": {
+        "generations": 3,
+        "input": 90358,
+        "cached": 86016,
+        "uncached": 4342
+      },
+      "native": {
+        "generations": 3,
+        "generationsTotal": 3,
+        "generationsBeforeReply": 3,
+        "generationsAfterReply": 0,
+        "input": 90358,
+        "cached": 86016,
+        "uncached": 4342,
+        "output": 490,
+        "reasoning": 32,
+        "firstInput": 28072,
+        "peakInput": 31477,
+        "toolCalls": [
+          {
+            "at": "2026-10-03T05:17:26.293Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-03T05:17:35.019Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true,
+      "nativeContexts": [
+        {
+          "at": "2026-10-03T05:17:21.903Z",
+          "model": "gpt-6-sol",
+          "effort": "low"
+        }
+      ]
+    },
+    {
+      "runAttemptId": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "participantId": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "state": "exited",
+      "startedAt": "2026-10-03T05:17:35.669Z",
+      "finishedAt": "2026-10-03T05:17:51.446Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-astra",
+        "provider": "openai",
+        "modelId": "gpt-6-astra",
+        "reasoning": "low"
+      },
+      "sessionId": "01a10030-f1f5-7a11-ae87-c0720148009a",
+      "seconds": 15.777,
+      "totals": {
+        "generations": 1,
+        "input": 30983,
+        "cached": 30464,
+        "uncached": 519
+      },
+      "native": {
+        "generations": 1,
+        "generationsTotal": 1,
+        "generationsBeforeReply": 1,
+        "generationsAfterReply": 0,
+        "input": 30983,
+        "cached": 30464,
+        "uncached": 519,
+        "output": 348,
+        "reasoning": 50,
+        "firstInput": 30983,
+        "peakInput": 30983,
+        "toolCalls": [
+          {
+            "at": "2026-10-03T05:17:51.160Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true,
+      "nativeContexts": [
+        {
+          "at": "2026-10-03T05:17:35.902Z",
+          "model": "gpt-6-astra",
+          "effort": "low"
+        }
+      ]
+    }
+  ],
+  "activations": [
+    {
+      "activation_id": "activation_aade88a1-0a51-4ea6-8f3e-6345354b5767",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "from_seq": 8,
+      "to_seq": 8,
+      "reason": "mention",
+      "state": "completed",
+      "lease_owner": null,
+      "lease_until": null,
+      "lease_until_ms": null,
+      "available_at": "2026-10-03T05:16:08.436Z",
+      "available_at_ms": 1791004568437,
+      "attempt_count": 1,
+      "last_error": null,
+      "created_at": "2026-10-03T05:16:08.436Z",
+      "updated_at": "2026-10-03T05:16:55.508Z"
+    },
+    {
+      "activation_id": "activation_e780fee3-5735-4be4-8d24-5e4818ca0714",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "from_seq": 8,
+      "to_seq": 8,
+      "reason": "mention",
+      "state": "completed",
+      "lease_owner": null,
+      "lease_until": null,
+      "lease_until_ms": null,
+      "available_at": "2026-10-03T05:16:08.436Z",
+      "available_at_ms": 1791004568437,
+      "attempt_count": 1,
+      "last_error": null,
+      "created_at": "2026-10-03T05:16:08.436Z",
+      "updated_at": "2026-10-03T05:16:38.539Z"
+    },
+    {
+      "activation_id": "activation_4812570c-a613-40f5-9b61-e82be4771fdc",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "from_seq": 8,
+      "to_seq": 8,
+      "reason": "mention",
+      "state": "completed",
+      "lease_owner": null,
+      "lease_until": null,
+      "lease_until_ms": null,
+      "available_at": "2026-10-03T05:16:08.436Z",
+      "available_at_ms": 1791004568438,
+      "attempt_count": 1,
+      "last_error": null,
+      "created_at": "2026-10-03T05:16:08.436Z",
+      "updated_at": "2026-10-03T05:17:20.908Z"
+    },
+    {
+      "activation_id": "activation_f18811b2-542e-4183-96cb-d45660249ab5",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "from_seq": 21,
+      "to_seq": 21,
+      "reason": "mention",
+      "state": "completed",
+      "lease_owner": null,
+      "lease_until": null,
+      "lease_until_ms": null,
+      "available_at": "2026-10-03T05:16:36.562Z",
+      "available_at_ms": 1791004596566,
+      "attempt_count": 1,
+      "last_error": null,
+      "created_at": "2026-10-03T05:16:36.562Z",
+      "updated_at": "2026-10-03T05:17:29.511Z"
+    },
+    {
+      "activation_id": "activation_1d0abe16-7930-4715-85e8-ab48d71ef309",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "from_seq": 28,
+      "to_seq": 28,
+      "reason": "mention",
+      "state": "completed",
+      "lease_owner": null,
+      "lease_until": null,
+      "lease_until_ms": null,
+      "available_at": "2026-10-03T05:17:20.889Z",
+      "available_at_ms": 1791004640890,
+      "attempt_count": 1,
+      "last_error": null,
+      "created_at": "2026-10-03T05:17:20.889Z",
+      "updated_at": "2026-10-03T05:17:38.808Z"
+    },
+    {
+      "activation_id": "activation_4936cae9-dfbc-44c3-a986-f8a5c71c5b0c",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "from_seq": 43,
+      "to_seq": 43,
+      "reason": "mention",
+      "state": "completed",
+      "lease_owner": null,
+      "lease_until": null,
+      "lease_until_ms": null,
+      "available_at": "2026-10-03T05:17:35.349Z",
+      "available_at_ms": 1791004655350,
+      "attempt_count": 1,
+      "last_error": null,
+      "created_at": "2026-10-03T05:17:35.349Z",
+      "updated_at": "2026-10-03T05:17:51.447Z"
+    }
+  ],
+  "selfInbox": 0,
+  "heldDrafts": [
+    {
+      "held_draft_id": "held_draft_c154c8e6-1756-4f49-a221-0a33dbcdef2c",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "activation_id": "activation_aade88a1-0a51-4ea6-8f3e-6345354b5767",
+      "thread_id": null,
+      "body": "我认为 Loom 的可确认增量是把协作交接变成有权限、顺序和执行凭据的 Room 事件：Inbox→Activation→RunAttempt→显式动作，且实例保有连续 session（AGENTS.md:64-69,94-109）。这比 herdr 互传或简易 box 多了可恢复、可追责的调度；但现有对照不能证明更省心：Loom 接力失序，累计输入 512,918 对 herdr 112,764（docs/evo/herdr-loom-value-2026-09-30.zh-CN.md:21-30,36-42）。推测其价值主要在长期多人任务，短审查可能不抵协议和运维成本。@disc-sol-b-20261003t051608z-4f6247acbdf82a2e5f921231 请从 Raft/Multica 复用边界检验。",
+      "attachments_json": "[]",
+      "based_on_room_seq": 8,
+      "seen_up_to_seq": 21,
+      "idempotency_key": "derived-send-2ebebbfb9effec64a7d0cf1a5e01d90a",
+      "state": "replaced",
+      "source_held_draft_id": null,
+      "rehold_count": 1,
+      "expires_at_ms": 1791005204644,
+      "resolution_kind": "revised",
+      "resolved_at": "2026-10-03T05:17:35.349Z",
+      "created_at": "2026-10-03T05:16:44.644Z",
+      "updated_at": "2026-10-03T05:17:35.349Z",
+      "attachment_comment_json": "null",
+      "reply_based_on_room_seq": 8,
+      "reply_final": 0
+    },
+    {
+      "held_draft_id": "held_draft_0b8f709c-7024-43d7-aba7-3a560f2a7eb3",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "activation_id": "activation_4812570c-a613-40f5-9b61-e82be4771fdc",
+      "thread_id": null,
+      "body": "确认：账本能约束执行，却不能保证判断正确。负责人任务书曾要求删防护，Codex 实验发现会重新投递遗留实例，遂撤回要求（/Users/sun/.loom/reviews/2026-10-03-backend-closeout-task-brief.md:94）。这种纠错已在 herdr 协作中发生。\n推测：Loom 相对 herdr+简易 box 的价值，应是减少“谁已读、谁接手、失败后怎么续”的人工管理，而非自动提高判断质量；若这些仍靠负责人追踪，收益未兑现。@disc-sol-a-20261003t051608z-a8c849dbb9dd2c278569c9b5 你认为最难由简易 box 补齐的保证是什么？",
+      "attachments_json": "[]",
+      "based_on_room_seq": 8,
+      "seen_up_to_seq": 21,
+      "idempotency_key": "derived-send-d64ebc6ac1c64ee371ea1e07fd802d83",
+      "state": "replaced",
+      "source_held_draft_id": null,
+      "rehold_count": 1,
+      "expires_at_ms": 1791005212220,
+      "resolution_kind": "revised",
+      "resolved_at": "2026-10-03T05:17:20.889Z",
+      "created_at": "2026-10-03T05:16:52.220Z",
+      "updated_at": "2026-10-03T05:17:20.889Z",
+      "attachment_comment_json": "null",
+      "reply_based_on_room_seq": 8,
+      "reply_final": 1
+    }
+  ],
+  "usageGaps": [],
+  "runsPerInstance": {
+    "solA": 2,
+    "solB": 1,
+    "astra": 3
+  },
+  "instanceMessages": 4,
+  "handoffs": 3,
+  "silentReplies": 1,
+  "chainLimitTrips": 0,
+  "endedWithoutHandoff": true,
+  "wakeChain": [
+    {
+      "seq": 21,
+      "from": "solB",
+      "to": "astra",
+      "streak": 1,
+      "chainLimit": 10,
+      "admitted": true
+    },
+    {
+      "seq": 28,
+      "from": "astra",
+      "to": "solA",
+      "streak": 2,
+      "chainLimit": 10,
+      "admitted": true
+    },
+    {
+      "seq": 43,
+      "from": "solA",
+      "to": "astra",
+      "streak": 3,
+      "chainLimit": 10,
+      "admitted": true
+    }
+  ],
+  "transcript": [
+    {
+      "seq": 8,
+      "at": "2026-10-03T05:16:08.437Z",
+      "author": "Human",
+      "wakes": ["solA", "solB", "astra"],
+      "threadId": null,
+      "body": "@disc-sol-a-20261003t051608z-a8c849dbb9dd2c278569c9b5 @disc-sol-b-20261003t051608z-4f6247acbdf82a2e5f921231 @disc-astra-20261003t051608z-0de84be7ac282e00fc8f7a1d 请讨论：Loom 的优势究竟是什么？与 Raft、Multica 等跨 provider 多 Agent 项目，以及 herdr 互传、herdr + 简易 box 相比，增量价值是什么、代价是什么？\n材料：/Users/sun/Code/repos/rah_os/AGENTS.md、docs/evo/target-contract.zh-CN.md、docs/evo/status.zh-CN.md、docs/evo/herdr-loom-value-2026-09-30.zh-CN.md、docs/evo/token-root-cause-raft-dm-2026-09-30.zh-CN.md、docs/audits/ 下 Raft/Multica 复用台账；/Users/sun/.loom/reviews 下负责人用 herdr 中枢驱动 Codex 的任务书和修订稿，可作为实际协作成本的一手材料。\n每次发言只 @ 下一位应回应者；要所有人回答用 @all；达成结论时给出结论且不再 @ 任何人。Human 只发本次开场，之后旁观。只读，不修改任何文件；每次发言不超过300字，用中文。给文件与行号依据，区分确认与推测。"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-03T05:16:36.562Z",
+      "author": "solB",
+      "wakes": ["astra"],
+      "threadId": null,
+      "body": "@disc-astra-20261003t051608z-0de84be7ac282e00fc8f7a1d 我认为增量价值是“可恢复的协作账本”：Room→Inbox→Activation→RunAttempt→显式动作是权威链，原生 session 只作执行上下文（AGENTS.md:65-73）；定向唤醒、私聊隔离和共享记忆有明确合同（target-contract:39-49,74）。Raft/Multica 的驱动能力已有可复用部分，账本才是差异（复用台账:19,33-35,50-51）。但价值尚未兑现：一次双 Codex 对照中 Loom 未完成预定接力，累计输入 512918 对 herdr 112764，且协调者时间未计（herdr-loom-value:14-16,23-30,38-42）。推测：简易 box 若补足可靠收件、结束与恢复，可能覆盖多数日常场景；需用同题端到端介入时间验证。"
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-03T05:17:20.890Z",
+      "author": "astra",
+      "wakes": ["solA"],
+      "threadId": null,
+      "body": "同意，但“有账本”不能推成“优于 Raft”：复用台账:19 明说未取得 Raft Server 源码，无法断言对方缺少事务保证。\n确认：herdr 已有有效纠错，Codex 实验促使负责人撤回删除防护的要求（/Users/sun/.loom/reviews/2026-10-03-backend-closeout-task-brief.md:94）。判断质量不是 Loom 独占价值。\n推测：增量是把接手、去重、恢复从协调者记忆变成可检查状态；代价是协议与维护成本。@disc-sol-a-20261003t051608z-a8c849dbb9dd2c278569c9b5 简易 box 最难补齐哪项保证？"
+    },
+    {
+      "seq": 43,
+      "at": "2026-10-03T05:17:35.350Z",
+      "author": "solA",
+      "wakes": ["astra"],
+      "threadId": null,
+      "body": "最难补的是“何时可确认完成并安全去重”，不是存消息。确认：Loom 要求原子写事件/投递、按因果游标拦截过期回复；唤醒或进程退出不算已读，Activation、Inbox、Task 各自结算（AGENTS.md:226-235）。重复通知仅凭同实例同 session 的逐条读取及成功发帖等证据取消（target-contract.zh-CN.md:47）。简易 box 若没有这些状态，崩溃或忙时交错后易靠人工判定漏接、重做；这是推测，尚无同条件实测。Raft 是否已有同等保证不能据此否定。@disc-astra-20261003t051608z-0de84be7ac282e00fc8f7a1d"
+    },
+    {
+      "seq": 51,
+      "at": "2026-10-03T05:17:51.429Z",
+      "author": "astra",
+      "wakes": [],
+      "threadId": null,
+      "body": "结论：Loom 的可核实增量，是将投递、接手、完成与恢复纳入统一且可追责的状态，而非跨 provider 本身（AGENTS.md:65-73；target-contract.zh-CN.md:47）。这也不能证明 Raft/Multica 缺少同等能力。\n代价是协议选择、额外模型请求及维护负担；已有对照未证明更省心，协调者成本还未计入（herdr-loom-value:5-16）。\n推测：短程、有人看管的协作，herdr+简易 box 可能更划算；长程、多次交接和故障恢复才可能体现 Loom 收益。是否继续投入，应以同题、同质量下人工介入时间、漏接/重做次数和完整成本验证，不能只看 Agent 数量或接力成功。"
+    }
+  ],
+  "codeCommit": "b26054b1fa4b09e311ba1315ce7720b784ae0d8f",
+  "authorization": "2026-10-03-loom-advantage-discussion-brief.md; 2 Codex gpt-6-sol + 1 gpt-6-astra, all low, one Human opening, no rescue/rerun",
+  "nativeVerifiedModelEffort": true,
+  "totals": {
+    "generations": 23,
+    "input": 557151,
+    "cached": 467584,
+    "uncached": 89567
+  },
+  "diagnostics": [
+    {
+      "runAttemptId": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "at": "2026-10-03T05:16:52.229Z",
+      "exitCode": 1,
+      "kind": "message-post",
+      "summary": "SEND_HELD_AS_DRAFT: message was NOT sent; no target delivery occurred.\nFreshness hold: showing latest 1 of 1 newer message.\nYour message has been saved as a draft. Saving a draft does not confirm delivery or complete this work. Review the bounded context shown here, then choose one path."
+    },
+    {
+      "runAttemptId": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "at": "2026-10-03T05:17:06.540Z",
+      "exitCode": 1,
+      "kind": "revise-draft",
+      "summary": "Error: --revise-draft preserves the saved attachments and reply intent; incompatible override\nCode: INVALID_ARG\nDraft saved: no"
+    },
+    {
+      "runAttemptId": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "at": "2026-10-03T05:17:20.898Z",
+      "exitCode": 0,
+      "kind": "revise-draft",
+      "summary": "Message sent to #e2e-discuss-20261003t051608z. Message ID: message_8e1e6345-c160-42c1-b5bf-2d3cf2f53ecf"
+    },
+    {
+      "runAttemptId": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "at": "2026-10-03T05:16:32.170Z",
+      "exitCode": 1,
+      "kind": "help",
+      "summary": "Error: This runtime requires `--turn [redacted] on every Worker command; use the handle given in the latest wake.\nCode: TURN_HANDLE_REQUIRED\nDraft saved: no"
+    },
+    {
+      "runAttemptId": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "at": "2026-10-03T05:16:35.349Z",
+      "exitCode": 0,
+      "kind": "help",
+      "summary": "## Messages: read and write\nA complete wake already contains the messages. Work from them; message-check is needed when the wake requests it or no reply is needed. Read additional history with `message-read --target TARGET`.\nPublish your answer on stdin:"
+    },
+    {
+      "runAttemptId": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "at": "2026-10-03T05:16:44.653Z",
+      "exitCode": 1,
+      "kind": "message-post",
+      "summary": "SEND_HELD_AS_DRAFT: message was NOT sent; no target delivery occurred.\nFreshness hold: showing latest 1 of 1 newer message.\nYour message has been saved as a draft. Saving a draft does not confirm delivery or complete this work. Review the bounded context shown here, then choose one path."
+    },
+    {
+      "runAttemptId": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "at": "2026-10-03T05:16:51.315Z",
+      "exitCode": 0,
+      "kind": "message-check",
+      "summary": "Sync window: 5 delivered, seq 4-8, cursor 0 to 8 of 8, oldest to newest.\nseq=4 time=2026-10-03T05:16:08.406Z actor=@owner type=membership.added\n  {\"participantId\":\"principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec\",\"role\":\"member\"}"
+    },
+    {
+      "runAttemptId": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "at": "2026-10-03T05:16:36.575Z",
+      "exitCode": 0,
+      "kind": "message-post",
+      "summary": "Message sent to #e2e-discuss-20261003t051608z. Message ID: message_1179b93c-edd5-4539-bcb7-e4a22e5573b1"
+    },
+    {
+      "runAttemptId": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "at": "2026-10-03T05:17:25.462Z",
+      "exitCode": 0,
+      "kind": "message-check",
+      "summary": "Sync window: 1 delivered, seq 21, cursor 8 to 21 of 21, oldest to newest.\n[target=#e2e-discuss-20261003t051608z seq=21 msg=message_1179b93c-edd5-4539-bcb7-e4a22e5573b1 time=2026-10-03 13:16:36 type=message.posted] @disc-sol-b-20261003t051608z-4f6247acbdf82a2e5f921231: (delivered in this wake)\nAlready delivered bodies are referenced above; use message-check --replay to restore their full text."
+    },
+    {
+      "runAttemptId": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "at": "2026-10-03T05:17:35.361Z",
+      "exitCode": 0,
+      "kind": "message-post",
+      "summary": "Warning: replacing an unsent draft for #e2e-discuss-20261003t051608z.\nOne draft is kept per target, so the previous body is now discarded.\nDiscarded draft (last copy):"
+    },
+    {
+      "runAttemptId": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "at": "2026-10-03T05:17:51.438Z",
+      "exitCode": 0,
+      "kind": "message-post",
+      "summary": "Message sent to #e2e-discuss-20261003t051608z. Message ID: message_619f237e-2816-4962-a1bb-ef6a5b960258"
+    }
+  ],
+  "messageLengths": [
+    {
+      "seq": 21,
+      "author": "solB",
+      "unicodeCodepoints": 407,
+      "withoutMentions": 354,
+      "chineseCharacters": 145
+    },
+    {
+      "seq": 28,
+      "author": "astra",
+      "unicodeCodepoints": 304,
+      "withoutMentions": 251,
+      "chineseCharacters": 114
+    },
+    {
+      "seq": 43,
+      "author": "solA",
+      "unicodeCodepoints": 300,
+      "withoutMentions": 247,
+      "chineseCharacters": 136
+    },
+    {
+      "seq": 51,
+      "author": "astra",
+      "unicodeCodepoints": 310,
+      "withoutMentions": 310,
+      "chineseCharacters": 164
+    }
+  ],
+  "presentations": [
+    {
+      "participant_id": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 8
+    },
+    {
+      "participant_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 21
+    },
+    {
+      "participant_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 8
+    },
+    {
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 21
+    },
+    {
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 8
+    },
+    {
+      "participant_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 28
+    },
+    {
+      "participant_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "room_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "thread_key": "",
+      "room_seq": 43
+    }
+  ],
+  "events": [
+    {
+      "room_seq": 1,
+      "type": "room.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+      "created_at": "2026-10-03T05:16:08.348Z"
+    },
+    {
+      "room_seq": 2,
+      "type": "membership.added",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "created_at": "2026-10-03T05:16:08.382Z"
+    },
+    {
+      "room_seq": 3,
+      "type": "instance.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "created_at": "2026-10-03T05:16:08.382Z"
+    },
+    {
+      "room_seq": 4,
+      "type": "membership.added",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "created_at": "2026-10-03T05:16:08.406Z"
+    },
+    {
+      "room_seq": 5,
+      "type": "instance.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "created_at": "2026-10-03T05:16:08.406Z"
+    },
+    {
+      "room_seq": 6,
+      "type": "membership.added",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "created_at": "2026-10-03T05:16:08.428Z"
+    },
+    {
+      "room_seq": 7,
+      "type": "instance.created",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "created_at": "2026-10-03T05:16:08.428Z"
+    },
+    {
+      "room_seq": 8,
+      "type": "message.posted",
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "aggregate_id": "message_a728c334-5abf-4cfa-a3ef-f61045d765bc",
+      "created_at": "2026-10-03T05:16:08.437Z"
+    },
+    {
+      "room_seq": 9,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_3cb2c41f-0e1e-4ad9-b399-5c26522ed05a",
+      "created_at": "2026-10-03T05:16:08.722Z"
+    },
+    {
+      "room_seq": 10,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_78d9031b-1d49-4691-8ae9-5e7381a0f907",
+      "created_at": "2026-10-03T05:16:08.723Z"
+    },
+    {
+      "room_seq": 11,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_71f635e2-01d3-40fb-bd72-596e887f2991",
+      "created_at": "2026-10-03T05:16:08.726Z"
+    },
+    {
+      "room_seq": 12,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "created_at": "2026-10-03T05:16:08.746Z"
+    },
+    {
+      "room_seq": 13,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "created_at": "2026-10-03T05:16:08.748Z"
+    },
+    {
+      "room_seq": 14,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "created_at": "2026-10-03T05:16:08.749Z"
+    },
+    {
+      "room_seq": 15,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "created_at": "2026-10-03T05:16:12.137Z"
+    },
+    {
+      "room_seq": 16,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "created_at": "2026-10-03T05:16:12.168Z"
+    },
+    {
+      "room_seq": 17,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "created_at": "2026-10-03T05:16:12.452Z"
+    },
+    {
+      "room_seq": 18,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "created_at": "2026-10-03T05:16:12.480Z"
+    },
+    {
+      "room_seq": 19,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "created_at": "2026-10-03T05:16:12.587Z"
+    },
+    {
+      "room_seq": 20,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "created_at": "2026-10-03T05:16:12.606Z"
+    },
+    {
+      "room_seq": 21,
+      "type": "message.posted",
+      "actor_id": "principal_174fe8d4-4d3a-45ad-b69d-33be0e44caec",
+      "aggregate_id": "message_1179b93c-edd5-4539-bcb7-e4a22e5573b1",
+      "created_at": "2026-10-03T05:16:36.562Z"
+    },
+    {
+      "room_seq": 22,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "created_at": "2026-10-03T05:16:38.535Z"
+    },
+    {
+      "room_seq": 23,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_34c71dd2-f3aa-4c48-af8a-8af3b023a172",
+      "created_at": "2026-10-03T05:16:38.537Z"
+    },
+    {
+      "room_seq": 24,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_e780fee3-5735-4be4-8d24-5e4818ca0714",
+      "created_at": "2026-10-03T05:16:38.540Z"
+    },
+    {
+      "room_seq": 25,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "created_at": "2026-10-03T05:16:55.505Z"
+    },
+    {
+      "room_seq": 26,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_69e3b855-9f77-43be-8a16-018d303ea33c",
+      "created_at": "2026-10-03T05:16:55.507Z"
+    },
+    {
+      "room_seq": 27,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_aade88a1-0a51-4ea6-8f3e-6345354b5767",
+      "created_at": "2026-10-03T05:16:55.509Z"
+    },
+    {
+      "room_seq": 28,
+      "type": "message.posted",
+      "actor_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "aggregate_id": "message_8e1e6345-c160-42c1-b5bf-2d3cf2f53ecf",
+      "created_at": "2026-10-03T05:17:20.890Z"
+    },
+    {
+      "room_seq": 29,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "created_at": "2026-10-03T05:17:20.907Z"
+    },
+    {
+      "room_seq": 30,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_7f95a7f4-6e66-4a15-a78a-81e6d3900b27",
+      "created_at": "2026-10-03T05:17:20.907Z"
+    },
+    {
+      "room_seq": 31,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_4812570c-a613-40f5-9b61-e82be4771fdc",
+      "created_at": "2026-10-03T05:17:20.908Z"
+    },
+    {
+      "room_seq": 32,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_c80730f0-ab5b-49ca-9640-6dad211988b9",
+      "created_at": "2026-10-03T05:17:20.911Z"
+    },
+    {
+      "room_seq": 33,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "created_at": "2026-10-03T05:17:20.912Z"
+    },
+    {
+      "room_seq": 34,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_a882b1b4-afb3-4caa-9242-48a548404061",
+      "created_at": "2026-10-03T05:17:21.036Z"
+    },
+    {
+      "room_seq": 35,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "created_at": "2026-10-03T05:17:21.056Z"
+    },
+    {
+      "room_seq": 36,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "created_at": "2026-10-03T05:17:21.283Z"
+    },
+    {
+      "room_seq": 37,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "created_at": "2026-10-03T05:17:21.294Z"
+    },
+    {
+      "room_seq": 38,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "created_at": "2026-10-03T05:17:21.894Z"
+    },
+    {
+      "room_seq": 39,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "created_at": "2026-10-03T05:17:21.900Z"
+    },
+    {
+      "room_seq": 40,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "created_at": "2026-10-03T05:17:29.510Z"
+    },
+    {
+      "room_seq": 41,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_a004eed8-74a9-4b90-9917-c3d7eb262887",
+      "created_at": "2026-10-03T05:17:29.511Z"
+    },
+    {
+      "room_seq": 42,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_f18811b2-542e-4183-96cb-d45660249ab5",
+      "created_at": "2026-10-03T05:17:29.512Z"
+    },
+    {
+      "room_seq": 43,
+      "type": "message.posted",
+      "actor_id": "principal_0fe50557-f120-41b4-84ed-da5a5d251a82",
+      "aggregate_id": "message_3f20c593-777e-4a96-8d4b-76151535102e",
+      "created_at": "2026-10-03T05:17:35.350Z"
+    },
+    {
+      "room_seq": 44,
+      "type": "placement.reserved",
+      "actor_id": "principal_system",
+      "aggregate_id": "placement_0e123a46-cb32-46db-a749-385ffe982f0a",
+      "created_at": "2026-10-03T05:17:35.641Z"
+    },
+    {
+      "room_seq": 45,
+      "type": "run.created",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "created_at": "2026-10-03T05:17:35.669Z"
+    },
+    {
+      "room_seq": 46,
+      "type": "run.runtime_prepared",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "created_at": "2026-10-03T05:17:35.893Z"
+    },
+    {
+      "room_seq": 47,
+      "type": "run.started",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "created_at": "2026-10-03T05:17:35.901Z"
+    },
+    {
+      "room_seq": 48,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "created_at": "2026-10-03T05:17:38.785Z"
+    },
+    {
+      "room_seq": 49,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_eb05afe7-9f13-473c-933a-f30f6370753d",
+      "created_at": "2026-10-03T05:17:38.796Z"
+    },
+    {
+      "room_seq": 50,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_1d0abe16-7930-4715-85e8-ab48d71ef309",
+      "created_at": "2026-10-03T05:17:38.809Z"
+    },
+    {
+      "room_seq": 51,
+      "type": "message.posted",
+      "actor_id": "principal_51100eb8-4f17-4c5e-9daa-6e22e2dd66a2",
+      "aggregate_id": "message_619f237e-2816-4962-a1bb-ef6a5b960258",
+      "created_at": "2026-10-03T05:17:51.429Z"
+    },
+    {
+      "room_seq": 52,
+      "type": "run.turn_quiesced",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "created_at": "2026-10-03T05:17:51.446Z"
+    },
+    {
+      "room_seq": 53,
+      "type": "run.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "run_9dc132df-e103-46db-ad86-237e6b369d73",
+      "created_at": "2026-10-03T05:17:51.446Z"
+    },
+    {
+      "room_seq": 54,
+      "type": "activation.finished",
+      "actor_id": "principal_system",
+      "aggregate_id": "activation_4936cae9-dfbc-44c3-a986-f8a5c71c5b0c",
+      "created_at": "2026-10-03T05:17:51.447Z"
+    }
+  ],
+  "finalState": {
+    "runs": 6,
+    "unfinished": 0,
+    "queued": 0
+  },
+  "verdict": {
+    "unattendedRelay": "completed in this sample; Human 1 + instance 4 messages; no rescue",
+    "efficiency": "not measured against native/Raft/herdr; no budget verdict",
+    "remaining": "one redundant read-only Astra Run; Sol A initial held reply never published, replaced later; two recoverable command errors",
+    "content": "useful distinction and explicit correction; no comparative proof of superiority; Multica comparison and long-horizon benefit remain unverified"
+  },
+  "nativeCliVersions": ["0.158.0"],
+  "automaticChecks": {
+    "approvedModelRed": {
+      "passed": 2,
+      "failed": 1
+    },
+    "approvedModelGreen": {
+      "passed": 3,
+      "failed": 0
+    },
+    "discussionAndApprovalTests": {
+      "passed": 5,
+      "failed": 0
+    },
+    "fullCheck1": {
+      "exitCode": 1,
+      "packages": {
+        "passed": 2758,
+        "skipped": 22
+      },
+      "webPassed": 487,
+      "consolePassed": 59,
+      "gateUnit": {
+        "passed": 233,
+        "failed": 3
+      },
+      "reason": "Three negative approval fixtures still expected gpt-6-sol/low rejection; updated to unapproved gpt-6.1-sol/low"
+    },
+    "gateUnitAfterCorrection": {
+      "passed": 236,
+      "failed": 0
+    },
+    "fullCheck2": {
+      "exitCode": 1,
+      "packages": {
+        "passed": 2757,
+        "failed": 1,
+        "skipped": 22
+      },
+      "reason": "instance-prewarm.test.ts:1009 lease maintenance failed; later stages not run"
+    },
+    "isolatedPrewarmRecheck": {
+      "passed": 1,
+      "failed": 0
+    },
+    "verdict": "NOT fully green; prewarm timing-related failure root cause not established"
+  }
+}

@@ -169,7 +169,7 @@ test("opencode: cold and warm, opencode-cli binding, provider/model ids", () => 
 
 test("fails closed on combinations outside the approval table", () => {
   const bad = [
-    { ...base, RAH_DRIFT_MODEL: "gpt-6-sol" },
+    { ...base, RAH_DRIFT_MODEL: "gpt-6.1-sol" },
     { ...base, RAH_DRIFT_MODEL: "gpt-5.6-sol", RAH_DRIFT_EFFORT: "ultra" },
     { ...base, RAH_DRIFT_EFFORT: "ultra" },
     { ...base, RAH_DRIFT_EFFORT: "high" },
