@@ -23,9 +23,8 @@ const fakeServerPath = fileURLToPath(
 );
 
 /**
- * Contract §2 through the composed product: the frozen frontend can still
- * provision a legacy persona Agent (`POST /v3/client/agents/provision`,
- * retiring), but the daemon's Kernel never gives it an Inbox item or an
+ * Contract §2 through the composed product: historical persona data is kept,
+ * its retired HTTP creation route is gone, and the Kernel never gives it an Inbox item or an
  * Activation, while a Role instance mentioned in the same message is
  * scheduled. FAKE app-server only: no model, no paid CLI; evidence is room.db.
  */
@@ -193,9 +192,13 @@ test("the composed daemon schedules a Role instance but never a legacy persona A
         workspaceId: workspace.workspace.workspaceId,
       })
     ).room.roomId;
-    const persona = (
-      await request<{ agent: { definition: { participantId: string } } }>(
-        "/v3/client/agents/provision",
+    // Seed historical persona data directly: its retired Human endpoint must reject creation.
+    const legacy = new RoomKernel({ databasePath });
+    legacy.initialize();
+    let persona: string;
+    try {
+      persona = legacy.provisionWorkspaceAgent(
+        legacy.authenticateAccessToken(human.accessToken),
         {
           basedOnRoomSeq: await head(controlRoomId),
           controlRoomId,
@@ -206,10 +209,23 @@ test("the composed daemon schedules a Role instance but never a legacy persona A
           modelIntent: { fallback: "disabled" },
           role: "Assistant",
           runtimeOfferId: offerId,
-          sessionPolicy: "prefer_resume",
         },
-      )
-    ).agent.definition.participantId;
+      ).agent.definition.participantId;
+    } finally {
+      legacy.close();
+    }
+    const retired = await fetch(
+      `${application.clientOrigin()}/v3/client/agents/provision`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${human.accessToken}`,
+          "content-type": "application/json",
+        },
+        body: "{}",
+      },
+    );
+    assert.equal(retired.status, 404);
     await request("/v3/client/rooms/members/add", {
       basedOnRoomSeq: await head(roomId),
       idempotencyKey: "persona-member",

@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -121,6 +122,14 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
         role: `parallel worker ${String(index)}`,
         skillRefs: [],
       });
+      bindRoleDefinitionFixture(
+        kernel,
+        humanActor,
+        join(directory, "room.db"),
+        created.definition.agentId,
+        room.roomId,
+        "multi-lane-runtime-offer",
+      );
       agentDefinitionIds.push(created.definition.agentId);
     }
     const host = authenticateHost(kernel, "multi-lane-host", [

@@ -111,10 +111,11 @@ affects later context), queues while busy, never steers Channel work and is
 invisible to other instances. Only Human messages steer; other instances'
 replies are read when idle. The legacy persona-Agent path is being removed from
 the evo backend; old data is not migrated. A new data home seeds no persona
-Agent, and in the product daemon the Kernel creates no Inbox item or Activation
-for a persona Agent (an Agent definition that is not a Role instance); the
-frozen frontend's `POST /v3/client/agents/provision` stays only until phase 4
-(retiring).
+Agent, and every Kernel unconditionally creates no Inbox item or Activation
+for a persona Agent (an Agent definition that is not a Role instance). Phase-4
+close-out removed `POST /v3/client/agents/provision`, its SDK operation and the
+optional scheduling switch; low-level historical provisioning and the protocol
+configuration schema remain for compatibility and Role creation.
 
 Loom builds only the Channel foundation, never scenario-specific features: users
 reach discussion, collaborative development, planned tasks and similar goals by

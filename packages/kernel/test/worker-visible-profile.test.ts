@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -312,6 +313,14 @@ test("visible profile separates configured offer/model from the frozen actual Ru
         "INSERT INTO runtime_offer_observations(runtime_offer_observation_id,runtime_offer_id,observation_sequence,runtime_offer_snapshot_digest,host_id,host_instance_id,runtime_profile_revision_id,revision_digest,observed_at,observed_at_ms,accepted_at,accepted_at_ms,lease_until,lease_until_ms,report_json,projection_json) VALUES('observation','offer',1,'digest','host','instance','frozen-revision','digest',?,0,?,0,?,9999999999999,'{}','{}')",
       )
       .run(stamp, stamp, later);
+    bindRoleDefinitionFixture(
+      f.kernel,
+      f.actor,
+      String(f.db.prepare("PRAGMA database_list").get()!.file),
+      f.definition.definition.agentId,
+      f.roomId,
+      "offer",
+    );
     f.kernel.postMessage(f.actor, {
       roomId: f.roomId,
       body: "fixture-run-input",
@@ -436,13 +445,11 @@ test("visible profile separates configured offer/model from the frozen actual Ru
       reasoning: "high",
     });
 
-    const hidden = f.kernel.createRoom(f.actor, {
-      name: "Hidden",
-      slug: "hidden",
-    });
-    f.kernel.addMember(f.actor, {
-      roomId: hidden.roomId,
-      principalId: f.agent.principal.principalId,
+    const hidden = f.kernel.openDirectRoom(f.actor, {
+      workspaceId: f.kernel.listWorkspaces(f.actor)[0]!.workspaceId,
+      peerPrincipalId: f.agent.principal.principalId,
+      basedOnControlRoomSeq: f.head(),
+      idempotencyKey: "hidden-private-box",
     });
     f.kernel.postMessage(f.actor, {
       roomId: hidden.roomId,

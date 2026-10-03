@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -322,7 +323,7 @@ test("two remote Computer sessions publish distinct Offers and claim their own A
       sessionPolicy: "fresh",
     }).policy;
     agents.forEach((agent, index) => {
-      kernel.createAgentDefinition(humanActor, {
+      const definition = kernel.createAgentDefinition(humanActor, {
         basedOnRoomSeq: latestRoomSeq(
           kernel,
           humanActor,
@@ -341,6 +342,14 @@ test("two remote Computer sessions publish distinct Offers and claim their own A
         role: "remote implementation agent",
         skillRefs: [],
       });
+      bindRoleDefinitionFixture(
+        kernel,
+        humanActor,
+        join(directory, "room.db"),
+        definition.definition.agentId,
+        room.roomId,
+        `offer-computer-${String(index + 1)}`,
+      );
     });
     const hostCredentials = agents.map((agent, index) =>
       kernel.provisionHostCredential({

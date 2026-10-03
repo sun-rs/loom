@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -197,7 +198,6 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
     });
     const application = new DaemonApplication({
       config,
-      legacyPersonaScheduling: true,
     });
     running = application.run({ signal: shutdown.signal });
     observer = new RoomKernel({ databasePath });
@@ -282,6 +282,15 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
       },
     );
     assert.ok(onboarded.event.roomSeq > 0);
+
+    bindRoleDefinitionFixture(
+      activeObserver,
+      humanActor,
+      databasePath,
+      definition.definition.agentId,
+      roomId,
+      offerId,
+    );
 
     // 1. The Human asks for a result; the Agent begins composing its reply.
     await humanMutation("/v3/client/messages/post", {

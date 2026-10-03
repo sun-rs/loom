@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -218,6 +219,14 @@ function fixture() {
     role: "worker",
     skillRefs: [],
   });
+  bindRoleDefinitionFixture(
+    kernel,
+    humanActor,
+    join(directory, "room.db"),
+    definition.definition.agentId,
+    room.roomId,
+    "fixture-offer",
+  );
   const host = kernel.authenticateHostAccessToken(
     kernel.provisionHostCredential({
       hostId: "watchdog-host",

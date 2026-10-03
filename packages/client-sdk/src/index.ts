@@ -162,8 +162,6 @@ import {
   ClientAgentMemoryReadResponseSchema,
   ClientAgentMemoryResetRequestSchema,
   ClientAgentMemoryResetResponseSchema,
-  ClientAgentProvisionRequestSchema,
-  ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
   ClientAgentsListResponseSchema,
   ClientHealthResponseSchema,
@@ -280,8 +278,6 @@ import {
   type ClientAgentMemoryReadResponse,
   type ClientAgentMemoryResetRequest,
   type ClientAgentMemoryResetResponse,
-  type ClientAgentProvisionRequest,
-  type ClientAgentProvisionResponse,
   type ClientAgentsListRequest,
   type ClientAgentsListResponse,
   type ClientHealthResponse,
@@ -520,10 +516,6 @@ export type RahClientOperationMap = ComposerOperationMap &
     "memory.policy.update": {
       input: ClientMemoryPolicyUpdateRequest;
       output: MemoryPolicyUpdateResponse;
-    };
-    "agent.provision": {
-      input: ClientAgentProvisionRequest;
-      output: ClientAgentProvisionResponse;
     };
     "agent.room.list": {
       input: ClientAgentRoomsListRequest;
@@ -1051,13 +1043,6 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: MemoryPolicyUpdateResponseSchema,
     method: "POST",
     path: "/v3/client/memory/policy/update",
-  },
-  "agent.provision": {
-    authenticated: true,
-    input: ClientAgentProvisionRequestSchema,
-    method: "POST",
-    output: ClientAgentProvisionResponseSchema,
-    path: "/v3/client/agents/provision",
   },
   "agent.room.list": {
     authenticated: true,

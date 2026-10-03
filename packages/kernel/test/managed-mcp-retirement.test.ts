@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -97,6 +98,14 @@ function fixture(state: "failed" | "pending") {
     }).accessToken,
   );
   kernel.heartbeatHost(host);
+  bindRoleDefinitionFixture(
+    kernel,
+    humanActor,
+    databasePath,
+    agentDefinition.definition.agentId,
+    workRoom.roomId,
+    "fixture-offer",
+  );
   kernel.postMessage(humanActor, {
     roomId: workRoom.roomId,
     body: "Historical activity",

@@ -112,8 +112,6 @@ import {
   ClientAgentMemoryReadResponseSchema,
   ClientAgentMemoryResetRequestSchema,
   ClientAgentMemoryResetResponseSchema,
-  ClientAgentProvisionRequestSchema,
-  ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
   ClientAgentsListResponseSchema,
   ClientErrorResponseSchema,
@@ -423,7 +421,6 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/rooms/list",
   "/agents/manage",
   "/agents/onboard",
-  "/agents/provision",
   "/roles/create",
   "/roles/revise",
   "/roles/list",
@@ -1356,26 +1353,6 @@ export class ClientApplicationService {
         200,
         InstanceActivationAbandonResponseSchema.parse(
           this.#human.abandonBlockedActivation(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/agents/provision") {
-      const command = parseClientRequest(
-        ClientAgentProvisionRequestSchema,
-        body,
-      );
-      const { avatarKey, description, toolAccessMode, ...required } = command;
-      writeJson(
-        response,
-        200,
-        ClientAgentProvisionResponseSchema.parse(
-          this.#human.provisionWorkspaceAgent(actor, {
-            ...required,
-            ...(avatarKey === undefined ? {} : { avatarKey }),
-            ...(description === undefined ? {} : { description }),
-            ...(toolAccessMode === undefined ? {} : { toolAccessMode }),
-          }),
         ),
       );
       return;

@@ -7,7 +7,7 @@ import {
 } from "./role-instance-fixture.ts";
 
 test("unfollowed conversation is excluded from wake and check, but later mention can catch it up", () => {
-  const f = roleInstanceFixture({ scheduleLegacyPersonas: false });
+  const f = roleInstanceFixture();
   try {
     const b = f.kernel.roles.instantiate(f.actor, {
       roleId: f.role.roleId,
@@ -118,7 +118,6 @@ test("unfollowed conversation is excluded from wake and check, but later mention
 test("Task membership subscribes to ordinary later discussion, without waking nonparticipants", () => {
   let now = new Date("2026-01-01T00:00:00Z");
   const f = roleInstanceFixture({
-    scheduleLegacyPersonas: false,
     now: () => now,
   });
   try {

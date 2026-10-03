@@ -71,12 +71,4 @@ export type RoomKernelOptions = {
   runtimeCertifications?: RuntimeCertification[];
   runtimeOfferClockSkewMs?: number;
   runtimeOfferMaxTtlMs?: number;
-  /**
-   * Contract §2: whether a legacy persona Agent (an Agent definition that is
-   * not a Role instance) still gets Inbox items and Activations. The product
-   * composition (`DaemonApplication`) passes `false`; the Kernel default keeps
-   * the unit tests that still use persona definitions as generic Agent
-   * fixtures (retiring: remove once they move to Role instances).
-   */
-  scheduleLegacyPersonas?: boolean;
 };

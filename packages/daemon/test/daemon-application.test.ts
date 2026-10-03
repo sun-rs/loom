@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import {
@@ -405,7 +406,6 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     });
     let application = new DaemonApplication({
       config,
-      legacyPersonaScheduling: true,
     });
     activeShutdown = new AbortController();
     running = application.run({ signal: activeShutdown.signal });
@@ -503,6 +503,14 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
         }),
       );
       roomSeq = onboarded.event.roomSeq;
+      bindRoleDefinitionFixture(
+        activeObserver,
+        humanActor,
+        databasePath,
+        agentId,
+        roomId,
+        offerIds[index]!,
+      );
     }
 
     const initialDelivery = await requireJson<{
@@ -711,6 +719,22 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
         roomId: catalogRoom.roomId,
       }),
     );
+    const reviewerRole = await requireJson<{ role: { roleId: string } }>(
+      await clientRequest(firstOrigin, "/v3/client/roles/create", {
+        basedOnRoomSeq: provisionSequence.latestRoomSeq,
+        controlRoomId: catalogRoom.roomId,
+        idempotencyKey: "p3c-review-role",
+        configuration: {
+          displayName: "Review Agent",
+          handle: "review-agent",
+          instructions: "Review canonical Room work before release.",
+          modelIntent: { fallback: "disabled", reasoning: "default" },
+          role: "Release reviewer",
+          runtimeOfferId: offerIds[0],
+          executionWorkspace: { kind: "agent_private" },
+        },
+      }),
+    );
     const provisionedAgent = await requireJson<{
       agent: {
         definition: { participantId: string };
@@ -718,19 +742,14 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
         currentRevision: { executionWorkspace?: { kind: string } };
       };
     }>(
-      await clientRequest(firstOrigin, "/v3/client/agents/provision", {
-        basedOnRoomSeq: provisionSequence.latestRoomSeq,
-        controlRoomId: catalogRoom.roomId,
-        displayName: "Review Agent",
-        handle: "review-agent",
-        idempotencyKey: "p3c-agent-provisioned",
-        instructions: "Review canonical Room work before release.",
-        modelIntent: { fallback: "disabled", reasoning: "default" },
-        role: "Release reviewer",
-        runtimeOfferId: offerIds[0],
+      await clientRequest(firstOrigin, "/v3/client/roles/instantiate", {
+        roleId: reviewerRole.role.roleId,
+        channelId: roomId,
+        basedOnRoomSeq: latestRoomSeq(activeObserver, humanActor, roomId),
+        idempotencyKey: "p3c-review-instance",
       }),
     );
-    assert.equal(provisionedAgent.agent.handle, "review-agent");
+    assert.ok(provisionedAgent.agent.handle.startsWith("review-agent-"));
     assert.equal(
       provisionedAgent.agent.currentRevision.executionWorkspace?.kind,
       "agent_private",
@@ -790,7 +809,6 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
 
     application = new DaemonApplication({
       config,
-      legacyPersonaScheduling: true,
     });
     activeShutdown = new AbortController();
     running = application.run({ signal: activeShutdown.signal });

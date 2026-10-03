@@ -51,15 +51,12 @@ export class RoomEventWriter {
   readonly #now: () => Date;
   readonly #obligations: ActivationObligationService;
   readonly #wakeChainLimit: () => number;
-  readonly #scheduleLegacyPersonas: boolean;
 
   constructor(input: {
     createId: (prefix: string) => string;
     database: DatabaseSync;
     now: () => Date;
     obligations: ActivationObligationService;
-    /** Contract §2: `false` gives a legacy persona Agent no attention. */
-    scheduleLegacyPersonas?: boolean;
     /** evo §37 A: the live `wakeGuard.instanceChainLimit` (default 10). */
     wakeChainLimit?: () => number;
   }) {
@@ -67,7 +64,6 @@ export class RoomEventWriter {
     this.#database = input.database;
     this.#now = input.now;
     this.#obligations = input.obligations;
-    this.#scheduleLegacyPersonas = input.scheduleLegacyPersonas ?? true;
     this.#wakeChainLimit =
       input.wakeChainLimit ??
       (() => RUN_GUARD_DEFAULTS.wakeGuard.instanceChainLimit);
@@ -202,10 +198,7 @@ export class RoomEventWriter {
       }));
     }
     for (const recipient of recipients) {
-      if (
-        !this.#scheduleLegacyPersonas &&
-        isLegacyPersonaAgent(this.#database, recipient.participantId)
-      )
+      if (isLegacyPersonaAgent(this.#database, recipient.participantId))
         continue;
       if (!allowsAgentChannelAttention(this.#database, event, recipient))
         continue;

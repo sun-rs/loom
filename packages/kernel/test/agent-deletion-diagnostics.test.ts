@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -75,6 +76,26 @@ function fixture() {
   });
   const agentId = definition.definition.agentId;
   const participantId = agentPrincipal.principal.principalId;
+  const workRoom = kernel.createWorkspaceRoom(actor, {
+    workspaceId: workspace.workspace.workspaceId,
+    basedOnControlRoomSeq: currentSeq(),
+    name: "Work",
+    slug: "work",
+    kind: "channel",
+    idempotencyKey: "work-channel",
+  }).room;
+  kernel.addMember(actor, {
+    roomId: workRoom.roomId,
+    principalId: participantId,
+  });
+  bindRoleDefinitionFixture(
+    kernel,
+    actor,
+    databasePath,
+    agentId,
+    workRoom.roomId,
+    "fixture-offer",
+  );
   const db = new DatabaseSync(databasePath);
   return {
     get kernel() {
@@ -97,7 +118,7 @@ function fixture() {
       idempotencyKey: "delete",
       state: "tombstoned" as const,
     }),
-    roomId: workspace.controlRoom.roomId,
+    roomId: workRoom.roomId,
     cleanup() {
       db.close();
       kernel.close();

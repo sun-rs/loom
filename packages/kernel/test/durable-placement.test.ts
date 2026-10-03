@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -221,6 +222,14 @@ function createFixture(
     skillRefs: [],
   });
 
+  bindRoleDefinitionFixture(
+    kernel,
+    humanActor,
+    databasePath,
+    agentMutation.definition.agentId,
+    room.roomId,
+    "fixture-offer",
+  );
   return {
     agentDefinition: agentMutation.definition,
     agentDefinitionRevision: agentMutation.revision,
@@ -252,21 +261,32 @@ function addAgent(
     principalId: participant.principalId,
     roomId: fixture.controlRoom.roomId,
   });
-  fixture.kernel.createAgentDefinition(fixture.humanActor, {
-    basedOnRoomSeq: latestRoomSeq(
-      fixture.kernel,
-      fixture.humanActor,
-      fixture.controlRoom.roomId,
-    ),
-    controlRoomId: fixture.controlRoom.roomId,
-    executionPolicyRevisionId: fixture.policy.executionPolicyRevisionId,
-    idempotencyKey,
-    instructionRefs: [],
-    memoryPolicyRef: fixture.agentDefinitionRevision.memoryPolicyRef,
-    participantId: participant.principalId,
-    role: `${handle} implementation agent`,
-    skillRefs: [],
-  });
+  const addedDefinition = fixture.kernel.createAgentDefinition(
+    fixture.humanActor,
+    {
+      basedOnRoomSeq: latestRoomSeq(
+        fixture.kernel,
+        fixture.humanActor,
+        fixture.controlRoom.roomId,
+      ),
+      controlRoomId: fixture.controlRoom.roomId,
+      executionPolicyRevisionId: fixture.policy.executionPolicyRevisionId,
+      idempotencyKey,
+      instructionRefs: [],
+      memoryPolicyRef: fixture.agentDefinitionRevision.memoryPolicyRef,
+      participantId: participant.principalId,
+      role: `${handle} implementation agent`,
+      skillRefs: [],
+    },
+  );
+  bindRoleDefinitionFixture(
+    fixture.kernel,
+    fixture.humanActor,
+    fixture.databasePath,
+    addedDefinition.definition.agentId,
+    fixture.room.roomId,
+    "fixture-offer",
+  );
   return participant.principalId;
 }
 
@@ -399,7 +419,7 @@ test("Agent memory home survives restart and prevents silent empty-memory failov
   assert.throws(
     () =>
       kernel.acquireAgentExclusiveOperationLease(hostB, {
-        kind: "memory_reset",
+        kind: "memory_maintenance",
         leaseMs: 30_000,
         operationId: "foreign-home-reset",
         participantId: fixture.agentId,
@@ -508,7 +528,7 @@ test("schema upgrade refuses to guess a memory home from conflicting historical 
   assert.throws(
     () =>
       upgraded.acquireAgentExclusiveOperationLease(hostA, {
-        kind: "memory_reset",
+        kind: "memory_maintenance",
         leaseMs: 30_000,
         operationId: "ambiguous-reset",
         participantId: fixture.agentId,
@@ -526,14 +546,14 @@ test("global Agent operation fence blocks Placement scheduling without dropping 
     runtimeOffer(host, "exclusive-operation-offer"),
   );
   kernel.postMessage(humanActor, {
-    body: "Preserve this queued Activation while memory is reset",
+    body: "Preserve this queued Activation during an exclusive maintenance lease",
     idempotencyKey: "exclusive-operation-message",
     recipients: [{ participantId: agentId, reason: "mention" }],
     roomId: room.roomId,
   });
 
   const fence = kernel.acquireAgentExclusiveOperationLease(host, {
-    kind: "memory_reset",
+    kind: "memory_maintenance",
     leaseMs: 30_000,
     operationId: "placement-memory-reset",
     participantId: agentId,
@@ -2371,8 +2391,16 @@ test("a crash after recovered terminal proof automatically resolves quarantine",
 });
 
 test("terminal RunAttempt releases Kernel capacity for another Agent", () => {
-  const { agentId, clock, controlRoom, humanActor, kernel, policy, room } =
-    createFixture();
+  const {
+    agentId,
+    clock,
+    controlRoom,
+    databasePath,
+    humanActor,
+    kernel,
+    policy,
+    room,
+  } = createFixture();
   const secondAgentProvisioning = kernel.provisionPrincipal({
     handle: "second-agent",
     kind: "agent",
@@ -2386,7 +2414,7 @@ test("terminal RunAttempt releases Kernel capacity for another Agent", () => {
     principalId: secondAgentId,
     roomId: controlRoom.roomId,
   });
-  kernel.createAgentDefinition(humanActor, {
+  const secondDefinition = kernel.createAgentDefinition(humanActor, {
     basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
     controlRoomId: controlRoom.roomId,
     executionPolicyRevisionId: policy.executionPolicyRevisionId,
@@ -2401,6 +2429,14 @@ test("terminal RunAttempt releases Kernel capacity for another Agent", () => {
     role: "second implementation agent",
     skillRefs: [],
   });
+  bindRoleDefinitionFixture(
+    kernel,
+    humanActor,
+    databasePath,
+    secondDefinition.definition.agentId,
+    room.roomId,
+    "fixture-offer",
+  );
   const host = authenticateHost(kernel, "host-shared", [
     agentId,
     secondAgentId,

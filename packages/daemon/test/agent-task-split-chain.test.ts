@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import {
   mkdirSync,
@@ -209,7 +210,6 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     });
     const application = new DaemonApplication({
       config,
-      legacyPersonaScheduling: true,
     });
     running = application.run({ signal: shutdown.signal });
     observer = new RoomKernel({ databasePath });
@@ -301,6 +301,14 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
         },
       );
       roomSeq = onboarded.event.roomSeq;
+      bindRoleDefinitionFixture(
+        activeObserver,
+        humanActor,
+        databasePath,
+        agentId,
+        roomId,
+        offerIds[index]!,
+      );
     }
 
     // 1. The Human posts one top-level message that the lead must split.

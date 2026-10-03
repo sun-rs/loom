@@ -88,7 +88,6 @@ export {
 
 export class DaemonApplication {
   readonly #config: DaemonConfig;
-  readonly #legacyPersonaScheduling: boolean;
   readonly #secretProvider: SecretProvider;
   #clientOrigin: string | undefined;
   #health: DaemonHealthSnapshot;
@@ -96,12 +95,9 @@ export class DaemonApplication {
 
   constructor(input: {
     config: DaemonConfig;
-    /** Contract §2: `true` only for retiring persona-driven tests. */
-    legacyPersonaScheduling?: boolean;
     secretProvider?: SecretProvider;
   }) {
     this.#config = structuredClone(input.config);
-    this.#legacyPersonaScheduling = input.legacyPersonaScheduling ?? false;
     this.#secretProvider = input.secretProvider ?? new FileSecretProvider();
     this.#health = {
       buildVersion: DAEMON_BUILD_VERSION,
@@ -163,7 +159,6 @@ export class DaemonApplication {
       );
       core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
-        scheduleLegacyPersonas: this.#legacyPersonaScheduling,
         ...channelWorkspaceCoreOptions(this.#config),
         ...(this.#config.schemaVersion === 4 && runtimeSettings
           ? {

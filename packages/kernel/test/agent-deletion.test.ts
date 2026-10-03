@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -76,6 +77,26 @@ function fixture() {
   const definition = create(parent.principal.principalId, "definition");
   const agentId = definition.definition.agentId;
   const participantId = parent.principal.principalId;
+  const workRoom = kernel.createWorkspaceRoom(actor, {
+    workspaceId: workspace.workspace.workspaceId,
+    basedOnControlRoomSeq: currentSeq(),
+    name: "Work",
+    slug: "work",
+    kind: "channel",
+    idempotencyKey: "work-channel",
+  }).room;
+  kernel.addMember(actor, {
+    roomId: workRoom.roomId,
+    principalId: participantId,
+  });
+  bindRoleDefinitionFixture(
+    kernel,
+    actor,
+    databasePath,
+    agentId,
+    workRoom.roomId,
+    "fixture-offer",
+  );
   const db = new DatabaseSync(databasePath);
   const request = () => ({
     action: "set_state" as const,
@@ -101,7 +122,7 @@ function fixture() {
     workspaceId: workspace.workspace.workspaceId,
     request,
     currentSeq,
-    roomId: workspace.controlRoom.roomId,
+    roomId: workRoom.roomId,
     cleanup() {
       db.close();
       kernel.close();
@@ -429,14 +450,7 @@ test("a live runtime, forged exit identity, and late worker calls cannot cross t
 test("an archived channel remains read-only while Agent deletion cleans its membership and queued work", () => {
   const f = fixture();
   try {
-    const room = f.kernel.createRoom(f.actor, {
-      name: "Archived",
-      slug: "archived",
-    });
-    f.kernel.addMember(f.actor, {
-      roomId: room.roomId,
-      principalId: f.participantId,
-    });
+    const room = { roomId: f.roomId };
     f.kernel.postMessage(f.actor, {
       roomId: room.roomId,
       body: "retained history",

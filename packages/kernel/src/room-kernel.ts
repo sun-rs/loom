@@ -605,7 +605,6 @@ export class RoomKernel {
       database: this.#database,
       now: this.#now,
       obligations: this.#activationObligations,
-      scheduleLegacyPersonas: options.scheduleLegacyPersonas ?? true,
       wakeChainLimit: () => this.runGuards.wakeGuard().instanceChainLimit,
     });
     this.workerChannelAttention = new AgentChannelAttentionService({

@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import {
   mkdirSync,
@@ -510,7 +511,6 @@ async function startSameCliDaemon(caps: {
     });
     const application = new DaemonApplication({
       config,
-      legacyPersonaScheduling: true,
     });
     running = application.run({ signal: shutdown.signal });
     observer = new RoomKernel({ databasePath });
@@ -589,6 +589,14 @@ async function startSameCliDaemon(caps: {
         idempotencyKey: `same-cli-onboard-${instance.participantId}`,
         roomId,
       });
+      bindRoleDefinitionFixture(
+        activeObserver,
+        humanActor,
+        databasePath,
+        instance.agentId,
+        roomId,
+        offerId,
+      );
     }
     // Onboarding may itself wake instances; let that settle before measuring.
     writeFileSync(barrierPath, "go\n");

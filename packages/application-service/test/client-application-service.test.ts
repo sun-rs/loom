@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -401,6 +402,14 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       slug: "client-agent-onboard",
       workspaceId: workspace.workspace.workspaceId,
     }).room;
+    bindRoleDefinitionFixture(
+      kernel,
+      humanActor,
+      join(directory, "room.db"),
+      agentDefinition.definition.agentId,
+      room.roomId,
+      "offer-codex",
+    );
     const created = kernel.createTask(humanActor, {
       assigneeId: agent.principal.principalId,
       idempotencyKey: "client-task-created",
@@ -1407,29 +1416,34 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       assert.equal(retired.status, 404, `retired MCP route ${path}`);
     }
 
-    const provisionResponse = await request(
+    const provisionRequest = {
+      avatarKey: "robot",
+      basedOnRoomSeq: kernel.sync(humanActor, {
+        afterSeq: 0,
+        consumerId: "client-agent-provision-seq",
+        roomId: controlRoom.roomId,
+      }).latestRoomSeq,
+      controlRoomId: controlRoom.roomId,
+      description: "Production-backed Agent",
+      displayName: "Alice",
+      handle: "client-alice",
+      idempotencyKey: "client-agent-provisioned",
+      instructions: "Read canonical Room state before acting.",
+      modelIntent: { fallback: "disabled" as const },
+      role: "Engineering Agent",
+      runtimeOfferId: "offer-codex",
+    };
+    const retiredProvision = await request(
       "/v3/client/agents/provision",
-      {
-        avatarKey: "robot",
-        basedOnRoomSeq: kernel.sync(humanActor, {
-          afterSeq: 0,
-          consumerId: "client-agent-provision-seq",
-          roomId: controlRoom.roomId,
-        }).latestRoomSeq,
-        controlRoomId: controlRoom.roomId,
-        description: "Production-backed Agent",
-        displayName: "Alice",
-        handle: "client-alice",
-        idempotencyKey: "client-agent-provisioned",
-        instructions: "Read canonical Room state before acting.",
-        modelIntent: { fallback: "disabled" },
-        role: "Engineering Agent",
-        runtimeOfferId: "offer-codex",
-      },
+      provisionRequest,
       human.accessToken,
     );
-    assert.equal(provisionResponse.status, 200);
-    const provisioned = await jsonObject(provisionResponse);
+    assert.equal(retiredProvision.status, 404);
+    // Historical management compatibility is independent from the retired HTTP creation route.
+    const provisioned = kernel.provisionWorkspaceAgent(
+      humanActor,
+      provisionRequest,
+    );
     assert.equal(provisioned.agent.handle, "client-alice");
     assert.equal(provisioned.agent.currentRevision.displayName, "Alice");
     assert.equal(provisioned.hostBinding.hostId, host.hostId);
@@ -1530,10 +1544,11 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       },
       human.accessToken,
     );
-    assert.equal(onboardResponse.status, 200);
-    const onboarded = await jsonObject(onboardResponse);
-    assert.equal(onboarded.membership.principalId, agent.principal.principalId);
-    assert.equal(onboarded.membership.role, "member");
+    assert.equal(
+      onboardResponse.status,
+      403,
+      "a Role instance cannot join a second channel",
+    );
     const agentRoomsResponse = await request(
       "/v3/client/agents/rooms/list",
       { agentId: agentDefinition.definition.agentId },
@@ -1544,7 +1559,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       (await jsonObject(agentRoomsResponse)).rooms.map(
         (room: { roomId: string }) => room.roomId,
       ),
-      [agentOnboardRoom.roomId, room.roomId, directRoom.room.roomId],
+      [room.roomId, directRoom.room.roomId],
     );
     const hiddenAgentRoomsResponse = await request(
       "/v3/client/agents/rooms/list",
@@ -1666,9 +1681,9 @@ test("Client API authenticates humans and exposes canonical Room work without ow
             roomId: agentOnboardRoom.roomId,
           },
           human.accessToken,
-        ).then(jsonObject)
-      ).deduplicated,
-      true,
+        )
+      ).status,
+      403,
     );
     assert.equal(
       (

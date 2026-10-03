@@ -198,7 +198,6 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "postRoomMessage",
       "prepareFile",
       "previewChannel",
-      "provisionWorkspaceAgent",
       "reactMessage",
       "readChannelMemory",
       "readRoomExecution",

@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -81,7 +82,7 @@ test("Worker Reminder HTTP contract preserves causal anchoring and owner scope",
       },
       sessionPolicy: "fresh",
     });
-    kernel.createAgentDefinition(actor, {
+    const definition = kernel.createAgentDefinition(actor, {
       basedOnRoomSeq: latestRoomSeq(
         kernel,
         actor,
@@ -100,6 +101,14 @@ test("Worker Reminder HTTP contract preserves causal anchoring and owner scope",
       role: "Reminder owner",
       skillRefs: [],
     });
+    bindRoleDefinitionFixture(
+      kernel,
+      actor,
+      join(directory, "room.db"),
+      definition.definition.agentId,
+      room.roomId,
+      "fixture-offer",
+    );
     const posted = kernel.postRoomMessage(actor, {
       body: "Remind yourself to review the release.",
       idempotencyKey: "worker-reminder-anchor",

@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -818,6 +819,14 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       [room],
       "the Agent chat directory contains only shared non-control Rooms",
     );
+    bindRoleDefinitionFixture(
+      kernel,
+      ownerActor,
+      join(directory, "room.db"),
+      created.agent.definition.agentId,
+      room.roomId,
+      "fixture-offer",
+    );
     kernel.postRoomMessage(ownerActor, {
       body: "Execute this through the selected real Runtime profile.",
       idempotencyKey: "agent-alice-message",
@@ -959,6 +968,14 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       roomId: room.roomId,
     });
     advance();
+    bindRoleDefinitionFixture(
+      kernel,
+      ownerActor,
+      join(directory, "room.db"),
+      definition.definition.agentId,
+      room.roomId,
+      "fixture-offer",
+    );
     kernel.postRoomMessage(ownerActor, {
       body: "Read this canonical Room message.",
       idempotencyKey: "activity-message-posted",
@@ -1419,6 +1436,14 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     });
     assert.equal(enabled.agent.definition.state, "enabled");
     assert.equal(enabled.event.type, "agent.enabled");
+    bindRoleDefinitionFixture(
+      kernel,
+      ownerActor,
+      join(directory, "room.db"),
+      created.agent.definition.agentId,
+      roomResult.room.roomId,
+      "fixture-offer",
+    );
     kernel.postRoomMessage(ownerActor, {
       body: "The enabled Agent must use revision two.",
       idempotencyKey: "agent-manage-enabled-message",
@@ -1443,7 +1468,10 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     const pausedWithQueuedWork = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
       agentId: created.agent.definition.agentId,
-      basedOnRoomSeq: enabled.event.roomSeq,
+      basedOnRoomSeq: kernel.sync(ownerActor, {
+        roomId: workspace.controlRoom.roomId,
+        consumerId: "after-role-fixture",
+      }).latestRoomSeq,
       idempotencyKey: "agent-manage-pause-queued",
       state: "disabled",
     });

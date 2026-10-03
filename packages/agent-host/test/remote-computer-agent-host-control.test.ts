@@ -1,3 +1,5 @@
+import { DatabaseSync } from "node:sqlite";
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -55,7 +57,15 @@ function createClock() {
   };
 }
 
-test("AgentHost executes one canonical Placement over a renewable remote Computer session", async () => {
+test("remote execution protocol consumes an explicitly queued generic worker Placement and renews its Computer session", async () => {
+  await remoteControlScenario(false);
+});
+
+test("remote Role instance without session-binding capability fails closed before spawning any process", async () => {
+  await remoteControlScenario(true);
+});
+
+async function remoteControlScenario(roleInstance: boolean) {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-remote-host-"));
   const clock = createClock();
   const kernel = new RoomKernel({
@@ -133,7 +143,7 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       },
       sessionPolicy: "fresh",
     }).policy;
-    kernel.createAgentDefinition(humanActor, {
+    const definition = kernel.createAgentDefinition(humanActor, {
       basedOnRoomSeq: controlSeq(),
       controlRoomId: workspace.controlRoom.roomId,
       executionPolicyRevisionId: policy.executionPolicyRevisionId,
@@ -148,6 +158,15 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       role: "remote execution fixture",
       skillRefs: [],
     });
+    if (roleInstance)
+      bindRoleDefinitionFixture(
+        kernel,
+        humanActor,
+        join(directory, "room.db"),
+        definition.definition.agentId,
+        room.roomId,
+        "offer-remote",
+      );
     const credential = kernel.provisionHostCredential({
       hostId: "remote-computer",
       participantIds: [agent.principal.principalId],
@@ -211,7 +230,7 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       env: { RAH_FAKE_MODE: "worker-sync" },
       supervisorDirectory: join(directory, "supervisors"),
     });
-    kernel.postMessage(humanActor, {
+    const firstMessage = kernel.postMessage(humanActor, {
       body: "Execute through the remote Computer control protocol",
       idempotencyKey: "remote-host-message",
       recipients: [
@@ -219,6 +238,7 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       ],
       roomId: room.roomId,
     });
+    if (!roleInstance) queueProtocolInput(firstMessage.event);
     assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
 
     const remoteControl = createRemoteComputerAgentHostControlPort(resident);
@@ -241,7 +261,33 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       runtimeRecoveryDrivers: [],
     });
     const result = await host.reconcileOnce();
-    assert.equal(result.state, "completed");
+    if (roleInstance) {
+      assert.equal(result.state, "failed");
+      assert.ok("error" in result);
+      assert.match(result.error, /RAH_INSTANCE_HOST_UNSUPPORTED/);
+      assert.equal(
+        kernel.listRuntimeProcesses({ roomId: room.roomId }).length,
+        0,
+        "unsupported remote Role must not spawn or silently create a session",
+      );
+      assert.equal(
+        kernel.listRunAttempts({ roomId: room.roomId })[0]?.state,
+        "failed",
+      );
+      const audit = new DatabaseSync(join(directory, "room.db"));
+      try {
+        assert.equal(
+          audit.prepare("SELECT count(*) n FROM role_instance_sessions").get()!
+            .n,
+          0,
+        );
+      } finally {
+        audit.close();
+      }
+      await resident.stop();
+      return;
+    }
+    assert.equal(result.state, "completed", JSON.stringify(result));
     assert.match(
       runtime.diagnostics({
         runId: result.state === "completed" ? result.runId : "unreachable",
@@ -267,7 +313,7 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       "terminated",
     );
 
-    kernel.postMessage(humanActor, {
+    const secondMessage = kernel.postMessage(humanActor, {
       body: "Execute through the production remote Computer composition",
       idempotencyKey: "remote-host-message-composed",
       recipients: [
@@ -275,6 +321,7 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
       ],
       roomId: room.roomId,
     });
+    queueProtocolInput(secondMessage.event);
     assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
     const controller = new AbortController();
     const service = new RemoteComputerAgentHostService({
@@ -299,6 +346,58 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
     assert.equal(service.snapshot().hostId, identity.hostId);
     assert.equal(service.snapshot().hostInstanceId, identity.instanceId);
     assert.equal(resident.snapshot().state, "stopped");
+    // Protocol-only input fixture: materialize an explicit queue input rather
+    // than asking product delivery to schedule a persona. No Role and no native
+    // session lifecycle are claimed by this positive test. Product delivery's
+    // unconditional persona fence remains exercised and is asserted below.
+    function queueProtocolInput(event: {
+      eventId: string;
+      roomId: string;
+      roomSeq: number;
+    }) {
+      const db = new DatabaseSync(join(directory, "room.db"));
+      try {
+        assert.equal(
+          db.prepare("SELECT count(*) n FROM role_instances").get()!.n,
+          0,
+        );
+        assert.equal(
+          db
+            .prepare("SELECT count(*) n FROM inbox_items WHERE event_id=?")
+            .get(event.eventId)!.n,
+          0,
+          "product must not deliver to this generic definition; queue input is fixture-only",
+        );
+        const at = clock.now().toISOString();
+        db.exec("BEGIN");
+        db.prepare(
+          "INSERT INTO inbox_items(inbox_item_id,room_id,participant_id,event_id,event_seq,reason,state,created_at) VALUES(?,?,?,?,?,'mention','pending',?)",
+        ).run(
+          `inbox-protocol-${event.eventId}`,
+          event.roomId,
+          agent.principal.principalId,
+          event.eventId,
+          event.roomSeq,
+          at,
+        );
+        db.prepare(
+          "INSERT INTO activations(activation_id,room_id,participant_id,from_seq,to_seq,reason,state,available_at,available_at_ms,attempt_count,created_at,updated_at) VALUES(?,?,?,?,?,'mention','queued',?,?,0,?,?)",
+        ).run(
+          `activation-protocol-${event.eventId}`,
+          event.roomId,
+          agent.principal.principalId,
+          event.roomSeq,
+          event.roomSeq,
+          at,
+          clock.now().getTime(),
+          at,
+          at,
+        );
+        db.exec("COMMIT");
+      } finally {
+        db.close();
+      }
+    }
   } finally {
     await transport.close();
     computer.dispose();
@@ -306,7 +405,7 @@ test("AgentHost executes one canonical Placement over a renewable remote Compute
     kernel.close();
     rmSync(directory, { force: true, recursive: true });
   }
-});
+}
 
 async function waitFor(predicate: () => boolean): Promise<void> {
   const deadline = Date.now() + 5_000;

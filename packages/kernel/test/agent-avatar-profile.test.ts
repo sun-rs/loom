@@ -1,3 +1,4 @@
+import { provisionRoleFixture } from "./provision-role-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -63,7 +64,7 @@ test("an official avatar profile revision is atomic, stale-safe, and persistent"
       ],
     };
     kernel.publishRuntimeOffer(host, offer);
-    const created = kernel.provisionWorkspaceAgent(actor, {
+    const created = provisionRoleFixture(kernel, actor, {
       basedOnRoomSeq: workspace.event.roomSeq,
       controlRoomId: workspace.controlRoom.roomId,
       displayName: "Alice",

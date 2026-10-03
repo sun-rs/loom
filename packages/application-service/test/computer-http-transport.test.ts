@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -456,7 +457,7 @@ test("two independent Computer processes use only the loopback control transport
       sessionPolicy: "fresh",
     }).policy;
     agents.forEach((agent, index) => {
-      kernel.createAgentDefinition(actor, {
+      const definition = kernel.createAgentDefinition(actor, {
         basedOnRoomSeq: latestRoomSeq(
           kernel,
           actor,
@@ -475,6 +476,14 @@ test("two independent Computer processes use only the loopback control transport
         role: "remote HTTP agent",
         skillRefs: [],
       });
+      bindRoleDefinitionFixture(
+        kernel,
+        actor,
+        join(directory, "room.db"),
+        definition.definition.agentId,
+        room.roomId,
+        `remote-offer-${String(index + 1)}`,
+      );
     });
     const credentials = agents.map((agent, index) =>
       kernel.provisionHostCredential({

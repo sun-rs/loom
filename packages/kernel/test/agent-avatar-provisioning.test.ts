@@ -1,3 +1,4 @@
+import { provisionRoleFixture } from "./provision-role-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -86,7 +87,7 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       runtimeOfferId: offer.runtimeOfferId,
       sessionPolicy: "prefer_resume" as const,
     };
-    const first = kernel.provisionWorkspaceAgent(actor, request);
+    const first = provisionRoleFixture(kernel, actor, request, all.room.roomId);
     assert.ok(
       kernel
         .listRoomMemberships(actor, { roomId: all.room.roomId })
@@ -103,18 +104,18 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
         afterSeq: 0,
       })
       .events.filter((event) => event.type === "agent.first_run_requested");
-    assert.equal(firstRun.length, 1);
-    assert.equal(
-      firstRun[0]!.payload.participantId,
-      first.agent.definition.participantId,
-    );
-    assert.equal(firstRun[0]!.payload.greetingEnabled, true);
+    assert.equal(firstRun.length, 0, "Role instances do not auto-greet");
     const firstKey = first.agent.currentRevision.avatarKey!;
     assert.ok(OFFICIAL_AGENT_AVATAR_KEYS.includes(firstKey));
-    const replay = kernel.provisionWorkspaceAgent(actor, request);
+    const replay = provisionRoleFixture(
+      kernel,
+      actor,
+      request,
+      all.room.roomId,
+    );
     assert.equal(replay.deduplicated, true);
     assert.equal(replay.agent.currentRevision.avatarKey, firstKey);
-    const second = kernel.provisionWorkspaceAgent(actor, {
+    const second = provisionRoleFixture(kernel, actor, {
       ...request,
       basedOnRoomSeq: first.event.roomSeq,
       handle: "kimi",
@@ -124,7 +125,7 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
     const secondKey = second.agent.currentRevision.avatarKey!;
     assert.ok(OFFICIAL_AGENT_AVATAR_KEYS.includes(secondKey));
     assert.notDeepEqual(firstKey, secondKey);
-    const manual = kernel.provisionWorkspaceAgent(actor, {
+    const manual = provisionRoleFixture(kernel, actor, {
       ...request,
       basedOnRoomSeq: second.event.roomSeq,
       avatarKey: "cat",
@@ -138,8 +139,8 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
     kernel.initialize();
     actor = kernel.authenticateAccessToken(owner.accessToken);
     assert.equal(
-      kernel.provisionWorkspaceAgent(actor, request).agent.currentRevision
-        .avatarKey,
+      provisionRoleFixture(kernel, actor, request, all.room.roomId).agent
+        .currentRevision.avatarKey,
       firstKey,
     );
   } finally {

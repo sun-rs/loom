@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -111,6 +112,14 @@ function fixture() {
     idempotencyKey: "irt-onboarded",
     roomId: room.roomId,
   });
+  bindRoleDefinitionFixture(
+    kernel,
+    ownerActor,
+    databasePath,
+    definition.definition.agentId,
+    room.roomId,
+    "fixture-offer",
+  );
   advance();
   const hostToken = kernel.provisionHostCredential({
     hostId: "irt-host",

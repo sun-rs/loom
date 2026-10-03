@@ -1,3 +1,4 @@
+import { provisionRoleFixture } from "../../kernel/test/provision-role-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -74,7 +75,7 @@ async function fixture() {
     ],
   };
   kernel.publishRuntimeOffer(host, offer);
-  const created = kernel.provisionWorkspaceAgent(actor, {
+  const created = provisionRoleFixture(kernel, actor, {
     basedOnRoomSeq: workspace.event.roomSeq,
     controlRoomId: workspace.controlRoom.roomId,
     displayName: "Alice",
@@ -88,19 +89,21 @@ async function fixture() {
   });
 
   const controlRoomId = workspace.controlRoom.roomId;
-  const room = kernel.createWorkspaceRoom(actor, {
-    workspaceId: workspace.workspace.workspaceId,
-    kind: "channel",
-    name: "Work",
-    slug: "work",
-    visibility: "public",
-    basedOnControlRoomSeq: created.event.roomSeq,
-    idempotencyKey: "work-room",
-    allowInstanceTaskCreation: true,
-  }).room;
-  kernel.addMember(actor, {
+  const room = kernel
+    .listRooms(actor)
+    .find((room) => room.roomId === created.instance.channelId)!;
+  kernel.updateWorkspaceRoom(actor, {
     roomId: room.roomId,
-    principalId: created.agent.definition.participantId,
+    name: room.name,
+    description: room.description,
+    visibility: room.visibility!,
+    allowInstanceTaskCreation: true,
+    basedOnRoomSeq: kernel.sync(actor, {
+      roomId: room.roomId,
+      afterSeq: 0,
+      consumerId: "setup",
+    }).latestRoomSeq,
+    idempotencyKey: "task-policy",
   });
   const db = new DatabaseSync(join(directory, "room.db"));
   const wake = () =>

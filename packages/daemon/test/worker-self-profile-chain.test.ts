@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -168,6 +169,14 @@ test("DaemonApplication launches a real fake child that edits its own profile an
       roomId: room.roomId,
       principalId: agent.principal.principalId,
     });
+    bindRoleDefinitionFixture(
+      seed,
+      actor,
+      databasePath,
+      definition.definition.agentId,
+      room.roomId,
+      "offer",
+    );
     const hostId = "profile-chain-host";
     const host = seed.provisionHostCredential({
       hostId,

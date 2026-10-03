@@ -8,11 +8,11 @@ import { roleInstanceFixture } from "./role-instance-fixture.ts";
  * Agent definition that is not a Role instance — takes no part in evo
  * scheduling. The Kernel records no Inbox item and no Activation for it, so no
  * Host ever leases its work; a Role instance in the same Channel is scheduled
- * as before. The frozen frontend may still provision one (retiring endpoint).
+ * as before. Historical persona rows are constructed only by this fixture.
  */
 test("a legacy persona Agent gets no Inbox item or Activation; the Role instance beside it does", () => {
-  // The product composition's setting (DaemonApplication).
-  const f = roleInstanceFixture({ scheduleLegacyPersonas: false });
+  // Every Kernel enforces this fence, without an opt-out.
+  const f = roleInstanceFixture();
   try {
     const persona = f.kernel.provisionWorkspaceAgent(f.actor, {
       basedOnRoomSeq: f.head(f.controlRoomId),

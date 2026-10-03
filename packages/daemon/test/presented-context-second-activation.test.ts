@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "../../kernel/test/role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -202,7 +203,6 @@ test("the follow-up Activation's sync states that the message was already presen
     });
     const application = new DaemonApplication({
       config,
-      legacyPersonaScheduling: true,
     });
     running = application.run({ signal: shutdown.signal });
     observer = new RoomKernel({ databasePath });
@@ -285,6 +285,15 @@ test("the follow-up Activation's sync states that the message was already presen
         idempotencyKey: "presented-agent-onboard",
         roomId,
       },
+    );
+
+    bindRoleDefinitionFixture(
+      activeObserver,
+      humanActor,
+      databasePath,
+      definition.definition.agentId,
+      roomId,
+      offerId,
     );
 
     // 1. Human asks; the Agent begins composing and is pinned by the barrier.

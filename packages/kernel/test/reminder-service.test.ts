@@ -1,3 +1,4 @@
+import { bindRoleDefinitionFixture } from "./role-definition-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -142,6 +143,14 @@ function createFixture(
     role: "Reminder owner",
     skillRefs: [],
   });
+  bindRoleDefinitionFixture(
+    kernel,
+    humanActor,
+    join(directory, "room.db"),
+    definition.definition.agentId,
+    room.roomId,
+    "fixture-offer",
+  );
   const posted = kernel.postRoomMessage(humanActor, {
     body: "Please remind yourself to publish the result.",
     idempotencyKey: "reminder-anchor-message",
@@ -348,59 +357,30 @@ test("a due Reminder persists a receipt before exactly one owner-only Activation
   }
 });
 
-test("a cross-Room Reminder keeps its message anchor but publishes and wakes only its owner in the receipt Room", () => {
-  const fixture = createFixture();
+test("a Role instance cannot publish a reminder into another channel or wake its members", () => {
+  const f = createFixture();
   try {
-    const otherAgent = fixture.kernel.provisionPrincipal({
-      handle: "reminder-bystander",
-      kind: "agent",
-    });
-    fixture.kernel.addMember(fixture.humanActor, {
-      principalId: otherAgent.principal.principalId,
-      roomId: fixture.receiptRoom.roomId,
-    });
-    const created = fixture.kernel.reminders.schedule(fixture.worker, {
-      basedOnRoomSeq: fixture.delivery.cursorAfter,
-      channel: "#reminder-receipts",
-      delaySeconds: 30,
-      idempotencyKey: "schedule-cross-room-reminder",
-      messageId: fixture.messageId,
-      title: "Publish into the receipts Room",
-    });
-    assert.equal(created.reminder.roomId, fixture.room.roomId);
-    assert.equal(created.reminder.targetRoomId, fixture.receiptRoom.roomId);
-    assert.equal(created.reminder.msgId, fixture.messageId);
-    fixture.clock.advance(30_000);
-    assert.equal(fixture.kernel.reminders.reconcileDue().delivered, 1);
-    const targetEvents = fixture.kernel.sync(fixture.humanActor, {
-      consumerId: "cross-room-target-audit",
-      roomId: fixture.receiptRoom.roomId,
-    }).events;
-    const fired = targetEvents.find((event) => event.type === "reminder.fired");
-    assert.ok(fired);
-    assert.equal(fired.payload.anchorRoomId, fixture.room.roomId);
-    assert.equal(fired.payload.messageId, fixture.messageId);
-    assert.equal(
-      fixture.kernel
-        .listActivations({
-          participantId: otherAgent.principal.principalId,
-          roomId: fixture.receiptRoom.roomId,
-        })
-        .some(({ reason }) => reason === "reminder"),
-      false,
+    assert.throws(
+      () =>
+        f.kernel.reminders.schedule(f.worker, {
+          basedOnRoomSeq: f.delivery.cursorAfter,
+          channel: "#reminder-receipts",
+          delaySeconds: 30,
+          idempotencyKey: "cross-room",
+          messageId: f.messageId,
+          title: "Cross-room work",
+        }),
+      /active execution target/,
     );
+    f.clock.advance(30_000);
+    assert.equal(f.kernel.reminders.reconcileDue().delivered, 0);
     assert.equal(
-      fixture.kernel
-        .listActivations({
-          participantId: fixture.agent.principal.principalId,
-          roomId: fixture.receiptRoom.roomId,
-        })
-        .filter(({ reason }) => reason === "reminder").length,
-      1,
+      f.kernel.listActivations({ roomId: f.receiptRoom.roomId }).length,
+      0,
     );
   } finally {
-    fixture.kernel.close();
-    rmSync(fixture.directory, { force: true, recursive: true });
+    f.kernel.close();
+    rmSync(f.directory, { force: true, recursive: true });
   }
 });
 

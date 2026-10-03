@@ -13,7 +13,7 @@ const bodies = (
   events.filter((e) => e.type === "message.posted").map((e) => e.payload.body);
 
 test("P77: first peer handoff carries Human opening without waking every member", () => {
-  const f = roleInstanceFixture({ scheduleLegacyPersonas: false });
+  const f = roleInstanceFixture();
   try {
     const b = f.kernel.roles.instantiate(f.actor, {
       roleId: f.role.roleId,
