@@ -99,3 +99,67 @@ test("retired provision is 404 while real HTTP role create/instantiate/list/revi
     f.close();
   }
 });
+
+test("retired onboard cannot mutate a private box; direct open keeps its fixed pair and identity", async () => {
+  const f = roleInstanceFixture();
+  const service = new ClientApplicationService({
+    human: createHumanApplicationPort(f.kernel),
+    health: () => {
+      throw new Error("unused");
+    },
+  });
+  try {
+    await service.start();
+    const client = new HttpRahClient({
+      baseUrl: service.origin,
+      accessToken: () => f.owner.accessToken,
+    });
+    const fresh = await client.request("role.instantiate", {
+      roleId: f.role.roleId,
+      channelId: f.home.roomId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "fresh-private-peer",
+    });
+    const pairCount = () =>
+      Number(f.db.prepare("SELECT count(*) n FROM direct_room_pairs").get()!.n);
+    const pairsBefore = pairCount();
+    const open = () =>
+      client.request("room.direct.open", {
+        workspaceId: f.workspace.workspace.workspaceId,
+        peerPrincipalId: fresh.instance.instanceId,
+        basedOnControlRoomSeq: f.head(f.controlRoomId),
+        idempotencyKey: "direct-reopen",
+      });
+    const first = await open();
+    assert.notEqual(first.room.roomId, f.privateBox.roomId);
+    assert.equal(pairCount(), pairsBefore + 1);
+    assert.equal((await open()).room.roomId, first.room.roomId);
+    assert.equal(pairCount(), pairsBefore + 1);
+    const members = () =>
+      client.request("room.member.list", { roomId: first.room.roomId });
+    const before = await members();
+    assert.deepEqual(
+      before.memberships.map((m) => m.principalId).sort(),
+      [f.owner.principal.principalId, fresh.instance.instanceId].sort(),
+    );
+    assert.ok(before.memberships.every((m) => m.role === "member"));
+    const response = await fetch(`${service.origin}/v3/client/agents/onboard`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${f.owner.accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        agentId: f.agentId,
+        roomId: first.room.roomId,
+        basedOnRoomSeq: f.head(first.room.roomId),
+        idempotencyKey: "retired-onboard",
+      }),
+    });
+    assert.equal(response.status, 404);
+    assert.deepEqual(await members(), before);
+  } finally {
+    await service.close();
+    f.close();
+  }
+});

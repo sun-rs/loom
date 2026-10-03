@@ -64,7 +64,6 @@
       const messages = restoreArray("messages");
       const tasks = restoreArray("tasks");
       const threads = restoreArray("threads");
-      let concurrentJoinPending = !memberIds.has("agent-opencode");
 
       function restoreArray(name) {
         return JSON.parse(
@@ -545,46 +544,6 @@
             ),
             deduplicated: false,
             event,
-          };
-        }
-        if (operation === "agent.onboard") {
-          const binding = bindings.find(
-            ({ agentDefinitionId }) =>
-              agentDefinitionId === input.agentDefinitionId,
-          );
-          if (binding === undefined) throw new Error("unknown fixture Agent");
-          if (
-            binding.participantId === "agent-opencode" &&
-            concurrentJoinPending
-          ) {
-            concurrentJoinPending = false;
-            memberIds.add(binding.participantId);
-            persistMembers();
-            appendEvent({
-              aggregateId: binding.participantId,
-              aggregateType: "membership",
-              idempotencyKey: input.idempotencyKey,
-              payload: { participantId: binding.participantId },
-              type: "membership.added",
-            });
-            throw new RahClientError("conflict", "already a member", 409);
-          }
-          if (memberIds.has(binding.participantId)) {
-            throw new RahClientError("conflict", "already a member", 409);
-          }
-          memberIds.add(binding.participantId);
-          persistMembers();
-          const event = appendEvent({
-            aggregateId: binding.participantId,
-            aggregateType: "membership",
-            idempotencyKey: input.idempotencyKey,
-            payload: { participantId: binding.participantId },
-            type: "membership.added",
-          });
-          return {
-            deduplicated: false,
-            event,
-            membership: membership(binding.participantId),
           };
         }
         if (operation === "room.member.remove") {

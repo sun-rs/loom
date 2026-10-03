@@ -425,8 +425,9 @@ test(
           roomA,
           "core-chain-room-admin",
         );
-        await postJson(originOf(), token, "/v3/client/agents/onboard", {
-          agentId: agent.definition.agentId,
+        await postJson(originOf(), token, "/v3/client/rooms/members/add", {
+          principalId: agent.definition.participantId,
+          role: "member",
           basedOnRoomSeq: roomDelivery.latestRoomSeq,
           idempotencyKey: `core-chain-onboard-a-${role.handle}`,
           roomId: roomA,
@@ -467,8 +468,9 @@ test(
           roomB,
           "core-chain-room-b-admin",
         );
-        await postJson(originOf(), token, "/v3/client/agents/onboard", {
-          agentId: definitionIdByHandle.get(handle)!,
+        await postJson(originOf(), token, "/v3/client/rooms/members/add", {
+          principalId: participantIdByHandle.get(handle)!,
+          role: "member",
           basedOnRoomSeq: delivery.latestRoomSeq,
           idempotencyKey: `core-chain-onboard-b-${handle}`,
           roomId: roomB,

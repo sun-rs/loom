@@ -199,9 +199,10 @@ test(
         await postJson(
           origin,
           prepared.humanAccessToken,
-          "/v3/client/agents/onboard",
+          "/v3/client/rooms/members/add",
           {
-            agentId: agent.definition.agentId,
+            principalId: agent.definition.participantId,
+            role: "member",
             basedOnRoomSeq: roomDelivery.latestRoomSeq,
             idempotencyKey: `real-split-chain-onboard-${role.handle}`,
             roomId,

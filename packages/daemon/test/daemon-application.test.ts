@@ -495,8 +495,9 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     let roomSeq = 1;
     for (const [index, agentId] of agentDefinitionIds.entries()) {
       const onboarded = await requireJson<{ event: { roomSeq: number } }>(
-        await clientRequest(firstOrigin, "/v3/client/agents/onboard", {
-          agentId,
+        await clientRequest(firstOrigin, "/v3/client/rooms/members/add", {
+          principalId: agents[index]!.principal.principalId,
+          role: "member",
           basedOnRoomSeq: roomSeq,
           idempotencyKey: `p3c-agent-onboard-${String(index)}`,
           roomId,

@@ -7,61 +7,9 @@ import type {
   RoomSnapshot,
 } from "@rah-os/protocol";
 
-export type EnsureRoomMembershipResult =
-  | { changed: false; membership: RoomMembership }
-  | { changed: true; event: RoomEvent; membership: RoomMembership };
-
 export type EnsureRoomMembershipRemovedResult =
   | { changed: false; removedPrincipalId: string }
   | { changed: true; event: RoomEvent; removedPrincipalId: string };
-
-export async function ensureRoomMembership(
-  client: RahClient,
-  input: {
-    agentId: string;
-    basedOnRoomSeq: number;
-    idempotencyKey: string;
-    participantId: string;
-    roomId: string;
-  },
-): Promise<EnsureRoomMembershipResult> {
-  const existing = await findRoomMembership(
-    client,
-    input.roomId,
-    input.participantId,
-  );
-  if (existing !== undefined) return { changed: false, membership: existing };
-
-  try {
-    const result = await client.request("agent.onboard", {
-      agentId: input.agentId,
-      basedOnRoomSeq: input.basedOnRoomSeq,
-      idempotencyKey: input.idempotencyKey,
-      roomId: input.roomId,
-    });
-    return result.deduplicated
-      ? { changed: false, membership: result.membership }
-      : {
-          changed: true,
-          event: result.event,
-          membership: result.membership,
-        };
-  } catch (failure) {
-    try {
-      const reconciled = await findRoomMembership(
-        client,
-        input.roomId,
-        input.participantId,
-      );
-      if (reconciled !== undefined) {
-        return { changed: false, membership: reconciled };
-      }
-    } catch {
-      // Preserve the mutation failure when reconciliation itself is unavailable.
-    }
-    throw failure;
-  }
-}
 
 export async function ensureRoomMembershipRemoved(
   client: RahClient,

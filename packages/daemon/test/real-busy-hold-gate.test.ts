@@ -272,9 +272,10 @@ test(
       await postJson(
         origin,
         prepared.humanAccessToken,
-        "/v3/client/agents/onboard",
+        "/v3/client/rooms/members/add",
         {
-          agentId,
+          principalId: participantId,
+          role: "member",
           basedOnRoomSeq: roomDelivery.latestRoomSeq,
           idempotencyKey: "real-busy-hold-onboard",
           roomId,

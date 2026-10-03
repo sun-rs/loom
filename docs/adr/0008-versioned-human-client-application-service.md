@@ -2,6 +2,8 @@
 
 状态：Accepted（collaboration P2/P3 loopback Human API + full current RahClient surface + daemon E2 local，2026-08-26）
 
+evo 更新（2026-10-03）：下文 onboard 为历史基线。`POST /v3/client/agents/onboard`、对应 SDK／Human port 已退役；频道成员通过 Role 实例化创建，固定双成员私聊通过 `room.direct.open` 打开。健康字段 `agentOnboard=false` 保留兼容。见 [evo 退役说明](../evo/backend-closeout.zh-CN.md#第五刀遗留-onboard-门面退役)。
+
 ## 背景
 
 Room-first Kernel 已经拥有 principal authentication、Room ACL、ordered event、durable cursor、Task 与 InputRequest，但浏览器或桌面客户端若直接打开 SQLite、调用 Kernel object，便会复制业务 owner，并无法跨进程或跨设备演进。复用 Worker API 也不成立：Worker bearer 是短命的 Activation/RunAttempt authority，而 Human client 使用长期 principal identity，二者的权限、游标和生命周期不同。

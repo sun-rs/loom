@@ -35,7 +35,6 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "agent.memory.get",
     "agent.memory.read",
     "agent.memory.reset",
-    "agent.onboard",
     "agent.presence.list",
     "agent.reminder.list",
     "agent.room.list",
@@ -429,16 +428,6 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "agent.manage",
       path: "/v3/client/agents/manage",
-    },
-    {
-      input: {
-        agentId: "agent-definition",
-        basedOnRoomSeq: 1,
-        idempotencyKey: "agent-onboard",
-        roomId: "room-main",
-      },
-      operation: "agent.onboard",
-      path: "/v3/client/agents/onboard",
     },
     {
       input: { roomId: "room-main" },

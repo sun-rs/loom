@@ -106,8 +106,9 @@ function fixture() {
     slug: "irt-lab",
     workspaceId: workspace.workspace.workspaceId,
   }).room;
-  kernel.onboardAgentToRoom(ownerActor, {
-    agentId: definition.definition.agentId,
+  kernel.addRoomMember(ownerActor, {
+    role: "member",
+    principalId: definition.definition.participantId,
     basedOnRoomSeq: seq(room.roomId),
     idempotencyKey: "irt-onboarded",
     roomId: room.roomId,

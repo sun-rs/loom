@@ -18,7 +18,6 @@ import {
   canHumanReopenTask,
   canHumanSetTaskAssignee,
   canManageRoomMembers,
-  canOnboardWorkspaceAgent,
   createRoomViewModel,
   foundationCapabilityIssue,
   opaqueIdFromBytes,
@@ -697,24 +696,6 @@ test("write controls require both daemon capabilities and canonical manager role
       role: "member",
     }),
     false,
-  );
-  assert.equal(
-    canOnboardWorkspaceAgent({
-      agentOnboard: false,
-      caughtUp: true,
-      memberWrite: true,
-      role: "admin",
-    }),
-    false,
-  );
-  assert.equal(
-    canOnboardWorkspaceAgent({
-      agentOnboard: true,
-      caughtUp: true,
-      memberWrite: true,
-      role: "admin",
-    }),
-    true,
   );
   assert.equal(
     canCreateWorkspaceRoom({ role: "owner", roomWrite: true }),

@@ -8,7 +8,6 @@ import {
   ClientAgentProvisionRequestSchema,
   ClientAgentTrajectoryListRequestSchema,
   ClientAgentTrajectoryListResponseSchema,
-  ClientAgentOnboardRequestSchema,
   ClientAgentRoomsListRequestSchema,
   ClientAgentRoomsListResponseSchema,
   ClientAgentsListRequestSchema,
@@ -747,34 +746,11 @@ test("Client API v3 opens a Raft-shaped Direct Room without caller-selected memb
   );
 });
 
-test("Client API v3 Agent catalog onboarding resolves definitions instead of accepting participant injection", () => {
+test("Client API v3 Agent catalog and rooms require their scoped identities", () => {
   assert.throws(() => ClientAgentsListRequestSchema.parse({}));
   assert.deepEqual(
     ClientAgentsListRequestSchema.parse({ controlRoomId: "room-control" }),
     { controlRoomId: "room-control" },
-  );
-  assert.deepEqual(
-    ClientAgentOnboardRequestSchema.parse({
-      agentId: "agent-definition-1",
-      basedOnRoomSeq: 1,
-      idempotencyKey: "agent-onboard-1",
-      roomId: "room-work",
-    }),
-    {
-      agentId: "agent-definition-1",
-      basedOnRoomSeq: 1,
-      idempotencyKey: "agent-onboard-1",
-      roomId: "room-work",
-    },
-  );
-  assert.throws(() =>
-    ClientAgentOnboardRequestSchema.parse({
-      agentId: "agent-definition-1",
-      basedOnRoomSeq: 1,
-      idempotencyKey: "agent-onboard-1",
-      participantId: "injected-agent",
-      roomId: "room-work",
-    }),
   );
   assert.deepEqual(
     ClientAgentRoomsListRequestSchema.parse({

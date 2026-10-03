@@ -612,7 +612,7 @@ export function createDaemonHumanClientService(input: {
       apiVersion: CLIENT_API_VERSION,
       buildVersion: input.buildVersion,
       capabilities: {
-        agentOnboard: true,
+        agentOnboard: false,
         agentExecutionReset: true,
         agentExecutionFullReset: true,
         agentRead: true,

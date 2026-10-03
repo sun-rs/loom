@@ -187,15 +187,3 @@ export const ClientAgentsListResponseSchema = z
 export type ClientAgentsListResponse = z.infer<
   typeof ClientAgentsListResponseSchema
 >;
-
-export const ClientAgentOnboardRequestSchema = z
-  .object({
-    agentId: IdentifierSchema,
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
-    roomId: IdentifierSchema,
-  })
-  .strict();
-export type ClientAgentOnboardRequest = z.infer<
-  typeof ClientAgentOnboardRequestSchema
->;

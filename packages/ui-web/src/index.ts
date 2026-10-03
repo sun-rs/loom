@@ -521,22 +521,6 @@ export function canManageRoomMembers(input: {
   return input.caughtUp && input.memberWrite && isManagerRole(input.role);
 }
 
-export function canOnboardWorkspaceAgent(input: {
-  agentOnboard: boolean;
-  caughtUp: boolean;
-  memberWrite: boolean;
-  role: MembershipRole | undefined;
-}): boolean {
-  return (
-    input.agentOnboard &&
-    canManageRoomMembers({
-      caughtUp: input.caughtUp,
-      memberWrite: input.memberWrite,
-      role: input.role,
-    })
-  );
-}
-
 export function canCreateWorkspaceRoom(input: {
   role: MembershipRole | undefined;
   roomWrite: boolean;

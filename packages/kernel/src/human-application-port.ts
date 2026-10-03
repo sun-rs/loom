@@ -47,7 +47,6 @@ export type HumanApplicationPort = Pick<
   | "listWorkspaces"
   | "listWorkspaceMemberGraph"
   | "manageWorkspaceAgent"
-  | "onboardAgentToRoom"
   | "openDirectRoom"
   | "forwardMessages"
   | "removeRoomMember"
@@ -282,8 +281,6 @@ export function createHumanApplicationPort(
       kernel.listWorkspaceMemberGraph(actor, input),
     manageWorkspaceAgent: (actor, input) =>
       kernel.manageWorkspaceAgent(actor, input),
-    onboardAgentToRoom: (actor, input) =>
-      kernel.onboardAgentToRoom(actor, input),
     openDirectRoom: (actor, input) => kernel.openDirectRoom(actor, input),
     forwardMessages: (actor, input) => kernel.forwardMessages(actor, input),
     postRoomMessage: (actor, input) => kernel.postRoomMessage(actor, input),

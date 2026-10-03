@@ -584,8 +584,9 @@ async function startSameCliDaemon(caps: {
       throw new Error(`${path} never committed at the latest Room sequence`);
     };
     for (const instance of instances) {
-      await humanMutation("/v3/client/agents/onboard", {
-        agentId: instance.agentId,
+      await humanMutation("/v3/client/rooms/members/add", {
+        principalId: instance.participantId,
+        role: "member",
         idempotencyKey: `same-cli-onboard-${instance.participantId}`,
         roomId,
       });

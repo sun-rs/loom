@@ -139,7 +139,6 @@ import {
   ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
-  ClientAgentOnboardRequestSchema,
   ClientAgentRoomsListRequestSchema,
   ClientAgentRoomsListResponseSchema,
   ClientAgentDeletionDiagnosticsRequestSchema,
@@ -261,7 +260,6 @@ import {
   type UsageSummaryRequest,
   type UsageSummaryResponse,
   type ClientAgentTrajectoryListResponse,
-  type ClientAgentOnboardRequest,
   type ClientAgentRoomsListRequest,
   type ClientAgentRoomsListResponse,
   type ClientAgentDeletionDiagnosticsRequest,
@@ -453,10 +451,6 @@ export type RahClientOperationMap = ComposerOperationMap &
     "agent.manage": {
       input: ClientAgentManageRequest;
       output: ClientAgentManageResponse;
-    };
-    "agent.onboard": {
-      input: ClientAgentOnboardRequest;
-      output: ClientRoomMemberMutationResponse;
     };
     "role.revise": { input: RoleReviseRequest; output: RoleCreateResponse };
     "role.create": { input: RoleCreateRequest; output: RoleCreateResponse };
@@ -917,13 +911,6 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientAgentManageResponseSchema,
     path: "/v3/client/agents/manage",
-  },
-  "agent.onboard": {
-    authenticated: true,
-    input: ClientAgentOnboardRequestSchema,
-    method: "POST",
-    output: ClientRoomMemberMutationResponseSchema,
-    path: "/v3/client/agents/onboard",
   },
   "role.revise": {
     authenticated: true,

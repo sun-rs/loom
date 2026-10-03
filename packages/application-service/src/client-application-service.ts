@@ -90,7 +90,6 @@ import {
   ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
-  ClientAgentOnboardRequestSchema,
   ClientAgentRoomsListRequestSchema,
   ClientAgentRoomsListResponseSchema,
   ClientAgentManageRequestSchema,
@@ -420,7 +419,6 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/memory/reset",
   "/agents/rooms/list",
   "/agents/manage",
-  "/agents/onboard",
   "/roles/create",
   "/roles/revise",
   "/roles/list",
@@ -1276,17 +1274,6 @@ export class ClientApplicationService {
         200,
         ClientAgentManageResponseSchema.parse(
           await manageAgentAfterTerminalProof(this.#human, actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/agents/onboard") {
-      const command = parseClientRequest(ClientAgentOnboardRequestSchema, body);
-      writeJson(
-        response,
-        200,
-        ClientRoomMemberMutationResponseSchema.parse(
-          this.#human.onboardAgentToRoom(actor, command),
         ),
       );
       return;

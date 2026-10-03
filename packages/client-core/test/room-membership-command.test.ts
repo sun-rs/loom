@@ -1,13 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { FakeRahClient, RahClientError } from "@rah-os/client-sdk";
+import { FakeRahClient } from "@rah-os/client-sdk";
 import type { RoomMembership } from "@rah-os/protocol";
 
-import {
-  ensureRoomMembership,
-  ensureRoomMembershipRemoved,
-} from "../src/index.ts";
+import { ensureRoomMembershipRemoved } from "../src/index.ts";
 
 const membership: RoomMembership = {
   joinedAt: "2026-08-27T00:00:00.000Z",
@@ -15,79 +12,6 @@ const membership: RoomMembership = {
   role: "member",
   roomId: "room-main",
 };
-
-test("joining an existing Room member reconciles without repeating onboarding", async () => {
-  const operations: string[] = [];
-  const client = new FakeRahClient(async (operation) => {
-    operations.push(operation);
-    if (operation === "room.member.list") {
-      return { memberships: [membership] };
-    }
-    throw new Error(`unexpected operation ${operation}`);
-  });
-
-  const result = await ensureRoomMembership(client, {
-    agentId: "definition-codex",
-    basedOnRoomSeq: 7,
-    idempotencyKey: "join-codex",
-    participantId: membership.principalId,
-    roomId: membership.roomId,
-  });
-
-  assert.deepEqual(result, { changed: false, membership });
-  assert.deepEqual(operations, ["room.member.list"]);
-});
-
-test("a concurrent join conflict is successful only after canonical membership proves the goal", async () => {
-  const operations: string[] = [];
-  let listCount = 0;
-  const client = new FakeRahClient(async (operation) => {
-    operations.push(operation);
-    if (operation === "room.member.list") {
-      listCount += 1;
-      return { memberships: listCount === 1 ? [] : [membership] };
-    }
-    if (operation === "agent.onboard") {
-      throw new RahClientError("conflict", "already a member", 409);
-    }
-    throw new Error(`unexpected operation ${operation}`);
-  });
-
-  const result = await ensureRoomMembership(client, {
-    agentId: "definition-codex",
-    basedOnRoomSeq: 7,
-    idempotencyKey: "join-codex",
-    participantId: membership.principalId,
-    roomId: membership.roomId,
-  });
-
-  assert.deepEqual(result, { changed: false, membership });
-  assert.deepEqual(operations, [
-    "room.member.list",
-    "agent.onboard",
-    "room.member.list",
-  ]);
-});
-
-test("a failed join is not hidden when canonical membership still disagrees", async () => {
-  const failure = new RahClientError("conflict", "different conflict", 409);
-  const client = new FakeRahClient(async (operation) => {
-    if (operation === "room.member.list") return { memberships: [] };
-    if (operation === "agent.onboard") throw failure;
-    throw new Error(`unexpected operation ${operation}`);
-  });
-
-  await assert.rejects(
-    ensureRoomMembership(client, {
-      agentId: "definition-codex",
-      basedOnRoomSeq: 7,
-      idempotencyKey: "join-codex",
-      participantId: membership.principalId,
-      roomId: membership.roomId,
-    }),
-    (caught) => caught === failure,
-  );
-});
 
 test("removing an absent Room member is already reconciled", async () => {
   const operations: string[] = [];
@@ -109,4 +33,48 @@ test("removing an absent Room member is already reconciled", async () => {
     removedPrincipalId: membership.principalId,
   });
   assert.deepEqual(operations, ["room.member.list"]);
+});
+
+test("a concurrent removal reconciles only after canonical membership proves absence", async () => {
+  const operations: string[] = [];
+  let reads = 0;
+  const client = new FakeRahClient(async (operation) => {
+    operations.push(operation);
+    if (operation === "room.member.list")
+      return { memberships: ++reads === 1 ? [membership] : [] };
+    if (operation === "room.member.remove") throw new Error("response lost");
+    throw new Error(`unexpected operation ${operation}`);
+  });
+  assert.deepEqual(
+    await ensureRoomMembershipRemoved(client, {
+      basedOnRoomSeq: 8,
+      idempotencyKey: "remove",
+      participantId: membership.principalId,
+      roomId: membership.roomId,
+    }),
+    { changed: false, removedPrincipalId: membership.principalId },
+  );
+  assert.deepEqual(operations, [
+    "room.member.list",
+    "room.member.remove",
+    "room.member.list",
+  ]);
+});
+
+test("failed removal is not hidden when canonical membership still exists", async () => {
+  const failure = new Error("rejected removal");
+  const client = new FakeRahClient(async (operation) => {
+    if (operation === "room.member.list") return { memberships: [membership] };
+    if (operation === "room.member.remove") throw failure;
+    throw new Error(`unexpected operation ${operation}`);
+  });
+  await assert.rejects(
+    ensureRoomMembershipRemoved(client, {
+      basedOnRoomSeq: 8,
+      idempotencyKey: "remove",
+      participantId: membership.principalId,
+      roomId: membership.roomId,
+    }),
+    (e) => e === failure,
+  );
 });

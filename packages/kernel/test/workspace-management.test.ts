@@ -513,7 +513,7 @@ test("Channel archive is reversible, idempotent, read-only, and manager-only", (
   }
 });
 
-test("an AgentDefinition cannot be onboarded across Workspace boundaries", () => {
+test("a Role cannot be instantiated across Workspace boundaries", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-scope-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   try {
@@ -522,101 +522,56 @@ test("an AgentDefinition cannot be onboarded across Workspace boundaries", () =>
       handle: "workspace-owner",
       kind: "human",
     });
-    const agent = kernel.provisionPrincipal({
-      handle: "workspace-agent",
-      kind: "agent",
+    const actor = kernel.authenticateAccessToken(owner.accessToken);
+    const a = kernel.createWorkspace(actor, {
+      name: "A",
+      slug: "a",
+      idempotencyKey: "a",
     });
-    const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
-    const workspaceA = kernel.createWorkspace(ownerActor, {
-      idempotencyKey: "workspace-a-created",
-      name: "Workspace A",
-      slug: "workspace-a",
+    const b = kernel.createWorkspace(actor, {
+      name: "B",
+      slug: "b",
+      idempotencyKey: "b",
     });
-    const workspaceB = kernel.createWorkspace(ownerActor, {
-      idempotencyKey: "workspace-b-created",
-      name: "Workspace B",
-      slug: "workspace-b",
-    });
-    const roomB = kernel.createWorkspaceRoom(ownerActor, {
-      basedOnControlRoomSeq: workspaceB.event.roomSeq,
-      idempotencyKey: "workspace-b-room-created",
+    const channel = kernel.createWorkspaceRoom(actor, {
+      workspaceId: b.workspace.workspaceId,
+      basedOnControlRoomSeq: b.event.roomSeq,
       kind: "channel",
-      name: "Workspace B Room",
-      slug: "workspace-b-room",
-      workspaceId: workspaceB.workspace.workspaceId,
+      name: "B",
+      slug: "b",
+      idempotencyKey: "b-channel",
     });
-    kernel.addMember(ownerActor, {
-      principalId: agent.principal.principalId,
-      roomId: workspaceA.controlRoom.roomId,
-    });
-    const policy = kernel.createExecutionPolicy(ownerActor, {
-      basedOnRoomSeq: kernel.sync(ownerActor, {
-        afterSeq: 0,
-        consumerId: "workspace-agent-scope",
-        roomId: workspaceA.controlRoom.roomId,
-      }).latestRoomSeq,
-      controlRoomId: workspaceA.controlRoom.roomId,
-      idempotencyKey: "workspace-a-agent-policy-created",
-      modelIntent: {
-        fallback: "disabled",
-        reasoning: "default",
-        serviceTier: "default",
+    const role = kernel.roles.create(actor, {
+      controlRoomId: a.controlRoom.roomId,
+      basedOnRoomSeq: a.event.roomSeq,
+      idempotencyKey: "role-a",
+      configuration: {
+        handle: "reviewer",
+        displayName: "Reviewer",
+        role: "Review",
+        instructions: "Review",
+        runtimeOfferId: "unused-offer",
+        modelIntent: { fallback: "disabled" },
       },
-      preferred: [],
-      required: {
-        allowedProtocolFamilies: ["rah-worker-process/v1"],
-        capabilities: [
-          { capability: "worker_commands", minimumEvidence: "probed" },
-        ],
-        minimumIsolation: "process",
-        workspaceMode: "in_place",
-      },
-      retryPolicyRef: {
-        artifactId: "workspace-a-retry-policy",
-        contentDigest: `sha256:${"a".repeat(64)}`,
-        versionId: "workspace-a-retry-policy-v1",
-      },
-      sessionPolicy: "prefer_resume",
-    });
-    assert.equal(policy.policy.toolAccessMode, "full_access");
-    const definition = kernel.createAgentDefinition(ownerActor, {
-      basedOnRoomSeq: policy.event.roomSeq,
-      controlRoomId: workspaceA.controlRoom.roomId,
-      executionPolicyRevisionId: policy.policy.executionPolicyRevisionId,
-      idempotencyKey: "workspace-a-agent-created",
-      instructionRefs: [],
-      memoryPolicyRef: {
-        artifactId: "workspace-a-memory-policy",
-        contentDigest: `sha256:${"b".repeat(64)}`,
-        versionId: "workspace-a-memory-policy-v1",
-      },
-      participantId: agent.principal.principalId,
-      role: "Workspace A Agent",
-      skillRefs: [],
-    });
-
+    }).role;
     assert.throws(
       () =>
-        kernel.onboardAgentToRoom(ownerActor, {
-          agentId: definition.definition.agentId,
-          basedOnRoomSeq: kernel.sync(ownerActor, {
-            afterSeq: 0,
-            consumerId: "workspace-b-agent-onboard",
-            roomId: roomB.room.roomId,
-          }).latestRoomSeq,
-          idempotencyKey: "cross-workspace-onboard",
-          roomId: roomB.room.roomId,
+        kernel.roles.instantiate(actor, {
+          roleId: role.roleId,
+          channelId: channel.room.roomId,
+          basedOnRoomSeq: channel.event.roomSeq,
+          idempotencyKey: "cross-workspace",
         }),
       /workspace/i,
     );
     assert.deepEqual(
-      kernel.listRoomMemberships(ownerActor, { roomId: roomB.room.roomId }),
+      kernel.listRoomMemberships(actor, { roomId: channel.room.roomId }),
       [
         {
-          joinedAt: roomB.room.createdAt,
+          joinedAt: channel.room.createdAt,
           principalId: owner.principal.principalId,
           role: "owner",
-          roomId: roomB.room.roomId,
+          roomId: channel.room.roomId,
         },
       ],
     );
@@ -798,8 +753,9 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       slug: "production",
       workspaceId: workspace.workspace.workspaceId,
     }).room;
-    const onboarded = kernel.onboardAgentToRoom(ownerActor, {
-      agentId: created.agent.definition.agentId,
+    const onboarded = kernel.addRoomMember(ownerActor, {
+      role: "member",
+      principalId: created.agent.definition.participantId,
       basedOnRoomSeq: kernel.sync(ownerActor, {
         afterSeq: 0,
         consumerId: "agent-alice-onboard-sequence",
@@ -957,8 +913,9 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       slug: "activity-lab",
       workspaceId: workspace.workspace.workspaceId,
     }).room;
-    kernel.onboardAgentToRoom(ownerActor, {
-      agentId: definition.definition.agentId,
+    kernel.addRoomMember(ownerActor, {
+      role: "member",
+      principalId: definition.definition.participantId,
       basedOnRoomSeq: kernel.sync(ownerActor, {
         afterSeq: 0,
         consumerId: "activity-onboard-sequence",
@@ -1400,8 +1357,9 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       slug: "managed-agent-room",
       workspaceId: workspace.workspace.workspaceId,
     });
-    kernel.onboardAgentToRoom(ownerActor, {
-      agentId: created.agent.definition.agentId,
+    kernel.addRoomMember(ownerActor, {
+      role: "member",
+      principalId: created.agent.definition.participantId,
       basedOnRoomSeq: kernel.sync(ownerActor, {
         afterSeq: 0,
         consumerId: "agent-manage-room-onboard",

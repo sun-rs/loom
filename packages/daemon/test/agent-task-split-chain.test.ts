@@ -292,9 +292,10 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     let roomSeq = 1;
     for (const [index, agentId] of agentDefinitionIds.entries()) {
       const onboarded = await clientRequest<{ event: { roomSeq: number } }>(
-        "/v3/client/agents/onboard",
+        "/v3/client/rooms/members/add",
         {
-          agentId,
+          principalId: agents[index]!.principal.principalId,
+          role: "member",
           basedOnRoomSeq: roomSeq,
           idempotencyKey: `split-agent-onboard-${String(index)}`,
           roomId,

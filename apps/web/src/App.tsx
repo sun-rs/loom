@@ -27,7 +27,6 @@ import { InteractivePopover } from "@rah-os/ui-web/neo-brutalist/interactive-pop
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  ensureRoomMembership,
   ensureRoomMembershipRemoved,
   loadOrCreateConsumerId,
   MessageSession,
@@ -85,7 +84,6 @@ import type {
 import {
   canCreateWorkspaceRoom,
   canManageRoomMembers,
-  canOnboardWorkspaceAgent,
   createRoomViewModel,
   foundationCapabilityIssue,
   mentionedRoomAgentIds,
@@ -1508,12 +1506,6 @@ function WorkspaceScreen({
     memberWrite: health?.capabilities.memberWrite === true,
     subjectKind: "human",
   });
-  const canOnboardCurrentRoomAgent = canOnboardWorkspaceAgent({
-    agentOnboard: health?.capabilities.agentOnboard === true,
-    caughtUp: roomData?.caughtUp === true,
-    memberWrite: health?.capabilities.memberWrite === true,
-    role: currentRoomRole,
-  });
   const canCreateCurrentWorkspaceRoom = canCreateWorkspaceRoom({
     role: workspaceMembershipRole,
     roomWrite: health?.capabilities.roomWrite === true,
@@ -2313,71 +2305,6 @@ function WorkspaceScreen({
       health,
       roomData,
     ],
-  );
-
-  const onboardAgent = useCallback(
-    async (binding: AgentMembershipIdentity) => {
-      if (activeRoom?.kind === "channel") {
-        throw new Error(
-          "请在 Role 管理选择配置并创建新实例，已有实例不能复用到另一频道。",
-        );
-      }
-      if (activeRoom === undefined || roomData === undefined) return;
-      if (!canOnboardCurrentRoomAgent) {
-        throw new Error("当前 Human 没有在此 Room 添加 Agent 的权限");
-      }
-      if (!roomData.caughtUp) {
-        throw new Error("Room 尚未追赶到最新位置，暂不能添加 Agent");
-      }
-      const session = sessions.current.get(activeRoom.roomId);
-      if (session === undefined) {
-        throw new Error("当前 Room 尚未建立 canonical session");
-      }
-      const idempotencyKey = `web-agent-onboard-${browserOpaqueId()}`;
-      const result = await runRoomMutationAtLatest({
-        mutate: (basedOnRoomSeq) =>
-          ensureRoomMembership(client, {
-            agentId: binding.agentId,
-            basedOnRoomSeq,
-            idempotencyKey,
-            participantId: binding.participantId,
-            roomId: activeRoom.roomId,
-          }),
-        session,
-      });
-      setRoomData((current) =>
-        current === undefined
-          ? current
-          : {
-              ...current,
-              activeMemberIds: current.activeMemberIds.includes(
-                binding.participantId,
-              )
-                ? current.activeMemberIds
-                : [...current.activeMemberIds, binding.participantId],
-              caughtUp: result.changed ? current.caughtUp : false,
-              latestRoomSeq:
-                result.changed && result.event !== undefined
-                  ? Math.max(current.latestRoomSeq, result.event.roomSeq)
-                  : current.latestRoomSeq,
-              members: current.members.some(
-                ({ principalId }) =>
-                  principalId === result.membership.principalId,
-              )
-                ? current.members
-                : [
-                    ...current.members,
-                    {
-                      handle: binding.handle,
-                      kind: "agent" as const,
-                      principalId: binding.participantId,
-                    },
-                  ],
-            },
-      );
-      setReload((value) => value + 1);
-    },
-    [activeRoom, canOnboardCurrentRoomAgent, client, roomData],
   );
 
   const removeAgent = useCallback(
@@ -4905,19 +4832,6 @@ function WorkspaceScreen({
                 ) : null}
                 {roomMembersOpen ? (
                   <RoomMembersDialog
-                    onCreateAgent={
-                      canCreateCurrentWorkspaceAgent &&
-                      canOnboardCurrentRoomAgent &&
-                      activeRoom
-                        ? () => {
-                            setAgentCreateChannel({
-                              roomId: activeRoom.roomId,
-                              name: activeConversationName ?? activeRoom.name,
-                            });
-                            setAgentCreateOpen(true);
-                          }
-                        : undefined
-                    }
                     onHideAll={async () => {
                       if (!activeWorkspace) return;
                       await changeSystemChannel(client, activeWorkspace, true);
@@ -4949,12 +4863,7 @@ function WorkspaceScreen({
                       />
                     )}
                     key={`${currentPrincipal?.principalId}:${activeRoom?.roomId}`}
-                    canAdd={
-                      activeRoom?.kind !== "channel" &&
-                      canOnboardCurrentRoomAgent &&
-                      roomData?.caughtUp === true &&
-                      activeRoom?.archivedAt === undefined
-                    }
+                    canAdd={false}
                     canLeave={currentRoomLeave.allowed}
                     canDelete={
                       canManageCurrentRoomMembers &&
@@ -4984,7 +4893,6 @@ function WorkspaceScreen({
                     members={(roomData?.members ?? []).filter(
                       ({ principalId }) => activeMemberIdSet.has(principalId),
                     )}
-                    onAdd={onboardAgent}
                     onArchive={() => changeRoomArchiveState(true)}
                     onClose={() => setRoomMembersOpen(false)}
                     onDelete={deleteCurrentRoom}

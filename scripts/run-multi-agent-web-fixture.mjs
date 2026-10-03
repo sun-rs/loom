@@ -295,11 +295,12 @@ if (command === "debug models" || command === "debug models --bundled") {
   }
 
   let roomSeq = latestRoomSeq(seed, humanActor, productRoom.room.roomId);
-  for (const [index, agentId] of agentDefinitionIds
+  for (const [index] of agentDefinitionIds
     .slice(0, onboardAgentCount)
     .entries()) {
-    const onboarded = seed.onboardAgentToRoom(humanActor, {
-      agentId,
+    const onboarded = seed.addRoomMember(humanActor, {
+      principalId: agents[index].principal.principalId,
+      role: "member",
       basedOnRoomSeq: roomSeq,
       idempotencyKey: `web-multi-agent-onboard-${String(index)}`,
       roomId: productRoom.room.roomId,

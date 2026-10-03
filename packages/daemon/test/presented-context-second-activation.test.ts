@@ -278,9 +278,10 @@ test("the follow-up Activation's sync states that the message was already presen
     };
 
     await clientRequest<{ event: { roomSeq: number } }>(
-      "/v3/client/agents/onboard",
+      "/v3/client/rooms/members/add",
       {
-        agentId: definition.definition.agentId,
+        principalId: definition.definition.participantId,
+        role: "member",
         basedOnRoomSeq: 1,
         idempotencyKey: "presented-agent-onboard",
         roomId,

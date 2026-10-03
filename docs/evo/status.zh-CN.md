@@ -19,7 +19,7 @@ P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-dire
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
 - `evo`：负责人于 2026-10-02 授权开始窄 phase 4。第一刀接入 Role 列表／保存配置／创建频道实例／进入聊天，第二刀接入 Role 修订与频道设置；main 不变，原实例资料侧栏保留。控制台暂保留，完整设置、记忆和私聊布局尚未迁入产品 UI。见[第一刀设计与验收](phase4-first-slice.zh-CN.md)及[第二刀设计与验收](phase4-slice2.zh-CN.md)。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
-- 当前部署：2026-10-03 已退休端点门禁迁移（任务书日期10-04），基线 `1287ea2` 加本批门禁／文档改动，产品源码不变；schema81，com.loom.evo优雅重启PID79909，验证构建buildId `f764c691ccd13c1b`。两库sqlite备份及完整state核验通过，备份`pre-restart-retired-gates-e112e4ff-19af-41c8-a8e3-68cd20dd7422`；11类业务表哈希不变，4条persona Inbox/Activation均0。正式Chrome刷新核验Role配置、参与频道与历史消息。完整check及本刀浏览器门禁通过，无付费调用；[断言清单、验证与部署](retired-endpoint-gates.zh-CN.md)。
+- 当前部署：2026-10-03 onboard旧门面退役（任务书日期10-04），基线 `25ea2ce` 加本条目所在清理批次；schema81，com.loom.evo优雅重启PID46548，验证构建buildId `85a2d52a33dc2848`。两库sqlite备份及完整state核验通过，备份`pre-restart-legacy-facade-ceb24403-3c46-46fa-9a52-2b124c7b0148`；11类业务表哈希不变，4条persona Inbox/Activation均0。正式Chrome刷新核验频道历史、成员设置与Role配置。完整check、格式、差异及本刀三组浏览器门禁通过，无付费调用；[复核、断言清单与部署](backend-closeout.zh-CN.md#第五刀遗留-onboard-门面退役)。
 - 临时监听调整：本机 Tailscale 为 `Stopped`，原 `100.101.107.87` 已不在接口上，重启曾因 `EADDRNOTAVAIL` 退出；现仅监听 `127.0.0.1:4176`，未开启 VPN、未开放所有网卡。原 launchd plist 保存在 `~/.loom/evo/backups/pre-restart-reply-default-b1409937-1f57-48ae-93ac-72f32da8aaf1/com.loom.evo.before-loopback.plist`；恢复原 Tailnet/LAN 入口需先恢复对应网络，再恢复此配置。
 - 数据库 schema 81（81：Task 消息列关注回填；80：频道实例自主创建 Task 开关；79：逐 Run 精确读取、输出收据与消费凭据；78：频道 `channel_steer_enabled`；77：呈现窗口冻结补读下界 `catch_up_json`）。运行时设置 `~/.loom/evo/state/runtime-settings.json` 修订 1：`prewarm.enabled = false`（负责人 2026-09-27 关闭预热；代码默认值现也为关闭，设置文件缺省时不预热），其余取默认值（全局 20、每 CLI 4、启动闸门 5 个 / 500 ms、唤醒上限 10、看门狗 15 min / 15 min / 4 h）。
 - 常驻默认：Codex、OpenCode 常驻开启；Claude 常驻默认关闭（须 `warmRuntimes.claude.enabled: true`）；Kimi 每轮冷进程。打包（SEA）构建回退为每轮模式。
@@ -136,13 +136,13 @@ Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户
 3. s2-spec §9 四问：默认值（TTL 30 min、软 12/硬 20、RSS 2 GiB、12 h、无进展 15 min）是否接受；第 2 问已按 Kimi 选项 A 与 Claude 默认关闭执行但未正式签字；轮中压缩丢句柄重试成本；Codex 冒烟关口授权时机。s2-spec 本身未正式签字。
 4. OpenCode 热路径是否补 `OPENCODE_PERMISSION` 全局 allow（历史第二十五节偏离）。
 5. Codex `$CODEX_HOME/AGENTS.md` 是否换专用 CODEX_HOME（涉及已有 thread 迁移）。
-6. 本机遗留的 fake `opencode serve` 孤儿进程是否清理（`node scripts/cli-efficiency/fixture-orphans.mjs` 只列不杀）。
+6. 已清理遗留 fake `opencode serve` 孤儿：核对进程身份、已删除临时目录及两库无正式运行归属后 SIGTERM，扫描归零；不改清扫器。
 7. （已裁定、实现并经 P44 真实复验）Human @ 只唤醒被点名实例并附补读段（合同 §3；调研 `~/.loom/reviews/2026-09-27-mention-wake-research.md`）。实例回复里署名式的 @（如"由 @x 著"）按实例 @ 规则唤醒对方：负责人 2026-09-27 裁定维持现状（实例互相 @ 唤醒是聊天室协作的基础，由链上限兜底）。
 
 技术未决（带触发条件）：
 
 - 远端 Role session 绑定缺口：远端控制口缺少 `recordInstanceSessionBinding`，Role 实例被 `RAH_INSTANCE_HOST_UNSUPPORTED` 拒绝（`packages/agent-host/src/agent-host.ts:485–496`）；机制冻结，本刀只登记，需要单独裁定后续范围。
-- `agents/onboard`（`agent.onboard`）**不是死代码，是待退役的旧入口**：application-service 保留路由与处理（`packages/application-service/src/client-application-service.ts:423,1283`），且产品前端仍在 `RoomMembersDialog` 的 `onAdd` 上接线（`apps/web/src/App.tsx:4987`）。频道场景下 `canAdd` 已禁用（`App.tsx:4952` 的 `kind !== "channel"`），点击会抛出"请在 Role 管理创建新实例"，因此该路径对频道不可达，但仍对非频道 Room 可达。真正退役它需要同时改前端接线与端点，属专门一刀。此前把它记为"无活调用方"不准确。
+- `agents/onboard` 已退役：此前前端确有接线，但 direct 的双成员在创建时固定、Kernel 拒绝成员变更，正常双方又都是 member，故没有成功添加第三人的产品路径。本刀删除前端到 Kernel 的整链，HTTP 返回404；私聊仍走 `room.direct.open`，频道新增仍走 Role 实例化。健康字段 `agentOnboard` 保留兼容并改为 false。见[本刀复核与验证](backend-closeout.zh-CN.md#第五刀遗留-onboard-门面退役)。
 
 - Worker 命令写法：面向模型的命令统一为绝对路径 `"$RAH_WORKER_CLI" worker …`（原 116 处裸 `rah …` 已改；本机 `/opt/homebrew/bin/rah` 是旧项目 CLI，登录 shell 中会遮蔽裸 `rah`）。曾改为 `loom-worker`，P61/P62 新旧交替对照显示它诱发每轮先重读/检查（+1 次生成）与 2/7 样本的残缺最终回复，已回退；`loom-worker` 包装脚本保留但不对模型宣传。`message-read` 对本轮已送达正文只给引用；两条提示词行为规则已删，`Reply:` 契约补全为“不要先 message-check 或 message-read”。效率仍 over-budget（首轮查路径 +1 次生成）。
 - P45 重复通知修复已实现、免费检查通过并部署：按成功 Run 的精确消费凭据取消未执行通知，不以最高已读位置完成候选；详见[设计与验证](read-covered-activation-plan.zh-CN.md)。P46 真实样本验证 Codex 重复通知被取消，但 Claude 账号禁用阻塞整体验收；效率对照仍未复跑。见[本轮证据](evidence/2026-09-29-discussion-recheck.md)。

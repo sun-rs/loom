@@ -273,9 +273,10 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
     };
 
     const onboarded = await clientRequest<{ event: { roomSeq: number } }>(
-      "/v3/client/agents/onboard",
+      "/v3/client/rooms/members/add",
       {
-        agentId: definition.definition.agentId,
+        principalId: definition.definition.participantId,
+        role: "member",
         basedOnRoomSeq: 1,
         idempotencyKey: "busy-hold-agent-onboard",
         roomId,

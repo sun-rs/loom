@@ -1544,8 +1544,21 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       },
       human.accessToken,
     );
+    assert.equal(onboardResponse.status, 404, "onboard is retired");
     assert.equal(
-      onboardResponse.status,
+      (
+        await request(
+          "/v3/client/rooms/members/add",
+          {
+            principalId: agentDefinition.definition.participantId,
+            roomId: agentOnboardRoom.roomId,
+            basedOnRoomSeq: 1,
+            role: "member",
+            idempotencyKey: "cross-channel-membership",
+          },
+          human.accessToken,
+        )
+      ).status,
       403,
       "a Role instance cannot join a second channel",
     );
@@ -1683,7 +1696,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
           human.accessToken,
         )
       ).status,
-      403,
+      404,
     );
     assert.equal(
       (

@@ -194,8 +194,9 @@ test("Role is inert configuration; two channel instances receive independent con
     }
     assert.throws(
       () =>
-        kernel.onboardAgentToRoom(actor, {
-          agentId: instances[0]!.agent.definition.agentId,
+        kernel.addRoomMember(actor, {
+          role: "member",
+          principalId: instances[0]!.instance.instanceId,
           roomId: channels[1]!.room.roomId,
           basedOnRoomSeq: head(channels[1]!.room.roomId),
           idempotencyKey: "cross-channel",

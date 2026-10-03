@@ -421,15 +421,25 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   const threadSyncStart = app.indexOf("useEffect", openThreadStart);
   const ensureActiveThreadStart = app.indexOf("const ensureActiveThread");
   const submitThreadReplyStart = app.indexOf("const submitThreadReply");
-  const onboardAgentStart = app.indexOf(
-    "const onboardAgent",
+  const removeAgentStart = app.indexOf(
+    "const removeAgent",
     submitThreadReplyStart,
+  );
+  assert.doesNotMatch(
+    app,
+    /const onboardAgent|onAdd=\{onboardAgent\}/u,
+    "the retired onboarding facade has no product callback",
+  );
+  assert.match(
+    app,
+    /canAdd=\{false\}/u,
+    "existing instances cannot be added through the legacy member picker",
   );
   assert.ok(openThreadStart >= 0 && threadSyncStart > openThreadStart);
   assert.ok(
     ensureActiveThreadStart > threadSyncStart &&
       submitThreadReplyStart > ensureActiveThreadStart &&
-      onboardAgentStart > submitThreadReplyStart,
+      removeAgentStart > submitThreadReplyStart,
   );
   assert.doesNotMatch(
     app.slice(openThreadStart, threadSyncStart),
@@ -447,7 +457,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     "the structural Thread creation must not wake Agents before the reply",
   );
   assert.match(
-    app.slice(submitThreadReplyStart, onboardAgentStart),
+    app.slice(submitThreadReplyStart, removeAgentStart),
     /await ensureActiveThread\(\)/u,
     "the first reply reuses the single canonical Thread owner",
   );

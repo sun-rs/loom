@@ -249,9 +249,10 @@ test(
         await postJson(
           origin,
           prepared.humanAccessToken,
-          "/v3/client/agents/onboard",
+          "/v3/client/rooms/members/add",
           {
-            agentId: agent.agent.definition.agentId,
+            principalId: agent.agent.definition.participantId,
+            role: "member",
             basedOnRoomSeq: onboardDelivery.latestRoomSeq,
             idempotencyKey: `real-role-contrast-onboard-${role.handle}`,
             roomId,

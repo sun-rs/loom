@@ -435,7 +435,7 @@ export function RoomMembersDialog({
   candidates: readonly ReturnType<typeof roomAgentCandidates>[number][];
   members: readonly Principal[];
   memberships?: readonly RoomMembership[];
-  onAdd: (agent: AgentMembershipIdentity) => Promise<void>;
+  onAdd?: (agent: AgentMembershipIdentity) => Promise<void>;
   onArchive: () => Promise<void>;
   onClose: () => void;
   onHideAll?: () => Promise<void>;
@@ -474,7 +474,7 @@ export function RoomMembersDialog({
     id: string;
   }>();
   const fixedMembership = room?.kind === "channel" && room.slug === "all";
-  const canAdd = allowedAdd && !fixedMembership;
+  const canAdd = allowedAdd && onAdd !== undefined && !fixedMembership;
   const canRemove = allowedRemove && !fixedMembership;
   const canManageRoles = allowedRoles && !fixedMembership;
   const [pendingAgentId, setPendingAgentId] = useState<string>();
@@ -582,7 +582,7 @@ export function RoomMembersDialog({
   const addSelection = async (
     agents: ReturnType<typeof roomAgentCandidates>,
   ) => {
-    if (mutationPendingRef.current || !canAdd)
+    if (mutationPendingRef.current || !canAdd || onAdd === undefined)
       return agents.map((a) => a.participantId);
     mutationPendingRef.current = true;
     const failed: string[] = [];

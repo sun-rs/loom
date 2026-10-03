@@ -188,3 +188,55 @@ TDD反证在独立副本进行：只去掉 AgentHost围栏仍被 GenericProcessA
 - 远端Role绑定能力仍缺失，已有双层拒绝围栏与新增负例守住，单独一刀处理；8组对照未发现修订1误拦Role回归。
 - 历史persona脚本与低层兼容代码仍在，已删入口不再可用；保留历史数据不等于恢复persona产品路径。
 - 本刀只完成所列范围，不宣称整个后端或全部legacy清理完成。
+
+## 第五刀：遗留 onboard 门面退役
+
+任务书 `2026-10-04-legacy-facade-cleanup-brief.md`；开始时 evo HEAD `25ea2ce`，工作树干净。执行机日期仍为2026-10-03。
+
+### 产品路径复核与代码
+
+此前把 onboard 记作无前端调用方是不准确的；App 确实把回调交给成员对话框。但 `CollaborationService.openDirectRoom` 为两人创建固定的 member 成员关系；`#assertMutableMembershipRoom` 明确拒绝 direct 成员变更。旧 UI 又要求 manager 才允许 onboard，因此不存在往正常私聊加入第三人的成功产品路径。先报告此结论，再删除接线。
+
+- App 删除 onboard 回调、权限计算和成员对话框的创建／添加回调，`canAdd=false`。direct 的旧添加入口明确禁用；频道仍从 Role 管理实例化，私聊仍用 `room.direct.open`。
+- 删除 client-core `ensureRoomMembership`、SDK `agent.onboard`、HTTP `/agents/onboard`、Kernel `onboardAgentToRoom` 与 Human port 暴露。
+- 删除独立的 `ClientAgentOnboardRequestSchema`/type：全仓确认无其它 Schema 依赖。保留 provision 配置 Schema、底层 `provisionWorkspaceAgent` 及所有本刀排除的管理／重置／房间读取接口。
+- 删除已无产品消费者的 UI 权限 helper `canOnboardWorkspaceAgent`。健康协议字段 `agentOnboard` 保留，daemon 实际值改为 false。
+- 共享成员对话框的通用添加展示仍供独立组件夹具使用；`onAdd` 改为可选且缺失时禁止添加，不再连接任何 onboard 业务路径。
+
+逐文件产品改动：`App.tsx` 删除消费链；`room-dialogs.tsx` 将添加回调可选化并在缺失时禁用；`client-core/src/index.ts` 删除添加对账封装、保留移除；`client-sdk/src/index.ts` 删除操作类型／Schema导入／路径；`client-application-service.ts` 删除允许路径与handler；`room-kernel.ts` 删除门面方法；`human-application-port.ts` 删除端口暴露；`agent-definition.ts` 删除独立请求Schema/type；`ui-web/src/index.ts` 删除退役权限helper；`daemon-application-support.ts` 能力值改false。`ADR-0008` 标注旧onboard描述已被evo替代，status更新当前状态，本文登记验证。
+
+### 测试迁移与放弃的旧断言
+
+| 文件／类别                                                                  | 保留／改形态／退休                                                                                                             |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Kernel instance-runtime、run-attempt-usage、workspace-management 的成员建立 | 通过现有 addRoomMember 建夹具，保留运行、用量、管理与活动断言及既有 Role 出处绑定                                              |
+| role-channel-mvp、application-service                                       | 跨频道拒绝走正式成员接口继续断言；旧 onboard HTTP 单独要求404                                                                  |
+| workspace-management 跨 Workspace                                           | 改为 Role 在另一 Workspace 实例化被拒且目标成员不变，不再断言退休 AgentDefinition onboard                                      |
+| client-core                                                                 | 删除加入已有 Agent 的3个旧流程测试；成员移除的缺席、冲突后核实、失败不吞掉分别验证                                             |
+| protocol、SDK、Human port                                                   | 移除退休操作的解析／映射／端口清单项，保留 Agent catalog/rooms 及其它接口断言                                                  |
+| role-http-closeout                                                          | 临时库实际 HTTP 创建私聊、重复打开复用、只有双方 member、退役调用404且成员不变；Role create/instantiate/list/revise 原验证保留 |
+| run-multi-agent-web-fixture                                                 | 使用 addRoomMember 建现有测试成员，不再调用退休 Kernel 方法                                                                    |
+| room-agent-membership.html                                                  | 删除退休 onboard mock 与专属并发加入变量，其它消息／移除 mock 保留                                                             |
+
+没有新增或退休 npm 门禁入口。失去产品对应的是“把既有 Agent 加到另一个 Room”的重试与 onboard 身份解析；并不伪造 Role 可复用到第二频道。通用移除对账语义仍验证。远端机制冻结，本刀未动。
+
+### 孤儿清理
+
+确认 PID35099 为 UID501、ppid1、启动于2026-09-27 14:02:06 的 `loom-og-record-ZK6FKY/fake-opencode.mjs serve`；临时父目录已不存在，打开文件不含正式数据，正式 `runtime_processes`、`instance_runtimes` 与 runtime registry 均无相应 PID／路径。发信号前重新核对身份，只发送 SIGTERM。随后进程消失，fixture-orphans 报零；没有终止正式进程。
+
+### 验证与部署
+
+代码结论：上述退役与夹具迁移完成，未改远端、Console、目标合同或调度策略。
+
+自动检查：红测试先得到 onboard 403≠404；删除整链后通过。首次完整检查暴露6项旧HTTP夹具失败，迁移后专项26/26通过；第二次后端2758/2758通过，Web源码边界测试1项失败，保留原消息列断言改定位后487/487通过。最终完整 `npm run check` 退出0：packages 2780项（2758通过，22个原有opt-in跳过）、Web487、Console59、效率脚本单测236、parity34、浏览器策略15、bilateral3；repository4、CI8、release19、workbench20、component-spec40、Raft contract34均通过。根/Web/Console typecheck及UI校验通过。`npm run format:check`、`git diff --check`通过。未新增skip或放宽业务断言。
+
+浏览器/API结论：`npm run test:web:roles`、`npm run test:web:room-add-members`、`npm run test:web:phase4-slice2`全部通过（桌面1440宽及390×844，临时真实daemon/Kernel + Fake CLI）。`npm run build:web:workbench`通过；仅既有大bundle提示。临时HTTP测试2/2通过，验证Role四命令、私聊新建／重复打开／固定双成员及退休端点404。正式Chrome刷新后读取P95频道历史，查看频道成员设置中disabled的添加按钮，再读P95 Codex A配置（gpt-6-luna/low）及参与频道；没有发送消息或保存业务配置。
+
+部署结论：2026-10-03，活动工作检查通过后，room.db、runtime-registry.db分别sqlite `.backup`并quick_check=ok；另做完整state备份校验与副本升级预检。备份 `~/.loom/evo/backups/pre-restart-legacy-facade-ceb24403-3c46-46fa-9a52-2b124c7b0148`。优雅停止com.loom.evo旧PID79909并确认退出，启动同一数据目录的新PID46548，监听127.0.0.1:4176；buildId `85a2d52a33dc2848`，冻结前端snapshot `5644a2cb70e2ff66bcdac86dcf8924bdd0489f34477b94080fd94758c4127e6e`。后端运行已验证的TS源码；基线25ea2ce加本刀改动，部署后packages/scripts/apps/web逐文件SHA复核不变。部署后11类业务表全量行哈希不变，schema81、quick_check/foreign_key_check正常，4条persona及其0 Inbox/0 Activation保留。4条SOS队列、2条隔离记录未被启动。正式页面核验后重复数据与源码比对仍一致。
+
+### 不符事实、未覆盖与遗留风险
+
+- 任务书所谓“非频道 Room 可达”准确含义是源代码仍接线；正常 direct 不满足 UI 管理权限，Kernel 也不允许变更成员，并非成功可用的产品流程。
+- 补查发现旧多 Agent Web 夹具脚本、5个免费daemon集成测试和7个opt-in真实门禁仍调用 onboard；已迁移请求到现有成员接口。旧 HTML mock 已删除。首次符号搜索漏掉 HTTP 路径字符串，扩大搜索后源码中仅留下3处404负例。
+- 未运行付费 CLI、效率对照、远端 Role 执行；未处理预热、fork、side。真实浏览器门禁使用临时库与 Fake CLI，不能视为真实模型验收。
+- 本刀只退役 onboard，不声称所有 legacy 门面或历史数据已清。旧正式数据保留。

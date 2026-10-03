@@ -3523,48 +3523,6 @@ export class RoomKernel {
       ),
     };
   }
-  onboardAgentToRoom(
-    actor: AuthenticatedActorContext,
-    input: {
-      agentId: string;
-      basedOnRoomSeq: number;
-      idempotencyKey: string;
-      roomId: string;
-    },
-  ): RoomMembershipMutationResult {
-    return this.#transaction(() => {
-      const actorId = this.#requireAuthenticatedActor(actor);
-      const principal = principalProfile.fromRow(
-        this.#requirePrincipal(actorId),
-      );
-      if (principal.kind !== "human") {
-        throw new ForbiddenError(
-          "Agent onboarding requires an authenticated Human principal",
-        );
-      }
-      const definition = this.#agentDefinitionFromRow(
-        this.#requireAgentDefinitionRow(input.agentId),
-      );
-      this.#requireMember(definition.controlRoomId, actorId);
-      this.#collaboration.requireSameWorkspace(
-        definition.controlRoomId,
-        input.roomId,
-      );
-      if (definition.state !== "enabled") {
-        throw new ConflictError(
-          `AgentDefinition ${input.agentId} is not enabled`,
-        );
-      }
-      return this.#collaboration.addRoomMember(principal, {
-        basedOnRoomSeq: input.basedOnRoomSeq,
-        idempotencyKey: input.idempotencyKey,
-        principalId: definition.participantId,
-        role: "member",
-        roomId: input.roomId,
-      });
-    });
-  }
-
   listHostExecutionWorkspaceBindings(host: AuthenticatedHostContext) {
     return listHostExecutionWorkspaceBindings(this.#database, host);
   }
