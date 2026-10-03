@@ -75,11 +75,19 @@ test("revision guidance explicitly preserves the model's original reply intent",
     text!,
     /message-post --revise-draft 'held_draft_1' --turn t1 --target '#drift' <</u,
   );
+  assert.match(
+    text!,
+    /Saved reply intent: final; a successful revision retains the request to end this turn/u,
+  );
   assert.doesNotMatch(text!, /--based-on-room-seq|--final/u);
   const progress = workerHeldSendGuidance({
     ...held,
     replyIntent: { basedOnRoomSeq: 8, final: false },
   });
+  assert.match(
+    progress!,
+    /Saved reply intent: progress; a successful revision does not request ending this turn/u,
+  );
   assert.doesNotMatch(progress!, /--final|--based-on-room-seq/u);
   assert.match(
     progress!,

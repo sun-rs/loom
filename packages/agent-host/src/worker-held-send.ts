@@ -151,7 +151,12 @@ Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
   )} newer message${newMessageCount === 1 ? "" : "s"}.${omittedNote}
 Your message has been saved as a draft. Saving a draft does not confirm delivery or complete this work. Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
-${marked ? "To revise this saved draft after review (preserving its original reply confirmation):" : "To replace this unmarked draft, send revised content normally:"}
+${
+  marked
+    ? `Saved reply intent: ${intent?.final === true ? "final; a successful revision retains the request to end this turn" : intent?.final === false ? "progress; a successful revision does not request ending this turn" : "unspecified; revision retains the saved intent"}. Preserve the original confirmation and intent; use the command below without adding override options.
+To revise this saved draft after review:`
+    : "To replace this unmarked draft, send revised content normally:"
+}
   "$RAH_WORKER_CLI" worker message-post${revise} --target ${target} <<'${MESSAGE_HEREDOC_DELIMITER}'
   revised message
   ${MESSAGE_HEREDOC_DELIMITER}

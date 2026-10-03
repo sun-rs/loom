@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Readable } from "node:stream";
 
 import {
   WORKER_HELP_TOPIC_NAMES,
@@ -150,4 +151,93 @@ test("P90: Task help supplies exact minimal progress and submission arguments", 
     /task-submit --target "#channel" --number N --summary TEXT/u,
   );
   assert.match(help, /Task commands do not acknowledge delivery/u);
+});
+
+test("message-post help is static with no turn or an expired turn and never reads stdin", async () => {
+  for (const tail of [
+    ["--help"],
+    ["--help", "--turn", "expired-handle"],
+    ["--turn", "expired-handle", "--help"],
+  ]) {
+    const state = runtime();
+    let reads = 0;
+    const stdin = new Readable({
+      read() {
+        reads += 1;
+        this.push(null);
+      },
+    });
+    assert.equal(
+      await runWorkerCliCommand(["worker", "message-post", ...tail], {
+        ...state.runtime,
+        env: { RAH_WORKER_TURN_ROOT: "/does-not-exist-help-only" },
+        stdin,
+      }),
+      0,
+      state.stderr(),
+    );
+    assert.equal(reads, 0);
+    assert.match(
+      state.stdout(),
+      /message-post \[--turn HANDLE\] --target TARGET/u,
+    );
+    assert.match(state.stdout(), /--revise-draft/u);
+    assert.match(state.stdout(), /worker help messages-advanced/u);
+    assert.equal(state.stderr(), "");
+  }
+});
+
+test("mixed or unknown command help is a local argument error with no execution", async () => {
+  for (const args of [
+    ["worker", "message-post", "--help", "--body", "do not send"],
+    ["worker", "message-post", "--help", "--send-draft"],
+    ["worker", "message-post", "--help", "--revise-draft", "draft"],
+    ["worker", "message-post", "--help", "--turn"],
+    ["worker", "message-post", "--help", "--help"],
+    ["worker", "unknown", "--help"],
+  ]) {
+    const state = runtime();
+    let reads = 0;
+    assert.equal(
+      await runWorkerCliCommand(args, {
+        ...state.runtime,
+        env: { RAH_WORKER_TURN_ROOT: "/does-not-exist-help-only" },
+        stdin: new Readable({
+          read() {
+            reads += 1;
+            this.push(null);
+          },
+        }),
+      }),
+      1,
+    );
+    assert.equal(reads, 0);
+    assert.match(state.stderr(), /Code: INVALID_ARG/u);
+    assert.equal(state.stdout(), "");
+  }
+});
+
+test("message-post help does not inspect credential environment even without a configured runtime", async () => {
+  const plain = runtime();
+  assert.equal(
+    await runWorkerCliCommand(
+      ["worker", "message-post", "--help"],
+      plain.runtime,
+    ),
+    0,
+  );
+  const guarded = runtime();
+  assert.equal(
+    await runWorkerCliCommand(["worker", "message-post", "--help"], {
+      ...guarded.runtime,
+      get env(): Readonly<Record<string, string | undefined>> {
+        throw new Error("static help must not inspect credentials");
+      },
+      get stdin(): NodeJS.ReadableStream {
+        throw new Error("static help must not inspect stdin");
+      },
+    }),
+    0,
+  );
+  assert.equal(guarded.stdout(), plain.stdout());
 });

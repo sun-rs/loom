@@ -498,6 +498,8 @@ test("server-info renders the runtime, the current agent and the room roster", (
     selfParticipantId: "participant-a",
   });
   assert.match(text ?? "", /^## Server\n/u);
+  assert.match(text ?? "", /worker help.*worker help <topic>/u);
+  assert.doesNotMatch(text ?? "", /any subcommand with `--help`/u);
   assert.match(text ?? "", /### Current Agent\n- Participant: participant-a/u);
   assert.match(text ?? "", /### Rooms\n/u);
   assert.match(
