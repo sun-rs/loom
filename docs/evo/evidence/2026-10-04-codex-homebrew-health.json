@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-04",
+  "kind": "post-P98 exact Homebrew executable health probes; loopback fake models only",
+  "paidModelCalls": 0,
+  "invokedExecutable": "/opt/homebrew/bin/codex",
+  "executables": {
+    "codex": {
+      "path": "/opt/homebrew/Caskroom/codex/0.160.0/bin/codex",
+      "sha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+      "quarantineAttributePresent": true
+    },
+    "codex-code-mode-host": {
+      "path": "/opt/homebrew/Caskroom/codex/0.160.0/bin/codex-code-mode-host",
+      "sha256": "679eedaea70529aa1cffc9bc0a0788c186412663544fa76c09d63b57f383a65a",
+      "quarantineAttributePresent": true
+    }
+  },
+  "native": {
+    "passed": true,
+    "mode": "codex exec --json; second round resumes first session",
+    "rounds": [
+      {
+        "round": 1,
+        "actualFileRead": true,
+        "memoryOffEnforced": true,
+        "exitCode": 0
+      },
+      {
+        "round": 2,
+        "actualFileRead": true,
+        "memoryOffEnforced": true,
+        "exitCode": 0
+      }
+    ],
+    "sameSession": true,
+    "fakeRequests": 4,
+    "proof": "Each round returned a different file-only random marker in the actual outer tool output"
+  },
+  "warm": {
+    "pass": true,
+    "kind": "real installed Codex + product warm driver/stdio MCP/Host bridge + temporary real Worker/Kernel; only loopback fake model",
+    "threadId": "01a10701-6c05-7bf0-98ae-9bb58a983a51",
+    "rounds": [
+      {
+        "round": 1,
+        "schemaNaturallyExposed": true,
+        "realWorkerPosts": 1,
+        "actorCorrect": true,
+        "roomCorrect": true,
+        "outerReceiptDeepEqual": true,
+        "eventId": "event_0f2d720b-729d-4c53-bd98-1e2c733b9464",
+        "localModelRequests": 2,
+        "final": false
+      },
+      {
+        "round": 2,
+        "schemaNaturallyExposed": true,
+        "realWorkerPosts": 1,
+        "actorCorrect": true,
+        "roomCorrect": true,
+        "outerReceiptDeepEqual": true,
+        "eventId": "event_b31f0404-fed7-4847-9aa5-ea8a6109601f",
+        "localModelRequests": 1,
+        "final": true
+      }
+    ],
+    "oldNativeTurnRejected": true,
+    "realKernelFinalMarker": true,
+    "finalReport": {
+      "protocol": "rah-final-interrupt/v1",
+      "requested": true,
+      "accepted": true,
+      "terminal": true,
+      "sent": true,
+      "preemptedFollowUp": true
+    },
+    "paidCalls": 0,
+    "limits": [
+      "Fixture host scopes and run termination are harness-managed, not full AgentHost reconciliation",
+      "Usage is synthetic fixture data, not a paid efficiency result",
+      "Single synthetic final sample; zero followup request not guaranteed across real model/network timings",
+      "No real paid usage, full AgentHost reconciliation, deployment or UI claim"
+    ]
+  },
+  "cleanup": {
+    "ownedProcessesRemaining": 0,
+    "formalServiceTouched": false,
+    "globalConfigOrSecurityAttributesChanged": false
+  },
+  "interpretation": "The same Homebrew path that failed P98 now executes native tools and warm MCP. Owner-observed macOS open confirmation plus earlier quarantine-path difference supports a launch-approval explanation; no OS security audit establishes a sole cause. Quarantine attribute presence alone does not prove current blocking.",
+  "limits": [
+    "Temporary isolated CODEX_HOME and workspaces; no paid account credentials supplied to fake provider",
+    "Fake-provider endpoint/configuration is deliberately different from paid execution; model behavior and cost remain unmeasured",
+    "Warm probe uses real product driver/MCP/Worker/Kernel but fixture-managed Host scopes; not full AgentHost reconciliation",
+    "This is a recorded manual preflight, not an automated mandatory gate implemented in source",
+    "No paid rerun is authorized by this free follow-up"
+  ]
+}

@@ -33,3 +33,5 @@ OpenCode 的免费研究发现可通过本地原生 hook 关联 session/call、�
 证据：[Codex 产品链免费摘要](evidence/2026-10-04-worker-mcp-product.json)。探针、红绿日志及失败证据归档于 `~/.loom/reviews/2026-10-04-channel-cost-research/worker-mcp-product-fixture/`。
 
 P98 付费进展（2026-10-04）：原生门禁实际使用 Homebrew 安装路径，代码执行宿主超时、未读到源文件；Loom 首轮也遇到相同超时，在质量核验后取消，后两轮未启动。故无有效同任务成本倍率。此前免费成功探针使用另一已有同版本／同哈希安装，不能替代本次实际执行路径的健康验证。预检遗漏、已发生用量与止损证据见[P98报告](evidence/2026-10-04-worker-mcp-cost-p98.md)，没有付费补跑。
+
+后续免费复验：P98实际Homebrew路径的原生文件读取／同session恢复及warm MCP两轮均通过，未再握手超时；没有改动系统安全属性，也没有启动付费模型。Owner观察到macOS辅助程序打开确认，为此前故障提供了新的系统启动线索。该结果只恢复工具健康证据，不改变P98失败与无有效成本倍率的结论。见[同路径健康证据](evidence/2026-10-04-codex-homebrew-health.json)。

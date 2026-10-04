@@ -31,3 +31,11 @@ Loom 用量由实际 RunAttempt 三条 generation 记录汇总，与该 session 
 隔离 daemon、runtime 及已登记的子进程均已退出。正式 evo 服务未改动。原始结果、隔离状态备份、准确 session 的 transcript、止损收据和质量审查存于 `~/.loom/reviews/2026-10-04-channel-cost-research/worker-mcp-paid-p98/`；原始 gate 结果保持不改写，人工质量裁决单独记录。
 
 机器摘要：[P98 用量与失效原因](2026-10-04-worker-mcp-cost-p98.json)。P97 的效率失败结论保持；P98 既不证明 MCP 成本改善，也不构成同质量条件下的反证。
+
+## 后续免费健康复验（2026-10-04）
+
+Owner 观察到 macOS 要求确认打开 Codex 的辅助程序。只读检查确认 `codex-code-mode-host` 是当前 Codex 进程的子进程；Homebrew 两个可执行文件带 quarantine 属性，当前对话后台所用副本不带该属性，签名标识均为 OpenAI。该观察支持系统启动确认影响握手的解释，但属性存在本身不能证明当前阻断，也没有据此修改安全设置。
+
+随后直接用 P98 的 `/opt/homebrew/bin/codex`（解析到相同 Homebrew 0.160.0 路径与哈希）接 loopback 假模型：原生 `exec` 首次及同 session 恢复均成功从各自文件读取随机校验值，三项官方记忆开关关闭；产品 warm driver／MCP／真实临时 Worker／Kernel 两轮通过，完整回执保留、旧 turn 拒绝，final 轮1次假请求。两种启动方式均未再出现握手超时。所有实验进程退出，正式服务、账户配置、全局 PATH 和安全属性均未修改。
+
+这是人工完成并留证的免费健康检查，不是已经加入源代码的自动前置门禁；隔离 home、假 provider 与夹具管理 Host 的限制仍在。P98 的失败和费用保留，不用健康复验代替真实模型效率结论。见[免费健康证据](2026-10-04-codex-homebrew-health.json)。
