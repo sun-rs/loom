@@ -1,0 +1,568 @@
+{
+  "scope": "Free installed CLI with local deterministic Fake Responses only",
+  "paidModelCalls": 0,
+  "sameBinaryDifferentExistingInstall": {
+    "codexSha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+    "hostSha256": "679eedaea70529aa1cffc9bc0a0788c186412663544fa76c09d63b57f383a65a",
+    "homebrew": "code-mode host negotiation timed out; owned host sample only _dyld_start, 112KiB footprint",
+    "existingDaemonPackage": "Code-mode dynamic callback and unique receipt passed initially and after same-thread cold resume",
+    "limits": "Identifies installation-path/OS launch conditions, not a proven sole cause; no xattr, signing, personal configuration, PATH or installed binaries changed"
+  },
+  "codeModeResult": {
+    "fixture": true,
+    "realModelCalls": 0,
+    "requests": [
+      {
+        "at": 1791102759985,
+        "phase": "initial",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": false
+      },
+      {
+        "at": 1791102760031,
+        "phase": "initial",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": true
+      },
+      {
+        "at": 1791102761281,
+        "phase": "cold-resume",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": false
+      },
+      {
+        "at": 1791102761326,
+        "phase": "cold-resume",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": true
+      }
+    ],
+    "callbacks": [
+      {
+        "at": 1791102760028,
+        "phase": "initial",
+        "threadId": "01a1060b-2f69-7261-b86a-ef1c57e094fd",
+        "turnId": "01a1060b-2fb0-7512-9632-5779bcbee81b",
+        "callId": "exec-c2f44ad1-b241-404f-bb04-82ea96c87891",
+        "namespace": null,
+        "tool": "loom_reply_probe",
+        "arguments": {
+          "body": "FAKE ONLY - no Room mutation",
+          "final": true
+        }
+      },
+      {
+        "at": 1791102761322,
+        "phase": "cold-resume",
+        "threadId": "01a1060b-2f69-7261-b86a-ef1c57e094fd",
+        "turnId": "01a1060b-3494-7d03-9e22-dd9a88db6d25",
+        "callId": "exec-6c479dfb-751a-4be0-8492-42ce9a442cbd",
+        "namespace": null,
+        "tool": "loom_reply_probe",
+        "arguments": {
+          "body": "FAKE ONLY - no Room mutation",
+          "final": true
+        }
+      }
+    ],
+    "events": [
+      {
+        "at": 1791102758757,
+        "phase": "initial",
+        "method": "remoteControl/status/changed"
+      },
+      {
+        "at": 1791102758831,
+        "phase": "initial",
+        "method": "thread/started"
+      },
+      {
+        "at": 1791102758833,
+        "phase": "initial",
+        "method": "thread/settings/updated"
+      },
+      {
+        "at": 1791102758836,
+        "phase": "initial",
+        "method": "thread/status/changed"
+      },
+      {
+        "at": 1791102758836,
+        "phase": "initial",
+        "method": "turn/started"
+      },
+      {
+        "at": 1791102759977,
+        "phase": "initial",
+        "method": "item/started",
+        "itemType": "userMessage"
+      },
+      {
+        "at": 1791102759977,
+        "phase": "initial",
+        "method": "item/completed",
+        "itemType": "userMessage"
+      },
+      {
+        "at": 1791102760027,
+        "phase": "initial",
+        "method": "item/started",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "at": 1791102760028,
+        "phase": "initial",
+        "method": "item/tool/call"
+      },
+      {
+        "at": 1791102760028,
+        "phase": "initial",
+        "method": "item/completed",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "at": 1791102760029,
+        "phase": "initial",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "at": 1791102760029,
+        "phase": "initial",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "at": 1791102760032,
+        "phase": "initial",
+        "method": "item/started",
+        "itemType": "agentMessage"
+      },
+      {
+        "at": 1791102760032,
+        "phase": "initial",
+        "method": "item/completed",
+        "itemType": "agentMessage"
+      },
+      {
+        "at": 1791102760033,
+        "phase": "initial",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "at": 1791102760033,
+        "phase": "initial",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "at": 1791102760033,
+        "phase": "initial",
+        "method": "thread/status/changed"
+      },
+      {
+        "at": 1791102760033,
+        "phase": "initial",
+        "method": "turn/completed"
+      },
+      {
+        "at": 1791102760066,
+        "phase": "cold-resume",
+        "method": "remoteControl/status/changed"
+      },
+      {
+        "at": 1791102760082,
+        "phase": "cold-resume",
+        "method": "warning"
+      },
+      {
+        "at": 1791102760083,
+        "phase": "cold-resume",
+        "method": "thread/status/changed"
+      },
+      {
+        "at": 1791102760086,
+        "phase": "cold-resume",
+        "method": "thread/settings/updated"
+      },
+      {
+        "at": 1791102760087,
+        "phase": "cold-resume",
+        "method": "thread/status/changed"
+      },
+      {
+        "at": 1791102760087,
+        "phase": "cold-resume",
+        "method": "turn/started"
+      },
+      {
+        "at": 1791102761274,
+        "phase": "cold-resume",
+        "method": "item/started",
+        "itemType": "userMessage"
+      },
+      {
+        "at": 1791102761274,
+        "phase": "cold-resume",
+        "method": "item/completed",
+        "itemType": "userMessage"
+      },
+      {
+        "at": 1791102761322,
+        "phase": "cold-resume",
+        "method": "item/started",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "at": 1791102761322,
+        "phase": "cold-resume",
+        "method": "item/tool/call"
+      },
+      {
+        "at": 1791102761323,
+        "phase": "cold-resume",
+        "method": "item/completed",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "at": 1791102761324,
+        "phase": "cold-resume",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "at": 1791102761324,
+        "phase": "cold-resume",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "at": 1791102761327,
+        "phase": "cold-resume",
+        "method": "item/started",
+        "itemType": "agentMessage"
+      },
+      {
+        "at": 1791102761327,
+        "phase": "cold-resume",
+        "method": "item/completed",
+        "itemType": "agentMessage"
+      },
+      {
+        "at": 1791102761328,
+        "phase": "cold-resume",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "at": 1791102761328,
+        "phase": "cold-resume",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "at": 1791102761328,
+        "phase": "cold-resume",
+        "method": "thread/status/changed"
+      },
+      {
+        "at": 1791102761328,
+        "phase": "cold-resume",
+        "method": "turn/completed"
+      }
+    ],
+    "phases": [
+      {
+        "phase": "initial",
+        "modelProvider": "loom_free_fixture",
+        "historyMode": "legacy",
+        "turnId": "01a1060b-2fb0-7512-9632-5779bcbee81b"
+      },
+      {
+        "phase": "cold-resume",
+        "modelProvider": "loom_free_fixture",
+        "historyMode": "legacy",
+        "turnId": "01a1060b-3494-7d03-9e22-dd9a88db6d25"
+      }
+    ],
+    "threadId": "01a1060b-2f69-7261-b86a-ef1c57e094fd",
+    "resumeToolOverride": "accepted-but-not-exposed",
+    "status": "passed"
+  },
+  "outerCodeCellReceipts": [
+    {
+      "timestamp": "2026-10-04T08:32:40.028Z",
+      "callId": "call_initial",
+      "output": [
+        {
+          "type": "input_text",
+          "text": "Script completed\nWall time 0.0 seconds\nOutput:\n"
+        },
+        {
+          "type": "input_text",
+          "text": "FAKE_TOOL_RECEIPT_initial"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-04T08:32:41.323Z",
+      "callId": "call_cold-resume",
+      "output": [
+        {
+          "type": "input_text",
+          "text": "Script completed\nWall time 0.0 seconds\nOutput:\n"
+        },
+        {
+          "type": "input_text",
+          "text": "FAKE_TOOL_RECEIPT_cold-resume"
+        }
+      ]
+    }
+  ],
+  "longWaitCorrection": "Earlier debug harness status=passed only meant the synthetic turn completed. Its pure-text tool actually returned timed out negotiating with the code-mode host in both phases; not an execution pass.",
+  "officialMemory": "All three Codex memory-off switches remained enforced in launch configuration",
+  "productChanged": false,
+  "finalTiming": {
+    "fixture": true,
+    "realModelCalls": 0,
+    "binary": "trusted installed 0.160.0 independent process",
+    "transport": "stdio app-server; model provider fixed to ephemeral 127.0.0.1 HTTP Responses fixture",
+    "groups": [
+      {
+        "name": "current",
+        "turnStatus": "interrupted",
+        "callbackResponseWriteAfterArmMs": 203,
+        "interruptAfterArmMs": 0,
+        "interruptBeforeResponse": true,
+        "outerOutputReceivedByFakeModel": false,
+        "requestCount": 1,
+        "interruptReport": {
+          "requested": true,
+          "accepted": true,
+          "terminal": true,
+          "sent": true,
+          "preemptedFollowUp": "unknown"
+        },
+        "events": [
+          {
+            "afterArmMs": -29,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call",
+            "status": "completed",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 0,
+            "method": "item/started",
+            "itemType": "dynamicToolCall",
+            "status": "inProgress",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 1,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call_output",
+            "status": null,
+            "hasUniqueReturnMarker": false,
+            "output": "aborted by user after 0.1s"
+          },
+          {
+            "afterArmMs": 4,
+            "method": "item/completed",
+            "itemType": "dynamicToolCall",
+            "status": "failed",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          }
+        ]
+      },
+      {
+        "name": "candidate",
+        "turnStatus": "interrupted",
+        "callbackResponseWriteAfterArmMs": 202,
+        "interruptAfterArmMs": 204,
+        "interruptBeforeResponse": false,
+        "outerOutputReceivedByFakeModel": false,
+        "requestCount": 1,
+        "interruptReport": {
+          "requested": true,
+          "accepted": true,
+          "terminal": true,
+          "sent": true,
+          "preemptedFollowUp": true
+        },
+        "events": [
+          {
+            "afterArmMs": -44,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call",
+            "status": "completed",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 0,
+            "method": "item/started",
+            "itemType": "dynamicToolCall",
+            "status": "inProgress",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 203,
+            "method": "item/completed",
+            "itemType": "dynamicToolCall",
+            "status": "completed",
+            "hasUniqueReturnMarker": true,
+            "output": null
+          },
+          {
+            "afterArmMs": 205,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call_output",
+            "status": null,
+            "hasUniqueReturnMarker": false,
+            "output": "aborted by user after 0.2s"
+          }
+        ]
+      },
+      {
+        "name": "control",
+        "turnStatus": "completed",
+        "callbackResponseWriteAfterArmMs": 202,
+        "interruptAfterArmMs": null,
+        "interruptBeforeResponse": false,
+        "outerOutputReceivedByFakeModel": true,
+        "requestCount": 2,
+        "interruptReport": {
+          "requested": false,
+          "accepted": "unknown",
+          "terminal": false,
+          "sent": false,
+          "preemptedFollowUp": "unknown"
+        },
+        "events": [
+          {
+            "afterArmMs": -40,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call",
+            "status": "completed",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 0,
+            "method": "item/started",
+            "itemType": "dynamicToolCall",
+            "status": "inProgress",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 203,
+            "method": "item/completed",
+            "itemType": "dynamicToolCall",
+            "status": "completed",
+            "hasUniqueReturnMarker": true,
+            "output": null
+          },
+          {
+            "afterArmMs": 205,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call_output",
+            "status": null,
+            "hasUniqueReturnMarker": true,
+            "output": [
+              {
+                "type": "input_text",
+                "text": "Script completed\nWall time 0.2 seconds\nOutput:\n"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"outerReceipt\":\"UNIQUE_FAKE_RECEIPT_control_1791103080567\"}"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "outer-aware",
+        "turnStatus": "interrupted",
+        "callbackResponseWriteAfterArmMs": 201,
+        "interruptAfterArmMs": 205,
+        "interruptBeforeResponse": false,
+        "outerMarkerAtArm": true,
+        "outerOutputReceivedByFakeModel": false,
+        "requestCount": 1,
+        "interruptReport": {
+          "requested": true,
+          "accepted": true,
+          "terminal": true,
+          "sent": true,
+          "preemptedFollowUp": true
+        },
+        "events": [
+          {
+            "afterArmMs": -26,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call",
+            "status": "completed",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 0,
+            "method": "item/started",
+            "itemType": "dynamicToolCall",
+            "status": "inProgress",
+            "hasUniqueReturnMarker": false,
+            "output": null
+          },
+          {
+            "afterArmMs": 202,
+            "method": "item/completed",
+            "itemType": "dynamicToolCall",
+            "status": "completed",
+            "hasUniqueReturnMarker": true,
+            "output": null
+          },
+          {
+            "afterArmMs": 204,
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call_output",
+            "status": null,
+            "hasUniqueReturnMarker": true,
+            "output": [
+              {
+                "type": "input_text",
+                "text": "Script completed\nWall time 0.2 seconds\nOutput:\n"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"outerReceipt\":\"UNIQUE_FAKE_RECEIPT_outer-aware_1791103124968\"}"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "verificationLimits": [
+    "No real-provider cost or quality measurement; all API completions are local deterministic fixtures",
+    "Native tool not wired into Loom product; no Worker authentication or Kernel mutation was exercised",
+    "Final timing is one inner tool inside one outer cell per sample; concurrent cells, yielded cells, lost raw frames, and held receipt causality remain mandatory integration cases",
+    "A completed turn or preemptedFollowUp=true never substitutes for a complete outer tool result",
+    "Matching executable bytes do not prove identical macOS launch/trust conditions; no installation or security attributes were modified"
+  ]
+}
