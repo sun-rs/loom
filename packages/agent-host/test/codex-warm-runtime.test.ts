@@ -55,6 +55,8 @@ type Harness = Awaited<ReturnType<typeof harness>>;
 
 async function harness(
   options: {
+    explicitFinalOutput?: boolean;
+    skipDeliveryRegistration?: boolean;
     failBinding?: boolean;
     hostHygiene?: boolean;
     interruptQuiesceTimeoutMs?: number;
@@ -179,6 +181,15 @@ async function harness(
     const createAdapter = () =>
       new CodexWarmAdapter({
         cwd: directory,
+        ...(options.explicitFinalOutput ? { explicitFinalOutput: true } : {}),
+        recordDeliveryAcceptance: (input) => {
+          if (options.explicitFinalOutput && !options.skipDeliveryRegistration)
+            kernel.markPresentedDeliverySent(host, {
+              activationId: input.activationId,
+              consumerId: input.consumerId,
+              runAttemptId: input.runAttemptId,
+            });
+        },
         driverArgs: [
           "--executable",
           executable,
@@ -2304,6 +2315,152 @@ test("automatic internal MCP wiring keeps two warm turns bound to original crede
   } finally {
     lines?.close();
     child?.kill();
+    await state.cleanup();
+  }
+});
+
+test("warm Codex explicit final output: opt-in two turns publish once each in one native session", async () => {
+  const state = await harness({ explicitFinalOutput: true });
+  try {
+    for (let turn = 1; turn <= 2; turn++) {
+      state.post(`[fake:envelope] question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+      const replies = sql(
+        state,
+        "SELECT actor_id, body FROM messages WHERE actor_id=? ORDER BY rowid",
+        state.participantId,
+      );
+      assert.equal(replies.length, turn);
+      assert.deepEqual(
+        { ...replies.at(-1) },
+        { actor_id: state.participantId, body: `FAKE CODEX FINAL ${turn}` },
+      );
+    }
+    const turns = state.records().filter((r) => r.event === "turn");
+    assert.equal(turns.length, 2);
+    for (const turn of turns) {
+      assert.match(
+        String(turn.text),
+        /Reply transport: explicit final-output/u,
+      );
+      assert.doesNotMatch(String(turn.text), /Use loom_reply for replies/u);
+    }
+    assert.equal(
+      state
+        .records()
+        .filter((r) => r.event === "request" && r.method === "thread/start")
+        .length,
+      1,
+    );
+    assert.equal(state.records().filter((r) => r.event === "worker").length, 0);
+    const runs = state.kernel.listRunAttempts({ roomId: state.roomId });
+    assert.equal(new Set(runs.map((r) => r.nativeTurnId)).size, 2);
+    assert.equal(new Set(runs.map((r) => r.instanceRuntimeId)).size, 1);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+for (const [label, options, token] of [
+  ["default off", {}, ""],
+  [
+    "commentary is diagnostic",
+    { explicitFinalOutput: true },
+    "[fake:commentary-envelope]",
+  ],
+  [
+    "native interrupted rejects complete text",
+    { explicitFinalOutput: true },
+    "[fake:envelope-interrupted]",
+  ],
+  [
+    "unregistered delivery cannot complete",
+    { explicitFinalOutput: true, skipDeliveryRegistration: true },
+    "",
+  ],
+] as const)
+  test(`warm Codex explicit final output: ${label}`, async () => {
+    const state = await harness(options);
+    try {
+      state.post(`[fake:envelope] ${token} question`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.notEqual(result.state, "completed", JSON.stringify(result));
+      assert.equal(
+        sql(state, "SELECT * FROM activations WHERE state='completed'").length,
+        0,
+      );
+      if (label !== "unregistered delivery cannot complete")
+        assert.equal(
+          sql(
+            state,
+            "SELECT * FROM messages WHERE actor_id=?",
+            state.participantId,
+          ).length,
+          0,
+        );
+      assert.equal(state.records().filter((r) => r.event === "turn").length, 1);
+      assert.equal(
+        state.records().filter((r) => r.event === "worker").length,
+        0,
+      );
+    } finally {
+      await state.cleanup();
+    }
+  });
+
+test("warm Codex explicit final output: cancellation after final item but before terminal success never publishes", async () => {
+  const state = await harness({ explicitFinalOutput: true });
+  const controller = new AbortController();
+  let running: Promise<void> | undefined;
+  try {
+    state.post("[fake:envelope] [fake:envelope-cancel] cancel this turn");
+    running = state.current.agentHost.run({ signal: controller.signal });
+    await waitFor(
+      () => state.records().some((r) => r.event === "envelope-emitted"),
+      "final item emitted",
+    );
+    controller.abort();
+    await running;
+    assert.equal(
+      sql(state, "SELECT * FROM messages WHERE actor_id=?", state.participantId)
+        .length,
+      0,
+    );
+    assert.equal(state.records().filter((r) => r.event === "turn").length, 1);
+  } finally {
+    controller.abort();
+    await running;
+    await state.cleanup();
+  }
+});
+
+test("warm Codex explicit final output: ambiguous HTTP result blocks automatic retry", async () => {
+  const state = await harness({ explicitFinalOutput: true });
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).endsWith("/v1/worker/messages/final-output")) {
+      attempts++;
+      throw Error("FAKE unknown write result");
+    }
+    return originalFetch(input, init);
+  };
+  try {
+    state.post("[fake:envelope] unknown submission");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(attempts, 1);
+    assert.equal(result.state, "failed");
+    assert.equal(
+      sql(state, "SELECT retry_disposition FROM activation_retry_fences")[0]
+        ?.retry_disposition,
+      "action_required",
+    );
+    assert.equal((await state.current.agentHost.reconcileOnce()).state, "idle");
+    assert.equal(state.records().filter((r) => r.event === "turn").length, 1);
+    assert.equal(attempts, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
     await state.cleanup();
   }
 });

@@ -1,0 +1,63 @@
+{
+  "kind": "real installed Codex with loopback fake model; production Host/Kernel chain",
+  "status": "passed",
+  "cliVersion": "codex-cli 0.160.0",
+  "paidProviderCalls": 0,
+  "providerUsage": "synthetic; not cost evidence",
+  "rounds": [
+    {
+      "round": 1,
+      "fakeHttpRequests": 1,
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "modelBasedOnRoomSeq": 3,
+      "activationState": "completed",
+      "publicationState": "published",
+      "nativeResult": "success",
+      "inFlightToolCount": 0,
+      "committedRoomSeq": 8,
+      "submissionKind": "final-output",
+      "ackThroughSeq": 3
+    },
+    {
+      "round": 2,
+      "fakeHttpRequests": 1,
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "modelBasedOnRoomSeq": 12,
+      "activationState": "completed",
+      "publicationState": "published",
+      "nativeResult": "success",
+      "inFlightToolCount": 0,
+      "committedRoomSeq": 17,
+      "submissionKind": "final-output",
+      "ackThroughSeq": 12
+    }
+  ],
+  "sameNativeSession": true,
+  "sameWarmRuntime": true,
+  "warmTurnCount": 2,
+  "secondRoundHistoryContainsFirstReply": true,
+  "nativeFinalPhases": 2,
+  "nativeCommentaryDecoys": 2,
+  "nativeSuccessfulTerminals": 2,
+  "commentaryPublished": false,
+  "realMcpBridgeRetained": true,
+  "isolatedHomeAndCodexHome": true,
+  "nativeMemoryPolicy": "production providerLaunchPolicy applied",
+  "cleanup": "runtime terminated; recorded probe PID no longer alive",
+  "limitations": [
+    "Two normal single-target warm turns only",
+    "Fake model emits valid packets deterministically",
+    "No paid model quality or efficiency claim"
+  ],
+  "sourceBase": "941f910641dc77d55b12758aad756bad5d3a6151",
+  "sourceWorkingTree": true,
+  "privateEvidenceRoot": "~/.loom/reviews/2026-10-05-final-output-product/codex/",
+  "evidenceSha256": {
+    "codex-product-probe.ts": "51b9f6213b09aac2b3a0606e354d9058d6b3f83d04d8248df7f3a09d5c47d2ad",
+    "codex-product-result.json": "5423fedfa392664af0ca57fc07c95f24e5660c574c63bddd5112f6d09726db4b",
+    "codex-product-probe.log": "0de129882cb7a32e465785e78ed5cd4878c01c0f63b6ba5e869d89dc392d5454",
+    "free-production-chain-review.md": "30e0a93a5d2726624cde4164a863a80886e03f59df524d261e4df918841c610d"
+  }
+}

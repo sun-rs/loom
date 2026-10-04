@@ -360,7 +360,12 @@ export function createConfiguredRuntime(input: {
           creationOptions,
           {
             explicitFinalOutput:
-              process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL === "1",
+              (input.runtimeProfileRevision.manifest.adapter.kind ===
+                "opencode-server/v1" &&
+                process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL === "1") ||
+              (input.runtimeProfileRevision.manifest.adapter.kind ===
+                "codex-app-server/v1" &&
+                process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL === "1"),
             issueWorkerCredential,
             pool: input.warmRuntimePool,
             runtimeEnvironment: async (scope) =>

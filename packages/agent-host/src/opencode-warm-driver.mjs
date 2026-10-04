@@ -1,3 +1,4 @@
+import { finalOutputInstructions } from "./final-output-instructions.js";
 // S2-c3 warm OpenCode driver (S2 spec §2/§4/§11, contract §6a): one
 // long-lived `opencode serve` per Role instance with one persistent `/event`
 // subscription. The driver is the process-group leader and speaks the same
@@ -93,10 +94,7 @@ import {
 } from "./opencode-server-client.js";
 import { stopOpenCodeServer } from "./opencode-server-process.js";
 import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
-import {
-  openCodeFinalOutputCandidate,
-  openCodeFinalOutputInstructions,
-} from "./opencode-final-output.js";
+import { openCodeFinalOutputCandidate } from "./opencode-final-output.js";
 import {
   openCodeConfigContentWithInstructions,
   openCodeMessageId,
@@ -965,7 +963,7 @@ function responseError(response) {
 async function startServer() {
   const port = await allocatePort();
   const rules = prepareOpenCodeInstructionsFile(
-    openCodeFinalOutputInstructions(
+    finalOutputInstructions(
       options.prompt,
       options.finalOutputMode === "enabled",
     ),

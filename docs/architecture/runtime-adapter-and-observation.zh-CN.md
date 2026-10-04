@@ -6,7 +6,7 @@ Claude 具体版本自定义模型的显式 effort 由 Protocol 提交许可表�
 
 ## evo 显式最终输出命令（2026-10-05 可选接入）
 
-OpenCode warm 的可选最终输出路径接收严格 `room.reply` JSON 命令，而非自动发表 stdout 或自然语言答案。模型显式提供本轮因果序号；原生正常终态和原请求身份只证明传输，Worker 身份、原目标、freshness、幂等与消费确认仍由 Kernel 校验。Host 在原 Run 凭据释放前完成有界提交，并保持续租和取消；业务收据不改写原生退出事实。结果未知或 held 不自动重新执行。其他 CLI 与远程 Computer 协议不扩展。开关、迁移和验收边界见[实现记录](../evo/final-output-transport.zh-CN.md)。
+OpenCode/Codex warm 的可选最终输出路径接收严格 `room.reply` JSON 命令，而非自动发表 stdout 或自然语言答案。模型显式提供本轮因果序号；原生正常终态和原请求身份只证明传输，Worker 身份、原目标、freshness、幂等与消费确认仍由 Kernel 校验。Host 在原 Run 凭据释放前完成有界提交，并保持续租和取消；业务收据不改写原生退出事实。结果未知或 held 不自动重新执行。Codex仅接受原thread/turn的唯一完整final_answer项与正常completed终态，commentary不参与发布；各CLI开关独立，默认关闭。Claude/Kimi与远程Computer协议不扩展。开关、迁移和验收边界见[实现记录](../evo/final-output-transport.zh-CN.md)。
 
 ## Agent 默认执行目录
 

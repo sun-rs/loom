@@ -177,7 +177,7 @@ export type WarmWorkerCredential = {
 };
 
 export type CodexWarmAdapterOptions = {
-  /** Opt-in OpenCode terminal command path; not a model-owned setting. */
+  /** Opt-in Codex/OpenCode terminal command path; not a model-owned setting. */
   explicitFinalOutput?: boolean;
   /** The warm driver; Codex when omitted. */
   driver?: WarmDriverDescriptor;
@@ -272,6 +272,14 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     return await this.#options.legacy.probe();
   }
 
+  #explicitFinalOutput(): boolean {
+    return (
+      this.#options.explicitFinalOutput === true &&
+      (this.#driver === CODEX_WARM_DRIVER ||
+        this.#driver === OPENCODE_WARM_DRIVER)
+    );
+  }
+
   #warm(input: ActivationEnvelope): boolean {
     if (isSea()) return false; // the packaged product has no warm entry yet
     return (
@@ -295,10 +303,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       driver: this.#driver.kind,
       key:
         this.#options.runtimeKey(input) +
-        (this.#options.explicitFinalOutput === true &&
-        this.#driver === OPENCODE_WARM_DRIVER
-          ? ":final-output/v1"
-          : ""),
+        (this.#explicitFinalOutput() ? ":final-output/v1" : ""),
       launch: async (layout) => await this.#launch(input, layout, launched),
       participantId: input.participantId,
     });
@@ -333,10 +338,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       runAttemptId: input.runAttemptId,
     });
     const credential = await this.#options.issueWorkerCredential(input);
-    if (
-      this.#options.explicitFinalOutput === true &&
-      this.#driver === OPENCODE_WARM_DRIVER
-    ) {
+    if (this.#explicitFinalOutput()) {
       binding.finalOutput = new WorkerFinalOutput({
         origin: this.#options.workerApiOrigin,
         accessToken: credential.accessToken,
@@ -561,8 +563,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       args: [
         isSea() ? this.#driver.seaEntry : this.#driver.entry,
         ...this.#options.driverArgs,
-        ...(this.#options.explicitFinalOutput === true &&
-        this.#driver === OPENCODE_WARM_DRIVER
+        ...(this.#explicitFinalOutput()
           ? ["--final-output-mode", "enabled"]
           : []),
         ...(model?.source === "custom_model" ||
@@ -944,10 +945,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         withFinalOutputGuidance(
           withWorkerMcpGuidance(
             withWorkerTurnHandle(base, handle),
-            runtime.workerMcp !== undefined,
+            runtime.workerMcp !== undefined && !this.#explicitFinalOutput(),
           ),
-          this.#options.explicitFinalOutput === true &&
-            this.#driver === OPENCODE_WARM_DRIVER,
+          this.#explicitFinalOutput(),
         ) +
         (notice === "" ? "" : `\n${notice}`) +
         (protocol === "" ? "" : `\n${protocol}`),

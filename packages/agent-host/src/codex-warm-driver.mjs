@@ -1,3 +1,5 @@
+import { createCodexFinalOutput } from "./codex-final-output.js";
+import { finalOutputInstructions } from "./final-output-instructions.js";
 // S2-a warm Codex driver (S2 spec §2/§4, contract §6a): one long-lived
 // `codex app-server --listen unix://<0700 dir>/app-server.sock` per Role
 // instance. The driver is the process-group leader and the Host's only
@@ -83,6 +85,7 @@ const TOOL_ITEM_TYPES = new Set([
   "commandExecution",
   "fileChange",
   "mcpToolCall",
+  "dynamicToolCall",
   "collabAgentToolCall",
   "webSearch",
 ]);
@@ -219,7 +222,10 @@ try {
     config: { ...memoryConfig("codex") },
     approvalPolicy: "never",
     cwd: process.cwd(),
-    developerInstructions: options.prompt,
+    developerInstructions: finalOutputInstructions(
+      options.prompt,
+      options.finalOutputMode === "enabled",
+    ),
     experimentalRawEvents: true,
     ...codexWorkspaceRoots(process.cwd(), options.additionalDirectories),
     sandbox: "danger-full-access",
@@ -369,6 +375,7 @@ async function beginTurn(command) {
 
 function createTurn(runAttemptId, nativeTurnId) {
   const turn = {
+    finalOutput: createCodexFinalOutput({ threadId, turnId: nativeTurnId }),
     closed: false,
     closing: false,
     lastFrameSeq: 0,
@@ -595,6 +602,7 @@ function handleNotification(frame) {
     );
     return;
   }
+  turn.finalOutput.observe(frame);
   turn.busyInput.observe(frame);
   turn.finalInterrupt.observe(frame);
   const item = params.item;
@@ -650,6 +658,12 @@ async function closeTurn(turn, params) {
       ? params.turn.error.message.slice(0, 2048)
       : undefined;
   emit("turn.drained", {
+    ...(status === "completed" &&
+    !turn.stopRequested &&
+    turn.tools.size === 0 &&
+    errorText === undefined
+      ? { finalOutputCandidate: turn.finalOutput.candidate() }
+      : {}),
     inFlightToolCount: turn.tools.size,
     lastFrameSeq: turn.lastFrameSeq,
     nativeTurnId: turn.nativeTurnId,
@@ -853,6 +867,8 @@ function parseArguments(args) {
     if (value === undefined) throw new Error(`missing value for ${name}`);
     if (name === "--executable") parsed.executable = value;
     else if (name === "--tool-access-mode") parsed.toolAccessMode = value;
+    else if (name === "--final-output-mode" && value === "enabled")
+      parsed.finalOutputMode = value;
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")
       parsed.prompt = readProviderPromptFile(value);

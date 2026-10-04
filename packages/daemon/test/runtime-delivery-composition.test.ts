@@ -7,6 +7,11 @@ import test from "node:test";
 import {
   AgentMemoryCoordinator,
   GenericProcessAdapter,
+  InstanceRuntimePool,
+  RuntimeProcessHygiene,
+  LeftoverProcessSweeper,
+  createSystemProcessTable,
+  createKernelAgentHostControlPort,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
@@ -108,7 +113,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
       t.mock.method(memory, "prepareRuntimeActivation", async () => ({
         env: {},
       }));
-      const runtime = createConfiguredRuntime({
+      const runtimeInput: Parameters<typeof createConfiguredRuntime>[0] = {
         agentMemoryCoordinator: memory,
         credentialEnvironment: credentials,
         cwd: directory,
@@ -145,7 +150,8 @@ for (const mode of ["direct", "gated", undefined] as const) {
             };
           },
         },
-      });
+      };
+      const runtime = createConfiguredRuntime(runtimeInput);
       assert.equal(runtime, adapter);
       assert.deepEqual(
         checkedIds,
@@ -251,6 +257,97 @@ for (const mode of ["direct", "gated", undefined] as const) {
       );
       if (mode !== undefined) assert.notEqual(prompts[0], prompts[1]);
       assert.equal(prompts[0], prompts[2]);
+      if (mode === undefined)
+        await t.test(
+          "final-output switches select only their own CLI and preserve the default",
+          () => {
+            const saved = [
+              process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL,
+              process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL,
+            ];
+            const pool = new InstanceRuntimePool({
+              control: createKernelAgentHostControlPort(kernel, host),
+              hostGeneration: host.instanceId,
+              hygiene: new RuntimeProcessHygiene({
+                sweeper: new LeftoverProcessSweeper({
+                  table: createSystemProcessTable(),
+                }),
+              }),
+              stateDirectory: join(directory, "warm"),
+            });
+            let selected: boolean | undefined;
+            t.mock.method(
+              implementations,
+              "createWarmRuntime",
+              (
+                ...args: Parameters<
+                  RuntimeImplementationRegistry["createWarmRuntime"]
+                >
+              ) => {
+                const warm = args[3];
+                selected = warm.explicitFinalOutput;
+                return adapter;
+              },
+            );
+            try {
+              for (const [codexFlag, openCodeFlag, adapterKind, expected] of [
+                [undefined, undefined, "codex-app-server/v1", false],
+                ["1", undefined, "codex-app-server/v1", true],
+                [undefined, "1", "codex-app-server/v1", false],
+                ["1", undefined, "opencode-server/v1", false],
+                [undefined, "1", "opencode-server/v1", true],
+                ["1", "1", "claude-stream-json/v1", false],
+                ["true", undefined, "codex-app-server/v1", false],
+              ] as const) {
+                if (codexFlag === undefined)
+                  delete process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL;
+                else process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL = codexFlag;
+                if (openCodeFlag === undefined)
+                  delete process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL;
+                else
+                  process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL = openCodeFlag;
+                selected = undefined;
+                assert.equal(
+                  createConfiguredRuntime({
+                    ...runtimeInput,
+                    warmRuntimePool: pool,
+                    warmRuntimeKinds: new Set([adapterKind]),
+                    runtimeProfileRevision: {
+                      ...revision,
+                      manifest: {
+                        ...manifest,
+                        manifestVersion: 3,
+                        modelCatalogProbe: {
+                          kind:
+                            adapterKind === "codex-app-server/v1"
+                              ? "codex-cli/v1"
+                              : adapterKind === "opencode-server/v1"
+                                ? "opencode-cli/v1"
+                                : "claude-cli/v1",
+                        },
+                        adapter: { ...manifest.adapter, kind: adapterKind },
+                      },
+                    },
+                  }),
+                  adapter,
+                );
+                assert.equal(
+                  selected,
+                  expected,
+                  `${adapterKind}: codex=${codexFlag}, opencode=${openCodeFlag}`,
+                );
+              }
+            } finally {
+              for (const [key, value] of [
+                ["LOOM_CODEX_FINAL_OUTPUT_TRIAL", saved[0]],
+                ["LOOM_OPENCODE_FINAL_OUTPUT_TRIAL", saved[1]],
+              ] as const) {
+                if (value === undefined) delete process.env[key];
+                else process.env[key] = value;
+              }
+            }
+          },
+        );
     } finally {
       registry.close();
       kernel.close();

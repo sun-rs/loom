@@ -223,6 +223,45 @@ const server = createServer(async (socket) => {
       itemId: `msg-${turn.id}`,
       delta: "working",
     });
+    if (has("envelope")) {
+      notify("item/completed", {
+        threadId,
+        turnId: turn.id,
+        item: {
+          type: "agentMessage",
+          id: `final-${turn.id}`,
+          phase: has("commentary-envelope") ? "commentary" : "final_answer",
+          text: JSON.stringify({
+            kind: "room.reply",
+            version: 1,
+            body: `FAKE CODEX FINAL ${turnCounter}`,
+            final: true,
+            basedOnRoomSeq: Number(
+              /--based-on-room-seq (\d+)/u.exec(turn.text)?.[1],
+            ),
+          }),
+        },
+      });
+      record({ event: "envelope-emitted", turnId: turn.id });
+      if (has("envelope-cancel"))
+        await new Promise((resolve) => {
+          turn.wake = resolve;
+        });
+      notify("turn/completed", {
+        threadId,
+        turn: {
+          id: turn.id,
+          status:
+            turn.interrupted || has("envelope-interrupted")
+              ? "interrupted"
+              : "completed",
+        },
+      });
+      record({ event: "turn-completed", turnId: turn.id });
+      activeTurn = undefined;
+      turn.markCompleted();
+      return;
+    }
     if (has("leftover")) spawnLeftover(turn);
     // Crash mid-turn once (input accepted, no completion); a retry proceeds.
     const crashMarker = join(stateDirectory, "crashed-during");

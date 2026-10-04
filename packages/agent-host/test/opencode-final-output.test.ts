@@ -1,16 +1,14 @@
+import { finalOutputInstructions } from "../src/final-output-instructions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  openCodeFinalOutputCandidate,
-  openCodeFinalOutputInstructions,
-} from "../src/opencode-final-output.js";
+import { openCodeFinalOutputCandidate } from "../src/opencode-final-output.js";
 
 test("OpenCode final-output system exception is opt-in and preserves ordinary Worker operations", () => {
   assert.equal(
-    openCodeFinalOutputInstructions("original rules", false),
+    finalOutputInstructions("original rules", false),
     "original rules",
   );
-  const text = openCodeFinalOutputInstructions("original rules", true);
+  const text = finalOutputInstructions("original rules", true);
   assert.ok(text.startsWith("original rules\n"));
   assert.match(text, /wake selects final-output/);
   assert.match(

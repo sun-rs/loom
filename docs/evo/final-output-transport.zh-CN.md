@@ -1,4 +1,4 @@
-# 显式最终回复输出：OpenCode 纵向接入
+# 显式最终回复输出：OpenCode／Codex 纵向接入
 
 2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。随后 P108 真实三轮传输和数值预算通过（输入1.140倍，双方生成2/1/1），但实质审查质量失败，**不是整体验收通过**。 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
@@ -43,7 +43,7 @@
 
 ## 产品接入的边界
 
-1. **在原 Run 的有效授权内收尾。** Host 的成功 native outcome 后、记录 runtime 终止前，完成有界提交并继续原有监督／续租。本批只接入源码部署的 OpenCode warm；SEA 仍走原有 CLI 路径。未来 cold 接入不属本批：现有 cold adapter 在 resolveExit 前释放凭据，不能直接在已撤权的 `finishRunAttempt` 旁补一个发帖回调；届时需要明确调整释放顺序，不能复活旧Run。
+1. **在原 Run 的有效授权内收尾。** Host 的成功 native outcome 后、记录 runtime 终止前，完成有界提交并继续原有监督／续租。当前接入源码部署的 OpenCode 与 Codex warm；SEA 仍走原有 CLI 路径。未来 cold 接入不属本批：现有 cold adapter 在 resolveExit 前释放凭据，不能直接在已撤权的 `finishRunAttempt` 旁补一个发帖回调；届时需要明确调整释放顺序，不能复活旧Run。
 2. **最终发布槽必须事务一致。** 第一阶段的既有 final marker 只记录首个 final 事件；当时复核工具 final 后再交 envelope，第二次被新鲜度检查暂存，**未复现双发布**。第二阶段已在 Kernel 同一事务内实现两种最终传输的冲突检查：先有工具 final 时拒绝输出 final，先有可信输出 final 时拒绝不同事件的工具 final，精确成功重放保留，避免为这些冲突创建多余 held 草稿。约束不由 Host“先查再发”实现，也不施加到所有普通多消息运行。可信来源来自专用 Worker 入口及原 Run 权限，不来自模型字段或可伪造的幂等键；普通进度消息不会被当作最终完成。
 3. **held／未知结果有明确去向。** 正常成功不为回执额外唤醒模型。held仍由现有草稿owner持久化，Human须能看到未发表原因与正文；不能在模型没有读到新事实时自动确认、原样发送或搬用旧读取凭据。既有同Activation重试可以保留session，但必须新Run／新凭据；无新事实不能空转重试。未知结果先核验或交Human处理，不建第二后台重发队列。
 
@@ -72,3 +72,13 @@ Protocol 定义严格 envelope／请求；application-service 的新 Worker 路�
 ## P108 付费结果
 
 [同题三轮报告](evidence/2026-10-05-final-output-p108.md)：原生与Loom各自同session，生成均为2/1/1，输入1.140倍、未缓存1.082倍；产品用量完整，逐轮数值预算通过。模型3/3输出被原凭据路径发表，但答复包含PID证明错误和不成立的测试标准，实质质量不通过。保留原机器needs-quality-review与独立失败判定，不据此宣布整体验收或四家验收通过。
+
+## Codex warm 接入
+
+OpenCode P108 后接入 Codex，复用同一严格envelope、原Run有界提交和Kernel事务；没有新增API或数据库迁移。Codex原生证据提取器只收原thread/turn的 `item/completed`、`agentMessage.phase=final_answer`，接受同一原始项的精确重复，多个不同最终项、缺phase、缺身份、错误、中断、超限或未完成工具均不能产生候选。匹配的正常 `turn/completed` 到达即冻结候选，等待忙时输入回执期间的晚帧不能替换它。`dynamicToolCall` 加入既有在途工具集合，专项反例先红后绿。
+
+使用独立daemon开关 `LOOM_CODEX_FINAL_OUTPUT_TRIAL=1`；OpenCode仍用自身开关，不能交叉启用。默认关闭，SEA与cold路径不变。启用时wake只选择最终输出，不再同时要求 `loom_reply`；通用system指引明确它是message-post/MCP最终回复的例外，其他Worker操作保留。原生MCP bridge及readiness握手仍保留，不以隐藏工具绕过原生能力验证。
+
+7项真实Host/Kernel＋假app-server集成验证两轮同session唯一发表、默认off、commentary排除、中断/取消零发表、缺登记ACK不能完成，以及未知写action_required且不自动重跑；helper/真实driver另有身份、唯一性、终态和在途工具反例。真实安装Codex0.160.0＋隔离loopback假模型已两轮贯穿生产链，每轮恰1HTTP、两个可信marker/两个完成Activation，同thread同runtime；commentary合法命令诱饵未发布。合成usage不作成本证据。模式切换后同session重建沿既有逻辑，本批未独立重测该组合。
+
+[Codex免费脱敏证据](evidence/2026-10-05-codex-final-output-free.json)。当前付费对照及正式部署待后续记录；上述免费证据不覆盖P108的质量失败，也不能证明Codex真实模型遵从率或长期成本。
