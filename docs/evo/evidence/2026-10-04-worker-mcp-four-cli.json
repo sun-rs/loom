@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-04",
+  "codeCommit": "96e562b0af73bd9e4c8393d11b080b00f8872608",
+  "scope": "Installed real CLIs, shared stdio MCP, local deterministic fake providers only",
+  "realModelCalls": 0,
+  "realWorkerCalls": 0,
+  "productChanged": false,
+  "formalServiceRestarted": false,
+  "sharedTool": {
+    "name": "loom_reply",
+    "arguments": ["body", "final"],
+    "identityArguments": false,
+    "testsPassed": 6,
+    "tddRedThenGreen": true,
+    "idempotency": "process-local JSON-RPC replay only; not durable Worker idempotency"
+  },
+  "codexClaude": [
+    {
+      "provider": "codex",
+      "status": "passed",
+      "phases": [
+        {
+          "phase": "initial",
+          "modelRequests": 2,
+          "acceptedMcpCalls": 1,
+          "uniqueReceiptMatched": true,
+          "identityMatched": true,
+          "toolsListCount": "not-recorded"
+        },
+        {
+          "phase": "warm-second",
+          "modelRequests": 2,
+          "acceptedMcpCalls": 1,
+          "uniqueReceiptMatched": true,
+          "identityMatched": true,
+          "toolsListCount": "not-recorded"
+        },
+        {
+          "phase": "cold-resume",
+          "modelRequests": 2,
+          "acceptedMcpCalls": 1,
+          "uniqueReceiptMatched": true,
+          "identityMatched": true,
+          "toolsListCount": "not-recorded"
+        }
+      ]
+    },
+    {
+      "provider": "claude",
+      "status": "passed",
+      "phases": [
+        {
+          "phase": "initial",
+          "modelRequests": 2,
+          "acceptedMcpCalls": 1,
+          "uniqueReceiptMatched": true,
+          "identityMatched": true,
+          "toolsListCount": "not-recorded"
+        },
+        {
+          "phase": "resume",
+          "modelRequests": 2,
+          "acceptedMcpCalls": 1,
+          "uniqueReceiptMatched": true,
+          "identityMatched": true,
+          "toolsListCount": "not-recorded"
+        }
+      ]
+    }
+  ],
+  "kimiOpenCode": {
+    "pass": true,
+    "kind": "offline evidence verification; no CLI/provider launched",
+    "checks": [
+      {
+        "cli": "kimi",
+        "round": 1,
+        "modelRequests": 2,
+        "mcpCalls": 1,
+        "receiptSequence": [false, true],
+        "receiptId": "cbcdbc8d-a857-4f85-b3fe-6d2369e587cf",
+        "metaKeys": [],
+        "receiptEvidence": "MCP receipt equals CLI stdout tool result by deep equality after JSON parse; fake request validated callID+body+binding"
+      },
+      {
+        "cli": "kimi",
+        "round": 2,
+        "modelRequests": 2,
+        "mcpCalls": 1,
+        "receiptSequence": [false, true],
+        "receiptId": "ce97bd1a-6bf8-4a9d-80fb-840436e81ca0",
+        "metaKeys": [],
+        "receiptEvidence": "MCP receipt equals CLI stdout tool result by deep equality after JSON parse; fake request validated callID+body+binding"
+      },
+      {
+        "cli": "opencode",
+        "round": 1,
+        "modelRequests": 2,
+        "mcpCalls": 1,
+        "receiptSequence": [false, true],
+        "receiptId": "d38ab49b-0a16-42a6-a4ba-def9ac15374f",
+        "metaKeys": ["progressToken"],
+        "receiptEvidence": "MCP log contains unique receipt; fake next-request predicate validated callID+body+binding, but next-request UUID was not retained"
+      },
+      {
+        "cli": "opencode",
+        "round": 2,
+        "modelRequests": 2,
+        "mcpCalls": 1,
+        "receiptSequence": [false, true],
+        "receiptId": "72e8cf5f-2d2b-4b3e-bbdd-e29aabb94f47",
+        "metaKeys": ["progressToken"],
+        "receiptEvidence": "MCP log contains unique receipt; fake next-request predicate validated callID+body+binding, but next-request UUID was not retained"
+      }
+    ],
+    "limits": [
+      "Only local fake model protocol transport, not cost acceptance or official memory-off",
+      "Kimi cold resume has immutable per-process run binding; OpenCode warm uses immutable connection binding, not proven per-Run switching",
+      "OpenCode raw next-request UUID not retained; cannot assert UUID equality with MCP receipt from existing data",
+      "Three OpenCode run-entry bootstrap timeouts precede successful fourth serve-entry trial"
+    ]
+  },
+  "versions": {
+    "codex": "0.160.0",
+    "claude": "2.1.287",
+    "kimi": "0.39.1",
+    "opencode": "1.18.32"
+  },
+  "failedSetupAttempts": {
+    "codex": {
+      "count": 3,
+      "reason": "MCP ready but deferred tool absent in static model prompt; no tool call"
+    },
+    "kimi": {
+      "count": 1,
+      "reason": "incompatible CLI startup flags; no model request"
+    },
+    "opencode": {
+      "count": 3,
+      "entry": "run",
+      "timeoutSecondsEach": 35,
+      "modelRequests": 0,
+      "mcpCalls": 0,
+      "reason": "bootstrap/init stall; cause unproven; subsequent serve succeeded"
+    }
+  },
+  "limits": [
+    "Not real model tool-choice reliability or token/cost measurement",
+    "Codex known tool name injected by fixture from MCP inventory; real model discovery not proven",
+    "Codex native turn metadata matched, but production per-Run authorization/revocation not implemented",
+    "OpenCode warm MCP only progressToken observed; per-Run authority binding unresolved",
+    "Kimi/OpenCode temporary child environment isolation is not verified official automatic-memory-off",
+    "All successful phases used two fake model requests; final interruption not implemented",
+    "No Worker auth/fencing/held receipt/ACK/durable idempotency acceptance",
+    "No target-contract change; P97 remains failed"
+  ],
+  "artifactSha256": {
+    "codex-probe.mjs": "16a1a52890c558967c347a5e997ec04055fbc2eabe38e15cbace11aad67630ec",
+    "opencode-serve-probe.mjs": "6f72afe41b77ed783e334f01b22311deeaf401051319bb6df8fcea2f78088363",
+    "shared-worker-mcp.mjs": "04861bb8859cdf3ea44be4e8fd1b43974c2295fbf98f99608e49d5acb3d40a5b",
+    "verify-codex-claude.mjs": "b30369033346241c4577022c969afccbccd35a99a318a9011685911b3e90fb00",
+    "shared-worker-mcp.test.mjs": "2d9d28e6cf270b42bbea8feefc88f7239af9f44d0ad16c67ae7c3567883fc86c",
+    "kimi-opencode-probe.mjs": "82da5be9a370c49aea1823591f9cd5b3feb6a12774febe5d5f070e1a11dafe99",
+    "worker-mcp.mjs": "04861bb8859cdf3ea44be4e8fd1b43974c2295fbf98f99608e49d5acb3d40a5b",
+    "claude-probe.mjs": "9da05e4d7fbd9c286f59919659a2a4c6ecf6f395a82205c43eba9010ae684d76",
+    "worker-mcp.test.mjs": "2d9d28e6cf270b42bbea8feefc88f7239af9f44d0ad16c67ae7c3567883fc86c",
+    "verify-kimi-opencode.mjs": "eb7dc3567fd5ec02965a1a39f7a9c54b87d7eb2b1b1de5bf4e73d705cdc7cbaa",
+    "opencode-debug-probe.mjs": "2a897f06240aff7c462e349cba6b0c88671dd6eb64f011a6760f3ad548b1bafa"
+  }
+}
