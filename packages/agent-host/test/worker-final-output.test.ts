@@ -19,6 +19,9 @@ test("final output accepts only one explicit bounded command, not diagnostic tex
     "```json\n" + envelope + "\n```",
     envelope + envelope,
     envelope.slice(0, -1),
+    // P109: the model closed the envelope after body, then appended fields.
+    '{"kind":"room.reply","version":1,"body":"FAKE"},"final":true,"basedOnRoomSeq":4}',
+
     envelope.replace('"body":"FAKE reply"', '"body":"a","body":"b"'),
     envelope.replace('"final":true', '"final":true,"actorId":"human"'),
     envelope.replace('"FAKE reply"', JSON.stringify("x".repeat(65536))),

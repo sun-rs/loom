@@ -54,7 +54,10 @@ import {
   providerLaunchPolicy,
   providerMemoryConfig as memoryConfig,
 } from "./provider-launch-arguments.js";
-import { WORKER_REPLY_MCP_TOOL } from "@rah-os/protocol";
+import {
+  WORKER_REPLY_MCP_TOOL,
+  WorkerFinalOutputEnvelopeSchema,
+} from "@rah-os/protocol";
 import {
   assertCodexWorkerMcpNamespace,
   codexWorkerMcpConfig,
@@ -310,6 +313,13 @@ async function beginTurn(command) {
   }
   starting = { buffered: [], runAttemptId };
   const params = {
+    ...(options.finalOutputMode === "enabled"
+      ? {
+          outputSchema: WorkerFinalOutputEnvelopeSchema.toJSONSchema({
+            target: "draft-7",
+          }),
+        }
+      : {}),
     clientUserMessageId: runAttemptId,
     input: [{ text: command.text, type: "text" }],
     threadId,

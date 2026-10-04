@@ -1,0 +1,68 @@
+{
+  "status": "passed",
+  "kind": "Real installed Codex 0.160.0 + loopback fake provider + production Host/Kernel",
+  "paidCalls": 0,
+  "httpRequestsPerTurn": [2, 1],
+  "schemaIdenticalOnAllRequests": true,
+  "textFormat": {
+    "type": "json_schema",
+    "strict": true,
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "room.reply"
+        },
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "basedOnRoomSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1
+        },
+        "final": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": ["kind", "version", "basedOnRoomSeq", "body", "final"],
+      "additionalProperties": false
+    },
+    "name": "codex_output_schema"
+  },
+  "actualToolOutput": [
+    {
+      "type": "input_text",
+      "text": "Script completed\nWall time 0.0 seconds\nOutput:\n"
+    },
+    {
+      "type": "input_text",
+      "text": "FAKE_SCHEMA_TOOL_EXECUTED"
+    }
+  ],
+  "sameNativeSession": true,
+  "runtimeTurnCount": 2,
+  "finalOutputMarkers": 2,
+  "completedActivations": 2,
+  "nativeFinalPhases": 2,
+  "limits": [
+    "Synthetic provider outputs and usage; no paid model reliability/quality/budget claim.",
+    "First probe attempt failed because fixture assumed request.tools array; failure retained separately."
+  ],
+  "sourceBase": "a062ecb1043d2273350d17921dc68aad9ae62d7e",
+  "sourceWorkingTree": true,
+  "privateEvidenceRoot": "~/.loom/reviews/2026-10-05-final-output-product/codex/",
+  "evidenceSha256": {
+    "codex-product-schema-probe.ts": "1569908446f0a199ed95647f532d7d6007bb2ac7d475c53f1de0566ec5405fdd",
+    "codex-product-schema-result.json": "6cab41564af16a859ff661e1c5b64bbc759410b7098e381fd91f1e8ccafa45f0",
+    "free-production-schema-review.md": "d68764e222dff5c03b6ab5fdaf2d61a8b2669f3815325b4b605593efa686fdc1"
+  }
+}

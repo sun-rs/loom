@@ -2386,6 +2386,15 @@ for (const [label, options, token] of [
       state.post(`[fake:envelope] ${token} question`);
       const result = await state.current.agentHost.reconcileOnce();
       assert.notEqual(result.state, "completed", JSON.stringify(result));
+      if (label === "default off") {
+        const request = state
+          .records()
+          .find((r) => r.event === "request" && r.method === "turn/start");
+        assert.equal(
+          (request?.params as Record<string, unknown>)?.outputSchema,
+          undefined,
+        );
+      }
       assert.equal(
         sql(state, "SELECT * FROM activations WHERE state='completed'").length,
         0,

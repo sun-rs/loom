@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "sampleId": "c656e044-9801-4ef7-831e-f737475a2620",
+  "nativeMemoryPolicy": {
+    "provider": "codex",
+    "supported": true,
+    "status": "supported",
+    "scope": "provider-native-auto-memory",
+    "mechanism": "cli-config"
+  },
+  "root": "<tmp>",
+  "startedAt": "2026-10-04T17:38:14.609Z",
+  "provider": "codex",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "bindingId": "local:codex-cli/v1:gpt-6-luna",
+  "cliVersion": "codex-cli 0.160.0",
+  "codeCommit": "a062ecb1043d2273350d17921dc68aad9ae62d7e",
+  "sourceRef": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "order": ["native", "role-warm"],
+  "questions": [
+    "只读审查当前工作目录的 scripts/workbench-launch-receipt.mjs 和 scripts/workbench-launch-receipt.test.mjs（已提供的固定 Git 快照，无需 git 命令）。仅分析网络配置在重启时的保留，列出已保证的行为、至多两项有行号依据的条件性风险；不能从两份文件证明的明确列出，不强凑漏洞。不要读其他项目文件，不修改文件、记忆或创建任务。最多400中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续上一轮：PID一致是否足以证明配置可信？区分函数级保证与整个重启流程的保证，纠正上一轮可能过强的结论，提出两条回归测试。只依赖已读内容，不重新读文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续此前审查：给出最终接受或拒绝修改的判断、保留和撤回的观点，以及前轮两条回归测试的验收标准。不要重新审查或读取文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。"
+  ],
+  "budgets": {
+    "maxExtraGenerations": 1,
+    "maxExtraGenerationsBeforeReply": 0,
+    "fixedOverheadTokens": 3000,
+    "inputRatio": 2,
+    "inputAllowanceTokens": 3000,
+    "replyAllowanceSeconds": 5,
+    "replyAllowanceRatio": 0.15
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "arms": {
+    "native": {
+      "kind": "native",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-04T17:38:17.073Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 43802,
+          "exit": 0,
+          "finishedAt": "2026-10-04T17:38:40.850Z",
+          "sessionId": "01a107fe-bbb8-7161-bb93-05a71e68d11d",
+          "answer": "审查结论：**已保证的行为**：重启只接受 schemaVersion 为 1 且 PID 匹配的回执；会先清除继承环境中的七个网络变量，再按回执模式重建网络配置，同时保留其他环境变量（主文件 15–23、87–99 行）。Tailnet 回执恢复 Tailnet 地址、端口和显式可信 LAN 地址，不从接口重新扫描；仅 Tailnet 模式不会带回旧 LAN 地址。Loopback 与 LAN 模式也会清除其他模式的网络变量。测试覆盖这些行为及无效回执或地址失败关闭（测试文件 13–76、105–178、201–222 行）。\n\n**条件性风险**：若回执文件可被篡改，代码只校验 schemaVersion、PID 和部分网络字段，没有证明回执来源可信（主文件 87–99 行）。若调用方未在启动成功后写入最新模式，测试未证明重启能反映实际运行配置；写入函数本身只接收传入的 mode（主文件 111–122 行）。\n\n**无法从这两份文件证明**：启动流程何时写入回执、文件访问权限是否足以防止篡改，以及下游如何解释重建出的环境变量。",
+          "stderr": "Reading additional input from stdin...\n",
+          "replySeconds": 19.431,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 22121,
+            "cached": 9728,
+            "uncached": 12393,
+            "output": 350,
+            "reasoning": 0,
+            "firstInput": 8938,
+            "peakInput": 13183,
+            "replySeconds": 19.431,
+            "toolCalls": [
+              {
+                "at": "2026-10-04T17:38:24.003Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          }
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-10-04T17:38:40.862Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 44780,
+          "exit": 0,
+          "finishedAt": "2026-10-04T17:38:58.630Z",
+          "sessionId": "01a107fe-bbb8-7161-bb93-05a71e68d11d",
+          "answer": "审查结论：PID 一致只证明回执中的 PID 与调用方给定的 incumbentPid 相等；这两份文件不能证明回执可信或由当前实例写入。函数级上，restartNetworkEnvironment 校验版本、PID 和部分网络字段，清除七个网络变量并按回执模式重建配置。上一轮“不会丢失或扩大实际运行地址集”的说法过强：它依赖回执准确代表 incumbent 配置，且不能据此保证整个重启流程。\n\n建议两条回归测试：\n\n1. PID 一致但回执网络配置被改为另一组有效地址时，明确验证函数接受并返回修改后的配置，以记录 PID 校验不提供配置真实性保证。\n2. 对带可信 LAN 地址的 Tailnet 回执，重启后验证可信地址与 Tailnet 地址、端口均保留；再用缺少该地址的回执验证它不会被恢复，明确配置保留依赖回执内容。",
+          "stderr": "",
+          "replySeconds": 14.487,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 13570,
+            "cached": 13056,
+            "uncached": 514,
+            "output": 218,
+            "reasoning": 0,
+            "firstInput": 13570,
+            "peakInput": 13570,
+            "replySeconds": 14.487,
+            "toolCalls": []
+          }
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-10-04T17:38:58.638Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 45477,
+          "exit": 0,
+          "finishedAt": "2026-10-04T17:39:16.531Z",
+          "sessionId": "01a107fe-bbb8-7161-bb93-05a71e68d11d",
+          "answer": "审查结论：接受“回执驱动重建网络配置”的修改，范围限于函数级行为；拒绝将其表述为已保证整个重启流程保留实际配置。保留：版本与 PID 校验、清理旧网络变量、按回执恢复配置及无效网络条目失败关闭。撤回：PID 一致足以证明配置可信，以及实际地址集必然不丢失、不扩大。\n\n回归测试验收标准：一，PID 匹配但回执被改成另一组有效地址，函数接受且输出反映回执，明确显示 PID 不证明配置真实性。二，可信 LAN 地址存在于回执时重启输出保留该地址、Tailnet 地址和端口；从回执移除后输出不应恢复该地址，明确保留依赖回执内容。",
+          "stderr": "",
+          "replySeconds": 14.633,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 13878,
+            "cached": 13056,
+            "uncached": 822,
+            "output": 188,
+            "reasoning": 0,
+            "firstInput": 13878,
+            "peakInput": 13878,
+            "replySeconds": 14.633,
+            "toolCalls": []
+          }
+        }
+      ],
+      "processes": [],
+      "status": "complete",
+      "measurementIdentityVerified": true
+    },
+    "role-warm": {
+      "kind": "role-warm",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-04T17:39:18.850Z",
+          "replies": []
+        }
+      ],
+      "processes": [
+        {
+          "pid": 46198,
+          "startedAt": "2026-10-04T17:39:18.690Z",
+          "finishedAt": "2026-10-04T17:39:34.719Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "status": "failed",
+      "warmRuntimes": true,
+      "firstRound": "cold",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "participantId": "principal_f810d75c-0f69-4afa-9bdd-4b0926fe13e6",
+      "roomId": "room_ccd830d3-4139-432c-8210-5d63afe076ef",
+      "error": "AssertionError [ERR_ASSERTION]: Activation quarantined",
+      "measurementIdentityVerified": true
+    }
+  },
+  "qualityReview": "required",
+  "status": "failed",
+  "baseline": {
+    "schemaVersion": 1,
+    "baselineId": "0292456b00fdc05d9872d76d73da5615a955225715e02a1c1a6655668250709a",
+    "identity": {
+      "workload": {
+        "id": "p97-direct-review-v1",
+        "variant": "canonical",
+        "sourceHashes": {
+          "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+          "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+        },
+        "instructionsSha256": "f4c367df91c230e5bb69dc4841053b0451a6910dbb904aa00c92fff0d227213c",
+        "questionsSha256": "990900ed483b97932456e6dd68f2d52b76cca2f760ff045629ff72c8537a26b0"
+      },
+      "delivery": {
+        "native": "native-final-text",
+        "loom": "explicit-room-post",
+        "successfulAnswer": "review-prefix-and-80-characters; human-quality-review-required",
+        "final": "explicit-only; never infer completion from stdout"
+      },
+      "session": {
+        "rounds": 3,
+        "continuity": "one-session-per-arm",
+        "order": ["native", "role-warm"],
+        "warmRestart": false,
+        "prewarm": false,
+        "forcedCompaction": false
+      },
+      "runtime": {
+        "provider": "codex",
+        "bindingId": "local:codex-cli/v1:gpt-6-luna",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "cliVersion": "codex-cli 0.160.0"
+      },
+      "nativePolicy": {
+        "args": [
+          "-c",
+          "notify=[]",
+          "-c",
+          "features.memories=false",
+          "-c",
+          "memories.generate_memories=false",
+          "-c",
+          "memories.use_memories=false",
+          "-c",
+          "features.multi_agent=false",
+          "-c",
+          "features.goals=false",
+          "-c",
+          "features.sleep_tool=false",
+          "-c",
+          "features.in_app_local_automation=false",
+          "-c",
+          "features.plugins=false",
+          "-c",
+          "features.apps=false",
+          "-c",
+          "features.hooks=false",
+          "-c",
+          "skills.include_instructions=false",
+          "-c",
+          "web_search=\"disabled\""
+        ],
+        "environment": {},
+        "memoryPolicy": {
+          "provider": "codex",
+          "supported": true,
+          "status": "supported",
+          "scope": "provider-native-auto-memory",
+          "mechanism": "cli-config"
+        }
+      },
+      "nativeInvocation": {
+        "initial": [
+          "exec",
+          "--json",
+          "--skip-git-repo-check",
+          "--dangerously-bypass-approvals-and-sandbox",
+          "-m",
+          "gpt-6-luna",
+          "-c",
+          "model_reasoning_effort=\"low\"",
+          "<question>"
+        ],
+        "resume": [
+          "exec",
+          "--json",
+          "--skip-git-repo-check",
+          "--dangerously-bypass-approvals-and-sandbox",
+          "-m",
+          "gpt-6-luna",
+          "-c",
+          "model_reasoning_effort=\"low\"",
+          "resume",
+          "<session>",
+          "<question>"
+        ]
+      },
+      "sampling": {
+        "order": ["native", "role-warm"],
+        "cacheControl": "uncontrolled-record-observed-hits",
+        "automaticPaidRerun": false
+      }
+    },
+    "limits": [
+      "Same identity is necessary, not proof of equal quality or server-side model revision",
+      "Never substitute a historical native denominator",
+      "Memory evidence certifies launch configuration, not OS filesystem isolation"
+    ]
+  },
+  "evaluationProfile": {
+    "metricsSha256": "aaa0bc299504eb56582599d7690858b2aca11564f29149436413b1531bdcff93",
+    "warmChecksSha256": "79270ce9778aab9a96a92ab3c3ace4d608d339274dd0789bb58998da8b9fba9c",
+    "budgetsSha256": "bfc4be25b472230d2f2d644abfcf762806e0459a54c258f6c34b1c81922e1661"
+  },
+  "catalogVerifiedAt": "2026-10-04T17:38:17.063Z",
+  "pairedNativeEvidence": {
+    "baselineId": "0292456b00fdc05d9872d76d73da5615a955225715e02a1c1a6655668250709a",
+    "nativeEvidenceSha256": "573bd2cdd87dd6950be02b8d78be0b32a9818cae7e8a57ed04fea9622c331a31",
+    "rounds": 3,
+    "source": "this-sample-native-arm"
+  },
+  "comparisons": {
+    "role-warm": {
+      "status": "missing-evidence",
+      "failures": ["metricsMissing"]
+    }
+  },
+  "measuredStatus": "missing-evidence",
+  "finishedAt": "2026-10-04T17:39:34.735Z",
+  "rawResultSha256": "1a66700b70a98b7e5af3c5184032b206e0fd7006976e492138779a676ee3a65f"
+}

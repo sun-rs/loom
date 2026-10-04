@@ -7,6 +7,7 @@ import { createInterface } from "node:readline";
 import type { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { WorkerFinalOutputEnvelopeSchema } from "@rah-os/protocol";
 import {
   acceptUnixWebSocket,
   type UnixWebSocketConnection,
@@ -26,6 +27,7 @@ test(
     let ws: UnixWebSocketConnection | undefined;
     let turn = 0;
     let instructions = "";
+    const nativeTurnRequests: Record<string, unknown>[] = [];
     const server = createServer(async (socket) => {
       ws = await acceptUnixWebSocket(socket);
       ws.onMessage = (text) => {
@@ -37,8 +39,10 @@ test(
           instructions = f.params.developerInstructions;
           result = { thread: { id: "thread-original" } };
         }
-        if (f.method === "turn/start")
+        if (f.method === "turn/start") {
+          nativeTurnRequests.push(f.params);
           result = { turn: { id: `turn-${++turn}` } };
+        }
         ws!.send(JSON.stringify({ id: f.id, result }));
       };
     });
@@ -100,6 +104,11 @@ test(
           }) + "\n",
         );
         await wait("turn.accepted", index + 1);
+        assert.deepEqual(
+          nativeTurnRequests[index]?.outputSchema,
+          WorkerFinalOutputEnvelopeSchema.toJSONSchema({ target: "draft-7" }),
+          "Constrain the native final output before generation; never repair malformed JSON or start a correction turn",
+        );
         const identity = {
           threadId: "thread-original",
           turnId: `turn-${index + 1}`,

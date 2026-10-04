@@ -81,4 +81,10 @@ OpenCode P108 后接入 Codex，复用同一严格envelope、原Run有界提交�
 
 7项真实Host/Kernel＋假app-server集成验证两轮同session唯一发表、默认off、commentary排除、中断/取消零发表、缺登记ACK不能完成，以及未知写action_required且不自动重跑；helper/真实driver另有身份、唯一性、终态和在途工具反例。真实安装Codex0.160.0＋隔离loopback假模型已两轮贯穿生产链，每轮恰1HTTP、两个可信marker/两个完成Activation，同thread同runtime；commentary合法命令诱饵未发布。合成usage不作成本证据。模式切换后同session重建沿既有逻辑，本批未独立重测该组合。
 
-[Codex免费脱敏证据](evidence/2026-10-05-codex-final-output-free.json)。当前付费对照及正式部署待后续记录；上述免费证据不覆盖P108的质量失败，也不能证明Codex真实模型遵从率或长期成本。
+[Codex免费脱敏证据](evidence/2026-10-05-codex-final-output-free.json)。P109付费首轮暴露非法JSON，严格拒绝、零发表，整批失败；免费证据不能证明真实模型格式遵从。见[P109报告](evidence/2026-10-05-final-output-p109.md)。正式部署待本批完成。
+
+## P109 后的原生格式约束修复
+
+Codex0.160.0稳定app-server的 `turn/start.outputSchema` 明确约束本轮最终回复。启用试验时，每次turn/start直接传入 `WorkerFinalOutputEnvelopeSchema.toJSONSchema({target:"draft-7"})`，避免另维护一份发布协议；默认路径不带outputSchema。字段序号仍由模型显式回传，Host不代填，不自动修JSON，也不发纠错轮。格式约束只管结构，原Run/目标/权限/新鲜度/ACK仍由原路径验证，不能据此保证内容正确或吞掉API不支持错误。
+
+缺少原生outputSchema的专项测试先红；接线后driver和7项Host链通过，包括默认路径没有新约束。[安装版CLI免费实证](evidence/2026-10-05-codex-output-schema-free.json)验证同session两轮，首轮真实exec工具后回复、次轮直接回复，共2+1次loopback HTTP；每次实际请求text.format均为json_schema/strict:true且schema一致，两个唯一发布/ACK完成。首次探针误假定可选tools数组存在导致探针失败，修正探针后的成功与失败均保留。假服务收到schema不能证明真实供应商必然强制约束或答案正确；P109原失败保留，后续如有付费验证必须作为新代码批次记录。
