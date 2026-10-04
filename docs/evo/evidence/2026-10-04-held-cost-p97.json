@@ -1,0 +1,198 @@
+{
+  "roomId": "room_7a0aca83-1cd4-4dd7-95fb-e789bd15aec7",
+  "instances": {
+    "a": {
+      "instanceId": "principal_978ccda9-ad89-449e-a2af-67fc5596e6fd",
+      "handle": "p97-held-p97-1791081190836-fe2b4265a361f9ebf623c3e1",
+      "bindingId": "local:codex-cli/v1:gpt-6-luna",
+      "effort": "low"
+    }
+  },
+  "humanId": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+  "startedAt": "2026-10-04T02:33:11.036Z",
+  "scope": "single-instance forced late fact; steer disabled; max2Runs/4minutes/no rescue",
+  "lateSentAt": "2026-10-04T02:33:12.141Z",
+  "quietCompleted": true,
+  "runs": [
+    {
+      "runAttemptId": "run_4c7fabd2-6292-4e7a-8265-5c096490089a",
+      "participantId": "principal_978ccda9-ad89-449e-a2af-67fc5596e6fd",
+      "state": "exited",
+      "startedAt": "2026-10-04T02:33:11.431Z",
+      "finishedAt": "2026-10-04T02:33:56.582Z",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "sessionId": "01a104c2-1991-7732-8b04-34834d96633d",
+      "seconds": 45.151,
+      "totals": {
+        "generations": 7,
+        "input": 91043,
+        "cached": 71936,
+        "uncached": 19107
+      },
+      "native": {
+        "generations": 7,
+        "generationsTotal": 7,
+        "generationsBeforeReply": 7,
+        "generationsAfterReply": 0,
+        "input": 91043,
+        "cached": 71936,
+        "uncached": 19107,
+        "output": 1629,
+        "reasoning": 0,
+        "firstInput": 10431,
+        "peakInput": 17072,
+        "toolCalls": [
+          {
+            "at": "2026-10-04T02:33:17.752Z",
+            "name": "exec",
+            "kind": "worker-command"
+          },
+          {
+            "at": "2026-10-04T02:33:21.143Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-04T02:33:23.353Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-04T02:33:25.980Z",
+            "name": "exec",
+            "kind": "other"
+          },
+          {
+            "at": "2026-10-04T02:33:39.196Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          },
+          {
+            "at": "2026-10-04T02:33:53.559Z",
+            "name": "exec",
+            "kind": "box-post",
+            "turnHandle": true
+          }
+        ]
+      },
+      "nativeError": null,
+      "nativeMatches": true
+    }
+  ],
+  "messages": [
+    {
+      "seq": 4,
+      "at": "2026-10-04T02:33:11.048Z",
+      "author": "human",
+      "wakes": ["instance"],
+      "threadId": null,
+      "body": "@p97-held-p97-1791081190836-fe2b4265a361f9ebf623c3e1 只读审查频道附加目录的 scripts/workbench-launch-receipt.mjs 与 scripts/workbench-launch-receipt.test.mjs 固定快照。仅分析PID核验与网络配置恢复：给出已保证的行为、至多两项有行号依据的条件性风险。只读这两份文件，不修改文件、记忆或创建任务，不安排协作者。只交付一次实质最终回答，以“审查结论：”开头，不单发进度确认。"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-04T02:33:12.139Z",
+      "author": "human",
+      "wakes": ["instance"],
+      "threadId": null,
+      "body": "@p97-held-p97-1791081190836-fe2b4265a361f9ebf623c3e1 补充约束：已有外层调用者在调用本函数前验证进程启动时间；请区分函数自身保证和外层保证，不把“这里只比PID”直接判为已证实漏洞。只在当前审查结论中纳入这一事实，无需额外回帖。"
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-04T02:33:53.827Z",
+      "author": "instance",
+      "wakes": [],
+      "threadId": null,
+      "body": "审查结论：\n\n**已保证的行为（限这两份文件）**\n\n- 恢复函数要求 schemaVersion 为 1，且 receipt.pid 必须与调用方传入的 incumbentPid 严格相等；缺失/不支持的回执、PID 不匹配会在构造恢复环境前报错（实现 87–100 行；测试 47–66 行）。外层调用者另行验证进程启动时间；这不是本函数自身做的检查，也不能据这两份文件判断外层核验实现细节。\n- 恢复时先从继承环境删除列出的七个网络配置键，再按回执模式构造配置，其他环境项保留。Loopback 会设置端口并清除继承的 Tailnet/LAN 配置（实现 15–23、97–99 行；测试 68–77 行）。Tailnet 恢复 Tailnet 地址、端口及回执中明确记录的可信 LAN 地址；未记录 LAN 地址时不会从继承值或接口扫描补入（实现 53–62、67–85 行；测试 108–149 行）。LAN 恢复 HTTPS origin、bind host 和可选绝对证书/私钥路径；测试验证继承的 Tailnet 键被清除（实现 29–47 行；测试 28–46 行）。\n- 写回执前会验证模式/网络配置及正整数 PID，以临时文件独占创建后重命名为正式文件；测试确认权限为 0600、可读回且可替换为新 PID（实现 111–124 行；测试 78–103 行）。\n\n**条件性风险**\n\n1. 若调用者传入的 incumbentPid 与外层已通过启动时间核验的运行实例 PID 不一致，严格相等检查会拒绝该回执。回执函数本身只比较 PID；进程启动时间核验来自外层调用者（87–96 行）。\n2. 若进程在回执写入/替换时发生并发退出或启动失败，正式回执的更新与服务生命周期是否保持一致取决于外层调用时序；本函数以临时文件后重命名（111–124 行），测试覆盖成功写入和替换但未覆盖这些时序（测试 78–103 行）。只有外层在失败后仍把旧实例识别为 incumbent 并继续恢复时，旧回执才可能被用于恢复。"
+    }
+  ],
+  "activations": [
+    {
+      "activation_id": "activation_c40a1572-389e-4e42-9ee3-959bf3c04b43",
+      "state": "completed",
+      "from_seq": 4,
+      "to_seq": 4
+    },
+    {
+      "activation_id": "activation_74100ac1-36ab-4cea-a0c1-3a598d0ad0a9",
+      "state": "cancelled",
+      "from_seq": 9,
+      "to_seq": 9
+    }
+  ],
+  "held": [
+    {
+      "held_draft_id": "held_draft_a05b1073-aba0-4e77-87f9-9f4876d934d0",
+      "state": "replaced",
+      "resolution_kind": "revised",
+      "reply_based_on_room_seq": 4,
+      "proofSeqs": "[9]",
+      "delivered": 1
+    }
+  ],
+  "receipts": [
+    {
+      "run_attempt_id": "run_4c7fabd2-6292-4e7a-8265-5c096490089a",
+      "room_seq": 9,
+      "delivered": 1,
+      "confirmed": 1
+    }
+  ],
+  "cancellations": [
+    {
+      "room_seq": 14,
+      "payload_json": "{\"activationId\":\"activation_74100ac1-36ab-4cea-a0c1-3a598d0ad0a9\",\"reason\":\"covered_by_successful_run\",\"sourceActivationId\":\"activation_c40a1572-389e-4e42-9ee3-959bf3c04b43\",\"sourceRunAttemptId\":\"run_4c7fabd2-6292-4e7a-8265-5c096490089a\",\"consumerId\":\"local-workbench-host-8e868f39-cdfe-4bec-9f6a-4073874c8ee2:runtime\",\"confirmedMessageSeqs\":[9],\"generation\":0}"
+    }
+  ],
+  "gaps": [],
+  "finishedAt": "2026-10-04T02:34:56.837Z",
+  "busyAfter": false,
+  "deliveryEvidence": {
+    "cursors": [
+      {
+        "consumer_id": "e2e-discuss-bc9c878c-423d-4a1e-b280-a0cdc3847593",
+        "last_seq": 14
+      },
+      {
+        "consumer_id": "e2e-discuss-ce892db1-88f8-43b8-ae86-6d9efbf8e035",
+        "last_seq": 8
+      },
+      {
+        "consumer_id": "e2e-discuss-d0edb032-7bcc-4e4a-8b1b-d0c5461b6d64",
+        "last_seq": 1
+      },
+      {
+        "consumer_id": "e2e-discuss-f22a9a79-83b3-43bb-966c-36bb20d27590",
+        "last_seq": 3
+      },
+      {
+        "consumer_id": "local-workbench-host-8e868f39-cdfe-4bec-9f6a-4073874c8ee2:runtime",
+        "last_seq": 4
+      }
+    ],
+    "inbox": [
+      {
+        "event_seq": 4,
+        "state": "pending"
+      },
+      {
+        "event_seq": 9,
+        "state": "pending"
+      }
+    ],
+    "selfInbox": 0,
+    "sessionGeneration": {
+      "generation": 0
+    }
+  },
+  "codeCommit": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+  "rawSha256": "fae01019e01f1f27c210f2b67d8cfcbfcc2731d17245dd1c9a6a86764082fef2",
+  "harnessSha256": "fa52ffe0e27effd7c78f7a255c0e32ccd959b42ede9e72df69ee7845acdf5fc1",
+  "authorization": "Owner agreed to a bounded real held-revision test and same-model native CLI comparison; no automatic paid rerun."
+}
