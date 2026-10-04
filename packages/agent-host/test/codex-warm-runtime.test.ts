@@ -905,6 +905,16 @@ test("a user MCP server added while the runtime ran restarts it before the threa
     state.post("[fake:ack] second");
     const refused = await state.current.agentHost.reconcileOnce();
     assert.notEqual(refused.state, "completed");
+    // The refused turn closes before config_restart's process exit is reaped.
+    // Retry only after the original runtime's durable termination; an immediate
+    // poll may still see its idle row and race that asynchronous teardown.
+    await waitFor(
+      () =>
+        sql(state, "SELECT state FROM instance_runtimes")[0]?.state ===
+          "terminated" &&
+        state.current.pool.runtimeFor(state.participantId) === undefined,
+      "the config-restart runtime's proven termination",
+    );
     const retried = await state.current.agentHost.reconcileOnce();
     assert.equal(
       retried.state,
@@ -2171,6 +2181,129 @@ test("S2-b boundary recycling: an aged idle runtime is stopped with proof before
       ),
     );
   } finally {
+    await state.cleanup();
+  }
+});
+
+test("automatic internal MCP wiring keeps two warm turns bound to original credentials through stdio", async () => {
+  const { spawn } = await import("node:child_process");
+  const { createInterface } = await import("node:readline");
+  const state = await harness();
+  let child: ReturnType<typeof spawn> | undefined;
+  let lines: ReturnType<typeof createInterface> | undefined;
+  try {
+    let oldTurn: string | undefined;
+    let runtimeId: string | undefined;
+    let requestId = 0;
+    let responses: AsyncIterableIterator<string> | undefined;
+    const rpc = async (method: string, params: unknown) => {
+      const id = ++requestId;
+      child!.stdin!.write(
+        JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n",
+      );
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const line = await Promise.race([
+        responses!.next(),
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(
+            () => reject(new Error("MCP fixture response timeout")),
+            5_000,
+          );
+        }),
+      ]).finally(() => clearTimeout(timer));
+      assert.equal(line.done, false, "MCP stdio remains open");
+      const value = JSON.parse(line.value!);
+      assert.equal(value.id, id);
+      assert.equal(value.error, undefined);
+      return value.result;
+    };
+    for (let round = 1; round <= 2; round++) {
+      state.post(`[fake:steer-wait] FAKE MCP warm wiring question ${round}`);
+      const running = state.current.agentHost.reconcileOnce();
+      const runtime = await waitFor(() => {
+        const candidate = state.current.pool.runtimeFor(state.participantId);
+        return candidate?.current?.nativeTurnId ? candidate : undefined;
+      }, `MCP native admission ${round}`);
+      assert.ok(
+        runtime.workerMcp,
+        "adapter automatically provisions an internal MCP bridge",
+      );
+      assert.ok(runtime.nativeSessionId);
+      const nativeTurn = runtime.current!.nativeTurnId!;
+      if (round === 1) {
+        runtimeId = runtime.instanceRuntimeId;
+        child = spawn(
+          process.execPath,
+          [
+            fileURLToPath(
+              new URL("../src/worker-mcp-entry.ts", import.meta.url),
+            ),
+          ],
+          {
+            env: { ...process.env, ...runtime.workerMcp.env },
+            stdio: ["pipe", "pipe", "pipe"],
+          },
+        );
+        lines = createInterface({ input: child.stdout! });
+        responses = lines[Symbol.asyncIterator]();
+        const initialized = await rpc("initialize", {
+          protocolVersion: "2025-06-18",
+          capabilities: {},
+          clientInfo: { name: "FAKE warm integration", version: "1" },
+        });
+        assert.equal(initialized.serverInfo.name, "loom-worker");
+        assert.equal((await rpc("tools/list", {})).tools[0].name, "loom_reply");
+      } else
+        assert.equal(
+          runtime.instanceRuntimeId,
+          runtimeId,
+          "second turn reuses the warm process and bridge",
+        );
+      const reply = (turn: string, suffix: string) =>
+        rpc("tools/call", {
+          name: "loom_reply",
+          arguments: { body: `FAKE MCP warm ${suffix}`, final: false },
+          _meta: {
+            "x-codex-turn-metadata": {
+              turn_id: turn,
+              thread_id: runtime.nativeSessionId,
+              session_id: runtime.nativeSessionId,
+            },
+            threadId: runtime.nativeSessionId,
+            sessionId: runtime.nativeSessionId,
+            callId: `call-${suffix}`,
+          },
+        });
+      if (oldTurn) {
+        const stale = await reply(oldTurn, "revoked");
+        assert.equal(
+          stale.isError,
+          true,
+          "old native turn cannot select the new Worker credential",
+        );
+      }
+      const result = await reply(nativeTurn, String(round));
+      assert.equal(result.isError, false, JSON.stringify(result));
+      const receipt = JSON.parse(result.content[0].text);
+      assert.equal(receipt.event.actorId, state.participantId);
+      assert.equal(receipt.event.roomId, state.roomId);
+      assert.equal((await running).state, "completed");
+      oldTurn = nativeTurn;
+    }
+    assert.equal(
+      sql(
+        state,
+        "SELECT message_id FROM messages WHERE body LIKE 'FAKE MCP warm %'",
+      ).length,
+      2,
+    );
+    assert.equal(
+      state.records().filter((record) => record.event === "start").length,
+      1,
+    );
+  } finally {
+    lines?.close();
+    child?.kill();
     await state.cleanup();
   }
 });

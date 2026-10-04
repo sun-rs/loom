@@ -11,6 +11,8 @@ export type CodexFinalInterruptReport = {
 };
 export function createCodexFinalInterrupt(options: {
   interrupt: () => Promise<unknown>;
+  /** Required for code mode, including tools whose raw start may arrive late. */
+  expectOuterOutput?: boolean;
 }): {
   readonly armed: boolean;
   readonly issued: boolean;

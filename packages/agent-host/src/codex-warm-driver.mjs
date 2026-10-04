@@ -52,6 +52,12 @@ import {
   providerLaunchPolicy,
   providerMemoryConfig as memoryConfig,
 } from "./provider-launch-arguments.js";
+import { WORKER_REPLY_MCP_TOOL } from "@rah-os/protocol";
+import {
+  assertCodexWorkerMcpNamespace,
+  codexWorkerMcpConfig,
+  verifyCodexWorkerMcpReady,
+} from "./codex-worker-mcp-config.mjs";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
   codexWorkspaceRoots,
@@ -108,10 +114,16 @@ let threadResumeParams;
 // user's MCP servers, fail-closed) refusing the launch is a `fatal` with its
 // reason, so the pool and the run carry it, not only "exited before ready".
 let launchPolicy;
+let workerMcp;
 try {
+  workerMcp = codexWorkerMcpConfig(process.env);
   launchPolicy = providerLaunchPolicy("codex", process.env, {
     codexExecutable: options.executable,
   });
+  assertCodexWorkerMcpNamespace(
+    workerMcp,
+    launchPolicy.codexMcpServerNames ?? [],
+  );
 } catch (error) {
   emit("fatal", { error: errorMessage(error).slice(0, 2048) });
   process.stderr.write(`[loom codex-warm] ${errorMessage(error)}\n`);
@@ -126,6 +138,7 @@ const codex = spawn(
     ...providerLaunchArguments("codex"),
     ...options.codexConfigArgs,
     ...launchPolicy.args,
+    ...(workerMcp?.args ?? []),
     "--listen",
     `unix://${socketPath}`,
   ],
@@ -246,6 +259,12 @@ try {
   threadId = started?.thread?.id;
   if (typeof threadId !== "string" || threadId === "")
     throw new Error("Codex thread request returned no thread.id");
+  if (workerMcp)
+    await verifyCodexWorkerMcpReady(
+      (method, params) => request(method, params, HANDSHAKE_TIMEOUT_MS),
+      threadId,
+      WORKER_REPLY_MCP_TOOL,
+    );
   threadLoaded = true;
   threadResumeParams = { ...threadStart, excludeTurns: true };
   usageTracker = new CodexTokenUsageTracker({ freshThread: !resumed });
@@ -373,6 +392,7 @@ function createTurn(runAttemptId, nativeTurnId) {
   turn.noticeInput = new PassThrough();
   // Final-reply turn end: this native turn only, never "the current turn".
   turn.finalInterrupt = createCodexFinalInterrupt({
+    expectOuterOutput: workerMcp !== undefined,
     interrupt: () =>
       request(
         "turn/interrupt",
@@ -431,6 +451,12 @@ async function reloadThread() {
   );
   if (resumed?.thread?.id !== threadId)
     throw new Error("thread/resume returned a different thread id");
+  if (workerMcp)
+    await verifyCodexWorkerMcpReady(
+      (method, params) => request(method, params, HANDSHAKE_TIMEOUT_MS),
+      threadId,
+      WORKER_REPLY_MCP_TOOL,
+    );
   threadLoaded = true;
 }
 

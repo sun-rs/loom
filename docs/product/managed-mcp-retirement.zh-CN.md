@@ -8,6 +8,8 @@ RAH 不再管理第三方 MCP Server 连接、凭据、目录、Agent 分配和�
 
 这不是禁止用户的 Agent 使用工具。用户自行安装配置的 CLI 及其自身 MCP 环境不由本次变更删除；Room 的 Worker CLI/HTTP、Activation、Task、附件、私有记忆与必要的 Provider 通信仍保留。不能按 MCP 字符串全局删除诊断或通用协议支持。
 
+2026-10-04 内部 Worker 通信切片：Codex warm 通过单一 `loom_worker` MCP 服务调用既有 Worker 发布接口；Host 绑定原 Run 权限，不提供第三方连接管理、目录、分配或代理设置。其他 CLI 的产品路径保持原状。此内部通信不撤销上述退役决定，见 [所有权、实现与验证边界](../evo/worker-mcp-reply.zh-CN.md)。
+
 ## 历史兼容与验证
 
 旧 SQLite 迁移、持久记录及备份不作破坏性清理；没有公开入口的历史结构可以保留，以保证既有状态可打开与 Room 历史完整。保留历史结构不表示当前仍支持此功能。后续若要恢复，需要新的用户产品决策。

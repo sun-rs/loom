@@ -1,0 +1,101 @@
+{
+  "pass": true,
+  "kind": "real installed Codex + product warm driver/stdio MCP/Host bridge + temporary real Worker/Kernel; only loopback fake model",
+  "threadId": "01a10652-84db-77b3-bbfe-00bf220c98d4",
+  "rounds": [
+    {
+      "round": 1,
+      "schemaNaturallyExposed": true,
+      "realWorkerPosts": 1,
+      "actorCorrect": true,
+      "roomCorrect": true,
+      "outerReceiptDeepEqual": true,
+      "eventId": "event_ef7fd4ac-a15d-4faf-a3fe-0d3073aba72d",
+      "localModelRequests": 2,
+      "final": false
+    },
+    {
+      "round": 2,
+      "schemaNaturallyExposed": true,
+      "realWorkerPosts": 1,
+      "actorCorrect": true,
+      "roomCorrect": true,
+      "outerReceiptDeepEqual": true,
+      "eventId": "event_f4be2f89-0f59-40b1-b300-a119f7765892",
+      "localModelRequests": 1,
+      "final": true
+    }
+  ],
+  "oldNativeTurnRejected": true,
+  "realKernelFinalMarker": true,
+  "finalReport": {
+    "protocol": "rah-final-interrupt/v1",
+    "requested": true,
+    "accepted": true,
+    "terminal": true,
+    "sent": true,
+    "preemptedFollowUp": true
+  },
+  "paidCalls": 0,
+  "limits": [
+    "Fixture host scopes and run termination are harness-managed, not full AgentHost reconciliation",
+    "Usage is synthetic fixture data, not a paid efficiency result",
+    "Single synthetic final sample; zero followup request not guaranteed across real model/network timings",
+    "No real paid usage, full AgentHost reconciliation, deployment or UI claim"
+  ],
+  "sourceBaseCommit": "069e465a29b9d3071383cae23789d23a1e1f2a86",
+  "sourceUnderTest": "working tree Worker MCP slice, before documentation handoff",
+  "officialNativeMemoryOff": true,
+  "productScope": "Codex warm source deployment only; other providers and SEA retain CLI",
+  "postSecondCellRepairVerification": {
+    "pass": true,
+    "kind": "real installed Codex + product warm driver/stdio MCP/Host bridge + temporary real Worker/Kernel; only loopback fake model",
+    "threadId": "01a1065f-a926-7ad0-8483-ee06855ae359",
+    "rounds": [
+      {
+        "round": 1,
+        "schemaNaturallyExposed": true,
+        "realWorkerPosts": 1,
+        "actorCorrect": true,
+        "roomCorrect": true,
+        "outerReceiptDeepEqual": true,
+        "eventId": "event_a385f112-e3ac-4e96-9e34-dcb96d2bcb06",
+        "localModelRequests": 2,
+        "final": false
+      },
+      {
+        "round": 2,
+        "schemaNaturallyExposed": true,
+        "realWorkerPosts": 1,
+        "actorCorrect": true,
+        "roomCorrect": true,
+        "outerReceiptDeepEqual": true,
+        "eventId": "event_6da68980-27b7-47f6-bda4-07377df2d076",
+        "localModelRequests": 1,
+        "final": true
+      }
+    ],
+    "oldNativeTurnRejected": true,
+    "realKernelFinalMarker": true,
+    "finalReport": {
+      "protocol": "rah-final-interrupt/v1",
+      "requested": true,
+      "accepted": true,
+      "terminal": true,
+      "sent": true,
+      "preemptedFollowUp": true
+    },
+    "paidCalls": 0,
+    "limits": [
+      "Fixture host scopes and run termination are harness-managed, not full AgentHost reconciliation",
+      "Usage is synthetic fixture data, not a paid efficiency result",
+      "Single synthetic final sample; zero followup request not guaranteed across real model/network timings",
+      "No real paid usage, full AgentHost reconciliation, deployment or UI claim"
+    ],
+    "parallelToolCalls": {
+      "presentOnAllRequests": true,
+      "value": false,
+      "observedRequests": 3
+    }
+  }
+}

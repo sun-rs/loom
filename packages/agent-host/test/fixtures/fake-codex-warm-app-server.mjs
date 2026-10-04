@@ -6,6 +6,7 @@
 // Each turn's behaviour is chosen by `[fake:<directive>]` tokens in the turn
 // input text (the Room message body reaches it through the bodied wake).
 import { spawn } from "node:child_process";
+import { WORKER_REPLY_MCP_TOOL } from "@rah-os/protocol";
 import {
   appendFileSync,
   existsSync,
@@ -99,6 +100,35 @@ const server = createServer(async (socket) => {
         return reply({ userAgent: "fake-codex-warm/0.0.0" });
       case "initialized":
         return;
+      case "mcpServerStatus/list": {
+        if (
+          frame.params.threadId !== threadId ||
+          frame.params.serverName !== "loom_worker"
+        )
+          return fail(
+            "FAKE inventory requires the current thread and internal server",
+          );
+        // Fake transport readiness only. The real MCP entry/bridge is exercised
+        // separately; this fixture never fabricates a tool call or its identity.
+        const configured =
+          args.includes("mcp_servers.loom_worker.enabled=true") &&
+          args.some((arg) =>
+            arg.startsWith("mcp_servers.loom_worker.command="),
+          );
+        return reply({
+          data: configured
+            ? [
+                {
+                  name: "loom_worker",
+                  runtimeStatus: "connected",
+                  tools: { loom_reply: WORKER_REPLY_MCP_TOOL },
+                  toolsError: null,
+                },
+              ]
+            : [],
+          nextCursor: null,
+        });
+      }
       case "thread/start": {
         threadId = `thread-${process.pid}-${Date.now()}`;
         if (threadsPath)
@@ -331,6 +361,16 @@ const server = createServer(async (socket) => {
 
   async function toolItem(turn, handle, name, command) {
     const item = { id: `${name}-${turn.id}`, type: "commandExecution" };
+    // FAKE code-mode envelope around the real Worker subprocess. Inner tool
+    // completion alone must not let the driver truncate the outer result.
+    const codeMode = args.includes("mcp_servers.loom_worker.enabled=true");
+    const callId = `outer-${name}-${turn.id}`;
+    if (codeMode)
+      notify("rawResponseItem/completed", {
+        threadId,
+        turnId: turn.id,
+        item: { type: "custom_tool_call", name: "exec", call_id: callId },
+      });
     notify("item/started", { threadId, turnId: turn.id, item });
     await runWorker(turn, handle, command);
     notify("item/completed", {
@@ -338,6 +378,21 @@ const server = createServer(async (socket) => {
       turnId: turn.id,
       item: { ...item, status: "completed" },
     });
+    if (codeMode)
+      notify("rawResponseItem/completed", {
+        threadId,
+        turnId: turn.id,
+        item: {
+          type: "custom_tool_call_output",
+          call_id: callId,
+          output: [
+            {
+              type: "input_text",
+              text: "Script completed\nWall time 0 seconds\nOutput:\nFAKE outer result completed",
+            },
+          ],
+        },
+      });
   }
 
   function usagePayload(turn, total) {

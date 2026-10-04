@@ -27,10 +27,13 @@
 //   advance beyond every observed response is one (`false`); an unchanged
 //   repeat is nothing; an unreadable or baseline-less report is `unknown`;
 // - otherwise the interrupt preempted the follow-up (`true`).
+import { createCodexOuterOutputBarrier } from "./codex-outer-output.js";
+
 const TOOL_ITEM_TYPES = new Set([
   "commandExecution",
   "fileChange",
   "mcpToolCall",
+  "dynamicToolCall",
   "collabAgentToolCall",
   "webSearch",
 ]);
@@ -57,7 +60,11 @@ function isFinalPost(item) {
   );
 }
 
-export function createCodexFinalInterrupt({ interrupt }) {
+export function createCodexFinalInterrupt({
+  interrupt,
+  expectOuterOutput = false,
+}) {
+  const outerOutput = createCodexOuterOutputBarrier(expectOuterOutput);
   const tools = new Map();
   let armed = false;
   let requested = false;
@@ -122,6 +129,7 @@ export function createCodexFinalInterrupt({ interrupt }) {
       return requested && accepted !== false;
     },
     observe(frame) {
+      outerOutput.observe(frame);
       const method = frame?.method;
       const item = frame?.params?.item;
       if (item && TOOL_ITEM_TYPES.has(item.type)) {
@@ -164,7 +172,8 @@ export function createCodexFinalInterrupt({ interrupt }) {
         const status = frame?.params?.turn?.status;
         if (typeof status === "string") terminal = status === "interrupted";
       }
-      if (armed && !requested && tools.size === 0) fire();
+      if (armed && !requested && tools.size === 0 && outerOutput.ready())
+        fire();
     },
     /** The Host's signal; false when already armed. */
     arm() {
@@ -179,7 +188,7 @@ export function createCodexFinalInterrupt({ interrupt }) {
         outputSinceIdle
       )
         ambiguous = true;
-      if (tools.size === 0) fire();
+      if (tools.size === 0 && outerOutput.ready()) fire();
       return true;
     },
     async report() {

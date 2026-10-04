@@ -12,6 +12,7 @@ import {
 } from "./leftover-process-sweeper.ts";
 import type { RuntimeProcessHygiene } from "./runtime-process-hygiene.ts";
 import type { RunExit } from "./runtime.ts";
+import type { WorkerMcpBridge } from "./worker-mcp-bridge.ts";
 import { writeWorkerCliWrapper } from "./worker-tool-transport.ts";
 import {
   resolveWarmRuntimePolicy,
@@ -138,6 +139,8 @@ type Deferred<T> = {
 };
 
 export type WarmTurn = {
+  /** Revoke the exact Host MCP binding before releasing the Worker credential. */
+  releaseMcp?: () => void;
   admission: Deferred<WarmTurnAdmission>;
   /** The begin command was written; admission may be pending. */
   beginSent?: boolean;
@@ -211,6 +214,8 @@ export type InstanceRuntimePoolOptions = {
 };
 
 export class WarmRuntime {
+  /** Runtime transport only; original execution credentials remain in its bindings. */
+  workerMcp: WorkerMcpBridge | undefined;
   readonly instanceRuntimeId: string;
   readonly participantId: string;
   readonly key: string;

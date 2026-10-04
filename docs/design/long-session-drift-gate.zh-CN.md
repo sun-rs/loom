@@ -81,7 +81,7 @@ RAH_DRIFT_ROUNDS=6 RAH_DRIFT_COMPACT_AT= RAH_DRIFT_ATTACH=1 npm run test:cli:dri
 
 - 先用 `probeLocalModelCatalog` 核对 binding 与 effort；Role 用 `exactBindingIds` 且 `fallback: disabled`；结束时核对所有 placement。
 - Codex：沿用 `model-guard.mjs` 的 stdio 与 Unix socket 代理围栏，按本次 model/effort 参数化
-  （`createCodexRequestGuard`）。围栏是白名单：只放行产品驱动与压缩客户端实际发送的 `initialize`/`initialized`、
+  （`createCodexRequestGuard`）。内部 Worker MCP 的唯一例外是产品生成的完整 `loom_worker` 启动配置与指定 native thread 的 `mcpServerStatus/list` 只读核验，具体限制同[效率门禁](cli-efficiency-gate.zh-CN.md)；模型、effort、记忆关闭围栏不变。围栏是白名单：只放行产品驱动与压缩客户端实际发送的 `initialize`/`initialized`、
   `thread/start|resume`、`thread/compact/start`、`turn/start|steer|interrupt` 及对服务端请求的响应，参数逐键限定
   （`config` 只许产品的 memory/multi_agent/goals 开关为 false 与许可 effort；`approvalPolicy` 只许 `never`；
   `approvalsReviewer`、`serviceTier`、非文本输入等一律拒绝）；thread/start|resume 必须带许可值，turn 级覆盖不得偏离；

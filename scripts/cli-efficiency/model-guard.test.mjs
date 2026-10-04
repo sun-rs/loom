@@ -497,3 +497,92 @@ createInterface({ input: process.stdin }).on("line", (l) => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("Codex gate admits only the complete exact internal Worker MCP launch group", async () => {
+  const { codexWorkerMcpConfig } =
+    await import("../../packages/agent-host/src/codex-worker-mcp-config.mjs");
+  const group = codexWorkerMcpConfig({
+    LOOM_WORKER_MCP_SOCKET: "/tmp/gate-fixture.sock",
+    LOOM_WORKER_MCP_SECRET: "not-an-argv-value",
+  }).args;
+  const launch = ["app-server", ...group, "--listen", "stdio://"];
+  assert.equal(classifyCodexLaunch(launch).kind, "app-server");
+  for (let i = 0; i < group.length; i += 2) {
+    assert.throws(() =>
+      classifyCodexLaunch([
+        "app-server",
+        ...group.slice(0, i),
+        ...group.slice(i + 2),
+      ]),
+    );
+    assert.throws(() =>
+      classifyCodexLaunch(["app-server", ...group, ...group.slice(i, i + 2)]),
+    );
+  }
+  for (const extra of [
+    "mcp_servers.other.enabled=true",
+    "mcp_servers.loom_worker.enabled=false",
+    'mcp_servers.loom_worker.url="http://127.0.0.1:1"',
+    'mcp_servers.loom_worker.env={LOOM_WORKER_MCP_SECRET="secret-in-argv"}',
+  ])
+    assert.throws(() =>
+      classifyCodexLaunch(["app-server", ...group, "-c", extra]),
+    );
+  for (const [key, value] of [
+    ["command", '"/bin/sh"'],
+    ["args", '["/tmp/other-entry.ts"]'],
+    ["env_vars", '["LOOM_WORKER_MCP_SECRET"]'],
+    ["omit_tools_from", "[]"],
+    ["enabled", "false"],
+  ]) {
+    const changed = group.map((x) =>
+      x.startsWith(`mcp_servers.loom_worker.${key}=`)
+        ? `mcp_servers.loom_worker.${key}=${value}`
+        : x,
+    );
+    assert.throws(() => classifyCodexLaunch(["app-server", ...changed]));
+  }
+  assert.throws(() => classifyCodexLaunch(["mcp", "list", "--json", ...group]));
+  assert.throws(() =>
+    classifyCodexLaunch([
+      "app-server",
+      ...group,
+      "-c",
+      "features.memories=true",
+    ]),
+  );
+});
+test("Codex gate admits only thread-scoped internal Worker MCP readiness reads", () => {
+  const guard = createCodexRequestGuard(approved);
+  assert.doesNotThrow(() =>
+    guard({
+      id: 1,
+      method: "mcpServerStatus/list",
+      params: { threadId: "original-thread", serverName: "loom_worker" },
+    }),
+  );
+  for (const params of [
+    {},
+    { threadId: "t" },
+    { serverName: "loom_worker" },
+    { threadId: "", serverName: "loom_worker" },
+    { threadId: "t", serverName: "other" },
+    { threadId: "t", serverName: "loom_worker", detail: "full" },
+    { threadId: "t", serverName: "loom_worker", cursor: "x" },
+  ])
+    assert.throws(() =>
+      guard({ id: 1, method: "mcpServerStatus/list", params }),
+    );
+  for (const method of [
+    "config/mcpServer/reload",
+    "mcpServer/tool/call",
+    "mcpServer/oauth/login",
+  ])
+    assert.throws(() =>
+      guard({
+        id: 1,
+        method,
+        params: { threadId: "t", serverName: "loom_worker" },
+      }),
+    );
+});

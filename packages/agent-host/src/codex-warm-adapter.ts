@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import { isSea } from "node:sea";
 import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import {
+  createWorkerMcpBridge,
+  type WorkerMcpBridge,
+} from "./worker-mcp-bridge.ts";
 
 import {
   RuntimeFailureSchema,
@@ -216,6 +221,7 @@ export type CodexWarmAdapterOptions = {
 
 /** What a cold launch prepared, kept on the runtime for its later turns. */
 type LaunchCapture = {
+  workerMcp?: WorkerMcpBridge;
   launchEnvironment?: Readonly<Record<string, string>>;
   standingPromptDigest?: string | undefined;
 };
@@ -284,6 +290,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     });
     const runtime = acquired.runtime;
     if (acquired.mode === "cold") {
+      runtime.workerMcp = launched.workerMcp;
       runtime.standingPromptDigest = launched.standingPromptDigest;
       runtime.launchEnvironment = launched.launchEnvironment ?? {};
     }
@@ -317,6 +324,21 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       scope: turnScope(input),
       token: credential.accessToken,
     });
+    if (runtime.workerMcp) {
+      if (!runtime.nativeSessionId)
+        throw Error("Worker MCP requires the original native session");
+      turn.releaseMcp = runtime.workerMcp.bind({
+        runAttemptId: input.runAttemptId,
+        threadId: runtime.nativeSessionId,
+        admission: turn.admission.promise,
+        accessToken: credential.accessToken,
+        isActive: () =>
+          !turn.cancelRequested &&
+          !turn.framesClosed &&
+          !turn.outcome.settled &&
+          runtime.state === "busy",
+      });
+    }
     const diagnostics = new BoundedOutput(65_536, [credential.accessToken]);
     let preparedDigest: string | undefined;
     let noticeDigest: string | undefined;
@@ -468,6 +490,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     });
     if (outcome.kind === "skipped") return outcome;
     outcome.runtime.standingPromptDigest = launched.standingPromptDigest;
+    outcome.runtime.workerMcp = launched.workerMcp;
     outcome.runtime.launchEnvironment = launched.launchEnvironment ?? {};
     return {
       instanceRuntimeId: outcome.runtime.instanceRuntimeId,
@@ -491,6 +514,19 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   ): Promise<WarmRuntimeLaunch> {
     const pool = this.#options.pool;
     const lease = await this.#options.runtimeEnvironment(input);
+    let mcp: WorkerMcpBridge | undefined;
+    if (this.#driver.kind === CODEX_WARM_DRIVER_KIND) {
+      try {
+        mcp = await createWorkerMcpBridge({
+          socketPath: join(layout.socketDirectory, "worker.sock"),
+          workerApiOrigin: this.#options.workerApiOrigin,
+        });
+        launched.workerMcp = mcp;
+      } catch (error) {
+        await lease.release?.();
+        throw error;
+      }
+    }
     launched.standingPromptDigest = lease.standingPromptDigest;
     launched.launchEnvironment = lease.env;
     const model = this.#options.resolvedModel;
@@ -529,13 +565,24 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         inherited: process.env,
         leased: {
           ...lease.env,
+          ...mcp?.env,
           [RAH_AGENT_TOOL_BIN_ENV]: layout.binDirectory,
           [RAH_WORKER_API_URL_ENV]: this.#options.workerApiOrigin,
           [RAH_WORKER_CLI_ENV]: layout.workerCli,
           [RAH_WORKER_TURN_ROOT_ENV]: layout.turnRoot,
         },
       }),
-      ...(lease.release === undefined ? {} : { release: lease.release }),
+      release: async () => {
+        const outcomes = await Promise.allSettled([
+          mcp?.close(),
+          lease.release?.(),
+        ]);
+        const errors = outcomes.flatMap((r) =>
+          r.status === "rejected" ? [r.reason] : [],
+        );
+        if (errors.length)
+          throw new AggregateError(errors, "Runtime transport cleanup failed");
+      },
     };
   }
 
@@ -776,6 +823,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       if (binding.turn.runAttemptId === input.runAttemptId) {
         this.#turns.delete(runId);
         // A start that failed after taking the lane still releases it here.
+        binding.turn.releaseMcp?.();
         await binding.turn.handle?.release();
       }
     await this.#options.pool.releaseTurn(
@@ -859,6 +907,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       noticed: notice !== "",
       text:
         withWorkerTurnHandle(base, handle) +
+        (runtime.workerMcp
+          ? "\nUse loom_reply for replies to this conversation; final=true only when finished. Other operations retain the Worker CLI."
+          : "") +
         (notice === "" ? "" : `\n${notice}`) +
         (protocol === "" ? "" : `\n${protocol}`),
     };
@@ -879,6 +930,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const { runtime, turn } = binding;
     const pool = this.#options.pool;
     runtime.closeTurnFrames(turn);
+    turn.releaseMcp?.();
     // Evidence of frames through lastFrameSeq is queued; drain it before
     // the handle goes away and the proof is written.
     await turn.collector?.finish();

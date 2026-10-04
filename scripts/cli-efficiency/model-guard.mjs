@@ -4,6 +4,7 @@ import { createInterface } from "node:readline";
 import { appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { providerLaunchSwitches } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import { codexWorkerMcpConfig } from "../../packages/agent-host/src/codex-worker-mcp-config.mjs";
 import { startGuardedUnixProxy } from "./ws-guard.mjs";
 
 // The product's process-only Codex switches (memory, multi_agent, goals,
@@ -12,6 +13,15 @@ import { startGuardedUnixProxy } from "./ws-guard.mjs";
 const PRODUCT_CONFIG = new Set(
   providerLaunchSwitches("codex").args.filter((a) => a !== "-c"),
 );
+// Only the product helper's complete local internal server configuration.
+// Socket and runtime secret are inherited env; neither is copied into argv.
+const WORKER_MCP_CONFIG = new Set(
+  codexWorkerMcpConfig({
+    LOOM_WORKER_MCP_SOCKET: "/unused-gate-config.sock",
+    LOOM_WORKER_MCP_SECRET: "validation-only",
+  }).args.filter((value) => value !== "-c"),
+);
+const WORKER_MCP_PREFIX = "mcp_servers.loom_worker.";
 const MCP_DISABLE = /^mcp_servers\.[^.=]+\.enabled=false$/u;
 // Thread-level config keys besides the approved effort, only as `false`.
 const PRODUCT_FALSE_KEYS = new Set(
@@ -144,6 +154,11 @@ export function createCodexRequestGuard(approved) {
         if (p.excludeTurns !== undefined && p.excludeTurns !== true)
           refuse(`${where}.excludeTurns`);
         return;
+      case "mcpServerStatus/list":
+        onlyKeys(p, ["threadId", "serverName"], where);
+        str(p.threadId, `${where}.threadId`);
+        if (p.serverName !== "loom_worker") refuse(`${where}.serverName`);
+        return;
       case "thread/compact/start":
         onlyKeys(p, ["threadId"], where);
         str(p.threadId, `${where}.threadId`);
@@ -221,17 +236,30 @@ export function classifyCodexLaunch(args) {
   }
   if (args[0] !== "app-server") throw new Error("Unsupported gate CLI command");
   let listens = 0;
+  const workerMcpEntries = [];
   for (let i = 1; i < args.length; i++) {
     const a = args[i];
     if (a === "-c") {
       const entry = String(args[++i] ?? "");
-      if (!PRODUCT_CONFIG.has(entry) && !MCP_DISABLE.test(entry))
+      if (entry.startsWith(WORKER_MCP_PREFIX)) {
+        workerMcpEntries.push(entry);
+        if (!WORKER_MCP_CONFIG.has(entry) && !MCP_DISABLE.test(entry))
+          refuse("internal Worker MCP config");
+      } else if (!PRODUCT_CONFIG.has(entry) && !MCP_DISABLE.test(entry))
         throw new Error(`Unsupported gate config override ${args[i]}`);
     } else if (a === "--listen") {
       listens += 1;
       if (listens > 1 || typeof args[++i] !== "string")
         throw new Error("Unsupported gate --listen transport");
     } else throw new Error(`Unsupported gate CLI argument ${a}`);
+  }
+  if (workerMcpEntries.some((entry) => WORKER_MCP_CONFIG.has(entry))) {
+    if (
+      workerMcpEntries.length !== WORKER_MCP_CONFIG.size ||
+      new Set(workerMcpEntries).size !== WORKER_MCP_CONFIG.size ||
+      workerMcpEntries.some((entry) => !WORKER_MCP_CONFIG.has(entry))
+    )
+      refuse("incomplete or duplicate internal Worker MCP config");
   }
   listenPlan(args);
   return { kind: "app-server" };
