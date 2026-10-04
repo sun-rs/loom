@@ -1,0 +1,283 @@
+{
+  "date": "2026-10-04",
+  "cliVersion": "codex-cli 0.160.0",
+  "scope": "Installed CLI with loopback deterministic Fake Responses; not real-model or Loom business acceptance",
+  "paidModelCalls": 0,
+  "productCodeChanged": false,
+  "officialAutoMemory": {
+    "features.memories": false,
+    "memories.generate_memories": false,
+    "memories.use_memories": false
+  },
+  "modelProvider": "loom_free_fixture",
+  "historyMode": "legacy",
+  "baselineCode": "91996e490257848cc4020cacccfba03033626835",
+  "result": {
+    "fixture": true,
+    "realModelCalls": 0,
+    "requests": [
+      {
+        "phase": "initial",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": false
+      },
+      {
+        "phase": "initial",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": true
+      },
+      {
+        "phase": "cold-resume",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": false
+      },
+      {
+        "phase": "cold-resume",
+        "path": "/v1/responses",
+        "model": "gpt-6-luna",
+        "toolNames": [],
+        "replyToolExposed": true,
+        "extraToolExposed": false,
+        "hasToolResult": true
+      }
+    ],
+    "callbacks": [
+      {
+        "phase": "initial",
+        "threadId": "01a10579-a7e4-7380-af8c-428d72ff54e4",
+        "turnId": "01a10579-a82c-7ab1-a0a5-e099d4e89afd",
+        "callId": "call_initial",
+        "namespace": null,
+        "tool": "loom_reply_probe",
+        "arguments": {
+          "body": "FAKE ONLY - no Room mutation",
+          "final": true
+        }
+      },
+      {
+        "phase": "cold-resume",
+        "threadId": "01a10579-a7e4-7380-af8c-428d72ff54e4",
+        "turnId": "01a10579-ad3c-7fa2-ac8b-37444efa3827",
+        "callId": "call_cold-resume",
+        "namespace": null,
+        "tool": "loom_reply_probe",
+        "arguments": {
+          "body": "FAKE ONLY - no Room mutation",
+          "final": true
+        }
+      }
+    ],
+    "events": [
+      {
+        "phase": "initial",
+        "method": "remoteControl/status/changed"
+      },
+      {
+        "phase": "initial",
+        "method": "thread/started"
+      },
+      {
+        "phase": "initial",
+        "method": "thread/settings/updated"
+      },
+      {
+        "phase": "initial",
+        "method": "thread/status/changed"
+      },
+      {
+        "phase": "initial",
+        "method": "turn/started"
+      },
+      {
+        "phase": "initial",
+        "method": "item/started",
+        "itemType": "userMessage"
+      },
+      {
+        "phase": "initial",
+        "method": "item/completed",
+        "itemType": "userMessage"
+      },
+      {
+        "phase": "initial",
+        "method": "item/started",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "phase": "initial",
+        "method": "item/tool/call"
+      },
+      {
+        "phase": "initial",
+        "method": "item/completed",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "phase": "initial",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "phase": "initial",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "phase": "initial",
+        "method": "item/started",
+        "itemType": "agentMessage"
+      },
+      {
+        "phase": "initial",
+        "method": "item/completed",
+        "itemType": "agentMessage"
+      },
+      {
+        "phase": "initial",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "phase": "initial",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "phase": "initial",
+        "method": "thread/status/changed"
+      },
+      {
+        "phase": "initial",
+        "method": "turn/completed"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "remoteControl/status/changed"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "warning"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "thread/status/changed"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "thread/settings/updated"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "thread/status/changed"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "turn/started"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/started",
+        "itemType": "userMessage"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/completed",
+        "itemType": "userMessage"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/started",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/tool/call"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/completed",
+        "itemType": "dynamicToolCall"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/started",
+        "itemType": "agentMessage"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "item/completed",
+        "itemType": "agentMessage"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "thread/tokenUsage/updated"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "account/rateLimits/updated"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "thread/status/changed"
+      },
+      {
+        "phase": "cold-resume",
+        "method": "turn/completed"
+      }
+    ],
+    "phases": [
+      {
+        "phase": "initial",
+        "modelProvider": "loom_free_fixture",
+        "historyMode": "legacy",
+        "turnId": "01a10579-a82c-7ab1-a0a5-e099d4e89afd"
+      },
+      {
+        "phase": "cold-resume",
+        "modelProvider": "loom_free_fixture",
+        "historyMode": "legacy",
+        "turnId": "01a10579-ad3c-7fa2-ac8b-37444efa3827"
+      }
+    ],
+    "threadId": "01a10579-a7e4-7380-af8c-428d72ff54e4",
+    "resumeToolOverride": "accepted-but-not-exposed",
+    "status": "passed"
+  },
+  "scriptSha256": "4650196886f4122166739478dbb4ffc3ec9f4b4a47456bc49e86c43545aae64d",
+  "limitations": [
+    "Dynamic tool definition is exposed inside input.additional_tools/functions.exec, not top-level tools",
+    "Successful callback fixture emits direct function_call; custom_tool_call code-mode fixture remains unresolved",
+    "No business credential, Worker API, final-interrupt, held-receipt or real-model cost has been accepted",
+    "Loopback model-provider guard is not whole-process network isolation",
+    "Each fake usage counter is fabricated fixture data and must never enter an efficiency comparison"
+  ],
+  "priorExperiments": [
+    "Missing top-level tools was an inspector error: dynamic definition exists inside additional_tools",
+    "Three custom_tool_call fixture shapes timed out before producing a callback; preserved as fixture failures, not attributed to Loom or the CLI without further diagnosis",
+    "Empty legacy thread lacks persisted rollout before first user message; paginated empty thread rejects list_turns; neither proves real-session resume failure"
+  ],
+  "resumedRequestReceiptEvidence": [
+    {
+      "type": "function_call_output",
+      "id": "fco_01a10579-b1a2-7311-b959-ee86930cbd5d",
+      "call_id": "call_cold-resume",
+      "output": "FAKE_TOOL_RECEIPT_cold-resume"
+    }
+  ]
+}
