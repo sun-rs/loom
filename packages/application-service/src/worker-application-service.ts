@@ -88,6 +88,7 @@ import {
   WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
   WorkerMessagePostResponseSchema,
   WorkerMessagePostRequestSchema,
+  WorkerFinalOutputRequestSchema,
   WorkerReminderCancelRequestSchema,
   WorkerReminderListRequestSchema,
   WorkerReminderListResponseSchema,
@@ -296,6 +297,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/acknowledge",
   "/v1/worker/artifacts/prepare",
   "/v1/worker/messages/post",
+  "/v1/worker/messages/final-output",
   "/v1/worker/messages/search",
   "/v1/worker/messages/react",
   "/v1/worker/memory/write",
@@ -1025,6 +1027,17 @@ export class WorkerApplicationService {
           this.#kernel.messageSocial.reactWorker(grant.execution, command),
         ),
       );
+      return;
+    }
+    if (route === "/v1/worker/messages/final-output") {
+      const command = parseWorkerRequest(WorkerFinalOutputRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const mutation = this.#kernel.submitWorkerFinalOutput(
+        grant.execution,
+        command,
+      );
+      if ("event" in mutation) grant.knownRoomSeqs.add(mutation.event.roomSeq);
+      writeJson(response, 200, WorkerMessagePostResponseSchema.parse(mutation));
       return;
     }
     if (route === "/v1/worker/messages/post") {

@@ -1,3 +1,7 @@
+import {
+  WorkerFinalOutput,
+  withFinalOutputGuidance,
+} from "./worker-final-output.ts";
 import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
@@ -173,6 +177,8 @@ export type WarmWorkerCredential = {
 };
 
 export type CodexWarmAdapterOptions = {
+  /** Opt-in OpenCode terminal command path; not a model-owned setting. */
+  explicitFinalOutput?: boolean;
   /** The warm driver; Codex when omitted. */
   driver?: WarmDriverDescriptor;
   pool: InstanceRuntimePool;
@@ -228,6 +234,8 @@ type LaunchCapture = {
 };
 
 type TurnBinding = {
+  finalOutput?: WorkerFinalOutput;
+  finalOutputDone?: boolean;
   activationId: string;
   /** Why the Host ended the turn (S2-b supervision), if it did. */
   supervision?: WarmTurnSupervision;
@@ -285,7 +293,12 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       ...this.#cliFingerprint(),
       runAttemptId: input.runAttemptId,
       driver: this.#driver.kind,
-      key: this.#options.runtimeKey(input),
+      key:
+        this.#options.runtimeKey(input) +
+        (this.#options.explicitFinalOutput === true &&
+        this.#driver === OPENCODE_WARM_DRIVER
+          ? ":final-output/v1"
+          : ""),
       launch: async (layout) => await this.#launch(input, layout, launched),
       participantId: input.participantId,
     });
@@ -320,6 +333,19 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       runAttemptId: input.runAttemptId,
     });
     const credential = await this.#options.issueWorkerCredential(input);
+    if (
+      this.#options.explicitFinalOutput === true &&
+      this.#driver === OPENCODE_WARM_DRIVER
+    ) {
+      binding.finalOutput = new WorkerFinalOutput({
+        origin: this.#options.workerApiOrigin,
+        accessToken: credential.accessToken,
+        isActive: () =>
+          !turn.cancelRequested &&
+          runtime.state === "busy" &&
+          !binding.finalOutputDone,
+      });
+    }
     turn.handle = await issueWorkerTurnHandle(runtime.layout.turnRoot, {
       revoke: credential.revoke,
       scope: turnScope(input),
@@ -535,6 +561,10 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       args: [
         isSea() ? this.#driver.seaEntry : this.#driver.entry,
         ...this.#options.driverArgs,
+        ...(this.#options.explicitFinalOutput === true &&
+        this.#driver === OPENCODE_WARM_DRIVER
+          ? ["--final-output-mode", "enabled"]
+          : []),
         ...(model?.source === "custom_model" ||
         model?.source === "explicit_binding"
           ? ["--model", model.modelId]
@@ -691,6 +721,10 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const binding = this.#turns.get(run.runId);
     if (binding === undefined) return await this.#options.legacy.cancel(run);
     const { runtime, turn } = binding;
+    if (binding.finalOutput && !binding.finalOutputDone) {
+      turn.cancelRequested = true;
+      binding.finalOutput.close();
+    }
     if (turn.outcome.settled)
       return await this.#settle(binding, await turn.outcome.promise);
     turn.cancelRequested = true;
@@ -907,9 +941,13 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       bodied: bodied !== undefined,
       noticed: notice !== "",
       text:
-        withWorkerMcpGuidance(
-          withWorkerTurnHandle(base, handle),
-          runtime.workerMcp !== undefined,
+        withFinalOutputGuidance(
+          withWorkerMcpGuidance(
+            withWorkerTurnHandle(base, handle),
+            runtime.workerMcp !== undefined,
+          ),
+          this.#options.explicitFinalOutput === true &&
+            this.#driver === OPENCODE_WARM_DRIVER,
         ) +
         (notice === "" ? "" : `\n${notice}`) +
         (protocol === "" ? "" : `\n${protocol}`),
@@ -936,6 +974,22 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     // the handle goes away and the proof is written.
     await turn.collector?.finish();
     await Promise.all(turn.integrityWrites);
+    const finalOutput =
+      binding.finalOutput &&
+      outcome.kind === "drained" &&
+      outcome.status === "completed" &&
+      !outcome.errorMessage &&
+      !binding.supervision &&
+      !turn.collector?.terminalFailure &&
+      outcome.inFlightToolCount === 0 &&
+      !turn.cancelRequested &&
+      (await runtime.processGroupAlive(pool.processTable))
+        ? await binding.finalOutput.submit(
+            outcome.finalOutputCandidate?.text ?? "",
+          )
+        : undefined;
+    binding.finalOutputDone = true;
+    binding.finalOutput?.close();
     const release = await turn.handle?.release();
     if (release !== undefined && !release.revoked)
       pool.diagnostic(
@@ -978,6 +1032,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       await pool.runtimeEnded(runtime, exit, "crash");
       return {
         ...runExitFrom(exit),
+        ...(finalOutput === undefined ? {} : { finalOutput }),
         ...(binding.supervision !== undefined && finalCommitted
           ? { finalReplyCommitted: true }
           : {}),
@@ -1010,6 +1065,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
               : "error";
     return {
       code: null,
+      ...(finalOutput === undefined ? {} : { finalOutput }),
       ...(failure === undefined ? {} : { failure }),
       quiesced: {
         closeSeq: outcome.lastFrameSeq,

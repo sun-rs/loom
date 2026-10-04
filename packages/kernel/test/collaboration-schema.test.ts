@@ -21,7 +21,7 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
 
     const migrated = new DatabaseSync(databasePath);
     migrated.exec("PRAGMA foreign_keys = ON");
-    assert.equal(KERNEL_SCHEMA_VERSION, 82);
+    assert.equal(KERNEL_SCHEMA_VERSION, 83);
     assert.equal(
       (
         migrated.prepare("PRAGMA user_version").get() as {

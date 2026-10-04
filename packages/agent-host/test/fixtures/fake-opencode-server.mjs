@@ -388,7 +388,15 @@ async function runPrompt(s, body, res) {
   const finish = (info) => {
     if (s.run === run) s.run = undefined;
     status(s, "idle");
-    send(res, 200, { info, parts: [] });
+    send(res, 200, {
+      info,
+      parts: tokens.has("final-envelope")
+        ? (
+            s.messages.find((message) => message.info.id === info.id)?.parts ??
+            []
+          ).map((part) => ({ ...part, sessionID: s.id }))
+        : [],
+    });
     const mark = `${env.FAKE_RECORD ?? ""}.autonomous`;
     if (tokens.has("autonomous") && !existsSync(mark)) {
       writeFileSync(mark, "");
@@ -417,6 +425,43 @@ async function runPrompt(s, body, res) {
   run.current = first;
   modelRequest(s, lastUser, "step");
   updatePart(s, { id: nextId("prt"), messageID: first.id, type: "step-start" });
+  if (tokens.has("final-envelope")) {
+    if (tokens.has("envelope-wait")) {
+      record({ event: "envelope-waiting" });
+      while (!run.cancelled && !existsSync(env.FAKE_RELEASE)) {
+        await new Promise((resolve) => {
+          run.wake = resolve;
+          setTimeout(resolve, 20);
+        });
+      }
+      if (run.cancelled) {
+        first.error = {
+          name: "MessageAbortedError",
+          data: { message: "The operation was aborted." },
+        };
+        first.time = { ...first.time, completed: Date.now() };
+        updateMessage(s, first);
+        return finish(first);
+      }
+    }
+    updatePart(s, {
+      id: nextId("prt"),
+      messageID: first.id,
+      type: "text",
+      text: JSON.stringify({
+        kind: "room.reply",
+        version: 1,
+        body: `FAKE FINAL ENVELOPE ${promptIndex}`,
+        basedOnRoomSeq: Number(/--based-on-room-seq (\d+)/u.exec(text)?.[1]),
+        final: true,
+      }),
+      time: { start: Date.now(), end: Date.now() },
+    });
+    first.finish = "stop";
+    first.time = { ...first.time, completed: Date.now() };
+    updateMessage(s, first);
+    return finish(first);
+  }
   if (tokens.has("error")) {
     first.error = {
       name: "APIError",

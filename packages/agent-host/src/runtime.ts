@@ -1,3 +1,4 @@
+import type { FinalOutputReceipt } from "./worker-final-output.ts";
 import type {
   Activation,
   AgentRuntimeContext,
@@ -59,6 +60,8 @@ export type TurnQuiescence = {
 };
 
 export type RunExit = {
+  /** Explicit command receipt, separate from the actual native termination. */
+  finalOutput?: FinalOutputReceipt;
   /** `null` with `quiesced`: the process did not exit. */
   code: number | null;
   failure?: RuntimeFailure;

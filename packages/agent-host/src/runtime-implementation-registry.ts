@@ -117,6 +117,7 @@ export type RuntimeCreationOptions = Pick<
  * separately and delivered only through that turn's handle.
  */
 export type WarmRuntimeCreation = {
+  explicitFinalOutput?: boolean;
   issueWorkerCredential: (
     input: ActivationEnvelope,
   ) => Promise<WarmWorkerCredential>;
@@ -1019,6 +1020,7 @@ function createWarmInstanceRuntime(
   );
   return new CodexWarmAdapter({
     driver,
+    ...(warm.explicitFinalOutput === true ? { explicitFinalOutput: true } : {}),
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     protocolNotice: (input) => protocolUpgrade.noticeFor(input),
     // S2-b: an idle runtime restarts when the probed binary changes.

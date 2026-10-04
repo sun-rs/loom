@@ -49,7 +49,15 @@ const RULES = "FAKE standing prompt for the warm OpenCode test";
 
 type Harness = Awaited<ReturnType<typeof harness>>;
 
-async function harness(options: { env?: Record<string, string> } = {}) {
+async function harness(
+  options: {
+    env?: Record<string, string>;
+    explicitFinalOutput?: boolean;
+    skipDeliveryRegistration?: boolean;
+    leaseMs?: number;
+    leaseRenewIntervalMs?: number;
+  } = {},
+) {
   const directory = mkdtempSync(join(tmpdir(), "rah-warm-opencode-"));
   chmodSync(directory, 0o700);
   const socketRoot = mkdtempSync("/tmp/lwo-");
@@ -129,6 +137,7 @@ async function harness(options: { env?: Record<string, string> } = {}) {
     };
     const adapter = new CodexWarmAdapter({
       driver: OPENCODE_WARM_DRIVER,
+      ...(options.explicitFinalOutput ? { explicitFinalOutput: true } : {}),
       cwd: directory,
       driverArgs: [
         "--executable",
@@ -152,11 +161,12 @@ async function harness(options: { env?: Record<string, string> } = {}) {
       recordDeliveryAcceptance: (input, acceptance) => {
         // As the daemon does: the Host credential registers the send, so the
         // bodied wake's post confirms delivery without a message-check.
-        kernel.markPresentedDeliverySent(host, {
-          activationId: input.activationId,
-          consumerId: input.consumerId,
-          runAttemptId: input.runAttemptId,
-        });
+        if (!options.skipDeliveryRegistration)
+          kernel.markPresentedDeliverySent(host, {
+            activationId: input.activationId,
+            consumerId: input.consumerId,
+            runAttemptId: input.runAttemptId,
+          });
         acceptances.push({
           turnId: acceptance.turnId,
           ...(acceptance.inputSha256 === undefined
@@ -191,7 +201,10 @@ async function harness(options: { env?: Record<string, string> } = {}) {
       guideEnabled: () => true,
       host,
       kernel,
-      leaseMs: 30_000,
+      leaseMs: options.leaseMs ?? 30_000,
+      ...(options.leaseRenewIntervalMs === undefined
+        ? {}
+        : { leaseRenewIntervalMs: options.leaseRenewIntervalMs }),
       pollIntervalMs: 20,
       retryAfterMs: 0,
       runtime: adapter,
@@ -220,6 +233,8 @@ async function harness(options: { env?: Record<string, string> } = {}) {
       });
     },
     records: readRecords,
+    releaseEnvelope: () =>
+      writeFileSync(join(directory, "never-released"), "release"),
     roomId: room.roomId,
     sessions,
     async cleanup() {
@@ -1039,5 +1054,353 @@ test("the registry builds the warm OpenCode adapter for opencode-server/v1 witho
   } finally {
     kernel.close();
     rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("warm OpenCode explicit final output: two native turns publish exactly once on the same session", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    env: { FAKE_SCENARIO: "final-envelope" },
+  });
+  try {
+    for (let turn = 1; turn <= 2; turn += 1) {
+      state.post(`explicit question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+      const replies = sql(
+        state,
+        "SELECT actor_id, body FROM messages WHERE actor_id = ? ORDER BY rowid",
+        state.participantId,
+      );
+      assert.equal(
+        replies.length,
+        turn,
+        "exactly one authenticated Room publication per completed native turn",
+      );
+      assert.deepEqual(
+        { ...replies.at(-1) },
+        { actor_id: state.participantId, body: `FAKE FINAL ENVELOPE ${turn}` },
+      );
+    }
+    assert.equal(spawns(state).length, 1);
+    assert.equal(requests(state, "POST", "/session").length, 1);
+    assert.equal(prompts(state).length, 2);
+    assert.equal(
+      events(state, "command").length,
+      0,
+      "no Worker CLI tool or protocol retry",
+    );
+    assert.equal(events(state, "model-request").length, 2);
+    const runs = orderedRuns(state);
+    assert.equal(runs.length, 2);
+    assert.equal(new Set(runs.map((run) => run.nativeTurnId)).size, 2);
+    assert.equal(new Set(runs.map((run) => run.instanceRuntimeId)).size, 1);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode explicit final output: newer Human fact holds publication without native retry", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    env: { FAKE_SCENARIO: "final-envelope+envelope-wait" },
+  });
+  try {
+    state.post("original fact");
+    const running = state.current.agentHost.reconcileOnce();
+    await waitFor(
+      () =>
+        events(state, "envelope-waiting").length === 1 &&
+        state.acceptances.length === 1,
+      "accepted original context",
+    );
+    state.post("new Human fact invalidates the pending reply");
+    state.releaseEnvelope();
+    const result = await running;
+    assert.equal(result.state, "failed", JSON.stringify(result));
+    assert.equal(
+      sql(state, "SELECT retry_disposition FROM activation_retry_fences")[0]
+        ?.retry_disposition,
+      "action_required",
+    );
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM messages WHERE actor_id = ?",
+        state.participantId,
+      ).length,
+      0,
+    );
+    const held = sql(
+      state,
+      "SELECT body, state FROM held_message_drafts WHERE participant_id = ?",
+      state.participantId,
+    );
+    assert.deepEqual(
+      held.map((row) => ({ ...row })),
+      [{ body: "FAKE FINAL ENVELOPE 1", state: "held" }],
+    );
+    assert.equal(
+      prompts(state).length,
+      1,
+      "no automatic corrective model turn",
+    );
+    assert.equal(events(state, "command").length, 0);
+    assert.equal(orderedRuns(state).length, 1);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode explicit final output: missing registered delivery cannot complete the Activation", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    skipDeliveryRegistration: true,
+    env: { FAKE_SCENARIO: "final-envelope" },
+  });
+  try {
+    state.post("unregistered delivery");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.notEqual(result.state, "completed", JSON.stringify(result));
+    assert.equal(
+      sql(state, "SELECT * FROM activations WHERE state = 'completed'").length,
+      0,
+    );
+    assert.equal(prompts(state).length, 1);
+    assert.equal(events(state, "command").length, 0);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode explicit final output: cancellation before final output publishes nothing", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    env: { FAKE_SCENARIO: "final-envelope+envelope-wait" },
+  });
+  try {
+    state.post("cancel before publication");
+    const controller = new AbortController();
+    const running = state.current.agentHost.run({ signal: controller.signal });
+    await waitFor(
+      () =>
+        events(state, "envelope-waiting").length === 1 &&
+        state.acceptances.length === 1,
+      "accepted pending final",
+    );
+    controller.abort();
+    await running;
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM messages WHERE actor_id = ?",
+        state.participantId,
+      ).length,
+      0,
+    );
+    assert.equal(sql(state, "SELECT * FROM held_message_drafts").length, 0);
+    assert.equal(orderedRuns(state)[0]?.state, "cancelled");
+    assert.equal(prompts(state).length, 1);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+function pauseFinalOutputFetch() {
+  const original = globalThis.fetch;
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let signal: AbortSignal | null | undefined;
+  let calls = 0;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).endsWith("/v1/worker/messages/final-output")) {
+      calls += 1;
+      signal = init?.signal;
+      await blocked;
+    }
+    return original(input, init);
+  };
+  return {
+    release,
+    restore: () => {
+      release();
+      globalThis.fetch = original;
+    },
+    get calls() {
+      return calls;
+    },
+    get signal() {
+      return signal;
+    },
+  };
+}
+
+test("warm OpenCode explicit final output: Host cancellation after native drained aborts pending HTTP publication", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    env: { FAKE_SCENARIO: "final-envelope" },
+  });
+  const paused = pauseFinalOutputFetch();
+  const controller = new AbortController();
+  let running: Promise<void> | undefined;
+  try {
+    state.post("cancel pending HTTP publication");
+    running = state.current.agentHost.run({ signal: controller.signal });
+    await waitFor(
+      () => paused.calls === 1,
+      "final-output HTTP boundary after native drained",
+    );
+    controller.abort();
+    await waitFor(
+      () => paused.signal?.aborted === true,
+      "Host cancellation aborts original submission",
+    );
+    paused.release();
+    await running;
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM messages WHERE actor_id = ?",
+        state.participantId,
+      ).length,
+      0,
+    );
+    assert.equal(sql(state, "SELECT * FROM held_message_drafts").length, 0);
+    assert.equal(paused.calls, 1, "no write retry");
+    assert.equal(prompts(state).length, 1, "no model retry");
+    assert.equal(
+      sql(state, "SELECT * FROM activations WHERE state='completed'").length,
+      0,
+    );
+  } finally {
+    controller.abort();
+    paused.restore();
+    await running;
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode explicit final output: Host renews the original lease while HTTP publication waits", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    leaseMs: 1200,
+    leaseRenewIntervalMs: 100,
+    env: { FAKE_SCENARIO: "final-envelope" },
+  });
+  const paused = pauseFinalOutputFetch();
+  let running:
+    ReturnType<typeof state.current.agentHost.reconcileOnce> | undefined;
+  try {
+    state.post("wait across a full lease before publication");
+    running = state.current.agentHost.reconcileOnce();
+    await waitFor(() => paused.calls === 1, "final-output HTTP boundary");
+    const initial = Number(
+      sql(
+        state,
+        "SELECT lease_until_ms FROM activations WHERE state='leased'",
+      )[0]?.lease_until_ms,
+    );
+    assert.ok(Number.isFinite(initial));
+    await waitFor(
+      () => Date.now() > initial + 100,
+      "initial lease deadline passes",
+      5000,
+    );
+    const renewed = Number(
+      sql(
+        state,
+        "SELECT lease_until_ms FROM activations WHERE state='leased'",
+      )[0]?.lease_until_ms,
+    );
+    assert.ok(
+      renewed > initial,
+      "lease persisted a later deadline during pending HTTP",
+    );
+    assert.ok(renewed > Date.now(), "same Activation remains actively leased");
+    paused.release();
+    const result = await running;
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM messages WHERE actor_id = ?",
+        state.participantId,
+      ).length,
+      1,
+    );
+    assert.equal(paused.calls, 1);
+    assert.equal(prompts(state).length, 1);
+  } finally {
+    paused.restore();
+    await running;
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode explicit final output: runtime death during unknown submission preserves its receipt and prevents retry", async () => {
+  const state = await harness({
+    explicitFinalOutput: true,
+    env: { FAKE_SCENARIO: "final-envelope" },
+  });
+  const originalFetch = globalThis.fetch;
+  const originalReap = state.current.adapter.reap.bind(state.current.adapter);
+  let observed: Awaited<ReturnType<typeof originalReap>> | undefined;
+  let calls = 0;
+  let killed = false;
+  state.current.adapter.reap = async (run) => {
+    observed = await originalReap(run);
+    return observed;
+  };
+  globalThis.fetch = async (input, init) => {
+    if (!String(input).endsWith("/v1/worker/messages/final-output"))
+      return originalFetch(input, init);
+    calls += 1;
+    const row = sql(
+      state,
+      "SELECT pid, pgid FROM instance_runtimes WHERE state='busy'",
+    )[0];
+    assert.ok(row && Number(row.pgid) > 1 && Number(row.pid) > 1);
+    // Exact process group comes only from this temporary Kernel's runtime.
+    process.kill(-Number(row.pgid), "SIGKILL");
+    await waitFor(
+      () => !alive(Number(row.pid)),
+      "test runtime actually exited",
+    );
+    killed = true;
+    throw new Error(
+      "FAKE ambiguous HTTP transport failure after runtime death",
+    );
+  };
+  try {
+    state.post("unknown publication while runtime dies");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(
+      killed,
+      true,
+      "fault really reached the submitted native-drained turn",
+    );
+    assert.equal(
+      observed?.finalOutput?.state,
+      "unknown",
+      "receipt must survive the runtime-vanished exit branch",
+    );
+    assert.equal(result.state, "failed");
+    assert.equal(
+      sql(state, "SELECT retry_disposition FROM activation_retry_fences")[0]
+        ?.retry_disposition,
+      "action_required",
+    );
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "idle",
+      "unknown write never automatically reruns",
+    );
+    assert.equal(prompts(state).length, 1);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    await state.cleanup();
   }
 });

@@ -5,6 +5,22 @@ import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
 
+export const WorkerFinalOutputRequestSchema = z
+  .object({
+    body: z.string().trim().min(1),
+    basedOnRoomSeq: z.number().int().nonnegative(),
+  })
+  .strict();
+export const WorkerFinalOutputEnvelopeSchema = z
+  .object({
+    kind: z.literal("room.reply"),
+    version: z.literal(1),
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    body: z.string().trim().min(1),
+    final: z.literal(true),
+  })
+  .strict();
+
 export const WorkerMessagePostRequestSchema = z
   .object({
     channel: WorkerReadChannelSchema.optional(),

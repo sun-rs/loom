@@ -4,6 +4,10 @@ Claude 具体版本自定义模型的显式 effort 由 Protocol 提交许可表�
 
 状态：最小 AgentHost、Fake/Generic Runtime、Host generation fencing、deadline、Outbox wake、持久 `prepared -> active` RunAttempt/RuntimeProcess 和 scoped Worker API 已实现；Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 已通过 opt-in 本机完整 Task gate，fake process 已通过 InputRequest 无 listening 恢复 gate。主动逃离 process group 的 descendant、完整 Artifact/Review workflow 和 Windows tree recovery 尚未实现或验证。
 
+## evo 显式最终输出命令（2026-10-05 可选接入）
+
+OpenCode warm 的可选最终输出路径接收严格 `room.reply` JSON 命令，而非自动发表 stdout 或自然语言答案。模型显式提供本轮因果序号；原生正常终态和原请求身份只证明传输，Worker 身份、原目标、freshness、幂等与消费确认仍由 Kernel 校验。Host 在原 Run 凭据释放前完成有界提交，并保持续租和取消；业务收据不改写原生退出事实。结果未知或 held 不自动重新执行。其他 CLI 与远程 Computer 协议不扩展。开关、迁移和验收边界见[实现记录](../evo/final-output-transport.zh-CN.md)。
+
 ## Agent 默认执行目录
 
 支持私有工作区的本地 daemon 以 `supportsAgentPrivateWorkspace` 发布可信能力；新建 Agent 定义显式保存 `executionWorkspace: agent_private`。旧定义缺字段保持既有 mount，显式 `existing_mount` 只接受 Host 已授权的非私有 mount。缺能力的旧 Host 与独立 Computer 不发布该能力，也不能调度私有 Agent。

@@ -1,0 +1,83 @@
+{
+  "evidenceVersion": 1,
+  "provider": "opencode",
+  "installedVersion": "1.18.32",
+  "modelProvider": "loopback fixture/fake",
+  "realProviderCalls": 0,
+  "verdict": "passed",
+  "chain": [
+    "installed CLI",
+    "production warm driver",
+    "shared warm adapter",
+    "AgentHost",
+    "authenticated Worker service",
+    "temporary real Kernel"
+  ],
+  "counts": {
+    "turns": 2,
+    "modelRequests": 2,
+    "requestsPerTurn": [1, 1],
+    "roomReplies": 2,
+    "completedActivations": 2,
+    "runAttempts": 2,
+    "nativeAssistantMessages": 2,
+    "nativeToolParts": 0,
+    "trustedFinalOutputMarkers": 2
+  },
+  "continuity": {
+    "sameNativeSession": true,
+    "sameWarmRuntime": true,
+    "priorReplyInSecondRequest": true
+  },
+  "causalSequenceSource": "fake model extracts current last-user Reply context; Host passes explicit model value unchanged",
+  "earlierFailures": {
+    "diagnosticAttempts": 3,
+    "fakeRequests": 3,
+    "cause": "published final envelope omitted model-confirmed basedOnRoomSeq; Activation ACK refused",
+    "retainedFailureResults": 2,
+    "fullyPreserved": false
+  },
+  "limits": [
+    "Fake predetermined valid model command does not prove real-model compliance or paid efficiency budgets.",
+    "Cancellation/held/unknown races covered separately by deterministic tests, not this native run.",
+    "Two retained failure JSON files plus drain traces cover the three diagnostic attempts; second attempt result was overwritten during setup."
+  ],
+  "rawFiles": [
+    {
+      "file": "opencode-product-probe.ts",
+      "sha256": "ea2473067b482339aa19d2cdbd51d58ff22f2c644ff311a9c663d1ff1527666b"
+    },
+    {
+      "file": "opencode-product-result.json",
+      "sha256": "f738df57435624799530d543d5e8b9f07a61a27a093d3f2c7676ebb6d8d819b8"
+    },
+    {
+      "file": "opencode-product-seq-probe.log",
+      "sha256": "4d7987c5adb941b4276e2a98e285bb2c335c3294398bdaf6b812d864a734f33b"
+    },
+    {
+      "file": "opencode-product-verification.txt",
+      "sha256": "bc63bf763d386373b830c4b33d4a8ab27c6e416253a280cd8d440ee88a7b5868"
+    },
+    {
+      "file": "opencode-product-first-failure.json",
+      "sha256": "9b782fd50ccd6bce9f5feaba9be57d1516da243bdb4d2a614f7933b985e2d493"
+    },
+    {
+      "file": "opencode-product-published-ack-failure.json",
+      "sha256": "66f74508f8edb5b49ae265f238034117241d5e2e1a00167d089eb9f02218fc07"
+    },
+    {
+      "file": "observe-drain.cjs",
+      "sha256": "ade9e1949b68b2ee883845c1969649b278959b5d97eba360b9baa8834fce58c9"
+    },
+    {
+      "file": "drains.jsonl",
+      "sha256": "0cbae4f7561a23d3b694681862ede22f7b5c6d91c9907141050c05352a56ebab"
+    }
+  ],
+  "sourceBase": "34d10ec4f079a54119e489fdde9ac2e4c4674e95",
+  "sourceWorkingTree": true,
+  "privateEvidenceRoot": "~/.loom/reviews/2026-10-05-final-output-product",
+  "productionDefaultEnabled": false
+}

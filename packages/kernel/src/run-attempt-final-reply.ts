@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS run_attempt_final_replies (
   event_id TEXT NOT NULL,
   room_seq INTEGER NOT NULL CHECK (room_seq > 0),
   committed_at TEXT NOT NULL,
+  submission_kind TEXT CHECK (submission_kind IS NULL OR submission_kind = 'final-output'),
   interrupt_sent INTEGER CHECK (interrupt_sent IS NULL OR interrupt_sent IN (0, 1)),
   preempted_follow_up TEXT CHECK (preempted_follow_up IS NULL OR preempted_follow_up IN ('true', 'false', 'unknown')),
   reported_at TEXT,
@@ -60,6 +61,10 @@ export function migrateRunAttemptFinalReplyFacts(database: DatabaseSync): void {
       .map((row) => String(row.name)),
   );
   if (columns.size === 0) return;
+  if (!columns.has("submission_kind"))
+    database.exec(
+      "ALTER TABLE run_attempt_final_replies ADD COLUMN submission_kind TEXT CHECK (submission_kind IS NULL OR submission_kind = 'final-output')",
+    );
   if (!columns.has("interrupt_requested"))
     database.exec(
       "ALTER TABLE run_attempt_final_replies ADD COLUMN interrupt_requested INTEGER CHECK (interrupt_requested IS NULL OR interrupt_requested IN (0, 1))",
@@ -106,6 +111,14 @@ export class RunAttemptFinalReplyService {
     scope: ActivationCredentialScope,
     event: RoomEvent,
   ): void {
+    const previous = this.#row(scope.runAttemptId);
+    if (
+      previous?.submission_kind === "final-output" &&
+      previous.event_id !== event.eventId
+    )
+      throw new ConflictError(
+        "This Run already committed its explicit final output",
+      );
     const inserted = this.#database
       .prepare(
         `INSERT OR IGNORE INTO run_attempt_final_replies(

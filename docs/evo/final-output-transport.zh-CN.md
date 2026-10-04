@@ -1,16 +1,22 @@
-# 显式最终回复输出：免费可行性验证
+# 显式最终回复输出：OpenCode 纵向接入
 
-2026-10-04，负责人同意研究普通最终回复改走原生 CLI 的最终输出。结论：**原生传输路径可行，正常回复不必为了发帖再请求一次模型；产品闭环尚未接入，不能宣称成本验收通过。** 当前正式部署仍见 [status](status.zh-CN.md)，本实验不修改目标合同或默认运行路径。
+2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。**尚不等于付费成本验收或默认部署。** 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
 ## 最小协议及所有者
 
-实验采用完整、单一的 JSON 对象：
+产品试验采用完整、单一的 JSON 对象（123仅为示例，模型必须回填本轮 Reply context 的实际序号）：
 
 ```json
-{ "kind": "room.reply", "version": 1, "body": "要发表的正文", "final": true }
+{
+  "kind": "room.reply",
+  "version": 1,
+  "basedOnRoomSeq": 123,
+  "body": "要发表的正文",
+  "final": true
+}
 ```
 
-这是显式发布命令，不是自动发布自然语言最终答案。模型不能指定作者、目标、Run、session、凭据或幂等键；目标来自原执行收到的交付，身份来自原 Worker 权限。协议初版不包含附件、跨目标、修订、Task 完成或 ACK。未知字段、多个对象、重复字段、普通文字、代码围栏、不完整 JSON 均拒绝；实验缓冲限制为64 KiB，不是产品合同的新预算。
+这是显式发布命令，不是自动发布自然语言最终答案。模型不能指定作者、目标、Run、session、凭据或幂等键；目标来自原执行收到的交付，身份来自原 Worker 权限。不包含附件、跨目标、修订或 Task 完成；不新增 ACK 命令。模型显式回传 `basedOnRoomSeq`，只沿既有已呈现／已登记投递的确认规则处理，Host 不替模型填写序号或补 ACK。未知字段、多个对象、重复字段、普通文字、代码围栏、不完整 JSON 均拒绝；实验缓冲限制为64 KiB，不是产品合同的新预算。
 
 原生适配器仅提取本轮明确的最终候选及结束证据。AgentHost 绑定原 Run，应用服务调用既有 Worker 业务路径；Kernel 仍独占新鲜度、事件、草稿、幂等与执行围栏。不能从 stdout 中搜索一段看起来像 JSON 的文本，也不能用“最近一次 Run”补身份。
 
@@ -27,28 +33,38 @@
 
 [脱敏摘要及原始文件哈希](evidence/2026-10-04-final-output-transport.json)。原始过程、失败、取消、恢复和离线检查在 `~/.loom/reviews/2026-10-04-channel-cost-research/final-output-transport/`。假模型按脚本输出格式，只证明传输能力，**不证明真实模型遵从率、真实token倍率或长期可靠性**。
 
-## 临时真实 Worker／Kernel 实验
+## 第一阶段临时 Worker／Kernel 实验（历史）
 
-可运行：`node --test scripts/final-output-trial/submission.test.mjs`。
+可运行：`node --test scripts/final-output-trial/submission.test.mjs`。该冻结原型没有因果字段，测试明确保持 Activation leased；第二阶段真实全链发现发表成功仍缺 ACK，故产品协议增加模型显式 `basedOnRoomSeq`，没有用平台默认值冒充消费证据。
 
 [实验提交器](../../scripts/final-output-trial/submission.mjs)不被任何生产 runtime 导入，只复用已有 `WorkerMcpExecution` 的原 Run HTTP 权限、幂等和未知写围栏，不另建业务处理器。适配器原生证据提取和这个提交器目前分开验证，没有把手工传入的 `status=completed` 冒充实际 Host 全链证明。
 
 8项测试先复现缺实现及空身份绑定漏洞，再验证：严格显式 schema；原身份／原目标只发表一次；同槽变体冲突；绑定必须含非空原生身份；候选身份错误、失败／取消／非终态／多候选不发送；新Human事实导致已有持久held且零发布／零final marker／游标不前移；提交后丢回执在同提交器内不重发；真正结束的Run即使本地liveness提示陈旧也被Kernel拒绝；重建实验提交器仍复用原业务幂等键。没有从成功退出推导 Task 完成或补 ACK。
 
-## 产品接入前必须完成的窄改动
+## 产品接入的边界
 
-1. **在原 Run 的有效授权内收尾。** Host 的成功 native outcome 后、记录 runtime 终止前，完成有界提交并继续原有监督／续租。现有 cold adapter 在 resolveExit 前释放凭据，不能直接在已撤权的 `finishRunAttempt` 旁补一个发帖回调；需要明确调整这一释放顺序，不能复活旧Run。
-2. **最终发布槽必须事务一致。** 既有 final marker 只记首个final事件，不是两种传输的统一互斥规则。实际复核中，工具final之后再交envelope，即使通过真实Worker history完整读取，第二次仍被固定原toSeq的新鲜度检查暂存；只有一条消息、一个marker，**未复现双发布**。需要明确已final时返回既有收据／冲突，避免多余held草稿；不能把这项设计需求宣传为已证重复发布漏洞。不能用 Host“先查有没有final、再发”代替Kernel事务约束，也不能把新规则施加到所有普通多消息运行。实验Run的选择必须来自可信Run绑定，不来自模型字段。普通进度消息不应被误判为最终完成。
+1. **在原 Run 的有效授权内收尾。** Host 的成功 native outcome 后、记录 runtime 终止前，完成有界提交并继续原有监督／续租。本批只接入源码部署的 OpenCode warm；SEA 仍走原有 CLI 路径。未来 cold 接入不属本批：现有 cold adapter 在 resolveExit 前释放凭据，不能直接在已撤权的 `finishRunAttempt` 旁补一个发帖回调；届时需要明确调整释放顺序，不能复活旧Run。
+2. **最终发布槽必须事务一致。** 第一阶段的既有 final marker 只记录首个 final 事件；当时复核工具 final 后再交 envelope，第二次被新鲜度检查暂存，**未复现双发布**。第二阶段已在 Kernel 同一事务内实现两种最终传输的冲突检查：先有工具 final 时拒绝输出 final，先有可信输出 final 时拒绝不同事件的工具 final，精确成功重放保留，避免为这些冲突创建多余 held 草稿。约束不由 Host“先查再发”实现，也不施加到所有普通多消息运行。可信来源来自专用 Worker 入口及原 Run 权限，不来自模型字段或可伪造的幂等键；普通进度消息不会被当作最终完成。
 3. **held／未知结果有明确去向。** 正常成功不为回执额外唤醒模型。held仍由现有草稿owner持久化，Human须能看到未发表原因与正文；不能在模型没有读到新事实时自动确认、原样发送或搬用旧读取凭据。既有同Activation重试可以保留session，但必须新Run／新凭据；无新事实不能空转重试。未知结果先核验或交Human处理，不建第二后台重发队列。
 
-建议首个产品纵向切片选 OpenCode warm：P105已经测到收尾生成成本，且其正常、截断、错误与取消的终态区分最直接。统一的是发布协议与Kernel语义，各CLI的结束证据仍分别适配；不要一次扩建四套Host生命周期。待一家完整纵向安全路径通过，再做已有授权范围内的有界真实同题对照；目前不运行付费对照的原因是上述闭环尚未通过，不是缺少负责人授权。
+首个产品纵向切片选择 OpenCode warm：P105已经测到收尾生成成本，且其正常、截断、错误与取消的终态区分最直接。统一的是发布协议与Kernel语义，各CLI的结束证据仍分别适配；不要一次扩建四套Host生命周期。一家完整纵向安全路径通过后，再做已有授权范围内的有界真实同题对照；不扩大四家生命周期或改变付费模型矩阵。
 
-## 下一纵向切片的验收出口
+## 本纵向切片的验收状态
 
 首个接入仅覆盖具有唯一原回复目标的 OpenCode warm 普通消息；多目标、附件和需要继续工作的进度消息继续使用现有工具。不是根据正文猜测该不该发表：只有完整显式命令、原生正常终态、原请求身份和有效原Run同时成立才提交。
 
-接入前先写会失败的 Host／Kernel 回归：成功结束到提交之间续租不断；提交前取消或撤权零发布；已提交但回执丢失不重发；工具final与输出final相遇返回明确既有结果或冲突；held持久可见且不空转；缺少交付ACK时仍不能完成Activation。再用真实安装OpenCode＋假模型贯穿这一条路径，验证同session下一轮仍可工作。通过后才运行有界付费同题对照，保留原生官方记忆关闭，并分别核对实质交付、原生请求数、累计输入与未缓存输入，不能只看一句成功答复。
+本切片已按先红后绿完成 Host／Kernel 回归：成功结束到提交之间续租不断；提交前取消或撤权零发布；已提交但回执丢失不重发；工具final与输出final相遇返回明确既有结果或冲突；held持久可见且不空转；缺少交付ACK时仍不能完成Activation。真实安装OpenCode＋假模型已贯穿这一条路径，验证同session下一轮仍可工作。有界付费同题对照和正式部署仍待验证；付费对照须保留原生官方记忆关闭，并分别核对实质交付、原生请求数、累计输入与未缓存输入，不能只看一句成功答复。
 
-当前这些是验收要求，不是已经实现的能力。研究阶段未修改生产源代码、未切换默认传输、未重启正式服务；现有付费失败和缺口不被本轮免费探针覆盖。
+第一阶段仅为研究；第二阶段已修改生产源代码，但默认关闭，通过本地 daemon 环境 `LOOM_OPENCODE_FINAL_OUTPUT_TRIAL=1` 选择试验，不读取模型提供的开关。未经单独记录的付费验证和正式重启不得声称部署完成。现有付费失败和缺口不被免费探针覆盖。
 
-本批验证：上述8项实验测试、完整 `npm run check`、`npm run format:check`、`git diff --check` 均通过；文档链接与私人证据哈希已核对。完整检查不包含这个opt-in实验，故实验测试另行运行。
+第一阶段验证：上述8项实验测试、完整 `npm run check`、`npm run format:check`、`git diff --check` 均通过；文档链接与私人证据哈希已核对。完整检查不包含这个opt-in实验，故实验测试另行运行。
+
+## 第二阶段实现与真实免费证据
+
+原生 driver 只在成功正常终态下提取原 session／parent 的单段最终文本。shared warm adapter 等待已收到的观察帧落地，在原凭据释放之前提交，Host 的租约维护继续覆盖 HTTP 等待；提交前取消拒绝发送；请求在途取消且结果不明时保留未知结果，不重发，已取得的明确发表回执仍予保留。原生终止状态与发表收据分别传给 Host。失败重试入口保留该 Run 的收据；结果不明时使用现有 `action_required`，不新建后台重试队列。
+
+Protocol 定义严格 envelope／请求；application-service 的新 Worker 路由只接收正文和模型显式序号。Kernel 复用原 post 事务、权限、原目标、freshness 和消费证据，派生固定幂等键；schema83 给既有 final marker 增加可信 `submission_kind`，旧 marker 保持 NULL，不从可伪造的 key 推断来源。显式输出与工具 final 在同一事务中互斥，精确成功重放保留，旧普通多帖不受新规则影响。多目标歧义沿既有409拒绝，不猜目标；held仍是可见持久草稿，不合成已读证明。
+
+真实安装 OpenCode 1.18.32＋loopback 假模型的证据在 `~/.loom/reviews/2026-10-05-final-output-product/`：修复后两次请求各回填当轮序号，两个 Run、两个已完成 Activation、同 session／runtime，两个可信 marker；原生库恰两个 assistant、零 tool part，第二请求带第一回复历史。早期“已发表但没有 ACK”的三次诊断保留了两份独立失败 JSON 和原生 drain 记录；第二次诊断的结果 JSON 在调试中被覆盖，未宣称三份原件均完整留存。假模型遵从格式不能证明真实模型遵从率、成本或长期可靠性。
+
+[第二阶段脱敏免费证据](evidence/2026-10-05-opencode-final-output-free.json)。7项Host全链回归覆盖两轮唯一发表、held、缺登记确认、输出前取消、drained后提交前取消、等待续租及提交时运行时死亡；未知写和所有失败重试入口另有专项反例。

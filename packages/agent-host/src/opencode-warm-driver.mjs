@@ -94,6 +94,10 @@ import {
 import { stopOpenCodeServer } from "./opencode-server-process.js";
 import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
 import {
+  openCodeFinalOutputCandidate,
+  openCodeFinalOutputInstructions,
+} from "./opencode-final-output.js";
+import {
   openCodeConfigContentWithInstructions,
   openCodeMessageId,
   prepareOpenCodeInstructionsFile,
@@ -912,6 +916,16 @@ async function settleTurn(turn, response, error) {
         ? "interrupted"
         : "completed";
   emit("turn.drained", {
+    ...(status === "completed" &&
+    replaceError === undefined &&
+    turn.finalInterrupt.toolsInFlight === 0
+      ? {
+          finalOutputCandidate: openCodeFinalOutputCandidate(response, {
+            sessionId,
+            parentId: turn.messageId,
+          }),
+        }
+      : {}),
     inFlightToolCount: turn.finalInterrupt.toolsInFlight,
     lastFrameSeq: turn.lastFrameSeq,
     nativeTurnId: turn.messageId,
@@ -950,7 +964,12 @@ function responseError(response) {
 
 async function startServer() {
   const port = await allocatePort();
-  const rules = prepareOpenCodeInstructionsFile(options.prompt);
+  const rules = prepareOpenCodeInstructionsFile(
+    openCodeFinalOutputInstructions(
+      options.prompt,
+      options.finalOutputMode === "enabled",
+    ),
+  );
   // evo §57/§59: the user's MCP servers, switched off by name.
   const userMcp = await prepareOpenCodeUserMcpIsolation({
     executable: options.executable,
@@ -1229,6 +1248,8 @@ function parseArguments(argv) {
     if (value === undefined) throw new Error(`missing value for ${name}`);
     if (name === "--executable") parsed.executable = value;
     else if (name === "--tool-access-mode") parsed.toolAccessMode = value;
+    else if (name === "--final-output-mode" && value === "enabled")
+      parsed.finalOutputMode = value;
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")
       parsed.prompt = readProviderPromptFile(value);

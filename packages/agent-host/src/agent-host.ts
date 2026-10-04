@@ -718,6 +718,21 @@ export class AgentHost {
     agentContext: ActivationEnvelope["agent"],
     notice: { accepted: boolean; text: string } | undefined,
   ): Promise<HostCycleResult> {
+    // Local to this attempt: once a publication was attempted, any failure
+    // path must preserve its uncertainty instead of automatically running it again.
+    let settledExit: RunExit | undefined;
+    const retry = (
+      target: Pick<Activation, "activationId" | "attemptCount">,
+      failure: string,
+      runtimeFailure?: RuntimeFailure,
+      disposition?: RuntimeRetryDisposition,
+    ) =>
+      this.#retryFailedActivation(
+        target,
+        failure,
+        runtimeFailure,
+        settledExit?.finalOutput ? "action_required" : disposition,
+      );
     const runtimeNotice = notice?.text;
     const envelope: ActivationEnvelope = {
       activationId: activation.activationId,
@@ -836,7 +851,7 @@ export class AgentHost {
           runAttemptId: runAttempt.runAttemptId,
           state: "cancelled",
         });
-        return this.#retryFailedActivation(activation, failure);
+        return retry(activation, failure);
       }
       run = gated.run;
       if (
@@ -863,6 +878,7 @@ export class AgentHost {
       const startedHandle = preparedRun ?? run;
       if (preparedRun !== undefined && startedHandle !== undefined) {
         const termination = await this.#cancelRuntime(runtime, startedHandle);
+        if (termination.kind !== "unproven") settledExit = termination.exit;
         if (termination.kind === "unproven") {
           const quarantineFailure = `${failure}; prepared runtime termination was not proven: ${termination.error}`;
           return this.#quarantineFailedActivation(
@@ -891,10 +907,11 @@ export class AgentHost {
           runAttemptId: runAttempt.runAttemptId,
           state: "failed",
         });
-        return this.#retryFailedActivation(activation, failure);
+        return retry(activation, failure);
       }
       if (startedHandle !== undefined) {
         const termination = await this.#cancelRuntime(runtime, startedHandle);
+        if (termination.kind !== "unproven") settledExit = termination.exit;
         const quarantineFailure =
           termination.kind === "unproven"
             ? `${failure}; unregistered runtime termination was not proven: ${termination.error}`
@@ -909,7 +926,7 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation, failure);
+      return retry(activation, failure);
     }
 
     if (run === undefined) {
@@ -1009,6 +1026,7 @@ export class AgentHost {
 
     if (outcome.kind === "activation_cancelled") {
       const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind !== "unproven") settledExit = termination.exit;
       if (termination.kind === "unproven") {
         return this.#quarantineFailedActivation(
           activation.activationId,
@@ -1052,6 +1070,7 @@ export class AgentHost {
           ? outcome.error
           : `daemon drain timed out after ${this.#drainTimeoutMs}ms`;
       const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind !== "unproven") settledExit = termination.exit;
       if (termination.kind === "unproven") {
         const quarantineFailure = `${failure}; runtime termination was not proven: ${termination.error}`;
         return this.#quarantineFailedActivation(
@@ -1080,7 +1099,7 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "cancelled",
       });
-      return this.#retryFailedActivation(activation, failure);
+      return retry(activation, failure);
     }
 
     if (outcome.kind === "timeout" || outcome.kind === "watchdog") {
@@ -1089,6 +1108,7 @@ export class AgentHost {
           ? runWatchdogFailure(outcome.reason)
           : `runtime timed out after ${this.#runTimeoutMs}ms`;
       const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind !== "unproven") settledExit = termination.exit;
       if (termination.kind === "unproven") {
         const quarantineFailure = `${failure}; runtime termination was not proven: ${termination.error}`;
         return this.#quarantineFailedActivation(
@@ -1136,16 +1156,17 @@ export class AgentHost {
             state: "completed",
           };
         } catch (error) {
-          return this.#retryFailedActivation(
+          return retry(
             activation,
             `${errorMessage(error)}; run failure: ${failure}`,
           );
         }
       }
-      return this.#retryFailedActivation(activation, failure);
+      return retry(activation, failure);
     }
     if (outcome.kind === "maintenance_failed") {
       const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind !== "unproven") settledExit = termination.exit;
       if (termination.kind === "unproven") {
         const quarantineFailure = `${outcome.error}; runtime termination was not proven: ${termination.error}`;
         return this.#quarantineFailedActivation(
@@ -1168,10 +1189,11 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation, outcome.error);
+      return retry(activation, outcome.error);
     }
     if (outcome.kind === "reap_failed") {
       const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind !== "unproven") settledExit = termination.exit;
       if (termination.kind === "unproven") {
         const quarantineFailure = `${outcome.error}; runtime termination was not proven: ${termination.error}`;
         return this.#quarantineFailedActivation(
@@ -1194,11 +1216,12 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation, outcome.error);
+      return retry(activation, outcome.error);
     }
     if (outcome.kind === "stopped") {
       const failure = "runtime supervisor stopped unexpectedly";
       const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind !== "unproven") settledExit = termination.exit;
       if (termination.kind === "unproven") {
         const quarantineFailure = `${failure}; runtime termination was not proven: ${termination.error}`;
         return this.#quarantineFailedActivation(
@@ -1221,10 +1244,11 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation, failure);
+      return retry(activation, failure);
     }
 
     const exit = outcome.exit;
+    settledExit = exit;
     const proofFailure = await this.#recordTerminationOrQuarantine({
       activationId: activation.activationId,
       participantId: activation.participantId,
@@ -1275,11 +1299,7 @@ export class AgentHost {
         // acknowledged: completion below proves ACK through `toSeq`, and a
         // refusal falls back to this retry. The exit stays as recorded.
         if (!(await this.#finalReplyCommitted(runAttempt.runAttemptId)))
-          return this.#retryFailedActivation(
-            activation,
-            runFailure.message,
-            runFailure.failure,
-          );
+          return retry(activation, runFailure.message, runFailure.failure);
       }
     } catch (error) {
       const failure = errorMessage(error);
@@ -1288,7 +1308,20 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation, failure);
+      return retry(activation, failure);
+    }
+
+    if (
+      exit.finalOutput &&
+      exit.finalOutput.state !== "published" &&
+      !(await this.#finalReplyCommitted(runAttempt.runAttemptId))
+    ) {
+      return retry(
+        activation,
+        exit.finalOutput.detail,
+        undefined,
+        "action_required",
+      );
     }
 
     try {
@@ -1320,17 +1353,13 @@ export class AgentHost {
         refusal.includes(BUSINESS_OBLIGATION_UNMET_MARKER) &&
         (await this.#finalReplyCommitted(runAttempt.runAttemptId))
       )
-        return this.#retryFailedActivation(
+        return retry(
           activation,
           reason,
           runFailure?.failure,
           "action_required",
         );
-      return this.#retryFailedActivation(
-        activation,
-        reason,
-        runFailure?.failure,
-      );
+      return retry(activation, reason, runFailure?.failure);
     }
   }
 

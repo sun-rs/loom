@@ -359,6 +359,8 @@ export function createConfiguredRuntime(input: {
           input.probeReport,
           creationOptions,
           {
+            explicitFinalOutput:
+              process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL === "1",
             issueWorkerCredential,
             pool: input.warmRuntimePool,
             runtimeEnvironment: async (scope) =>

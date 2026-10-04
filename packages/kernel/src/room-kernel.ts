@@ -1,3 +1,4 @@
+import { submitWorkerFinalOutputTransaction } from "./worker-final-output.ts";
 import * as HeldReadCoverage from "./held-read-coverage.ts";
 import { backfillTaskThreadFollows } from "./task-thread-follow-backfill.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
@@ -437,7 +438,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 82;
+export const KERNEL_SCHEMA_VERSION = 83;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1800,6 +1801,24 @@ export class RoomKernel {
       ),
     );
   }
+  submitWorkerFinalOutput(
+    execution: AuthenticatedWorkerExecutionContext,
+    raw: { body: string; basedOnRoomSeq: number },
+  ) {
+    return this.finalReplies.hinting(() =>
+      this.#transaction(() => {
+        const scope = this.#requireAuthenticatedWorkerExecution(execution);
+        return submitWorkerFinalOutputTransaction({
+          database: this.#database,
+          scope,
+          raw,
+          post: (input) =>
+            this.#postWorkerOriginMessage(execution, scope, input),
+        });
+      }),
+    );
+  }
+
   postWorkerMessage(
     execution: AuthenticatedWorkerExecutionContext,
     input: WorkerMessagePostRequest,
@@ -1809,24 +1828,32 @@ export class RoomKernel {
         return this.workerTargetContext.post(execution, input);
       return this.#transaction(() => {
         const scope = this.#requireAuthenticatedWorkerExecution(execution);
-        return postWorkerMessageTransaction({
-          comments: this.attachmentComments,
-          database: this.#database,
-          collaboration: this.#collaboration,
-          files: this.files,
-          principal: principalProfile.fromRow(
-            this.#requirePrincipal(scope.participantId),
-          ),
-          scope,
-          execution,
-          input,
-          now: this.#now,
-          eventFromRow: (row) => this.#eventFromRow(row),
-          acknowledge: (s, i) =>
-            this.acknowledgePresentedDeliveryInTransaction(s, i),
-          recordFinal: (s, e) => this.finalReplies.recordInTransaction(s, e),
-        });
+        return this.#postWorkerOriginMessage(execution, scope, input);
       });
+    });
+  }
+
+  #postWorkerOriginMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    scope: ActivationCredentialScope,
+    input: WorkerMessagePostRequest,
+  ) {
+    return postWorkerMessageTransaction({
+      comments: this.attachmentComments,
+      database: this.#database,
+      collaboration: this.#collaboration,
+      files: this.files,
+      principal: principalProfile.fromRow(
+        this.#requirePrincipal(scope.participantId),
+      ),
+      scope,
+      execution,
+      input,
+      now: this.#now,
+      eventFromRow: (row) => this.#eventFromRow(row),
+      acknowledge: (s, i) =>
+        this.acknowledgePresentedDeliveryInTransaction(s, i),
+      recordFinal: (s, e) => this.finalReplies.recordInTransaction(s, e),
     });
   }
 

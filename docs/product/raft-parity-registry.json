@@ -7447,6 +7447,18 @@
       "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
       "note": "Text/no-JSON mode only. Successful output maps actual canonical state to #N moved to STATUS; held does not print moved. This row does not close the five-state authority or transition gaps."
+    },
+    {
+      "id": "route.messages.final-output",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/messages/final-output"
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "client-contract",
+      "constraint": "activation-fence",
+      "note": "Owner-approved evo local extension (2026-10-05), not a Raft port: a strict explicit final-output command uses the original authenticated Run, model-provided causal position, existing post transaction and trusted final-slot provenance. Ordinary provider prose remains diagnostic. See docs/evo/final-output-transport.zh-CN.md; no claim of upstream server parity."
     }
   ]
 }

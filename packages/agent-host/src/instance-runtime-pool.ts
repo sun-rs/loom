@@ -82,6 +82,7 @@ export type WarmTurnOutcome =
       errorMessage?: string;
       /** The driver issued the final-reply interrupt for this native turn. */
       endedAfterFinalReply?: boolean;
+      finalOutputCandidate?: { text: string; nativeMessageId: string };
     }
   | { kind: "exit"; exit: RunExit }
   /** The runtime was killed but its exit is not proven: no proof exists. */
@@ -637,6 +638,19 @@ export class WarmRuntime {
             : {}),
           ...(envelope.endedAfterFinalReply === true
             ? { endedAfterFinalReply: true }
+            : {}),
+          ...(typeof envelope.finalOutputCandidate === "object" &&
+          envelope.finalOutputCandidate !== null &&
+          typeof (envelope.finalOutputCandidate as Record<string, unknown>)
+            .text === "string" &&
+          typeof (envelope.finalOutputCandidate as Record<string, unknown>)
+            .nativeMessageId === "string"
+            ? {
+                finalOutputCandidate: envelope.finalOutputCandidate as {
+                  text: string;
+                  nativeMessageId: string;
+                },
+              }
             : {}),
         });
         return;

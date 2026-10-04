@@ -199,7 +199,7 @@ test("legacy NULL held proof is never backfilled by replaying an old hold", () =
       "ALTER TABLE held_message_drafts DROP COLUMN read_proof_json; PRAGMA user_version=81",
     );
     c.f.kernel.initialize();
-    assert.equal(c.f.db.prepare("PRAGMA user_version").get()?.user_version, 82);
+    assert.equal(c.f.db.prepare("PRAGMA user_version").get()?.user_version, 83);
     assert.equal(
       c.f.db
         .prepare(
