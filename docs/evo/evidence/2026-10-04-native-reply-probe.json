@@ -1,0 +1,61 @@
+{
+  "kind": "free-native-protocol-feasibility",
+  "date": "2026-10-04",
+  "cliVersion": "codex-cli 0.160.0",
+  "paidModelCalls": 0,
+  "productModified": false,
+  "sessionReplacement": false,
+  "limits": [
+    "New thread registration accepted; actual model tool invocation untested",
+    "Existing session tool retrofit and cold-resume persistence unverified",
+    "Read/resume failures involved new empty threads, not existing user sessions"
+  ],
+  "registration": {
+    "cwd": "<isolated temporary directory>",
+    "sentMethods": [
+      "initialize",
+      "initialized",
+      "thread/start",
+      "thread/read",
+      "thread/unsubscribe"
+    ],
+    "receivedMethods": [
+      "remoteControl/status/changed",
+      "account/updated",
+      "thread/started"
+    ],
+    "modelTurnStarted": false,
+    "initialized": true,
+    "dynamicToolRegistrationAccepted": true,
+    "threadId": "01a104fd-11b8-7820-acbc-a6222ea16cd1",
+    "startedTurnCount": 0,
+    "readError": "ephemeral threads do not support includeTurns",
+    "unsubscribed": {
+      "status": "unsubscribed"
+    }
+  },
+  "resume": {
+    "cwd": "<isolated temporary directory>",
+    "sentMethods": [
+      "initialize",
+      "initialized",
+      "thread/start",
+      "thread/read",
+      "thread/unsubscribe",
+      "thread/resume",
+      "thread/start"
+    ],
+    "receivedMethods": ["remoteControl/status/changed", "thread/started"],
+    "modelTurnStarted": false,
+    "initialized": true,
+    "dynamicToolRegistrationAccepted": true,
+    "threadId": "01a104fd-f801-7c32-a0c9-c6b6974c4f39",
+    "startedTurnCount": 0,
+    "readError": "list_turns is not supported yet",
+    "unsubscribed": {
+      "status": "unsubscribed"
+    },
+    "resumeError": "list_turns is not supported yet",
+    "startWithInvalidDynamicToolsRejected": "Invalid request: invalid type: integer `123`, expected a sequence"
+  }
+}
