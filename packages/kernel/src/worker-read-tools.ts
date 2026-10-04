@@ -1,3 +1,4 @@
+import * as HeldReadCoverage from "./held-read-coverage.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import { readPresentedWindow } from "./activation-presented-window.ts";
 import { workerAddressing } from "./worker-addressing.ts";
@@ -625,11 +626,17 @@ export class WorkerReadService {
     raw: unknown,
   ): { received: boolean } {
     return this.#read(execution, (scope) => ({
-      received: ReadCoverage.received(
-        this.#db,
-        scope,
-        P.WorkerReadReceivedRequestSchema.parse(raw).readReceiptId,
-      ),
+      received:
+        ReadCoverage.received(
+          this.#db,
+          scope,
+          P.WorkerReadReceivedRequestSchema.parse(raw).readReceiptId,
+        ) ||
+        HeldReadCoverage.received(
+          this.#db,
+          scope,
+          P.WorkerReadReceivedRequestSchema.parse(raw).readReceiptId,
+        ),
     }));
   }
 

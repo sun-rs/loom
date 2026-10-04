@@ -6,7 +6,7 @@
 /** Raft uses an unlikely delimiter so shell snippets cannot close the heredoc. */
 export const MESSAGE_HEREDOC_DELIMITER = "RAH_MESSAGE_EOF";
 
-const MAX_RENDERED_BODY_CHARACTERS = 500;
+export const MAX_RENDERED_BODY_CHARACTERS = 500;
 
 function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\"'\"'")}'`;

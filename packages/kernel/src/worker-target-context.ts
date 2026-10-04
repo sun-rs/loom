@@ -1,3 +1,4 @@
+import * as HeldReadCoverage from "./held-read-coverage.ts";
 import { heldRevisionWindow } from "./held-draft-revision.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import { assertWorkerReplyTarget } from "./worker-reply-target-guard.ts";
@@ -469,6 +470,11 @@ export class WorkerTargetContextService {
             ? undefined
             : text(draft.row, "body")
           : input.body;
+      const previousHeld = this.#context.database
+        .prepare(
+          "SELECT held_draft_id FROM held_message_drafts WHERE room_id=? AND idempotency_key=?",
+        )
+        .get(target.roomId, window.idempotencyKey);
       const result = this.#context
         .collaboration()
         .postActivationMessage(principal, {
@@ -499,7 +505,30 @@ export class WorkerTargetContextService {
       if ("event" in result && !result.deduplicated)
         this.#context.files().consume(attachments, result.event.aggregateId);
       this.#context.attachmentComments().bindWorkerResult(metadata, result);
+      if (
+        input.reviseDraftId !== undefined &&
+        "event" in result &&
+        !result.deduplicated
+      )
+        HeldReadCoverage.confirmRevision(
+          this.#context.database,
+          origin,
+          input.reviseDraftId,
+          result.event,
+        );
       this.#settleReplyIntent(origin, intent, result);
+      if ("state" in result && result.state === "held") {
+        const readReceiptId = HeldReadCoverage.record(
+          this.#context.database,
+          origin,
+          result,
+          previousHeld?.held_draft_id !== result.heldDraftId,
+        );
+        return P.WorkerMessagePostResponseSchema.parse({
+          ...result,
+          ...(readReceiptId ? { readReceiptId } : {}),
+        });
+      }
       return P.WorkerMessagePostResponseSchema.parse(result);
     });
   }

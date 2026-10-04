@@ -454,7 +454,7 @@ test("schema 79 creates empty provenance instead of converting historical MAX re
     );
     f.db.exec("DROP TABLE worker_run_read_receipts; PRAGMA user_version=78");
     f.kernel.initialize();
-    assert.equal(f.db.prepare("PRAGMA user_version").get()?.user_version, 81);
+    assert.equal(f.db.prepare("PRAGMA user_version").get()?.user_version, 82);
     assert.equal(
       f.db.prepare("SELECT count(*) n FROM worker_run_read_receipts").get()?.n,
       0,

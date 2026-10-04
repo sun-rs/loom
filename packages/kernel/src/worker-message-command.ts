@@ -1,3 +1,4 @@
+import * as HeldReadCoverage from "./held-read-coverage.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import type { AttachmentCommentsService } from "./attachment-comments.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -137,6 +138,11 @@ export function postWorkerMessageTransaction(context: {
     eventFromRow: context.eventFromRow,
     resolveLive: (ids) => files.forWorkerMessage(execution, ids),
   });
+  const previousHeld = database
+    .prepare(
+      "SELECT held_draft_id FROM held_message_drafts WHERE room_id=? AND idempotency_key=?",
+    )
+    .get(scope.roomId, idempotencyKey);
   const result = context.collaboration.postActivationMessage(
     context.principal,
     {
@@ -185,6 +191,15 @@ export function postWorkerMessageTransaction(context: {
     acknowledge: context.acknowledge,
     recordFinal: context.recordFinal,
   });
+  if ("state" in result && result.state === "held") {
+    const readReceiptId = HeldReadCoverage.record(
+      database,
+      scope,
+      result,
+      previousHeld?.held_draft_id !== result.heldDraftId,
+    );
+    return { ...result, ...(readReceiptId ? { readReceiptId } : {}) };
+  }
   // A token that woke nobody rides back on the successful post, exactly as
   // Raft returns unresolvedMentionHandles alongside a queued message. A
   // deduplicated post reports nothing: the first one already did.

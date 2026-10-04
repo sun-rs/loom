@@ -133,6 +133,8 @@ export const WorkerMessageHeldResponseSchema = z
     activationIds: z.array(IdentifierSchema),
     basedOnRoomSeq: z.number().int().nonnegative(),
     heldDraftId: IdentifierSchema,
+    /** Hidden CLI output receipt for this exact held window; never an ACK. */
+    readReceiptId: z.string().uuid().optional(),
     replyIntent: HeldReplyIntentSchema.optional(),
     recoveryTarget: WorkerReadChannelSchema.optional(),
     newMessageCount: z.number().int().positive(),

@@ -1,3 +1,4 @@
+import * as HeldReadCoverage from "./held-read-coverage.ts";
 import { backfillTaskThreadFollows } from "./task-thread-follow-backfill.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import * as MemoryIndex from "./channel-memory-index.ts";
@@ -436,7 +437,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 81;
+export const KERNEL_SCHEMA_VERSION = 82;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1101,6 +1102,7 @@ export class RoomKernel {
       migrateCatchUpV77(this.#database);
       migrateChannelPolicies(this.#database);
       ReadCoverage.migrate(this.#database);
+      HeldReadCoverage.migrate(this.#database);
       MemoryIndex.clearDeletedMemoryDescriptions(this.#database);
       RunAttemptUsageService.migrateCleanupV66(this.#database);
       if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();

@@ -17,7 +17,7 @@ import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
 import { integer, text } from "./sqlite-row.ts";
 
 /** Final closes consumption even while tools/processes are still winding down. */
-function finalized(
+export function finalized(
   database: DatabaseSync,
   scope: ActivationCredentialScope,
 ): boolean {

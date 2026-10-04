@@ -1,3 +1,4 @@
+import { writeWorkerHeldResult } from "./worker-held-output.ts";
 import { staticWorkerCommandHelp } from "./worker-static-help.ts";
 import { writeWorkerReadResult } from "./worker-read-output.ts";
 import { WorkerTaskUpdateRequestSchema } from "@rah-os/protocol";
@@ -10,10 +11,7 @@ import {
 } from "./worker-message-check.ts";
 import {
   MESSAGE_HEREDOC_DELIMITER,
-  SEND_HELD_AS_DRAFT_MESSAGE,
-  SEND_HELD_AS_DRAFT_NEXT_ACTION,
   formatDraftReplacedWarning,
-  workerHeldSendGuidance,
   workerReplacedDraftBody,
   workerReplacedDraftNotice,
   workerSendSuccessOutput,
@@ -545,18 +543,18 @@ export async function runWorkerCliCommand(
     // (`handleMessageSend`: `if (!opts.json) writeText(...)` then `throw`), so
     // its body is stdout and its envelope is stderr. The thread-target
     // confirmation renders nothing and only raises, so all of it is stderr.
-    const heldGuidance = workerHeldSendGuidance(result, turnSuffix);
-    if (heldGuidance !== undefined) {
-      if (!jsonOutput) runtime.stdout.write(`${text}${heldGuidance}`);
-      throw cliError("SEND_HELD_AS_DRAFT", SEND_HELD_AS_DRAFT_MESSAGE, {
-        details: { held: result },
-        draftSaved: true,
-        effect: "draft_saved",
-        outputMode: jsonOutput ? "json" : "text",
-        retryable: false,
-        suggestedNextAction: SEND_HELD_AS_DRAFT_NEXT_ACTION,
-      });
-    }
+    if (
+      await writeWorkerHeldResult({
+        result,
+        jsonOutput,
+        turnSuffix,
+        prefix: text,
+        stdout: runtime.stdout,
+        stderr: runtime.stderr,
+        send,
+      })
+    )
+      return 1;
     const confirmationBody = workerTargetConfirmationBody(result, turnSuffix);
     if (confirmationBody !== undefined) {
       throw cliError(
