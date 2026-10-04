@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-04",
+  "codeBase": "e894b5761bdcee9090dde3849c56b220b37dfd70",
+  "scope": "Installed CLI transport with loopback fake models; separate temporary real Worker/Kernel submission prototype. Not end-to-end AgentHost acceptance.",
+  "paidCalls": 0,
+  "productionChanges": false,
+  "providers": [
+    {
+      "cli": "Codex",
+      "version": "0.160.0",
+      "normalInitialHttpRequests": 1,
+      "sameSessionResumeHttpRequests": 1
+    },
+    {
+      "cli": "Claude Code",
+      "version": "2.1.287",
+      "normalInitialHttpRequests": 1,
+      "sameSessionResumeHttpRequests": 1
+    },
+    {
+      "cli": "Kimi",
+      "version": "0.39.1",
+      "normalInitialHttpRequests": 1,
+      "sameSessionResumeHttpRequests": 1
+    },
+    {
+      "cli": "OpenCode",
+      "version": "1.18.32",
+      "normalInitialHttpRequests": 1,
+      "sameSessionResumeHttpRequests": 1
+    }
+  ],
+  "workerKernelTests": {
+    "passed": 8,
+    "command": "node --test scripts/final-output-trial/submission.test.mjs"
+  },
+  "collisionObservation": {
+    "priorToolFinalMessages": 1,
+    "afterNativeEnvelopeMessages": 1,
+    "finalMarkers": 1,
+    "secondResult": "held",
+    "historyReadBeforeSecondSubmit": true,
+    "duplicatePublicationReproduced": false
+  },
+  "limitations": [
+    "Fake model outputs establish transport, not real model adherence or cost ratios.",
+    "Provider extraction and Worker submission were tested separately, not through a production Host lifecycle.",
+    "Kimi ACP end_turn alone does not distinguish truncation; scoped native wire finish evidence is necessary.",
+    "Kimi probes used an earlier envelope shape; strict final schema is independently tested.",
+    "A successful final requires active original Run credentials; cold release and Host renewal ordering need integration.",
+    "Cross-facade final semantics and held/unknown recovery remain unimplemented."
+  ],
+  "privateEvidenceRoot": "~/.loom/reviews/2026-10-04-channel-cost-research/final-output-transport",
+  "privateEvidence": [
+    {
+      "path": "codex-success.json",
+      "sha256": "1aba4ff181578f1abbf3f363aaa1047f14ee07ecb7e22dee7404cbe0bd2b0128"
+    },
+    {
+      "path": "codex-interrupted.json",
+      "sha256": "768308f2115a320e0afb042c4e349d08bdc99baf78addf4ea0e753784a2777a4"
+    },
+    {
+      "path": "claude-287-success.json",
+      "sha256": "04fb9b750d2032c25013d9e9fb7342610c36564529d7231ed25956324308e72c"
+    },
+    {
+      "path": "claude-287-interrupted.json",
+      "sha256": "cc9808375d06a1930e9da9f0fab718cc8299b8daec1cceebb07b1294f372a7ef"
+    },
+    {
+      "path": "claude-287-offline-verification.json",
+      "sha256": "5e94ddad474c8e9ad8bd0d5d776864e9167e04db3c1dad3b2bbc756b7df570a5"
+    },
+    {
+      "path": "kimi-opencode-offline-verification.json",
+      "sha256": "ce7d1354b96d2444937ba066ebad1108e0e0f58c9cdb8b0399e55f18b3877573"
+    },
+    {
+      "path": "kimi-flush/result.json",
+      "sha256": "52155878c99a752b1d69c04f37c89bb5b957dc2cff3d17387c893ff808a94a60"
+    },
+    {
+      "path": "opencode-cold/result.json",
+      "sha256": "4272bce4473600dc035790b588f577e4a430ebbee5ba4be30a86bd8e42f00b34"
+    },
+    {
+      "path": "collision-after-read.json",
+      "sha256": "dd95844875a1443447587d286332a2ec9777b1368e98dc5a36d708ac8d8df06a"
+    },
+    {
+      "path": "loom-final-output-submission-red.log",
+      "sha256": "c8abf0214383e153e5fb67cb35fa8adc48921d9f35e039642c6e0ece5f10aff9"
+    },
+    {
+      "path": "loom-final-output-submission-complete.log",
+      "sha256": "1e357ca56cb5f92b5e5dfb26c41a1c2de16e70c35a473bccb7363dee1499120a"
+    },
+    {
+      "path": "loom-final-output-identity-red.log",
+      "sha256": "48742d269a4134971e7e21f0985544413abbff254ad18a85d40e2cd292fb543c"
+    },
+    {
+      "path": "loom-final-output-full-check.log",
+      "sha256": "45606d0bfb834711f25537bd4e6a7ea49224e2ce6f79a5661c5151ab34060b6d"
+    },
+    {
+      "path": "loom-final-output-format.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    }
+  ],
+  "verification": {
+    "npmRunCheck": "passed",
+    "formatCheck": "passed",
+    "gitDiffCheck": "passed",
+    "documentLinksAndPrivateEvidenceHashes": "passed"
+  }
+}
