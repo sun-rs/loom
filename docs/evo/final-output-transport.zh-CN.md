@@ -81,7 +81,7 @@ OpenCode P108 后接入 Codex，复用同一严格envelope、原Run有界提交�
 
 7项真实Host/Kernel＋假app-server集成验证两轮同session唯一发表、默认off、commentary排除、中断/取消零发表、缺登记ACK不能完成，以及未知写action_required且不自动重跑；helper/真实driver另有身份、唯一性、终态和在途工具反例。真实安装Codex0.160.0＋隔离loopback假模型已两轮贯穿生产链，每轮恰1HTTP、两个可信marker/两个完成Activation，同thread同runtime；commentary合法命令诱饵未发布。合成usage不作成本证据。模式切换后同session重建沿既有逻辑，本批未独立重测该组合。
 
-[Codex免费脱敏证据](evidence/2026-10-05-codex-final-output-free.json)。P109付费首轮暴露非法JSON，严格拒绝、零发表，整批失败；免费证据不能证明真实模型格式遵从。见[P109报告](evidence/2026-10-05-final-output-p109.md)。正式部署待本批完成。
+[Codex免费脱敏证据](evidence/2026-10-05-codex-final-output-free.json)。P109付费首轮暴露非法JSON，严格拒绝、零发表，整批失败；免费证据不能证明真实模型格式遵从。见[P109报告](evidence/2026-10-05-final-output-p109.md)。正式源码已在本批备份重启，试验开关保持关闭；见[部署凭据](evidence/2026-10-05-codex-final-output-deployment.json)。
 
 ## P109 后的原生格式约束修复
 
@@ -92,3 +92,7 @@ Codex0.160.0稳定app-server的 `turn/start.outputSchema` 明确约束本轮最�
 P110付费验证在模型生成前被测试护栏阻断：原turn/start白名单未接纳outputSchema，随后连续性保护拒绝替换session，零发表。见[P110失败报告](evidence/2026-10-05-final-output-p110.md)。这不证明真实provider支持或不支持结构化输出；修复必须连同同款paid guard做免费全链验证，只放行精确Protocol schema，不放宽model/effort或其他字段。
 
 P110护栏修复仅放行Protocol生成的精确draft7 schema，保留模型、effort和其他字段限制；相关69项免费测试通过。[同款付费护栏免费闭环](evidence/2026-10-05-codex-output-schema-guarded-free.json)已用真实Codex验证同session两轮、实际HTTP为2+1、工具前后及续轮均携带严格schema、两个发表和ACK完成。它补足测试接线覆盖，不改变P110失败，也不证明真实模型质量或成本。
+
+## P111 Codex付费验证
+
+[P111报告](evidence/2026-10-05-final-output-p111.md)：固定题目、官方自动记忆关闭、本批独立原生分母。两边生成均2/1/1，累计输入1.226倍、未缓存1.194倍，首代差2708，三轮可信发表及ACK、usage完整，数值预算通过。原生输出格式约束修复后的本样本不再出现非法JSON；这不承诺长期零失败。答复核心PID可信性边界正确，实质质量及指令瑕疵单独记录。没有独立HTTP总数，不将token倍率写成账单倍率；P109/P110失败仍保留。正式实验开关保持关闭，其他CLI和长session未由本批验收。
