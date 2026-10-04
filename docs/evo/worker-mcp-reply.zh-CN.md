@@ -31,3 +31,5 @@ Codex 的 MCP 参数 schema 直接暴露（本内部服务 `omit_tools_from=["de
 OpenCode 的免费研究发现可通过本地原生 hook 关联 session/call、唯一 running part 与 Host 输入消息，但当前 `--pure` 不加载 plugin；不能直接放宽到加载用户插件。其现有 final 控制在两份免费样本中保留完整结果，却仍发出第二次模型请求。其产品身份适配和无额外生成路径均未收口，不随本切片接线。
 
 证据：[Codex 产品链免费摘要](evidence/2026-10-04-worker-mcp-product.json)。探针、红绿日志及失败证据归档于 `~/.loom/reviews/2026-10-04-channel-cost-research/worker-mcp-product-fixture/`。
+
+P98 付费进展（2026-10-04）：原生门禁实际使用 Homebrew 安装路径，代码执行宿主超时、未读到源文件；Loom 首轮也遇到相同超时，在质量核验后取消，后两轮未启动。故无有效同任务成本倍率。此前免费成功探针使用另一已有同版本／同哈希安装，不能替代本次实际执行路径的健康验证。预检遗漏、已发生用量与止损证据见[P98报告](evidence/2026-10-04-worker-mcp-cost-p98.md)，没有付费补跑。

@@ -1,0 +1,116 @@
+{
+  "batch": "P98",
+  "date": "2026-10-04",
+  "codeCommit": "4e3775ca11f62edf9b85e9c8ae3aab8757abcc49",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cliVersion": "codex-cli 0.160.0",
+  "sourceRef": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+  "baselineId": "0292456b00fdc05d9872d76d73da5615a955225715e02a1c1a6655668250709a",
+  "authorization": "Owner approved one native/role-warm batch of three human rounds per arm; no rerun",
+  "gateStatus": "failed",
+  "qualityVerdict": "native-task-failed; no valid successful-task denominator",
+  "efficiencyVerdict": "not-comparable; no cost ratio",
+  "native": {
+    "rounds": [
+      {
+        "round": 1,
+        "input": 36238,
+        "cached": 24832,
+        "uncached": 11406,
+        "output": 233,
+        "generations": 4,
+        "replySeconds": 103.833,
+        "memoryOffEnforced": true,
+        "answer": "审查结论：当前无法读取两份指定文件：命令执行工具连续超时。因此无法核实重启时网络配置的保留行为，也无法提供有行号依据的条件性风险；不能据此断言存在或不存在风险。",
+        "toolsAttempted": 3
+      },
+      {
+        "round": 2,
+        "input": 9335,
+        "cached": 8960,
+        "uncached": 375,
+        "output": 179,
+        "generations": 1,
+        "replySeconds": 9.42,
+        "memoryOffEnforced": true,
+        "answer": "审查结论：上一轮并未读到文件，因此没有依据判断 PID 一致性或配置可信度；“无法核实”不等于“没有保证”或“没有风险”。PID 一致至多证明相关检查所覆盖的 PID 条件成立，不能单独证明网络配置真实、完整或未被篡改。函数级检查也不能证明整个重启流程都保留了配置；后者需有流程级证据。\n\n建议回归测试：① PID 一致但配置内容被替换时，验证是否拒绝将其视为可信；② 走完整重启流程后，验证网络配置按预期保留。由于本轮要求只依赖已读内容，而上一轮未读到文件，无法确认这两项与现有实现的对应关系。",
+        "toolsAttempted": 0
+      },
+      {
+        "round": 3,
+        "input": 9604,
+        "cached": 8960,
+        "uncached": 644,
+        "output": 150,
+        "generations": 1,
+        "replySeconds": 9.609,
+        "memoryOffEnforced": true,
+        "answer": "审查结论：拒绝基于现有记录接受或要求修改；前轮未读到两份文件，无法形成代码审查结论。保留“PID 一致本身不足以证明配置可信”这一一般判断；撤回任何暗示它适用于当前实现、或整条重启流程有特定保证的说法。\n\n回归测试验收标准：① PID 一致但配置被替换时，结果符合明确定义的信任策略，且不能仅凭 PID 判可信；② 完整重启后，配置与预期保留值一致。具体策略及预期值须由实现或需求确定，本记录无法判断。",
+        "toolsAttempted": 0
+      }
+    ],
+    "totals": {
+      "input": 55177,
+      "cached": 42752,
+      "uncached": 12425,
+      "output": 562,
+      "generations": 6
+    },
+    "hostNegotiationTimeouts": 3,
+    "quality": "Could not read the two source files; rounds 2 and 3 only continued the admitted lack of evidence"
+  },
+  "loom": {
+    "startedHumanRounds": 1,
+    "completedHumanRounds": 0,
+    "runState": "cancelled",
+    "runtimeState": "terminated",
+    "terminationReason": "host_shutdown",
+    "hostNegotiationTimeoutsBeforeStop": 2,
+    "publishedReplies": 0,
+    "reportedUsage": {
+      "generations": 3,
+      "input": 34665,
+      "cached": 22016,
+      "output": 167,
+      "reasoning": 0,
+      "uncached": 12649
+    },
+    "transcriptUsageMatches": true,
+    "usageGaps": [],
+    "remainingRoundsStarted": false
+  },
+  "totalReportedUsage": {
+    "input": 89842,
+    "cached": 64768,
+    "uncached": 25074,
+    "output": 729,
+    "generations": 9
+  },
+  "stop": {
+    "at": "2026-10-04T12:11:12.691222+00:00",
+    "reason": "Native control failed the review task: code-mode host negotiation timed out and no source files were read; stop further paid spend without rerun.",
+    "pid": 20359,
+    "signal": "SIGTERM",
+    "verifiedExactIsolatedDaemon": true
+  },
+  "installationEvidence": {
+    "paidResolvedCodex": "/opt/homebrew/Caskroom/codex/0.160.0/bin/codex",
+    "successfulFreeProbeCodex": "~/.codex/packages/app-server-daemon/releases/0.160.0-aarch64-apple-darwin/bin/codex",
+    "bothCodexSha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+    "limit": "Equal version and bytes do not prove equal installation-path/OS launch conditions; sole OS cause not established",
+    "preflightGap": "Version/catalog/memory checks did not exercise the paid executable code-mode host; prior free success came from a different existing installation"
+  },
+  "cleanup": {
+    "isolatedDaemonExited": true,
+    "runtimeTerminated": true,
+    "ownedProcessesRemaining": 0,
+    "formalServiceTouched": false
+  },
+  "limits": [
+    "Cancelled Loom first round is reported usage, not a completed workload or efficiency comparison",
+    "No billing-price estimate; token counts are provider-reported, not invoice verification",
+    "No paid retry or model substitution",
+    "P97 failure remains; P98 neither demonstrates nor refutes MCP cost improvement"
+  ]
+}
