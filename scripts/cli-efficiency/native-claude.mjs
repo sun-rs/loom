@@ -1,3 +1,4 @@
+import { assertNativeMemoryPolicy } from "./native-memory-policy.mjs";
 // Claude native arm: the installed `claude -p` directly (no RAH worker,
 // scheduler or runtime adapter), one process per round, the same session
 // resumed. Usage comes from its own stream-json through the product's usage
@@ -37,6 +38,12 @@ export async function nativeClaudeRound({
     ...policy.args,
   ];
   assert.equal(classifyClaudeLaunch(args, config), "turn");
+  const env = nativeEnvironment(policy.environment);
+  round.nativeMemoryPolicy = assertNativeMemoryPolicy({
+    provider: "claude",
+    args,
+    env,
+  });
   const executable = execFileSync("which", ["claude"], {
     encoding: "utf8",
   }).trim();
@@ -48,7 +55,7 @@ export async function nativeClaudeRound({
       executable,
       args,
       cwd,
-      env: nativeEnvironment(policy.environment),
+      env,
       onSpawn: (pid) => {
         round.pid = pid;
         save();

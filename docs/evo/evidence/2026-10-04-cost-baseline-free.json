@@ -1,0 +1,306 @@
+{
+  "date": "2026-10-04",
+  "scope": "Free cost-baseline and native-auto-memory launch-policy verification",
+  "paidProviderTurns": 0,
+  "runtimeProductChanged": false,
+  "historicalEfficiencyVerdict": "P97 remains failed; no new cost measurement",
+  "plans": {
+    "codex": {
+      "status": "planned",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "bindingId": "local:codex-cli/v1:gpt-6-luna",
+      "cliVersion": "codex-cli 0.160.0",
+      "sourceRef": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+      "sourceHashes": {
+        "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+        "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+      },
+      "order": ["native", "role-warm"],
+      "baseline": {
+        "schemaVersion": 1,
+        "baselineId": "0292456b00fdc05d9872d76d73da5615a955225715e02a1c1a6655668250709a",
+        "identity": {
+          "workload": {
+            "id": "p97-direct-review-v1",
+            "variant": "canonical",
+            "sourceHashes": {
+              "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+              "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+            },
+            "instructionsSha256": "f4c367df91c230e5bb69dc4841053b0451a6910dbb904aa00c92fff0d227213c",
+            "questionsSha256": "990900ed483b97932456e6dd68f2d52b76cca2f760ff045629ff72c8537a26b0"
+          },
+          "delivery": {
+            "native": "native-final-text",
+            "loom": "explicit-room-post",
+            "successfulAnswer": "review-prefix-and-80-characters; human-quality-review-required",
+            "final": "explicit-only; never infer completion from stdout"
+          },
+          "session": {
+            "rounds": 3,
+            "continuity": "one-session-per-arm",
+            "order": ["native", "role-warm"],
+            "warmRestart": false,
+            "prewarm": false,
+            "forcedCompaction": false
+          },
+          "runtime": {
+            "provider": "codex",
+            "bindingId": "local:codex-cli/v1:gpt-6-luna",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "cliVersion": "codex-cli 0.160.0"
+          },
+          "nativePolicy": {
+            "args": [
+              "-c",
+              "notify=[]",
+              "-c",
+              "features.memories=false",
+              "-c",
+              "memories.generate_memories=false",
+              "-c",
+              "memories.use_memories=false",
+              "-c",
+              "features.multi_agent=false",
+              "-c",
+              "features.goals=false",
+              "-c",
+              "features.sleep_tool=false",
+              "-c",
+              "features.in_app_local_automation=false",
+              "-c",
+              "features.plugins=false",
+              "-c",
+              "features.apps=false",
+              "-c",
+              "features.hooks=false",
+              "-c",
+              "skills.include_instructions=false",
+              "-c",
+              "web_search=\"disabled\""
+            ],
+            "environment": {},
+            "memoryPolicy": {
+              "provider": "codex",
+              "supported": true,
+              "status": "supported",
+              "scope": "provider-native-auto-memory",
+              "mechanism": "cli-config"
+            }
+          },
+          "nativeInvocation": {
+            "initial": [
+              "exec",
+              "--json",
+              "--skip-git-repo-check",
+              "--dangerously-bypass-approvals-and-sandbox",
+              "-m",
+              "gpt-6-luna",
+              "-c",
+              "model_reasoning_effort=\"low\"",
+              "<question>"
+            ],
+            "resume": [
+              "exec",
+              "--json",
+              "--skip-git-repo-check",
+              "--dangerously-bypass-approvals-and-sandbox",
+              "-m",
+              "gpt-6-luna",
+              "-c",
+              "model_reasoning_effort=\"low\"",
+              "resume",
+              "<session>",
+              "<question>"
+            ]
+          },
+          "sampling": {
+            "order": ["native", "role-warm"],
+            "cacheControl": "uncontrolled-record-observed-hits",
+            "automaticPaidRerun": false
+          }
+        },
+        "limits": [
+          "Same identity is necessary, not proof of equal quality or server-side model revision",
+          "Never substitute a historical native denominator",
+          "Memory evidence certifies launch configuration, not OS filesystem isolation"
+        ]
+      },
+      "evaluationProfile": {
+        "metricsSha256": "0b2f425dbbb3e3acaad7a83dbd924111edb5e98d79e4a8f6498c05c1171f3a5d",
+        "warmChecksSha256": "7fc6e8a6854b3c4d2f41ef61a9cd109c7434e7cbb717ecd1b185efdae0ecc70b",
+        "budgetsSha256": "bfc4be25b472230d2f2d644abfcf762806e0459a54c258f6c34b1c81922e1661"
+      },
+      "nativeMemoryPolicy": {
+        "provider": "codex",
+        "supported": true,
+        "status": "supported",
+        "scope": "provider-native-auto-memory",
+        "mechanism": "cli-config"
+      },
+      "qualityReview": "required",
+      "codeCommit": "971856db267b2a55f7354ba1b9a907528d790f07",
+      "workingTree": {
+        "dirty": true,
+        "changedPaths": 12,
+        "untrackedPaths": 5,
+        "statusSha256": "1bd349c9413fd36785fa3debca9da46c23b5d3e3f301e86e1047c6f0bd7df772",
+        "diffSha256": "64ec36aa4b053edafa3964e41167729b9544117810a122d0322ef6a998b859a7"
+      }
+    },
+    "claude": {
+      "status": "planned",
+      "provider": "claude",
+      "model": "haiku",
+      "effort": null,
+      "bindingId": "local:claude-cli/v1:haiku",
+      "cliVersion": "2.1.287 (Claude Code)",
+      "sourceRef": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+      "sourceHashes": {
+        "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+        "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+      },
+      "order": ["native", "role-warm"],
+      "baseline": {
+        "schemaVersion": 1,
+        "baselineId": "e84a1f3878935bc39e4ac7546623a4b1105ec0c7bcddef8a3393633d5d42e4c5",
+        "identity": {
+          "workload": {
+            "id": "p97-direct-review-v1",
+            "variant": "canonical",
+            "sourceHashes": {
+              "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+              "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+            },
+            "instructionsSha256": "f4c367df91c230e5bb69dc4841053b0451a6910dbb904aa00c92fff0d227213c",
+            "questionsSha256": "990900ed483b97932456e6dd68f2d52b76cca2f760ff045629ff72c8537a26b0"
+          },
+          "delivery": {
+            "native": "native-final-text",
+            "loom": "explicit-room-post",
+            "successfulAnswer": "review-prefix-and-80-characters; human-quality-review-required",
+            "final": "explicit-only; never infer completion from stdout"
+          },
+          "session": {
+            "rounds": 3,
+            "continuity": "one-session-per-arm",
+            "order": ["native", "role-warm"],
+            "warmRestart": false,
+            "prewarm": false,
+            "forcedCompaction": false
+          },
+          "runtime": {
+            "provider": "claude",
+            "bindingId": "local:claude-cli/v1:haiku",
+            "model": "haiku",
+            "effort": null,
+            "cliVersion": "2.1.287 (Claude Code)"
+          },
+          "nativePolicy": {
+            "args": [
+              "--setting-sources",
+              "project,local",
+              "--strict-mcp-config"
+            ],
+            "environment": {
+              "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+              "ENABLE_CLAUDEAI_MCP_SERVERS": "false"
+            },
+            "memoryPolicy": {
+              "provider": "claude",
+              "supported": true,
+              "status": "supported",
+              "scope": "provider-native-auto-memory",
+              "mechanism": "environment"
+            }
+          },
+          "nativeInvocation": {
+            "initial": [
+              "-p",
+              "<question>",
+              "--output-format",
+              "stream-json",
+              "--verbose",
+              "--include-partial-messages",
+              "--dangerously-skip-permissions",
+              "--model",
+              "haiku"
+            ],
+            "resume": [
+              "-p",
+              "<question>",
+              "--output-format",
+              "stream-json",
+              "--verbose",
+              "--include-partial-messages",
+              "--dangerously-skip-permissions",
+              "--model",
+              "haiku",
+              "--resume",
+              "<session>"
+            ]
+          },
+          "sampling": {
+            "order": ["native", "role-warm"],
+            "cacheControl": "uncontrolled-record-observed-hits",
+            "automaticPaidRerun": false
+          }
+        },
+        "limits": [
+          "Same identity is necessary, not proof of equal quality or server-side model revision",
+          "Never substitute a historical native denominator",
+          "Memory evidence certifies launch configuration, not OS filesystem isolation"
+        ]
+      },
+      "evaluationProfile": {
+        "metricsSha256": "0b2f425dbbb3e3acaad7a83dbd924111edb5e98d79e4a8f6498c05c1171f3a5d",
+        "warmChecksSha256": "7fc6e8a6854b3c4d2f41ef61a9cd109c7434e7cbb717ecd1b185efdae0ecc70b",
+        "budgetsSha256": "bfc4be25b472230d2f2d644abfcf762806e0459a54c258f6c34b1c81922e1661"
+      },
+      "nativeMemoryPolicy": {
+        "provider": "claude",
+        "supported": true,
+        "status": "supported",
+        "scope": "provider-native-auto-memory",
+        "mechanism": "environment"
+      },
+      "qualityReview": "required",
+      "codeCommit": "971856db267b2a55f7354ba1b9a907528d790f07",
+      "workingTree": {
+        "dirty": true,
+        "changedPaths": 12,
+        "untrackedPaths": 5,
+        "statusSha256": "1bd349c9413fd36785fa3debca9da46c23b5d3e3f301e86e1047c6f0bd7df772",
+        "diffSha256": "64ec36aa4b053edafa3964e41167729b9544117810a122d0322ef6a998b859a7"
+      }
+    }
+  },
+  "verification": {
+    "focusedBaselineTests": {
+      "passed": 6,
+      "failed": 0
+    },
+    "efficiencyUnitTests": {
+      "passed": 246,
+      "failed": 0
+    },
+    "nativeMemory": "Fake CLI first/resume launch captures; unsupported providers fail before model startup",
+    "fullRepositoryCheck": {
+      "command": "npm run check",
+      "exitCode": 0
+    },
+    "ciWorkflowTests": {
+      "passed": 9,
+      "failed": 0,
+      "note": "Focused rerun after adding full-history checkout requirement"
+    }
+  },
+  "limitations": [
+    "Memory evidence proves enforced launch settings, not filesystem isolation or semantic removal of previously seen memory",
+    "Plan calls CLI --version only; it is not a real-provider acceptance or performance result",
+    "Matching baselineId does not prove equal cache conditions, server-side model revision, or answer quality"
+  ]
+}

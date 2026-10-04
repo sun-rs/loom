@@ -4,9 +4,17 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  FIXED_WORKLOAD,
+  createCostBaseline,
+  nativePairEvidence,
+} from "./cli-efficiency/baseline.mjs";
+import { describeNativeMemoryPolicy } from "./cli-efficiency/native-memory-policy.mjs";
+import { providerLaunchSwitches } from "../packages/agent-host/src/provider-launch-arguments.js";
 import { instructions, questions } from "./cli-efficiency/common.mjs";
-import { nativeRound } from "./cli-efficiency/native.mjs";
+import { claudeNativeArgs } from "./cli-efficiency/claude-usage.mjs";
+import { codexNativeArgs, nativeRound } from "./cli-efficiency/native.mjs";
 import { nativeClaudeRound } from "./cli-efficiency/native-claude.mjs";
 import { nativeKimiRound } from "./cli-efficiency/native-kimi.mjs";
 import { nativeOpenCodeRound } from "./cli-efficiency/native-opencode.mjs";
@@ -27,9 +35,11 @@ import {
   gateStatus,
 } from "./cli-efficiency/metrics.mjs";
 import { compareWarmCold, firstRoundReport } from "./cli-efficiency/warm.mjs";
+const planOnly = process.argv.includes("--plan");
 assert.ok(
-  process.argv.includes("--paid"),
-  "Requires explicit --paid and user authorization",
+  process.argv.slice(2).length === 1 &&
+    (planOnly || process.argv.includes("--paid")),
+  "Requires exactly one of --plan (free) or --paid (explicit user authorization)",
 );
 // RAH_EFFICIENCY_PROVIDER=codex|claude|kimi|opencode (default codex): each
 // runtime is compared with its own native CLI. Codex, Claude and OpenCode
@@ -39,6 +49,11 @@ assert.ok(
 // here before any process starts. See efficiency-config.mjs.
 const config = parseEfficiencyEnv(process.env);
 const { provider, model, effort, bindingId, order } = config;
+const nativeMemoryPolicy = describeNativeMemoryPolicy(provider);
+assert.ok(
+  nativeMemoryPolicy.supported,
+  `Native memory policy unsupported: ${nativeMemoryPolicy.reason}`,
+);
 const nativeRounds = {
   codex: nativeRound,
   claude: nativeClaudeRound,
@@ -47,9 +62,9 @@ const nativeRounds = {
 }[provider];
 const root = mkdtempSync(join(tmpdir(), "rah-cli-efficiency-"));
 // codeCommit/workingTree: the code under test; sourceRef: the question
-// snapshot (RAH_EFFICIENCY_REF, default HEAD) copied into each workspace.
+// snapshot (explicit override or the fixed P97 workload) copied into each workspace.
 const provenance = codeProvenance({
-  sourceRef: process.env.RAH_EFFICIENCY_REF ?? "HEAD",
+  sourceRef: process.env.RAH_EFFICIENCY_REF ?? FIXED_WORKLOAD.sourceRef,
 });
 const files = [
   "scripts/workbench-launch-receipt.mjs",
@@ -64,6 +79,8 @@ const snapshot = Object.fromEntries(
 const hash = (b) => createHash("sha256").update(b).digest("hex");
 const result = {
   schemaVersion: 1,
+  sampleId: randomUUID(),
+  nativeMemoryPolicy,
   root,
   startedAt: new Date().toISOString(),
   provider,
@@ -82,6 +99,56 @@ const result = {
   qualityReview: "required",
   status: "running",
 };
+result.baseline = createCostBaseline({
+  config,
+  cliVersion: result.cliVersion,
+  instructions,
+  questions,
+  snapshot,
+  nativePolicy: providerLaunchSwitches(provider),
+  memoryPolicy: nativeMemoryPolicy,
+  nativeInvocation: Object.fromEntries(
+    ["initial", "resume"].map((phase) => {
+      const options = {
+        model,
+        effort,
+        prompt: "<question>",
+        sessionId: phase === "resume" ? "<session>" : undefined,
+        launchArgs: [],
+      };
+      return [
+        phase,
+        provider === "codex"
+          ? codexNativeArgs(options)
+          : claudeNativeArgs(options),
+      ];
+    }),
+  ),
+  sourceOverride:
+    process.env.RAH_EFFICIENCY_REF !== undefined &&
+    provenance.sourceRef !== FIXED_WORKLOAD.sourceRef,
+  warmRestart: process.env.RAH_EFFICIENCY_WARM_RESTART === "1",
+});
+result.evaluationProfile = {
+  metricsSha256: hash(
+    readFileSync(new URL("./cli-efficiency/metrics.mjs", import.meta.url)),
+  ),
+  warmChecksSha256: hash(
+    readFileSync(new URL("./cli-efficiency/warm.mjs", import.meta.url)),
+  ),
+  budgetsSha256: hash(JSON.stringify(budgets)),
+};
+if (planOnly) {
+  result.status = "planned";
+  console.log(JSON.stringify(result, null, 2));
+  process.exit(0);
+}
+const assertCliVersion = () =>
+  assert.equal(
+    execFileSync(provider, ["--version"], { encoding: "utf8" }).trim(),
+    result.cliVersion,
+    "CLI version changed during the paired sample",
+  );
 let written;
 const save = () => {
   written = writeEvidence(root, result);
@@ -123,6 +190,7 @@ try {
     result.arms[kind] = arm;
     save();
     try {
+      assertCliVersion();
       if (kind === "native") {
         let sessionId;
         for (let i = 0; i < questions.length; i++) {
@@ -149,18 +217,40 @@ try {
           save,
           config,
         });
+    } catch (error) {
+      arm.status = "failed";
+      arm.error = String(error);
+      console.error(kind, arm.error);
+    }
+    // Check identity even after a business/usage failure: retain comparable
+    // costs when identity is intact, but never pair a changed experiment.
+    try {
+      assertCliVersion();
       for (const f of files)
         assert.equal(
           hash(readFileSync(join(cwd, f))),
           result.sourceHashes[f],
           "Source changed",
         );
+      assert.equal(
+        readFileSync(join(cwd, config.instructionFile), "utf8"),
+        instructions + "\n",
+        "Instructions changed",
+      );
+      arm.measurementIdentityVerified = true;
+      if (kind === "native" && arm.status === "complete")
+        result.pairedNativeEvidence = nativePairEvidence({
+          baseline: result.baseline,
+          native: arm,
+        });
     } catch (error) {
+      arm.measurementIdentityVerified = false;
       arm.status = "failed";
-      arm.error = String(error);
-      console.error(kind, arm.error);
+      arm.identityError = String(error);
+      console.error(kind, arm.identityError);
     }
     save();
+    if (kind === "native" && arm.status !== "complete") break;
   }
   // Contract §6: fixed overhead is judged once per arm; residue and
   // work-path variance are reported, and every round carries the exact
@@ -169,10 +259,13 @@ try {
     order
       .filter((kind) => kind !== "native")
       .map((kind) => {
-        const nat = result.arms.native.rounds.map((r) => r.metrics);
-        const rah = result.arms[kind].rounds.map((r) => r.metrics);
+        const nat = result.arms.native?.rounds.map((r) => r.metrics) ?? [];
+        const rah = result.arms[kind]?.rounds.map((r) => r.metrics) ?? [];
         const complete =
-          rah.length === nat.length && [...nat, ...rah].every(Boolean);
+          result.pairedNativeEvidence !== undefined &&
+          result.arms[kind]?.measurementIdentityVerified === true &&
+          rah.length === nat.length &&
+          [...nat, ...rah].every(Boolean);
         return [
           kind,
           complete

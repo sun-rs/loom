@@ -8,6 +8,18 @@
 provider/模型/effort 组合在配置解析时、任何进程启动前失败，shim 也只为表内组合生成；Fable、GPT-5.6 Ultra 与任何
 `max`/`ultra` 档永不放行。
 
+## 固定成本基线与官方记忆关闭（2026-10-04）
+
+先运行 `RAH_EFFICIENCY_ORDER=native,role-warm npm run test:cli:efficiency -- --plan` 免费检查实验身份；它只读取本地代码、配置与 CLI 版本，不启动模型回合。`--paid` 仍须本批用户授权。
+
+默认题目快照固定为 P97 的 `4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b`，不随被测 HEAD 变化。`scripts/cli-efficiency/baseline.mjs` 固定题目、业务指令和源文件内容哈希；修改题目或指令须显式更新 workload 版本。`RAH_EFFICIENCY_REF` 可用于探索不同源码；内容变化产生不同 baselineId，同字节的不同提交保持同一身份。
+
+baselineId 还包含模型绑定、effort、CLI 版本、原生调用参数形态、记忆及启动策略、组顺序与重启条件；被测代码版本和本次 sampleId 另记，不能改变分母。指标实现和预算摘要另记 evaluationProfile。每次比值必须绑定本批完整原生三轮的 pairedNativeEvidence，不能使用历史样本分母。每组运行后再次核对 CLI 版本、源文件与业务指令；身份变化时保留原始消耗，但不输出可比结论。相同 baselineId 不证明服务端模型版本、缓存冷热或回答质量相同；人工语义验收仍必需。
+
+原生对照关闭官方自动记忆，首次启动和每次 resume 都在模型回合启动前检查实际参数或环境，并在 round.nativeMemoryPolicy 中记录白名单证据：Codex 强制 `features.memories=false`、`memories.generate_memories=false`、`memories.use_memories=false`；Claude 强制 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`。这些关闭设置此前已来自共享启动策略，本批新增强制核验与逐轮证据，不能据此断言旧样本曾开启记忆。正常同 session 对话上下文仍保留；这不是文件系统隔离，也不会抹除已进入上下文的内容。
+
+当前只有 Codex、Claude 的关闭机制已核验。Kimi、OpenCode 的官方记忆关闭方式尚未证实，本 gate 在启动 provider 前拒绝它们的计划或付费运行；模型许可表和历史证据保留，下面的多 Provider 描述记录已有适配能力，不代表当前可绕过记忆检查。未经新证据不能以“没找到开关”推断它没有记忆。
+
 ## 首个可执行范围
 
 ```sh
@@ -244,7 +256,7 @@ P73 的 `cat "$RAH_WORKER_CLI" >/dev/null` 无有效输出、非协议要求，�
 
 证据写入打印的隔离目录 `result.json`，包含失败轮次，不包含账户凭证或完整工具输出。批次 4 起证据分别记录被测代码
 `codeCommit`（HEAD）与 `workingTree`（`git status --porcelain` 含未跟踪文件的摘要、`git diff HEAD` 摘要、变更与未跟踪数），
-题目快照另记 `sourceRef`（`RAH_EFFICIENCY_REF`，默认 HEAD）；同目录写 `result.redacted.json`（临时根换 `<tmp>`、home 换 `~`），
+题目快照另记 `sourceRef`（`RAH_EFFICIENCY_REF`，默认固定 P97 源码提交）；同目录写 `result.redacted.json`（临时根换 `<tmp>`、home 换 `~`），
 其 `rawResultSha256` 为原始 `result.json` 的 sha256，提交证据用脱敏文件。此前提交的四份效率证据的 `commit` 字段是题目
 快照（均为 main 里程碑 `5122795`），不是被测代码版本；它们测的是各自阶段的 evo 代码，单看文件无法确定具体版本。
 原生 session 文件保留于 CLI 自己的目录，只提取用量和必要诊断摘要；正式频道与正式库不动。

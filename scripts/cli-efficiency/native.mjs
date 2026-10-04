@@ -1,3 +1,4 @@
+import { assertNativeMemoryPolicy } from "./native-memory-policy.mjs";
 import { isEffectiveAnswer } from "./metrics.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -64,6 +65,11 @@ export async function nativeRound({
     sessionId,
     prompt,
     launchArgs: providerLaunchPolicy("codex", env, { cwd }).args,
+  });
+  round.nativeMemoryPolicy = assertNativeMemoryPolicy({
+    provider: "codex",
+    args,
+    env,
   });
   const child = spawn("codex", args, {
     cwd,

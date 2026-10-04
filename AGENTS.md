@@ -252,7 +252,9 @@ collaborator reply does not complete a Task. See target contract §3a.
 ## Native-CLI benchmark
 
 The native CLI running the same session, model and effort is the efficiency
-baseline. The budgets and their measurement rules live only in contract §6;
+baseline. Native controls must disable provider-owned automatic memory on
+every initial/resume launch; unverifiable disablement blocks the benchmark.
+Normal same-session conversation history remains enabled. The budgets and their measurement rules live only in contract §6;
 do not restate the numbers elsewhere. Per-turn usage, context-window occupancy
 and compaction count are shown per instance; data a CLI does not provide is
 shown as unknown, never estimated.

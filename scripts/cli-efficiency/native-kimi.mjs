@@ -1,3 +1,5 @@
+import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import { assertNativeMemoryPolicy } from "./native-memory-policy.mjs";
 // Kimi native arm: the installed `kimi -p` print mode directly, one process
 // per round, the same session resumed with `--session`. Print mode reports no
 // usage; the session wire does (step.end usage per generation, llm.request
@@ -26,7 +28,15 @@ export async function nativeKimiRound({
   config,
 }) {
   const args = kimiNativeArgs({ model: config.model, prompt, sessionId });
-  const env = nativeEnvironment({ [KIMI_THINKING_ENV]: config.effort });
+  const env = nativeEnvironment({
+    ...providerLaunchPolicy("kimi").environment,
+    [KIMI_THINKING_ENV]: config.effort,
+  });
+  round.nativeMemoryPolicy = assertNativeMemoryPolicy({
+    provider: "kimi",
+    args,
+    env,
+  });
   checkKimiPrintLaunch(args, env, config);
   const executable = execFileSync("which", ["kimi"], {
     encoding: "utf8",

@@ -1,3 +1,4 @@
+import { assertNativeMemoryPolicy } from "./native-memory-policy.mjs";
 // OpenCode native arm: the installed `opencode run` directly (no RAH worker,
 // scheduler or runtime adapter), one process per round, the same session
 // resumed. Usage comes from its own JSON events through the product's
@@ -33,9 +34,6 @@ export async function nativeOpenCodeRound({
     prompt,
     sessionId,
   });
-  const executable = execFileSync("which", ["opencode"], {
-    encoding: "utf8",
-  }).trim();
   // Same process-only global-config isolation as the product's drivers,
   // user MCP servers included: OpenCode's own resolution (`debug config
   // --pure`, no model call) with this launch's environment and cwd, then
@@ -44,6 +42,10 @@ export async function nativeOpenCodeRound({
     config,
     nativeEnvironment(providerLaunchPolicy("opencode").environment),
   );
+  assertNativeMemoryPolicy({ provider: "opencode", args, env: baseEnv });
+  const executable = execFileSync("which", ["opencode"], {
+    encoding: "utf8",
+  }).trim();
   const mcpNames = await resolveOpenCodeMcpNames({
     executable,
     env: baseEnv,
@@ -55,6 +57,11 @@ export async function nativeOpenCodeRound({
     mcpNames,
   );
   checkOpenCodeNativeLaunch(args, env, config, mcpNames);
+  round.nativeMemoryPolicy = assertNativeMemoryPolicy({
+    provider: "opencode",
+    args,
+    env,
+  });
   round.userMcpDisabled = mcpNames;
   round.startedAt = new Date().toISOString();
   save();

@@ -147,3 +147,15 @@ test("the rc mobile, task, menu and scroll gates run in CI", () => {
     );
   }
 });
+
+test("CI fetches the historical source used by the fixed efficiency baseline", () => {
+  const checkout = workflowText.match(
+    /- uses: actions\/checkout@[^\n]+\n(?<options>(?:[ ]{8,}[^\n]*\n)*)/u,
+  );
+  assert.ok(checkout, "CI checkout step is required");
+  assert.match(
+    checkout.groups.options,
+    /fetch-depth: 0/u,
+    "fixed historical workload must be available to free baseline tests",
+  );
+});
