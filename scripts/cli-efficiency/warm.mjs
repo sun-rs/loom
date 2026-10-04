@@ -197,8 +197,16 @@ export function compareWarmCold(coldRounds, warmRounds) {
   };
 }
 
-// true/false: every transcript box-post carried `--turn`; null: none observed.
+// true: every observed CLI post carried --turn; false also includes ambiguous
+// mixed-cell evidence. null: no CLI post/evidence observed, never MCP authority.
 export function replyTurnHandle(toolCalls) {
-  const posts = (toolCalls ?? []).filter((c) => c.kind === "box-post");
-  return posts.length ? posts.every((c) => c.turnHandle === true) : null;
+  const posts = (toolCalls ?? []).filter(
+    (c) => c.kind === "box-post" || c.cliTurnHandle !== undefined,
+  );
+  return posts.length
+    ? posts.every(
+        (c) =>
+          (c.kind === "box-post" ? c.turnHandle : c.cliTurnHandle) === true,
+      )
+    : null;
 }

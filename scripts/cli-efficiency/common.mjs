@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync, globSync } from "node:fs";
 import { homedir } from "node:os";
 import { summarizeUsage } from "./metrics.mjs";
-import { workerCallKind } from "./tool-calls.mjs";
+import { workerCallKind, mcpCliTurnHandle } from "./tool-calls.mjs";
 export const instructions =
   "Read-only bounded review of scripts/workbench-launch-receipt.mjs and scripts/workbench-launch-receipt.test.mjs only. Do not edit files, write memory, create tasks, run restart commands, install dependencies, or read other project files. Distinguish proven facts from conditional concerns.";
 const baseQuestions = [
@@ -69,13 +69,18 @@ export function measure(
       .map((e) => {
         const raw = e.payload.arguments ?? e.payload.input;
         const args = typeof raw === "string" ? raw : "";
-        const kind = workerCallKind(raw);
+        const kind = workerCallKind(raw, e.payload.name);
+        const cliTurnHandle =
+          kind === "worker-mcp-reply"
+            ? mcpCliTurnHandle(raw, e.payload.name)
+            : undefined;
         // S2-a: whether the Worker call carried the per-turn handle flag
         // (boolean only; the handle itself is never recorded).
         return {
           at: e.timestamp,
           name: e.payload.name,
           kind,
+          ...(cliTurnHandle === undefined ? {} : { cliTurnHandle }),
           ...(kind === "box-post" || kind === "box-check"
             ? { turnHandle: /--turn\b/.test(args) }
             : {}),

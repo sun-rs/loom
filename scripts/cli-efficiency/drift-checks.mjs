@@ -7,6 +7,7 @@ import {
   countToolCalls,
   toolCallCategory,
   workerCallKind,
+  mcpCliTurnHandle,
 } from "./tool-calls.mjs";
 
 export const DRIFT_CRITERIA = {
@@ -100,9 +101,14 @@ export function codexToolCalls(events) {
     .map((e) => {
       const raw = e.payload.arguments ?? e.payload.input;
       const args = typeof raw === "string" ? raw : "";
-      const kind = workerCallKind(raw);
+      const kind = workerCallKind(raw, e.payload.name);
+      const cliTurnHandle =
+        kind === "worker-mcp-reply"
+          ? mcpCliTurnHandle(raw, e.payload.name)
+          : undefined;
       return {
         kind,
+        ...(cliTurnHandle === undefined ? {} : { cliTurnHandle }),
         ...(kind === "box-post" || kind === "box-check"
           ? {
               turnHandle: /--turn\b/.test(args),
