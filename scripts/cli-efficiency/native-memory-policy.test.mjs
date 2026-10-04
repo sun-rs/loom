@@ -29,11 +29,14 @@ test("memory support declarations distinguish missing policy from enforced off",
     assert.equal(describeNativeMemoryPolicy(provider).status, "supported");
   }
   for (const provider of ["kimi", "opencode"]) {
-    assert.equal(describeNativeMemoryPolicy(provider).supported, false);
-    assert.equal(describeNativeMemoryPolicy(provider).status, "unsupported");
+    assert.equal(describeNativeMemoryPolicy(provider).supported, true);
+    assert.equal(
+      describeNativeMemoryPolicy(provider).mechanism,
+      "version-audit",
+    );
     assert.throws(
       () => assertNativeMemoryPolicy({ provider, args: [], env: {} }),
-      /no verified.*memory/i,
+      /audited.*version|executable/i,
     );
   }
   assert.throws(
@@ -139,10 +142,14 @@ test("native runners record enforced first/resume settings from the spawned fake
   const oldPath = process.env.PATH;
   const oldMemory = process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY;
   const oldLaunch = process.env.RAH_PROVIDER_LAUNCH_ARGS_JSON;
-  const script = `#!${process.execPath}\nimport {appendFileSync} from 'node:fs';\nif(process.argv[2]==='mcp'){console.log('[]');}else{appendFileSync(${JSON.stringify(record)},JSON.stringify({args:process.argv.slice(2),memory:process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY})+'\\n');}\n`;
+  const oldConfig = process.env.CLAUDE_CONFIG_DIR;
+  const oldAlias = process.env.ANTHROPIC_DEFAULT_SONNET_MODEL;
+  const script = `#!${process.execPath}\nimport {appendFileSync} from 'node:fs';\nif(process.argv[2]==='--version'){console.log('999.0.0');}else if(process.argv[2]==='mcp'){console.log('[]');}else{appendFileSync(${JSON.stringify(record)},JSON.stringify({args:process.argv.slice(2),memory:process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY})+'\\n');}\n`;
   for (const name of ["codex", "claude", "kimi", "opencode"])
     writeFileSync(join(dir, name), script, { mode: 0o700 });
   process.env.PATH = `${dir}:${oldPath}`;
+  process.env.CLAUDE_CONFIG_DIR = dir;
+  process.env.ANTHROPIC_DEFAULT_SONNET_MODEL = "claude-sonnet-fixture";
   process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY = "0";
   process.env.RAH_PROVIDER_LAUNCH_ARGS_JSON =
     '{"runtimeId":"codex","overrideArgs":["--enable","memories"]}';
@@ -194,24 +201,158 @@ test("native runners record enforced first/resume settings from the spawned fake
             round: {},
             save() {},
           }),
-          /no verified.*memory/i,
+          /audited.*version|executable/i,
         );
       }
     }
     assert.equal(
       readFileSync(record, "utf8").trim().split("\n").length,
       4,
-      "unsupported policy refuses before any CLI launch",
+      "unknown version refuses before any model invocation",
     );
   } finally {
     for (const [key, value] of [
       ["PATH", oldPath],
+      ["CLAUDE_CONFIG_DIR", oldConfig],
+      ["ANTHROPIC_DEFAULT_SONNET_MODEL", oldAlias],
       ["CLAUDE_CODE_DISABLE_AUTO_MEMORY", oldMemory],
       ["RAH_PROVIDER_LAUNCH_ARGS_JSON", oldLaunch],
     ]) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("audited native versions are not-applicable, never falsely memory-off, and upgrades fail before model calls", () => {
+  const dir = mkdtempSync(join(tmpdir(), "loom-memory-version-"));
+  try {
+    for (const [provider, version] of [
+      ["kimi", "0.39.1"],
+      ["opencode", "1.18.32"],
+    ]) {
+      const executable = join(dir, provider);
+      writeFileSync(
+        executable,
+        `#!${process.execPath}\nif(process.argv[2]!=='--version')process.exit(99);console.log(${JSON.stringify(version)});`,
+        { mode: 0o700 },
+      );
+      const env = {
+        ...process.env,
+        ...providerLaunchSwitches(provider).environment,
+        SECRET: "private-value",
+      };
+      for (const sessionId of [undefined, "same-session"]) {
+        const args =
+          provider === "kimi"
+            ? ["-p", "fixture", ...(sessionId ? ["--session", sessionId] : [])]
+            : [
+                "run",
+                "--pure",
+                ...(sessionId ? ["--session", sessionId] : []),
+                "fixture",
+              ];
+        const evidence = assertNativeMemoryPolicy({
+          provider,
+          args,
+          env,
+          executable,
+        });
+        assert.equal(evidence.status, "not-applicable");
+        assert.equal(evidence.evidence, "audited-cli-version");
+        assert.equal(evidence.version, version);
+        assert.ok(evidence.sourceRevision);
+        assert.equal(JSON.stringify(evidence).includes("private-value"), false);
+        if (provider === "opencode")
+          assert.throws(
+            () =>
+              assertNativeMemoryPolicy({
+                provider,
+                args: args.filter((a) => a !== "--pure"),
+                env,
+                executable,
+              }),
+            /pure/u,
+          );
+      }
+      writeFileSync(
+        executable,
+        `#!${process.execPath}\nconsole.log('999.0.0');`,
+        { mode: 0o700 },
+      );
+      assert.throws(
+        () =>
+          assertNativeMemoryPolicy({
+            provider,
+            args: ["run", "--pure", "fixture"],
+            env,
+            executable,
+          }),
+        /audited.*version/i,
+      );
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("audited Kimi/OpenCode actual native first and resume spawns record bounded version evidence", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "loom-audited-native-spawn-")),
+    record = join(dir, "calls.jsonl");
+  const oldPath = process.env.PATH;
+  try {
+    for (const [provider, version] of [
+      ["kimi", "0.39.1"],
+      ["opencode", "1.18.32"],
+    ]) {
+      writeFileSync(
+        join(dir, provider),
+        `#!${process.execPath}\nimport {appendFileSync} from 'node:fs';\nif(process.argv[2]==='--version')console.log('${version}');else if(process.argv[2]==='debug')console.log('{}');else appendFileSync(${JSON.stringify(record)},JSON.stringify({provider:'${provider}',args:process.argv.slice(2)})+'\\n');`,
+        { mode: 0o700 },
+      );
+    }
+    process.env.PATH = `${dir}:${oldPath}`;
+    for (const [provider, run, config] of [
+      ["kimi", nativeKimiRound, { model: "kimi-code/k3", effort: "high" }],
+      [
+        "opencode",
+        nativeOpenCodeRound,
+        { model: "deepseek/deepseek-flash", effort: "low" },
+      ],
+    ]) {
+      for (const sessionId of [undefined, "same-session"]) {
+        const round = {};
+        await assert.rejects(
+          run({
+            cwd: dir,
+            prompt: "FAKE NO MODEL",
+            sessionId,
+            config,
+            round,
+            save() {},
+          }),
+          /Native session id missing|Native session id changed/,
+        );
+        assert.equal(round.nativeMemoryPolicy.provider, provider);
+        assert.equal(round.nativeMemoryPolicy.status, "not-applicable");
+        assert.equal(round.nativeMemoryPolicy.evidence, "audited-cli-version");
+      }
+    }
+    const calls = readFileSync(record, "utf8")
+      .trim()
+      .split("\n")
+      .map(JSON.parse);
+    assert.equal(calls.length, 4);
+    for (const call of [calls[1], calls[3]])
+      assert.equal(
+        call.args[call.args.indexOf("--session") + 1],
+        "same-session",
+      );
+    assert.ok(calls.slice(2).every((call) => call.args.includes("--pure")));
+  } finally {
+    if (oldPath === undefined) delete process.env.PATH;
+    else process.env.PATH = oldPath;
     rmSync(dir, { recursive: true, force: true });
   }
 });

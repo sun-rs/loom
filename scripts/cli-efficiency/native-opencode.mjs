@@ -40,12 +40,20 @@ export async function nativeOpenCodeRound({
   // each name switched off (full review 2 B-P2-6).
   const baseEnv = openCodeNativeEnv(
     config,
-    nativeEnvironment(providerLaunchPolicy("opencode").environment),
+    nativeEnvironment({
+      ...providerLaunchPolicy("opencode").environment,
+      PWD: cwd,
+    }),
   );
-  assertNativeMemoryPolicy({ provider: "opencode", args, env: baseEnv });
   const executable = execFileSync("which", ["opencode"], {
     encoding: "utf8",
   }).trim();
+  assertNativeMemoryPolicy({
+    provider: "opencode",
+    executable,
+    args,
+    env: baseEnv,
+  });
   const mcpNames = await resolveOpenCodeMcpNames({
     executable,
     env: baseEnv,
@@ -53,12 +61,16 @@ export async function nativeOpenCodeRound({
   });
   const env = openCodeNativeEnv(
     config,
-    nativeEnvironment(providerLaunchPolicy("opencode").environment),
+    nativeEnvironment({
+      ...providerLaunchPolicy("opencode").environment,
+      PWD: cwd,
+    }),
     mcpNames,
   );
   checkOpenCodeNativeLaunch(args, env, config, mcpNames);
   round.nativeMemoryPolicy = assertNativeMemoryPolicy({
     provider: "opencode",
+    executable,
     args,
     env,
   });

@@ -24,6 +24,7 @@ import { appendFileSync, rmSync } from "node:fs";
 import { createServer, createConnection } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
 import { claudeModelMatches } from "./claude-usage.mjs";
 
@@ -47,6 +48,53 @@ function flagValues(args, long, short) {
   return values;
 }
 
+// No arbitrary server, config file, environment or extra Node argument may
+// enter a paid process. Secrets are inherited from the Host, never argv.
+function assertWorkerMcpConfig(args) {
+  const configs = flagValues(args, "--mcp-config");
+  if (configs.length === 0) return;
+  assert.equal(configs.length, 1, "MCP config must be unique");
+  assert.equal(
+    args.filter((a) => a === "--strict-mcp-config").length,
+    1,
+    "MCP requires strict isolation exactly once",
+  );
+  assert.ok(
+    !args.some((a) => a.startsWith("--strict-mcp-config=")),
+    "MCP strict flag cannot have a value",
+  );
+  let config;
+  try {
+    config = JSON.parse(configs[0]);
+  } catch {
+    throw new Error("MCP requires the inline internal Worker config");
+  }
+  const expected = {
+    mcpServers: {
+      loom_worker: {
+        command: process.execPath,
+        args: [
+          fileURLToPath(
+            new URL(
+              "../../packages/agent-host/src/worker-mcp-entry.ts",
+              import.meta.url,
+            ),
+          ),
+        ],
+      },
+    },
+  };
+  // Do not include either object in an assertion error: invalid configs may
+  // contain secrets supplied by a user.
+  try {
+    assert.deepEqual(config, expected);
+  } catch {
+    throw new Error(
+      "MCP config must contain only the fixed internal Worker entry",
+    );
+  }
+}
+
 // "version" | "catalog" | "turn"; throws for anything else.
 export function classifyClaudeLaunch(args, approved) {
   assert.ok(
@@ -60,6 +108,7 @@ export function classifyClaudeLaunch(args, approved) {
   for (const a of args)
     if (FORBIDDEN.has(a.split("=")[0]))
       throw new Error(`Unsupported gate argument ${a}`);
+  assertWorkerMcpConfig(args);
   const models = flagValues(args, "--model");
   const efforts = flagValues(args, "--effort");
   const print = args.includes("--print") || args.includes("-p");

@@ -169,6 +169,13 @@ function replayOf(frame) {
     message: { role: "user", content: frame.message.content },
     uuid: frame.uuid,
   };
+  if (env.FAKE_REPLAY_STRIP_MCP_GUIDE === "1")
+    replay.message.content = [
+      {
+        type: "text",
+        text: textOf(frame.message).split("\nUse loom_reply")[0],
+      },
+    ];
   if (env.FAKE_REPLAY_UUID === "mismatch")
     replay.uuid = "00000000-0000-4000-8000-000000000000";
   if (env.FAKE_REPLAY_UUID === "absent") delete replay.uuid;
@@ -194,6 +201,12 @@ async function runTurn(turn) {
     send({
       type: "system",
       subtype: "init",
+      ...(env.FAKE_WORKER_MCP_READY === "1"
+        ? {
+            tools: ["mcp__loom_worker__loom_reply"],
+            mcp_servers: [{ name: "loom_worker", status: "connected" }],
+          }
+        : {}),
       capabilities: [
         "interrupt_receipt_v1",
         "interrupt_cancel_queued_v1",

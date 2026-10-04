@@ -27,7 +27,9 @@ export async function runLines({
   let stderr = "";
   const child = spawn(executable, args, {
     cwd,
-    env,
+    // OpenCode resolves its root from PWD before process.cwd(). A parent's
+    // stale PWD must never redirect the native arm away from its fixture.
+    env: { ...env, PWD: cwd },
     stdio: ["ignore", "pipe", "pipe"],
   });
   onSpawn?.(child.pid);

@@ -18,7 +18,11 @@ baselineId 还包含模型绑定、effort、CLI 版本、原生调用参数形�
 
 原生对照关闭官方自动记忆，首次启动和每次 resume 都在模型回合启动前检查实际参数或环境，并在 round.nativeMemoryPolicy 中记录白名单证据：Codex 强制 `features.memories=false`、`memories.generate_memories=false`、`memories.use_memories=false`；Claude 强制 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`。这些关闭设置此前已来自共享启动策略，本批新增强制核验与逐轮证据，不能据此断言旧样本曾开启记忆。正常同 session 对话上下文仍保留；这不是文件系统隔离，也不会抹除已进入上下文的内容。
 
-当前只有 Codex、Claude 的关闭机制已核验。Kimi、OpenCode 的官方记忆关闭方式尚未证实，本 gate 在启动 provider 前拒绝它们的计划或付费运行；模型许可表和历史证据保留，下面的多 Provider 描述记录已有适配能力，不代表当前可绕过记忆检查。未经新证据不能以“没找到开关”推断它没有记忆。
+Codex、Claude 使用已核验的显式关闭机制。Kimi 0.39.1 与 OpenCode 1.18.32 经[精确版本装配链审计](../audits/2026-10-04-native-memory-version-audit.zh-CN.md)，原生自动记忆记为 `not-applicable`，不伪称 `enforced`；其他版本在任一付费臂之前拒绝，每次原生 spawn 再核对实际 executable 版本。OpenCode 必须保持产品同款 `--pure` 与指令来源隔离环境。用户插件、规则文件、连续 session 历史不是本审计宣称关闭的官方自动记忆，既有文件隔离局限保留。
+
+Claude 原生组复用产品的 connection-only 解析器，只读取连接和模型 alias 白名单，不执行 `apiKeyHelper`、不启用用户 hooks 或行为配置，也不修改账号。显式连接环境优先，凭据不与另一来源的 endpoint 混配；baseline 只记解析策略标识，不记 key／URL。规划及每次原生启动前检查所选 alias 属于许可模型族，不匹配就在付费前拒绝，不能静默换模型或删除 alias 绕过配置。
+
+OpenCode 原生 `run` 优先读取 `PWD`。原生模型进程及配置预检均须令 `cwd` 与子进程 `PWD` 指向同一临时题目工作区，不能继承仓库根目录的 `PWD`；进程正常退出不证明加载了相同指令。P103 曾加载仓库目录，其成本比率保留为观测，不能用于公平预算验收。修复后的免费 loopback 探针只验证实际 prompt 加载临时 AGENTS，新的效率结论仍需公平同题、独立授权的新批次。
 
 ## 首个可执行范围
 
@@ -62,7 +66,7 @@ Role 指令，与 Codex 口径相同）。
 
 | Provider | 原生组                                                                                                                                                                                                                         | RAH 组                                                                         | 用量来源与可判定项                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Claude   | `claude -p <题> --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions --model --effort`，第 2 轮起 `--resume <id>`（不 fork），每轮新进程                                            | `role`（每轮）与 `role-warm`（隔离 daemon 打开 `warmRuntimes.claude.enabled`） | 两侧都用产品同一 `ClaudeStreamUsageTracker`（stream_event 按 message id，一次生成一条，输入 = 未缓存 + 缓存写 + 缓存读）：原生取自身 stdout，RAH 取产品入库生成记录（`observedAt` 切分回复前/后）。session transcript 按 message id 去重独立复核生成数/输入/缓存（RAH 不一致即 `usageEvidenceMismatch`；原生只报告）。全部 §6 预算照常判定                                                                                                                                                                                                  |
+| Claude   | `claude -p <题> --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions --model --effort`，第 2 轮起 `--resume <id>`（不 fork），每轮新进程                                            | `role`（每轮）与 `role-warm`（隔离 daemon 打开 `warmRuntimes.claude.enabled`） | 两侧都用产品同一 `ClaudeStreamUsageTracker`（stream_event 按 message id，一次生成一条，输入 = 未缓存 + 缓存写 + 缓存读）：原生取自身 stdout，RAH 取产品入库生成记录（`observedAt` 是用量观察时间，回复前/后按下述时序证据裁决）。session transcript 按 message id 去重独立复核生成数/输入/缓存（RAH 不一致即 `usageEvidenceMismatch`；原生只报告）。全部 §6 预算照常判定                                                                                                                                                                    |
 | Kimi     | `kimi -p <题> --output-format stream-json -m <model>`，第 2 轮起 `--session <id>`（id 取自 `session.resume_hint`），`KIMI_MODEL_THINKING_EFFORT=<effort>`，每轮新进程                                                          | `role`（每轮 ACP）                                                             | print 模式与 ACP 协议本身都不给用量；两侧同取 session wire `agents/main/wire.jsonl`：`step.end` 按 `messageId` 一次生成一条（输入 = inputOther + 缓存读 + 缓存写），`llm.request` 的 `modelAlias`/`thinkingEffort` 事后核对。产品自 evo §40 起由 Kimi 驱动读取同一 wire 逐次入库用量，门禁把 Kimi 产品用量设为必需（`productUsage: required`，全面审查 2 B-P1-2）：不完整或缺失即 `usageEvidenceMissing`，完整时与 wire 推导的 RAH 用量交叉核对；wire 缺失时 tokens/生成数按证据缺失处理（如 `fixedOverheadMissing`），不编造数字，也不豁免 |
 | OpenCode | `opencode run --pure --format json --auto -m <model> --variant <effort>`，第 1 轮 `--title`（避免内部标题生成调用），第 2 轮起 `--session <id>`，`OPENCODE_CONFIG_CONTENT` 把 `model`/`small_model` 固定为许可模型，每轮新进程 | `role`（每轮 serve）与 `role-warm`（产品默认常驻）                             | 两侧用产品同一 `openCodeStepFinishUsage`（每个 step-finish part 一条，输入 = input + 缓存读 + 缓存写，输出含推理）：原生取自身 JSON 事件，RAH 取产品入库生成记录。事后读 `opencode.db`（本 session 树本轮窗口内的 assistant）核对模型与 variant，零条即失败；RAH 组工具调用类别取自 db 的 tool part。RAH 组暂无独立的 token 交叉复核（db step-finish 未与产品记录比对），全部 §6 预算照常判定                                                                                                                                               |
 
@@ -109,6 +113,12 @@ Worker check/post 与其他工具调用的类别。原生原始轨迹只作诊�
 RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：thread/start、resume 在转发前必须显式指定许可模型和 effort，白名单外的方法、参数与子命令一律拒绝；其他初始化 Agent 也不能绕过。原生组通过明确 CLI 参数指定许可模型，并事后核对原生轨迹。
 缺用量、换 session、模型不符、失败或额外 Run 均不算通过；不能靠少读代码降低成本。
 
+生成开始与 usage 观察时间不能混同。Codex `token_usage_record.timestamp`、其他 provider 的 `observedAt` 可能晚于发帖工具提交；早于回复的完成记录能证明该生成在回复前，晚到记录不能证明它属于回复后。Kimi 仅在同 agent、同 `turnStep` 的唯一 `llm.request` 与 begin/end UUID、顺序均匹配时采用原生请求时刻；缺失或重试歧义不靠相邻记录猜配。OpenCode 通过产品 responseId 对应的 step-finish part，关联同 session/message 的唯一 step-start：message.created 与 step-start 构成开始下／上界，回复落在两界之间仍未知。Claude 当前缺少同等开始关联时使用完成记录的保守界限，不将晚 usage 直接划为回复后。
+
+Kimi 另核对原生请求覆盖：同 agent／turnStep 的唯一 `llm.request` 必须关联带 messageId 和 usage 的 `step.end`。`requestCoverage` 分别记录请求数、已匹配数、未报告请求与未匹配用量；请求次数不冒充生成用量记录。已知中断请求无 usage 时，保留已有 token 数值但追加既有 `usageEvidenceMissing`；原生覆盖不完整不能作为分母，产品已记录完整的 usage 也不能掩盖此缺口。未知用量不记零，亦不估算账单。
+
+精确切分不足时，`generationsBeforeReply`／`generationsAfterReply` 保持 `null`，`replyTimingEvidence` 记录已知前、已知后及未定数。`beforeReplyBudgetEvidence` 用这些上下界判断原预算：最坏上界仍达标才证明通过，最好下界也超限则失败，横跨预算则 `generationsBeforeReplyMissing`。未定时间的业务调用不能提供回复前上界的正抵扣；已证明的业务时间差与可能的原生业务负抵扣仍保留。上下界裁决不补造精确数字、不改变 token 总量或预算，也不把 Host 的 `preemptedFollowUp` 当作未发模型请求的证明。
+
 预算采用 owner 2026-09-24 修订后的 [evo 目标合同](../evo/target-contract.zh-CN.md) 第 6 节（数值集中在 `metrics.mjs` 的 `budgets`）：
 
 - 业务路径差（负责人 2026-09-25 裁定 A，`tool-calls.mjs`）：工具调用分三类。协议 = Worker CLI 调用（`message-post`、`message-check`、
@@ -120,7 +130,7 @@ RAH 门禁执行文件使用仅供测试的 stdio 模型围栏：thread/start、
   原始差 `extraGenerations`/`extraGenerationsBeforeReply`、业务差、`workPath.toolCalls`（按类别与种类计数）全部写入证据，终端逐轮打印一行
   （`formatComparisonRound`）。
 - 协议额外生成（整轮）：`extraProtocolGenerations` = (RAH 整轮生成数 − 原生整轮生成数) − 业务路径差 ≤ 1；不设绝对总数上限。
-- 回复前额外生成：`extraProtocolGenerationsBeforeReply` = (RAH 回复前生成数 − 原生整轮生成数) − 回复前业务路径差 ≤ 0；回复切分未知即
+- 回复前额外生成：`extraProtocolGenerationsBeforeReply` = (RAH 回复前生成数 − 原生整轮生成数) − 回复前业务路径差 ≤ 0；回复切分未知且上下界仍不能裁决时为
   `generationsBeforeReplyMissing`。例：原生一次 `nl` 读完即答（2 次），RAH `sed` 读后又 `nl` 重读再发帖（3 次）：原始差 +1、业务差 +1、
   协议差 0，不超预算但照常报告；RAH 读一次、多一次 `message-check` 再发帖：业务差 0、协议差 +1，超预算。
 - 固定开销（`fixedOverhead`，按组判一次）：新 session 第 1 轮第 1 次生成的输入，RAH − 原生 ≤ 3,000 token；任一侧缺数据即 `fixedOverheadMissing`。续聊轮的首请求只报告、不设预算，但仍须两侧都有（缺即 `firstInputMissing`），供分解使用。
@@ -233,11 +243,11 @@ P77 的两条早停不能作为修复后完整六条讨论的成本上限。验�
 P67/P68 暴露提前 final 会把开场白/占位消息放大为工作中断。本批最小修法：普通 `message-post` 只发布，不默认携带 `final: true`；唤醒保留精确目标和因果序号，但不预填 `--final`（多目标也不替模型决定最后一条）。显式 `--final` 是完成全部当前工作后主动选择的终止声明，仍走现有 Kernel 标记与 Host 中断；`--progress` 兼容，重发 `--send-draft` 保留已存意图。HTTP、ACK、Task、执行围栏均不变，不按正文关键词猜完成度。普通发帖后的自然收尾成本须计入，不用提前中断制造省 token 的假象。旧 session 通过协议升级卡获知新规则，不重建会话。仍存在模型主动误用显式 final 的边界，需真实验收，不宣称由本批根除。
 
 模型发出完成回复后，Kernel 在同一事务记录该 RunAttempt 的最终回复标记（schema 67，
-不是 ACK），Host 读到后由驱动在下一个工具边界发原生 `turn/interrupt`，省掉工具结果回灌后只说"已发送"的整轮生成。
+不是 ACK），Host 读到后由驱动在安全工具边界请求原生中断，尝试阻止后续生成；中断已发出或已接受均不保证下一模型请求尚未开始。
 Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `interrupt` 控制请求）；Kimi 由 S2-c2 接入（无工具在途时 ACP `session/cancel`，`kimi-final-interrupt.js`）；OpenCode 由 S2-c3 接入（发帖工具结束后 `POST /session/:id/abort`，`opencode-final-interrupt.js`）。2026-09-27 Kimi 效率证据每轮 `finalInterrupt.sent/accepted = true`。
 
 - 用量接口 `finalInterrupt`：`null` 表示本轮没有完成回复标记；否则 `{committedRoomSeq, sent, preemptedFollowUp}`。
-  `sent` 为驱动确认已发出中断（被拒绝或未上报为 false，此时本轮按原行为多一次生成）；`preemptedFollowUp`
+  `sent` 为驱动确认已发出中断（被拒绝或未上报为 false；实际追加生成次数仍须独立证据）；`preemptedFollowUp`
   按证据判定（S2-b 修正，此前真实运行即使回复后生成数为 0 也总报 false）：最终回复的工具结束后观察到模型输出、
   新的工具调用，或用量帧使线程累计用量超过已观察到的全部生成 → false；原样重复的用量帧不是生成，
   工具结束后到达的第一个前进用量帧若对应尚未结算的上一次生成（发帖那次调用）也不算后续生成；
@@ -246,7 +256,7 @@ Codex 每轮与热进程两条路径已接；Claude 由 S2-c1 接入（原生 `i
   `committed/sent/preempted/notPreempted/unknown/noFinalPost/evidenceMissing`。只报告，不进入失败判定；
   生成数预算仍按 usage 计。
 - 局限：`preemptedFollowUp` 的用量归属按"每次生成恰好一条前进用量帧"推断，未经真实 Codex 帧序验证；
-  中断落地与后续请求发出的先后在真实 CLI 上须用付费门禁实测。
+  它反映已观察到的输出／用量，不能证明 provider 从未接收后续请求。OpenCode 免费原生探针已出现回执完整、中断已发而仍有下一请求；详见[当前公开能力边界](../evo/worker-mcp-opencode-boundary.zh-CN.md)。实际生成归属须用上述独立时序证据，不能用中断状态替代。
 
 ## 证据与后续范围
 

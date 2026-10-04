@@ -9,7 +9,6 @@ import {
   roleInstanceFixture,
   startInstanceRun,
 } from "../../kernel/test/role-instance-fixture.ts";
-import { WorkerMessagePostResponseSchema } from "../../protocol/src/worker-message.ts";
 import { createWorkerMcpBridge } from "../src/worker-mcp-bridge.ts";
 
 type McpResult = {
@@ -111,11 +110,11 @@ test("internal MCP publishes once as the credential actor and never rebinds a re
     );
     const result = await invoke(original);
     assert.equal(result.isError, false, JSON.stringify(result));
-    const receipt = WorkerMessagePostResponseSchema.parse(
-      JSON.parse(result.content[0]!.text),
-    );
-    assert.ok("event" in receipt);
-    assert.equal(receipt.event.actorId, f.instance.instanceId);
+    const receipt = JSON.parse(result.content[0]!.text);
+    assert.equal(receipt.state, "published");
+    assert.equal(receipt.actorId, f.instance.instanceId);
+    assert.equal("body" in receipt, false);
+    assert.equal("event" in receipt, false);
     assert.deepEqual(
       await invoke(original),
       result,

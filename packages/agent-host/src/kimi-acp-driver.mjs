@@ -1,3 +1,5 @@
+import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
+import { KimiWorkerMcpReady } from "./kimi-worker-mcp-ready.js";
 import {
   parseAttachedDirectory,
   writeKimiWorkspaceConfig,
@@ -133,6 +135,10 @@ kimi.stderr.pipe(process.stderr);
 
 const pending = new Map();
 let requestSequence = 0;
+const workerMcpReady =
+  process.env.LOOM_WORKER_MCP_IDENTITY === "cold-stdio/v1"
+    ? new KimiWorkerMcpReady()
+    : undefined;
 let processExit;
 const processExited = new Promise((resolve) => {
   processExit = resolve;
@@ -372,6 +378,7 @@ async function runTurn(resumeSessionId, mcpServers) {
   }
   activeSessionId = sessionId;
   await configureSession(sessionId);
+  if (workerMcpReady) await workerMcpReady.wait(sessionId, request);
   trajectoryWriter.emit(
     runtimeStatusTrajectory(
       "working",
@@ -399,7 +406,7 @@ async function runTurn(resumeSessionId, mcpServers) {
           `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
         ]
       : []),
-    TURN_INPUT,
+    withWorkerMcpGuidance(TURN_INPUT, workerMcpReady !== undefined),
   ].join("\n\n");
   const wire = kimiWireStart(sessionId, resumeSessionId !== undefined);
   wire.promptText = promptText;
@@ -538,6 +545,7 @@ async function configureSession(sessionId) {
 }
 
 async function handleFrame(frame) {
+  workerMcpReady?.observe(frame);
   if (!isRecord(frame)) return;
   if (Object.hasOwn(frame, "id") && Object.hasOwn(frame, "method")) {
     await handleAgentRequest(frame);

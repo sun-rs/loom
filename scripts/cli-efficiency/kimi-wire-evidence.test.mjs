@@ -133,3 +133,176 @@ test("the forced /compact of the real run is observed from the wire even though 
     "a begun but unfinished compaction is not observed",
   );
 });
+
+test("P102 usage is linked to the unique same-agent turn step request, not step completion", async () => {
+  const { readFileSync } = await import("node:fs");
+  const text = readFileSync(
+    new URL("./fixtures/p102-kimi-timing.jsonl", import.meta.url),
+    "utf8",
+  );
+  const wire = kimiWireRound(text);
+  assert.deepEqual(
+    wire.generations.map((g) => g.startedAt),
+    [
+      1791122270830, 1791122287327, 1791122309380, 1791122317992, 1791122336106,
+      1791122355589, 1791122364470,
+    ].map((t) => new Date(t).toISOString()),
+  );
+  for (const mutate of [
+    (rows) => rows.filter((r) => r.type !== "llm.request"),
+    (rows) => [...rows, ...rows.filter((r) => r.type === "llm.request")],
+    (rows) =>
+      rows.map((r) =>
+        r.type === "llm.request" ? { ...r, agentId: "different" } : r,
+      ),
+    (rows) =>
+      rows.map((r) =>
+        r.event?.type === "step.begin"
+          ? { ...r, event: { ...r.event, uuid: "wrong" } }
+          : r,
+      ),
+  ]) {
+    const bad = kimiWireRound(
+      mutate(text.trim().split("\n").map(JSON.parse))
+        .map(JSON.stringify)
+        .join("\n"),
+    );
+    assert.ok(bad.generations.every((g) => g.startedAt === undefined));
+  }
+});
+
+test("P102 exact request association counts posting generation before reply and final generation after", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { summarizeGenerations } = await import("./metrics.mjs");
+  const text = readFileSync(
+    new URL("./fixtures/p102-kimi-timing.jsonl", import.meta.url),
+    "utf8",
+  );
+  const windows = [
+    [
+      "2026-10-04T13:57:49.889Z",
+      "2026-10-04T13:58:37.086Z",
+      "2026-10-04T13:58:29.360Z",
+      2,
+    ],
+    [
+      "2026-10-04T13:58:37.096Z",
+      "2026-10-04T13:59:13.628Z",
+      "2026-10-04T13:58:56.087Z",
+      1,
+    ],
+    [
+      "2026-10-04T13:59:14.670Z",
+      "2026-10-04T13:59:28.440Z",
+      "2026-10-04T13:59:24.452Z",
+      1,
+    ],
+  ];
+  for (const [from, to, replyAt, before] of windows) {
+    const generations = kimiWireRound(text, { from, to }).generations;
+    const result = summarizeGenerations(generations, { replyAt });
+    assert.equal(result.generationsBeforeReply, before);
+    assert.equal(result.generationsAfterReply, 1);
+  }
+});
+
+test("unreported native requests remain missing cost evidence, not zero-token generations", () => {
+  const req = (step) => ({
+    type: "llm.request",
+    agentId: "main",
+    kind: "loop",
+    turnStep: `0.${step}`,
+    time: 1000 + step,
+  });
+  const end = (step, reported = true) => ({
+    type: "context.append_loop_event",
+    agentId: "main",
+    time: 2000 + step,
+    event: {
+      type: "step.end",
+      turnId: "0",
+      step,
+      uuid: `step${step}`,
+      ...(reported
+        ? { messageId: `response${step}`, usage: { inputOther: 10, output: 2 } }
+        : { finishReason: "interrupted" }),
+    },
+  });
+  const wire = kimiWireRound(
+    [req(1), end(1), req(2), end(2, false)].map(JSON.stringify).join("\n"),
+  );
+  assert.deepEqual(wire.requestCoverage, {
+    status: "incomplete",
+    requests: 2,
+    matchedRequests: 1,
+    unreportedRequests: 1,
+    unmatchedUsageRecords: 0,
+  });
+  assert.equal(wire.generations.length, 1);
+  assert.equal(wire.generations[0].inputTokens, 10);
+  const duplicate = kimiWireRound(
+    [req(1), req(1), end(1)].map(JSON.stringify).join("\n"),
+  );
+  assert.equal(duplicate.requestCoverage.status, "incomplete");
+  assert.equal(duplicate.requestCoverage.matchedRequests, 0);
+});
+
+test("P106 seven native requests and four usage records cannot pass full cost evidence", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { summarizeGenerations, compareRounds } = await import("./metrics.mjs");
+  const wire = kimiWireRound(
+    readFileSync(
+      new URL("./fixtures/p106-kimi-request-coverage.jsonl", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(wire.requestCoverage, {
+    status: "incomplete",
+    requests: 7,
+    matchedRequests: 4,
+    unreportedRequests: 3,
+    unmatchedUsageRecords: 0,
+  });
+  const metrics = summarizeGenerations(wire.generations);
+  assert.equal(metrics.input, 106131);
+  assert.equal(metrics.generationsTotal, 4);
+  const native = { ...metrics, replySeconds: 1, toolCalls: [] };
+  const rah = {
+    ...native,
+    requestCoverage: wire.requestCoverage,
+    productUsage: {
+      completeness: "complete",
+      totals: {
+        generations: 4,
+        inputTokens: metrics.input,
+        cachedInputTokens: metrics.cached,
+        outputTokens: metrics.output,
+      },
+    },
+  };
+  const compared = compareRounds(native, rah);
+  assert.deepEqual(compared.failures, ["usageEvidenceMissing"]);
+  assert.equal(compared.measuredStatus, "missing-evidence");
+});
+
+test("native measurement carries independent request coverage without discarding recorded usage", async () => {
+  const { measureKimiWire } = await import("./native-kimi.mjs");
+  withKimiHome("real", ({ sessionDir }) => {
+    copyFileSync(
+      new URL("./fixtures/p106-kimi-request-coverage.jsonl", import.meta.url),
+      join(sessionDir, "agents", "main", "wire.jsonl"),
+    );
+    const measured = measureKimiWire(
+      SESSION,
+      {
+        startedAt: "2026-10-04T14:30:30Z",
+        finishedAt: "2026-10-04T14:31:25Z",
+        replySeconds: 1,
+      },
+      approved,
+    );
+    assert.equal(measured.requestCoverage.unreportedRequests, 3);
+    assert.equal(measured.input, 106131);
+    assert.equal(measured.generationsTotal, 4);
+  });
+});

@@ -8,7 +8,8 @@
 // carrying `messageId` and `usage {inputOther, output, inputCacheRead,
 // inputCacheCreation}`; each request is logged as `llm.request` with its
 // `modelAlias` and `thinkingEffort`. The same wire serves both arms (the
-// product's Kimi ACP driver records no usage), so both are counted alike.
+// product's Kimi ACP driver also records these wire generations), so both
+// are counted alike and the gate cross-checks the product ledger.
 import { jsonArgs, workerCall } from "./claude-usage.mjs";
 
 export const KIMI_THINKING_ENV = "KIMI_MODEL_THINKING_EFFORT";
@@ -105,6 +106,7 @@ export function kimiWireRound(text, { from, to } = {}) {
   const lo = bound(from, -Infinity);
   const hi = bound(to, Infinity);
   const byId = new Map();
+  const steps = new Map();
   const requests = [];
   const toolCalls = [];
   let usageRecords = 0;
@@ -119,6 +121,26 @@ export function kimiWireRound(text, { from, to } = {}) {
     }
     if (typeof r?.time !== "number" || r.time < lo || r.time > hi) continue;
     const at = new Date(r.time).toISOString();
+    const event = r.event ?? {};
+    const turnStep =
+      r.type === "llm.request"
+        ? r.turnStep
+        : typeof event.turnId === "string" && Number.isInteger(event.step)
+          ? `${event.turnId}.${event.step}`
+          : undefined;
+    const key =
+      typeof r.agentId === "string" && typeof turnStep === "string"
+        ? JSON.stringify([r.agentId, turnStep])
+        : undefined;
+    if (key !== undefined) {
+      const step = steps.get(key) ?? { begins: [], requests: [], ends: [] };
+      if (r.type === "llm.request" && r.kind === "loop") step.requests.push(r);
+      if (r.type === "context.append_loop_event" && event.type === "step.begin")
+        step.begins.push(r);
+      if (r.type === "context.append_loop_event" && event.type === "step.end")
+        step.ends.push(r);
+      steps.set(key, step);
+    }
     if (r.type === "llm.request")
       requests.push({
         kind: r.kind ?? null,
@@ -146,9 +168,55 @@ export function kimiWireRound(text, { from, to } = {}) {
       observedAt: at,
     });
   }
+  // Requests and reported generations are different evidence. A cancelled
+  // request without usage is not a zero-token generation or a free request.
+  const matchedIds = new Set();
+  const endCounts = new Map();
+  for (const step of steps.values())
+    for (const end of step.ends) {
+      const id = end.event.messageId;
+      if (typeof id === "string")
+        endCounts.set(id, (endCounts.get(id) ?? 0) + 1);
+    }
+  for (const step of steps.values()) {
+    if (step.requests.length !== 1 || step.ends.length !== 1) continue;
+    const request = step.requests[0],
+      end = step.ends[0],
+      id = end.event.messageId;
+    if (request.time <= end.time && endCounts.get(id) === 1 && byId.has(id))
+      matchedIds.add(id);
+  }
+  const requestCoverage = {
+    status:
+      matchedIds.size === requests.length && matchedIds.size === byId.size
+        ? "complete"
+        : "incomplete",
+    requests: requests.length,
+    matchedRequests: matchedIds.size,
+    unreportedRequests: requests.length - matchedIds.size,
+    unmatchedUsageRecords: byId.size - matchedIds.size,
+  };
+  // Exact native keys, not adjacency: retries/duplicate steps remain unknown.
+  for (const { begins, requests, ends } of steps.values()) {
+    if (begins.length !== 1 || requests.length !== 1 || ends.length !== 1)
+      continue;
+    const [begin] = begins,
+      [request] = requests,
+      [end] = ends;
+    if (
+      typeof begin.event.uuid !== "string" ||
+      begin.event.uuid !== end.event.uuid ||
+      begin.time > request.time ||
+      request.time > end.time
+    )
+      continue;
+    const generation = byId.get(end.event.messageId);
+    if (generation) generation.startedAt = new Date(request.time).toISOString();
+  }
   return {
     generations: [...byId.values()],
     requests,
+    requestCoverage,
     usageRecords,
     compactions,
     toolCalls,

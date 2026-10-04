@@ -16,6 +16,19 @@ import { classifyClaudeLaunch } from "./claude-guard.mjs";
 import { nativeEnvironment, runLines } from "./cli-process.mjs";
 import { readClaudeTranscript } from "./provider-files.mjs";
 import { providerLaunchPolicy } from "../../packages/agent-host/src/provider-launch-arguments.js";
+import { claudeConnectionEnvironment } from "../../packages/agent-host/src/claude-connection-environment.js";
+
+// Free preflight, also used before planning either arm. Never rewrite a user's
+// alias or silently route an approved binding to a different model family.
+export function nativeClaudeEnvironment(config, extra = {}) {
+  const env = claudeConnectionEnvironment(nativeEnvironment(extra));
+  const alias = env[`ANTHROPIC_DEFAULT_${config.model.toUpperCase()}_MODEL`];
+  assert.ok(
+    alias === undefined || claudeModelMatches(config.model, alias),
+    "Configured Claude alias is outside the approved model family",
+  );
+  return env;
+}
 
 export async function nativeClaudeRound({
   cwd,
@@ -38,7 +51,10 @@ export async function nativeClaudeRound({
     ...policy.args,
   ];
   assert.equal(classifyClaudeLaunch(args, config), "turn");
-  const env = nativeEnvironment(policy.environment);
+  // Same approved connection-only resolver as both product drivers. Isolation
+  // excludes personal behavior, but must not silently switch the native arm's
+  // account/route by dropping settings.json connection data.
+  const env = nativeClaudeEnvironment(config, policy.environment);
   round.nativeMemoryPolicy = assertNativeMemoryPolicy({
     provider: "claude",
     args,

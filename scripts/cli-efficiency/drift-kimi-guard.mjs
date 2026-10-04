@@ -50,6 +50,18 @@ export function createKimiRequestGuard(approved, env = {}) {
         const s = state(p.sessionId);
         assert.ok(s.model, "Prompt before the approved model was set");
         assert.ok(s.thinking, "Prompt before the approved thinking was set");
+        if (
+          env.LOOM_WORKER_MCP_IDENTITY === "cold-stdio/v1" &&
+          p.prompt?.some(
+            (part) =>
+              part.type === "text" && part.text?.trimStart().startsWith("/"),
+          )
+        )
+          assert.deepEqual(
+            p.prompt,
+            [{ type: "text", text: "/mcp" }],
+            "Unapproved internal MCP slash command",
+          );
         return;
       }
       case "session/set_mode":

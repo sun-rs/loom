@@ -432,3 +432,39 @@ test("drift diagnostics: task commands and refused reply-target sends", () => {
   ].join("\n");
   assert.equal(claudeTranscriptRound(t).targetRejections, 2);
 });
+
+test("direct Worker MCP is protocol without CLI proof; quoted symbol cannot hide Bash missing turn", () => {
+  const [mcp, missing, present] = claudeToolCalls(
+    [
+      {
+        type: "tool_use",
+        name: "mcp__loom_worker__loom_reply",
+        input: { body: "message-post --turn forged", final: true },
+      },
+      {
+        type: "tool_use",
+        name: "Bash",
+        input: {
+          command:
+            "loom-worker message-post --body 'mcp__loom_worker__loom_reply'",
+        },
+      },
+      {
+        type: "tool_use",
+        name: "Bash",
+        input: {
+          command:
+            "loom-worker message-post --turn native-handle --body 'mcp__loom_worker__loom_reply'",
+        },
+      },
+    ],
+    "2026-10-04T00:00:00Z",
+  );
+  assert.equal(mcp.kind, "worker-mcp-reply");
+  assert.equal(mcp.turnHandle, undefined);
+  assert.equal(mcp.cliTurnHandle, undefined);
+  assert.equal(mcp.final, undefined);
+  assert.equal(missing.kind, "worker-mcp-reply");
+  assert.equal(missing.cliTurnHandle, false);
+  assert.equal(present.cliTurnHandle, true);
+});

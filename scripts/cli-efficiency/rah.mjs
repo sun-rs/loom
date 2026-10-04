@@ -1,3 +1,4 @@
+import { readOpenCodeTiming } from "./opencode-timing.mjs";
 import { isEffectiveAnswer, summarizeGenerations } from "./metrics.mjs";
 import { mergeRoundProductUsage, roundRunVerdict } from "./round-retry.mjs";
 import {
@@ -427,8 +428,15 @@ function measureRah({ config, sessionId, round, replyAt, productUsage }) {
         toolCalls,
         usageSource: "unavailable",
       };
+    const timing = readOpenCodeTiming(sessionId, from, to);
     return {
-      ...summarizeGenerations(records, { replyAt }),
+      ...summarizeGenerations(
+        records.map((record) => ({
+          ...record,
+          ...timing.get(record.responseId),
+        })),
+        { replyAt },
+      ),
       replySeconds: round.replySeconds,
       toolCalls,
       usageSource: "product",

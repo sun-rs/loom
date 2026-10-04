@@ -32,15 +32,16 @@ export async function nativeKimiRound({
     ...providerLaunchPolicy("kimi").environment,
     [KIMI_THINKING_ENV]: config.effort,
   });
+  const executable = execFileSync("which", ["kimi"], {
+    encoding: "utf8",
+  }).trim();
   round.nativeMemoryPolicy = assertNativeMemoryPolicy({
     provider: "kimi",
+    executable,
     args,
     env,
   });
   checkKimiPrintLaunch(args, env, config);
-  const executable = execFileSync("which", ["kimi"], {
-    encoding: "utf8",
-  }).trim();
   round.startedAt = new Date().toISOString();
   save();
   let run;
@@ -98,6 +99,7 @@ export function measureKimiWire(sessionId, round, config, options = {}) {
   }
   const base = {
     replySeconds: round.replySeconds,
+    ...(wire ? { requestCoverage: wire.requestCoverage } : {}),
     toolCalls: wire?.toolCalls ?? options.fallbackToolCalls ?? null,
   };
   if (!wire) {

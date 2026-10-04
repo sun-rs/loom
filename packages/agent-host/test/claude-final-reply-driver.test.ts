@@ -489,3 +489,39 @@ test("Host termination (not a final reply) still ends the run as interrupted", a
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("cold MCP guide decorates first/resume native input while exact replay ACK retains original Host wake digest", async () => {
+  for (const resume of [undefined, "existing-session"]) {
+    const wake = "#main seq 7 msg=12345678 @human: review";
+    const result = await runTurn({
+      wake,
+      ...(resume === undefined ? {} : { resume }),
+      env: {
+        LOOM_WORKER_MCP_SOCKET: "/tmp/FAKE-INTERNAL-SOCKET",
+        FAKE_WORKER_MCP_READY: "1",
+        FAKE_TOOL: "none",
+      },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    const text = result.records.find((r) => r.kind === "input")!.text as string;
+    assert.ok(text.startsWith(wake + "\nUse loom_reply"));
+    assert.equal(text.split("Use loom_reply").length - 1, 1);
+    const accepted = byProtocol(result.frames, "rah-delivery-accepted/v1");
+    assert.equal(accepted.length, 1);
+    assert.equal(accepted[0]!.inputSha256, sha256(wake));
+  }
+});
+
+test("MCP guide does not loosen exact replay: a raw-wake-only echo cannot ACK the decorated input", async () => {
+  const result = await runTurn({
+    wake: WAKE,
+    env: {
+      LOOM_WORKER_MCP_SOCKET: "/tmp/FAKE-INTERNAL-SOCKET",
+      FAKE_WORKER_MCP_READY: "1",
+      FAKE_TOOL: "none",
+      FAKE_REPLAY_STRIP_MCP_GUIDE: "1",
+    },
+  });
+  assert.notEqual(result.code, 0);
+  assert.deepEqual(byProtocol(result.frames, "rah-delivery-accepted/v1"), []);
+});

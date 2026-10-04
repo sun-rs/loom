@@ -9,6 +9,15 @@ import {
 
 const socketPath = process.env.LOOM_WORKER_MCP_SOCKET;
 const secret = process.env.LOOM_WORKER_MCP_SECRET;
+const coldIdentity =
+  process.env.LOOM_WORKER_MCP_IDENTITY === "cold-stdio/v1"
+    ? process.env.LOOM_WORKER_MCP_NONCE
+    : undefined;
+if (
+  process.env.LOOM_WORKER_MCP_IDENTITY === "cold-stdio/v1" &&
+  !/^[a-f0-9-]{36}$/.test(coldIdentity ?? "")
+)
+  throw Error("Cold MCP namespace missing");
 if (!socketPath || !isAbsolute(socketPath) || !secret)
   throw Error("Loom MCP transport is not configured");
 const errorResult = (message: string) => ({
@@ -113,7 +122,15 @@ async function handle(line: string): Promise<void> {
     } else if (req.method === "ping") result = {};
     else if (req.method === "tools/list")
       result = { tools: [WORKER_REPLY_MCP_TOOL] };
-    else if (req.method === "tools/call") result = await invoke(req.params);
+    else if (req.method === "tools/call")
+      result = await invoke(
+        coldIdentity
+          ? {
+              ...req.params,
+              transportIdentity: { nonce: coldIdentity, requestId: id },
+            }
+          : req.params,
+      );
     else {
       response = {
         jsonrpc: "2.0",

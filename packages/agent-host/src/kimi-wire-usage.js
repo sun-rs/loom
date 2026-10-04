@@ -21,8 +21,8 @@
 //   `inconsistent_total`;
 // - the main agent called a sub-agent (`Agent`/`AgentSwarm`), whose steps
 //   live in wires this reader does not attribute: `unsupported_provider`.
-// A step cancelled before it produced usage (the Host's final interrupt)
-// has no usage record in the wire and is not a generation, as for Claude.
+// An issued llm.request without its own step usage leaves the sums partial,
+// including final-interrupted requests. A step.begin alone is not a request.
 import {
   closeSync,
   existsSync,
@@ -179,6 +179,8 @@ export function kimiTurnUsage(
   let inCompaction = false;
   let turnRecords = 0;
   let stepUsages = 0;
+  const requestsByStep = new Map();
+  const usagesByStep = new Map();
   const sameTurn = (value) => {
     if (value === undefined || value === null) return false;
     const id = String(value);
@@ -197,6 +199,19 @@ export function kimiTurnUsage(
       if (!sameTurn(record.turnId)) gap("parse_error");
       ended = true;
       break;
+    }
+    if (record.type === "llm.request" && record.kind === "loop") {
+      if (
+        record.agentId !== "main" ||
+        typeof record.turnStep !== "string" ||
+        record.turnStep === ""
+      )
+        gap("parse_error");
+      else
+        requestsByStep.set(
+          record.turnStep,
+          (requestsByStep.get(record.turnStep) ?? 0) + 1,
+        );
     }
     if (record.type === "full_compaction.begin") inCompaction = true;
     else if (record.type === "full_compaction.complete") inCompaction = false;
@@ -218,13 +233,29 @@ export function kimiTurnUsage(
         gap("unsupported_provider");
       if (event.type !== "step.end" || event.usage === undefined) continue;
       stepUsages += 1;
-      collect(
+      const usage =
         typeof event.messageId === "string" && event.messageId !== ""
           ? kimiUsage(event.usage, event.messageId, at)
-          : undefined,
-      );
+          : undefined;
+      // Duplicate response IDs remain one observation; another step cannot
+      // borrow that receipt to cover a separately issued model request.
+      if (
+        usage !== undefined &&
+        record.agentId === "main" &&
+        !seen.has(usage.responseId)
+      ) {
+        const key = `${event.turnId}.${event.step}`;
+        usagesByStep.set(key, (usagesByStep.get(key) ?? 0) + 1);
+      }
+      collect(usage);
     }
   }
+  if (
+    [...requestsByStep].some(
+      ([key, count]) => count > (usagesByStep.get(key) ?? 0),
+    )
+  )
+    gap("parse_error");
   if (turnRecords !== stepUsages) gap("inconsistent_total");
   return { ended, usages, gaps };
 }

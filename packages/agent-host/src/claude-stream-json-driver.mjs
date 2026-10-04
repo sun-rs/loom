@@ -1,3 +1,5 @@
+import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
+import { assertClaudeWorkerMcpReady } from "./claude-worker-mcp-ready.js";
 import { claudeConnectionEnvironment } from "./claude-connection-environment.js";
 import { readProviderPromptFile } from "./provider-prompt-file.js";
 import {
@@ -59,6 +61,12 @@ const options = parseArguments(driverArguments(process.argv.slice(2)));
 // already appended the notice lines, so the acceptance digest covers them);
 // otherwise the fixed startup wake plus the env notices.
 const TURN_INPUT = options.wakeInput ?? providerActivationInput();
+// Claude emits init only after input. This hint is Host-configured, not proof
+// of readiness; the existing native init check still fails closed.
+const MODEL_INPUT = withWorkerMcpGuidance(
+  TURN_INPUT,
+  Boolean(process.env.LOOM_WORKER_MCP_SOCKET),
+);
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 const usageTracker = new ClaudeStreamUsageTracker();
 const usageWriter = new ProviderUsageWriter();
@@ -327,6 +335,13 @@ async function runTurn(resumeSession) {
     }
     if (frame.type === "system" && frame.subtype === "init") {
       initObserved = true;
+      if (process.env.LOOM_WORKER_MCP_SOCKET) {
+        try {
+          assertClaudeWorkerMcpReady(frame);
+        } catch (error) {
+          protocolError = error.message;
+        }
+      }
       if (
         Array.isArray(frame.capabilities) &&
         frame.capabilities.includes("msg_lifecycle_v1")
@@ -410,7 +425,7 @@ async function runTurn(resumeSession) {
     uuid: inputUuid,
     message: {
       role: "user",
-      content: [{ type: "text", text: TURN_INPUT }],
+      content: [{ type: "text", text: MODEL_INPUT }],
     },
     ...(resumeSession === undefined ? {} : { session_id: resumeSession }),
   };
@@ -584,7 +599,7 @@ function activationReplay(frame, inputUuid) {
     .filter((candidate) => isRecord(candidate) && candidate.type === "text")
     .map((candidate) => candidate.text)
     .join("");
-  if (text !== TURN_INPUT) return undefined;
+  if (text !== MODEL_INPUT) return undefined;
   if (frame.uuid === inputUuid) return "exact";
   return frame.uuid === undefined ? "legacy" : undefined;
 }

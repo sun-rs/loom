@@ -61,15 +61,17 @@ test("free plan freezes P97 source rather than HEAD, and never starts a model", 
   }
 });
 
-test("an unverified memory policy fails before paid provider startup", () => {
+test("an unaudited CLI version fails before either paid arm startup", () => {
   const f = fixture();
   try {
-    const r = f.run(["--paid"], {
-      RAH_EFFICIENCY_PROVIDER: "kimi",
-      RAH_EFFICIENCY_ORDER: "native,role",
-    });
-    assert.notEqual(r.status, 0);
-    assert.match(r.stderr, /memory/i);
+    for (const provider of ["kimi", "opencode"]) {
+      const r = f.run(["--paid"], {
+        RAH_EFFICIENCY_PROVIDER: provider,
+        RAH_EFFICIENCY_ORDER: "role,native",
+      });
+      assert.notEqual(r.status, 0);
+      assert.match(r.stderr, /audited CLI version/i);
+    }
     assert.equal(existsSync(f.marker), false);
   } finally {
     rmSync(f.root, { recursive: true, force: true });

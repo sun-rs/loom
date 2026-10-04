@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "sampleId": "821b851f-5fe8-455d-8d20-b8e9936be1ac",
+  "nativeMemoryPolicy": {
+    "provider": "claude",
+    "supported": true,
+    "status": "supported",
+    "scope": "provider-native-auto-memory",
+    "mechanism": "environment"
+  },
+  "root": "<tmp>",
+  "startedAt": "2026-10-04T13:51:58.404Z",
+  "provider": "claude",
+  "model": "haiku",
+  "effort": null,
+  "bindingId": "local:claude-cli/v1:haiku",
+  "cliVersion": "2.1.287 (Claude Code)",
+  "codeCommit": "c8a9ce2daf457e56357a5149d8265b51165add1f",
+  "sourceRef": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+  "workingTree": {
+    "dirty": true,
+    "changedPaths": 21,
+    "untrackedPaths": 12,
+    "statusSha256": "b5a08d4b4ba9fa40d9932499eeab204b7569480e3cb956d3f42e2c15f9d968f8",
+    "diffSha256": "05f09556e6e7f5ddbfbb39abe25b94919a87157a8e397b9c05f747b5e0c47de3"
+  },
+  "order": ["native", "role"],
+  "questions": [
+    "只读审查当前工作目录的 scripts/workbench-launch-receipt.mjs 和 scripts/workbench-launch-receipt.test.mjs（已提供的固定 Git 快照，无需 git 命令）。仅分析网络配置在重启时的保留，列出已保证的行为、至多两项有行号依据的条件性风险；不能从两份文件证明的明确列出，不强凑漏洞。不要读其他项目文件，不修改文件、记忆或创建任务。最多400中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续上一轮：PID一致是否足以证明配置可信？区分函数级保证与整个重启流程的保证，纠正上一轮可能过强的结论，提出两条回归测试。只依赖已读内容，不重新读文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续此前审查：给出最终接受或拒绝修改的判断、保留和撤回的观点，以及前轮两条回归测试的验收标准。不要重新审查或读取文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。"
+  ],
+  "budgets": {
+    "maxExtraGenerations": 1,
+    "maxExtraGenerationsBeforeReply": 0,
+    "fixedOverheadTokens": 3000,
+    "inputRatio": 2,
+    "inputAllowanceTokens": 3000,
+    "replyAllowanceSeconds": 5,
+    "replyAllowanceRatio": 0.15
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "arms": {
+    "native": {
+      "kind": "native",
+      "rounds": [
+        {
+          "round": 1,
+          "nativeMemoryPolicy": {
+            "provider": "claude",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "environment",
+            "evidence": "spawn-configuration",
+            "environment": {
+              "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+            }
+          },
+          "startedAt": "2026-10-04T13:51:59.657Z",
+          "pid": 40910,
+          "finishedAt": "2026-10-04T13:52:30.837Z",
+          "exit": 0,
+          "stderr": "[claude-code:unrecognized_model] {\"model\":\"kimi-k3\",\"query_source\":\"sdk\"}\n",
+          "sessionId": "583c33ed-bbc4-4c0a-b624-ff35f04a8816",
+          "answer": "审查结论：\n\n**已保证的行为（由两文件可证）**\n- 重启以 receipt 为权威：`restartNetworkEnvironment` 先删除全部 7 个网络键（`networkKeys`, L15-23, L98），再从 `receipt.mode` 重放，不重新扫描接口（L97-99）。\n- Tailnet 模式回写 `RAH_TAILNET_HOST` 及去环回后的 `RAH_TRUSTED_LAN_HOSTS`，且经 `assertTailnetHost`/`assertTrustedLanHosts` 校验（L54-62, L67-86）；CGNAT 外地址、重复项、`0.0.0.0`、字符串而非数组等均 fail closed（测试 L151-222）。\n- loopback receipt 清除继承的远程变量（测试 L68-77）；LAN 模式保留 origin/bindHost/证书路径（L29-47）。\n- 缺失 receipt、pid 不匹配、未知 kind 均抛错（L88-96, 测试 L47-67）。\n- 写 receipt 先校验可复现性、临时文件 `wx`+0o600+rename 原子替换（L111-125）。\n\n**条件性风险（至多两项）**\n1. `restartNetworkEnvironment` 仅做环境映射，是否被重启路径实际调用、receipt 文件是否被重启流程强制读取，这两份文件无法证明（依赖未提供的调用方）。\n2. `readLaunchReceipt` 对非 ENOENT 错误直接抛出（L106-109），但 JSON 结构畸形（如 mode 非对象）仅在 `networkEnvironment` 断言处失败；若调用方先 `readLaunchReceipt` 再传 pid，竞态下 receipt 被替换（rename 原子但读-用不原子）时的行为无法从此二文件判定。\n\n**无法证明项**：launch-mode 解析器本身的正确性（`workbench-launch-mode.mjs` 未读）、端口冲突处理、Windows 下 0o600 语义、receipt 文件被恶意替换的防护。",
+          "result": {
+            "subtype": "success",
+            "isError": false,
+            "numTurns": 3,
+            "at": 1791121950272
+          },
+          "models": ["kimi-k3"],
+          "usageGaps": []
+        }
+      ],
+      "processes": [],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Unapproved model kimi-k3",
+      "measurementIdentityVerified": true
+    }
+  },
+  "qualityReview": "required",
+  "status": "failed",
+  "baseline": {
+    "schemaVersion": 1,
+    "baselineId": "20eb85a91e2da9ab8fd9fbc626d59c61192bf59dd544867eacd38c6e5f796045",
+    "identity": {
+      "workload": {
+        "id": "p97-direct-review-v1",
+        "variant": "canonical",
+        "sourceHashes": {
+          "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+          "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+        },
+        "instructionsSha256": "f4c367df91c230e5bb69dc4841053b0451a6910dbb904aa00c92fff0d227213c",
+        "questionsSha256": "990900ed483b97932456e6dd68f2d52b76cca2f760ff045629ff72c8537a26b0"
+      },
+      "delivery": {
+        "native": "native-final-text",
+        "loom": "explicit-room-post",
+        "successfulAnswer": "review-prefix-and-80-characters; human-quality-review-required",
+        "final": "explicit-only; never infer completion from stdout"
+      },
+      "session": {
+        "rounds": 3,
+        "continuity": "one-session-per-arm",
+        "order": ["native", "role"],
+        "warmRestart": false,
+        "prewarm": false,
+        "forcedCompaction": false
+      },
+      "runtime": {
+        "provider": "claude",
+        "bindingId": "local:claude-cli/v1:haiku",
+        "model": "haiku",
+        "effort": null,
+        "cliVersion": "2.1.287 (Claude Code)"
+      },
+      "nativePolicy": {
+        "args": ["--setting-sources", "project,local", "--strict-mcp-config"],
+        "environment": {
+          "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+          "ENABLE_CLAUDEAI_MCP_SERVERS": "false"
+        },
+        "connectionPolicy": "claude-connection-environment/v1",
+        "memoryPolicy": {
+          "provider": "claude",
+          "supported": true,
+          "status": "supported",
+          "scope": "provider-native-auto-memory",
+          "mechanism": "environment"
+        }
+      },
+      "nativeInvocation": {
+        "initial": [
+          "-p",
+          "<question>",
+          "--output-format",
+          "stream-json",
+          "--verbose",
+          "--include-partial-messages",
+          "--dangerously-skip-permissions",
+          "--model",
+          "haiku"
+        ],
+        "resume": [
+          "-p",
+          "<question>",
+          "--output-format",
+          "stream-json",
+          "--verbose",
+          "--include-partial-messages",
+          "--dangerously-skip-permissions",
+          "--model",
+          "haiku",
+          "--resume",
+          "<session>"
+        ]
+      },
+      "sampling": {
+        "order": ["native", "role"],
+        "cacheControl": "uncontrolled-record-observed-hits",
+        "automaticPaidRerun": false
+      }
+    },
+    "limits": [
+      "Same identity is necessary, not proof of equal quality or server-side model revision",
+      "Never substitute a historical native denominator",
+      "Memory evidence certifies launch configuration, not OS filesystem isolation"
+    ]
+  },
+  "evaluationProfile": {
+    "metricsSha256": "2ffa977359944b626e5d3d0c3cfa789dd1f688387071d0bfc1b7ff430eac78e1",
+    "warmChecksSha256": "79270ce9778aab9a96a92ab3c3ace4d608d339274dd0789bb58998da8b9fba9c",
+    "budgetsSha256": "bfc4be25b472230d2f2d644abfcf762806e0459a54c258f6c34b1c81922e1661"
+  },
+  "catalogVerifiedAt": "2026-10-04T13:51:59.645Z",
+  "comparisons": {
+    "role": {
+      "status": "missing-evidence",
+      "failures": ["metricsMissing"]
+    }
+  },
+  "measuredStatus": "missing-evidence",
+  "finishedAt": "2026-10-04T13:52:30.865Z",
+  "rawResultSha256": "6050f9703a32ca3b535ee93446edb1e50afa36b6a93804891c83d682d8d8ef98"
+}

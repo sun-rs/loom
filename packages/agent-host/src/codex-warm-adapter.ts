@@ -1,3 +1,4 @@
+import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import { isSea } from "node:sea";
@@ -906,10 +907,10 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       bodied: bodied !== undefined,
       noticed: notice !== "",
       text:
-        withWorkerTurnHandle(base, handle) +
-        (runtime.workerMcp
-          ? "\nUse loom_reply for replies to this conversation; final=true only when finished. Other operations retain the Worker CLI."
-          : "") +
+        withWorkerMcpGuidance(
+          withWorkerTurnHandle(base, handle),
+          runtime.workerMcp !== undefined,
+        ) +
         (notice === "" ? "" : `\n${notice}`) +
         (protocol === "" ? "" : `\n${protocol}`),
     };

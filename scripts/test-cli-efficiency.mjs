@@ -11,11 +11,16 @@ import {
   nativePairEvidence,
 } from "./cli-efficiency/baseline.mjs";
 import { describeNativeMemoryPolicy } from "./cli-efficiency/native-memory-policy.mjs";
-import { providerLaunchSwitches } from "../packages/agent-host/src/provider-launch-arguments.js";
 import { instructions, questions } from "./cli-efficiency/common.mjs";
-import { claudeNativeArgs } from "./cli-efficiency/claude-usage.mjs";
-import { codexNativeArgs, nativeRound } from "./cli-efficiency/native.mjs";
-import { nativeClaudeRound } from "./cli-efficiency/native-claude.mjs";
+import {
+  nativeInvocationArgs,
+  nativeInvocationPolicy,
+} from "./cli-efficiency/native-invocation.mjs";
+import { nativeRound } from "./cli-efficiency/native.mjs";
+import {
+  nativeClaudeRound,
+  nativeClaudeEnvironment,
+} from "./cli-efficiency/native-claude.mjs";
 import { nativeKimiRound } from "./cli-efficiency/native-kimi.mjs";
 import { nativeOpenCodeRound } from "./cli-efficiency/native-opencode.mjs";
 import {
@@ -49,6 +54,7 @@ assert.ok(
 // here before any process starts. See efficiency-config.mjs.
 const config = parseEfficiencyEnv(process.env);
 const { provider, model, effort, bindingId, order } = config;
+if (provider === "claude") nativeClaudeEnvironment(config);
 const nativeMemoryPolicy = describeNativeMemoryPolicy(provider);
 assert.ok(
   nativeMemoryPolicy.supported,
@@ -105,7 +111,7 @@ result.baseline = createCostBaseline({
   instructions,
   questions,
   snapshot,
-  nativePolicy: providerLaunchSwitches(provider),
+  nativePolicy: nativeInvocationPolicy(provider),
   memoryPolicy: nativeMemoryPolicy,
   nativeInvocation: Object.fromEntries(
     ["initial", "resume"].map((phase) => {
@@ -116,12 +122,7 @@ result.baseline = createCostBaseline({
         sessionId: phase === "resume" ? "<session>" : undefined,
         launchArgs: [],
       };
-      return [
-        phase,
-        provider === "codex"
-          ? codexNativeArgs(options)
-          : claudeNativeArgs(options),
-      ];
+      return [phase, nativeInvocationArgs(provider, options)];
     }),
   ),
   sourceOverride:

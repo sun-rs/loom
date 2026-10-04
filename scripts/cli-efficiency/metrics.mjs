@@ -23,11 +23,12 @@ const EVIDENCE_FAILURES = new Set([
 ]);
 const isEvidenceFailure = (f) =>
   f.endsWith("Missing") || EVIDENCE_FAILURES.has(f);
-// replyAt: ISO time the effective Room reply landed. The generation whose tool
-// call posted it finished (and recorded usage) before that time, so it counts
-// as before-reply; later generations are after-reply. Omitted = native arm,
-// where the final answer generation is the reply. null = no effective reply,
-// so the split is unknown.
+// replyAt: ISO time the effective Room reply landed. A Codex usage record is
+// written after the response's output and can lag the tool's committed reply.
+// Its timestamp is only an upper bound: before the cut proves before-reply;
+// after the cut does not prove a new generation. Without explicit response
+// attribution a straddling split stays unknown. Omitted replyAt means native,
+// whose final answer is the reply; null means no effective reply was observed.
 export function summarizeUsage(events, { replyAt } = {}) {
   const byResponse = new Map();
   for (const e of events)
@@ -40,21 +41,29 @@ export function summarizeUsage(events, { replyAt } = {}) {
   const rows = records.map((e) => e.payload.usage);
   assert.ok(rows.length, "Missing native per-response usage evidence");
   let before = rows.length;
+  let replyTimingEvidence;
   if (replyAt === null) before = null;
   else if (replyAt !== undefined) {
     const cut = Date.parse(replyAt);
     assert.ok(Number.isFinite(cut), "Invalid effective reply timestamp");
-    before = records.filter((e) => {
+    const knownBeforeReply = records.filter((e) => {
       const at = Date.parse(e.timestamp);
       assert.ok(Number.isFinite(at), "Invalid usage timestamp");
       return at <= cut;
     }).length;
+    replyTimingEvidence = {
+      basis: "usage-record-upper-bound",
+      knownBeforeReply,
+      unresolved: rows.length - knownBeforeReply,
+    };
+    before = replyTimingEvidence.unresolved === 0 ? knownBeforeReply : null;
   }
   const out = {
     generations: rows.length,
     generationsTotal: rows.length,
     generationsBeforeReply: before,
     generationsAfterReply: before === null ? null : rows.length - before,
+    ...(replyTimingEvidence === undefined ? {} : { replyTimingEvidence }),
     input: 0,
     cached: 0,
     uncached: 0,
@@ -94,21 +103,48 @@ export function summarizeGenerations(records, { replyAt } = {}) {
   const rows = [...byResponse.values()];
   assert.ok(rows.length, "Missing per-generation usage evidence");
   let before = rows.length;
+  let replyTimingEvidence;
   if (replyAt === null) before = null;
   else if (replyAt !== undefined) {
     const cut = Date.parse(replyAt);
     assert.ok(Number.isFinite(cut), "Invalid effective reply timestamp");
-    before = rows.filter((r) => {
+    let knownBeforeReply = 0,
+      knownAfterReply = 0;
+    for (const r of rows) {
       const at = Date.parse(r.observedAt);
       assert.ok(Number.isFinite(at), "Invalid usage timestamp");
-      return at <= cut;
-    }).length;
+      const start = Date.parse(r.startedAt ?? "");
+      if (Number.isFinite(start) && start <= at) {
+        if (start <= cut) knownBeforeReply += 1;
+        else knownAfterReply += 1;
+      } else {
+        const after = Date.parse(r.startedAfter ?? "");
+        const by = Date.parse(r.startedBy ?? "");
+        if (
+          Number.isFinite(after) &&
+          Number.isFinite(by) &&
+          after <= by &&
+          by <= at
+        ) {
+          if (by <= cut) knownBeforeReply += 1;
+          else if (after > cut) knownAfterReply += 1;
+        } else if (at <= cut) knownBeforeReply += 1;
+      }
+    }
+    replyTimingEvidence = {
+      basis: "native-generation-timing",
+      knownBeforeReply,
+      knownAfterReply,
+      unresolved: rows.length - knownBeforeReply - knownAfterReply,
+    };
+    before = replyTimingEvidence.unresolved === 0 ? knownBeforeReply : null;
   }
   const out = {
     generations: rows.length,
     generationsTotal: rows.length,
     generationsBeforeReply: before,
     generationsAfterReply: before === null ? null : rows.length - before,
+    ...(replyTimingEvidence === undefined ? {} : { replyTimingEvidence }),
     input: 0,
     cached: 0,
     uncached: 0,
@@ -516,13 +552,63 @@ export function compareRounds(native, rah, options = {}) {
       ? null
       : extraGenerationsBeforeReply -
         credit(workPath.extraGenerationsBeforeReply);
+  // Completion timestamps leave an interval, not an exact split. The same
+  // unchanged budget can still be proved when even the worst case fits.
+  const timing = rah.replyTimingEvidence;
+  let beforeReplyBudgetEvidence = null;
+  if (
+    extraProtocolGenerationsBeforeReply === null &&
+    ["usage-record-upper-bound", "native-generation-timing"].includes(
+      timing?.basis,
+    ) &&
+    Number.isInteger(timing.knownBeforeReply) &&
+    timing.knownBeforeReply >= 0 &&
+    Number.isInteger(timing.unresolved) &&
+    timing.unresolved >= 0 &&
+    Number.isInteger(timing.knownAfterReply ?? 0) &&
+    (timing.knownAfterReply ?? 0) >= 0 &&
+    timing.knownBeforeReply +
+      timing.unresolved +
+      (timing.knownAfterReply ?? 0) ===
+      generations.rah.total &&
+    finite(nativeTotal)
+  ) {
+    const business = workPath.businessToolCallsBeforeReply;
+    const timed = business.basis === "reply-time";
+    // An untimed business call may fall on either side. Do not use a
+    // whole-round positive credit to certify the upper bound.
+    const minCredit = timed ? credit(business.delta) : -credit(business.native);
+    const maxCredit = credit(business.delta);
+    const lower = timing.knownBeforeReply - nativeTotal - maxCredit;
+    const upper =
+      generations.rah.total -
+      (timing.knownAfterReply ?? 0) -
+      nativeTotal -
+      minCredit;
+    const budget = budgets.maxExtraGenerationsBeforeReply;
+    beforeReplyBudgetEvidence = {
+      basis: timing.basis,
+      lower,
+      upper,
+      budget,
+      status:
+        upper <= budget
+          ? "within-budget"
+          : lower > budget
+            ? "over-budget"
+            : "missing-evidence",
+    };
+  }
   if (counts) {
     if (extraProtocolGenerations === null) failures.push("generationsMissing");
     else if (extraProtocolGenerations > budgets.maxExtraGenerations)
       failures.push("generations");
-    if (extraProtocolGenerationsBeforeReply === null)
-      failures.push("generationsBeforeReplyMissing");
-    else if (
+    if (extraProtocolGenerationsBeforeReply === null) {
+      if (beforeReplyBudgetEvidence?.status === "over-budget")
+        failures.push("generationsBeforeReply");
+      else if (beforeReplyBudgetEvidence?.status !== "within-budget")
+        failures.push("generationsBeforeReplyMissing");
+    } else if (
       extraProtocolGenerationsBeforeReply >
       budgets.maxExtraGenerationsBeforeReply
     )
@@ -543,8 +629,18 @@ export function compareRounds(native, rah, options = {}) {
   // A round the Kernel retried (round-retry.mjs) is a counted soft item:
   // over budget however its summed cost fared, never within budget.
   if (rah.retried === true) failures.push("retried");
+  const requestCoverage = {
+    native: native.requestCoverage ?? null,
+    rah: rah.requestCoverage ?? null,
+  };
+  const requestGap = Object.values(requestCoverage).some(
+    (coverage) => coverage !== null && coverage.status !== "complete",
+  );
   const evidence = usageEvidence(rah, !unmeasured.includes("productUsage"));
-  if (!["complete", "not-recorded"].includes(evidence.completeness))
+  if (
+    requestGap ||
+    !["complete", "not-recorded"].includes(evidence.completeness)
+  )
     failures.push("usageEvidenceMissing");
   else if (evidence.mismatches.length) failures.push("usageEvidenceMismatch");
   const measuredStatus = statusOf(failures);
@@ -561,9 +657,15 @@ export function compareRounds(native, rah, options = {}) {
     workPathExtraGenerationsBeforeReply: workPath.extraGenerationsBeforeReply,
     extraProtocolGenerations,
     extraProtocolGenerationsBeforeReply,
+    ...(beforeReplyBudgetEvidence === null
+      ? {}
+      : { beforeReplyBudgetEvidence }),
     workPath,
     input,
     usageEvidence: evidence,
+    ...(requestCoverage.native === null && requestCoverage.rah === null
+      ? {}
+      : { requestCoverage }),
     finalInterrupt: finalInterruptOf(rah),
     inputRatio: rah.input / native.input,
     inputRatioJudged:

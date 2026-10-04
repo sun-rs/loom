@@ -2285,8 +2285,8 @@ test("automatic internal MCP wiring keeps two warm turns bound to original crede
       const result = await reply(nativeTurn, String(round));
       assert.equal(result.isError, false, JSON.stringify(result));
       const receipt = JSON.parse(result.content[0].text);
-      assert.equal(receipt.event.actorId, state.participantId);
-      assert.equal(receipt.event.roomId, state.roomId);
+      assert.equal(receipt.actorId, state.participantId);
+      assert.equal(receipt.roomId, state.roomId);
       assert.equal((await running).state, "completed");
       oldTurn = nativeTurn;
     }

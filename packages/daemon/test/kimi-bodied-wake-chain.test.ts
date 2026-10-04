@@ -35,8 +35,13 @@ import { deliveryAcceptanceRegistration } from "../src/delivery-acceptance-regis
  * generates once more unless the prompt was cancelled by `session/cancel`.
  * No paid provider runs.
  */
-const FAKE = fileURLToPath(
+const UPSTREAM_FAKE = fileURLToPath(
   new URL("../../agent-host/test/fixtures/fake-kimi-acp.mjs", import.meta.url),
+);
+
+// Simulates only native MCP readiness; business prompts still use UPSTREAM_FAKE.
+const FAKE = fileURLToPath(
+  new URL("./fixtures/fake-kimi-bodied-mcp-ready.mjs", import.meta.url),
 );
 
 async function fixture() {
@@ -61,7 +66,14 @@ async function fixture() {
   const worker = new WorkerApplicationService({ kernel });
   await worker.start();
   const executable = join(directory, "fake-kimi-model.mjs");
-  writeFileSync(executable, readFileSync(FAKE), { mode: 0o700 });
+  writeFileSync(
+    executable,
+    readFileSync(FAKE, "utf8").replace(
+      "process.env.FAKE_KIMI_UPSTREAM",
+      JSON.stringify(UPSTREAM_FAKE),
+    ),
+    { mode: 0o700 },
+  );
   const recordPath = join(directory, "record.jsonl");
   const profiles = new RuntimeProfileRegistry({
     databasePath: join(directory, "runtime-registry.db"),
@@ -207,6 +219,11 @@ test("bodied wake (Kimi): one --final reply completes the Activation without mes
         ),
       );
       assert.doesNotMatch(prompt, /--startup/u);
+      assert.equal(
+        prompt.split("Use loom_reply").length - 1,
+        1,
+        "ready internal MCP has one per-turn tool entry hint",
+      );
     }
     const records = context.records();
     assert.deepEqual(

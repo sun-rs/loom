@@ -1,3 +1,7 @@
+import {
+  nativeMemoryVersionEvidence,
+  NATIVE_MEMORY_VERSION_AUDITS,
+} from "./native-memory-version.mjs";
 // Launch evidence only: official auto-memory settings, not file isolation or
 // recall of memory already present in a resumed session. Never serialize env.
 import {
@@ -8,30 +12,29 @@ import {
 export function describeNativeMemoryPolicy(provider) {
   if (!["codex", "claude", "kimi", "opencode"].includes(provider))
     throw new Error(`Unknown provider ${provider}`);
-  const supported = provider === "codex" || provider === "claude";
   return {
     provider,
-    supported,
-    status: supported ? "supported" : "unsupported",
+    supported: true,
+    status: "supported",
     scope: "provider-native-auto-memory",
     mechanism:
       provider === "codex"
         ? "cli-config"
         : provider === "claude"
           ? "environment"
-          : null,
-    ...(!supported
-      ? {
-          reason:
-            "No verified native auto-memory disable policy; absence of a switch does not prove absence of the feature",
-        }
-      : {}),
+          : "version-audit",
+    ...NATIVE_MEMORY_VERSION_AUDITS[provider],
   };
 }
 
-export function assertNativeMemoryPolicy({ provider, args, env }) {
+export function assertNativeMemoryPolicy({ provider, args, env, executable }) {
   const declared = describeNativeMemoryPolicy(provider);
   if (!declared.supported) throw new Error(`${provider}: ${declared.reason}`);
+  if (provider === "kimi" || provider === "opencode")
+    return {
+      ...declared,
+      ...nativeMemoryVersionEvidence({ provider, args, env, executable }),
+    };
   const evidence = {
     ...declared,
     status: "enforced",

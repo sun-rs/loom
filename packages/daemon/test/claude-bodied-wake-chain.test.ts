@@ -434,7 +434,14 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   const replay = {type:"user",isReplay:true,parent_tool_use_id:null,uuid:frame.uuid,message:{role:"user",content:frame.message.content}};
   if (mode === "no-uuid-echo") delete replay.uuid;
   send(replay);
-  send({type:"system",subtype:"init",capabilities:["interrupt_receipt_v1","interrupt_cancel_queued_v1"]});
+  // Simulate the new cold launch inventory only when Host supplied its config.
+  // These tests deliberately keep using Bash/Worker CLI to cover that fallback.
+  const mcpIndex = args.indexOf("--mcp-config");
+  const mcp = mcpIndex < 0 ? undefined : JSON.parse(args[mcpIndex + 1]).mcpServers?.loom_worker;
+  const internalMcp = mcp && process.env.LOOM_WORKER_MCP_SOCKET && process.env.LOOM_WORKER_MCP_SECRET;
+  send({type:"system",subtype:"init",capabilities:["interrupt_receipt_v1","interrupt_cancel_queued_v1"],
+    tools: internalMcp ? ["Bash", "mcp__loom_worker__loom_reply"] : ["Bash"],
+    mcp_servers: internalMcp ? [{name:"loom_worker",status:"connected"}] : []});
   // Give the Host time to register the acceptance, like a real generation.
   setTimeout(() => void act(text), 200);
 }).on("close", () => process.exit(0));

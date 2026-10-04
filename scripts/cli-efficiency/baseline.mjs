@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { NATIVE_MEMORY_VERSION_AUDITS } from "./native-memory-version.mjs";
 import { isEffectiveAnswer } from "./metrics.mjs";
 
 // P97's direct-answer workload. Product HEAD is deliberately NOT the question
@@ -62,6 +63,24 @@ export function createCostBaseline({
       memoryPolicy.provider === config.provider,
     "Native memory-off policy is not verified for this provider",
   );
+  const audit = NATIVE_MEMORY_VERSION_AUDITS[config.provider];
+  if (audit) {
+    assert.equal(
+      cliVersion,
+      audit.version,
+      "Native audited CLI version differs",
+    );
+    assert.equal(
+      memoryPolicy.version,
+      audit.version,
+      "Native audit version missing",
+    );
+    assert.equal(
+      memoryPolicy.sourceRevision,
+      audit.sourceRevision,
+      "Native audit source differs",
+    );
+  }
   assert.ok(
     nativePolicy &&
       Array.isArray(nativePolicy.args) &&
@@ -159,18 +178,38 @@ export function nativePairEvidence({ baseline, native }) {
       isEffectiveAnswer(round.answer),
       "Native effective delivery missing",
     );
+    const policy = round.nativeMemoryPolicy;
+    const audit =
+      NATIVE_MEMORY_VERSION_AUDITS[baseline.identity.runtime.provider];
     assert.equal(
-      round.nativeMemoryPolicy?.status,
-      "enforced",
-      "Native memory-off enforcement missing",
-    );
-    assert.equal(
-      round.nativeMemoryPolicy.provider,
+      policy?.provider,
       baseline.identity.runtime.provider,
       "Native memory provider differs",
     );
-    assert.equal(round.nativeMemoryPolicy.scope, "provider-native-auto-memory");
-    assert.equal(round.nativeMemoryPolicy.evidence, "spawn-configuration");
+    assert.equal(policy?.scope, "provider-native-auto-memory");
+    if (audit) {
+      assert.equal(
+        policy.status,
+        "not-applicable",
+        "Native version audit evidence missing",
+      );
+      assert.equal(policy.evidence, "audited-cli-version");
+      assert.equal(policy.version, audit.version);
+      assert.equal(policy.version, baseline.identity.runtime.cliVersion);
+      assert.equal(policy.sourceRevision, audit.sourceRevision);
+    } else {
+      assert.equal(
+        policy?.status,
+        "enforced",
+        "Native memory-off enforcement missing",
+      );
+      assert.equal(policy.evidence, "spawn-configuration");
+    }
+    assert.ok(
+      round.metrics?.requestCoverage === undefined ||
+        round.metrics.requestCoverage.status === "complete",
+      "Native request coverage incomplete",
+    );
     for (const field of [
       "generations",
       "input",

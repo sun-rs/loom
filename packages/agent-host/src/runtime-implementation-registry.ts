@@ -1,3 +1,5 @@
+import { kimiWorkerMcpLease } from "./cold-worker-mcp-lease.ts";
+import { claudeWorkerMcpLease } from "./claude-worker-mcp-lease.ts";
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
 import { createHostBodiedWake, renderBodiedWake } from "./bodied-wake.ts";
 import { resumedMemoryIndexLease } from "./channel-memory-index.ts";
@@ -673,7 +675,10 @@ function createClaudeStreamJsonRuntime(
       ? {}
       : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
     activationEnvironment: async (input) => {
-      const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const lease = await claudeWorkerMcpLease(
+        input.runAttemptId,
+        (await baseActivationEnvironment?.(input)) ?? { env: {} },
+      );
       standingPromptDigests.remember(input, lease.standingPromptDigest);
       const key = providerSessionKey(
         input,
@@ -1296,7 +1301,10 @@ function createKimiAcpRuntime(
       ? {}
       : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
     activationEnvironment: async (input) => {
-      const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const lease = await kimiWorkerMcpLease(
+        input.runAttemptId,
+        (await baseActivationEnvironment?.(input)) ?? { env: {} },
+      );
       standingPromptDigests.remember(input, lease.standingPromptDigest);
       preparedCards.delete(input.runAttemptId);
       const key = providerSessionKey(

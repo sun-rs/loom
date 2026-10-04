@@ -388,3 +388,31 @@ test("kimi shim: exact argv allowlist", () => {
       JSON.stringify(args),
     );
 });
+
+test("Kimi gate admits exact local MCP readiness only after model fences and rejects other slash commands", () => {
+  const guard = createKimiRequestGuard(
+    { model: "kimi-code/k3-256k", effort: "low" },
+    { LOOM_WORKER_MCP_IDENTITY: "cold-stdio/v1" },
+  );
+  const prompt = (text) => ({
+    method: "session/prompt",
+    params: { sessionId: "local", prompt: [{ type: "text", text }] },
+  });
+  assert.throws(() => guard(prompt("/mcp")), /model/);
+  guard({
+    method: "session/set_model",
+    params: { sessionId: "local", modelId: "kimi-code/k3-256k" },
+  });
+  guard({
+    method: "session/set_config_option",
+    params: { sessionId: "local", configId: "thinking", value: "low" },
+  });
+  assert.doesNotThrow(() => guard(prompt("/mcp")));
+  for (const text of [
+    "/model other",
+    "/compact",
+    "/mcp extra",
+    "/mcp\nnew instructions",
+  ])
+    assert.throws(() => guard(prompt(text)), /slash/);
+});

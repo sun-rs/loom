@@ -1,3 +1,4 @@
+import { KimiColdWorkerMcp } from "./kimi-cold-worker-mcp.ts";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { chmod, rm } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -8,12 +9,57 @@ import {
   type WorkerMcpBinding,
 } from "./worker-mcp-turns.ts";
 
+import { ClaudeColdWorkerMcp } from "./claude-cold-worker-mcp.ts";
+import type {
+  WorkerMcpExecutionBinding,
+  McpResult,
+} from "./worker-mcp-execution.ts";
+
 /** Private runtime transport; real Worker credentials stay inside AgentHost. */
-export async function createWorkerMcpBridge(input: {
+type BridgeInput = {
   socketPath: string;
   workerApiOrigin: string;
   fetch?: typeof fetch;
-}) {
+};
+export async function createWorkerMcpBridge(input: BridgeInput) {
+  const turns = new WorkerMcpTurns(input.workerApiOrigin, input.fetch ?? fetch);
+  return {
+    ...(await createTransport(input, turns)),
+    bind: (binding: WorkerMcpBinding) => turns.bind(binding),
+  };
+}
+export async function createClaudeColdWorkerMcpBridge(
+  input: BridgeInput & { binding: WorkerMcpExecutionBinding },
+) {
+  return await createTransport(
+    input,
+    new ClaudeColdWorkerMcp(
+      input.workerApiOrigin,
+      input.fetch ?? fetch,
+      input.binding,
+    ),
+  );
+}
+export async function createKimiColdWorkerMcpBridge(
+  input: BridgeInput & {
+    binding: WorkerMcpExecutionBinding;
+    transportNonce: string;
+  },
+) {
+  return await createTransport(
+    input,
+    new KimiColdWorkerMcp(
+      input.workerApiOrigin,
+      input.fetch ?? fetch,
+      input.binding,
+      input.transportNonce,
+    ),
+  );
+}
+async function createTransport(
+  input: BridgeInput,
+  turns: { call(params: unknown): Promise<McpResult>; close(): void },
+) {
   if (!isAbsolute(input.socketPath)) throw Error("MCP socket must be absolute");
   const origin = new URL(input.workerApiOrigin);
   if (
@@ -24,7 +70,6 @@ export async function createWorkerMcpBridge(input: {
   )
     throw Error("Invalid Worker origin");
   const secret = randomBytes(32).toString("base64url");
-  const turns = new WorkerMcpTurns(input.workerApiOrigin, input.fetch ?? fetch);
   const server = createServer(async (req, res) => {
     const supplied = Buffer.from(req.headers.authorization ?? "");
     const expected = Buffer.from(`Bearer ${secret}`);
@@ -77,7 +122,6 @@ export async function createWorkerMcpBridge(input: {
       LOOM_WORKER_MCP_SOCKET: input.socketPath,
       LOOM_WORKER_MCP_SECRET: secret,
     },
-    bind: (binding: WorkerMcpBinding) => turns.bind(binding),
     close: () =>
       (closed ??= (async () => {
         turns.close();

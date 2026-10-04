@@ -1,0 +1,89 @@
+{
+  "restart": {
+    "at": "2026-10-04T14:58:51.971Z",
+    "oldPid": 2969,
+    "newPid": 9693,
+    "backup": "~/.loom/evo/backups/pre-restart-worker-mcp-multi-cli-c674952e-9caf-4829-8748-de3ec0b9bc13",
+    "sourceSha256": "0c12871559a50b6841ecdea14e2775e82d49c715454e5d6715d22bf9b8ad1f92",
+    "head": "c8a9ce2daf457e56357a5149d8265b51165add1f",
+    "databases": 2,
+    "files": 302,
+    "businessTables": {
+      "messages": {
+        "rows": 235,
+        "sha256": "c7e1fe0ff2db90f81eb3e4db8695dbe28dfe8783c7aa4b0d361f2cb91817c888"
+      },
+      "tasks": {
+        "rows": 9,
+        "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+      },
+      "role_templates": {
+        "rows": 39,
+        "sha256": "c11295d87be6062fde6ef8ff20b4495a6b984a7ab75e72e00c512ef11ab42d1a"
+      },
+      "role_revisions": {
+        "rows": 39,
+        "sha256": "79f791e267b7c7544b5c6b881ac486bd519145424c8dc7c805750f6ed1c61a2d"
+      },
+      "role_instances": {
+        "rows": 65,
+        "sha256": "f93603dff830fa409d737a13de1433eb1d0943af07b509d3ed573637d97cd3b3"
+      },
+      "memory_entries": {
+        "rows": 4,
+        "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+      },
+      "memory_revisions": {
+        "rows": 4,
+        "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+      },
+      "role_instance_sessions": {
+        "rows": 63,
+        "sha256": "a6323123619a9eb57b6876b8849b859c2cfd79b56f50667af3a89d16cf93ba33"
+      },
+      "room_events": {
+        "rows": 2059,
+        "sha256": "3a9e068af9fd153a004722bc9c3b02b9af8a8c59b464cf9654ede9a0528095e0"
+      },
+      "agent_definitions": {
+        "rows": 69,
+        "sha256": "044111c4fc6d2be52ea7f677d06eaf40917bb7e2c87f40b7573d8aeb3633281a"
+      },
+      "inbox_items": {
+        "rows": 163,
+        "sha256": "c13bd14439ab1ed317ecc8b405bb7e57024406db140b2386e88d7f808e3f9c79"
+      }
+    },
+    "verified": true
+  },
+  "api": {
+    "at": "2026-10-04T14:59:28.645Z",
+    "roles": 39,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "authenticated": true
+  },
+  "browser": {
+    "surface": "fresh Chrome tab via cua",
+    "url": "http://127.0.0.1:4176/?room=room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+    "historyVisible": true,
+    "observedErrorLogs": []
+  },
+  "checks": {
+    "fullCheck": "passed",
+    "core": {
+      "passed": 2849,
+      "skipped": 22
+    },
+    "web": 487,
+    "console": 59,
+    "efficiencyUnit": 282,
+    "format": "passed",
+    "diff": "passed"
+  },
+  "limitations": [
+    "No frontend product code changed; existing verified build retained.",
+    "Real-provider acceptance ran in temporary real daemons, not the formal data home.",
+    "P104 Codex short sample passed; P105 cost remains high; P107 over-budget and incomplete usage; Claude alias blocked."
+  ]
+}

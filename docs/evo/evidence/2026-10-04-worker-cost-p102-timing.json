@@ -1,0 +1,658 @@
+{
+  "source": "<tmp>/rah-cli-efficiency-5Q9Cph/result.json",
+  "note": "Offline timing correction, original unmodified; no model calls",
+  "generationTiming": [
+    [
+      {
+        "responseId": "chatcmpl-I4ZLxYCAbgVl37S81BOwqkRZ",
+        "inputTokens": 23043,
+        "cachedInputTokens": 19456,
+        "outputTokens": 105,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:58:07.321Z",
+        "startedAt": "2026-10-04T13:57:50.830Z"
+      },
+      {
+        "responseId": "chatcmpl-31Dr2CebOLjAYfe8ckATIs2K",
+        "inputTokens": 26716,
+        "cachedInputTokens": 23040,
+        "outputTokens": 388,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:58:29.376Z",
+        "startedAt": "2026-10-04T13:58:07.327Z"
+      },
+      {
+        "responseId": "chatcmpl-XCX2QEE3lRo3DqXqjmXIN3tA",
+        "inputTokens": 27172,
+        "cachedInputTokens": 26624,
+        "outputTokens": 99,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:58:36.346Z",
+        "startedAt": "2026-10-04T13:58:29.380Z"
+      }
+    ],
+    [
+      {
+        "responseId": "chatcmpl-wtDNSR1b0zfRJXxU4Zy4byDN",
+        "inputTokens": 27405,
+        "cachedInputTokens": 27136,
+        "outputTokens": 284,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:58:56.101Z",
+        "startedAt": "2026-10-04T13:58:37.992Z"
+      },
+      {
+        "responseId": "chatcmpl-w3yzpRQFy2yiTQGiTAI2HLmv",
+        "inputTokens": 27755,
+        "cachedInputTokens": 27392,
+        "outputTokens": 102,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:59:12.799Z",
+        "startedAt": "2026-10-04T13:58:56.106Z"
+      }
+    ],
+    [
+      {
+        "responseId": "chatcmpl-mPeq8jjhbfyBrFJG2YYOV3mJ",
+        "inputTokens": 27981,
+        "cachedInputTokens": 27648,
+        "outputTokens": 287,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:59:24.466Z",
+        "startedAt": "2026-10-04T13:59:15.589Z"
+      },
+      {
+        "responseId": "chatcmpl-ZEfstjHE2wbQ6vygm2tkRelN",
+        "inputTokens": 28331,
+        "cachedInputTokens": 27904,
+        "outputTokens": 86,
+        "reasoningOutputTokens": null,
+        "observedAt": "2026-10-04T13:59:27.602Z",
+        "startedAt": "2026-10-04T13:59:24.470Z"
+      }
+    ]
+  ],
+  "rounds": [
+    {
+      "generations": 3,
+      "generationsTotal": 3,
+      "generationsBeforeReply": 2,
+      "generationsAfterReply": 1,
+      "input": 76931,
+      "cached": 69120,
+      "uncached": 7811,
+      "output": 592,
+      "reasoning": null,
+      "firstInput": 23043,
+      "peakInput": 27172,
+      "replySeconds": 39.471,
+      "toolCalls": [
+        {
+          "at": "2026-10-04T13:58:07.315Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-04T13:58:07.316Z",
+          "name": "Read",
+          "kind": "other"
+        },
+        {
+          "at": "2026-10-04T13:58:28.569Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "replyAt": "2026-10-04T13:58:29.360Z",
+      "productUsage": {
+        "completeness": "complete",
+        "gaps": [],
+        "totals": {
+          "generations": 3,
+          "inputTokens": 76931,
+          "cachedInputTokens": 69120,
+          "outputTokens": 592,
+          "reasoningOutputTokens": null
+        }
+      },
+      "finalInterrupt": null,
+      "replyTimingEvidence": {
+        "basis": "native-generation-timing",
+        "knownBeforeReply": 2,
+        "knownAfterReply": 1,
+        "unresolved": 0
+      }
+    },
+    {
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 1,
+      "input": 55160,
+      "cached": 54528,
+      "uncached": 632,
+      "output": 386,
+      "reasoning": null,
+      "firstInput": 27405,
+      "peakInput": 27755,
+      "replySeconds": 18.991,
+      "toolCalls": [
+        {
+          "at": "2026-10-04T13:58:55.691Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "replyAt": "2026-10-04T13:58:56.087Z",
+      "productUsage": {
+        "completeness": "complete",
+        "gaps": [],
+        "totals": {
+          "generations": 2,
+          "inputTokens": 55160,
+          "cachedInputTokens": 54528,
+          "outputTokens": 386,
+          "reasoningOutputTokens": null
+        }
+      },
+      "finalInterrupt": null,
+      "replyTimingEvidence": {
+        "basis": "native-generation-timing",
+        "knownBeforeReply": 1,
+        "knownAfterReply": 1,
+        "unresolved": 0
+      }
+    },
+    {
+      "generations": 2,
+      "generationsTotal": 2,
+      "generationsBeforeReply": 1,
+      "generationsAfterReply": 1,
+      "input": 56312,
+      "cached": 55552,
+      "uncached": 760,
+      "output": 373,
+      "reasoning": null,
+      "firstInput": 27981,
+      "peakInput": 28331,
+      "replySeconds": 9.782,
+      "toolCalls": [
+        {
+          "at": "2026-10-04T13:59:24.049Z",
+          "name": "Bash",
+          "kind": "box-post",
+          "turnHandle": false,
+          "final": false
+        }
+      ],
+      "replyAt": "2026-10-04T13:59:24.452Z",
+      "productUsage": {
+        "completeness": "complete",
+        "gaps": [],
+        "totals": {
+          "generations": 2,
+          "inputTokens": 56312,
+          "cachedInputTokens": 55552,
+          "outputTokens": 373,
+          "reasoningOutputTokens": null
+        }
+      },
+      "finalInterrupt": null,
+      "replyTimingEvidence": {
+        "basis": "native-generation-timing",
+        "knownBeforeReply": 1,
+        "knownAfterReply": 1,
+        "unresolved": 0
+      }
+    }
+  ],
+  "comparison": {
+    "status": "over-budget",
+    "measuredStatus": "over-budget",
+    "failures": [],
+    "unmeasured": [],
+    "finalInterrupt": {
+      "rounds": 3,
+      "committed": 0,
+      "requested": 0,
+      "accepted": 0,
+      "terminal": 0,
+      "sent": 0,
+      "preempted": 0,
+      "notPreempted": 0,
+      "unknown": 0,
+      "noFinalPost": 3,
+      "evidenceMissing": 0
+    },
+    "retriedRounds": [],
+    "fixedOverhead": {
+      "rah": 23043,
+      "native": 21487,
+      "tokens": 1556,
+      "budget": 3000
+    },
+    "perRoundResidue": [
+      {
+        "fromRound": 2,
+        "toRound": 3,
+        "rahGrowth": 576,
+        "nativeGrowth": 506,
+        "tokens": 70
+      }
+    ],
+    "workPathVariance": {
+      "round1HistoryDelta": {
+        "rahGrowth": 4362,
+        "nativeGrowth": 3562,
+        "tokens": 800
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessToolCalls": {
+            "rah": 2,
+            "native": 2,
+            "delta": 0
+          },
+          "generations": {
+            "rah": 3,
+            "native": 2,
+            "delta": 1
+          },
+          "extraGenerations": {
+            "raw": 1,
+            "workPath": 0,
+            "protocol": 1
+          },
+          "toolCalls": {
+            "rah": {
+              "total": 3,
+              "business": 2,
+              "protocol": 1,
+              "unknown": 0,
+              "byKind": {
+                "other": 2,
+                "box-post": 1
+              }
+            },
+            "native": {
+              "total": 2,
+              "business": 2,
+              "protocol": 0,
+              "unknown": 0,
+              "byKind": {
+                "other": 2
+              }
+            }
+          }
+        },
+        {
+          "round": 2,
+          "businessToolCalls": {
+            "rah": 0,
+            "native": 0,
+            "delta": 0
+          },
+          "generations": {
+            "rah": 2,
+            "native": 1,
+            "delta": 1
+          },
+          "extraGenerations": {
+            "raw": 1,
+            "workPath": 0,
+            "protocol": 1
+          },
+          "toolCalls": {
+            "rah": {
+              "total": 1,
+              "business": 0,
+              "protocol": 1,
+              "unknown": 0,
+              "byKind": {
+                "box-post": 1
+              }
+            },
+            "native": {
+              "total": 0,
+              "business": 0,
+              "protocol": 0,
+              "unknown": 0,
+              "byKind": {}
+            }
+          }
+        },
+        {
+          "round": 3,
+          "businessToolCalls": {
+            "rah": 0,
+            "native": 0,
+            "delta": 0
+          },
+          "generations": {
+            "rah": 2,
+            "native": 1,
+            "delta": 1
+          },
+          "extraGenerations": {
+            "raw": 1,
+            "workPath": 0,
+            "protocol": 1
+          },
+          "toolCalls": {
+            "rah": {
+              "total": 1,
+              "business": 0,
+              "protocol": 1,
+              "unknown": 0,
+              "byKind": {
+                "box-post": 1
+              }
+            },
+            "native": {
+              "total": 0,
+              "business": 0,
+              "protocol": 0,
+              "unknown": 0,
+              "byKind": {}
+            }
+          }
+        }
+      ]
+    },
+    "rounds": [
+      {
+        "status": "over-budget",
+        "measuredStatus": "over-budget",
+        "failures": ["replySeconds"],
+        "unmeasured": [],
+        "notes": [],
+        "generations": {
+          "native": {
+            "total": 2,
+            "beforeReply": 2,
+            "afterReply": 0
+          },
+          "rah": {
+            "total": 3,
+            "beforeReply": 2,
+            "afterReply": 1
+          }
+        },
+        "extraGenerations": 1,
+        "extraGenerationsBeforeReply": 0,
+        "workPathExtraGenerations": 0,
+        "workPathExtraGenerationsBeforeReply": 0,
+        "extraProtocolGenerations": 1,
+        "extraProtocolGenerationsBeforeReply": 0,
+        "workPath": {
+          "businessToolCalls": {
+            "rah": 2,
+            "native": 2,
+            "delta": 0
+          },
+          "businessToolCallsBeforeReply": {
+            "rah": 2,
+            "native": 2,
+            "delta": 0,
+            "basis": "reply-time"
+          },
+          "toolCalls": {
+            "rah": {
+              "total": 3,
+              "business": 2,
+              "protocol": 1,
+              "unknown": 0,
+              "byKind": {
+                "other": 2,
+                "box-post": 1
+              }
+            },
+            "native": {
+              "total": 2,
+              "business": 2,
+              "protocol": 0,
+              "unknown": 0,
+              "byKind": {
+                "other": 2
+              }
+            }
+          },
+          "unknownCountedAsProtocol": 0,
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0
+        },
+        "input": {
+          "raw": 76931,
+          "workPath": 0,
+          "judged": 76931,
+          "budget": 99278
+        },
+        "usageEvidence": {
+          "completeness": "complete",
+          "gaps": [],
+          "mismatches": []
+        },
+        "finalInterrupt": {
+          "committed": false,
+          "requested": false,
+          "accepted": null,
+          "terminal": null,
+          "sent": false,
+          "preemptedFollowUp": null
+        },
+        "inputRatio": 1.6494993460408671,
+        "inputRatioJudged": 1.6494993460408671,
+        "uncachedRatio": 0.9194820482636845,
+        "replyRatio": 2.014443196897009,
+        "inputDecomposition": {
+          "rah": 76931,
+          "native": 46639,
+          "budget": 99278,
+          "delta": 30292,
+          "fixedOverhead": 4668,
+          "round1History": 0,
+          "residue": 0,
+          "extraGenerations": 21487,
+          "workPathGenerations": 0,
+          "protocolGenerations": 21487,
+          "intraRound": 4137
+        }
+      },
+      {
+        "status": "over-budget",
+        "measuredStatus": "over-budget",
+        "failures": ["replySeconds"],
+        "unmeasured": [],
+        "notes": [],
+        "generations": {
+          "native": {
+            "total": 1,
+            "beforeReply": 1,
+            "afterReply": 0
+          },
+          "rah": {
+            "total": 2,
+            "beforeReply": 1,
+            "afterReply": 1
+          }
+        },
+        "extraGenerations": 1,
+        "extraGenerationsBeforeReply": 0,
+        "workPathExtraGenerations": 0,
+        "workPathExtraGenerationsBeforeReply": 0,
+        "extraProtocolGenerations": 1,
+        "extraProtocolGenerationsBeforeReply": 0,
+        "workPath": {
+          "businessToolCalls": {
+            "rah": 0,
+            "native": 0,
+            "delta": 0
+          },
+          "businessToolCallsBeforeReply": {
+            "rah": 0,
+            "native": 0,
+            "delta": 0,
+            "basis": "reply-time"
+          },
+          "toolCalls": {
+            "rah": {
+              "total": 1,
+              "business": 0,
+              "protocol": 1,
+              "unknown": 0,
+              "byKind": {
+                "box-post": 1
+              }
+            },
+            "native": {
+              "total": 0,
+              "business": 0,
+              "protocol": 0,
+              "unknown": 0,
+              "byKind": {}
+            }
+          },
+          "unknownCountedAsProtocol": 0,
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0
+        },
+        "input": {
+          "raw": 55160,
+          "workPath": 0,
+          "judged": 55160,
+          "budget": 56098
+        },
+        "usageEvidence": {
+          "completeness": "complete",
+          "gaps": [],
+          "mismatches": []
+        },
+        "finalInterrupt": {
+          "committed": false,
+          "requested": false,
+          "accepted": null,
+          "terminal": null,
+          "sent": false,
+          "preemptedFollowUp": null
+        },
+        "inputRatio": 2.20208391552557,
+        "inputRatioJudged": 2.20208391552557,
+        "uncachedRatio": 0.07084407577625827,
+        "replyRatio": 1.814022351705034,
+        "inputDecomposition": {
+          "rah": 55160,
+          "native": 25049,
+          "budget": 56098,
+          "delta": 30111,
+          "fixedOverhead": 3112,
+          "round1History": 1600,
+          "residue": 0,
+          "extraGenerations": 25049,
+          "workPathGenerations": 0,
+          "protocolGenerations": 25049,
+          "intraRound": 350
+        }
+      },
+      {
+        "status": "within-budget",
+        "measuredStatus": "within-budget",
+        "failures": [],
+        "unmeasured": [],
+        "notes": [],
+        "generations": {
+          "native": {
+            "total": 1,
+            "beforeReply": 1,
+            "afterReply": 0
+          },
+          "rah": {
+            "total": 2,
+            "beforeReply": 1,
+            "afterReply": 1
+          }
+        },
+        "extraGenerations": 1,
+        "extraGenerationsBeforeReply": 0,
+        "workPathExtraGenerations": 0,
+        "workPathExtraGenerationsBeforeReply": 0,
+        "extraProtocolGenerations": 1,
+        "extraProtocolGenerationsBeforeReply": 0,
+        "workPath": {
+          "businessToolCalls": {
+            "rah": 0,
+            "native": 0,
+            "delta": 0
+          },
+          "businessToolCallsBeforeReply": {
+            "rah": 0,
+            "native": 0,
+            "delta": 0,
+            "basis": "reply-time"
+          },
+          "toolCalls": {
+            "rah": {
+              "total": 1,
+              "business": 0,
+              "protocol": 1,
+              "unknown": 0,
+              "byKind": {
+                "box-post": 1
+              }
+            },
+            "native": {
+              "total": 0,
+              "business": 0,
+              "protocol": 0,
+              "unknown": 0,
+              "byKind": {}
+            }
+          },
+          "unknownCountedAsProtocol": 0,
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0
+        },
+        "input": {
+          "raw": 56312,
+          "workPath": 0,
+          "judged": 56312,
+          "budget": 57110
+        },
+        "usageEvidence": {
+          "completeness": "complete",
+          "gaps": [],
+          "mismatches": []
+        },
+        "finalInterrupt": {
+          "committed": false,
+          "requested": false,
+          "accepted": null,
+          "terminal": null,
+          "sent": false,
+          "preemptedFollowUp": null
+        },
+        "inputRatio": 2.2035609469771082,
+        "inputRatioJudged": 2.2035609469771082,
+        "uncachedRatio": 1.0511756569847857,
+        "replyRatio": 0.961943160586095,
+        "inputDecomposition": {
+          "rah": 56312,
+          "native": 25555,
+          "budget": 57110,
+          "delta": 30757,
+          "fixedOverhead": 3112,
+          "round1History": 1600,
+          "residue": 140,
+          "extraGenerations": 25555,
+          "workPathGenerations": 0,
+          "protocolGenerations": 25555,
+          "intraRound": 350
+        }
+      }
+    ]
+  }
+}

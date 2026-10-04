@@ -111,7 +111,7 @@ test("a completed prompt yields one generation per step.end usage, with the prov
     });
 });
 
-test("a prompt ended by the final interrupt keeps its finished steps; the cancelled step has no usage", () => {
+test("a requested step interrupted without usage preserves finished sums and reports a capture gap", () => {
   // Real turn 0 (session start lines included): steps 1-2 finished, step 3
   // cancelled before usage.
   const turn = kimiTurnUsage(turnRegion(0, 18), {
@@ -119,7 +119,10 @@ test("a prompt ended by the final interrupt keeps its finished steps; the cancel
     promptText: PROMPT,
   });
   assert.equal(turn.ended, true);
-  assert.deepEqual(turn.gaps, []);
+  assert.deepEqual(
+    turn.gaps.map((gap) => gap.reason),
+    ["parse_error"],
+  );
   assert.deepEqual(
     turn.usages.map((usage) => [usage.responseId, usage.inputTokens]),
     [
@@ -163,7 +166,11 @@ test("a compaction inside this turn does not end it: generation after it is stil
     { now: at, promptText: PROMPT },
   );
   assert.equal(late.ended, true);
-  assert.deepEqual(late.gaps, []);
+  // The fixture also issued step 5.3 before final cancellation, without usage.
+  assert.deepEqual(
+    late.gaps.map((gap) => gap.reason),
+    ["parse_error"],
+  );
   assert.equal(late.usages.length, 3);
   assert.match(late.usages[0]!.responseId, /^compaction:/u);
   assert.deepEqual(
@@ -363,4 +370,92 @@ test("the wire is found through Kimi's session index and read from the pre-promp
   } finally {
     rmSync(home, { recursive: true, force: true });
   }
+});
+
+test("cancellation before any recorded model request does not invent a usage gap", () => {
+  const wire = turnRegion(0, 18)
+    .split("\n")
+    .filter((line) => {
+      if (!line) return true;
+      const record = JSON.parse(line);
+      return !(record.type === "llm.request" && record.turnStep === "0.3");
+    })
+    .join("\n");
+  const result = kimiTurnUsage(wire, { now: at, promptText: PROMPT });
+  assert.equal(result.ended, true);
+  assert.equal(result.usages.length, 2);
+  assert.deepEqual(result.gaps, []);
+});
+
+test("usage from another step cannot cover an issued request missing its own usage", () => {
+  const wire = turnRegion(30, 42)
+    .split("\n")
+    .map((line) => {
+      if (!line) return line;
+      const record = JSON.parse(line);
+      if (record.type === "llm.request") record.turnStep = "2.99";
+      return JSON.stringify(record);
+    })
+    .join("\n");
+  const result = kimiTurnUsage(wire, { now: at, promptText: PROMPT });
+  assert.equal(result.ended, true);
+  assert.equal(result.usages.length, 2);
+  assert.deepEqual(
+    result.gaps.map((gap) => gap.reason),
+    ["parse_error"],
+  );
+});
+
+test("duplicate response IDs cannot fill a second request coverage gap", () => {
+  let firstId: string | undefined;
+  const wire = turnRegion(30, 42)
+    .split("\n")
+    .map((line) => {
+      if (!line) return line;
+      const record = JSON.parse(line);
+      if (record.event?.type === "step.end" && record.event.usage) {
+        firstId ??= record.event.messageId;
+        record.event.messageId = firstId;
+      }
+      return JSON.stringify(record);
+    })
+    .join("\n");
+  const result = kimiTurnUsage(wire, { now: at, promptText: PROMPT });
+  assert.equal(result.ended, true);
+  assert.equal(result.usages.length, 1);
+  assert.deepEqual(
+    result.gaps.map((gap) => gap.reason),
+    ["parse_error"],
+  );
+});
+
+test("coverage from the following turn cannot erase this turn's cancelled request gap", () => {
+  const result = kimiTurnUsage(
+    turnRegion(0, 18) + turnRegion(30, 42, "later"),
+    { now: at, promptText: PROMPT },
+  );
+  assert.equal(result.ended, true);
+  assert.equal(result.usages.length, 2);
+  assert.deepEqual(
+    result.gaps.map((gap) => gap.reason),
+    ["parse_error"],
+  );
+});
+
+test("another agent's same-step receipt cannot cover this main agent's request", () => {
+  const wire = turnRegion(30, 42)
+    .split("\n")
+    .map((line) => {
+      if (!line) return line;
+      const record = JSON.parse(line);
+      if (record.event?.type === "step.end") record.agentId = "foreign";
+      return JSON.stringify(record);
+    })
+    .join("\n");
+  const result = kimiTurnUsage(wire, { now: at, promptText: PROMPT });
+  assert.equal(result.ended, true);
+  assert.deepEqual(
+    result.gaps.map((gap) => gap.reason),
+    ["parse_error"],
+  );
 });

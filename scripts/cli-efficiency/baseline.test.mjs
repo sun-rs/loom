@@ -180,3 +180,57 @@ test("a denominator must be this complete native arm with memory enforcement on 
     paired.nativeEvidenceSha256,
   );
 });
+
+test("version-audited providers reject upgrades before either arm and require exact per-spawn audit evidence", async () => {
+  const { describeNativeMemoryPolicy } =
+    await import("./native-memory-policy.mjs");
+  for (const provider of ["kimi", "opencode"]) {
+    const input = fixture();
+    input.config.provider = provider;
+    input.memoryPolicy = describeNativeMemoryPolicy(provider);
+    input.cliVersion = provider === "kimi" ? "0.39.1" : "1.18.32";
+    assert.throws(
+      () => createCostBaseline({ ...input, cliVersion: "999.0.0" }),
+      /audit.*version/i,
+    );
+    const baseline = createCostBaseline(input),
+      native = nativeArm();
+    for (const round of native.rounds)
+      round.nativeMemoryPolicy = {
+        ...input.memoryPolicy,
+        status: "not-applicable",
+        evidence: "audited-cli-version",
+      };
+    assert.ok(nativePairEvidence({ baseline, native }).nativeEvidenceSha256);
+    for (const patch of [
+      { version: "999.0.0" },
+      { sourceRevision: "invented" },
+      { status: "enforced" },
+      { evidence: "spawn-configuration" },
+    ]) {
+      const bad = structuredClone(native);
+      Object.assign(bad.rounds[1].nativeMemoryPolicy, patch);
+      assert.throws(() => nativePairEvidence({ baseline, native: bad }));
+    }
+  }
+  const baseline = createCostBaseline(fixture()),
+    native = nativeArm();
+  native.rounds[0].nativeMemoryPolicy.status = "not-applicable";
+  assert.throws(() => nativePairEvidence({ baseline, native }));
+});
+
+test("native denominator cannot hide unreported native requests behind complete usage records", () => {
+  const baseline = createCostBaseline(fixture()),
+    native = nativeArm();
+  native.rounds[0].metrics.requestCoverage = {
+    status: "incomplete",
+    requests: 3,
+    matchedRequests: 2,
+    unreportedRequests: 1,
+    unmatchedUsageRecords: 0,
+  };
+  assert.throws(
+    () => nativePairEvidence({ baseline, native }),
+    /request.*coverage/i,
+  );
+});

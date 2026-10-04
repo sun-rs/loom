@@ -44,8 +44,9 @@ const usageAt = (id, timestamp) => ({
     },
   },
 });
-test("generations split at the effective Room reply: the posting generation is before-reply", () => {
-  // check -> post (its tool call lands the reply at :05) -> final.
+test("usage completion times cannot distinguish a delayed posting record from a follow-up", () => {
+  // A record at :07 may be delayed usage for the posting response, not a new
+  // generation. Synthetic response IDs do not provide an output association.
   const events = [
     usageAt("check", "2026-01-01T00:00:01.000Z"),
     usageAt("post", "2026-01-01T00:00:04.000Z"),
@@ -54,8 +55,13 @@ test("generations split at the effective Room reply: the posting generation is b
   const m = summarizeUsage(events, { replyAt: "2026-01-01T00:00:05.000Z" });
   assert.equal(m.generations, 3, "generations stays the total");
   assert.equal(m.generationsTotal, 3);
-  assert.equal(m.generationsBeforeReply, 2);
-  assert.equal(m.generationsAfterReply, 1);
+  assert.equal(m.generationsBeforeReply, null);
+  assert.equal(m.generationsAfterReply, null);
+  assert.deepEqual(m.replyTimingEvidence, {
+    basis: "usage-record-upper-bound",
+    knownBeforeReply: 2,
+    unresolved: 1,
+  });
   // Native: the final answer generation is the reply, so everything is before.
   const n = summarizeUsage(events);
   assert.equal(n.generationsBeforeReply, 3);
@@ -601,8 +607,14 @@ test("per-provider generations (product/transcript records) summarize like Codex
   assert.deepEqual(m, {
     generations: 3,
     generationsTotal: 3,
-    generationsBeforeReply: 2,
-    generationsAfterReply: 1,
+    generationsBeforeReply: null,
+    generationsAfterReply: null,
+    replyTimingEvidence: {
+      basis: "native-generation-timing",
+      knownBeforeReply: 2,
+      knownAfterReply: 0,
+      unresolved: 1,
+    },
     input: 64312,
     cached: 62300,
     uncached: 2012,
@@ -889,4 +901,58 @@ test("owner A: the input decomposition splits extra generations into work path a
     workPath: 1,
     protocol: 0,
   });
+});
+
+test("mixed native timing keeps exact split unknown and excludes proven after-reply generation from its upper bound", async () => {
+  const { summarizeGenerations } = await import("./metrics.mjs");
+  const row = (responseId, extra = {}) => ({
+    responseId,
+    observedAt: "2026-01-01T00:00:10Z",
+    inputTokens: 1,
+    cachedInputTokens: 0,
+    outputTokens: 1,
+    reasoningOutputTokens: null,
+    ...extra,
+  });
+  const measured = summarizeGenerations(
+    [
+      row("known-after", {
+        startedAfter: "2026-01-01T00:00:06Z",
+        startedBy: "2026-01-01T00:00:07Z",
+      }),
+      row("unknown"),
+    ],
+    { replyAt: "2026-01-01T00:00:05Z" },
+  );
+  assert.equal(measured.generationsBeforeReply, null);
+  assert.deepEqual(measured.replyTimingEvidence, {
+    basis: "native-generation-timing",
+    knownBeforeReply: 0,
+    knownAfterReply: 1,
+    unresolved: 1,
+  });
+  const compared = compareRounds(
+    { generationsTotal: 1, toolCalls: [] },
+    { ...measured, toolCalls: [] },
+  );
+  assert.equal(compared.beforeReplyBudgetEvidence.upper, 0);
+  assert.equal(compared.beforeReplyBudgetEvidence.status, "within-budget");
+});
+
+test("unreported request coverage on either arm defeats otherwise matching recorded token totals", () => {
+  const gap = {
+    status: "incomplete",
+    requests: 3,
+    matchedRequests: 2,
+    unreportedRequests: 1,
+    unmatchedUsageRecords: 0,
+  };
+  for (const [native, rah] of [
+    [{ ...nativeRound, requestCoverage: gap }, rahRound],
+    [nativeRound, { ...rahRound, requestCoverage: gap }],
+  ]) {
+    const result = compareRounds(native, rah);
+    assert.ok(result.failures.includes("usageEvidenceMissing"));
+    assert.equal(result.measuredStatus, "missing-evidence");
+  }
 });

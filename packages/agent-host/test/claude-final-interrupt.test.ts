@@ -190,3 +190,42 @@ test("receipt race: a stated non-abort reason never waits for the receipt", () =
   helper.observe(failure);
   assert.equal(helper.awaitsReceipt(failure), false);
 });
+
+test("native MCP final is timing evidence only; Host arm and complete result remain required", async () => {
+  let interrupts = 0;
+  const tracker = createClaudeFinalInterrupt({
+    interrupt: async () => {
+      interrupts++;
+    },
+  });
+  tracker.observe({
+    type: "assistant",
+    message: {
+      content: [
+        {
+          type: "tool_use",
+          id: "mcp-final",
+          name: "mcp__loom_worker__loom_reply",
+          input: { body: "FAKE", final: true },
+        },
+      ],
+    },
+  });
+  tracker.observe({
+    type: "user",
+    message: {
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: "mcp-final",
+          content: "complete receipt",
+        },
+      ],
+    },
+  });
+  assert.equal(interrupts, 0);
+  tracker.observe({ type: "stream_event", event: { type: "message_start" } });
+  tracker.arm();
+  assert.equal(interrupts, 1);
+  assert.equal((await tracker.report()).preemptedFollowUp, false);
+});

@@ -8,17 +8,22 @@
 // independent cross-check (one line per content block, usage repeated per
 // line of a message id, so it is deduplicated by message id).
 import { ClaudeStreamUsageTracker } from "../../packages/agent-host/src/provider-usage.js";
-import { workerCallKind } from "./tool-calls.mjs";
+import { workerCallKind, mcpCliTurnHandle } from "./tool-calls.mjs";
 
 // One tool call → Worker call kind (boolean handle flag only; the handle
 // itself is never recorded). Mirrors common.mjs `measure` for Codex.
 export function workerCall(name, args, at) {
   // Absent arguments (undefined) are an unclassifiable, `unknown` call.
-  const kind = workerCallKind(args);
+  const kind = workerCallKind(args, name);
+  const cliTurnHandle =
+    kind === "worker-mcp-reply"
+      ? mcpCliTurnHandle(args, name === "Bash" ? "shell" : name)
+      : undefined;
   return {
     at,
     name,
     kind,
+    ...(cliTurnHandle === undefined ? {} : { cliTurnHandle }),
     ...(kind === "box-post" || kind === "box-check"
       ? { turnHandle: /--turn\b/.test(args) }
       : {}),

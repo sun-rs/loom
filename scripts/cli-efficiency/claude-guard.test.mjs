@@ -404,3 +404,53 @@ test("output watcher: any model outside the approved family is a violation", () 
     undefined,
   );
 });
+
+test("MCP launch only admits the fixed internal worker entry and strict isolation", async () => {
+  const { fileURLToPath } = await import("node:url");
+  const config = {
+    mcpServers: {
+      loom_worker: {
+        command: process.execPath,
+        args: [
+          fileURLToPath(
+            new URL(
+              "../../packages/agent-host/src/worker-mcp-entry.ts",
+              import.meta.url,
+            ),
+          ),
+        ],
+      },
+    },
+  };
+  const args = [
+    ...product,
+    "--strict-mcp-config",
+    "--mcp-config",
+    JSON.stringify(config),
+  ];
+  assert.equal(classifyClaudeLaunch(args, approved), "turn");
+  for (const invalid of [
+    [...product, "--mcp-config", JSON.stringify(config)],
+    [...args, "--mcp-config", JSON.stringify(config)],
+    [...args, "--strict-mcp-config"],
+    [...product, "--strict-mcp-config", "--mcp-config", "/tmp/user.json"],
+    [
+      ...product,
+      "--strict-mcp-config",
+      "--mcp-config",
+      JSON.stringify({ mcpServers: { other: { command: "evil" } } }),
+    ],
+    ...[
+      { ...config.mcpServers.loom_worker, command: "node" },
+      { ...config.mcpServers.loom_worker, args: ["/tmp/evil.ts"] },
+      { ...config.mcpServers.loom_worker, env: { TOKEN: "FAKE_SECRET" } },
+      { ...config.mcpServers.loom_worker, type: "stdio" },
+    ].map((server) => [
+      ...product,
+      "--strict-mcp-config",
+      "--mcp-config",
+      JSON.stringify({ mcpServers: { loom_worker: server } }),
+    ]),
+  ])
+    assert.throws(() => classifyClaudeLaunch(invalid, approved), /MCP/);
+});
