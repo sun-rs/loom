@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+import { WorkerFinalOutputEnvelopeSchema } from "@rah-os/protocol";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
@@ -10,6 +12,9 @@ import { startGuardedUnixProxy } from "./ws-guard.mjs";
 // The product's process-only Codex switches (memory, multi_agent, goals,
 // global personal-config isolation), exactly as the product passes them.
 // Per-name user MCP disables are admitted only as `enabled=false`.
+const FINAL_OUTPUT_SCHEMA = WorkerFinalOutputEnvelopeSchema.toJSONSchema({
+  target: "draft-7",
+});
 const PRODUCT_CONFIG = new Set(
   providerLaunchSwitches("codex").args.filter((a) => a !== "-c"),
 );
@@ -166,9 +171,21 @@ export function createCodexRequestGuard(approved) {
       case "turn/start":
         onlyKeys(
           p,
-          ["threadId", "input", "clientUserMessageId", "model", "effort"],
+          [
+            "threadId",
+            "input",
+            "clientUserMessageId",
+            "model",
+            "effort",
+            "outputSchema",
+          ],
           where,
         );
+        if (
+          Object.hasOwn(p, "outputSchema") &&
+          !isDeepStrictEqual(p.outputSchema, FINAL_OUTPUT_SCHEMA)
+        )
+          refuse(`${where}.outputSchema`);
         if (p.model !== undefined)
           assert.equal(p.model, approved.model, "Unapproved turn model");
         if (p.effort !== undefined)

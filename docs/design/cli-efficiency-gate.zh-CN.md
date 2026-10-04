@@ -8,6 +8,8 @@
 provider/模型/effort 组合在配置解析时、任何进程启动前失败，shim 也只为表内组合生成；Fable、GPT-5.6 Ultra 与任何
 `max`/`ultra` 档永不放行。
 
+Codex最终输出试验的`turn/start.outputSchema`仅允许Protocol现有发布envelope生成的精确draft7 schema；不能通过宽泛schema放松测试护栏。改动原生请求字段后，付费前须用正式`writeGuardedShim`与真实CLI、loopback假模型贯穿生产链，覆盖实际工具前后及续轮；绕过护栏的免费探针不足以证明付费接线可用。
+
 ## 固定成本基线与官方记忆关闭（2026-10-04）
 
 先运行 `RAH_EFFICIENCY_ORDER=native,role-warm npm run test:cli:efficiency -- --plan` 免费检查实验身份；它只读取本地代码、配置与 CLI 版本，不启动模型回合。`--paid` 仍须本批用户授权。

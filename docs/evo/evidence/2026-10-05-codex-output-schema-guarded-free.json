@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "kind": "Real Codex 0.160.0 + exact paid writeGuardedShim/model-guard + loopback fake Responses + production Host/Kernel",
+  "paidCalls": 0,
+  "httpRequestsPerTurn": [2, 1],
+  "guardThreadAdmissions": 1,
+  "guardSocketInstances": 1,
+  "textFormat": {
+    "type": "json_schema",
+    "strict": true,
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "room.reply"
+        },
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "basedOnRoomSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1
+        },
+        "final": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": ["kind", "version", "basedOnRoomSeq", "body", "final"],
+      "additionalProperties": false
+    },
+    "name": "codex_output_schema"
+  },
+  "actualToolOutputObservedBeforeFinal": true,
+  "sameNativeSession": true,
+  "nativeFinalPhaseCount": 2,
+  "markerCount": 2,
+  "completedActivations": 2,
+  "ackCoverageVerifiedByProbe": true,
+  "limits": [
+    "Synthetic model output/usage, no paid model reliability or cost claim.",
+    "P110 remains failed and is not reclassified."
+  ]
+}

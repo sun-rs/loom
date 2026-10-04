@@ -1,3 +1,4 @@
+import { WorkerFinalOutputEnvelopeSchema } from "@rah-os/protocol";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -586,3 +587,108 @@ test("Codex gate admits only thread-scoped internal Worker MCP readiness reads",
       }),
     );
 });
+
+const finalOutputSchema = WorkerFinalOutputEnvelopeSchema.toJSONSchema({
+  target: "draft-7",
+});
+function reverseObjectKeys(value) {
+  if (Array.isArray(value)) return value.map(reverseObjectKeys);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value)
+        .reverse()
+        .map(([key, item]) => [key, reverseObjectKeys(item)]),
+    );
+  return value;
+}
+function outputTurn(outputSchema) {
+  return {
+    id: 991,
+    method: "turn/start",
+    params: {
+      ...productMessages.find((message) => message.method === "turn/start")
+        .params,
+      outputSchema,
+    },
+  };
+}
+test("Codex outputSchema admits only the exact Protocol shape independent of object key order", () => {
+  assert.doesNotThrow(() => guard(outputTurn(finalOutputSchema)));
+  assert.doesNotThrow(() =>
+    guard(outputTurn(reverseObjectKeys(finalOutputSchema))),
+  );
+  for (const bad of [
+    null,
+    {},
+    { type: "object" },
+    { ...finalOutputSchema, additionalProperties: true },
+    { ...finalOutputSchema, extra: true },
+    { ...finalOutputSchema, required: ["body"] },
+    {
+      ...finalOutputSchema,
+      properties: {
+        ...finalOutputSchema.properties,
+        basedOnRoomSeq: { type: "number" },
+      },
+    },
+  ]) {
+    assert.throws(() => guard(outputTurn(bad)), /outputSchema/);
+  }
+  for (const extra of [
+    { model: "gpt-6-sol" },
+    { effort: "high" },
+    { unknown: true },
+  ]) {
+    const value = outputTurn(finalOutputSchema);
+    Object.assign(value.params, extra);
+    assert.throws(() => guard(value));
+  }
+});
+test(
+  "real guarded shim forwards exact final schema and blocks broad schema before the fake provider",
+  { timeout: 10000 },
+  async () => {
+    const dir = mkdtempSync(join(tmpdir(), "loom-output-schema-guard-"));
+    try {
+      const fake = join(dir, "fake.mjs");
+      writeFileSync(
+        fake,
+        `#!/usr/bin/env node
+import {createInterface} from 'node:readline';createInterface({input:process.stdin}).on('line',line=>console.log(line));
+`,
+        { mode: 0o700 },
+      );
+      const shim = writeGuardedShim({
+        provider: "codex",
+        path: join(dir, "shim.mjs"),
+        realCli: fake,
+        ...approved,
+      });
+      for (const [schema, pass] of [
+        [reverseObjectKeys(finalOutputSchema), true],
+        [{ type: "object" }, false],
+      ]) {
+        const child = spawn(shim, ["app-server", "--listen", "stdio://"], {
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+        let stdout = "",
+          stderr = "";
+        child.stdout.on("data", (data) => (stdout += data));
+        child.stderr.on("data", (data) => (stderr += data));
+        const done = new Promise((resolve) => child.once("close", resolve));
+        child.stdin.end(JSON.stringify(outputTurn(schema)) + "\n");
+        const code = await done;
+        if (pass) {
+          assert.equal(code, 0, stderr);
+          assert.deepEqual(JSON.parse(stdout).params.outputSchema, schema);
+        } else {
+          assert.equal(code, 1);
+          assert.equal(stdout, "");
+          assert.match(stderr, /PAID_GATE_MODEL_DENIED.*outputSchema/);
+        }
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+);

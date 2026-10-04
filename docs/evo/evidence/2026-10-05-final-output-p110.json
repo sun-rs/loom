@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "sampleId": "c2f97e81-5735-44c7-b638-97469a951eb2",
+  "nativeMemoryPolicy": {
+    "provider": "codex",
+    "supported": true,
+    "status": "supported",
+    "scope": "provider-native-auto-memory",
+    "mechanism": "cli-config"
+  },
+  "root": "<tmp>",
+  "startedAt": "2026-10-04T18:03:29.233Z",
+  "provider": "codex",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "bindingId": "local:codex-cli/v1:gpt-6-luna",
+  "cliVersion": "codex-cli 0.160.0",
+  "codeCommit": "6ecbfd701a8aa6d066ac59a466eb1ab0bc1fd9da",
+  "sourceRef": "4b8e7e5897e024fbe17dc08fbcf5beb556e5ee6b",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "order": ["native", "role-warm"],
+  "questions": [
+    "只读审查当前工作目录的 scripts/workbench-launch-receipt.mjs 和 scripts/workbench-launch-receipt.test.mjs（已提供的固定 Git 快照，无需 git 命令）。仅分析网络配置在重启时的保留，列出已保证的行为、至多两项有行号依据的条件性风险；不能从两份文件证明的明确列出，不强凑漏洞。不要读其他项目文件，不修改文件、记忆或创建任务。最多400中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续上一轮：PID一致是否足以证明配置可信？区分函数级保证与整个重启流程的保证，纠正上一轮可能过强的结论，提出两条回归测试。只依赖已读内容，不重新读文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。",
+    "继续此前审查：给出最终接受或拒绝修改的判断、保留和撤回的观点，以及前轮两条回归测试的验收标准。不要重新审查或读取文件，不修改文件、记忆或创建任务。最多300中文字。 请只发送一次最终回答，以“审查结论：”开头；不要单独发送收到或进度确认。"
+  ],
+  "budgets": {
+    "maxExtraGenerations": 1,
+    "maxExtraGenerationsBeforeReply": 0,
+    "fixedOverheadTokens": 3000,
+    "inputRatio": 2,
+    "inputAllowanceTokens": 3000,
+    "replyAllowanceSeconds": 5,
+    "replyAllowanceRatio": 0.15
+  },
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "arms": {
+    "native": {
+      "kind": "native",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-04T18:03:29.276Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 51182,
+          "exit": 0,
+          "finishedAt": "2026-10-04T18:04:01.008Z",
+          "sessionId": "01a10815-cebd-7e41-8954-665f5728a145",
+          "answer": "审查结论：\n\n**已保证的行为**\n- 重启以版本为 1 且 PID 匹配的收据为准；收据缺失、过期或模式无效时会失败，不会静默改变访问模式（主文件 87–99 行；测试 47–66 行）。\n- 重启前清除继承环境中的七个网络变量，再按收据模式重建配置；其他环境变量保留（主文件 15–23、97–99 行）。\n- Tailnet 收据可保留其绑定地址、端口及明确记录的可信 LAN 地址，不依赖网卡重扫；未记录 LAN 地址时不会从环境或接口重新加入（主文件 54–62、67–85 行；测试 108–149 行）。\n- Loopback 和 LAN 模式分别清理远程绑定配置、恢复对应配置；测试覆盖相关场景（测试 28–45、68–76 行）。\n\n**条件性风险**\n- LAN 模式只检查 HTTPS origin 和非空绑定地址；证书、密钥路径若提供须为绝对路径，但可不提供（主文件 29–46 行）。若下游启动依赖这些路径，缺失或不可用时能否启动、是否影响重启，无法由这两份文件证明。\n- `writeLaunchReceipt` 会验证并原样保存 `mode`，但收据读取只解析 JSON；其文件权限设置为 0600（主文件 101–124 行）。若收据可被其他途径替换或被同权限主体修改，具体影响取决于外部访问控制；两份文件不能证明这些条件。",
+          "stderr": "Reading additional input from stdin...\n",
+          "replySeconds": 27.411,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 22115,
+            "cached": 7936,
+            "uncached": 14179,
+            "output": 421,
+            "reasoning": 0,
+            "firstInput": 8938,
+            "peakInput": 13177,
+            "replySeconds": 27.411,
+            "toolCalls": [
+              {
+                "at": "2026-10-04T18:03:37.281Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          }
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-10-04T18:04:01.033Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 52428,
+          "exit": 0,
+          "finishedAt": "2026-10-04T18:04:23.203Z",
+          "sessionId": "01a10815-cebd-7e41-8954-665f5728a145",
+          "answer": "审查结论：\n\nPID 一致只保证收据中的 `pid` 等于传入的 `incumbentPid`（主文件 92–96 行）；不能证明收据内容可信，也不能单独证明整个重启流程可信。函数会检查模式及部分网络字段，并以收据重建指定网络环境变量（87–99 行），但不能据此断言外部流程确实使用该环境、收据未被篡改或配置可成功启动。\n\n更准确地说，代码与测试保证的是：有效收据下，函数按记录模式生成网络环境；缺失、PID 不匹配或部分无效配置会报错。收据来源可信度及端到端重启效果无法由两份文件证明。\n\n建议回归测试：\n1. PID 匹配但收据网络字段被篡改或无效时，确认拒绝，或明确记录哪些篡改仍可通过验证。\n2. 模拟有效收据交给重启流程，确认最终启动实际使用生成的网络环境，且收据 PID 与运行实例对应。",
+          "stderr": "",
+          "replySeconds": 18.92,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 13641,
+            "cached": 13056,
+            "uncached": 585,
+            "output": 241,
+            "reasoning": 0,
+            "firstInput": 13641,
+            "peakInput": 13641,
+            "replySeconds": 18.92,
+            "toolCalls": []
+          }
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-10-04T18:04:23.232Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 53210,
+          "exit": 0,
+          "finishedAt": "2026-10-04T18:04:44.574Z",
+          "sessionId": "01a10815-cebd-7e41-8954-665f5728a145",
+          "answer": "审查结论：接受修改后的判断，撤回“整个重启流程已保证配置可信”的表述；保留函数级结论：PID 匹配仅证明字段相等，有效收据经校验后用于生成网络环境，部分无效情况会报错。端到端可信度无法由已读两份文件证明。\n\n回归测试验收标准：\n1. PID 匹配但收据网络字段遭篡改：对违反现有校验的字段，函数必须报错；合法字段被改成另一合法值时，应明确断言函数按收据值生成配置，不把 PID 一致当作内容真实性证明。\n2. 整个重启流程：启动实例 PID 须与收据一致，最终启动实际收到的网络环境须与收据模式一致；未使用生成环境或 PID 不对应时测试失败。",
+          "stderr": "",
+          "replySeconds": 17.686,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 13972,
+            "cached": 13056,
+            "uncached": 916,
+            "output": 193,
+            "reasoning": 0,
+            "firstInput": 13972,
+            "peakInput": 13972,
+            "replySeconds": 17.686,
+            "toolCalls": []
+          }
+        }
+      ],
+      "processes": [],
+      "status": "complete",
+      "measurementIdentityVerified": true
+    },
+    "role-warm": {
+      "kind": "role-warm",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-04T18:04:49.360Z",
+          "replies": []
+        }
+      ],
+      "processes": [
+        {
+          "pid": 54088,
+          "startedAt": "2026-10-04T18:04:49.118Z",
+          "finishedAt": "2026-10-04T18:05:20.464Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "status": "failed",
+      "warmRuntimes": true,
+      "firstRound": "cold",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "participantId": "principal_fad46371-3e08-43cf-aa6e-f2441afa7f51",
+      "roomId": "room_62646487-d14e-4a71-804f-a408d354d6be",
+      "error": "AssertionError [ERR_ASSERTION]: Activation quarantined",
+      "measurementIdentityVerified": true
+    }
+  },
+  "qualityReview": "required",
+  "status": "failed",
+  "baseline": {
+    "schemaVersion": 1,
+    "baselineId": "0292456b00fdc05d9872d76d73da5615a955225715e02a1c1a6655668250709a",
+    "identity": {
+      "workload": {
+        "id": "p97-direct-review-v1",
+        "variant": "canonical",
+        "sourceHashes": {
+          "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+          "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+        },
+        "instructionsSha256": "f4c367df91c230e5bb69dc4841053b0451a6910dbb904aa00c92fff0d227213c",
+        "questionsSha256": "990900ed483b97932456e6dd68f2d52b76cca2f760ff045629ff72c8537a26b0"
+      },
+      "delivery": {
+        "native": "native-final-text",
+        "loom": "explicit-room-post",
+        "successfulAnswer": "review-prefix-and-80-characters; human-quality-review-required",
+        "final": "explicit-only; never infer completion from stdout"
+      },
+      "session": {
+        "rounds": 3,
+        "continuity": "one-session-per-arm",
+        "order": ["native", "role-warm"],
+        "warmRestart": false,
+        "prewarm": false,
+        "forcedCompaction": false
+      },
+      "runtime": {
+        "provider": "codex",
+        "bindingId": "local:codex-cli/v1:gpt-6-luna",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "cliVersion": "codex-cli 0.160.0"
+      },
+      "nativePolicy": {
+        "args": [
+          "-c",
+          "notify=[]",
+          "-c",
+          "features.memories=false",
+          "-c",
+          "memories.generate_memories=false",
+          "-c",
+          "memories.use_memories=false",
+          "-c",
+          "features.multi_agent=false",
+          "-c",
+          "features.goals=false",
+          "-c",
+          "features.sleep_tool=false",
+          "-c",
+          "features.in_app_local_automation=false",
+          "-c",
+          "features.plugins=false",
+          "-c",
+          "features.apps=false",
+          "-c",
+          "features.hooks=false",
+          "-c",
+          "skills.include_instructions=false",
+          "-c",
+          "web_search=\"disabled\""
+        ],
+        "environment": {},
+        "memoryPolicy": {
+          "provider": "codex",
+          "supported": true,
+          "status": "supported",
+          "scope": "provider-native-auto-memory",
+          "mechanism": "cli-config"
+        }
+      },
+      "nativeInvocation": {
+        "initial": [
+          "exec",
+          "--json",
+          "--skip-git-repo-check",
+          "--dangerously-bypass-approvals-and-sandbox",
+          "-m",
+          "gpt-6-luna",
+          "-c",
+          "model_reasoning_effort=\"low\"",
+          "<question>"
+        ],
+        "resume": [
+          "exec",
+          "--json",
+          "--skip-git-repo-check",
+          "--dangerously-bypass-approvals-and-sandbox",
+          "-m",
+          "gpt-6-luna",
+          "-c",
+          "model_reasoning_effort=\"low\"",
+          "resume",
+          "<session>",
+          "<question>"
+        ]
+      },
+      "sampling": {
+        "order": ["native", "role-warm"],
+        "cacheControl": "uncontrolled-record-observed-hits",
+        "automaticPaidRerun": false
+      }
+    },
+    "limits": [
+      "Same identity is necessary, not proof of equal quality or server-side model revision",
+      "Never substitute a historical native denominator",
+      "Memory evidence certifies launch configuration, not OS filesystem isolation"
+    ]
+  },
+  "evaluationProfile": {
+    "metricsSha256": "aaa0bc299504eb56582599d7690858b2aca11564f29149436413b1531bdcff93",
+    "warmChecksSha256": "79270ce9778aab9a96a92ab3c3ace4d608d339274dd0789bb58998da8b9fba9c",
+    "budgetsSha256": "bfc4be25b472230d2f2d644abfcf762806e0459a54c258f6c34b1c81922e1661"
+  },
+  "catalogVerifiedAt": "2026-10-04T18:03:29.268Z",
+  "pairedNativeEvidence": {
+    "baselineId": "0292456b00fdc05d9872d76d73da5615a955225715e02a1c1a6655668250709a",
+    "nativeEvidenceSha256": "7fccb4118250c2226a56dfa0e4387b2cc8f91976b54c5ed68d9ee8abe36a1fa9",
+    "rounds": 3,
+    "source": "this-sample-native-arm"
+  },
+  "comparisons": {
+    "role-warm": {
+      "status": "missing-evidence",
+      "failures": ["metricsMissing"]
+    }
+  },
+  "measuredStatus": "missing-evidence",
+  "finishedAt": "2026-10-04T18:05:20.493Z",
+  "rawResultSha256": "f2e2d889ef28a97f9d794c4d25363b1152bb4efa788b47f0ffcfe04b75f131d9"
+}

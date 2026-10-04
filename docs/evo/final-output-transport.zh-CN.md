@@ -88,3 +88,7 @@ OpenCode P108 后接入 Codex，复用同一严格envelope、原Run有界提交�
 Codex0.160.0稳定app-server的 `turn/start.outputSchema` 明确约束本轮最终回复。启用试验时，每次turn/start直接传入 `WorkerFinalOutputEnvelopeSchema.toJSONSchema({target:"draft-7"})`，避免另维护一份发布协议；默认路径不带outputSchema。字段序号仍由模型显式回传，Host不代填，不自动修JSON，也不发纠错轮。格式约束只管结构，原Run/目标/权限/新鲜度/ACK仍由原路径验证，不能据此保证内容正确或吞掉API不支持错误。
 
 缺少原生outputSchema的专项测试先红；接线后driver和7项Host链通过，包括默认路径没有新约束。[安装版CLI免费实证](evidence/2026-10-05-codex-output-schema-free.json)验证同session两轮，首轮真实exec工具后回复、次轮直接回复，共2+1次loopback HTTP；每次实际请求text.format均为json_schema/strict:true且schema一致，两个唯一发布/ACK完成。首次探针误假定可选tools数组存在导致探针失败，修正探针后的成功与失败均保留。假服务收到schema不能证明真实供应商必然强制约束或答案正确；P109原失败保留，后续如有付费验证必须作为新代码批次记录。
+
+P110付费验证在模型生成前被测试护栏阻断：原turn/start白名单未接纳outputSchema，随后连续性保护拒绝替换session，零发表。见[P110失败报告](evidence/2026-10-05-final-output-p110.md)。这不证明真实provider支持或不支持结构化输出；修复必须连同同款paid guard做免费全链验证，只放行精确Protocol schema，不放宽model/effort或其他字段。
+
+P110护栏修复仅放行Protocol生成的精确draft7 schema，保留模型、effort和其他字段限制；相关69项免费测试通过。[同款付费护栏免费闭环](evidence/2026-10-05-codex-output-schema-guarded-free.json)已用真实Codex验证同session两轮、实际HTTP为2+1、工具前后及续轮均携带严格schema、两个发表和ACK完成。它补足测试接线覆盖，不改变P110失败，也不证明真实模型质量或成本。
