@@ -10,6 +10,15 @@ provider/模型/effort 组合在配置解析时、任何进程启动前失败，
 
 Codex最终输出试验的`turn/start.outputSchema`仅允许Protocol现有发布envelope生成的精确draft7 schema；不能通过宽泛schema放松测试护栏。改动原生请求字段后，付费前须用正式`writeGuardedShim`与真实CLI、loopback假模型贯穿生产链，覆盖实际工具前后及续轮；绕过护栏的免费探针不足以证明付费接线可用。
 
+## 随机模型长期研究的后续设计（2026-10-06）
+
+P118–P120 的指定路径 profile 多次在产品首轮截断，不能作为长期成本或稳定性结论。
+后续设计见[随机模型业务交付与长期成本验收](../evo/stochastic-cli-evaluation-design.zh-CN.md)：
+以业务正确送达和完整计费为准，合法 MCP/CLI 路径属于诊断；质量失败、恢复、多次生成与累计成本分开记录，
+安全、证据和资源边界仍可停止。独立配对与执行顺序在研究前固定，不以跑到通过为停止规则。
+该设计尚待实现，未改变合同 §6、旧证据裁决或现有执行器，也未授权新付费调用。
+不得将旧路径限定入口直接作为新业务观察研究运行。
+
 ## 固定成本基线与官方记忆关闭（2026-10-04）
 
 先运行 `RAH_EFFICIENCY_ORDER=native,role-warm npm run test:cli:efficiency -- --plan` 免费检查实验身份；它只读取本地代码、配置与 CLI 版本，不启动模型回合。`--paid` 仍须本批用户授权。
