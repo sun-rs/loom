@@ -1,0 +1,2908 @@
+{
+  "schemaVersion": 1,
+  "rawResultSha256": "67af97f450ebd134687f8df7165041668b937ebb3316c984306faccadaa43c24",
+  "blindMapping": {
+    "A": "final-output",
+    "B": "native",
+    "C": "default"
+  },
+  "quality": {
+    "native": {
+      "label": "B",
+      "reviewScope": "anonymous answer-only technical/instruction review; tools, route, cost and result not reviewed",
+      "workloadId": "restart-audit-12/v1",
+      "promptSetHash": "2baafe268994b8a00bfdcae984382974fb073235cbd84b1f83dfa4be84e702a7",
+      "sourceRef": "7afe141",
+      "inputSha256": "8f09b598a1c7d773922e6bfcdd83eb95e9068860b1f0b0112893a5b869e97660",
+      "rulesSha256": "d2760e4d8c6b838033e7fc17596e7af192774ba25b470957d886877b64d6ad49",
+      "sourceVerification": [
+        {
+          "path": "scripts/workbench-launch-receipt.mjs",
+          "expected": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+          "actual": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059"
+        },
+        {
+          "path": "scripts/workbench-launch-receipt.test.mjs",
+          "expected": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+          "actual": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+        },
+        {
+          "path": "scripts/restart-local-workbench.mjs",
+          "expected": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f",
+          "actual": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f"
+        },
+        {
+          "path": "scripts/workbench-restart-guard.mjs",
+          "expected": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb",
+          "actual": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb"
+        },
+        {
+          "path": "packages/daemon/src/state-backup.ts",
+          "expected": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+          "actual": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436"
+        },
+        {
+          "path": "packages/daemon/test/workbench-restart-guard.test.ts",
+          "expected": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab",
+          "actual": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab"
+        }
+      ],
+      "stages": [
+        {
+          "stage": 1,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "七个 networkKeys 被清除后重建，未称清除整个 env",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "先复制原环境、删除七个网络键并按回执模式重建；其他变量保留。",
+              "source": "receipt:15–23,87–99"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种模式正确且 LAN cert/key 非无条件成对必填",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "loopback仅恢复端口；tailnet恢复端口和主机/LAN地址；LAN的证书私钥为可选绝对路径。",
+              "source": "receipt:24–63"
+            },
+            {
+              "criterion": 3,
+              "rubric": "PID数值相等不是回执来源真实性/无 PID 重用证明。引用 receipt:15–99。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "不能证明该进程当前存活、身份未复用或确实监听相应地址。将相等限定于回执声明的编号，没有升级为来源认证。",
+              "source": "receipt:87–94"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 303,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 2,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "tailnet additionalBindHosts 已有 deepEqual，不可称无覆盖",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "“重建模式与原模式相等”准确识别tailnet附加地址测试。",
+              "source": "receipt.test:108–130"
+            },
+            {
+              "criterion": 2,
+              "rubric": "无效写入测试使用新目录，不能推出失败会删除旧回执",
+              "score": 0,
+              "status": "missing",
+              "evidence": "未讨论无效写入测试仅在新目录执行，也未指出不能推导删除旧回执。记missing，不是明确错误断言。",
+              "source": "receipt.test:180–200"
+            },
+            {
+              "criterion": 3,
+              "rubric": "未覆盖项及测试前置真实，不能把 PID 真实性编造为已有保证。receipt.test:108–130、180–200。",
+              "score": 1,
+              "status": "partial",
+              "evidence": "未覆盖PID存活/重用、崩溃并发重命名属真实证据边界；但随后设计的env七键清理用例不是其列出的两项边界之一，未完成“其中一个”测试设计。",
+              "source": "receipt:87–124;receipt.test:68–77"
+            }
+          ],
+          "score": 3,
+          "maxScore": 6,
+          "instructions": {
+            "han": 295,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 3,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "validate→inspect→backup→verify→recheck→stop，全部 true 且 await",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "完整顺序列出，并称任一步非true即阻断；停止成功后才spawn。",
+              "source": "guard:18–29;restart:125–223"
+            },
+            {
+              "criterion": 2,
+              "rubric": "ps identity/cwd/database/port 检查不等于回执作者认证",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "分别列出初始命令、identity/cwd/db/port；未据此声称认证回执作者。",
+              "source": "restart:59–104"
+            },
+            {
+              "criterion": 3,
+              "rubric": "SIGTERM30s未退出抛错、不forcekill且未进入后续spawn，不能把spawn等同健康/页面验收。restart:59–104、125–223；guard:18–29。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "明确超时不强杀、不启动successor；未验证drain及真实依赖，未宣称spawn即健康。",
+              "source": "restart:174–223"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 294,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 4,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "online SQLite backup，不复制live WAL",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "“SQLite在线备份API”“源WAL、SHM、journal不直接复制”。",
+              "source": "state:174–190"
+            },
+            {
+              "criterion": 2,
+              "rubric": "socket省略及精确 warm-runtimes/instrt_UUID/turns 排除，provider-sessions不整体排除",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "精确warm-runtimes/instrt_<UUID>/turns排除，socket单列；没有扩大排除provider-sessions。",
+              "source": "state:74–117"
+            },
+            {
+              "criterion": 3,
+              "rubric": "拒绝symlink/已存在目标/嵌套目标，普通文件hash前后比较不证明多DB与其他文件全局原子。state:76–204。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "独占目标、拒绝symlink、不覆盖，并明确不是state同一时刻原子冻结。",
+              "source": "state:142–204"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 320,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 5,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "quick_check/FK与hash不同作用",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "区分quick_check/FK、实际读取与SHA256字节摘要。",
+              "source": "state:210–249;daemon.test:155–180"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种损坏分别digest/dbset/filedigest拒绝，不把合法SQLite改写视作可通过",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "合法SQL改写、额外db、普通文件改写分别拒绝。",
+              "source": "state:227–255;daemon.test:192–239"
+            },
+            {
+              "criterion": 3,
+              "rubric": "guard steps注入测试不是实际ps/lsof/SIGTERM/spawn/健康全链验证。state:210–257；test:109–244。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "“不启动真实服务”且SIGTERM/drain无全链证明。",
+              "source": "daemon.test:107–153"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 286,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 6,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "restartable依次允许/拒绝/拒绝/允许/拒绝，idle五者全部拒绝",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "五行表restartable是/否/否/是/否，idle全否，准确。",
+              "source": "state:259–308"
+            },
+            {
+              "criterion": 2,
+              "rubric": "Run/runtime/placement/exclusive lease同样阻挡，SOS须room+operation关联且lease全部NULL",
+              "score": 1,
+              "status": "partial",
+              "evidence": "准确列出lease三字段全空及room匹配SOS；未具体说明其他Run/runtime/placement/exclusive owner仍阻挡。附带“带lease quarantined专门用例未见”错误：既有test在quarantined行上循环设置三个lease字段并assert throws。",
+              "source": "state:282–305;daemon.test:34,66–70"
+            },
+            {
+              "criterion": 3,
+              "rubric": "纯SELECT+assert不修改/完成状态，实际脚本用restartable而restore用idle。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "“只读计数并断言，不完成、重试、恢复或丢弃工作”，调用inspect的restartable定位正确。不要求提前谈阶段8restore实现。",
+              "source": "state:259–308;restart:91–99"
+            }
+          ],
+          "score": 5,
+          "maxScore": 6,
+          "instructions": {
+            "han": 220,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 7,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "nopending不snapshot、unsupported/sameversionunexpected拒绝",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "no pending不快照；unsupported、同版本unexpected drift拒绝；legacy仅诊断。",
+              "source": "state:433–461"
+            },
+            {
+              "criterion": 2,
+              "rubric": "preflight在临时copy初始化、protect在snapshot后初始化live",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "preflight临时副本，protect在快照后写state原库。",
+              "source": "state:394–422,461–489"
+            },
+            {
+              "criterion": 3,
+              "rubric": "snapshot失败阻止migration，kernel.initialize失败没有自动restore保证。未给Kernel实现不能证明migration本身无bug。state:394–489。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "快照失败不得迁移；迁移开始后失败没有可见自动恢复，未猜Kernel内部。",
+              "source": "state:466–488"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 291,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 8,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "confirm/path/verifiedsnapshot，runningPid检查是可选，不可断言总自动发现所有进程",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "确认值、schema/path、verifiedsnapshot以及可选runningPid准确；对kill失败的描述与catch一致，没有夸大全进程检测。",
+              "source": "state:492–525"
+            },
+            {
+              "criterion": 2,
+              "rubric": "idle+hosts offline+writeEvidence+file/dbset/contentdigest多层，roomSeq单独不够",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "idle、hosts offline、writeEvidence、文件/数据库集合/content digest均列出，roomSeq不足。",
+              "source": "state:526–566"
+            },
+            {
+              "criterion": 3,
+              "rubric": "stage先验证且再次verifyUnchanged，第二rename失败尝试改回原目录，不是不可失败事务/全局排他锁。digest具体实现未给出，不猜算法。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "staging验证+第二次live复核，第二rename失败尝试复原且可能补救失败；没有宣称事务或全局锁。",
+              "source": "state:567–584"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 324,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 9,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "确诊 omittedRuntimeCredentials仅非空时返回，recheck expected漏字段，deepEqual失败于stop前",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "准确指出仅非空返回omittedRuntimeCredentials而recheck投影漏字段，stop前deepEqual失败。",
+              "source": "state:114–117;restart:152–173"
+            },
+            {
+              "criterion": 2,
+              "rubric": "不误称凭据泄漏/数据损坏",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "将效果限定误拒、未SIGTERM/未spawn；未误称泄漏或损坏。",
+              "source": "restart:152–176"
+            },
+            {
+              "criterion": 3,
+              "rubric": "建议比较相同完整manifest（含排除目录名单）而非删除/弱化整个检查，新增目录变化仍应拒绝。state:114–117；restart:152–156。此为固定快照的真实可复现整合缺口，不依赖模型自我纠错。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "建议以receipt原manifest补可选字段、保留完整深比较，目录增加/变化仍拒绝。属于题目提示后的定位。",
+              "source": "state:114–117,157–163;restart:152–156"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 314,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 10,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "持续文件变化在清单复查被拒（避免声称中途改回也必检出）",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "虽标“条件拒绝”，明确纳入清单的持续内容摘要变化会拒绝；以未反映清单的变化为限定，与hash内容而非所有文件属性的代码相容。",
+              "source": "state:82–117,157–163,198–204"
+            },
+            {
+              "criterion": 2,
+              "rubric": "事件追加由inspect/baseline seq或活动检查拒",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "baseline/recheck每room最大序号比较，对正常Room事件追加的结论正确。",
+              "source": "restart:91–99,152–160"
+            },
+            {
+              "criterion": 3,
+              "rubric": "最终check→signal没有原子互斥证明，多DB无全局snapshot；可见安全机制与未知的原生drain实现分开。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "明确最后inspect到signal窗口及多DB无统一时点，没有猜测drain保证。",
+              "source": "restart:174–176;state:163–188"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 346,
+            "hanCompliant": false,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 11,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "同一runtime UUID/turns路径匹配真实regex且虚假credential内容不进入backup",
+              "score": 1,
+              "status": "partial",
+              "evidence": "稳定匹配路径与stop观察点正确，但fixture只说目录，没有虚假credential内容及不被备份的断言；“注入真实形状recheck结果”未明确怎样执行实际遗漏字段的比较，测试可能只验证模拟器。",
+              "source": "state:74–117;restart:152–156"
+            },
+            {
+              "criterion": 2,
+              "rubric": "比较前后集合改变拒绝，不以忽略extra字段修复",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "新增/移除集合，断言recheck拒绝且不调用stop，符合安全保留要求。当前“可能错误放行”对移除最后一个目录成立；新增仍有多余属性会拒绝，未声称两者均必放行。",
+              "source": "state:114–117;restart:152–156"
+            },
+            {
+              "criterion": 3,
+              "rubric": "合法数据库内容改写/新业务写入测试定位正确guard且临时状态/fake steps，不需真实restart，不声称测试已执行。允许等价准确案例。",
+              "score": 1,
+              "status": "partial",
+              "evidence": "先验证快照再向live追加事件、restore拒绝方向正确，但只说“合法SQLite库”不足：需有效snapshot旁置receipt、idle相关表状态、hosts offline以到达writeEvidence；否则会在更早guard失败。",
+              "source": "state:503–545"
+            }
+          ],
+          "score": 4,
+          "maxScore": 6,
+          "instructions": {
+            "han": 417,
+            "hanCompliant": true,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": true
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 12,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "保持阶段9实证缺口及安全边界，不用“所有restart不可用”夸大限定触发条件",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "缺口限定凭据目录recheck，先修再验收，未夸大所有restart均坏。",
+              "source": "restart:152–173"
+            },
+            {
+              "criterion": 2,
+              "rubric": "建议单owner最小整合修复+回归、没有恢复凭据/跳过校验/服务实际操作",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "改期望对象并保留集合比较，回归顺序合理，没有建议恢复能力或跳过检查。",
+              "source": "state:114–117;restart:152–156"
+            },
+            {
+              "criterion": 3,
+              "rubric": "不把fixture/staticreview变成实际部署、全链、效率验收，保留依赖和TOCTOU边界。",
+              "score": 1,
+              "status": "partial",
+              "evidence": "保留静态/执行边界与TOCTOU，但“恢复前的业务写入保护也有实现及测试证据（阶段4–8）”过度：本manifest的测试未调用restoreStateSnapshot/stateWriteEvidence，只证明其他检查。",
+              "source": "daemon.test:13–21,24–269;state:543–547"
+            }
+          ],
+          "score": 5,
+          "maxScore": 6,
+          "instructions": {
+            "han": 442,
+            "hanCompliant": true,
+            "prefix": true,
+            "selfClaimsLengthCompliance": true,
+            "lengthSelfClaimAccurate": true
+          },
+          "toolTrace": "not-reviewed"
+        }
+      ],
+      "total": 65,
+      "maxScore": 72,
+      "threshold": 60,
+      "criticalSafetyErrors": [],
+      "technicalVerdict": "bounded-sample-pass",
+      "instructionVerdict": "fail-length-compliance; tool/action compliance not reviewed",
+      "hanCompliantStages": [11, 12],
+      "checkpoints": [
+        {
+          "stage": 1,
+          "score": 6,
+          "maxScore": 6
+        },
+        {
+          "stage": 3,
+          "score": 15,
+          "maxScore": 18
+        },
+        {
+          "stage": 6,
+          "score": 32,
+          "maxScore": 36
+        },
+        {
+          "stage": 9,
+          "score": 50,
+          "maxScore": 54
+        },
+        {
+          "stage": 12,
+          "score": 65,
+          "maxScore": 72
+        }
+      ],
+      "continuity": [
+        {
+          "stages": [9, 11],
+          "status": "consistent-with-incomplete-test-spec",
+          "detail": "阶段9成功定位遗漏字段；阶段11保留修复与集合变化要求，但测试前置不足。"
+        },
+        {
+          "stages": [10, 12],
+          "status": "genuine-quotation-not-fabricated-retraction",
+          "detail": "阶段12确实回顾阶段10原有“必拒绝”，没有虚构先前断言；新限定是只比较max的代码边界。对合法单调Room追加，原判断仍成立；不能把非递增外部写入反例当已发生正常业务缺陷，也不加分当自主纠错成功。"
+        },
+        {
+          "stages": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          "status": "incorrect-self-assessment",
+          "detail": "这些轮次均自述400–600汉字合规，实际220–346；独立指令/自我校验缺陷，不抹掉技术分。"
+        }
+      ],
+      "limitations": [
+        "stage9 was guided; no autonomous bug-discovery claim",
+        "No tool trace or source-read boundary verdict yet",
+        "No session/model/memory/route/cost claims",
+        "Some citation ranges are approximate; substantive source match checked"
+      ]
+    },
+    "final-output": {
+      "label": "A",
+      "reviewScope": "anonymous answer-only; no result/route/cost/tool review",
+      "workloadId": "restart-audit-12/v1",
+      "promptSetHash": "2baafe268994b8a00bfdcae984382974fb073235cbd84b1f83dfa4be84e702a7",
+      "sourceRef": "7afe141",
+      "inputSha256": "daed4dd7c7ad962f742c38894863571ec9d45e86a1863f58d799723999e49ef8",
+      "rulesSha256": "d2760e4d8c6b838033e7fc17596e7af192774ba25b470957d886877b64d6ad49",
+      "sourceVerification": [
+        {
+          "path": "scripts/workbench-launch-receipt.mjs",
+          "expected": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+          "actual": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059"
+        },
+        {
+          "path": "scripts/workbench-launch-receipt.test.mjs",
+          "expected": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+          "actual": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+        },
+        {
+          "path": "scripts/restart-local-workbench.mjs",
+          "expected": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f",
+          "actual": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f"
+        },
+        {
+          "path": "scripts/workbench-restart-guard.mjs",
+          "expected": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb",
+          "actual": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb"
+        },
+        {
+          "path": "packages/daemon/src/state-backup.ts",
+          "expected": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+          "actual": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436"
+        },
+        {
+          "path": "packages/daemon/test/workbench-restart-guard.test.ts",
+          "expected": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab",
+          "actual": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab"
+        }
+      ],
+      "stages": [
+        {
+          "stage": 1,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "七个 networkKeys 被清除后重建，未称清除整个 env",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "“删除七个网络键…其他环境变量保留”，正确限定清理范围。",
+              "source": "receipt:15–23,87–99"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种模式正确且 LAN cert/key 非无条件成对必填",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "三模式端口/host/origin差异正确；LAN证书密钥可选，未强制配对。",
+              "source": "receipt:24–63"
+            },
+            {
+              "criterion": 3,
+              "rubric": "PID数值相等不是回执来源真实性/无 PID 重用证明。引用 receipt:15–99。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "明确PID数字匹配不证明存活、未复用或可信配置来源。",
+              "source": "receipt:87–94"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 358,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 2,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "tailnet additionalBindHosts 已有 deepEqual，不可称无覆盖",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "引用assert.deepEqual(restarted,mode)及不跟随新接口地址；准确识别已有覆盖。",
+              "source": "receipt.test:108–130"
+            },
+            {
+              "criterion": 2,
+              "rubric": "无效写入测试使用新目录，不能推出失败会删除旧回执",
+              "score": 1,
+              "status": "partial",
+              "evidence": "提到“无效网络项写入拒绝且无回执”，但未说明测试仅使用新目录，遗漏不能推导失败删除旧回执的前提；并未明确声称删除旧文件。",
+              "source": "receipt.test:180–200"
+            },
+            {
+              "criterion": 3,
+              "rubric": "未覆盖项及测试前置真实，不能把 PID 真实性编造为已有保证。receipt.test:108–130、180–200。",
+              "score": 1,
+              "status": "partial",
+              "evidence": "PID复用/目录信任等未证明边界成立；所设计测试另转向临时文件清理，未对应前述两项未知，但清理断言确为可补足行为。",
+              "source": "receipt:87–124;receipt.test:68–77"
+            }
+          ],
+          "score": 4,
+          "maxScore": 6,
+          "instructions": {
+            "han": 385,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 3,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "validate→inspect→backup→verify→recheck→stop，全部 true 且 await",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "完整编排顺序及guard按序true断言；spawn在guard完整返回之后。",
+              "source": "guard:18–29;restart:125–223"
+            },
+            {
+              "criterion": 2,
+              "rubric": "ps identity/cwd/database/port 检查不等于回执作者认证",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "ps启动时间/命令、cwd、db、port与receipt字段匹配明确区分；未声称认证receipt作者。",
+              "source": "restart:59–104"
+            },
+            {
+              "criterion": 3,
+              "rubric": "SIGTERM30s未退出抛错、不forcekill且未进入后续spawn，不能把spawn等同健康/页面验收。restart:59–104、125–223；guard:18–29。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "30秒超时不强杀不spawn，OS/信号drain尚未验证，未等同健康。",
+              "source": "restart:174–223"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 356,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 4,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "online SQLite backup，不复制live WAL",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "SQLite在线backup、WAL/SHM/journal侧车不复制，正确。",
+              "source": "state:174–190"
+            },
+            {
+              "criterion": 2,
+              "rubric": "socket省略及精确 warm-runtimes/instrt_UUID/turns 排除，provider-sessions不整体排除",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "socket及精确warm-runtime turns目录单列省略；不扩大排除范围。",
+              "source": "state:74–117"
+            },
+            {
+              "criterion": 3,
+              "rubric": "拒绝symlink/已存在目标/嵌套目标，普通文件hash前后比较不证明多DB与其他文件全局原子。state:76–204。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "拒绝symlink/特殊文件、目标独占且state外；不声称多DB/文件原子统一时点。",
+              "source": "state:142–204"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 380,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 5,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "quick_check/FK与hash不同作用",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "数据库可读/quick_check/FK与字节SHA256区分正确。",
+              "source": "state:210–249;daemon.test:155–180"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种损坏分别digest/dbset/filedigest拒绝，不把合法SQLite改写视作可通过",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "三种损坏的摘要/集合/普通文件摘要拒绝正确。",
+              "source": "state:227–255;daemon.test:192–239"
+            },
+            {
+              "criterion": 3,
+              "rubric": "guard steps注入测试不是实际ps/lsof/SIGTERM/spawn/健康全链验证。state:210–257；test:109–244。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "明确guard步骤测试未驱动真实进程与数据库竞态，未声称全链已验。",
+              "source": "daemon.test:107–153"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 362,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 6,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "restartable依次允许/拒绝/拒绝/允许/拒绝，idle五者全部拒绝",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "五种restartable/idle结果全部正确。",
+              "source": "state:259–308"
+            },
+            {
+              "criterion": 2,
+              "rubric": "Run/runtime/placement/exclusive lease同样阻挡，SOS须room+operation关联且lease全部NULL",
+              "score": 1,
+              "status": "partial",
+              "evidence": "正确解释lease三个字段、room和operation关联及stopped豁免；未具体说明其他Run/runtime/placement/exclusive owner检查（只假设其他表静止）。",
+              "source": "state:282–305;daemon.test:34,66–70"
+            },
+            {
+              "criterion": 3,
+              "rubric": "纯SELECT+assert不修改/完成状态，实际脚本用restartable而restore用idle。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "检查不修改工作，inspect只读调用restartable定位正确；不要求主动提前涉及restore。",
+              "source": "state:259–308;restart:91–99"
+            }
+          ],
+          "score": 5,
+          "maxScore": 6,
+          "instructions": {
+            "han": 271,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 7,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "nopending不snapshot、unsupported/sameversionunexpected拒绝",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "no pending前提、unsupported、同版本unexpected drift和legacy诊断四分支正确。",
+              "source": "state:433–461"
+            },
+            {
+              "criterion": 2,
+              "rubric": "preflight在临时copy初始化、protect在snapshot后初始化live",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "preflight临时副本与protect原库目标明确。",
+              "source": "state:394–422,461–489"
+            },
+            {
+              "criterion": 3,
+              "rubric": "snapshot失败阻止migration，kernel.initialize失败没有自动restore保证。未给Kernel实现不能证明migration本身无bug。state:394–489。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "快照失败阻止初始化，迁移失败没有可见自动恢复；未将快照当回滚事务。",
+              "source": "state:466–488"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 327,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 8,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "confirm/path/verifiedsnapshot，runningPid检查是可选，不可断言总自动发现所有进程",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "confirm、receipt路径版本、verify、可选PID准确，不证明所有写者已停。",
+              "source": "state:492–525"
+            },
+            {
+              "criterion": 2,
+              "rubric": "idle+hosts offline+writeEvidence+file/dbset/contentdigest多层，roomSeq单独不够",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "idle/hosts offline/eventCount+seq及文件/dbset/contentdigest多层正确；roomSeq单独不足。关于同seq事件只是代码层假设，不把它当正常单调Room写入的实证。",
+              "source": "state:526–566"
+            },
+            {
+              "criterion": 3,
+              "rubric": "stage先验证且再次verifyUnchanged，第二rename失败尝试改回原目录，不是不可失败事务/全局排他锁。digest具体实现未给出，不猜算法。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "stage验证后二次复核，rename失败尝试复原可能再失败；没有锁/租约证明，未猜digest算法。",
+              "source": "state:567–584"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 385,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 9,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "确诊 omittedRuntimeCredentials仅非空时返回，recheck expected漏字段，deepEqual失败于stop前",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "确诊非空omittedRuntimeCredentials与recheck投影漏字段，stop前失败。",
+              "source": "state:114–117;restart:152–173"
+            },
+            {
+              "criterion": 2,
+              "rubric": "不误称凭据泄漏/数据损坏",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "限定跨层字段契约误拒，没有泄漏/损坏结论。",
+              "source": "restart:152–176"
+            },
+            {
+              "criterion": 3,
+              "rubric": "建议比较相同完整manifest（含排除目录名单）而非删除/弱化整个检查，新增目录变化仍应拒绝。state:114–117；restart:152–156。此为固定快照的真实可复现整合缺口，不依赖模型自我纠错。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "保留files/sockets及省略名单严格比较，拒绝简单忽略字段。为题面引导后的定位。",
+              "source": "state:114–117,157–163;restart:152–156"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 348,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 10,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "持续文件变化在清单复查被拒（避免声称中途改回也必检出）",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "持续内容改变被hash比较拒绝，回改原字节不是必检出，符合题设。",
+              "source": "state:82–117,157–163,198–204"
+            },
+            {
+              "criterion": 2,
+              "rubric": "事件追加由inspect/baseline seq或活动检查拒",
+              "score": 1,
+              "status": "partial",
+              "evidence": "拒绝结论对正常单调Room追加成立，但错误声称inspect“比较room_events总数及各room最大seq”；restart inspect只有GROUP BY MAX，没有COUNT。混淆了restore的stateWriteEvidence。",
+              "source": "restart:91–99,152–160"
+            },
+            {
+              "criterion": 3,
+              "rubric": "最终check→signal没有原子互斥证明，多DB无全局snapshot；可见安全机制与未知的原生drain实现分开。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "指出inspect后signal前无原子互斥，多DB没有共享事务时点，准确。",
+              "source": "restart:174–176;state:163–188"
+            }
+          ],
+          "score": 5,
+          "maxScore": 6,
+          "instructions": {
+            "han": 353,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 11,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "同一runtime UUID/turns路径匹配真实regex且虚假credential内容不进入backup",
+              "score": 1,
+              "status": "partial",
+              "evidence": "稳定匹配目录+六步到stop方向正确；未包含虚假credential内容及未备份断言，执行实际recheck方式不足。",
+              "source": "state:74–117;restart:152–156"
+            },
+            {
+              "criterion": 2,
+              "rubric": "比较前后集合改变拒绝，不以忽略extra字段修复",
+              "score": 1,
+              "status": "partial",
+              "evidence": "要求增删集合拒绝正确，但声称当前同样会在含第三字段时失败，未区别移除最后一个目录时第三字段消失、当前recheck反而可能通过。",
+              "source": "state:114–117;restart:152–156"
+            },
+            {
+              "criterion": 3,
+              "rubric": "合法数据库内容改写/新业务写入测试定位正确guard且临时状态/fake steps，不需真实restart，不声称测试已执行。允许等价准确案例。",
+              "score": 1,
+              "status": "partial",
+              "evidence": "restore测试方向正确；“SQLite数据库和receipt”未指定snapshot外置receipt结构/idle schema及hosts offline等到达目标检查的前置，测试可能早失败。",
+              "source": "state:503–545"
+            }
+          ],
+          "score": 3,
+          "maxScore": 6,
+          "instructions": {
+            "han": 380,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 12,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "保持阶段9实证缺口及安全边界，不用“所有restart不可用”夸大限定触发条件",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "准确保留阶段9触发条件，不泛称所有restart不可用。",
+              "source": "restart:152–173"
+            },
+            {
+              "criterion": 2,
+              "rubric": "建议单owner最小整合修复+回归、没有恢复凭据/跳过校验/服务实际操作",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "单点统一recheck字段、保留其他检查，修复/验收顺序合理。",
+              "source": "state:114–117;restart:152–156"
+            },
+            {
+              "criterion": 3,
+              "rubric": "不把fixture/staticreview变成实际部署、全链、效率验收，保留依赖和TOCTOU边界。",
+              "score": 2,
+              "status": "satisfied",
+              "evidence": "严格区分已有静态测试与待执行规格，保留TOCTOU/依赖/真实进程边界，没有声称已部署或已执行。",
+              "source": "daemon.test:13–21,24–269;state:543–547"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 349,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthSelfReport": "says written to target; stage3 explicitly says meets target",
+            "selfReportVerified": false
+          },
+          "toolTrace": "not-reviewed"
+        }
+      ],
+      "total": 65,
+      "maxScore": 72,
+      "threshold": 60,
+      "criticalSafetyErrors": [],
+      "technicalVerdict": "bounded-sample-pass",
+      "instructionVerdict": "fail-length-compliance; tool/action compliance not reviewed",
+      "hanCompliantCount": 0,
+      "hanCompliantStages": [],
+      "checkpoints": [
+        {
+          "stage": 1,
+          "score": 6,
+          "maxScore": 6
+        },
+        {
+          "stage": 3,
+          "score": 16,
+          "maxScore": 18
+        },
+        {
+          "stage": 6,
+          "score": 33,
+          "maxScore": 36
+        },
+        {
+          "stage": 9,
+          "score": 51,
+          "maxScore": 54
+        },
+        {
+          "stage": 12,
+          "score": 65,
+          "maxScore": 72
+        }
+      ],
+      "continuity": [
+        {
+          "stages": [8, 10],
+          "status": "cross-module-evidence-confusion",
+          "detail": "restore使用eventCount+maxseq，阶段10却把两者同时归给restart inspect；后续未纠正。"
+        },
+        {
+          "stages": [9, 11],
+          "status": "incomplete-negative-case-analysis",
+          "detail": "指出投影遗漏后，未区分移除最后一个省略目录时字段消失与新增目录时字段仍在，阶段11对现有失败形状说得过宽。"
+        },
+        {
+          "stages": [],
+          "status": "no-fabricated-retraction-observed",
+          "detail": "未编造此前错误或撤回。"
+        }
+      ],
+      "limitations": [
+        "guided stage9, not autonomous discovery",
+        "all tool/read/session/model/memory/cost boundaries unreviewed",
+        "0/12 answers satisfy Han range, independent of technical score"
+      ]
+    },
+    "default": {
+      "label": "C",
+      "reviewScope": "two separate actual stage1 deliveries, no selection or merging; no route/result/cost/tools reviewed",
+      "workloadId": "restart-audit-12/v1",
+      "promptSetHash": "2baafe268994b8a00bfdcae984382974fb073235cbd84b1f83dfa4be84e702a7",
+      "sourceRef": "7afe141",
+      "inputSha256": "a6d8a670cf91c6c59e5b1115f5c87471a0d3d875f4f2f2059423b03c0a20a8a0",
+      "rulesSha256": "d2760e4d8c6b838033e7fc17596e7af192774ba25b470957d886877b64d6ad49",
+      "deliveries": [
+        {
+          "stage": 1,
+          "delivery": 1,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "七个 networkKeys 被清除后重建，未称清除整个 env",
+              "score": 2,
+              "evidence": "明确清除七个网络键并保留其他环境值，范围限定正确。",
+              "source": "receipt:15–23,87–99"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种模式正确且 LAN cert/key 非无条件成对必填",
+              "score": 2,
+              "evidence": "loopback/tailnet/LAN对应端口/host/origin及可选绝对证书密钥，未强制配对。",
+              "source": "receipt:24–63"
+            },
+            {
+              "criterion": 3,
+              "rubric": "PID数值相等不是回执来源真实性/无 PID 重用证明。引用 receipt:15–99。",
+              "score": 2,
+              "evidence": "明确PID数字相等不证明存活、未复用或文件真实性；调用者和未开放host校验边界保持未知。",
+              "source": "receipt:87–99"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 332,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthClaimCorrect": false
+          },
+          "toolTrace": "not-reviewed"
+        },
+        {
+          "stage": 1,
+          "delivery": 2,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "七个 networkKeys 被清除后重建，未称清除整个 env",
+              "score": 2,
+              "evidence": "明确清除七个网络键并保留其他环境值，范围限定正确。",
+              "source": "receipt:15–23,87–99"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种模式正确且 LAN cert/key 非无条件成对必填",
+              "score": 2,
+              "evidence": "loopback/tailnet/LAN对应端口/host/origin及可选绝对证书密钥，未强制配对。",
+              "source": "receipt:24–63"
+            },
+            {
+              "criterion": 3,
+              "rubric": "PID数值相等不是回执来源真实性/无 PID 重用证明。引用 receipt:15–99。",
+              "score": 2,
+              "evidence": "明确PID数字相等不证明存活、未复用或文件真实性；调用者和未开放host校验边界保持未知。",
+              "source": "receipt:87–99"
+            }
+          ],
+          "score": 6,
+          "maxScore": 6,
+          "instructions": {
+            "han": 289,
+            "hanCompliant": false,
+            "prefix": true,
+            "lengthClaimCorrect": false
+          },
+          "toolTrace": "not-reviewed"
+        }
+      ],
+      "fullTaskVerdict": "not-observed",
+      "technicalStage1Verdict": "both deliveries satisfy 3 criteria independently; not two completed stages",
+      "criticalSafetyErrors": [],
+      "missingStages": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "duplicateDelivery": {
+        "stage": 1,
+        "count": 2,
+        "status": "observed-two-deliveries; violates single-final-delivery requirement at visible task output level; origin/mechanism unreviewed"
+      },
+      "instructionVerdict": "both below Han minimum; duplicate delivery separately recorded",
+      "continuity": "two first-stage versions broadly consistent; long-session continuity not observed",
+      "limitations": [
+        "cannot select better delivery",
+        "no invented subsequent stages or aggregate12stage score",
+        "tools/read/session/model/memory/cost unreviewed"
+      ]
+    }
+  },
+  "cost": {
+    "rawRoot": "<tmp>",
+    "rawSha256": "67af97f450ebd134687f8df7165041668b937ebb3316c984306faccadaa43c24",
+    "codeCommit": "eae22514a9f218799bc39e8f38cf8046aa334eba",
+    "resultStatus": "partial-failure",
+    "arms": {
+      "native": {
+        "sessionId": "01a109d9-fa16-75b0-9723-d3933cbf6526",
+        "rollout": "~/.codex/sessions/2026/10/05/rollout-2026-10-05T10-17-22-01a109d9-fa16-75b0-9723-d3933cbf6526.jsonl",
+        "rolloutSha256": "d83af6771471b556d630057c8adef972ba71eeed1c61713e36ece5bede631e5b",
+        "turnContexts": 12,
+        "modelEffort": [["gpt-6-luna", "low"]],
+        "nativeMemoryMode": "disabled",
+        "observedUsageTotals": {
+          "input": 473755,
+          "cached": 428288,
+          "output": 7693,
+          "uncached": 45467,
+          "generations": 20
+        },
+        "usageLines": [
+          17, 21, 35, 39, 53, 57, 71, 75, 89, 93, 107, 111, 125, 129, 143, 147,
+          158, 169, 180, 191
+        ],
+        "contextWindowReported": [258400],
+        "lastUsageContextUsedRange": [9236, 34949],
+        "peakInput": 34526,
+        "compactionDiagnosticEvents": []
+      },
+      "default": {
+        "sessionId": "01a109de-d17b-7ce0-933b-954f247361b1",
+        "rollout": "~/.codex/sessions/2026/10/05/rollout-2026-10-05T10-22-42-01a109de-d17b-7ce0-933b-954f247361b1.jsonl",
+        "rolloutSha256": "71a880cd59292bc54e7cb7bc6fd126f4be60ab30b3426c7fcdf6fc25adc84c33",
+        "turnContexts": 2,
+        "modelEffort": [["gpt-6-luna", "low"]],
+        "nativeMemoryMode": "disabled",
+        "observedUsageTotals": {
+          "input": 142959,
+          "cached": 92672,
+          "output": 1668,
+          "uncached": 50287,
+          "generations": 9
+        },
+        "usageLines": [17, 22, 27, 39, 44, 49, 54, 59, 64],
+        "contextWindowReported": [258400],
+        "lastUsageContextUsedRange": [11880, 19757],
+        "peakInput": 19684,
+        "compactionDiagnosticEvents": [],
+        "kernel": {
+          "usageTotals": {
+            "input": 142959,
+            "cached": 92672,
+            "output": 1668,
+            "uncached": 50287,
+            "generations": 9
+          },
+          "usageGapCount": 0,
+          "activations": [
+            {
+              "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+              "state": "completed",
+              "to_seq": 4
+            }
+          ],
+          "markers": [
+            {
+              "run_attempt_id": "run_3b947359-e7e6-4370-83fb-8d55273d8504",
+              "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+              "room_seq": 9,
+              "submission_kind": null
+            },
+            {
+              "run_attempt_id": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc",
+              "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+              "room_seq": 17,
+              "submission_kind": null
+            }
+          ],
+          "cursors": [
+            {
+              "last_seq": 4
+            }
+          ],
+          "runtimeSessions": [
+            {
+              "native_session_id": "01a109de-d17b-7ce0-933b-954f247361b1",
+              "turn_count": 2,
+              "state": "terminated"
+            }
+          ],
+          "runCount": 2
+        }
+      },
+      "final-output": {
+        "sessionId": "01a109e0-8c99-7312-bda2-fc0af71d14b6",
+        "rollout": "~/.codex/sessions/2026/10/05/rollout-2026-10-05T10-24-33-01a109e0-8c99-7312-bda2-fc0af71d14b6.jsonl",
+        "rolloutSha256": "985fbe6f970f477fa2816b32ba7097815a12a6b99cb3d864667ca62b86a3c9a3",
+        "turnContexts": 12,
+        "modelEffort": [["gpt-6-luna", "low"]],
+        "nativeMemoryMode": "disabled",
+        "observedUsageTotals": {
+          "input": 521685,
+          "cached": 443904,
+          "output": 5924,
+          "uncached": 77781,
+          "generations": 20
+        },
+        "usageLines": [
+          15, 19, 30, 34, 45, 49, 60, 64, 75, 79, 90, 94, 105, 109, 120, 124,
+          134, 144, 154, 164
+        ],
+        "contextWindowReported": [258400],
+        "lastUsageContextUsedRange": [12087, 36894],
+        "peakInput": 36495,
+        "compactionDiagnosticEvents": [],
+        "kernel": {
+          "usageTotals": {
+            "input": 521685,
+            "cached": 443904,
+            "output": 5924,
+            "uncached": 77781,
+            "generations": 20
+          },
+          "usageGapCount": 0,
+          "activations": [
+            {
+              "activation_id": "activation_8350f1c9-50ed-4e0d-aefb-67d38edcb30c",
+              "state": "completed",
+              "to_seq": 4
+            },
+            {
+              "activation_id": "activation_ec9ac044-cc97-459a-86c9-8941e0be695c",
+              "state": "completed",
+              "to_seq": 13
+            },
+            {
+              "activation_id": "activation_e68e8a82-2010-4b9c-ac46-83c51c1e55e0",
+              "state": "completed",
+              "to_seq": 22
+            },
+            {
+              "activation_id": "activation_83d9d68d-66f1-4d36-a545-bd63633efbbb",
+              "state": "completed",
+              "to_seq": 31
+            },
+            {
+              "activation_id": "activation_cdb2493d-7936-4735-987d-b38f9114c928",
+              "state": "completed",
+              "to_seq": 40
+            },
+            {
+              "activation_id": "activation_2458954a-2bfd-4819-9ca5-7d17fb856cd0",
+              "state": "completed",
+              "to_seq": 49
+            },
+            {
+              "activation_id": "activation_ffcd91d4-2647-4411-ba15-b85f4bf23a8a",
+              "state": "completed",
+              "to_seq": 58
+            },
+            {
+              "activation_id": "activation_75d71a6a-e8fe-4d36-ad4e-42a64e928077",
+              "state": "completed",
+              "to_seq": 67
+            },
+            {
+              "activation_id": "activation_9e1f1f7f-c80e-4eb5-952d-fce214fdbd37",
+              "state": "completed",
+              "to_seq": 76
+            },
+            {
+              "activation_id": "activation_aa9426c7-0983-43f0-a732-f6664b4dfd5a",
+              "state": "completed",
+              "to_seq": 85
+            },
+            {
+              "activation_id": "activation_561b5c4f-7277-42a7-806a-351a26049684",
+              "state": "completed",
+              "to_seq": 94
+            },
+            {
+              "activation_id": "activation_b65342e5-2e95-40c1-b23b-f0a7ac6cf0e6",
+              "state": "completed",
+              "to_seq": 103
+            }
+          ],
+          "markers": [
+            {
+              "run_attempt_id": "run_6e4aee4d-8e25-4b81-b700-1e4fb897e1a0",
+              "activation_id": "activation_8350f1c9-50ed-4e0d-aefb-67d38edcb30c",
+              "room_seq": 9,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_d80d3d6f-f90e-459d-b404-ecc1f9bcb41e",
+              "activation_id": "activation_ec9ac044-cc97-459a-86c9-8941e0be695c",
+              "room_seq": 18,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_a0a16383-7322-4f71-bef3-b1df78ae7cbc",
+              "activation_id": "activation_e68e8a82-2010-4b9c-ac46-83c51c1e55e0",
+              "room_seq": 27,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_e6f4868a-938a-48d7-97eb-6f47b458fe28",
+              "activation_id": "activation_83d9d68d-66f1-4d36-a545-bd63633efbbb",
+              "room_seq": 36,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_69a42a4a-c4ec-48dc-91b0-b5c30b9dd829",
+              "activation_id": "activation_cdb2493d-7936-4735-987d-b38f9114c928",
+              "room_seq": 45,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_332b4bf8-fd0b-4f1b-a741-e6e597d93754",
+              "activation_id": "activation_2458954a-2bfd-4819-9ca5-7d17fb856cd0",
+              "room_seq": 54,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_bae3f81a-8de3-4191-8c14-5e92a2c7f74c",
+              "activation_id": "activation_ffcd91d4-2647-4411-ba15-b85f4bf23a8a",
+              "room_seq": 63,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_9c0ce7ae-52db-4d8b-86ad-ced3a0501f10",
+              "activation_id": "activation_75d71a6a-e8fe-4d36-ad4e-42a64e928077",
+              "room_seq": 72,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_06d9d929-2f0c-4d14-affb-be557a1c3292",
+              "activation_id": "activation_9e1f1f7f-c80e-4eb5-952d-fce214fdbd37",
+              "room_seq": 81,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_288f2739-7173-4a55-81cc-d1e812b4c317",
+              "activation_id": "activation_aa9426c7-0983-43f0-a732-f6664b4dfd5a",
+              "room_seq": 90,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_99a2983e-fe13-4881-866f-99ab7c464c7d",
+              "activation_id": "activation_561b5c4f-7277-42a7-806a-351a26049684",
+              "room_seq": 99,
+              "submission_kind": "final-output"
+            },
+            {
+              "run_attempt_id": "run_e5229db8-03ce-4428-ae69-af71449953f2",
+              "activation_id": "activation_b65342e5-2e95-40c1-b23b-f0a7ac6cf0e6",
+              "room_seq": 108,
+              "submission_kind": "final-output"
+            }
+          ],
+          "cursors": [
+            {
+              "last_seq": 103
+            }
+          ],
+          "runtimeSessions": [
+            {
+              "native_session_id": "01a109e0-8c99-7312-bda2-fc0af71d14b6",
+              "turn_count": 12,
+              "state": "terminated"
+            }
+          ],
+          "runCount": 12
+        }
+      }
+    },
+    "checks": [
+      "All three transcript last-usage sums match recorded known observed totals",
+      "Both product database usage sums independently match transcripts",
+      "Checkpoints and windows recomputed from this batch rounds match summary",
+      "Default failed stage not used as long-session denominator or complete sample"
+    ],
+    "stageCacheDifferences": [
+      {
+        "stage": 1,
+        "nativeInput": 19797,
+        "finalInput": 25543,
+        "nativeCached": 8960,
+        "finalCached": 11008,
+        "nativeUncached": 10837,
+        "finalUncached": 14535,
+        "uncachedDelta": 3698
+      },
+      {
+        "stage": 2,
+        "nativeInput": 25877,
+        "finalInput": 31166,
+        "nativeCached": 20992,
+        "finalCached": 26112,
+        "nativeUncached": 4885,
+        "finalUncached": 5054,
+        "uncachedDelta": 169
+      },
+      {
+        "stage": 3,
+        "nativeInput": 32896,
+        "finalInput": 38120,
+        "nativeCached": 28160,
+        "finalCached": 16128,
+        "nativeUncached": 4736,
+        "finalUncached": 21992,
+        "uncachedDelta": 17256
+      },
+      {
+        "stage": 4,
+        "nativeInput": 40092,
+        "finalInput": 45072,
+        "nativeCached": 35328,
+        "finalCached": 40448,
+        "nativeUncached": 4764,
+        "finalUncached": 4624,
+        "uncachedDelta": -140
+      },
+      {
+        "stage": 5,
+        "nativeInput": 47851,
+        "finalInput": 52653,
+        "nativeCached": 42496,
+        "finalCached": 40448,
+        "nativeUncached": 5355,
+        "finalUncached": 12205,
+        "uncachedDelta": 6850
+      },
+      {
+        "stage": 6,
+        "nativeInput": 53268,
+        "finalInput": 58084,
+        "nativeCached": 50688,
+        "finalCached": 55808,
+        "nativeUncached": 2580,
+        "finalUncached": 2276,
+        "uncachedDelta": -304
+      },
+      {
+        "stage": 7,
+        "nativeInput": 57467,
+        "finalInput": 62100,
+        "nativeCached": 53760,
+        "finalCached": 52736,
+        "nativeUncached": 3707,
+        "finalUncached": 9364,
+        "uncachedDelta": 5657
+      },
+      {
+        "stage": 8,
+        "nativeInput": 62254,
+        "finalInput": 66693,
+        "nativeCached": 58880,
+        "finalCached": 64000,
+        "nativeUncached": 3374,
+        "finalUncached": 2693,
+        "uncachedDelta": -681
+      },
+      {
+        "stage": 9,
+        "nativeInput": 32547,
+        "finalInput": 34623,
+        "nativeCached": 31488,
+        "finalCached": 33536,
+        "nativeUncached": 1059,
+        "finalUncached": 1087,
+        "uncachedDelta": 28
+      },
+      {
+        "stage": 10,
+        "nativeInput": 33218,
+        "finalInput": 35258,
+        "nativeCached": 31488,
+        "finalCached": 33536,
+        "nativeUncached": 1730,
+        "finalUncached": 1722,
+        "uncachedDelta": -8
+      },
+      {
+        "stage": 11,
+        "nativeInput": 33962,
+        "finalInput": 35878,
+        "nativeCached": 32512,
+        "finalCached": 34560,
+        "nativeUncached": 1450,
+        "finalUncached": 1318,
+        "uncachedDelta": -132
+      },
+      {
+        "stage": 12,
+        "nativeInput": 34526,
+        "finalInput": 36495,
+        "nativeCached": 33536,
+        "finalCached": 35584,
+        "nativeUncached": 990,
+        "finalUncached": 911,
+        "uncachedDelta": -79
+      }
+    ],
+    "paired": {
+      "checkpoints": [
+        {
+          "from": 1,
+          "to": 1,
+          "totals": {
+            "native": {
+              "input": 19797,
+              "cached": 8960,
+              "uncached": 10837,
+              "output": 813,
+              "generations": 2,
+              "durationSeconds": 27.618
+            },
+            "final-output": {
+              "input": 25543,
+              "cached": 11008,
+              "uncached": 14535,
+              "output": 512,
+              "generations": 2,
+              "durationSeconds": 22.396
+            }
+          },
+          "ratios": {
+            "input": 1.2902459968682123,
+            "cached": 1.2285714285714286,
+            "uncached": 1.3412383500968903,
+            "output": 0.6297662976629766,
+            "generations": 1,
+            "durationSeconds": 0.8109204142226085
+          }
+        },
+        {
+          "from": 1,
+          "to": 3,
+          "totals": {
+            "native": {
+              "input": 78570,
+              "cached": 58112,
+              "uncached": 20458,
+              "output": 2204,
+              "generations": 6,
+              "durationSeconds": 76.40299999999999
+            },
+            "final-output": {
+              "input": 94829,
+              "cached": 53248,
+              "uncached": 41581,
+              "output": 1604,
+              "generations": 6,
+              "durationSeconds": 57.603
+            }
+          },
+          "ratios": {
+            "input": 1.206936489754359,
+            "cached": 0.9162995594713657,
+            "uncached": 2.032505621272852,
+            "output": 0.7277676950998185,
+            "generations": 1,
+            "durationSeconds": 0.75393636375535
+          }
+        },
+        {
+          "from": 1,
+          "to": 6,
+          "totals": {
+            "native": {
+              "input": 219781,
+              "cached": 186624,
+              "uncached": 33157,
+              "output": 4244,
+              "generations": 12,
+              "durationSeconds": 151.81
+            },
+            "final-output": {
+              "input": 250638,
+              "cached": 189952,
+              "uncached": 60686,
+              "output": 3248,
+              "generations": 12,
+              "durationSeconds": 108.006
+            }
+          },
+          "ratios": {
+            "input": 1.1403988515840768,
+            "cached": 1.0178326474622772,
+            "uncached": 1.830262086437253,
+            "output": 0.765315739868049,
+            "generations": 1,
+            "durationSeconds": 0.7114551083591332
+          }
+        },
+        {
+          "from": 1,
+          "to": 9,
+          "totals": {
+            "native": {
+              "input": 372049,
+              "cached": 330752,
+              "uncached": 41297,
+              "output": 6226,
+              "generations": 17,
+              "durationSeconds": 242.623
+            },
+            "final-output": {
+              "input": 414054,
+              "cached": 340224,
+              "uncached": 73830,
+              "output": 4698,
+              "generations": 17,
+              "durationSeconds": 153.577
+            }
+          },
+          "ratios": {
+            "input": 1.1129017951936437,
+            "cached": 1.028637770897833,
+            "uncached": 1.7877811947599098,
+            "output": 0.7545775778991327,
+            "generations": 1,
+            "durationSeconds": 0.6329861554757793
+          }
+        },
+        {
+          "from": 1,
+          "to": 12,
+          "totals": {
+            "native": {
+              "input": 473755,
+              "cached": 428288,
+              "uncached": 45467,
+              "output": 7693,
+              "generations": 20,
+              "durationSeconds": 313.23699999999997
+            },
+            "final-output": {
+              "input": 521685,
+              "cached": 443904,
+              "uncached": 77781,
+              "output": 5924,
+              "generations": 20,
+              "durationSeconds": 191.713
+            }
+          },
+          "ratios": {
+            "input": 1.101170436195924,
+            "cached": 1.0364614465032875,
+            "uncached": 1.710713264565509,
+            "output": 0.7700506954374107,
+            "generations": 1,
+            "durationSeconds": 0.6120381691818017
+          }
+        }
+      ],
+      "windows": [
+        {
+          "from": 1,
+          "to": 1,
+          "totals": {
+            "native": {
+              "input": 19797,
+              "cached": 8960,
+              "uncached": 10837,
+              "output": 813,
+              "generations": 2,
+              "durationSeconds": 27.618
+            },
+            "final-output": {
+              "input": 25543,
+              "cached": 11008,
+              "uncached": 14535,
+              "output": 512,
+              "generations": 2,
+              "durationSeconds": 22.396
+            }
+          },
+          "ratios": {
+            "input": 1.2902459968682123,
+            "cached": 1.2285714285714286,
+            "uncached": 1.3412383500968903,
+            "output": 0.6297662976629766,
+            "generations": 1,
+            "durationSeconds": 0.8109204142226085
+          }
+        },
+        {
+          "from": 2,
+          "to": 6,
+          "totals": {
+            "native": {
+              "input": 199984,
+              "cached": 177664,
+              "uncached": 22320,
+              "output": 3431,
+              "generations": 10,
+              "durationSeconds": 124.19200000000001
+            },
+            "final-output": {
+              "input": 225095,
+              "cached": 178944,
+              "uncached": 46151,
+              "output": 2736,
+              "generations": 10,
+              "durationSeconds": 85.61
+            }
+          },
+          "ratios": {
+            "input": 1.1255650452036163,
+            "cached": 1.0072046109510087,
+            "uncached": 2.0676971326164875,
+            "output": 0.797435150102011,
+            "generations": 1,
+            "durationSeconds": 0.6893358670445761
+          }
+        },
+        {
+          "from": 7,
+          "to": 12,
+          "totals": {
+            "native": {
+              "input": 253974,
+              "cached": 241664,
+              "uncached": 12310,
+              "output": 3449,
+              "generations": 8,
+              "durationSeconds": 161.427
+            },
+            "final-output": {
+              "input": 271047,
+              "cached": 253952,
+              "uncached": 17095,
+              "output": 2676,
+              "generations": 8,
+              "durationSeconds": 83.707
+            }
+          },
+          "ratios": {
+            "input": 1.0672234165702001,
+            "cached": 1.0508474576271187,
+            "uncached": 1.3887083671811535,
+            "output": 0.7758770658161787,
+            "generations": 1,
+            "durationSeconds": 0.5185439858264107
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "No paid HTTP capture; generations are reported completed observations",
+      "Token ratios are not bill ratios",
+      "One ordered sample: cache and time effects uncontrolled; stage3/5/7 patterns not causal proof",
+      "No compaction diagnostics observed; occupancy did not approach context window; cannot claim compaction behavior tested",
+      "Default kernel Activation completed but gate stage failed duplicateReply/finalMissing; retains incomplete status"
+    ]
+  },
+  "transportAndTools": {
+    "scope": "readonly completed P113; no new providers",
+    "arms": {
+      "native": {
+        "sessionId": "01a109d9-fa16-75b0-9723-d3933cbf6526",
+        "nativeTurnContexts": 12,
+        "calls": [
+          {
+            "nativeTurnOrdinal": 1,
+            "line": 13,
+            "name": "exec",
+            "resultLine": 16,
+            "toolCellCompleted": true,
+            "command": "cat -n scripts/workbench-launch-receipt.mjs",
+            "exactAuthorizedContent": true,
+            "returnedChars": 5112,
+            "returnedSha256": "c542b98018b755876617658f004cec125212c6a56de56d37ca0bf22fd0e8f071",
+            "allowedSources": [["scripts/workbench-launch-receipt.mjs", null]]
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 31,
+            "name": "exec",
+            "resultLine": 34,
+            "toolCellCompleted": true,
+            "command": "cat -n scripts/workbench-launch-receipt.test.mjs",
+            "exactAuthorizedContent": true,
+            "returnedChars": 8549,
+            "returnedSha256": "2cfde9be9d8245365c1f4d82c79cd5dc928f5852673cd5294f860fde97af385b",
+            "allowedSources": [
+              ["scripts/workbench-launch-receipt.test.mjs", null]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 3,
+            "line": 49,
+            "name": "exec",
+            "resultLine": 52,
+            "toolCellCompleted": true,
+            "command": "cat -n scripts/restart-local-workbench.mjs scripts/workbench-restart-guard.mjs",
+            "exactAuthorizedContent": true,
+            "returnedChars": 9450,
+            "returnedSha256": "908958942f659d6e4f79c66568f7c12f81f055d810161fe19c3e5a956dd29094",
+            "allowedSources": [
+              ["scripts/restart-local-workbench.mjs", null],
+              ["scripts/workbench-restart-guard.mjs", null]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 4,
+            "line": 67,
+            "name": "exec",
+            "resultLine": 70,
+            "toolCellCompleted": true,
+            "command": "sed -n '1,257p' packages/daemon/src/state-backup.ts | nl -ba -v1",
+            "exactAuthorizedContent": true,
+            "returnedChars": 9777,
+            "returnedSha256": "ed34dd351492ef33c8b4435478e7bfbf3fe3137f0b1e33d6e7bb0b1c2c5e6064",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [1, 257]]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 5,
+            "line": 85,
+            "name": "exec",
+            "resultLine": 88,
+            "toolCellCompleted": true,
+            "command": "cat -n packages/daemon/test/workbench-restart-guard.test.ts",
+            "exactAuthorizedContent": true,
+            "returnedChars": 11921,
+            "returnedSha256": "17981c1ee375d5d70e9775cf49dd10979e66690fe68625359696fe99914ca11d",
+            "allowedSources": [
+              ["packages/daemon/test/workbench-restart-guard.test.ts", null]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 6,
+            "line": 103,
+            "name": "exec",
+            "resultLine": 106,
+            "toolCellCompleted": true,
+            "command": "sed -n '258,309p' packages/daemon/src/state-backup.ts | nl -ba -v258",
+            "exactAuthorizedContent": true,
+            "returnedChars": 2166,
+            "returnedSha256": "63aeabe2f446a772b11aca9ba09c0c4160ac7b4c1ddd58e0d09120cb64daf503",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [258, 309]]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 7,
+            "line": 121,
+            "name": "exec",
+            "resultLine": 124,
+            "toolCellCompleted": true,
+            "command": "sed -n '310,491p' packages/daemon/src/state-backup.ts | nl -ba -v310",
+            "exactAuthorizedContent": true,
+            "returnedChars": 7306,
+            "returnedSha256": "8f067da27a8bd7c867a49965333a090faf4a842c8e9b6e5f829282ed4abf1f61",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [310, 491]]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 8,
+            "line": 139,
+            "name": "exec",
+            "resultLine": 142,
+            "toolCellCompleted": true,
+            "command": "sed -n '492,601p' packages/daemon/src/state-backup.ts | nl -ba -v492",
+            "exactAuthorizedContent": true,
+            "returnedChars": 4661,
+            "returnedSha256": "0e09fe8dd5d64b499a7ce065cb476d2ec353999c3126194e1c680e440dd8b62f",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [492, 601]]
+            ]
+          }
+        ],
+        "finalAnswers": [
+          {
+            "stage": 1,
+            "line": 19
+          },
+          {
+            "stage": 2,
+            "line": 37
+          },
+          {
+            "stage": 3,
+            "line": 55
+          },
+          {
+            "stage": 4,
+            "line": 73
+          },
+          {
+            "stage": 5,
+            "line": 91
+          },
+          {
+            "stage": 6,
+            "line": 109
+          },
+          {
+            "stage": 7,
+            "line": 127
+          },
+          {
+            "stage": 8,
+            "line": 145
+          },
+          {
+            "stage": 9,
+            "line": 156
+          },
+          {
+            "stage": 10,
+            "line": 167
+          },
+          {
+            "stage": 11,
+            "line": 178
+          },
+          {
+            "stage": 12,
+            "line": 189
+          }
+        ],
+        "sameSession": true,
+        "stages9to12NoTools": true,
+        "noObservedSourceMutationOrScriptExecution": true,
+        "recordedPidChecks": [
+          {
+            "pid": 32163,
+            "existsNow": false
+          },
+          {
+            "pid": 37379,
+            "existsNow": false
+          },
+          {
+            "pid": 36357,
+            "existsNow": false
+          },
+          {
+            "pid": 33285,
+            "existsNow": false
+          },
+          {
+            "pid": 44227,
+            "existsNow": false
+          },
+          {
+            "pid": 42184,
+            "existsNow": false
+          },
+          {
+            "pid": 35338,
+            "existsNow": false
+          },
+          {
+            "pid": 40876,
+            "existsNow": false
+          },
+          {
+            "pid": 43377,
+            "existsNow": false
+          },
+          {
+            "pid": 38556,
+            "existsNow": false
+          },
+          {
+            "pid": 34270,
+            "existsNow": false
+          },
+          {
+            "pid": 39647,
+            "existsNow": false
+          }
+        ]
+      },
+      "default": {
+        "sessionId": "01a109de-d17b-7ce0-933b-954f247361b1",
+        "nativeTurnContexts": 2,
+        "calls": [
+          {
+            "nativeTurnOrdinal": 1,
+            "line": 13,
+            "name": "exec",
+            "resultLine": 16,
+            "toolCellCompleted": true,
+            "classification": "source read",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 1,
+            "line": 18,
+            "name": "exec",
+            "resultLine": 21,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 1,
+            "line": 23,
+            "name": "exec",
+            "resultLine": 26,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 35,
+            "name": "exec",
+            "resultLine": 38,
+            "toolCellCompleted": true,
+            "classification": "source reread",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 40,
+            "name": "exec",
+            "resultLine": 43,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 45,
+            "name": "exec",
+            "resultLine": 48,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 50,
+            "name": "exec",
+            "resultLine": 53,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 55,
+            "name": "exec",
+            "resultLine": 58,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 60,
+            "name": "exec",
+            "resultLine": 63,
+            "toolCellCompleted": true,
+            "classification": "protocol action",
+            "rawStored": false
+          }
+        ],
+        "finalAnswers": [],
+        "sameSession": true,
+        "sourceReadCalls": 2,
+        "sourceRereads": 1,
+        "activations": [
+          {
+            "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+            "to_seq": 4,
+            "state": "completed",
+            "attempt_count": 2
+          }
+        ],
+        "markers": [
+          {
+            "run_attempt_id": "run_3b947359-e7e6-4370-83fb-8d55273d8504",
+            "room_seq": 9,
+            "submission_kind": null
+          },
+          {
+            "run_attempt_id": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc",
+            "room_seq": 17,
+            "submission_kind": null
+          }
+        ],
+        "runtimes": [
+          {
+            "pid": 45220,
+            "pgid": 45220,
+            "state": "terminated",
+            "turn_count": 2,
+            "native_session_id": "01a109de-d17b-7ce0-933b-954f247361b1",
+            "terminated_reason": "host_shutdown",
+            "processGroupExistsNow": false
+          }
+        ],
+        "runModes": [
+          {
+            "execution_mode": "cold",
+            "n": 1
+          },
+          {
+            "execution_mode": "warm",
+            "n": 1
+          }
+        ],
+        "cursor": [
+          {
+            "last_seq": 4
+          }
+        ],
+        "activeRuntimeProcesses": 0,
+        "recordedPidChecks": [
+          {
+            "pid": 45128,
+            "existsNow": false
+          },
+          {
+            "pid": 45220,
+            "existsNow": false
+          }
+        ]
+      },
+      "final-output": {
+        "sessionId": "01a109e0-8c99-7312-bda2-fc0af71d14b6",
+        "nativeTurnContexts": 12,
+        "calls": [
+          {
+            "nativeTurnOrdinal": 1,
+            "line": 11,
+            "name": "exec",
+            "resultLine": 14,
+            "toolCellCompleted": true,
+            "command": "nl -ba scripts/workbench-launch-receipt.mjs",
+            "exactAuthorizedContent": true,
+            "returnedChars": 5112,
+            "returnedSha256": "c542b98018b755876617658f004cec125212c6a56de56d37ca0bf22fd0e8f071",
+            "allowedSources": [["scripts/workbench-launch-receipt.mjs", null]]
+          },
+          {
+            "nativeTurnOrdinal": 2,
+            "line": 26,
+            "name": "exec",
+            "resultLine": 29,
+            "toolCellCompleted": true,
+            "command": "nl -ba scripts/workbench-launch-receipt.test.mjs",
+            "exactAuthorizedContent": true,
+            "returnedChars": 8549,
+            "returnedSha256": "2cfde9be9d8245365c1f4d82c79cd5dc928f5852673cd5294f860fde97af385b",
+            "allowedSources": [
+              ["scripts/workbench-launch-receipt.test.mjs", null]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 3,
+            "line": 41,
+            "name": "exec",
+            "resultLine": 44,
+            "toolCellCompleted": true,
+            "command": "nl -ba scripts/restart-local-workbench.mjs && nl -ba scripts/workbench-restart-guard.mjs",
+            "exactAuthorizedContent": true,
+            "returnedChars": 9450,
+            "returnedSha256": "908958942f659d6e4f79c66568f7c12f81f055d810161fe19c3e5a956dd29094",
+            "allowedSources": [
+              ["scripts/restart-local-workbench.mjs", null],
+              ["scripts/workbench-restart-guard.mjs", null]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 4,
+            "line": 56,
+            "name": "exec",
+            "resultLine": 59,
+            "toolCellCompleted": true,
+            "command": "nl -ba packages/daemon/src/state-backup.ts | sed -n '1,257p'",
+            "exactAuthorizedContent": true,
+            "returnedChars": 9777,
+            "returnedSha256": "ed34dd351492ef33c8b4435478e7bfbf3fe3137f0b1e33d6e7bb0b1c2c5e6064",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [1, 257]]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 5,
+            "line": 71,
+            "name": "exec",
+            "resultLine": 74,
+            "toolCellCompleted": true,
+            "command": "nl -ba packages/daemon/test/workbench-restart-guard.test.ts",
+            "exactAuthorizedContent": true,
+            "returnedChars": 11921,
+            "returnedSha256": "17981c1ee375d5d70e9775cf49dd10979e66690fe68625359696fe99914ca11d",
+            "allowedSources": [
+              ["packages/daemon/test/workbench-restart-guard.test.ts", null]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 6,
+            "line": 86,
+            "name": "exec",
+            "resultLine": 89,
+            "toolCellCompleted": true,
+            "command": "nl -ba packages/daemon/src/state-backup.ts | sed -n '258,309p'",
+            "exactAuthorizedContent": true,
+            "returnedChars": 2166,
+            "returnedSha256": "63aeabe2f446a772b11aca9ba09c0c4160ac7b4c1ddd58e0d09120cb64daf503",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [258, 309]]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 7,
+            "line": 101,
+            "name": "exec",
+            "resultLine": 104,
+            "toolCellCompleted": true,
+            "command": "nl -ba packages/daemon/src/state-backup.ts | sed -n '310,491p'",
+            "exactAuthorizedContent": true,
+            "returnedChars": 7306,
+            "returnedSha256": "8f067da27a8bd7c867a49965333a090faf4a842c8e9b6e5f829282ed4abf1f61",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [310, 491]]
+            ]
+          },
+          {
+            "nativeTurnOrdinal": 8,
+            "line": 116,
+            "name": "exec",
+            "resultLine": 119,
+            "toolCellCompleted": true,
+            "command": "nl -ba packages/daemon/src/state-backup.ts | sed -n '492,601p'",
+            "exactAuthorizedContent": true,
+            "returnedChars": 4661,
+            "returnedSha256": "0e09fe8dd5d64b499a7ce065cb476d2ec353999c3126194e1c680e440dd8b62f",
+            "allowedSources": [
+              ["packages/daemon/src/state-backup.ts", [492, 601]]
+            ]
+          }
+        ],
+        "finalAnswers": [
+          {
+            "stage": 1,
+            "line": 17,
+            "basedOnRoomSeq": 4,
+            "bodySha256": "f7c4006e02abdce21c997e731ae7671239a5a754aa742f73851fe4609649fbd3"
+          },
+          {
+            "stage": 2,
+            "line": 32,
+            "basedOnRoomSeq": 13,
+            "bodySha256": "317422878a7f4a4cc4edc05d71ecd36fb2fd46cb7018e14e0afec53ee5461cb9"
+          },
+          {
+            "stage": 3,
+            "line": 47,
+            "basedOnRoomSeq": 22,
+            "bodySha256": "35f8996dcc767aa6404610b57a3b960c2aea28585bdc5ab0fcb6695d9bb30261"
+          },
+          {
+            "stage": 4,
+            "line": 62,
+            "basedOnRoomSeq": 31,
+            "bodySha256": "a1753abf993f2449366a8f68ef6c6c9c657a904df35652f34c70fa48ec822746"
+          },
+          {
+            "stage": 5,
+            "line": 77,
+            "basedOnRoomSeq": 40,
+            "bodySha256": "c8dba78715dac36889ab907b80b3d7bd5362c3aa9682ed50af249b4655ac1965"
+          },
+          {
+            "stage": 6,
+            "line": 92,
+            "basedOnRoomSeq": 49,
+            "bodySha256": "36937b1ed23002393ea5472fa7759bdf1cceb26aab68529a1bbc906211891beb"
+          },
+          {
+            "stage": 7,
+            "line": 107,
+            "basedOnRoomSeq": 58,
+            "bodySha256": "bc6bf04a258cbd8a9bf3077f76706ba2333989492b45b42dd5b80a4d2f42546d"
+          },
+          {
+            "stage": 8,
+            "line": 122,
+            "basedOnRoomSeq": 67,
+            "bodySha256": "e9a9c316d2f1c946ee2f5ddcaac6b31c5709399fc5d5fd73cce36bc79d5aa207"
+          },
+          {
+            "stage": 9,
+            "line": 132,
+            "basedOnRoomSeq": 76,
+            "bodySha256": "45bd4b19d5e78f7f05bb56d2a1be0a628e5161e1b83872aca2b372b2132466fa"
+          },
+          {
+            "stage": 10,
+            "line": 142,
+            "basedOnRoomSeq": 85,
+            "bodySha256": "49299f686c7bf80aea39357f45998ee4a2ca232ed144fff4946dc3c870032359"
+          },
+          {
+            "stage": 11,
+            "line": 152,
+            "basedOnRoomSeq": 94,
+            "bodySha256": "3a104957b7c965f92da60b1ede83480dcf8f76130c08e3647a03ece690441b52"
+          },
+          {
+            "stage": 12,
+            "line": 162,
+            "basedOnRoomSeq": 103,
+            "bodySha256": "427256713fa4ff0402ef80929dd69585dc3b23465085103dc168a42565cc53cc"
+          }
+        ],
+        "sameSession": true,
+        "stages9to12NoTools": true,
+        "noObservedSourceMutationOrScriptExecution": true,
+        "activations": [
+          {
+            "activation_id": "activation_8350f1c9-50ed-4e0d-aefb-67d38edcb30c",
+            "to_seq": 4,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_ec9ac044-cc97-459a-86c9-8941e0be695c",
+            "to_seq": 13,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_e68e8a82-2010-4b9c-ac46-83c51c1e55e0",
+            "to_seq": 22,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_83d9d68d-66f1-4d36-a545-bd63633efbbb",
+            "to_seq": 31,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_cdb2493d-7936-4735-987d-b38f9114c928",
+            "to_seq": 40,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_2458954a-2bfd-4819-9ca5-7d17fb856cd0",
+            "to_seq": 49,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_ffcd91d4-2647-4411-ba15-b85f4bf23a8a",
+            "to_seq": 58,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_75d71a6a-e8fe-4d36-ad4e-42a64e928077",
+            "to_seq": 67,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_9e1f1f7f-c80e-4eb5-952d-fce214fdbd37",
+            "to_seq": 76,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_aa9426c7-0983-43f0-a732-f6664b4dfd5a",
+            "to_seq": 85,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_561b5c4f-7277-42a7-806a-351a26049684",
+            "to_seq": 94,
+            "state": "completed",
+            "attempt_count": 1
+          },
+          {
+            "activation_id": "activation_b65342e5-2e95-40c1-b23b-f0a7ac6cf0e6",
+            "to_seq": 103,
+            "state": "completed",
+            "attempt_count": 1
+          }
+        ],
+        "markers": [
+          {
+            "run_attempt_id": "run_6e4aee4d-8e25-4b81-b700-1e4fb897e1a0",
+            "room_seq": 9,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_d80d3d6f-f90e-459d-b404-ecc1f9bcb41e",
+            "room_seq": 18,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_a0a16383-7322-4f71-bef3-b1df78ae7cbc",
+            "room_seq": 27,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_e6f4868a-938a-48d7-97eb-6f47b458fe28",
+            "room_seq": 36,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_69a42a4a-c4ec-48dc-91b0-b5c30b9dd829",
+            "room_seq": 45,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_332b4bf8-fd0b-4f1b-a741-e6e597d93754",
+            "room_seq": 54,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_bae3f81a-8de3-4191-8c14-5e92a2c7f74c",
+            "room_seq": 63,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_9c0ce7ae-52db-4d8b-86ad-ced3a0501f10",
+            "room_seq": 72,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_06d9d929-2f0c-4d14-affb-be557a1c3292",
+            "room_seq": 81,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_288f2739-7173-4a55-81cc-d1e812b4c317",
+            "room_seq": 90,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_99a2983e-fe13-4881-866f-99ab7c464c7d",
+            "room_seq": 99,
+            "submission_kind": "final-output"
+          },
+          {
+            "run_attempt_id": "run_e5229db8-03ce-4428-ae69-af71449953f2",
+            "room_seq": 108,
+            "submission_kind": "final-output"
+          }
+        ],
+        "runtimes": [
+          {
+            "pid": 50007,
+            "pgid": 50007,
+            "state": "terminated",
+            "turn_count": 12,
+            "native_session_id": "01a109e0-8c99-7312-bda2-fc0af71d14b6",
+            "terminated_reason": "host_shutdown",
+            "processGroupExistsNow": false
+          }
+        ],
+        "runModes": [
+          {
+            "execution_mode": "cold",
+            "n": 1
+          },
+          {
+            "execution_mode": "warm",
+            "n": 11
+          }
+        ],
+        "cursor": [
+          {
+            "last_seq": 103
+          }
+        ],
+        "activeRuntimeProcesses": 0,
+        "recordedPidChecks": [
+          {
+            "pid": 49938,
+            "existsNow": false
+          },
+          {
+            "pid": 50007,
+            "existsNow": false
+          }
+        ],
+        "everyRawEnvelopeBodyMatchesPublishedMessage": true
+      }
+    }
+  },
+  "defaultFailure": {
+    "scope": "P113 default only; read-only no provider invocation",
+    "sessionId": "01a109de-d17b-7ce0-933b-954f247361b1",
+    "activations": [
+      {
+        "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+        "from_seq": 4,
+        "to_seq": 4,
+        "state": "completed",
+        "attempt_count": 2,
+        "last_error": "activation delivery is not acknowledged through sequence 4"
+      }
+    ],
+    "runs": [
+      {
+        "run_attempt_id": "run_3b947359-e7e6-4370-83fb-8d55273d8504",
+        "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+        "attempt_number": 1,
+        "native_turn_id": "01a109de-dc8f-7d00-9bc0-b158080ef69d",
+        "state": "exited",
+        "execution_mode": "cold",
+        "started_at": "2026-10-05T02:22:39.122Z",
+        "finished_at": "2026-10-05T02:23:16.309Z"
+      },
+      {
+        "run_attempt_id": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc",
+        "activation_id": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+        "attempt_number": 2,
+        "native_turn_id": "01a109df-b94b-76e0-ad21-da86440838b5",
+        "state": "exited",
+        "execution_mode": "warm",
+        "started_at": "2026-10-05T02:23:39.144Z",
+        "finished_at": "2026-10-05T02:24:28.059Z"
+      }
+    ],
+    "finalMarkers": [
+      {
+        "run_attempt_id": "run_3b947359-e7e6-4370-83fb-8d55273d8504",
+        "room_seq": 9,
+        "submission_kind": null,
+        "interrupt_sent": 1,
+        "preempted_follow_up": "true"
+      },
+      {
+        "run_attempt_id": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc",
+        "room_seq": 17,
+        "submission_kind": null,
+        "interrupt_sent": 1,
+        "preempted_follow_up": "true"
+      }
+    ],
+    "usage": [
+      {
+        "run_attempt_id": "run_3b947359-e7e6-4370-83fb-8d55273d8504",
+        "generations": 3,
+        "input": 38989,
+        "cached": 0,
+        "output": 994
+      },
+      {
+        "run_attempt_id": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc",
+        "generations": 6,
+        "input": 103970,
+        "cached": 92672,
+        "output": 674
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "type": "room.created",
+        "facts": {}
+      },
+      {
+        "seq": 2,
+        "type": "membership.added",
+        "facts": {}
+      },
+      {
+        "seq": 3,
+        "type": "instance.created",
+        "facts": {}
+      },
+      {
+        "seq": 4,
+        "type": "message.posted",
+        "facts": {
+          "basedOnRoomSeq": 3
+        }
+      },
+      {
+        "seq": 5,
+        "type": "placement.reserved",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab"
+        }
+      },
+      {
+        "seq": 6,
+        "type": "run.created",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "runAttemptId": "run_3b947359-e7e6-4370-83fb-8d55273d8504"
+        }
+      },
+      {
+        "seq": 7,
+        "type": "run.runtime_prepared",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "runAttemptId": "run_3b947359-e7e6-4370-83fb-8d55273d8504"
+        }
+      },
+      {
+        "seq": 8,
+        "type": "run.started",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "runAttemptId": "run_3b947359-e7e6-4370-83fb-8d55273d8504"
+        }
+      },
+      {
+        "seq": 9,
+        "type": "message.posted",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "basedOnRoomSeq": 4
+        }
+      },
+      {
+        "seq": 10,
+        "type": "run.turn_quiesced",
+        "facts": {
+          "runAttemptId": "run_3b947359-e7e6-4370-83fb-8d55273d8504"
+        }
+      },
+      {
+        "seq": 11,
+        "type": "run.finished",
+        "facts": {
+          "runAttemptId": "run_3b947359-e7e6-4370-83fb-8d55273d8504",
+          "state": "exited"
+        }
+      },
+      {
+        "seq": 12,
+        "type": "activation.retry_scheduled",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "error": "activation delivery is not acknowledged through sequence 4",
+          "retryDisposition": "recoverable"
+        }
+      },
+      {
+        "seq": 13,
+        "type": "placement.reserved",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab"
+        }
+      },
+      {
+        "seq": 14,
+        "type": "run.created",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "runAttemptId": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc"
+        }
+      },
+      {
+        "seq": 15,
+        "type": "run.runtime_prepared",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "runAttemptId": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc"
+        }
+      },
+      {
+        "seq": 16,
+        "type": "run.started",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "runAttemptId": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc"
+        }
+      },
+      {
+        "seq": 17,
+        "type": "message.posted",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab",
+          "basedOnRoomSeq": 9
+        }
+      },
+      {
+        "seq": 18,
+        "type": "run.turn_quiesced",
+        "facts": {
+          "runAttemptId": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc"
+        }
+      },
+      {
+        "seq": 19,
+        "type": "run.finished",
+        "facts": {
+          "runAttemptId": "run_939e1ee6-61c7-4846-a549-59a588cfe8cc",
+          "state": "exited"
+        }
+      },
+      {
+        "seq": 20,
+        "type": "activation.finished",
+        "facts": {
+          "activationId": "activation_262dec69-9509-4249-b3de-75ca9b7637ab"
+        }
+      }
+    ],
+    "transcriptEvidence": [
+      {
+        "line": 18,
+        "action": "MCP invalid fields target/turn; provided basedOnRoomSeq4; rejected at line21"
+      },
+      {
+        "line": 23,
+        "action": "MCP retry body+final:true, omitted basedOnRoomSeq; published seq9 at line26"
+      },
+      {
+        "line": 35,
+        "action": "second native turn rereads same source"
+      },
+      {
+        "line": 40,
+        "action": "MCP body+final:true+basedOnRoomSeq4 held behind own seq9 at line43"
+      },
+      {
+        "line": 45,
+        "action": "CLI message-check; delivered seq4 shown cursor0→4 at line48"
+      },
+      {
+        "line": 50,
+        "action": "CLI help messages"
+      },
+      {
+        "line": 55,
+        "action": "CLI help messages-advanced"
+      },
+      {
+        "line": 60,
+        "action": "CLI message-post --send-draft; unique second message seq17 at line63"
+      }
+    ],
+    "interpretation": {
+      "secondActivation": false,
+      "sameActivationRetry": true,
+      "identicalCallReplayObserved": false,
+      "modelMisuse": "initial undeclared identity fields then removing causal seq with the invalid fields",
+      "platformContribution": "final marker interrupts execution even without ACK; missing ACK classified recoverable and reruns already-replied obligation",
+      "gateFinalMissing": "exactly-one check failed because two final markers, not zero"
+    },
+    "limits": [
+      "No new test/replay; this diagnoses observed event sequence only.",
+      "Do not equate nine usage generations with independently measured HTTP request count.",
+      "Read check transport vs ACK timing: final cursor update persisted at draft send; message-check output alone is not asserted as exact commit time."
+    ]
+  }
+}
