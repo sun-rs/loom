@@ -38,7 +38,7 @@ function awaitedReply(node) {
   );
   return literalArguments(c.arguments[0]);
 }
-function replyArguments(call) {
+export function replyArguments(call) {
   if (
     call.type === "function_call" &&
     call.name === "mcp__loom_worker__loom_reply"

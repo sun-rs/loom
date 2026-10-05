@@ -112,8 +112,18 @@ function combine(parts) {
 }
 export function summarizeLongChannel(
   arms,
-  { readProofPolicy = "tool-result/v1", productArm = "final-output" } = {},
+  {
+    readProofPolicy = "tool-result/v1",
+    productArm = "final-output",
+    mcpReplyProof = "single-mcp-final-reply",
+  } = {},
 ) {
+  if (
+    !["single-mcp-final-reply", "observed-mcp-final-reply"].includes(
+      mcpReplyProof,
+    )
+  )
+    throw new Error("Unknown MCP reply proof");
   if (!["final-output", "worker-mcp"].includes(productArm))
     throw new Error("Unknown product arm");
   if (!["tool-result/v1", "inline-input/v1"].includes(readProofPolicy))
@@ -165,7 +175,7 @@ export function summarizeLongChannel(
             n,
             true,
             firstReadProof,
-            productArm === "worker-mcp" ? "single-mcp-final-reply" : undefined,
+            productArm === "worker-mcp" ? mcpReplyProof : undefined,
           ),
         ),
       ]),

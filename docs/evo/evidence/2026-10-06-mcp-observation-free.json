@@ -1,0 +1,78 @@
+{
+  "kind": "free real CLI with loopback synthetic model; registered target recovery at first middle and last stages",
+  "paidCalls": 0,
+  "receivedLoopbackRequests": 75,
+  "arms": {
+    "native": {
+      "stages": 36,
+      "generations": 36,
+      "input": 3600,
+      "speakers": {
+        "a": {
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "b": {
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "c": {
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      }
+    },
+    "worker-mcp": {
+      "stages": 36,
+      "generations": 39,
+      "input": 3900,
+      "speakers": {
+        "a": {
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "b": {
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "c": {
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      }
+    }
+  },
+  "recoveryStages": [1, 13, 36],
+  "durable": {
+    "runs": 36,
+    "completedActivationsWithConsumerAck": 36,
+    "uniqueFinalMarkers": 36,
+    "usageRows": 39,
+    "usageGaps": 0
+  },
+  "checksPassed": 471,
+  "hashes": {
+    "native-a.jsonl": "94a45537e0583bf520bba9219f2fa16f680924712a36908e6e985b342cde579b",
+    "native-b.jsonl": "af86c3ec773b42fbf16d6ee9dae494a97440f58ef9046ced5c16957274f342ef",
+    "native-c.jsonl": "c79a6a3faee610690509a28bf7314aa8412d658ad432345aa5d9496275ea89fd",
+    "worker-mcp-a.jsonl": "7c2f55758ee7c861379c673cc929976e4d0cd2e65fe57588cab1fbfa3634cc96",
+    "worker-mcp-b.jsonl": "3cdb95a97448bb51dbb0b3c7a45e7e71d811198efe76f8a4ee98ef93a058d4c8",
+    "worker-mcp-c.jsonl": "8020f6c29ea1d90f2ea84100a091d56e8628c572819f575252fba3f978d6086c",
+    "positive.private.json": "5196986585f08d5bc224b3572a64d6adaa18a5b547586f9b60335d9804ae27cb",
+    "probe.mjs": "f78bb1bfe861cdbce59cc63a7c45e7d12e9f2a89be5f88909ad7b9d97dd4d68c",
+    "run-probe.py": "b2f4c20d8a535a8448914ffa815a9675508b48907929c497d446f189e28cc8f2",
+    "room.snapshot.db": "4ea757c0bb5aa1c2f28df6823d2259ae98b70434f2071793d4b94e2110b66455",
+    "audit.py": "defb67465d9ed262968969cdd7a845f1da19b3cfea709d35bb8381de7eb55ac1"
+  },
+  "limits": [
+    "Synthetic requests and costs do not establish real model stability or performance.",
+    "Direct shared-arm probe; paid command not invoked.",
+    "P119 verdict unchanged; no historical record overwritten."
+  ]
+}
