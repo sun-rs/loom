@@ -1,0 +1,123 @@
+{
+  "sample": "P121",
+  "kind": "independent paid-smoke audit; no additional model calls",
+  "completePlannedStagesPerArm": 6,
+  "participantsPerArm": 3,
+  "continuousStagesPerSession": 2,
+  "distinctNativeSessions": 6,
+  "actualCliVersion": "0.160.0",
+  "actualModel": "gpt-6-luna",
+  "actualEffort": "low",
+  "nativeMemory": "disabled in all six session records",
+  "rawUsage": {
+    "worker-delivery": {
+      "input": 98453,
+      "cached": 38144,
+      "uncached": 60309,
+      "output": 294,
+      "generations": 6
+    },
+    "native": {
+      "input": 79932,
+      "cached": 38912,
+      "uncached": 41020,
+      "output": 78,
+      "generations": 6
+    }
+  },
+  "ratios": {
+    "input": 1.2317094530350798,
+    "uncached": 1.4702340321794247,
+    "output": 3.769230769230769
+  },
+  "firstGenerationInputDifferencesByStage": [
+    3030, 2836, 2642, 3535, 3338, 3140
+  ],
+  "newMaterialCopies": {
+    "worker-delivery": {
+      "a": [1, 0],
+      "b": [1, 0],
+      "c": [1, 0]
+    },
+    "native": {
+      "a": [1, 0],
+      "b": [1, 0],
+      "c": [1, 0]
+    }
+  },
+  "durable": {
+    "runs": 6,
+    "completedActivations": 6,
+    "finalMarkers": 6,
+    "sameConsumerAck": 6,
+    "uniqueCorrectTargetMessages": 6,
+    "persistedUsageRows": 6,
+    "usageGaps": 0,
+    "automaticRetries": 0,
+    "testRuntimesTerminated": true,
+    "daemonExitCode": 0
+  },
+  "transport": {
+    "product": "six actual MCP calls; six complete correlated published receipts; no threadId parameter; no rejection or deduplication observed",
+    "native": "zero tool calls",
+    "receipts": [
+      {
+        "stage": 1,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 8,
+        "roomSequence": 13
+      },
+      {
+        "stage": 4,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 35,
+        "roomSequence": 40
+      },
+      {
+        "stage": 2,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 17,
+        "roomSequence": 22
+      },
+      {
+        "stage": 5,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 44,
+        "roomSequence": 49
+      },
+      {
+        "stage": 3,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 26,
+        "roomSequence": 31
+      },
+      {
+        "stage": 6,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 53,
+        "roomSequence": 58
+      }
+    ]
+  },
+  "quality": {
+    "sourceBasis": "state-backup.ts frozen lines95-101 and113-117",
+    "nativeCorrect": 6,
+    "productCorrect": 6,
+    "scope": "two questions repeated for three participants; no long-chain or cooperation-value claim"
+  },
+  "checks": 65,
+  "limits": [
+    "Paid smoke only: one pair, product first, three sessions per arm and two stages per session.",
+    "Model trajectory and peer history are endogenous; raw ratio is not a causal estimate of pure platform overhead.",
+    "Response usage records are not independently captured HTTP request counts.",
+    "Product exact before/after generation timing remains unknown in raw metrics; late usage cannot be called another post-reply generation.",
+    "Native automatic diagnostic rejection/dedup counts remain unknown for wrappers; this audit separately inspects these six complete actual outputs.",
+    "A first-stage input difference is 3030, so full contract acceptance must not be inferred from all answers and ACKs passing."
+  ]
+}
