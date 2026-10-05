@@ -1,0 +1,5236 @@
+{
+  "sampleId": "P115",
+  "codeCommit": "a653c257fe47242f62940434f767ce0fe0b7748b",
+  "productSourceCommit": "6b8a7c3fe3f7a607dcbc29dc6eba44bd302d36f4",
+  "rawResultSha256": "03f2c357fdd5b1012c40e5fd79d6007c7e17784c58d5c03b440a134292aa64e3",
+  "decision": {
+    "delivery": "pass",
+    "contract6": "within-budget",
+    "nativeTechnicalQuality": "fail",
+    "productTechnicalQuality": "fail",
+    "fullInstructions": "fail",
+    "successfulTaskRelativeAcceptance": "inconclusive: native core task failed",
+    "promotion": "no; experimental flags remain off",
+    "batch": "closed; no resampling"
+  },
+  "frozenInputs": {
+    "codeCommit": "a653c257fe47242f62940434f767ce0fe0b7748b",
+    "files": {
+      "docs/evo/closeout-plan.zh-CN.md": "36648b7444d6b55eb88e00705145578f6d6f4961512cc62d4227bbc9fa417bc3",
+      "docs/evo/closeout-quality-rules.zh-CN.md": "601281cdb36356abf91dc7eedc5a44a5a6cc51e156da66f900b72943403060b2",
+      "scripts/cli-efficiency/long-session-workload.mjs": "6f47d8bdd22a9bc193b93d32b40bc0c80bf98004ef12c8f46bff1cfcb4c61f06",
+      "scripts/cli-efficiency/metrics.mjs": "aaa0bc299504eb56582599d7690858b2aca11564f29149436413b1531bdcff93"
+    }
+  },
+  "cost": {
+    "sourceResultSha256": "03f2c357fdd5b1012c40e5fd79d6007c7e17784c58d5c03b440a134292aa64e3",
+    "sourceStatus": "needs-quality-review",
+    "sealed": true,
+    "codeCommit": "a653c257fe47242f62940434f767ce0fe0b7748b",
+    "baselineIdentity": "7c89997d451bc79b30696d455c60555f90714cd5fd53781a9a21b1f1b4930d53",
+    "arms": {
+      "native": {
+        "status": "complete",
+        "stageCount": 12,
+        "sameSession": true,
+        "nativeMemoryDisabled": true,
+        "actualIdentity": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "turnContextCount": 12,
+        "usageEvents": 20,
+        "runAttempts": null,
+        "databaseRunInventoryComplete": null,
+        "allUsageAssigned": true,
+        "transcriptSha256": "d155b88c1a808a5126aa797e2db8f9f3e2f725378e47479e20afd5a22713e6fd",
+        "stages": [
+          {
+            "stage": 1,
+            "input": 19743,
+            "cached": 8960,
+            "output": 480,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 10783,
+            "durationSeconds": 20.098,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 2,
+            "input": 25157,
+            "cached": 11008,
+            "output": 474,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 14149,
+            "durationSeconds": 19.688,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 3,
+            "input": 31845,
+            "cached": 27136,
+            "output": 526,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 4709,
+            "durationSeconds": 22.157,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 4,
+            "input": 38594,
+            "cached": 34304,
+            "output": 530,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 4290,
+            "durationSeconds": 20.401,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 5,
+            "input": 45934,
+            "cached": 40448,
+            "output": 444,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 5486,
+            "durationSeconds": 19.441,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 6,
+            "input": 51026,
+            "cached": 48640,
+            "output": 492,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 2386,
+            "durationSeconds": 20.966,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 7,
+            "input": 54814,
+            "cached": 35328,
+            "output": 521,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 19486,
+            "durationSeconds": 21.738,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 8,
+            "input": 59285,
+            "cached": 55808,
+            "output": 485,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 3477,
+            "durationSeconds": 32.554,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 9,
+            "input": 30814,
+            "cached": 29440,
+            "output": 409,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 1374,
+            "durationSeconds": 16.868,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 10,
+            "input": 31358,
+            "cached": 30464,
+            "output": 414,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 894,
+            "durationSeconds": 16.847,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 11,
+            "input": 31912,
+            "cached": 25344,
+            "output": 463,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 6568,
+            "durationSeconds": 19.262,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          },
+          {
+            "stage": 12,
+            "input": 32499,
+            "cached": 31488,
+            "output": 431,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 1011,
+            "durationSeconds": 17.581,
+            "runAttempts": null,
+            "metricsMatchTranscript": true
+          }
+        ],
+        "totals": {
+          "input": 452981,
+          "cached": 378368,
+          "uncached": 74613,
+          "output": 5669,
+          "generations": 20,
+          "durationSeconds": 247.601
+        },
+        "windows": {
+          "1": {
+            "input": 19743,
+            "cached": 8960,
+            "uncached": 10783,
+            "output": 480,
+            "generations": 2,
+            "durationSeconds": 20.098
+          },
+          "2-6": {
+            "input": 192556,
+            "cached": 161536,
+            "uncached": 31020,
+            "output": 2466,
+            "generations": 10,
+            "durationSeconds": 102.65299999999999
+          },
+          "7-12": {
+            "input": 240682,
+            "cached": 207872,
+            "uncached": 32810,
+            "output": 2723,
+            "generations": 8,
+            "durationSeconds": 124.85
+          }
+        },
+        "checkpoints": {
+          "1": {
+            "input": 19743,
+            "cached": 8960,
+            "uncached": 10783,
+            "output": 480,
+            "generations": 2,
+            "durationSeconds": 20.098
+          },
+          "3": {
+            "input": 76745,
+            "cached": 47104,
+            "uncached": 29641,
+            "output": 1480,
+            "generations": 6,
+            "durationSeconds": 61.943
+          },
+          "6": {
+            "input": 212299,
+            "cached": 170496,
+            "uncached": 41803,
+            "output": 2946,
+            "generations": 12,
+            "durationSeconds": 122.751
+          },
+          "9": {
+            "input": 357212,
+            "cached": 291072,
+            "uncached": 66140,
+            "output": 4361,
+            "generations": 17,
+            "durationSeconds": 193.911
+          },
+          "12": {
+            "input": 452981,
+            "cached": 378368,
+            "uncached": 74613,
+            "output": 5669,
+            "generations": 20,
+            "durationSeconds": 247.601
+          }
+        }
+      },
+      "final-output": {
+        "status": "complete",
+        "stageCount": 12,
+        "sameSession": true,
+        "nativeMemoryDisabled": true,
+        "actualIdentity": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "turnContextCount": 12,
+        "usageEvents": 20,
+        "runAttempts": 12,
+        "databaseRunInventoryComplete": true,
+        "allUsageAssigned": true,
+        "transcriptSha256": "48b28304901ae0ab72546459d1b557e78b1c84e0c6da0ea1caedb2520e1729ee",
+        "stages": [
+          {
+            "stage": 1,
+            "input": 25172,
+            "cached": 11008,
+            "output": 472,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 14164,
+            "durationSeconds": 20.07,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 2,
+            "input": 29636,
+            "cached": 26112,
+            "output": 523,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 3524,
+            "durationSeconds": 13.079,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 3,
+            "input": 35089,
+            "cached": 31232,
+            "output": 540,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 3857,
+            "durationSeconds": 14.214,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 4,
+            "input": 40416,
+            "cached": 18176,
+            "output": 583,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 22240,
+            "durationSeconds": 13.701,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 5,
+            "input": 46377,
+            "cached": 41472,
+            "output": 540,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 4905,
+            "durationSeconds": 13.821,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 6,
+            "input": 50815,
+            "cached": 42496,
+            "output": 516,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 8319,
+            "durationSeconds": 12.684,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 7,
+            "input": 54057,
+            "cached": 49664,
+            "output": 509,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 4393,
+            "durationSeconds": 13.423,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 8,
+            "input": 57739,
+            "cached": 52736,
+            "output": 522,
+            "reasoning": 0,
+            "generations": 2,
+            "uncached": 5003,
+            "durationSeconds": 13.986,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 9,
+            "input": 29984,
+            "cached": 27392,
+            "output": 438,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 2592,
+            "durationSeconds": 10.812,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 10,
+            "input": 30628,
+            "cached": 27392,
+            "output": 450,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 3236,
+            "durationSeconds": 11.497,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 11,
+            "input": 31292,
+            "cached": 28416,
+            "output": 439,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 2876,
+            "durationSeconds": 11.509,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          },
+          {
+            "stage": 12,
+            "input": 31929,
+            "cached": 30464,
+            "output": 453,
+            "reasoning": 0,
+            "generations": 1,
+            "uncached": 1465,
+            "durationSeconds": 10.195,
+            "runAttempts": 1,
+            "metricsMatchTranscript": true,
+            "databaseUsageMatch": true,
+            "databaseGapCount": 0
+          }
+        ],
+        "totals": {
+          "input": 463134,
+          "cached": 386560,
+          "uncached": 76574,
+          "output": 5985,
+          "generations": 20,
+          "durationSeconds": 158.991
+        },
+        "windows": {
+          "1": {
+            "input": 25172,
+            "cached": 11008,
+            "uncached": 14164,
+            "output": 472,
+            "generations": 2,
+            "durationSeconds": 20.07
+          },
+          "2-6": {
+            "input": 202333,
+            "cached": 159488,
+            "uncached": 42845,
+            "output": 2702,
+            "generations": 10,
+            "durationSeconds": 67.499
+          },
+          "7-12": {
+            "input": 235629,
+            "cached": 216064,
+            "uncached": 19565,
+            "output": 2811,
+            "generations": 8,
+            "durationSeconds": 71.422
+          }
+        },
+        "checkpoints": {
+          "1": {
+            "input": 25172,
+            "cached": 11008,
+            "uncached": 14164,
+            "output": 472,
+            "generations": 2,
+            "durationSeconds": 20.07
+          },
+          "3": {
+            "input": 89897,
+            "cached": 68352,
+            "uncached": 21545,
+            "output": 1535,
+            "generations": 6,
+            "durationSeconds": 47.363
+          },
+          "6": {
+            "input": 227505,
+            "cached": 170496,
+            "uncached": 57009,
+            "output": 3174,
+            "generations": 12,
+            "durationSeconds": 87.569
+          },
+          "9": {
+            "input": 369285,
+            "cached": 300288,
+            "uncached": 68997,
+            "output": 4643,
+            "generations": 17,
+            "durationSeconds": 125.79
+          },
+          "12": {
+            "input": 463134,
+            "cached": 386560,
+            "uncached": 76574,
+            "output": 5985,
+            "generations": 20,
+            "durationSeconds": 158.991
+          }
+        }
+      }
+    },
+    "ratiosAgainstSameBatchNative": {
+      "final-output": {
+        "totals": {
+          "input": 1.022413743622801,
+          "cached": 1.0216508795669823,
+          "uncached": 1.0262822832482275,
+          "output": 1.0557417533956606,
+          "generations": 1.0,
+          "durationSeconds": 0.6421258395563831
+        },
+        "windows": {
+          "1": {
+            "input": 1.2749835384693309,
+            "cached": 1.2285714285714286,
+            "uncached": 1.3135491050727999,
+            "output": 0.9833333333333333,
+            "generations": 1.0,
+            "durationSeconds": 0.9986068265499055
+          },
+          "2-6": {
+            "input": 1.0507748395272025,
+            "cached": 0.9873217115689382,
+            "uncached": 1.3812056737588652,
+            "output": 1.0957015409570154,
+            "generations": 1.0,
+            "durationSeconds": 0.6575453225916437
+          },
+          "7-12": {
+            "input": 0.9790054927248403,
+            "cached": 1.0394088669950738,
+            "uncached": 0.5963120999695215,
+            "output": 1.0323172970987882,
+            "generations": 1.0,
+            "durationSeconds": 0.572062474969964
+          }
+        },
+        "checkpoints": {
+          "1": {
+            "input": 1.2749835384693309,
+            "cached": 1.2285714285714286,
+            "uncached": 1.3135491050727999,
+            "output": 0.9833333333333333,
+            "generations": 1.0,
+            "durationSeconds": 0.9986068265499055
+          },
+          "3": {
+            "input": 1.1713727278650075,
+            "cached": 1.451086956521739,
+            "uncached": 0.7268648156270031,
+            "output": 1.037162162162162,
+            "generations": 1.0,
+            "durationSeconds": 0.7646223140629288
+          },
+          "6": {
+            "input": 1.0716253962571656,
+            "cached": 1.0,
+            "uncached": 1.3637537975743368,
+            "output": 1.0773930753564154,
+            "generations": 1.0,
+            "durationSeconds": 0.7133872636475467
+          },
+          "9": {
+            "input": 1.0337978567349362,
+            "cached": 1.0316622691292876,
+            "uncached": 1.0431962503779861,
+            "output": 1.0646640678743406,
+            "generations": 1.0,
+            "durationSeconds": 0.6486996611847704
+          },
+          "12": {
+            "input": 1.022413743622801,
+            "cached": 1.0216508795669823,
+            "uncached": 1.0262822832482275,
+            "output": 1.0557417533956606,
+            "generations": 1.0,
+            "durationSeconds": 0.6421258395563831
+          }
+        }
+      }
+    },
+    "issues": [],
+    "method": "Independent raw token_count last_token_usage summed once per distinct total_token_usage record in exact stage windows; product rows additionally summed across every recorded Run; no exclusions for failed calls, help, repair or retries. Rate-limit/account fields not collected.",
+    "limits": [
+      "Completed usage generations are not independent HTTP request counts.",
+      "Tokens and ratios are not provider bills.",
+      "Cache differences are observational, not architectural causality.",
+      "P113 is not a denominator; no cross-batch substitution.",
+      "Quality and tool-path interpretation belong to separate audits."
+    ],
+    "contractAudit": {
+      "owner": "scripts/cli-efficiency/metrics.mjs",
+      "ownerSha256": "aaa0bc299504eb56582599d7690858b2aca11564f29149436413b1531bdcff93",
+      "evaluationScriptSha256": "a2257f3f62e1a04bbe280cb4ac34c379423533d8cae8c6ce9c9d9790bcffd20c",
+      "sourceResultSha256": "03f2c357fdd5b1012c40e5fd79d6007c7e17784c58d5c03b440a134292aa64e3",
+      "status": "within-budget",
+      "fixedOverhead": {
+        "rah": 12007,
+        "native": 9103,
+        "tokens": 2904,
+        "budget": 3000
+      },
+      "armFailures": [],
+      "retriedRounds": [],
+      "rounds": [
+        {
+          "stage": 1,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 2,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 3,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 4,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 5,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 6,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 7,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 8,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 9,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 10,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 11,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        },
+        {
+          "stage": 12,
+          "status": "within-budget",
+          "failures": [],
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          }
+        }
+      ],
+      "independentOfQuality": true,
+      "fullOwnerOutput": "contract-independent.json"
+    }
+  },
+  "contract": {
+    "sampleId": "P115",
+    "resultSha256": "03f2c357fdd5b1012c40e5fd79d6007c7e17784c58d5c03b440a134292aa64e3",
+    "metricOwner": "scripts/cli-efficiency/metrics.mjs",
+    "metricOwnerSha256": "aaa0bc299504eb56582599d7690858b2aca11564f29149436413b1531bdcff93",
+    "completePairedStageEvidence": true,
+    "contractComparison": {
+      "status": "within-budget",
+      "measuredStatus": "within-budget",
+      "failures": [],
+      "unmeasured": [],
+      "finalInterrupt": {
+        "rounds": 12,
+        "committed": 12,
+        "requested": 0,
+        "accepted": 0,
+        "terminal": 0,
+        "sent": 0,
+        "preempted": 0,
+        "notPreempted": 0,
+        "unknown": 12,
+        "noFinalPost": 0,
+        "evidenceMissing": 0
+      },
+      "retriedRounds": [],
+      "fixedOverhead": {
+        "rah": 12007,
+        "native": 9103,
+        "tokens": 2904,
+        "budget": 3000
+      },
+      "perRoundResidue": [
+        {
+          "fromRound": 2,
+          "toRound": 3,
+          "rahGrowth": 2786,
+          "nativeGrowth": 3346,
+          "tokens": -560
+        },
+        {
+          "fromRound": 3,
+          "toRound": 4,
+          "rahGrowth": 2672,
+          "nativeGrowth": 3371,
+          "tokens": -699
+        },
+        {
+          "fromRound": 4,
+          "toRound": 5,
+          "rahGrowth": 2705,
+          "nativeGrowth": 3390,
+          "tokens": -685
+        },
+        {
+          "fromRound": 5,
+          "toRound": 6,
+          "rahGrowth": 3223,
+          "nativeGrowth": 3879,
+          "tokens": -656
+        },
+        {
+          "fromRound": 6,
+          "toRound": 7,
+          "rahGrowth": 1164,
+          "nativeGrowth": 1231,
+          "tokens": -67
+        },
+        {
+          "fromRound": 7,
+          "toRound": 8,
+          "rahGrowth": 2082,
+          "nativeGrowth": 2596,
+          "tokens": -514
+        },
+        {
+          "fromRound": 8,
+          "toRound": 9,
+          "rahGrowth": 1610,
+          "nativeGrowth": 1833,
+          "tokens": -223
+        },
+        {
+          "fromRound": 9,
+          "toRound": 10,
+          "rahGrowth": 644,
+          "nativeGrowth": 544,
+          "tokens": 100
+        },
+        {
+          "fromRound": 10,
+          "toRound": 11,
+          "rahGrowth": 664,
+          "nativeGrowth": 554,
+          "tokens": 110
+        },
+        {
+          "fromRound": 11,
+          "toRound": 12,
+          "rahGrowth": 637,
+          "nativeGrowth": 587,
+          "tokens": 50
+        }
+      ],
+      "workPathVariance": {
+        "round1HistoryDelta": {
+          "rahGrowth": 1735,
+          "nativeGrowth": 2065,
+          "tokens": -330
+        },
+        "rounds": [
+          {
+            "round": 1,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 2,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 3,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 4,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 5,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 6,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 7,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 8,
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 2,
+              "native": 2,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            }
+          },
+          {
+            "round": 9,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          },
+          {
+            "round": 10,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          },
+          {
+            "round": 11,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          },
+          {
+            "round": 12,
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "generations": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "extraGenerations": {
+              "raw": 0,
+              "workPath": 0,
+              "protocol": 0
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            }
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 25172,
+            "workPath": 0,
+            "judged": 25172,
+            "budget": 45486
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 1.2749835384693309,
+          "inputRatioJudged": 1.2749835384693309,
+          "uncachedRatio": 1.3135491050727999,
+          "replyRatio": 1.269301645802885,
+          "inputDecomposition": {
+            "rah": 25172,
+            "native": 19743,
+            "budget": 45486,
+            "delta": 5429,
+            "fixedOverhead": 5808,
+            "round1History": 0,
+            "residue": 0,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -379
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 29636,
+            "workPath": 0,
+            "judged": 29636,
+            "budget": 56314
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 1.1780418968875461,
+          "inputRatioJudged": 1.1780418968875461,
+          "uncachedRatio": 0.2490635380592268,
+          "replyRatio": 0.8442841359589264,
+          "inputDecomposition": {
+            "rah": 29636,
+            "native": 25157,
+            "budget": 56314,
+            "delta": 4479,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": 0,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -669
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 35089,
+            "workPath": 0,
+            "judged": 35089,
+            "budget": 69690
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 1.1018684251844875,
+          "inputRatioJudged": 1.1018684251844875,
+          "uncachedRatio": 0.8190698662136334,
+          "replyRatio": 0.7998529578102026,
+          "inputDecomposition": {
+            "rah": 35089,
+            "native": 31845,
+            "budget": 69690,
+            "delta": 3244,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": -1120,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -784
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 40416,
+            "workPath": 0,
+            "judged": 40416,
+            "budget": 83188
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 1.0472094107892418,
+          "inputRatioJudged": 1.0472094107892418,
+          "uncachedRatio": 5.1841491841491845,
+          "replyRatio": 0.8521934197407778,
+          "inputDecomposition": {
+            "rah": 40416,
+            "native": 38594,
+            "budget": 83188,
+            "delta": 1822,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": -2518,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -808
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 46377,
+            "workPath": 0,
+            "judged": 46377,
+            "budget": 97868
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 1.0096442722166588,
+          "inputRatioJudged": 1.0096442722166588,
+          "uncachedRatio": 0.8940940576011666,
+          "replyRatio": 0.9442847364818617,
+          "inputDecomposition": {
+            "rah": 46377,
+            "native": 45934,
+            "budget": 97868,
+            "delta": 443,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": -3888,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -817
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 50815,
+            "workPath": 0,
+            "judged": 50815,
+            "budget": 108052
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.995864853212088,
+          "inputRatioJudged": 0.995864853212088,
+          "uncachedRatio": 3.486588432523051,
+          "replyRatio": 0.762728262184061,
+          "inputDecomposition": {
+            "rah": 50815,
+            "native": 51026,
+            "budget": 108052,
+            "delta": -211,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": -5200,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -159
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 54057,
+            "workPath": 0,
+            "judged": 54057,
+            "budget": 115628
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.9861896595760207,
+          "inputRatioJudged": 0.9861896595760207,
+          "uncachedRatio": 0.22544390844709022,
+          "replyRatio": 0.7845137701244324,
+          "inputDecomposition": {
+            "rah": 54057,
+            "native": 54814,
+            "budget": 115628,
+            "delta": -757,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": -5334,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -571
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 2,
+              "beforeReply": 2,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 1,
+              "native": 1,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              },
+              "native": {
+                "total": 1,
+                "business": 1,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {
+                  "other": 1
+                }
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 57739,
+            "workPath": 0,
+            "judged": 57739,
+            "budget": 124570
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.9739225773804504,
+          "inputRatioJudged": 0.9739225773804504,
+          "uncachedRatio": 1.4388840954846132,
+          "replyRatio": 0.49249451249734477,
+          "inputDecomposition": {
+            "rah": 57739,
+            "native": 59285,
+            "budget": 124570,
+            "delta": -1546,
+            "fixedOverhead": 5808,
+            "round1History": -660,
+            "residue": -6362,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": -332
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 29984,
+            "workPath": 0,
+            "judged": 29984,
+            "budget": 67628
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.9730641916012203,
+          "inputRatioJudged": 0.9730641916012203,
+          "uncachedRatio": 1.8864628820960698,
+          "replyRatio": 0.7859859566998244,
+          "inputDecomposition": {
+            "rah": 29984,
+            "native": 30814,
+            "budget": 67628,
+            "delta": -830,
+            "fixedOverhead": 2904,
+            "round1History": -330,
+            "residue": -3404,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 30628,
+            "workPath": 0,
+            "judged": 30628,
+            "budget": 68716
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.9767204541105938,
+          "inputRatioJudged": 0.9767204541105938,
+          "uncachedRatio": 3.6196868008948546,
+          "replyRatio": 0.8420122265596229,
+          "inputDecomposition": {
+            "rah": 30628,
+            "native": 31358,
+            "budget": 68716,
+            "delta": -730,
+            "fixedOverhead": 2904,
+            "round1History": -330,
+            "residue": -3304,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 31292,
+            "workPath": 0,
+            "judged": 31292,
+            "budget": 69824
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.9805715718225119,
+          "inputRatioJudged": 0.9805715718225119,
+          "uncachedRatio": 0.43788063337393424,
+          "replyRatio": 0.7150705456361593,
+          "inputDecomposition": {
+            "rah": 31292,
+            "native": 31912,
+            "budget": 69824,
+            "delta": -620,
+            "fixedOverhead": 2904,
+            "round1History": -330,
+            "residue": -3194,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        },
+        {
+          "status": "within-budget",
+          "measuredStatus": "within-budget",
+          "failures": [],
+          "unmeasured": [],
+          "notes": [],
+          "generations": {
+            "native": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            },
+            "rah": {
+              "total": 1,
+              "beforeReply": 1,
+              "afterReply": 0
+            }
+          },
+          "extraGenerations": 0,
+          "extraGenerationsBeforeReply": 0,
+          "workPathExtraGenerations": 0,
+          "workPathExtraGenerationsBeforeReply": 0,
+          "extraProtocolGenerations": 0,
+          "extraProtocolGenerationsBeforeReply": 0,
+          "workPath": {
+            "businessToolCalls": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0
+            },
+            "businessToolCallsBeforeReply": {
+              "rah": 0,
+              "native": 0,
+              "delta": 0,
+              "basis": "reply-time"
+            },
+            "toolCalls": {
+              "rah": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              },
+              "native": {
+                "total": 0,
+                "business": 0,
+                "protocol": 0,
+                "unknown": 0,
+                "byKind": {}
+              }
+            },
+            "unknownCountedAsProtocol": 0,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0
+          },
+          "input": {
+            "raw": 31929,
+            "workPath": 0,
+            "judged": 31929,
+            "budget": 70998
+          },
+          "usageEvidence": {
+            "completeness": "complete",
+            "gaps": [],
+            "mismatches": []
+          },
+          "finalInterrupt": {
+            "committed": true,
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": "unknown",
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "inputRatio": 0.9824609987999631,
+          "inputRatioJudged": 0.9824609987999631,
+          "uncachedRatio": 1.4490603363006924,
+          "replyRatio": 0.7180286078459143,
+          "inputDecomposition": {
+            "rah": 31929,
+            "native": 32499,
+            "budget": 70998,
+            "delta": -570,
+            "fixedOverhead": 2904,
+            "round1History": -330,
+            "residue": -3144,
+            "extraGenerations": 0,
+            "workPathGenerations": 0,
+            "protocolGenerations": 0,
+            "intraRound": 0
+          }
+        }
+      ]
+    },
+    "verdict": "see-contractComparison",
+    "notes": [
+      "Uses existing budget owner unchanged; no new thresholds.",
+      "Cumulative raw costs and semantic/instruction/transport acceptance are separate.",
+      "No historical native denominator or excluded retry costs."
+    ]
+  },
+  "transport": {
+    "resultSha256": "03f2c357fdd5b1012c40e5fd79d6007c7e17784c58d5c03b440a134292aa64e3",
+    "resultPath": "<isolated-run>/result.json",
+    "batchStatus": "needs-quality-review",
+    "baselineIdentity": "7c89997d451bc79b30696d455c60555f90714cd5fd53781a9a21b1f1b4930d53",
+    "order": ["native", "final-output"],
+    "arms": {
+      "native": {
+        "sessionIds": ["01a10a66-78d9-7b13-b5ba-1d22f36f769f"],
+        "rollout": "~/.codex/sessions/2026/10/05/rollout-2026-10-05T12-50-50-01a10a66-78d9-7b13-b5ba-1d22f36f769f.jsonl",
+        "rolloutSha256": "d155b88c1a808a5126aa797e2db8f9f3e2f725378e47479e20afd5a22713e6fd",
+        "identityVerified": true,
+        "memoryModes": ["disabled"],
+        "compactionDiagnostics": [],
+        "stages": [
+          {
+            "stage": 1,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 13,
+                "at": "2026-10-05T04:50:56.809Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba scripts/workbench-launch-receipt.mjs\",max_output_tokens:10000});\ntext(r.output);\n",
+                "outputLine": 16
+              }
+            ],
+            "contexts": [
+              {
+                "line": 8,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a66-791e-7173-af0a-c5d2fdb713c6"
+              }
+            ],
+            "finals": [
+              {
+                "line": 19,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 2,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 31,
+                "at": "2026-10-05T04:51:16.770Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba scripts/workbench-launch-receipt.test.mjs\",max_output_tokens:12000});\ntext(r.output);\n",
+                "outputLine": 34
+              }
+            ],
+            "contexts": [
+              {
+                "line": 26,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a66-c794-7983-a77c-ce58faffc7c0"
+              }
+            ],
+            "finals": [
+              {
+                "line": 37,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 3,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 49,
+                "at": "2026-10-05T04:51:38.916Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba scripts/restart-local-workbench.mjs && nl -ba scripts/workbench-restart-guard.mjs\",max_output_tokens:16000});\ntext(r.output);\n",
+                "outputLine": 52
+              }
+            ],
+            "contexts": [
+              {
+                "line": 44,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a67-1e7f-7423-b8fe-d4b82c40d9fb"
+              }
+            ],
+            "finals": [
+              {
+                "line": 55,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 4,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 67,
+                "at": "2026-10-05T04:51:59.493Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba packages/daemon/src/state-backup.ts | sed -n '1,257p'\",max_output_tokens:18000});\ntext(r.output);\n",
+                "outputLine": 70
+              }
+            ],
+            "contexts": [
+              {
+                "line": 62,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a67-6b61-7ed1-916e-8eca6d988bea"
+              }
+            ],
+            "finals": [
+              {
+                "line": 73,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 5,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 85,
+                "at": "2026-10-05T04:52:19.623Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba packages/daemon/test/workbench-restart-guard.test.ts\",max_output_tokens:16000});\ntext(r.output);\n",
+                "outputLine": 88
+              }
+            ],
+            "contexts": [
+              {
+                "line": 80,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a67-bb59-7d53-b33e-48c909f73d12"
+              }
+            ],
+            "finals": [
+              {
+                "line": 91,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 6,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 103,
+                "at": "2026-10-05T04:52:40.362Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba packages/daemon/src/state-backup.ts | sed -n '258,309p'\",max_output_tokens:7000});\ntext(r.output);\n",
+                "outputLine": 106
+              }
+            ],
+            "contexts": [
+              {
+                "line": 98,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a68-108d-7e00-82d9-01f40e5c2b97"
+              }
+            ],
+            "finals": [
+              {
+                "line": 109,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 7,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 121,
+                "at": "2026-10-05T04:53:00.948Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba packages/daemon/src/state-backup.ts | sed -n '310,491p'\",max_output_tokens:15000});\ntext(r.output);\n",
+                "outputLine": 124
+              }
+            ],
+            "contexts": [
+              {
+                "line": 116,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a68-59b6-7941-9cef-7784380757fa"
+              }
+            ],
+            "finals": [
+              {
+                "line": 127,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 8,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 139,
+                "at": "2026-10-05T04:53:23.374Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"nl -ba packages/daemon/src/state-backup.ts | sed -n '492,601p'\",max_output_tokens:11000});\ntext(r.output);\n",
+                "outputLine": 142
+              }
+            ],
+            "contexts": [
+              {
+                "line": 134,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a68-aef1-7cf0-a768-4c6e0782c28c"
+              }
+            ],
+            "finals": [
+              {
+                "line": 145,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 9,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 152,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a69-37db-7b41-8c82-62c82e686e47"
+              }
+            ],
+            "finals": [
+              {
+                "line": 156,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 10,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 163,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a69-70be-7542-b0d3-73c8afc1e26f"
+              }
+            ],
+            "finals": [
+              {
+                "line": 167,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 11,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 174,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a69-bc2d-7eb2-86b0-cf3228ff2a44"
+              }
+            ],
+            "finals": [
+              {
+                "line": 178,
+                "phase": "final_answer"
+              }
+            ]
+          },
+          {
+            "stage": 12,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 185,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a69-fe97-7502-a353-c8bef078f9da"
+              }
+            ],
+            "finals": [
+              {
+                "line": 189,
+                "phase": "final_answer"
+              }
+            ]
+          }
+        ]
+      },
+      "final-output": {
+        "sessionIds": ["01a10a6a-4ffe-7ee3-8011-eca0d21d85d0"],
+        "rollout": "~/.codex/sessions/2026/10/05/rollout-2026-10-05T12-55-05-01a10a6a-4ffe-7ee3-8011-eca0d21d85d0.jsonl",
+        "rolloutSha256": "48b28304901ae0ab72546459d1b557e78b1c84e0c6da0ea1caedb2520e1729ee",
+        "identityVerified": true,
+        "memoryModes": ["disabled"],
+        "compactionDiagnostics": [],
+        "stages": [
+          {
+            "stage": 1,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 11,
+                "at": "2026-10-05T04:55:11.438Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"cat scripts/workbench-launch-receipt.mjs\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:8000}); text(r.output);\n",
+                "outputLine": 14
+              }
+            ],
+            "contexts": [
+              {
+                "line": 8,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6a-5def-73e3-bffa-e258b427906f"
+              }
+            ],
+            "finals": [
+              {
+                "line": 17,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 4,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_1d23aba2-0b9d-4a2a-8fc2-283d64e09355",
+                "placement_id": "placement_9d10a359-f0b3-4c33-bfa1-2f47b2e1d05f",
+                "activation_id": "activation_9998b15f-9fff-402f-9601-57096d8429ad",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:fba53614-df4a-4b4c-a857-305acb74304b",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:55:00.952Z",
+                "finished_at": "2026-10-05T04:55:20.820Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6a-5def-73e3-bffa-e258b427906f",
+                "execution_mode": "cold",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_9998b15f-9fff-402f-9601-57096d8429ad",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 4,
+                  "to_seq": 4,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:55:00.838Z",
+                  "available_at_ms": 1791176100840,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:55:00.838Z",
+                  "updated_at": "2026-10-05T04:55:20.822Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 2,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 26,
+                "at": "2026-10-05T04:55:24.669Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"cat scripts/workbench-launch-receipt.test.mjs\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:10000}); text(r.output);\n",
+                "outputLine": 29
+              }
+            ],
+            "contexts": [
+              {
+                "line": 23,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6a-9b87-7133-b086-12f2167ed4b1"
+              }
+            ],
+            "finals": [
+              {
+                "line": 32,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 13,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_265fa64b-553f-4e4a-a99d-baebb46c6737",
+                "placement_id": "placement_ef6014ed-cd6a-4dff-a2c4-048622ed5b3d",
+                "activation_id": "activation_f0b62b85-63f6-4f86-b433-d4c7c65946c3",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:531cd96e-078f-4f8d-b472-84475c45af04",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:55:21.070Z",
+                "finished_at": "2026-10-05T04:55:33.947Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6a-9b87-7133-b086-12f2167ed4b1",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_f0b62b85-63f6-4f86-b433-d4c7c65946c3",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 13,
+                  "to_seq": 13,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:55:20.948Z",
+                  "available_at_ms": 1791176120948,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:55:20.948Z",
+                  "updated_at": "2026-10-05T04:55:33.948Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 3,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 41,
+                "at": "2026-10-05T04:55:37.947Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"cat scripts/restart-local-workbench.mjs scripts/workbench-restart-guard.mjs\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:12000}); text(r.output);\n",
+                "outputLine": 44
+              }
+            ],
+            "contexts": [
+              {
+                "line": 38,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6a-ceb5-7f71-a0bd-6a7d7a6cf68e"
+              }
+            ],
+            "finals": [
+              {
+                "line": 47,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 22,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_e21dc9eb-21f6-4eba-818b-6e55c7a00bcc",
+                "placement_id": "placement_2811de17-4f69-4ebf-8015-108dff82cb89",
+                "activation_id": "activation_0918cbdf-ed65-4fc6-8237-25f6673e90ae",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:20b1fae4-b64f-44c9-8666-0e6b7d0422bc",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:55:34.168Z",
+                "finished_at": "2026-10-05T04:55:48.231Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6a-ceb5-7f71-a0bd-6a7d7a6cf68e",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_0918cbdf-ed65-4fc6-8237-25f6673e90ae",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 22,
+                  "to_seq": 22,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:55:34.083Z",
+                  "available_at_ms": 1791176134084,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:55:34.083Z",
+                  "updated_at": "2026-10-05T04:55:48.232Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 4,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 56,
+                "at": "2026-10-05T04:55:51.710Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"sed -n '1,257p' packages/daemon/src/state-backup.ts\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:12000}); text(r.output);\n",
+                "outputLine": 59
+              }
+            ],
+            "contexts": [
+              {
+                "line": 53,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6b-06e1-7732-9263-aea648c5f2fc"
+              }
+            ],
+            "finals": [
+              {
+                "line": 62,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 31,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_ebf28e2a-1cb1-4dcc-a59a-62dc5380ce20",
+                "placement_id": "placement_b201f47d-fe8b-4f34-a91c-ccd770b0a0ff",
+                "activation_id": "activation_c01e1492-a607-4388-b392-4012b8286b60",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:1667b2e7-f576-415c-86ec-df983e6b2f17",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:55:48.535Z",
+                "finished_at": "2026-10-05T04:56:02.037Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6b-06e1-7732-9263-aea648c5f2fc",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_c01e1492-a607-4388-b392-4012b8286b60",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 31,
+                  "to_seq": 31,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:55:48.357Z",
+                  "available_at_ms": 1791176148358,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:55:48.357Z",
+                  "updated_at": "2026-10-05T04:56:02.038Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 5,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 71,
+                "at": "2026-10-05T04:56:05.767Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"cat packages/daemon/test/workbench-restart-guard.test.ts\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:14000}); text(r.output);\n",
+                "outputLine": 74
+              }
+            ],
+            "contexts": [
+              {
+                "line": 68,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6b-3d11-75f0-941d-9608e67d2b99"
+              }
+            ],
+            "finals": [
+              {
+                "line": 77,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 40,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_70839beb-2810-49b5-baa4-09a2bd2689ef",
+                "placement_id": "placement_340a7b42-5beb-4da8-946e-5b9cabedd6fb",
+                "activation_id": "activation_adf2cee0-3648-446f-92fb-3a5be95f572a",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:029537ef-0c0f-43c2-a7be-8a34fa875094",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:56:02.416Z",
+                "finished_at": "2026-10-05T04:56:15.917Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6b-3d11-75f0-941d-9608e67d2b99",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_adf2cee0-3648-446f-92fb-3a5be95f572a",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 40,
+                  "to_seq": 40,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:56:02.121Z",
+                  "available_at_ms": 1791176162121,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:56:02.121Z",
+                  "updated_at": "2026-10-05T04:56:15.918Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 6,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 86,
+                "at": "2026-10-05T04:56:19.717Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"sed -n '258,309p' packages/daemon/src/state-backup.ts\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:6000}); text(r.output);\n",
+                "outputLine": 89
+              }
+            ],
+            "contexts": [
+              {
+                "line": 83,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6b-7337-7f11-8c39-77a2193796f8"
+              }
+            ],
+            "finals": [
+              {
+                "line": 92,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 49,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_1fa7db1c-324f-4262-a6a0-0a0dd652c543",
+                "placement_id": "placement_6db788fb-5968-4ea5-9bfb-17dd5f0f20f5",
+                "activation_id": "activation_d67407f0-db16-41e4-8363-23bba7515a1c",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:ca1baf34-473d-472d-a3e5-d8347aeffcb2",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:56:16.271Z",
+                "finished_at": "2026-10-05T04:56:28.623Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6b-7337-7f11-8c39-77a2193796f8",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_d67407f0-db16-41e4-8363-23bba7515a1c",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 49,
+                  "to_seq": 49,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:56:16.004Z",
+                  "available_at_ms": 1791176176005,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:56:16.004Z",
+                  "updated_at": "2026-10-05T04:56:28.624Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 7,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 101,
+                "at": "2026-10-05T04:56:32.404Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"sed -n '310,491p' packages/daemon/src/state-backup.ts\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:9000}); text(r.output);\n",
+                "outputLine": 104
+              }
+            ],
+            "contexts": [
+              {
+                "line": 98,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6b-a441-7dd3-84b2-dfdc56b1f429"
+              }
+            ],
+            "finals": [
+              {
+                "line": 107,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 58,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_453fb3ed-8e4b-434b-b6f8-ca7a4f868eb2",
+                "placement_id": "placement_feee01df-7424-436f-a898-363dee7fb8ec",
+                "activation_id": "activation_6a7af47f-a3a6-4fb4-a0e9-d7a23417de08",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:394dc7bc-6da3-4fac-a15c-82a9603761bd",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:56:28.841Z",
+                "finished_at": "2026-10-05T04:56:42.087Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6b-a441-7dd3-84b2-dfdc56b1f429",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_6a7af47f-a3a6-4fb4-a0e9-d7a23417de08",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 58,
+                  "to_seq": 58,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:56:28.769Z",
+                  "available_at_ms": 1791176188769,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:56:28.769Z",
+                  "updated_at": "2026-10-05T04:56:42.088Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 8,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [
+              {
+                "line": 116,
+                "at": "2026-10-05T04:56:45.817Z",
+                "name": "exec",
+                "input": "const r = await tools.exec_command({cmd:\"sed -n '492,601p' packages/daemon/src/state-backup.ts\",workdir:\"<isolated-run>/final-output/workspace\",max_output_tokens:9000}); text(r.output);\n",
+                "outputLine": 119
+              }
+            ],
+            "contexts": [
+              {
+                "line": 113,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6b-d96f-7be1-b906-9ee6e08d9489"
+              }
+            ],
+            "finals": [
+              {
+                "line": 122,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 67,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_876525dc-a0cb-47e3-af10-9042905e0c62",
+                "placement_id": "placement_89e6c414-3192-4dcd-9b9a-eb7a8bf4bd20",
+                "activation_id": "activation_e1067de8-4a34-4401-80d9-55f16e9c0c21",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:166fad37-d84a-4869-96c8-d073a8a83361",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:56:42.454Z",
+                "finished_at": "2026-10-05T04:56:56.173Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6b-d96f-7be1-b906-9ee6e08d9489",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_e1067de8-4a34-4401-80d9-55f16e9c0c21",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 67,
+                  "to_seq": 67,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:56:42.255Z",
+                  "available_at_ms": 1791176202255,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:56:42.255Z",
+                  "updated_at": "2026-10-05T04:56:56.174Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 9,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 128,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6c-10ac-7470-9821-4da7452c1e40"
+              }
+            ],
+            "finals": [
+              {
+                "line": 132,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 76,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_9c5c2119-1a69-4550-a808-1773b5f3fe13",
+                "placement_id": "placement_2cc52cab-c9f5-4551-9181-fc0bb82f70d8",
+                "activation_id": "activation_1a736836-37a2-4d9b-a547-f019f95ec5a8",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:1e5af852-8868-45ea-98af-a2fd357caca3",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:56:56.587Z",
+                "finished_at": "2026-10-05T04:57:07.072Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6c-10ac-7470-9821-4da7452c1e40",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_1a736836-37a2-4d9b-a547-f019f95ec5a8",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 76,
+                  "to_seq": 76,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:56:56.322Z",
+                  "available_at_ms": 1791176216323,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:56:56.322Z",
+                  "updated_at": "2026-10-05T04:57:07.073Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 10,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 138,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6c-3aee-7a32-b90f-021dfa5d9a87"
+              }
+            ],
+            "finals": [
+              {
+                "line": 142,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 85,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_dd9a6399-8c8c-4c84-b1fd-d7bb24b3457a",
+                "placement_id": "placement_0f7a3aee-2683-41e3-9a26-9db1027ad086",
+                "activation_id": "activation_42fc85f5-23ce-4a27-b024-4e06580c14d6",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:199cc633-36c5-4cc2-8366-f212cfd63978",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:57:07.408Z",
+                "finished_at": "2026-10-05T04:57:18.663Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6c-3aee-7a32-b90f-021dfa5d9a87",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_42fc85f5-23ce-4a27-b024-4e06580c14d6",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 85,
+                  "to_seq": 85,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:57:07.225Z",
+                  "available_at_ms": 1791176227225,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:57:07.225Z",
+                  "updated_at": "2026-10-05T04:57:18.664Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 11,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 148,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6c-6836-7580-ac09-38717051b2f5"
+              }
+            ],
+            "finals": [
+              {
+                "line": 152,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 94,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_629cabe8-9228-446f-9ba6-f20afb87c570",
+                "placement_id": "placement_3e5d557e-a107-4efc-85e2-67c95a52dc20",
+                "activation_id": "activation_c58aaf97-9f68-4135-b0f3-94db469e72ac",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:e5bad38d-cf1d-4579-a4c7-56cef2b27907",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:57:18.996Z",
+                "finished_at": "2026-10-05T04:57:30.276Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6c-6836-7580-ac09-38717051b2f5",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_c58aaf97-9f68-4135-b0f3-94db469e72ac",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 94,
+                  "to_seq": 94,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:57:18.819Z",
+                  "available_at_ms": 1791176238819,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:57:18.819Z",
+                  "updated_at": "2026-10-05T04:57:30.276Z"
+                }
+              }
+            ]
+          },
+          {
+            "stage": 12,
+            "actualIdentityVerified": true,
+            "actualMemoryOff": true,
+            "tools": [],
+            "contexts": [
+              {
+                "line": 158,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "turnId": "01a10a6c-9596-7a41-9c08-07de3af76720"
+              }
+            ],
+            "finals": [
+              {
+                "line": 162,
+                "phase": "final_answer",
+                "envelope": {
+                  "kind": "room.reply",
+                  "version": 1,
+                  "basedOnRoomSeq": 103,
+                  "final": true
+                }
+              }
+            ],
+            "runs": [
+              {
+                "run_attempt_id": "run_23641fae-6add-4734-af2c-f845cd99b1c0",
+                "placement_id": "placement_1a0b6dd0-a241-49e1-a226-d6039b7539e9",
+                "activation_id": "activation_3afcb6d9-7385-4b2f-883c-a90c8cd37848",
+                "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                "host_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84",
+                "attempt_number": 1,
+                "state": "exited",
+                "runtime_run_id": "turn:c3cc2741-e70b-46a1-afc1-1313dcc00304",
+                "exit_code": null,
+                "exit_signal": null,
+                "error": null,
+                "started_at": "2026-10-05T04:57:30.598Z",
+                "finished_at": "2026-10-05T04:57:40.569Z",
+                "instance_runtime_id": "instrt_2c62b708-f1b7-4dcf-9b2f-5d2dcd9f9e7b",
+                "native_turn_id": "01a10a6c-9596-7a41-9c08-07de3af76720",
+                "execution_mode": "warm",
+                "session_resume_ms": null,
+                "activation": {
+                  "activation_id": "activation_3afcb6d9-7385-4b2f-883c-a90c8cd37848",
+                  "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+                  "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+                  "from_seq": 103,
+                  "to_seq": 103,
+                  "reason": "room_policy",
+                  "state": "completed",
+                  "lease_owner": null,
+                  "lease_until": null,
+                  "lease_until_ms": null,
+                  "available_at": "2026-10-05T04:57:30.425Z",
+                  "available_at_ms": 1791176250426,
+                  "attempt_count": 1,
+                  "last_error": null,
+                  "created_at": "2026-10-05T04:57:30.425Z",
+                  "updated_at": "2026-10-05T04:57:40.570Z"
+                }
+              }
+            ]
+          }
+        ],
+        "markers": [
+          {
+            "run_attempt_id": "run_1d23aba2-0b9d-4a2a-8fc2-283d64e09355",
+            "activation_id": "activation_9998b15f-9fff-402f-9601-57096d8429ad",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_0d604cc3-e2bb-48bc-b34b-014f4fdc7aba",
+            "room_seq": 9,
+            "committed_at": "2026-10-05T04:55:20.812Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_265fa64b-553f-4e4a-a99d-baebb46c6737",
+            "activation_id": "activation_f0b62b85-63f6-4f86-b433-d4c7c65946c3",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_49dbab3a-c4e5-451a-8783-d167c9a49166",
+            "room_seq": 18,
+            "committed_at": "2026-10-05T04:55:33.938Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_e21dc9eb-21f6-4eba-818b-6e55c7a00bcc",
+            "activation_id": "activation_0918cbdf-ed65-4fc6-8237-25f6673e90ae",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_c57a040d-3449-4434-8702-9fe21f56c104",
+            "room_seq": 27,
+            "committed_at": "2026-10-05T04:55:48.224Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_ebf28e2a-1cb1-4dcc-a59a-62dc5380ce20",
+            "activation_id": "activation_c01e1492-a607-4388-b392-4012b8286b60",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_09333cdb-cff9-4d24-8d84-62d1d9ac1019",
+            "room_seq": 36,
+            "committed_at": "2026-10-05T04:56:02.032Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_70839beb-2810-49b5-baa4-09a2bd2689ef",
+            "activation_id": "activation_adf2cee0-3648-446f-92fb-3a5be95f572a",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_4e8ee4be-378a-4ad1-8a01-78f7051039f4",
+            "room_seq": 45,
+            "committed_at": "2026-10-05T04:56:15.908Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_1fa7db1c-324f-4262-a6a0-0a0dd652c543",
+            "activation_id": "activation_d67407f0-db16-41e4-8363-23bba7515a1c",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_ef0a987a-e5b8-4575-b6df-ebfd744cdae6",
+            "room_seq": 54,
+            "committed_at": "2026-10-05T04:56:28.616Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_453fb3ed-8e4b-434b-b6f8-ca7a4f868eb2",
+            "activation_id": "activation_6a7af47f-a3a6-4fb4-a0e9-d7a23417de08",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_b6668651-15bb-4091-9e3c-566701e247a8",
+            "room_seq": 63,
+            "committed_at": "2026-10-05T04:56:42.069Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_876525dc-a0cb-47e3-af10-9042905e0c62",
+            "activation_id": "activation_e1067de8-4a34-4401-80d9-55f16e9c0c21",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_5d2c507f-d66e-4fcf-af6f-7c42a0065bbe",
+            "room_seq": 72,
+            "committed_at": "2026-10-05T04:56:56.165Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_9c5c2119-1a69-4550-a808-1773b5f3fe13",
+            "activation_id": "activation_1a736836-37a2-4d9b-a547-f019f95ec5a8",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_3ad24d2c-40e3-4a92-bd1b-4a90f329c895",
+            "room_seq": 81,
+            "committed_at": "2026-10-05T04:57:07.067Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_dd9a6399-8c8c-4c84-b1fd-d7bb24b3457a",
+            "activation_id": "activation_42fc85f5-23ce-4a27-b024-4e06580c14d6",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_94393848-1934-4923-8400-4842969a7d8b",
+            "room_seq": 90,
+            "committed_at": "2026-10-05T04:57:18.655Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_629cabe8-9228-446f-9ba6-f20afb87c570",
+            "activation_id": "activation_c58aaf97-9f68-4135-b0f3-94db469e72ac",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_445f8745-fc99-4392-8072-3066dd540f63",
+            "room_seq": 99,
+            "committed_at": "2026-10-05T04:57:30.271Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          },
+          {
+            "run_attempt_id": "run_23641fae-6add-4734-af2c-f845cd99b1c0",
+            "activation_id": "activation_3afcb6d9-7385-4b2f-883c-a90c8cd37848",
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "event_id": "event_40da3285-515e-4bd4-a9c3-7e28d2dc91ca",
+            "room_seq": 108,
+            "committed_at": "2026-10-05T04:57:40.563Z",
+            "submission_kind": "final-output",
+            "interrupt_sent": null,
+            "preempted_follow_up": null,
+            "reported_at": null,
+            "interrupt_requested": null,
+            "interrupt_accepted": null,
+            "interrupt_terminal": null
+          }
+        ],
+        "cursors": [
+          {
+            "room_id": "room_dd0bb7c9-2018-434d-9479-a1a6df17b821",
+            "participant_id": "principal_6e2f00ed-3424-48cc-94e6-ab2dd9e37669",
+            "consumer_id": "local-workbench-host-df2f051f-de28-4e62-ab3e-b343a9f7ba84:runtime",
+            "last_seq": 103,
+            "updated_at": "2026-10-05T04:57:40.563Z"
+          }
+        ],
+        "retryEvents": []
+      }
+    },
+    "observedAt": "2026-10-05T04:58:10.762659+00:00",
+    "outputCompleteness": {
+      "native": [
+        {
+          "stage": 1,
+          "outputLine": 16,
+          "exactSnapshotMatch": true,
+          "characters": 5112,
+          "utf8Bytes": 5112,
+          "sourceCharacters": 4237,
+          "observedOutputSha256": "c542b98018b755876617658f004cec125212c6a56de56d37ca0bf22fd0e8f071",
+          "truncated": false
+        },
+        {
+          "stage": 2,
+          "outputLine": 34,
+          "exactSnapshotMatch": true,
+          "characters": 8549,
+          "utf8Bytes": 8549,
+          "sourceCharacters": 6995,
+          "observedOutputSha256": "2cfde9be9d8245365c1f4d82c79cd5dc928f5852673cd5294f860fde97af385b",
+          "truncated": false
+        },
+        {
+          "stage": 3,
+          "outputLine": 52,
+          "exactSnapshotMatch": true,
+          "characters": 9450,
+          "utf8Bytes": 9450,
+          "sourceCharacters": 7686,
+          "observedOutputSha256": "908958942f659d6e4f79c66568f7c12f81f055d810161fe19c3e5a956dd29094",
+          "truncated": false
+        },
+        {
+          "stage": 4,
+          "outputLine": 70,
+          "exactSnapshotMatch": true,
+          "characters": 9777,
+          "utf8Bytes": 9777,
+          "sourceCharacters": 7978,
+          "observedOutputSha256": "ed34dd351492ef33c8b4435478e7bfbf3fe3137f0b1e33d6e7bb0b1c2c5e6064",
+          "truncated": false
+        },
+        {
+          "stage": 5,
+          "outputLine": 88,
+          "exactSnapshotMatch": true,
+          "characters": 11921,
+          "utf8Bytes": 11921,
+          "sourceCharacters": 10038,
+          "observedOutputSha256": "17981c1ee375d5d70e9775cf49dd10979e66690fe68625359696fe99914ca11d",
+          "truncated": false
+        },
+        {
+          "stage": 6,
+          "outputLine": 106,
+          "exactSnapshotMatch": true,
+          "characters": 2166,
+          "utf8Bytes": 2166,
+          "sourceCharacters": 1802,
+          "observedOutputSha256": "63aeabe2f446a772b11aca9ba09c0c4160ac7b4c1ddd58e0d09120cb64daf503",
+          "truncated": false
+        },
+        {
+          "stage": 7,
+          "outputLine": 124,
+          "exactSnapshotMatch": true,
+          "characters": 7306,
+          "utf8Bytes": 7306,
+          "sourceCharacters": 6032,
+          "observedOutputSha256": "8f067da27a8bd7c867a49965333a090faf4a842c8e9b6e5f829282ed4abf1f61",
+          "truncated": false
+        },
+        {
+          "stage": 8,
+          "outputLine": 142,
+          "exactSnapshotMatch": true,
+          "characters": 4661,
+          "utf8Bytes": 4661,
+          "sourceCharacters": 3891,
+          "observedOutputSha256": "0e09fe8dd5d64b499a7ce065cb476d2ec353999c3126194e1c680e440dd8b62f",
+          "truncated": false
+        }
+      ],
+      "final-output": [
+        {
+          "stage": 1,
+          "outputLine": 14,
+          "exactSnapshotMatch": true,
+          "characters": 4237,
+          "utf8Bytes": 4237,
+          "sourceCharacters": 4237,
+          "observedOutputSha256": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+          "truncated": false
+        },
+        {
+          "stage": 2,
+          "outputLine": 29,
+          "exactSnapshotMatch": true,
+          "characters": 6995,
+          "utf8Bytes": 6995,
+          "sourceCharacters": 6995,
+          "observedOutputSha256": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+          "truncated": false
+        },
+        {
+          "stage": 3,
+          "outputLine": 44,
+          "exactSnapshotMatch": true,
+          "characters": 7686,
+          "utf8Bytes": 7686,
+          "sourceCharacters": 7686,
+          "observedOutputSha256": "937464dbc35930aaec95c514952b0b135cb641b4ddc72f9f80514200be790e33",
+          "truncated": false
+        },
+        {
+          "stage": 4,
+          "outputLine": 59,
+          "exactSnapshotMatch": true,
+          "characters": 7978,
+          "utf8Bytes": 7978,
+          "sourceCharacters": 7978,
+          "observedOutputSha256": "84ac9ffbe3b71aa28303719c98093fa1f13db2de3df7882e8d8301abf31266a2",
+          "truncated": false
+        },
+        {
+          "stage": 5,
+          "outputLine": 74,
+          "exactSnapshotMatch": true,
+          "characters": 10038,
+          "utf8Bytes": 10038,
+          "sourceCharacters": 10038,
+          "observedOutputSha256": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab",
+          "truncated": false
+        },
+        {
+          "stage": 6,
+          "outputLine": 89,
+          "exactSnapshotMatch": true,
+          "characters": 1802,
+          "utf8Bytes": 1802,
+          "sourceCharacters": 1802,
+          "observedOutputSha256": "0bfe3e43e9fe69a172b485473fe3b3031fa9b5ae53e731ec28a8d1e6713a3516",
+          "truncated": false
+        },
+        {
+          "stage": 7,
+          "outputLine": 104,
+          "exactSnapshotMatch": true,
+          "characters": 6032,
+          "utf8Bytes": 6032,
+          "sourceCharacters": 6032,
+          "observedOutputSha256": "0b0018b7fc96d6ccde510735af823706b4145fa8595d7772ac64c5ffe9f6ba1a",
+          "truncated": false
+        },
+        {
+          "stage": 8,
+          "outputLine": 119,
+          "exactSnapshotMatch": true,
+          "characters": 3891,
+          "utf8Bytes": 3891,
+          "sourceCharacters": 3891,
+          "observedOutputSha256": "83cbdefbfa2aae2c2dae0990d5bc69a3848c66e4cc493d2e18a41bd4a1156723",
+          "truncated": false
+        }
+      ],
+      "scope": "Exact whole string comparison of model-visible outer tool output against fixed source snapshot: native nl -ba rendering versus final cat/sed. Equal business source, different line-number rendering; no token or causal attribution."
+    }
+  },
+  "quality": {
+    "native": {
+      "label": "A",
+      "workloadId": "restart-audit-12/v1",
+      "sourceRef": "7afe141",
+      "promptSetHash": "2baafe268994b8a00bfdcae984382974fb073235cbd84b1f83dfa4be84e702a7",
+      "reviewMode": "answer/source technical blind review; no P115 result, costs or mapping opened",
+      "blindnessLimitation": "Only blind-A.json and fixed source/rules read. Absolute experiment workspace prefix was anonymized by provider of the package. Original-A/map/result/cost not opened.",
+      "score": 66,
+      "maximum": 72,
+      "criticalErrors": [],
+      "technicalVerdict": "fail",
+      "instructionVerdict": "fail: only stage12 meets Han length; remaining source/tool/transport/session evidence unknown",
+      "stages": [
+        {
+          "stage": 1,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "七个 networkKeys 被清除后重建，未称清除整个 env",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "环境清理会删除七项网络键后再叠加新模式变量",
+              "sourceAt7afe141": "receipt:15–23,97–99",
+              "reason": "明确七键范围"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种模式正确且 LAN cert/key 非无条件成对必填",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "loopback 仅恢复…tailnet…LAN…可选证书、私钥绝对路径",
+              "sourceAt7afe141": "receipt:29–62",
+              "reason": "三模式正确，路径可选"
+            },
+            {
+              "criterion": 3,
+              "rubric": "PID数值相等不是回执来源真实性/无 PID 重用证明。引用 receipt:15–99。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "不能证明该进程仍存活、PID 未被复用，或回执内容可信",
+              "sourceAt7afe141": "receipt:87–99",
+              "reason": "数值匹配不是来源认证"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 358,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 2,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "tailnet additionalBindHosts 已有 deepEqual，不可称无覆盖",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "Tailnet 受信 LAN 集合往返及不重扫扩张断言",
+              "sourceAt7afe141": "receipt.test:108–131",
+              "reason": "承认完整集合往返测试"
+            },
+            {
+              "criterion": 2,
+              "rubric": "无效写入测试使用新目录，不能推出失败会删除旧回执",
+              "score": 1,
+              "classification": "partial",
+              "quote": "不可复现的地址集合则拒写且不产生回执",
+              "sourceAt7afe141": "receipt.test:180–200",
+              "reason": "partial：准确提到拒写结果，但漏新目录前提及不证明删除旧回执；后文明确旧回执保留仍未知，故不判作已断言旧回执删除"
+            },
+            {
+              "criterion": 3,
+              "rubric": "未覆盖项及测试前置真实，不能把 PID 真实性编造为已有保证。receipt.test:108–130、180–200。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "已有有效回执…模拟改名失败…旧回执…内容不变、临时文件已清理",
+              "sourceAt7afe141": "receipt:111–125;receipt.test:78–103,180–200",
+              "reason": "真实未覆盖故障边界及合理规格，未虚构PID认证"
+            }
+          ],
+          "score": 5,
+          "maximum": 6,
+          "hanCount": 331,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 3,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "validate→inspect→backup→verify→recheck→stop，全部 true 且 await",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "严格依次调用六阶段，任一阶段不返回 true 即停止",
+              "sourceAt7afe141": "guard:19–29;restart:126–213",
+              "reason": "正确顺序及严格成功门禁，依次完成后下一步的语义等价await"
+            },
+            {
+              "criterion": 2,
+              "rubric": "ps identity/cwd/database/port 检查不等于回执作者认证",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "ps 固定启动时间及命令行…lsof…cwd…room.db…端口",
+              "sourceAt7afe141": "restart:62–101",
+              "reason": "调用处检查准确，明确时点边界"
+            },
+            {
+              "criterion": 3,
+              "rubric": "SIGTERM30s未退出抛错、不forcekill且未进入后续spawn，不能把spawn等同健康/页面验收。restart:59–104、125–223；guard:18–29。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "超时抛错且明确不强杀、不启动 successor",
+              "sourceAt7afe141": "restart:177–213",
+              "reason": "未将spawn当健康验收"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 348,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 4,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "online SQLite backup，不复制live WAL",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "SQLite 在线备份…WAL、SHM、journal 侧车不直接复制",
+              "sourceAt7afe141": "state:175–188",
+              "reason": "online而非复制live sidecars"
+            },
+            {
+              "criterion": 2,
+              "rubric": "socket省略及精确 warm-runtimes/instrt_UUID/turns 排除，provider-sessions不整体排除",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "socket…不进入备份…仅匹配…turns…省略并记录",
+              "sourceAt7afe141": "state:74–117",
+              "reason": "精确排除范围，未扩大到provider-sessions"
+            },
+            {
+              "criterion": 3,
+              "rubric": "拒绝symlink/已存在目标/嵌套目标，普通文件hash前后比较不证明多DB与其他文件全局原子。state:76–204。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "目标…之外且新建独占…拒绝符号链接…不构成…全状态原子快照",
+              "sourceAt7afe141": "state:142–205",
+              "reason": "路径及跨资源一致性边界正确"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 353,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 5,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "quick_check/FK与hash不同作用",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "quick_check、外键检查…SHA-256 比较",
+              "sourceAt7afe141": "state:208–249",
+              "reason": "健康性与字节摘要不同"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种损坏分别digest/dbset/filedigest拒绝，不把合法SQLite改写视作可通过",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "合法 SQL 改写…拒绝…extra.db…集合…普通文件…摘要",
+              "sourceAt7afe141": "guard.test:194–239",
+              "reason": "三类损坏判定正确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "guard steps注入测试不是实际ps/lsof/SIGTERM/spawn/健康全链验证。state:210–257；test:109–244。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "测试覆盖guardedStop…但没有运行端到端编排",
+              "sourceAt7afe141": "guard.test:107–153",
+              "reason": "未扩张为真实进程全链验证"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 301,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 6,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "restartable依次允许/拒绝/拒绝/允许/拒绝，idle五者全部拒绝",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "无 lease…允许/拒绝…带 lease…拒绝…普通queued…拒绝…stopped…允许/拒绝…resumed…拒绝",
+              "sourceAt7afe141": "state:259–306",
+              "reason": "五组正确"
+            },
+            {
+              "criterion": 2,
+              "rubric": "Run/runtime/placement/exclusive lease同样阻挡，SOS须room+operation关联且lease全部NULL",
+              "score": 1,
+              "classification": "partial",
+              "quote": "三类 lease 字段全为空…相同 room 的 hold 与 operation…stopped",
+              "sourceAt7afe141": "state:286–301",
+              "reason": "SOS准确；缺Run/runtime/placement/exclusive lease其他执行owner谓词"
+            },
+            {
+              "criterion": 3,
+              "rubric": "纯SELECT+assert不修改/完成状态，实际脚本用restartable而restore用idle。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "不完成、重试、恢复或丢弃…脚本…调用此判定",
+              "sourceAt7afe141": "state:259–306;restart:91–101",
+              "reason": "只读检查及调用场景正确"
+            }
+          ],
+          "score": 5,
+          "maximum": 6,
+          "hanCount": 237,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 7,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "nopending不snapshot、unsupported/sameversionunexpected拒绝",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "无pending…不复制…unsupported…拒绝…unexpected drift…拒绝…pending…先…快照",
+              "sourceAt7afe141": "state:433–485",
+              "reason": "四分支准确"
+            },
+            {
+              "criterion": 2,
+              "rubric": "preflight在临时copy初始化、protect在snapshot后初始化live",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "preflight…临时目录…protect…原 room.db",
+              "sourceAt7afe141": "state:394–420,464–485",
+              "reason": "副本与正式库目标正确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "snapshot失败阻止migration，kernel.initialize失败没有自动restore保证。未给Kernel实现不能证明migration本身无bug。state:394–489。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "快照未能完成或验证…中止…initialize失败…没有自动恢复调用",
+              "sourceAt7afe141": "state:467–485",
+              "reason": "没有把快照存在当自动回滚"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 344,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 8,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "confirm/path/verifiedsnapshot，runningPid检查是可选，不可断言总自动发现所有进程",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "字面确认…版本1…路径…校验…若提供PID",
+              "sourceAt7afe141": "state:498–525",
+              "reason": "明确PID可选"
+            },
+            {
+              "criterion": 2,
+              "rubric": "idle+hosts offline+writeEvidence+file/dbset/contentdigest多层，roomSeq单独不够",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "idle…hosts…offline…业务写入证据…文件清单…数据库集合…内容摘要",
+              "sourceAt7afe141": "state:526–565",
+              "reason": "不凭roomSeq单独恢复"
+            },
+            {
+              "criterion": 3,
+              "rubric": "stage先验证且再次verifyUnchanged，第二rename失败尝试改回原目录，不是不可失败事务/全局排他锁。digest具体实现未给出，不猜算法。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "尝试…原目录改回…没有锁…无法…绝对互斥",
+              "sourceAt7afe141": "state:567–584",
+              "reason": "staging复核、rename补救与并发边界正确"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 374,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 9,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "确诊 omittedRuntimeCredentials仅非空时返回，recheck expected漏字段，deepEqual失败于stop前",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "当前inventory…带该字段…期望对象不会带…因多出字段而失败…停在recheck",
+              "sourceAt7afe141": "state:114–117;restart:152–176",
+              "reason": "准确诊断稳定合法目录阻断"
+            },
+            {
+              "criterion": 2,
+              "rubric": "不误称凭据泄漏/数据损坏",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "字段契约不一致",
+              "sourceAt7afe141": "state:95–117;restart:152–156",
+              "reason": "未误称泄漏或损坏"
+            },
+            {
+              "criterion": 3,
+              "rubric": "建议比较相同完整manifest（含排除目录名单）而非删除/弱化整个检查，新增目录变化仍应拒绝。state:114–117；restart:152–156。此为固定快照的真实可复现整合缺口，不依赖模型自我纠错。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "无该字段时同样省略…继续深比较完整对象…仅比较files会漏…变化",
+              "sourceAt7afe141": "state:114–117;restart:152–156",
+              "reason": "条件式纳入完整manifest安全；并非简单给undefined造键"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 287,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 10,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "持续文件变化在清单复查被拒（避免声称中途改回也必检出）",
+              "score": 1,
+              "classification": "partial",
+              "quote": "改变并保持：条件拒绝…若文件短暂变化后恢复",
+              "sourceAt7afe141": "state:157–162,197–202",
+              "reason": "partial：清单机制准确，但题设持续改变被改回的不同情形稀释，未清楚判该题设必拒"
+            },
+            {
+              "criterion": 2,
+              "rubric": "事件追加由inspect/baseline seq或活动检查拒",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "Room事件…追加并保持：必拒绝…各room最大room_seq",
+              "sourceAt7afe141": "restart:91–101,152–161",
+              "reason": "正规事件追加的基线判定正确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "最终check→signal没有原子互斥证明，多DB无全局snapshot；可见安全机制与未知的原生drain实现分开。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "inspect…SIGTERM…没有原子锁…无跨数据库事务或共同快照时点",
+              "sourceAt7afe141": "restart:174–177;state:163–188",
+              "reason": "TOCTOU与多库上限正确"
+            }
+          ],
+          "score": 5,
+          "maximum": 6,
+          "hanCount": 372,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 11,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "同一runtime UUID/turns路径匹配真实regex且虚假credential内容不进入backup",
+              "score": 0,
+              "classification": "wrong",
+              "quote": "令 validate、inspect、backup、verify、recheck 返回成功…观察stop被调用",
+              "sourceAt7afe141": "state:76–117;restart:152–156",
+              "reason": "wrong specification：直接把被测recheck设成功不能证明真实字段比较，虽随后准确说真实recheck现红；且没有凭据内容不入backup断言"
+            },
+            {
+              "criterion": 2,
+              "rubric": "比较前后集合改变拒绝，不以忽略extra字段修复",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "增加第二个合法turn目录…完整排除目录集合…现代码…先拒绝稳定目录…区分能力未验证",
+              "sourceAt7afe141": "state:114–117;restart:152–156",
+              "reason": "变化案例旧红原因及修复后目标正确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "合法数据库内容改写/新业务写入测试定位正确guard且临时状态/fake steps，不需真实restart，不声称测试已执行。允许等价准确案例。",
+              "score": 1,
+              "classification": "partial",
+              "quote": "改动live数据库…roomSeq不变…restore…内容摘要不同而拒绝…未被rename",
+              "sourceAt7afe141": "state:498–565",
+              "reason": "partial：命中正确内容guard，但规格缺confirm、路径/快照、idle/hosts offline等到达被测guard的必要前置，可能更早失败而假绿"
+            }
+          ],
+          "score": 3,
+          "maximum": 6,
+          "hanCount": 359,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 12,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "保持阶段9实证缺口及安全边界，不用“所有restart不可用”夸大限定触发条件",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "稳定state…多字段而停在recheck，无法到达stop",
+              "sourceAt7afe141": "state:114–117;restart:152–156",
+              "reason": "保持正确主诊断及条件"
+            },
+            {
+              "criterion": 2,
+              "rubric": "建议单owner最小整合修复+回归、没有恢复凭据/跳过校验/服务实际操作",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "最小修改限于…同值、同缺省规则…完整对象深比较及排除目录清单校验",
+              "sourceAt7afe141": "restart:152–156",
+              "reason": "修改安全最小，不恢复临时凭据、不删检查"
+            },
+            {
+              "criterion": 3,
+              "rubric": "不把fixture/staticreview变成实际部署、全链、效率验收，保留依赖和TOCTOU边界。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "静态审查…不是执行验收…并发互斥…drain…仍未证明",
+              "sourceAt7afe141": "guard:19–29;state:567–584",
+              "reason": "不扩张真实验收"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 421,
+          "lengthPass": true,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        }
+      ],
+      "checkpoints": [
+        {
+          "throughStage": 1,
+          "score": 6,
+          "maximum": 6,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 3,
+          "score": 17,
+          "maximum": 18,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 6,
+          "score": 34,
+          "maximum": 36,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 9,
+          "score": 52,
+          "maximum": 54,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 12,
+          "score": 66,
+          "maximum": 72,
+          "fullTaskVerdict": "fail: core K11"
+        }
+      ],
+      "crossRound": {
+        "fabricatedRetractions": [],
+        "findings": [
+          {
+            "stage": 9,
+            "kind": "inaccurate_evidence_recollection",
+            "quote": "阶段4测试还表明…workbench-restart-guard.test.ts未读取",
+            "reason": "阶段4开放实现非测试，阶段5已读该测试；该句测试/实现证据归属和已读状态混乱。没有宣称本身执行验证，非critical。"
+          },
+          {
+            "stage": 12,
+            "kind": "citation_recollection",
+            "quote": "阶段9已给出…两项规格",
+            "reason": "精确的两项编号规格在stage11，stage9有设计方向；定位不精确而非虚构自我撤回。"
+          }
+        ]
+      },
+      "limitations": [
+        "Only one answer per stage observed in package; actual unique delivery, tool access, no writes, native session continuity, model/effort/memory and compaction unknown pending separate trace audit.",
+        "Stage9 bug location was explicitly guided by frozen question; no autonomous-discovery claim.",
+        "No paid calls, CLI execution, tests, service operations or product-source edits performed for this review.",
+        "Each answer includes an approximate self-reported Han count; only automated Script=Han counts below govern."
+      ],
+      "ruleRevision": "a653c25",
+      "scoreThreshold": "pass",
+      "criticalGate": "pass",
+      "coreTaskGate": "fail",
+      "technicalQualityPass": false,
+      "comparisonVerdict": "not_evaluated: this arm absolute assessment only",
+      "coreGates": {
+        "K9": {
+          "verdict": "pass",
+          "quote": "当前 inventory 也会带该字段，而…期望对象不会带它…深比较…失败…停在 recheck",
+          "source": "7afe141 restart:152–176;state:114–117"
+        },
+        "K11": {
+          "verdict": "fail",
+          "evidence": [
+            {
+              "quote": "令…recheck 返回成功，记录调用序列。观察 stop 被调用。",
+              "reason": "Explicitly mocks subject recheck success; later prose saying true comparator is red does not make this executable regression specification exercise the comparator."
+            },
+            {
+              "quote": null,
+              "reason": "No explicit preservation of fake credential contents exclusion from backup/restore in stage11 specification."
+            },
+            {
+              "quote": "restoreStateSnapshot 因 live 数据库内容摘要不同而拒绝",
+              "reason": "Correct intended guard, but no confirm/path/idle/offline preconditions sufficient to reach it; possible earlier rejection does not prove digest refusal."
+            }
+          ],
+          "source": "7afe141 restart:152–156;state:95–101,170,498–565"
+        },
+        "K12": {
+          "verdict": "pass",
+          "quote": "稳定 state 也会因深比较多字段而停在 recheck…按 receipt 同值、同缺省规则纳入该字段，保留完整对象深比较",
+          "source": "7afe141 restart:152–156;state:114–117"
+        }
+      },
+      "publicationNote": "Corrected reviewMode batch-label typo P114 to P115; private original and hash preserved, no assessment changed."
+    },
+    "final-output": {
+      "label": "B",
+      "workloadId": "restart-audit-12/v1",
+      "sourceRef": "7afe141",
+      "promptSetHash": "2baafe268994b8a00bfdcae984382974fb073235cbd84b1f83dfa4be84e702a7",
+      "reviewMode": "answer/source technical blind review; no P115 result, costs or mapping opened",
+      "blindnessLimitation": "Only blind-B package and frozen source/rules read; original/map/raw/result/cost not accessed. Workspace prefixes anonymized.",
+      "score": 61,
+      "maximum": 72,
+      "criticalErrors": [
+        {
+          "stage": 9,
+          "category": "建议删除安全校验",
+          "quote": "最小修改是在比较时明确投影实时对象为 { files: current.files, omittedSockets: current.omittedSockets }…不把运行期凭据目录纳入恢复差异判定",
+          "source": "7afe141 restart:152–156;state:114–117,197–202",
+          "reason": "该建议去除被要求保留的目录集合检查，仅内容不复制无法替代集合稳定性；为实质安全退化建议，不只是措辞或缺项。",
+          "laterState": "stage11后半及stage12恢复记录/比较路径集合，最终方案安全；冻结规则不追溯抹除当轮critical。"
+        }
+      ],
+      "technicalVerdict": "fail",
+      "instructionVerdict": "fail: 0/12 Han length; actual tool/transport/session evidence not in package remains unknown",
+      "stages": [
+        {
+          "stage": 1,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "七个 networkKeys 被清除后重建，未称清除整个 env",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "删除七个网络键…仅覆盖列出的七项，其余…保留",
+              "sourceAt7afe141": "receipt:15–23,87–99",
+              "reason": "准确范围"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种模式正确且 LAN cert/key 非无条件成对必填",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "loopback仅恢复…tailnet…LAN…可选证书/私钥绝对路径",
+              "sourceAt7afe141": "receipt:29–62",
+              "reason": "三模式与可选证书正确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "PID数值相等不是回执来源真实性/无 PID 重用证明。引用 receipt:15–99。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "不能证明…存活、PID未复用、文件未被篡改",
+              "sourceAt7afe141": "receipt:87–99",
+              "reason": "数值匹配未被当作来源认证"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 283,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 2,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "tailnet additionalBindHosts 已有 deepEqual，不可称无覆盖",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "重新解析后入口集合与回执一致",
+              "sourceAt7afe141": "receipt.test:108–130",
+              "reason": "明确已有完整集合往返"
+            },
+            {
+              "criterion": 2,
+              "rubric": "无效写入测试使用新目录，不能推出失败会删除旧回执",
+              "score": 1,
+              "classification": "partial",
+              "quote": "另有无效写入不生成回执的断言",
+              "sourceAt7afe141": "receipt.test:180–200",
+              "reason": "partial：有拒写结果但无新目录限定，不证明旧回执删除；未明确断言删除旧文件"
+            },
+            {
+              "criterion": 3,
+              "rubric": "未覆盖项及测试前置真实，不能把 PID 真实性编造为已有保证。receipt.test:108–130、180–200。",
+              "score": 1,
+              "classification": "partial_with_wrong_claim",
+              "quote": "也未证明…非网络环境键保留…断言…不含全部七个键，只含RAH_WEB_PORT…并保留PATH",
+              "sourceAt7afe141": "receipt.test:13–26;receipt:97–99",
+              "reason": "partial/wrong：全七键污染测试可补，但PATH保留已有第22行断言；全部七键不含与重建port的文字矛盾，应明确排除除port外旧键"
+            }
+          ],
+          "score": 4,
+          "maximum": 6,
+          "hanCount": 316,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 3,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "validate→inspect→backup→verify→recheck→stop，全部 true 且 await",
+              "score": 1,
+              "classification": "partial",
+              "quote": "校验→inspect→备份→校验→重查→SIGTERM→spawn",
+              "sourceAt7afe141": "guard:19–29;restart:126–213",
+              "reason": "顺序正确，遗漏每步await/严格true"
+            },
+            {
+              "criterion": 2,
+              "rubric": "ps identity/cwd/database/port 检查不等于回执作者认证",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "ps…启动时间与完整命令…lsof…cwd…room.db…端口",
+              "sourceAt7afe141": "restart:62–101",
+              "reason": "新增身份观测准确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "SIGTERM30s未退出抛错、不forcekill且未进入后续spawn，不能把spawn等同健康/页面验收。restart:59–104、125–223；guard:18–29。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "30秒后抛错…不会强杀…不会启动successor…不等于业务级排空",
+              "sourceAt7afe141": "restart:174–213",
+              "reason": "超时/启动/健康边界正确"
+            }
+          ],
+          "score": 5,
+          "maximum": 6,
+          "hanCount": 335,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 4,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "online SQLite backup，不复制live WAL",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "SQLite backup API…源WAL/SHM/journal侧车不复制",
+              "sourceAt7afe141": "state:175–188",
+              "reason": "在线备份正确"
+            },
+            {
+              "criterion": 2,
+              "rubric": "socket省略及精确 warm-runtimes/instrt_UUID/turns 排除，provider-sessions不整体排除",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "socket…排除…匹配…turns…记录…验证目标也不允许",
+              "sourceAt7afe141": "state:74–117",
+              "reason": "精确排除且没有扩大provider-sessions"
+            },
+            {
+              "criterion": 3,
+              "rubric": "拒绝symlink/已存在目标/嵌套目标，普通文件hash前后比较不证明多DB与其他文件全局原子。state:76–204。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "拒绝…符号链接…target…state外…独占…没有统一事务时点",
+              "sourceAt7afe141": "state:142–205",
+              "reason": "路径与一致性边界正确"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 364,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 5,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "quick_check/FK与hash不同作用",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "quick_check…foreign_key_check…SHA-256…不能取代字节绑定",
+              "sourceAt7afe141": "state:208–249",
+              "reason": "健康性与字节一致分开"
+            },
+            {
+              "criterion": 2,
+              "rubric": "三种损坏分别digest/dbset/filedigest拒绝，不把合法SQLite改写视作可通过",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "合法SQL UPDATE…digest mismatch…extra.db…set mismatch…memory.md…拒绝",
+              "sourceAt7afe141": "guard.test:194–239",
+              "reason": "三类损坏准确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "guard steps注入测试不是实际ps/lsof/SIGTERM/spawn/健康全链验证。state:210–257；test:109–244。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "单元测试只测guard阶段顺序…没有执行重启编排",
+              "sourceAt7afe141": "guard.test:107–153",
+              "reason": "不扩张为真实运维验收"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 311,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 6,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "restartable依次允许/拒绝/拒绝/允许/拒绝，idle五者全部拒绝",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "无lease…通过/拒绝…带lease…都拒绝…普通queued…拒绝…stopped…通过/拒绝…resumed…拒绝",
+              "sourceAt7afe141": "state:259–306",
+              "reason": "五条件正确"
+            },
+            {
+              "criterion": 2,
+              "rubric": "Run/runtime/placement/exclusive lease同样阻挡，SOS须room+operation关联且lease全部NULL",
+              "score": 1,
+              "classification": "partial",
+              "quote": "匹配room/operation…stopped hold…无lease",
+              "sourceAt7afe141": "state:286–301",
+              "reason": "SOS正确；其他执行owner被泛称，没有具体Run/runtime/placement/exclusive lease条件"
+            },
+            {
+              "criterion": 3,
+              "rubric": "纯SELECT+assert不修改/完成状态，实际脚本用restartable而restore用idle。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "不重试、恢复或丢弃…不会清理…inspect…restartable",
+              "sourceAt7afe141": "state:259–306;restart:91–101",
+              "reason": "纯检查及脚本使用正确"
+            }
+          ],
+          "score": 5,
+          "maximum": 6,
+          "hanCount": 264,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 7,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "nopending不snapshot、unsupported/sameversionunexpected拒绝",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "无pending…不复制…unsupported…拒绝…unexpected…拒绝…pending…先取证备份",
+              "sourceAt7afe141": "state:433–485",
+              "reason": "四分支正确"
+            },
+            {
+              "criterion": 2,
+              "rubric": "preflight在临时copy初始化、protect在snapshot后初始化live",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "preflight…临时副本…protect…真实数据库",
+              "sourceAt7afe141": "state:394–420,464–485",
+              "reason": "写入目标正确"
+            },
+            {
+              "criterion": 3,
+              "rubric": "snapshot失败阻止migration，kernel.initialize失败没有自动restore保证。未给Kernel实现不能证明migration本身无bug。state:394–489。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "快照或回执…失败…迁移不得发生…initialize后异常…不能宣称自动回滚",
+              "sourceAt7afe141": "state:467–485",
+              "reason": "保留Kernel迁移语义未知"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 344,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 8,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "confirm/path/verifiedsnapshot，runningPid检查是可选，不可断言总自动发现所有进程",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "confirm…版本…路径…验证…若提供runningPid",
+              "sourceAt7afe141": "state:498–525",
+              "reason": "明确PID可选"
+            },
+            {
+              "criterion": 2,
+              "rubric": "idle+hosts offline+writeEvidence+file/dbset/contentdigest多层，roomSeq单独不够",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "idle…hosts offline…写入证据…普通文件…集合…摘要",
+              "sourceAt7afe141": "state:526–565",
+              "reason": "不以roomseq相同恢复"
+            },
+            {
+              "criterion": 3,
+              "rubric": "stage先验证且再次verifyUnchanged，第二rename失败尝试改回原目录，不是不可失败事务/全局排他锁。digest具体实现未给出，不猜算法。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "第二次rename失败…尝试…若补救失败…不能保证…未见跨进程锁",
+              "sourceAt7afe141": "state:567–584",
+              "reason": "补救和排他边界准确"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 389,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 9,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "确诊 omittedRuntimeCredentials仅非空时返回，recheck expected漏字段，deepEqual失败于stop前",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "实时fileInventory完整返回…仅含两项期望…多出字段…失败…stop均不会发生",
+              "sourceAt7afe141": "state:114–117;restart:152–176",
+              "reason": "核心稳定目录阻断准确；开头有意省略不比较措辞不准确，但后文明示深比较失败"
+            },
+            {
+              "criterion": 2,
+              "rubric": "不误称凭据泄漏/数据损坏",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "安全检查会错误阻断重启",
+              "sourceAt7afe141": "state:95–117;restart:152–156",
+              "reason": "未称泄漏或数据损坏"
+            },
+            {
+              "criterion": 3,
+              "rubric": "建议比较相同完整manifest（含排除目录名单）而非删除/弱化整个检查，新增目录变化仍应拒绝。state:114–117；restart:152–156。此为固定快照的真实可复现整合缺口，不依赖模型自我纠错。",
+              "score": 0,
+              "classification": "wrong",
+              "quote": "最小修改…投影实时对象为{files…omittedSockets}…不把运行期凭据目录纳入…判定",
+              "sourceAt7afe141": "state:114–117,197–202;restart:152–156",
+              "reason": "wrong/critical：建议直接丢弃完整省略目录集合校验，违反要求保留安全检查；内容不恢复不代表路径集合可不检查"
+            }
+          ],
+          "score": 4,
+          "maximum": 6,
+          "hanCount": 321,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 10,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "持续文件变化在清单复查被拒（避免声称中途改回也必检出）",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "改变并保持：必拒绝…改回原字节…不足以证明",
+              "sourceAt7afe141": "state:157–162,197–203",
+              "reason": "持续变化及改回边界准确，后一句改回被写成并保持有措辞混乱"
+            },
+            {
+              "criterion": 2,
+              "rubric": "事件追加由inspect/baseline seq或活动检查拒",
+              "score": 1,
+              "classification": "partial_with_wrong_claim",
+              "quote": "inspect记录事件数量及各room最大room_seq",
+              "sourceAt7afe141": "restart:91–98,152–161",
+              "reason": "partial/wrong：正规追加必拒结论正确，但inspect只查max，没有eventCount，混入stateWriteEvidence字段"
+            },
+            {
+              "criterion": 3,
+              "rubric": "最终check→signal没有原子互斥证明，多DB无全局snapshot；可见安全机制与未知的原生drain实现分开。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "没有…原子锁…drain外部…非跨库事务",
+              "sourceAt7afe141": "restart:174–177;state:163–188",
+              "reason": "TOCTOU和多DB上限正确"
+            }
+          ],
+          "score": 5,
+          "maximum": 6,
+          "hanCount": 379,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 11,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "同一runtime UUID/turns路径匹配真实regex且虚假credential内容不进入backup",
+              "score": 1,
+              "classification": "partial",
+              "quote": "recheck按现逻辑取fileInventory与…receipt…现代码红点…修复投影后应绿",
+              "sourceAt7afe141": "state:76–117;restart:152–156",
+              "reason": "partial：真正比较及稳定场景红点正确，但沿用stage9不安全投影方案且未明确虚假凭据内容不备份断言"
+            },
+            {
+              "criterion": 2,
+              "rubric": "比较前后集合改变拒绝，不以忽略extra字段修复",
+              "score": 0,
+              "classification": "wrong",
+              "quote": "现代码只比较files与omittedSockets…不会发现变化、会到stop",
+              "sourceAt7afe141": "state:114–117;restart:152–156",
+              "reason": "wrong：与stage9正确完整左值相矛盾；新增或仍非空集合会因缺字段拒绝。仅最后目录移除可能通过，不能一概断言"
+            },
+            {
+              "criterion": 3,
+              "rubric": "合法数据库内容改写/新业务写入测试定位正确guard且临时状态/fake steps，不需真实restart，不声称测试已执行。允许等价准确案例。",
+              "score": 1,
+              "classification": "partial",
+              "quote": "追加room_events…verifyStateBackup仍通过…restore…writeEvidence不同拒绝",
+              "sourceAt7afe141": "state:498–565",
+              "reason": "partial：目标guard正确，但没有confirm/path/idle/offline等确保到达guard的前置；规格不能只看任意拒绝"
+            }
+          ],
+          "score": 2,
+          "maximum": 6,
+          "hanCount": 385,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        },
+        {
+          "stage": 12,
+          "criteria": [
+            {
+              "criterion": 1,
+              "rubric": "保持阶段9实证缺口及安全边界，不用“所有restart不可用”夸大限定触发条件",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "稳定存在合法运行期凭据目录也会阻断停机",
+              "sourceAt7afe141": "state:114–117;restart:152–156",
+              "reason": "最终保留真实主诊断"
+            },
+            {
+              "criterion": 2,
+              "rubric": "建议单owner最小整合修复+回归、没有恢复凭据/跳过校验/服务实际操作",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "比较这两项，同时记录并比较omittedRuntimeCredentials路径集合…不复制凭据目录",
+              "sourceAt7afe141": "restart:152–156;state:95–101,170",
+              "reason": "最终方案修复stage9安全退化，完整集合比较恢复；不追溯擦除早先critical"
+            },
+            {
+              "criterion": 3,
+              "rubric": "不把fixture/staticreview变成实际部署、全链、效率验收，保留依赖和TOCTOU边界。",
+              "score": 2,
+              "classification": "satisfied",
+              "quote": "这轮未执行验收…未运行测试或服务…竞态…依赖未证实",
+              "sourceAt7afe141": "guard:19–29;state:567–584",
+              "reason": "保持静态与执行验收区分"
+            }
+          ],
+          "score": 6,
+          "maximum": 6,
+          "hanCount": 386,
+          "lengthPass": false,
+          "prefixPass": true,
+          "oneAnswerInPackage": true,
+          "actualDeliveryCount": "unknown: no tool/transport evidence supplied",
+          "toolReadWriteEvidence": "unknown: answer-only blind package"
+        }
+      ],
+      "checkpoints": [
+        {
+          "throughStage": 1,
+          "score": 6,
+          "maximum": 6,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 3,
+          "score": 15,
+          "maximum": 18,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 6,
+          "score": 32,
+          "maximum": 36,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 9,
+          "score": 48,
+          "maximum": 54,
+          "fullTaskVerdict": "not_yet_applicable"
+        },
+        {
+          "throughStage": 12,
+          "score": 61,
+          "maximum": 72,
+          "fullTaskVerdict": "fail: critical stage9 and K11"
+        }
+      ],
+      "crossRound": {
+        "fabricatedRetractions": [],
+        "findings": [
+          {
+            "stages": [9, 11, 12],
+            "kind": "unsafe_suggestion_then_recovery",
+            "reason": "stage9建议丢弃目录集合比较，stage11后半及stage12改为记录并比较集合；属于后轮恢复，没有明确自我纠正，原critical保留。"
+          },
+          {
+            "stages": [9, 11],
+            "kind": "unresolved_source_contradiction",
+            "reason": "stage9完整左值多字段会拒绝，stage11又声称现代码只比较两字段，集合变化会通过。"
+          }
+        ]
+      },
+      "limitations": [
+        "Only one answer per stage observed in package; actual unique delivery, tool access, no writes, native session continuity, model/effort/memory and compaction unknown pending separate trace audit.",
+        "Stage9 bug location was explicitly guided by frozen question; no autonomous-discovery claim.",
+        "No paid calls, CLI execution, tests, service operations or product-source edits performed for this review.",
+        "Each answer includes an approximate self-reported Han count; only automated Script=Han counts below govern."
+      ],
+      "ruleRevision": "a653c25",
+      "scoreThreshold": "pass",
+      "criticalGate": "fail",
+      "coreTaskGate": "fail",
+      "technicalQualityPass": false,
+      "comparisonVerdict": "not_evaluated: absolute arm assessment only",
+      "coreGates": {
+        "K9": {
+          "verdict": "pass",
+          "quote": "实时fileInventory的完整返回对象…多出该字段即不相等…stop均不会发生",
+          "source": "restart:152–176;state:114–117"
+        },
+        "K11": {
+          "verdict": "fail",
+          "evidence": [
+            "阶段11错误断言旧代码只比较两字段，目录新增/删除均不会发现变化；新增/仍非空实际被缺字段拒绝。",
+            "稳定测试以不安全投影为修复，缺少虚假凭据内容不入backup/restore明确断言。",
+            "恢复规格命中writeEvidence，但未给confirm/path/idle/offline等足以到达guard的前置。"
+          ],
+          "source": "restart:152–156;state:95–117,498–565"
+        },
+        "K12": {
+          "verdict": "pass",
+          "quote": "稳定存在合法运行期凭据目录也会阻断停机…同时记录并比较omittedRuntimeCredentials的路径集合…不复制凭据目录",
+          "source": "restart:152–156;state:95–117"
+        }
+      },
+      "referenceAccuracy": {
+        "verdict": "partial",
+        "examples": [
+          "stage9 recheck cites restart113–128; actual152–156",
+          "stage2 Tailnet roundtrip cites test88–118; actual108–130",
+          "stage7 preflight cites state358–384; actual394–420"
+        ],
+        "note": "Multiple line offsets; separate precision limitation, not evidence of actual unauthorized read."
+      },
+      "publicationNote": "Corrected reviewMode batch-label typo P114 to P115; private original and hash preserved, no assessment changed."
+    }
+  },
+  "privateArtifactHashes": {
+    "transport-archive-manifest.json": "4a883d83a618f889f9ee699184f96dd7005a5dc8c6e26021a2a390c9d3ca70de",
+    "quality-A.json": "7ab4ef3cb8f7cbd0acd07d090855272a0b53cceef97fde8ec4592f5f0ffe83e6",
+    "quality-B.json": "74c6a2c596f30033842b116f031c7741486572cbecedcf89d41d925c3b4c97c2",
+    "transport-audit.json": "d860a964d5a29d1276dbc6fa24f2fd7bfa976645c8c8a1fad028912997bf6d47",
+    "cost-audit.json": "af4109aa136b3028ae10cb1d27e8cb1d96dbfdb0fb89de38bfda66275c40be28",
+    "contract-independent.json": "32de4af0a48e5b09ef5844704587d138e58c455f0b73b7bd7298a34fcfcd3556"
+  }
+}
