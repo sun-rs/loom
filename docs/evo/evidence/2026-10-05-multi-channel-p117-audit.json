@@ -1,0 +1,41 @@
+{
+  "kind": "P117 real native first-round failure audit",
+  "paidBatchCount": 1,
+  "registeredCodeCommit": "57ffdd40d7338888c98a3b464de8d6f7417fdd6e",
+  "registeredIdentity": "4a89cd04ce54b1f7f03429118fb13813f3c194d0279741f963293b76328e9ab9",
+  "rawSha256": "1dec0f5792fa6df6f66ce629428fc10dca759afa632b98ee7d75ed243366f82c",
+  "rolloutSha256": "13357b04337ff930b4f02266c835a0d3bebacf6342476bb7fc7bcf8e6373663c",
+  "status": "native-incomplete",
+  "nativeRounds": 1,
+  "productStarted": false,
+  "actualModelEffort": [["gpt-6-luna", "low"]],
+  "memoryDisabled": true,
+  "actualWorkspaceVerified": true,
+  "businessInstructionsCopies": 1,
+  "evidenceFileMatchesFrozenSha256": true,
+  "toolCallCount": 0,
+  "actualAnswer": "审查结论：credential_field=unknown",
+  "expectedAnswer": "审查结论：credential_field=absent",
+  "usage": {
+    "generations": 1,
+    "generationsTotal": 1,
+    "generationsBeforeReply": 1,
+    "generationsAfterReply": 0,
+    "input": 9192,
+    "cached": 0,
+    "uncached": 9192,
+    "output": 13,
+    "reasoning": 0,
+    "firstInput": 9192,
+    "peakInput": 9192,
+    "replySeconds": 5.992,
+    "toolCalls": []
+  },
+  "comparison": "missing-evidence",
+  "limits": [
+    "Reported generations are not independently captured HTTP request counts.",
+    "No paired product measurements; no Loom cost ratio.",
+    "Model skipped required read; causal reason is unknown.",
+    "No rerun, product changes, service restart or deployment."
+  ]
+}
