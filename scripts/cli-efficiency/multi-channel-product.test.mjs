@@ -174,7 +174,6 @@ function fixture({
         effort: "low",
         bindingId: "gpt-6-luna",
       },
-      instructions: "fixed instructions",
       steps: [
         { speaker: "a", body: "first" },
         { speaker: "b", body: "second" },
@@ -382,4 +381,26 @@ test("canonical mention must be durably bound to exactly the scheduled instance"
   );
   assert.equal(f.arm.rounds.length, 1);
   assert.deepEqual(f.arm.messages[0].mentions, []);
+});
+
+test("roles/create carries only the AGENTS reference, never duplicate business instructions", async () => {
+  const { RoleConfigurationSchema } =
+    await import("../../packages/protocol/src/role-catalog.ts");
+  const f = fixture();
+  // Caller no longer supplies business prose to the product harness.
+  delete f.options.instructions;
+  await runMultiProduct(f.options, f.dependencies);
+  const configs = f.requests
+    .filter((r) => r.path.endsWith("roles/create"))
+    .map((r) => r.body.configuration);
+  assert.equal(configs.length, 3);
+  for (const config of configs) {
+    assert.equal(config.instructions, "Follow the workspace AGENTS.md.");
+    assert.equal(RoleConfigurationSchema.safeParse(config).success, true);
+    assert.equal(
+      RoleConfigurationSchema.safeParse({ ...config, instructions: "" })
+        .success,
+      false,
+    );
+  }
 });

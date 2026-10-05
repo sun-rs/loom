@@ -35,6 +35,8 @@ import {
 } from "./cli-efficiency/native-invocation.mjs";
 import { longArmEnvironment } from "./test-cli-long-session.mjs";
 
+import { MULTI_INSTRUCTION_POLICY } from "./cli-efficiency/multi-channel-product.mjs";
+
 export function multiPlan(args, version) {
   assert.ok(
     args.length === 1 && ["--plan", "--paid"].includes(args[0]),
@@ -47,6 +49,8 @@ export function multiPlan(args, version) {
     RAH_EFFICIENCY_EFFORT: "low",
   });
   const identity = {
+    experimentVersion: "multi-channel/v2",
+    instructionPolicy: MULTI_INSTRUCTION_POLICY,
     workloadId: multiWorkload.id,
     sourceRef: multiWorkload.sourceRef,
     files: Object.fromEntries(
@@ -299,7 +303,6 @@ export async function runMultiChannel(args) {
             root: armRoot,
             cwd,
             config: plan.config,
-            instructions: multiWorkload.instructions,
             steps: multiWorkload.steps,
             arm,
             save,

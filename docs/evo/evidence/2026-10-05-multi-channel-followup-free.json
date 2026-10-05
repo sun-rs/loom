@@ -1,0 +1,53 @@
+{
+  "kind": "real Codex + loopback fake provider; business-instruction deduplication verification",
+  "paidCalls": 0,
+  "cliVersion": "0.160.0",
+  "syntheticModel": "gpt-6-luna",
+  "effort": "low",
+  "status": "passed",
+  "receivedHttp": 6,
+  "validatedRequests": 6,
+  "businessCopiesPerRequest": [1, 1, 1, 1, 1, 1],
+  "strictSchemaPerRequest": [true, true, true, true, true, true],
+  "runs": 6,
+  "uniqueReplyIds": 6,
+  "completedActivations": 6,
+  "trustedFinalMarkers": 6,
+  "continuousSessions": {
+    "a": 1,
+    "b": 1,
+    "c": 1
+  },
+  "distinctSessions": 3,
+  "actualMemoryOff": true,
+  "failures": [
+    {
+      "attempt": 1,
+      "reason": "503 Connection Closed for local endpoint; root cause unconfirmed, no validated fake response",
+      "httpCount": "unknown; counter was after assertions"
+    },
+    {
+      "attempt": 2,
+      "reason": "probe omitted final-output trial flag; reached fake handler but missing text.format",
+      "httpCount": "at least one; counter was after assertions"
+    },
+    {
+      "attempt": 3,
+      "reason": "same missing trial flag; local-only proxy experiment did not address cause",
+      "httpCount": "at least one; counter was after assertions"
+    }
+  ],
+  "successfulProbeEnvironment": "isolated HOME/CODEX_HOME, no account credentials; loopback provider only; NO_PROXY/no_proxy; CODEX trial on, OPENCODE trial off; no global proxy changes",
+  "artifacts": {
+    "first-free-result.private.json": "19083b7325c138f8097a86f349cb8a00fe06e52523d19b662da3885dad7c2b66",
+    "second-free-result.private.json": "16533657b1ac746caf8d15ad545b0dcd97a31a65865c24efd4641d4674dc0603",
+    "third-free-result.private.json": "4701b4b2af8f4caeede974fb91681920c8a3f3b34dd838566ddc3fec8b0ace18",
+    "free-result.private.json": "027978bccd47eaf7c9fa31b959fbd1429b3323a6dbf93d473b63fa985828509a",
+    "free-probe.mjs": "d32e9f4f789e1fe271ff8b7ee6fe3e5b9d171237bf5230f9bcfe859c10b7f3ef"
+  },
+  "limits": [
+    "Fake replies and synthetic usage do not establish model quality or paid-token reduction.",
+    "Only product transport probed; native business instructions unchanged.",
+    "P116 paid verdict and archived identity are unchanged."
+  ]
+}

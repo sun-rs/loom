@@ -117,3 +117,19 @@ test("executable free plan never probes a catalog or starts any model", async ()
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("new plan identifies the AGENTS-only business carrier and retains reference overhead", () => {
+  const p = multiPlan(["--plan"], "codex-cli 0.160.0");
+  assert.equal(p.experimentVersion, "multi-channel/v2");
+  assert.deepEqual(p.instructionPolicy, {
+    id: "workspace-agents-business-only/v2",
+    businessCarrier: "workspace/AGENTS.md in both arms",
+    roleInstructions: "Follow the workspace AGENTS.md.",
+    roleReferenceCost: "retained in product raw usage",
+  });
+  assert.notEqual(
+    p.baselineIdentity,
+    "ee165964664ebcb6093c489ca2667e4eaaa3ee38f119d921ec8f54cae9d16294",
+  );
+  assert.equal(p.providerStarted, false);
+});

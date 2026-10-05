@@ -10,6 +10,15 @@ import { measure, wait, transcript } from "./common.mjs";
 import { runSucceeded } from "./warm.mjs";
 import { recoverFailedProductRound } from "./long-session-recovery.mjs";
 
+// The Role schema requires nonempty instructions. Keep only a reference here;
+// the shared workspace AGENTS.md is the sole business-prose carrier.
+export const MULTI_INSTRUCTION_POLICY = Object.freeze({
+  id: "workspace-agents-business-only/v2",
+  businessCarrier: "workspace/AGENTS.md in both arms",
+  roleInstructions: "Follow the workspace AGENTS.md.",
+  roleReferenceCost: "retained in product raw usage",
+});
+
 // Read-only durable inventory. No credential/lease tables or provider text are
 // queried. Explicit joins include every participant's usage, not only speaker.
 export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
@@ -61,12 +70,11 @@ export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
 
 // Dependency seam is for deterministic tests; production callers use defaults.
 export async function runMultiProduct(
-  { root, cwd, config, instructions, steps, arm, save, beforeRound },
+  { root, cwd, config, steps, arm, save, beforeRound },
   dependencies = {},
 ) {
   assert.equal(config?.provider, "codex", "Multi product gate is Codex-only");
   assert.ok(config.model && config.bindingId && config.effort);
-  assert.ok(typeof instructions === "string" && instructions.length > 0);
   assert.ok(Array.isArray(steps) && steps.length > 0);
   for (const s of steps) {
     assert.ok(["a", "b", "c"].includes(s.speaker));
@@ -174,7 +182,7 @@ export async function runMultiProduct(
           configuration: {
             displayName: `Multi ${speaker}`,
             handle: `multi-${speaker}`,
-            instructions,
+            instructions: MULTI_INSTRUCTION_POLICY.roleInstructions,
             role: "Bounded code reviewer",
             executionWorkspace: {
               kind: "existing_mount",
