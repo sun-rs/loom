@@ -1,0 +1,116 @@
+{
+  "kind": "P120 paid MCP observation independent audit",
+  "codeCommit": "745465447b635dca2679b346ea2476b4c413af85",
+  "baselineIdentity": "45103559dfffa51d269112bcbffe41122d62947756626c0247b72c06e4918682",
+  "status": "worker-mcp-incomplete",
+  "arms": {
+    "native": {
+      "stages": 36,
+      "validatedPrefix": 36,
+      "knownTotals": {
+        "input": 533106,
+        "cached": 464384,
+        "uncached": 68722,
+        "output": 459,
+        "generations": 36
+      },
+      "speakers": {
+        "a": {
+          "stages": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "actualToolCalls": 0,
+          "exactAnswers": 12
+        },
+        "b": {
+          "stages": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "actualToolCalls": 0,
+          "exactAnswers": 12
+        },
+        "c": {
+          "stages": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "actualToolCalls": 0,
+          "exactAnswers": 12
+        }
+      }
+    },
+    "worker-mcp": {
+      "stages": 1,
+      "validatedPrefix": 0,
+      "knownTotals": {
+        "input": 32280,
+        "cached": 15104,
+        "uncached": 17176,
+        "output": 161,
+        "generations": 2
+      },
+      "speakers": {
+        "a": {
+          "stages": 1,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "newInputSourceCopies": [1],
+          "actualToolCalls": 2,
+          "exactAnswers": 1
+        }
+      }
+    }
+  },
+  "observedFirstStage": {
+    "nativeInput": 13068,
+    "productInput": 32280,
+    "totalInputRatio": 2.470156106519743,
+    "firstGenerationInputDifference": 3014,
+    "nativeGenerations": 1,
+    "productGenerations": 2,
+    "productGenerationsBeforeReply": 2,
+    "productGenerationsAfterReply": 0,
+    "nativeReplySeconds": 5.992,
+    "productReplySeconds": 10.707,
+    "replySecondsDifference": 4.715000000000001
+  },
+  "durableProduct": {
+    "runs": 1,
+    "completedActivations": 1,
+    "exactConsumerAck": true,
+    "uniquePublishedReplies": 1,
+    "ordinaryFinalMarkers": 1,
+    "firstCallRejected": "forbidden",
+    "firstThreadId": "#multi-efficiency",
+    "secondTransport": "Worker CLI with explicit channel target",
+    "correlatedCliOutput": true,
+    "usageGaps": 0,
+    "productBCNotStarted": true
+  },
+  "limits": [
+    "No long paired ratio: product stopped after first stage.",
+    "Reported generations are not independent HTTP counts or monetary billing.",
+    "Correct answer and delivery do not satisfy the frozen MCP-only recovery profile; actual CLI fallback is not an MCP receipt.",
+    "No rerun or deployment."
+  ],
+  "passedAuditChecks": 184,
+  "hashes": {
+    "result.private.json": "26d87fbab091bae0a776b79fb17ecf8715ed2e38dd28762141a4b2784ce958d9",
+    "paid.log": "1a36116b1849bd73f908af702fbd980895b74fc19f99f2e1b33fbef1877c50cc",
+    "room.snapshot.db": "f148a0ba2f3daf79a388583bc3609dc64957b1c3a34e60cbb79106c8f3077cf9",
+    "native-b.jsonl": "51bc0cd0c2b508e90452dba694222d723bb3ed0d1c97a128bd1c1fbb4418ec60",
+    "worker-mcp-a.jsonl": "648675e43a3f87963012f631580251ffb13232979e93ea1be319c70b31880a22",
+    "native-a.jsonl": "a583ed77477970f31a7f6ac1e11de70d0c873db6e5a7ab3a57323a1d900b1e81",
+    "native-c.jsonl": "bded0e511e5b793afcff092aaedcb3b62bda3fee7402e501f5101951d2bd0465"
+  }
+}

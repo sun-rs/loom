@@ -1,6 +1,6 @@
 # 默认 MCP：保留恢复成本的长期观察
 
-此切片落实[验证设计审查](mcp-long-observation-review.zh-CN.md)中有明确证据的一项恢复规则。只修改验收工具，不修改产品工具参数、Kernel 或正式服务；P119 原始文件、失败裁决和旧 profile 均保留。没有新付费授权。
+此切片落实[验证设计审查](mcp-long-observation-review.zh-CN.md)中有明确证据的一项恢复规则。只修改验收工具，不修改产品工具参数、Kernel 或正式服务；P119 原始文件、失败裁决和旧 profile 均保留。owner 随后批准的一次 [P120](evidence/2026-10-06-multi-channel-p120.md) 已执行：产品首轮拒绝后转 CLI 正确送达，但不满足冻结的 MCP-only 路径条件；长期倍率未建立。本批封账，不补跑。
 
 ## 实现与界限
 
