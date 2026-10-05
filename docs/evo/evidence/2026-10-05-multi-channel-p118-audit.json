@@ -1,0 +1,124 @@
+{
+  "kind": "P118 real inline material paid batch audit",
+  "paidBatchCount": 1,
+  "codeCommit": "224dea19c2abb087b10be3becec4c638d4dadd92",
+  "baselineIdentity": "6701d39611ff38c41512a69cdb9988b75f1a9024ace38fd7246b1047b7199056",
+  "status": "final-output-incomplete",
+  "contractComparison": {
+    "status": "missing-evidence",
+    "participants": {}
+  },
+  "arms": {
+    "native": {
+      "stageCount": 36,
+      "validatedPrefix": 36,
+      "status": "complete",
+      "speakers": {
+        "a": {
+          "stages": 12,
+          "oneContinuousSession": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "nativeMemoryDisabled": true,
+          "businessInstructionsCopies": 1,
+          "newInputMaterialCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "exactAnswers": 12,
+          "toolCalls": 0
+        },
+        "b": {
+          "stages": 12,
+          "oneContinuousSession": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "nativeMemoryDisabled": true,
+          "businessInstructionsCopies": 1,
+          "newInputMaterialCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "exactAnswers": 12,
+          "toolCalls": 0
+        },
+        "c": {
+          "stages": 12,
+          "oneContinuousSession": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "nativeMemoryDisabled": true,
+          "businessInstructionsCopies": 1,
+          "newInputMaterialCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "exactAnswers": 12,
+          "toolCalls": 0
+        }
+      },
+      "knownTotals": {
+        "input": 533106,
+        "cached": 432384,
+        "uncached": 100722,
+        "output": 459,
+        "generations": 36
+      }
+    },
+    "final-output": {
+      "stageCount": 1,
+      "validatedPrefix": 0,
+      "status": "failed",
+      "speakers": {
+        "a": {
+          "stages": 1,
+          "oneContinuousSession": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "nativeMemoryDisabled": true,
+          "businessInstructionsCopies": 1,
+          "newInputMaterialCopies": [1],
+          "exactAnswers": 1,
+          "toolCalls": 1
+        }
+      },
+      "knownTotals": {
+        "input": 16255,
+        "cached": 0,
+        "uncached": 16255,
+        "output": 54,
+        "generations": 1
+      },
+      "actualTool": {
+        "outer": "exec",
+        "inner": "mcp__loom_worker__loom_reply",
+        "basedOnRoomSeq": 8,
+        "body": "审查结论：credential_field=absent",
+        "final": true
+      }
+    }
+  },
+  "durableProduct": {
+    "runs": 1,
+    "completedActivations": 1,
+    "attemptCount": 1,
+    "materialPresented": true,
+    "exactConsumerAck": true,
+    "correctPublishedReply": true,
+    "finalMarkers": 1,
+    "submissionKind": null,
+    "selectedFinalOutputMarkers": 0,
+    "interruptRequestedAcceptedTerminal": true,
+    "usageRows": 1,
+    "usageGaps": 0,
+    "productBCNotStarted": true
+  },
+  "firstTurnObservedInputDifference": 3187,
+  "limits": [
+    "No complete paired long observation; no qualified Loom token ratio.",
+    "Reported generations are not independently captured HTTP requests or billing invoices.",
+    "MCP published correctly in one reported generation, but violates this frozen final-output zero-tool profile.",
+    "Same-material fixed questions with peer answers do not establish independent reviews or collaborative value.",
+    "No rerun, backend changes or deployment."
+  ],
+  "hashes": {
+    "result.private.json": "98af5f365228d1a04111a13e3c4e56b59086e782e78f39deb7cb94bb0814a6a0",
+    "paid.log": "45eb6181f33cb4ac04f12917d09cdbf3d3c2d685d4ce4fd40ac65d89e6d66d99",
+    "room.snapshot.db": "fe5117c2e2bd3479f28f1f0e87a2d286de3c58cbaada66ff07c2bd40f45bd30c",
+    "native-b.jsonl": "eb8d47f5389fe0a018c3118b858a10d997c100c54520e5f403575a130e684357",
+    "native-a.jsonl": "8bbf87fc878cdd8eb42a35af4de4499dd764952d7f7dfe2b45594a565d86e505",
+    "native-c.jsonl": "f691d4f469e97f84cc18d1b4ee76de54f305d39d4a8846c4f18a597c3ee287cb",
+    "final-output-a.jsonl": "2f8f7397408ad26020504d124d6116c18c2b4ce9675ef874a25eeb04e09d7a4e"
+  }
+}
