@@ -70,9 +70,22 @@ export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
 
 // Dependency seam is for deterministic tests; production callers use defaults.
 export async function runMultiProduct(
-  { root, cwd, config, steps, arm, save, beforeRound },
+  {
+    root,
+    cwd,
+    config,
+    steps,
+    arm,
+    save,
+    beforeRound,
+    productArm = "final-output",
+  },
   dependencies = {},
 ) {
+  assert.ok(
+    ["final-output", "worker-mcp"].includes(productArm),
+    "Unknown product arm",
+  );
   assert.equal(config?.provider, "codex", "Multi product gate is Codex-only");
   assert.ok(config.model && config.bindingId && config.effort);
   assert.ok(Array.isArray(steps) && steps.length > 0);
@@ -398,16 +411,17 @@ export async function runMultiProduct(
       }
       round.metrics.finalInterrupt = usage.finalInterrupt ?? null;
       round.metrics.replyAt = reply.createdAt;
-      assert.equal(
-        data.markers.filter(
-          (m) =>
-            m.run_attempt_id === run.runAttemptId &&
-            m.room_seq === reply.roomSeq &&
-            m.submission_kind === "final-output",
-        ).length,
-        1,
-        "Missing unique final marker",
+      const markers = data.markers.filter(
+        (m) =>
+          m.run_attempt_id === run.runAttemptId &&
+          m.room_seq === reply.roomSeq &&
+          m.submission_kind ===
+            (productArm === "worker-mcp" ? null : "final-output"),
       );
+      assert.equal(markers.length, 1, "Missing unique final marker");
+      // A null marker alone does not prove MCP: profile validation must join
+      // the actual native call/result receipt with this durable event.
+      round.finalMarker = markers[0];
       for (const p of observer.listPlacements({ roomId })) {
         assert.equal(p.resolvedModel.modelId, config.model);
         assert.equal(p.resolvedModel.reasoning, config.effort);

@@ -17,7 +17,7 @@ function sumMetrics(metrics) {
     missing,
   };
 }
-function prefix(arm, speaker, n, product, firstReadProof) {
+function prefix(arm, speaker, n, product, firstReadProof, replyProof) {
   const rounds = (arm?.rounds ?? [])
     .filter((r) => r.speaker === speaker)
     .slice(0, n);
@@ -53,6 +53,8 @@ function prefix(arm, speaker, n, product, firstReadProof) {
       r.validationError
     )
       issues.push("validation-incomplete");
+    if (replyProof && r.validation?.replyProof !== replyProof)
+      issues.push("reply-proof-incomplete");
     const m = r.metrics;
     if (!m || m.input !== m.cached + m.uncached || !(m.generations > 0))
       issues.push("usage-inconsistent");
@@ -110,8 +112,10 @@ function combine(parts) {
 }
 export function summarizeLongChannel(
   arms,
-  { readProofPolicy = "tool-result/v1" } = {},
+  { readProofPolicy = "tool-result/v1", productArm = "final-output" } = {},
 ) {
+  if (!["final-output", "worker-mcp"].includes(productArm))
+    throw new Error("Unknown product arm");
   if (!["tool-result/v1", "inline-input/v1"].includes(readProofPolicy))
     throw new Error("Unknown read proof policy");
   const firstReadProof =
@@ -155,7 +159,14 @@ export function summarizeLongChannel(
         s,
         pair(
           prefix(arms?.native, s, n, false, firstReadProof),
-          prefix(arms?.["final-output"], s, n, true, firstReadProof),
+          prefix(
+            arms?.[productArm],
+            s,
+            n,
+            true,
+            firstReadProof,
+            productArm === "worker-mcp" ? "single-mcp-final-reply" : undefined,
+          ),
         ),
       ]),
     );
@@ -171,7 +182,7 @@ export function summarizeLongChannel(
   return {
     status:
       arms?.native?.status === "complete" &&
-      arms?.["final-output"]?.status === "complete" &&
+      arms?.[productArm]?.status === "complete" &&
       checkpoints.at(-1).total.status === "comparable"
         ? "complete"
         : "incomplete",

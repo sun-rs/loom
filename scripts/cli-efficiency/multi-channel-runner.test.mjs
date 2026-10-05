@@ -133,3 +133,49 @@ test("new plan identifies the AGENTS-only business carrier and retains reference
   );
   assert.equal(p.providerStarted, false);
 });
+
+test("validation fence passes arm identity and worker-mcp still requires product usage", async () => {
+  const { createRoundValidationFence } =
+    await import("../test-cli-multi-channel.mjs");
+  const arm = {
+    kind: "worker-mcp",
+    rounds: [{ speaker: "a", sessionId: "s" }],
+  };
+  let kind;
+  createRoundValidationFence({
+    arm,
+    transcript: () => [],
+    evidenceText: "fixture",
+    expectedFor: () => "",
+    validate: (input) => {
+      kind = input.armKind;
+      return { answer: "exact" };
+    },
+  })();
+  assert.equal(kind, "worker-mcp");
+  assert.throws(
+    () =>
+      validateMultiHistory({
+        kind: "worker-mcp",
+        rounds: [
+          {
+            speaker: "a",
+            round: 1,
+            sessionId: "s",
+            longStageSucceeded: true,
+            actualMemoryOff: true,
+            actualIdentityVerified: true,
+            actualWorkspaceVerified: true,
+            metrics: {
+              input: 1,
+              cached: 0,
+              uncached: 1,
+              output: 1,
+              generations: 1,
+            },
+          },
+        ],
+      }),
+    /product usage/i,
+  );
+});

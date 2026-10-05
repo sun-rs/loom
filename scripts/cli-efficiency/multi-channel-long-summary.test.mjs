@@ -197,3 +197,25 @@ test("inline proof requires explicit registered policy and never loosens tool pr
     /proof policy/i,
   );
 });
+
+test("worker-mcp summary requires every product reply proof without altering native or old profiles", () => {
+  const old = arms();
+  const a = { native: old.native, "worker-mcp": old["final-output"] };
+  for (const arm of Object.values(a))
+    for (const r of arm.rounds.slice(0, 3))
+      r.validation.readProof = "complete-inline-input";
+  const opts = { readProofPolicy: "inline-input/v1", productArm: "worker-mcp" };
+  assert.equal(summarizeLongChannel(a, opts).status, "incomplete");
+  for (const r of a["worker-mcp"].rounds)
+    r.validation.replyProof = "single-mcp-final-reply";
+  assert.equal(summarizeLongChannel(a, opts).status, "complete");
+  delete a["worker-mcp"].rounds[35].validation.replyProof;
+  assert.equal(
+    summarizeLongChannel(a, opts).checkpoints.at(-1).total.ratios,
+    null,
+  );
+  assert.throws(
+    () => summarizeLongChannel(a, { ...opts, productArm: "other" }),
+    /arm/i,
+  );
+});

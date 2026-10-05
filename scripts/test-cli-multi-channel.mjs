@@ -47,6 +47,11 @@ const DEFAULT_PROFILE = {
 
 export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
   const workload = profile.workload;
+  const productArm = profile.productArm ?? "final-output";
+  assert.ok(
+    ["final-output", "worker-mcp"].includes(productArm),
+    "Unknown product arm",
+  );
   assert.equal(
     workload.steps.length,
     speakers.length * profile.roundsPerParticipant,
@@ -64,6 +69,7 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
   });
   const identity = {
     experimentVersion: profile.experimentVersion,
+    ...(profile.productArm === undefined ? {} : { productArm }),
     ...(profile.validationPolicy
       ? { validationPolicy: profile.validationPolicy }
       : {}),
@@ -78,7 +84,7 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     version,
     model: config.model,
     effort: config.effort,
-    order: ["native", "final-output"],
+    order: ["native", productArm],
     historyPolicy:
       "independent arm histories; fixed business questions; own peer replies relayed without editing",
     routingIdentity:
@@ -98,7 +104,10 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
       ]),
     ),
     arms: Object.fromEntries(
-      ["native", "final-output"].map((k) => [k, longArmEnvironment(k, {})]),
+      ["native", productArm].map((k) => [
+        k,
+        longArmEnvironment(k === "worker-mcp" ? "default" : k, {}),
+      ]),
     ),
     relayTemplate: channelPrompt([{ author: "<author>", body: "<body>" }]),
     firstDelivery:
@@ -151,7 +160,7 @@ export function validateMultiHistory(arm) {
         m.input === m.cached + m.uncached,
       "Missing/inconsistent usage",
     );
-    if (arm.kind === "final-output")
+    if (["final-output", "worker-mcp"].includes(arm.kind))
       assert.ok(m.productUsage, "Missing product usage");
     if (m.productUsage) {
       assert.equal(
@@ -187,6 +196,7 @@ export function createRoundValidationFence({
       if (round.validationError) throw new Error(round.validationError);
       try {
         round.validation = validate({
+          armKind: arm.kind,
           round,
           previousRounds: arm.rounds
             .slice(0, processed)
@@ -305,7 +315,10 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
         "RAH_EFFICIENCY_WARM_RESTART",
       ];
       const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
-      Object.assign(process.env, longArmEnvironment(kind));
+      Object.assign(
+        process.env,
+        longArmEnvironment(kind === "worker-mcp" ? "default" : kind),
+      );
       const verify = () => {
         assert.equal(version(), plan.version, "CLI changed");
         for (const [p, body] of Object.entries(workload.files))
@@ -361,6 +374,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
           });
         else
           await runMultiProduct({
+            productArm: profile.productArm ?? "final-output",
             root: armRoot,
             cwd,
             config: plan.config,
@@ -409,7 +423,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
     }
     result.contractComparison = compareParticipants(
       result.arms.native,
-      result.arms["final-output"],
+      result.arms[profile.productArm ?? "final-output"],
       plan.roundsPerParticipant,
     );
     if (result.status === "running") result.status = "needs-quality-review";

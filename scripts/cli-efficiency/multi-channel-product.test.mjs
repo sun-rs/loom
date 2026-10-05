@@ -404,3 +404,40 @@ test("roles/create carries only the AGENTS reference, never duplicate business i
     );
   }
 });
+
+test("worker-mcp arm preserves the tool final marker and does not admit an output marker", async () => {
+  const f = fixture();
+  const read = f.dependencies.readEvidence;
+  f.dependencies.readEvidence = () => {
+    const data = read();
+    data.markers = data.markers.map((m) => ({
+      ...m,
+      submission_kind: null,
+      event_id: "event-fixture",
+    }));
+    return data;
+  };
+  await runMultiProduct(
+    { ...f.options, productArm: "worker-mcp" },
+    f.dependencies,
+  );
+  assert.equal(f.arm.rounds[0].finalMarker.submission_kind, null);
+  assert.equal(f.arm.rounds[0].finalMarker.event_id, "event-fixture");
+  const wrong = fixture();
+  await assert.rejects(
+    runMultiProduct(
+      { ...wrong.options, productArm: "worker-mcp" },
+      wrong.dependencies,
+    ),
+    /marker/i,
+  );
+  const unknown = fixture();
+  await assert.rejects(
+    runMultiProduct(
+      { ...unknown.options, productArm: "arbitrary" },
+      unknown.dependencies,
+    ),
+    /arm/i,
+  );
+  assert.equal(unknown.requests.length, 0);
+});

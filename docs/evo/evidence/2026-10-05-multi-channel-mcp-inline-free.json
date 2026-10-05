@@ -1,0 +1,202 @@
+{
+  "kind": "independent installed CLI and SQLite audit with loopback fake model",
+  "syntheticAnswersAndUsage": true,
+  "paidCalls": 0,
+  "arms": {
+    "native": {
+      "speakers": {
+        "a": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "b": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "c": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      }
+    },
+    "worker-mcp": {
+      "speakers": {
+        "a": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 24,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "b": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 24,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "c": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 24,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      }
+    }
+  },
+  "durable": {
+    "runs": 36,
+    "activations": 36,
+    "completedWithExactConsumerAck": 36,
+    "ordinaryToolFinalMarkers": 36,
+    "uniquePublishedReplies": 36,
+    "correlatedMcpPublishedReceipts": 36,
+    "firstSourceSameMessageAndSeqForAllThree": true,
+    "sourceEventCount": 1
+  },
+  "limits": [
+    "Fake model answers and usage do not establish real-model task quality or token efficiency.",
+    "Native zero tools and product one MCP call are observed behavior, not filesystem isolation.",
+    "Completed Activation and exact consumer cursor evidence establish delivery acknowledgement, not semantic understanding.",
+    "One request per stage is observed only in this synthetic positive case, not an admission rule or real-model cost promise. Mixed extra-tool negative required natural follow-up; its second generation remains counted."
+  ],
+  "passed": true,
+  "observedRequests": {
+    "native": 36,
+    "workerMcp": 36
+  },
+  "observedReportedGenerations": {
+    "native": 36,
+    "worker-mcp": 36
+  },
+  "allBusinessInstructionsExactlyOncePerRequest": true,
+  "productFinalInterruptTerminal": 36,
+  "negativeCases": {
+    "wrong-body-literal": {
+      "status": "expected-rejection",
+      "receivedLoopbackHttp": 1,
+      "reportedGenerations": 1,
+      "processedPrefix": 0,
+      "stagesObserved": 1,
+      "nextStageNotStarted": true,
+      "reason": "reply argument body mismatch",
+      "actualOuterToolCalls": 1,
+      "durableFinalMarkers": 1,
+      "costRetained": true
+    },
+    "extra-tool-natural-final": {
+      "status": "expected-rejection",
+      "receivedLoopbackHttp": 2,
+      "reportedGenerations": 2,
+      "processedPrefix": 0,
+      "stagesObserved": 1,
+      "nextStageNotStarted": true,
+      "reason": "unregistered tool statements",
+      "actualOuterToolCalls": 1,
+      "durableFinalMarkers": 1,
+      "costRetained": true
+    }
+  },
+  "preservedEarlierProbeFailures": [
+    {
+      "file": "alternate-release-failed-positive.launch.private.json",
+      "sha256": "ddecdc2b485ad87f83b0fd8cc76c7a2bf37e20990fc7f8afbe30ea055cd705e3"
+    },
+    {
+      "file": "alternate-release-failed-positive.private.json",
+      "sha256": "14fa91620cc838f63e05bba4c9d042856a44fabf934c0e9887d55c46cd393f5d"
+    },
+    {
+      "file": "caskroom-failed-positive.launch.private.json",
+      "sha256": "f2927db3bc063e85f599eadf8a08faa8ec7d7e89c37d8937587f541a9ab21f84"
+    },
+    {
+      "file": "caskroom-failed-positive.private.json",
+      "sha256": "0d459aab888c584deb6885e0d140521cc344980f5910de1f5e1705803b60759f"
+    },
+    {
+      "file": "disk-failed-positive.launch.private.json",
+      "sha256": "7eab23ba2c55d8bb85f84b3fc19ad9cd847d0650ad4628fb9a2ab2e3012c3049"
+    },
+    {
+      "file": "disk-failed-positive.private.json",
+      "sha256": "62df555c28058352585e5beb90c545318b87ad68992c94a21f60f5b00e3e5966"
+    },
+    {
+      "file": "wrong-body.private.json",
+      "sha256": "e3ecff03b0d05344b0805955710b56687954d7a08eacef8e866c0ea3784b56f8"
+    },
+    {
+      "file": "extra-tool.private.json",
+      "sha256": "72bd11f7a7753b26822db56fd1b9734bb25db4f334fea628898e9d5a1ad9aa32"
+    }
+  ],
+  "independentChecks": {
+    "passed": 437,
+    "failed": 0,
+    "detailedReportSha256": "0b0ef8e178eae08950163a81a446b7f3ee8943d77b85e4ef335962a58f2245d6"
+  },
+  "baselineIdentity": "25c57119ac664b208e06f270cf76b4a1119fe82dd8bf00cff7f7236a792527f3",
+  "artifactHashes": {
+    "positive.private.json": "42ddb397466e09da46b86e308214fca8a89e0d7b9d3f7acf1ae47c34ce38958b",
+    "probe.mjs": "feaa4d353b9d0c61cb6bddde5b45a79c452e846c3aef6e732015c4d7f56c6485",
+    "room.snapshot.db": "e096bc24d96461f19d71b73fd4b92b92695c92fc95f4eec5c90ebbeb114cd403",
+    "wrong-body-literal.jsonl": "6e9a3e6e107ae5962aca9dbe91d0733ec694e6083d5e34609dc5a796f6588a1f",
+    "wrong-body-literal.snapshot.db": "dbe06ed1d580b821aa3fb9ae77e1cc4506663dc2fd5f2397f51f4e10a8d63237",
+    "wrong-body-literal.private.json": "e5b1a1b5eea2382e45ff3b37514a16a9015fcab5f4eec28b5cc121ff44e093a2",
+    "extra-tool-natural-final.jsonl": "5cef661f52790d7ba9a3a094b03341cce1139010fb5a01468bb73d47546a8da5",
+    "extra-tool-natural-final.snapshot.db": "fb716a7a10d363f86d45b924da4525d32fea3d9fcc6765582dbb89fc88d19618",
+    "extra-tool-natural-final.private.json": "8876828ba14cc11f58663fd97245831c55d1a18d1ac949e88f6b1bee57ae65eb",
+    "run-extra-tool-natural-final.py": "0f007cf04192a9f43fc2477f21ea03130accc86355b6add910d477a4fe30fe97",
+    "alternate-release-failed-positive.launch.private.json": "ddecdc2b485ad87f83b0fd8cc76c7a2bf37e20990fc7f8afbe30ea055cd705e3",
+    "extra-tool.launch.private.json": "e29bd8b0bf03f9360ae770a2434a5dbbd85d57b678de3dd16baf71d3a1e7d16b",
+    "wrong-body-literal.launch.private.json": "da8692ffcd138a5d6f44ca12f934599320fd9f7d46b343ef7a5e7d63effd1e76",
+    "run-wrong-body-literal.py": "f01b1bafd786385e3e18be39bab79393be6b84bf6dacce3faee520d9f6c9e5a7",
+    "independent-audit.py": "cd427d4138a7333a93b21048d9c9811987c41cb0f2270aca6b7c1e9d064d295f",
+    "wrong-body.launch.private.json": "48c53e94bd119b1cc05a3a9da49e184bb216ead2da76c18408c03dcc67e2c75a",
+    "probe-extra-tool-natural-final.mjs": "96ef11a67a9c2aacd8616fe10359ac6ddf159b228162ed6bbf304c04a77ee938",
+    "probe-wrong-body-literal.mjs": "24aed4228146c3fd9f0d501cc53cbbadcb391ad8f41b5acf59c6efbedcbfcd19",
+    "positive.launch.private.json": "e4730a32f6cbc66d2c1f31b7ca64d1dfc17eeaf3ca94937db0a234286d473b75",
+    "extra-tool-natural-final.launch.private.json": "fca826a69acfc8f7663d000cd02116e2c6517104bb9db92633f881f974c349ff",
+    "caskroom-failed-positive.launch.private.json": "f2927db3bc063e85f599eadf8a08faa8ec7d7e89c37d8937587f541a9ab21f84",
+    "disk-failed-positive.launch.private.json": "7eab23ba2c55d8bb85f84b3fc19ad9cd847d0650ad4628fb9a2ab2e3012c3049",
+    "run-probe.py": "b2f4c20d8a535a8448914ffa815a9675508b48907929c497d446f189e28cc8f2",
+    "seal-audit.py": "d555109481d1a64ba559a7c82372092b74dd033932cf7bd10c8a507ecb81f843"
+  },
+  "rolloutHashes": {
+    "native/a": "1b063175aae129fd285dbcba2939cf0fc1d45011a66bd198f6d8ab8706560392",
+    "native/b": "9766c3424e357e86234bedfa38661653627f5c079e6f99cfd1953e36188240e5",
+    "native/c": "a850fdd07df44099a9058f534642d151832f8d86a719a4a9009a3829da599217",
+    "worker-mcp/a": "ad36feb59553f1284953aa17ff2e3a122cced157bf7ba8f8ee6e219b0c8da52a",
+    "worker-mcp/b": "9dc50375b82f8a17d1d281155fe2e03a9862b20dadb696f8d380dceda14dbcd2",
+    "worker-mcp/c": "9ac366effd853e907badd1622d097b386b6a6122ee93e7c36450d3486b7eec00"
+  }
+}
