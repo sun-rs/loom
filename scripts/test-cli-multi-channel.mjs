@@ -37,7 +37,21 @@ import { longArmEnvironment } from "./test-cli-long-session.mjs";
 
 import { MULTI_INSTRUCTION_POLICY } from "./cli-efficiency/multi-channel-product.mjs";
 
-export function multiPlan(args, version) {
+const DEFAULT_PROFILE = {
+  workload: multiWorkload,
+  experimentVersion: "multi-channel/v2",
+  sampleId: "P116",
+  roundsPerParticipant: 4,
+  limits: { perArmInput: 1200000, perArmMs: 1200000, maxProductRuns: 12 },
+};
+
+export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
+  const workload = profile.workload;
+  assert.equal(
+    workload.steps.length,
+    speakers.length * profile.roundsPerParticipant,
+  );
+  assert.equal(profile.limits.maxProductRuns, workload.steps.length);
   assert.ok(
     args.length === 1 && ["--plan", "--paid"].includes(args[0]),
     "Requires exactly --plan or --paid",
@@ -49,15 +63,18 @@ export function multiPlan(args, version) {
     RAH_EFFICIENCY_EFFORT: "low",
   });
   const identity = {
-    experimentVersion: "multi-channel/v2",
+    experimentVersion: profile.experimentVersion,
+    ...(profile.validationPolicy
+      ? { validationPolicy: profile.validationPolicy }
+      : {}),
     instructionPolicy: MULTI_INSTRUCTION_POLICY,
-    workloadId: multiWorkload.id,
-    sourceRef: multiWorkload.sourceRef,
+    workloadId: workload.id,
+    sourceRef: workload.sourceRef,
     files: Object.fromEntries(
-      Object.entries(multiWorkload.files).map(([p, b]) => [p, longHash(b)]),
+      Object.entries(workload.files).map(([p, b]) => [p, longHash(b)]),
     ),
-    instructions: longHash(multiWorkload.instructions),
-    steps: longHash(JSON.stringify(multiWorkload.steps)),
+    instructions: longHash(workload.instructions),
+    steps: longHash(JSON.stringify(workload.steps)),
     version,
     model: config.model,
     effort: config.effort,
@@ -86,16 +103,16 @@ export function multiPlan(args, version) {
     relayTemplate: channelPrompt([{ author: "<author>", body: "<body>" }]),
     firstDelivery:
       "Role creation sequence is the origin floor before messages; first turn includes prior channel business messages",
-    limits: { perArmInput: 1200000, perArmMs: 1200000, maxProductRuns: 12 },
+    limits: profile.limits,
   };
   return {
     mode: args[0].slice(2),
     providerStarted: false,
     config,
     ...identity,
-    stageCount: 12,
+    stageCount: workload.steps.length,
     participantCount: 3,
-    roundsPerParticipant: 4,
+    roundsPerParticipant: profile.roundsPerParticipant,
     autonomousAdmission: "requires-separate-four-gate-review",
     baselineIdentity: longHash(JSON.stringify(identity)),
   };
@@ -155,9 +172,43 @@ export function validateMultiHistory(arm) {
 }
 const version = () =>
   execFileSync("codex", ["--version"], { encoding: "utf8" }).trim();
-export async function runMultiChannel(args) {
-  const plan = multiPlan(args, version()),
-    provenance = codeProvenance({ sourceRef: multiWorkload.sourceRef });
+export function createRoundValidationFence({
+  arm,
+  transcript,
+  evidenceText,
+  expectedFor,
+  validate,
+}) {
+  let processed = 0;
+  arm.validationProcessedPrefix = 0;
+  return () => {
+    while (processed < arm.rounds.length) {
+      const round = arm.rounds[processed];
+      if (round.validationError) throw new Error(round.validationError);
+      try {
+        round.validation = validate({
+          round,
+          previousRounds: arm.rounds
+            .slice(0, processed)
+            .filter((r) => r.speaker === round.speaker),
+          events: transcript(round.sessionId),
+          expectedAnswer: expectedFor(round),
+          evidenceText,
+        });
+        processed += 1;
+        arm.validationProcessedPrefix = processed;
+      } catch (error) {
+        round.validationError = String(error);
+        throw error;
+      }
+    }
+  };
+}
+
+export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
+  const workload = profile.workload;
+  const plan = multiPlan(args, version(), profile),
+    provenance = codeProvenance({ sourceRef: workload.sourceRef });
   if (plan.mode === "plan") {
     console.log(JSON.stringify({ ...plan, ...provenance }, null, 2));
     return;
@@ -169,7 +220,7 @@ export async function runMultiChannel(args) {
   );
   const root = mkdtempSync(join(tmpdir(), "loom-cli-multi-channel-"));
   const result = {
-    sampleId: "P116",
+    sampleId: profile.sampleId,
     ...plan,
     ...provenance,
     root,
@@ -233,9 +284,9 @@ export async function runMultiChannel(args) {
       const armRoot = join(root, kind),
         cwd = join(armRoot, "workspace");
       mkdirSync(cwd, { recursive: true });
-      for (const [p, b] of Object.entries(multiWorkload.files))
+      for (const [p, b] of Object.entries(workload.files))
         writeFileSync(join(cwd, p), b);
-      writeFileSync(join(cwd, "AGENTS.md"), multiWorkload.instructions + "\n");
+      writeFileSync(join(cwd, "AGENTS.md"), workload.instructions + "\n");
       const arm = {
         kind,
         workspace: cwd,
@@ -257,7 +308,7 @@ export async function runMultiChannel(args) {
       Object.assign(process.env, longArmEnvironment(kind));
       const verify = () => {
         assert.equal(version(), plan.version, "CLI changed");
-        for (const [p, body] of Object.entries(multiWorkload.files))
+        for (const [p, body] of Object.entries(workload.files))
           assert.equal(
             readFileSync(join(cwd, p), "utf8"),
             body,
@@ -265,14 +316,24 @@ export async function runMultiChannel(args) {
           );
         assert.equal(
           readFileSync(join(cwd, "AGENTS.md"), "utf8"),
-          multiWorkload.instructions + "\n",
+          workload.instructions + "\n",
           "Instructions changed",
         );
       };
+      const validateRounds = profile.validateRound
+        ? createRoundValidationFence({
+            arm,
+            transcript,
+            evidenceText: workload.files["evidence.txt"],
+            expectedFor: profile.expectedFor,
+            validate: profile.validateRound,
+          })
+        : () => {};
       const beforeRound = () => {
         verify();
         markIdentity(arm);
         validateMultiHistory(arm);
+        validateRounds();
         checkLongSessionBudget(arm, {
           startedAt,
           maxMs: plan.limits.perArmMs,
@@ -286,7 +347,7 @@ export async function runMultiChannel(args) {
         if (kind === "native")
           await runNativeChannel({
             arm,
-            steps: multiWorkload.steps,
+            steps: workload.steps,
             cwd,
             config: plan.config,
             save,
@@ -303,15 +364,16 @@ export async function runMultiChannel(args) {
             root: armRoot,
             cwd,
             config: plan.config,
-            steps: multiWorkload.steps,
+            steps: workload.steps,
             arm,
             save,
             beforeRound,
           });
         markIdentity(arm);
         validateMultiHistory(arm);
+        validateRounds();
         verify();
-        assert.equal(arm.rounds.length, 12);
+        assert.equal(arm.rounds.length, plan.stageCount);
         arm.status = "complete";
       } catch (error) {
         arm.status = "failed";
@@ -348,6 +410,7 @@ export async function runMultiChannel(args) {
     result.contractComparison = compareParticipants(
       result.arms.native,
       result.arms["final-output"],
+      plan.roundsPerParticipant,
     );
     if (result.status === "running") result.status = "needs-quality-review";
   } catch (error) {
@@ -355,6 +418,8 @@ export async function runMultiChannel(args) {
     result.error = String(error);
   } finally {
     result.finishedAt = new Date().toISOString();
+    if (profile.summarize)
+      result.longObservation = profile.summarize(result.arms);
     save();
   }
   return result;

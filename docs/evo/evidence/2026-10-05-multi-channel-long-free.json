@@ -1,0 +1,129 @@
+{
+  "kind": "independent real-CLI loopback fixture audit",
+  "paidCalls": 0,
+  "syntheticAnswersAndUsage": true,
+  "receivedHttp": 78,
+  "arms": {
+    "native": {
+      "rounds": 36,
+      "validationPrefix": 36,
+      "speakers": {
+        "a": {
+          "rounds": 12,
+          "continuousSession": true,
+          "memoryOff": true,
+          "turnContexts": 12,
+          "actualModels": [["gpt-6-luna", "low"]],
+          "tools": 1,
+          "firstReadFullAndCorrelated": true,
+          "laterTools": 0
+        },
+        "b": {
+          "rounds": 12,
+          "continuousSession": true,
+          "memoryOff": true,
+          "turnContexts": 12,
+          "actualModels": [["gpt-6-luna", "low"]],
+          "tools": 1,
+          "firstReadFullAndCorrelated": true,
+          "laterTools": 0
+        },
+        "c": {
+          "rounds": 12,
+          "continuousSession": true,
+          "memoryOff": true,
+          "turnContexts": 12,
+          "actualModels": [["gpt-6-luna", "low"]],
+          "tools": 1,
+          "firstReadFullAndCorrelated": true,
+          "laterTools": 0
+        }
+      },
+      "httpRequests": 39,
+      "allBusinessCopiesOne": true,
+      "distinctSessions": 3
+    },
+    "final-output": {
+      "rounds": 36,
+      "validationPrefix": 36,
+      "speakers": {
+        "a": {
+          "rounds": 12,
+          "continuousSession": true,
+          "memoryOff": true,
+          "turnContexts": 12,
+          "actualModels": [["gpt-6-luna", "low"]],
+          "tools": 1,
+          "firstReadFullAndCorrelated": true,
+          "laterTools": 0
+        },
+        "b": {
+          "rounds": 12,
+          "continuousSession": true,
+          "memoryOff": true,
+          "turnContexts": 12,
+          "actualModels": [["gpt-6-luna", "low"]],
+          "tools": 1,
+          "firstReadFullAndCorrelated": true,
+          "laterTools": 0
+        },
+        "c": {
+          "rounds": 12,
+          "continuousSession": true,
+          "memoryOff": true,
+          "turnContexts": 12,
+          "actualModels": [["gpt-6-luna", "low"]],
+          "tools": 1,
+          "firstReadFullAndCorrelated": true,
+          "laterTools": 0
+        }
+      },
+      "httpRequests": 39,
+      "allBusinessCopiesOne": true,
+      "distinctSessions": 3
+    }
+  },
+  "sha256": {
+    "result.private.json": "b83d21bc08528d3f8a632d8da80323dbcf4d54637d150a7229c04cdf040d2503",
+    "missing-read.private.json": "e517eeaac42f0079b348e6b61258928dfeb7ef99d54805e88a5a3574d4c0b21f",
+    "probe.mjs": "8dbfc9b1fad27a11ebdc2a170ad03d896ea9cc5fc369eb3856c5cdb529a79677",
+    "missing-read-probe.mjs": "6f81ef66352174a8b0c9633ca0b05644ecadece4b5476064a3e9413e2146f83f",
+    "native-a.jsonl": "7e0dfc71e69e05ee8a9b6076ed729787abe6725d6ef59e5a243fe860c005499f",
+    "native-b.jsonl": "6a9e330b3e94e6e7c02996fdaa937db6cdf3024f26a6a086e2aa0a190792f2b0",
+    "native-c.jsonl": "404203d43f25080556eec2530d6e63fac3a395a96b19d75404346d1668c32f85",
+    "final-output-a.jsonl": "659b6016529836456af9ee4fd3e3f5777c6909b74c20cf1e1f9d3979d8b2b7df",
+    "final-output-b.jsonl": "a203952b6952bf4eb3e9151cc1e8c2fe756afcc59892863da5efce36702596de",
+    "final-output-c.jsonl": "10e10fd35c29035bd42f1f66a0b3da26d3e6d801482b1fa6e5ac197170fec860"
+  },
+  "durable": {
+    "runs": 36,
+    "runStates": {
+      "exited": 36
+    },
+    "activations": 36,
+    "markers": 36,
+    "messages": 72,
+    "all36ExactConsumerAckAndMarkerChecks": true
+  },
+  "missingRead": {
+    "status": "failed",
+    "receivedHttp": 1,
+    "nativeRounds": 1,
+    "productNotStarted": true,
+    "readError": true
+  },
+  "limits": [
+    "Synthetic fake model answers and usage; no real model competence or efficiency verdict.",
+    "Tool observation is not filesystem isolation.",
+    "Unknown native item forms are deliberately unsupported and fail closed."
+  ],
+  "automatedVerification": {
+    "npmCheck": "passed",
+    "backendPassed": 2910,
+    "backendSkipped": 22,
+    "webPassed": 487,
+    "consolePassed": 59,
+    "efficiencyPassed": 367,
+    "paidEntryExecuted": false
+  }
+}
