@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "fixture": true,
+  "syntheticModel": true,
+  "usageSynthetic": true,
+  "paidProviderCalls": 0,
+  "cliVersion": "codex-cli 0.160.0",
+  "sourceCommit": "49b97e0fe041ee07ebdbc3abc4f4a9a075516795",
+  "loopbackOnly": true,
+  "credentialEnvironment": "env -i; isolated HOME/CODEX_HOME; no real provider credentials; local provider requires_openai_auth=false",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "actualLoopbackHttpPerWake": [2, 1],
+  "strictCanonicalSchemaAllRequests": true,
+  "toolOutputReturnedBeforeFinal": true,
+  "sameSession": true,
+  "runtimeCount": 1,
+  "nativeTurnCount": 2,
+  "runCount": 2,
+  "completedActivations": 2,
+  "publishedMessages": 2,
+  "trustedFinalOutputMarkers": 2,
+  "nativeMemoryMode": "disabled",
+  "cursorCoveredEachActivation": true,
+  "commentaryNotPublished": true,
+  "guardActive": true,
+  "limits": [
+    "Fake provider chooses correct envelopes; not real model compliance, semantic quality or paid efficiency proof.",
+    "Same live warm session two turns, not a new cold-resume or old-session protocol-upgrade experiment.",
+    "Only local fake HTTP counts are measured; synthetic usage not a billing claim."
+  ],
+  "artifactSha256": {
+    "codex-product-guarded-schema-result.json": "8fb92d7b31945e2817efdbb0bc9ebf10f37ac50cd0f9548013d194e7da7b069c",
+    "codex-product-guarded-schema-probe.ts": "8d9b6476fb1c92e3ee13e199f941583cf78553808387c367ca792da2aa3f5c09",
+    "free-probe.log": "bddf51dd50b93d1b50fb5353f29eb3564d7557e11271b251d6990d09f44f8881"
+  },
+  "productSourceUnchangedFrom": "6b8a7c3",
+  "workingTree": "Test-selector and documentation changes uncommitted during probe; product source unchanged from stated revision."
+}

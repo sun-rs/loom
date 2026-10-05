@@ -31,6 +31,7 @@ OpenCode 原生 `run` 优先读取 `PWD`。原生模型进程及配置预检均�
 连续长任务另有[12阶段预注册实验](../evo/long-session-efficiency-plan.zh-CN.md)：
 `node scripts/test-cli-long-session.mjs --plan` 免费核对身份，`--paid` 执行当批授权的三臂样本。
 它保留启动和恢复成本，按固定进度比较累计消耗与独立质量；不替代本页的逐轮合同门禁，也不沿用旧样本分母。
+[P115收口](../evo/closeout-plan.zh-CN.md)显式附加`--final-output-only`仅测native与final-output，原默认三臂不变；逐轮合同裁决仍复用`metrics.mjs`的`compareArm`，累计观察和核心任务质量分别判定。
 
 ```sh
 npm run test:cli:efficiency -- --paid

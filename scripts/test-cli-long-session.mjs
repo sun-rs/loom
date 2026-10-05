@@ -28,8 +28,10 @@ import { describeNativeMemoryPolicy } from "./cli-efficiency/native-memory-polic
 
 export function longSessionPlan(args, cliVersion) {
   assert.ok(
-    args.length === 1 && ["--plan", "--paid"].includes(args[0]),
-    "Requires exactly --plan or --paid",
+    ["--plan", "--paid"].includes(args[0]) &&
+      (args.length === 1 ||
+        (args.length === 2 && args[1] === "--final-output-only")),
+    "Requires --plan or --paid, optionally followed by --final-output-only",
   );
   assert.equal(
     cliVersion,
@@ -47,7 +49,10 @@ export function longSessionPlan(args, cliVersion) {
   longWorkload.questions.forEach((q, i) =>
     assert.equal(longHash(q), longWorkload.questionHashes[i]),
   );
-  const order = ["native", "default", "final-output"];
+  const order =
+    args[1] === "--final-output-only"
+      ? ["native", "final-output"]
+      : ["native", "default", "final-output"];
   const limits = {
     perArmInput: 1200000,
     perArmMs: 1200000,
@@ -110,6 +115,10 @@ export function longSessionPlan(args, cliVersion) {
   };
 }
 export function longArmEnvironment(kind, environment = process.env) {
+  assert.ok(
+    ["native", "default", "final-output"].includes(kind),
+    "Unknown long-session arm",
+  );
   return {
     ...environment,
     LOOM_CODEX_FINAL_OUTPUT_TRIAL: kind === "final-output" ? "1" : "0",

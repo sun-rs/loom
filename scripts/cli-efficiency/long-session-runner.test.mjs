@@ -97,6 +97,27 @@ test("executable --plan permits only version lookup and does not enter provider/
     assert.equal(r.status, 0, r.stderr);
     assert.equal(JSON.parse(r.stdout).providerStarted, false);
     assert.equal(readFileSync(join(dir, "calls"), "utf8"), "--version\n");
+    const two = spawnSync(
+      process.execPath,
+      ["scripts/test-cli-long-session.mjs", "--plan", "--final-output-only"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: dir + ":" + process.env.PATH,
+          NODE_TEST_CONTEXT: undefined,
+        },
+        timeout: 10000,
+      },
+    );
+    assert.equal(two.status, 0, two.stderr);
+    const twoPlan = JSON.parse(two.stdout);
+    assert.equal(twoPlan.providerStarted, false);
+    assert.deepEqual(twoPlan.order, ["native", "final-output"]);
+    assert.equal(
+      readFileSync(join(dir, "calls"), "utf8"),
+      "--version\n--version\n",
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -198,4 +219,85 @@ test("failed identity forbids a summary ratio while preserving observed cost", a
   });
   assert.equal(s.comparisons.product.total.ratios, null);
   assert.equal(s.arms.product.total.knownObservedTotals.input, 10);
+});
+
+test("explicit final-output-only plan selects a distinct two-arm identity without changing workload", () => {
+  const old = longSessionPlan(["--plan"], "codex-cli 0.160.0");
+  const plan = longSessionPlan(
+    ["--plan", "--final-output-only"],
+    "codex-cli 0.160.0",
+  );
+  const paid = longSessionPlan(
+    ["--paid", "--final-output-only"],
+    "codex-cli 0.160.0",
+  );
+  assert.deepEqual(plan.order, ["native", "final-output"]);
+  assert.deepEqual(Object.keys(plan.baseline.arms), plan.order);
+  assert.deepEqual(plan.baseline.order, plan.order);
+  assert.notEqual(plan.baseline.identitySha256, old.baseline.identitySha256);
+  assert.equal(paid.baseline.identitySha256, plan.baseline.identitySha256);
+  assert.equal(paid.mode, "paid");
+  for (const key of ["questions", "instructions", "limits"])
+    assert.deepEqual(plan[key], old[key]);
+  for (const key of [
+    "memoryPolicy",
+    "nativeInvocation",
+    "sourceHashes",
+    "workloadId",
+  ])
+    assert.deepEqual(plan.baseline[key], old.baseline[key]);
+  for (const args of [
+    ["--final-output-only"],
+    ["--final-output-only", "--plan"],
+    ["--plan", "--final-output-only", "--final-output-only"],
+    ["--plan", "--arms=native,other"],
+    ["--plan", "--order=final-output,native"],
+    ["--paid", "--default-only"],
+  ])
+    assert.throws(() => longSessionPlan(args, "codex-cli 0.160.0"));
+  assert.throws(() => longArmEnvironment("unknown", {}));
+});
+
+test("two-arm summary keeps native pairing and failed final cost without requiring default", async () => {
+  const { summarizeLongSession } = await import("./long-session-metrics.mjs");
+  const plan = longSessionPlan(
+    ["--plan", "--final-output-only"],
+    "codex-cli 0.160.0",
+  );
+  const stage = {
+    stage: 1,
+    sessionId: "s",
+    completed: true,
+    memoryOff: true,
+    durationSeconds: 1,
+    usage: {
+      input: 10,
+      cached: 3,
+      uncached: 7,
+      output: 2,
+      generations: 1,
+      completeness: "complete",
+      gaps: [],
+    },
+  };
+  for (const completed of [true, false]) {
+    const summary = summarizeLongSession({
+      arms: Object.fromEntries(
+        plan.order.map((kind) => [
+          kind,
+          { stages: [{ ...stage, completed: kind === "native" || completed }] },
+        ]),
+      ),
+      checkpoints: [1],
+      expectedStages: 1,
+    });
+    assert.deepEqual(Object.keys(summary.arms), plan.order);
+    assert.equal(
+      summary.arms["final-output"].total.knownObservedTotals.input,
+      10,
+    );
+    if (completed)
+      assert.equal(summary.comparisons["final-output"].total.ratios.input, 1);
+    else assert.equal(summary.comparisons["final-output"].total.ratios, null);
+  }
 });
