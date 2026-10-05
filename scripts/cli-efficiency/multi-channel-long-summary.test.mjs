@@ -170,3 +170,30 @@ test("exact answer alone is not complete read validation; each phase needs its o
     );
   }
 });
+
+test("inline proof requires explicit registered policy and never loosens tool profile", () => {
+  const a = arms();
+  for (const arm of Object.values(a))
+    for (const r of arm.rounds.slice(0, 3))
+      r.validation.readProof = "complete-inline-input";
+  assert.equal(summarizeLongChannel(a).checkpoints[0].total.ratios, null);
+  assert.equal(
+    summarizeLongChannel(a, { readProofPolicy: "inline-input/v1" }).status,
+    "complete",
+  );
+  assert.equal(
+    summarizeLongChannel(arms(), { readProofPolicy: "inline-input/v1" })
+      .checkpoints[0].total.ratios,
+    null,
+  );
+  a["final-output"].rounds[3].validation.readProof = "complete-inline-input";
+  assert.equal(
+    summarizeLongChannel(a, { readProofPolicy: "inline-input/v1" })
+      .checkpoints[1].total.ratios,
+    null,
+  );
+  assert.throws(
+    () => summarizeLongChannel(a, { readProofPolicy: "arbitrary" }),
+    /proof policy/i,
+  );
+});

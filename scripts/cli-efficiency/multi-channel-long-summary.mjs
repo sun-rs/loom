@@ -17,7 +17,7 @@ function sumMetrics(metrics) {
     missing,
   };
 }
-function prefix(arm, speaker, n, product) {
+function prefix(arm, speaker, n, product, firstReadProof) {
   const rounds = (arm?.rounds ?? [])
     .filter((r) => r.speaker === speaker)
     .slice(0, n);
@@ -49,7 +49,7 @@ function prefix(arm, speaker, n, product) {
     if (
       r.validation?.answer !== "exact" ||
       r.validation?.readProof !==
-        (i === 0 ? "complete-tool-result" : "previous-turn-only") ||
+        (i === 0 ? firstReadProof : "previous-turn-only") ||
       r.validationError
     )
       issues.push("validation-incomplete");
@@ -108,7 +108,16 @@ function combine(parts) {
     issues,
   };
 }
-export function summarizeLongChannel(arms) {
+export function summarizeLongChannel(
+  arms,
+  { readProofPolicy = "tool-result/v1" } = {},
+) {
+  if (!["tool-result/v1", "inline-input/v1"].includes(readProofPolicy))
+    throw new Error("Unknown read proof policy");
+  const firstReadProof =
+    readProofPolicy === "inline-input/v1"
+      ? "complete-inline-input"
+      : "complete-tool-result";
   const observedTotals = {};
   for (const [name, arm] of Object.entries(arms ?? {})) {
     const roundMetrics = sumMetrics((arm.rounds ?? []).map((r) => r.metrics));
@@ -145,8 +154,8 @@ export function summarizeLongChannel(arms) {
       SPEAKERS.map((s) => [
         s,
         pair(
-          prefix(arms?.native, s, n, false),
-          prefix(arms?.["final-output"], s, n, true),
+          prefix(arms?.native, s, n, false, firstReadProof),
+          prefix(arms?.["final-output"], s, n, true, firstReadProof),
         ),
       ]),
     );

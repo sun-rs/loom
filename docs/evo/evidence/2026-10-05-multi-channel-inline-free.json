@@ -1,0 +1,134 @@
+{
+  "kind": "independent installed CLI and SQLite audit with loopback fake model",
+  "syntheticAnswersAndUsage": true,
+  "paidCalls": 0,
+  "arms": {
+    "native": {
+      "speakers": {
+        "a": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "b": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "c": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      }
+    },
+    "final-output": {
+      "speakers": {
+        "a": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "b": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "c": {
+          "rounds": 12,
+          "continuousSession": true,
+          "nativeMemoryDisabled": true,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "turnContexts": 12,
+          "nativeToolEvents": 0,
+          "newInputSourceCopies": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      }
+    }
+  },
+  "durable": {
+    "runs": 36,
+    "activations": 36,
+    "completedWithExactConsumerAck": 36,
+    "finalOutputMarkers": 36,
+    "uniquePublishedReplies": 36,
+    "firstSourceSameMessageAndSeqForAllThree": true,
+    "sourceEventCount": 1
+  },
+  "limits": [
+    "Fake model answers and usage do not establish real-model task quality or token efficiency.",
+    "Zero observed tool events is not filesystem isolation.",
+    "Completed Activation and exact consumer cursor evidence establish delivery acknowledgement, not semantic understanding."
+  ],
+  "passed": true,
+  "negative": {
+    "deliberatelyMissingInput": true,
+    "observedHttp": 1,
+    "nativeRounds": 1,
+    "syntheticAnswerExact": true,
+    "fullInputValidationRejected": true,
+    "productNotStarted": true,
+    "knownSyntheticInputTokens": 100
+  },
+  "artifactHashes": {
+    "result.private.json": "14c7db7552f12b7145d0034def6c73529abeca34c2026c883e07ae50acea7466",
+    "probe.mjs": "98757cf9a55fa12bb083003b39b5e84fd5f1cabe55455262ff0ea3d8af38caa2",
+    "room.snapshot.db": "2c4ca249666b3b52c7bd401fd61b8ed547712135c60cc3359e24217449424840",
+    "missing-input.private.json": "f7476c8cfac6197ccd76080a4e2bcc04f7133b10bd750e8adccaec5c01624aff",
+    "missing-input-probe.mjs": "ebb85246a60506a3507d14ad9795debae2c9f1ed61cece50d5a8f218570ea57b",
+    "missing-input.log": "6de406a7a34c279c549e5ede8b6372c6765a73d6ef228f4c88179ac3f8911dac",
+    "independent-audit.py": "9c428bde5fa8e76ce2680f9754a00c590618d9808b5ab02ff75d5be2382fd242",
+    "missing-input-native-a.jsonl": "13cf2d8725d26a6aeaead14462fa9ad22bd087465bb547dd3cfad558285853fd"
+  },
+  "rolloutHashes": {
+    "native/a": "fb7f053072c7a75051056e15209be0edd504319c5c9beb9d6468ec4d04a6041e",
+    "native/b": "fcf41fb4fe3d4796eebb94b4377ed8f942be2839abbec8ee3e0d8dde8d8a7c2a",
+    "native/c": "b493e20362f764053f3f179d936af51043dfdcae9923c2974fdf165cb2401571",
+    "final-output/a": "9ba7803973294e6c32fffde37cb40902b8b5195dfff483c1efaab6695826a7d0",
+    "final-output/b": "1e7437e16f41e25de4db4e52bbcd50f72bb5dcf7de3be587e782e701b69e4ead",
+    "final-output/c": "a220bbd7408558b47e72bd9fb15aaa1801ce80d02bd9addd7923d33e5a26d885"
+  },
+  "limitationsBeforeSuccessfulProbe": {
+    "positiveLoopbackStartupFailures": 2,
+    "negativeLoopbackStartupFailures": 2,
+    "reason": "Four CLI startup attempts reported local proxy 503 before obtaining a fixture response; preserved rollout diagnostics; no paid model calls."
+  },
+  "startupFailureRolloutHashes": {
+    "startup-failed-dmu8kemn.jsonl": "57f76384ea235fa2626c9c53b4623c06e1e0f8a02b05f1656460d8d34d8c0c33",
+    "startup-failed-42925vr3.jsonl": "e6c33339c4bc138194816151252649d49b22e4a426266d422da9b3b156998276",
+    "startup-failed-yuf_zwjq.jsonl": "b8f22d848a695e3a56232ccce6791ba60ef1cfa716be04d075bdf9202fd397c2",
+    "startup-failed-d3y7pxs4.jsonl": "14cefad8e1553b341ce6ad6de053ed8130b010953bcdcd8401df92f8d5dab316"
+  },
+  "independentChecks": {
+    "passed": 293,
+    "failed": 0,
+    "detailedReportSha256": "2a3b01c245986d0af48dbee4eb11dc2f84b5275749ef95c2b56ba1777d7715ed"
+  },
+  "baselineIdentity": "6701d39611ff38c41512a69cdb9988b75f1a9024ace38fd7246b1047b7199056"
+}
