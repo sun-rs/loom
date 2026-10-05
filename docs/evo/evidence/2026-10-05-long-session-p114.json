@@ -1,0 +1,4337 @@
+{
+  "schemaVersion": 1,
+  "sampleId": "P114",
+  "root": "<tmp>",
+  "startedAt": "2026-10-05T03:32:36.183Z",
+  "mode": "paid",
+  "config": {
+    "provider": "codex",
+    "catalogKind": "codex-cli/v1",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "bindingId": "local:codex-cli/v1:gpt-6-luna",
+    "order": ["native", "role", "role-warm"],
+    "instructionFile": "AGENTS.md",
+    "productUsage": "required"
+  },
+  "cliVersion": "codex-cli 0.160.0",
+  "order": ["native", "default", "final-output"],
+  "questions": [
+    "阶段1：网络保留契约\n新增读取 scripts/workbench-launch-receipt.mjs 全文。\n建立网络回执的输入/输出契约：分别说明 loopback、tailnet、LAN 的重建行为及环境清理；说明 PID 检查能证明与不能证明什么；列一项尚需调用者或依赖确认的边界。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段2：测试覆盖矩阵\n新增读取 scripts/workbench-launch-receipt.test.mjs 全文。\n把已有测试归为“保留正确配置”“拒绝损坏输入”“回执写入”三组，各给一项精确断言；指出两个未由这些测试证明的边界，并设计其中一个只读审查层面的回归测试规格（前置/输入/断言，不执行）。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段3：实际重启编排\n新增读取 scripts/restart-local-workbench.mjs 与 scripts/workbench-restart-guard.mjs 全文。\n按真实调用顺序给出从候选构建检查到 successor spawn 的简图；解释相较回执 helper 新增哪些 incumbent 身份检查、何时重新检查；判断超时能否强杀/启动 successor。区分调用处可见保证和未提供依赖实现。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段4：备份内容与排除规则\n新增读取 packages/daemon/src/state-backup.ts:1–257。\n制作四类条目的处理表：普通私有/可执行文件、SQLite与WAL、socket、运行期turn凭据目录；说明如何拒绝路径/目标风险。给出备份一致性的准确边界，不把“校验通过”扩大为全状态原子快照。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段5：验证证据与损坏注入\n新增读取 packages/daemon/test/workbench-restart-guard.test.ts 全文。\n用实现和测试区分“数据库自身可读/完整”“数据库字节与receipt相同”“数据库集合相同”“普通文件相同”四种证据。针对合法SQL改写、额外数据库、文件改写各判定会否拒绝；指出一项这里没有覆盖的运维整合行为。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段6：哪些工作允许重启\n新增读取 packages/daemon/src/state-backup.ts:258–309。\n判定五种条件（其他表均静止）：无lease的quarantined、带lease的quarantined、普通queued、同room且operation=stopped的无lease queued、同room operation=resumed的queued。分别给 restartable/idle 结果。说明该检查会否完成/丢弃这些工作，并连接到重启脚本。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段7：迁移前保护\n新增读取 packages/daemon/src/state-backup.ts:310–491。\n整理 no pending、unsupported schema、同版本unexpected drift、pending migration 四条分支；比较 preflightKernelUpgrade 与 protectKernelSchemaMigration 的写入目标。说明备份失败时哪一步不得发生、哪种失败后不能宣称数据已自动回滚。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段8：显式恢复条件\n新增读取 packages/daemon/src/state-backup.ts:492–601。\n按顺序列出恢复前的确认、身份/路径、备份、运行/静止、业务写入和内容检查；解释 staging/两次rename 的失败补救。说明为何“roomSeq未增加”不足以允许恢复，并指出可见代码对并发排除的证明边界。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段9：跨层契约对齐\n无新读取。\n把阶段4的 fileInventory 完整返回对象与阶段3 recheck 实参逐字段对照。对于存在被省略运行期凭据目录、其他一切不变的合法state，推导重启会在哪里停住；如确有问题，给出保留安全检查的最小修改建议和反例，不实施。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段10：竞态与证据上限\n无新读取。\n对三种事件给“必拒绝/条件拒绝/代码不足以证明”及原因：普通文件在备份过程中改变并保持；Room事件在baseline与recheck之间追加并保持；最后一次inspect返回后、SIGTERM前新工作到达。另说明多数据库依次备份是否获得同一事务时点。只讨论可见程序，不发明新调度器。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段11：最小可执行回归计划（只写规格）\n无新读取。\n为阶段9缺口写两个精确测试（稳定目录允许到达stop；目录集合变化仍阻止stop）；再给一个区别“备份内部有效”与“备份不可替代实时状态”的测试。每项含最小fixture、观察点、现代码红点/已绿或未验证状态。不得靠运行真实服务，或把预期fail的功能当既有实现。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。",
+    "阶段12：交接决定\n无新读取。\n交付给维护者一份最终审查备忘录：当前哪些用途有代码/测试支持，哪一项具体缺口建议先修，哪些验证仍缺；给最小修改范围及验收顺序。引用此前证据而不复制全报告；只有真实先前错误才纠正，明确是静态审查而非执行验收。\n沿用统一边界；本轮答复400–600个汉字，以“审查结论：”开头。"
+  ],
+  "instructions": "这是一项连续的只读工程审查：同一原生 session 完成12阶段，不替换会话。只使用固定快照列出的文件及已开放的行段；已读内容尽量从上下文复用，若原生compaction等导致必要重读，应标明原因并如实计费，不能用未开放源码补答案。不得读取其他源码、真实服务状态、历史审计或私人资料；不得运行/导入脚本、执行测试、写文件、操作服务、使用记忆或Task。允许只读shell读取指定源文件；未提供的依赖实现标为未验证。每轮仅一次最终答复，以“审查结论：”开头，正文400–600个汉字（统计Unicode Han字符，JSON传输外壳不计），引用文件和行号，区分实现、已有测试、建议、未知。长度合规作为独立指令指标单列，交付完成不等于技术质量通过。不要重复此前全文；仅有真实先前错误才准确纠正，不编造自我撤回。所有阶段题面固定，不以模型表现改题。",
+  "limits": {
+    "perArmInput": 1200000,
+    "perArmMs": 1200000,
+    "scope": "admission-only; one in-flight stage can exceed observed cap"
+  },
+  "baseline": {
+    "cliVersion": "codex-cli 0.160.0",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "order": ["native", "default", "final-output"],
+    "limits": {
+      "perArmInput": 1200000,
+      "perArmMs": 1200000,
+      "scope": "admission-only; one in-flight stage can exceed observed cap"
+    },
+    "nativeInvocationPolicy": {
+      "args": [
+        "-c",
+        "notify=[]",
+        "-c",
+        "features.memories=false",
+        "-c",
+        "memories.generate_memories=false",
+        "-c",
+        "memories.use_memories=false",
+        "-c",
+        "features.multi_agent=false",
+        "-c",
+        "features.goals=false",
+        "-c",
+        "features.sleep_tool=false",
+        "-c",
+        "features.in_app_local_automation=false",
+        "-c",
+        "features.plugins=false",
+        "-c",
+        "features.apps=false",
+        "-c",
+        "features.hooks=false",
+        "-c",
+        "skills.include_instructions=false",
+        "-c",
+        "web_search=\"disabled\""
+      ],
+      "environment": {}
+    },
+    "memoryPolicy": {
+      "provider": "codex",
+      "supported": true,
+      "status": "supported",
+      "scope": "provider-native-auto-memory",
+      "mechanism": "cli-config"
+    },
+    "nativeInvocation": {
+      "initial": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-m",
+        "gpt-6-luna",
+        "-c",
+        "model_reasoning_effort=\"low\"",
+        "<question>"
+      ],
+      "resume": [
+        "exec",
+        "--json",
+        "--skip-git-repo-check",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-m",
+        "gpt-6-luna",
+        "-c",
+        "model_reasoning_effort=\"low\"",
+        "resume",
+        "<session>",
+        "<question>"
+      ]
+    },
+    "arms": {
+      "native": {
+        "LOOM_CODEX_FINAL_OUTPUT_TRIAL": "0",
+        "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL": "0",
+        "RAH_EFFICIENCY_WARM_RESTART": "0"
+      },
+      "default": {
+        "LOOM_CODEX_FINAL_OUTPUT_TRIAL": "0",
+        "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL": "0",
+        "RAH_EFFICIENCY_WARM_RESTART": "0"
+      },
+      "final-output": {
+        "LOOM_CODEX_FINAL_OUTPUT_TRIAL": "1",
+        "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL": "0",
+        "RAH_EFFICIENCY_WARM_RESTART": "0"
+      }
+    },
+    "warmRestart": false,
+    "forcedCompaction": false,
+    "compactionPolicy": "provider-native automatic; no forced compaction",
+    "stageCount": 12,
+    "workloadId": "restart-audit-12/v1",
+    "sourceRef": "7afe141",
+    "sourceHashes": {
+      "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+      "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+      "scripts/restart-local-workbench.mjs": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f",
+      "scripts/workbench-restart-guard.mjs": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb",
+      "packages/daemon/src/state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+      "packages/daemon/test/workbench-restart-guard.test.ts": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab"
+    },
+    "instructionsSha256": "06b5b5e5acbcf6cc7a808517eb45a1175f0429e9d4b74bcaeea927ca3f2dcad7",
+    "questionHashes": [
+      "da3a2d53888dcbed014815421dfd0d254f32c00782bdbd3b7228dc3200e8b151",
+      "6159ee6e25d039d323130d2aa0a89d577f6809ff9a863d65dfa6774a8ab53669",
+      "0f0045a76a7acd65dff82a516369e88f94ce108bad0e5639f2aa8fa1a31de0b5",
+      "e041bb4217bff21747a063059b3eb47551b5a0a42c2786e8ec5d37cb2fcfe73a",
+      "f7a4a1ec80d6798ffc69be678e5f00dfe3f1b36998709fa0281edc0d84bed275",
+      "9e14c6bf8c8111999b112cddbb41a46b0124675c45ef15675e5b803230ae47ec",
+      "d491b6ae6e19f3864172474f21cc6409b57b1ed25a62452600b4698440490efc",
+      "5eb9b66f3a2a938f531039cd2a713338bd0fd1ccd3fb9937cad0b822b36545d1",
+      "9f191bc1af57fa3dfa27563b4f44f0af34a3aea873b4abd2bb83fa179c3644ea",
+      "a91b922df2689558fdd5e7de6e7da5a4298b2043aeadfa0f817dd26bc4116db8",
+      "a9683ea4d955f79a7871a4b72fd639db4ea8aecdb0f91a0479c54046c0c256a7",
+      "5d435d17eafe53463a7522713f9f3fb247a45d991d462d6537eb7baf9f9545b6"
+    ],
+    "promptSetHash": "2baafe268994b8a00bfdcae984382974fb073235cbd84b1f83dfa4be84e702a7",
+    "identitySha256": "ed10899c149ac9f358837ce46e6b2457a7685c93dd48b26a3091a1f604be6fdc"
+  },
+  "codeCommit": "6b8a7c3fe3f7a607dcbc29dc6eba44bd302d36f4",
+  "sourceRef": "7afe141be65b3d57a7b332a7e6eb4a81fa1034e7",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "status": "needs-quality-review",
+  "qualityReview": "required",
+  "arms": {
+    "native": {
+      "kind": "native",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-05T03:32:38.967Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 15537,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:33:01.852Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：实现方面，[scripts/workbench-launch-receipt.mjs](<tmp>/native/workspace/scripts/workbench-launch-receipt.mjs:101) 以 `workbench-launch.json` 为回执文件；缺文件返回 `undefined`，其他读取错误继续抛出。写入时先校验网络模式和正整数 PID，再以独占方式写入权限为 `0600` 的临时文件并改名落盘（111–125行）。重启仅接受 schemaVersion 1 且回执 PID 等于调用者提供的 incumbent PID；旧格式须显式采用网络配置（87–99行）。\n\nloopback 重建为 `RAH_WEB_PORT`，并清理全部已知网络变量（15–22、49–53、97–99行）。tailnet 重建端口、绑定主机及回执中记录的可信 LAN 附加地址；缺省附加地址为空，并会校验主机（54–85行）。LAN 重建 HTTPS origin、绑定主机及可选证书和私钥绝对路径，不写入端口变量（29–47行）。三种模式重启前都会移除七个网络变量，避免继承旧值；其他环境变量保留。\n\nPID 相等只证明回执中的数值与调用者传入值一致，不能证明该 PID 当前存活、对应进程身份真实，或回执未被替换。边界待确认：调用者如何取得并验证 incumbent PID，以及 LAN 端口由哪个配置或依赖决定；脚本只显式校验 origin 与路径，相关依赖实现未开放，无法验证。脚本明示重启保留既有模式及 Tailnet/LAN 地址集合，不重新扫描接口（10–14行）。\n\n已有测试：本轮未开放或读取测试，故行为未由测试验证。建议：确认 PID 校验与 LAN 端口来源的调用契约。未知：被导入的模式校验函数内部实现。长度合规：正文约460个汉字，符合400–600字要求。",
+          "stderr": "Reading additional input from stdin...\n",
+          "replySeconds": 18.182,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 19816,
+            "cached": 8960,
+            "uncached": 10856,
+            "output": 644,
+            "reasoning": 0,
+            "firstInput": 9103,
+            "peakInput": 10713,
+            "replySeconds": 18.182,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:32:47.196Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-10-05T03:33:01.919Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 16356,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:33:22.435Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：按测试目的归组，**保留正确配置**：第108–132行断言重启环境中的 Tailnet 主机与可信 LAN 地址分别为 `100.101.107.87`、`192.168.1.86`，并校验重建地址集合精确包含三个地址。**拒绝损坏输入**：第151–179行逐项输入含公网、非法地址、全地址、重复地址及非数组的可信 LAN 列表，并断言重启抛出含 `trusted LAN` 的错误。**回执写入**：第78–103行断言写入文件权限为 `0600`，再次写入后读回 PID 为43、模式为 loopback，且内容不含 `TOKEN`。\n\n这些测试不证明：PID 是否对应当前存活且身份正确的进程；LAN 模式的 HTTPS origin、证书与私钥路径校验及重建覆盖情况。前者可作为只读审查层面的回归规格：**前置**，观察 `restartNetworkEnvironment` 输入和结果，不创建文件、不启动服务；**输入**，分别令回执 PID 与 incumbent PID 相同、不同，再给相同 PID 但无进程存活证据的情形；**断言**，只核对函数是否按数值相等接受或拒绝，并记录它无法区分进程存活与身份，不能将此规格视作进程验证测试。实现依赖的进程查询未开放，无法扩展此结论。\n\n建议：补充 LAN 回执往返与非法 origin、相对证书路径的测试。未知：导入的 `workbenchLaunchMode` 对真实服务绑定的效果；本轮仅凭测试断言陈述。长度合规：正文约455个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 16.194,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 25556,
+            "cached": 20992,
+            "uncached": 4564,
+            "output": 559,
+            "reasoning": 0,
+            "firstInput": 11332,
+            "peakInput": 14224,
+            "replySeconds": 16.194,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:33:09.740Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-10-05T03:33:22.489Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 17081,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:33:47.293Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：调用顺序可概括为：**候选静态资源快照并核对 build ID → 检查 incumbent → 备份状态 → 验证备份及内核升级预检 → 重查文件清单与事件基线 → 写外置备份回执 → 再查 incumbent 后发 SIGTERM 等待 → 创建日志并 spawn successor**（[restart-local-workbench.mjs](<tmp>/native/workspace/scripts/restart-local-workbench.mjs:126)，[workbench-restart-guard.mjs](<tmp>/native/workspace/scripts/workbench-restart-guard.mjs:19)）。\n\n相比回执 helper 的 schema 与数值 PID 相等检查，编排层先用 `ps` 检查命令形态并保存完整启动时间及命令行；`inspect()` 再核验身份未变、cwd 属于当前仓库、进程持有指定数据库与端口，并检查数据库可重启性及事件基线（62–102行）。备份后重查清单与事件基线；停机前再次比较身份与基线（152–176行）。这些是调用处可见检查，不能证明 PID 未被系统复用后又满足同样观测，或数据库依赖检查的内部语义。\n\n等待上限为30秒；超时抛错且明确不强杀、不启动 successor（174–188行）。successor 只在 `guardedStop` 全部步骤成功返回后 spawn（198行）。已有测试：本轮未读编排测试，不能据此声称有测试覆盖。依赖边界：仓库身份、静态快照、SQLite 备份和内核预检、日志打开及 launcher drain 的实现未提供，行为未验证。建议：后续审查验证这些依赖契约及 spawn 失败时的恢复行为。长度合规：正文约445个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 20.352,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 32415,
+            "cached": 28160,
+            "uncached": 4255,
+            "output": 672,
+            "reasoning": 0,
+            "firstInput": 14763,
+            "peakInput": 17652,
+            "replySeconds": 20.352,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:33:32.725Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 4,
+          "startedAt": "2026-10-05T03:33:47.332Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 17956,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:34:12.274Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：四类条目处理如下：普通文件先要求为常规文件，再复制且目标不可覆盖；目标权限设为 `0600`，只保留源执行位 `0100`，随后同步（[state-backup.ts](<tmp>/native/workspace/packages/daemon/src/state-backup.ts:163)）。SQLite `.db` 用只读连接执行 SQLite backup 到目标，设权限、验证后记录哈希；源端 `-wal`、`-shm`、`-journal` 不复制，目标使用独立验证（175–188、208–224行）。Socket 记录在省略清单中，不备份（104–105行）。匹配 `warm-runtimes/instrt_<UUID>/turns` 的运行期凭据目录会记录并跳过；恢复校验时禁止保留此类目录（74–80、95–101行）。\n\n路径风险方面，备份目标必须在 state 外；state 根及递归项均拒绝符号链接，拒绝非目录、非普通文件及非 socket 特殊项；目标目录独占创建，文件独占复制，避免复用或覆盖现有备份（142–156、163–193行）。但本段未显示对所有路径组件竞态或目标父目录符号链接的独立防护，不能推断已覆盖。\n\n一致性边界：备份前后比较源文件哈希及省略项，数据库另用 backup API 生成副本，并校验数据库集合、完整性检查、外键检查及哈希；这能发现部分备份期间变更和目标损坏，不构成所有文件同一时刻的原子快照。重启编排的事件基线复核属于另行检查，不能扩大为全状态原子性。已有测试：本轮未读取备份测试。建议：审查并覆盖目标父路径与并发改动边界。未知：SQLite backup API 与哈希依赖的底层实现细节。长度合规：正文约465个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 20.585,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 39458,
+            "cached": 34304,
+            "uncached": 5154,
+            "output": 671,
+            "reasoning": 0,
+            "firstInput": 18280,
+            "peakInput": 21178,
+            "replySeconds": 20.585,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:33:57.517Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 5,
+          "startedAt": "2026-10-05T03:34:12.341Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 18841,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:36:30.570Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：四种证据各自回答不同问题。数据库自身可读/完整：备份代码以 SQLite 打开副本，要求 `quick_check` 返回 `ok`、`foreign_key_check` 为空（实现第208–224行）；测试还验证 WAL 中已提交数据能读回（[workbench-restart-guard.test.ts](<tmp>/native/workspace/packages/daemon/test/workbench-restart-guard.test.ts:155)）。数据库字节与 receipt 相同：receipt 保存副本 SHA-256，验证时重算比较（实现第242–249行），合法 SQL 更新虽可保持数据库可读，仍因摘要不同被拒（测试第211–228行）。数据库集合相同：验证枚举 `.db` 名称与 receipt 列表一致；额外 `extra.db` 被拒（实现第231–240行；测试第230–238行）。普通文件相同：清单记录文件哈希，验证与 receipt 对照；改写 `memory.md` 被拒（实现第251–255行；测试第194–202行）。\n\n因此，合法 SQL 改写会拒绝；新增数据库会以集合不匹配拒绝；普通文件改写会以摘要不匹配拒绝。它们分别是内容完整性或集合一致性检查，不等同于证明来源可信或整个 state 原子一致。已有测试证明这些注入会触发拒绝。运维整合未覆盖的一项是：重启命令在 incumbent 停止、备份验证成功后 spawn successor，并确认服务实际就绪；本文件只测试备份与 guard 阶段，没有证明整条命令的停机、启动及恢复联动。建议补充可控进程的端到端编排验证；未知是部署环境中的启动就绪契约。长度合规：正文约450个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 135.629,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 47080,
+            "cached": 21248,
+            "uncached": 25832,
+            "output": 617,
+            "reasoning": 0,
+            "firstInput": 21810,
+            "peakInput": 25270,
+            "replySeconds": 135.629,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:35:00.078Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 6,
+          "startedAt": "2026-10-05T03:36:30.649Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 25169,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:36:57.198Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：在题设“其他表均静止”下，五种条件的结果为：\n\n| 条件 | restartable | idle |\n|---|---|---|\n| 无 lease 的 quarantined | 通过 | 拒绝 |\n| 带 lease 的 quarantined | 拒绝 | 拒绝 |\n| 普通 queued | 拒绝 | 拒绝 |\n| 同 room、operation 为 stopped 的无 lease queued | 通过 | 拒绝 |\n| 同 room、operation 为 resumed 的 queued | 拒绝 | 拒绝 |\n\n`assertWorkbenchIdle` 将 queued、leased、quarantined 一律视为活跃工作（[state-backup.ts](<tmp>/native/workspace/packages/daemon/src/state-backup.ts:259)）。`assertWorkbenchRestartable` 允许保留惰性工作，但额外拒绝仍带任一 lease 字段的 quarantined 项（263–276行）；其谓词拒绝所有 leased 项，以及 queued 项，唯有无 lease 且同 room 的 hold 与 operation 匹配、状态为 stopped 才可保留（278–306行）。因此 resumed 不满足豁免条件。\n\n这项检查只判断是否可安全进入重启流程，不会完成、重试、恢复或丢弃工作；注释明确说明重启保留惰性工作（263行）。重启脚本的 `inspect()` 调用 `assertWorkbenchRestartable(db)`，随后才备份并进入停机编排（阶段3已读脚本第91–94行）；拒绝会阻断流程。已有测试：本轮读取的实现片段未新增测试；阶段5已读测试覆盖 quarantined 保留、带 lease 拒绝、stopped 配对 queued 保留以及 resumed 拒绝（测试第23–92行）。未知：数据库模式及操作并发写入约束未在本轮开放内容中验证。建议：维持重启守卫与恢复守卫区分，避免将“可重启”误解为“空闲”。长度合规：正文约465个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 22.168,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 52520,
+            "cached": 49664,
+            "uncached": 2856,
+            "output": 670,
+            "reasoning": 0,
+            "firstInput": 25862,
+            "peakInput": 26658,
+            "replySeconds": 22.168,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:36:41.780Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 7,
+          "startedAt": "2026-10-05T03:36:57.275Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 26096,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:37:22.039Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：四条分支如下（[state-backup.ts](<tmp>/native/workspace/packages/daemon/src/state-backup.ts:428)）：\n\n| 分支 | 行为 |\n|---|---|\n| 无 pending | 返回 `migrated:false`，不创建快照，也不初始化 Kernel（461–463行）。 |\n| unsupported schema | 直接拒绝打开，提示安装匹配或更新版本；不进入迁移（433–438行）。 |\n| 同版本 unexpected drift | 直接拒绝修改数据库，要求显式修复迁移（439–449行）。 |\n| 有 pending migration | 先记录事件写入证据，再建快照和回执，最后初始化 Kernel 迁移（352–384、467–485行）。已接受的 legacy drift 仅输出诊断；不作为迁移动作（450–459行）。 |\n\n`preflightKernelUpgrade` 接收备份中的数据库路径，复制到临时目录后，在该副本上运行候选 `RoomKernel.initialize()`，检查 pending changes 归零及数据库有效，完成后删除临时目录（394–420行）。它写入临时预检副本，不触碰正式数据库。`protectKernelSchemaMigration` 的快照写到 snapshotRoot，成功后才对正式 `state/room.db` 初始化 Kernel；迁移目标是正式数据库（464–485行）。\n\n备份或快照任一步失败，调用会抛错并中止，正式数据库迁移不得发生（424–427、473–477行）。但正式数据库开始执行 `initialize()` 后若迁移中途失败，此段没有自动恢复或回滚逻辑，不能宣称数据已自动回滚；快照存在也不等于已自动还原。已有测试：本轮未新增读取迁移保护测试，故分支行为仅据实现判断。建议：验证迁移执行失败后的恢复流程。未知：`RoomKernel` 的具体迁移事务语义及 schema inspection 实现未在开放行段中提供。长度合规：正文约450个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 20.479,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 56668,
+            "cached": 52736,
+            "uncached": 3932,
+            "output": 671,
+            "reasoning": 0,
+            "firstInput": 27273,
+            "peakInput": 29395,
+            "replySeconds": 20.479,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:37:06.756Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 8,
+          "startedAt": "2026-10-05T03:37:22.131Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 26982,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:37:49.594Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：恢复前按顺序要求：显式确认值为 `restore-from-snapshot`；读取回执并核对版本、规范化 state 路径归属；验证快照备份；若提供 PID，要求进程检查不存活；只读打开当前数据库，要求 `assertWorkbenchIdle` 通过且所有 host 离线；比较当前业务写入证据与快照；再检查文件哈希、数据库集合及每个数据库的内容摘要（[state-backup.ts](<tmp>/native/workspace/packages/daemon/src/state-backup.ts:492)）。\n\n`roomSeq` 未增加不足以允许恢复，因为新事件可能落在已有 room 序号之外的其他业务状态；实现同时比较全局 `eventCount` 与各 room 最大序号，并要求文件及数据库内容也未变（311–329、543–565行）。序号相同不能替代这些检查。\n\n替换前先建立 staging、复制快照并验证，再次检查当前 state 未变；随后两次 rename：先把当前树移至 superseded，再把 staging 移入 state。第二次 rename 失败时，代码尝试将 superseded 移回原路径后重新抛错（567–584行）。staging 复制或验证失败时尚未移动原树；但恢复旧树的 rename 若也失败，代码没有进一步补救，且不能声称恢复成功。\n\n可见代码提供多次比较和短暂只读检查，但未显示跨进程锁、写入冻结或覆盖“最后检查至 rename”间隙的并发排除机制；运行 PID 检查还是可选参数。因此它能证明有序复核，不足以证明并发写入绝不发生。已有测试：本轮未读取恢复测试。建议：确认调用者如何保证恢复期间停写。未知：外部服务是否实施写入隔离。长度合规：正文约450个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 23.028,
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "input": 61433,
+            "cached": 57856,
+            "uncached": 3577,
+            "output": 641,
+            "reasoning": 0,
+            "firstInput": 30019,
+            "peakInput": 31414,
+            "replySeconds": 23.028,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:37:31.343Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ]
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 9,
+          "startedAt": "2026-10-05T03:37:49.718Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 28019,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:38:09.303Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：阶段4中 `fileInventory(state)` 的完整返回对象包含 `files`、`omittedSockets`，以及仅在存在匹配目录时才出现的 `omittedRuntimeCredentials`；无此类目录时，第三字段被省略（阶段4读取的 `state-backup.ts:24–28、82–117`）。阶段3 `recheck()` 将它与仅含 `files: receipt.files` 和 `omittedSockets: receipt.omittedSockets` 的对象深比较（`restart-local-workbench.mjs:152–161`），没有传入允许运行期凭据目录的参数。\n\n因此，当 state 中存在被识别并合法省略的运行期凭据目录、其他内容不变时，备份 receipt 的 `omittedRuntimeCredentials` 会包含目录名；复核时 `fileInventory(state)` 也返回该字段，但比较预期对象没有它。深比较失败，重启在 `recheck` 阶段中止，尚未写外置重启回执或发送 SIGTERM（阶段3：152–177行）。这是跨层对象契约不一致：目录虽按备份规则合法跳过，却无法通过重启复核。\n\n最小修改建议：让 `recheck()` 的预期对象从 `receipt` 取完整清单字段，或显式加入 `omittedRuntimeCredentials`，并保留 `files`、`omittedSockets` 的相等检查；不得过滤或忽略此字段。反例：若只删掉该字段检查，凭据目录在备份后新增或变更也可能被当作无关变化放过。应比较目录名清单，让新增、移除或识别结果变化仍阻断重启。已有测试：本轮无新读取；此前测试覆盖凭据以外的地址、备份及复核情形，未证明该整合路径。建议：修正后增加含凭据目录的 recheck 回归用例。未知：其他调用方是否另有完整对象比较。长度合规：正文约445个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 16.068,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 32007,
+            "cached": 30464,
+            "uncached": 1543,
+            "output": 463,
+            "reasoning": 0,
+            "firstInput": 32007,
+            "peakInput": 32007,
+            "replySeconds": 16.068,
+            "toolCalls": []
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 10,
+          "startedAt": "2026-10-05T03:38:09.403Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 28710,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:38:28.962Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：普通文件在备份期间改变并保持：**条件拒绝**。`backupState` 记录备份前 `fileInventory`，复制后再次核对；若变化反映在哈希或省略项中，比较失败（阶段4 `state-backup.ts:157–161、197–202`）。但若文件在遍历与复制之间变化、随后恢复原状，前后清单可能相同，代码不足以证明必拒绝。\n\nRoom 事件在 baseline 与 recheck 之间追加并保持：**必拒绝**（按给定事件保持不撤回）。重启编排在检查时重新执行 `inspect()`，其返回 room 事件计数与逐 room 最大序号；深比较基线，差异会阻断并提示稍后重试（阶段3 `restart-local-workbench.mjs:91–100、152–161`）。\n\n最后一次 `inspect()` 返回后、SIGTERM 前新工作到达：**代码不足以证明必拒绝**。停机回调先比较 `inspect()` 与 baseline，随后立即发 SIGTERM（阶段3 `restart-local-workbench.mjs:174–176`）；这段没有显示检查与信号之间的写入锁或原子门禁，因此新工作可能落在检查之后。前置 `assertWorkbenchRestartable` 也只是检查时点的数据库状态，不证明之后无新工作。\n\n多数据库按目录排序逐个执行 SQLite backup，代码没有跨库事务或共同快照时点（阶段4 `state-backup.ts:120–139、163–188`），故不能认为多个数据库来自同一事务时刻。已有测试：阶段5覆盖备份损坏拒绝等情形，但未证明上述竞态均必拒绝。建议：把这些视为当前证据边界。未知：未开放依赖是否另行提供并发写入隔离。长度合规：正文约430个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 16.328,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 32607,
+            "cached": 31488,
+            "uncached": 1119,
+            "output": 437,
+            "reasoning": 0,
+            "firstInput": 32607,
+            "peakInput": 32607,
+            "replySeconds": 16.328,
+            "toolCalls": []
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 11,
+          "startedAt": "2026-10-05T03:38:29.062Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 29407,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:38:48.748Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：以下均为回归规格，不执行，也不把预期结果描述成现有功能。\n\n1. **稳定凭据目录允许到达 stop。**最小 fixture：临时 state，含正常 `room.db`、一份普通文件及符合 `warm-runtimes/instrt_<UUID>/turns` 的目录；模拟重启各阶段成功且不改 state。观察点：备份后 `recheck` 成功并调用 `stop`。现代码红点：receipt 清单含 `omittedRuntimeCredentials`，但阶段3 recheck 期望对象未包含此字段，深比较会提前拒绝（阶段9所述跨层缺口）。\n\n2. **凭据目录集合变化仍阻止 stop。**最小 fixture 同上；备份后、recheck 前新增或移除一个匹配目录。观察点：recheck 失败，`stop` 未调用。现代码状态：新增时当前比较也会因对象字段不一致而拒绝，但稳定目录同样被拒；移除时当前清单字段缺失也会拒绝。应在修复完整对象比较后保持该拒绝，不能靠忽略字段使测试变绿。\n\n3. **内部有效但不可替代实时状态。**最小 fixture：从含 `room.db` 和普通文件的 state 生成并验证备份，随后仅改写实时普通文件，保持备份内容及数据库健康。观察点：备份自身验证通过，但重启 recheck 因实时文件 inventory 不同而失败，`stop` 未调用。现代码状态：文件摘要验证和独立 recheck 均有实现依据（阶段4 `state-backup.ts:197–205、251–255`；阶段3 recheck）；此组合规格未在已读测试中验证。\n\n这些规格使用临时目录、模拟步骤与文件操作，不启动真实服务。已有测试：阶段5覆盖备份中文件改写导致 receipt 验证拒绝；没有证明备份有效即足以替代当前 state。建议按上述观察点分别断言停止步骤是否调用，避免只断言异常文本。长度合规：正文约460个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 16.481,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 33184,
+            "cached": 31488,
+            "uncached": 1696,
+            "output": 487,
+            "reasoning": 0,
+            "firstInput": 33184,
+            "peakInput": 33184,
+            "replySeconds": 16.481,
+            "toolCalls": []
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 12,
+          "startedAt": "2026-10-05T03:38:48.848Z",
+          "nativeMemoryPolicy": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "pid": 30084,
+          "exit": 0,
+          "finishedAt": "2026-10-05T03:39:10.011Z",
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "answer": "审查结论：本备忘录是基于阶段1–11已读文件与行段的静态审查，不是执行验收。代码与已有测试支持网络回执重建及已知网络变量清理（阶段1–2）；支持备份普通文件、SQLite、socket与特定运行期凭据目录的处理及校验（阶段4–5）；支持重启守卫对惰性工作和活动工作的区分（阶段6）；支持迁移前先检测、快照、验证再迁移，以及显式恢复的多项拒绝条件（阶段7–8）。测试覆盖部分备份损坏、receipt 摘要与集合变化、守卫顺序；不能据此宣称生产重启、迁移或恢复已验收。\n\n建议先修阶段9发现的具体契约缺口：`fileInventory()` 在存在运行期凭据目录时返回 `omittedRuntimeCredentials`，重启 `recheck()` 却只比较 `files` 与 `omittedSockets`，造成合法稳定 state 也在停机前被拒。最小范围是在 `restart-local-workbench.mjs` 的 recheck 预期对象中纳入该字段，并保留完整目录清单比较；不要忽略它。验收先加两项隔离回归：稳定目录可到达 `stop`；目录新增或移除仍阻止 `stop`。再验证阶段11第三项，区分备份内部有效与实时 state 可替代性。\n\n仍缺的验证包括真实调用链中候选构建、备份、停机与 successor 就绪联动；检查至 SIGTERM 间并发新工作的排除；多数据库共同事务时点；正式 schema migration 失败后的恢复行为，以及恢复期间写入隔离。建议依次完成字段修复、上述回归、编排故障注入规格，再审查依赖契约与运维验收。长度合规：正文约450个汉字，符合400–600字要求。",
+          "stderr": "",
+          "replySeconds": 17.875,
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "input": 33795,
+            "cached": 32512,
+            "uncached": 1283,
+            "output": 444,
+            "reasoning": 0,
+            "firstInput": 33795,
+            "peakInput": 33795,
+            "replySeconds": 17.875,
+            "toolCalls": []
+          },
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        }
+      ],
+      "processes": [],
+      "status": "complete",
+      "startedAt": "2026-10-05T03:32:38.952Z",
+      "identityVerified": true,
+      "stages": [
+        {
+          "stage": 1,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 22.885,
+          "usage": {
+            "input": 19816,
+            "cached": 8960,
+            "uncached": 10856,
+            "output": 644,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 2,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 20.516,
+          "usage": {
+            "input": 25556,
+            "cached": 20992,
+            "uncached": 4564,
+            "output": 559,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 3,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 24.804,
+          "usage": {
+            "input": 32415,
+            "cached": 28160,
+            "uncached": 4255,
+            "output": 672,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 4,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 24.942,
+          "usage": {
+            "input": 39458,
+            "cached": 34304,
+            "uncached": 5154,
+            "output": 671,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 5,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 138.229,
+          "usage": {
+            "input": 47080,
+            "cached": 21248,
+            "uncached": 25832,
+            "output": 617,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 6,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 26.549,
+          "usage": {
+            "input": 52520,
+            "cached": 49664,
+            "uncached": 2856,
+            "output": 670,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 7,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 24.764,
+          "usage": {
+            "input": 56668,
+            "cached": 52736,
+            "uncached": 3932,
+            "output": 671,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 8,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 27.463,
+          "usage": {
+            "input": 61433,
+            "cached": 57856,
+            "uncached": 3577,
+            "output": 641,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 9,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 19.585,
+          "usage": {
+            "input": 32007,
+            "cached": 30464,
+            "uncached": 1543,
+            "output": 463,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 10,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 19.559,
+          "usage": {
+            "input": 32607,
+            "cached": 31488,
+            "uncached": 1119,
+            "output": 437,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 11,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 19.686,
+          "usage": {
+            "input": 33184,
+            "cached": 31488,
+            "uncached": 1696,
+            "output": 487,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 12,
+          "sessionId": "01a10a1e-e3fd-7900-91be-e5db94133e04",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 21.163,
+          "usage": {
+            "input": 33795,
+            "cached": 32512,
+            "uncached": 1283,
+            "output": 444,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        }
+      ],
+      "finishedAt": "2026-10-05T03:39:10.183Z"
+    },
+    "default": {
+      "kind": "default",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-05T03:39:12.532Z",
+          "finishedAt": "2026-10-05T03:40:08.741Z",
+          "firstMessageSeconds": 56.076,
+          "replySeconds": 56.076,
+          "runs": [
+            {
+              "runAttemptId": "run_0837d80f-2454-4c5d-a340-6375c3eb9602",
+              "startedAt": "2026-10-05T03:39:12.800Z",
+              "finishedAt": "2026-10-05T03:40:08.648Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "cold",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.268,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 7,
+            "generationsTotal": 7,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 6,
+              "unresolved": 1
+            },
+            "input": 98717,
+            "cached": 77312,
+            "uncached": 21405,
+            "output": 2144,
+            "reasoning": 148,
+            "firstInput": 11799,
+            "peakInput": 16277,
+            "replySeconds": 56.076,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:39:20.328Z",
+                "name": "exec",
+                "kind": "worker-command"
+              },
+              {
+                "at": "2026-10-05T03:39:23.846Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:39:27.739Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:39:36.613Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              },
+              {
+                "at": "2026-10-05T03:39:48.186Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              },
+              {
+                "at": "2026-10-05T03:39:59.070Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              },
+              {
+                "at": "2026-10-05T03:40:08.580Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:40:08.608Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 7,
+                "inputTokens": 98717,
+                "cachedInputTokens": 77312,
+                "outputTokens": 2144,
+                "reasoningOutputTokens": 148
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 9,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：实现：该模块将回执定义为 schemaVersion=1、pid 与 mode；写入前校验网络模式和正整数 PID，以随机临时文件独占创建、权限 0600 后 rename 覆盖目标，finally 清理临时文件；读取缺文件返回 undefined，其他读取/JSON 解析错误上抛（scripts/workbench-launch-receipt.mjs:101-125）。重启须版本为1且回执 PID 等于 incumbentPid，然后先从继承环境删除七个网络键，再叠加回执模式生成值，其他环境项保留（:15-23,87-100）。loopback 仅重建 RAH_WEB_PORT；tailnet 重建端口、校验过的 RAH_TAILNET_HOST，并按需重建逗号连接的可信 LAN 主机；LAN 重建 HTTPS 公共 origin、bind host，以及存在时的绝对证书/私钥路径，不写 web port（:29-62）。PID 相等只能证明回执记录值与调用者提供值一致，不能证明进程存活、身份真实或该文件由其写入；调用者如何取得并核验 incumbentPid 未知。已有测试：本轮未读取测试文件，行为覆盖未验证。建议：调用方应明确旧版实例采用显式网络接管的流程，并核验 PID 来源；此模块本身拒绝无/不支持回执。未知：workbench-launch-mode.mjs 的主机校验语义及下游如何解释这些变量未开放，不能据此断言网络可达性、证书有效性或实际监听范围。长度合规：正文约510个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-10-05T03:40:08.801Z",
+          "finishedAt": "2026-10-05T03:40:32.817Z",
+          "firstMessageSeconds": 23.879,
+          "replySeconds": 23.879,
+          "runs": [
+            {
+              "runAttemptId": "run_18a4aa37-5413-4ebd-a679-6fa2a202cde6",
+              "startedAt": "2026-10-05T03:40:09.026Z",
+              "finishedAt": "2026-10-05T03:40:20.986Z",
+              "state": "exited",
+              "succeeded": true
+            },
+            {
+              "runAttemptId": "run_7ce63a67-25c1-4276-a2d6-0de700167838",
+              "startedAt": "2026-10-05T03:40:20.990Z",
+              "finishedAt": "2026-10-05T03:40:32.742Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 2,
+          "retried": true,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.225,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 3,
+            "generationsTotal": 3,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 1
+            },
+            "input": 56331,
+            "cached": 50432,
+            "uncached": 5899,
+            "output": 918,
+            "reasoning": 0,
+            "firstInput": 17139,
+            "peakInput": 19895,
+            "replySeconds": 23.879,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:40:12.338Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:40:32.672Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:40:32.680Z",
+            "retried": true,
+            "attempts": 2,
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 3,
+                "inputTokens": 56331,
+                "cachedInputTokens": 50432,
+                "outputTokens": 918,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 25,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：已有测试按三组归类。保留正确配置：Tailnet 回执重启后保留显式可信 LAN 地址；精确断言 env.RAH_TRUSTED_LAN_HOSTS === \"192.168.1.86\"（scripts/workbench-launch-receipt.test.mjs:59-83）。拒绝损坏输入：可信 LAN 列表含重复地址时拒绝；测试遍历损坏列表并断言抛出匹配 /trusted LAN/iu 的错误（:85-115）。回执写入：写入后文件权限为 0600，再写入新 PID 后读取到 receipt.pid === 43（:37-57）。这些测试未证明两条边界：其一，PID 匹配不能证明进程存活或回执确由该进程生成；其二，LAN HTTPS 回执的证书路径为绝对路径，不证明证书文件存在、有效，或下游确实使用它（实现仅在 workbench-launch-receipt.mjs:38-45 检查绝对路径）。建议针对第二条设计只读审查层面的回归规格，不执行：前置为隔离临时目录且启动模式解析依赖可用；输入为 LAN 回执，证书与私钥路径为绝对但指向不存在文件；断言分别明确写入或重启是否接受，并检查重建环境仍含对应路径。该规格锁定当前模块的路径校验边界，不能据此声称下游 TLS 可用。未读取依赖实现，证书语义仍未知。长度合规：正文约445个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-10-05T03:40:32.857Z",
+          "finishedAt": "2026-10-05T03:40:48.201Z",
+          "firstMessageSeconds": 15.262,
+          "replySeconds": 15.262,
+          "runs": [
+            {
+              "runAttemptId": "run_9af61a8f-c0c1-455c-9488-a091c68724fd",
+              "startedAt": "2026-10-05T03:40:32.964Z",
+              "finishedAt": "2026-10-05T03:40:48.175Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.107,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 1
+            },
+            "input": 43552,
+            "cached": 39424,
+            "uncached": 4128,
+            "output": 593,
+            "reasoning": 0,
+            "firstInput": 20744,
+            "peakInput": 22808,
+            "replySeconds": 15.262,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:40:37.855Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:40:48.103Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:40:48.119Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 43552,
+                "cachedInputTokens": 39424,
+                "outputTokens": 593,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 34,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：可见调用顺序如下：候选 Web 资产快照并核对 build ID → 首次 inspect → 备份状态 → 校验备份及内核升级预检 → recheck → stop → 旧进程退出后打开日志并 spawn successor（scripts/restart-local-workbench.mjs:91-178；guard 顺序见 scripts/workbench-restart-guard.mjs:14-28）。inspect 除回执 helper 的 schema、回执 PID 与传入 PID 一致外，还用 ps 保存启动时间和完整命令并要求是本地 launcher；再以 lsof 确认 cwd 属当前 repo、持有指定 room.db 且持有目标监听端口，并只读数据库校验可重启状态、采集 room_events 各 room 最大序号（restart-local-workbench.mjs:43-83；helper 为 workbench-launch-receipt.mjs:87-100）。recheck 在备份后再次核验文件清单、omitted sockets 与事件基线；stop 前又 inspect 并比较基线，然后发 SIGTERM，最多等30秒检查该 PID 消失（:127-159）。超时明确抛错，不发强杀信号，也不进入 spawn；仅退出成功才继续（:153-159,165-178）。这些是调用处可见保证；守卫只按序执行布尔步骤（workbench-restart-guard.mjs:14-28），在线备份、空闲/重启判定、预检与文件盘点的实际可靠性依赖未开放的 daemon 实现；repository identity、资产快照及日志 API 也未验证。已有测试：本轮未读对应测试，编排路径覆盖未知。长度合规：正文约475个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 4,
+          "startedAt": "2026-10-05T03:40:48.250Z",
+          "finishedAt": "2026-10-05T03:41:02.805Z",
+          "firstMessageSeconds": 14.463,
+          "replySeconds": 14.463,
+          "runs": [
+            {
+              "runAttemptId": "run_b5ac183d-e6bc-4e12-a026-0a4ce61062f0",
+              "startedAt": "2026-10-05T03:40:48.331Z",
+              "finishedAt": "2026-10-05T03:41:02.766Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.081,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 1
+            },
+            "input": 50223,
+            "cached": 45568,
+            "uncached": 4655,
+            "output": 647,
+            "reasoning": 0,
+            "firstInput": 23677,
+            "peakInput": 26546,
+            "replySeconds": 14.463,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:40:52.590Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:41:02.699Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:41:02.713Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 50223,
+                "cachedInputTokens": 45568,
+                "outputTokens": 647,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 43,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：四类处理如下。普通私有文件均按 SHA-256 纳入清单并复制，目标独占创建；目标文件权限设为 0600，并仅保留源文件的可执行位，逐文件 sync（packages/daemon/src/state-backup.ts:82-118,189-194）。`.db` 用 SQLite backup API 在线备份，目标 chmod 0600，执行 quick_check、foreign_key_check 并切换 DELETE journal mode 后计算摘要；源 WAL/SHM/journal 不复制，数据库路径单独登记（:120-139,175-188,208-225）。socket 记入 omittedSockets，不备份（:103-105,175-176）。精确匹配 `warm-runtimes/instrt_<UUID>/turns` 的运行期凭据目录整体排除，清单记 omittedRuntimeCredentials；校验目标时禁止该目录（:74-80,95-101,252-254）。风险拒绝包括：目标必须在 state 之外且不能复用（relative 检查、mkdir 独占）；state 根及遍历项拒绝符号链接，特殊非目录/普通文件/socket 项报错；不支持条目拒绝（:142-156,169-190）。一致性边界：backupState 前后比较源文件清单与摘要，SQLite 分别在线备份并校验目标，verifyStateBackup 比对数据库集合、哈希及普通文件摘要（:157-205,227-256）。这不构成全状态原子快照：多个数据库、普通文件与目录并无共同冻结时点；socket和凭据目录明确省略，调用方后续停机重查才提供额外约束，不能把单库备份校验等同全状态一致性。已有测试本轮未读取；目标路径竞态及 SQLite 在线备份的底层原子性依赖未验证。长度合规：正文约492个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 5,
+          "startedAt": "2026-10-05T03:41:02.858Z",
+          "finishedAt": "2026-10-05T03:41:18.350Z",
+          "firstMessageSeconds": 15.322,
+          "replySeconds": 15.322,
+          "runs": [
+            {
+              "runAttemptId": "run_92f37510-2cfe-4873-a2d4-0f7325025c24",
+              "startedAt": "2026-10-05T03:41:02.957Z",
+              "finishedAt": "2026-10-05T03:41:18.290Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.099,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 1
+            },
+            "input": 57558,
+            "cached": 52736,
+            "uncached": 4822,
+            "output": 659,
+            "reasoning": 75,
+            "firstInput": 27475,
+            "peakInput": 30083,
+            "replySeconds": 15.322,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:41:07.223Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:41:18.159Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:41:18.180Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 57558,
+                "cachedInputTokens": 52736,
+                "outputTokens": 659,
+                "reasoningOutputTokens": 75
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 52,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：四类证据不能互相替代。数据库自身可读/完整：备份目标逐库执行 SQLite quick_check、foreign_key_check，并设为 DELETE journal；损坏源库测试断言 backupState 拒绝“not SQLite”（实现 packages/daemon/src/state-backup.ts:208-225；测试 packages/daemon/test/workbench-restart-guard.test.ts 中 corrupt database 用例）。数据库字节与 receipt 相同：verifyStateBackup 对各目标数据库重算 SHA-256 与 databaseHashes 比较；测试先合法执行 UPDATE，再断言 digest mismatch，故有效 SQL 改写仍会拒绝（实现 :242-249；测试 valid SQLite rewrite 用例）。数据库集合相同：比较实际 .db 名称与 receipt.databases；测试新增 extra.db 后断言 database set mismatch（实现 :120-139,231-240；同一测试）。普通文件相同：fileInventory 对非数据库文件按内容哈希，验证时与 receipt.files 比；测试改写 memory.md 后断言 digest mismatch（实现 :82-118,251-255；corrupt database and post-backup file damage 用例）。另有 WAL 在线备份测试读回已提交记录并确认无旧 WAL（测试 online WAL backup 用例），但这些是各项证据，不是多文件、多个库的共同原子快照。运维整合未覆盖：测试没有实际运行 incumbent launcher、发 SIGTERM 并观察其 drain/退出，再确认 successor 仅在退出后启动；guard 测试仅用 mock 步骤验证顺序。实现包含该编排，但信号处理与 daemon 行为未由本测试证明。长度合规：正文约475个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 6,
+          "startedAt": "2026-10-05T03:41:18.416Z",
+          "finishedAt": "2026-10-05T03:41:34.551Z",
+          "firstMessageSeconds": 16.057,
+          "replySeconds": 16.057,
+          "runs": [
+            {
+              "runAttemptId": "run_f42b390f-eeac-4aac-93d3-507a3f58db79",
+              "startedAt": "2026-10-05T03:41:18.594Z",
+              "finishedAt": "2026-10-05T03:41:34.490Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.178,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 62821,
+            "cached": 59904,
+            "uncached": 2917,
+            "output": 734,
+            "reasoning": 126,
+            "firstInput": 31029,
+            "peakInput": 31792,
+            "replySeconds": 16.057,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:41:22.601Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:41:34.449Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:41:34.473Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 62821,
+                "cachedInputTokens": 59904,
+                "outputTokens": 734,
+                "reasoningOutputTokens": 126
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 61,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：在其他活动表均静止时，五种状态判定为：无 lease 的 quarantined：restartable 通过、idle 拒绝；带任一 lease 字段的 quarantined：两者都拒绝；普通 queued：两者都拒绝；同 room 且 operation=stopped、无 lease 的 queued：restartable 通过、idle 拒绝；operation=resumed 的无 lease queued：两者都拒绝。依据是 idle 对 queued、leased、quarantined 一律计为活动，而 restartable 允许静止的 quarantined，并只豁免无 lease 且有匹配 room hold/operation stopped 的 queued；随后专门拒绝仍带 lease 的 quarantined（packages/daemon/src/state-backup.ts:259-307）。因此此处是读库断言，不完成、恢复、重试或丢弃工作；注释也明确重启保留惰性工作（:263-265）。已有测试覆盖：准许无 lease quarantine 与 stopped hold 下 queued，拒绝 quarantine lease、普通 queued 及 resumed 操作，并断言记录未被改动（packages/daemon/test/workbench-restart-guard.test.ts:13-74）。连接编排：重启脚本 inspect 以只读数据库调用 assertWorkbenchRestartable，失败则阻断后续备份/停机；另采集事件序号以供备份后复查（scripts/restart-local-workbench.mjs:56-83,127-159）。建议不要将 restartable 当成 idle 或任务处置完成的证明；其他执行所有者表仍须通过对应谓词检查。未知：被保留 queued/quarantined 工作在 successor 启动后的调度语义不在本行段范围内。长度合规：正文约455个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 7,
+          "startedAt": "2026-10-05T03:41:34.626Z",
+          "finishedAt": "2026-10-05T03:41:51.741Z",
+          "firstMessageSeconds": 17.06,
+          "replySeconds": 17.06,
+          "runs": [
+            {
+              "runAttemptId": "run_2cb5e7d3-9660-4da4-90fd-2bc97db6d180",
+              "startedAt": "2026-10-05T03:41:34.705Z",
+              "finishedAt": "2026-10-05T03:41:51.726Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.079,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 1
+            },
+            "input": 67676,
+            "cached": 64000,
+            "uncached": 3676,
+            "output": 693,
+            "reasoning": 68,
+            "firstInput": 32789,
+            "peakInput": 34887,
+            "replySeconds": 17.06,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:41:39.001Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:41:51.665Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:41:51.686Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 67676,
+                "cachedInputTokens": 64000,
+                "outputTokens": 693,
+                "reasoningOutputTokens": 68
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 70,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：四条分支如下。无 pending：记录 schema 状态后返回 migrated=false，不复制状态、不初始化迁移；若有 legacy drift 只打印诊断，不据此修改数据（packages/daemon/src/state-backup.ts:450-462）。unsupported schema：直接拒绝打开，提示安装匹配或更新版本；不会尝试降级（:433-437）。数据库与内核同版本且含 unexpected_drift：拒绝变更，要求显式修复迁移；同版本本身不代表忽略异常漂移（:439-448）。有 pending migration：先采集事件进度证据、做独占备份并写快照 receipt，之后才创建正式 RoomKernel 并 initialize（:352-384,461-485）。preflightKernelUpgrade 与 protectKernelSchemaMigration 写入目标不同：前者把数据库在线备份到临时目录，在副本上初始化候选 Kernel、检查 pending 清空并校验，finally 删除临时目录；不触碰指定数据库（:394-420）。后者先备份原状态并记录证据，再迁移实际 state/room.db（:428-485）。因此快照/校验失败时正式迁移不得发生，函数以“数据库未迁移”错误中止（:473-478）。若正式 initialize 开始后自身失败，代码只在 finally 关闭 Kernel，没有捕获并自动恢复快照；不得宣称业务数据已回滚。快照留存可供人工恢复，不等于自动回滚。实现表明这点；本轮未读取相关测试，迁移故障恢复行为覆盖未知。建议运维分别报告候选预检、保护快照和正式迁移阶段结果，避免把候选副本成功误作真实迁移已完成。长度合规：正文约466个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 8,
+          "startedAt": "2026-10-05T03:41:51.820Z",
+          "finishedAt": "2026-10-05T03:42:09.255Z",
+          "firstMessageSeconds": 17.284,
+          "replySeconds": 17.284,
+          "runs": [
+            {
+              "runAttemptId": "run_b7abf9b9-a191-40fa-ba4d-0ccc3a4aa220",
+              "startedAt": "2026-10-05T03:41:52.099Z",
+              "finishedAt": "2026-10-05T03:42:09.151Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.279,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 1
+            },
+            "input": 73050,
+            "cached": 70144,
+            "uncached": 2906,
+            "output": 704,
+            "reasoning": 82,
+            "firstInput": 35840,
+            "peakInput": 37210,
+            "replySeconds": 17.284,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:41:57.306Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:42:09.083Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:42:09.104Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 73050,
+                "cachedInputTokens": 70144,
+                "outputTokens": 704,
+                "reasoningOutputTokens": 82
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 79,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：恢复顺序是：先要求 confirm 精确等于 restore-from-snapshot；读取并核对 receipt 版本及其 stateDirectory 与目标解析路径一致；验证快照内容；若传入 runningPid，则 kill(pid,0) 必须失败；只读检查当前库 idle 且 agent_hosts 全部 offline；比较 stateWriteEvidence；再比较普通文件摘要、数据库集合及各库 databaseContentDigest；复制快照到新 staging，验证 staging 并再次核验当前状态后才换目录（packages/daemon/src/state-backup.ts:492-577）。roomSeq 未增加仍不足以恢复：业务写入可能不改变事件总数或每 room 最大序号，例如其他数据库或普通文件变更；实现另查文件摘要、数据库名集合和数据库内容摘要（:543-565）。目录替换先将当前 state rename 为 superseded，再将 staging rename 为正式 state；第二次 rename 失败会尝试把 superseded rename 回原路径后重抛，当前树因此保留（:573-584）。代码未清理失败遗留的 staging；若第一次 rename 本身失败，操作发生在 try 外，也不会触发回滚逻辑（:568-582）。并发排除边界：有传入 PID 时仅做一次存活探测；各静止、写入和内容检查之后仍有间隔，第二次状态核验也不是锁，无法从可见代码证明检查到 rename 间无新进程或写入。runningPid 还是可选参数，故调用者必须确保停止服务并阻断写入；PID 检查也不能证明进程身份。建议恢复运维建立外部停机/排他窗口。测试本轮未读取；故障注入和并发恢复覆盖未知。长度合规：正文约480个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 9,
+          "startedAt": "2026-10-05T03:42:09.368Z",
+          "finishedAt": "2026-10-05T03:42:24.444Z",
+          "firstMessageSeconds": 14.987,
+          "replySeconds": 14.987,
+          "runs": [
+            {
+              "runAttemptId": "run_fbea94dc-5751-40b7-840e-f830a8b0d8d9",
+              "startedAt": "2026-10-05T03:42:09.472Z",
+              "finishedAt": "2026-10-05T03:42:24.439Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.104,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 0,
+              "unresolved": 1
+            },
+            "input": 38176,
+            "cached": 36608,
+            "uncached": 1568,
+            "output": 659,
+            "reasoning": 207,
+            "firstInput": 38176,
+            "peakInput": 38176,
+            "replySeconds": 14.987,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:42:24.351Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:42:24.355Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 38176,
+                "cachedInputTokens": 36608,
+                "outputTokens": 659,
+                "reasoningOutputTokens": 207
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 88,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：阶段4的 fileInventory 返回 `{ files, omittedSockets, ...可选 omittedRuntimeCredentials }`；运行期凭据目录匹配时，字段包含其相对路径数组（packages/daemon/src/state-backup.ts:24-28,74-80,82-117）。阶段3 recheck 左值是完整 `await fileInventory(state)`，右值却只构造 `{ files: receipt.files, omittedSockets: receipt.omittedSockets }`，没有对照第三字段（scripts/restart-local-workbench.mjs:127-134）。因此合法 state 若含一个可识别且未变化的凭据目录，backupState 会在 receipt 中记下该目录并跳过复制；重启随后在 recheck 的 deepEqual 处失败，停在 stop 之前，服务不会按该流程停机或启动 successor。这是跨层对象契约不一致，可能造成可重复重启阻断。最小建议：构造预期对象时按 receipt 是否含该字段条件式加入 `omittedRuntimeCredentials`，并继续比较它，既保持遗漏清单稳定性检查，也不把凭据纳入备份。反例：初始和 recheck 均有 `warm-runtimes/instrt_<合法UUID>/turns`，其他文件、socket及摘要完全不变；左边多出凭据目录数组，右边缺键，严格深比较仍失败。回归规格应覆盖无凭据时字段缺省兼容、有凭据时清单相等通过，以及目录集合变化时仍拒绝；本轮仅推导，未改代码或执行测试。已有实现和此前已读调用点支持此结论。长度合规：正文约441个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 10,
+          "startedAt": "2026-10-05T03:42:24.540Z",
+          "finishedAt": "2026-10-05T03:42:39.769Z",
+          "firstMessageSeconds": 15.116,
+          "replySeconds": 15.116,
+          "runs": [
+            {
+              "runAttemptId": "run_1bc4a19c-e246-4969-b79c-500b0e47ba64",
+              "startedAt": "2026-10-05T03:42:24.595Z",
+              "finishedAt": "2026-10-05T03:42:39.698Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.055,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 0,
+              "unresolved": 1
+            },
+            "input": 39250,
+            "cached": 37632,
+            "uncached": 1618,
+            "output": 761,
+            "reasoning": 313,
+            "firstInput": 39250,
+            "peakInput": 39250,
+            "replySeconds": 15.116,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:42:39.631Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:42:39.656Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 39250,
+                "cachedInputTokens": 37632,
+                "outputTokens": 761,
+                "reasoningOutputTokens": 313
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 97,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：普通文件在备份期间改变并保持：必拒绝（以文件内容确有变化为前提）。backupState 先取含普通文件 SHA-256 的 inventory，复制后再取一次并 deepEqual；摘要不同即抛 State files changed during backup，重启不会进入停机阶段（packages/daemon/src/state-backup.ts:157-161,189-205）。Room 事件在 baseline 与 recheck 间追加并保持：条件拒绝。重启脚本 baseline 与 recheck 比较的是每 room 最大 room_seq；新事件使任一最大值变化就拒绝，但 inspect 未比较总事件数，所以若追加不改变这些最大值，代码不能证明发现（scripts/restart-local-workbench.mjs:70-83,127-140）。最后一次 inspect 返回后、SIGTERM 前新工作到达：代码不足以证明会拒绝或阻止信号。stop 中先比较 inspect 与 baseline，随后单独调用 process.kill(pid, \"SIGTERM\")；两者之间没有原子门闩或再检查，数据库 guard 只能证明检查时符合谓词（:145-149）。多数据库也是依序遍历并分别调用 SQLite backup API，每个目标库可单独校验，但没有跨库共同事务或冻结点，不能声称取得同一事务时点快照（state-backup.ts:163-188）。结论依赖可见代码；WAL backup 的单库一致性保证属 SQLite API 依赖，未在本轮源码开放范围内核验。建议报告整体快照为逐项证据校验，不表述成跨资源原子备份。长度合规：正文约430个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 11,
+          "startedAt": "2026-10-05T03:42:39.861Z",
+          "finishedAt": "2026-10-05T03:42:58.144Z",
+          "firstMessageSeconds": 18.203,
+          "replySeconds": 18.203,
+          "runs": [
+            {
+              "runAttemptId": "run_d5a946aa-3502-41ca-96d6-99ce30a9197c",
+              "startedAt": "2026-10-05T03:42:39.965Z",
+              "finishedAt": "2026-10-05T03:42:58.090Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.104,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 0,
+              "unresolved": 1
+            },
+            "input": 40438,
+            "cached": 38656,
+            "uncached": 1782,
+            "output": 903,
+            "reasoning": 443,
+            "firstInput": 40438,
+            "peakInput": 40438,
+            "replySeconds": 18.203,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:42:58.044Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:42:58.064Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 40438,
+                "cachedInputTokens": 38656,
+                "outputTokens": 903,
+                "reasoningOutputTokens": 443
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 106,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：以下均为测试规格，不执行，也不把预期行为当成已有实现。1）稳定目录到达 stop：最小 fixture 为临时 state，含固定 UUID 的 warm-runtimes/instrt_<UUID>/turns 与一个普通文件；模拟 validate、inspect、backup、verify、recheck，令两次 fileInventory 完全相同。观察 recheck 接受且 stop 被调用一次。现代码红：左值含 omittedRuntimeCredentials，restart-local-workbench.mjs:127-134 的期望对象未含此键，故稳定状态也会在 recheck deepEqual 失败。2）目录集合变化阻止 stop：同一 fixture，在 backup 后新增第二个匹配 turns 目录，观察 recheck 失败且 stop 调用次数为零；修复后还须证明失败来自省略目录清单不相等。现代码虽会阻止 stop，却同样拒绝稳定目录，不能区分变化与缺键，故回归判别能力未验证；不得仅以 stop 未调用判绿。3）快照内部有效但不可替代实时状态：建立含 room.db 与普通文件的 state，backupState 后 verifyStateBackup 成功；随后对 live 库追加业务事件但保持其可读，再用该快照尝试 restoreStateSnapshot。观察恢复因 writeEvidence 或实时内容变化而拒绝、live 内容不变。state-backup.ts:227-256 支持备份自校验，:543-565 明确拒绝新写入；该组合符合现有实现，但专门测试状态未验证。本项不启动服务；restore 的 runningPid 可省略，fixture 需满足 idle/hosts offline 前置条件。长度合规：正文约456个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 12,
+          "startedAt": "2026-10-05T03:42:58.252Z",
+          "finishedAt": "2026-10-05T03:43:14.098Z",
+          "firstMessageSeconds": 15.763,
+          "replySeconds": 15.763,
+          "runs": [
+            {
+              "runAttemptId": "run_b8e759d9-2122-4794-9f86-f5d1f5f27762",
+              "startedAt": "2026-10-05T03:42:58.351Z",
+              "finishedAt": "2026-10-05T03:43:14.061Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.099,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": null,
+            "generationsAfterReply": null,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 0,
+              "unresolved": 1
+            },
+            "input": 41752,
+            "cached": 39680,
+            "uncached": 2072,
+            "output": 660,
+            "reasoning": 98,
+            "firstInput": 41752,
+            "peakInput": 41752,
+            "replySeconds": 15.763,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:43:13.995Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "replyAt": "2026-10-05T03:43:14.015Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 41752,
+                "cachedInputTokens": 39680,
+                "outputTokens": 660,
+                "reasoningOutputTokens": 98
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 115,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：交接备忘录（静态审查，未运行测试或执行验收）。有代码及测试支持的用途包括：网络回执按 loopback、tailnet、LAN 重建并清理继承键（workbench-launch-receipt.test.mjs:1-115）；重启前候选构建核对、进程/仓库/状态库/端口检查、备份复核、SIGTERM 等待及退出后启动 successor（restart-local-workbench.mjs:43-178；guard 顺序测试 workbench-restart-guard.test.ts）；SQLite 在线备份、哈希/集合校验、符号链接拒绝及迁移前快照（state-backup.ts:142-256,343-485；对应测试覆盖 WAL、损坏及摘要变化）。优先修复的具体缺口是重启 recheck 忽略 fileInventory 的可选 omittedRuntimeCredentials 字段：稳定合法目录也因对象不等而阻断停机，且无法区分目录变化（阶段9，restart-local-workbench.mjs:127-134；state-backup.ts:24-28,95-117）。最小范围只改 recheck 期望对象，按 receipt 是否有该字段加入同一凭据目录清单；保留 files 与 omittedSockets 比较，不放宽拒绝路径或备份排除。验收顺序：先测稳定目录允许到 stop；再测 backup 后目录集合变化仍在 stop 前失败且原因是清单变化；随后跑现有备份/守卫测试，最后由维护者在受控环境验证真实 incumbent drain、SIGTERM 与 successor 启动整合。仍缺多资源原子快照和检查至停机间并发排除证明、恢复目录替换故障注入、凭据目录回归覆盖及真实运维整合验收；不可将逐项校验表述成全局原子备份。此前结论无须纠正。长度合规：正文约481个汉字，符合400–600要求。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        }
+      ],
+      "processes": [
+        {
+          "pid": 30873,
+          "startedAt": "2026-10-05T03:39:12.358Z",
+          "finishedAt": "2026-10-05T03:43:14.342Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "status": "complete",
+      "startedAt": "2026-10-05T03:39:10.185Z",
+      "warmRuntimes": true,
+      "firstRound": "cold",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "participantId": "principal_521c6f6e-9e92-4387-9157-19f710ce70f1",
+      "roomId": "room_8f69b11e-b8a1-4336-820f-828ba511dd70",
+      "identityVerified": true,
+      "instanceRuntimes": [
+        {
+          "instance_runtime_id": "instrt_ca5d703a-c8cb-4ef0-8eb3-a66b73bd89a2",
+          "pid": 30956,
+          "native_session_id": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "session_resume_ms": null,
+          "state": "idle",
+          "turn_count": 13,
+          "terminated_reason": null,
+          "started_at": "2026-10-05T03:39:12.813Z"
+        }
+      ],
+      "warmFailures": [],
+      "stages": [
+        {
+          "stage": 1,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 56.209,
+          "usage": {
+            "input": 98717,
+            "cached": 77312,
+            "uncached": 21405,
+            "output": 2144,
+            "generations": 7,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 2,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 24.016,
+          "usage": {
+            "input": 56331,
+            "cached": 50432,
+            "uncached": 5899,
+            "output": 918,
+            "generations": 3,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 3,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.344,
+          "usage": {
+            "input": 43552,
+            "cached": 39424,
+            "uncached": 4128,
+            "output": 593,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 4,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 14.555,
+          "usage": {
+            "input": 50223,
+            "cached": 45568,
+            "uncached": 4655,
+            "output": 647,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 5,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.492,
+          "usage": {
+            "input": 57558,
+            "cached": 52736,
+            "uncached": 4822,
+            "output": 659,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 6,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 16.135,
+          "usage": {
+            "input": 62821,
+            "cached": 59904,
+            "uncached": 2917,
+            "output": 734,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 7,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 17.115,
+          "usage": {
+            "input": 67676,
+            "cached": 64000,
+            "uncached": 3676,
+            "output": 693,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 8,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 17.435,
+          "usage": {
+            "input": 73050,
+            "cached": 70144,
+            "uncached": 2906,
+            "output": 704,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 9,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.076,
+          "usage": {
+            "input": 38176,
+            "cached": 36608,
+            "uncached": 1568,
+            "output": 659,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 10,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.229,
+          "usage": {
+            "input": 39250,
+            "cached": 37632,
+            "uncached": 1618,
+            "output": 761,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 11,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 18.283,
+          "usage": {
+            "input": 40438,
+            "cached": 38656,
+            "uncached": 1782,
+            "output": 903,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 12,
+          "sessionId": "01a10a24-e96c-7631-8b64-4f20fa5b2d73",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.846,
+          "usage": {
+            "input": 41752,
+            "cached": 39680,
+            "uncached": 2072,
+            "output": 660,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        }
+      ],
+      "finishedAt": "2026-10-05T03:43:14.508Z"
+    },
+    "final-output": {
+      "kind": "final-output",
+      "rounds": [
+        {
+          "round": 1,
+          "startedAt": "2026-10-05T03:43:18.826Z",
+          "finishedAt": "2026-10-05T03:43:42.635Z",
+          "firstMessageSeconds": 23.733,
+          "replySeconds": 23.733,
+          "runs": [
+            {
+              "runAttemptId": "run_c51f2f96-1e8e-47b1-af84-60e5388a24eb",
+              "startedAt": "2026-10-05T03:43:19.097Z",
+              "finishedAt": "2026-10-05T03:43:42.570Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "cold",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.271,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 3,
+            "generationsTotal": 3,
+            "generationsBeforeReply": 3,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 3,
+              "unresolved": 0
+            },
+            "input": 39257,
+            "cached": 11008,
+            "uncached": 28249,
+            "output": 534,
+            "reasoning": 0,
+            "firstInput": 12003,
+            "peakInput": 13658,
+            "replySeconds": 23.733,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:43:27.908Z",
+                "name": "exec",
+                "kind": "other"
+              },
+              {
+                "at": "2026-10-05T03:43:30.548Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:43:42.559Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 3,
+                "inputTokens": 39257,
+                "cachedInputTokens": 11008,
+                "outputTokens": 534,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 9,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：实现：scripts/workbench-launch-receipt.mjs:87-100要求回执schemaVersion为1且PID与调用者给定的incumbentPid相等；随后复制传入环境、删除七个网络键，再按回执mode重建，其他环境键保留。loopback只恢复RAH_WEB_PORT；tailnet恢复端口、经断言的绑定主机及可选的可信LAN地址；lan恢复HTTPS公开origin、绑定主机和可选证书/私钥绝对路径，见24-85行。可信LAN地址从回执明确记录，不扫描接口；重复loopback或无效地址会失败。回执由临时独占创建、权限0600后rename发布，读取时缺文件返回undefined，其余错误传播，见101-125行。PID相等只能证明回执声明与调用者提供的PID一致，不能证明该PID当前存活、身份未复用，也不能证明对应进程实际按记录配置运行；需调用方提供可靠的incumbent PID及存活判定。已有测试：本轮未开放测试文件，测试覆盖未知；未运行测试。建议：调用方区分缺失或旧版回执并要求显式网络接纳，检查持有进程与回执PID的对应关系。未知：mode来源及TLS文件存在性、权限和消费者解释均属调用者或依赖边界，本文件未验证。长度合规：正文400–600汉字指标待核，按本地可见汉字计数约435字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 2,
+          "startedAt": "2026-10-05T03:43:42.670Z",
+          "finishedAt": "2026-10-05T03:43:57.064Z",
+          "firstMessageSeconds": 14.353,
+          "replySeconds": 14.353,
+          "runs": [
+            {
+              "runAttemptId": "run_ad148044-e4e9-4b5f-8aac-2524b784333b",
+              "startedAt": "2026-10-05T03:43:42.773Z",
+              "finishedAt": "2026-10-05T03:43:57.033Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.103,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 31355,
+            "cached": 26112,
+            "uncached": 5243,
+            "output": 567,
+            "reasoning": 0,
+            "firstInput": 14235,
+            "peakInput": 17120,
+            "replySeconds": 14.353,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:43:47.333Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:43:57.023Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 31355,
+                "cachedInputTokens": 26112,
+                "outputTokens": 567,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 18,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：保留正确配置：测试验证Tailnet回执会把明确记录的LAN地址重建为RAH_TRUSTED_LAN_HOSTS，且启动模式重建结果等于原mode（scripts/workbench-launch-receipt.test.mjs:108-125）；另测Tailnet-only不从新接口扫描结果添回LAN项（133-149）。拒绝损坏输入：断言Tailnet可信LAN列表为非数组、重复、越界或非法地址时抛出trusted LAN错误（151-179）；另验证非CGNAT Tailnet绑定被拒绝（201-222）。回执写入：成功写入后文件权限为0600，再写入替换为PID 43和loopback模式，并检查内容不含TOKEN（78-103）。未证明的边界有二：并发写入/rename失败或进程中断时旧回执是否完整保留；PID与真实存活进程及其实际绑定的对应性。回归规格建议前者：前置为临时空目录且无服务启动，输入为已知有效mode与PID；模拟目标文件rename前写入失败，断言读取结果仍为缺失、无临时文件遗留；再以有效回执覆盖时故意令rename失败，断言旧回执字节保持不变且临时文件清理。此为规格，未执行；实际注入方式取决于文件系统依赖。建议将注入及异常清理列为测试。未知：原子替换和崩溃持久性受平台文件系统语义影响，本轮未验证。未重读上一阶段实现；本轮只读取新增测试文件。长度合规：正文400–600汉字指标，本回复约440个汉字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 3,
+          "startedAt": "2026-10-05T03:43:57.115Z",
+          "finishedAt": "2026-10-05T03:44:14.733Z",
+          "firstMessageSeconds": 17.519,
+          "replySeconds": 17.519,
+          "runs": [
+            {
+              "runAttemptId": "run_6dc2b176-aece-4903-89b0-2b8696944021",
+              "startedAt": "2026-10-05T03:43:57.413Z",
+              "finishedAt": "2026-10-05T03:44:14.643Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.298,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 38450,
+            "cached": 33280,
+            "uncached": 5170,
+            "output": 669,
+            "reasoning": 0,
+            "firstInput": 17747,
+            "peakInput": 20703,
+            "replySeconds": 17.519,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:44:03.625Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:44:14.634Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 38450,
+                "cachedInputTokens": 33280,
+                "outputTokens": 669,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 27,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：调用顺序简图：构建快照并核对webBuildId → inspect incumbent并记录事件基线 → 备份 → 校验备份及升级预检 → recheck文件清单和事件基线 → 写私有收据 → 再inspect → SIGTERM并等待退出 → 创建日志描述符 → spawn successor（restart-local-workbench.mjs:126-213；workbench-restart-guard.mjs:19-29）。新增身份检查包括ps命令行须为run-local-workbench（:62-68），lsof核对cwd属于当前repo、打开指定room.db、监听指定port（:69-90）；只读数据库须可重启并查询各room最大seq（:91-101）。检查在备份前inspect一次、备份后recheck再次inspect并比对事件基线，停止前又inspect并比对（:139-161、174-176），身份函数每次还要求命令行字符串与初始值完全一致（:69-70）。30秒轮询仅等待SIGTERM后的退出，超时明确抛错且不强杀、不启动successor（:174-188）；spawn位于guardedStop成功返回之后（:189-213）。调用处能证明上述命令与编排约束；不能证明ps/lsof输出无竞态或进程身份不可复用，也未证明守护停止步骤异常时外部状态恢复。依赖边界：SQLite备份、idle/restartable判定与升级预检实现位于未开放的daemon state-backup.ts（guard:3-16），语义未验证；快照、日志与launcher亦未审。建议核实PID重用窗口及daemon备份约束。未运行代码或测试。长度合规：正文400–600汉字，约449个汉字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 4,
+          "startedAt": "2026-10-05T03:44:14.808Z",
+          "finishedAt": "2026-10-05T03:44:31.201Z",
+          "firstMessageSeconds": 16.307,
+          "replySeconds": 16.307,
+          "runs": [
+            {
+              "runAttemptId": "run_c256369e-8642-4c79-9dba-8684d90d03fc",
+              "startedAt": "2026-10-05T03:44:15.048Z",
+              "finishedAt": "2026-10-05T03:44:31.124Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.24,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 45539,
+            "cached": 34304,
+            "uncached": 11235,
+            "output": 597,
+            "reasoning": 0,
+            "firstInput": 21335,
+            "peakInput": 24204,
+            "replySeconds": 16.307,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:44:20.025Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:44:31.115Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 45539,
+                "cachedInputTokens": 34304,
+                "outputTokens": 597,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 36,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：四类处理如下。普通文件：逐项SHA-256入清单，复制时独占创建；备份文件收紧为0600，仅保留源可执行位，并sync（packages/daemon/src/state-backup.ts:82-117、189-194）。SQLite：排除.db-wal/.db-shm/.db-journal，主.db用SQLite backup API复制，校验quick_check、外键并切换DELETE journal，另存摘要（:120-139、175-188、208-224）。socket：不复制，记录路径（:103-105、175-176）。运行期凭据：只匹配warm-runtimes/instrt_<UUID>/turns目录并跳过，验证目标时禁止恢复该目录；provider-sessions等不匹配项仍保留（:74-80、95-102）。路径/目标防护：拒绝备份位于state内部、state根为符号链接、遍历遇到任意符号链接或不支持条目；目标mkdir独占且权限0700，文件独占复制（:142-156、163-194）。一致性边界：备份前后fileInventory必须相同，备份后核对数据库集合、哈希与普通文件哈希，提供逐文件稳定证据；这不证明目录树整体原子快照，扫描与复制间仍可能有瞬时变化，socket及凭据目录明确遗漏。阶段3调用方另在停止前对事件基线及清单复查（restart-local-workbench.mjs:152-176），降低活动写入风险，但也不构成所有状态同一时点快照。依赖SQLite backup语义及底层文件系统同步/崩溃持久性未验证。建议：把此限制写入恢复运维说明。未运行测试。长度合规：正文400–600汉字，约443个汉字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 5,
+          "startedAt": "2026-10-05T03:44:31.275Z",
+          "finishedAt": "2026-10-05T03:44:46.011Z",
+          "firstMessageSeconds": 14.71,
+          "replySeconds": 14.71,
+          "runs": [
+            {
+              "runAttemptId": "run_7ac3cdb3-626d-4878-9059-457b7a38b49d",
+              "startedAt": "2026-10-05T03:44:31.431Z",
+              "finishedAt": "2026-10-05T03:44:45.995Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.156,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 53162,
+            "cached": 44544,
+            "uncached": 8618,
+            "output": 549,
+            "reasoning": 0,
+            "firstInput": 24864,
+            "peakInput": 28298,
+            "replySeconds": 14.71,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:44:36.005Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:44:45.985Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 53162,
+                "cachedInputTokens": 44544,
+                "outputTokens": 549,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 45,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：四种证据层次不同。数据库可读/完整：backupState调用verifyDatabase，检查PRAGMA quick_check为ok、foreign_key_check为空（state-backup.ts:208-224）；测试另证明WAL中已提交数据可读、无旧WAL（workbench-restart-guard.test.ts:155-180）。数据库字节与receipt相同：逐库SHA-256与receipt比较（state-backup.ts:242-249）；测试做合法SQL更新后仍可读，但摘要变化导致拒绝（test.ts:211-228）。数据库集合相同：发现的.db路径须等于receipt.databases；测试增加extra.db后拒绝（state-backup.ts:231-240；test.ts:230-239）。普通文件相同：目标fileInventory哈希映射须等于receipt.files；测试改写memory.md后拒绝（state-backup.ts:251-255；test.ts:194-202）。因此合法SQL改写、额外数据库、普通文件改写均会拒绝，虽数据库本身可健康。测试也验证符号链接及损坏数据库被拒（test.ts:186-209）。这些验证是receipt相对备份目标的检查，不构成来源状态与备份整体原子一致证明。未覆盖的运维整合行为：重启编排是否确实按序执行验证、停止incumbent并只在成功后spawn successor；guard单测只验证步骤函数序列（test.ts:107-153），不驱动真实重启脚本和进程生命周期。建议补充隔离进程/临时状态的编排集成覆盖。未运行测试。长度合规：正文400–600汉字，约428汉字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 6,
+          "startedAt": "2026-10-05T03:44:46.072Z",
+          "finishedAt": "2026-10-05T03:45:03.045Z",
+          "firstMessageSeconds": 16.927,
+          "replySeconds": 16.927,
+          "runs": [
+            {
+              "runAttemptId": "run_e3191514-07ca-4fda-b274-58b798377899",
+              "startedAt": "2026-10-05T03:44:46.302Z",
+              "finishedAt": "2026-10-05T03:45:03.004Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.23,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 58614,
+            "cached": 55808,
+            "uncached": 2806,
+            "output": 559,
+            "reasoning": 0,
+            "firstInput": 28922,
+            "peakInput": 29692,
+            "replySeconds": 16.927,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:44:52.078Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:45:02.999Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 58614,
+                "cachedInputTokens": 55808,
+                "outputTokens": 559,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 54,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：其他表均静止时，五种activation的结果为：无lease quarantined：restartable通过，idle拒绝；带任一lease字段的quarantined：两者均拒绝，restartable另有专门检查（state-backup.ts:264-275）；普通queued：两者均拒绝；同room、operation=stopped且无lease的queued：restartable通过，idle拒绝；operation=resumed的queued：两者均拒绝，因为例外只接受匹配room及operation_id的stopped记录（:259-261、278-306）。restartable允许保留惰性quarantined与已停止操作隔离的queued；它不会完成、重试、恢复或丢弃工作，注释明确承诺只保留（:263）。阶段3脚本的inspect调用assertWorkbenchRestartable(db)，查询room事件基线后关闭只读数据库（restart-local-workbench.mjs:91-101）；备份前及停止前复查该基线，随后SIGTERM等待incumbent退出，再spawn successor（:139-176、189-213）。因此idle与restartable有意不同：前者用于严格恢复场景，重启仅放行特定惰性工作。已有阶段5测试覆盖quarantined无lease可过、带lease拒绝、stopped queued保留且resumed拒绝（workbench-restart-guard.test.ts:23-92）；未运行测试。未验证：工作在检查/停止间变化时的并发保证及daemon侧查询实际依赖，本轮只据已开放实现判断。建议保持两种判定的调用场景说明清晰。长度合规：正文400–600汉字，约444汉字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 7,
+          "startedAt": "2026-10-05T03:45:03.104Z",
+          "finishedAt": "2026-10-05T03:45:22.369Z",
+          "firstMessageSeconds": 19.242,
+          "replySeconds": 19.242,
+          "runs": [
+            {
+              "runAttemptId": "run_b0b1a118-a038-425e-bb88-2b9738d5f031",
+              "startedAt": "2026-10-05T03:45:03.181Z",
+              "finishedAt": "2026-10-05T03:45:22.355Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.077,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 62678,
+            "cached": 58880,
+            "uncached": 3798,
+            "output": 590,
+            "reasoning": 0,
+            "firstInput": 30292,
+            "peakInput": 32386,
+            "replySeconds": 19.242,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:45:09.300Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:45:22.346Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 62678,
+                "cachedInputTokens": 58880,
+                "outputTokens": 590,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 63,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：四条分支：no pending时返回migrated=false，不复制状态；unsupported schema直接拒绝打开，提示匹配或更新构建；同版本且有unexpected_drift时报错，要求显式修复迁移；pending migration则先建快照，再初始化Kernel迁移，返回快照目录（packages/daemon/src/state-backup.ts:433-485）。legacy_drift仅写stderr诊断，不单独阻止迁移；快照收据记录pending与legacy差异（:362-384、450-459）。preflightKernelUpgrade只对输入数据库做backup到临时目录，在副本上RoomKernel.initialize、确认pending清空并校验数据库，最后删除临时目录；不触碰正式数据库（:393-420）。protectKernelSchemaMigration则在正式数据库迁移前检查schema、把全状态快照及收据写至snapshotRoot，再对正式room.db执行initialize（:428-485）。若快照复制或校验失败，必须中止，Kernel不得初始化正式库；实现抛出“database was not migrated”错误（:473-478）。但正式库initialize开始后若迁移失败，本段没有事务回滚或自动恢复逻辑，不能宣称数据已自动回滚；快照存在仅提供恢复材料，不代表已还原。此实现与阶段3的停止前备份、候选库预检相连：restart脚本先校验目标备份，再对其room.db做preflightKernelUpgrade，之后才复查并停止旧进程（restart-local-workbench.mjs:143-176）。本轮未运行代码或测试；候选副本迁移及Kernel内部事务语义的细节未在此片段证明。建议明确区分备份失败与正式迁移失败的运维处置。长度合规：正文400–600汉字，约440个汉字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 8,
+          "startedAt": "2026-10-05T03:45:22.447Z",
+          "finishedAt": "2026-10-05T03:45:45.381Z",
+          "firstMessageSeconds": 22.916,
+          "replySeconds": 22.916,
+          "runs": [
+            {
+              "runAttemptId": "run_66024f7d-2645-4d87-9a03-602eb9a79e20",
+              "startedAt": "2026-10-05T03:45:22.593Z",
+              "finishedAt": "2026-10-05T03:45:45.374Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.146,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 2,
+            "generationsTotal": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 2,
+              "unresolved": 0
+            },
+            "input": 67437,
+            "cached": 64000,
+            "uncached": 3437,
+            "output": 547,
+            "reasoning": 0,
+            "firstInput": 33032,
+            "peakInput": 34405,
+            "replySeconds": 22.916,
+            "toolCalls": [
+              {
+                "at": "2026-10-05T03:45:32.170Z",
+                "name": "exec",
+                "kind": "other"
+              }
+            ],
+            "replyAt": "2026-10-05T03:45:45.363Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 2,
+                "inputTokens": 67437,
+                "cachedInputTokens": 64000,
+                "outputTokens": 547,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 72,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：恢复按序要求：调用者提供confirm=\"restore-from-snapshot\"；读取收据并校验版本及其state路径与目标一致；验证快照内容；若传runningPid则确认该PID不可用；对当前库执行idle检查并要求所有agent_hosts离线；再比较业务写入证据、普通文件摘要、数据库集合及逐库内容摘要（state-backup.ts:492-565）。roomSeq未增加不足以放行：事件数及各room最大seq相同仍不能排除非事件数据库表、普通文件或其他数据库字节变化；实现还逐项检查这些内容（:543-565）。通过后先复制到同级staging并验证，再复查当前树未变；两次rename先将live树移到superseded，再将staging换成目标。第二次失败时尝试把superseded改回原路径后抛出；成功则保留superseded供后续处理（:567-584）。若恢复替换rename失败但回移成功，旧现场复位；若回移自身失败，代码没有再兜底，现场可能留在superseded路径。身份/并发边界：runningPid仅在调用方传入时做kill(pid,0)检查，不证明该PID就是唯一持有者；只读idle/hosts检查与后续rename之间存在窗口，二次verifyUnchanged只覆盖部分文件/数据库证据，不能从此段证明全局排他或阻止新连接写入。建议运维先停服务并确保无其他写者。未运行测试。长度合规：正文400–600汉字，约438字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 9,
+          "startedAt": "2026-10-05T03:45:45.464Z",
+          "finishedAt": "2026-10-05T03:46:01.142Z",
+          "firstMessageSeconds": 15.595,
+          "replySeconds": 15.595,
+          "runs": [
+            {
+              "runAttemptId": "run_8ac9e2e5-83d9-4e9e-a5fb-7e0bb024e233",
+              "startedAt": "2026-10-05T03:45:45.531Z",
+              "finishedAt": "2026-10-05T03:46:01.068Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.067,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 0
+            },
+            "input": 34999,
+            "cached": 33536,
+            "uncached": 1463,
+            "output": 455,
+            "reasoning": 0,
+            "firstInput": 34999,
+            "peakInput": 34999,
+            "replySeconds": 15.595,
+            "toolCalls": [],
+            "replyAt": "2026-10-05T03:46:01.059Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 34999,
+                "cachedInputTokens": 33536,
+                "outputTokens": 455,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 81,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：阶段4的fileInventory完整返回对象为files、omittedSockets，以及存在时才带的omittedRuntimeCredentials；备份receipt由扫描结果展开保留这些字段（state-backup.ts:24-32、82-117、157-162）。阶段3 recheck却将当前扫描结果投影成仅files与omittedSockets，再与{files:receipt.files, omittedSockets:receipt.omittedSockets}深比较（restart-local-workbench.mjs:152-160）。因此字段层面，省略凭据目录清单不参与recheck；socket清单仍参与，普通文件哈希也参与。对含合法匹配凭据目录、其余状态不变的state，当前扫描两边仍得到相同files和omittedSockets，故不会因该可选字段缺失而停住；recheck通过后才写重启收据，后续继续停止旧进程。需要区分它与备份阶段自己的完整对象比较：backupState在复制前后完整比较fileInventory，凭据目录列表变化会在该阶段被发现（state-backup.ts:157-162、197-202）；本题场景假设备份已成功且之后目录清单稳定，故没有跨层失败。若希望recheck也覆盖凭据目录变动，最小修改是将双方都投影为统一三字段对象，缺省凭据列表规范化为空数组后比较；同时保留files和omittedSockets检查。反例：复制后新增或移除一个匹配的turns目录，现有recheck忽略该差异，仍可能放行；规范化三字段比较则拒绝。该列表记录名称而非内容，新增比较也不能证明目录内部凭据未变。建议明确凭据清单是否属于停止前稳定性条件；本轮未改代码、未运行测试。长度合规：正文400–600汉字，约421字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 10,
+          "startedAt": "2026-10-05T03:46:01.275Z",
+          "finishedAt": "2026-10-05T03:46:16.003Z",
+          "firstMessageSeconds": 14.703,
+          "replySeconds": 14.703,
+          "runs": [
+            {
+              "runAttemptId": "run_7522e8f8-1b8f-4d96-85d7-87e5d5bc0e56",
+              "startedAt": "2026-10-05T03:46:01.404Z",
+              "finishedAt": "2026-10-05T03:46:15.985Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.129,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 0
+            },
+            "input": 35661,
+            "cached": 34560,
+            "uncached": 1101,
+            "output": 413,
+            "reasoning": 0,
+            "firstInput": 35661,
+            "peakInput": 35661,
+            "replySeconds": 14.703,
+            "toolCalls": [],
+            "replyAt": "2026-10-05T03:46:15.978Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 35661,
+                "cachedInputTokens": 34560,
+                "outputTokens": 413,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 90,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：普通文件在备份过程中改变并保持：必拒绝，若变化可被前后清单观察到。backupState先取fileInventory，再复制，完成后重新扫描并与before比较；哈希不一致会在“State files changed during backup”处失败（state-backup.ts:157-162、197-203）。若短暂变化后恢复为相同字节，代码不足以证明曾发生变化。Room事件在baseline与recheck之间追加并保持：必拒绝。重启脚本recheck再次inspect，并深比较各room最大seq及事件基线；新增事件会令比较不等，停止流程不继续（restart-local-workbench.mjs:139-160）。最后一次inspect返回后、SIGTERM前新工作到达：代码不足以证明必拒绝。可见顺序是inspect完成后直接process.kill发送SIGTERM，中间没有再次读取业务表或原子锁定工作入口（:174-176）；因此该窗口内新工作可能已进入，而脚本不能保证发现，实际能否接单取决于未开放的服务端排空/写入语义。多数据库按目录遍历顺序逐个打开只读连接并调用SQLite backup，之后再校验；没有跨库事务或共同快照时间戳（state-backup.ts:163-188）。每库备份可各自包含一致的SQLite视图，但不能据此声称多个数据库来自同一事务时点。建议运维把该竞态与一致性上限纳入停机条件；不引入其他调度机制。本轮复用既读文件，未重读、未运行测试。长度合规：正文400–600汉字，约424字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 11,
+          "startedAt": "2026-10-05T03:46:16.085Z",
+          "finishedAt": "2026-10-05T03:46:31.885Z",
+          "firstMessageSeconds": 15.739,
+          "replySeconds": 15.739,
+          "runs": [
+            {
+              "runAttemptId": "run_28e3a8d3-26ee-41dc-afd2-9c347e57d66c",
+              "startedAt": "2026-10-05T03:46:16.287Z",
+              "finishedAt": "2026-10-05T03:46:31.834Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.202,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 0
+            },
+            "input": 36287,
+            "cached": 34560,
+            "uncached": 1727,
+            "output": 430,
+            "reasoning": 0,
+            "firstInput": 36287,
+            "peakInput": 36287,
+            "replySeconds": 15.739,
+            "toolCalls": [],
+            "replyAt": "2026-10-05T03:46:31.824Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 36287,
+                "cachedInputTokens": 34560,
+                "outputTokens": 430,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 99,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：规格一，稳定目录允许到stop。最小fixture：临时state含普通文件及一个匹配的warm-runtimes/instrt_<UUID>/turns目录；mock各guard步骤，validate、inspect、backup、verify、recheck、stop均成功，备份前后目录集合不变。观察点：stop被调用一次。现代码：已绿；fileInventory完整对象前后比较稳定时相同，restart recheck投影字段亦相同。规格二，目录集合变化阻止stop。复用fixture，在backup后、recheck前新增或移除匹配turns目录，其余文件、socket清单与room事件基线不变；观察guard拒绝且stop未调用。现代码：红点；recheck仅比较files与omittedSockets，忽略omittedRuntimeCredentials差异。拟议三字段规范化比较后应拒绝，尚未实现、未验证。规格三，区分备份内部有效与不可替代实时状态。最小fixture：临时state含room.db及普通文件，先生成有效快照，随后仅对live数据库作合法业务写入并保持快照不变；确认verifyStateBackup(snapshot, receipt)仍通过，再调用显式恢复前置内容检查，断言因live业务写入证据或数据库内容摘要变化而拒绝，live字节保持原样。观察点是快照自身完整性通过不代表恢复可替代实时状态。前半段由已有实现支持（state-backup.ts:227-256），后半段拒绝条件可见（:543-565），组合测试未见，状态未验证。三项均为规格，未执行；使用临时文件与mock，不启动真实服务。长度合规：正文400–600汉字，约430字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        },
+        {
+          "round": 12,
+          "startedAt": "2026-10-05T03:46:31.995Z",
+          "finishedAt": "2026-10-05T03:46:48.100Z",
+          "firstMessageSeconds": 16.083,
+          "replySeconds": 16.083,
+          "runs": [
+            {
+              "runAttemptId": "run_0cc27551-c458-4b82-aadd-bec1312d7d27",
+              "startedAt": "2026-10-05T03:46:32.158Z",
+              "finishedAt": "2026-10-05T03:46:48.086Z",
+              "state": "exited",
+              "succeeded": true
+            }
+          ],
+          "attempts": 1,
+          "runVerdict": [],
+          "execution": {
+            "instanceRuntimeId": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+            "mode": "warm",
+            "sessionResumeMs": null,
+            "lateFrameCount": 0
+          },
+          "sessionResumeMs": null,
+          "queueSeconds": 0.163,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "metrics": {
+            "generations": 1,
+            "generationsTotal": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replyTimingEvidence": {
+              "basis": "usage-record-upper-bound",
+              "knownBeforeReply": 1,
+              "unresolved": 0
+            },
+            "input": 36918,
+            "cached": 35584,
+            "uncached": 1334,
+            "output": 499,
+            "reasoning": 0,
+            "firstInput": 36918,
+            "peakInput": 36918,
+            "replySeconds": 16.083,
+            "toolCalls": [],
+            "replyAt": "2026-10-05T03:46:48.078Z",
+            "productUsage": {
+              "completeness": "complete",
+              "gaps": [],
+              "totals": {
+                "generations": 1,
+                "inputTokens": 36918,
+                "cachedInputTokens": 35584,
+                "outputTokens": 499,
+                "reasoningOutputTokens": 0
+              }
+            },
+            "finalInterrupt": {
+              "committedRoomSeq": 108,
+              "requested": false,
+              "accepted": "unknown",
+              "terminal": "unknown",
+              "sent": false,
+              "preemptedFollowUp": "unknown"
+            }
+          },
+          "replyTurnHandle": null,
+          "answer": "审查结论：现有代码与测试支持本机显式重启的若干用途：回执保留网络模式并拒绝损坏条目；测试覆盖配置重建、拒绝非法输入及私有回执写入（scripts/workbench-launch-receipt.test.mjs:13-222）。重启编排要求候选构建匹配，检查PID命令、checkout、数据库和端口，备份校验及事件基线复查通过后才发SIGTERM；测试支持守卫步骤失败不进入stop（restart-local-workbench.mjs:62-90、126-188；workbench-restart-guard.test.ts:107-153）。备份测试覆盖WAL提交数据、文件摘要、数据库摘要与集合、符号链接拒绝（该测试:155-239）。这些证据不等于真实服务端到端验收。优先缺口是阶段9的recheck漏比对可选omittedRuntimeCredentials目录清单：文件清单稳定但turns目录增删仍可能到达stop。建议只改restart-local-workbench.mjs:152-160，将receipt和当前inventory都规范成files、omittedSockets、缺省为空的omittedRuntimeCredentials三字段后比较；保留现有文件及事件检查。验收先加两项隔离测试：稳定目录可到stop；目录集合变化时stop不调用。再测合法快照自身校验通过但live业务写入变化使恢复前置拒绝，确认无覆盖（state-backup.ts:543-565）。之后验证原有守卫和备份测试，再进行有人值守的本机重启演练，检查旧进程退出、successor启动及日志/回执。多库共同快照时点、最后inspect至SIGTERM竞态、PID身份排他和真实恢复演练仍未证实。此前分析未发现需纠正的具体错误。此为基于开放源码与测试文本的静态审查；本轮及此前均未执行代码或测试，不构成执行验收。长度合规：正文400–600汉字，约454字。",
+          "longStageSucceeded": true,
+          "actualIdentityVerified": true,
+          "actualMemoryOff": true
+        }
+      ],
+      "processes": [
+        {
+          "pid": 40143,
+          "startedAt": "2026-10-05T03:43:18.682Z",
+          "finishedAt": "2026-10-05T03:46:48.355Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "status": "complete",
+      "startedAt": "2026-10-05T03:43:14.510Z",
+      "warmRuntimes": true,
+      "firstRound": "cold",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "participantId": "principal_01e12d93-d694-40ba-9c58-ff5f2afce524",
+      "roomId": "room_0e39c533-f581-46c2-9eb1-649e202980c1",
+      "identityVerified": true,
+      "instanceRuntimes": [
+        {
+          "instance_runtime_id": "instrt_8e78ab22-45c0-49de-b214-1868c521fee9",
+          "pid": 40220,
+          "native_session_id": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "session_resume_ms": null,
+          "state": "idle",
+          "turn_count": 12,
+          "terminated_reason": null,
+          "started_at": "2026-10-05T03:43:19.113Z"
+        }
+      ],
+      "warmFailures": [],
+      "stages": [
+        {
+          "stage": 1,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 23.809,
+          "usage": {
+            "input": 39257,
+            "cached": 11008,
+            "uncached": 28249,
+            "output": 534,
+            "generations": 3,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 2,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 14.394,
+          "usage": {
+            "input": 31355,
+            "cached": 26112,
+            "uncached": 5243,
+            "output": 567,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 3,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 17.618,
+          "usage": {
+            "input": 38450,
+            "cached": 33280,
+            "uncached": 5170,
+            "output": 669,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 4,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 16.393,
+          "usage": {
+            "input": 45539,
+            "cached": 34304,
+            "uncached": 11235,
+            "output": 597,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 5,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 14.736,
+          "usage": {
+            "input": 53162,
+            "cached": 44544,
+            "uncached": 8618,
+            "output": 549,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 6,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 16.973,
+          "usage": {
+            "input": 58614,
+            "cached": 55808,
+            "uncached": 2806,
+            "output": 559,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 7,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 19.265,
+          "usage": {
+            "input": 62678,
+            "cached": 58880,
+            "uncached": 3798,
+            "output": 590,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 8,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 22.934,
+          "usage": {
+            "input": 67437,
+            "cached": 64000,
+            "uncached": 3437,
+            "output": 547,
+            "generations": 2,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 9,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.678,
+          "usage": {
+            "input": 34999,
+            "cached": 33536,
+            "uncached": 1463,
+            "output": 455,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 10,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 14.728,
+          "usage": {
+            "input": 35661,
+            "cached": 34560,
+            "uncached": 1101,
+            "output": 413,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 11,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 15.8,
+          "usage": {
+            "input": 36287,
+            "cached": 34560,
+            "uncached": 1727,
+            "output": 430,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        },
+        {
+          "stage": 12,
+          "sessionId": "01a10a28-ab6e-74d3-8bec-9bfd2fcaf77d",
+          "completed": true,
+          "memoryOff": true,
+          "durationSeconds": 16.105,
+          "usage": {
+            "input": 36918,
+            "cached": 35584,
+            "uncached": 1334,
+            "output": 499,
+            "generations": 1,
+            "completeness": "complete",
+            "gaps": []
+          }
+        }
+      ],
+      "finishedAt": "2026-10-05T03:46:48.522Z"
+    }
+  },
+  "catalogVerifiedAt": "2026-10-05T03:32:38.949Z",
+  "summary": {
+    "status": "complete",
+    "quality": "not-assessed",
+    "budgetVerdict": "not-assessed",
+    "arms": {
+      "native": {
+        "total": {
+          "fromStage": 1,
+          "toStage": 12,
+          "status": "complete",
+          "knownObservedTotals": {
+            "input": 466539,
+            "cached": 399872,
+            "uncached": 66667,
+            "output": 6976,
+            "generations": 20,
+            "durationSeconds": 390.14500000000004
+          },
+          "totals": {
+            "input": 466539,
+            "cached": 399872,
+            "uncached": 66667,
+            "output": 6976,
+            "generations": 20,
+            "durationSeconds": 390.14500000000004
+          },
+          "issues": []
+        },
+        "checkpoints": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 19816,
+              "cached": 8960,
+              "uncached": 10856,
+              "output": 644,
+              "generations": 2,
+              "durationSeconds": 22.885
+            },
+            "totals": {
+              "input": 19816,
+              "cached": 8960,
+              "uncached": 10856,
+              "output": 644,
+              "generations": 2,
+              "durationSeconds": 22.885
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 3,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 77787,
+              "cached": 58112,
+              "uncached": 19675,
+              "output": 1875,
+              "generations": 6,
+              "durationSeconds": 68.205
+            },
+            "totals": {
+              "input": 77787,
+              "cached": 58112,
+              "uncached": 19675,
+              "output": 1875,
+              "generations": 6,
+              "durationSeconds": 68.205
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 6,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 216845,
+              "cached": 163328,
+              "uncached": 53517,
+              "output": 3833,
+              "generations": 12,
+              "durationSeconds": 257.925
+            },
+            "totals": {
+              "input": 216845,
+              "cached": 163328,
+              "uncached": 53517,
+              "output": 3833,
+              "generations": 12,
+              "durationSeconds": 257.925
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 9,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 366953,
+              "cached": 304384,
+              "uncached": 62569,
+              "output": 5608,
+              "generations": 17,
+              "durationSeconds": 329.737
+            },
+            "totals": {
+              "input": 366953,
+              "cached": 304384,
+              "uncached": 62569,
+              "output": 5608,
+              "generations": 17,
+              "durationSeconds": 329.737
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 12,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 466539,
+              "cached": 399872,
+              "uncached": 66667,
+              "output": 6976,
+              "generations": 20,
+              "durationSeconds": 390.14500000000004
+            },
+            "totals": {
+              "input": 466539,
+              "cached": 399872,
+              "uncached": 66667,
+              "output": 6976,
+              "generations": 20,
+              "durationSeconds": 390.14500000000004
+            },
+            "issues": []
+          }
+        ],
+        "windows": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 19816,
+              "cached": 8960,
+              "uncached": 10856,
+              "output": 644,
+              "generations": 2,
+              "durationSeconds": 22.885
+            },
+            "totals": {
+              "input": 19816,
+              "cached": 8960,
+              "uncached": 10856,
+              "output": 644,
+              "generations": 2,
+              "durationSeconds": 22.885
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 2,
+            "toStage": 6,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 197029,
+              "cached": 154368,
+              "uncached": 42661,
+              "output": 3189,
+              "generations": 10,
+              "durationSeconds": 235.04000000000002
+            },
+            "totals": {
+              "input": 197029,
+              "cached": 154368,
+              "uncached": 42661,
+              "output": 3189,
+              "generations": 10,
+              "durationSeconds": 235.04000000000002
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 7,
+            "toStage": 12,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 249694,
+              "cached": 236544,
+              "uncached": 13150,
+              "output": 3143,
+              "generations": 8,
+              "durationSeconds": 132.22000000000003
+            },
+            "totals": {
+              "input": 249694,
+              "cached": 236544,
+              "uncached": 13150,
+              "output": 3143,
+              "generations": 8,
+              "durationSeconds": 132.22000000000003
+            },
+            "issues": []
+          }
+        ]
+      },
+      "default": {
+        "total": {
+          "fromStage": 1,
+          "toStage": 12,
+          "status": "complete",
+          "knownObservedTotals": {
+            "input": 669544,
+            "cached": 612096,
+            "uncached": 57448,
+            "output": 10075,
+            "generations": 26,
+            "durationSeconds": 240.735
+          },
+          "totals": {
+            "input": 669544,
+            "cached": 612096,
+            "uncached": 57448,
+            "output": 10075,
+            "generations": 26,
+            "durationSeconds": 240.735
+          },
+          "issues": []
+        },
+        "checkpoints": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 98717,
+              "cached": 77312,
+              "uncached": 21405,
+              "output": 2144,
+              "generations": 7,
+              "durationSeconds": 56.209
+            },
+            "totals": {
+              "input": 98717,
+              "cached": 77312,
+              "uncached": 21405,
+              "output": 2144,
+              "generations": 7,
+              "durationSeconds": 56.209
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 3,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 198600,
+              "cached": 167168,
+              "uncached": 31432,
+              "output": 3655,
+              "generations": 12,
+              "durationSeconds": 95.56899999999999
+            },
+            "totals": {
+              "input": 198600,
+              "cached": 167168,
+              "uncached": 31432,
+              "output": 3655,
+              "generations": 12,
+              "durationSeconds": 95.56899999999999
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 6,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 369202,
+              "cached": 325376,
+              "uncached": 43826,
+              "output": 5695,
+              "generations": 18,
+              "durationSeconds": 141.751
+            },
+            "totals": {
+              "input": 369202,
+              "cached": 325376,
+              "uncached": 43826,
+              "output": 5695,
+              "generations": 18,
+              "durationSeconds": 141.751
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 9,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 548104,
+              "cached": 496128,
+              "uncached": 51976,
+              "output": 7751,
+              "generations": 23,
+              "durationSeconds": 191.377
+            },
+            "totals": {
+              "input": 548104,
+              "cached": 496128,
+              "uncached": 51976,
+              "output": 7751,
+              "generations": 23,
+              "durationSeconds": 191.377
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 12,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 669544,
+              "cached": 612096,
+              "uncached": 57448,
+              "output": 10075,
+              "generations": 26,
+              "durationSeconds": 240.735
+            },
+            "totals": {
+              "input": 669544,
+              "cached": 612096,
+              "uncached": 57448,
+              "output": 10075,
+              "generations": 26,
+              "durationSeconds": 240.735
+            },
+            "issues": []
+          }
+        ],
+        "windows": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 98717,
+              "cached": 77312,
+              "uncached": 21405,
+              "output": 2144,
+              "generations": 7,
+              "durationSeconds": 56.209
+            },
+            "totals": {
+              "input": 98717,
+              "cached": 77312,
+              "uncached": 21405,
+              "output": 2144,
+              "generations": 7,
+              "durationSeconds": 56.209
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 2,
+            "toStage": 6,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 270485,
+              "cached": 248064,
+              "uncached": 22421,
+              "output": 3551,
+              "generations": 11,
+              "durationSeconds": 85.542
+            },
+            "totals": {
+              "input": 270485,
+              "cached": 248064,
+              "uncached": 22421,
+              "output": 3551,
+              "generations": 11,
+              "durationSeconds": 85.542
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 7,
+            "toStage": 12,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 300342,
+              "cached": 286720,
+              "uncached": 13622,
+              "output": 4380,
+              "generations": 8,
+              "durationSeconds": 98.984
+            },
+            "totals": {
+              "input": 300342,
+              "cached": 286720,
+              "uncached": 13622,
+              "output": 4380,
+              "generations": 8,
+              "durationSeconds": 98.984
+            },
+            "issues": []
+          }
+        ]
+      },
+      "final-output": {
+        "total": {
+          "fromStage": 1,
+          "toStage": 12,
+          "status": "complete",
+          "knownObservedTotals": {
+            "input": 540357,
+            "cached": 466176,
+            "uncached": 74181,
+            "output": 6409,
+            "generations": 21,
+            "durationSeconds": 208.43300000000002
+          },
+          "totals": {
+            "input": 540357,
+            "cached": 466176,
+            "uncached": 74181,
+            "output": 6409,
+            "generations": 21,
+            "durationSeconds": 208.43300000000002
+          },
+          "issues": []
+        },
+        "checkpoints": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 39257,
+              "cached": 11008,
+              "uncached": 28249,
+              "output": 534,
+              "generations": 3,
+              "durationSeconds": 23.809
+            },
+            "totals": {
+              "input": 39257,
+              "cached": 11008,
+              "uncached": 28249,
+              "output": 534,
+              "generations": 3,
+              "durationSeconds": 23.809
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 3,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 109062,
+              "cached": 70400,
+              "uncached": 38662,
+              "output": 1770,
+              "generations": 7,
+              "durationSeconds": 55.821
+            },
+            "totals": {
+              "input": 109062,
+              "cached": 70400,
+              "uncached": 38662,
+              "output": 1770,
+              "generations": 7,
+              "durationSeconds": 55.821
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 6,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 266377,
+              "cached": 205056,
+              "uncached": 61321,
+              "output": 3475,
+              "generations": 13,
+              "durationSeconds": 103.923
+            },
+            "totals": {
+              "input": 266377,
+              "cached": 205056,
+              "uncached": 61321,
+              "output": 3475,
+              "generations": 13,
+              "durationSeconds": 103.923
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 9,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 431491,
+              "cached": 361472,
+              "uncached": 70019,
+              "output": 5067,
+              "generations": 18,
+              "durationSeconds": 161.8
+            },
+            "totals": {
+              "input": 431491,
+              "cached": 361472,
+              "uncached": 70019,
+              "output": 5067,
+              "generations": 18,
+              "durationSeconds": 161.8
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 1,
+            "toStage": 12,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 540357,
+              "cached": 466176,
+              "uncached": 74181,
+              "output": 6409,
+              "generations": 21,
+              "durationSeconds": 208.43300000000002
+            },
+            "totals": {
+              "input": 540357,
+              "cached": 466176,
+              "uncached": 74181,
+              "output": 6409,
+              "generations": 21,
+              "durationSeconds": 208.43300000000002
+            },
+            "issues": []
+          }
+        ],
+        "windows": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 39257,
+              "cached": 11008,
+              "uncached": 28249,
+              "output": 534,
+              "generations": 3,
+              "durationSeconds": 23.809
+            },
+            "totals": {
+              "input": 39257,
+              "cached": 11008,
+              "uncached": 28249,
+              "output": 534,
+              "generations": 3,
+              "durationSeconds": 23.809
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 2,
+            "toStage": 6,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 227120,
+              "cached": 194048,
+              "uncached": 33072,
+              "output": 2941,
+              "generations": 10,
+              "durationSeconds": 80.114
+            },
+            "totals": {
+              "input": 227120,
+              "cached": 194048,
+              "uncached": 33072,
+              "output": 2941,
+              "generations": 10,
+              "durationSeconds": 80.114
+            },
+            "issues": []
+          },
+          {
+            "fromStage": 7,
+            "toStage": 12,
+            "status": "complete",
+            "knownObservedTotals": {
+              "input": 273980,
+              "cached": 261120,
+              "uncached": 12860,
+              "output": 2934,
+              "generations": 8,
+              "durationSeconds": 104.50999999999999
+            },
+            "totals": {
+              "input": 273980,
+              "cached": 261120,
+              "uncached": 12860,
+              "output": 2934,
+              "generations": 8,
+              "durationSeconds": 104.50999999999999
+            },
+            "issues": []
+          }
+        ]
+      }
+    },
+    "comparisons": {
+      "default": {
+        "total": {
+          "fromStage": 1,
+          "toStage": 12,
+          "status": "comparable",
+          "ratios": {
+            "input": 1.4351297533539533,
+            "cached": 1.530729833546735,
+            "uncached": 0.8617156914215429,
+            "output": 1.444237385321101,
+            "generations": 1.3,
+            "durationSeconds": 0.6170398185290085
+          },
+          "deltas": {
+            "input": 203005,
+            "cached": 212224,
+            "uncached": -9219,
+            "output": 3099,
+            "generations": 6,
+            "durationSeconds": -149.41000000000003
+          }
+        },
+        "checkpoints": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "comparable",
+            "ratios": {
+              "input": 4.981681469519581,
+              "cached": 8.628571428571428,
+              "uncached": 1.9717207074428886,
+              "output": 3.329192546583851,
+              "generations": 3.5,
+              "durationSeconds": 2.456150316801398
+            },
+            "deltas": {
+              "input": 78901,
+              "cached": 68352,
+              "uncached": 10549,
+              "output": 1500,
+              "generations": 5,
+              "durationSeconds": 33.324
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 3,
+            "status": "comparable",
+            "ratios": {
+              "input": 2.5531258436499673,
+              "cached": 2.8766519823788546,
+              "uncached": 1.5975603557814486,
+              "output": 1.9493333333333334,
+              "generations": 2,
+              "durationSeconds": 1.401202257898981
+            },
+            "deltas": {
+              "input": 120813,
+              "cached": 109056,
+              "uncached": 11757,
+              "output": 1780,
+              "generations": 6,
+              "durationSeconds": 27.36399999999999
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 6,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.702607853535936,
+              "cached": 1.9921630094043887,
+              "uncached": 0.8189173533643516,
+              "output": 1.485781372293243,
+              "generations": 1.5,
+              "durationSeconds": 0.5495822429000679
+            },
+            "deltas": {
+              "input": 152357,
+              "cached": 162048,
+              "uncached": -9691,
+              "output": 1862,
+              "generations": 6,
+              "durationSeconds": -116.174
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 9,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.4936626761465366,
+              "cached": 1.6299411269974768,
+              "uncached": 0.8306989084051207,
+              "output": 1.382132667617689,
+              "generations": 1.3529411764705883,
+              "durationSeconds": 0.5803928585509057
+            },
+            "deltas": {
+              "input": 181151,
+              "cached": 191744,
+              "uncached": -10593,
+              "output": 2143,
+              "generations": 6,
+              "durationSeconds": -138.36
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 12,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.4351297533539533,
+              "cached": 1.530729833546735,
+              "uncached": 0.8617156914215429,
+              "output": 1.444237385321101,
+              "generations": 1.3,
+              "durationSeconds": 0.6170398185290085
+            },
+            "deltas": {
+              "input": 203005,
+              "cached": 212224,
+              "uncached": -9219,
+              "output": 3099,
+              "generations": 6,
+              "durationSeconds": -149.41000000000003
+            }
+          }
+        ],
+        "windows": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "comparable",
+            "ratios": {
+              "input": 4.981681469519581,
+              "cached": 8.628571428571428,
+              "uncached": 1.9717207074428886,
+              "output": 3.329192546583851,
+              "generations": 3.5,
+              "durationSeconds": 2.456150316801398
+            },
+            "deltas": {
+              "input": 78901,
+              "cached": 68352,
+              "uncached": 10549,
+              "output": 1500,
+              "generations": 5,
+              "durationSeconds": 33.324
+            }
+          },
+          {
+            "fromStage": 2,
+            "toStage": 6,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.3728182145775496,
+              "cached": 1.6069651741293531,
+              "uncached": 0.5255619887016244,
+              "output": 1.1135152085293196,
+              "generations": 1.1,
+              "durationSeconds": 0.36394656228727024
+            },
+            "deltas": {
+              "input": 73456,
+              "cached": 93696,
+              "uncached": -20240,
+              "output": 362,
+              "generations": 1,
+              "durationSeconds": -149.49800000000002
+            }
+          },
+          {
+            "fromStage": 7,
+            "toStage": 12,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.202840276498434,
+              "cached": 1.2121212121212122,
+              "uncached": 1.035893536121673,
+              "output": 1.3935730194082088,
+              "generations": 1,
+              "durationSeconds": 0.7486310694297381
+            },
+            "deltas": {
+              "input": 50648,
+              "cached": 50176,
+              "uncached": 472,
+              "output": 1237,
+              "generations": 0,
+              "durationSeconds": -33.23600000000003
+            }
+          }
+        ]
+      },
+      "final-output": {
+        "total": {
+          "fromStage": 1,
+          "toStage": 12,
+          "status": "comparable",
+          "ratios": {
+            "input": 1.158224714332564,
+            "cached": 1.1658130601792573,
+            "uncached": 1.1127094364528178,
+            "output": 0.9187213302752294,
+            "generations": 1.05,
+            "durationSeconds": 0.5342449602071024
+          },
+          "deltas": {
+            "input": 73818,
+            "cached": 66304,
+            "uncached": 7514,
+            "output": -567,
+            "generations": 1,
+            "durationSeconds": -181.71200000000002
+          }
+        },
+        "checkpoints": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.981075898264029,
+              "cached": 1.2285714285714286,
+              "uncached": 2.6021554900515844,
+              "output": 0.8291925465838509,
+              "generations": 1.5,
+              "durationSeconds": 1.0403757920034957
+            },
+            "deltas": {
+              "input": 19441,
+              "cached": 2048,
+              "uncached": 17393,
+              "output": -110,
+              "generations": 1,
+              "durationSeconds": 0.9239999999999995
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 3,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.4020594700914035,
+              "cached": 1.2114537444933922,
+              "uncached": 1.9650317662007624,
+              "output": 0.944,
+              "generations": 1.1666666666666667,
+              "durationSeconds": 0.8184297338904772
+            },
+            "deltas": {
+              "input": 31275,
+              "cached": 12288,
+              "uncached": 18987,
+              "output": -105,
+              "generations": 1,
+              "durationSeconds": -12.384
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 6,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.2284212225322235,
+              "cached": 1.255485893416928,
+              "uncached": 1.1458228226544835,
+              "output": 0.9066005739629533,
+              "generations": 1.0833333333333333,
+              "durationSeconds": 0.4029194533294562
+            },
+            "deltas": {
+              "input": 49532,
+              "cached": 41728,
+              "uncached": 7804,
+              "output": -358,
+              "generations": 1,
+              "durationSeconds": -154.002
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 9,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.1758753845860368,
+              "cached": 1.1875525651808243,
+              "uncached": 1.119068548322652,
+              "output": 0.9035306704707561,
+              "generations": 1.0588235294117647,
+              "durationSeconds": 0.49069409863012037
+            },
+            "deltas": {
+              "input": 64538,
+              "cached": 57088,
+              "uncached": 7450,
+              "output": -541,
+              "generations": 1,
+              "durationSeconds": -167.937
+            }
+          },
+          {
+            "fromStage": 1,
+            "toStage": 12,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.158224714332564,
+              "cached": 1.1658130601792573,
+              "uncached": 1.1127094364528178,
+              "output": 0.9187213302752294,
+              "generations": 1.05,
+              "durationSeconds": 0.5342449602071024
+            },
+            "deltas": {
+              "input": 73818,
+              "cached": 66304,
+              "uncached": 7514,
+              "output": -567,
+              "generations": 1,
+              "durationSeconds": -181.71200000000002
+            }
+          }
+        ],
+        "windows": [
+          {
+            "fromStage": 1,
+            "toStage": 1,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.981075898264029,
+              "cached": 1.2285714285714286,
+              "uncached": 2.6021554900515844,
+              "output": 0.8291925465838509,
+              "generations": 1.5,
+              "durationSeconds": 1.0403757920034957
+            },
+            "deltas": {
+              "input": 19441,
+              "cached": 2048,
+              "uncached": 17393,
+              "output": -110,
+              "generations": 1,
+              "durationSeconds": 0.9239999999999995
+            }
+          },
+          {
+            "fromStage": 2,
+            "toStage": 6,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.152723710722787,
+              "cached": 1.2570480928689884,
+              "uncached": 0.7752279599634326,
+              "output": 0.9222326748196927,
+              "generations": 1,
+              "durationSeconds": 0.34085262083049694
+            },
+            "deltas": {
+              "input": 30091,
+              "cached": 39680,
+              "uncached": -9589,
+              "output": -248,
+              "generations": 0,
+              "durationSeconds": -154.92600000000002
+            }
+          },
+          {
+            "fromStage": 7,
+            "toStage": 12,
+            "status": "comparable",
+            "ratios": {
+              "input": 1.0972630499731673,
+              "cached": 1.103896103896104,
+              "uncached": 0.9779467680608365,
+              "output": 0.9335030225898823,
+              "generations": 1,
+              "durationSeconds": 0.7904250491604898
+            },
+            "deltas": {
+              "input": 24286,
+              "cached": 24576,
+              "uncached": -290,
+              "output": -209,
+              "generations": 0,
+              "durationSeconds": -27.710000000000036
+            }
+          }
+        ]
+      }
+    }
+  },
+  "finishedAt": "2026-10-05T03:46:48.524Z",
+  "rawResultSha256": "eca829bede385457bfcb955cd183fa50f823e5424a607fac436bf82c159aa780"
+}
