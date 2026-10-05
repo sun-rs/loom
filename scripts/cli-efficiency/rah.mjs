@@ -33,6 +33,8 @@ export async function rahArm({
   arm,
   save,
   config,
+  businessInstructions = instructions,
+  beforeRound,
 }) {
   assert.ok(config?.provider && config.model, "rahArm needs the gate config");
   const { provider, model, effort, bindingId } = config;
@@ -152,7 +154,7 @@ export async function rahArm({
     const configuration = {
       displayName: "Efficiency Reviewer",
       handle: "efficiency-reviewer",
-      instructions,
+      instructions: businessInstructions,
       role: "Bounded code reviewer",
       executionWorkspace: {
         kind: "existing_mount",
@@ -214,6 +216,7 @@ export async function rahArm({
     Object.assign(arm, { participantId, roomId });
     save();
     for (let i = 0; i < questions.length; i++) {
+      await beforeRound?.({ round: i + 1, arm });
       if (i + 1 === restartBeforeRound) {
         await stop();
         await start();
@@ -366,6 +369,7 @@ export async function rahArm({
       // A guard that saw another model after forwarding fails the arm.
       gate.assertNoGuardViolations();
       assert.deepEqual(observer.listTasks(actor, { roomId }), []);
+      round.longStageSucceeded = true;
       save();
       console.log(`${kind} round ${i + 1}: ${round.replySeconds}s`);
     }

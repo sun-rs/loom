@@ -28,6 +28,10 @@ OpenCode 原生 `run` 优先读取 `PWD`。原生模型进程及配置预检均�
 
 ## 首个可执行范围
 
+连续长任务另有[12阶段预注册实验](../evo/long-session-efficiency-plan.zh-CN.md)：
+`node scripts/test-cli-long-session.mjs --plan` 免费核对身份，`--paid` 执行当批授权的三臂样本。
+它保留启动和恢复成本，按固定进度比较累计消耗与独立质量；不替代本页的逐轮合同门禁，也不沿用旧样本分母。
+
 ```sh
 npm run test:cli:efficiency -- --paid
 ```
