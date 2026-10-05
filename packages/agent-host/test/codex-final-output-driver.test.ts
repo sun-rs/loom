@@ -89,7 +89,7 @@ test(
       ws!.send(JSON.stringify({ method, params }));
     try {
       await wait("ready", 1);
-      assert.match(instructions, /replaces message-post\/MCP for this reply/);
+      assert.match(instructions, /message-post\/MCP reply requirement/);
       for (const [index, mode] of [
         "normal",
         "commentary",

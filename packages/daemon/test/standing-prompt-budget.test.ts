@@ -99,7 +99,7 @@ const MOVED_RULES: readonly RegExp[] = [
   /use the current environment, never a previous turn's Room, range or Worker path/giu,
   /`msg=<ref>` is a short message id/giu,
   /pass a wake's `--turn <handle>` to every Worker command/giu,
-  /reply through the current reply path using its `Reply context:` arguments/giu,
+  /publish the answer with `message-post` using its `Reply context:` arguments/giu,
   /With no reply needed, run `message-check` once/giu,
   /when a wake says `message-check first`, run it before replying/giu,
   /Never infer missing memory or no work from an error/giu,

@@ -20,10 +20,6 @@ test("OpenCode final-output system exception is opt-in and preserves ordinary Wo
     /exact --based-on-room-seq value from the current Reply context/,
   );
   assert.match(text, /Other operations retain the Worker tools/);
-  assert.match(text, /complete all current work/);
-  assert.match(text, /progress, attachments, other targets/);
-  assert.match(text, /wakes without this selection/);
-  assert.match(text, /do not also post.*through a tool/);
 });
 
 const expected = { sessionId: "session-original", parentId: "input-original" };

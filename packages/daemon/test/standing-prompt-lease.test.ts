@@ -271,11 +271,10 @@ test("§59: every launch carries the CLI protocol; a session created on the with
   // are on demand. Reads, no-reply ACK and explicit final remain distinct.
   // Pin the new card; both withdrawn-tool and preceding CLI sessions upgrade.
   // 2026-09-30: publication and completion are separate; final is explicit.
-  // 2026-10-05: one reply-path reference replaces duplicate CLI routing.
-  assert.equal(STANDING_PROTOCOL_VERSION, "b71903b8402e");
+  assert.equal(STANDING_PROTOCOL_VERSION, "43b49986b67f");
   assert.equal(
     createHash("sha256").update(renderStandingProtocolCard()).digest("hex"),
-    "f8ffa681c214fdfb92b9bb9d77ab0be43586b00a538a389a99d6e863ed6edd4e",
+    "268c21434e38d703386f949ef449834e55035ecd663b264d1a1d3c9ef5b05278",
   );
   const agent = { ...agentContext({ role: "review" }), instanceChannelId: "c" };
   const lease = standingPromptLease(envelope(agent), options)!;
@@ -313,5 +312,5 @@ test("§59: every launch carries the CLI protocol; a session created on the with
     protocolUpdateNotice(STANDING_PROTOCOL_VERSION),
   );
   assert.equal(notice, protocolUpdateNotice(STANDING_PROTOCOL_VERSION));
-  assert.match(notice!, /b71903b8402e/u);
+  assert.match(notice!, /43b49986b67f/u);
 });

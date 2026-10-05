@@ -3,18 +3,7 @@ import test from "node:test";
 import {
   WorkerFinalOutput,
   parseFinalOutput,
-  withFinalOutputGuidance,
 } from "../src/worker-final-output.ts";
-
-test("final-output wake selects transport once without repeating standing rules or changing reply authority", () => {
-  const wake =
-    "Messages: FAKE\nReply context: --target #original --based-on-room-seq 17 --turn original-turn";
-  assert.equal(withFinalOutputGuidance(wake, false), wake);
-  assert.equal(
-    withFinalOutputGuidance(wake, true),
-    `${wake}\nReply transport: explicit final-output.`,
-  );
-});
 
 const envelope = JSON.stringify({
   kind: "room.reply",

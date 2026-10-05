@@ -126,17 +126,34 @@ function platformLayer(
   channelMemory: boolean,
 ): string {
   if (agent && channelMemory)
-    return `If the wake lacks your messages, run \`"$RAH_WORKER_CLI" worker message-check --startup\`. Your role is stated in this prompt; do not duplicate it.
+    return `If the wake lacks your messages, run \`"$RAH_WORKER_CLI" worker message-check --startup\` (identity, scope, messages; validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON). Your role is stated in this prompt; do not duplicate it.
 ${CHANNEL_MEMORY_POINTER}
 
 ${workerCliSection()}`;
   const bootstrap = agent
-    ? 'If the wake lacks your messages, run `"$RAH_WORKER_CLI" worker message-check --startup`. Your role is stated in this prompt; do not duplicate it.'
+    ? 'If the wake lacks your messages, run `"$RAH_WORKER_CLI" worker message-check --startup` (identity, scope, memory index, messages; validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON). Your role is stated in this prompt; do not duplicate it.'
     : "First parse process.env.RAH_AGENT_CONTEXT_JSON and process.env.RAH_CONTEXT_MANIFEST_JSON. The first contains the frozen AgentDefinition role and instructions; the second is the Kernel-owned audit record of the exact Room range, instruction/skill/memory content references, RuntimeProfile and Workspace revision selected for this RunAttempt. Follow those instructions unless they conflict with the canonical Worker protocol or system safety. Do not substitute mutable latest files for the manifest references.";
   return `${bootstrap}
 ${buildAgentMemoryInstructions()}
 
 ${workerCliSection()}`;
+}
+
+function workspacePolicyLayer(
+  context: StandingPromptRuntimeContext | undefined,
+): string | undefined {
+  const lines: string[] = [];
+  if (context?.workspaceMode) {
+    lines.push(
+      `Workspace mode: ${context.workspaceMode} (recorded by RAH OS for this Activation).`,
+    );
+  }
+  if (context?.toolAccessMode) {
+    lines.push(
+      `Tool access: ${context.toolAccessMode} (recorded by RAH OS for this Activation).`,
+    );
+  }
+  return lines.length > 0 ? lines.join("\n") : undefined;
 }
 
 function initialRoleLayer(
@@ -182,6 +199,12 @@ export function standingPromptLayers(
     { id: "reminders", text: remindersSection() },
     { id: "communication-style", text: communicationStyleSection() },
     { id: "formatting", text: formattingSection() },
+    workspacePolicyLayer(input?.runtimeContext) === undefined
+      ? undefined
+      : {
+          id: "workspace-policy",
+          text: workspacePolicyLayer(input?.runtimeContext)!,
+        },
     initialRoleLayer(agent) === undefined
       ? undefined
       : { id: "initial-role", text: initialRoleLayer(agent)! },
