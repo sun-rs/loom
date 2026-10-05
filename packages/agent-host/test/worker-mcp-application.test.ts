@@ -123,6 +123,30 @@ test("internal MCP publishes once as the credential actor and never rebinds a re
       "FAKE MCP integration reply one",
       { basedOnRoomSeq: first.work.scope.toSeq },
     );
+    for (const threadId of ["#multi-efficiency", "thread-id", null]) {
+      const rejected = await invoke(
+        params(
+          "native-turn-1",
+          `bad-target-${threadId}`,
+          "must not select a target",
+          {
+            basedOnRoomSeq: first.work.scope.toSeq,
+            threadId,
+          },
+        ),
+      );
+      assert.equal(rejected.isError, true);
+      assert.equal(
+        JSON.parse(rejected.content[0]!.text).error.code,
+        "INVALID_ARGUMENTS",
+      );
+      assert.equal(
+        f.db
+          .prepare("SELECT count(*) AS count FROM messages WHERE body=?")
+          .get("must not select a target")?.count,
+        0,
+      );
+    }
     const result = await invoke(original);
     assert.equal(result.isError, false, JSON.stringify(result));
     const receipt = JSON.parse(result.content[0]!.text);

@@ -47,6 +47,12 @@ export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
       messages,
       runs: observer.listRunAttempts({ roomId }),
       activations: observer.listActivations({ roomId }),
+      subscriptionCursors: rows(
+        "SELECT * FROM subscription_cursors WHERE room_id=?",
+      ),
+      events: rows(
+        "SELECT event_id, room_id, room_seq, actor_id, type, aggregate_type, aggregate_id, payload_json FROM room_events WHERE room_id=?",
+      ),
       presentedWindows: rows(
         "SELECT p.activation_id, p.consumer_id, p.run_attempt_id, p.from_seq, p.to_seq, p.presented_seqs_json, p.content_digest, p.rendered_at, p.sent_at, p.pending_ack_seq FROM activation_presented_windows p JOIN run_attempts r ON r.run_attempt_id=p.run_attempt_id WHERE r.room_id=?",
       ),
@@ -79,11 +85,12 @@ export async function runMultiProduct(
     save,
     beforeRound,
     productArm = "final-output",
+    maxRunAttempts = steps.length,
   },
   dependencies = {},
 ) {
   assert.ok(
-    ["final-output", "worker-mcp"].includes(productArm),
+    ["final-output", "worker-mcp", "worker-delivery"].includes(productArm),
     "Unknown product arm",
   );
   assert.equal(config?.provider, "codex", "Multi product gate is Codex-only");
@@ -105,6 +112,14 @@ export async function runMultiProduct(
     readEvidence: readMultiEvidence,
     ...dependencies,
   };
+  const business = productArm === "worker-delivery";
+  assert.ok(
+    Number.isSafeInteger(maxRunAttempts) && maxRunAttempts >= steps.length,
+  );
+  assert.ok(
+    business || maxRunAttempts === steps.length,
+    "Legacy Run bound must not change",
+  );
   arm.rounds ??= [];
   arm.processes ??= [];
   assert.equal(
@@ -114,7 +129,7 @@ export async function runMultiProduct(
   );
   arm.members = {};
   arm.status = "running";
-  arm.runLimit = steps.length;
+  arm.runLimit = maxRunAttempts;
   const gate = await deps.prepareGateDaemon({
     ...config,
     root,
@@ -134,18 +149,52 @@ export async function runMultiProduct(
       roomId,
     });
     Object.assign(arm, data);
+    if (business && activeRound) {
+      const stageRuns = data.runs.filter(
+        (r) => !activeRound.previousRunIds.includes(r.runAttemptId),
+      );
+      const ids = new Set(stageRuns.map((r) => r.runAttemptId));
+      const activationIds = new Set(stageRuns.map((r) => r.activationId));
+      activeRound.durableDeliveryProof = {
+        runs: stageRuns,
+        activations: data.activations.filter((a) =>
+          activationIds.has(a.activationId),
+        ),
+        presentedWindows: (data.presentedWindows ?? []).filter((p) =>
+          ids.has(p.run_attempt_id),
+        ),
+        subscriptionCursors: (data.subscriptionCursors ?? []).filter(
+          (c) =>
+            c.room_id === roomId &&
+            c.participant_id === activeRound.participantId,
+        ),
+        finalMarkers: data.markers.filter((m) => ids.has(m.run_attempt_id)),
+        messages: data.messages.filter(
+          (m) =>
+            m.roomSeq > activeRound.beforeRoomSeq &&
+            m.actorId !== actor.principalId,
+        ),
+        events: (data.events ?? []).filter(
+          (e) => e.room_seq > activeRound.beforeRoomSeq,
+        ),
+      };
+    }
     save();
     return data;
   };
   const checkRuns = (data, round) => {
-    assert.ok(data.runs.length <= steps.length, "Total Run limit exceeded");
+    assert.ok(data.runs.length <= maxRunAttempts, "Total Run limit exceeded");
     const fresh = data.runs.filter(
       (r) => !round.previousRunIds.includes(r.runAttemptId),
     );
     round.runs = fresh;
     assert.ok(
-      fresh.length <= 1 &&
-        fresh.every((r) => r.participantId === round.participantId),
+      (business || fresh.length <= 1) &&
+        fresh.every((r) => r.participantId === round.participantId) &&
+        (!business ||
+          fresh.every(
+            (r) => r.activationId && r.activationId === fresh[0].activationId,
+          )),
       "Unexpected Run or automatic retry; no further admission",
     );
     return fresh;
@@ -235,16 +284,18 @@ export async function runMultiProduct(
       3,
     );
     let data = capture();
+    let settledRunIds = [];
     assert.equal(data.runs.length, 0, "Unexpected setup Run");
     for (const [index, step] of steps.entries()) {
       // Reinspect durable state after the caller's budget fence, before posting.
       await beforeRound?.({ round: index + 1, arm });
       data = capture();
-      assert.equal(
-        data.runs.length,
-        index,
+      assert.deepEqual(
+        data.runs.map((r) => r.runAttemptId).sort(),
+        settledRunIds,
         "Unexpected Run between scheduled steps",
       );
+      assert.ok(data.runs.length < maxRunAttempts, "No remaining Run budget");
       assert.ok(
         data.activations.every((a) => a.state === "completed"),
         "Channel not idle",
@@ -301,7 +352,10 @@ export async function runMultiProduct(
         assert.ok(
           round.replies.length <= 1 &&
             round.replies.every(
-              (m) => m.actorId === member.participantId && !m.threadId,
+              (m) =>
+                m.actorId === member.participantId &&
+                !m.threadId &&
+                (!business || m.roomId === roomId),
             ),
           "Unexpected or duplicate Channel reply",
         );
@@ -318,14 +372,32 @@ export async function runMultiProduct(
           "Activation failed",
         );
         if (
+          !business &&
           fresh.some((r) =>
             ["failed", "cancelled", "timed_out"].includes(r.state),
           )
         )
           throw Error("Run failed");
+        if (
+          business &&
+          fresh.length &&
+          fresh.every((r) =>
+            ["exited", "failed", "cancelled", "timed_out"].includes(r.state),
+          ) &&
+          data.activations.every((a) => a.state === "completed") &&
+          data.runtimes.every((r) => r.state !== "busy") &&
+          !round.replies.length
+        )
+          throw Error(
+            "No canonical reply after terminal delivery; no further admission",
+          );
         return (
-          fresh.length === 1 &&
-          fresh[0].state === "exited" &&
+          fresh.length >= 1 &&
+          fresh.every((r) =>
+            business
+              ? ["exited", "failed", "cancelled", "timed_out"].includes(r.state)
+              : r.state === "exited",
+          ) &&
           round.replies.length === 1 &&
           data.activations.every((a) => a.state === "completed") &&
           data.runtimes.every((r) => r.state !== "busy")
@@ -334,39 +406,152 @@ export async function runMultiProduct(
       round.finishedAt = new Date().toISOString();
       const reply = round.replies[0];
       assert.ok(
-        /^审查结论：\s*\S/.test(reply.body.trim()),
+        business
+          ? typeof reply.body === "string" && !!reply.body.trim()
+          : /^审查结论：\s*\S/.test(reply.body.trim()),
         "No effective answer",
       );
       round.answer = reply.body;
       round.replySeconds =
         (Date.parse(reply.createdAt) - Date.parse(round.startedAt)) / 1000;
       round.firstMessageSeconds = round.replySeconds;
-      const run = round.runs[0];
-      const usage = await gate.post("/v3/client/agents/run-usage/get", {
-        agentId: member.agentId,
-        runAttemptId: run.runAttemptId,
-      });
+      const attemptUsages = [];
+      for (const attempt of round.runs) {
+        const value = await gate.post("/v3/client/agents/run-usage/get", {
+          agentId: member.agentId,
+          runAttemptId: attempt.runAttemptId,
+        });
+        attemptUsages.push(value);
+        round.attemptUsages = attemptUsages;
+        assert.equal(value.completeness, "complete");
+        assert.deepEqual(value.gaps, []);
+        assert.ok(!value.truncated);
+        const rt = data.runtimes.find(
+          (r) => r.instance_runtime_id === value.execution?.instanceRuntimeId,
+        );
+        assert.ok(rt?.native_session_id, "Missing runtime session evidence");
+        if (member.sessionId)
+          assert.equal(
+            rt.native_session_id,
+            member.sessionId,
+            "Session changed",
+          );
+        if (member.instanceRuntimeId)
+          assert.equal(
+            rt.instance_runtime_id,
+            member.instanceRuntimeId,
+            "Runtime changed",
+          );
+        member.sessionId = rt.native_session_id;
+        member.instanceRuntimeId = rt.instance_runtime_id;
+      }
+      const markers = data.markers.filter(
+        (m) =>
+          round.runs.some((r) => r.runAttemptId === m.run_attempt_id) &&
+          m.room_seq === reply.roomSeq &&
+          (business ||
+            m.submission_kind ===
+              (productArm === "worker-mcp" ? null : "final-output")),
+      );
+      if (business)
+        assert.equal(markers.length, 1, "Missing unique final marker");
+      const run = business
+        ? round.runs.find((r) => r.runAttemptId === markers[0].run_attempt_id)
+        : round.runs[0];
+      const finalUsage = attemptUsages[round.runs.indexOf(run)];
+      assert.ok(
+        runSucceeded(run, finalUsage.execution),
+        "Unsuccessful final Run",
+      );
+      const usage = business
+        ? {
+            completeness: "complete",
+            gaps: [],
+            totals: Object.fromEntries(
+              [
+                "inputTokens",
+                "cachedInputTokens",
+                "outputTokens",
+                "generations",
+              ].map((field) => [
+                field,
+                attemptUsages.reduce((sum, u) => {
+                  assert.ok(
+                    Number.isSafeInteger(u.totals?.[field]) &&
+                      u.totals[field] >= 0,
+                    `Missing attempt usage: ${field}`,
+                  );
+                  return sum + u.totals[field];
+                }, 0),
+              ]),
+            ),
+            execution: finalUsage.execution,
+            finalInterrupt: finalUsage.finalInterrupt,
+          }
+        : finalUsage;
+      if (business)
+        usage.totals.reasoningOutputTokens = attemptUsages.every(
+          (u) =>
+            Number.isSafeInteger(u.totals.reasoningOutputTokens) &&
+            u.totals.reasoningOutputTokens >= 0,
+        )
+          ? attemptUsages.reduce(
+              (sum, u) => sum + u.totals.reasoningOutputTokens,
+              0,
+            )
+          : null;
       round.productUsage = usage;
       round.execution = usage.execution;
-      assert.ok(runSucceeded(run, usage.execution), "Unsuccessful Run");
-      assert.equal(usage.completeness, "complete");
-      assert.deepEqual(usage.gaps, []);
-      assert.ok(!usage.truncated);
-      const rt = data.runtimes.find(
-        (r) => r.instance_runtime_id === usage.execution?.instanceRuntimeId,
-      );
-      assert.ok(rt?.native_session_id, "Missing runtime session evidence");
-      if (member.sessionId)
-        assert.equal(rt.native_session_id, member.sessionId, "Session changed");
-      if (member.instanceRuntimeId)
-        assert.equal(
-          rt.instance_runtime_id,
-          member.instanceRuntimeId,
-          "Runtime changed",
-        );
-      member.sessionId = rt.native_session_id;
-      member.instanceRuntimeId = rt.instance_runtime_id;
       round.sessionId = member.sessionId;
+      if (business) {
+        const proof = round.durableDeliveryProof,
+          marker = markers[0];
+        assert.equal(proof.finalMarkers.length, 1, "Multiple final markers");
+        const activation = proof.activations.find(
+          (a) => a.activationId === run.activationId,
+        );
+        assert.ok(
+          activation &&
+            activation.state === "completed" &&
+            activation.participantId === member.participantId &&
+            activation.roomId === roomId &&
+            activation.toSeq >= round.humanRoomSeq,
+          "Invalid delivery activation",
+        );
+        assert.equal(
+          marker.activation_id,
+          activation.activationId,
+          "Marker activation mismatch",
+        );
+        assert.equal(marker.room_id, roomId, "Marker room mismatch");
+        const event = proof.events.find((e) => e.event_id === marker.event_id);
+        assert.ok(
+          event &&
+            event.room_id === roomId &&
+            event.room_seq === reply.roomSeq &&
+            event.actor_id === member.participantId &&
+            event.type === "message.posted" &&
+            event.aggregate_id === reply.messageId,
+          "Canonical reply event mismatch",
+        );
+        const windows = proof.presentedWindows.filter(
+          (p) =>
+            p.run_attempt_id === run.runAttemptId &&
+            p.activation_id === activation.activationId &&
+            p.sent_at &&
+            p.to_seq >= activation.toSeq,
+        );
+        assert.ok(
+          windows.some((p) =>
+            proof.subscriptionCursors.some(
+              (c) =>
+                c.consumer_id === p.consumer_id &&
+                c.last_seq >= activation.toSeq,
+            ),
+          ),
+          "Missing same-consumer delivery ACK cursor",
+        );
+      }
       const metas = deps
         .transcript(round.sessionId)
         .filter((e) => e.type === "session_meta");
@@ -379,7 +564,7 @@ export async function runMultiProduct(
         round,
         { replyAt: reply.createdAt },
         config,
-        { turns: 1 },
+        { turns: round.runs.length },
       );
       // measure() independently validates the original turn_context model/effort.
       round.actualIdentityVerified = true;
@@ -411,16 +596,8 @@ export async function runMultiProduct(
       }
       round.metrics.finalInterrupt = usage.finalInterrupt ?? null;
       round.metrics.replyAt = reply.createdAt;
-      const markers = data.markers.filter(
-        (m) =>
-          m.run_attempt_id === run.runAttemptId &&
-          m.room_seq === reply.roomSeq &&
-          m.submission_kind ===
-            (productArm === "worker-mcp" ? null : "final-output"),
-      );
       assert.equal(markers.length, 1, "Missing unique final marker");
-      // A null marker alone does not prove MCP: profile validation must join
-      // the actual native call/result receipt with this durable event.
+      // Null submission kind is tool delivery, not by itself proof of MCP.
       round.finalMarker = markers[0];
       for (const p of observer.listPlacements({ roomId })) {
         assert.equal(p.resolvedModel.modelId, config.model);
@@ -430,6 +607,7 @@ export async function runMultiProduct(
       assert.deepEqual(observer.listTasks(actor, { roomId }), []);
       round.longStageSucceeded = true;
       save();
+      settledRunIds = data.runs.map((r) => r.runAttemptId).sort();
       activeRound = undefined;
     }
     arm.status = "complete";
@@ -474,7 +652,13 @@ export async function runMultiProduct(
             }));
           }
           if (arm.status === "complete") {
-            assert.equal(arm.runs.length, steps.length, "Late unexpected Run");
+            assert.deepEqual(
+              arm.runs.map((r) => r.runAttemptId).sort(),
+              arm.rounds
+                .flatMap((r) => r.runs.map((a) => a.runAttemptId))
+                .sort(),
+              "Late unexpected Run",
+            );
             assert.deepEqual(arm.usageGaps, [], "Late usage gap");
             for (const round of arm.rounds) {
               const rows = arm.usageRows.filter((u) =>

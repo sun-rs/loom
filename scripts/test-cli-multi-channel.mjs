@@ -49,14 +49,22 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
   const workload = profile.workload;
   const productArm = profile.productArm ?? "final-output";
   assert.ok(
-    ["final-output", "worker-mcp"].includes(productArm),
+    ["final-output", "worker-mcp", "worker-delivery"].includes(productArm),
     "Unknown product arm",
   );
   assert.equal(
     workload.steps.length,
     speakers.length * profile.roundsPerParticipant,
   );
-  assert.equal(profile.limits.maxProductRuns, workload.steps.length);
+  if (productArm === "worker-delivery") {
+    assert.ok(
+      Number.isSafeInteger(profile.limits.maxProductRuns) &&
+        profile.limits.maxProductRuns >= workload.steps.length,
+    );
+    assert.equal(profile.answerPolicy, "business-content");
+  } else assert.equal(profile.limits.maxProductRuns, workload.steps.length);
+  const order = profile.order ?? ["native", productArm];
+  assert.deepEqual([...order].sort(), ["native", productArm].sort());
   assert.ok(
     args.length === 1 && ["--plan", "--paid"].includes(args[0]),
     "Requires exactly --plan or --paid",
@@ -70,6 +78,9 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
   const identity = {
     experimentVersion: profile.experimentVersion,
     ...(profile.productArm === undefined ? {} : { productArm }),
+    ...(profile.answerPolicy === undefined
+      ? {}
+      : { answerPolicy: profile.answerPolicy }),
     ...(profile.validationPolicy
       ? { validationPolicy: profile.validationPolicy }
       : {}),
@@ -84,7 +95,7 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     version,
     model: config.model,
     effort: config.effort,
-    order: ["native", productArm],
+    order,
     historyPolicy:
       "independent arm histories; fixed business questions; own peer replies relayed without editing",
     routingIdentity:
@@ -106,7 +117,10 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     arms: Object.fromEntries(
       ["native", productArm].map((k) => [
         k,
-        longArmEnvironment(k === "worker-mcp" ? "default" : k, {}),
+        longArmEnvironment(
+          ["worker-mcp", "worker-delivery"].includes(k) ? "default" : k,
+          {},
+        ),
       ]),
     ),
     relayTemplate: channelPrompt([{ author: "<author>", body: "<body>" }]),
@@ -160,7 +174,7 @@ export function validateMultiHistory(arm) {
         m.input === m.cached + m.uncached,
       "Missing/inconsistent usage",
     );
-    if (["final-output", "worker-mcp"].includes(arm.kind))
+    if (["final-output", "worker-mcp", "worker-delivery"].includes(arm.kind))
       assert.ok(m.productUsage, "Missing product usage");
     if (m.productUsage) {
       assert.equal(
@@ -317,7 +331,9 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
       const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
       Object.assign(
         process.env,
-        longArmEnvironment(kind === "worker-mcp" ? "default" : kind),
+        longArmEnvironment(
+          ["worker-mcp", "worker-delivery"].includes(kind) ? "default" : kind,
+        ),
       );
       const verify = () => {
         assert.equal(version(), plan.version, "CLI changed");
@@ -369,12 +385,15 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
               nativeRound({
                 ...options,
                 answerValidator: (answer) =>
-                  /^审查结论：\s*\S/u.test(answer.trim()),
+                  profile.answerPolicy === "business-content"
+                    ? Boolean(answer.trim())
+                    : /^审查结论：\s*\S/u.test(answer.trim()),
               }),
           });
         else
           await runMultiProduct({
             productArm: profile.productArm ?? "final-output",
+            maxRunAttempts: profile.limits.maxProductRuns,
             root: armRoot,
             cwd,
             config: plan.config,

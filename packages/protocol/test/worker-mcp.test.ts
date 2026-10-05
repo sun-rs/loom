@@ -51,3 +51,19 @@ test("draft revision preserves saved target and final intent", () => {
       false,
     );
 });
+
+test("current reply has no model-selectable target, including explicit room null", () => {
+  assert.equal(
+    "threadId" in WORKER_REPLY_MCP_TOOL.inputSchema.properties,
+    false,
+  );
+  for (const threadId of ["#multi-efficiency", "thread-id", null])
+    assert.equal(
+      WorkerReplyMcpArgumentsSchema.safeParse({
+        body: "reply",
+        final: true,
+        threadId,
+      }).success,
+      false,
+    );
+});

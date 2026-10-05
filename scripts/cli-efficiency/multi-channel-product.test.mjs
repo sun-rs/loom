@@ -9,12 +9,19 @@ function fixture({
   memoryMode = "disabled",
   lateUsage = false,
   omitCanonicalMention = false,
+  businessAnswer,
+  retry = false,
+  missingAck = false,
+  submissionKind = "final-output",
 } = {}) {
   const arm = { rounds: [], processes: [] };
   const messages = [],
     runs = [],
     activations = [],
-    requests = [];
+    requests = [],
+    presentedWindows = [],
+    subscriptionCursors = [],
+    events = [];
   let stopped = false,
     creations = 0,
     seq = 0;
@@ -22,12 +29,19 @@ function fixture({
     runs: [...runs],
     activations: [...activations],
     messages: [...messages],
-    markers: runs.map((r) => ({
-      run_attempt_id: r.runAttemptId,
-      submission_kind: "final-output",
-      room_seq:
-        messages[Number(r.runAttemptId.replace("run-", "")) * 2 + 1]?.roomSeq,
-    })),
+    presentedWindows: [...presentedWindows],
+    subscriptionCursors: [...subscriptionCursors],
+    events: [...events],
+    markers: runs
+      .filter((r) => r.replySeq)
+      .map((r) => ({
+        run_attempt_id: r.runAttemptId,
+        activation_id: r.activationId,
+        room_id: "room",
+        event_id: `event-${r.replySeq}`,
+        submission_kind: submissionKind,
+        room_seq: r.replySeq,
+      })),
     runtimes: ["a", "b", "c"].map((s) => ({
       participant_id: s,
       instance_runtime_id: `rt-${s}`,
@@ -119,19 +133,61 @@ function fixture({
         const r = {
           runAttemptId: `run-${runs.length}`,
           participantId: s,
+          roomId: "room",
+          activationId: `activation-${seq}`,
           state: "exited",
           exitCode: 0,
           startedAt: new Date().toISOString(),
           finishedAt: new Date().toISOString(),
         };
+        if (retry)
+          runs.push({
+            ...r,
+            runAttemptId: `${r.runAttemptId}-retry`,
+            exitCode: 1,
+          });
         runs.push(r);
         if (extraRun)
           runs.push({ ...r, runAttemptId: "unexpected", participantId: "c" });
-        activations.push({ state: "completed", participantId: s });
+        activations.push({
+          activationId: r.activationId,
+          roomId: "room",
+          fromSeq: seq,
+          toSeq: seq,
+          state: "completed",
+          participantId: s,
+        });
+        presentedWindows.push({
+          activation_id: r.activationId,
+          run_attempt_id: r.runAttemptId,
+          consumer_id: `consumer-${s}`,
+          from_seq: seq,
+          to_seq: seq,
+          sent_at: new Date().toISOString(),
+          presented_seqs_json: JSON.stringify([seq]),
+        });
+        subscriptionCursors.push({
+          room_id: "room",
+          participant_id: s,
+          consumer_id: `consumer-${s}`,
+          last_seq: missingAck ? 0 : seq,
+        });
+        r.replySeq = seq + 1;
+        events.push({
+          event_id: `event-${seq + 1}`,
+          room_id: "room",
+          room_seq: seq + 1,
+          actor_id: s,
+          type: "message.posted",
+          aggregate_type: "message",
+          aggregate_id: `reply-${seq}`,
+        });
         messages.push({
           messageId: `reply-${seq}`,
           actorId: s,
-          body: badMention ? "@multi-c wrong" : "审查结论：已核对。",
+          body: badMention
+            ? "@multi-c wrong"
+            : (businessAnswer ?? "审查结论：已核对。"),
           roomSeq: ++seq,
           createdAt: new Date().toISOString(),
           roomId: "room",
@@ -192,7 +248,12 @@ function fixture({
       transcript: () => [
         { type: "session_meta", payload: { memory_mode: memoryMode } },
       ],
-      measure: () => ({ input: 1, cached: 0, output: 1, generations: 1 }),
+      measure: () => ({
+        input: retry ? 2 : 1,
+        cached: 0,
+        output: retry ? 2 : 1,
+        generations: retry ? 2 : 1,
+      }),
     },
   };
 }
@@ -440,4 +501,160 @@ test("worker-mcp arm preserves the tool final marker and does not admit an outpu
     /arm/i,
   );
   assert.equal(unknown.requests.length, 0);
+});
+
+test("worker delivery accepts generic business answers and preserves actual durable ACK joins", async () => {
+  const f = fixture({
+    businessAnswer: "答案是 absent。",
+    submissionKind: null,
+  });
+  await runMultiProduct(
+    { ...f.options, productArm: "worker-delivery" },
+    f.dependencies,
+  );
+  assert.equal(f.arm.rounds[0].answer, "答案是 absent。");
+  const proof = f.arm.rounds[0].durableDeliveryProof;
+  assert.equal(proof.messages.length, 1);
+  assert.equal(
+    proof.finalMarkers[0].event_id,
+    proof.events.find((e) => e.type === "message.posted").event_id,
+  );
+  assert.equal(
+    proof.presentedWindows[0].consumer_id,
+    proof.subscriptionCursors[0].consumer_id,
+  );
+  assert.equal(
+    proof.activations[0].toSeq,
+    proof.subscriptionCursors[0].last_seq,
+  );
+});
+
+test("worker delivery records all same-activation retry costs without adding retries", async () => {
+  const f = fixture({
+    retry: true,
+    businessAnswer: "unknown",
+    submissionKind: null,
+  });
+  await runMultiProduct(
+    { ...f.options, productArm: "worker-delivery", maxRunAttempts: 6 },
+    f.dependencies,
+  );
+  assert.equal(f.arm.runs.length, 6);
+  assert.equal(f.arm.rounds.length, 3);
+  for (const r of f.arm.rounds) {
+    assert.equal(r.runs.length, 2);
+    assert.equal(r.productUsage.totals.inputTokens, 2);
+    assert.equal(r.productUsage.totals.reasoningOutputTokens, null);
+    assert.equal(r.attemptUsages.length, 2);
+    assert.equal(r.metrics.input, 2);
+  }
+});
+
+test("worker delivery rejects missing same-consumer ACK despite completed activation and marker", async () => {
+  const f = fixture({ missingAck: true });
+  await assert.rejects(
+    runMultiProduct(
+      { ...f.options, productArm: "worker-delivery" },
+      f.dependencies,
+    ),
+    /ACK|cursor/i,
+  );
+  assert.equal(f.arm.rounds.length, 1);
+  assert.equal(
+    f.arm.rounds[0].durableDeliveryProof.subscriptionCursors[0].last_seq,
+    0,
+  );
+});
+
+test("business retry cannot cross activation, exceed cap, or hide an attempt usage gap", async () => {
+  for (const fault of [
+    "activation",
+    "budget",
+    "usage",
+    "cursor",
+    "event",
+    "target",
+  ]) {
+    const f = fixture({ retry: true, submissionKind: null });
+    const read = f.dependencies.readEvidence;
+    f.dependencies.readEvidence = () => {
+      const data = read();
+      if (fault === "activation" && data.runs.length)
+        data.runs = data.runs.map((r, i) =>
+          i === 0 ? { ...r, activationId: "foreign" } : r,
+        );
+      if (fault === "cursor")
+        data.subscriptionCursors = data.subscriptionCursors.map((c) => ({
+          ...c,
+          consumer_id: "foreign",
+        }));
+      if (fault === "event")
+        data.events = data.events.map((e) => ({
+          ...e,
+          aggregate_id: "foreign",
+        }));
+      if (fault === "target")
+        data.messages = data.messages.map((m) =>
+          m.actorId === "human" ? m : { ...m, roomId: "foreign" },
+        );
+      return data;
+    };
+    if (fault === "usage") {
+      const prepare = f.dependencies.prepareGateDaemon;
+      f.dependencies.prepareGateDaemon = async (...args) => {
+        const gate = await prepare(...args),
+          post = gate.post.bind(gate);
+        gate.post = async (path, body) => {
+          const value = await post(path, body);
+          if (
+            path.endsWith("run-usage/get") &&
+            body.runAttemptId.endsWith("-retry")
+          )
+            return {
+              ...value,
+              completeness: "incomplete",
+              gaps: [{ kind: "missing" }],
+            };
+          return value;
+        };
+        return gate;
+      };
+    }
+    await assert.rejects(
+      runMultiProduct(
+        {
+          ...f.options,
+          productArm: "worker-delivery",
+          maxRunAttempts: fault === "budget" ? 3 : 6,
+        },
+        f.dependencies,
+      ),
+      undefined,
+      fault,
+    );
+    assert.equal(f.arm.status, "failed", fault);
+    assert.ok(f.arm.usageRows.length > 0, fault);
+  }
+});
+
+test("business terminal without a canonical reply stops, preserving durable failure facts", async () => {
+  const f = fixture();
+  const read = f.dependencies.readEvidence;
+  f.dependencies.readEvidence = () => {
+    const data = read();
+    data.messages = data.messages.filter((m) => m.actorId === "human");
+    data.markers = [];
+    return data;
+  };
+  await assert.rejects(
+    runMultiProduct(
+      { ...f.options, productArm: "worker-delivery" },
+      f.dependencies,
+    ),
+    /No canonical reply/,
+  );
+  assert.equal(f.arm.rounds.length, 1);
+  assert.equal(f.arm.rounds[0].durableDeliveryProof.runs.length, 1);
+  assert.equal(f.arm.rounds[0].durableDeliveryProof.finalMarkers.length, 0);
+  assert.equal(f.arm.usageRows.length, 1);
 });

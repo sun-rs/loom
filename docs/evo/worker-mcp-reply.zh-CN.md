@@ -5,6 +5,7 @@
 ## 边界与唯一所有者
 
 - `packages/protocol/worker-mcp.ts` 拥有工具定义与业务参数验证。`loom_reply` 发布本次交付目标的正文，显式选择 final／progress，或修订已有 held draft；附件、跨目标和其他操作保留 CLI。
+- 当前目标 facade 不接受业务 `threadId`（包括 null）或频道参数；新帖只有 `body`、`final` 和可选 `basedOnRoomSeq`，revision 只有 `body` 与 `reviseDraftId`。这不影响原生 `_meta.threadId` 的执行身份校验。Kernel 沿原凭据的 Activation 投递范围解析唯一顶层或 Thread；private box 保持原 Room scope。多目标合并仍返回冲突且不写入，需通过既有 Worker CLI 显式选择；不会选择最后一条消息的目标。held revision 恢复已存目标及 final/progress 意图，ACK、新鲜度及 unknown-result 围栏不变。
 - AgentHost 拥有每个 Codex warm runtime 或 Claude/Kimi cold Run 的私有 Unix socket、传输认证和原 Run 凭据闭包。MCP 子进程只持有连接本 runtime 的认证值，业务凭据不进入模型参数或 CLI argv。现有同 UID/full-access 限制不变，不宣称操作系统级隔离。
 - Worker 应用服务与 Kernel 继续拥有作者、目标、权限、新鲜度、幂等、草稿、事件、Inbox／Activation／Task。MCP 只调用既有 `POST /v1/worker/messages/post`，不另建业务处理器、队列或游标。
 
