@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "kind": "final-delivery-precondition-free-validation",
+  "fixture": true,
+  "syntheticModel": true,
+  "usageSynthetic": true,
+  "paidProviderCalls": 0,
+  "status": "free-fixture-passed",
+  "sourceProvenance": {
+    "baseCommit": "0d91e44527179a52c14718778c913221ec3a4ae9",
+    "state": "uncommitted repair worktree based on baseCommit; not a clean committed acceptance revision",
+    "filesSha256": {
+      "packages/kernel/src/run-attempt-final-reply.ts": "93b71e053563228ea85be2ad5b270af585873f438ba7cc1c92d64275304eb4d5",
+      "packages/kernel/src/activation-presented-window.ts": "8ab201a1f6d48420ea87c2237d3ac840e30b7a8598a8a9045491885213468e26",
+      "packages/kernel/src/errors.ts": "b7befae41e1dbff2602161ed8a642ef815802da8147964211cee312d7a550ef3",
+      "packages/agent-host/src/worker-cli-error.ts": "b0f45787d04f0d7562d6c60c2087b599113a3b8af01615f2a55463ab05256e0c",
+      "packages/kernel/test/final-delivery-precondition.test.ts": "c27740a667e77fe780f22256ddaec3598d2bee272bb47a543dc857951874a051",
+      "packages/kernel/test/run-attempt-final-reply.test.ts": "07a19a1a53e6e6fa82ff72c43d3468f5fe736a9b9d5caf16e28792d391ef7727",
+      "packages/agent-host/test/worker-mcp-application.test.ts": "c125e1ad42976d916b414b68c5ef3fe0a9c050b8043daecb015a0f596fb51a72"
+    }
+  },
+  "probe": {
+    "status": "passed",
+    "fixture": true,
+    "paidProviderCalls": 0,
+    "usageSynthetic": true,
+    "cliVersion": "codex-cli 0.160.0",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "route": "formal default MCP; explicit final-output disabled",
+    "actualLoopbackHttpPerWake": [2, 1],
+    "beforeCorrection": {
+      "markers": 0,
+      "cursors": 0,
+      "messages": 0,
+      "runs": 1
+    },
+    "errorCode": "final_delivery_unconfirmed",
+    "errorIsResultUnknown": false,
+    "sameNativeSession": true,
+    "runtimeCount": 1,
+    "nativeTurnCount": 2,
+    "runCount": 2,
+    "completedActivations": 2,
+    "finalMarkers": 2,
+    "cursorCoveredEachActivation": true,
+    "nativeMemoryMode": "disabled",
+    "completeOuterPublishedReceipts": 2,
+    "limits": [
+      "Synthetic model deliberately corrects arguments; no real model reliability/quality/efficiency claim.",
+      "Guard and real bridge/Host/Worker/Kernel executed; no manual delivery ACK."
+    ]
+  },
+  "review": {
+    "singleOwner": "Kernel RunAttemptFinalReplyService.recordInTransaction, shared by originating/explicit-target Worker posts and final-output facade",
+    "transaction": "Final precondition runs after existing legitimate acknowledgement attempt and before marker/hint insertion; rejection rolls back message, attachment consumption, comment projections and read-coverage SQL",
+    "allowConditions": [
+      "Existing exact Room/participant/consumer cursor covers Activation head",
+      "Exact Activation/consumer/Run pending model echo covers head and original presented-prefix algorithm proves full range; sent still unregistered",
+      "Same existing final marker event replays without reapplying a new precondition, after ordinary authentication/idempotency checks"
+    ],
+    "preserved": [
+      "No synthetic ACK",
+      "Prepared pending proof does not advance cursor; only real Host mark-sent later applies existing ACK algorithm",
+      "Progress remains nonterminal",
+      "Held draft saved final/progress intent survives refused resend/revision",
+      "Identity mismatch and partial notice/event gap cannot borrow complete consumption proof"
+    ],
+    "limits": [
+      "A full pending presentation is an existing Host-acceptance race exception, not actual ACK; if mark-sent never arrives, consumption remains unconfirmed",
+      "Fixture scripted the corrected model arguments; no real-model correction reliability, answer quality, paid efficiency or generalized cost claim",
+      "Synthetic loopback HTTP counts are actual for this fake provider only; not evidence of real-provider request totals",
+      "Dedicated new regression proves uploaded attachment rollback; comment rollback additionally reviewed as SQL, not separately exercised by that new test"
+    ]
+  },
+  "longSessionAcceptanceAudit": {
+    "preRegistrationUnchanged": true,
+    "sameRunRepairCosts": "Every completed generation in the round transcript and all admitted Run usage contribute; no exclusion for tool errors/help/correction",
+    "failureRetention": "Failed arm stays failed; original round/evidence retained. Missing metrics recovered read-only from exact isolated Room/participant Run windows, including usage rows recorded after the round cutoff",
+    "completeness": "Recovered failure usage explicitly incomplete; gaps/mismatches block admission of the next paid stage and complete comparison",
+    "diagnosticLimit": "No special stage counter for final_delivery_unconfirmed; actual refusal/error content must be checked in retained native tool transcript alongside Kernel no-write/ACK evidence, not inferred from normalized success",
+    "notRunByThisReview": "No paid CLI started and no new free provider turn started"
+  },
+  "rawEvidenceSha256": {
+    "summary.redacted.json": "55783874cdd63785dcebb9b50b9623c7f02d1e04cb05bfa93d7b373ed6361c21",
+    "default-mcp-final-ack-result.json": "f99186a5842919024e68daf27033d5daf339a3d28f996f091199d23df9106266",
+    "default-mcp-final-ack-probe.ts": "bfacb6cb39b5ed40bb5d339c9c89bc63c9fab7b774c1ee63861a120e612679de",
+    "default-mcp-final-ack-probe.log": "6cf3946ba191baf487ea2f7f0f282a5c39b1315ffe8e06fba69fefb47285d427",
+    "mcp-application-red.log": "84726d00fd77224e8aec4f768367f7809fab251ec28ff90df718c0e219c6189e",
+    "mcp-application-green.log": "d2060628fc4fbb1047c81ed4f16df2fbcc6872d080eb295bf22173c55ddda9c6",
+    "review.md": "fab0486c5f58cbf0c59f8a1c5ef46c9d2d7ed8d02ceb09aeed75af4f76fffa68"
+  }
+}

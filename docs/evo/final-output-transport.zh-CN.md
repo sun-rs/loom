@@ -43,6 +43,8 @@
 
 ## 产品接入的边界
 
+P113后的共享final前置检查也适用于本显式输出入口：新final发布必须已有本消费者的真实delivery ACK，或满足同Run完整presented prefix的既有Host发送登记竞态；仅有显式seq、但正文因notice或事件缺口未完整交付，仍拒绝整个发布事务。专用 `final_delivery_unconfirmed` 表示本次没有新消息或marker提交，不改变未知写入围栏。历史成功精确重放保留；pending始终不是ACK。共同所有者和反例见[Worker final消费设计](worker-mcp-reply.zh-CN.md#p113-后的-final-消费前置检查设计2026-10-05)。
+
 1. **在原 Run 的有效授权内收尾。** Host 的成功 native outcome 后、记录 runtime 终止前，完成有界提交并继续原有监督／续租。当前接入源码部署的 OpenCode 与 Codex warm；SEA 仍走原有 CLI 路径。未来 cold 接入不属本批：现有 cold adapter 在 resolveExit 前释放凭据，不能直接在已撤权的 `finishRunAttempt` 旁补一个发帖回调；届时需要明确调整释放顺序，不能复活旧Run。
 2. **最终发布槽必须事务一致。** 第一阶段的既有 final marker 只记录首个 final 事件；当时复核工具 final 后再交 envelope，第二次被新鲜度检查暂存，**未复现双发布**。第二阶段已在 Kernel 同一事务内实现两种最终传输的冲突检查：先有工具 final 时拒绝输出 final，先有可信输出 final 时拒绝不同事件的工具 final，精确成功重放保留，避免为这些冲突创建多余 held 草稿。约束不由 Host“先查再发”实现，也不施加到所有普通多消息运行。可信来源来自专用 Worker 入口及原 Run 权限，不来自模型字段或可伪造的幂等键；普通进度消息不会被当作最终完成。
 3. **held／未知结果有明确去向。** 正常成功不为回执额外唤醒模型。held仍由现有草稿owner持久化，Human须能看到未发表原因与正文；不能在模型没有读到新事实时自动确认、原样发送或搬用旧读取凭据。既有同Activation重试可以保留session，但必须新Run／新凭据；无新事实不能空转重试。未知结果先核验或交Human处理，不建第二后台重发队列。

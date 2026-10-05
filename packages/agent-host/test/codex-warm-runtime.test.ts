@@ -1544,7 +1544,7 @@ test("final reply (warm): a rejected interrupt falls back to the unchanged turn 
   }
 });
 
-test("final reply (warm): --final never acknowledges — without ACK the Activation does not complete", async () => {
+test("final reply (warm): unconfirmed --final publishes nothing, does not interrupt, and cannot complete", async () => {
   const state = await harness();
   try {
     state.post("[fake:final-noack] question");
@@ -1554,7 +1554,44 @@ test("final reply (warm): --final never acknowledges — without ACK the Activat
       result.state === "failed" ? result.error : "",
       /not acknowledged through sequence/u,
     );
-    assert.deepEqual(followUps(state), []);
+    assert.equal(
+      followUps(state).length,
+      1,
+      "a rejected final cannot preempt remaining work",
+    );
+    assert.deepEqual(interruptRequests(state), []);
+    const posts = state
+      .records()
+      .filter(
+        (record) =>
+          record.event === "worker" &&
+          (record.command as string[] | undefined)?.includes("message-post"),
+      );
+    assert.equal(posts.length, 1);
+    assert.equal(posts[0]!.status, 1);
+    assert.match(String(posts[0]!.stderr), /final_delivery_unconfirmed/u);
+    assert.equal(
+      sql(state, "SELECT * FROM messages WHERE actor_id=?", state.participantId)
+        .length,
+      0,
+    );
+    assert.equal(
+      sql(state, "SELECT * FROM run_attempt_final_replies").length,
+      0,
+    );
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM subscription_cursors WHERE participant_id=? AND last_seq>0",
+        state.participantId,
+      ).length,
+      0,
+    );
+    assert.equal(orderedRuns(state).length, 1);
+    assert.equal(
+      sql(state, "SELECT * FROM activations WHERE state='completed'").length,
+      0,
+    );
     const [process] = state.kernel.listRuntimeProcesses({
       roomId: state.roomId,
     });

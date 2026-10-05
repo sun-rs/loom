@@ -1590,6 +1590,13 @@ for (const rejection of [
     cliCode: "thread_context_target_mismatch",
     message: "receipt names another thread",
   },
+  {
+    name: "a rolled-back final without delivery confirmation",
+    status: 409,
+    code: "final_delivery_unconfirmed",
+    cliCode: "final_delivery_unconfirmed",
+    message: "This final submission committed no new message or marker",
+  },
 ]) {
   test(`message-post rejected with ${rejection.name} is reported as not sent and correctable`, async () => {
     const state = fixture();

@@ -128,7 +128,13 @@ test("prior tool final blocks output without making a held draft", async () => {
   const x = await fixture();
   try {
     assert.equal(
-      (await x.send("post", { body: "FAKE tool", final: true })).status,
+      (
+        await x.send("post", {
+          body: "FAKE tool",
+          basedOnRoomSeq: x.work.scope.toSeq,
+          final: true,
+        })
+      ).status,
       200,
     );
     assert.equal(
@@ -157,9 +163,8 @@ test("final output marker rejects a later tool final transaction; ordinary tool 
         (
           await x.send(source, {
             body: "FAKE first",
-            ...(source === "post"
-              ? { final: true }
-              : { basedOnRoomSeq: x.work.scope.toSeq }),
+            basedOnRoomSeq: x.work.scope.toSeq,
+            ...(source === "post" ? { final: true } : {}),
           })
         ).status,
         200,
@@ -229,6 +234,7 @@ test("a Worker-supplied platform-looking key cannot mint trusted final-output pr
   try {
     const first = await x.send("post", {
       body: "FAKE spoof",
+      basedOnRoomSeq: x.work.scope.toSeq,
       final: true,
       idempotencyKey: `final-output:v1:${x.work.run.runAttemptId}`,
     });

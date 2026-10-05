@@ -10,6 +10,12 @@ test("schema 82 final markers survive upgrade without gaining trusted final-outp
   const f = roleInstanceFixture();
   try {
     const work = startInstanceRun(f);
+    // Construct a valid historical final through the real delivery/ACK path
+    // before removing the new column to emulate the schema-82 database.
+    const delivery = f.kernel.syncWorker(work.execution, {});
+    f.kernel.acknowledgeWorkerCursor(work.execution, {
+      throughSeq: delivery.cursorAfter,
+    });
     f.kernel.postWorkerMessage(work.execution, {
       body: "existing final",
       final: true,

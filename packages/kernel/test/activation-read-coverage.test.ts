@@ -491,6 +491,9 @@ test("late tools after --final cannot consume a new Human message during process
   try {
     const work = startInstanceRun(f);
     read(f, work);
+    // The original delivered work must be confirmed before its final reply;
+    // later history reads still cannot consume work arriving after that final.
+    confirm(f, work);
     const reply = f.kernel.postWorkerMessage(work.execution, {
       channel: "#home",
       body: "finished",

@@ -123,6 +123,10 @@ test("P2-1: an older Host's report keeps accepted and terminal unknown; requeste
   try {
     context.post("please answer");
     const run = context.activate();
+    const delivery = context.kernel.syncWorker(run.execution, {});
+    context.kernel.acknowledgeWorkerCursor(run.execution, {
+      throughSeq: delivery.cursorAfter,
+    });
     const runAttemptId = run.run.runAttemptId;
     context.kernel.postWorkerMessage(run.execution, {
       body: "the answer",
@@ -154,6 +158,10 @@ test("a final post records the marker once and hints the Host after commit", () 
   try {
     context.post("please answer");
     const run = context.activate();
+    const delivery = context.kernel.syncWorker(run.execution, {});
+    context.kernel.acknowledgeWorkerCursor(run.execution, {
+      throughSeq: delivery.cursorAfter,
+    });
     const hints: string[] = [];
     const unsubscribe = context.kernel.finalReplies.subscribe(
       (runAttemptId) => {
@@ -223,7 +231,7 @@ test("a post without final records nothing and hints nobody", () => {
   }
 });
 
-test("a final post on the --target route records the marker but never ACKs by itself", () => {
+test("a target final requires consumption, not merely presentation", () => {
   const context = fixture();
   try {
     context.post("please answer");
@@ -249,16 +257,20 @@ test("a final post on the --target route records the marker but never ACKs by it
       consumerId: "worker",
       runAttemptId: run.run.runAttemptId,
     });
-    const result = context.kernel.postWorkerMessage(run.execution, {
-      body: "the answer",
-      channel: "#main",
-      final: true,
-    });
-    assert.ok("event" in result, JSON.stringify(result));
-    assert.ok(
+    assert.throws(
+      () =>
+        context.kernel.postWorkerMessage(run.execution, {
+          body: "the answer",
+          channel: "#main",
+          final: true,
+        }),
+      /Final delivery is unconfirmed/u,
+    );
+    assert.equal(
       context.kernel.finalReplies.read(context.host, {
         runAttemptId: run.run.runAttemptId,
       }),
+      null,
     );
     // No model-presented cursor on this route: nothing is acknowledged, so
     // the Activation cannot complete on `final` alone.
@@ -280,6 +292,10 @@ test("only the owning Host reads the marker; the interrupt report is recorded on
   try {
     context.post("please answer");
     const run = context.activate();
+    const delivery = context.kernel.syncWorker(run.execution, {});
+    context.kernel.acknowledgeWorkerCursor(run.execution, {
+      throughSeq: delivery.cursorAfter,
+    });
     const runAttemptId = run.run.runAttemptId;
     context.kernel.postWorkerMessage(run.execution, {
       body: "the answer",
@@ -488,3 +504,122 @@ test("a progress post after a held final reply must not inherit final or ACK", (
     context.close();
   }
 });
+
+for (const target of [false, true]) {
+  test(`final without consumption rolls back all publication (target=${target})`, () => {
+    const f = fixture();
+    try {
+      f.post("please answer");
+      const r = f.activate();
+      f.kernel.presentWorkerMessages(r.execution);
+      f.kernel.markPresentedDeliverySent(f.host, {
+        activationId: r.activation.activationId,
+        consumerId: "worker",
+        runAttemptId: r.run.runAttemptId,
+      });
+      const before = f.database
+        .prepare("SELECT COUNT(*) n FROM room_events")
+        .get()?.n;
+      const hints: string[] = [];
+      f.kernel.finalReplies.subscribe((id) => hints.push(id));
+      assert.throws(
+        () =>
+          f.kernel.postWorkerMessage(r.execution, {
+            ...(target ? { channel: "#main" } : {}),
+            body: "unconfirmed answer",
+            final: true,
+          }),
+        (error: unknown) =>
+          (error as { code?: string }).code === "final_delivery_unconfirmed",
+      );
+      assert.equal(
+        f.database.prepare("SELECT COUNT(*) n FROM room_events").get()?.n,
+        before,
+      );
+      assert.equal(
+        f.database
+          .prepare(
+            "SELECT COUNT(*) n FROM messages WHERE body='unconfirmed answer'",
+          )
+          .get()?.n,
+        0,
+      );
+      assert.equal(
+        f.kernel.finalReplies.read(f.host, {
+          runAttemptId: r.run.runAttemptId,
+        }),
+        null,
+      );
+      assert.deepEqual(hints, []);
+      const delivery = f.kernel.syncWorker(r.execution, {});
+      f.kernel.acknowledgeWorkerCursor(r.execution, {
+        throughSeq: delivery.cursorAfter,
+      });
+      const posted = f.kernel.postWorkerMessage(r.execution, {
+        ...(target ? { channel: "#main" } : {}),
+        body: "confirmed answer",
+        final: true,
+      });
+      assert.ok("event" in posted);
+      assert.equal(hints.length, 1);
+    } finally {
+      f.close();
+    }
+  });
+}
+
+for (const sent of [false, true]) {
+  for (const truncated of [false, true]) {
+    test(`explicit final delivery proof (sent=${sent}, truncated=${truncated})`, () => {
+      const f = fixture();
+      try {
+        f.post(truncated ? "x".repeat(100_000) : "please answer");
+        const r = f.activate();
+        const window = f.kernel.presentWorkerMessages(r.execution);
+        if (truncated) assert.ok(window.noticeCount > 0);
+        if (sent)
+          f.kernel.markPresentedDeliverySent(f.host, {
+            activationId: r.activation.activationId,
+            consumerId: "worker",
+            runAttemptId: r.run.runAttemptId,
+          });
+        const post = () =>
+          f.kernel.postWorkerMessage(r.execution, {
+            body: "answer",
+            final: true,
+            basedOnRoomSeq: r.activation.toSeq,
+          });
+        if (truncated) {
+          assert.throws(post, /Final delivery is unconfirmed/u);
+          assert.equal(
+            f.kernel.finalReplies.read(f.host, {
+              runAttemptId: r.run.runAttemptId,
+            }),
+            null,
+          );
+        } else {
+          assert.ok("event" in post());
+          const cursor = () =>
+            Number(
+              f.database
+                .prepare(
+                  "SELECT last_seq FROM subscription_cursors WHERE consumer_id='worker'",
+                )
+                .get()?.last_seq ?? 0,
+            );
+          assert.equal(cursor(), sent ? r.activation.toSeq : 0);
+          if (!sent) {
+            f.kernel.markPresentedDeliverySent(f.host, {
+              activationId: r.activation.activationId,
+              consumerId: "worker",
+              runAttemptId: r.run.runAttemptId,
+            });
+            assert.equal(cursor(), r.activation.toSeq);
+          }
+        }
+      } finally {
+        f.close();
+      }
+    });
+  }
+}

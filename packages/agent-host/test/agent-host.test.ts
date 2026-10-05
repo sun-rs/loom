@@ -1489,7 +1489,7 @@ for (const [label, marker, acknowledged, expected] of [
     true,
     "completed",
   ],
-  ["with the final marker but no ACK is retried", true, false, "queued"],
+  ["with a legacy final marker but no ACK is retried", true, false, "queued"],
   ["with ACK but no final marker is retried", false, true, "queued"],
 ] as const) {
   test(`a run that exits 1 ${label}`, async () => {
@@ -1538,7 +1538,29 @@ for (const [label, marker, acknowledged, expected] of [
             recipients: [],
             roomId: input.roomId,
           });
-          if (marker)
+          if (marker && !acknowledged) {
+            // Historical database state written before final ACK admission was
+            // enforced. Seed only its old marker, never fake a delivery ACK.
+            const legacy = new DatabaseSync(join(directory, "room.db"));
+            try {
+              legacy
+                .prepare(
+                  `INSERT INTO run_attempt_final_replies
+                (run_attempt_id,activation_id,room_id,event_id,room_seq,committed_at)
+                VALUES (?,?,?,?,?,?)`,
+                )
+                .run(
+                  input.runAttemptId,
+                  input.activationId,
+                  input.roomId,
+                  reply.event.eventId,
+                  reply.event.roomSeq,
+                  new Date().toISOString(),
+                );
+            } finally {
+              legacy.close();
+            }
+          } else if (marker)
             kernel.finalReplies.recordInTransaction(
               {
                 activationId: input.activationId,
@@ -1582,14 +1604,16 @@ for (const [label, marker, acknowledged, expected] of [
 }
 
 /**
- * Eighth review P2-2: a run that committed its `--final` reply but did not
- * acknowledge delivery and then exited 1 is retried; the retry reason is the
+ * Eighth review P2-2, retained for the pending-presented-delivery race:
+ * a model-confirmed final can commit before the Host marks the full wake sent.
+ * If sent proof never arrives and the runtime exits 1, delivery remains unACKed
+ * and the existing recovery retries; the retry reason is the
  * Kernel's completion refusal (delivery not acknowledged) with the run
  * failure kept for diagnosis, so the next wake names the already committed
  * reply. After the retry only checks and acknowledges, the Room holds one
  * reply.
  */
-test("a run that exits 1 after a committed but unacknowledged --final reply is retried with a wake that names that reply; the retry's check leaves one reply", async () => {
+test("a run that exits 1 after a pending-delivery final with delayed Host sent proof retries with the existing reply; the retry's check leaves one reply", async () => {
   const directory = mkdtempSync(
     join(tmpdir(), "rah-os-agent-host-final-noack-"),
   );
@@ -1631,17 +1655,15 @@ test("a run that exits 1 after a committed but unacknowledged --final reply is r
         const { accessToken } = worker.issueActivationCredential(host, input);
         if (firstReplyId === undefined) {
           await call(accessToken, "message-present");
-          kernel.markPresentedDeliverySent(host, {
-            activationId: input.activationId,
-            consumerId: input.consumerId,
-            runAttemptId: input.runAttemptId,
-          });
-          // `--final` without a causal marker: marker recorded, no ACK.
+          // A fully presented wake and model-confirmed seq permit the final,
+          // but the Host's sent proof has not arrived. Keep ACK genuinely absent
+          // to exercise the existing residual-race recovery, not a refused write.
           const posted = await call(accessToken, "messages/post", {
             body: "FAKE final reply",
-            channel: "#f",
+            basedOnRoomSeq: input.toSeq,
             final: true,
           });
+          assert.ok(posted.event, JSON.stringify(posted));
           firstReplyId = posted.event.aggregateId;
           return;
         }

@@ -124,3 +124,13 @@ export class StaleContextError extends KernelError {
     this.latestRoomSeq = latestRoomSeq;
   }
 }
+
+/** A final publication transaction was refused without committing a message. */
+export class FinalDeliveryUnconfirmedError extends KernelError {
+  constructor() {
+    super(
+      "Final delivery is unconfirmed; no new message or final marker was committed. Supply explicit basedOnRoomSeq for the fully delivered content; if content is incomplete, use message-check to confirm delivery first.",
+      "final_delivery_unconfirmed",
+    );
+  }
+}

@@ -463,9 +463,11 @@ test("a held draft from an earlier Activation does not lend its reply intent to 
 async function retriedAfter(
   f: Awaited<ReturnType<typeof fixture>>,
   post: (run: ReturnType<typeof f.activate>) => Promise<Record<string, any>>,
+  sent = true,
 ) {
   const first = f.activate();
-  await first.present();
+  if (sent) await first.present();
+  else assert.equal((await first.call("message-present")).status, 200);
   const posted = await post(first);
   assert.equal(posted.status, 200, JSON.stringify(posted.body));
   const failure = first.end();
@@ -523,18 +525,21 @@ test("a retry after a partial answer to one of several targets is not reported a
   }
 });
 
-test("a retry after a committed --final post that was not acknowledged reports it as the final reply", async () => {
+test("a retry after a pending-delivery final with delayed Host sent proof reports the committed final reply", async () => {
   const f = await fixture();
   try {
     f.post("channel question");
-    const { posted, presented } = await retriedAfter(f, (run) =>
-      // `--final` without a causal marker: the marker is recorded, the
-      // delivery is not acknowledged (final alone never acknowledges).
-      run.call("messages/post", {
-        channel: "#drift",
-        body: "the answer",
-        final: true,
-      }),
+    const { posted, presented } = await retriedAfter(
+      f,
+      // Full content is presented and explicitly confirmed by the model;
+      // the Host sent proof is delayed, so the cursor remains unACKed.
+      (run) =>
+        run.call("messages/post", {
+          body: "the answer",
+          basedOnRoomSeq: run.activation.toSeq,
+          final: true,
+        }),
+      false,
     );
     assert.equal(
       presented.previousAttemptReplyMessageId,

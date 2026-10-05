@@ -9,8 +9,14 @@ import {
   type RunAttemptFinalInterruptRecordInput,
 } from "@rah-os/protocol";
 
+import { hasPendingPresentedAcknowledgement } from "./activation-presented-window.ts";
 import type { AuthenticatedHostContext } from "./auth.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
+import {
+  ConflictError,
+  FinalDeliveryUnconfirmedError,
+  ForbiddenError,
+  NotFoundError,
+} from "./errors.ts";
 import type { RuntimeTrajectoryServiceOptions } from "./runtime-trajectory.ts";
 import {
   integer,
@@ -27,8 +33,10 @@ import {
  * a RunAttempt wins. The Host (the only party that may end a native turn)
  * reads it and reports whether its native interrupt landed.
  *
- * Not an ACK, not a Task transition, not a Room event: completing the
- * Activation still requires delivery acknowledged through `toSeq`.
+ * A new final requires an existing delivery ACK, or a model-confirmed full
+ * presented prefix pending the Host acceptance signal. The marker itself is
+ * not an ACK, Task transition or Room event; completion still requires the
+ * cursor through `toSeq`, including after that narrowly permitted race.
  */
 export const RUN_ATTEMPT_FINAL_REPLY_SCHEMA = `
 CREATE TABLE IF NOT EXISTS run_attempt_final_replies (
@@ -112,6 +120,7 @@ export class RunAttemptFinalReplyService {
     event: RoomEvent,
   ): void {
     const previous = this.#row(scope.runAttemptId);
+    if (previous?.event_id === event.eventId) return;
     if (
       previous?.submission_kind === "final-output" &&
       previous.event_id !== event.eventId
@@ -119,6 +128,16 @@ export class RunAttemptFinalReplyService {
       throw new ConflictError(
         "This Run already committed its explicit final output",
       );
+    const cursor = this.#database
+      .prepare(
+        "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id=?",
+      )
+      .get(scope.roomId, scope.participantId, scope.consumerId);
+    if (
+      (cursor ? integer(cursor as Row, "last_seq") : 0) < scope.toSeq &&
+      !hasPendingPresentedAcknowledgement(this.#database, scope)
+    )
+      throw new FinalDeliveryUnconfirmedError();
     const inserted = this.#database
       .prepare(
         `INSERT OR IGNORE INTO run_attempt_final_replies(

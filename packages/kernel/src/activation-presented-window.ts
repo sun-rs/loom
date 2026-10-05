@@ -734,3 +734,21 @@ export function presentedWindowAcknowledgement(
   if (basedOnRoomSeq < prefix.throughSeq) return undefined;
   return { throughSeq: prefix.throughSeq, messageSeqs: prefix.messageSeqs };
 }
+
+/** Preserve only the pending Host acceptance race, without advancing a cursor. */
+export function hasPendingPresentedAcknowledgement(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+): boolean {
+  const window = readPresentedWindow(database, scope);
+  if (
+    !window ||
+    window.sentAt !== undefined ||
+    window.pendingAckSeq === undefined ||
+    window.pendingAckSeq < scope.toSeq
+  )
+    return false;
+  return (
+    (presentedPrefix(database, scope, window)?.throughSeq ?? -1) >= scope.toSeq
+  );
+}

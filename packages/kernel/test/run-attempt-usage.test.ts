@@ -1204,6 +1204,10 @@ test("final-reply interrupt evidence: null without a final post, unknown until t
       runAttemptId: state.runAttemptId,
       toSeq: state.activation.toSeq,
     });
+    const delivery = state.kernel.syncWorker(execution, {});
+    state.kernel.acknowledgeWorkerCursor(execution, {
+      throughSeq: delivery.cursorAfter,
+    });
     const posted = state.kernel.postWorkerMessage(execution, {
       body: "final answer",
       final: true,

@@ -20,6 +20,16 @@ Codex 的 MCP 参数 schema 直接暴露（本内部服务 `omit_tools_from=["de
 
 最终结束仍只由 Host 读到 Kernel final 标记触发。Codex 中断还需等待同 thread/turn/call 的外层代码执行返回及全部内层工具完成；新内层调用撤销前一代码单元的完成记录，不能借用旧输出提前结束。缺 raw 帧、未知返回格式、多个内层调用归属不明、yield／无法闭合的代码单元保守自然结束。诊断事件只决定中断时机，不创造业务完成。不能用 `preemptedFollowUp=true` 替代实际模型请求计数。
 
+## P113 后的 final 消费前置检查设计（2026-10-05）
+
+[P113](evidence/2026-10-05-long-session-p113.md) 的默认路径先成功发表final，因模型省略因果序号而未ACK，随后同一Activation重跑并重复发表。修复的唯一业务所有者为 Kernel 的 `RunAttemptFinalReplyService.recordInTransaction`：两条发帖路由以及草稿真正发表时都经过同一事务终点，先沿原有规则尝试ACK，再判断是否能提交新final。
+
+允许条件为同Room/participant/consumer的真实cursor覆盖Activation head；因此合法 `message-check` 后无需重复传seq。另一条件仅保留既有Host发送登记竞态：同Activation/consumer/Run的模型 `pending_ack_seq` 覆盖head、原始冻结presented prefix完整覆盖head，且发送尚未登记。该只读资格复用 `activation-presented-window` 的原prefix算法，不复制游标或投递状态，不把pending提升成真实ACK。Host永不登记发送仍是未确认状态，本刀不宣称排除此故障。
+
+其他新final拒绝整个发布事务，正文、事件、附件消费、marker及其hint均不能部分提交；使用专用 `final_delivery_unconfirmed` 错误区分“确定回滚、纠正后可重新提交”与未知写入。显式seq存在但正文notice降级、遗漏事件或借用其他Run的pending都不足以放行。progress不受此终态条件限制；held仍可保存意图，真正发送或修订发表时才检查，拒绝不能吃掉旧草稿。已有同Run、同event的成功final精确重放保留原结果，不重判历史成功；旧progress升级final不属于该例外。
+
+MCP schema不改为一律必填seq，以免破坏先check后省略seq及只传body/draft ID的合法修订；代码执行规则，恢复指导只在错误中出现。未知网络/5xx/幂等身份冲突的围栏不放宽。实施及免费、真实CLI、付费和部署结果分别以状态页和新批证据为准，不回写P113失败为通过。
+
 ## 验证与限制
 
 自动测试覆盖严格参数、重复／冲突调用、原凭据作者、旧 turn 拒绝、提前到达不借用后续绑定、未知结果不重发、held 不合成 ACK、MCP stdio 往返、两轮 warm 自动接线，以及代码模式外层返回保护。
