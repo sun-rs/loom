@@ -1,0 +1,97 @@
+{
+  "restart": {
+    "at": "2026-10-05T01:17:54.481Z",
+    "oldPid": 83197,
+    "newPid": 49396,
+    "backup": "~/.loom/evo/backups/pre-restart-context-compaction-6430591c-b505-4344-aa1a-774c56776846",
+    "sourceSha256": "ba2417978ca3ac86c6dc46aa8829d0a99062ececed9cbc1823cd68efe56be1bc",
+    "head": "d0e5c645065f7984151c585c10c9934ea0f5c951",
+    "databases": 2,
+    "files": 302,
+    "businessTables": {
+      "messages": {
+        "rows": 235,
+        "sha256": "c7e1fe0ff2db90f81eb3e4db8695dbe28dfe8783c7aa4b0d361f2cb91817c888"
+      },
+      "tasks": {
+        "rows": 9,
+        "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+      },
+      "role_templates": {
+        "rows": 39,
+        "sha256": "c11295d87be6062fde6ef8ff20b4495a6b984a7ab75e72e00c512ef11ab42d1a"
+      },
+      "role_revisions": {
+        "rows": 39,
+        "sha256": "79f791e267b7c7544b5c6b881ac486bd519145424c8dc7c805750f6ed1c61a2d"
+      },
+      "role_instances": {
+        "rows": 65,
+        "sha256": "f93603dff830fa409d737a13de1433eb1d0943af07b509d3ed573637d97cd3b3"
+      },
+      "memory_entries": {
+        "rows": 4,
+        "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+      },
+      "memory_revisions": {
+        "rows": 4,
+        "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+      },
+      "role_instance_sessions": {
+        "rows": 63,
+        "sha256": "a6323123619a9eb57b6876b8849b859c2cfd79b56f50667af3a89d16cf93ba33"
+      },
+      "room_events": {
+        "rows": 2059,
+        "sha256": "3a9e068af9fd153a004722bc9c3b02b9af8a8c59b464cf9654ede9a0528095e0"
+      },
+      "agent_definitions": {
+        "rows": 69,
+        "sha256": "044111c4fc6d2be52ea7f677d06eaf40917bb7e2c87f40b7573d8aeb3633281a"
+      },
+      "inbox_items": {
+        "rows": 163,
+        "sha256": "c13bd14439ab1ed317ecc8b405bb7e57024406db140b2386e88d7f808e3f9c79"
+      }
+    },
+    "verified": true
+  },
+  "schema": 83,
+  "productSourceEquals": "24a6ea8429c49aabb56e6f61875c3c05be59e71a",
+  "explicitFinalOutput": {
+    "codexFormalServiceEnabled": false,
+    "opencodeFormalServiceEnabled": false
+  },
+  "api": {
+    "at": "2026-10-05T01:18:08.549Z",
+    "roles": 39,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "authenticated": true
+  },
+  "browser": {
+    "surface": "fresh Chrome tab via cua",
+    "roleListVisible": true,
+    "historyVisible": true,
+    "observedErrorLogs": [],
+    "scope": "Existing Role list and channel history only; not all UI interactions"
+  },
+  "checks": {
+    "restoredFullCheck": "passed",
+    "core": {
+      "passed": 2894,
+      "skipped": 22
+    },
+    "web": 487,
+    "console": 59,
+    "efficiencyUnit": 284,
+    "format": "passed",
+    "diff": "passed"
+  },
+  "limitations": [
+    "P112 compaction rejected and fully reverted; no optimization retained.",
+    "P111 remains a bounded successful sample, not proof of stable routing.",
+    "P112 paid runs used isolated state; formal service never loaded the candidate.",
+    "Frontend unchanged; build85a2d52a33dc2848 retained."
+  ]
+}

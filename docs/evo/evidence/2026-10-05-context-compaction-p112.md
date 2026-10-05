@@ -28,3 +28,5 @@ Kernel 的三个 Activation 完成，`toSeq=4/13/22`、ACK cursor 到 22，final
 原始目录：`/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-X9qDfT`。原始 result SHA-256：`a8819af512084174052c6944307a6a11c6a19df2ca992f42de96cd5ed583c573`。公开 JSON 隐去临时 root 和 turn 能力值，保留原状态、答案及指标；两个独立审计位于 `~/.loom/reviews/2026-10-05-context-compaction/p112/independent-quality-review.txt` 与 `cost-delivery-review.md`。
 
 后续设计排查（未实施）：`loom_reply`目前允许模型传threadId，P112将频道名误填为线程。可优先评估收窄为沿用原Activation唯一目标，保留显式basedOnRoomSeq及现有多目标/附件回退；这只能减少已知误用面，不能保证模型选用native final或直接声称成本改善。本批不混入schema改动。
+
+回撤后正式服务已备份并优雅重启，产品源码哈希与P111部署相同，业务数据哈希不变；实验开关仍关闭。见[部署凭据](2026-10-05-context-compaction-deployment.json)。本里程碑保存基线与失败边界，不是优化成功或全面验收。
