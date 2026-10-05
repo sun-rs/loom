@@ -1,0 +1,45 @@
+{
+  "newSession": {
+    "status": "passed",
+    "paidCalls": 0,
+    "actualHttpRequestsPerTurn": [2, 1],
+    "sameSession": true,
+    "nativeMemoryMode": "disabled",
+    "markers": 2,
+    "completedActivations": 2,
+    "exactCanonicalStrictSchemaAllRequests": true,
+    "oldPromptChars": 7168,
+    "newPromptChars": 6860,
+    "promptDeltaChars": -308,
+    "oldWakeTransportChars": 140,
+    "newWakeTransportChars": 40,
+    "wakeDeltaChars": -100,
+    "tokenSavings": "not measured"
+  },
+  "oldSessionUpgrade": {
+    "status": "passed",
+    "paidCalls": 0,
+    "actualHttpRequestsPerTurn": [2, 1, 1],
+    "sameSession": true,
+    "nativeMemoryMode": "disabled",
+    "markers": 3,
+    "completedActivations": 3,
+    "exactCanonicalStrictSchemaAllRequests": true,
+    "oldPromptChars": 7168,
+    "newPromptChars": 6860,
+    "promptDeltaChars": -308,
+    "oldWakeTransportChars": 140,
+    "newWakeTransportChars": 40,
+    "wakeDeltaChars": -100,
+    "tokenSavings": "not measured",
+    "protocolVersions": ["43b49986b67f", "b71903b8402e", "b71903b8402e"],
+    "runtimeTurnCounts": [1, 2],
+    "noticeInCurrentWake": [false, true, false]
+  },
+  "limitations": [
+    "Loopback fake model only; no paid token or quality claim.",
+    "Upgrade fixture composes real SessionProtocolUpgrade and ProviderSessionStore with real CLI/Host/Kernel, not complete daemon configuration migration.",
+    "Three probe setup failures retained privately; exact guards correctly refused mismatched old/current paths.",
+    "Existing native history is retained, not proven erased."
+  ]
+}

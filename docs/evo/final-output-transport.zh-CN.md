@@ -96,3 +96,13 @@ P110护栏修复仅放行Protocol生成的精确draft7 schema，保留模型、e
 ## P111 Codex付费验证
 
 [P111报告](evidence/2026-10-05-final-output-p111.md)：固定题目、官方自动记忆关闭、本批独立原生分母。两边生成均2/1/1，累计输入1.226倍、未缓存1.194倍，首代差2708，三轮可信发表及ACK、usage完整，数值预算通过。原生输出格式约束修复后的本样本不再出现非法JSON；这不承诺长期零失败。答复核心PID可信性边界正确，实质质量及指令瑕疵单独记录。没有独立HTTP总数，不将token倍率写成账单倍率；P109/P110失败仍保留。正式实验开关保持关闭，其他CLI和长session未由本批验收。
+
+## P111 后的上下文去重
+
+本批只精简现有指引，不新增协议profile或改变提交状态机。编译器是平台说明的唯一组装者：Workspace mode/Tool access保留在runtime context一次；缺消息时的`message-check --startup`动作不变，删除其重复实现细节；startup引用当前回复路径，具体CLI语法仍由Worker段说明，显式最终输出由现有opt-in段说明。每轮wake只选择transport，进度、附件和其他目标的工具回退说明放在站立指引中一次。保留完整JSON示例给没有原生schema的OpenCode，并保留当轮seq显式回填、禁止重复工具发布及完成工作后才final。
+
+Role原始配置和指令、memory、权限、Task、held/unknown、ACK以及Kernel围栏未改。共享说明影响其他CLI的静态prompt；本批真实付费结论只针对Codex，不推断四家都受益。固定编译夹具与实际安装CLI的免费链分别记录字符/请求结构，不能当作token或账单证据。
+
+协议摘要随唯一协议正文更新，旧实例仍按原session ID恢复，不以prompt摘要变化新建session；存活warm进程不会仅因磁盘源码变化自动替换其已载入说明。即使恢复调用携带新说明，也不保证原生历史中的旧文本被抹除。本批新增免费验证与独立配对结果在完成后分别记录，不改判P109/P110或复用P111分母。
+
+[本批免费证据](evidence/2026-10-05-context-compaction-free.json)：相同Role/runtime/memory输入，旧24a6ea8与当前正式编译器及最终指引渲染7168→6860字符，wake尾140→40字符。真实Codex+正式guard+fake验证新session两轮2+1请求；另以旧真实接线建session、关pool后用当前接线恢复同ID，三轮2+1+1请求，三个可信发表/ACK完成，协议notice仅第二轮当前wake出现、完成后接受新版本。各请求strict schema，原生memory_mode=disabled。升级夹具组合了正式store/upgrade owner，但不是完整daemon配置迁移验证；三次夹具路径/descriptor设置失败保留，未放宽guard。

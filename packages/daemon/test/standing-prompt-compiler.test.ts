@@ -61,7 +61,6 @@ test("layer order is stable for a fully populated agent", () => {
       "reminders",
       "communication-style",
       "formatting",
-      "workspace-policy",
       "initial-role",
       "startup",
     ],
@@ -85,11 +84,11 @@ test("runtime-dependent layers are omitted without runtime context", () => {
   ]);
 });
 
-test("workspace-policy renders only the present policy fields", () => {
+test("runtime context is the sole owner of workspace and tool policy values", () => {
   const layers = standingPromptLayers({
     runtimeContext: { workspaceMode: "in_place" },
   });
-  const policy = layers.find((layer) => layer.id === "workspace-policy");
+  const policy = layers.find((layer) => layer.id === "runtime-context");
   assert.ok(policy);
   assert.match(policy.text, /Workspace mode: in_place/u);
   assert.doesNotMatch(policy.text, /Tool access/u);
@@ -143,7 +142,8 @@ test("agent identity, role and ported Raft sentences appear verbatim", () => {
 
 test("bootstrap sentence stops promising role and instructions when an agent layer is present", () => {
   const withAgent = compileStandingPrompt({ agent: fixtureAgent }).prompt;
-  assert.match(withAgent, /RAH_CONTEXT_MANIFEST_JSON/u);
+  assert.match(withAgent, /message-check --startup/u);
+  assert.match(localWorkbenchWorkerPrompt(), /RAH_CONTEXT_MANIFEST_JSON/u);
   assert.doesNotMatch(
     withAgent,
     /contains the frozen AgentDefinition role and instructions/u,
@@ -200,8 +200,14 @@ test("a large instructions layer stays within the launch budget", () => {
 
 test("compiled agent prompt keeps every platform contract assertion", () => {
   const prompt = compileStandingPrompt({ agent: fixtureAgent }).prompt;
-  assert.match(prompt, /RAH_AGENT_CONTEXT_JSON/u);
-  assert.match(prompt, /RAH_CONTEXT_MANIFEST_JSON/u);
+  // The configured role is already supplied; manifest validation remains
+  // inside the startup command, not repeated as model implementation detail.
+  assert.match(
+    prompt,
+    /If the wake lacks your messages[^\n]*message-check --startup/u,
+  );
+  assert.match(localWorkbenchWorkerPrompt(), /RAH_AGENT_CONTEXT_JSON/u);
+  assert.match(localWorkbenchWorkerPrompt(), /RAH_CONTEXT_MANIFEST_JSON/u);
   assert.match(prompt, /RAH_AGENT_MEMORY_INDEX/u);
   assert.match(prompt, /RAH_AGENT_MEMORY_BOOTSTRAP_JSON/u);
   assert.match(prompt, /RAH_AGENT_MEMORY_SOURCE_FILE/u);
@@ -867,4 +873,44 @@ test("S1-d: the prompt fits both the bodied wake and the fixed startup wake", ()
     prompt,
     /Delivery confirmation is automatic in `message-check` or a `--based-on-room-seq` reply/u,
   );
+});
+
+test("compiled prompt removes repeated configuration and bootstrap implementation details without losing actions", () => {
+  for (const channelMemory of [
+    undefined,
+    { section: "CHANNEL MEMORY FIXTURE" },
+  ]) {
+    const { prompt } = compileStandingPrompt({
+      agent: fixtureAgent,
+      runtimeContext: fixtureRuntimeContext,
+      ...(channelMemory ? { channelMemory } : {}),
+    });
+    assert.equal([...prompt.matchAll(/Workspace mode: in_place/g)].length, 1);
+    assert.equal([...prompt.matchAll(/Tool access: full_access/g)].length, 1);
+    assert.match(
+      prompt,
+      /If the wake lacks your messages, run `"\$RAH_WORKER_CLI" worker message-check --startup`/,
+    );
+    assert.match(
+      prompt,
+      /Your role is stated in this prompt; do not duplicate it/,
+    );
+    assert.doesNotMatch(
+      prompt,
+      /validates RAH_AGENT_CONTEXT_JSON and RAH_CONTEXT_MANIFEST_JSON/,
+    );
+    assert.match(
+      prompt,
+      /reply through the current reply path using its `Reply context:` arguments/,
+    );
+    assert.doesNotMatch(prompt, /then publish the answer with `message-post`/);
+    assert.match(
+      prompt,
+      /message-post <Reply context arguments> <<'RAH_MESSAGE_EOF'/,
+    );
+    assert.match(
+      prompt,
+      /Complete wakes already supply the messages; no `message-check` or `message-read` first/,
+    );
+  }
 });

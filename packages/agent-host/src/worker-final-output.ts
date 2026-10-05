@@ -133,10 +133,5 @@ export function withFinalOutputGuidance(
   input: string,
   enabled: boolean,
 ): string {
-  return (
-    input +
-    (enabled
-      ? "\nReply transport: explicit final-output JSON for this delivery's single target. Progress, attachments and other targets retain Worker tools."
-      : "")
-  );
+  return input + (enabled ? "\nReply transport: explicit final-output." : "");
 }
