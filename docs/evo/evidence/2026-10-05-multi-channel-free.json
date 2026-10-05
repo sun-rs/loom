@@ -1,0 +1,136 @@
+{
+  "sampleId": "P116-free",
+  "status": "passed",
+  "paidCalls": 0,
+  "kind": "real Codex + loopback fake provider + isolated gate daemon",
+  "baseCommit": "c7be13cd69107b3f550b7a689fc1382f655c226c",
+  "worktree": "uncommitted test harness additions; product src unchanged",
+  "rawSha256": "6736e6c5acd732b0a910832f9cb103a26d530b819b4ed3cdff17467bceba817f",
+  "probeSha256": "918be74425de1ee1a2c7aa2fb9a329d6f3e121a2502aa399fd09e3404b3a8bc0",
+  "actualFakeHttpRequests": 6,
+  "strictCanonicalSchemaEveryRequest": true,
+  "participantCount": 3,
+  "runCount": 6,
+  "finalMarkers": [
+    {
+      "roomSeq": 13,
+      "kind": "final-output"
+    },
+    {
+      "roomSeq": 22,
+      "kind": "final-output"
+    },
+    {
+      "roomSeq": 31,
+      "kind": "final-output"
+    },
+    {
+      "roomSeq": 40,
+      "kind": "final-output"
+    },
+    {
+      "roomSeq": 49,
+      "kind": "final-output"
+    },
+    {
+      "roomSeq": 58,
+      "kind": "final-output"
+    }
+  ],
+  "proof": [
+    {
+      "stage": 1,
+      "speaker": "a",
+      "fromSeq": 4,
+      "toSeq": 8,
+      "realCursor": 35,
+      "activationState": "completed",
+      "sessionId": "01a10a88-2922-7201-9e37-4579f406e4e0",
+      "actualMemoryOff": true,
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "stage": 2,
+      "speaker": "b",
+      "fromSeq": 6,
+      "toSeq": 17,
+      "realCursor": 44,
+      "activationState": "completed",
+      "sessionId": "01a10a88-2d12-70c1-bdd1-ede7e153d543",
+      "actualMemoryOff": true,
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "stage": 3,
+      "speaker": "c",
+      "fromSeq": 8,
+      "toSeq": 26,
+      "realCursor": 53,
+      "activationState": "completed",
+      "sessionId": "01a10a88-3154-78f1-9722-047b40192c11",
+      "actualMemoryOff": true,
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "stage": 4,
+      "speaker": "a",
+      "fromSeq": 9,
+      "toSeq": 35,
+      "realCursor": 35,
+      "activationState": "completed",
+      "sessionId": "01a10a88-2922-7201-9e37-4579f406e4e0",
+      "actualMemoryOff": true,
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "stage": 5,
+      "speaker": "b",
+      "fromSeq": 18,
+      "toSeq": 44,
+      "realCursor": 44,
+      "activationState": "completed",
+      "sessionId": "01a10a88-2d12-70c1-bdd1-ede7e153d543",
+      "actualMemoryOff": true,
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "stage": 6,
+      "speaker": "c",
+      "fromSeq": 27,
+      "toSeq": 53,
+      "realCursor": 53,
+      "activationState": "completed",
+      "sessionId": "01a10a88-3154-78f1-9722-047b40192c11",
+      "actualMemoryOff": true,
+      "model": "gpt-6-luna",
+      "effort": "low"
+    }
+  ],
+  "initialBusinessHistory": {
+    "a": ["Human1"],
+    "b": ["Human1", "A1", "Human2"],
+    "c": ["Human1", "A1", "Human2", "B1", "Human3"]
+  },
+  "platformMetadata": "first wakes additionally include instance/member creation events; not native business history",
+  "priorFreeFailure": {
+    "sha256": "95f971fc73fb896372dbf54f5028b28cb54b53305f274ceb0c0c88c6db0de695",
+    "reason": "harness incorrectly used Role handle rather than instantiated canonical handle; canonical mentions empty caused broadcast; strict unexpected-Run guard stopped admission",
+    "paidCalls": 0,
+    "fakeHttpRequests": 1,
+    "preserved": true
+  },
+  "limits": [
+    "synthetic final only, not real model quality/token efficiency",
+    "no paid cold resume/compaction/parallel CLI proof",
+    "parallel scheduling separately proved with real Roles and Fake adapter",
+    "all fake input/output and SQLite retained privately; no formal service change"
+  ],
+  "cursorEvidenceScope": "realCursor is the final durable consumer cursor, not a per-stage-time snapshot; per-stage completion and sent/presented evidence retained privately",
+  "initialReadOrigin": "Role instance.created sequence fallback, not a claim that an initial subscription cursor row was prewritten",
+  "harnessSha256": "53b16ce19323f36e1b75e5f6aa19099f30c452bbe94ce495bfb4fcba3c3b331b"
+}

@@ -51,6 +51,7 @@ export async function nativeRound({
   save,
   round,
   config,
+  answerValidator = isEffectiveAnswer,
 }) {
   round.startedAt = new Date().toISOString();
   let buf = "",
@@ -125,10 +126,18 @@ export async function nativeRound({
   round.replySeconds = (finalAt - Date.parse(round.startedAt)) / 1000;
   round.metrics = measure(seenId, round, undefined, config);
   save();
-  assert.ok(
-    isEffectiveAnswer(answer),
-    "Missing effective final answer; retain cost evidence",
-  );
+  validateNativeAnswer(answer, answerValidator);
   save();
   return seenId;
+}
+
+export function validateNativeAnswer(answer, validator = isEffectiveAnswer) {
+  assert.ok(
+    typeof answer === "string" && answer.trim(),
+    "Missing final answer",
+  );
+  assert.ok(
+    validator(answer),
+    "Missing effective final answer; retain cost evidence",
+  );
 }
