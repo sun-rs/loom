@@ -1,0 +1,472 @@
+{
+  "fixture": true,
+  "paidCalls": 0,
+  "kernelCalls": 0,
+  "purpose": "installed CLI transport/byte feasibility only; not business acceptance or token estimate",
+  "version": "codex-cli 0.160.0",
+  "binarySha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+  "sourceCommit": "5cf6a8066e878c934f85b72cdcd3b07dbeff0a59",
+  "maxFakeHttpPerArm": 6,
+  "arms": [
+    {
+      "kind": "dynamic",
+      "fakeHttp": 6,
+      "oneContinuousSession": true,
+      "memoryMode": "disabled",
+      "fullInterruptAcceptance": "failed on cold-resume; failures retained",
+      "phases": [
+        {
+          "phase": "initial",
+          "fakeHttp": 1,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": true,
+          "rawEvents": 8,
+          "interruptAfterCompleteInnerAndOuter": true,
+          "interrupt": {
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "terminal": "interrupted",
+          "currentReceiptObservedInNextFakeRequest": false,
+          "knownFailure": null
+        },
+        {
+          "phase": "warm",
+          "fakeHttp": 1,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": true,
+          "rawEvents": 4,
+          "interruptAfterCompleteInnerAndOuter": true,
+          "interrupt": {
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "terminal": "interrupted",
+          "currentReceiptObservedInNextFakeRequest": false,
+          "knownFailure": null
+        },
+        {
+          "phase": "cold-resume",
+          "fakeHttp": 2,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": false,
+          "rawEvents": 0,
+          "interruptAfterCompleteInnerAndOuter": false,
+          "interrupt": {
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": false,
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "terminal": "completed",
+          "currentReceiptObservedInNextFakeRequest": true,
+          "knownFailure": "no raw outer event; conservative no interrupt; natural model completion"
+        },
+        {
+          "phase": "cold-resume-recheck",
+          "fakeHttp": 2,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": false,
+          "rawEvents": 0,
+          "interruptAfterCompleteInnerAndOuter": false,
+          "interrupt": {
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": false,
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "terminal": "completed",
+          "currentReceiptObservedInNextFakeRequest": true,
+          "knownFailure": "no raw outer event; conservative no interrupt; natural model completion"
+        }
+      ]
+    },
+    {
+      "kind": "mcp",
+      "fakeHttp": 6,
+      "oneContinuousSession": true,
+      "memoryMode": "disabled",
+      "fullInterruptAcceptance": "failed on cold-resume; failures retained",
+      "phases": [
+        {
+          "phase": "initial",
+          "fakeHttp": 1,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": true,
+          "rawEvents": 8,
+          "interruptAfterCompleteInnerAndOuter": true,
+          "interrupt": {
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "terminal": "interrupted",
+          "currentReceiptObservedInNextFakeRequest": false,
+          "knownFailure": null
+        },
+        {
+          "phase": "warm",
+          "fakeHttp": 1,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": true,
+          "rawEvents": 4,
+          "interruptAfterCompleteInnerAndOuter": true,
+          "interrupt": {
+            "requested": true,
+            "accepted": true,
+            "terminal": true,
+            "sent": true,
+            "preemptedFollowUp": true
+          },
+          "terminal": "interrupted",
+          "currentReceiptObservedInNextFakeRequest": false,
+          "knownFailure": null
+        },
+        {
+          "phase": "cold-resume",
+          "fakeHttp": 2,
+          "callbackCount": 0,
+          "nativeIdentityMatched": null,
+          "toolArgsExact": null,
+          "innerStatuses": ["failed"],
+          "innerMarker": false,
+          "outerMarker": false,
+          "rawEvents": 0,
+          "interruptAfterCompleteInnerAndOuter": false,
+          "interrupt": {
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": false,
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "terminal": "completed",
+          "currentReceiptObservedInNextFakeRequest": false,
+          "knownFailure": "first cold MCP omitted explicit sandbox; native approval refused"
+        },
+        {
+          "phase": "cold-resume-recheck",
+          "fakeHttp": 2,
+          "callbackCount": 1,
+          "nativeIdentityMatched": true,
+          "toolArgsExact": true,
+          "innerStatuses": ["completed"],
+          "innerMarker": true,
+          "outerMarker": false,
+          "rawEvents": 0,
+          "interruptAfterCompleteInnerAndOuter": false,
+          "interrupt": {
+            "requested": false,
+            "accepted": "unknown",
+            "terminal": false,
+            "sent": false,
+            "preemptedFollowUp": "unknown"
+          },
+          "terminal": "completed",
+          "currentReceiptObservedInNextFakeRequest": true,
+          "knownFailure": "no raw outer event; conservative no interrupt; natural model completion"
+        }
+      ]
+    }
+  ],
+  "isolation": {
+    "freshHomeAndCodexHomePerArm": true,
+    "sameWorkspace": true,
+    "credentialVariablesInherited": false,
+    "modelProvider": "ephemeral 127.0.0.1 Responses fixture",
+    "nativeMemory": {
+      "features.memories": false,
+      "memories.generate_memories": false,
+      "memories.use_memories": false
+    },
+    "otherMcpServers": false
+  },
+  "initialRequestByteComparison": {
+    "dynamicRaw": 43554,
+    "mcpRaw": 46988,
+    "rawDifferenceMcpMinusDynamic": 3434,
+    "dynamicExecDescriptionUtf8": 8184,
+    "mcpExecDescriptionUtf8": 11481,
+    "execDescriptionDifference": 3297,
+    "mcpOnlyBlocksUtf8": {
+      "sharedTypes": 1573,
+      "list_mcp_resource_templates": 669,
+      "list_mcp_resources": 571,
+      "read_mcp_resource": 438
+    },
+    "blockSum": 3251,
+    "otherDescriptionDifference": "tool qualified name, unknown versus CallToolResult return declaration, section separators",
+    "businessToolDescriptionSame": true,
+    "businessInputSchemaSha256": "b9287e1b7f83eb9ad8581dfe0b1464a9e22078357675b0211a0389b57a46d2f7",
+    "allNonToolsInitialInputEqualIgnoringIds": true,
+    "fullRequestDifferences": [
+      "additional_tools description",
+      "transient item IDs",
+      "prompt_cache_key",
+      "client_metadata"
+    ],
+    "notTokensOrPrice": true
+  },
+  "limits": [
+    "Only no-other-MCP isolated configuration measured; other provider-owned MCP may retain generic types/resource tools.",
+    "Fake model calls known declared function, not evidence of real model tool selection or quality.",
+    "No Worker application service/Kernel/ACK/mutation tested.",
+    "Cold resume callback persisted, but complete outer event needed for interrupt was not observed even with production-like explicit resume parameters; no production regression inferred from fixture.",
+    "Only thread/start registration verified. Prior archived resume override ignored a new tool; updating schema or adding tools to existing session remains unsupported by the tested mechanism. Never rotate session to conceal this.",
+    "Fake request counts and byte differences are not token, cache, pricing, or real-provider efficiency evidence."
+  ],
+  "sourceHashes": {
+    "packages/protocol/src/worker-mcp.ts": "50a08bfde669a97cef21ab5409d9ef2eaf25b292f71fda774fbdf5849a570b6d",
+    "packages/agent-host/src/provider-launch-arguments.js": "91ebd5b8d188c3ee917502d50c116ead15a4ee8962436145260af52b5a3ea620",
+    "packages/agent-host/src/codex-final-interrupt.js": "3bd6a31cfc5f61e8c53d50e8381377b17755ec653e8ccde2c35c3c6bee619893",
+    "packages/agent-host/src/codex-outer-output.js": "176261c651b1a6ff8f60ef62c62a127cc4e9a0750e34b6d48228390477f09aa3"
+  },
+  "independentAudit": {
+    "evidenceFactsVerified": true,
+    "checks": 148,
+    "paidCalls": 0,
+    "kernelCalls": 0,
+    "arms": [
+      {
+        "arm": "dynamic",
+        "requests": 6,
+        "continuousSession": true,
+        "nativeMemoryOff": true,
+        "phases": [
+          {
+            "phase": "initial",
+            "requests": 1,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": true,
+            "interrupted": true
+          },
+          {
+            "phase": "warm",
+            "requests": 1,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": true,
+            "interrupted": true
+          },
+          {
+            "phase": "cold-resume",
+            "requests": 2,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": false,
+            "interrupted": false
+          },
+          {
+            "phase": "cold-resume-recheck",
+            "requests": 2,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": false,
+            "interrupted": false
+          }
+        ]
+      },
+      {
+        "arm": "mcp",
+        "requests": 6,
+        "continuousSession": true,
+        "nativeMemoryOff": true,
+        "phases": [
+          {
+            "phase": "initial",
+            "requests": 1,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": true,
+            "interrupted": true
+          },
+          {
+            "phase": "warm",
+            "requests": 1,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": true,
+            "interrupted": true
+          },
+          {
+            "phase": "cold-resume",
+            "requests": 2,
+            "callbacks": 0,
+            "innerStatus": "failed",
+            "outerNotification": false,
+            "interrupted": false
+          },
+          {
+            "phase": "cold-resume-recheck",
+            "requests": 2,
+            "callbacks": 1,
+            "innerStatus": "completed",
+            "outerNotification": false,
+            "interrupted": false
+          }
+        ]
+      }
+    ],
+    "byteFacts": {
+      "initialFullRequestDifferenceMcpMinusDynamic": 3434,
+      "execDescriptionUtf8Difference": 3297,
+      "genericMcpBlocksUtf8": 3251
+    },
+    "verdict": "Initial and warm native transport callbacks plus complete inner/outer interrupt boundary verified for both arms. Cold-resume full interrupt acceptance failed for both and remains unresolved; successful cold callbacks and next-request receipt do not prove raw-event barrier support.",
+    "isolationReview": "Fresh separate HOME/CODEX_HOME, explicit fake provider URL, no auth file, explicit memory-off CLI config and actual memory_mode disabled. Spawn environment is an explicit whitelist; no provider credential variables inherited.",
+    "limits": [
+      "No Worker credentials, application-service or Kernel/ACK tested; callback returns fake marker only.",
+      "Static bytes are not tokens, cached tokens, monetary costs or real-model efficiency.",
+      "Cold absent raw events are observed in both transports; first MCP cold additionally lacked explicit sandbox and was denied. Do not label this dynamic-specific regression.",
+      "Other provider-owned MCP servers may retain generic declarations.",
+      "Old-session registration/migration and future schema changes were not proved; no session replacement justified.",
+      "Historical failed attempts retained and counted; no new CLI launched by auditor."
+    ]
+  },
+  "schemaFollowup": {
+    "scope": "schema-only followup; no new CLI/provider calls",
+    "resumeRawEventsDeclared": false,
+    "rawEventsOptInDeclaredOnly": "v2/ThreadStartParams.ts:83-86",
+    "initializeExperimentalApi": "gates experimental fields/methods; does not declare raw event enablement",
+    "otherSupportedRawEventEnableMethodFound": false,
+    "limits": "No supported alternative found in generated 0.160.0 protocol. Generic config permits arbitrary keys, so absence is not a universal proof that no undocumented mechanism exists. Passing experimentalRawEvents in thread/resume does not prove enablement.",
+    "warmHistory": [
+      {
+        "arm": "dynamic",
+        "items": [
+          {
+            "type": "custom_tool_call",
+            "bytes": 229
+          },
+          {
+            "type": "custom_tool_call_output",
+            "bytes": 264
+          },
+          {
+            "type": "message",
+            "bytes": 352
+          }
+        ]
+      },
+      {
+        "arm": "mcp",
+        "items": [
+          {
+            "type": "custom_tool_call",
+            "bytes": 247
+          },
+          {
+            "type": "custom_tool_call_output",
+            "bytes": 331
+          },
+          {
+            "type": "message",
+            "bytes": 352
+          }
+        ]
+      }
+    ],
+    "warmHistoryLimits": "Short FAKE marker only; tool name/result wrapper account for this sample delta. Not a real published receipt, persistent history growth forecast, or token/price estimate."
+  },
+  "schemaEvidence": {
+    "provenance": "Previously generated locally with codex-cli 0.160.0 app-server generate-ts --experimental; copied without running CLI or HTTP",
+    "files": {
+      "v2/ThreadStartParams.ts": {
+        "sha256": "dc8bebec4181a5502fc141b0122cc48e066b3b5c77d9fd2a4de875fcd6d66a68",
+        "bytes": 3712
+      },
+      "v2/ThreadResumeParams.ts": {
+        "sha256": "6ea6561448792277f9b52ac9d920d71ef8c9be6e43621ee6329fb948329e8ff7",
+        "bytes": 3392
+      },
+      "v2/TurnStartParams.ts": {
+        "sha256": "18a8492238c2b7476d1db5a96ec4dd57df6eb49e05e49f13820eb9298c412dfa",
+        "bytes": 4912
+      },
+      "InitializeCapabilities.ts": {
+        "sha256": "dee58273861971585e0615804eaf50ba4690cd4846f02ed352ed211887a022a5",
+        "bytes": 1205
+      },
+      "ClientRequest.ts": {
+        "sha256": "f21e6307c8c2c7f2b5a32d434cdca238e3ec19b71a1f40b60f8c305289860436",
+        "bytes": 27239
+      },
+      "v2/DynamicToolSpec.ts": {
+        "sha256": "bd4b06afea9395a426f8facc9d800f4b201fea44fab667f854710acff4c8f393",
+        "bytes": 436
+      },
+      "v2/DynamicToolFunctionSpec.ts": {
+        "sha256": "41586221845d8de57d4c6cc91d83f3e004c905648ba62754f5876e331a81d9a8",
+        "bytes": 337
+      },
+      "v2/DynamicToolCallParams.ts": {
+        "sha256": "6524a162207514c3a50a1e65f9abed9c59d97f38fb9cf221f740340ef5c5051f",
+        "bytes": 364
+      },
+      "v2/DynamicToolCallResponse.ts": {
+        "sha256": "df53cf5e967d26aa59615db06f4179a7b2330f44df4298a8393eaf9f48f7e115",
+        "bytes": 361
+      },
+      "v2/DynamicToolCallOutputContentItem.ts": {
+        "sha256": "9eebff80cb251a368d772ff75313de20d23dfef0ed6dc7f61630da9040b7e425",
+        "bytes": 332
+      }
+    }
+  },
+  "artifactSha256": {
+    "analyze.py": "633ad1d3c6d835afa7037c9ac6cfdaf3f58a591a00040f18fa84cbab57ca0979",
+    "cold-recheck-probe.mjs": "f6bcb7e086afeedfc4c9942ab1bec4c74545aec06724e3611c90bab62bb89fb8",
+    "dynamic-cold-resume-recheck-request-5.json": "fd53afca1a9e0e5c3c0fffb255146f8cfcdc2e0244d035b424a8e239554b11ee",
+    "dynamic-cold-resume-recheck-request-6.json": "e04cede793b914a68f3b7f75c05ffe7d500239c07ab5d14238822c91f5361939",
+    "dynamic-cold-resume-request-3.json": "84abd0c4ed6abc09ebdb6ea0359abd36f128b8037feb5c0c158115e75be89ec8",
+    "dynamic-cold-resume-request-4.json": "49e35b38a89d57cb7f7c6c6545bc016027314b33721d8d3187e69a94e1674842",
+    "dynamic-initial-request-1.json": "0f28a8bc014710e784abc4bdd7cef62da368b2d04ea02a0e3c7e2179ff931d1f",
+    "dynamic-warm-request-2.json": "db4b82c1d642aa2658d671d62150c0cbaae2eb542162600f6b7fb140f05815dd",
+    "independent-audit.py": "8156dc6125855345ab2b3d3e0cdebd1b219f98d27f35fba6f8f8da3ff30fbe4a",
+    "mcp-cold-resume-recheck-request-5.json": "d1735b36ce6484d4888af82c97dda592bc8d3e31eff4ed41ae9aec10ac970ee8",
+    "mcp-cold-resume-recheck-request-6.json": "99fb6afade6cbe056cd3fc1d884ced2bee357585c71479016bbdaec68b8c8547",
+    "mcp-cold-resume-request-3.json": "1842144e991d7bcffaa763059b662d8eb2e024d24ed4a0ed1157081397a812f2",
+    "mcp-cold-resume-request-4.json": "a804fa9c2fdfd8ef1eb8e8b961416dbcb1b59cd42505c1489229c7f8ca012edd",
+    "mcp-fixture.mjs": "e90f2d963f342355dc1417a2dbefd2f6444c229f9d04e8b576fb799000f55205",
+    "mcp-initial-request-1.json": "7f5633a0a00a2461c6aad2bd27d35f7c97dfda9fbca9d08e3ceb4ee4133adece",
+    "mcp-probe.mjs": "4cb085ba65bd2108f34edbe0bdeef950bd96dbf36c6a3c0044c101d2b4897f3b",
+    "mcp-warm-request-2.json": "46a69750e754836b8b3f6ea2708755e1ab92d7ad7e54655b77366acdd54dc2a6",
+    "probe.mjs": "54d1ee32d046750ea97b1e8e09bf32b446662160f59e1e52a4c9a4c257961d4c",
+    "tool.json": "df2ebe43a112db4cf67f354424b59d224567f22dafba11b2804a74d77bc0c23c"
+  }
+}
