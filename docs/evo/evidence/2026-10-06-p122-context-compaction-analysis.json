@@ -1,0 +1,318 @@
+{
+  "sourceCommit": "e69d1351126ba8301177007cb1ca1173b6f71038",
+  "scope": "P122 archived visible tool outputs; offline byte accounting, no provider calls or token estimates",
+  "rolloutSha256": {
+    "a": "6707199030b011cf7b6c81c47fa3e5186086f92ba72a431dca4063ea4a0f594c",
+    "b": "c9a6b4880262fa07e8451945a608da05c70ec4c03a4ada94ea54088208a4c42d",
+    "c": "b683445024f4a6bd13e212d1a5d69bbfdd8e6855bdb56b33f4e2b86cc6f58c90"
+  },
+  "count": 36,
+  "totals": {
+    "receiptBytes": 11402,
+    "envelopeBytes": 14390,
+    "runnerTextBytes": 1692,
+    "emptyFieldBytes": 684
+  },
+  "ranges": {
+    "receiptBytes": [316, 317],
+    "envelopeBytes": [399, 400],
+    "runnerTextBytes": [47, 47],
+    "emptyFieldBytes": [19, 19]
+  },
+  "rows": [
+    {
+      "speaker": "a",
+      "round": 1,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 2,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 3,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 4,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 5,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 6,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 7,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 8,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 9,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 10,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 11,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "a",
+      "round": 12,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 1,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 2,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 3,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 4,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 5,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 6,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 7,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 8,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 9,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 10,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 11,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "b",
+      "round": 12,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 1,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 2,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 3,
+      "receiptBytes": 316,
+      "envelopeBytes": 399,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 4,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 5,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 6,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 7,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 8,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 9,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 10,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 11,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    },
+    {
+      "speaker": "c",
+      "round": 12,
+      "receiptBytes": 317,
+      "envelopeBytes": 400,
+      "runnerTextBytes": 47,
+      "emptyFieldBytes": 19
+    }
+  ],
+  "limits": [
+    "Visible UTF-8 text bytes only, not full provider requests or tokenizer measurements.",
+    "Envelope contains receipt; do not add receiptBytes to envelopeBytes.",
+    "Each output recorded once; historical replay and caching are not measured here.",
+    "No candidate applied to production or provider history."
+  ]
+}
