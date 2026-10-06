@@ -1,0 +1,895 @@
+{
+  "source": "72 existing loopback requests only; no new CLI/model calls",
+  "requestCount": 72,
+  "inputJsonDifferenceBytes": 752048,
+  "wholeRequestDifferenceBytes": 750140,
+  "outsideInputDifferenceBytes": -1908,
+  "exactAdditiveInputLedger": {
+    "baseInstructions": 0,
+    "delegationPolicy": 0,
+    "historicalInterruptions": 69696,
+    "historicalNativeAnswers": -30345,
+    "historicalToolCalls": 47274,
+    "historicalToolResults": 137620,
+    "inputArraySyntax": 396,
+    "teamInstructions": 0,
+    "workspaceContext": 972,
+    "tools.sharedMcpTypes": 60156,
+    "tools.genericResourceTools": 61920,
+    "tools.loomReplyDefinition": 25596,
+    "runtime.runtimeJsonEnvelopeDifference": 1080,
+    "runtime.identity preamble": 12852,
+    "runtime.## Current Runtime Context": 16416,
+    "runtime.## Precedence": 28404,
+    "runtime.## Worker CLI": 99432,
+    "runtime.## Communication style": 15876,
+    "runtime.## Initial role": 4284,
+    "runtime.## Message Notifications": 51840,
+    "runtime.## Channel memory index": 3060,
+    "wakes.remainingWakeText": 145519,
+    "wakes.humanBusinessBodies": 0,
+    "wakes.peerAnswerBodies": 0,
+    "wakes.wakeJsonEnvelope": 0
+  },
+  "wakeResidualComponents": {
+    "product": {
+      "deliveryPartitionLabels": 12168,
+      "creationMetadata": 25020,
+      "messageHeadersAndRouting": 87526,
+      "mentionAnnotation": 31302,
+      "replyContext": 23505,
+      "mcpPathGuidance": 27846
+    },
+    "native": {
+      "otherOrNativeRelayWrapper": 61848
+    }
+  },
+  "wakeAbsoluteBytes": {
+    "product": {
+      "humanBusinessBodies": 739611,
+      "remainingWakeText": 207367,
+      "wakeJsonEnvelope": 29016,
+      "peerAnswerBodies": 13047
+    },
+    "native": {
+      "humanBusinessBodies": 739611,
+      "remainingWakeText": 61848,
+      "wakeJsonEnvelope": 29016,
+      "peerAnswerBodies": 13047
+    }
+  },
+  "handleSuffixCounterfactual": {
+    "operation": "offline remove only -24hex suffix after multi-a/b/c; no actual identity/history changes",
+    "savedInputBytes": 45000,
+    "subsetsNotAdditiveWithLedger": {
+      "standingproduct": 900,
+      "currentproduct": 6975,
+      "historicalproduct": 37125,
+      "standingnative": 0,
+      "currentnative": 0,
+      "historicalnative": 0
+    }
+  },
+  "rows": [
+    {
+      "request": 1,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 15731,
+        "remainingWakeText": 1788,
+        "wakeJsonEnvelope": 124
+      },
+      "inputBytes": 70900
+    },
+    {
+      "request": 2,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 16051,
+        "peerAnswerBodies": 38,
+        "remainingWakeText": 1298,
+        "wakeJsonEnvelope": 124
+      },
+      "inputBytes": 70768
+    },
+    {
+      "request": 3,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 16371,
+        "peerAnswerBodies": 76,
+        "remainingWakeText": 807,
+        "wakeJsonEnvelope": 124
+      },
+      "inputBytes": 70635
+    },
+    {
+      "request": 4,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 16669,
+        "remainingWakeText": 2596,
+        "wakeJsonEnvelope": 248,
+        "peerAnswerBodies": 76
+      },
+      "inputBytes": 74140
+    },
+    {
+      "request": 5,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 16967,
+        "peerAnswerBodies": 109,
+        "remainingWakeText": 2106,
+        "wakeJsonEnvelope": 248
+      },
+      "inputBytes": 73982
+    },
+    {
+      "request": 6,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 17265,
+        "peerAnswerBodies": 142,
+        "remainingWakeText": 1615,
+        "wakeJsonEnvelope": 248
+      },
+      "inputBytes": 73822
+    },
+    {
+      "request": 7,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 17508,
+        "remainingWakeText": 3404,
+        "wakeJsonEnvelope": 372,
+        "peerAnswerBodies": 142
+      },
+      "inputBytes": 77267
+    },
+    {
+      "request": 8,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 17751,
+        "peerAnswerBodies": 168,
+        "remainingWakeText": 2914,
+        "wakeJsonEnvelope": 372
+      },
+      "inputBytes": 77047
+    },
+    {
+      "request": 9,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 17994,
+        "peerAnswerBodies": 194,
+        "remainingWakeText": 2423,
+        "wakeJsonEnvelope": 372
+      },
+      "inputBytes": 76825
+    },
+    {
+      "request": 10,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 18221,
+        "remainingWakeText": 4212,
+        "wakeJsonEnvelope": 496,
+        "peerAnswerBodies": 194
+      },
+      "inputBytes": 80247
+    },
+    {
+      "request": 11,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 18448,
+        "peerAnswerBodies": 223,
+        "remainingWakeText": 3722,
+        "wakeJsonEnvelope": 496
+      },
+      "inputBytes": 80014
+    },
+    {
+      "request": 12,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 18675,
+        "peerAnswerBodies": 252,
+        "remainingWakeText": 3234,
+        "wakeJsonEnvelope": 496
+      },
+      "inputBytes": 79782
+    },
+    {
+      "request": 13,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 18933,
+        "remainingWakeText": 5025,
+        "wakeJsonEnvelope": 620,
+        "peerAnswerBodies": 252
+      },
+      "inputBytes": 83243
+    },
+    {
+      "request": 14,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 19191,
+        "peerAnswerBodies": 280,
+        "remainingWakeText": 4536,
+        "wakeJsonEnvelope": 620
+      },
+      "inputBytes": 83042
+    },
+    {
+      "request": 15,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 19449,
+        "peerAnswerBodies": 308,
+        "remainingWakeText": 4048,
+        "wakeJsonEnvelope": 620
+      },
+      "inputBytes": 82841
+    },
+    {
+      "request": 16,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 19748,
+        "remainingWakeText": 5839,
+        "wakeJsonEnvelope": 744,
+        "peerAnswerBodies": 308
+      },
+      "inputBytes": 86342
+    },
+    {
+      "request": 17,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 20047,
+        "peerAnswerBodies": 332,
+        "remainingWakeText": 5350,
+        "wakeJsonEnvelope": 744
+      },
+      "inputBytes": 86178
+    },
+    {
+      "request": 18,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 20346,
+        "peerAnswerBodies": 356,
+        "remainingWakeText": 4862,
+        "wakeJsonEnvelope": 744
+      },
+      "inputBytes": 86014
+    },
+    {
+      "request": 19,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 20588,
+        "remainingWakeText": 6653,
+        "wakeJsonEnvelope": 868,
+        "peerAnswerBodies": 356
+      },
+      "inputBytes": 89454
+    },
+    {
+      "request": 20,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 20830,
+        "peerAnswerBodies": 380,
+        "remainingWakeText": 6164,
+        "wakeJsonEnvelope": 868
+      },
+      "inputBytes": 89233
+    },
+    {
+      "request": 21,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 21072,
+        "peerAnswerBodies": 404,
+        "remainingWakeText": 5676,
+        "wakeJsonEnvelope": 868
+      },
+      "inputBytes": 89012
+    },
+    {
+      "request": 22,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 21415,
+        "remainingWakeText": 7467,
+        "wakeJsonEnvelope": 992,
+        "peerAnswerBodies": 404
+      },
+      "inputBytes": 92553
+    },
+    {
+      "request": 23,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 21758,
+        "peerAnswerBodies": 439,
+        "remainingWakeText": 6978,
+        "wakeJsonEnvelope": 992
+      },
+      "inputBytes": 92444
+    },
+    {
+      "request": 24,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 22101,
+        "peerAnswerBodies": 474,
+        "remainingWakeText": 6490,
+        "wakeJsonEnvelope": 992
+      },
+      "inputBytes": 92335
+    },
+    {
+      "request": 25,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 22349,
+        "remainingWakeText": 8281,
+        "wakeJsonEnvelope": 1116,
+        "peerAnswerBodies": 474
+      },
+      "inputBytes": 95792
+    },
+    {
+      "request": 26,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 22597,
+        "peerAnswerBodies": 503,
+        "remainingWakeText": 7792,
+        "wakeJsonEnvelope": 1116
+      },
+      "inputBytes": 95582
+    },
+    {
+      "request": 27,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 22845,
+        "peerAnswerBodies": 532,
+        "remainingWakeText": 7304,
+        "wakeJsonEnvelope": 1116
+      },
+      "inputBytes": 95372
+    },
+    {
+      "request": 28,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 23094,
+        "remainingWakeText": 9095,
+        "wakeJsonEnvelope": 1240,
+        "peerAnswerBodies": 532
+      },
+      "inputBytes": 98824
+    },
+    {
+      "request": 29,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 23343,
+        "peerAnswerBodies": 566,
+        "remainingWakeText": 8606,
+        "wakeJsonEnvelope": 1240
+      },
+      "inputBytes": 98620
+    },
+    {
+      "request": 30,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 23592,
+        "peerAnswerBodies": 600,
+        "remainingWakeText": 8118,
+        "wakeJsonEnvelope": 1240
+      },
+      "inputBytes": 98416
+    },
+    {
+      "request": 31,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 23946,
+        "remainingWakeText": 9909,
+        "wakeJsonEnvelope": 1364,
+        "peerAnswerBodies": 600
+      },
+      "inputBytes": 101978
+    },
+    {
+      "request": 32,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 24300,
+        "peerAnswerBodies": 628,
+        "remainingWakeText": 9420,
+        "wakeJsonEnvelope": 1364
+      },
+      "inputBytes": 101873
+    },
+    {
+      "request": 33,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 24654,
+        "peerAnswerBodies": 656,
+        "remainingWakeText": 8932,
+        "wakeJsonEnvelope": 1364
+      },
+      "inputBytes": 101768
+    },
+    {
+      "request": 34,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 24954,
+        "remainingWakeText": 10723,
+        "wakeJsonEnvelope": 1488,
+        "peerAnswerBodies": 656
+      },
+      "inputBytes": 105270
+    },
+    {
+      "request": 35,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 25254,
+        "peerAnswerBodies": 683,
+        "remainingWakeText": 10234,
+        "wakeJsonEnvelope": 1488
+      },
+      "inputBytes": 105110
+    },
+    {
+      "request": 36,
+      "arm": "product",
+      "wakeComponents": {
+        "humanBusinessBodies": 25554,
+        "peerAnswerBodies": 710,
+        "remainingWakeText": 9746,
+        "wakeJsonEnvelope": 1488
+      },
+      "inputBytes": 104950
+    },
+    {
+      "request": 37,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 15731,
+        "remainingWakeText": 196,
+        "wakeJsonEnvelope": 124
+      },
+      "inputBytes": 58700
+    },
+    {
+      "request": 38,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 16051,
+        "peerAnswerBodies": 38,
+        "remainingWakeText": 233,
+        "wakeJsonEnvelope": 124
+      },
+      "inputBytes": 59095
+    },
+    {
+      "request": 39,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 16371,
+        "peerAnswerBodies": 76,
+        "remainingWakeText": 270,
+        "wakeJsonEnvelope": 124
+      },
+      "inputBytes": 59490
+    },
+    {
+      "request": 40,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 16669,
+        "remainingWakeText": 466,
+        "wakeJsonEnvelope": 248,
+        "peerAnswerBodies": 76
+      },
+      "inputBytes": 60271
+    },
+    {
+      "request": 41,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 16967,
+        "peerAnswerBodies": 109,
+        "remainingWakeText": 503,
+        "wakeJsonEnvelope": 248
+      },
+      "inputBytes": 60639
+    },
+    {
+      "request": 42,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 17265,
+        "peerAnswerBodies": 142,
+        "remainingWakeText": 540,
+        "wakeJsonEnvelope": 248
+      },
+      "inputBytes": 61007
+    },
+    {
+      "request": 43,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 17508,
+        "remainingWakeText": 736,
+        "wakeJsonEnvelope": 372,
+        "peerAnswerBodies": 142
+      },
+      "inputBytes": 61728
+    },
+    {
+      "request": 44,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 17751,
+        "peerAnswerBodies": 168,
+        "remainingWakeText": 773,
+        "wakeJsonEnvelope": 372
+      },
+      "inputBytes": 62034
+    },
+    {
+      "request": 45,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 17994,
+        "peerAnswerBodies": 194,
+        "remainingWakeText": 810,
+        "wakeJsonEnvelope": 372
+      },
+      "inputBytes": 62340
+    },
+    {
+      "request": 46,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 18221,
+        "remainingWakeText": 1006,
+        "wakeJsonEnvelope": 496,
+        "peerAnswerBodies": 194
+      },
+      "inputBytes": 63038
+    },
+    {
+      "request": 47,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 18448,
+        "peerAnswerBodies": 223,
+        "remainingWakeText": 1043,
+        "wakeJsonEnvelope": 496
+      },
+      "inputBytes": 63331
+    },
+    {
+      "request": 48,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 18675,
+        "peerAnswerBodies": 252,
+        "remainingWakeText": 1080,
+        "wakeJsonEnvelope": 496
+      },
+      "inputBytes": 63624
+    },
+    {
+      "request": 49,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 18933,
+        "remainingWakeText": 1276,
+        "wakeJsonEnvelope": 620,
+        "peerAnswerBodies": 252
+      },
+      "inputBytes": 64356
+    },
+    {
+      "request": 50,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 19191,
+        "peerAnswerBodies": 280,
+        "remainingWakeText": 1313,
+        "wakeJsonEnvelope": 620
+      },
+      "inputBytes": 64679
+    },
+    {
+      "request": 51,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 19449,
+        "peerAnswerBodies": 308,
+        "remainingWakeText": 1350,
+        "wakeJsonEnvelope": 620
+      },
+      "inputBytes": 65002
+    },
+    {
+      "request": 52,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 19748,
+        "remainingWakeText": 1546,
+        "wakeJsonEnvelope": 744,
+        "peerAnswerBodies": 308
+      },
+      "inputBytes": 65774
+    },
+    {
+      "request": 53,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 20047,
+        "peerAnswerBodies": 332,
+        "remainingWakeText": 1583,
+        "wakeJsonEnvelope": 744
+      },
+      "inputBytes": 66134
+    },
+    {
+      "request": 54,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 20346,
+        "peerAnswerBodies": 356,
+        "remainingWakeText": 1620,
+        "wakeJsonEnvelope": 744
+      },
+      "inputBytes": 66494
+    },
+    {
+      "request": 55,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 20588,
+        "remainingWakeText": 1816,
+        "wakeJsonEnvelope": 868,
+        "peerAnswerBodies": 356
+      },
+      "inputBytes": 67205
+    },
+    {
+      "request": 56,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 20830,
+        "peerAnswerBodies": 380,
+        "remainingWakeText": 1853,
+        "wakeJsonEnvelope": 868
+      },
+      "inputBytes": 67508
+    },
+    {
+      "request": 57,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 21072,
+        "peerAnswerBodies": 404,
+        "remainingWakeText": 1890,
+        "wakeJsonEnvelope": 868
+      },
+      "inputBytes": 67811
+    },
+    {
+      "request": 58,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 21415,
+        "remainingWakeText": 2086,
+        "wakeJsonEnvelope": 992,
+        "peerAnswerBodies": 404
+      },
+      "inputBytes": 68623
+    },
+    {
+      "request": 59,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 21758,
+        "peerAnswerBodies": 439,
+        "remainingWakeText": 2123,
+        "wakeJsonEnvelope": 992
+      },
+      "inputBytes": 69038
+    },
+    {
+      "request": 60,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 22101,
+        "peerAnswerBodies": 474,
+        "remainingWakeText": 2160,
+        "wakeJsonEnvelope": 992
+      },
+      "inputBytes": 69453
+    },
+    {
+      "request": 61,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 22349,
+        "remainingWakeText": 2356,
+        "wakeJsonEnvelope": 1116,
+        "peerAnswerBodies": 474
+      },
+      "inputBytes": 70181
+    },
+    {
+      "request": 62,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 22597,
+        "peerAnswerBodies": 503,
+        "remainingWakeText": 2393,
+        "wakeJsonEnvelope": 1116
+      },
+      "inputBytes": 70495
+    },
+    {
+      "request": 63,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 22845,
+        "peerAnswerBodies": 532,
+        "remainingWakeText": 2430,
+        "wakeJsonEnvelope": 1116
+      },
+      "inputBytes": 70809
+    },
+    {
+      "request": 64,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 23094,
+        "remainingWakeText": 2626,
+        "wakeJsonEnvelope": 1240,
+        "peerAnswerBodies": 532
+      },
+      "inputBytes": 71532
+    },
+    {
+      "request": 65,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 23343,
+        "peerAnswerBodies": 566,
+        "remainingWakeText": 2663,
+        "wakeJsonEnvelope": 1240
+      },
+      "inputBytes": 71852
+    },
+    {
+      "request": 66,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 23592,
+        "peerAnswerBodies": 600,
+        "remainingWakeText": 2700,
+        "wakeJsonEnvelope": 1240
+      },
+      "inputBytes": 72172
+    },
+    {
+      "request": 67,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 23946,
+        "remainingWakeText": 2896,
+        "wakeJsonEnvelope": 1364,
+        "peerAnswerBodies": 600
+      },
+      "inputBytes": 73005
+    },
+    {
+      "request": 68,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 24300,
+        "peerAnswerBodies": 628,
+        "remainingWakeText": 2933,
+        "wakeJsonEnvelope": 1364
+      },
+      "inputBytes": 73424
+    },
+    {
+      "request": 69,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 24654,
+        "peerAnswerBodies": 656,
+        "remainingWakeText": 2970,
+        "wakeJsonEnvelope": 1364
+      },
+      "inputBytes": 73843
+    },
+    {
+      "request": 70,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 24954,
+        "remainingWakeText": 3166,
+        "wakeJsonEnvelope": 1488,
+        "peerAnswerBodies": 656
+      },
+      "inputBytes": 74616
+    },
+    {
+      "request": 71,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 25254,
+        "peerAnswerBodies": 683,
+        "remainingWakeText": 3203,
+        "wakeJsonEnvelope": 1488
+      },
+      "inputBytes": 74980
+    },
+    {
+      "request": 72,
+      "arm": "native",
+      "wakeComponents": {
+        "humanBusinessBodies": 25554,
+        "peerAnswerBodies": 710,
+        "remainingWakeText": 3240,
+        "wakeJsonEnvelope": 1488
+      },
+      "inputBytes": 75344
+    }
+  ],
+  "limitations": [
+    "Bytes are neither tokens nor billing; no real-model trajectory or cache behavior measured.",
+    "Removal arithmetic does not establish safe removability or acceptance.",
+    "Native and product wrappers differ; business-body matching is exact text, wrapper residual is not uniformly necessary safety.",
+    "No model history or message record modified."
+  ],
+  "receiptRepresentationCounterfactual": {
+    "counts": {
+      "actualHistoryItems": 198,
+      "actualJsonBytes": 137620,
+      "hypotheticalSingleReceiptStringJsonBytes": 90892,
+      "semanticReceiptCompactJsonBytes": 62668,
+      "representationOnlyDifferenceBytes": 46728
+    },
+    "operation": "retain all inner receipt fields and response item identity; hypothetically replace code-mode display+nested MCP string with one receipt string",
+    "notAnImplementedOrVerifiedProviderAPI": true
+  },
+  "ordinarySuccessReceiptCounterfactual": {
+    "counts": {
+      "historyItems": 198,
+      "actualJsonBytes": 137620,
+      "hypotheticalCompactReceiptJsonBytes": 82774,
+      "differenceBytes": 54846
+    },
+    "operation": "only replace inner successful receipt JSON by state/messageId/roomSeq; preserve MCP envelope, code-mode output, call identity and all other bytes",
+    "conditionsObserved": "all fixture receipts published, deduplicated=false, activationIds=[], no warnings",
+    "notCovered": "dedup=true, warnings, nonempty activations, held, unknown, real external consumers; do not infer safe removal from this byte arithmetic"
+  },
+  "analysisScriptSha256": "e46c623adf47420a897c47471ac40be5c94357d053e90706b61f05c9cb79f135",
+  "privateAnalysisArchive": "2026-10-06-context-byte-counterfactual"
+}

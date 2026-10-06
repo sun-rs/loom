@@ -301,6 +301,8 @@ Claude/Kimi/OpenCode 各有原生对照臂（见上文“多 Provider”），�
 
 ### 免费完整请求分账（离线工具，不是效率门禁）
 
+[长期成本归因](../evo/evidence/2026-10-06-long-cost-attribution.md)进一步分开 P122 的真实用量算术与免费请求的字节组成，并核对内部完整证据和模型可见投影的边界。生成数相同不代表输入开销相同；字节反事实不作为 token、费用或候选实现通过的证据。
+
 `scripts/cli-efficiency/request-accounting.mjs` 读取已捕获的请求体，只统计 JSON 字节、分类及 input 前缀是否保持，不启动 CLI、不连接 provider、不读用量或估算 token/费用。支持范围是[已审计的 Codex 0.160.0 受控频道探针布局](../evo/evidence/2026-10-06-request-accounting-free.md)：六个固定 input 项后接消息/工具历史；其他 CLI、版本、布局须重新核验，不能仅凭解析成功宣称语义相同。
 
 清单是 JSON 数组，例如：

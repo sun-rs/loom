@@ -1,0 +1,3624 @@
+{
+  "kind": "P122-observed-token-arithmetic-not-billing-or-causal-attribution",
+  "sourceHashes": {
+    "result.private.json": "fc7c6283bb8e43ca1ff752cc6d8b696e421d193ecb312fe9249b5e88fd49e17a",
+    "quality-review.json": "4fc2d0428c1c4d842eec849a982d80a6dd3f10f2edc153a807c1a94a8acf8d23",
+    "native-a.jsonl": "244bf9233035eb4a97b872ff42ed4abbf48621b18bbe4b0f229c6c188d2806c7",
+    "native-b.jsonl": "0466c2c58fda3824d2c81bdb63124beae1cebe745c5aae475491b5f240009f82",
+    "native-c.jsonl": "d6449dbf80debdfe7dc2f2fe365c04f2e534b0983dfa80af50d4be39c254ae66",
+    "worker-delivery-a.jsonl": "6707199030b011cf7b6c81c47fa3e5186086f92ba72a431dca4063ea4a0f594c",
+    "worker-delivery-b.jsonl": "c9a6b4880262fa07e8451945a608da05c70ec4c03a4ada94ea54088208a4c42d",
+    "worker-delivery-c.jsonl": "b683445024f4a6bd13e212d1a5d69bbfdd8e6855bdb56b33f4e2b86cc6f58c90"
+  },
+  "totals": {
+    "native": {
+      "input": 532998,
+      "cached": 474624,
+      "uncached": 58374,
+      "output": 459,
+      "generations": 36
+    },
+    "product": {
+      "input": 732101,
+      "cached": 636672,
+      "uncached": 95429,
+      "output": 1755,
+      "generations": 36
+    },
+    "delta": {
+      "input": 199103,
+      "cached": 162048,
+      "uncached": 37055,
+      "output": 1296,
+      "generations": 0
+    },
+    "ratios": {
+      "input": 1.3735529964465159,
+      "cached": 1.3414239482200647,
+      "uncached": 1.634786034878542,
+      "output": 3.823529411764706,
+      "generations": 1.0
+    },
+    "cachedFraction": {
+      "native": 0.8904798892303536,
+      "product": 0.8696504990431648
+    }
+  },
+  "decomposition": {
+    "identity": "sum_s sum_r D[s,r] = 12*sum_s D[s,1] + sum_s sum_(k=2..12) (13-k)*(D[s,k]-D[s,k-1])",
+    "firstGapRepeated12": 101232,
+    "firstGapRepeated12Share": 0.5084403549921398,
+    "growthAboveFirstGap": 97871,
+    "growthShare": 0.49155964500786026,
+    "actualFirstThreeStagesDelta": 8436,
+    "actualFirstStagesShare": 0.04237002958267831,
+    "continuationDelta": 190667,
+    "cacheIdentity": "uncached delta = input delta - cached delta",
+    "cachedDeltaShareOfInputDelta": 0.8138902979864693,
+    "uncachedDeltaShareOfInputDelta": 0.1861097020135307
+  },
+  "sessions": {
+    "a": {
+      "totals": {
+        "native": {
+          "input": 176652,
+          "cached": 152832,
+          "uncached": 23820,
+          "output": 153,
+          "generations": 12
+        },
+        "product": {
+          "input": 245371,
+          "cached": 213248,
+          "uncached": 32123,
+          "output": 585,
+          "generations": 12
+        },
+        "delta": {
+          "input": 68719,
+          "cached": 60416,
+          "uncached": 8303,
+          "output": 432,
+          "generations": 0
+        },
+        "ratios": {
+          "input": 1.3890077666825171,
+          "cached": 1.3953098827470687,
+          "uncached": 1.3485726280436607,
+          "output": 3.823529411764706,
+          "generations": 1.0
+        },
+        "cachedFraction": {
+          "native": 0.8651586169417839,
+          "product": 0.8690839585770119
+        }
+      },
+      "shareOfTotalInputDelta": 0.34514296620342233,
+      "firstObservedGap": 3011,
+      "firstGapRepeated12ArithmeticComponent": 36132,
+      "growthAboveFirstGapArithmeticComponent": 32587,
+      "inputGapByLocalRound": [
+        3011, 3503, 3997, 4495, 4986, 5490, 5981, 6470, 6964, 7453, 7941, 8428
+      ],
+      "incrementWeightedContributions": [
+        {
+          "introducedAtLocalRound": 2,
+          "changeInInputGap": 492,
+          "remainingRequestsIncludingCurrent": 11,
+          "weightedContribution": 5412
+        },
+        {
+          "introducedAtLocalRound": 3,
+          "changeInInputGap": 494,
+          "remainingRequestsIncludingCurrent": 10,
+          "weightedContribution": 4940
+        },
+        {
+          "introducedAtLocalRound": 4,
+          "changeInInputGap": 498,
+          "remainingRequestsIncludingCurrent": 9,
+          "weightedContribution": 4482
+        },
+        {
+          "introducedAtLocalRound": 5,
+          "changeInInputGap": 491,
+          "remainingRequestsIncludingCurrent": 8,
+          "weightedContribution": 3928
+        },
+        {
+          "introducedAtLocalRound": 6,
+          "changeInInputGap": 504,
+          "remainingRequestsIncludingCurrent": 7,
+          "weightedContribution": 3528
+        },
+        {
+          "introducedAtLocalRound": 7,
+          "changeInInputGap": 491,
+          "remainingRequestsIncludingCurrent": 6,
+          "weightedContribution": 2946
+        },
+        {
+          "introducedAtLocalRound": 8,
+          "changeInInputGap": 489,
+          "remainingRequestsIncludingCurrent": 5,
+          "weightedContribution": 2445
+        },
+        {
+          "introducedAtLocalRound": 9,
+          "changeInInputGap": 494,
+          "remainingRequestsIncludingCurrent": 4,
+          "weightedContribution": 1976
+        },
+        {
+          "introducedAtLocalRound": 10,
+          "changeInInputGap": 489,
+          "remainingRequestsIncludingCurrent": 3,
+          "weightedContribution": 1467
+        },
+        {
+          "introducedAtLocalRound": 11,
+          "changeInInputGap": 488,
+          "remainingRequestsIncludingCurrent": 2,
+          "weightedContribution": 976
+        },
+        {
+          "introducedAtLocalRound": 12,
+          "changeInInputGap": 487,
+          "remainingRequestsIncludingCurrent": 1,
+          "weightedContribution": 487
+        }
+      ]
+    },
+    "b": {
+      "totals": {
+        "native": {
+          "input": 177666,
+          "cached": 165888,
+          "uncached": 11778,
+          "output": 153,
+          "generations": 12
+        },
+        "product": {
+          "input": 244233,
+          "cached": 212224,
+          "uncached": 32009,
+          "output": 585,
+          "generations": 12
+        },
+        "delta": {
+          "input": 66567,
+          "cached": 46336,
+          "uncached": 20231,
+          "output": 432,
+          "generations": 0
+        },
+        "ratios": {
+          "input": 1.374674951875992,
+          "cached": 1.279320987654321,
+          "uncached": 2.7176940057734758,
+          "output": 3.823529411764706,
+          "generations": 1.0
+        },
+        "cachedFraction": {
+          "native": 0.9337070683192057,
+          "product": 0.868940724635901
+        }
+      },
+      "shareOfTotalInputDelta": 0.3343344901884954,
+      "firstObservedGap": 2808,
+      "firstGapRepeated12ArithmeticComponent": 33696,
+      "growthAboveFirstGapArithmeticComponent": 32871,
+      "inputGapByLocalRound": [
+        2808, 3304, 3802, 4299, 4800, 5298, 5794, 6300, 6797, 7294, 7790, 8281
+      ],
+      "incrementWeightedContributions": [
+        {
+          "introducedAtLocalRound": 2,
+          "changeInInputGap": 496,
+          "remainingRequestsIncludingCurrent": 11,
+          "weightedContribution": 5456
+        },
+        {
+          "introducedAtLocalRound": 3,
+          "changeInInputGap": 498,
+          "remainingRequestsIncludingCurrent": 10,
+          "weightedContribution": 4980
+        },
+        {
+          "introducedAtLocalRound": 4,
+          "changeInInputGap": 497,
+          "remainingRequestsIncludingCurrent": 9,
+          "weightedContribution": 4473
+        },
+        {
+          "introducedAtLocalRound": 5,
+          "changeInInputGap": 501,
+          "remainingRequestsIncludingCurrent": 8,
+          "weightedContribution": 4008
+        },
+        {
+          "introducedAtLocalRound": 6,
+          "changeInInputGap": 498,
+          "remainingRequestsIncludingCurrent": 7,
+          "weightedContribution": 3486
+        },
+        {
+          "introducedAtLocalRound": 7,
+          "changeInInputGap": 496,
+          "remainingRequestsIncludingCurrent": 6,
+          "weightedContribution": 2976
+        },
+        {
+          "introducedAtLocalRound": 8,
+          "changeInInputGap": 506,
+          "remainingRequestsIncludingCurrent": 5,
+          "weightedContribution": 2530
+        },
+        {
+          "introducedAtLocalRound": 9,
+          "changeInInputGap": 497,
+          "remainingRequestsIncludingCurrent": 4,
+          "weightedContribution": 1988
+        },
+        {
+          "introducedAtLocalRound": 10,
+          "changeInInputGap": 497,
+          "remainingRequestsIncludingCurrent": 3,
+          "weightedContribution": 1491
+        },
+        {
+          "introducedAtLocalRound": 11,
+          "changeInInputGap": 496,
+          "remainingRequestsIncludingCurrent": 2,
+          "weightedContribution": 992
+        },
+        {
+          "introducedAtLocalRound": 12,
+          "changeInInputGap": 491,
+          "remainingRequestsIncludingCurrent": 1,
+          "weightedContribution": 491
+        }
+      ]
+    },
+    "c": {
+      "totals": {
+        "native": {
+          "input": 178680,
+          "cached": 155904,
+          "uncached": 22776,
+          "output": 153,
+          "generations": 12
+        },
+        "product": {
+          "input": 242497,
+          "cached": 211200,
+          "uncached": 31297,
+          "output": 585,
+          "generations": 12
+        },
+        "delta": {
+          "input": 63817,
+          "cached": 55296,
+          "uncached": 8521,
+          "output": 432,
+          "generations": 0
+        },
+        "ratios": {
+          "input": 1.3571580479068726,
+          "cached": 1.354679802955665,
+          "uncached": 1.3741218826835264,
+          "output": 3.823529411764706,
+          "generations": 1.0
+        },
+        "cachedFraction": {
+          "native": 0.8725319006044325,
+          "product": 0.8709386095498088
+        }
+      },
+      "shareOfTotalInputDelta": 0.32052254360808224,
+      "firstObservedGap": 2617,
+      "firstGapRepeated12ArithmeticComponent": 31404,
+      "growthAboveFirstGapArithmeticComponent": 32413,
+      "inputGapByLocalRound": [
+        2617, 3108, 3601, 4094, 4584, 5075, 5565, 6057, 6545, 7032, 7525, 8014
+      ],
+      "incrementWeightedContributions": [
+        {
+          "introducedAtLocalRound": 2,
+          "changeInInputGap": 491,
+          "remainingRequestsIncludingCurrent": 11,
+          "weightedContribution": 5401
+        },
+        {
+          "introducedAtLocalRound": 3,
+          "changeInInputGap": 493,
+          "remainingRequestsIncludingCurrent": 10,
+          "weightedContribution": 4930
+        },
+        {
+          "introducedAtLocalRound": 4,
+          "changeInInputGap": 493,
+          "remainingRequestsIncludingCurrent": 9,
+          "weightedContribution": 4437
+        },
+        {
+          "introducedAtLocalRound": 5,
+          "changeInInputGap": 490,
+          "remainingRequestsIncludingCurrent": 8,
+          "weightedContribution": 3920
+        },
+        {
+          "introducedAtLocalRound": 6,
+          "changeInInputGap": 491,
+          "remainingRequestsIncludingCurrent": 7,
+          "weightedContribution": 3437
+        },
+        {
+          "introducedAtLocalRound": 7,
+          "changeInInputGap": 490,
+          "remainingRequestsIncludingCurrent": 6,
+          "weightedContribution": 2940
+        },
+        {
+          "introducedAtLocalRound": 8,
+          "changeInInputGap": 492,
+          "remainingRequestsIncludingCurrent": 5,
+          "weightedContribution": 2460
+        },
+        {
+          "introducedAtLocalRound": 9,
+          "changeInInputGap": 488,
+          "remainingRequestsIncludingCurrent": 4,
+          "weightedContribution": 1952
+        },
+        {
+          "introducedAtLocalRound": 10,
+          "changeInInputGap": 487,
+          "remainingRequestsIncludingCurrent": 3,
+          "weightedContribution": 1461
+        },
+        {
+          "introducedAtLocalRound": 11,
+          "changeInInputGap": 493,
+          "remainingRequestsIncludingCurrent": 2,
+          "weightedContribution": 986
+        },
+        {
+          "introducedAtLocalRound": 12,
+          "changeInInputGap": 489,
+          "remainingRequestsIncludingCurrent": 1,
+          "weightedContribution": 489
+        }
+      ]
+    }
+  },
+  "checkpoints": {
+    "1": {
+      "native": {
+        "input": 39471,
+        "cached": 12032,
+        "uncached": 27439,
+        "output": 42,
+        "generations": 3
+      },
+      "product": {
+        "input": 47907,
+        "cached": 0,
+        "uncached": 47907,
+        "output": 150,
+        "generations": 3
+      },
+      "delta": {
+        "input": 8436,
+        "cached": -12032,
+        "uncached": 20468,
+        "output": 108,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2137265334042715,
+        "cached": 0.0,
+        "uncached": 1.7459455519516018,
+        "output": 3.5714285714285716,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.30483139520154034,
+        "product": 0.0
+      }
+    },
+    "4": {
+      "native": {
+        "input": 163260,
+        "cached": 127488,
+        "uncached": 35772,
+        "output": 153,
+        "generations": 12
+      },
+      "product": {
+        "input": 205899,
+        "cached": 145152,
+        "uncached": 60747,
+        "output": 585,
+        "generations": 12
+      },
+      "delta": {
+        "input": 42639,
+        "cached": 17664,
+        "uncached": 24975,
+        "output": 432,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2611723631018008,
+        "cached": 1.1385542168674698,
+        "uncached": 1.6981717544448172,
+        "output": 3.823529411764706,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.7808893789048144,
+        "product": 0.7049669983827022
+      }
+    },
+    "8": {
+      "native": {
+        "input": 340821,
+        "cached": 293376,
+        "uncached": 47445,
+        "output": 306,
+        "generations": 24
+      },
+      "product": {
+        "input": 449860,
+        "cached": 371456,
+        "uncached": 78404,
+        "output": 1170,
+        "generations": 24
+      },
+      "delta": {
+        "input": 109039,
+        "cached": 78080,
+        "uncached": 30959,
+        "output": 864,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.319930403349559,
+        "cached": 1.2661431064572426,
+        "uncached": 1.6525239751290968,
+        "output": 3.823529411764706,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.8607920286602058,
+        "product": 0.8257146667852221
+      }
+    },
+    "12": {
+      "native": {
+        "input": 532998,
+        "cached": 474624,
+        "uncached": 58374,
+        "output": 459,
+        "generations": 36
+      },
+      "product": {
+        "input": 732101,
+        "cached": 636672,
+        "uncached": 95429,
+        "output": 1755,
+        "generations": 36
+      },
+      "delta": {
+        "input": 199103,
+        "cached": 162048,
+        "uncached": 37055,
+        "output": 1296,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3735529964465159,
+        "cached": 1.3414239482200647,
+        "uncached": 1.634786034878542,
+        "output": 3.823529411764706,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.8904798892303536,
+        "product": 0.8696504990431648
+      }
+    }
+  },
+  "windows": {
+    "first": {
+      "native": {
+        "input": 39471,
+        "cached": 12032,
+        "uncached": 27439,
+        "output": 42,
+        "generations": 3
+      },
+      "product": {
+        "input": 47907,
+        "cached": 0,
+        "uncached": 47907,
+        "output": 150,
+        "generations": 3
+      },
+      "delta": {
+        "input": 8436,
+        "cached": -12032,
+        "uncached": 20468,
+        "output": 108,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2137265334042715,
+        "cached": 0.0,
+        "uncached": 1.7459455519516018,
+        "output": 3.5714285714285716,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.30483139520154034,
+        "product": 0.0
+      }
+    },
+    "continuation": {
+      "native": {
+        "input": 493527,
+        "cached": 462592,
+        "uncached": 30935,
+        "output": 417,
+        "generations": 33
+      },
+      "product": {
+        "input": 684194,
+        "cached": 636672,
+        "uncached": 47522,
+        "output": 1605,
+        "generations": 33
+      },
+      "delta": {
+        "input": 190667,
+        "cached": 174080,
+        "uncached": 16587,
+        "output": 1188,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3863354993749075,
+        "cached": 1.3763143331488654,
+        "uncached": 1.536188782931954,
+        "output": 3.8489208633093526,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9373185256328428,
+        "product": 0.9305430915792889
+      }
+    },
+    "rounds2to4": {
+      "native": {
+        "input": 123789,
+        "cached": 115456,
+        "uncached": 8333,
+        "output": 111,
+        "generations": 9
+      },
+      "product": {
+        "input": 157992,
+        "cached": 145152,
+        "uncached": 12840,
+        "output": 435,
+        "generations": 9
+      },
+      "delta": {
+        "input": 34203,
+        "cached": 29696,
+        "uncached": 4507,
+        "output": 324,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2763008021714368,
+        "cached": 1.2572062084257207,
+        "uncached": 1.5408616344653787,
+        "output": 3.918918918918919,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9326838410521129,
+        "product": 0.9187300622816346
+      }
+    },
+    "rounds5to8": {
+      "native": {
+        "input": 177561,
+        "cached": 165888,
+        "uncached": 11673,
+        "output": 153,
+        "generations": 12
+      },
+      "product": {
+        "input": 243961,
+        "cached": 226304,
+        "uncached": 17657,
+        "output": 585,
+        "generations": 12
+      },
+      "delta": {
+        "input": 66400,
+        "cached": 60416,
+        "uncached": 5984,
+        "output": 432,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3739559925884626,
+        "cached": 1.3641975308641976,
+        "uncached": 1.5126359976013022,
+        "output": 3.823529411764706,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9342592123270312,
+        "product": 0.9276236775550191
+      }
+    },
+    "rounds9to12": {
+      "native": {
+        "input": 192177,
+        "cached": 181248,
+        "uncached": 10929,
+        "output": 153,
+        "generations": 12
+      },
+      "product": {
+        "input": 282241,
+        "cached": 265216,
+        "uncached": 17025,
+        "output": 585,
+        "generations": 12
+      },
+      "delta": {
+        "input": 90064,
+        "cached": 83968,
+        "uncached": 6096,
+        "output": 432,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4686512954203677,
+        "cached": 1.463276836158192,
+        "uncached": 1.5577820477628328,
+        "output": 3.823529411764706,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9431305515228149,
+        "product": 0.9396792103202583
+      }
+    }
+  },
+  "stages": [
+    {
+      "speaker": "a",
+      "localRound": 1,
+      "globalStage": 1,
+      "native": {
+        "input": 13065,
+        "cached": 0,
+        "uncached": 13065,
+        "output": 14,
+        "generations": 1
+      },
+      "product": {
+        "input": 16076,
+        "cached": 0,
+        "uncached": 16076,
+        "output": 50,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3011,
+        "cached": 0,
+        "uncached": 3011,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2304630692690395,
+        "cached": null,
+        "uncached": 1.2304630692690395,
+        "output": 3.5714285714285716,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.0,
+        "product": 0.0
+      },
+      "inputGapIncreaseSincePrevious": null,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 1,
+      "globalStage": 2,
+      "native": {
+        "input": 13157,
+        "cached": 12032,
+        "uncached": 1125,
+        "output": 14,
+        "generations": 1
+      },
+      "product": {
+        "input": 15965,
+        "cached": 0,
+        "uncached": 15965,
+        "output": 50,
+        "generations": 1
+      },
+      "delta": {
+        "input": 2808,
+        "cached": -12032,
+        "uncached": 14840,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2134225127308658,
+        "cached": 0.0,
+        "uncached": 14.19111111111111,
+        "output": 3.5714285714285716,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9144941856046211,
+        "product": 0.0
+      },
+      "inputGapIncreaseSincePrevious": null,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 1,
+      "globalStage": 3,
+      "native": {
+        "input": 13249,
+        "cached": 0,
+        "uncached": 13249,
+        "output": 14,
+        "generations": 1
+      },
+      "product": {
+        "input": 15866,
+        "cached": 0,
+        "uncached": 15866,
+        "output": 50,
+        "generations": 1
+      },
+      "delta": {
+        "input": 2617,
+        "cached": 0,
+        "uncached": 2617,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.1975243414597327,
+        "cached": null,
+        "uncached": 1.1975243414597327,
+        "output": 3.5714285714285716,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.0,
+        "product": 0.0
+      },
+      "inputGapIncreaseSincePrevious": null,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 2,
+      "globalStage": 4,
+      "native": {
+        "input": 13389,
+        "cached": 12032,
+        "uncached": 1357,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 16892,
+        "cached": 15104,
+        "uncached": 1788,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3503,
+        "cached": 3072,
+        "uncached": 431,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2616326835461946,
+        "cached": 1.2553191489361701,
+        "uncached": 1.3176123802505526,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.898648143998805,
+        "product": 0.8941510774331044
+      },
+      "inputGapIncreaseSincePrevious": 492,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 2,
+      "globalStage": 5,
+      "native": {
+        "input": 13475,
+        "cached": 12032,
+        "uncached": 1443,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 16779,
+        "cached": 15104,
+        "uncached": 1675,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3304,
+        "cached": 3072,
+        "uncached": 232,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2451948051948052,
+        "cached": 1.2553191489361701,
+        "uncached": 1.1607761607761609,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.89291280148423,
+        "product": 0.9001728350914834
+      },
+      "inputGapIncreaseSincePrevious": 496,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 2,
+      "globalStage": 6,
+      "native": {
+        "input": 13561,
+        "cached": 13056,
+        "uncached": 505,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 16669,
+        "cached": 15104,
+        "uncached": 1565,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3108,
+        "cached": 2048,
+        "uncached": 1060,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2291866381535286,
+        "cached": 1.1568627450980393,
+        "uncached": 3.099009900990099,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.96276085834378,
+        "product": 0.9061131441598176
+      },
+      "inputGapIncreaseSincePrevious": 491,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 3,
+      "globalStage": 7,
+      "native": {
+        "input": 13686,
+        "cached": 13056,
+        "uncached": 630,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 17683,
+        "cached": 16128,
+        "uncached": 1555,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3997,
+        "cached": 3072,
+        "uncached": 925,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.292050270349262,
+        "cached": 1.2352941176470589,
+        "uncached": 2.4682539682539684,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9539675580885576,
+        "product": 0.9120624328451055
+      },
+      "inputGapIncreaseSincePrevious": 494,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 3,
+      "globalStage": 8,
+      "native": {
+        "input": 13759,
+        "cached": 13056,
+        "uncached": 703,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 17561,
+        "cached": 16128,
+        "uncached": 1433,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3802,
+        "cached": 3072,
+        "uncached": 730,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2763282215277274,
+        "cached": 1.2352941176470589,
+        "uncached": 2.0384068278805123,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9489061705065776,
+        "product": 0.9183987244462161
+      },
+      "inputGapIncreaseSincePrevious": 498,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 3,
+      "globalStage": 9,
+      "native": {
+        "input": 13832,
+        "cached": 13056,
+        "uncached": 776,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 17433,
+        "cached": 16128,
+        "uncached": 1305,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 3601,
+        "cached": 3072,
+        "uncached": 529,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.2603383458646618,
+        "cached": 1.2352941176470589,
+        "uncached": 1.681701030927835,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9438982070561018,
+        "product": 0.9251419721218379
+      },
+      "inputGapIncreaseSincePrevious": 493,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 4,
+      "globalStage": 10,
+      "native": {
+        "input": 13956,
+        "cached": 13056,
+        "uncached": 900,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 18451,
+        "cached": 17152,
+        "uncached": 1299,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 4495,
+        "cached": 4096,
+        "uncached": 399,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3220836916021783,
+        "cached": 1.3137254901960784,
+        "uncached": 1.4433333333333334,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9355116079105761,
+        "product": 0.9295973117988184
+      },
+      "inputGapIncreaseSincePrevious": 498,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 4,
+      "globalStage": 11,
+      "native": {
+        "input": 14029,
+        "cached": 13056,
+        "uncached": 973,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 18328,
+        "cached": 17152,
+        "uncached": 1176,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 4299,
+        "cached": 4096,
+        "uncached": 203,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3064366669042697,
+        "cached": 1.3137254901960784,
+        "uncached": 1.20863309352518,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.930643666690427,
+        "product": 0.9358358795285902
+      },
+      "inputGapIncreaseSincePrevious": 497,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 4,
+      "globalStage": 12,
+      "native": {
+        "input": 14102,
+        "cached": 13056,
+        "uncached": 1046,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 18196,
+        "cached": 17152,
+        "uncached": 1044,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 4094,
+        "cached": 4096,
+        "uncached": -2,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.290313430719047,
+        "cached": 1.3137254901960784,
+        "uncached": 0.9980879541108987,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9258261239540491,
+        "product": 0.9426247526928996
+      },
+      "inputGapIncreaseSincePrevious": 493,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 5,
+      "globalStage": 13,
+      "native": {
+        "input": 14242,
+        "cached": 13056,
+        "uncached": 1186,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 19228,
+        "cached": 18176,
+        "uncached": 1052,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 4986,
+        "cached": 5120,
+        "uncached": -134,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.350091279314703,
+        "cached": 1.392156862745098,
+        "uncached": 0.8870151770657673,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9167251790478865,
+        "product": 0.9452881214894945
+      },
+      "inputGapIncreaseSincePrevious": 491,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 5,
+      "globalStage": 14,
+      "native": {
+        "input": 14330,
+        "cached": 13056,
+        "uncached": 1274,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 19130,
+        "cached": 18176,
+        "uncached": 954,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 4800,
+        "cached": 5120,
+        "uncached": -320,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3349616189811584,
+        "cached": 1.392156862745098,
+        "uncached": 0.7488226059654631,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9110956036287509,
+        "product": 0.9501306847882907
+      },
+      "inputGapIncreaseSincePrevious": 501,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 5,
+      "globalStage": 15,
+      "native": {
+        "input": 14418,
+        "cached": 13056,
+        "uncached": 1362,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 19002,
+        "cached": 17152,
+        "uncached": 1850,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 4584,
+        "cached": 4096,
+        "uncached": 488,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3179359134415314,
+        "cached": 1.3137254901960784,
+        "uncached": 1.3582966226138031,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9055347482313775,
+        "product": 0.9026418271760868
+      },
+      "inputGapIncreaseSincePrevious": 490,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 6,
+      "globalStage": 16,
+      "native": {
+        "input": 14561,
+        "cached": 14080,
+        "uncached": 481,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 20051,
+        "cached": 18176,
+        "uncached": 1875,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 5490,
+        "cached": 4096,
+        "uncached": 1394,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3770345443307466,
+        "cached": 1.290909090909091,
+        "uncached": 3.898128898128898,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9669665544948836,
+        "product": 0.906488454441175
+      },
+      "inputGapIncreaseSincePrevious": 504,
+      "nativeQuality": "correct",
+      "productQuality": "incorrect"
+    },
+    {
+      "speaker": "b",
+      "localRound": 6,
+      "globalStage": 17,
+      "native": {
+        "input": 14652,
+        "cached": 14080,
+        "uncached": 572,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 19950,
+        "cached": 18176,
+        "uncached": 1774,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 5298,
+        "cached": 4096,
+        "uncached": 1202,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3615888615888616,
+        "cached": 1.290909090909091,
+        "uncached": 3.1013986013986012,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.960960960960961,
+        "product": 0.9110776942355889
+      },
+      "inputGapIncreaseSincePrevious": 498,
+      "nativeQuality": "correct",
+      "productQuality": "incorrect"
+    },
+    {
+      "speaker": "c",
+      "localRound": 6,
+      "globalStage": 18,
+      "native": {
+        "input": 14743,
+        "cached": 14080,
+        "uncached": 663,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 19818,
+        "cached": 18176,
+        "uncached": 1642,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 5075,
+        "cached": 4096,
+        "uncached": 979,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.34423116055077,
+        "cached": 1.290909090909091,
+        "uncached": 2.4766214177978885,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9550295055280472,
+        "product": 0.9171460288626501
+      },
+      "inputGapIncreaseSincePrevious": 491,
+      "nativeQuality": "correct",
+      "productQuality": "incorrect"
+    },
+    {
+      "speaker": "a",
+      "localRound": 7,
+      "globalStage": 19,
+      "native": {
+        "input": 14870,
+        "cached": 14080,
+        "uncached": 790,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 20851,
+        "cached": 19200,
+        "uncached": 1651,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 5981,
+        "cached": 5120,
+        "uncached": 861,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.40221923335575,
+        "cached": 1.3636363636363635,
+        "uncached": 2.089873417721519,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9468728984532616,
+        "product": 0.9208191453647308
+      },
+      "inputGapIncreaseSincePrevious": 491,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 7,
+      "globalStage": 20,
+      "native": {
+        "input": 14944,
+        "cached": 14080,
+        "uncached": 864,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 20738,
+        "cached": 19200,
+        "uncached": 1538,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 5794,
+        "cached": 5120,
+        "uncached": 674,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3877141327623126,
+        "cached": 1.3636363636363635,
+        "uncached": 1.7800925925925926,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9421841541755889,
+        "product": 0.9258366284116115
+      },
+      "inputGapIncreaseSincePrevious": 496,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 7,
+      "globalStage": 21,
+      "native": {
+        "input": 15018,
+        "cached": 14080,
+        "uncached": 938,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 20583,
+        "cached": 19200,
+        "uncached": 1383,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 5565,
+        "cached": 5120,
+        "uncached": 445,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3705553335996803,
+        "cached": 1.3636363636363635,
+        "uncached": 1.4744136460554371,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9375416167265948,
+        "product": 0.9328086284798134
+      },
+      "inputGapIncreaseSincePrevious": 490,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 8,
+      "globalStage": 22,
+      "native": {
+        "input": 15165,
+        "cached": 14080,
+        "uncached": 1085,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 21635,
+        "cached": 20224,
+        "uncached": 1411,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 6470,
+        "cached": 6144,
+        "uncached": 326,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4266402901417738,
+        "cached": 1.4363636363636363,
+        "uncached": 1.3004608294930875,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9284536762281569,
+        "product": 0.9347816038825977
+      },
+      "inputGapIncreaseSincePrevious": 489,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 8,
+      "globalStage": 23,
+      "native": {
+        "input": 15261,
+        "cached": 14080,
+        "uncached": 1181,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 21561,
+        "cached": 20224,
+        "uncached": 1337,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 6300,
+        "cached": 6144,
+        "uncached": 156,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4128169844702183,
+        "cached": 1.4363636363636363,
+        "uncached": 1.1320914479254869,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.922613197038202,
+        "product": 0.9379898891517091
+      },
+      "inputGapIncreaseSincePrevious": 506,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 8,
+      "globalStage": 24,
+      "native": {
+        "input": 15357,
+        "cached": 14080,
+        "uncached": 1277,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 21414,
+        "cached": 20224,
+        "uncached": 1190,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 6057,
+        "cached": 6144,
+        "uncached": -87,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.3944129712834539,
+        "cached": 1.4363636363636363,
+        "uncached": 0.9318715740015662,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9168457380998893,
+        "product": 0.9444288783039133
+      },
+      "inputGapIncreaseSincePrevious": 492,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 9,
+      "globalStage": 25,
+      "native": {
+        "input": 15485,
+        "cached": 14080,
+        "uncached": 1405,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 22449,
+        "cached": 21248,
+        "uncached": 1201,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 6964,
+        "cached": 7168,
+        "uncached": -204,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.44972554084598,
+        "cached": 1.509090909090909,
+        "uncached": 0.8548042704626334,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9092670326122053,
+        "product": 0.9465009577264021
+      },
+      "inputGapIncreaseSincePrevious": 494,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 9,
+      "globalStage": 26,
+      "native": {
+        "input": 15561,
+        "cached": 15104,
+        "uncached": 457,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 22358,
+        "cached": 21248,
+        "uncached": 1110,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 6797,
+        "cached": 6144,
+        "uncached": 653,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4367971210076473,
+        "cached": 1.4067796610169492,
+        "uncached": 2.428884026258206,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9706317074738128,
+        "product": 0.9503533410859648
+      },
+      "inputGapIncreaseSincePrevious": 497,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 9,
+      "globalStage": 27,
+      "native": {
+        "input": 15637,
+        "cached": 15104,
+        "uncached": 533,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 22182,
+        "cached": 21248,
+        "uncached": 934,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 6545,
+        "cached": 6144,
+        "uncached": 401,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4185585470358764,
+        "cached": 1.4067796610169492,
+        "uncached": 1.7523452157598498,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.965914177911364,
+        "product": 0.9578937877558381
+      },
+      "inputGapIncreaseSincePrevious": 488,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 10,
+      "globalStage": 28,
+      "native": {
+        "input": 15762,
+        "cached": 15104,
+        "uncached": 658,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 23215,
+        "cached": 22272,
+        "uncached": 943,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 7453,
+        "cached": 7168,
+        "uncached": 285,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.472846085522142,
+        "cached": 1.4745762711864407,
+        "uncached": 1.4331306990881458,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9582540286765638,
+        "product": 0.9593797113934955
+      },
+      "inputGapIncreaseSincePrevious": 489,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 10,
+      "globalStage": 29,
+      "native": {
+        "input": 15835,
+        "cached": 15104,
+        "uncached": 731,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 23129,
+        "cached": 21248,
+        "uncached": 1881,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 7294,
+        "cached": 6144,
+        "uncached": 1150,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4606251973476476,
+        "cached": 1.4067796610169492,
+        "uncached": 2.573187414500684,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9538364382696558,
+        "product": 0.9186735267413204
+      },
+      "inputGapIncreaseSincePrevious": 497,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 10,
+      "globalStage": 30,
+      "native": {
+        "input": 15908,
+        "cached": 15104,
+        "uncached": 804,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 22940,
+        "cached": 21248,
+        "uncached": 1692,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 7032,
+        "cached": 6144,
+        "uncached": 888,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.442041740005029,
+        "cached": 1.4067796610169492,
+        "uncached": 2.1044776119402986,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9494593915011315,
+        "product": 0.9262423714036617
+      },
+      "inputGapIncreaseSincePrevious": 487,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 11,
+      "globalStage": 31,
+      "native": {
+        "input": 16063,
+        "cached": 15104,
+        "uncached": 959,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 24004,
+        "cached": 22272,
+        "uncached": 1732,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 7941,
+        "cached": 7168,
+        "uncached": 773,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.494365934134346,
+        "cached": 1.4745762711864407,
+        "uncached": 1.8060479666319083,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9402975782855009,
+        "product": 0.9278453591068155
+      },
+      "inputGapIncreaseSincePrevious": 488,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 11,
+      "globalStage": 32,
+      "native": {
+        "input": 16165,
+        "cached": 15104,
+        "uncached": 1061,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 23955,
+        "cached": 22272,
+        "uncached": 1683,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 7790,
+        "cached": 7168,
+        "uncached": 622,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4819053510671203,
+        "cached": 1.4745762711864407,
+        "uncached": 1.586239396795476,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.934364367460563,
+        "product": 0.9297432686286787
+      },
+      "inputGapIncreaseSincePrevious": 496,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 11,
+      "globalStage": 33,
+      "native": {
+        "input": 16267,
+        "cached": 15104,
+        "uncached": 1163,
+        "output": 12,
+        "generations": 1
+      },
+      "product": {
+        "input": 23792,
+        "cached": 22272,
+        "uncached": 1520,
+        "output": 48,
+        "generations": 1
+      },
+      "delta": {
+        "input": 7525,
+        "cached": 7168,
+        "uncached": 357,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4625929796520563,
+        "cached": 1.4745762711864407,
+        "uncached": 1.3069647463456577,
+        "output": 4.0,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9285055634105859,
+        "product": 0.9361129791526563
+      },
+      "inputGapIncreaseSincePrevious": 493,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "a",
+      "localRound": 12,
+      "globalStage": 34,
+      "native": {
+        "input": 16408,
+        "cached": 15104,
+        "uncached": 1304,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 24836,
+        "cached": 23296,
+        "uncached": 1540,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 8428,
+        "cached": 8192,
+        "uncached": 236,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.5136518771331058,
+        "cached": 1.5423728813559323,
+        "uncached": 1.1809815950920246,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9205265724037055,
+        "product": 0.9379932356257046
+      },
+      "inputGapIncreaseSincePrevious": 487,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "b",
+      "localRound": 12,
+      "globalStage": 35,
+      "native": {
+        "input": 16498,
+        "cached": 15104,
+        "uncached": 1394,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 24779,
+        "cached": 23296,
+        "uncached": 1483,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 8281,
+        "cached": 8192,
+        "uncached": 89,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.501939629045945,
+        "cached": 1.5423728813559323,
+        "uncached": 1.0638450502152081,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9155049096860225,
+        "product": 0.9401509342588482
+      },
+      "inputGapIncreaseSincePrevious": 491,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    },
+    {
+      "speaker": "c",
+      "localRound": 12,
+      "globalStage": 36,
+      "native": {
+        "input": 16588,
+        "cached": 16128,
+        "uncached": 460,
+        "output": 13,
+        "generations": 1
+      },
+      "product": {
+        "input": 24602,
+        "cached": 23296,
+        "uncached": 1306,
+        "output": 49,
+        "generations": 1
+      },
+      "delta": {
+        "input": 8014,
+        "cached": 7168,
+        "uncached": 846,
+        "output": 36,
+        "generations": 0
+      },
+      "ratios": {
+        "input": 1.4831203279479142,
+        "cached": 1.4444444444444444,
+        "uncached": 2.8391304347826085,
+        "output": 3.769230769230769,
+        "generations": 1.0
+      },
+      "cachedFraction": {
+        "native": 0.9722691102001447,
+        "product": 0.9469148849687017
+      },
+      "inputGapIncreaseSincePrevious": 489,
+      "nativeQuality": "correct",
+      "productQuality": "correct"
+    }
+  ],
+  "rawUsageVerification": [
+    {
+      "arm": "native",
+      "speaker": "a",
+      "sameSession": true,
+      "stages": 12,
+      "distinctUsageUpdates": 12,
+      "usageMatchesAllStageMetrics": true,
+      "observedCompactionEvents": 0
+    },
+    {
+      "arm": "native",
+      "speaker": "b",
+      "sameSession": true,
+      "stages": 12,
+      "distinctUsageUpdates": 12,
+      "usageMatchesAllStageMetrics": true,
+      "observedCompactionEvents": 0
+    },
+    {
+      "arm": "native",
+      "speaker": "c",
+      "sameSession": true,
+      "stages": 12,
+      "distinctUsageUpdates": 12,
+      "usageMatchesAllStageMetrics": true,
+      "observedCompactionEvents": 0
+    },
+    {
+      "arm": "worker-delivery",
+      "speaker": "a",
+      "sameSession": true,
+      "stages": 12,
+      "distinctUsageUpdates": 12,
+      "usageMatchesAllStageMetrics": true,
+      "observedCompactionEvents": 0
+    },
+    {
+      "arm": "worker-delivery",
+      "speaker": "b",
+      "sameSession": true,
+      "stages": 12,
+      "distinctUsageUpdates": 12,
+      "usageMatchesAllStageMetrics": true,
+      "observedCompactionEvents": 0
+    },
+    {
+      "arm": "worker-delivery",
+      "speaker": "c",
+      "sameSession": true,
+      "stages": 12,
+      "distinctUsageUpdates": 12,
+      "usageMatchesAllStageMetrics": true,
+      "observedCompactionEvents": 0
+    }
+  ],
+  "fairness": {
+    "sameSourceHashPerArm": true,
+    "actualInputAudit": {
+      "native": {
+        "sourceSha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+        "stages": [
+          {
+            "stage": 1,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 1
+          },
+          {
+            "stage": 4,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 7,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 10,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 13,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 16,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0,
+            "precedingWrongModeAnswerOccurrences": 0,
+            "precedingCorrectModeAnswerOccurrences": 0
+          },
+          {
+            "stage": 19,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 22,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 25,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 28,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 31,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 34,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 2,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 1
+          },
+          {
+            "stage": 5,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 8,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 11,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 14,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 17,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0,
+            "precedingWrongModeAnswerOccurrences": 0,
+            "precedingCorrectModeAnswerOccurrences": 1
+          },
+          {
+            "stage": 20,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 23,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 26,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 29,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 32,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 35,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 3,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 1
+          },
+          {
+            "stage": 6,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 9,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 12,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 15,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 18,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0,
+            "precedingWrongModeAnswerOccurrences": 0,
+            "precedingCorrectModeAnswerOccurrences": 2
+          },
+          {
+            "stage": 21,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 24,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 27,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 30,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 33,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 36,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          }
+        ]
+      },
+      "worker-delivery": {
+        "sourceSha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+        "stages": [
+          {
+            "stage": 1,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 1
+          },
+          {
+            "stage": 4,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 7,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 10,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 13,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 16,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0,
+            "precedingWrongModeAnswerOccurrences": 0,
+            "precedingCorrectModeAnswerOccurrences": 0
+          },
+          {
+            "stage": 19,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 22,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 25,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 28,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 31,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 34,
+            "speaker": "a",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 2,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 1
+          },
+          {
+            "stage": 5,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 8,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 11,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 14,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 17,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0,
+            "precedingWrongModeAnswerOccurrences": 1,
+            "precedingCorrectModeAnswerOccurrences": 0
+          },
+          {
+            "stage": 20,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 23,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 26,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 29,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 32,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 35,
+            "speaker": "b",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 3,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 1
+          },
+          {
+            "stage": 6,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 9,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 12,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 15,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 18,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0,
+            "precedingWrongModeAnswerOccurrences": 2,
+            "precedingCorrectModeAnswerOccurrences": 0
+          },
+          {
+            "stage": 21,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 24,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 27,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 30,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 33,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          },
+          {
+            "stage": 36,
+            "speaker": "c",
+            "sourceCopiesInNewInput": 0
+          }
+        ]
+      }
+    },
+    "sourceHash": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+    "quality": {
+      "nativeCorrect": 36,
+      "productCorrect": 33,
+      "productIncorrectStages": [16, 17, 18]
+    },
+    "peers": "Each arm relays its actual peer answers, not the other arm or gold; these are different histories after different answers and are not independent individual reviews.",
+    "independentlyRecheckedInputStages": [
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 1,
+        "sourceCopiesInNewInput": 1,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 4,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 7,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 10,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 13,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 16,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": 0
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 19,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 22,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 25,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 28,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 31,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "a",
+        "globalStage": 34,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 2,
+        "sourceCopiesInNewInput": 1,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 5,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 8,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 11,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 14,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 17,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": 0
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 20,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 23,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 26,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 29,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 32,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "b",
+        "globalStage": 35,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 3,
+        "sourceCopiesInNewInput": 1,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 6,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 9,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 12,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 15,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 18,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": 0
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 21,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 24,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 27,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 30,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 33,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "native",
+        "speaker": "c",
+        "globalStage": 36,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 1,
+        "sourceCopiesInNewInput": 1,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 4,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 7,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 10,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 13,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 16,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 19,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 22,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 25,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 28,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 31,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "a",
+        "globalStage": 34,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 2,
+        "sourceCopiesInNewInput": 1,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 5,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 8,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 11,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 14,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 17,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": 1
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 20,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 23,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 26,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 29,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 32,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "b",
+        "globalStage": 35,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 3,
+        "sourceCopiesInNewInput": 1,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 6,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 9,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 12,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 15,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 18,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": 2
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 21,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 24,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 27,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 30,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 33,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      },
+      {
+        "arm": "worker-delivery",
+        "speaker": "c",
+        "globalStage": 36,
+        "sourceCopiesInNewInput": 0,
+        "earlierWrongModeAnswerOccurrences": null
+      }
+    ]
+  },
+  "limits": [
+    "First-gap repetition and growth are exact algebraic components, not identified token costs of static policy/history; first gap includes membership/initial delivery/peer timing differences.",
+    "Cached and uncached deltas are observed accounting bins, not a counterfactual cache saving or price.",
+    "36 distinct reported generation usage updates per arm independently verified; HTTP request count and unreported/unfinished provider requests cannot be inferred from this.",
+    "Full paid request bodies/tokenized component boundaries unavailable; no byte-to-token conversion; later free wire captures cannot replace P122 raw requests.",
+    "Quality differs; not equal-quality efficiency and not independent repetitions. No paid calls or raw edits."
+  ],
+  "outputObservation": {
+    "perStageOutputDelta": [36],
+    "actualOutputEvidence": [
+      {
+        "arm": "native",
+        "globalStage": 1,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 4,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 7,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 10,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 13,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 16,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 19,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 22,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 25,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 28,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 31,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 34,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 2,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 5,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 8,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 11,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 14,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 17,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 20,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 23,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 26,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 29,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 32,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 35,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 3,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 6,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 9,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 12,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 15,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 18,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 21,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 24,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 27,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 30,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 33,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "native",
+        "globalStage": 36,
+        "customToolCalls": 0,
+        "assistantMessages": 1,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 1,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 4,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 7,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 10,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 13,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 16,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 19,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 22,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 25,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 28,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 31,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 34,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 2,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 5,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 8,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 11,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 14,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 17,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 20,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 23,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 26,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 29,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 32,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 35,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 3,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 6,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 9,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 12,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 15,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 18,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 21,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 24,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 27,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 30,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 33,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      },
+      {
+        "arm": "worker-delivery",
+        "globalStage": 36,
+        "customToolCalls": 1,
+        "assistantMessages": 0,
+        "reportedReasoningOutput": 0
+      }
+    ],
+    "nativeForm": "plain final assistant answer",
+    "productForm": "exec code with const r = await tools.mcp__loom_worker__loom_reply({body:answer,final:true,basedOnRoomSeq:currentSeq}); text(r)",
+    "interpretation": "Observed output difference is +36 reported tokens in every stage, total1296. Code wrapper, tool name, keys, booleans, sequence and text(r) are visible extra output syntax, but no per-syntax token allocation is available. All reported reasoning_output_tokens are0; this does not measure hidden provider computation."
+  },
+  "analysisScriptSha256": "a2c2132dfcf216f8e60d0aca7d7823b84934e23e9ed0ccfb00762869ac2c40f5",
+  "privateAnalysisArchive": "2026-10-06-p122-cost-decomposition"
+}
