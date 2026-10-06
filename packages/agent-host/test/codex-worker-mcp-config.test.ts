@@ -45,7 +45,9 @@ test("optional internal MCP config requires both bindings and never copies secre
     false,
   );
   assert.ok(
-    c.args.includes('mcp_servers.loom_worker.omit_tools_from=["deferred"]'),
+    c.args.includes(
+      'mcp_servers.loom_worker.omit_tools_from=["code_mode","deferred"]',
+    ),
   );
   assert.ok(
     c.args.includes(

@@ -1,0 +1,138 @@
+{
+  "mode": "offline replay of captured frames through unchanged production barrier; no model/network/process",
+  "direct": [
+    {
+      "at": "2026-10-06T16:18:14.880Z",
+      "turn": 1,
+      "method": "rawResponseItem/completed",
+      "type": "function_call",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:14.881Z",
+      "turn": 1,
+      "method": "item/started",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:14.891Z",
+      "turn": 1,
+      "method": "item/completed",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:14.892Z",
+      "turn": 1,
+      "method": "rawResponseItem/completed",
+      "type": "function_call_output",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:15.437Z",
+      "turn": 2,
+      "method": "rawResponseItem/completed",
+      "type": "function_call",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:15.438Z",
+      "turn": 2,
+      "method": "item/started",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:15.445Z",
+      "turn": 2,
+      "method": "item/completed",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T16:18:15.446Z",
+      "turn": 2,
+      "method": "rawResponseItem/completed",
+      "type": "function_call_output",
+      "ready": false
+    }
+  ],
+  "priorCodeMode": [
+    {
+      "at": "2026-10-06T10:28:22.314Z",
+      "turn": 1,
+      "method": "rawResponseItem/completed",
+      "type": "custom_tool_call",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:22.398Z",
+      "turn": 1,
+      "method": "item/started",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:22.408Z",
+      "turn": 1,
+      "method": "item/completed",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:22.411Z",
+      "turn": 1,
+      "method": "rawResponseItem/completed",
+      "type": "custom_tool_call_output",
+      "ready": true
+    },
+    {
+      "at": "2026-10-06T10:28:22.774Z",
+      "turn": 2,
+      "method": "rawResponseItem/completed",
+      "type": "custom_tool_call",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:22.775Z",
+      "turn": 2,
+      "method": "item/started",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:22.780Z",
+      "turn": 2,
+      "method": "item/completed",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:22.781Z",
+      "turn": 2,
+      "method": "rawResponseItem/completed",
+      "type": "custom_tool_call_output",
+      "ready": true
+    },
+    {
+      "at": "2026-10-06T10:28:25.260Z",
+      "turn": 3,
+      "method": "item/started",
+      "type": "mcpToolCall",
+      "ready": false
+    },
+    {
+      "at": "2026-10-06T10:28:25.270Z",
+      "turn": 3,
+      "method": "item/completed",
+      "type": "mcpToolCall",
+      "ready": false
+    }
+  ],
+  "limits": [
+    "Barrier readiness alone is not authorization: the Host final marker must arm the interrupt and all tools must settle.",
+    "Host-to-driver stdin arm timestamp is not captured by the Unix app-server wire; this replay does not claim its exact arrival.",
+    "A ready interrupt does not prove cancellation beats provider HTTP request initiation."
+  ]
+}

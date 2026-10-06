@@ -1,0 +1,20 @@
+[
+  {
+    "stage": 1,
+    "sameThreadTurnCallCorrelation": true,
+    "mcpCompletedBeforeRawOutput": true,
+    "rawOutputEqualsSubsequentProviderInputOutput": true,
+    "outputSha256": "23988d38943145a7601225344b0133b56904bd95a7555930be062010b690c2a5",
+    "rawOutputAt": "2026-10-06T16:18:14.892Z",
+    "secondRequestAt": "2026-10-06T16:18:14.895Z"
+  },
+  {
+    "stage": 2,
+    "sameThreadTurnCallCorrelation": true,
+    "mcpCompletedBeforeRawOutput": true,
+    "rawOutputEqualsSubsequentProviderInputOutput": true,
+    "outputSha256": "76c1ee12b7afe8241703e84d12d2986f463b7cb0e241d5441c429ba1fc4fcab0",
+    "rawOutputAt": "2026-10-06T16:18:15.446Z",
+    "secondRequestAt": "2026-10-06T16:18:15.449Z"
+  }
+]

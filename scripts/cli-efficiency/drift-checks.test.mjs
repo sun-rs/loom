@@ -822,3 +822,18 @@ test("attached-read: a failed read is a hard violation counted in the totals", (
   assert.equal(ok.status, "pass");
   assert.equal(ok.compactionOverhead.status, "no-compaction");
 });
+
+test("Codex direct MCP namespace is included in protocol cost without CLI handle proof", () => {
+  const mk = (namespace) => ({
+    payload: {
+      type: "function_call",
+      namespace,
+      name: "loom_reply",
+      arguments: '{"body":"message-post --turn fake"}',
+    },
+  });
+  assert.deepEqual(codexToolCalls([mk("mcp__loom_worker")]), [
+    { kind: "worker-mcp-reply" },
+  ]);
+  assert.deepEqual(codexToolCalls([mk("foreign")]), [{ kind: "unknown" }]);
+});

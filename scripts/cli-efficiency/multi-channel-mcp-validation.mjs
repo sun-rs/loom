@@ -1,3 +1,8 @@
+import {
+  isWorkerMcpReply,
+  isDirectWorkerMcp,
+  directWorkerMcpResult,
+} from "./worker-mcp-evidence.mjs";
 import assert from "node:assert/strict";
 import ts from "typescript";
 import { validateInlineChannelRound } from "./multi-channel-inline-validation.mjs";
@@ -39,9 +44,15 @@ function awaitedReply(node) {
   return literalArguments(c.arguments[0]);
 }
 export function replyArguments(call) {
+  assert.ok(
+    call.namespace === undefined ||
+      (call.type === "custom_tool_call" && call.namespace === "functions") ||
+      isDirectWorkerMcp(call),
+    "unregistered tool namespace",
+  );
   if (
     call.type === "function_call" &&
-    call.name === "mcp__loom_worker__loom_reply"
+    isWorkerMcpReply(call.name, call.namespace)
   )
     return JSON.parse(call.arguments);
   assert.ok(
@@ -232,7 +243,9 @@ export function validateMcpInlineRound(options) {
       !reply.threadId,
     "durable reply mismatch",
   );
-  const receipt = publishedReceipt(output.output);
+  const receipt = isDirectWorkerMcp(call)
+    ? directWorkerMcpResult(output.output)
+    : publishedReceipt(output.output);
   assert.ok(
     receipt && typeof receipt === "object" && !Array.isArray(receipt),
     "invalid MCP receipt",

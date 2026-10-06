@@ -1,3 +1,9 @@
+import {
+  WORKER_MCP_REPLY,
+  isWorkerMcpReply,
+  isDirectWorkerMcp,
+  directWorkerMcpResult,
+} from "./worker-mcp-evidence.mjs";
 import assert from "node:assert/strict";
 import ts from "typescript";
 const fail = (message) => {
@@ -152,7 +158,7 @@ function unknownWrite(value, depth = 0) {
   return (
     value.error?.code === "RESULT_UNKNOWN" ||
     (Array.isArray(value.content) && unknownWrite(value.content, depth + 1)) ||
-    (value.type === "text" &&
+    (["text", "input_text"].includes(value.type) &&
       typeof value.text === "string" &&
       unknownWrite(value.text, depth + 1))
   );
@@ -177,15 +183,33 @@ export function inspectBusinessToolCalls(events, round) {
     if (["function_call", "custom_tool_call"].includes(p?.type)) {
       assert.ok(p.call_id && !seen.has(p.call_id), "duplicate call id");
       seen.add(p.call_id);
-      pending.set(p.call_id, { type: p.type, time });
+      pending.set(p.call_id, {
+        type: p.type,
+        time,
+        direct: isDirectWorkerMcp(p),
+      });
+      assert.ok(
+        p.namespace === undefined ||
+          p.namespace === "functions" ||
+          isDirectWorkerMcp(p),
+        "unregistered tool namespace",
+      );
+      assert.ok(
+        p.name !== WORKER_MCP_REPLY || p.namespace === undefined,
+        "inconsistent MCP namespace",
+      );
       const ops =
         p.type === "custom_tool_call" && p.name === "exec"
           ? wrapper(p.input)
-          : [operation(p.name, JSON.parse(p.arguments))];
-      if (
-        p.type !== "function_call" ||
-        p.name !== "mcp__loom_worker__loom_reply"
-      )
+          : [
+              operation(
+                isWorkerMcpReply(p.name, p.namespace)
+                  ? WORKER_MCP_REPLY
+                  : p.name,
+                JSON.parse(p.arguments),
+              ),
+            ];
+      if (p.type !== "function_call" || !isWorkerMcpReply(p.name, p.namespace))
         diagnosticsComplete = false;
       attemptedCalls += ops.length;
       transports.push(...ops);
@@ -201,6 +225,19 @@ export function inspectBusinessToolCalls(events, round) {
           : "custom_tool_call_output",
       );
       pending.delete(p.call_id);
+      if (call.direct) {
+        const v = directWorkerMcpResult(p.output);
+        if (v.state === "published") {
+          assert.ok(
+            round.replies?.some(
+              (r) => r.messageId === v.messageId && r.roomSeq === v.roomSeq,
+            ),
+            "direct MCP receipt differs from durable reply",
+          );
+        } else rejectedCalls++;
+        if (v.deduplicated === true) deduplicatedCalls++;
+        continue;
+      }
       const texts =
         typeof p.output === "string"
           ? [p.output]

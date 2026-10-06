@@ -1,3 +1,4 @@
+import { isWorkerMcpReply } from "./worker-mcp-evidence.mjs";
 // Tool-call classification shared by the efficiency and drift gates (owner
 // 2026-09-25, decision A). A Worker CLI call (message-post/check, help, Task
 // commands, other `worker <command>`), internal Worker MCP replies and a read
@@ -11,7 +12,6 @@
 // reserved internal tool symbol is conservatively all protocol, even if mixed
 // with business work or the symbol is only referenced/quoted. No token split
 // or --turn/final proof is inferred from model-written arguments.
-const WORKER_MCP_REPLY = "mcp__loom_worker__loom_reply";
 const WORKER_MCP_SYMBOL = /\bmcp__loom_worker__loom_reply\b/;
 const HELP = /\bworker\s+help\b/;
 const POST = /message-post/;
@@ -29,9 +29,23 @@ export const PROTOCOL_KINDS = new Set([
   "memory-read",
 ]);
 
-export function workerCallKind(args, toolName) {
+export function workerCallKind(args, toolName, namespace) {
+  if (toolName === "loom_reply" && !isWorkerMcpReply(toolName, namespace))
+    return "unknown";
+  if (toolName === "mcp__loom_worker__loom_reply" && namespace !== undefined)
+    return "unknown";
   if (
-    toolName === WORKER_MCP_REPLY ||
+    namespace !== undefined &&
+    !["functions", "mcp__loom_worker"].includes(namespace)
+  )
+    return "unknown";
+  if (
+    namespace === "mcp__loom_worker" &&
+    !isWorkerMcpReply(toolName, namespace)
+  )
+    return "unknown";
+  if (
+    isWorkerMcpReply(toolName, namespace) ||
     (typeof args === "string" && WORKER_MCP_SYMBOL.test(args))
   )
     return "worker-mcp-reply";
@@ -74,8 +88,8 @@ export function countToolCalls(toolCalls) {
 // no-handle failure. Direct MCP arguments never prove CLI execution. Outer
 // cells containing CLI-like text are ambiguous, even if it is only prose;
 // do not parse JavaScript or accept model-written --turn text as proof.
-export function mcpCliTurnHandle(args, toolName) {
-  if (toolName === WORKER_MCP_REPLY) return undefined;
+export function mcpCliTurnHandle(args, toolName, namespace) {
+  if (isWorkerMcpReply(toolName, namespace)) return undefined;
   if (["exec_command", "shell_command", "shell"].includes(toolName)) {
     try {
       const parsed = JSON.parse(args);

@@ -101,10 +101,10 @@ export function codexToolCalls(events) {
     .map((e) => {
       const raw = e.payload.arguments ?? e.payload.input;
       const args = typeof raw === "string" ? raw : "";
-      const kind = workerCallKind(raw, e.payload.name);
+      const kind = workerCallKind(raw, e.payload.name, e.payload.namespace);
       const cliTurnHandle =
         kind === "worker-mcp-reply"
-          ? mcpCliTurnHandle(raw, e.payload.name)
+          ? mcpCliTurnHandle(raw, e.payload.name, e.payload.namespace)
           : undefined;
       return {
         kind,

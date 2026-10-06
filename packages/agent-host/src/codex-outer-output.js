@@ -1,3 +1,5 @@
+import { withCodexDirectOutput } from "./codex-direct-output.js";
+
 // Diagnostic transport barrier only. It never arms a final interrupt or proves
 // a Room mutation. Drivers with code mode enabled must set expectOuterOutput:
 // inner completion can precede even the raw outer call notification.
@@ -9,7 +11,7 @@ export function createCodexOuterOutputBarrier(expectOuterOutput) {
   let scope;
   const calls = new Map();
   const observedCallIds = new Set();
-  return {
+  return withCodexDirectOutput({
     observe(frame) {
       const { method, params } = frame ?? {};
       const item = params?.item;
@@ -89,5 +91,5 @@ export function createCodexOuterOutputBarrier(expectOuterOutput) {
     ready() {
       return !required || (completedOutput && !blocked && calls.size === 0);
     },
-  };
+  });
 }

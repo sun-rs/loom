@@ -1,0 +1,343 @@
+{
+  "kind": "offline same-content byte arithmetic; no CLI/provider executions",
+  "actualPriorCompactOutputs": [
+    {
+      "source": "prior-compact-code-mode",
+      "request": 4,
+      "actualOutputItemBytes": 417,
+      "sameContentDirectProjectionBytes": 308,
+      "nestedEnvelopeOnlyBytesRemoved": 87,
+      "headerAndTypeBytesRemoved": 22,
+      "totalProjectionBytesRemoved": 109
+    },
+    {
+      "source": "prior-compact-code-mode",
+      "request": 5,
+      "actualOutputItemBytes": 417,
+      "sameContentDirectProjectionBytes": 308,
+      "nestedEnvelopeOnlyBytesRemoved": 87,
+      "headerAndTypeBytesRemoved": 22,
+      "totalProjectionBytesRemoved": 109
+    },
+    {
+      "source": "prior-compact-code-mode",
+      "request": 6,
+      "actualOutputItemBytes": 417,
+      "sameContentDirectProjectionBytes": 308,
+      "nestedEnvelopeOnlyBytesRemoved": 87,
+      "headerAndTypeBytesRemoved": 22,
+      "totalProjectionBytesRemoved": 109
+    }
+  ],
+  "actualDirectOutputsReverseCheck": [
+    {
+      "actualDirectOutputItemBytes": 310,
+      "sameContentCodeModeReconstructionBytes": 419,
+      "differenceBytes": 109
+    },
+    {
+      "actualDirectOutputItemBytes": 310,
+      "sameContentCodeModeReconstructionBytes": 419,
+      "differenceBytes": 109
+    },
+    {
+      "actualDirectOutputItemBytes": 310,
+      "sameContentCodeModeReconstructionBytes": 419,
+      "differenceBytes": 109
+    }
+  ],
+  "historicalReplayProjection": {
+    "replayedOutputs": 198,
+    "historicalFullReceiptCodeModeBytes": 137620,
+    "compactReceiptCodeModeBytes": 82774,
+    "compactReceiptUnwrappedOnlyBytes": 65548,
+    "compactReceiptDirectProjectionBytes": 61192,
+    "alreadyMeasuredCompactReceiptReduction": 54846,
+    "additionalNestedEnvelopeReduction": 17226,
+    "additionalHeaderAndTypeReduction": 4356,
+    "additionalDirectProjectionReduction": 21582
+  },
+  "historicalReplayRows": [
+    {
+      "request": 1
+    },
+    {
+      "request": 2
+    },
+    {
+      "request": 3
+    },
+    {
+      "request": 4,
+      "replayedOutputs": 1,
+      "historicalFullReceiptCodeModeBytes": 694,
+      "compactReceiptCodeModeBytes": 417,
+      "compactReceiptUnwrappedOnlyBytes": 330,
+      "compactReceiptDirectProjectionBytes": 308
+    },
+    {
+      "request": 5,
+      "replayedOutputs": 1,
+      "historicalFullReceiptCodeModeBytes": 694,
+      "compactReceiptCodeModeBytes": 417,
+      "compactReceiptUnwrappedOnlyBytes": 330,
+      "compactReceiptDirectProjectionBytes": 308
+    },
+    {
+      "request": 6,
+      "replayedOutputs": 1,
+      "historicalFullReceiptCodeModeBytes": 694,
+      "compactReceiptCodeModeBytes": 417,
+      "compactReceiptUnwrappedOnlyBytes": 330,
+      "compactReceiptDirectProjectionBytes": 308
+    },
+    {
+      "request": 7,
+      "replayedOutputs": 2,
+      "historicalFullReceiptCodeModeBytes": 1388,
+      "compactReceiptCodeModeBytes": 834,
+      "compactReceiptUnwrappedOnlyBytes": 660,
+      "compactReceiptDirectProjectionBytes": 616
+    },
+    {
+      "request": 8,
+      "replayedOutputs": 2,
+      "historicalFullReceiptCodeModeBytes": 1388,
+      "compactReceiptCodeModeBytes": 834,
+      "compactReceiptUnwrappedOnlyBytes": 660,
+      "compactReceiptDirectProjectionBytes": 616
+    },
+    {
+      "request": 9,
+      "replayedOutputs": 2,
+      "historicalFullReceiptCodeModeBytes": 1388,
+      "compactReceiptCodeModeBytes": 834,
+      "compactReceiptUnwrappedOnlyBytes": 660,
+      "compactReceiptDirectProjectionBytes": 616
+    },
+    {
+      "request": 10,
+      "replayedOutputs": 3,
+      "historicalFullReceiptCodeModeBytes": 2082,
+      "compactReceiptCodeModeBytes": 1251,
+      "compactReceiptUnwrappedOnlyBytes": 990,
+      "compactReceiptDirectProjectionBytes": 924
+    },
+    {
+      "request": 11,
+      "replayedOutputs": 3,
+      "historicalFullReceiptCodeModeBytes": 2082,
+      "compactReceiptCodeModeBytes": 1251,
+      "compactReceiptUnwrappedOnlyBytes": 990,
+      "compactReceiptDirectProjectionBytes": 924
+    },
+    {
+      "request": 12,
+      "replayedOutputs": 3,
+      "historicalFullReceiptCodeModeBytes": 2082,
+      "compactReceiptCodeModeBytes": 1251,
+      "compactReceiptUnwrappedOnlyBytes": 990,
+      "compactReceiptDirectProjectionBytes": 924
+    },
+    {
+      "request": 13,
+      "replayedOutputs": 4,
+      "historicalFullReceiptCodeModeBytes": 2777,
+      "compactReceiptCodeModeBytes": 1669,
+      "compactReceiptUnwrappedOnlyBytes": 1321,
+      "compactReceiptDirectProjectionBytes": 1233
+    },
+    {
+      "request": 14,
+      "replayedOutputs": 4,
+      "historicalFullReceiptCodeModeBytes": 2778,
+      "compactReceiptCodeModeBytes": 1670,
+      "compactReceiptUnwrappedOnlyBytes": 1322,
+      "compactReceiptDirectProjectionBytes": 1234
+    },
+    {
+      "request": 15,
+      "replayedOutputs": 4,
+      "historicalFullReceiptCodeModeBytes": 2778,
+      "compactReceiptCodeModeBytes": 1670,
+      "compactReceiptUnwrappedOnlyBytes": 1322,
+      "compactReceiptDirectProjectionBytes": 1234
+    },
+    {
+      "request": 16,
+      "replayedOutputs": 5,
+      "historicalFullReceiptCodeModeBytes": 3473,
+      "compactReceiptCodeModeBytes": 2088,
+      "compactReceiptUnwrappedOnlyBytes": 1653,
+      "compactReceiptDirectProjectionBytes": 1543
+    },
+    {
+      "request": 17,
+      "replayedOutputs": 5,
+      "historicalFullReceiptCodeModeBytes": 3474,
+      "compactReceiptCodeModeBytes": 2089,
+      "compactReceiptUnwrappedOnlyBytes": 1654,
+      "compactReceiptDirectProjectionBytes": 1544
+    },
+    {
+      "request": 18,
+      "replayedOutputs": 5,
+      "historicalFullReceiptCodeModeBytes": 3474,
+      "compactReceiptCodeModeBytes": 2089,
+      "compactReceiptUnwrappedOnlyBytes": 1654,
+      "compactReceiptDirectProjectionBytes": 1544
+    },
+    {
+      "request": 19,
+      "replayedOutputs": 6,
+      "historicalFullReceiptCodeModeBytes": 4169,
+      "compactReceiptCodeModeBytes": 2507,
+      "compactReceiptUnwrappedOnlyBytes": 1985,
+      "compactReceiptDirectProjectionBytes": 1853
+    },
+    {
+      "request": 20,
+      "replayedOutputs": 6,
+      "historicalFullReceiptCodeModeBytes": 4170,
+      "compactReceiptCodeModeBytes": 2508,
+      "compactReceiptUnwrappedOnlyBytes": 1986,
+      "compactReceiptDirectProjectionBytes": 1854
+    },
+    {
+      "request": 21,
+      "replayedOutputs": 6,
+      "historicalFullReceiptCodeModeBytes": 4170,
+      "compactReceiptCodeModeBytes": 2508,
+      "compactReceiptUnwrappedOnlyBytes": 1986,
+      "compactReceiptDirectProjectionBytes": 1854
+    },
+    {
+      "request": 22,
+      "replayedOutputs": 7,
+      "historicalFullReceiptCodeModeBytes": 4865,
+      "compactReceiptCodeModeBytes": 2926,
+      "compactReceiptUnwrappedOnlyBytes": 2317,
+      "compactReceiptDirectProjectionBytes": 2163
+    },
+    {
+      "request": 23,
+      "replayedOutputs": 7,
+      "historicalFullReceiptCodeModeBytes": 4866,
+      "compactReceiptCodeModeBytes": 2927,
+      "compactReceiptUnwrappedOnlyBytes": 2318,
+      "compactReceiptDirectProjectionBytes": 2164
+    },
+    {
+      "request": 24,
+      "replayedOutputs": 7,
+      "historicalFullReceiptCodeModeBytes": 4866,
+      "compactReceiptCodeModeBytes": 2927,
+      "compactReceiptUnwrappedOnlyBytes": 2318,
+      "compactReceiptDirectProjectionBytes": 2164
+    },
+    {
+      "request": 25,
+      "replayedOutputs": 8,
+      "historicalFullReceiptCodeModeBytes": 5561,
+      "compactReceiptCodeModeBytes": 3345,
+      "compactReceiptUnwrappedOnlyBytes": 2649,
+      "compactReceiptDirectProjectionBytes": 2473
+    },
+    {
+      "request": 26,
+      "replayedOutputs": 8,
+      "historicalFullReceiptCodeModeBytes": 5562,
+      "compactReceiptCodeModeBytes": 3346,
+      "compactReceiptUnwrappedOnlyBytes": 2650,
+      "compactReceiptDirectProjectionBytes": 2474
+    },
+    {
+      "request": 27,
+      "replayedOutputs": 8,
+      "historicalFullReceiptCodeModeBytes": 5562,
+      "compactReceiptCodeModeBytes": 3346,
+      "compactReceiptUnwrappedOnlyBytes": 2650,
+      "compactReceiptDirectProjectionBytes": 2474
+    },
+    {
+      "request": 28,
+      "replayedOutputs": 9,
+      "historicalFullReceiptCodeModeBytes": 6257,
+      "compactReceiptCodeModeBytes": 3764,
+      "compactReceiptUnwrappedOnlyBytes": 2981,
+      "compactReceiptDirectProjectionBytes": 2783
+    },
+    {
+      "request": 29,
+      "replayedOutputs": 9,
+      "historicalFullReceiptCodeModeBytes": 6258,
+      "compactReceiptCodeModeBytes": 3765,
+      "compactReceiptUnwrappedOnlyBytes": 2982,
+      "compactReceiptDirectProjectionBytes": 2784
+    },
+    {
+      "request": 30,
+      "replayedOutputs": 9,
+      "historicalFullReceiptCodeModeBytes": 6258,
+      "compactReceiptCodeModeBytes": 3765,
+      "compactReceiptUnwrappedOnlyBytes": 2982,
+      "compactReceiptDirectProjectionBytes": 2784
+    },
+    {
+      "request": 31,
+      "replayedOutputs": 10,
+      "historicalFullReceiptCodeModeBytes": 6953,
+      "compactReceiptCodeModeBytes": 4183,
+      "compactReceiptUnwrappedOnlyBytes": 3313,
+      "compactReceiptDirectProjectionBytes": 3093
+    },
+    {
+      "request": 32,
+      "replayedOutputs": 10,
+      "historicalFullReceiptCodeModeBytes": 6954,
+      "compactReceiptCodeModeBytes": 4184,
+      "compactReceiptUnwrappedOnlyBytes": 3314,
+      "compactReceiptDirectProjectionBytes": 3094
+    },
+    {
+      "request": 33,
+      "replayedOutputs": 10,
+      "historicalFullReceiptCodeModeBytes": 6954,
+      "compactReceiptCodeModeBytes": 4184,
+      "compactReceiptUnwrappedOnlyBytes": 3314,
+      "compactReceiptDirectProjectionBytes": 3094
+    },
+    {
+      "request": 34,
+      "replayedOutputs": 11,
+      "historicalFullReceiptCodeModeBytes": 7649,
+      "compactReceiptCodeModeBytes": 4602,
+      "compactReceiptUnwrappedOnlyBytes": 3645,
+      "compactReceiptDirectProjectionBytes": 3403
+    },
+    {
+      "request": 35,
+      "replayedOutputs": 11,
+      "historicalFullReceiptCodeModeBytes": 7650,
+      "compactReceiptCodeModeBytes": 4603,
+      "compactReceiptUnwrappedOnlyBytes": 3646,
+      "compactReceiptDirectProjectionBytes": 3404
+    },
+    {
+      "request": 36,
+      "replayedOutputs": 11,
+      "historicalFullReceiptCodeModeBytes": 7650,
+      "compactReceiptCodeModeBytes": 4603,
+      "compactReceiptUnwrappedOnlyBytes": 3646,
+      "compactReceiptDirectProjectionBytes": 3404
+    }
+  ],
+  "limits": [
+    "Projection keeps identical semantic receipts, opaque item/call IDs and numerical timing; source bytes remain unchanged. Real direct item IDs and wall time strings need not match the projection.",
+    "Historical replay projection holds the existing 36 request schedule and 198 replay occurrences fixed. No prediction of future model decisions, request count, tokenization, caching, price, or safe context removal.",
+    "Compact receipt reduction and direct-envelope reduction are sequential separate changes; do not attribute both to direct exposure.",
+    "Model-authored call text differs across independent probes. No measured output-token saving inferred. Direct call removes executable wrapper syntax but adds namespace field; its size depends on actual arguments and chosen wrapper.",
+    "Native CLI interruption notices, standing instructions, wake/history and semantic receipt remain. Cold sample still has a second HTTP; no universal zero-follow-up claim.",
+    "Tool catalogue is separate recurring fixed input, not historical result envelope; no double counting catalogue bytes here."
+  ]
+}

@@ -9,7 +9,7 @@
 - AgentHost 拥有每个 Codex warm runtime 或 Claude/Kimi cold Run 的私有 Unix socket、传输认证和原 Run 凭据闭包。MCP 子进程只持有连接本 runtime 的认证值，业务凭据不进入模型参数或 CLI argv。现有同 UID/full-access 限制不变，不宣称操作系统级隔离。
 - Worker 应用服务与 Kernel 继续拥有作者、目标、权限、新鲜度、幂等、草稿、事件、Inbox／Activation／Task。MCP 只调用既有 `POST /v1/worker/messages/post`，不另建业务处理器、队列或游标。
 
-Codex 的 MCP 参数 schema 直接暴露（本内部服务 `omit_tools_from=["deferred"]`）。首次与恢复都核验当前 thread 的服务连接及精确工具定义，失败不进入模型轮次。不改用户全局配置；用户 MCP 继续按名关闭。已有用户服务占用内部保留名 `loom_worker` 时，在启动 app-server 前明确拒绝，避免配置合并。原本没有该工具的 session 可在进程重启后按原 ID 恢复并获得工具，不创建替代 session，也不依赖尚未验证的热加载。
+Codex 的 MCP 参数 schema 直接暴露（2026-10-07 本内部服务改用 `omit_tools_from=["code_mode","deferred"]`，安装版0.160.0免费实测为直接 namespace 工具，避免额外代码执行包装；其他CLI工具不变）。首次与恢复都核验当前 thread 的服务连接及精确工具定义，失败不进入模型轮次。不改用户全局配置；用户 MCP 继续按名关闭。已有用户服务占用内部保留名 `loom_worker` 时，在启动 app-server 前明确拒绝，避免配置合并。原本没有该工具的 session 可在进程重启后按原 ID 恢复并获得工具，不创建替代 session，也不依赖尚未验证的热加载。
 
 ## 调用与结束
 
@@ -19,7 +19,7 @@ Codex 的 MCP 参数 schema 直接暴露（本内部服务 `omit_tools_from=["de
 
 新帖必须明确 `final`；草稿修订只接受正文和 draft ID，保留 Kernel 保存的原意图与目标。工具返回不等于 ACK。held／目标确认仍返回既有业务状态，并明确通过原 CLI 读取／恢复；本切片不签发 MCP 消费 receipt，不以 Host HTTP 返回或内层工具完成证明完整上下文送达。因此不宣称 MCP held 路径有精确取消收益，既有 CLI 的完整输出收据路径保留。
 
-最终结束仍只由 Host 读到 Kernel final 标记触发。Codex 中断还需等待同 thread/turn/call 的外层代码执行返回及全部内层工具完成；新内层调用撤销前一代码单元的完成记录，不能借用旧输出提前结束。缺 raw 帧、未知返回格式、多个内层调用归属不明、yield／无法闭合的代码单元保守自然结束。诊断事件只决定中断时机，不创造业务完成。不能用 `preemptedFollowUp=true` 替代实际模型请求计数。
+最终结束仍只由 Host 读到 Kernel final 标记触发。Codex 中断还需等待全部工具完成及同 thread/turn/call 的完整传输证据：直接路径必须同时具备 raw 调用、原生 MCP started/completed 和与原生结果逐块一致的 raw 输出；代码模式仍等待外层代码执行返回。新内层调用撤销前一代码单元的完成记录，不能借用旧输出提前结束。缺 raw 帧、未知返回格式、多个内层调用归属不明、yield／无法闭合的代码单元保守自然结束。冲突重复调用、未知直接输出和无法关联的后续工具保守禁用本轮提前结束。诊断事件只决定中断时机，不创造业务完成。直接路径原因及免费实测见[直接 MCP 停止屏障](evidence/2026-10-07-mcp-direct-barrier.md)。不能用 `preemptedFollowUp=true` 替代实际模型请求计数。
 
 ## P113 后的 final 消费前置检查设计（2026-10-05）
 

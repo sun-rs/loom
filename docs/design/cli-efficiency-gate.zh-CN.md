@@ -90,7 +90,7 @@ Role 指令，与 Codex 口径相同）。
 
 - Codex RAH 组 shim（`model-guard.mjs`）：JSON-RPC 方法与参数白名单（只放行产品实际发送的请求，详见
   [漂移门禁](long-session-drift-gate.zh-CN.md)“模型围栏”），argv 只许 `--version`、`debug models [--bundled]` 与产品形式的
-  `app-server`；内部 `loom_worker` MCP 只接受 `codexWorkerMcpConfig` 生成的完整配置组，固定 Node executable、仓库入口、环境变量名与 `omit_tools_from=["deferred"]`，缺项、重复项、其他服务器启用、URL 和直接携带 secret 的配置均拒绝。只新增带非空 `threadId` 且 `serverName="loom_worker"` 的 `mcpServerStatus/list` 只读请求；不放行 MCP reload、工具调用或通用配置写入。原生组 `codex exec` 参数固定许可值；事后 rollout `turn_context` 逐条核对模型与 effort。
+  `app-server`；内部 `loom_worker` MCP 只接受 `codexWorkerMcpConfig` 生成的完整配置组，固定 Node executable、仓库入口、环境变量名与 `omit_tools_from=["code_mode","deferred"]`，缺项、重复项、其他服务器启用、URL 和直接携带 secret 的配置均拒绝。只新增带非空 `threadId` 且 `serverName="loom_worker"` 的 `mcpServerStatus/list` 只读请求；不放行 MCP reload、工具调用或通用配置写入。原生组 `codex exec` 参数固定许可值；事后 rollout `turn_context` 逐条核对模型与 effort。
 - Claude RAH 组 shim（`claude-guard.mjs`）：可跑模型回合的启动必须恰好一个 `--model` 与一个 `--effort` 且等于许可值
   （`haiku` 须零个 `--effort`）；禁止 `--fallback-model`、`--fork-session`、`--continue`、`--settings`、`--agents`；stdin 只许
   user、`interrupt` 控制请求与 control_response（`set_model`/`set_max_thinking_tokens`/`apply_flag_settings` 等一律拒绝并杀进程），

@@ -314,3 +314,55 @@ test("unknown writes remain blocking when a legal wrapper prints only MCP conten
     /unknown write outcome/i,
   );
 });
+
+test("direct namespace native output diagnoses success and rejects spoof or unknown", () => {
+  const f = fixture();
+  const c = f.events[1];
+  c.payload.name = "loom_reply";
+  c.payload.namespace = "mcp__loom_worker";
+  const result = { state: "published", messageId: "message", roomSeq: 12 };
+  f.events[2].payload.output = [
+    { type: "input_text", text: "Wall time: 0.01 seconds\nOutput:" },
+    { type: "input_text", text: JSON.stringify(result) },
+  ];
+  const v = inspectBusinessToolCalls(f.events, f.round);
+  assert.equal(v.rejectedCalls, 0);
+  assert.equal(v.deduplicatedCalls, 0);
+  assert.deepEqual(v.transports, ["worker-mcp"]);
+  c.payload.namespace = "foreign";
+  assert.throws(() => inspectBusinessToolCalls(f.events, f.round));
+  c.payload.namespace = "mcp__loom_worker";
+  f.events[2].payload.output[1].text = JSON.stringify({
+    error: { code: "RESULT_UNKNOWN" },
+  });
+  assert.throws(
+    () => inspectBusinessToolCalls(f.events, f.round),
+    /unknown write/i,
+  );
+});
+
+test("direct native success cannot contradict durable reply or claim both error and success", () => {
+  const f = fixture();
+  Object.assign(f.events[1].payload, {
+    name: "loom_reply",
+    namespace: "mcp__loom_worker",
+  });
+  for (const result of [
+    { state: "published", messageId: "wrong", roomSeq: 12 },
+    {
+      state: "published",
+      messageId: "message",
+      roomSeq: 12,
+      error: { code: "REFUSED" },
+    },
+  ]) {
+    f.events[2].payload.output = [
+      { type: "input_text", text: "Wall time: 0.01 seconds\nOutput:" },
+      { type: "input_text", text: JSON.stringify(result) },
+    ];
+    assert.throws(() => inspectBusinessToolCalls(f.events, f.round));
+  }
+  f.events[1].payload.name = "mcp__loom_worker__loom_reply";
+  f.events[1].payload.namespace = "functions";
+  assert.throws(() => inspectBusinessToolCalls(f.events, f.round));
+});

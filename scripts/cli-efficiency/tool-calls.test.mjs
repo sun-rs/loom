@@ -64,3 +64,15 @@ test("the collision-free loom-worker command is classified like the RAH_WORKER_C
     "worker-command",
   );
 });
+
+test("exact native MCP namespace is protocol but spoofed namespace is unknown", () => {
+  assert.equal(
+    workerCallKind("{}", "loom_reply", "mcp__loom_worker"),
+    "worker-mcp-reply",
+  );
+  assert.equal(workerCallKind("{}", "loom_reply", "evil"), "unknown");
+  assert.equal(
+    workerCallKind("{}", "mcp__loom_worker__loom_reply", "evil"),
+    "unknown",
+  );
+});

@@ -1,0 +1,113 @@
+{
+  "status": "passed",
+  "kind": "installed CLI with isolated loopback fake model; unmodified production direct-MCP configuration",
+  "actualHttpRequests": 4,
+  "maximumAdmittedHttp": 6,
+  "toolCatalogues": [
+    {
+      "request": 1,
+      "compactJsonUtf8Bytes": 20257,
+      "sharedMcpTypesPresent": false,
+      "directWorkerNamespacePresent": true
+    },
+    {
+      "request": 2,
+      "compactJsonUtf8Bytes": 20257,
+      "sharedMcpTypesPresent": false,
+      "directWorkerNamespacePresent": true
+    },
+    {
+      "request": 3,
+      "compactJsonUtf8Bytes": 20257,
+      "sharedMcpTypesPresent": false,
+      "directWorkerNamespacePresent": true
+    },
+    {
+      "request": 4,
+      "compactJsonUtf8Bytes": 20257,
+      "sharedMcpTypesPresent": false,
+      "directWorkerNamespacePresent": true
+    }
+  ],
+  "toolCatalogueMeasurement": "UTF-8 bytes of compact JSON array extracted from actual additional_tools; not tokens or whole request bytes",
+  "stages": [
+    {
+      "stage": 1,
+      "mode": "initial",
+      "actualHttpRequests": 1,
+      "reportedSyntheticGenerations": 1,
+      "canonicalReplyAndConsumerAck": true,
+      "completeOutputRetainedInRollout": true,
+      "nativeMcpCompletedAt": "2026-10-06T20:32:51.908Z",
+      "completeRawOutputAt": "2026-10-06T20:32:51.909Z",
+      "driverInterruptWrittenAt": "2026-10-06T20:32:51.909Z",
+      "finalInterrupt": {
+        "committedRoomSeq": 10,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      }
+    },
+    {
+      "stage": 2,
+      "mode": "warm",
+      "actualHttpRequests": 1,
+      "reportedSyntheticGenerations": 1,
+      "canonicalReplyAndConsumerAck": true,
+      "completeOutputRetainedInRollout": true,
+      "nativeMcpCompletedAt": "2026-10-06T20:32:52.326Z",
+      "completeRawOutputAt": "2026-10-06T20:32:52.327Z",
+      "driverInterruptWrittenAt": "2026-10-06T20:32:52.327Z",
+      "finalInterrupt": {
+        "committedRoomSeq": 19,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      }
+    },
+    {
+      "stage": 3,
+      "mode": "cold-same-session",
+      "actualHttpRequests": 2,
+      "reportedSyntheticGenerations": 2,
+      "canonicalReplyAndConsumerAck": true,
+      "completeOutputRetainedInRollout": true,
+      "nativeMcpCompletedAt": "2026-10-06T20:32:54.820Z",
+      "completeRawOutputAt": null,
+      "driverInterruptWrittenAt": null,
+      "finalInterrupt": {
+        "committedRoomSeq": 28,
+        "requested": false,
+        "accepted": "unknown",
+        "terminal": false,
+        "sent": false,
+        "preemptedFollowUp": "unknown"
+      }
+    }
+  ],
+  "sameNativeSession": true,
+  "warmRuntimeReused": true,
+  "coldRuntimeReplacedAfterGracefulIdleDaemonRestart": true,
+  "nativeAutomaticMemoryDisabled": true,
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "uniqueReplies": 3,
+  "consumerAcknowledgedCompletedActivations": 3,
+  "platformAttempts": 3,
+  "allOutputReceiptsRetained": 3,
+  "coldOutputAlsoRetainedInSecondHttpInput": true,
+  "productionSurfaceConfigurationVerifiedPerLaunch": true,
+  "surfaceArgumentOverrideApplied": false,
+  "productionConfigurationMutatedByProbe": false,
+  "limits": [
+    "Synthetic usage only: no token, cache, price or real-model quality conclusion.",
+    "One timing sample: initial/warm cancelled before observed next fake HTTP, not deterministic preemption guarantee.",
+    "Cold raw call/output notifications absent although result is retained in rollout/provider history; conservative natural completion remains2HTTP.",
+    "Host final marker remains business authority; native raw transport result proves only output completion.",
+    "No provider/HTTP retries added by this probe; all4actualHTTP retained."
+  ]
+}

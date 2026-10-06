@@ -1,0 +1,85 @@
+{
+  "status": "passed",
+  "kind": "installed CLI with isolated loopback fake model; experimental direct-MCP argv override",
+  "actualHttpRequests": 4,
+  "maximumAdmittedHttp": 6,
+  "stages": [
+    {
+      "stage": 1,
+      "mode": "initial",
+      "actualHttpRequests": 1,
+      "reportedSyntheticGenerations": 1,
+      "canonicalReplyAndConsumerAck": true,
+      "completeOutputRetainedInRollout": true,
+      "nativeMcpCompletedAt": "2026-10-06T20:31:08.386Z",
+      "completeRawOutputAt": "2026-10-06T20:31:08.387Z",
+      "driverInterruptWrittenAt": "2026-10-06T20:31:08.388Z",
+      "finalInterrupt": {
+        "committedRoomSeq": 10,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      }
+    },
+    {
+      "stage": 2,
+      "mode": "warm",
+      "actualHttpRequests": 1,
+      "reportedSyntheticGenerations": 1,
+      "canonicalReplyAndConsumerAck": true,
+      "completeOutputRetainedInRollout": true,
+      "nativeMcpCompletedAt": "2026-10-06T20:31:08.815Z",
+      "completeRawOutputAt": "2026-10-06T20:31:08.816Z",
+      "driverInterruptWrittenAt": "2026-10-06T20:31:08.816Z",
+      "finalInterrupt": {
+        "committedRoomSeq": 19,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      }
+    },
+    {
+      "stage": 3,
+      "mode": "cold-same-session",
+      "actualHttpRequests": 2,
+      "reportedSyntheticGenerations": 2,
+      "canonicalReplyAndConsumerAck": true,
+      "completeOutputRetainedInRollout": true,
+      "nativeMcpCompletedAt": "2026-10-06T20:31:11.383Z",
+      "completeRawOutputAt": null,
+      "driverInterruptWrittenAt": null,
+      "finalInterrupt": {
+        "committedRoomSeq": 28,
+        "requested": false,
+        "accepted": "unknown",
+        "terminal": false,
+        "sent": false,
+        "preemptedFollowUp": "unknown"
+      }
+    }
+  ],
+  "sameNativeSession": true,
+  "warmRuntimeReused": true,
+  "coldRuntimeReplacedAfterGracefulIdleDaemonRestart": true,
+  "nativeAutomaticMemoryDisabled": true,
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "uniqueReplies": 3,
+  "consumerAcknowledgedCompletedActivations": 3,
+  "platformAttempts": 3,
+  "allOutputReceiptsRetained": 3,
+  "coldOutputAlsoRetainedInSecondHttpInput": true,
+  "verifiedSingleSurfaceOverridePerLaunch": true,
+  "productionConfigurationChanged": false,
+  "limits": [
+    "Synthetic usage only: no token, cache, price or real-model quality conclusion.",
+    "One timing sample: initial/warm cancelled before observed next fake HTTP, not deterministic preemption guarantee.",
+    "Cold raw call/output notifications absent although result is retained in rollout/provider history; conservative natural completion remains2HTTP.",
+    "Host final marker remains business authority; native raw transport result proves only output completion.",
+    "No provider/HTTP retries added by this probe; all4actualHTTP retained."
+  ]
+}

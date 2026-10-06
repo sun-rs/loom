@@ -24,7 +24,8 @@ export function codexWorkerMcpConfig(env) {
     args: [fileURLToPath(new URL("./worker-mcp-entry.ts", import.meta.url))],
     env_vars: ["LOOM_WORKER_MCP_SOCKET", "LOOM_WORKER_MCP_SECRET"],
     enabled: true,
-    omit_tools_from: ["deferred"],
+    // Keep the single reply tool direct: no extra code-mode MCP wrapper.
+    omit_tools_from: ["code_mode", "deferred"],
   };
   return {
     args: Object.entries(values).flatMap(([key, value]) => [

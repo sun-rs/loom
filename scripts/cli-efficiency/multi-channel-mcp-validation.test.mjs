@@ -333,3 +333,66 @@ test("compact receipt never substitutes for a complete current durable marker an
     assert.throws(() => validateMcpInlineRound(o), /marker|reply/i);
   }
 });
+
+test("native namespaced MCP result is joined to durable delivery, spoof and contradictory results reject", () => {
+  const c = row({
+    type: "function_call",
+    namespace: "mcp__loom_worker",
+    name: "loom_reply",
+    call_id: "call-1",
+    arguments: JSON.stringify({
+      body: "exact",
+      basedOnRoomSeq: 8,
+      final: true,
+      threadId: null,
+    }),
+  });
+  const o = row({
+    type: "function_call_output",
+    call_id: "call-1",
+    output: [
+      { type: "input_text", text: "Wall time: 0.01 seconds\nOutput:" },
+      {
+        type: "input_text",
+        text: JSON.stringify({
+          state: "published",
+          messageId: "message-1",
+          roomSeq: 12,
+        }),
+      },
+    ],
+  });
+  assert.equal(
+    validateMcpInlineRound(options({ events: [user(), c, o] })).replyProof,
+    "single-mcp-final-reply",
+  );
+  for (const namespace of [undefined, "evil", "mcp__loom_worker_fake"]) {
+    const bad = structuredClone(c);
+    bad.payload.namespace = namespace;
+    assert.throws(() =>
+      validateMcpInlineRound(options({ events: [user(), bad, o] })),
+    );
+  }
+  for (const extra of [
+    { state: "published", messageId: "wrong", roomSeq: 12 },
+    { error: { code: "RESULT_UNKNOWN" } },
+  ]) {
+    const bad = structuredClone(o);
+    bad.payload.output.push({
+      type: "input_text",
+      text: JSON.stringify(extra),
+    });
+    assert.throws(() =>
+      validateMcpInlineRound(options({ events: [user(), c, bad] })),
+    );
+  }
+});
+
+test("code-mode evidence with a foreign namespace is not a Worker call", () => {
+  const c = call();
+  c.payload.namespace = "foreign";
+  assert.throws(
+    () => validateMcpInlineRound(options({ events: [user(), c, output()] })),
+    /namespace/,
+  );
+});
