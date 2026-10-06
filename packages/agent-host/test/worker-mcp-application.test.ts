@@ -151,7 +151,24 @@ test("internal MCP publishes once as the credential actor and never rebinds a re
     assert.equal(result.isError, false, JSON.stringify(result));
     const receipt = JSON.parse(result.content[0]!.text);
     assert.equal(receipt.state, "published");
-    assert.equal(receipt.actorId, f.instance.instanceId);
+    assert.deepEqual(Object.keys(receipt).sort(), [
+      "messageId",
+      "roomSeq",
+      "state",
+    ]);
+    const durable = f.db
+      .prepare(
+        "SELECT actor_id, room_id, room_seq FROM room_events WHERE aggregate_id=? AND type='message.posted'",
+      )
+      .get(receipt.messageId);
+    assert.deepEqual(
+      { ...durable },
+      {
+        actor_id: f.instance.instanceId,
+        room_id: f.home.roomId,
+        room_seq: receipt.roomSeq,
+      },
+    );
     assert.equal("body" in receipt, false);
     assert.equal("event" in receipt, false);
     assert.deepEqual(

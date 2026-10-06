@@ -49,7 +49,7 @@ P98 付费进展（2026-10-04）：原生门禁实际使用 Homebrew 安装路�
 
 ## 本批收口：精简回执与固定 Run 冷路径
 
-P99真实对照发现成功回执重复包含刚发表的全部正文。`protocol/worker-mcp-receipt.ts` 现在把已通过 Worker 成功 schema 验证的 `message.posted` 映射为发表回执：保留 Room、序号、消息／事件／作者、线程、去重结果、后续 activation IDs，以及未命中 @ 与替换草稿警告；普通成功不回灌正文。held／目标确认和错误继续原有信息及恢复规则，未知结果不转成成功。HTTP 业务响应和 Kernel 事件没有改变，不生成 ACK 或 Task 完成证明。
+P99真实对照发现成功回执重复包含刚发表的全部正文。`protocol/worker-mcp-receipt.ts` 现在把已通过 Worker 成功 schema 验证的 `message.posted` 映射为发表回执：2026-10-06 进一步将普通成功的模型可见投影限定为 `state: published`、`messageId`、`roomSeq`；仅在重复发表时附带 `deduplicated: true`，非空未命中 @ 和替换草稿信息继续保留。Room、事件／作者、线程及后续 activation IDs 留在完整服务响应与持久记录，不回灌模型历史；投影前仍验证完整响应（包括不再展示的字段）。此为本地实现，参考[上游源码研究](evidence/2026-10-06-upstream-context-design.md)的记录／视图分离设计，未复制或结构移植上游代码。held／目标确认和错误继续原有信息及恢复规则，未知结果不转成成功。HTTP 业务响应和 Kernel 事件没有改变，不生成 ACK 或 Task 完成证明。
 
 发送、同调用缓存和 unknown 围栏由 AgentHost `WorkerMcpExecution` 共用。Codex 保留原生 thread/turn/call 匹配。Claude 与 Kimi 每个冷进程对应一个不可变原 Run，Host 创建独立私有 socket／连接 secret 并持有原 Worker credential；恢复沿用原生 session ID，不沿用旧 Run 权限。共同 cold lease 读取 Host 自己的 owner-private、非符号链接 credential 文件，结束先撤销 bridge，再释放既有 lease。SEA 保持原 CLI 路径。
 

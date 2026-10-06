@@ -37,7 +37,7 @@ test("explicit final schema rejects diagnostic prose, ambiguous JSON, forged aut
     assert.throws(() => parseFinalReply(text));
 });
 
-async function fixture() {
+async function fixture({ acknowledge = true } = {}) {
   const f = roleInstanceFixture();
   const service = new WorkerApplicationService({ kernel: f.kernel });
   await service.start();
@@ -48,6 +48,12 @@ async function fixture() {
     consumerId: "worker",
     runAttemptId: work.run.runAttemptId,
   });
+  if (acknowledge) {
+    const delivery = f.kernel.syncWorker(work.execution, {});
+    f.kernel.acknowledgeWorkerCursor(work.execution, {
+      throughSeq: delivery.cursorAfter,
+    });
+  }
   const credential = service.issueActivationCredential(f.host, work.scope);
   let active = true;
   const options = {
@@ -84,8 +90,19 @@ test("completed native candidate publishes once under original Worker identity; 
     assert.equal(result.isError, false);
     const receipt = bodyOf(result);
     assert.equal(receipt.state, "published");
-    assert.equal(receipt.actorId, x.f.instance.instanceId);
-    assert.equal(receipt.roomId, x.f.home.roomId);
+    const published = x.f.db
+      .prepare(
+        "SELECT actor_id, room_id, room_seq FROM room_events WHERE aggregate_id=? AND type='message.posted'",
+      )
+      .get(receipt.messageId);
+    assert.deepEqual(
+      { ...published },
+      {
+        actor_id: x.f.instance.instanceId,
+        room_id: x.f.home.roomId,
+        room_seq: receipt.roomSeq,
+      },
+    );
     assert.deepEqual(await submit(terminal()), result);
     assert.equal(
       bodyOf(await submit(terminal(envelope("changed")))).error.code,
@@ -265,5 +282,22 @@ test("the original terminal binding must contain nonempty session and turn IDs b
     assert.equal(sends, 0);
   } finally {
     await f.close();
+  }
+});
+
+test("laboratory final without prior consumer acknowledgement cannot publish", async () => {
+  const x = await fixture({ acknowledge: false });
+  try {
+    const result = await createFinalOutputTrial(x.options)(terminal());
+    assert.equal(result.isError, true);
+    assert.match(JSON.stringify(bodyOf(result)), /final_delivery_unconfirmed/);
+    assert.equal(
+      x.f.db
+        .prepare("SELECT count(*) AS n FROM messages WHERE body=?")
+        .get("FAKE explicit final reply").n,
+      0,
+    );
+  } finally {
+    await x.close();
   }
 });

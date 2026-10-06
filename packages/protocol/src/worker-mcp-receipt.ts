@@ -1,6 +1,8 @@
 import { WorkerMessageMutationResponseSchema } from "./worker-message.ts";
 
-/** A transport receipt, never an ACK or a Task/Activation completion claim. */
+/** Model-visible projection after full response validation. The durable event and
+ * delivery effects stay with the service; this receipt is never an ACK or a
+ * Task/Activation completion claim. Retain exceptional outcomes for recovery. */
 export function workerMcpPublishedReceipt(input: unknown) {
   const value = WorkerMessageMutationResponseSchema.parse(input);
   const event = value.event;
@@ -8,21 +10,13 @@ export function workerMcpPublishedReceipt(input: unknown) {
     throw new Error("Expected a published message result");
   return {
     state: "published" as const,
-    eventId: event.eventId,
-    roomId: event.roomId,
-    roomSeq: event.roomSeq,
-    actorId: event.actorId,
     messageId: event.aggregateId,
-    threadId:
-      typeof event.payload.threadId === "string"
-        ? event.payload.threadId
-        : null,
-    deduplicated: value.deduplicated,
-    activationIds: value.activationIds,
+    roomSeq: event.roomSeq,
+    ...(value.deduplicated ? { deduplicated: true } : {}),
     ...(value.replacedDraft === undefined
       ? {}
       : { replacedDraft: value.replacedDraft }),
-    ...(value.unresolvedMentionHandles === undefined
+    ...(!value.unresolvedMentionHandles?.length
       ? {}
       : { unresolvedMentionHandles: value.unresolvedMentionHandles }),
   };

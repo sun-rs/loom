@@ -208,8 +208,16 @@ export function validateMcpInlineRound(options) {
   assert.equal(round.runs?.length, 1, "missing unique durable Run");
   const reply = round.replies[0],
     marker = round.finalMarker;
+  const nonemptyId = (value) => typeof value === "string" && value.length > 0;
   assert.ok(
     marker &&
+      nonemptyId(marker.event_id) &&
+      nonemptyId(round.runs[0].runAttemptId) &&
+      nonemptyId(reply.roomId) &&
+      Number.isSafeInteger(reply.roomSeq) &&
+      Number.isSafeInteger(round.humanRoomSeq) &&
+      round.humanRoomSeq >= 0 &&
+      reply.roomSeq > round.humanRoomSeq &&
       marker.submission_kind === null &&
       marker.run_attempt_id === round.runs[0].runAttemptId &&
       marker.room_id === reply.roomId &&
@@ -217,12 +225,18 @@ export function validateMcpInlineRound(options) {
     "incorrect final marker",
   );
   assert.ok(
-    reply.body === expectedAnswer &&
+    nonemptyId(reply.messageId) &&
+      nonemptyId(round.participantId) &&
+      reply.body === expectedAnswer &&
       reply.actorId === round.participantId &&
       !reply.threadId,
     "durable reply mismatch",
   );
   const receipt = publishedReceipt(output.output);
+  assert.ok(
+    receipt && typeof receipt === "object" && !Array.isArray(receipt),
+    "invalid MCP receipt",
+  );
   const { activationIds, unresolvedMentionHandles, ...published } = receipt;
   for (const list of [activationIds, unresolvedMentionHandles]) {
     assert.ok(
@@ -230,18 +244,35 @@ export function validateMcpInlineRound(options) {
       "MCP receipt has unexpected delivery effects",
     );
   }
+  // The compact model view is not an identity/ACK proof. Those remain durable
+  // runner checks; correlate its retained references to the checked reply here.
+  // Historical full receipts must still supply the entire original identity.
+  const full = [
+    "eventId",
+    "roomId",
+    "actorId",
+    "threadId",
+    "deduplicated",
+  ].some((key) => Object.hasOwn(published, key));
+  const expected = full
+    ? {
+        state: "published",
+        eventId: marker.event_id,
+        roomId: reply.roomId,
+        roomSeq: reply.roomSeq,
+        actorId: reply.actorId,
+        messageId: reply.messageId,
+        threadId: null,
+        deduplicated: false,
+      }
+    : {
+        state: "published",
+        messageId: reply.messageId,
+        roomSeq: reply.roomSeq,
+      };
   assert.deepEqual(
     published,
-    {
-      state: "published",
-      eventId: marker.event_id,
-      roomId: reply.roomId,
-      roomSeq: reply.roomSeq,
-      actorId: reply.actorId,
-      messageId: reply.messageId,
-      threadId: null,
-      deduplicated: false,
-    },
+    expected,
     "MCP receipt differs from current durable reply",
   );
   const proof = validateInlineChannelRound({ ...options, events: retained });

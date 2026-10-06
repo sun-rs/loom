@@ -95,9 +95,20 @@ for (const scenario of [
       } else {
         assert.equal(result.isError, false, JSON.stringify(receipt));
         assert.equal(receipt.state, "published");
-        assert.equal(receipt.roomId, roomId);
-        assert.equal(receipt.threadId, expectedThread);
-        assert.equal(receipt.actorId, f.instance.instanceId);
+        const published = f.db
+          .prepare(
+            "SELECT m.room_id, m.thread_id, m.actor_id, e.room_seq FROM messages m JOIN room_events e ON e.aggregate_id=m.message_id AND e.type='message.posted' WHERE m.message_id=?",
+          )
+          .get(receipt.messageId);
+        assert.deepEqual(
+          { ...published },
+          {
+            room_id: roomId,
+            thread_id: expectedThread,
+            actor_id: f.instance.instanceId,
+            room_seq: receipt.roomSeq,
+          },
+        );
         assert.deepEqual(
           await execution.call("target-call", {
             body: "MCP target reply",

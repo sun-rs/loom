@@ -46,8 +46,13 @@ test("Claude cold binds original Run, deduplicates native toolUseId and returns 
     "Bearer original-secret",
   );
   const receipt = JSON.parse(a.content[0]!.text);
-  assert.equal(receipt.eventId, "event");
-  assert.equal(receipt.actorId, "instance");
+  assert.deepEqual(receipt, {
+    state: "published",
+    messageId: posted.event.aggregateId,
+    roomSeq: posted.event.roomSeq,
+  });
+  assert.equal(posted.event.eventId, "event");
+  assert.equal(posted.event.actorId, "instance");
   assert.ok(!a.content[0]!.text.includes("do not echo"));
   assert.equal((await cold.call(params("tool-1", "changed"))).isError, true);
   assert.equal(sends.length, 1);

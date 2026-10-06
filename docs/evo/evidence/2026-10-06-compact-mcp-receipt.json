@@ -1,0 +1,93 @@
+{
+  "kind": "real CLI isolated loopback fake-provider transport proof; no actual model calls",
+  "status": "passed",
+  "actualHttpRequests": 6,
+  "reportedSyntheticGenerations": 6,
+  "syntheticUsageNotEfficiencyEvidence": true,
+  "participants": 3,
+  "roundsPerParticipant": 2,
+  "continuousSessions": 3,
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cliVersion": "0.160.0",
+  "cliSha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+  "nativeAutomaticMemoryDisabled": true,
+  "uniqueCanonicalReplies": 6,
+  "finalMarkers": 6,
+  "consumerAcknowledgedActivations": 6,
+  "realMcpReceipts": 6,
+  "compactReceiptsObservedInSubsequentProviderRequests": 3,
+  "stages": [
+    {
+      "stage": 1,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 2,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 3,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 4,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 5,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 6,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    }
+  ],
+  "sameReceiptRepresentationComparisons": [
+    {
+      "request": 4,
+      "actualReceiptJsonBytes": 93,
+      "reconstructedLegacyReceiptJsonBytes": 316,
+      "actualHistoryItemJsonBytes": 417,
+      "reconstructedLegacyHistoryItemJsonBytes": 694,
+      "differenceBytes": 277
+    },
+    {
+      "request": 5,
+      "actualReceiptJsonBytes": 93,
+      "reconstructedLegacyReceiptJsonBytes": 316,
+      "actualHistoryItemJsonBytes": 417,
+      "reconstructedLegacyHistoryItemJsonBytes": 694,
+      "differenceBytes": 277
+    },
+    {
+      "request": 6,
+      "actualReceiptJsonBytes": 93,
+      "reconstructedLegacyReceiptJsonBytes": 316,
+      "actualHistoryItemJsonBytes": 417,
+      "reconstructedLegacyHistoryItemJsonBytes": 694,
+      "differenceBytes": 277
+    }
+  ],
+  "comparisonLimit": "Hypothetical reconstruction of previous receipt fields from the same canonical event, assuming ordinary non-deduplicated success with no activation effects; not old binary replay, no tokenizer or cost claim. Existing MCP/code-mode wrapper and call identity retained.",
+  "security": "isolated HOME/CODEX_HOME, no inherited credentials, provider points only to localhost, no paid fallback; default MCP flags0",
+  "uncovered": "warnings, held, dedup and unknown outcomes covered separately by unit tests, not injected here"
+}

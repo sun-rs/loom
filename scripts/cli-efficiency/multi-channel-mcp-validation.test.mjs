@@ -236,3 +236,100 @@ test("retain follow-up generation cost instead of rejecting a valid single deliv
     "single-mcp-final-reply",
   );
 });
+
+test("compact receipt correlates to the durable reply without model-visible identity fields", () => {
+  const compact = { state: "published", messageId: "message-1", roomSeq: 12 };
+  const o = options({ events: [user(), call(), output(compact)] });
+  const before = structuredClone(o);
+  assert.equal(validateMcpInlineRound(o).replyProof, "single-mcp-final-reply");
+  assert.deepEqual(o, before);
+  const direct = options({
+    events: [
+      user(),
+      row({
+        type: "function_call",
+        name: "mcp__loom_worker__loom_reply",
+        call_id: "direct",
+        arguments: JSON.stringify({
+          body: "exact",
+          final: true,
+          basedOnRoomSeq: 8,
+        }),
+      }),
+      row({
+        type: "function_call_output",
+        call_id: "direct",
+        output: JSON.stringify({
+          isError: false,
+          content: [{ type: "text", text: JSON.stringify(compact) }],
+        }),
+      }),
+    ],
+  });
+  assert.equal(
+    validateMcpInlineRound(direct).replyProof,
+    "single-mcp-final-reply",
+  );
+});
+
+test("compact normal-round receipt cannot hide mismatches, warnings or delivery effects", () => {
+  const compact = { state: "published", messageId: "message-1", roomSeq: 12 };
+  for (const changes of [
+    { messageId: "other" },
+    { roomSeq: 11 },
+    { state: "held" },
+    { deduplicated: true },
+    { replacedDraft: { draftId: "draft-1" } },
+    { unresolvedMentionHandles: ["missing"] },
+    { activationIds: ["extra"] },
+    { actorId: "actor-1" },
+    { eventId: "event-1" },
+    { extra: "unknown" },
+  ]) {
+    assert.throws(
+      () =>
+        validateMcpInlineRound(
+          options({
+            events: [user(), call(), output({ ...compact, ...changes })],
+          }),
+        ),
+      /receipt/i,
+    );
+  }
+});
+
+test("compact receipt never substitutes for a complete current durable marker and actor", () => {
+  const compact = { state: "published", messageId: "message-1", roomSeq: 12 };
+  for (const mutate of [
+    (r) => {
+      delete r.finalMarker.event_id;
+    },
+    (r) => {
+      r.finalMarker.run_attempt_id = "old-run";
+    },
+    (r) => {
+      r.finalMarker.room_seq = 11;
+    },
+    (r) => {
+      r.finalMarker.room_id = "other-room";
+    },
+    (r) => {
+      r.replies[0].actorId = "other-actor";
+    },
+    (r) => {
+      r.replies[0].threadId = "other-target";
+    },
+    (r) => {
+      r.replies[0].roomSeq = 8;
+      r.finalMarker.room_seq = 8;
+    },
+    (r) => {
+      delete r.replies[0].roomId;
+      delete r.finalMarker.room_id;
+    },
+  ]) {
+    const o = options({ events: [user(), call(), output(compact)] });
+    mutate(o.round);
+    assert.throws(() => validateMcpInlineRound(o), /marker|reply/i);
+  }
+});

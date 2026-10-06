@@ -27,14 +27,8 @@ test("MCP publication returns a bounded receipt, not a second copy of the reply"
   const receipt = workerMcpPublishedReceipt(response);
   assert.deepEqual(receipt, {
     state: "published",
-    eventId: "event_post",
-    roomId: "room_a",
-    roomSeq: 9,
-    actorId: "principal_a",
     messageId: "message_a",
-    threadId: "thread_a",
-    deduplicated: false,
-    activationIds: ["activation_next"],
+    roomSeq: 9,
   });
   assert.ok(JSON.stringify(receipt).length < 400);
   assert.ok(!JSON.stringify(receipt).includes("already supplied"));
@@ -60,6 +54,19 @@ test("held, unrecognized, or non-message results cannot become publication recei
     { ...response, event: { ...response.event, type: "task.completed" } },
     { ...response, event: { ...response.event, aggregateType: "task" } },
     { ...response, event: { ...response.event, roomSeq: -1 } },
+    { ...response, event: { ...response.event, actorId: null } },
+    { ...response, activationIds: [null] },
   ])
     assert.throws(() => workerMcpPublishedReceipt(value));
+});
+
+test("ordinary receipt omits empty warnings without mutating the full response", () => {
+  const input = { ...response, unresolvedMentionHandles: [] };
+  const before = structuredClone(input);
+  assert.deepEqual(workerMcpPublishedReceipt(input), {
+    state: "published",
+    messageId: "message_a",
+    roomSeq: 9,
+  });
+  assert.deepEqual(input, before);
 });

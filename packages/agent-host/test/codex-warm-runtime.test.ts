@@ -2333,8 +2333,21 @@ test("automatic internal MCP wiring keeps two warm turns bound to original crede
       const result = await reply(nativeTurn, String(round));
       assert.equal(result.isError, false, JSON.stringify(result));
       const receipt = JSON.parse(result.content[0].text);
-      assert.equal(receipt.actorId, state.participantId);
-      assert.equal(receipt.roomId, state.roomId);
+      const published = sql(
+        state,
+        "SELECT m.actor_id, m.room_id, e.room_seq FROM messages m JOIN room_events e ON e.aggregate_id=m.message_id AND e.type='message.posted' WHERE m.message_id=?",
+        receipt.messageId,
+      );
+      assert.deepEqual(
+        published.map((row) => ({ ...row })),
+        [
+          {
+            actor_id: state.participantId,
+            room_id: state.roomId,
+            room_seq: receipt.roomSeq,
+          },
+        ],
+      );
       assert.equal((await running).state, "completed");
       oldTurn = nativeTurn;
     }
