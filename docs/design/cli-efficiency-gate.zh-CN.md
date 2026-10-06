@@ -299,4 +299,34 @@ Claude/Kimi/OpenCode 各有原生对照臂（见上文“多 Provider”），�
 门禁脚本与用量汇总由 `scripts/cli-efficiency/` 所有；不新增产品队列或上下文状态。
 确定性汇总/预算测试可免费随批执行：`npm run test:cli:efficiency:unit`。
 
+### 免费完整请求分账（离线工具，不是效率门禁）
+
+`scripts/cli-efficiency/request-accounting.mjs` 读取已捕获的请求体，只统计 JSON 字节、分类及 input 前缀是否保持，不启动 CLI、不连接 provider、不读用量或估算 token/费用。支持范围是[已审计的 Codex 0.160.0 受控频道探针布局](../evo/evidence/2026-10-06-request-accounting-free.md)：六个固定 input 项后接消息/工具历史；其他 CLI、版本、布局须重新核验，不能仅凭解析成功宣称语义相同。
+
+清单是 JSON 数组，例如：
+
+```json
+[
+  {
+    "arm": "product",
+    "session": "a",
+    "round": 1,
+    "bodyPath": "request-001.private.json"
+  }
+]
+```
+
+`bodyPath` 相对清单目录解析。`session` 是调用者分组标签，不是由工具核验的 provider 身份；`round` 是该标签下从 1 连续递增的**捕获请求序号**，不等于业务轮数或 Run 数。可交错记录不同 session/arm，不允许漏号、倒序或重号。
+
+```bash
+node scripts/cli-efficiency/request-accounting.mjs /path/to/capture-manifest.json
+node --test scripts/cli-efficiency/request-accounting.test.mjs
+```
+
+每份 body 必须是原样紧凑 UTF-8 JSON；非法编码、BOM、非紧凑序列化或不支持的固定布局拒绝分账，避免生成不对应原文件的 SHA/字节证据。CLI 失败只打印通用错误，不回显原文或文件路径。输出只包含受限标签、计数、分类、SHA 和限制说明，不包含 prompt、工具正文或 metadata 值；这不能代替对调用者填写标签的审查。
+
+新增 input 类型计入 `unclassifiedInput` 并将 `classificationComplete` 置为 false；旧固定内容或历史变化分别报告 `prefixStable=false`、`historyPreserved=false`；首请求无前件时为 null。分类完整不代表历史保持，也不证明请求捕获完整、同 session、官方记忆关闭、业务 ACK 或效率通过；这些仍由既有独立证据核验。
+
+`requestOutsideInput` 包含 input 之外的 JSON 字段与语法，并非模型上下文的同义词。数组分隔符独立计数，嵌套 MCP 结果不再重复相加。工具不设置新预算或输出倍率；目标预算仍只在目标合同 §6。
+
 首次执行结果与基线数字见 [状态历史日志](../evo/log/status-history-2026-09.zh-CN.md)的"效率基线"一节；全部付费运行见 [付费运行台账](../evo/paid-runs.zh-CN.md)。

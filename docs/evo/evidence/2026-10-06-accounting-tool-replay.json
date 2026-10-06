@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "capturedRequestsReplayed": 72,
+  "rawRequestsUnchanged": true,
+  "allCategoriesBytesAndHashesMatchEarlierIndependentAccounting": true,
+  "firstRequestContinuity": "null; no prior request",
+  "resumedRequestsPreservePrefixAndHistory": 66,
+  "newProviderCalls": 0,
+  "sourceCaptureReport": "2026-10-06-request-accounting-free.md",
+  "outputSha256": "231de491927e0a0f1f67a23a6446ffb7d842ed34cc87e1338cf9c4804cb793a7",
+  "limits": [
+    "Offline reanalysis, not a new real-CLI or paid-model run.",
+    "Bytes only, no efficiency or price claim."
+  ]
+}
