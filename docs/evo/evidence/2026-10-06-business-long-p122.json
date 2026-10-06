@@ -1,0 +1,5430 @@
+{
+  "sampleId": "business-observation-long/v1/pair-1",
+  "experimentVersion": "business-observation-long/v1",
+  "productArm": "worker-delivery",
+  "answerPolicy": "business-content",
+  "platformMemoryPolicy": "disabled",
+  "validationPolicy": {
+    "id": "canonical-business-observation/v1",
+    "study": {
+      "id": "business-observation-long/v1",
+      "pairIndex": 1,
+      "plannedPairs": 4,
+      "pairsPerInvocation": 1,
+      "plannedStages": 288,
+      "authorization": "explicit authorization required for each pair; no automatic admission of remaining pairs",
+      "repeatPolicy": "no automatic repeats, replacement samples, or continuation across repaired source identities",
+      "plannedResourceCaps": {
+        "allArmsInput": 12000000,
+        "allArmsMs": 9600000,
+        "productRunAttempts": 288
+      },
+      "capSemantics": "admission bounds; retain actual in-flight overshoot and all failure costs"
+    },
+    "quality": "semantic factual correctness separate from delivery; errors continue with actual history",
+    "execution": "canonical delivery and exact consumer ACK; inspect authorized tool operations; unknown effects stop",
+    "cost": "retain all generations, retries, failures and output; no trajectory equality",
+    "expectedSha256": "932bde9fd099644536b1190e6880e16f917184c5acc84bbc21a22764f07efb67"
+  },
+  "workloadId": "credential-inline-facts-3x12/v1",
+  "version": "codex-cli 0.160.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "order": ["native", "worker-delivery"],
+  "historyPolicy": "independent arm histories; fixed business questions; own peer replies relayed without editing",
+  "nativeMemory": {
+    "provider": "codex",
+    "supported": true,
+    "status": "supported",
+    "scope": "provider-native-auto-memory",
+    "mechanism": "cli-config"
+  },
+  "limits": {
+    "perArmInput": 1500000,
+    "perArmMs": 1200000,
+    "maxProductRuns": 72
+  },
+  "stageCount": 36,
+  "participantCount": 3,
+  "roundsPerParticipant": 12,
+  "baselineIdentity": "38e7d3ee336ff10a68197b6bc97261fcbf61c40a96a6320550a3d0aea37104a8",
+  "codeCommit": "01be1d7aed2133e68ac68009781dd09715ebb6ff",
+  "workingTree": {
+    "dirty": false,
+    "changedPaths": 0,
+    "untrackedPaths": 0,
+    "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "startedAt": "2026-10-06T01:43:56.635Z",
+  "finishedAt": "2026-10-06T01:57:38.202Z",
+  "status": "needs-quality-review",
+  "qualityReview": "required",
+  "longObservation": {
+    "roundsPerParticipant": 12,
+    "observedCosts": {
+      "native": {
+        "status": "complete",
+        "roundMetrics": {
+          "knownTotals": {
+            "input": 532998,
+            "cached": 474624,
+            "uncached": 58374,
+            "output": 459,
+            "generations": 36
+          },
+          "totals": {
+            "input": 532998,
+            "cached": 474624,
+            "uncached": 58374,
+            "output": 459,
+            "generations": 36
+          },
+          "issues": []
+        },
+        "issues": [],
+        "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+      },
+      "worker-delivery": {
+        "status": "complete",
+        "roundMetrics": {
+          "knownTotals": {
+            "input": 732101,
+            "cached": 636672,
+            "uncached": 95429,
+            "output": 1755,
+            "generations": 36
+          },
+          "totals": {
+            "input": 732101,
+            "cached": 636672,
+            "uncached": 95429,
+            "output": 1755,
+            "generations": 36
+          },
+          "issues": []
+        },
+        "durableUsage": {
+          "knownTotals": {
+            "input": 732101,
+            "cached": 636672,
+            "uncached": 95429,
+            "output": 1755,
+            "generations": 36
+          },
+          "totals": {
+            "input": 732101,
+            "cached": 636672,
+            "uncached": 95429,
+            "output": 1755,
+            "generations": 36
+          },
+          "issues": []
+        },
+        "issues": [],
+        "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+      }
+    },
+    "quality": {
+      "native": {
+        "correct": 36,
+        "incorrect": 0,
+        "unscorable": 0,
+        "unknown": 0,
+        "delivered": 36,
+        "notDelivered": 0,
+        "deliveryUnknown": 0,
+        "notRun": 0
+      },
+      "worker-delivery": {
+        "correct": 33,
+        "incorrect": 3,
+        "unscorable": 0,
+        "unknown": 0,
+        "delivered": 36,
+        "notDelivered": 0,
+        "deliveryUnknown": 0,
+        "notRun": 0
+      }
+    },
+    "reliability": {
+      "native": {
+        "attemptedCalls": 0,
+        "rejectedCalls": 0,
+        "deduplicatedCalls": 0,
+        "knownTotals": {
+          "attemptedCalls": 0,
+          "rejectedCalls": 0,
+          "deduplicatedCalls": 0
+        },
+        "status": "complete"
+      },
+      "worker-delivery": {
+        "attemptedCalls": 36,
+        "rejectedCalls": null,
+        "deduplicatedCalls": null,
+        "knownTotals": {
+          "attemptedCalls": 36,
+          "rejectedCalls": 0,
+          "deduplicatedCalls": 0
+        },
+        "status": "unknown"
+      }
+    },
+    "checkpoints": [
+      {
+        "roundsPerParticipant": 1,
+        "comparisonBasis": "diagnostic-cost-only",
+        "participants": {
+          "a": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 13065,
+                "cached": 0,
+                "uncached": 13065,
+                "output": 14,
+                "generations": 1
+              },
+              "knownTotals": {
+                "input": 13065,
+                "cached": 0,
+                "uncached": 13065,
+                "output": 14,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 16076,
+                "cached": 0,
+                "uncached": 16076,
+                "output": 50,
+                "generations": 1
+              },
+              "knownTotals": {
+                "input": 16076,
+                "cached": 0,
+                "uncached": 16076,
+                "output": 50,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.2304630692690395,
+              "cached": null,
+              "uncached": 1.2304630692690395,
+              "output": 3.5714285714285716,
+              "generations": 1
+            }
+          },
+          "b": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 13157,
+                "cached": 12032,
+                "uncached": 1125,
+                "output": 14,
+                "generations": 1
+              },
+              "knownTotals": {
+                "input": 13157,
+                "cached": 12032,
+                "uncached": 1125,
+                "output": 14,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 15965,
+                "cached": 0,
+                "uncached": 15965,
+                "output": 50,
+                "generations": 1
+              },
+              "knownTotals": {
+                "input": 15965,
+                "cached": 0,
+                "uncached": 15965,
+                "output": 50,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.2134225127308658,
+              "cached": 0,
+              "uncached": 14.19111111111111,
+              "output": 3.5714285714285716,
+              "generations": 1
+            }
+          },
+          "c": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 13249,
+                "cached": 0,
+                "uncached": 13249,
+                "output": 14,
+                "generations": 1
+              },
+              "knownTotals": {
+                "input": 13249,
+                "cached": 0,
+                "uncached": 13249,
+                "output": 14,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 15866,
+                "cached": 0,
+                "uncached": 15866,
+                "output": 50,
+                "generations": 1
+              },
+              "knownTotals": {
+                "input": 15866,
+                "cached": 0,
+                "uncached": 15866,
+                "output": 50,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.1975243414597327,
+              "cached": null,
+              "uncached": 1.1975243414597327,
+              "output": 3.5714285714285716,
+              "generations": 1
+            }
+          }
+        },
+        "total": {
+          "status": "comparable",
+          "native": {
+            "status": "complete",
+            "totals": {
+              "input": 39471,
+              "cached": 12032,
+              "uncached": 27439,
+              "output": 42,
+              "generations": 3
+            },
+            "knownTotals": {
+              "input": 39471,
+              "cached": 12032,
+              "uncached": 27439,
+              "output": 42,
+              "generations": 3
+            },
+            "issues": []
+          },
+          "product": {
+            "status": "complete",
+            "totals": {
+              "input": 47907,
+              "cached": 0,
+              "uncached": 47907,
+              "output": 150,
+              "generations": 3
+            },
+            "knownTotals": {
+              "input": 47907,
+              "cached": 0,
+              "uncached": 47907,
+              "output": 150,
+              "generations": 3
+            },
+            "issues": []
+          },
+          "ratios": {
+            "input": 1.2137265334042715,
+            "cached": 0,
+            "uncached": 1.7459455519516018,
+            "output": 3.5714285714285716,
+            "generations": 1
+          }
+        }
+      },
+      {
+        "roundsPerParticipant": 4,
+        "comparisonBasis": "diagnostic-cost-only",
+        "participants": {
+          "a": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 54096,
+                "cached": 38144,
+                "uncached": 15952,
+                "output": 51,
+                "generations": 4
+              },
+              "knownTotals": {
+                "input": 54096,
+                "cached": 38144,
+                "uncached": 15952,
+                "output": 51,
+                "generations": 4
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 69102,
+                "cached": 48384,
+                "uncached": 20718,
+                "output": 195,
+                "generations": 4
+              },
+              "knownTotals": {
+                "input": 69102,
+                "cached": 48384,
+                "uncached": 20718,
+                "output": 195,
+                "generations": 4
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.2773957409050576,
+              "cached": 1.2684563758389262,
+              "uncached": 1.2987713139418255,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          },
+          "b": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 54420,
+                "cached": 50176,
+                "uncached": 4244,
+                "output": 51,
+                "generations": 4
+              },
+              "knownTotals": {
+                "input": 54420,
+                "cached": 50176,
+                "uncached": 4244,
+                "output": 51,
+                "generations": 4
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 68633,
+                "cached": 48384,
+                "uncached": 20249,
+                "output": 195,
+                "generations": 4
+              },
+              "knownTotals": {
+                "input": 68633,
+                "cached": 48384,
+                "uncached": 20249,
+                "output": 195,
+                "generations": 4
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.2611723631018008,
+              "cached": 0.9642857142857143,
+              "uncached": 4.771206409048068,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          },
+          "c": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 54744,
+                "cached": 39168,
+                "uncached": 15576,
+                "output": 51,
+                "generations": 4
+              },
+              "knownTotals": {
+                "input": 54744,
+                "cached": 39168,
+                "uncached": 15576,
+                "output": 51,
+                "generations": 4
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 68164,
+                "cached": 48384,
+                "uncached": 19780,
+                "output": 195,
+                "generations": 4
+              },
+              "knownTotals": {
+                "input": 68164,
+                "cached": 48384,
+                "uncached": 19780,
+                "output": 195,
+                "generations": 4
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.245141020020459,
+              "cached": 1.2352941176470589,
+              "uncached": 1.2699024139702106,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          }
+        },
+        "total": {
+          "status": "comparable",
+          "native": {
+            "status": "complete",
+            "totals": {
+              "input": 163260,
+              "cached": 127488,
+              "uncached": 35772,
+              "output": 153,
+              "generations": 12
+            },
+            "knownTotals": {
+              "input": 163260,
+              "cached": 127488,
+              "uncached": 35772,
+              "output": 153,
+              "generations": 12
+            },
+            "issues": []
+          },
+          "product": {
+            "status": "complete",
+            "totals": {
+              "input": 205899,
+              "cached": 145152,
+              "uncached": 60747,
+              "output": 585,
+              "generations": 12
+            },
+            "knownTotals": {
+              "input": 205899,
+              "cached": 145152,
+              "uncached": 60747,
+              "output": 585,
+              "generations": 12
+            },
+            "issues": []
+          },
+          "ratios": {
+            "input": 1.2611723631018008,
+            "cached": 1.1385542168674698,
+            "uncached": 1.6981717544448172,
+            "output": 3.823529411764706,
+            "generations": 1
+          }
+        }
+      },
+      {
+        "roundsPerParticipant": 8,
+        "comparisonBasis": "diagnostic-cost-only",
+        "participants": {
+          "a": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 112934,
+                "cached": 93440,
+                "uncached": 19494,
+                "output": 102,
+                "generations": 8
+              },
+              "knownTotals": {
+                "input": 112934,
+                "cached": 93440,
+                "uncached": 19494,
+                "output": 102,
+                "generations": 8
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 150867,
+                "cached": 124160,
+                "uncached": 26707,
+                "output": 390,
+                "generations": 8
+              },
+              "knownTotals": {
+                "input": 150867,
+                "cached": 124160,
+                "uncached": 26707,
+                "output": 390,
+                "generations": 8
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.3358864469513168,
+              "cached": 1.3287671232876712,
+              "uncached": 1.370011285523751,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          },
+          "b": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 113607,
+                "cached": 105472,
+                "uncached": 8135,
+                "output": 102,
+                "generations": 8
+              },
+              "knownTotals": {
+                "input": 113607,
+                "cached": 105472,
+                "uncached": 8135,
+                "output": 102,
+                "generations": 8
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 150012,
+                "cached": 124160,
+                "uncached": 25852,
+                "output": 390,
+                "generations": 8
+              },
+              "knownTotals": {
+                "input": 150012,
+                "cached": 124160,
+                "uncached": 25852,
+                "output": 390,
+                "generations": 8
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.3204468034540124,
+              "cached": 1.1771844660194175,
+              "uncached": 3.177873386601106,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          },
+          "c": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 114280,
+                "cached": 94464,
+                "uncached": 19816,
+                "output": 102,
+                "generations": 8
+              },
+              "knownTotals": {
+                "input": 114280,
+                "cached": 94464,
+                "uncached": 19816,
+                "output": 102,
+                "generations": 8
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 148981,
+                "cached": 123136,
+                "uncached": 25845,
+                "output": 390,
+                "generations": 8
+              },
+              "knownTotals": {
+                "input": 148981,
+                "cached": 123136,
+                "uncached": 25845,
+                "output": 390,
+                "generations": 8
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.3036489324466223,
+              "cached": 1.3035230352303524,
+              "uncached": 1.3042490916431166,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          }
+        },
+        "total": {
+          "status": "comparable",
+          "native": {
+            "status": "complete",
+            "totals": {
+              "input": 340821,
+              "cached": 293376,
+              "uncached": 47445,
+              "output": 306,
+              "generations": 24
+            },
+            "knownTotals": {
+              "input": 340821,
+              "cached": 293376,
+              "uncached": 47445,
+              "output": 306,
+              "generations": 24
+            },
+            "issues": []
+          },
+          "product": {
+            "status": "complete",
+            "totals": {
+              "input": 449860,
+              "cached": 371456,
+              "uncached": 78404,
+              "output": 1170,
+              "generations": 24
+            },
+            "knownTotals": {
+              "input": 449860,
+              "cached": 371456,
+              "uncached": 78404,
+              "output": 1170,
+              "generations": 24
+            },
+            "issues": []
+          },
+          "ratios": {
+            "input": 1.319930403349559,
+            "cached": 1.2661431064572426,
+            "uncached": 1.6525239751290968,
+            "output": 3.823529411764706,
+            "generations": 1
+          }
+        }
+      },
+      {
+        "roundsPerParticipant": 12,
+        "comparisonBasis": "diagnostic-cost-only",
+        "participants": {
+          "a": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 176652,
+                "cached": 152832,
+                "uncached": 23820,
+                "output": 153,
+                "generations": 12
+              },
+              "knownTotals": {
+                "input": 176652,
+                "cached": 152832,
+                "uncached": 23820,
+                "output": 153,
+                "generations": 12
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 245371,
+                "cached": 213248,
+                "uncached": 32123,
+                "output": 585,
+                "generations": 12
+              },
+              "knownTotals": {
+                "input": 245371,
+                "cached": 213248,
+                "uncached": 32123,
+                "output": 585,
+                "generations": 12
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.3890077666825171,
+              "cached": 1.3953098827470687,
+              "uncached": 1.3485726280436607,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          },
+          "b": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 177666,
+                "cached": 165888,
+                "uncached": 11778,
+                "output": 153,
+                "generations": 12
+              },
+              "knownTotals": {
+                "input": 177666,
+                "cached": 165888,
+                "uncached": 11778,
+                "output": 153,
+                "generations": 12
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 244233,
+                "cached": 212224,
+                "uncached": 32009,
+                "output": 585,
+                "generations": 12
+              },
+              "knownTotals": {
+                "input": 244233,
+                "cached": 212224,
+                "uncached": 32009,
+                "output": 585,
+                "generations": 12
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.374674951875992,
+              "cached": 1.279320987654321,
+              "uncached": 2.7176940057734758,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          },
+          "c": {
+            "status": "comparable",
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 178680,
+                "cached": 155904,
+                "uncached": 22776,
+                "output": 153,
+                "generations": 12
+              },
+              "knownTotals": {
+                "input": 178680,
+                "cached": 155904,
+                "uncached": 22776,
+                "output": 153,
+                "generations": 12
+              },
+              "issues": []
+            },
+            "product": {
+              "status": "complete",
+              "totals": {
+                "input": 242497,
+                "cached": 211200,
+                "uncached": 31297,
+                "output": 585,
+                "generations": 12
+              },
+              "knownTotals": {
+                "input": 242497,
+                "cached": 211200,
+                "uncached": 31297,
+                "output": 585,
+                "generations": 12
+              },
+              "issues": []
+            },
+            "ratios": {
+              "input": 1.3571580479068726,
+              "cached": 1.354679802955665,
+              "uncached": 1.3741218826835264,
+              "output": 3.823529411764706,
+              "generations": 1
+            }
+          }
+        },
+        "total": {
+          "status": "comparable",
+          "native": {
+            "status": "complete",
+            "totals": {
+              "input": 532998,
+              "cached": 474624,
+              "uncached": 58374,
+              "output": 459,
+              "generations": 36
+            },
+            "knownTotals": {
+              "input": 532998,
+              "cached": 474624,
+              "uncached": 58374,
+              "output": 459,
+              "generations": 36
+            },
+            "issues": []
+          },
+          "product": {
+            "status": "complete",
+            "totals": {
+              "input": 732101,
+              "cached": 636672,
+              "uncached": 95429,
+              "output": 1755,
+              "generations": 36
+            },
+            "knownTotals": {
+              "input": 732101,
+              "cached": 636672,
+              "uncached": 95429,
+              "output": 1755,
+              "generations": 36
+            },
+            "issues": []
+          },
+          "ratios": {
+            "input": 1.3735529964465159,
+            "cached": 1.3414239482200647,
+            "uncached": 1.634786034878542,
+            "output": 3.823529411764706,
+            "generations": 1
+          }
+        }
+      }
+    ],
+    "sameQuality": {
+      "eligible": false,
+      "basis": "not-established",
+      "ratios": null
+    },
+    "contractVerdict": "not-assessed",
+    "stability": "not-established",
+    "interpretation": "All observed costs remain visible. Prefix ratios are descriptive only; quality failure is not cured by later success. Token vectors are not bills."
+  },
+  "evidenceKind": "P122 public projection; original retained privately",
+  "originalResultSha256": "fc7c6283bb8e43ca1ff752cc6d8b696e421d193ecb312fe9249b5e88fd49e17a",
+  "arms": {
+    "native": {
+      "status": "complete",
+      "validationProcessedPrefix": 36,
+      "rounds": [
+        {
+          "round": 1,
+          "speaker": "a",
+          "answer": "审查结论：credential_field=absent",
+          "startedAt": "2026-10-06T01:43:59.077Z",
+          "finishedAt": "2026-10-06T01:44:14.105Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "complete-inline-input",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13065,
+            "cached": 0,
+            "uncached": 13065,
+            "output": 14,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13065,
+            "peakInput": 13065,
+            "replySeconds": 11.712,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 2,
+          "speaker": "b",
+          "answer": "审查结论：credential_field=absent",
+          "startedAt": "2026-10-06T01:44:14.152Z",
+          "finishedAt": "2026-10-06T01:44:30.429Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "complete-inline-input",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13157,
+            "cached": 12032,
+            "uncached": 1125,
+            "output": 14,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13157,
+            "peakInput": 13157,
+            "replySeconds": 13.003,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 3,
+          "speaker": "c",
+          "answer": "审查结论：credential_field=absent",
+          "startedAt": "2026-10-06T01:44:30.489Z",
+          "finishedAt": "2026-10-06T01:44:42.396Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "complete-inline-input",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13249,
+            "cached": 0,
+            "uncached": 13249,
+            "output": 14,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13249,
+            "peakInput": 13249,
+            "replySeconds": 8.697,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 4,
+          "speaker": "a",
+          "answer": "审查结论：credentials=reject",
+          "startedAt": "2026-10-06T01:44:42.464Z",
+          "finishedAt": "2026-10-06T01:44:59.723Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13389,
+            "cached": 12032,
+            "uncached": 1357,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13389,
+            "peakInput": 13389,
+            "replySeconds": 13.786,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 5,
+          "speaker": "b",
+          "answer": "审查结论：credentials=reject",
+          "startedAt": "2026-10-06T01:44:59.802Z",
+          "finishedAt": "2026-10-06T01:45:21.636Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13475,
+            "cached": 12032,
+            "uncached": 1443,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13475,
+            "peakInput": 13475,
+            "replySeconds": 18.604,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 6,
+          "speaker": "c",
+          "answer": "审查结论：credentials=reject",
+          "startedAt": "2026-10-06T01:45:21.713Z",
+          "finishedAt": "2026-10-06T01:45:35.067Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13561,
+            "cached": 13056,
+            "uncached": 505,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13561,
+            "peakInput": 13561,
+            "replySeconds": 10.182,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 7,
+          "speaker": "a",
+          "answer": "审查结论：socket=omit",
+          "startedAt": "2026-10-06T01:45:35.149Z",
+          "finishedAt": "2026-10-06T01:45:53.108Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13686,
+            "cached": 13056,
+            "uncached": 630,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13686,
+            "peakInput": 13686,
+            "replySeconds": 14.675,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 8,
+          "speaker": "b",
+          "answer": "审查结论：socket=omit",
+          "startedAt": "2026-10-06T01:45:53.195Z",
+          "finishedAt": "2026-10-06T01:46:10.331Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13759,
+            "cached": 13056,
+            "uncached": 703,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13759,
+            "peakInput": 13759,
+            "replySeconds": 13.739,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 9,
+          "speaker": "c",
+          "answer": "审查结论：socket=omit",
+          "startedAt": "2026-10-06T01:46:10.417Z",
+          "finishedAt": "2026-10-06T01:46:23.626Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13832,
+            "cached": 13056,
+            "uncached": 776,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13832,
+            "peakInput": 13832,
+            "replySeconds": 9.913,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 10,
+          "speaker": "a",
+          "answer": "审查结论：symlink=reject",
+          "startedAt": "2026-10-06T01:46:23.719Z",
+          "finishedAt": "2026-10-06T01:46:39.905Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 13956,
+            "cached": 13056,
+            "uncached": 900,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 13956,
+            "peakInput": 13956,
+            "replySeconds": 12.871,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 11,
+          "speaker": "b",
+          "answer": "审查结论：symlink=reject",
+          "startedAt": "2026-10-06T01:46:39.977Z",
+          "finishedAt": "2026-10-06T01:47:03.057Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14029,
+            "cached": 13056,
+            "uncached": 973,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14029,
+            "peakInput": 14029,
+            "replySeconds": 19.357,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 12,
+          "speaker": "c",
+          "answer": "审查结论：symlink=reject",
+          "startedAt": "2026-10-06T01:47:03.127Z",
+          "finishedAt": "2026-10-06T01:47:20.103Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14102,
+            "cached": 13056,
+            "uncached": 1046,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14102,
+            "peakInput": 14102,
+            "replySeconds": 13.308,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 13,
+          "speaker": "a",
+          "answer": "审查结论：sidecars=omit",
+          "startedAt": "2026-10-06T01:47:20.177Z",
+          "finishedAt": "2026-10-06T01:47:37.864Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14242,
+            "cached": 13056,
+            "uncached": 1186,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14242,
+            "peakInput": 14242,
+            "replySeconds": 14.411,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 14,
+          "speaker": "b",
+          "answer": "审查结论：sidecars=omit",
+          "startedAt": "2026-10-06T01:47:37.973Z",
+          "finishedAt": "2026-10-06T01:47:54.502Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14330,
+            "cached": 13056,
+            "uncached": 1274,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14330,
+            "peakInput": 14330,
+            "replySeconds": 13.248,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 15,
+          "speaker": "c",
+          "answer": "审查结论：sidecars=omit",
+          "startedAt": "2026-10-06T01:47:54.597Z",
+          "finishedAt": "2026-10-06T01:48:09.165Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14418,
+            "cached": 13056,
+            "uncached": 1362,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14418,
+            "peakInput": 14418,
+            "replySeconds": 10.159,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 16,
+          "speaker": "a",
+          "answer": "审查结论：mode=0700",
+          "startedAt": "2026-10-06T01:48:09.282Z",
+          "finishedAt": "2026-10-06T01:48:24.459Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14561,
+            "cached": 14080,
+            "uncached": 481,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14561,
+            "peakInput": 14561,
+            "replySeconds": 11.965,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 17,
+          "speaker": "b",
+          "answer": "审查结论：mode=0700",
+          "startedAt": "2026-10-06T01:48:24.583Z",
+          "finishedAt": "2026-10-06T01:48:40.308Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14652,
+            "cached": 14080,
+            "uncached": 572,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14652,
+            "peakInput": 14652,
+            "replySeconds": 12.312,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 18,
+          "speaker": "c",
+          "answer": "审查结论：mode=0700",
+          "startedAt": "2026-10-06T01:48:40.427Z",
+          "finishedAt": "2026-10-06T01:48:56.949Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14743,
+            "cached": 14080,
+            "uncached": 663,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14743,
+            "peakInput": 14743,
+            "replySeconds": 13.279,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 19,
+          "speaker": "a",
+          "answer": "审查结论：db=backup",
+          "startedAt": "2026-10-06T01:48:57.079Z",
+          "finishedAt": "2026-10-06T01:49:24.219Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14870,
+            "cached": 14080,
+            "uncached": 790,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14870,
+            "peakInput": 14870,
+            "replySeconds": 23.852,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 20,
+          "speaker": "b",
+          "answer": "审查结论：db=backup",
+          "startedAt": "2026-10-06T01:49:24.331Z",
+          "finishedAt": "2026-10-06T01:49:41.740Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 14944,
+            "cached": 14080,
+            "uncached": 864,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 14944,
+            "peakInput": 14944,
+            "replySeconds": 14.194,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 21,
+          "speaker": "c",
+          "answer": "审查结论：db=backup",
+          "startedAt": "2026-10-06T01:49:41.854Z",
+          "finishedAt": "2026-10-06T01:49:54.670Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15018,
+            "cached": 14080,
+            "uncached": 938,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15018,
+            "peakInput": 15018,
+            "replySeconds": 9.205,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 22,
+          "speaker": "a",
+          "answer": "审查结论：changed_files=reject",
+          "startedAt": "2026-10-06T01:49:54.837Z",
+          "finishedAt": "2026-10-06T01:50:09.851Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15165,
+            "cached": 14080,
+            "uncached": 1085,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15165,
+            "peakInput": 15165,
+            "replySeconds": 10.517,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 23,
+          "speaker": "b",
+          "answer": "审查结论：changed_files=reject",
+          "startedAt": "2026-10-06T01:50:09.974Z",
+          "finishedAt": "2026-10-06T01:50:24.944Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15261,
+            "cached": 14080,
+            "uncached": 1181,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15261,
+            "peakInput": 15261,
+            "replySeconds": 11.643,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 24,
+          "speaker": "c",
+          "answer": "审查结论：changed_files=reject",
+          "startedAt": "2026-10-06T01:50:25.089Z",
+          "finishedAt": "2026-10-06T01:50:38.432Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15357,
+            "cached": 14080,
+            "uncached": 1277,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15357,
+            "peakInput": 15357,
+            "replySeconds": 10.178,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 25,
+          "speaker": "a",
+          "answer": "审查结论：quick_check=ok",
+          "startedAt": "2026-10-06T01:50:38.555Z",
+          "finishedAt": "2026-10-06T01:50:52.916Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15485,
+            "cached": 14080,
+            "uncached": 1405,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15485,
+            "peakInput": 15485,
+            "replySeconds": 11.141,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 26,
+          "speaker": "b",
+          "answer": "审查结论：quick_check=ok",
+          "startedAt": "2026-10-06T01:50:53.075Z",
+          "finishedAt": "2026-10-06T01:51:10.512Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15561,
+            "cached": 15104,
+            "uncached": 457,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15561,
+            "peakInput": 15561,
+            "replySeconds": 14.071,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 27,
+          "speaker": "c",
+          "answer": "审查结论：quick_check=ok",
+          "startedAt": "2026-10-06T01:51:10.667Z",
+          "finishedAt": "2026-10-06T01:51:27.119Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15637,
+            "cached": 15104,
+            "uncached": 533,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15637,
+            "peakInput": 15637,
+            "replySeconds": 13.202,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 28,
+          "speaker": "a",
+          "answer": "审查结论：foreign_keys=reject",
+          "startedAt": "2026-10-06T01:51:27.302Z",
+          "finishedAt": "2026-10-06T01:51:47.335Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15762,
+            "cached": 15104,
+            "uncached": 658,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15762,
+            "peakInput": 15762,
+            "replySeconds": 16.642,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 29,
+          "speaker": "b",
+          "answer": "审查结论：foreign_keys=reject",
+          "startedAt": "2026-10-06T01:51:47.528Z",
+          "finishedAt": "2026-10-06T01:52:01.194Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15835,
+            "cached": 15104,
+            "uncached": 731,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15835,
+            "peakInput": 15835,
+            "replySeconds": 10.492,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 30,
+          "speaker": "c",
+          "answer": "审查结论：foreign_keys=reject",
+          "startedAt": "2026-10-06T01:52:01.377Z",
+          "finishedAt": "2026-10-06T01:52:16.931Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 15908,
+            "cached": 15104,
+            "uncached": 804,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15908,
+            "peakInput": 15908,
+            "replySeconds": 12.298,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 31,
+          "speaker": "a",
+          "answer": "审查结论：stable=reject",
+          "startedAt": "2026-10-06T01:52:17.127Z",
+          "finishedAt": "2026-10-06T01:52:34.474Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 16063,
+            "cached": 15104,
+            "uncached": 959,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16063,
+            "peakInput": 16063,
+            "replySeconds": 14.119,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 32,
+          "speaker": "b",
+          "answer": "审查结论：stable=reject",
+          "startedAt": "2026-10-06T01:52:34.665Z",
+          "finishedAt": "2026-10-06T01:52:55.085Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 16165,
+            "cached": 15104,
+            "uncached": 1061,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16165,
+            "peakInput": 16165,
+            "replySeconds": 17.135,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 33,
+          "speaker": "c",
+          "answer": "审查结论：stable=reject",
+          "startedAt": "2026-10-06T01:52:55.278Z",
+          "finishedAt": "2026-10-06T01:53:10.079Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 16267,
+            "cached": 15104,
+            "uncached": 1163,
+            "output": 12,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16267,
+            "peakInput": 16267,
+            "replySeconds": 11.423,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 34,
+          "speaker": "a",
+          "answer": "审查结论：stop_calls=0",
+          "startedAt": "2026-10-06T01:53:10.288Z",
+          "finishedAt": "2026-10-06T01:53:34.907Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 16408,
+            "cached": 15104,
+            "uncached": 1304,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16408,
+            "peakInput": 16408,
+            "replySeconds": 19.77,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 35,
+          "speaker": "b",
+          "answer": "审查结论：stop_calls=0",
+          "startedAt": "2026-10-06T01:53:35.098Z",
+          "finishedAt": "2026-10-06T01:53:50.875Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 16498,
+            "cached": 15104,
+            "uncached": 1394,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16498,
+            "peakInput": 16498,
+            "replySeconds": 12.414,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        },
+        {
+          "round": 36,
+          "speaker": "c",
+          "answer": "审查结论：stop_calls=0",
+          "startedAt": "2026-10-06T01:53:51.096Z",
+          "finishedAt": "2026-10-06T01:54:08.279Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": [],
+            "reliability": {
+              "attemptedCalls": 0,
+              "rejectedCalls": 0,
+              "deduplicatedCalls": 0
+            }
+          },
+          "metrics": {
+            "input": 16588,
+            "cached": 16128,
+            "uncached": 460,
+            "output": 13,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16588,
+            "peakInput": 16588,
+            "replySeconds": 13.527,
+            "toolCalls": [],
+            "finalInterrupt": null
+          }
+        }
+      ]
+    },
+    "worker-delivery": {
+      "status": "complete",
+      "validationProcessedPrefix": 36,
+      "rounds": [
+        {
+          "round": 1,
+          "speaker": "a",
+          "answer": "审查结论：credential_field=absent",
+          "startedAt": "2026-10-06T01:54:10.467Z",
+          "finishedAt": "2026-10-06T01:54:25.540Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "complete-inline-input",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 16076,
+            "cached": 0,
+            "uncached": 16076,
+            "output": 50,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16076,
+            "peakInput": 16076,
+            "replySeconds": 14.958,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:54:25.393Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 14,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 2,
+          "speaker": "b",
+          "answer": "审查结论：credential_field=absent",
+          "startedAt": "2026-10-06T01:54:25.590Z",
+          "finishedAt": "2026-10-06T01:54:32.691Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "complete-inline-input",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 15965,
+            "cached": 0,
+            "uncached": 15965,
+            "output": 50,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15965,
+            "peakInput": 15965,
+            "replySeconds": 6.995,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:54:32.525Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 23,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 3,
+          "speaker": "c",
+          "answer": "审查结论：credential_field=absent",
+          "startedAt": "2026-10-06T01:54:32.741Z",
+          "finishedAt": "2026-10-06T01:54:40.201Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "complete-inline-input",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 15866,
+            "cached": 0,
+            "uncached": 15866,
+            "output": 50,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 15866,
+            "peakInput": 15866,
+            "replySeconds": 7.351,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:54:40.031Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 32,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 4,
+          "speaker": "a",
+          "answer": "审查结论：credentials=reject",
+          "startedAt": "2026-10-06T01:54:40.257Z",
+          "finishedAt": "2026-10-06T01:54:49.519Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 16892,
+            "cached": 15104,
+            "uncached": 1788,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16892,
+            "peakInput": 16892,
+            "replySeconds": 9.093,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:54:49.337Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 41,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 5,
+          "speaker": "b",
+          "answer": "审查结论：credentials=reject",
+          "startedAt": "2026-10-06T01:54:49.589Z",
+          "finishedAt": "2026-10-06T01:54:52.118Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 16779,
+            "cached": 15104,
+            "uncached": 1675,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16779,
+            "peakInput": 16779,
+            "replySeconds": 2.313,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:54:51.890Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 50,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 6,
+          "speaker": "c",
+          "answer": "审查结论：credentials=reject",
+          "startedAt": "2026-10-06T01:54:52.195Z",
+          "finishedAt": "2026-10-06T01:54:54.615Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 16669,
+            "cached": 15104,
+            "uncached": 1565,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 16669,
+            "peakInput": 16669,
+            "replySeconds": 2.281,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:54:54.453Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 59,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 7,
+          "speaker": "a",
+          "answer": "审查结论：socket=omit",
+          "startedAt": "2026-10-06T01:54:54.699Z",
+          "finishedAt": "2026-10-06T01:55:06.531Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 17683,
+            "cached": 16128,
+            "uncached": 1555,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 17683,
+            "peakInput": 17683,
+            "replySeconds": 11.692,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:06.381Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 68,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 8,
+          "speaker": "b",
+          "answer": "审查结论：socket=omit",
+          "startedAt": "2026-10-06T01:55:06.620Z",
+          "finishedAt": "2026-10-06T01:55:09.088Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 17561,
+            "cached": 16128,
+            "uncached": 1433,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 17561,
+            "peakInput": 17561,
+            "replySeconds": 2.267,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:08.877Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 77,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 9,
+          "speaker": "c",
+          "answer": "审查结论：socket=omit",
+          "startedAt": "2026-10-06T01:55:09.174Z",
+          "finishedAt": "2026-10-06T01:55:11.819Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 17433,
+            "cached": 16128,
+            "uncached": 1305,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 17433,
+            "peakInput": 17433,
+            "replySeconds": 2.496,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:11.659Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 86,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 10,
+          "speaker": "a",
+          "answer": "审查结论：symlink=reject",
+          "startedAt": "2026-10-06T01:55:11.925Z",
+          "finishedAt": "2026-10-06T01:55:23.444Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 18451,
+            "cached": 17152,
+            "uncached": 1299,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 18451,
+            "peakInput": 18451,
+            "replySeconds": 11.298,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:23.212Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 95,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 11,
+          "speaker": "b",
+          "answer": "审查结论：symlink=reject",
+          "startedAt": "2026-10-06T01:55:23.548Z",
+          "finishedAt": "2026-10-06T01:55:26.268Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 18328,
+            "cached": 17152,
+            "uncached": 1176,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 18328,
+            "peakInput": 18328,
+            "replySeconds": 2.595,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:26.136Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 104,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 12,
+          "speaker": "c",
+          "answer": "审查结论：symlink=reject",
+          "startedAt": "2026-10-06T01:55:26.378Z",
+          "finishedAt": "2026-10-06T01:55:28.812Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 18196,
+            "cached": 17152,
+            "uncached": 1044,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 18196,
+            "peakInput": 18196,
+            "replySeconds": 2.229,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:28.599Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 113,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 13,
+          "speaker": "a",
+          "answer": "审查结论：sidecars=omit",
+          "startedAt": "2026-10-06T01:55:28.918Z",
+          "finishedAt": "2026-10-06T01:55:44.998Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 19228,
+            "cached": 18176,
+            "uncached": 1052,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 19228,
+            "peakInput": 19228,
+            "replySeconds": 15.939,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:44.852Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 122,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 14,
+          "speaker": "b",
+          "answer": "审查结论：sidecars=omit",
+          "startedAt": "2026-10-06T01:55:45.113Z",
+          "finishedAt": "2026-10-06T01:55:47.850Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 19130,
+            "cached": 18176,
+            "uncached": 954,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 19130,
+            "peakInput": 19130,
+            "replySeconds": 2.519,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:47.625Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 131,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 15,
+          "speaker": "c",
+          "answer": "审查结论：sidecars=omit",
+          "startedAt": "2026-10-06T01:55:47.970Z",
+          "finishedAt": "2026-10-06T01:55:50.464Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 19002,
+            "cached": 17152,
+            "uncached": 1850,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 19002,
+            "peakInput": 19002,
+            "replySeconds": 2.38,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:50.346Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 140,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 16,
+          "speaker": "a",
+          "answer": "审查结论：mode=0744",
+          "startedAt": "2026-10-06T01:55:50.602Z",
+          "finishedAt": "2026-10-06T01:55:58.930Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "incorrect",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 20051,
+            "cached": 18176,
+            "uncached": 1875,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 20051,
+            "peakInput": 20051,
+            "replySeconds": 8.221,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:55:58.815Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 149,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 17,
+          "speaker": "b",
+          "answer": "审查结论：mode=0744",
+          "startedAt": "2026-10-06T01:55:59.067Z",
+          "finishedAt": "2026-10-06T01:56:01.813Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "incorrect",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 19950,
+            "cached": 18176,
+            "uncached": 1774,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 19950,
+            "peakInput": 19950,
+            "replySeconds": 2.616,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:01.679Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 158,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 18,
+          "speaker": "c",
+          "answer": "审查结论：mode=0744",
+          "startedAt": "2026-10-06T01:56:01.953Z",
+          "finishedAt": "2026-10-06T01:56:04.744Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "incorrect",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 19818,
+            "cached": 18176,
+            "uncached": 1642,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 19818,
+            "peakInput": 19818,
+            "replySeconds": 2.643,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:04.590Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 167,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 19,
+          "speaker": "a",
+          "answer": "审查结论：db=backup",
+          "startedAt": "2026-10-06T01:56:04.886Z",
+          "finishedAt": "2026-10-06T01:56:10.865Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 20851,
+            "cached": 19200,
+            "uncached": 1651,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 20851,
+            "peakInput": 20851,
+            "replySeconds": 5.83,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:10.707Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 176,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 20,
+          "speaker": "b",
+          "answer": "审查结论：db=backup",
+          "startedAt": "2026-10-06T01:56:11.036Z",
+          "finishedAt": "2026-10-06T01:56:13.901Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 20738,
+            "cached": 19200,
+            "uncached": 1538,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 20738,
+            "peakInput": 20738,
+            "replySeconds": 2.614,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:13.644Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 185,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 21,
+          "speaker": "c",
+          "answer": "审查结论：db=backup",
+          "startedAt": "2026-10-06T01:56:14.065Z",
+          "finishedAt": "2026-10-06T01:56:16.697Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 20583,
+            "cached": 19200,
+            "uncached": 1383,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 20583,
+            "peakInput": 20583,
+            "replySeconds": 2.52,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:16.581Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 194,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 22,
+          "speaker": "a",
+          "answer": "审查结论：changed_files=reject",
+          "startedAt": "2026-10-06T01:56:16.880Z",
+          "finishedAt": "2026-10-06T01:56:28.100Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 21635,
+            "cached": 20224,
+            "uncached": 1411,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 21635,
+            "peakInput": 21635,
+            "replySeconds": 10.996,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:27.870Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 203,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 23,
+          "speaker": "b",
+          "answer": "审查结论：changed_files=reject",
+          "startedAt": "2026-10-06T01:56:28.279Z",
+          "finishedAt": "2026-10-06T01:56:32.766Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 21561,
+            "cached": 20224,
+            "uncached": 1337,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 21561,
+            "peakInput": 21561,
+            "replySeconds": 4.268,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:32.540Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 212,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 24,
+          "speaker": "c",
+          "answer": "审查结论：changed_files=reject",
+          "startedAt": "2026-10-06T01:56:32.940Z",
+          "finishedAt": "2026-10-06T01:56:35.538Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 21414,
+            "cached": 20224,
+            "uncached": 1190,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 21414,
+            "peakInput": 21414,
+            "replySeconds": 2.394,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:35.328Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 221,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 25,
+          "speaker": "a",
+          "answer": "审查结论：quick_check=ok",
+          "startedAt": "2026-10-06T01:56:35.747Z",
+          "finishedAt": "2026-10-06T01:56:50.277Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 22449,
+            "cached": 21248,
+            "uncached": 1201,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 22449,
+            "peakInput": 22449,
+            "replySeconds": 14.272,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:50.014Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 230,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 26,
+          "speaker": "b",
+          "answer": "审查结论：quick_check=ok",
+          "startedAt": "2026-10-06T01:56:50.465Z",
+          "finishedAt": "2026-10-06T01:56:53.733Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 22358,
+            "cached": 21248,
+            "uncached": 1110,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 22358,
+            "peakInput": 22358,
+            "replySeconds": 3.122,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:53.583Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 239,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 27,
+          "speaker": "c",
+          "answer": "审查结论：quick_check=ok",
+          "startedAt": "2026-10-06T01:56:53.929Z",
+          "finishedAt": "2026-10-06T01:56:56.602Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 22182,
+            "cached": 21248,
+            "uncached": 934,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 22182,
+            "peakInput": 22182,
+            "replySeconds": 2.515,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:56:56.439Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 248,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 28,
+          "speaker": "a",
+          "answer": "审查结论：foreign_keys=reject",
+          "startedAt": "2026-10-06T01:56:56.821Z",
+          "finishedAt": "2026-10-06T01:57:04.293Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 23215,
+            "cached": 22272,
+            "uncached": 943,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 23215,
+            "peakInput": 23215,
+            "replySeconds": 7.315,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:04.131Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 257,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 29,
+          "speaker": "b",
+          "answer": "审查结论：foreign_keys=reject",
+          "startedAt": "2026-10-06T01:57:04.497Z",
+          "finishedAt": "2026-10-06T01:57:07.290Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 23129,
+            "cached": 21248,
+            "uncached": 1881,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 23129,
+            "peakInput": 23129,
+            "replySeconds": 2.661,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:07.154Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 266,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 30,
+          "speaker": "c",
+          "answer": "审查结论：foreign_keys=reject",
+          "startedAt": "2026-10-06T01:57:07.499Z",
+          "finishedAt": "2026-10-06T01:57:10.194Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 22940,
+            "cached": 21248,
+            "uncached": 1692,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 22940,
+            "peakInput": 22940,
+            "replySeconds": 2.57,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:10.065Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 275,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 31,
+          "speaker": "a",
+          "answer": "审查结论：stable=reject",
+          "startedAt": "2026-10-06T01:57:10.420Z",
+          "finishedAt": "2026-10-06T01:57:16.704Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 24004,
+            "cached": 22272,
+            "uncached": 1732,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 24004,
+            "peakInput": 24004,
+            "replySeconds": 6.101,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:16.517Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 284,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 32,
+          "speaker": "b",
+          "answer": "审查结论：stable=reject",
+          "startedAt": "2026-10-06T01:57:16.945Z",
+          "finishedAt": "2026-10-06T01:57:19.651Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 23955,
+            "cached": 22272,
+            "uncached": 1683,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 23955,
+            "peakInput": 23955,
+            "replySeconds": 2.529,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:19.468Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 293,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 33,
+          "speaker": "c",
+          "answer": "审查结论：stable=reject",
+          "startedAt": "2026-10-06T01:57:19.889Z",
+          "finishedAt": "2026-10-06T01:57:22.382Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 23792,
+            "cached": 22272,
+            "uncached": 1520,
+            "output": 48,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 23792,
+            "peakInput": 23792,
+            "replySeconds": 2.397,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:22.282Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 302,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 34,
+          "speaker": "a",
+          "answer": "审查结论：stop_calls=0",
+          "startedAt": "2026-10-06T01:57:22.675Z",
+          "finishedAt": "2026-10-06T01:57:31.303Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 24836,
+            "cached": 23296,
+            "uncached": 1540,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 24836,
+            "peakInput": 24836,
+            "replySeconds": 8.358,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:31.028Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 311,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 35,
+          "speaker": "b",
+          "answer": "审查结论：stop_calls=0",
+          "startedAt": "2026-10-06T01:57:31.605Z",
+          "finishedAt": "2026-10-06T01:57:34.290Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 24779,
+            "cached": 23296,
+            "uncached": 1483,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 24779,
+            "peakInput": 24779,
+            "replySeconds": 2.435,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:34.036Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 320,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        },
+        {
+          "round": 36,
+          "speaker": "c",
+          "answer": "审查结论：stop_calls=0",
+          "startedAt": "2026-10-06T01:57:34.550Z",
+          "finishedAt": "2026-10-06T01:57:37.229Z",
+          "actualMemoryOff": true,
+          "actualIdentityVerified": true,
+          "actualWorkspaceVerified": true,
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "longStageSucceeded": true,
+          "validation": {
+            "executionIntegrity": "verified",
+            "deliveryVerdict": "delivered",
+            "qualityVerdict": "correct",
+            "readProof": "previous-turn-only",
+            "transportDiagnostics": ["worker-mcp"],
+            "reliability": {
+              "attemptedCalls": 1,
+              "rejectedCalls": null,
+              "deduplicatedCalls": null
+            }
+          },
+          "metrics": {
+            "input": 24602,
+            "cached": 23296,
+            "uncached": 1306,
+            "output": 49,
+            "reasoning": 0,
+            "generations": 1,
+            "firstInput": 24602,
+            "peakInput": 24602,
+            "replySeconds": 2.539,
+            "toolCalls": [
+              {
+                "at": "2026-10-06T01:57:37.085Z",
+                "name": "exec",
+                "kind": "worker-mcp-reply"
+              }
+            ],
+            "finalInterrupt": {
+              "committedRoomSeq": 329,
+              "requested": true,
+              "accepted": true,
+              "terminal": true,
+              "sent": true,
+              "preemptedFollowUp": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "contractComparison": {
+    "status": "over-budget",
+    "participants": {
+      "a": {
+        "status": "over-budget",
+        "failures": ["fixedOverhead"],
+        "unmeasured": [],
+        "fixedOverhead": {
+          "rah": 16076,
+          "native": 13065,
+          "tokens": 3011,
+          "budget": 3000
+        },
+        "perRoundResidue": [
+          {
+            "fromRound": 2,
+            "toRound": 3,
+            "rahGrowth": 791,
+            "nativeGrowth": 297,
+            "tokens": 494
+          },
+          {
+            "fromRound": 3,
+            "toRound": 4,
+            "rahGrowth": 768,
+            "nativeGrowth": 270,
+            "tokens": 498
+          },
+          {
+            "fromRound": 4,
+            "toRound": 5,
+            "rahGrowth": 777,
+            "nativeGrowth": 286,
+            "tokens": 491
+          },
+          {
+            "fromRound": 5,
+            "toRound": 6,
+            "rahGrowth": 823,
+            "nativeGrowth": 319,
+            "tokens": 504
+          },
+          {
+            "fromRound": 6,
+            "toRound": 7,
+            "rahGrowth": 800,
+            "nativeGrowth": 309,
+            "tokens": 491
+          },
+          {
+            "fromRound": 7,
+            "toRound": 8,
+            "rahGrowth": 784,
+            "nativeGrowth": 295,
+            "tokens": 489
+          },
+          {
+            "fromRound": 8,
+            "toRound": 9,
+            "rahGrowth": 814,
+            "nativeGrowth": 320,
+            "tokens": 494
+          },
+          {
+            "fromRound": 9,
+            "toRound": 10,
+            "rahGrowth": 766,
+            "nativeGrowth": 277,
+            "tokens": 489
+          },
+          {
+            "fromRound": 10,
+            "toRound": 11,
+            "rahGrowth": 789,
+            "nativeGrowth": 301,
+            "tokens": 488
+          },
+          {
+            "fromRound": 11,
+            "toRound": 12,
+            "rahGrowth": 832,
+            "nativeGrowth": 345,
+            "tokens": 487
+          }
+        ],
+        "retriedRounds": [],
+        "rounds": [
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2304630692690395,
+            "uncachedRatio": 1.2304630692690395,
+            "replyRatio": 1.2771516393442623,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 16076,
+              "native": 13065,
+              "budget": 32130,
+              "delta": 3011,
+              "fixedOverhead": 3011,
+              "round1History": 0,
+              "residue": 0,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2616326835461946,
+            "uncachedRatio": 1.3176123802505526,
+            "replyRatio": 0.6595821848251849,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 16892,
+              "native": 13389,
+              "budget": 32778,
+              "delta": 3503,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 0,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.292050270349262,
+            "uncachedRatio": 2.4682539682539684,
+            "replyRatio": 0.7967291311754685,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 17683,
+              "native": 13686,
+              "budget": 33372,
+              "delta": 3997,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 494,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3220836916021783,
+            "uncachedRatio": 1.4433333333333334,
+            "replyRatio": 0.877787273716106,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 18451,
+              "native": 13956,
+              "budget": 33912,
+              "delta": 4495,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 992,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.350091279314703,
+            "uncachedRatio": 0.8870151770657673,
+            "replyRatio": 1.1060301158837,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 19228,
+              "native": 14242,
+              "budget": 34484,
+              "delta": 4986,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 1483,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3770345443307466,
+            "uncachedRatio": 3.898128898128898,
+            "replyRatio": 0.6870873380693691,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 20051,
+              "native": 14561,
+              "budget": 35122,
+              "delta": 5490,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 1987,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.40221923335575,
+            "uncachedRatio": 2.089873417721519,
+            "replyRatio": 0.24442394767734363,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 20851,
+              "native": 14870,
+              "budget": 35740,
+              "delta": 5981,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 2478,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4266402901417738,
+            "uncachedRatio": 1.3004608294930875,
+            "replyRatio": 1.0455453075972236,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 21635,
+              "native": 15165,
+              "budget": 36330,
+              "delta": 6470,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 2967,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.44972554084598,
+            "uncachedRatio": 0.8548042704626334,
+            "replyRatio": 1.2810340184902613,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 22449,
+              "native": 15485,
+              "budget": 36970,
+              "delta": 6964,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 3461,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.472846085522142,
+            "uncachedRatio": 1.4331306990881458,
+            "replyRatio": 0.4395505347914914,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 23215,
+              "native": 15762,
+              "budget": 37524,
+              "delta": 7453,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 3950,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.494365934134346,
+            "uncachedRatio": 1.8060479666319083,
+            "replyRatio": 0.43211275586089665,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 24004,
+              "native": 16063,
+              "budget": 38126,
+              "delta": 7941,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 4438,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.5136518771331058,
+            "uncachedRatio": 1.1809815950920246,
+            "replyRatio": 0.42276176024279216,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 24836,
+              "native": 16408,
+              "budget": 38816,
+              "delta": 8428,
+              "fixedOverhead": 3011,
+              "round1History": 492,
+              "residue": 4925,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          }
+        ]
+      },
+      "b": {
+        "status": "within-budget",
+        "failures": [],
+        "unmeasured": [],
+        "fixedOverhead": {
+          "rah": 15965,
+          "native": 13157,
+          "tokens": 2808,
+          "budget": 3000
+        },
+        "perRoundResidue": [
+          {
+            "fromRound": 2,
+            "toRound": 3,
+            "rahGrowth": 782,
+            "nativeGrowth": 284,
+            "tokens": 498
+          },
+          {
+            "fromRound": 3,
+            "toRound": 4,
+            "rahGrowth": 767,
+            "nativeGrowth": 270,
+            "tokens": 497
+          },
+          {
+            "fromRound": 4,
+            "toRound": 5,
+            "rahGrowth": 802,
+            "nativeGrowth": 301,
+            "tokens": 501
+          },
+          {
+            "fromRound": 5,
+            "toRound": 6,
+            "rahGrowth": 820,
+            "nativeGrowth": 322,
+            "tokens": 498
+          },
+          {
+            "fromRound": 6,
+            "toRound": 7,
+            "rahGrowth": 788,
+            "nativeGrowth": 292,
+            "tokens": 496
+          },
+          {
+            "fromRound": 7,
+            "toRound": 8,
+            "rahGrowth": 823,
+            "nativeGrowth": 317,
+            "tokens": 506
+          },
+          {
+            "fromRound": 8,
+            "toRound": 9,
+            "rahGrowth": 797,
+            "nativeGrowth": 300,
+            "tokens": 497
+          },
+          {
+            "fromRound": 9,
+            "toRound": 10,
+            "rahGrowth": 771,
+            "nativeGrowth": 274,
+            "tokens": 497
+          },
+          {
+            "fromRound": 10,
+            "toRound": 11,
+            "rahGrowth": 826,
+            "nativeGrowth": 330,
+            "tokens": 496
+          },
+          {
+            "fromRound": 11,
+            "toRound": 12,
+            "rahGrowth": 824,
+            "nativeGrowth": 333,
+            "tokens": 491
+          }
+        ],
+        "retriedRounds": [],
+        "rounds": [
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2134225127308658,
+            "uncachedRatio": 14.19111111111111,
+            "replyRatio": 0.5379527801276629,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 15965,
+              "native": 13157,
+              "budget": 32314,
+              "delta": 2808,
+              "fixedOverhead": 2808,
+              "round1History": 0,
+              "residue": 0,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2451948051948052,
+            "uncachedRatio": 1.1607761607761609,
+            "replyRatio": 0.12432810148355194,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 16779,
+              "native": 13475,
+              "budget": 32950,
+              "delta": 3304,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 0,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2763282215277274,
+            "uncachedRatio": 2.0384068278805123,
+            "replyRatio": 0.16500473105757332,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 17561,
+              "native": 13759,
+              "budget": 33518,
+              "delta": 3802,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 498,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3064366669042697,
+            "uncachedRatio": 1.20863309352518,
+            "replyRatio": 0.13406002996332078,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 18328,
+              "native": 14029,
+              "budget": 34058,
+              "delta": 4299,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 995,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3349616189811584,
+            "uncachedRatio": 0.7488226059654631,
+            "replyRatio": 0.1901419082125604,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 19130,
+              "native": 14330,
+              "budget": 34660,
+              "delta": 4800,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 1496,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3615888615888616,
+            "uncachedRatio": 3.1013986013986012,
+            "replyRatio": 0.21247563352826512,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 19950,
+              "native": 14652,
+              "budget": 35304,
+              "delta": 5298,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 1994,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3877141327623126,
+            "uncachedRatio": 1.7800925925925926,
+            "replyRatio": 0.1841623221079329,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 20738,
+              "native": 14944,
+              "budget": 35888,
+              "delta": 5794,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 2490,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4128169844702183,
+            "uncachedRatio": 1.1320914479254869,
+            "replyRatio": 0.3665721892982908,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 21561,
+              "native": 15261,
+              "budget": 36522,
+              "delta": 6300,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 2996,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4367971210076473,
+            "uncachedRatio": 2.428884026258206,
+            "replyRatio": 0.22187477791201762,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 22358,
+              "native": 15561,
+              "budget": 37122,
+              "delta": 6797,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 3493,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4606251973476476,
+            "uncachedRatio": 2.573187414500684,
+            "replyRatio": 0.25362180709111704,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 23129,
+              "native": 15835,
+              "budget": 37670,
+              "delta": 7294,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 3990,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4819053510671203,
+            "uncachedRatio": 1.586239396795476,
+            "replyRatio": 0.14759264662970525,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": 0,
+            "beforeReplyBudgetEvidence": null,
+            "inputDecomposition": {
+              "rah": 23955,
+              "native": 16165,
+              "budget": 38330,
+              "delta": 7790,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 4486,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.501939629045945,
+            "uncachedRatio": 1.0638450502152081,
+            "replyRatio": 0.1961495086193008,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 24779,
+              "native": 16498,
+              "budget": 38996,
+              "delta": 8281,
+              "fixedOverhead": 2808,
+              "round1History": 496,
+              "residue": 4977,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          }
+        ]
+      },
+      "c": {
+        "status": "within-budget",
+        "failures": [],
+        "unmeasured": [],
+        "fixedOverhead": {
+          "rah": 15866,
+          "native": 13249,
+          "tokens": 2617,
+          "budget": 3000
+        },
+        "perRoundResidue": [
+          {
+            "fromRound": 2,
+            "toRound": 3,
+            "rahGrowth": 764,
+            "nativeGrowth": 271,
+            "tokens": 493
+          },
+          {
+            "fromRound": 3,
+            "toRound": 4,
+            "rahGrowth": 763,
+            "nativeGrowth": 270,
+            "tokens": 493
+          },
+          {
+            "fromRound": 4,
+            "toRound": 5,
+            "rahGrowth": 806,
+            "nativeGrowth": 316,
+            "tokens": 490
+          },
+          {
+            "fromRound": 5,
+            "toRound": 6,
+            "rahGrowth": 816,
+            "nativeGrowth": 325,
+            "tokens": 491
+          },
+          {
+            "fromRound": 6,
+            "toRound": 7,
+            "rahGrowth": 765,
+            "nativeGrowth": 275,
+            "tokens": 490
+          },
+          {
+            "fromRound": 7,
+            "toRound": 8,
+            "rahGrowth": 831,
+            "nativeGrowth": 339,
+            "tokens": 492
+          },
+          {
+            "fromRound": 8,
+            "toRound": 9,
+            "rahGrowth": 768,
+            "nativeGrowth": 280,
+            "tokens": 488
+          },
+          {
+            "fromRound": 9,
+            "toRound": 10,
+            "rahGrowth": 758,
+            "nativeGrowth": 271,
+            "tokens": 487
+          },
+          {
+            "fromRound": 10,
+            "toRound": 11,
+            "rahGrowth": 852,
+            "nativeGrowth": 359,
+            "tokens": 493
+          },
+          {
+            "fromRound": 11,
+            "toRound": 12,
+            "rahGrowth": 810,
+            "nativeGrowth": 321,
+            "tokens": 489
+          }
+        ],
+        "retriedRounds": [],
+        "rounds": [
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.1975243414597327,
+            "uncachedRatio": 1.1975243414597327,
+            "replyRatio": 0.8452339887317467,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 15866,
+              "native": 13249,
+              "budget": 32498,
+              "delta": 2617,
+              "fixedOverhead": 2617,
+              "round1History": 0,
+              "residue": 0,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2291866381535286,
+            "uncachedRatio": 3.099009900990099,
+            "replyRatio": 0.22402278530740524,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 16669,
+              "native": 13561,
+              "budget": 33122,
+              "delta": 3108,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 0,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.2603383458646618,
+            "uncachedRatio": 1.681701030927835,
+            "replyRatio": 0.251790578028851,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 17433,
+              "native": 13832,
+              "budget": 33664,
+              "delta": 3601,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 493,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.290313430719047,
+            "uncachedRatio": 0.9980879541108987,
+            "replyRatio": 0.16749323715058612,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 18196,
+              "native": 14102,
+              "budget": 34204,
+              "delta": 4094,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 986,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3179359134415314,
+            "uncachedRatio": 1.3582966226138031,
+            "replyRatio": 0.23427502706959344,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 19002,
+              "native": 14418,
+              "budget": 34836,
+              "delta": 4584,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 1476,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.34423116055077,
+            "uncachedRatio": 2.4766214177978885,
+            "replyRatio": 0.19903607199337298,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 19818,
+              "native": 14743,
+              "budget": 35486,
+              "delta": 5075,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 1967,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3705553335996803,
+            "uncachedRatio": 1.4744136460554371,
+            "replyRatio": 0.2737642585551331,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 20583,
+              "native": 15018,
+              "budget": 36036,
+              "delta": 5565,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 2457,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.3944129712834539,
+            "uncachedRatio": 0.9318715740015662,
+            "replyRatio": 0.23521320495185694,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 21414,
+              "native": 15357,
+              "budget": 36714,
+              "delta": 6057,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 2949,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4185585470358764,
+            "uncachedRatio": 1.7523452157598498,
+            "replyRatio": 0.19050143917588244,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 22182,
+              "native": 15637,
+              "budget": 37274,
+              "delta": 6545,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 3437,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.442041740005029,
+            "uncachedRatio": 2.1044776119402986,
+            "replyRatio": 0.20897706944218572,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 22940,
+              "native": 15908,
+              "budget": 37816,
+              "delta": 7032,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 3924,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4625929796520563,
+            "uncachedRatio": 1.3069647463456577,
+            "replyRatio": 0.20983979690098922,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 23792,
+              "native": 16267,
+              "budget": 38534,
+              "delta": 7525,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 4417,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          },
+          {
+            "status": "within-budget",
+            "failures": [],
+            "unmeasured": [],
+            "inputRatio": 1.4831203279479142,
+            "uncachedRatio": 2.8391304347826085,
+            "replyRatio": 0.18769867672063284,
+            "extraGenerations": 0,
+            "extraGenerationsBeforeReply": null,
+            "beforeReplyBudgetEvidence": {
+              "basis": "usage-record-upper-bound",
+              "lower": -1,
+              "upper": 0,
+              "budget": 0,
+              "status": "within-budget"
+            },
+            "inputDecomposition": {
+              "rah": 24602,
+              "native": 16588,
+              "budget": 39176,
+              "delta": 8014,
+              "fixedOverhead": 2617,
+              "round1History": 491,
+              "residue": 4906,
+              "extraGenerations": 0,
+              "workPathGenerations": 0,
+              "protocolGenerations": 0,
+              "intraRound": 0
+            }
+          }
+        ]
+      }
+    }
+  }
+}

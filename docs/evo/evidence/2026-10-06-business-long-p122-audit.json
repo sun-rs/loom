@@ -1,0 +1,379 @@
+{
+  "sample": "P122",
+  "kind": "independent paired long observation audit; no additional model calls",
+  "completePlannedStagesPerArm": 36,
+  "participantsPerArm": 3,
+  "continuousStagesPerSession": 12,
+  "distinctNativeSessions": 6,
+  "actualCliVersion": "0.160.0",
+  "actualModel": "gpt-6-luna",
+  "actualEffort": "low",
+  "nativeMemory": "disabled in all six session records",
+  "rawUsage": {
+    "native": {
+      "input": 532998,
+      "cached": 474624,
+      "uncached": 58374,
+      "output": 459,
+      "generations": 36
+    },
+    "worker-delivery": {
+      "input": 732101,
+      "cached": 636672,
+      "uncached": 95429,
+      "output": 1755,
+      "generations": 36
+    }
+  },
+  "descriptiveCostRatios": {
+    "input": 1.3735529964465159,
+    "uncached": 1.634786034878542,
+    "output": 3.823529411764706
+  },
+  "firstGenerationInputDifferencesByStage": [
+    3011, 2808, 2617, 3503, 3304, 3108, 3997, 3802, 3601, 4495, 4299, 4094,
+    4986, 4800, 4584, 5490, 5298, 5075, 5981, 5794, 5565, 6470, 6300, 6057,
+    6964, 6797, 6545, 7453, 7294, 7032, 7941, 7790, 7525, 8428, 8281, 8014
+  ],
+  "newMaterialCopies": {
+    "native": {
+      "a": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "b": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "c": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "worker-delivery": {
+      "a": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "b": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "c": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  "durable": {
+    "runs": 36,
+    "completedActivations": 36,
+    "finalMarkers": 36,
+    "sameConsumerAck": 36,
+    "uniqueCorrectTargetMessages": 36,
+    "persistedUsageRows": 36,
+    "usageGaps": 0,
+    "automaticRetries": 0,
+    "testRuntimesTerminated": true,
+    "daemonExitCode": 0
+  },
+  "transport": {
+    "product": "36 actual MCP calls; 36 complete correlated published receipts; no threadId parameter; no rejection or deduplication observed",
+    "native": "zero tool calls",
+    "receipts": [
+      {
+        "stage": 1,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 9,
+        "roomSequence": 14
+      },
+      {
+        "stage": 4,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 36,
+        "roomSequence": 41
+      },
+      {
+        "stage": 7,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 63,
+        "roomSequence": 68
+      },
+      {
+        "stage": 10,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 90,
+        "roomSequence": 95
+      },
+      {
+        "stage": 13,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 117,
+        "roomSequence": 122
+      },
+      {
+        "stage": 16,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 144,
+        "roomSequence": 149
+      },
+      {
+        "stage": 19,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 171,
+        "roomSequence": 176
+      },
+      {
+        "stage": 22,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 198,
+        "roomSequence": 203
+      },
+      {
+        "stage": 25,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 225,
+        "roomSequence": 230
+      },
+      {
+        "stage": 28,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 252,
+        "roomSequence": 257
+      },
+      {
+        "stage": 31,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 279,
+        "roomSequence": 284
+      },
+      {
+        "stage": 34,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 306,
+        "roomSequence": 311
+      },
+      {
+        "stage": 2,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 18,
+        "roomSequence": 23
+      },
+      {
+        "stage": 5,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 45,
+        "roomSequence": 50
+      },
+      {
+        "stage": 8,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 72,
+        "roomSequence": 77
+      },
+      {
+        "stage": 11,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 99,
+        "roomSequence": 104
+      },
+      {
+        "stage": 14,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 126,
+        "roomSequence": 131
+      },
+      {
+        "stage": 17,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 153,
+        "roomSequence": 158
+      },
+      {
+        "stage": 20,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 180,
+        "roomSequence": 185
+      },
+      {
+        "stage": 23,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 207,
+        "roomSequence": 212
+      },
+      {
+        "stage": 26,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 234,
+        "roomSequence": 239
+      },
+      {
+        "stage": 29,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 261,
+        "roomSequence": 266
+      },
+      {
+        "stage": 32,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 288,
+        "roomSequence": 293
+      },
+      {
+        "stage": 35,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 315,
+        "roomSequence": 320
+      },
+      {
+        "stage": 3,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 27,
+        "roomSequence": 32
+      },
+      {
+        "stage": 6,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 54,
+        "roomSequence": 59
+      },
+      {
+        "stage": 9,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 81,
+        "roomSequence": 86
+      },
+      {
+        "stage": 12,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 108,
+        "roomSequence": 113
+      },
+      {
+        "stage": 15,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 135,
+        "roomSequence": 140
+      },
+      {
+        "stage": 18,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 162,
+        "roomSequence": 167
+      },
+      {
+        "stage": 21,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 189,
+        "roomSequence": 194
+      },
+      {
+        "stage": 24,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 216,
+        "roomSequence": 221
+      },
+      {
+        "stage": 27,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 243,
+        "roomSequence": 248
+      },
+      {
+        "stage": 30,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 270,
+        "roomSequence": 275
+      },
+      {
+        "stage": 33,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 297,
+        "roomSequence": 302
+      },
+      {
+        "stage": 36,
+        "published": true,
+        "deduplicated": false,
+        "explicitSequence": 324,
+        "roomSequence": 329
+      }
+    ]
+  },
+  "quality": {
+    "native": {
+      "correct": 36,
+      "incorrect": 0,
+      "unscorable": 0
+    },
+    "worker-delivery": {
+      "correct": 33,
+      "incorrect": 3,
+      "unscorable": 0
+    }
+  },
+  "wrongAnswers": [
+    {
+      "arm": "worker-delivery",
+      "stage": 16,
+      "body": "审查结论：mode=0744",
+      "expected": "审查结论：mode=0700"
+    },
+    {
+      "arm": "worker-delivery",
+      "stage": 17,
+      "body": "审查结论：mode=0744",
+      "expected": "审查结论：mode=0700"
+    },
+    {
+      "arm": "worker-delivery",
+      "stage": 18,
+      "body": "审查结论：mode=0744",
+      "expected": "审查结论：mode=0700"
+    }
+  ],
+  "sameQualityEligible": false,
+  "checks": 365,
+  "limits": [
+    "One observed long pair only, native first; no claim of stability or general failure rate.",
+    "Three wrong product answers retained; all-cost ratios are descriptive, not equal-quality efficiency.",
+    "Model trajectory and peer history are endogenous; raw ratio is not a causal estimate of pure platform overhead.",
+    "Response usage records are not independently captured HTTP request counts.",
+    "Product exact before/after generation timing remains unknown in raw metrics; late usage cannot be called another post-reply generation.",
+    "Automatic diagnostic rejection/dedup counts remain unknown for wrappers; this audit separately inspects these 36 complete actual outputs."
+  ],
+  "platformMemory": {
+    "readDefault": false,
+    "writeDefault": false,
+    "enabledOverrides": 0,
+    "policyChangedBeforeInstances": true,
+    "policyEvents": 1,
+    "servedIndexReadEnabled": [false, false, false],
+    "entries": 0
+  },
+  "finalFence": {
+    "native": 36,
+    "worker-delivery": 36
+  },
+  "independentBaseChecks": 889,
+  "rawResultSha256": "fc7c6283bb8e43ca1ff752cc6d8b696e421d193ecb312fe9249b5e88fd49e17a",
+  "observedExecutionOrder": ["native", "worker-delivery"],
+  "descriptiveOnly": true
+}

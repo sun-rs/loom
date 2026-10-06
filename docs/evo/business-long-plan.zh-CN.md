@@ -1,6 +1,6 @@
 # 业务交付长期观察：免费准备与执行清单
 
-本轮 owner“开始”承接的是免费输入分析与长期测试准备，未授权新付费调用。依据[随机模型验收设计](stochastic-cli-evaluation-design.zh-CN.md)，仅创建可运行入口；P121 结果及历史裁决保持不变。
+准备阶段 owner“开始”承接的是免费输入分析与长期测试准备。后续 owner“继续”已授权并完成第1配对 [P122](evidence/2026-10-06-business-long-p122.md)：质量及效率未验收，其余三对未启动或授权。依据[随机模型验收设计](stochastic-cli-evaluation-design.zh-CN.md)，仅创建可运行入口；P121 结果及历史裁决保持不变。
 
 输入拆解见[P121 常驻与续轮开销](evidence/2026-10-06-p121-input-analysis.md)。本批只合并一处重复 Tool access 权限说明，不移除身份、工具权限、seq/turn、ACK、final 或 unknown-write 规则；不宣称已测得 token 降幅。
 
@@ -43,4 +43,4 @@
 
 P121 的 CLI 自动记忆关闭证据成立，但平台频道没有持久策略行或成员覆盖，实际采用默认读写开启；条目为零。因此只能说“空平台记忆库，没有已知条目投递”，不能说平台读写被关闭。这不改变其实际用量、答案、交付或效率失败裁决。新长期 profile 显式冻结关闭条件，身份与 P121 不同，不直接拼接样本。
 
-当前代码与免费链路已通过全量 check、最终 typecheck、format 和 diff；生产权限文案精简已按[部署凭据](evidence/2026-10-06-business-long-deployment.json)完成备份、重启和真实页面复核。本批新增付费调用为零。
+当前代码与免费链路已通过全量 check、最终 typecheck、format 和 diff；生产权限文案精简已按[部署凭据](evidence/2026-10-06-business-long-deployment.json)完成备份、重启和真实页面复核。上述免费准备批新增付费调用为零；后续P122付费结果单独记录，不混入免费证据。
