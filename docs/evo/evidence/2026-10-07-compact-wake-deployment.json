@@ -1,0 +1,83 @@
+{
+  "at": "2026-10-06T16:20:24.027Z",
+  "oldPid": 91931,
+  "newPid": 81577,
+  "backup": "pre-restart-compact-wake-projection-32d7f375-963d-4d98-b52a-d129a4f82b11",
+  "sourceSha256": "453bf59207d90f39f63378df7aeb70bf57a3965d188ac1facf27d9c883dbf76e",
+  "head": "06b570ae0f7abfff577cd81f36f83673d0d4cd10",
+  "databases": 2,
+  "files": 302,
+  "businessTables": {
+    "messages": {
+      "rows": 235,
+      "sha256": "c7e1fe0ff2db90f81eb3e4db8695dbe28dfe8783c7aa4b0d361f2cb91817c888"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 39,
+      "sha256": "c11295d87be6062fde6ef8ff20b4495a6b984a7ab75e72e00c512ef11ab42d1a"
+    },
+    "role_revisions": {
+      "rows": 39,
+      "sha256": "79f791e267b7c7544b5c6b881ac486bd519145424c8dc7c805750f6ed1c61a2d"
+    },
+    "role_instances": {
+      "rows": 65,
+      "sha256": "f93603dff830fa409d737a13de1433eb1d0943af07b509d3ed573637d97cd3b3"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 63,
+      "sha256": "a6323123619a9eb57b6876b8849b859c2cfd79b56f50667af3a89d16cf93ba33"
+    },
+    "room_events": {
+      "rows": 2059,
+      "sha256": "3a9e068af9fd153a004722bc9c3b02b9af8a8c59b464cf9654ede9a0528095e0"
+    },
+    "agent_definitions": {
+      "rows": 69,
+      "sha256": "044111c4fc6d2be52ea7f677d06eaf40917bb7e2c87f40b7573d8aeb3633281a"
+    },
+    "inbox_items": {
+      "rows": 163,
+      "sha256": "c13bd14439ab1ed317ecc8b405bb7e57024406db140b2386e88d7f808e3f9c79"
+    }
+  },
+  "verified": true,
+  "verification": {
+    "check": "passed (root verified)",
+    "format": "passed (root verified)",
+    "diff": "passed (root verified)",
+    "businessTableHashesUnchanged": true,
+    "formalTrialFlags": {
+      "LOOM_CODEX_FINAL_OUTPUT_TRIAL": "unset",
+      "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL": "unset"
+    },
+    "browser": {
+      "freshChromePage": true,
+      "channels": 40,
+      "roles": 39,
+      "existingP95Messages": 9,
+      "existingCompletedTaskVisible": true,
+      "capturedErrors": 0,
+      "scope": "Read-only channel list, existing channel messages/task and Role list; not all interactions",
+      "existingDirectoryWarning": "Historical smoke-console attached_directory_missing warning retained; no filesystem repair"
+    },
+    "inertWorkPreserved": {
+      "queued": 4,
+      "quarantined": 2
+    },
+    "frontendChanged": false
+  },
+  "paidCallsInThisDeployment": 0
+}

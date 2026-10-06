@@ -1,0 +1,53 @@
+{
+  "kind": "isolated installed CLI tool exposure capability experiment; not production gate acceptance",
+  "status": "direct-tool-delivery-proven-with-extra-followup-requests",
+  "cliVersion": "0.160.0",
+  "approvedBinding": "gpt-6-luna",
+  "effort": "low",
+  "actualProvider": "loopback fake only",
+  "nativeAutomaticMemoryDisabled": true,
+  "guard": "Production model/effort/memory guard sees original argv. Audited private downstream wrapper replaces only the exact single omit_tools_from argument; this final argv is experimental, not production-approved config.",
+  "override": {
+    "from": ["deferred"],
+    "to": ["code_mode", "deferred"],
+    "verifiedSingleArgumentReplacement": true
+  },
+  "totalHttpCap": 6,
+  "priorPreservedFailure": {
+    "httpRequests": 2,
+    "reason": "Probe refused namespace encoding before checking installed ResponseItem schema; platform failure retry observed; no published replies."
+  },
+  "verifiedSample": {
+    "httpRequests": 4,
+    "reportedSyntheticGenerations": 4,
+    "stages": 2,
+    "sameSession": true,
+    "sameRuntime": true,
+    "canonicalReplies": 2,
+    "sameConsumerAckedActivations": 2,
+    "directCalls": 2,
+    "correlatedActualPublishedReceipts": 2,
+    "ordinaryFinalFollowups": 2,
+    "interruptSent": 0,
+    "interruptRequested": 0,
+    "preemptedFollowup": "unknown"
+  },
+  "toolSurface": {
+    "namespace": "mcp__loom_worker",
+    "function": "loom_reply",
+    "actualNameAndSchemaObservedBeforeSyntheticCall": true,
+    "sharedMcpTypesPresent": false,
+    "functionsExecRemains": true,
+    "actualToolsJsonBytes": 20257,
+    "previousProductionProbeToolsJsonBytes": 21779,
+    "catalogueByteDifferenceOnly": 1522,
+    "catalogueComparisonLimit": "Existing compact-wake production probe, identical other tool catalogue fields; different workflow, no whole-input/token/cost comparison."
+  },
+  "conclusion": "The CLI supports direct MCP exposure, with smaller observed tool catalogue. Existing Host final barrier did not early-stop these direct calls; the fake provider received a second request per round. No production switch or net efficiency claim is justified.",
+  "limits": [
+    "No real model choice/quality/cache/price observations. Usage is synthetic.",
+    "No production source/config/guard relaxation or official service changes.",
+    "Initial failed sample is preserved; total6HTTP budget exhausted; no further calls.",
+    "Current expectOuterOutput barrier remains unchanged. No causal diagnosis of missing early interrupt beyond observed lifecycle in this probe."
+  ]
+}
