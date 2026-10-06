@@ -14,7 +14,9 @@
  *
  * - each event line is `renderCompactWakeEventLines`: canonical target, real
  *   Room seq, short message ref, author and body; a non-message business fact
- *   keeps a compact type and payload;
+ *   keeps a compact type and payload (except instance.created bookkeeping).
+ *   Consecutive exact targets share a header only if shorter, independently
+ *   within each catch-up/directed partition; seq, author and body stay intact;
  * - a window whose contiguous `presentedThroughSeq` reaches the Activation
  *   head ends with Reply context metadata: exact targets, the shared
  *   --based-on-room-seq and optional turn handle. It supplies no command

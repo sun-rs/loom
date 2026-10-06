@@ -1,0 +1,155 @@
+{
+  "kind": "real CLI isolated loopback fake-provider transport proof; no actual model calls",
+  "status": "passed",
+  "actualHttpRequests": 6,
+  "reportedSyntheticGenerations": 6,
+  "syntheticUsageNotEfficiencyEvidence": true,
+  "participants": 3,
+  "roundsPerParticipant": 2,
+  "continuousSessions": 3,
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cliVersion": "0.160.0",
+  "cliSha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+  "nativeAutomaticMemoryDisabled": true,
+  "uniqueCanonicalReplies": 6,
+  "finalMarkers": 6,
+  "consumerAcknowledgedActivations": 6,
+  "realMcpReceipts": 6,
+  "compactReceiptsObservedInSubsequentProviderRequests": 3,
+  "stages": [
+    {
+      "stage": 1,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 2,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 3,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 4,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 5,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    },
+    {
+      "stage": 6,
+      "canonicalReply": true,
+      "sameConsumerAck": true,
+      "oneAttempt": true,
+      "reportedGenerations": 1
+    }
+  ],
+  "security": "isolated HOME/CODEX_HOME, no inherited credentials, provider points only to localhost, no paid fallback; default MCP flags0",
+  "uncovered": "warnings, held, dedup and unknown outcomes covered separately by unit tests, not injected here",
+  "wakeRendering": {
+    "kind": "real CLI six-request compact wake verification plus exact old-renderer offline replay",
+    "status": "passed",
+    "oldRendererRevision": "c22f258",
+    "actualHttpRequests": 6,
+    "modelCalls": "loopback synthetic only",
+    "newWakes": [
+      {
+        "stage": 1,
+        "catchupEvents": 4,
+        "forYouEvents": 1,
+        "fullBodiesOrderSeqAuthorMentionsPreserved": true,
+        "partitionsPreserved": true,
+        "singletonTargetExplicit": true,
+        "sharedTargetObserved": true,
+        "newWakeJsonBytesReduction": 369,
+        "metadataJsonBytesReduction": 324
+      },
+      {
+        "stage": 2,
+        "catchupEvents": 4,
+        "forYouEvents": 1,
+        "fullBodiesOrderSeqAuthorMentionsPreserved": true,
+        "partitionsPreserved": true,
+        "singletonTargetExplicit": true,
+        "sharedTargetObserved": true,
+        "newWakeJsonBytesReduction": 207,
+        "metadataJsonBytesReduction": 162
+      },
+      {
+        "stage": 3,
+        "catchupEvents": 4,
+        "forYouEvents": 1,
+        "fullBodiesOrderSeqAuthorMentionsPreserved": true,
+        "partitionsPreserved": true,
+        "singletonTargetExplicit": true,
+        "sharedTargetObserved": true,
+        "newWakeJsonBytesReduction": 45,
+        "metadataJsonBytesReduction": 0
+      },
+      {
+        "stage": 4,
+        "catchupEvents": 4,
+        "forYouEvents": 1,
+        "fullBodiesOrderSeqAuthorMentionsPreserved": true,
+        "partitionsPreserved": true,
+        "singletonTargetExplicit": true,
+        "sharedTargetObserved": true,
+        "newWakeJsonBytesReduction": 45,
+        "metadataJsonBytesReduction": 0
+      },
+      {
+        "stage": 5,
+        "catchupEvents": 4,
+        "forYouEvents": 1,
+        "fullBodiesOrderSeqAuthorMentionsPreserved": true,
+        "partitionsPreserved": true,
+        "singletonTargetExplicit": true,
+        "sharedTargetObserved": true,
+        "newWakeJsonBytesReduction": 45,
+        "metadataJsonBytesReduction": 0
+      },
+      {
+        "stage": 6,
+        "catchupEvents": 4,
+        "forYouEvents": 1,
+        "fullBodiesOrderSeqAuthorMentionsPreserved": true,
+        "partitionsPreserved": true,
+        "singletonTargetExplicit": true,
+        "sharedTargetObserved": true,
+        "newWakeJsonBytesReduction": 45,
+        "metadataJsonBytesReduction": 0
+      }
+    ],
+    "newInstanceCreatedOccurrences": 3,
+    "databaseRetainsBothMetadataFields": true,
+    "historyWakeOccurrences": 9,
+    "newWakeJsonBytesReduction": 756,
+    "allCapturedRequestsActualJsonBytes": 440583,
+    "allCapturedRequestsSameInputsOldRendererJsonBytes": 441960,
+    "allCapturedRequestsWakeJsonBytesReduction": 1377,
+    "limits": [
+      "Old-renderer output recomputed offline on identical canonical events/addressing; not second CLI/model sample.",
+      "Byte changes only; no token/cache/price/quality benefit claim.",
+      "Production grouping guard compares rendered UTF-8 text, not JSON wire bytes; tiny target cases may have zero JSON-byte gain. All groups measured here use #multi-efficiency and have positive wire reduction.",
+      "Only one top-level channel target in this probe; mixed targets, short names and threads depend on separate tests.",
+      "Canonical full metadata remains in durable events; existing consumer ACK sequence checks pass. Compact model rendering does not prove the model read omitted metadata."
+    ]
+  }
+}

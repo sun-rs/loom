@@ -65,8 +65,9 @@ test("golden: a complete window is one line per message plus reply metadata", ()
   assert.equal(
     formatBodiedWakeInput({ present: present() }),
     [
-      "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
-      "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
+      "Target: #general",
+      "seq 12 msg=0c12aaaa @richard: can you take the migration?",
+      "seq 14 msg=0c14bbbb @richard: and the rollback plan",
       'Reply context: --target "#general" --based-on-room-seq 14',
     ].join("\n"),
   );
@@ -76,8 +77,9 @@ test("golden: a warm turn carries its handle once in reply metadata", () => {
   assert.equal(
     formatBodiedWakeInput({ present: present(), turnHandle: HANDLE }),
     [
-      "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
-      "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
+      "Target: #general",
+      "seq 12 msg=0c12aaaa @richard: can you take the migration?",
+      "seq 14 msg=0c14bbbb @richard: and the rollback plan",
       `Reply context: --target "#general" --turn ${HANDLE} --based-on-room-seq 14`,
     ].join("\n"),
   );
@@ -132,9 +134,10 @@ test("golden: a business fact keeps a compact type and its payload", () => {
       }),
     }),
     [
-      "#general seq 12 msg=0c12aaaa @richard: one",
-      '#general seq 13 task.cancelled @richard {"taskId":"task-7","number":7}',
-      "#general seq 14 msg=0c14bbbb @richard: two",
+      "Target: #general",
+      "seq 12 msg=0c12aaaa @richard: one",
+      'seq 13 task.cancelled @richard {"taskId":"task-7","number":7}',
+      "seq 14 msg=0c14bbbb @richard: two",
       "Task delivery: run message-check first, then handle the Task events. Task commands do not acknowledge delivery.",
     ].join("\n"),
   );
@@ -146,8 +149,9 @@ test("golden: the Host cleanup notice rides as one bounded trailing line", () =>
   assert.equal(
     withRuntimeNotice(formatBodiedWakeInput({ present: present() })!, notice),
     [
-      "#general seq 12 msg=0c12aaaa @richard: can you take the migration?",
-      "#general seq 14 msg=0c14bbbb @richard: and the rollback plan",
+      "Target: #general",
+      "seq 12 msg=0c12aaaa @richard: can you take the migration?",
+      "seq 14 msg=0c14bbbb @richard: and the rollback plan",
       'Reply context: --target "#general" --based-on-room-seq 14',
       notice,
     ].join("\n"),
@@ -484,10 +488,11 @@ test("review P1-2: a merged range's event that did not wake the instance is back
   assert.equal(lines[0], "Since your last read (did not wake you):");
   assert.match(lines[1]!, /seq 13 .*only for you/u);
   assert.equal(lines[2], "For you:");
-  assert.match(lines[3]!, /seq 12 .*@worker one/u);
-  assert.match(lines[4]!, /seq 14 .*@worker two/u);
+  assert.equal(lines[3], "Target: #general");
+  assert.match(lines[4]!, /seq 12 .*@worker one/u);
+  assert.match(lines[5]!, /seq 14 .*@worker two/u);
   assert.equal(
-    lines[5],
+    lines[6],
     'Reply context: --target "#general" --based-on-room-seq 14',
   );
 });
@@ -565,4 +570,34 @@ test("P90: catch-up Task facts do not add a check to an ordinary message wake", 
   })!;
   assert.match(output, /Reply context:/u);
   assert.doesNotMatch(output, /run message-check/u);
+});
+
+test("grouped same-target history and directed delivery retain separate scope headers", () => {
+  const input = present({
+    fromSeq: 12,
+    directedSeqs: [12, 14],
+    events: [
+      event(10, "message.posted", { messageId: "old-10", body: "old first" }),
+      event(11, "message.posted", { messageId: "old-11", body: "old second" }),
+      event(12, "message.posted", { messageId: M12, body: "new first" }),
+      event(14, "message.posted", { messageId: M14, body: "new second" }),
+    ],
+    presentedSeqs: [10, 11, 12, 13, 14],
+  });
+  const before = structuredClone(input);
+  assert.equal(
+    formatBodiedWakeInput({ present: input, turnHandle: HANDLE }),
+    [
+      "Since your last read (did not wake you):",
+      "Target: #general",
+      "seq 10 msg=old-10 @richard: old first",
+      "seq 11 msg=old-11 @richard: old second",
+      "For you:",
+      "Target: #general",
+      "seq 12 msg=0c12aaaa @richard: new first",
+      "seq 14 msg=0c14bbbb @richard: new second",
+      `Reply context: --target "#general" --turn ${HANDLE} --based-on-room-seq 14`,
+    ].join("\n"),
+  );
+  assert.deepEqual(input, before);
 });

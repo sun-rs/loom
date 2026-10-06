@@ -535,8 +535,19 @@ function eventLines(
  * - any other business fact keeps its compact type and payload:
  *   `<target> seq <N> <type> @<actor> <payload JSON>`.
  *
- * Time and the redundant `type=message.posted` field are omitted.
+ * Time and the redundant `type=message.posted` field are omitted. The wake
+ * projection hides only top-level instance.created provisioning/digest fields.
+ * Consecutive exact targets may share a header below; full reads stay unchanged.
  */
+function compactEventTarget(event: Json): string {
+  const target = asString(event.target) ?? asString(event.roomId) ?? "-";
+  const threadId = asString(asRecord(event.payload).threadId);
+  if (event.type !== "message.posted" || threadId === undefined) return target;
+  return target.startsWith("#") || target.startsWith("dm:@")
+    ? `${target}:${shortWorkerRef(threadId)}`
+    : `${target} threadId=${threadId}`;
+}
+
 function compactEventLines(rawEvent: Json, addressing?: unknown): string[] {
   const event = addressed(rawEvent, addressing);
   const payload = asRecord(event.payload);
@@ -544,18 +555,21 @@ function compactEventLines(rawEvent: Json, addressing?: unknown): string[] {
     asString(event.senderHandle) ?? asString(event.actorId) ?? "unknown";
   const target = asString(event.target) ?? asString(event.roomId) ?? "-";
   const seq = `seq ${asNumber(event.roomSeq) ?? "-"}`;
+  if (event.type === "instance.created") {
+    const {
+      provisionEventId: _provision,
+      requestDigest: _digest,
+      ...visible
+    } = payload;
+    return [
+      `${target} ${seq} instance.created @${actor} ${JSON.stringify(visible)}`,
+    ];
+  }
   if (event.type !== "message.posted")
     return [
       `${target} ${seq} ${asString(event.type) ?? "-"} @${actor} ${JSON.stringify(payload)}`,
     ];
-  const threadId = asString(payload.threadId);
-  const addressable = target.startsWith("#") || target.startsWith("dm:@");
-  const where =
-    threadId === undefined
-      ? target
-      : addressable
-        ? `${target}:${shortWorkerRef(threadId)}`
-        : `${target} threadId=${threadId}`;
+  const where = compactEventTarget(event);
   const lines = [
     `${where} ${seq} msg=${shortWorkerRef(asString(payload.messageId) ?? "-")} @${actor}: ${
       asString(payload.body) ?? ""
@@ -611,8 +625,34 @@ export function renderCompactWakeEventLines(
   events: readonly unknown[],
   addressing: unknown,
 ): string {
-  return events
-    .flatMap((event) => compactEventLines(asRecord(event), addressing))
+  const groups: { key: string; target: string; lines: string[][] }[] = [];
+  for (const raw of events) {
+    const event = addressed(asRecord(raw), addressing);
+    const target = compactEventTarget(event);
+    const room = asString(event.roomId);
+    const thread = asString(asRecord(event.payload).threadId);
+    const key = JSON.stringify([room, thread, target]);
+    const previous = groups.at(-1);
+    const lines = compactEventLines(asRecord(raw), addressing);
+    if (room !== undefined && previous?.key === key) previous.lines.push(lines);
+    else groups.push({ key, target, lines: [lines] });
+  }
+  return groups
+    .map(({ target, lines }) => {
+      const original = lines.flat().join("\n");
+      const grouped =
+        `Target: ${target}\n` +
+        lines
+          .flatMap(([first, ...rest]) => [
+            first!.slice(target.length + 1),
+            ...rest,
+          ])
+          .join("\n");
+      return lines.length > 1 &&
+        Buffer.byteLength(grouped) < Buffer.byteLength(original)
+        ? grouped
+        : original;
+    })
     .join("\n");
 }
 

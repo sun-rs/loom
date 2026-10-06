@@ -55,3 +55,9 @@ Task 长期归属与短期 claim 租约、P94 旧成功回执问题另列为紧�
 回归先复现同 Activation 换 Run 后的旧回执，再验证过期重新认领→启动→进度→提交、精确重试不重复事件、旧 Run 拒写；另覆盖状态入口过期恢复及业务键跨 Run 保持稳定。真实 CLI 验收另列，本批免费测试不替代它。
 
 本次修复的免费验证：专项 15 项通过。全量 `npm run check` 后端首次 2753 通过、22 跳过、2 失败：一项热 Codex 测试等待 running turn 超时，单独复跑通过，未改其时限或断言；另一项 daemon 旧断言要求跨 Run 仅一次 claim/start，现明确改为每个 Run 各一次执行认领／启动，并保留 create/progress/submit 各一次的精确断言、增加两个 claim 的不同 Run 归属检查，整个 daemon 文件 21 项通过。首次失败记录保留，不宣称全量首次全绿。被 `check` 的短路跳过的 Web、控制台、parity、正式浏览器政策、双边截图策略及效率门禁单测已另行执行通过；最终类型、格式和 diff 检查通过。未执行付费 CLI，本次运行次数、token、实际 Task 续办结果仍待有界真实验收。
+
+## 2026-10-06：模型投递显示精简
+
+Host 的 `worker-read-render.ts` 继续单独拥有 bodied wake 的文本投影。连续事件只有完整 Room ID、完整 Thread ID 与显示目标均相同时，才可使用一个 `Target:` 标题；单条及 UTF-8 字节没有严格减少的分组保留逐条目标。不按短引用合并，不重排事件，不跨 `Since your last read` / `For you` 分区，每次渲染重新声明目标。正文、Room seq、作者、消息引用、mentions、附件、Reply context、notice、重试及恢复信息保持原语义。
+
+仅 `instance.created` 投影隐藏顶层 `provisionEventId` 和 `requestDigest`；完整实例及其他字段保留，其他事件不删字段。Kernel 事件、完整 Worker 响应、contentDigest 和 ACK 所有权不变；原生 session 的既有历史不改写。这是本地显示实现，无上游代码复制。实际字节、免费链路、自动检查及部署状态分开记于[本批证据](evidence/2026-10-06-compact-wake-projection.md)，不由文本压缩推断效率达标。
