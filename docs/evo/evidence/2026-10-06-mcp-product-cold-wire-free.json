@@ -1,0 +1,186 @@
+{
+  "experiment": "existing MCP production path; transparent wire mirror; synthetic loopback only",
+  "paidCalls": 0,
+  "fakeHttp": 4,
+  "httpLimit": 6,
+  "verdict": {
+    "deliveryAccountingContinuity": "verified synthetic fixture",
+    "coldSingleHttp": "not achieved",
+    "realModelEfficiency": "not tested"
+  },
+  "stages": [
+    {
+      "stage": 1,
+      "fakeHttp": 1,
+      "usageGenerations": 1,
+      "syntheticInput": 100,
+      "syntheticOutput": 20,
+      "mcpInnerCompleted": 1,
+      "rawResponseItemCompleted": 8,
+      "rawOuterOutputCompleted": 1,
+      "turnInterruptRequests": 1,
+      "outerCompletedBeforeInterrupt": true,
+      "afterReplyMarkerInRawOuter": false,
+      "finalInterrupt": {
+        "committedRoomSeq": 10,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      }
+    },
+    {
+      "stage": 2,
+      "fakeHttp": 1,
+      "usageGenerations": 1,
+      "syntheticInput": 100,
+      "syntheticOutput": 20,
+      "mcpInnerCompleted": 1,
+      "rawResponseItemCompleted": 4,
+      "rawOuterOutputCompleted": 1,
+      "turnInterruptRequests": 1,
+      "outerCompletedBeforeInterrupt": true,
+      "afterReplyMarkerInRawOuter": true,
+      "finalInterrupt": {
+        "committedRoomSeq": 19,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      }
+    },
+    {
+      "stage": 3,
+      "fakeHttp": 2,
+      "usageGenerations": 2,
+      "syntheticInput": 200,
+      "syntheticOutput": 40,
+      "mcpInnerCompleted": 1,
+      "rawResponseItemCompleted": 0,
+      "rawOuterOutputCompleted": 0,
+      "turnInterruptRequests": 0,
+      "outerCompletedBeforeInterrupt": false,
+      "afterReplyMarkerInRawOuter": false,
+      "finalInterrupt": {
+        "committedRoomSeq": 28,
+        "requested": false,
+        "accepted": "unknown",
+        "terminal": false,
+        "sent": false,
+        "preemptedFollowUp": "unknown"
+      }
+    }
+  ],
+  "sameNativeSession": true,
+  "initialWarmSameRuntime": true,
+  "coldNewRuntime": true,
+  "actualResumeSentExperimentalRawEvents": true,
+  "daemonExitCodes": [0, 0],
+  "sourceCommit": "cb92b8bf93c6a277a0744432b45de328ff2f3bde",
+  "limitations": [
+    "Mirror is upstream of production guard; capture plus byte-forwarding source and subsequent Run state, not a direct per-notification driver-consumption ACK.",
+    "Extra proxy and synchronous private logging introduce small timing perturbation; no latency claim.",
+    "Original fake constant usage 100/20 per HTTP; accounting evidence, not token or price estimate.",
+    "measure omitted replyAt; before/after generation split not usable for post timing.",
+    "No product change, no account inheritance, no real provider, no formal state; one run only."
+  ],
+  "cleanup": {
+    "daemonExitCodes": [0, 0],
+    "matchingOwnedProcessPaths": []
+  },
+  "offlineReplay": "inner completed then arm counterfactual; initial/warm interrupt at raw outer; cold no interrupt",
+  "schemaFiles": 875,
+  "schemaReview": {
+    "installedVersion": "0.160.0",
+    "source": "installed experimental TypeScript schema; audit independently regenerated all files with no provider calls",
+    "fullSchemaFiles": 875,
+    "rawEventEnableField": "v2/ThreadStartParams.ts experimentalRawEvents",
+    "noRawEnableField": [
+      "v2/ThreadResumeParams.ts",
+      "v2/ThreadSettingsUpdateParams.ts",
+      "v2/TurnSettingsUpdateParams.ts",
+      "v2/ThreadSettings.ts",
+      "InitializeCapabilities.ts"
+    ],
+    "ClientRequest": "no thread subscribe/listen method; thread/unsubscribe exists; settings/update inspected",
+    "ThreadInjectItemsParams": "model-visible history mutation, not event-subscription control; not a safe workaround",
+    "configScopeLimit": "untyped arbitrary config exists; absence in generated public protocol does not disprove undocumented implementation",
+    "finding": "No verified formal same-session resume raw-event enable method in this installed public schema. Unsupported extra resume field is not evidence of enabling."
+  },
+  "replay": {
+    "kind": "offline counterfactual: arm immediately after inner completed; not measured Host arm timing",
+    "productionModule": "packages/agent-host/src/codex-final-interrupt.js",
+    "expectOuterOutput": true,
+    "stages": [
+      {
+        "stage": 1,
+        "frames": 14,
+        "interrupts": [
+          {
+            "at": "2026-10-06T10:28:22.411Z",
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call_output"
+          }
+        ]
+      },
+      {
+        "stage": 2,
+        "frames": 11,
+        "interrupts": [
+          {
+            "at": "2026-10-06T10:28:22.781Z",
+            "method": "rawResponseItem/completed",
+            "itemType": "custom_tool_call_output"
+          }
+        ]
+      },
+      {
+        "stage": 3,
+        "frames": 8,
+        "interrupts": []
+      }
+    ],
+    "scope": "absence of raw outer is sufficient for conservative no-interrupt in this recorded sequence"
+  },
+  "privateArchive": "2026-10-06-mcp-product-cold-wire-free",
+  "evidenceHashes": {
+    "result.private.json": "5965a5d818666779b613ed73b672916eb3b9918eaf5ef763a952d039b4d0cd33",
+    "capture-cli.mjs": "3b789143ae587c5f3bfa0b97926bc0fb0a235a6c9664cfbe83c27d0ca29a9e7f",
+    "probe.mjs": "0dc5ab865c5a34a19c881e0e3311bd953b34b734c8b1a81f1a6d3777c6588073",
+    "decode.py": "14106f830b151ace1feebf8f63650297ca90bd1ec4455b4fbea2e3123ea976df",
+    "decoded.private.json": "aa6f905d6e503ae15ce6e6f54867335ee320494f615788181e8fe8cf39b7f142",
+    "replay.mjs": "54d9275cfc587e286f33373d33ba583dc08583dde7cdec49450133e2f70e9f38",
+    "replay-result.json": "b3f293d30aec04a4f0486128168a45551025c2e905843abb66ae623fbea9172f",
+    "schema-followup.json": "d5766f413a736cf466118cf7aed16d5ca69dddfdb365313027b7a5f4e6cbdeb2",
+    "request-1.json": "9d046c28dfdb2a9a94a97e7c01f7166bd80c75a7f9fc8fd60882f5b0220457ce",
+    "request-2.json": "e8fe96190d8c27060ae6e43fe1b2a63382f0342932bab99a1970091de26ffc72",
+    "request-3.json": "b9b538388ae6711f64a5412e2a80ce94a2cec82aafb5b61e7ec34f3949039581",
+    "request-4.json": "b122a99d04aeba4911cf700691044a83f4e69eb1ef7acfef47de11f2c7712892",
+    "schema-sha256.json": "f4d71885cad4e5168d978d22eb2e19fa1808a899c3ef6205589047bfa66669c6"
+  },
+  "safetyTests": {
+    "command": "node --test packages/agent-host/test/codex-final-outer-output.test.ts packages/agent-host/test/codex-final-interrupt.test.ts",
+    "passed": 34,
+    "failed": 0
+  },
+  "schemaFileHashes": {
+    "v2/ThreadStartParams.ts": "dc8bebec4181a5502fc141b0122cc48e066b3b5c77d9fd2a4de875fcd6d66a68",
+    "v2/ThreadResumeParams.ts": "6ea6561448792277f9b52ac9d920d71ef8c9be6e43621ee6329fb948329e8ff7",
+    "v2/ThreadSettingsUpdateParams.ts": "820e4eaa164d2702070fcaa05af109b48a2187d22027dcb3783c46e81b1b63f8",
+    "v2/TurnSettingsUpdateParams.ts": "6f0fc46fde34283ffb0b790f4ed65665bef8ffa1ae276aaa7d3d6a75821abbf7",
+    "InitializeCapabilities.ts": "dee58273861971585e0615804eaf50ba4690cd4846f02ed352ed211887a022a5",
+    "ClientRequest.ts": "f21e6307c8c2c7f2b5a32d434cdca238e3ec19b71a1f40b60f8c305289860436"
+  },
+  "wireHashes": {
+    "wire-73359.jsonl": "8fade58d48922c49778c0a7bd1eeae1a19e9934d76ce03cebc6c87fef1d247c7",
+    "wire-73569.jsonl": "76c04a6ca5fac445e615d24a1a56750d9cda92c71ef83339c9b1ee567c88e86f"
+  },
+  "independentAudit": {
+    "businessChecks": 45,
+    "wireChecks": 187,
+    "schemaIndependentRegenerationByteExact": true,
+    "report": "2026-10-06-mcp-product-cold-wire-free-audit.json"
+  }
+}

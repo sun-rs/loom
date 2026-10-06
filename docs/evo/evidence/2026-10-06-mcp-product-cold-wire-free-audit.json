@@ -1,0 +1,28 @@
+{
+  "kind": "independent cold-resume wire audit",
+  "passed": true,
+  "businessChecks": 45,
+  "wireChecks": 187,
+  "decodedFrames": 81,
+  "fakeHttpRequests": 4,
+  "paidCalls": 0,
+  "perStageHttpRequests": [1, 1, 2],
+  "sameNativeSession": true,
+  "runtimeReplacedOnlyAfterRestart": true,
+  "canonicalReplies": 3,
+  "completedActivations": 3,
+  "finalMarkers": 3,
+  "ackVerified": true,
+  "usageMatchesDbAndRollout": true,
+  "schemaFileCount": 875,
+  "schemaIndependentRegenerationByteExact": true,
+  "rawResultSha256": "5965a5d818666779b613ed73b672916eb3b9918eaf5ef763a952d039b4d0cd33",
+  "limits": [
+    "Proxy output write is not proof that driver consumed each frame.",
+    "Replay arms counterfactually immediately after inner completion; it does not measure Host arm timing.",
+    "Cold absence of raw outer is sufficient for conservative fallback in this trace, not proof of a unique underlying cause.",
+    "Generated public schema is not evidence that all undocumented arbitrary configuration is absent.",
+    "Fake usage and HTTP request counts are not paid performance or token-cost evidence.",
+    "Raw measure before/after fields omitted replyAt; use captured HTTP and canonical commit timestamps instead."
+  ]
+}
