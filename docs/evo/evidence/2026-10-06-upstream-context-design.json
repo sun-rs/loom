@@ -1,0 +1,390 @@
+{
+  "date": "2026-10-06",
+  "loomSourceCommit": "5ef7483fca23f5fdd31eb54f1d46a923494b965b",
+  "scope": "fixed official source reading and local isolated algorithm inspection; no provider calls, product modifications, code ports, or deployment",
+  "projects": {
+    "multica": {
+      "project": "multica-ai/multica",
+      "commit": "11861145abc59a0d39c8c8f24ad837d4584e664f",
+      "scope": "existing pinned checkout, independently fetched remote files; no execution or port",
+      "license": "Multica License: Apache 2.0 text plus additional conditions; not recorded as plain Apache-2.0",
+      "files": [
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/multica-ai/multica/blob/11861145abc59a0d39c8c8f24ad837d4584e664f/LICENSE",
+          "sha256": "0e42d37bb02dc61f270c5a0528d489da76e5a578b209856f2e95ee4d60aacdbe",
+          "matchesLocal": true
+        },
+        {
+          "path": "server/cmd/multica/cmd_issue.go",
+          "url": "https://github.com/multica-ai/multica/blob/11861145abc59a0d39c8c8f24ad837d4584e664f/server/cmd/multica/cmd_issue.go",
+          "sha256": "dc101c4495e65450048aa811354a28b3070e1ac2d5bc20d47a8dd6c42b5a7e9b",
+          "matchesLocal": true
+        },
+        {
+          "path": "server/internal/handler/comment.go",
+          "url": "https://github.com/multica-ai/multica/blob/11861145abc59a0d39c8c8f24ad837d4584e664f/server/internal/handler/comment.go",
+          "sha256": "d79570b86cad14b024d81b1f15f21ad104c325bfbf2a926a97abcb7a34f115be",
+          "matchesLocal": true
+        },
+        {
+          "path": "server/internal/daemon/prompt.go",
+          "url": "https://github.com/multica-ai/multica/blob/11861145abc59a0d39c8c8f24ad837d4584e664f/server/internal/daemon/prompt.go",
+          "sha256": "79b77c967ec1ea5276c9690600f31acbf6b65142a4205400a73bddf7827a28d0",
+          "matchesLocal": true
+        },
+        {
+          "path": "server/pkg/agent/codex.go",
+          "url": "https://github.com/multica-ai/multica/blob/11861145abc59a0d39c8c8f24ad837d4584e664f/server/pkg/agent/codex.go",
+          "sha256": "04780a8f80b28f1308147e78e7514e7ecc12a9e426a2f8610a7f32f78713ed01",
+          "matchesLocal": true
+        }
+      ],
+      "privateProvenanceSha256": "3977e6adc5ed66e61ad6696183f730da1f175cfcf753ef59d3d0ce0827726a6a"
+    },
+    "opencode": {
+      "repository": "https://github.com/anomalyco/opencode",
+      "commit": "3f393d78bfc3f0826b2c7080e57964c235704695",
+      "license": "MIT Copyright (c) 2025 opencode",
+      "archiveSha256": "7d6b7edab93123a0f193a0c796facf0350385dbd934da99824d4ed8ad6d5b440",
+      "fileHashes": {
+        "LICENSE": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b",
+        "CONTEXT.md": "9a4980983ed2067c83782dfec54c1723654aa33223fb6789fad4c2ee68fc66b6",
+        "packages/core/src/tool-output-store.ts": "3eea248408c62f7ce4c56433dabdbabf8507095dda812b41a1e1168b713536b2",
+        "packages/core/src/tool/registry.ts": "cf2f73a4c6ed6ede7ba1cac30dac9bdf004142461d5bbcc8d55421cb2def7254",
+        "packages/core/src/session/compaction.ts": "35bc2da1578b6bb80a3c39c1d6c51f234f34ce6586dd4f9d230e2a31b257138d",
+        "packages/core/src/session/history.ts": "232f3d6b3c4ef832deab874920de0f513473acc51b5ed56488023ea3ba02d605",
+        "packages/core/src/session/context-epoch.ts": "b6e07dccc330779192975a58d763941a9b8ae458cc6974e040c26cd149ff7fd8",
+        "packages/core/src/session/runner/llm.ts": "ba0b03e2b00cfe67bc98988f348ad76ba4f73d9e36fe46883710bbdc4e48c3a3",
+        "packages/core/src/session/runner/to-llm-message.ts": "6a4c5399cdf70bf9b1769683dca4712f6c8f8e2108fc006616504929026d23b8",
+        "packages/core/src/config/compaction.ts": "6d9247b8155b368c6de2e13b48fce9e1a87468ac442dba0a29f7b3b3cbfb10b6",
+        "packages/core/src/util/token.ts": "a157df378a5baaf7a35ac1cb9c94dd29266d916329545529604274d6cddbc635"
+      },
+      "scope": "static official HEAD study; not installed CLI behavior; no code copied into Loom; no model executed",
+      "privateProvenanceSha256": "8109c45f108b1709070ee99d2aff13fe92fe32241bc6fcaea04bc8d7658e76d6"
+    },
+    "openhands": {
+      "repository": "https://github.com/OpenHands/software-agent-sdk",
+      "commit": "250dd4817c7174e349f5872e70f5b5a5c17de79d",
+      "license": "MIT; Copyright (c) 2026 OpenHands contributors",
+      "scope": "current SDK implementation and its default tools preset, not every OpenHands web/CLI deployment",
+      "readOnly": true,
+      "executedProjectCode": false,
+      "modelCalls": 0,
+      "files": {
+        "LICENSE": {
+          "sha256": "14a9b631c658eee682c6c2973525fbdf808c3457176bc47513052c559cc5ce86",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/LICENSE"
+        },
+        "openhands-sdk/openhands/sdk/agent/base.py": {
+          "sha256": "b844cd18c7abb9168557be431e15c61c61c7c017fede98cf7e1239e21df1915f",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/agent/base.py"
+        },
+        "openhands-sdk/openhands/sdk/agent/agent.py": {
+          "sha256": "6a24d0cf275b25b8777ef97f3958df79bd1425c0df0d79a3eab4c68577bd170c",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/agent/agent.py"
+        },
+        "openhands-sdk/openhands/sdk/agent/utils.py": {
+          "sha256": "44bee4fc97ea270d87019d15a2fba7b04902a4d69da618bca7fed5de01e07cc3",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/agent/utils.py"
+        },
+        "openhands-sdk/openhands/sdk/context/view/view.py": {
+          "sha256": "3d31709f284b40e41bf1d12ef53d34662339757902ce06df3765be272531b45f",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/context/view/view.py"
+        },
+        "openhands-sdk/openhands/sdk/context/condenser/llm_summarizing_condenser.py": {
+          "sha256": "8e3ddb4a770ba80d7aaa0b96247d95d8985cd860133b0efa6d0315de50727e6e",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/context/condenser/llm_summarizing_condenser.py"
+        },
+        "openhands-sdk/openhands/sdk/context/condenser/base.py": {
+          "sha256": "26ecce4b6c42de204396ec38cc94fb032adc6b20180b1d8315f09c1a78bca6a0",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/context/condenser/base.py"
+        },
+        "openhands-sdk/openhands/sdk/event/condenser.py": {
+          "sha256": "1b172330b5270e29c6bf12a8a61818009b9b252fd497c51ad3eac51a3deb5c1e",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/event/condenser.py"
+        },
+        "openhands-sdk/openhands/sdk/conversation/event_store.py": {
+          "sha256": "af721391c46a1979c45e0e414c45a82dfc42d8a92d62ac2ccea0242f725450b0",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/conversation/event_store.py"
+        },
+        "openhands-sdk/openhands/sdk/conversation/state.py": {
+          "sha256": "7e488ee6cb483f35b852bcb0900f5f49e0490a2b5bf28d6387d869d207727360",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/conversation/state.py"
+        },
+        "openhands-sdk/openhands/sdk/utils/truncate.py": {
+          "sha256": "2d8440e3908147b75a482d3782cf349eeecf61d44e87de37fe788ea5aa2ab8a5",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-sdk/openhands/sdk/utils/truncate.py"
+        },
+        "openhands-tools/openhands/tools/terminal/definition.py": {
+          "sha256": "a978161b8512762607288fe1e3459dfd9b9d3ed79f46b6495cda9d5d2da6e3a3",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-tools/openhands/tools/terminal/definition.py"
+        },
+        "openhands-tools/openhands/tools/terminal/constants.py": {
+          "sha256": "0de85b7e0d8f94f3233e38b663f3a14d4eb3cda94e62f2ed6edcebdc9228f353",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-tools/openhands/tools/terminal/constants.py"
+        },
+        "openhands-tools/openhands/tools/terminal/terminal/terminal_session.py": {
+          "sha256": "8eb9dc1dac48bf4e76f564bb0edd46bb966d5334b2d872a3e90a332d4710b5f8",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-tools/openhands/tools/terminal/terminal/terminal_session.py"
+        },
+        "openhands-tools/openhands/tools/preset/default.py": {
+          "sha256": "514fc343d371cc21287dc2a5fcc19e2bf173514618a25d3601c3b7adc93a1a1f",
+          "url": "https://github.com/OpenHands/software-agent-sdk/blob/250dd4817c7174e349f5872e70f5b5a5c17de79d/openhands-tools/openhands/tools/preset/default.py"
+        }
+      },
+      "privateProvenanceSha256": "5b722339d01bc92078bfe6e691363f19afb8ce23b88ec2b45607545e455a4fb9"
+    },
+    "autogen": {
+      "repository": "https://github.com/microsoft/autogen",
+      "commit": "027ecf0a379bcc1d09956d46d12d44a3ad9cee14",
+      "files": [
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/LICENSE",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/LICENSE",
+          "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+          "bytes": 18650
+        },
+        {
+          "path": "LICENSE-CODE",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/LICENSE-CODE",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/LICENSE-CODE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+          "bytes": 1141
+        },
+        {
+          "path": "README.md",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/README.md",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/README.md",
+          "sha256": "5d300aa3304aeecf1a48f68ac76a1af255b8645d666b8aa154790cb30f1dbb94",
+          "bytes": 20790
+        },
+        {
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "sha256": "c0e578fc34be40f46f8e36a91b53fb27cf5ff454f4efb3f4ea5dc1e32d0048c1",
+          "bytes": 78803
+        },
+        {
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py",
+          "sha256": "73667dc739ab4b32660fba6e09c0d7f65e83ef6aae7f79fb45163709b519b266",
+          "bytes": 14831
+        },
+        {
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py",
+          "sha256": "6564fcf9c2660071b176c39c373616ed210b8723f68dc00386d724c6031dc5f6",
+          "bytes": 9661
+        },
+        {
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py",
+          "sha256": "d154eff992eb7235cf97d1266ad5a2404305ecaa59f5c0593513d48b20e0b1e5",
+          "bytes": 14424
+        },
+        {
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/__init__.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/__init__.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/__init__.py",
+          "sha256": "de3bb571fef004fd6276f0cd41e60d9e8e2f209f7e849048b7abee2e678f73fb",
+          "bytes": 658
+        },
+        {
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_buffered_chat_completion_context.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_buffered_chat_completion_context.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_buffered_chat_completion_context.py",
+          "sha256": "61166bbf4f9e350abd5a9fa511628ca9adf7e11125497fa7739622c431086120",
+          "bytes": 2025
+        },
+        {
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_chat_completion_context.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_chat_completion_context.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_chat_completion_context.py",
+          "sha256": "a7c47acc4e51bb03978d31857acc9184a0d160053b435b9adb013b853c71a694",
+          "bytes": 2742
+        },
+        {
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_head_and_tail_chat_completion_context.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_head_and_tail_chat_completion_context.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_head_and_tail_chat_completion_context.py",
+          "sha256": "786c23f4ee4807284fc67aa6dcba5011b7358688df0198de5cb775540b8c44f5",
+          "bytes": 3384
+        },
+        {
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_token_limited_chat_completion_context.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_token_limited_chat_completion_context.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_token_limited_chat_completion_context.py",
+          "sha256": "dc85bc0b4efb65203f2c8be9bf95b0a81275719474a8bdd847bda773f5d9b3de",
+          "bytes": 4481
+        },
+        {
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_unbounded_chat_completion_context.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_unbounded_chat_completion_context.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_unbounded_chat_completion_context.py",
+          "sha256": "95558777b003a0be8dd5942a82d2698c1e3309af263ce85e275a7386b64fdfac",
+          "bytes": 1162
+        },
+        {
+          "path": "python/packages/autogen-core/tests/test_model_context.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/tests/test_model_context.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/tests/test_model_context.py",
+          "sha256": "9fe75926f874eefbd58d971ebee9fa6620096a374fd58c0aaf9f803fc62f63c6",
+          "bytes": 8006
+        },
+        {
+          "path": "python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py",
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py",
+          "rawUrl": "https://raw.githubusercontent.com/microsoft/autogen/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py",
+          "sha256": "4359a8d5560ee3ea0b0d95cdc4d55f512e690944b6b6ab6ca8340f16fd4b7f42",
+          "bytes": 77525
+        }
+      ],
+      "mode": "read-only source review; no code ported into Loom",
+      "license": {
+        "code": "MIT",
+        "documentation": "CC-BY-4.0",
+        "source": "README.md:222-225; LICENSE-CODE; LICENSE"
+      },
+      "reviewReferences": [
+        {
+          "id": "container",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py",
+          "startLine": 53,
+          "endLine": 66,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py#L53-L66"
+        },
+        {
+          "id": "incrementalCall",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py",
+          "startLine": 128,
+          "endLine": 145,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py#L128-L145"
+        },
+        {
+          "id": "manager",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py",
+          "startLine": 133,
+          "endLine": 150,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py#L133-L150"
+        },
+        {
+          "id": "managerState",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py",
+          "startLine": 58,
+          "endLine": 82,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py#L58-L82"
+        },
+        {
+          "id": "contextState",
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_chat_completion_context.py",
+          "startLine": 48,
+          "endLine": 68,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_chat_completion_context.py#L48-L68"
+        },
+        {
+          "id": "unbounded",
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_unbounded_chat_completion_context.py",
+          "startLine": 15,
+          "endLine": 24,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_unbounded_chat_completion_context.py#L15-L24"
+        },
+        {
+          "id": "buffered",
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_buffered_chat_completion_context.py",
+          "startLine": 28,
+          "endLine": 41,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_buffered_chat_completion_context.py#L28-L41"
+        },
+        {
+          "id": "headTail",
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_head_and_tail_chat_completion_context.py",
+          "startLine": 40,
+          "endLine": 66,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_head_and_tail_chat_completion_context.py#L40-L66"
+        },
+        {
+          "id": "tokenLimited",
+          "path": "python/packages/autogen-core/src/autogen_core/model_context/_token_limited_chat_completion_context.py",
+          "startLine": 42,
+          "endLine": 77,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-core/src/autogen_core/model_context/_token_limited_chat_completion_context.py#L42-L77"
+        },
+        {
+          "id": "agentDefault",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "startLine": 837,
+          "endLine": 848,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py#L837-L848"
+        },
+        {
+          "id": "agentAppend",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "startLine": 1014,
+          "endLine": 1025,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py#L1014-L1025"
+        },
+        {
+          "id": "agentRequest",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "startLine": 1085,
+          "endLine": 1114,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py#L1085-L1114"
+        },
+        {
+          "id": "agentToolHistory",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "startLine": 1230,
+          "endLine": 1256,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py#L1230-L1256"
+        },
+        {
+          "id": "agentReflection",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "startLine": 1302,
+          "endLine": 1326,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py#L1302-L1326"
+        },
+        {
+          "id": "agentToolSummary",
+          "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py",
+          "startLine": 1507,
+          "endLine": 1537,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py#L1507-L1537"
+        },
+        {
+          "id": "countEstimate",
+          "path": "python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py",
+          "startLine": 308,
+          "endLine": 333,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py#L308-L333"
+        },
+        {
+          "id": "license",
+          "path": "README.md",
+          "startLine": 220,
+          "endLine": 225,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/README.md#L220-L225"
+        }
+      ],
+      "adoption": "None; private source research only. Not byte-exact reuse or a structural port into Loom.",
+      "privateProvenanceSha256": "0bee9795877573d7a22ea37f6b29ba5fcc38d9c673bd8793f9f1a0f35c54e2e1"
+    },
+    "anthropic": {
+      "readDate": "2026-10-06",
+      "retrieval": "web tool opened all three official pages; direct urllib archive attempt returned HTTP 403, no archive hash claimed",
+      "scope": "official engineering guidance, not audited Claude Code source",
+      "sources": [
+        "https://www.anthropic.com/engineering/writing-tools-for-agents",
+        "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+        "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      ],
+      "privateProvenanceSha256": "0140df959455284e61cdfed80ad24ef4ff2821d730fb48c67ee1a8e67d1274ee"
+    }
+  }
+}
