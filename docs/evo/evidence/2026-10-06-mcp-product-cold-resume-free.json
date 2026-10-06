@@ -1,0 +1,121 @@
+{
+  "kind": "synthetic loopback real-product transport verification; not paid model acceptance",
+  "paidCalls": 0,
+  "fakeHttpRequests": 4,
+  "httpCap": 12,
+  "cliVersion": "0.160.0",
+  "stages": [
+    {
+      "stage": 1,
+      "fakeHttpRequests": 1,
+      "completedGenerations": 1,
+      "syntheticInput": 100,
+      "syntheticOutput": 20,
+      "uniqueCommittedReplies": 1,
+      "runs": 1,
+      "actualConsumerAck": true,
+      "executionMode": "cold",
+      "finalInterrupt": {
+        "committedRoomSeq": 10,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      },
+      "nativeOuterOutputRecords": 1,
+      "afterReplyMarker": false
+    },
+    {
+      "stage": 2,
+      "fakeHttpRequests": 1,
+      "completedGenerations": 1,
+      "syntheticInput": 100,
+      "syntheticOutput": 20,
+      "uniqueCommittedReplies": 1,
+      "runs": 1,
+      "actualConsumerAck": true,
+      "executionMode": "warm",
+      "finalInterrupt": {
+        "committedRoomSeq": 19,
+        "requested": true,
+        "accepted": true,
+        "terminal": true,
+        "sent": true,
+        "preemptedFollowUp": true
+      },
+      "nativeOuterOutputRecords": 1,
+      "afterReplyMarker": true
+    },
+    {
+      "stage": 3,
+      "fakeHttpRequests": 2,
+      "completedGenerations": 2,
+      "syntheticInput": 200,
+      "syntheticOutput": 40,
+      "uniqueCommittedReplies": 1,
+      "runs": 1,
+      "actualConsumerAck": true,
+      "executionMode": "cold",
+      "finalInterrupt": {
+        "committedRoomSeq": 28,
+        "requested": false,
+        "accepted": "unknown",
+        "terminal": false,
+        "sent": false,
+        "preemptedFollowUp": "unknown"
+      },
+      "nativeOuterOutputRecords": 1,
+      "afterReplyMarker": false
+    }
+  ],
+  "sameNativeSessionAllStages": true,
+  "sameRuntimeInitialWarm": true,
+  "differentRuntimeColdResume": true,
+  "daemonShutdownExitCodes": [0, 0],
+  "providerMemoryMode": "disabled",
+  "platformMemoryReadWrite": false,
+  "coldExtraRequestHasCompletedToolReceipt": true,
+  "sourceCommit": "35ade1778b0b6044408dd8d415b42ff9b5a087e0",
+  "sourceHashes": {
+    "packages/agent-host/src/codex-warm-driver.mjs": "d92cef7883540ebf4c9f26a8433c3f05ed225f2277d9d69d2801fcb248ee9f62",
+    "packages/agent-host/src/codex-final-interrupt.js": "3bd6a31cfc5f61e8c53d50e8381377b17755ec653e8ccde2c35c3c6bee619893",
+    "packages/agent-host/src/codex-warm-adapter.ts": "9ffb0ddfc07c530e0a60eec41a0900d531e5f4d66261e4945d1977aaa7ab9b9f",
+    "scripts/cli-efficiency/gate-daemon.mjs": "40caf7c838721fc1b0c6d5a8cb0e0c552b4091ac6051566e9b0a4e8d7a0d1991"
+  },
+  "limitations": [
+    "No raw app-server wire notification tap in production gate; native rollout outer-result records are not proof driver received raw outer notifications.",
+    "Cold no-interrupt observed; a separate protocol experiment suggests a missing-notification hypothesis, but this product capture does not establish that cause.",
+    "Synthetic constant 100 input / 20 output per fake HTTP; verifies accounting only, not real tokens or costs.",
+    "No real stochastic model, answer quality, latency benchmark or universal one-request guarantee.",
+    "Whole isolated daemon gracefully restarted between stages 2/3, not an in-process idle-runtime recycle API.",
+    "measure was called without replyAt; its generationsBeforeReply/AfterReply fields are not valid post timing evidence. HTTP request 4 timestamp is independently later than canonical commit."
+  ],
+  "verdict": {
+    "deliveryAndAccounting": "verified for this synthetic fixture",
+    "coldOneRequest": "not achieved (2 fake HTTP)",
+    "realModelEfficiency": "not evaluated"
+  },
+  "cleanup": {
+    "bothOwnedDaemonsExited": true,
+    "exitCodes": [0, 0],
+    "ownedProcessPathScan": "no matching live child; shell inspection itself excluded",
+    "formalServicesTouched": false
+  },
+  "coldExtraHttpAfterCanonicalCommit": true,
+  "privateArchive": "2026-10-06-mcp-product-cold-resume-free",
+  "evidenceHashes": {
+    "probe.mjs": "051a37d16be217b3a53d5dd70bb712af16a977f35222a351796a8fbac39f5f5c",
+    "run-probe.py": "24f4e0cff6b7b5f7fd09e45e88ae7da83ddb03e009632c5ca85d6b66baff5168",
+    "result.private.json": "03d7a88725c78f80d5ee9be74f8a66bcced5b81775a79d5ed3877dde6dbe4a84",
+    "request-1.json": "b2a2b019181e10649de2b9a1f788b50600d8f229d96493e112c7f1ce058ec605",
+    "request-2.json": "eea3cb842d522c6aa2ebe3b1a940b30b183a552f71ca56e1a59dcb1f2d7538cc",
+    "request-3.json": "bd9e3d9e6240f649f8ca457560984e194d3018482c95efa4cfb5ab7547d3374e",
+    "request-4.json": "48ae64d759d03ed0f9881c3d9ab9c50ec4c19f6057e0536d24bafda0db97ac56"
+  },
+  "independentAudit": {
+    "checks": 45,
+    "report": "2026-10-06-mcp-product-cold-resume-free-audit.json",
+    "scriptSha256": "dc96ad938d12ae14be8f389217e57b3f7566c71b3e99ac174cc945433be839ce"
+  }
+}

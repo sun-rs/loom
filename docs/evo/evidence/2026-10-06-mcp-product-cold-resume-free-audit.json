@@ -1,0 +1,51 @@
+{
+  "kind": "independent real production MCP cold-resume path fixture audit",
+  "paidCalls": 0,
+  "checks": 45,
+  "verified": true,
+  "requests": 4,
+  "byStage": [
+    {
+      "stage": 1,
+      "httpRequests": 1,
+      "input": 100,
+      "output": 20,
+      "canonicalReplyAndAck": true,
+      "completeNativeOuterResult": true,
+      "interruptRequested": true,
+      "interruptAccepted": "true",
+      "interruptTerminal": "true"
+    },
+    {
+      "stage": 2,
+      "httpRequests": 1,
+      "input": 100,
+      "output": 20,
+      "canonicalReplyAndAck": true,
+      "completeNativeOuterResult": true,
+      "interruptRequested": true,
+      "interruptAccepted": "true",
+      "interruptTerminal": "true"
+    },
+    {
+      "stage": 3,
+      "httpRequests": 2,
+      "input": 200,
+      "output": 40,
+      "canonicalReplyAndAck": true,
+      "completeNativeOuterResult": true,
+      "interruptRequested": false,
+      "interruptAccepted": "unknown",
+      "interruptTerminal": "false"
+    }
+  ],
+  "continuousNativeSession": true,
+  "runtimePattern": "same initial/warm runtime; new runtime after idle graceful restart with same native session",
+  "cleanup": "two daemon exits0; both instance runtimes terminated host_shutdown",
+  "limits": [
+    "Synthetic model/usage and three stages only: no paid efficiency or statistical stability claim.",
+    "Driver raw stdout notification frames were not captured; native rollout outer results do not establish that driver received rawResponseItem notifications.",
+    "Cold has an observed second request after canonical commit and actual interrupt_requested=false; reason cannot be independently reduced to missing raw notifications from this capture.",
+    "Raw measure() was invoked without replyAt, so its before/after generation labels are not valid post-reply timing evidence; explicit HTTP timestamps establish the cold second request occurred after reply."
+  ]
+}
