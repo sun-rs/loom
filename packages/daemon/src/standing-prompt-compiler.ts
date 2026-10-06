@@ -148,11 +148,6 @@ function workspacePolicyLayer(
       `Workspace mode: ${context.workspaceMode} (recorded by RAH OS for this Activation).`,
     );
   }
-  if (context?.toolAccessMode) {
-    lines.push(
-      `Tool access: ${context.toolAccessMode} (recorded by RAH OS for this Activation).`,
-    );
-  }
   return lines.length > 0 ? lines.join("\n") : undefined;
 }
 

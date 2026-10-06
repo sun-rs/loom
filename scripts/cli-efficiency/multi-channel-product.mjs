@@ -47,6 +47,12 @@ export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
       messages,
       runs: observer.listRunAttempts({ roomId }),
       activations: observer.listActivations({ roomId }),
+      memoryPolicies: rows(
+        "SELECT * FROM memory_access_policies WHERE room_id=?",
+      ),
+      memoryOverrides: rows(
+        "SELECT * FROM memory_access_overrides WHERE room_id=?",
+      ),
       subscriptionCursors: rows(
         "SELECT * FROM subscription_cursors WHERE room_id=?",
       ),
@@ -85,6 +91,7 @@ export async function runMultiProduct(
     save,
     beforeRound,
     productArm = "final-output",
+    platformMemoryPolicy,
     maxRunAttempts = steps.length,
   },
   dependencies = {},
@@ -112,6 +119,10 @@ export async function runMultiProduct(
     readEvidence: readMultiEvidence,
     ...dependencies,
   };
+  assert.ok(
+    platformMemoryPolicy === undefined || platformMemoryPolicy === "disabled",
+    "Unsupported platform memory policy",
+  );
   const business = productArm === "worker-delivery";
   assert.ok(
     Number.isSafeInteger(maxRunAttempts) && maxRunAttempts >= steps.length,
@@ -149,6 +160,32 @@ export async function runMultiProduct(
       roomId,
     });
     Object.assign(arm, data);
+    if (platformMemoryPolicy === "disabled") {
+      arm.platformMemoryPolicyEvidence ??= { requested: "disabled" };
+      Object.assign(arm.platformMemoryPolicyEvidence, {
+        latestPolicies: data.memoryPolicies ?? [],
+        latestOverrides: data.memoryOverrides ?? [],
+        observedAt: new Date().toISOString(),
+      });
+      save();
+      assert.ok(
+        data.memoryPolicies?.length === 1 &&
+          data.memoryPolicies[0].room_id === roomId &&
+          data.memoryPolicies[0].read_default === 0 &&
+          data.memoryPolicies[0].write_default === 0,
+        "Platform memory defaults are not disabled",
+      );
+      assert.ok(
+        Array.isArray(data.memoryOverrides) &&
+          data.memoryOverrides.every(
+            (o) =>
+              o.room_id === roomId &&
+              o.read_enabled !== 1 &&
+              o.write_enabled !== 1,
+          ),
+        "Platform memory override enables access",
+      );
+    }
     if (business && activeRound) {
       const stageRuns = data.runs.filter(
         (r) => !activeRound.previousRunIds.includes(r.runAttemptId),
@@ -235,6 +272,40 @@ export async function runMultiProduct(
       })
     ).room.roomId;
     arm.roomId = roomId;
+    if (platformMemoryPolicy === "disabled") {
+      const before = await gate.post("/v3/client/memory/policy/read", {
+        channelId: roomId,
+      });
+      const updated = await gate.post("/v3/client/memory/policy/update", {
+        channelId: roomId,
+        expectedRevision: before.revision,
+        readDefault: false,
+        writeDefault: false,
+        idempotencyKey: randomUUID(),
+      });
+      const readback = await gate.post("/v3/client/memory/policy/read", {
+        channelId: roomId,
+      });
+      arm.platformMemoryPolicyEvidence = {
+        requested: "disabled",
+        before,
+        updateEvent: updated.event,
+        readback,
+      };
+      save();
+      assert.ok(
+        readback.channelId === roomId &&
+          readback.revision === updated.policy.revision &&
+          readback.readDefault === false &&
+          readback.writeDefault === false &&
+          readback.overrides.every(
+            (o) => o.read !== true && o.write !== true,
+          ) &&
+          readback.members.every((m) => m.read === false && m.write === false),
+        "Platform memory readback did not prove disabled",
+      );
+      capture(); // Verify persisted switches before creating any instance.
+    }
     for (const speaker of ["a", "b", "c"]) {
       const role = (
         await gate.post("/v3/client/roles/create", {

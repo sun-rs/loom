@@ -13,6 +13,7 @@ function fixture({
   retry = false,
   missingAck = false,
   submissionKind = "final-output",
+  memoryReadbackFault = false,
 } = {}) {
   const arm = { rounds: [], processes: [] };
   const messages = [],
@@ -24,8 +25,27 @@ function fixture({
     events = [];
   let stopped = false,
     creations = 0,
-    seq = 0;
+    seq = 0,
+    memoryPolicy = {
+      channelId: "room",
+      revision: 0,
+      readDefault: true,
+      writeDefault: true,
+      overrides: [],
+      members: [],
+    };
   const evidence = () => ({
+    memoryPolicies: memoryPolicy.revision
+      ? [
+          {
+            room_id: "room",
+            revision: memoryPolicy.revision,
+            read_default: Number(memoryPolicy.readDefault),
+            write_default: Number(memoryPolicy.writeDefault),
+          },
+        ]
+      : [],
+    memoryOverrides: [],
     runs: [...runs],
     activations: [...activations],
     messages: [...messages],
@@ -86,6 +106,24 @@ function fixture({
     assertNoGuardViolations() {},
     async post(path, body) {
       requests.push({ path, body });
+      if (path.endsWith("memory/policy/read"))
+        return memoryReadbackFault && memoryPolicy.revision
+          ? { ...memoryPolicy, readDefault: true }
+          : { ...memoryPolicy };
+      if (path.endsWith("memory/policy/update")) {
+        assert.equal(body.expectedRevision, memoryPolicy.revision);
+        memoryPolicy = {
+          ...memoryPolicy,
+          revision: memoryPolicy.revision + 1,
+          readDefault: body.readDefault,
+          writeDefault: body.writeDefault,
+        };
+        return {
+          policy: { ...memoryPolicy },
+          event: { eventId: "memory-event" },
+          deduplicated: false,
+        };
+      }
       if (path.endsWith("runtimes/list"))
         return {
           runtimes: [
@@ -657,4 +695,84 @@ test("business terminal without a canonical reply stops, preserving durable fail
   assert.equal(f.arm.rounds[0].durableDeliveryProof.runs.length, 1);
   assert.equal(f.arm.rounds[0].durableDeliveryProof.finalMarkers.length, 0);
   assert.equal(f.arm.usageRows.length, 1);
+});
+
+test("explicit platform memory disabled is persisted before instances and Human admission; default is unchanged", async () => {
+  const f = fixture();
+  await runMultiProduct(
+    { ...f.options, platformMemoryPolicy: "disabled" },
+    f.dependencies,
+  );
+  const update = f.requests.findIndex((r) =>
+    r.path.endsWith("memory/policy/update"),
+  );
+  const instantiate = f.requests.findIndex((r) =>
+    r.path.endsWith("roles/instantiate"),
+  );
+  assert.ok(update >= 0 && update < instantiate);
+  const request = f.requests[update].body;
+  assert.equal(request.readDefault, false);
+  assert.equal(request.writeDefault, false);
+  assert.equal(f.arm.platformMemoryPolicyEvidence.readback.readDefault, false);
+  assert.equal(f.arm.platformMemoryPolicyEvidence.readback.writeDefault, false);
+  assert.equal(
+    f.arm.platformMemoryPolicyEvidence.latestPolicies[0].read_default,
+    0,
+  );
+  const old = fixture();
+  await runMultiProduct(old.options, old.dependencies);
+  assert.ok(!old.requests.some((r) => r.path.includes("memory/policy")));
+  assert.equal(old.arm.platformMemoryPolicyEvidence, undefined);
+});
+
+test("platform memory readback failure prevents any instance creation or Human message", async () => {
+  const f = fixture({ memoryReadbackFault: true });
+  await assert.rejects(
+    runMultiProduct(
+      { ...f.options, platformMemoryPolicy: "disabled" },
+      f.dependencies,
+    ),
+    /memory/i,
+  );
+  assert.ok(
+    !f.requests.some(
+      (r) =>
+        r.path.endsWith("roles/instantiate") ||
+        r.path.endsWith("messages/post"),
+    ),
+  );
+  assert.equal(f.stopped, true);
+});
+
+test("platform memory override drift stops next Human admission and preserves evidence", async () => {
+  const f = fixture();
+  const read = f.dependencies.readEvidence;
+  f.dependencies.readEvidence = () => {
+    const d = read();
+    if (d.runs.length)
+      d.memoryOverrides = [
+        {
+          room_id: "room",
+          instance_id: "a",
+          read_enabled: 1,
+          write_enabled: null,
+        },
+      ];
+    return d;
+  };
+  await assert.rejects(
+    runMultiProduct(
+      { ...f.options, platformMemoryPolicy: "disabled" },
+      f.dependencies,
+    ),
+    /memory/i,
+  );
+  assert.equal(
+    f.requests.filter((r) => r.path.endsWith("messages/post")).length,
+    1,
+  );
+  assert.equal(
+    f.arm.platformMemoryPolicyEvidence.latestOverrides[0].read_enabled,
+    1,
+  );
 });

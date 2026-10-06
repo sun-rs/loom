@@ -1,0 +1,665 @@
+{
+  "sample": "P121",
+  "rawSha256": "89282b6c7cc3a65e0556821e300f0a54660f64a3a3c715dd7180ccef00fe8141",
+  "codeCommit": "befeee87b5eddb2a6954da0af224cfac85fdd468",
+  "measurement": "exact decoded retained text; codepoints and UTF-8 bytes, never token estimates",
+  "participants": {
+    "a": {
+      "baseInstructionsEqual": true,
+      "baseInstructions": {
+        "codepoints": 18037,
+        "utf8Bytes": 18043
+      },
+      "extraStandingPlatformPrefix": {
+        "codepoints": 6448,
+        "utf8Bytes": 6462
+      },
+      "sharedDeveloperSectionsEqual": true,
+      "native": [
+        {
+          "stage": 1,
+          "reportedInput": 13071,
+          "reportedCached": 0,
+          "reportedUncached": 13071,
+          "reportedOutput": 14,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 14970,
+            "utf8Bytes": 15356
+          },
+          "agentsAndEnvironment": {
+            "codepoints": 1156,
+            "utf8Bytes": 1974
+          },
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "modelToolCallText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "returnedToolOutputText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "assistantFinalText": {
+            "codepoints": 28,
+            "utf8Bytes": 38
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          }
+        },
+        {
+          "stage": 4,
+          "reportedInput": 13395,
+          "reportedCached": 12032,
+          "reportedUncached": 1363,
+          "reportedOutput": 12,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 652,
+            "utf8Bytes": 1270
+          },
+          "agentsAndEnvironment": null,
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "modelToolCallText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "returnedToolOutputText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "assistantFinalText": {
+            "codepoints": 23,
+            "utf8Bytes": 33
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          }
+        }
+      ],
+      "worker-delivery": [
+        {
+          "stage": 1,
+          "reportedInput": 16101,
+          "reportedCached": 0,
+          "reportedUncached": 16101,
+          "reportedOutput": 50,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 16591,
+            "utf8Bytes": 16863
+          },
+          "agentsAndEnvironment": {
+            "codepoints": 1183,
+            "utf8Bytes": 2001
+          },
+          "membershipAndInstanceMetadataLines": {
+            "count": 4,
+            "codepoints": 1310,
+            "utf8Bytes": 1310
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 215,
+            "utf8Bytes": 215
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 46,
+            "utf8Bytes": 46
+          },
+          "modelToolCallText": {
+            "codepoints": 127,
+            "utf8Bytes": 137
+          },
+          "returnedToolOutputText": {
+            "codepoints": 446,
+            "utf8Bytes": 446
+          },
+          "assistantFinalText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 221,
+            "utf8Bytes": 221
+          }
+        },
+        {
+          "stage": 4,
+          "reportedInput": 16930,
+          "reportedCached": 15104,
+          "reportedUncached": 1826,
+          "reportedOutput": 48,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 1305,
+            "utf8Bytes": 1809
+          },
+          "agentsAndEnvironment": null,
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 216,
+            "utf8Bytes": 216
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 138,
+            "utf8Bytes": 138
+          },
+          "modelToolCallText": {
+            "codepoints": 123,
+            "utf8Bytes": 133
+          },
+          "returnedToolOutputText": {
+            "codepoints": 446,
+            "utf8Bytes": 446
+          },
+          "assistantFinalText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 221,
+            "utf8Bytes": 221
+          }
+        }
+      ],
+      "reportedFirstInputDelta": 3030,
+      "reportedContinuedInputDelta": 3535,
+      "reportedInputGrowthDifference": 505,
+      "visibleContinuationDifference": {
+        "newWakeCodepoints": 653,
+        "newWakeUtf8Bytes": 539,
+        "priorResponseTextCodepoints": 766,
+        "priorResponseTextUtf8Bytes": 766
+      }
+    },
+    "b": {
+      "baseInstructionsEqual": true,
+      "baseInstructions": {
+        "codepoints": 18037,
+        "utf8Bytes": 18043
+      },
+      "extraStandingPlatformPrefix": {
+        "codepoints": 6448,
+        "utf8Bytes": 6462
+      },
+      "sharedDeveloperSectionsEqual": true,
+      "native": [
+        {
+          "stage": 2,
+          "reportedInput": 13163,
+          "reportedCached": 1792,
+          "reportedUncached": 11371,
+          "reportedOutput": 14,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 15181,
+            "utf8Bytes": 15745
+          },
+          "agentsAndEnvironment": {
+            "codepoints": 1156,
+            "utf8Bytes": 1974
+          },
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "modelToolCallText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "returnedToolOutputText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "assistantFinalText": {
+            "codepoints": 28,
+            "utf8Bytes": 38
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          }
+        },
+        {
+          "stage": 5,
+          "reportedInput": 13481,
+          "reportedCached": 12032,
+          "reportedUncached": 1449,
+          "reportedOutput": 12,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 645,
+            "utf8Bytes": 1243
+          },
+          "agentsAndEnvironment": null,
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "modelToolCallText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "returnedToolOutputText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "assistantFinalText": {
+            "codepoints": 23,
+            "utf8Bytes": 33
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          }
+        }
+      ],
+      "worker-delivery": [
+        {
+          "stage": 2,
+          "reportedInput": 15999,
+          "reportedCached": 0,
+          "reportedUncached": 15999,
+          "reportedOutput": 50,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 16318,
+            "utf8Bytes": 16768
+          },
+          "agentsAndEnvironment": {
+            "codepoints": 1183,
+            "utf8Bytes": 2001
+          },
+          "membershipAndInstanceMetadataLines": {
+            "count": 2,
+            "codepoints": 655,
+            "utf8Bytes": 655
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 216,
+            "utf8Bytes": 216
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 92,
+            "utf8Bytes": 92
+          },
+          "modelToolCallText": {
+            "codepoints": 130,
+            "utf8Bytes": 140
+          },
+          "returnedToolOutputText": {
+            "codepoints": 446,
+            "utf8Bytes": 446
+          },
+          "assistantFinalText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 221,
+            "utf8Bytes": 221
+          }
+        },
+        {
+          "stage": 5,
+          "reportedInput": 16819,
+          "reportedCached": 15104,
+          "reportedUncached": 1715,
+          "reportedOutput": 48,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 1298,
+            "utf8Bytes": 1782
+          },
+          "agentsAndEnvironment": null,
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 216,
+            "utf8Bytes": 216
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 138,
+            "utf8Bytes": 138
+          },
+          "modelToolCallText": {
+            "codepoints": 125,
+            "utf8Bytes": 135
+          },
+          "returnedToolOutputText": {
+            "codepoints": 446,
+            "utf8Bytes": 446
+          },
+          "assistantFinalText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 221,
+            "utf8Bytes": 221
+          }
+        }
+      ],
+      "reportedFirstInputDelta": 2836,
+      "reportedContinuedInputDelta": 3338,
+      "reportedInputGrowthDifference": 502,
+      "visibleContinuationDifference": {
+        "newWakeCodepoints": 653,
+        "newWakeUtf8Bytes": 539,
+        "priorResponseTextCodepoints": 769,
+        "priorResponseTextUtf8Bytes": 769
+      }
+    },
+    "c": {
+      "baseInstructionsEqual": true,
+      "baseInstructions": {
+        "codepoints": 18037,
+        "utf8Bytes": 18043
+      },
+      "extraStandingPlatformPrefix": {
+        "codepoints": 6448,
+        "utf8Bytes": 6462
+      },
+      "sharedDeveloperSectionsEqual": true,
+      "native": [
+        {
+          "stage": 3,
+          "reportedInput": 13255,
+          "reportedCached": 0,
+          "reportedUncached": 13255,
+          "reportedOutput": 14,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 15392,
+            "utf8Bytes": 16134
+          },
+          "agentsAndEnvironment": {
+            "codepoints": 1156,
+            "utf8Bytes": 1974
+          },
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "modelToolCallText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "returnedToolOutputText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "assistantFinalText": {
+            "codepoints": 28,
+            "utf8Bytes": 38
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          }
+        },
+        {
+          "stage": 6,
+          "reportedInput": 13567,
+          "reportedCached": 13056,
+          "reportedUncached": 511,
+          "reportedOutput": 12,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 638,
+            "utf8Bytes": 1216
+          },
+          "agentsAndEnvironment": null,
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "modelToolCallText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "returnedToolOutputText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "assistantFinalText": {
+            "codepoints": 23,
+            "utf8Bytes": 33
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          }
+        }
+      ],
+      "worker-delivery": [
+        {
+          "stage": 3,
+          "reportedInput": 15897,
+          "reportedCached": 7936,
+          "reportedUncached": 7961,
+          "reportedOutput": 50,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 16044,
+            "utf8Bytes": 16672
+          },
+          "agentsAndEnvironment": {
+            "codepoints": 1183,
+            "utf8Bytes": 2001
+          },
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 216,
+            "utf8Bytes": 216
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 138,
+            "utf8Bytes": 138
+          },
+          "modelToolCallText": {
+            "codepoints": 130,
+            "utf8Bytes": 140
+          },
+          "returnedToolOutputText": {
+            "codepoints": 446,
+            "utf8Bytes": 446
+          },
+          "assistantFinalText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 221,
+            "utf8Bytes": 221
+          }
+        },
+        {
+          "stage": 6,
+          "reportedInput": 16707,
+          "reportedCached": 0,
+          "reportedUncached": 16707,
+          "reportedOutput": 48,
+          "reportedGenerations": 1,
+          "newWake": {
+            "codepoints": 1291,
+            "utf8Bytes": 1755
+          },
+          "agentsAndEnvironment": null,
+          "membershipAndInstanceMetadataLines": {
+            "count": 0,
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "replyContextAndMcpGuidanceLines": {
+            "codepoints": 216,
+            "utf8Bytes": 216
+          },
+          "mentionAnnotationLines": {
+            "codepoints": 138,
+            "utf8Bytes": 138
+          },
+          "modelToolCallText": {
+            "codepoints": 125,
+            "utf8Bytes": 135
+          },
+          "returnedToolOutputText": {
+            "codepoints": 446,
+            "utf8Bytes": 446
+          },
+          "assistantFinalText": {
+            "codepoints": 0,
+            "utf8Bytes": 0
+          },
+          "postTurnInterruptionNotice": {
+            "codepoints": 221,
+            "utf8Bytes": 221
+          }
+        }
+      ],
+      "reportedFirstInputDelta": 2642,
+      "reportedContinuedInputDelta": 3140,
+      "reportedInputGrowthDifference": 498,
+      "visibleContinuationDifference": {
+        "newWakeCodepoints": 653,
+        "newWakeUtf8Bytes": 539,
+        "priorResponseTextCodepoints": 769,
+        "priorResponseTextUtf8Bytes": 769
+      }
+    }
+  },
+  "sourceSha256": {
+    "native-a.jsonl": "fdb7cf145496be4343ac29610790096670f7e717894f1a75cda707824a874196",
+    "worker-delivery-a.jsonl": "c135ce86e7556026182239c389546d628ae9ba7a943b4e45ba12364cd36a839f",
+    "native-b.jsonl": "1b9bececd2c62a6f1bbbd553a046f73c2f7d74bed34793fa4831dec354a338d9",
+    "worker-delivery-b.jsonl": "3169096365b148247da9ee8aac33cc3afb6534a9d4dbcf2976fc2b9dda29cb3c",
+    "native-c.jsonl": "83657b0884e985e896f77b60ddfe6452950be5ecb1a672a1524dec6a010998a5",
+    "worker-delivery-c.jsonl": "06a1bd9116f7d93acc40325b72d60f233619e1b8bde0c531358a3add82ef44e9"
+  },
+  "standingSections": [
+    {
+      "heading": "identity introduction",
+      "codepoints": 351,
+      "utf8Bytes": 353
+    },
+    {
+      "heading": "## Current Runtime Context",
+      "codepoints": 482,
+      "utf8Bytes": 482
+    },
+    {
+      "heading": "## Precedence",
+      "codepoints": 774,
+      "utf8Bytes": 778
+    },
+    {
+      "heading": "## Worker CLI",
+      "codepoints": 2722,
+      "utf8Bytes": 2728
+    },
+    {
+      "heading": "## Communication style",
+      "codepoints": 497,
+      "utf8Bytes": 499
+    },
+    {
+      "heading": "## Initial role",
+      "codepoints": 109,
+      "utf8Bytes": 109
+    },
+    {
+      "heading": "## Message Notifications",
+      "codepoints": 1428,
+      "utf8Bytes": 1428
+    },
+    {
+      "heading": "## Channel memory index",
+      "codepoints": 85,
+      "utf8Bytes": 85
+    }
+  ],
+  "toolAccessOccurrences": 2,
+  "roleReferenceOccurrences": 1,
+  "memoryHelpOccurrences": 2,
+  "limitations": [
+    "No full outbound provider request or tool schema bytes archived; retained transcript is not exact serialized model input.",
+    "No tokenizer estimates; reported token differences cannot be allocated using character or byte ratios.",
+    "An interruption notice retained before next turn is observable; exact provider history serialization is not independently captured.",
+    "One paired smoke with two turns does not establish causal savings, stable cache behavior or long-run amortization.",
+    "Input tokens include cached input; token ratios are not bill ratios."
+  ]
+}

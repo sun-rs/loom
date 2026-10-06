@@ -868,3 +868,23 @@ test("S1-d: the prompt fits both the bodied wake and the fixed startup wake", ()
     /Delivery confirmation is automatic in `message-check` or a `--based-on-room-seq` reply/u,
   );
 });
+
+test("compiled prompt states the actual tool access mode exactly once in authoritative runtime context", () => {
+  for (const toolAccessMode of ["full_access", "read_only"]) {
+    for (const runtimeContext of [
+      { ...fixtureRuntimeContext, toolAccessMode },
+      { toolAccessMode },
+    ]) {
+      const { prompt } = compileStandingPrompt({
+        agent: fixtureAgent,
+        runtimeContext,
+      });
+      assert.equal(prompt.match(/Tool access:/gu)?.length, 1);
+      assert.ok(prompt.includes(`- Tool access: ${toolAccessMode}`));
+      const runtime = standingPromptLayers({ runtimeContext }).find(
+        (layer) => layer.id === "runtime-context",
+      );
+      assert.ok(runtime?.text.includes(`- Tool access: ${toolAccessMode}`));
+    }
+  }
+});

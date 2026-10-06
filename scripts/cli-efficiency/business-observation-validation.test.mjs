@@ -249,3 +249,68 @@ test("CLI diagnostic counts are unknown rather than invented zero when receipts 
   assert.equal(v.reliability.deduplicatedCalls, null);
   assert.equal(v.deliveryVerdict, "delivered");
 });
+
+test("an explicit unknown write outcome stops even if a later canonical reply exists", () => {
+  for (const wrapped of [false, true]) {
+    const o = fixture();
+    const result = {
+      isError: true,
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            error: {
+              code: "RESULT_UNKNOWN",
+              message: "Human verification required",
+            },
+          }),
+        },
+      ],
+    };
+    o.events[2].payload.output = JSON.stringify(result);
+    if (wrapped) {
+      o.events[1].payload = {
+        type: "custom_tool_call",
+        name: "exec",
+        call_id: "c",
+        input:
+          'text(await tools.mcp__loom_worker__loom_reply({body:"answer",final:true}));',
+      };
+      o.events[2].payload.type = "custom_tool_call_output";
+      o.events[2].payload.output = [
+        { type: "text", text: JSON.stringify(result) },
+      ];
+    }
+    assert.throws(
+      () => validateBusinessObservationRound(o),
+      /unknown write outcome/i,
+    );
+  }
+});
+
+test("unknown writes remain blocking when a legal wrapper prints only MCP content", () => {
+  const o = fixture();
+  o.events[1].payload = {
+    type: "custom_tool_call",
+    name: "exec",
+    call_id: "c",
+    input:
+      'const r=await tools.mcp__loom_worker__loom_reply({body:"answer",final:true}); text(r.content);',
+  };
+  o.events[2].payload = {
+    type: "custom_tool_call_output",
+    call_id: "c",
+    output: JSON.stringify([
+      {
+        type: "text",
+        text: JSON.stringify({
+          error: { code: "RESULT_UNKNOWN", message: "verify" },
+        }),
+      },
+    ]),
+  };
+  assert.throws(
+    () => validateBusinessObservationRound(o),
+    /unknown write outcome/i,
+  );
+});

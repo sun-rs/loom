@@ -63,6 +63,11 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     );
     assert.equal(profile.answerPolicy, "business-content");
   } else assert.equal(profile.limits.maxProductRuns, workload.steps.length);
+  assert.ok(
+    profile.platformMemoryPolicy === undefined ||
+      profile.platformMemoryPolicy === "disabled",
+    "Unsupported platform memory policy",
+  );
   const order = profile.order ?? ["native", productArm];
   assert.deepEqual([...order].sort(), ["native", productArm].sort());
   assert.ok(
@@ -84,6 +89,9 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     ...(profile.validationPolicy
       ? { validationPolicy: profile.validationPolicy }
       : {}),
+    ...(profile.platformMemoryPolicy === undefined
+      ? {}
+      : { platformMemoryPolicy: profile.platformMemoryPolicy }),
     instructionPolicy: MULTI_INSTRUCTION_POLICY,
     workloadId: workload.id,
     sourceRef: workload.sourceRef,
@@ -394,6 +402,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
           await runMultiProduct({
             productArm: profile.productArm ?? "final-output",
             maxRunAttempts: profile.limits.maxProductRuns,
+            platformMemoryPolicy: profile.platformMemoryPolicy,
             root: armRoot,
             cwd,
             config: plan.config,

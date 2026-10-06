@@ -6,6 +6,8 @@
 
 owner“请开始测试”授权一次[业务冒烟](../stochastic-cli-evaluation-design.zh-CN.md)，未扩展到四配对长期研究。干净源码 `befeee8`（产品实现 `b684d3c`）；Codex 0.160.0、`gpt-6-luna/low`，双方每次初始/续聊均关闭官方自动记忆，正常会话历史保留。Loom 先、原生后；两臂三 session×两阶段，不复用 P118–P120 的原生分母。
 
+后续免费检查补充：本次平台频道没有显式 memory policy/override，默认读写开启，但记忆条目为零；不能把 provider 自动记忆关闭等同于平台开关关闭。原始费用与裁决不变，新长期条件见[执行清单](../business-long-plan.zh-CN.md)。
+
 原始结果的 `needs-quality-review` 状态保留，人工质量与独立核账单独记录，不改写原始输出。自动 wrapper 拒绝/去重计数为 unknown；实际工具回执可由独立审计确认，不能用手工核对冒充自动诊断能力已经完整。
 
 ## 全部已报告用量

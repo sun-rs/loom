@@ -134,6 +134,29 @@ function wrapper(source) {
   assert.ok(operations.length, "no verified tool operation");
   return operations;
 }
+// Inspect only known MCP text/content projections, never execute provider code.
+function unknownWrite(value, depth = 0) {
+  if (depth > 8) fail("tool result nesting cannot be verified");
+  if (typeof value === "string") {
+    let parsed;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      return false;
+    }
+    return unknownWrite(parsed, depth + 1);
+  }
+  if (Array.isArray(value))
+    return value.some((part) => unknownWrite(part, depth + 1));
+  if (!value || typeof value !== "object") return false;
+  return (
+    value.error?.code === "RESULT_UNKNOWN" ||
+    (Array.isArray(value.content) && unknownWrite(value.content, depth + 1)) ||
+    (value.type === "text" &&
+      typeof value.text === "string" &&
+      unknownWrite(value.text, depth + 1))
+  );
+}
 export function inspectBusinessToolCalls(events, round) {
   const start = Date.parse(round.startedAt),
     end = Date.parse(round.finishedAt),
@@ -183,6 +206,7 @@ export function inspectBusinessToolCalls(events, round) {
           ? [p.output]
           : (p.output ?? []).map((x) => x.text ?? "");
       let resultRecognized = false;
+      const unknownWriteOutcome = texts.some((text) => unknownWrite(text));
       for (const text of texts) {
         try {
           const v = JSON.parse(text);
@@ -191,12 +215,14 @@ export function inspectBusinessToolCalls(events, round) {
           if (v.isError === true) rejectedCalls++;
           for (const part of v.content ?? []) {
             try {
-              if (JSON.parse(part.text).deduplicated === true)
-                deduplicatedCalls++;
+              const result = JSON.parse(part.text);
+              if (result.deduplicated === true) deduplicatedCalls++;
             } catch {}
           }
         } catch {}
       }
+      if (unknownWriteOutcome)
+        fail("unknown write outcome requires verification");
       if (!resultRecognized) diagnosticsComplete = false;
     } else fail("unsupported tool event");
   }

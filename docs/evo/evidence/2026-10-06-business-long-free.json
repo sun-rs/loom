@@ -1,0 +1,101 @@
+{
+  "kind": "real installed CLI with synthetic loopback provider, not a paid model evaluation",
+  "paidCalls": 0,
+  "cliVersion": "0.160.0",
+  "actualLoopbackRequests": 76,
+  "requestsByArm": {
+    "worker-delivery": 39,
+    "native": 37
+  },
+  "completedStages": {
+    "worker-delivery": 36,
+    "native": 36
+  },
+  "continuousSessionsPerArm": 3,
+  "turnsPerSession": 12,
+  "rawUsage": {
+    "worker-delivery": {
+      "input": 3900,
+      "cached": 0,
+      "output": 780,
+      "generations": 39
+    },
+    "native": {
+      "input": 3700,
+      "cached": 0,
+      "output": 740,
+      "generations": 37
+    }
+  },
+  "durable": {
+    "runs": 36,
+    "completedActivationsWithSameConsumerAck": 36,
+    "uniqueCanonicalReplies": 36,
+    "ordinaryFinalMarkers": 36,
+    "usageGaps": 0,
+    "automaticRetries": 0
+  },
+  "memory": {
+    "providerNativeMemoryDisabled": true,
+    "platformReadDefault": false,
+    "platformWriteDefault": false,
+    "enabledOverrides": 0,
+    "policyChangedBeforeInstances": true,
+    "policyChangeEvents": 1,
+    "indexReadEnabled": [false, false, false]
+  },
+  "faults": {
+    "definiteRejectionAndRecoveryStages": [1, 13, 36],
+    "firstRecovery": "Worker CLI",
+    "otherRecoveries": "MCP",
+    "incorrectAnswerStage": 10,
+    "incorrectAnswerPropagatedUnchangedToStages": [11, 12],
+    "nativeExtraTool": "stage1 pwd",
+    "lastStageEvaluated": true
+  },
+  "quality": {
+    "nativeCorrect": 36,
+    "productCorrect": 35,
+    "productIncorrect": 1,
+    "sameQualityEligible": false
+  },
+  "materialNewInputCopies": {
+    "worker-delivery": {
+      "a": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "b": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "c": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "native": {
+      "a": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "b": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "c": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  "checks": 358,
+  "limits": [
+    "Synthetic answers and usage verify tested mechanisms only, not real-model skill, efficiency or stability.",
+    "No product attempt retry was injected; same-Activation multiple attempts retain separate unit-test evidence.",
+    "This is the successful long positive scenario with deliberate recoveries and one wrong answer, not a new unknown-write negative test.",
+    "Before/after generation timing remains whatever the native evidence actually provides; HTTP counts were independently observed only because the fake server is controlled."
+  ],
+  "baseChecks": 884,
+  "revisionEvidence": {
+    "basis": "Final source after removing duplicate Tool access from workspace policy; Runtime Context keeps the authority statement.",
+    "rawResultSha256": "4d1473cee5fc74f1553d5c27642fe648266c50fa6e026754c32e62868fe5a380",
+    "earlierSuccessfulFreeRunRetained": true,
+    "earlierRawResultSha256": "8891906de494984928a71c5660652d2ed10a305f874a688434008b50b7b611c1",
+    "rerunReason": "Free final-source verification after prompt deduplication, not a paid rerun.",
+    "actualProductSessionDeveloperToolAccessOccurrences": {
+      "a": 1,
+      "b": 1,
+      "c": 1
+    }
+  },
+  "offlineRevalidation": {
+    "passed": true,
+    "stages": 72,
+    "unchangedVerdicts": true,
+    "rawUnchanged": true,
+    "validatorSha256": "16d51fc022965a0dc7fb6c7c5194f382b45c8db2cee9a2f8933fbf8d360181a5"
+  }
+}
