@@ -1,0 +1,49 @@
+{
+  "kind": "independent full HTTP body capture audit, true CLI with fake loopback provider",
+  "paidCalls": 0,
+  "syntheticAnswersAndUsage": true,
+  "requests": 72,
+  "requestsPerArm": 36,
+  "stagesPerArm": 36,
+  "sessionsPerArm": 3,
+  "turnsPerSession": 12,
+  "allChecksPass": true,
+  "baseChecks": 888,
+  "requestAndReceiptChecks": 379,
+  "durable": {
+    "runs": 36,
+    "activations": 36,
+    "markers": 36,
+    "usageRows": 36,
+    "usageGaps": []
+  },
+  "platformMemoryDisabled": true,
+  "providerMemoryDisabled": true,
+  "finalFencePerArm": 36,
+  "limits": [
+    "Controlled fake requests only; not paid-model efficiency, model quality or a pricing measurement.",
+    "Capture includes exact request JSON payload bytes; HTTP transport framing is not retained.",
+    "No injected recovery or unknown-write negative case in this run."
+  ],
+  "byteAudit": {
+    "passed": true,
+    "all72RawBodiesExactlyCompactJSON": true,
+    "all72CategoryTotalsReconcile": true,
+    "allSixSessionOldInputPrefixesPreserved": true,
+    "perRequestToolDefinitionDeltaJSONBytes": 4102,
+    "perRequestRuntimePolicyDeltaJSONBytes": 6479,
+    "toolDescriptionAddedJSONPayloadBytes": {
+      "sharedTypes": 1671,
+      "resourceTools": 1720,
+      "loomReply": 711
+    },
+    "cumulativeProductJSONBytes": 3212939,
+    "cumulativeNativeJSONBytes": 2462799,
+    "differenceJSONBytes": 750140,
+    "limits": [
+      "Byte accounting only; not token counts, provider internal prompts, cache hit rates, or billed costs.",
+      "Fake usage and fixed answers excluded from performance claims.",
+      "Captured fixture is not a reconstruction of P122 actual paid HTTP requests."
+    ]
+  }
+}
