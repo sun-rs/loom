@@ -163,7 +163,41 @@ function unknownWrite(value, depth = 0) {
       unknownWrite(value.text, depth + 1))
   );
 }
-export function inspectBusinessToolCalls(events, round) {
+// Known result surfaces only; never search arbitrary prose for a receipt.
+export function publicationReceipts(value, depth = 0) {
+  if (depth > 8) return [];
+  if (typeof value === "string") {
+    try {
+      return publicationReceipts(JSON.parse(value), depth + 1);
+    } catch {}
+    const m = value
+      .trim()
+      .match(
+        /^Message sent to [^\r\n]+\. Message ID: (message_[A-Za-z0-9_-]+)$/u,
+      );
+    return m ? [{ messageId: m[1] }] : [];
+  }
+  if (Array.isArray(value))
+    return value.flatMap((v) => publicationReceipts(v, depth + 1));
+  if (!value || typeof value !== "object") return [];
+  if (
+    value.state === "published" &&
+    typeof value.messageId === "string" &&
+    Number.isSafeInteger(value.roomSeq)
+  )
+    return [{ messageId: value.messageId, roomSeq: value.roomSeq }];
+  if (Array.isArray(value.content))
+    return publicationReceipts(value.content, depth + 1);
+  if (["text", "input_text"].includes(value.type))
+    return publicationReceipts(value.text, depth + 1);
+  return [];
+}
+export function inspectBusinessToolCalls(
+  events,
+  round,
+  { collectReceipts = false } = {},
+) {
+  const publishedReceipts = [];
   const start = Date.parse(round.startedAt),
     end = Date.parse(round.finishedAt),
     pending = new Map(),
@@ -225,6 +259,8 @@ export function inspectBusinessToolCalls(events, round) {
           : "custom_tool_call_output",
       );
       pending.delete(p.call_id);
+      if (collectReceipts)
+        publishedReceipts.push(...publicationReceipts(p.output));
       if (call.direct) {
         const v = directWorkerMcpResult(p.output);
         if (v.state === "published") {
@@ -265,6 +301,7 @@ export function inspectBusinessToolCalls(events, round) {
   }
   assert.equal(pending.size, 0, "tool result missing");
   return {
+    ...(collectReceipts ? { publishedReceipts } : {}),
     attemptedCalls,
     rejectedCalls: diagnosticsComplete ? rejectedCalls : null,
     deduplicatedCalls: diagnosticsComplete ? deduplicatedCalls : null,
@@ -276,14 +313,10 @@ const normalize = (text) =>
     .trim()
     .replace(/^```(?:text)?\s*\n([\s\S]*?)\n```$/u, "$1")
     .trim();
-export function validateBusinessObservationRound({
-  armKind,
-  round,
-  previousRounds,
-  events,
-  expectedAnswer,
-  evidenceText,
-}) {
+export function validateBusinessObservationRound(
+  { armKind, round, previousRounds, events, expectedAnswer, evidenceText },
+  { allowNatural = false } = {},
+) {
   assert.ok(["native", "worker-delivery"].includes(armKind));
   const start = Date.parse(round.startedAt),
     end = Date.parse(round.finishedAt);
@@ -323,7 +356,9 @@ export function validateBusinessObservationRound({
     previousRounds.length ? 0 : 1,
     "material retransmission or omission",
   );
-  const tools = inspectBusinessToolCalls(events, round);
+  const tools = inspectBusinessToolCalls(events, round, {
+    collectReceipts: allowNatural,
+  });
   if (armKind === "worker-delivery") {
     const p = round.durableDeliveryProof;
     assert.ok(p, "missing durable proof");
@@ -333,12 +368,22 @@ export function validateBusinessObservationRound({
     assert.ok(!message.threadId, "wrong reply target");
     assert.equal(message.body, round.answer);
     assert.deepEqual(round.replies, [message]);
-    assert.equal(p.finalMarkers.length, 1, "nonunique final marker");
+    if (allowNatural)
+      assert.ok(p.finalMarkers.length <= 1, "nonunique final marker");
+    else assert.equal(p.finalMarkers.length, 1, "nonunique final marker");
     const marker = p.finalMarkers[0];
-    assert.equal(marker.room_id, message.roomId);
-    assert.equal(marker.room_seq, message.roomSeq);
-    assert.equal(marker.submission_kind, null);
-    const event = p.events.find((e) => e.event_id === marker.event_id);
+    if (marker) {
+      assert.equal(marker.room_id, message.roomId);
+      assert.equal(marker.room_seq, message.roomSeq);
+      assert.equal(marker.submission_kind, null);
+    }
+    const event = p.events.find((e) =>
+      marker
+        ? e.event_id === marker.event_id
+        : e.aggregate_id === message.messageId &&
+          e.room_seq === message.roomSeq &&
+          e.room_id === message.roomId,
+    );
     assert.ok(
       event &&
         event.room_id === message.roomId &&
@@ -350,7 +395,37 @@ export function validateBusinessObservationRound({
     assert.equal(payload.messageId, message.messageId);
     assert.deepEqual(p.runs, round.runs);
     assert.ok(p.runs.length);
-    const run = p.runs.find((r) => r.runAttemptId === marker.run_attempt_id);
+    const run = marker
+      ? p.runs.find((r) => r.runAttemptId === marker.run_attempt_id)
+      : p.runs.length === 1
+        ? p.runs[0]
+        : undefined;
+    if (allowNatural) {
+      assert.ok(
+        run &&
+          run.state === "exited" &&
+          (run.exitCode === undefined || run.exitCode === 0),
+        "Unsuccessful or nonunique natural Run",
+      );
+      assert.equal(event.actor_id, message.actorId);
+      assert.equal(event.type, "message.posted");
+      assert.equal(event.aggregate_id, message.messageId);
+      if (!marker) {
+        assert.equal(
+          payload.activationId,
+          run.activationId,
+          "Publication belongs to another Activation",
+        );
+        assert.ok(
+          tools.publishedReceipts.some(
+            (r) =>
+              r.messageId === message.messageId &&
+              (r.roomSeq === undefined || r.roomSeq === message.roomSeq),
+          ),
+          "No correlated Worker publication receipt",
+        );
+      }
+    }
     assert.ok(
       run &&
         run.participantId === round.participantId &&
@@ -409,4 +484,9 @@ export function validateBusinessObservationRound({
       deduplicatedCalls: tools.deduplicatedCalls,
     },
   };
+}
+
+// Separate observation profile; the original strict-final gate is unchanged.
+export function validateNaturalBusinessObservationRound(args) {
+  return validateBusinessObservationRound(args, { allowNatural: true });
 }

@@ -13,6 +13,10 @@ function sum(metrics) {
   const knownTotals = Object.fromEntries(FIELDS.map((k) => [k, 0]));
   const issues = metrics.length ? [] : ["no-observations"];
   for (const [i, m] of metrics.entries()) {
+    if (m?.usageRecoveryIncomplete)
+      issues.push(`recovered-usage-incomplete:${i}`);
+    if (m?.requestCoverage && m.requestCoverage.status !== "complete")
+      issues.push(`request-coverage-incomplete:${i}`);
     for (const k of FIELDS) {
       if (count(m?.[k])) knownTotals[k] += m[k];
       else issues.push(`usage-missing:${i}:${k}`);

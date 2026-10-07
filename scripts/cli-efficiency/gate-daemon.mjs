@@ -60,6 +60,7 @@ export async function prepareGateDaemon({
   save,
   consumerId,
   launchRecordPath,
+  memoryRecordPath,
 }) {
   const stateDirectory = join(root, "state");
   const realCli = execFileSync("which", [provider], {
@@ -82,6 +83,7 @@ export async function prepareGateDaemon({
     effort,
     options,
     launchRecordPath,
+    memoryRecordPath,
   });
   // effort null (effortless Claude Haiku): the product sends no effort.
   const spec = {

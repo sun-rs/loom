@@ -35,6 +35,12 @@ import {
 } from "./cli-efficiency/native-invocation.mjs";
 import { longArmEnvironment } from "./test-cli-long-session.mjs";
 
+import {
+  assertMultiProviderVersion,
+  readMultiProviderEvents,
+  assertMultiProviderIdentity,
+} from "./cli-efficiency/multi-provider.mjs";
+import { recoverFailedNativeRounds } from "./cli-efficiency/multi-native-recovery.mjs";
 import { MULTI_INSTRUCTION_POLICY } from "./cli-efficiency/multi-channel-product.mjs";
 
 const DEFAULT_PROFILE = {
@@ -45,7 +51,12 @@ const DEFAULT_PROFILE = {
   limits: { perArmInput: 1200000, perArmMs: 1200000, maxProductRuns: 12 },
 };
 
-export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
+export function multiPlan(
+  args,
+  version,
+  profile = DEFAULT_PROFILE,
+  environment = {},
+) {
   const workload = profile.workload;
   const productArm = profile.productArm ?? "final-output";
   assert.ok(
@@ -74,12 +85,12 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     args.length === 1 && ["--plan", "--paid"].includes(args[0]),
     "Requires exactly --plan or --paid",
   );
-  assert.equal(version, "codex-cli 0.160.0", "Unregistered CLI version");
-  const config = parseEfficiencyEnv({
-    RAH_EFFICIENCY_PROVIDER: "codex",
-    RAH_EFFICIENCY_MODEL: "gpt-6-luna",
-    RAH_EFFICIENCY_EFFORT: "low",
-  });
+  const config = parseEfficiencyEnv(environment);
+  assertMultiProviderVersion(config.provider, version);
+  assert.ok(
+    config.provider === "codex" || productArm === "worker-delivery",
+    "This profile requires Codex; cross-provider business profile required",
+  );
   const identity = {
     experimentVersion: profile.experimentVersion,
     ...(profile.productArm === undefined ? {} : { productArm }),
@@ -92,7 +103,18 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
     ...(profile.platformMemoryPolicy === undefined
       ? {}
       : { platformMemoryPolicy: profile.platformMemoryPolicy }),
-    instructionPolicy: MULTI_INSTRUCTION_POLICY,
+    ...(profile.completionPolicy === undefined
+      ? {}
+      : { completionPolicy: profile.completionPolicy }),
+    instructionPolicy:
+      config.provider === "claude"
+        ? {
+            ...MULTI_INSTRUCTION_POLICY,
+            id: "workspace-native-business-only/v1",
+            businessCarrier: "workspace/CLAUDE.md in both arms",
+            roleInstructions: "Follow the workspace CLAUDE.md.",
+          }
+        : MULTI_INSTRUCTION_POLICY,
     workloadId: workload.id,
     sourceRef: workload.sourceRef,
     files: Object.fromEntries(
@@ -108,12 +130,12 @@ export function multiPlan(args, version, profile = DEFAULT_PROFILE) {
       "independent arm histories; fixed business questions; own peer replies relayed without editing",
     routingIdentity:
       "native logical aliases; product actual instance handles including unique suffix; raw cost retained",
-    nativeMemory: describeNativeMemoryPolicy("codex"),
-    nativeInvocationPolicy: nativeInvocationPolicy("codex"),
+    nativeMemory: describeNativeMemoryPolicy(config.provider),
+    nativeInvocationPolicy: nativeInvocationPolicy(config.provider),
     nativeInvocation: Object.fromEntries(
       ["initial", "resume"].map((phase) => [
         phase,
-        nativeInvocationArgs("codex", {
+        nativeInvocationArgs(config.provider, {
           model: config.model,
           effort: config.effort,
           prompt: "<channel-delta>",
@@ -174,6 +196,11 @@ export function validateMultiHistory(arm) {
     sessions[r.speaker] = r.sessionId;
     const m = r.metrics;
     assert.ok(
+      m?.requestCoverage === undefined ||
+        m.requestCoverage.status === "complete",
+      "Native request coverage incomplete",
+    );
+    assert.ok(
       m &&
         ["input", "cached", "uncached", "output", "generations"].every(
           (k) => Number.isSafeInteger(m[k]) && m[k] >= 0,
@@ -201,8 +228,8 @@ export function validateMultiHistory(arm) {
     }
   }
 }
-const version = () =>
-  execFileSync("codex", ["--version"], { encoding: "utf8" }).trim();
+const version = (provider = "codex") =>
+  execFileSync(provider, ["--version"], { encoding: "utf8" }).trim();
 export function createRoundValidationFence({
   arm,
   transcript,
@@ -239,7 +266,13 @@ export function createRoundValidationFence({
 
 export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
   const workload = profile.workload;
-  const plan = multiPlan(args, version(), profile),
+  const selected = parseEfficiencyEnv(process.env);
+  const plan = multiPlan(
+      args,
+      version(selected.provider),
+      profile,
+      process.env,
+    ),
     provenance = codeProvenance({ sourceRef: workload.sourceRef });
   if (plan.mode === "plan") {
     console.log(JSON.stringify({ ...plan, ...provenance }, null, 2));
@@ -265,42 +298,49 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
   save();
   console.log("EVIDENCE " + join(root, "result.json"));
   const { nativeRound } = await import("./cli-efficiency/native.mjs");
-  const { transcript, measure } = await import("./cli-efficiency/common.mjs");
+  const { nativeClaudeRound, nativeClaudeEnvironment } =
+    await import("./cli-efficiency/native-claude.mjs");
+  const { nativeKimiRound } = await import("./cli-efficiency/native-kimi.mjs");
+  const { nativeOpenCodeRound } =
+    await import("./cli-efficiency/native-opencode.mjs");
+  const invokeNative = {
+    codex: nativeRound,
+    claude: nativeClaudeRound,
+    kimi: nativeKimiRound,
+    opencode: nativeOpenCodeRound,
+  }[selected.provider];
+  if (selected.provider === "claude") nativeClaudeEnvironment(selected);
   const { runMultiProduct } =
     await import("./cli-efficiency/multi-channel-product.mjs");
   const { probeLocalModelCatalog } =
     await import("../packages/agent-host/src/model-catalog-probe.ts");
   const markIdentity = (arm) => {
     for (const r of arm.rounds) {
-      const rows = transcript(r.sessionId),
-        metas = rows.filter((x) => x.type === "session_meta");
-      r.actualMemoryOff =
-        metas.length > 0 &&
-        metas.every((x) => x.payload.memory_mode === "disabled");
-      const contexts = rows.filter(
-        (x) =>
-          x.type === "turn_context" &&
-          x.timestamp >= r.startedAt &&
-          x.timestamp <= r.finishedAt,
-      );
-      assert.ok(contexts.length > 0, "Missing actual model context");
-      for (const c of contexts) {
-        assert.equal(c.payload.model, plan.config.model);
-        assert.equal(c.payload.effort, plan.config.effort);
+      assertMultiProviderIdentity({
+        config: plan.config,
+        round: r,
+        cwd: arm.workspace,
+      });
+      if (plan.config.provider !== "codex" && arm.kind === "native") {
+        assert.ok(
+          ["enforced", "not-applicable"].includes(r.nativeMemoryPolicy?.status),
+          "Missing native launch memory policy",
+        );
+        assert.equal(r.nativeMemoryPolicy.provider, plan.config.provider);
         assert.equal(
-          realpathSync(c.payload.cwd),
+          realpathSync(r.nativeLaunchCwd),
           realpathSync(arm.workspace),
           "Actual CLI workspace changed",
         );
+        r.actualMemoryOff = true;
+        r.actualWorkspaceVerified = true;
       }
-      r.actualIdentityVerified = true;
-      r.actualWorkspaceVerified = true;
     }
   };
   try {
     const catalog = await probeLocalModelCatalog({
       kind: plan.config.catalogKind,
-      executablePath: execFileSync("which", ["codex"], {
+      executablePath: execFileSync("which", [plan.config.provider], {
         encoding: "utf8",
       }).trim(),
       cwd: root,
@@ -309,7 +349,11 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
       (b) => b.modelBindingId === plan.config.bindingId,
     );
     assert.equal(binding?.modelId, plan.config.model);
-    assert.ok(binding.supportedReasoning.includes(plan.config.effort));
+    assert.ok(
+      plan.config.effort === null
+        ? binding.supportedReasoning.length === 0
+        : binding.supportedReasoning.includes(plan.config.effort),
+    );
     result.catalogVerifiedAt = new Date().toISOString();
     save();
     for (const kind of plan.order) {
@@ -318,7 +362,10 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
       mkdirSync(cwd, { recursive: true });
       for (const [p, b] of Object.entries(workload.files))
         writeFileSync(join(cwd, p), b);
-      writeFileSync(join(cwd, "AGENTS.md"), workload.instructions + "\n");
+      writeFileSync(
+        join(cwd, plan.config.instructionFile),
+        workload.instructions + "\n",
+      );
       const arm = {
         kind,
         workspace: cwd,
@@ -344,7 +391,11 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
         ),
       );
       const verify = () => {
-        assert.equal(version(), plan.version, "CLI changed");
+        assert.equal(
+          version(plan.config.provider),
+          plan.version,
+          "CLI changed",
+        );
         for (const [p, body] of Object.entries(workload.files))
           assert.equal(
             readFileSync(join(cwd, p), "utf8"),
@@ -352,7 +403,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
             "Fixture changed",
           );
         assert.equal(
-          readFileSync(join(cwd, "AGENTS.md"), "utf8"),
+          readFileSync(join(cwd, plan.config.instructionFile), "utf8"),
           workload.instructions + "\n",
           "Instructions changed",
         );
@@ -360,7 +411,8 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
       const validateRounds = profile.validateRound
         ? createRoundValidationFence({
             arm,
-            transcript,
+            transcript: (id) =>
+              readMultiProviderEvents(plan.config.provider, id),
             evidenceText: workload.files["evidence.txt"],
             expectedFor: profile.expectedFor,
             validate: profile.validateRound,
@@ -390,7 +442,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
             save,
             beforeRound,
             invoke: (options) =>
-              nativeRound({
+              invokeNative({
                 ...options,
                 answerValidator: (answer) =>
                   profile.answerPolicy === "business-content"
@@ -403,6 +455,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
             productArm: profile.productArm ?? "final-output",
             maxRunAttempts: profile.limits.maxProductRuns,
             platformMemoryPolicy: profile.platformMemoryPolicy,
+            completionPolicy: profile.completionPolicy,
             root: armRoot,
             cwd,
             config: plan.config,
@@ -420,16 +473,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
       } catch (error) {
         arm.status = "failed";
         arm.error = String(error);
-        if (kind === "native")
-          for (const r of arm.rounds)
-            if (!r.metrics && r.sessionId && r.startedAt && r.finishedAt) {
-              try {
-                r.metrics = measure(r.sessionId, r, undefined, plan.config);
-                r.recoveredUsage = "native-transcript";
-              } catch (e) {
-                r.usageRecoveryError = String(e);
-              }
-            }
+        if (kind === "native") recoverFailedNativeRounds(arm, plan.config);
       } finally {
         try {
           verify();

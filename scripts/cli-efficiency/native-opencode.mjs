@@ -27,6 +27,7 @@ export async function nativeOpenCodeRound({
   save,
   round,
   config,
+  answerValidator = isEffectiveAnswer,
 }) {
   const args = openCodeNativeArgs({
     model: config.model,
@@ -75,6 +76,7 @@ export async function nativeOpenCodeRound({
     env,
   });
   round.userMcpDisabled = mcpNames;
+  round.nativeLaunchCwd = cwd;
   round.startedAt = new Date().toISOString();
   save();
   let run;
@@ -104,6 +106,11 @@ export async function nativeOpenCodeRound({
     errors: parsed.errors.length ? parsed.errors : undefined,
   });
   save();
+  round.nativeUsageEvidence = {
+    generations: parsed.generations,
+    gaps: parsed.gaps,
+  };
+  save();
   assert.equal(run.exit, 0, "Native CLI failed");
   assert.equal(parsed.errors.length, 0, "Native turn reported an error");
   assert.equal(parsed.sessionIds.length, 1, "Native session id changed");
@@ -132,7 +139,7 @@ export async function nativeOpenCodeRound({
     };
   save();
   assert.ok(
-    isEffectiveAnswer(parsed.answer),
+    answerValidator(parsed.answer),
     "Missing effective final answer; retain cost evidence",
   );
   return session;

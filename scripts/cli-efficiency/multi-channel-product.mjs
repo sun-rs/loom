@@ -3,6 +3,10 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { assertApprovedGateModel } from "./approved-models.mjs";
+import { measureRah } from "./rah.mjs";
+import { assertMultiLaunchEvidence } from "./multi-launch-evidence.mjs";
 import { join } from "node:path";
 import { RoomKernel } from "@rah-os/kernel";
 import { prepareGateDaemon } from "./gate-daemon.mjs";
@@ -72,7 +76,7 @@ export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
         "SELECT u.* FROM run_attempt_usage_gaps u JOIN run_attempts r ON r.run_attempt_id=u.run_attempt_id WHERE r.room_id=?",
       ),
       runtimes: rows(
-        "SELECT instance_runtime_id, participant_id, native_session_id, state, turn_count, started_at, terminated_reason FROM instance_runtimes WHERE participant_id IN (SELECT principal_id FROM memberships WHERE room_id=?)",
+        "SELECT instance_runtime_id, participant_id, native_session_id, pid, state, turn_count, started_at, terminated_reason FROM instance_runtimes WHERE participant_id IN (SELECT principal_id FROM memberships WHERE room_id=?)",
       ),
     };
   } finally {
@@ -92,6 +96,7 @@ export async function runMultiProduct(
     beforeRound,
     productArm = "final-output",
     platformMemoryPolicy,
+    completionPolicy,
     maxRunAttempts = steps.length,
   },
   dependencies = {},
@@ -100,8 +105,12 @@ export async function runMultiProduct(
     ["final-output", "worker-mcp", "worker-delivery"].includes(productArm),
     "Unknown product arm",
   );
-  assert.equal(config?.provider, "codex", "Multi product gate is Codex-only");
-  assert.ok(config.model && config.bindingId && config.effort);
+  assertApprovedGateModel(config);
+  assert.ok(
+    config.provider === "codex" || productArm === "worker-delivery",
+    "Cross-provider business profile required",
+  );
+  assert.ok(config.model && config.bindingId);
   assert.ok(Array.isArray(steps) && steps.length > 0);
   for (const s of steps) {
     assert.ok(["a", "b", "c"].includes(s.speaker));
@@ -117,6 +126,15 @@ export async function runMultiProduct(
     transcript,
     wait,
     readEvidence: readMultiEvidence,
+    measureProduct: measureRah,
+    readLaunchEvidence: (path) =>
+      existsSync(path)
+        ? readFileSync(path, "utf8")
+            .trim()
+            .split("\n")
+            .filter(Boolean)
+            .map(JSON.parse)
+        : [],
     ...dependencies,
   };
   assert.ok(
@@ -124,6 +142,12 @@ export async function runMultiProduct(
     "Unsupported platform memory policy",
   );
   const business = productArm === "worker-delivery";
+  assert.ok(
+    completionPolicy === undefined ||
+      (business && completionPolicy === "canonical-and-ack/v1"),
+    "Unknown completion policy",
+  );
+  const natural = completionPolicy === "canonical-and-ack/v1";
   assert.ok(
     Number.isSafeInteger(maxRunAttempts) && maxRunAttempts >= steps.length,
   );
@@ -141,11 +165,13 @@ export async function runMultiProduct(
   arm.members = {};
   arm.status = "running";
   arm.runLimit = maxRunAttempts;
+  const memoryRecordPath = join(root, "memory-launch.jsonl");
   const gate = await deps.prepareGateDaemon({
     ...config,
     root,
     cwd,
-    warm: true,
+    warm: config.provider !== "kimi" && config.provider !== "claude",
+    ...(config.provider === "codex" ? {} : { memoryRecordPath }),
     prewarm: false,
     processes: arm.processes,
     save,
@@ -258,7 +284,11 @@ export async function runMultiProduct(
       (b) => b.modelBindingId === config.bindingId,
     );
     assert.equal(binding?.modelId, config.model);
-    assert.ok(binding.supportedReasoning.includes(config.effort));
+    assert.ok(
+      config.effort === null
+        ? binding.supportedReasoning.length === 0
+        : binding.supportedReasoning.includes(config.effort),
+    );
     arm.binding = config.bindingId;
     const control = gate.prepared.metadata.controlRoomId;
     roomId = (
@@ -315,7 +345,10 @@ export async function runMultiProduct(
           configuration: {
             displayName: `Multi ${speaker}`,
             handle: `multi-${speaker}`,
-            instructions: MULTI_INSTRUCTION_POLICY.roleInstructions,
+            instructions:
+              config.provider === "claude"
+                ? "Follow the workspace CLAUDE.md."
+                : MULTI_INSTRUCTION_POLICY.roleInstructions,
             role: "Bounded code reviewer",
             executionWorkspace: {
               kind: "existing_mount",
@@ -507,7 +540,10 @@ export async function runMultiProduct(
             member.sessionId,
             "Session changed",
           );
-        if (member.instanceRuntimeId)
+        if (
+          member.instanceRuntimeId &&
+          ["codex", "opencode"].includes(config.provider)
+        )
           assert.equal(
             rt.instance_runtime_id,
             member.instanceRuntimeId,
@@ -524,10 +560,18 @@ export async function runMultiProduct(
             m.submission_kind ===
               (productArm === "worker-mcp" ? null : "final-output")),
       );
-      if (business)
+      if (business && !natural)
         assert.equal(markers.length, 1, "Missing unique final marker");
+      if (natural)
+        assert.ok(
+          markers.length <= 1 &&
+            (markers.length === 1 || round.runs.length === 1),
+          "Missing uniquely associated final Run",
+        );
       const run = business
-        ? round.runs.find((r) => r.runAttemptId === markers[0].run_attempt_id)
+        ? markers.length
+          ? round.runs.find((r) => r.runAttemptId === markers[0].run_attempt_id)
+          : round.runs[0]
         : round.runs[0];
       const finalUsage = attemptUsages[round.runs.indexOf(run)];
       assert.ok(
@@ -538,6 +582,7 @@ export async function runMultiProduct(
         ? {
             completeness: "complete",
             gaps: [],
+            generations: attemptUsages.flatMap((u) => u.generations ?? []),
             totals: Object.fromEntries(
               [
                 "inputTokens",
@@ -577,7 +622,11 @@ export async function runMultiProduct(
       if (business) {
         const proof = round.durableDeliveryProof,
           marker = markers[0];
-        assert.equal(proof.finalMarkers.length, 1, "Multiple final markers");
+        assert.equal(
+          proof.finalMarkers.length,
+          natural ? markers.length : 1,
+          "Multiple or inconsistent final markers",
+        );
         const activation = proof.activations.find(
           (a) => a.activationId === run.activationId,
         );
@@ -589,13 +638,27 @@ export async function runMultiProduct(
             activation.toSeq >= round.humanRoomSeq,
           "Invalid delivery activation",
         );
-        assert.equal(
-          marker.activation_id,
-          activation.activationId,
-          "Marker activation mismatch",
+        if (marker) {
+          assert.equal(
+            marker.activation_id,
+            activation.activationId,
+            "Marker activation mismatch",
+          );
+          assert.equal(marker.room_id, roomId, "Marker room mismatch");
+        }
+        const event = proof.events.find((e) =>
+          marker
+            ? e.event_id === marker.event_id
+            : e.aggregate_id === reply.messageId &&
+              e.room_id === roomId &&
+              e.room_seq === reply.roomSeq,
         );
-        assert.equal(marker.room_id, roomId, "Marker room mismatch");
-        const event = proof.events.find((e) => e.event_id === marker.event_id);
+        if (!marker)
+          assert.equal(
+            JSON.parse(event?.payload_json ?? "null")?.activationId,
+            run.activationId,
+            "Unattributed natural publication",
+          );
         assert.ok(
           event &&
             event.room_id === roomId &&
@@ -623,20 +686,43 @@ export async function runMultiProduct(
           "Missing same-consumer delivery ACK cursor",
         );
       }
-      const metas = deps
-        .transcript(round.sessionId)
-        .filter((e) => e.type === "session_meta");
-      round.actualMemoryOff =
-        metas.length > 0 &&
-        metas.every((e) => e.payload.memory_mode === "disabled");
+      if (config.provider === "codex") {
+        const metas = deps
+          .transcript(round.sessionId)
+          .filter((e) => e.type === "session_meta");
+        round.actualMemoryOff =
+          metas.length > 0 &&
+          metas.every((e) => e.payload.memory_mode === "disabled");
+      } else {
+        const records = deps.readLaunchEvidence(memoryRecordPath);
+        round.actualLaunchEvidence = assertMultiLaunchEvidence(records, {
+          provider: config.provider,
+          cwd,
+          finishedAt: round.finishedAt,
+          runs: round.runs,
+          sessionId: round.sessionId,
+          runtimes: data.runtimes,
+        });
+        round.actualMemoryOff = true;
+        round.actualWorkspaceVerified = true;
+      }
       assert.ok(round.actualMemoryOff, "Actual native memory is not disabled");
-      round.metrics = deps.measure(
-        round.sessionId,
-        round,
-        { replyAt: reply.createdAt },
-        config,
-        { turns: round.runs.length },
-      );
+      round.metrics =
+        config.provider === "codex"
+          ? deps.measure(
+              round.sessionId,
+              round,
+              { replyAt: reply.createdAt },
+              config,
+              { turns: round.runs.length },
+            )
+          : deps.measureProduct({
+              config,
+              sessionId: round.sessionId,
+              round,
+              replyAt: reply.createdAt,
+              productUsage: usage,
+            });
       // measure() independently validates the original turn_context model/effort.
       round.actualIdentityVerified = true;
       round.actualModel = config.model;
@@ -667,12 +753,13 @@ export async function runMultiProduct(
       }
       round.metrics.finalInterrupt = usage.finalInterrupt ?? null;
       round.metrics.replyAt = reply.createdAt;
-      assert.equal(markers.length, 1, "Missing unique final marker");
+      if (!natural)
+        assert.equal(markers.length, 1, "Missing unique final marker");
       // Null submission kind is tool delivery, not by itself proof of MCP.
-      round.finalMarker = markers[0];
+      round.finalMarker = markers[0] ?? null;
       for (const p of observer.listPlacements({ roomId })) {
         assert.equal(p.resolvedModel.modelId, config.model);
-        assert.equal(p.resolvedModel.reasoning, config.effort);
+        assert.equal(p.resolvedModel.reasoning, config.effort ?? undefined);
       }
       gate.assertNoGuardViolations();
       assert.deepEqual(observer.listTasks(actor, { roomId }), []);

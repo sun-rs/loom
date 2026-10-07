@@ -366,3 +366,48 @@ test("direct native success cannot contradict durable reply or claim both error 
   f.events[1].payload.namespace = "functions";
   assert.throws(() => inspectBusinessToolCalls(f.events, f.round));
 });
+
+test("new natural observation accepts unique canonical explicit publication with exact Run ACK, legacy strict still refuses no marker", async () => {
+  const { validateNaturalBusinessObservationRound } =
+    await import("./business-observation-validation.mjs");
+  const f = fixture(),
+    p = f.round.durableDeliveryProof;
+  p.finalMarkers = [];
+  Object.assign(p.events[0], {
+    actor_id: "a",
+    type: "message.posted",
+    aggregate_id: "message",
+  });
+  p.events[0].payload_json = JSON.stringify({
+    ...p.messages[0],
+    activationId: "act",
+  });
+  f.events[2].payload.output = JSON.stringify({
+    state: "published",
+    messageId: "message",
+    roomSeq: 12,
+  });
+  assert.throws(() => validateBusinessObservationRound(f), /final marker/);
+  assert.equal(
+    validateNaturalBusinessObservationRound(f).deliveryVerdict,
+    "delivered",
+  );
+  for (const mutate of [
+    (x) => (x.round.durableDeliveryProof.subscriptionCursors[0].last_seq = 7),
+    (x) => (x.round.durableDeliveryProof.events[0].actor_id = "other"),
+    (x) => (x.round.runs[0].state = "cancelled"),
+    (x) => (x.round.runs[0].state = "failed"),
+    (x) => x.round.runs.push({ ...x.round.runs[0], runAttemptId: "retry" }),
+    (x) => (x.events[2].payload.output = "unconfirmed"),
+    (x) =>
+      (x.events[2].payload.output = JSON.stringify({
+        state: "published",
+        messageId: "different",
+        roomSeq: 12,
+      })),
+  ]) {
+    const x = structuredClone(f);
+    mutate(x);
+    assert.throws(() => validateNaturalBusinessObservationRound(x));
+  }
+});

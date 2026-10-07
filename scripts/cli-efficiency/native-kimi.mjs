@@ -26,6 +26,7 @@ export async function nativeKimiRound({
   save,
   round,
   config,
+  answerValidator = isEffectiveAnswer,
 }) {
   const args = kimiNativeArgs({ model: config.model, prompt, sessionId });
   const env = nativeEnvironment({
@@ -42,6 +43,7 @@ export async function nativeKimiRound({
     env,
   });
   checkKimiPrintLaunch(args, env, config);
+  round.nativeLaunchCwd = cwd;
   round.startedAt = new Date().toISOString();
   save();
   let run;
@@ -69,6 +71,21 @@ export async function nativeKimiRound({
     retries: parsed.retries,
   });
   save();
+  if (parsed.sessionId) {
+    try {
+      const wire = kimiWireRound(readKimiWire(parsed.sessionId), {
+        from: round.startedAt,
+        to: round.finishedAt,
+      });
+      round.nativeUsageEvidence = {
+        generations: wire.generations,
+        requestCoverage: wire.requestCoverage,
+      };
+    } catch (error) {
+      round.nativeUsageRecoveryError = String(error);
+    }
+    save();
+  }
   assert.equal(run.exit, 0, "Native CLI failed");
   assert.ok(parsed.sessionId, "Native session id missing");
   if (sessionId) assert.equal(parsed.sessionId, sessionId, "Session changed");
@@ -79,7 +96,7 @@ export async function nativeKimiRound({
   });
   save();
   assert.ok(
-    isEffectiveAnswer(parsed.answer),
+    answerValidator(parsed.answer),
     "Missing effective final answer; retain cost evidence",
   );
   return parsed.sessionId;

@@ -37,6 +37,7 @@ export async function nativeClaudeRound({
   save,
   round,
   config,
+  answerValidator = isEffectiveAnswer,
 }) {
   // Same process-only memory and global-config isolation policy as the
   // product's Claude drivers.
@@ -63,6 +64,7 @@ export async function nativeClaudeRound({
   const executable = execFileSync("which", ["claude"], {
     encoding: "utf8",
   }).trim();
+  round.nativeLaunchCwd = cwd;
   round.startedAt = new Date().toISOString();
   save();
   let run;
@@ -91,6 +93,11 @@ export async function nativeClaudeRound({
     models: parsed.models,
     usageGaps: parsed.gaps,
   });
+  save();
+  round.nativeUsageEvidence = {
+    generations: parsed.generations,
+    gaps: parsed.gaps,
+  };
   save();
   assert.equal(run.exit, 0, "Native CLI failed");
   assert.ok(parsed.result && !parsed.result.isError, "Native turn failed");
@@ -127,7 +134,7 @@ export async function nativeClaudeRound({
   );
   save();
   assert.ok(
-    isEffectiveAnswer(parsed.answer),
+    answerValidator(parsed.answer),
     "Missing effective final answer; retain cost evidence",
   );
   return parsed.sessionId;

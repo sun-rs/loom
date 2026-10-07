@@ -75,6 +75,7 @@ export function writeGuardedShim({
   effort,
   options = {},
   launchRecordPath,
+  memoryRecordPath,
 }) {
   const entry = MODULES[provider];
   if (!entry) throw new Error(`No gate guard for ${provider}`);
@@ -115,9 +116,13 @@ export function writeGuardedShim({
     launchRecordPath === undefined
       ? ""
       : `import {appendGateLaunchRecord} from ${JSON.stringify(new URL("./drift-attach.mjs", import.meta.url).href)};\nappendGateLaunchRecord(${JSON.stringify(launchRecordPath)});\n`;
+  const memoryRecord =
+    memoryRecordPath === undefined
+      ? ""
+      : `import {appendMultiLaunchEvidence} from ${JSON.stringify(new URL("./multi-launch-evidence.mjs", import.meta.url).href)};\nappendMultiLaunchEvidence(${JSON.stringify(memoryRecordPath)},${JSON.stringify(provider)},${JSON.stringify(realCli)});\n`;
   writeFileSync(
     path,
-    `#!/usr/bin/env node\nimport {${fn}} from ${JSON.stringify(href)};\n${record}await ${fn}(${JSON.stringify(realCli)}, ${JSON.stringify(approved)}${extra});\n`,
+    `#!/usr/bin/env node\nimport {${fn}} from ${JSON.stringify(href)};\n${record}${memoryRecord}await ${fn}(${JSON.stringify(realCli)}, ${JSON.stringify(approved)}${extra});\n`,
     { mode: 0o700 },
   );
   return path;

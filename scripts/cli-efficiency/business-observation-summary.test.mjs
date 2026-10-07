@@ -216,3 +216,27 @@ test("durable unknown attempts are separate overlapping costs, never lost or dou
   assert.equal(s.checkpoints[1].total.ratios, null);
   assert.equal(s.sameQuality.eligible, false);
 });
+
+test("known usage cannot hide canceled request coverage gaps", () => {
+  const a = arms();
+  a.native.rounds[0].metrics.requestCoverage = {
+    status: "incomplete",
+    requests: 2,
+    reported: 1,
+  };
+  const s = summarizeBusinessObservation(a);
+  assert.equal(s.observedCosts.native.status, "unknown");
+  assert.equal(s.observedCosts.native.roundMetrics.totals, null);
+  assert.equal(s.observedCosts.native.roundMetrics.knownTotals.input, 360);
+  assert.equal(s.sameQuality.eligible, false);
+  assert.equal(s.checkpoints[0].total.ratios, null);
+});
+
+test("recovered failure usage remains known-only rather than complete cost evidence", () => {
+  const a = arms();
+  a.native.rounds[0].metrics.usageRecoveryIncomplete = true;
+  const s = summarizeBusinessObservation(a);
+  assert.equal(s.observedCosts.native.status, "unknown");
+  assert.equal(s.observedCosts.native.roundMetrics.knownTotals.input, 360);
+  assert.equal(s.sameQuality.eligible, false);
+});

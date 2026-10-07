@@ -402,7 +402,13 @@ export async function rahArm({
 // - opencode: the product-recorded generations (the same step-finish
 //   accounting as the native arm); the CLI database proves model and variant;
 // - kimi: the session wire (the product records no Kimi usage).
-function measureRah({ config, sessionId, round, replyAt, productUsage }) {
+export function measureRah({
+  config,
+  sessionId,
+  round,
+  replyAt,
+  productUsage,
+}) {
   if (config.provider === "codex")
     return measure(sessionId, round, { replyAt }, config, {
       turns: round.runs.length,

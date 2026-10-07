@@ -14,6 +14,14 @@ function fixture({
   missingAck = false,
   submissionKind = "final-output",
   memoryReadbackFault = false,
+  config = {
+    provider: "codex",
+    model: "gpt-6-luna",
+    effort: "low",
+    bindingId: "gpt-6-luna",
+  },
+  launchRows = [],
+  omitMarkers = false,
 } = {}) {
   const arm = { rounds: [], processes: [] };
   const messages = [],
@@ -53,7 +61,7 @@ function fixture({
     subscriptionCursors: [...subscriptionCursors],
     events: [...events],
     markers: runs
-      .filter((r) => r.replySeq)
+      .filter((r) => r.replySeq && !omitMarkers)
       .map((r) => ({
         run_attempt_id: r.runAttemptId,
         activation_id: r.activationId,
@@ -67,6 +75,7 @@ function fixture({
       instance_runtime_id: `rt-${s}`,
       native_session_id: `session-${s}`,
       state: "idle",
+      pid: 123,
     })),
     usageRows: runs.map((r) => ({
       run_attempt_id: r.runAttemptId,
@@ -80,6 +89,15 @@ function fixture({
     runAttemptId: r.runAttemptId,
     completeness: "complete",
     gaps: [],
+    generations: [
+      {
+        responseId: r.runAttemptId,
+        inputTokens: 1,
+        cachedInputTokens: 0,
+        outputTokens: 1,
+        observedAt: r.finishedAt,
+      },
+    ],
     totals: {
       inputTokens: 1,
       cachedInputTokens: 0,
@@ -132,9 +150,10 @@ function fixture({
               runtimeOfferId: "offer",
               modelBindingDescriptors: [
                 {
-                  modelBindingId: "gpt-6-luna",
-                  modelId: "gpt-6-luna",
-                  supportedReasoning: ["low"],
+                  modelBindingId: config.bindingId,
+                  modelId: config.model,
+                  supportedReasoning:
+                    config.effort === null ? [] : [config.effort],
                 },
               ],
             },
@@ -170,6 +189,7 @@ function fixture({
         });
         const r = {
           runAttemptId: `run-${runs.length}`,
+          instanceRuntimeId: `rt-${s}`,
           participantId: s,
           roomId: "room",
           activationId: `activation-${seq}`,
@@ -219,6 +239,7 @@ function fixture({
           type: "message.posted",
           aggregate_type: "message",
           aggregate_id: `reply-${seq}`,
+          payload_json: JSON.stringify({ activationId: r.activationId }),
         });
         messages.push({
           messageId: `reply-${seq}`,
@@ -250,7 +271,14 @@ function fixture({
       return [];
     }
     listPlacements() {
-      return [{ resolvedModel: { modelId: "gpt-6-luna", reasoning: "low" } }];
+      return [
+        {
+          resolvedModel: {
+            modelId: config.model,
+            reasoning: config.effort ?? undefined,
+          },
+        },
+      ];
     }
   }
   return {
@@ -261,13 +289,8 @@ function fixture({
     },
     options: {
       root: "/fake",
-      cwd: "/snapshot",
-      config: {
-        provider: "codex",
-        model: "gpt-6-luna",
-        effort: "low",
-        bindingId: "gpt-6-luna",
-      },
+      cwd: config.provider === "codex" ? "/snapshot" : "/tmp",
+      config,
       steps: [
         { speaker: "a", body: "first" },
         { speaker: "b", body: "second" },
@@ -286,6 +309,27 @@ function fixture({
       transcript: () => [
         { type: "session_meta", payload: { memory_mode: memoryMode } },
       ],
+      readLaunchEvidence: () =>
+        launchRows.flatMap((row) =>
+          runs.map((r) => ({
+            ...row,
+            at: r.startedAt ?? new Date().toISOString(),
+            runAttemptId: r.runAttemptId,
+            parentPid: 123,
+          })),
+        ),
+      measureProduct: ({ productUsage }) => {
+        assert.equal(
+          productUsage.generations.length,
+          productUsage.totals.generations,
+        );
+        return {
+          input: 1,
+          cached: 0,
+          output: 1,
+          generations: 1,
+        };
+      },
       measure: () => ({
         input: retry ? 2 : 1,
         cached: 0,
@@ -775,4 +819,128 @@ test("platform memory override drift stops next Human admission and preserves ev
     f.arm.platformMemoryPolicyEvidence.latestOverrides[0].read_enabled,
     1,
   );
+});
+
+test("business product routes all approved CLIs and preserves memory, nullable effort, ACK and native measurement fences", async () => {
+  const { multiLaunchEvidence } = await import("./multi-launch-evidence.mjs");
+  for (const [provider, model, effort, version, args, env] of [
+    [
+      "claude",
+      "haiku",
+      null,
+      "2.1.287 (Claude Code)",
+      ["--print", "--setting-sources", "project,local", "--strict-mcp-config"],
+      { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" },
+    ],
+    ["kimi", "kimi-code/k3-256k", "low", "0.39.1", ["acp"], {}],
+    [
+      "opencode",
+      "deepseek/deepseek-flash",
+      "low",
+      "1.18.32",
+      ["serve", "--pure"],
+      {
+        OPENCODE_DISABLE_CLAUDE_CODE: "1",
+        OPENCODE_DISABLE_EXTERNAL_SKILLS: "1",
+      },
+    ],
+  ]) {
+    const config = { provider, model, effort, bindingId: model };
+    const rows = [
+      multiLaunchEvidence({
+        provider,
+        version,
+        args,
+        env,
+        cwd: "/tmp",
+        at: "2000-01-01T00:00:00Z",
+      }),
+    ];
+    for (const missing of [false, true]) {
+      const f = fixture({
+        config,
+        launchRows: missing ? [] : rows,
+        submissionKind: null,
+      });
+      let prepared;
+      const deps = {
+        ...f.dependencies,
+        prepareGateDaemon: async (o) => {
+          prepared = o;
+          return f.dependencies.prepareGateDaemon(o);
+        },
+      };
+      if (missing)
+        await assert.rejects(
+          runMultiProduct(
+            { ...f.options, productArm: "worker-delivery" },
+            deps,
+          ),
+          /launch memory/,
+        );
+      else {
+        await runMultiProduct(
+          { ...f.options, productArm: "worker-delivery" },
+          deps,
+        );
+        assert.equal(f.arm.status, "complete");
+        assert.equal(prepared.provider, provider);
+        assert.equal(prepared.warm, provider === "opencode");
+        assert.match(prepared.memoryRecordPath, /memory-launch/);
+        assert.ok(
+          f.arm.rounds.every(
+            (r) => r.actualMemoryOff && r.actualWorkspaceVerified,
+          ),
+        );
+        assert.equal(
+          f.requests.find((r) => r.path.endsWith("roles/create")).body
+            .configuration.instructions,
+          provider === "claude"
+            ? "Follow the workspace CLAUDE.md."
+            : "Follow the workspace AGENTS.md.",
+        );
+      }
+    }
+  }
+});
+
+test("explicit natural observation allows zero final markers but keeps canonical ACK and sole successful Run", async () => {
+  const make = (o) =>
+    fixture({ submissionKind: null, omitMarkers: true, ...o });
+  const f = make();
+  await runMultiProduct(
+    {
+      ...f.options,
+      productArm: "worker-delivery",
+      completionPolicy: "canonical-and-ack/v1",
+    },
+    f.dependencies,
+  );
+  assert.equal(f.arm.status, "complete");
+  assert.ok(f.arm.rounds.every((r) => r.finalMarker === null));
+  const strict = make();
+  await assert.rejects(
+    runMultiProduct(
+      { ...strict.options, productArm: "worker-delivery" },
+      strict.dependencies,
+    ),
+    /marker/,
+  );
+  for (const problem of [
+    { missingAck: true },
+    { retry: true },
+    { extraRun: true },
+  ]) {
+    const g = make(problem);
+    await assert.rejects(
+      runMultiProduct(
+        {
+          ...g.options,
+          productArm: "worker-delivery",
+          completionPolicy: "canonical-and-ack/v1",
+        },
+        g.dependencies,
+      ),
+    );
+  }
 });

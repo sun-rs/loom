@@ -11,7 +11,7 @@ import {
 import { validateBusinessObservationRound } from "./cli-efficiency/business-observation-validation.mjs";
 import { summarizeBusinessObservation } from "./cli-efficiency/business-observation-summary.mjs";
 
-function invocation(args) {
+export function businessLongInvocation(args) {
   assert.ok(
     args.length === 2 &&
       ["--plan", "--paid"].includes(args[0]) &&
@@ -68,12 +68,12 @@ function invocation(args) {
     },
   };
 }
-export function businessLongPlan(args, version) {
-  const { mode, profile } = invocation(args);
-  return multiPlan([mode], version, profile);
+export function businessLongPlan(args, version, environment = {}) {
+  const { mode, profile } = businessLongInvocation(args);
+  return multiPlan([mode], version, profile, environment);
 }
 export function runBusinessLong(args) {
-  const { mode, profile } = invocation(args);
+  const { mode, profile } = businessLongInvocation(args);
   return runMultiChannel([mode], profile);
 }
 if (

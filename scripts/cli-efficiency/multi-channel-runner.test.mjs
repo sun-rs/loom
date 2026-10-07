@@ -179,3 +179,51 @@ test("validation fence passes arm identity and worker-mcp still requires product
     /product usage/i,
   );
 });
+
+test("long admission preserves but refuses canceled-request usage gaps even if ledger generations are complete", () => {
+  const base = {
+    speaker: "a",
+    sessionId: "a",
+    longStageSucceeded: true,
+    actualMemoryOff: true,
+    actualIdentityVerified: true,
+    actualWorkspaceVerified: true,
+    metrics: {
+      input: 10,
+      cached: 0,
+      uncached: 10,
+      output: 2,
+      generations: 1,
+      requestCoverage: {
+        status: "incomplete",
+        requests: 2,
+        matchedRequests: 1,
+        unreportedRequests: 1,
+        unmatchedUsageRecords: 0,
+      },
+    },
+  };
+  assert.throws(
+    () => validateMultiHistory({ rounds: [base] }),
+    /request.*coverage/i,
+  );
+  assert.equal(base.metrics.input, 10);
+  assert.doesNotThrow(() =>
+    validateMultiHistory({
+      rounds: [
+        {
+          ...base,
+          metrics: {
+            ...base.metrics,
+            requestCoverage: {
+              ...base.metrics.requestCoverage,
+              status: "complete",
+              requests: 1,
+              unreportedRequests: 0,
+            },
+          },
+        },
+      ],
+    }),
+  );
+});
