@@ -1,0 +1,50 @@
+{
+  "kind": "read-only upstream source comparison; no provider calls or installed CLI changes",
+  "releaseTag": "rust-v0.160.0",
+  "releaseCommit": "a956835d020762cb2b570053af06f643a11c0ecc",
+  "observedMainCommit": "0b863c69f50335acd92164aab971cb58d298c2fe",
+  "sources": [
+    {
+      "url": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/app-server/src/request_processors/thread_processor.rs",
+      "sha256": "786c0549e5c1b57421e03472f3b8c3519090849fb8401163f3da5cc2c55b66be",
+      "bytes": 251617
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/0b863c69f50335acd92164aab971cb58d298c2fe/codex-rs/app-server/src/request_processors/thread_processor.rs",
+      "sha256": "2c40a6db590c9823a6775b28c2e125544583246318ce038166d28fb57a10ab29",
+      "bytes": 252303
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/app-server/src/request_processors/thread_lifecycle.rs",
+      "sha256": "204a9b470a4ee86fbc7cdbc6737291a8dea678c562220153df4ccd57f4545ea4",
+      "bytes": 34305
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/app-server/src/thread_state.rs",
+      "sha256": "a3f9d252d61c9a78c50db119c87796cec92a734971762c1ba013791af2556e33",
+      "bytes": 23440
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/app-server-protocol/src/protocol/v2/thread.rs",
+      "sha256": "d5e626a8f3bade6865a6274642a607124bea49cf3ebdbc202f70e8d2a976dafb",
+      "bytes": 78367
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/0b863c69f50335acd92164aab971cb58d298c2fe/codex-rs/app-server-protocol/src/protocol/v2/thread.rs",
+      "sha256": "553d99d01eed0c7a9073f481938f7dd68ef633879be0e1ffd8373778c937b158",
+      "bytes": 78993
+    }
+  ],
+  "findings": [
+    "New ThreadState defaults raw events to false.",
+    "thread/start carries experimental_raw_events into listener attachment.",
+    "Fresh-process thread/resume attaches listener with literal raw_events_enabled false.",
+    "Listener discards RawResponseItem and RawResponseCompleted while opt-in false.",
+    "Inspected main retains the same cold-resume false and lacks a ThreadResumeParams raw switch."
+  ],
+  "limits": [
+    "Source revision and installed generated schema/observed wire agree; no claim all versions lack a supported setter.",
+    "No upstream patch was built or installed; no Loom transport barrier relaxed.",
+    "This explains observed missing raw notifications; it does not explain P122 equal-generation long-input growth."
+  ]
+}

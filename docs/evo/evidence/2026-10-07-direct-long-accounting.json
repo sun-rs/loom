@@ -1,0 +1,122 @@
+{
+  "sourceCommit": "630ca56b0d0d7db55b99b0c2a5eebaf62975c0e7",
+  "audit": {
+    "status": "passed",
+    "actualHttp": 72,
+    "nativeRequests": 36,
+    "productRequests": 36,
+    "continuousSessions": 6,
+    "roundsPerSession": 12,
+    "nativeMemoryDisabledAllSessions": true,
+    "exactModelEffortContexts": 72,
+    "uniquePublishedReplies": 36,
+    "consumerAckAndFinalMarkerVerified": 36,
+    "fullDirectOutputsRetained": 36,
+    "priorOutputHistoryExact": true,
+    "stablePrefixesAndPreservedHistory": true,
+    "requestMetadataAndByteSumsVerified": 72,
+    "formalAccountingTotalsMatch": true,
+    "formalClassifierUnknownRequests": 33,
+    "limits": [
+      "Synthetic answers and usage; not real-model quality, token, cache or price evidence.",
+      "Official classifier does not yet recognize direct function items; its unknown flags are preserved. Private classification and official complete byte totals cross-check.",
+      "Compared same workloads and answer bodies with older capture; opaque IDs, paths and timings vary, so not exact per-patch causal attribution."
+    ]
+  },
+  "checkpoints": [
+    {
+      "roundsPerSession": 1,
+      "cumulativeWireBytes": {
+        "product": 211388,
+        "native": 181716
+      },
+      "cumulativeByteRatio": 1.1632877677254616,
+      "currentRoundWireBytes": {
+        "product": 211388,
+        "native": 181716
+      },
+      "currentRoundByteRatio": 1.1632877677254616
+    },
+    {
+      "roundsPerSession": 4,
+      "cumulativeWireBytes": {
+        "product": 893471,
+        "native": 753021
+      },
+      "cumulativeByteRatio": 1.1865153827051305,
+      "currentRoundWireBytes": {
+        "product": 234979,
+        "native": 194424
+      },
+      "currentRoundByteRatio": 1.208590503230054
+    },
+    {
+      "roundsPerSession": 8,
+      "cumulativeWireBytes": {
+        "product": 1912076,
+        "native": 1572822
+      },
+      "cumulativeByteRatio": 1.2156976441072163,
+      "currentRoundWireBytes": {
+        "product": 266736,
+        "native": 211545
+      },
+      "currentRoundByteRatio": 1.2608948450684252
+    },
+    {
+      "roundsPerSession": 12,
+      "cumulativeWireBytes": {
+        "product": 3059417,
+        "native": 2462799
+      },
+      "cumulativeByteRatio": 1.2422520067614125,
+      "currentRoundWireBytes": {
+        "product": 299202,
+        "native": 229371
+      },
+      "currentRoundByteRatio": 1.3044456361091856
+    }
+  ],
+  "remainingCategoryWireDifferences": {
+    "baseInstructions": 0,
+    "currentWake": 18988,
+    "delegationPolicy": 0,
+    "historicalInterruptions": 69696,
+    "historicalNativeAnswers": -30345,
+    "historicalToolCalls": 40938,
+    "historicalToolResults": 61588,
+    "historicalWakes": 110169,
+    "inputArraySyntax": 396,
+    "requestOutsideInput": -1908,
+    "runtimePolicy": 233244,
+    "teamInstructions": 0,
+    "toolDefinitions": 92880,
+    "workspaceContext": 972
+  },
+  "historicalComparison": {
+    "oldNativeWireBytes": 2462799,
+    "currentNativeWireBytes": 2462799,
+    "oldProductWireBytes": 3212939,
+    "currentProductWireBytes": 3059417,
+    "oldWireOverhead": 750140,
+    "currentWireOverhead": 596618,
+    "overheadReductionBytes": 153522,
+    "overheadReductionFraction": 0.20465779721118724,
+    "productTotalReductionFraction": 0.04778241977205294
+  },
+  "identitySuffixObservation": {
+    "sourceOwner": "packages/kernel/src/role-catalog.ts",
+    "suffixCharacters": 25,
+    "observedOccurrencesInProductInput": 1800,
+    "suffixUtf8Bytes": 45000,
+    "notAuthorizedRemoval": true
+  },
+  "limits": [
+    "Synthetic answers and usage; not real-model quality, token, cache or price evidence.",
+    "Official classifier does not yet recognize direct function items; its unknown flags are preserved. Private classification and official complete byte totals cross-check.",
+    "Compared same workloads and answer bodies with older capture; opaque IDs, paths and timings vary, so not exact per-patch causal attribution.",
+    "Cumulative JSON request-byte ratios are not token or price ratios, nor a replacement for P122 uncached input ratio.",
+    "Existing history is preserved; no automatic session replacement or removal.",
+    "Warm continuous sample only; independent cold-resume 2-request limitation remains."
+  ]
+}
