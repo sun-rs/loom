@@ -281,3 +281,47 @@ test("known foreground shell display/timeout options do not lose authority check
       /shell/,
     );
 });
+
+test("OpenCode retains database tool parent/session provenance on both correlated events", () => {
+  const es = normalizeBusinessEvents("opencode", [
+    {
+      timestamp: "2026-10-07T00:00:00Z",
+      role: "assistant",
+      nativeSessionId: "s",
+      nativeMessageId: "assistant",
+      nativeParentId: "turn",
+      part: {
+        type: "tool",
+        callID: "call",
+        tool: "bash",
+        state: { status: "completed", input: { command: "pwd" }, output: "ok" },
+      },
+    },
+  ]);
+  assert.equal(es.length, 2);
+  for (const e of es)
+    assert.deepEqual(e.nativePublication, {
+      provider: "opencode",
+      sessionId: "s",
+      messageId: "assistant",
+      nativeTurnId: "turn",
+    });
+});
+
+test("OpenCode user input keeps native user ID distinct from assistant provenance", () => {
+  const [e] = normalizeBusinessEvents("opencode", [
+    {
+      timestamp: "2026-10-07T00:00:00Z",
+      role: "user",
+      nativeSessionId: "s",
+      nativeMessageId: "turn",
+      part: { type: "text", text: "source" },
+    },
+  ]);
+  assert.deepEqual(e.nativeInput, {
+    provider: "opencode",
+    sessionId: "s",
+    nativeTurnId: "turn",
+  });
+  assert.equal(e.nativePublication, undefined);
+});

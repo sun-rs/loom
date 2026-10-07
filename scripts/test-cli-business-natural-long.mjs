@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { businessLongInvocation } from "./test-cli-business-long.mjs";
 import { multiPlan, runMultiChannel } from "./test-cli-multi-channel.mjs";
 import { validateNaturalBusinessObservationRound } from "./cli-efficiency/business-observation-validation.mjs";
-function invocation(args) {
+export function naturalBusinessLongInvocation(args) {
   const { mode, profile } = businessLongInvocation(args);
   const id = "business-observation-natural-long/v1";
   return {
@@ -26,11 +26,11 @@ function invocation(args) {
   };
 }
 export function naturalBusinessLongPlan(args, version, environment = {}) {
-  const { mode, profile } = invocation(args);
+  const { mode, profile } = naturalBusinessLongInvocation(args);
   return multiPlan([mode], version, profile, environment);
 }
 export function runNaturalBusinessLong(args) {
-  const { mode, profile } = invocation(args);
+  const { mode, profile } = naturalBusinessLongInvocation(args);
   return runMultiChannel([mode], profile);
 }
 if (

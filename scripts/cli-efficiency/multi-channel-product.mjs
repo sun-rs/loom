@@ -6,6 +6,10 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { assertApprovedGateModel } from "./approved-models.mjs";
 import { measureRah } from "./rah.mjs";
+import { readMultiProviderEvents } from "./multi-provider.mjs";
+import { inspectBusinessToolCalls } from "./business-observation-validation.mjs";
+import { selectNaturalPublicationRun } from "./natural-publication-evidence.mjs";
+import { readColdSessionEvidence } from "./multi-cold-session.mjs";
 import { assertMultiLaunchEvidence } from "./multi-launch-evidence.mjs";
 import { join } from "node:path";
 import { RoomKernel } from "@rah-os/kernel";
@@ -75,6 +79,9 @@ export function readMultiEvidence({ stateDirectory, observer, actor, roomId }) {
       usageGaps: rows(
         "SELECT u.* FROM run_attempt_usage_gaps u JOIN run_attempts r ON r.run_attempt_id=u.run_attempt_id WHERE r.room_id=?",
       ),
+      sessions: rows(
+        "SELECT s.* FROM role_instance_sessions s JOIN memberships m ON m.principal_id=s.instance_id WHERE m.room_id=?",
+      ),
       runtimes: rows(
         "SELECT instance_runtime_id, participant_id, native_session_id, pid, state, turn_count, started_at, terminated_reason FROM instance_runtimes WHERE participant_id IN (SELECT principal_id FROM memberships WHERE room_id=?)",
       ),
@@ -126,6 +133,8 @@ export async function runMultiProduct(
     transcript,
     wait,
     readEvidence: readMultiEvidence,
+    readColdSessionEvidence,
+    readProviderEvents: readMultiProviderEvents,
     measureProduct: measureRah,
     readLaunchEvidence: (path) =>
       existsSync(path)
@@ -144,10 +153,14 @@ export async function runMultiProduct(
   const business = productArm === "worker-delivery";
   assert.ok(
     completionPolicy === undefined ||
-      (business && completionPolicy === "canonical-and-ack/v1"),
+      (business &&
+        ["canonical-and-ack/v1", "canonical-and-ack/v2"].includes(
+          completionPolicy,
+        )),
     "Unknown completion policy",
   );
-  const natural = completionPolicy === "canonical-and-ack/v1";
+  const natural = completionPolicy !== undefined;
+  const naturalV2 = completionPolicy === "canonical-and-ack/v2";
   assert.ok(
     Number.isSafeInteger(maxRunAttempts) && maxRunAttempts >= steps.length,
   );
@@ -530,27 +543,39 @@ export async function runMultiProduct(
         assert.equal(value.completeness, "complete");
         assert.deepEqual(value.gaps, []);
         assert.ok(!value.truncated);
-        const rt = data.runtimes.find(
-          (r) => r.instance_runtime_id === value.execution?.instanceRuntimeId,
-        );
-        assert.ok(rt?.native_session_id, "Missing runtime session evidence");
+        let nativeSessionId;
+        if (["claude", "kimi"].includes(config.provider)) {
+          const binding = await deps.readColdSessionEvidence({
+            stateDirectory: gate.stateDirectory,
+            provider: config.provider,
+            participantId: member.participantId,
+            roomId,
+            sessionState: data.sessions?.find(
+              (s) => s.instance_id === member.participantId,
+            ),
+            runs: data.runs,
+            expectedGeneration: member.sessionGeneration ?? 0,
+          });
+          member.sessionGeneration = binding.generation;
+          round.nativeSessionBinding = binding;
+          nativeSessionId = binding.sessionId;
+        } else {
+          const rt = data.runtimes.find(
+            (r) => r.instance_runtime_id === value.execution?.instanceRuntimeId,
+          );
+          assert.ok(rt?.native_session_id, "Missing runtime session evidence");
+          nativeSessionId = rt.native_session_id;
+          if (member.instanceRuntimeId)
+            assert.equal(
+              rt.instance_runtime_id,
+              member.instanceRuntimeId,
+              "Runtime changed",
+            );
+          member.instanceRuntimeId = rt.instance_runtime_id;
+        }
         if (member.sessionId)
-          assert.equal(
-            rt.native_session_id,
-            member.sessionId,
-            "Session changed",
-          );
-        if (
-          member.instanceRuntimeId &&
-          ["codex", "opencode"].includes(config.provider)
-        )
-          assert.equal(
-            rt.instance_runtime_id,
-            member.instanceRuntimeId,
-            "Runtime changed",
-          );
-        member.sessionId = rt.native_session_id;
-        member.instanceRuntimeId = rt.instance_runtime_id;
+          assert.equal(nativeSessionId, member.sessionId, "Session changed");
+        member.sessionId = nativeSessionId;
       }
       const markers = data.markers.filter(
         (m) =>
@@ -565,14 +590,45 @@ export async function runMultiProduct(
       if (natural)
         assert.ok(
           markers.length <= 1 &&
-            (markers.length === 1 || round.runs.length === 1),
+            (markers.length === 1 || round.runs.length === 1 || naturalV2),
           "Missing uniquely associated final Run",
         );
-      const run = business
-        ? markers.length
-          ? round.runs.find((r) => r.runAttemptId === markers[0].run_attempt_id)
-          : round.runs[0]
-        : round.runs[0];
+      let run;
+      if (naturalV2 && markers.length === 0) {
+        if (round.runs.length > 1)
+          assert.equal(
+            config.provider,
+            "opencode",
+            "Retry publication provenance unavailable for this CLI",
+          );
+        const publicationEvent = round.durableDeliveryProof.events.find(
+          (e) =>
+            e.aggregate_id === reply.messageId &&
+            e.room_id === roomId &&
+            e.room_seq === reply.roomSeq,
+        );
+        const receipts = inspectBusinessToolCalls(
+          deps.readProviderEvents(config.provider, member.sessionId),
+          round,
+          { collectReceipts: true },
+        ).publishedReceipts;
+        run = selectNaturalPublicationRun({
+          runs: round.runs,
+          receipts,
+          messageId: reply.messageId,
+          roomSeq: reply.roomSeq,
+          sessionId: member.sessionId,
+          activationId: JSON.parse(publicationEvent?.payload_json ?? "null")
+            ?.activationId,
+        });
+        round.publishingRunAttemptId = run.runAttemptId;
+      } else
+        run =
+          business && markers.length
+            ? round.runs.find(
+                (r) => r.runAttemptId === markers[0].run_attempt_id,
+              )
+            : round.runs[0];
       const finalUsage = attemptUsages[round.runs.indexOf(run)];
       assert.ok(
         runSucceeded(run, finalUsage.execution),

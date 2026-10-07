@@ -22,6 +22,7 @@ function fixture({
   },
   launchRows = [],
   omitMarkers = false,
+  coldShape = ["claude", "kimi"].includes(config.provider),
 } = {}) {
   const arm = { rounds: [], processes: [] };
   const messages = [],
@@ -70,13 +71,21 @@ function fixture({
         submission_kind: submissionKind,
         room_seq: r.replySeq,
       })),
-    runtimes: ["a", "b", "c"].map((s) => ({
-      participant_id: s,
-      instance_runtime_id: `rt-${s}`,
-      native_session_id: `session-${s}`,
-      state: "idle",
-      pid: 123,
+    sessions: ["a", "b", "c"].map((s) => ({
+      instance_id: s,
+      generation: 0,
+      bound: 1,
+      bound_run_attempt_id: `run-${s}`,
     })),
+    runtimes: coldShape
+      ? []
+      : ["a", "b", "c"].map((s) => ({
+          participant_id: s,
+          instance_runtime_id: `rt-${s}`,
+          native_session_id: `session-${s}`,
+          state: "idle",
+          pid: 123,
+        })),
     usageRows: runs.map((r) => ({
       run_attempt_id: r.runAttemptId,
       input_tokens: stopped && lateUsage ? 2 : 1,
@@ -104,7 +113,9 @@ function fixture({
       outputTokens: 1,
       generations: 1,
     },
-    execution: { instanceRuntimeId: `rt-${r.participantId}` },
+    execution: coldShape
+      ? null
+      : { instanceRuntimeId: `rt-${r.participantId}` },
     finalInterrupt: {},
   });
   const gate = {
@@ -189,7 +200,8 @@ function fixture({
         });
         const r = {
           runAttemptId: `run-${runs.length}`,
-          instanceRuntimeId: `rt-${s}`,
+          nativeTurnId: `turn-${runs.length}`,
+          ...(coldShape ? {} : { instanceRuntimeId: `rt-${s}` }),
           participantId: s,
           roomId: "room",
           activationId: `activation-${seq}`,
@@ -202,6 +214,7 @@ function fixture({
           runs.push({
             ...r,
             runAttemptId: `${r.runAttemptId}-retry`,
+            nativeTurnId: `${r.nativeTurnId}-retry`,
             exitCode: 1,
           });
         runs.push(r);
@@ -300,6 +313,14 @@ function fixture({
       save() {},
     },
     dependencies: {
+      readColdSessionEvidence: async ({
+        participantId,
+        expectedGeneration,
+      }) => ({
+        sessionId: `session-${participantId}`,
+        generation: expectedGeneration,
+        participantId,
+      }),
       prepareGateDaemon: async () => gate,
       RoomKernel: Observer,
       readEvidence: evidence,
@@ -324,10 +345,10 @@ function fixture({
           productUsage.totals.generations,
         );
         return {
-          input: 1,
+          input: productUsage.totals.inputTokens,
           cached: 0,
-          output: 1,
-          generations: 1,
+          output: productUsage.totals.outputTokens,
+          generations: productUsage.totals.generations,
         };
       },
       measure: () => ({
@@ -941,6 +962,131 @@ test("explicit natural observation allows zero final markers but keeps canonical
         },
         g.dependencies,
       ),
+    );
+  }
+});
+
+test("cold Claude product runs preserve native session without a fabricated warm runtime row", async () => {
+  const f = fixture({
+    coldShape: true,
+    config: {
+      provider: "claude",
+      model: "haiku",
+      effort: null,
+      bindingId: "haiku",
+    },
+    submissionKind: null,
+    launchRows: [
+      {
+        provider: "claude",
+        at: "2026-01-01",
+        cwd: "/tmp",
+        version: "2.1.287 (Claude Code)",
+        memoryPolicy: { status: "enforced" },
+        evidence: "actual-guarded-launch-options/v1",
+      },
+    ],
+  });
+  await runMultiProduct(
+    { ...f.options, productArm: "worker-delivery" },
+    f.dependencies,
+  );
+  assert.equal(f.arm.status, "complete");
+  assert.equal(f.arm.runtimes.length, 0);
+  assert.ok(
+    f.arm.rounds.every(
+      (r) =>
+        r.sessionId === `session-${r.participantId}` &&
+        r.nativeSessionBinding.generation === 0,
+    ),
+  );
+});
+
+test("natural v2 selects the proven publishing Run and retains every retry charge; v1 still refuses", async () => {
+  const config = {
+    provider: "opencode",
+    model: "deepseek/deepseek-flash",
+    effort: "low",
+    bindingId: "deepseek/deepseek-flash",
+  };
+  const f = fixture({
+    config,
+    retry: true,
+    omitMarkers: true,
+    submissionKind: null,
+    launchRows: [
+      {
+        provider: "opencode",
+        at: "2026-01-01",
+        cwd: "/tmp",
+        version: "1.18.32",
+        memoryPolicy: { status: "not-applicable" },
+        evidence: "actual-guarded-launch-options/v1",
+      },
+    ],
+  });
+  f.dependencies.readProviderEvents = (_provider, sessionId) => {
+    const r = f.arm.rounds.at(-1),
+      run = r.runs.find((x) => x.exitCode === 0),
+      m = r.replies[0],
+      nativePublication = {
+        provider: "opencode",
+        sessionId,
+        messageId: "assistant",
+        nativeTurnId: run.nativeTurnId,
+      };
+    return [
+      {
+        type: "response_item",
+        timestamp: r.finishedAt,
+        nativePublication,
+        payload: {
+          type: "function_call",
+          call_id: "call",
+          name: "mcp__loom_worker__loom_reply",
+          arguments: JSON.stringify({ body: m.body, final: false }),
+        },
+      },
+      {
+        type: "response_item",
+        timestamp: r.finishedAt,
+        nativePublication,
+        payload: {
+          type: "function_call_output",
+          call_id: "call",
+          output: JSON.stringify({
+            isError: false,
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  state: "published",
+                  messageId: m.messageId,
+                  roomSeq: m.roomSeq,
+                }),
+              },
+            ],
+          }),
+        },
+      },
+    ];
+  };
+  await runMultiProduct(
+    {
+      ...f.options,
+      productArm: "worker-delivery",
+      completionPolicy: "canonical-and-ack/v2",
+      maxRunAttempts: 6,
+    },
+    f.dependencies,
+  );
+  assert.equal(f.arm.status, "complete");
+  for (const r of f.arm.rounds) {
+    assert.equal(r.runs.length, 2);
+    assert.equal(r.productUsage.totals.generations, 2);
+    assert.equal(
+      r.publishingRunAttemptId,
+      r.runs.find((x) => x.exitCode === 0).runAttemptId,
     );
   }
 });

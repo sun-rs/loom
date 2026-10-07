@@ -40,9 +40,16 @@ const fail = (type) => {
 export function normalizeBusinessEvents(provider, rows) {
   if (provider === "codex") return rows;
   const out = [];
+  let nativePublication, nativeInput;
   const emit = (at, payload) => {
     assert.ok(Number.isFinite(Date.parse(at)), "Missing provider timestamp");
-    out.push({ type: "response_item", timestamp: at, payload });
+    out.push({
+      type: "response_item",
+      timestamp: at,
+      payload,
+      ...(nativePublication ? { nativePublication } : {}),
+      ...(nativeInput ? { nativeInput } : {}),
+    });
   };
   const message = (at, text) =>
     emit(at, {
@@ -94,6 +101,32 @@ export function normalizeBusinessEvents(provider, rows) {
       }),
     });
   for (const row of rows) {
+    nativePublication = undefined;
+    nativeInput =
+      provider === "opencode" &&
+      row.role === "user" &&
+      [row.nativeSessionId, row.nativeMessageId].every(
+        (v) => typeof v === "string" && v,
+      )
+        ? {
+            provider: "opencode",
+            sessionId: row.nativeSessionId,
+            nativeTurnId: row.nativeMessageId,
+          }
+        : undefined;
+    if (
+      provider === "opencode" &&
+      row.role === "assistant" &&
+      [row.nativeSessionId, row.nativeMessageId, row.nativeParentId].every(
+        (v) => typeof v === "string" && v.length > 0,
+      )
+    )
+      nativePublication = {
+        provider: "opencode",
+        sessionId: row.nativeSessionId,
+        messageId: row.nativeMessageId,
+        nativeTurnId: row.nativeParentId,
+      };
     if (provider === "claude") {
       if (!["user", "assistant"].includes(row.type)) continue;
       assert.ok(!row.isSidechain, "Unregistered sidechain execution");
@@ -193,7 +226,7 @@ export function readMultiProviderEvents(provider, sessionId) {
     const rows = db
       .prepare(
         `WITH RECURSIVE tree(id) AS (SELECT ? UNION SELECT s.id FROM session s JOIN tree t ON s.parent_id=t.id)
-   SELECT p.time_created,p.data,m.data AS message FROM part p JOIN message m ON m.id=p.message_id
+   SELECT p.time_created,p.data,p.session_id,p.message_id,m.data AS message FROM part p JOIN message m ON m.id=p.message_id
    WHERE p.session_id IN (SELECT id FROM tree) ORDER BY p.time_created,p.id`,
       )
       .all(sessionId);
@@ -203,6 +236,9 @@ export function readMultiProviderEvents(provider, sessionId) {
         const p = JSON.parse(r.data);
         return {
           part: p,
+          nativeSessionId: r.session_id,
+          nativeMessageId: r.message_id,
+          nativeParentId: JSON.parse(r.message).parentID,
           role: JSON.parse(r.message).role,
           timestamp: new Date(
             p.time?.start ?? p.state?.time?.start ?? r.time_created,

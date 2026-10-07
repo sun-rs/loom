@@ -19,7 +19,15 @@ const NATIVE_TITLE = "Loom efficiency gate native";
 
 // Native arm: one process per round, the same session resumed after round 1.
 // The explicit title avoids OpenCode's internal title-generation call.
-export function openCodeNativeArgs({ model, effort, prompt, sessionId }) {
+export function openCodeNativeArgs({
+  model,
+  effort,
+  prompt,
+  sessionId,
+  promptTransport = "argv",
+}) {
+  if (!["argv", "stdin"].includes(promptTransport))
+    throw new Error("Unknown native prompt transport");
   if (!model || !effort || typeof prompt !== "string")
     throw new Error("Native OpenCode args need model, effort and prompt");
   return [
@@ -35,7 +43,7 @@ export function openCodeNativeArgs({ model, effort, prompt, sessionId }) {
     "--variant",
     effort,
     ...(sessionId ? ["--session", sessionId] : ["--title", NATIVE_TITLE]),
-    prompt,
+    ...(promptTransport === "stdin" ? [] : [prompt]),
   ];
 }
 

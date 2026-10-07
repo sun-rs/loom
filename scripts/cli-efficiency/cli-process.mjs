@@ -20,8 +20,11 @@ export async function runLines({
   cwd,
   env,
   onSpawn,
+  input,
   timeoutMs = 240_000,
 }) {
+  if (input !== undefined && typeof input !== "string")
+    throw new TypeError("CLI input must be text");
   const entries = [];
   let buffer = "";
   let stderr = "";
@@ -30,8 +33,15 @@ export async function runLines({
     // OpenCode resolves its root from PWD before process.cwd(). A parent's
     // stale PWD must never redirect the native arm away from its fixture.
     env: { ...env, PWD: cwd },
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
   });
+  let inputError;
+  if (input !== undefined) {
+    child.stdin.on("error", (error) => {
+      inputError = String(error);
+    });
+    child.stdin.end(input);
+  }
   onSpawn?.(child.pid);
   let timedOut = false;
   const timer = setTimeout(() => {
@@ -54,7 +64,13 @@ export async function runLines({
       child.once("close", (code) => resolve(code));
     });
     if (buffer) entries.push({ line: buffer, at: Date.now() });
-    return { entries, exit, stderr, timedOut };
+    return {
+      entries,
+      exit,
+      stderr,
+      timedOut,
+      ...(inputError ? { inputError } : {}),
+    };
   } finally {
     clearTimeout(timer);
     clearTimeout(killTimer);

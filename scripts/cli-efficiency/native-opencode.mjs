@@ -28,12 +28,14 @@ export async function nativeOpenCodeRound({
   round,
   config,
   answerValidator = isEffectiveAnswer,
+  promptTransport = "argv",
 }) {
   const args = openCodeNativeArgs({
     model: config.model,
     effort: config.effort,
     prompt,
     sessionId,
+    promptTransport,
   });
   // Same process-only global-config isolation as the product's drivers,
   // user MCP servers included: OpenCode's own resolution (`debug config
@@ -83,6 +85,7 @@ export async function nativeOpenCodeRound({
   try {
     run = await runLines({
       executable,
+      ...(promptTransport === "stdin" ? { input: prompt } : {}),
       args,
       cwd,
       env,
@@ -100,6 +103,7 @@ export async function nativeOpenCodeRound({
     exit: run.exit,
     timeout: run.timedOut || undefined,
     stderr: run.stderr,
+    ...(run.inputError ? { inputError: run.inputError } : {}),
     sessionId: session,
     answer: parsed.answer,
     usageGaps: parsed.gaps,
@@ -112,6 +116,7 @@ export async function nativeOpenCodeRound({
   };
   save();
   assert.equal(run.exit, 0, "Native CLI failed");
+  assert.equal(run.inputError, undefined, "Native stdin delivery failed");
   assert.equal(parsed.errors.length, 0, "Native turn reported an error");
   assert.equal(parsed.sessionIds.length, 1, "Native session id changed");
   if (sessionId) assert.equal(session, sessionId, "Session changed");

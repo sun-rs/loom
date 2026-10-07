@@ -1,3 +1,4 @@
+import { selectNaturalPublicationRun } from "./natural-publication-evidence.mjs";
 import {
   WORKER_MCP_REPLY,
   isWorkerMcpReply,
@@ -219,6 +220,7 @@ export function inspectBusinessToolCalls(
       seen.add(p.call_id);
       pending.set(p.call_id, {
         type: p.type,
+        nativePublication: e.nativePublication,
         time,
         direct: isDirectWorkerMcp(p),
       });
@@ -259,8 +261,28 @@ export function inspectBusinessToolCalls(
           : "custom_tool_call_output",
       );
       pending.delete(p.call_id);
-      if (collectReceipts)
-        publishedReceipts.push(...publicationReceipts(p.output));
+      if (collectReceipts) {
+        let successfulNativeOutput = false;
+        try {
+          const output = JSON.parse(p.output);
+          successfulNativeOutput =
+            output.isError === false && Array.isArray(output.content);
+        } catch {}
+        const association =
+          successfulNativeOutput &&
+          call.nativePublication &&
+          e.nativePublication &&
+          JSON.stringify(call.nativePublication) ===
+            JSON.stringify(e.nativePublication)
+            ? call.nativePublication
+            : undefined;
+        publishedReceipts.push(
+          ...publicationReceipts(p.output).map((r) => ({
+            ...r,
+            ...(association ? { nativePublication: association } : {}),
+          })),
+        );
+      }
       if (call.direct) {
         const v = directWorkerMcpResult(p.output);
         if (v.state === "published") {
@@ -315,7 +337,7 @@ const normalize = (text) =>
     .trim();
 export function validateBusinessObservationRound(
   { armKind, round, previousRounds, events, expectedAnswer, evidenceText },
-  { allowNatural = false } = {},
+  { allowNatural = false, nativeAssociation = false } = {},
 ) {
   assert.ok(["native", "worker-delivery"].includes(armKind));
   const start = Date.parse(round.startedAt),
@@ -337,25 +359,73 @@ export function validateBusinessObservationRound(
           (i === 0 ? "complete-inline-input" : "previous-turn-only"),
       "invalid continuation evidence",
     );
-  const texts = events
-    .filter(
-      (e) =>
-        e.type === "response_item" &&
-        e.payload?.role === "user" &&
-        Date.parse(e.timestamp) >= start &&
-        Date.parse(e.timestamp) <= end,
-    )
-    .flatMap((e) =>
-      (e.payload.content ?? [])
-        .filter((c) => c.type === "input_text")
-        .map((c) => c.text),
-    );
-  assert.ok(texts.length, "no current input");
-  assert.equal(
-    texts.reduce((n, t) => n + t.split(evidenceText).length - 1, 0),
-    previousRounds.length ? 0 : 1,
-    "material retransmission or omission",
+  const inputEvents = events.filter(
+    (e) =>
+      e.type === "response_item" &&
+      e.payload?.role === "user" &&
+      Date.parse(e.timestamp) >= start &&
+      Date.parse(e.timestamp) <= end,
   );
+  const texts = inputEvents.flatMap((e) =>
+    (e.payload.content ?? [])
+      .filter((c) => c.type === "input_text")
+      .map((c) => c.text),
+  );
+  assert.ok(texts.length, "no current input");
+  const materialDeliveries = texts.reduce(
+    (n, t) => n + t.split(evidenceText).length - 1,
+    0,
+  );
+  const retryInputs =
+    nativeAssociation &&
+    armKind === "worker-delivery" &&
+    !previousRounds.length &&
+    round.runs?.length > 1;
+  if (retryInputs) {
+    const runs = round.runs;
+    assert.equal(
+      new Set(runs.map((r) => r.activationId)).size,
+      1,
+      "Cross-Activation retry input",
+    );
+    assert.ok(
+      runs.every(
+        (r) =>
+          typeof r.activationId === "string" &&
+          r.activationId &&
+          typeof r.nativeTurnId === "string" &&
+          r.nativeTurnId,
+      ),
+      "Missing native retry identity",
+    );
+    assert.equal(
+      new Set(runs.map((r) => r.nativeTurnId)).size,
+      runs.length,
+      "Duplicate native retry identity",
+    );
+    assert.equal(inputEvents.length, runs.length, "Unassociated retry input");
+    for (const run of runs) {
+      const input = inputEvents.filter(
+        (e) =>
+          e.nativeInput?.provider === "opencode" &&
+          e.nativeInput.sessionId === round.sessionId &&
+          e.nativeInput.nativeTurnId === run.nativeTurnId,
+      );
+      assert.equal(input.length, 1, "Missing unique native Run input");
+      assert.equal(
+        (input[0].payload.content ?? [])
+          .filter((c) => c.type === "input_text")
+          .reduce((n, c) => n + c.text.split(evidenceText).length - 1, 0),
+        1,
+        "Retry material retransmission or omission",
+      );
+    }
+  } else
+    assert.equal(
+      materialDeliveries,
+      previousRounds.length ? 0 : 1,
+      "material retransmission or omission",
+    );
   const tools = inspectBusinessToolCalls(events, round, {
     collectReceipts: allowNatural,
   });
@@ -397,9 +467,18 @@ export function validateBusinessObservationRound(
     assert.ok(p.runs.length);
     const run = marker
       ? p.runs.find((r) => r.runAttemptId === marker.run_attempt_id)
-      : p.runs.length === 1
-        ? p.runs[0]
-        : undefined;
+      : nativeAssociation
+        ? selectNaturalPublicationRun({
+            runs: p.runs,
+            receipts: tools.publishedReceipts,
+            messageId: message.messageId,
+            roomSeq: message.roomSeq,
+            sessionId: round.sessionId,
+            activationId: payload.activationId,
+          })
+        : p.runs.length === 1
+          ? p.runs[0]
+          : undefined;
     if (allowNatural) {
       assert.ok(
         run &&
@@ -471,6 +550,14 @@ export function validateBusinessObservationRound(
         ? "incorrect"
         : "unscorable";
   return {
+    ...(nativeAssociation
+      ? {
+          inputObservation: {
+            materialDeliveries,
+            materialRetransmissions: retryInputs ? materialDeliveries - 1 : 0,
+          },
+        }
+      : {}),
     executionIntegrity: "verified",
     deliveryVerdict: "delivered",
     qualityVerdict,
@@ -489,4 +576,11 @@ export function validateBusinessObservationRound(
 // Separate observation profile; the original strict-final gate is unchanged.
 export function validateNaturalBusinessObservationRound(args) {
   return validateBusinessObservationRound(args, { allowNatural: true });
+}
+
+export function validateNaturalBusinessObservationRoundV2(args) {
+  return validateBusinessObservationRound(args, {
+    allowNatural: true,
+    nativeAssociation: true,
+  });
 }

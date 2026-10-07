@@ -87,12 +87,20 @@ export function multiPlan(
   );
   const config = parseEfficiencyEnv(environment);
   assertMultiProviderVersion(config.provider, version);
+  const nativePromptTransport =
+    profile.nativePromptTransports?.[config.provider];
+  assert.ok(
+    nativePromptTransport === undefined ||
+      (config.provider === "opencode" && nativePromptTransport === "stdin"),
+    "Unregistered native prompt transport",
+  );
   assert.ok(
     config.provider === "codex" || productArm === "worker-delivery",
     "This profile requires Codex; cross-provider business profile required",
   );
   const identity = {
     experimentVersion: profile.experimentVersion,
+    ...(nativePromptTransport ? { nativePromptTransport } : {}),
     ...(profile.productArm === undefined ? {} : { productArm }),
     ...(profile.answerPolicy === undefined
       ? {}
@@ -131,7 +139,10 @@ export function multiPlan(
     routingIdentity:
       "native logical aliases; product actual instance handles including unique suffix; raw cost retained",
     nativeMemory: describeNativeMemoryPolicy(config.provider),
-    nativeInvocationPolicy: nativeInvocationPolicy(config.provider),
+    nativeInvocationPolicy: {
+      ...nativeInvocationPolicy(config.provider),
+      ...(nativePromptTransport ? { inputTransport: "stdin/v1" } : {}),
+    },
     nativeInvocation: Object.fromEntries(
       ["initial", "resume"].map((phase) => [
         phase,
@@ -139,6 +150,9 @@ export function multiPlan(
           model: config.model,
           effort: config.effort,
           prompt: "<channel-delta>",
+          ...(nativePromptTransport
+            ? { promptTransport: nativePromptTransport }
+            : {}),
           sessionId: phase === "resume" ? "<session>" : undefined,
           launchArgs: [],
         }),
@@ -444,6 +458,9 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
             invoke: (options) =>
               invokeNative({
                 ...options,
+                ...(plan.nativePromptTransport
+                  ? { promptTransport: plan.nativePromptTransport }
+                  : {}),
                 answerValidator: (answer) =>
                   profile.answerPolicy === "business-content"
                     ? Boolean(answer.trim())

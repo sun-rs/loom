@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { recoverMultiNativeUsage } from "./multi-native-recovery.mjs";
@@ -12,6 +18,7 @@ const fs=require('node:fs'),path=require('node:path');const provider=path.basena
 if(args[0]==='--version'){console.log({claude:'2.1.287 (Claude Code)',kimi:'0.39.1',opencode:'1.18.32'}[provider]);process.exit(0)}
 if(args[0]==='debug'){console.log('{}');process.exit(0)}
 const emit=x=>console.log(JSON.stringify(x));
+if(provider==='opencode'&&process.env.FAKE_NATIVE_INPUT_CAPTURE){const piped=fs.readFileSync(0,'utf8');const arg=args.at(-1);const text=piped||('"'+arg.replace(/"/g,'\\"')+'"');fs.appendFileSync(process.env.FAKE_NATIVE_INPUT_CAPTURE,JSON.stringify({text,args,env:{pure:args.includes('--pure'),disable:process.env.OPENCODE_DISABLE_CLAUDE_CODE}})+'\n');}
 if(provider==='claude'){
  const dir=path.join(process.env.CLAUDE_CONFIG_DIR,'projects','fixture');fs.mkdirSync(dir,{recursive:true});
  const m={id:'msg-'+t,model:'claude-haiku-test',content:[{type:'text',text:answer}],usage:{input_tokens:10,output_tokens:2}};
@@ -144,4 +151,56 @@ test("failed native batch retains reported charges even when the session id is m
   assert.equal(arm.rounds[0].metrics.usageRecoveryIncomplete, true);
   assert.equal(arm.rounds[0].usageRecoveryEvidence.identityVerified, false);
   assert.equal(arm.rounds[0].sessionId, undefined);
+});
+
+test("explicit OpenCode stdin preserves full inline material on initial and same-session resume", async () => {
+  const { inlineEvidenceText } =
+    await import("./multi-channel-inline-workload.mjs");
+  const root = mkdtempSync(join(tmpdir(), "loom-native-stdin-")),
+    old = { ...process.env };
+  try {
+    Object.assign(process.env, {
+      PATH: root + ":" + old.PATH,
+      OPENCODE_DB: join(root, "db"),
+      FAKE_NATIVE_INPUT_CAPTURE: join(root, "captured"),
+    });
+    writeFileSync(join(root, "opencode"), fixture, { mode: 0o700 });
+    let sessionId;
+    for (let i = 0; i < 2; i++) {
+      const round = {},
+        prompt = inlineEvidenceText + `\nPhase ${i}: "literal" \n`;
+      sessionId = await nativeOpenCodeRound({
+        cwd: root,
+        sessionId,
+        prompt,
+        promptTransport: "stdin",
+        round,
+        config: { model: "deepseek/deepseek-flash", effort: "low" },
+        save() {},
+        answerValidator: (a) => a === "short",
+      });
+      const row = JSON.parse(
+        readFileSync(process.env.FAKE_NATIVE_INPUT_CAPTURE, "utf8")
+          .trim()
+          .split("\n")
+          .at(-1),
+      );
+      assert.equal(row.text, prompt);
+      assert.ok(!row.args.includes(prompt));
+      assert.equal(row.env.pure, true);
+      assert.equal(row.env.disable, "1");
+      assert.equal(
+        row.args[row.args.indexOf("-m") + 1],
+        "deepseek/deepseek-flash",
+      );
+      assert.equal(row.args[row.args.indexOf("--variant") + 1], "low");
+      if (i)
+        assert.equal(row.args[row.args.indexOf("--session") + 1], sessionId);
+    }
+  } finally {
+    for (const k of Object.keys(process.env))
+      if (!(k in old)) delete process.env[k];
+    Object.assign(process.env, old);
+    rmSync(root, { recursive: true, force: true });
+  }
 });

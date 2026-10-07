@@ -411,3 +411,126 @@ test("new natural observation accepts unique canonical explicit publication with
     assert.throws(() => validateNaturalBusinessObservationRound(x));
   }
 });
+
+test("natural v2 associates a retried publication by native parent ID; v1 stays strict", async () => {
+  const {
+    validateNaturalBusinessObservationRound,
+    validateNaturalBusinessObservationRoundV2,
+  } = await import("./business-observation-validation.mjs");
+  const f = fixture(),
+    p = f.round.durableDeliveryProof;
+  p.finalMarkers = [];
+  Object.assign(p.events[0], {
+    actor_id: "a",
+    type: "message.posted",
+    aggregate_id: "message",
+  });
+  p.events[0].payload_json = JSON.stringify({
+    ...p.messages[0],
+    activationId: "act",
+  });
+  f.round.runs[0].nativeTurnId = "turn2";
+  f.round.runs.unshift({
+    ...f.round.runs[0],
+    runAttemptId: "earlier",
+    nativeTurnId: "turn1",
+  });
+  p.runs = f.round.runs;
+  f.events[2].payload.output = JSON.stringify({
+    isError: false,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          state: "published",
+          messageId: "message",
+          roomSeq: 12,
+        }),
+      },
+    ],
+  });
+  for (const e of f.events.slice(1))
+    e.nativePublication = {
+      provider: "opencode",
+      sessionId: "s",
+      messageId: "assistant2",
+      nativeTurnId: "turn2",
+    };
+  f.events[0].nativeInput = {
+    provider: "opencode",
+    sessionId: "s",
+    nativeTurnId: "turn1",
+  };
+  const retryInput = structuredClone(f.events[0]);
+  retryInput.nativeInput.nativeTurnId = "turn2";
+  f.events.push(retryInput);
+  assert.throws(() => validateNaturalBusinessObservationRound(f));
+  assert.equal(
+    validateNaturalBusinessObservationRoundV2(f).deliveryVerdict,
+    "delivered",
+  );
+  for (const mutate of [
+    (x) => delete x.events[1].nativePublication,
+    (x) => {
+      const o = JSON.parse(x.events[2].payload.output);
+      o.isError = true;
+      x.events[2].payload.output = JSON.stringify(o);
+    },
+    (x) => (x.events[2].nativePublication.nativeTurnId = "turn1"),
+    (x) => (x.events[1].nativePublication.sessionId = "other"),
+    (x) => {
+      for (const e of x.events.filter((e) => e.nativePublication))
+        e.nativePublication.nativeTurnId = "absent";
+    },
+    (x) => (x.round.runs[0].nativeTurnId = "turn2"),
+    (x) => (x.round.runs[1].state = "failed"),
+    (x) => (x.round.durableDeliveryProof.subscriptionCursors[0].last_seq = 7),
+  ]) {
+    const x = structuredClone(f);
+    mutate(x);
+    assert.throws(() => validateNaturalBusinessObservationRoundV2(x));
+  }
+});
+
+test("v2 first-stage retransmission requires each actual Run user ID; v1 rejects duplicates", async () => {
+  const { validateNaturalBusinessObservationRoundV2 } =
+    await import("./business-observation-validation.mjs");
+  const f = fixture(),
+    p = f.round.durableDeliveryProof;
+  f.round.runs[0].nativeTurnId = "turn2";
+  f.round.runs.unshift({
+    ...f.round.runs[0],
+    runAttemptId: "earlier",
+    nativeTurnId: "turn1",
+  });
+  p.runs = f.round.runs;
+  f.events[0].nativeInput = {
+    provider: "opencode",
+    sessionId: "s",
+    nativeTurnId: "turn1",
+  };
+  const second = structuredClone(f.events[0]);
+  second.nativeInput.nativeTurnId = "turn2";
+  f.events.splice(1, 0, second);
+  Object.assign(p.events[0], {
+    actor_id: "a",
+    type: "message.posted",
+    aggregate_id: "message",
+  });
+  const v = validateNaturalBusinessObservationRoundV2(f);
+  assert.equal(v.inputObservation.materialDeliveries, 2);
+  assert.equal(v.inputObservation.materialRetransmissions, 1);
+  assert.throws(() => validateBusinessObservationRound(f), /material/);
+  for (const mutate of [
+    (x) => delete x.events[0].nativeInput,
+    (x) => (x.events[1].nativeInput.nativeTurnId = "turn1"),
+    (x) => (x.events[1].nativeInput.sessionId = "other"),
+    (x) => (x.round.runs[0].activationId = "other"),
+    (x) => (x.events[1].payload.content[0].text = "missing"),
+    (x) => x.events.push(structuredClone(x.events[0])),
+  ]) {
+    const x = structuredClone(f);
+    mutate(x);
+    assert.throws(() => validateNaturalBusinessObservationRoundV2(x));
+  }
+});
