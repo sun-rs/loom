@@ -1,0 +1,70 @@
+{
+  "kind": "invoice-artifact-v2 OpenCode native-final-text free integration",
+  "paidCalls": 0,
+  "root": "private-reviews/2026-10-08-invoice-opencode/runs/1791468809805",
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "fixturePlanSha256": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+  "arms": {
+    "native": {
+      "sameSession": true,
+      "nativeGenerations": 24,
+      "fakeProviderRequests": 24,
+      "actualBashArtifactWrites": 12,
+      "artifactSnapshotsRetainedAndHashMatched": 12,
+      "qualityFailedRounds": [2],
+      "qualityPassedRounds": [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "finalFunctionalCasesPassed": 37,
+      "selfTestsAllRoundsPassed": true,
+      "rawRequestResponseApiDbStepAccountingMatches": true,
+      "actualCliDeniedOracleRepoPeerAndBothTempFamiliesAllRounds": true,
+      "memoryDisabledAndFreshConfig": true
+    },
+    "terminal": {
+      "sameSession": true,
+      "nativeGenerations": 24,
+      "fakeProviderRequests": 24,
+      "actualBashArtifactWrites": 12,
+      "artifactSnapshotsRetainedAndHashMatched": 12,
+      "qualityFailedRounds": [2],
+      "qualityPassedRounds": [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "finalFunctionalCasesPassed": 37,
+      "selfTestsAllRoundsPassed": true,
+      "rawRequestResponseApiDbStepAccountingMatches": true,
+      "actualCliDeniedOracleRepoPeerAndBothTempFamiliesAllRounds": true,
+      "memoryDisabledAndFreshConfig": true
+    }
+  },
+  "kernel": {
+    "publishedFinalReceipts": 12,
+    "completedActivations": 12,
+    "exitedRuns": 12,
+    "pendingAckCleared": 12,
+    "workerCursorThroughSeq": 103
+  },
+  "cleanup": {
+    "native": {
+      "exitCode": null,
+      "signalCode": "SIGTERM",
+      "alive": false,
+      "portOpen": false
+    },
+    "terminal": {
+      "exitCode": null,
+      "signalCode": "SIGTERM",
+      "alive": false,
+      "portOpen": false
+    }
+  },
+  "networkNegative": "network-green.txt independently proves localhost reachable and external IP PermissionError under same compact profile generator",
+  "qualityOracleFeedback": false,
+  "limitations": [
+    "Reference code is intentionally supplied inline by fake provider, not a model-produced solution or paid quality evidence.",
+    "R2 deliberately broken then R3 restored by scripted fake response; validates quality continuation and snapshots only.",
+    "README remains synthetic mechanism text, not semantic documentation acceptance.",
+    "Run exit0 denotes settled native turn; long-lived isolated CLI serve processes are separately SIGTERM-cleaned.",
+    "Initial broad network rule passed CLI fixture but failed external-IP negative; archived run is not final isolation acceptance.",
+    "No production changes or paid authorization/launch."
+  ]
+}

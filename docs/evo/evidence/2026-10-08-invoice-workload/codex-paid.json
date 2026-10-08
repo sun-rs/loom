@@ -1,0 +1,650 @@
+{
+  "batch": "P149",
+  "status": "completed-needs-independent-review",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "samples": 1,
+  "evidence": "runs/1791469312910-P149",
+  "rounds": [
+    {
+      "arm": "native",
+      "round": 1,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 1,
+      "totalChecks": 1,
+      "allArtifactChecksPassed": true,
+      "generations": 8,
+      "usage": {
+        "input_tokens": 112664,
+        "cached_input_tokens": 82944,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2103,
+        "reasoning_output_tokens": 77
+      },
+      "commandExecutionItems": 3
+    },
+    {
+      "arm": "structured",
+      "round": 1,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 1,
+      "totalChecks": 1,
+      "allArtifactChecksPassed": true,
+      "generations": 9,
+      "usage": {
+        "input_tokens": 127943,
+        "cached_input_tokens": 107264,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2048,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 5
+    },
+    {
+      "arm": "structured",
+      "round": 2,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 3,
+      "totalChecks": 3,
+      "allArtifactChecksPassed": true,
+      "generations": 3,
+      "usage": {
+        "input_tokens": 51160,
+        "cached_input_tokens": 42240,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 445,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 3,
+      "totalChecks": 3,
+      "allArtifactChecksPassed": true,
+      "generations": 1,
+      "usage": {
+        "input_tokens": 15640,
+        "cached_input_tokens": 1792,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 57,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 0
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 4,
+      "totalChecks": 4,
+      "allArtifactChecksPassed": true,
+      "generations": 4,
+      "usage": {
+        "input_tokens": 64716,
+        "cached_input_tokens": 61440,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 656,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 1
+    },
+    {
+      "arm": "structured",
+      "round": 3,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 4,
+      "totalChecks": 4,
+      "allArtifactChecksPassed": true,
+      "generations": 2,
+      "usage": {
+        "input_tokens": 36439,
+        "cached_input_tokens": 34304,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 484,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 1
+    },
+    {
+      "arm": "structured",
+      "round": 4,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 7,
+      "totalChecks": 7,
+      "allArtifactChecksPassed": true,
+      "generations": 3,
+      "usage": {
+        "input_tokens": 60156,
+        "cached_input_tokens": 48384,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1156,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 7,
+      "totalChecks": 7,
+      "allArtifactChecksPassed": true,
+      "generations": 8,
+      "usage": {
+        "input_tokens": 153384,
+        "cached_input_tokens": 131072,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2166,
+        "reasoning_output_tokens": 330
+      },
+      "commandExecutionItems": 3
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 9,
+      "totalChecks": 9,
+      "allArtifactChecksPassed": true,
+      "generations": 5,
+      "usage": {
+        "input_tokens": 112480,
+        "cached_input_tokens": 104192,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1630,
+        "reasoning_output_tokens": 233
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "structured",
+      "round": 5,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 9,
+      "totalChecks": 9,
+      "allArtifactChecksPassed": true,
+      "generations": 4,
+      "usage": {
+        "input_tokens": 95005,
+        "cached_input_tokens": 88064,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1282,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 3
+    },
+    {
+      "arm": "structured",
+      "round": 6,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 25,
+      "totalChecks": 25,
+      "allArtifactChecksPassed": true,
+      "generations": 5,
+      "usage": {
+        "input_tokens": 143507,
+        "cached_input_tokens": 135936,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2315,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 3
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 25,
+      "totalChecks": 25,
+      "allArtifactChecksPassed": true,
+      "generations": 7,
+      "usage": {
+        "input_tokens": 186336,
+        "cached_input_tokens": 174336,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2442,
+        "reasoning_output_tokens": 251
+      },
+      "commandExecutionItems": 3
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 27,
+      "totalChecks": 27,
+      "allArtifactChecksPassed": true,
+      "generations": 5,
+      "usage": {
+        "input_tokens": 157655,
+        "cached_input_tokens": 152320,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2281,
+        "reasoning_output_tokens": 115
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "structured",
+      "round": 7,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 27,
+      "totalChecks": 27,
+      "allArtifactChecksPassed": true,
+      "generations": 3,
+      "usage": {
+        "input_tokens": 102505,
+        "cached_input_tokens": 94464,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2223,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "structured",
+      "round": 8,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 28,
+      "totalChecks": 28,
+      "allArtifactChecksPassed": true,
+      "generations": 2,
+      "usage": {
+        "input_tokens": 75808,
+        "cached_input_tokens": 73216,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 970,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 1
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 28,
+      "totalChecks": 28,
+      "allArtifactChecksPassed": true,
+      "generations": 6,
+      "usage": {
+        "input_tokens": 208973,
+        "cached_input_tokens": 201216,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1288,
+        "reasoning_output_tokens": 22
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 29,
+      "totalChecks": 29,
+      "allArtifactChecksPassed": true,
+      "generations": 5,
+      "usage": {
+        "input_tokens": 192537,
+        "cached_input_tokens": 172800,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1598,
+        "reasoning_output_tokens": 163
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "structured",
+      "round": 9,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 29,
+      "totalChecks": 29,
+      "allArtifactChecksPassed": true,
+      "generations": 2,
+      "usage": {
+        "input_tokens": 79801,
+        "cached_input_tokens": 76288,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1209,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 1
+    },
+    {
+      "arm": "structured",
+      "round": 10,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 35,
+      "totalChecks": 35,
+      "allArtifactChecksPassed": true,
+      "generations": 2,
+      "usage": {
+        "input_tokens": 84021,
+        "cached_input_tokens": 81408,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1034,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 1
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 35,
+      "totalChecks": 35,
+      "allArtifactChecksPassed": true,
+      "generations": 4,
+      "usage": {
+        "input_tokens": 164555,
+        "cached_input_tokens": 157696,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1148,
+        "reasoning_output_tokens": 143
+      },
+      "commandExecutionItems": 1
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 36,
+      "totalChecks": 36,
+      "allArtifactChecksPassed": true,
+      "generations": 4,
+      "usage": {
+        "input_tokens": 186576,
+        "cached_input_tokens": 169984,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1242,
+        "reasoning_output_tokens": 471
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "structured",
+      "round": 11,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 36,
+      "totalChecks": 36,
+      "allArtifactChecksPassed": true,
+      "generations": 3,
+      "usage": {
+        "input_tokens": 140515,
+        "cached_input_tokens": 132352,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 988,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "structured",
+      "round": 12,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 37,
+      "totalChecks": 37,
+      "allArtifactChecksPassed": true,
+      "generations": 3,
+      "usage": {
+        "input_tokens": 157153,
+        "cached_input_tokens": 149760,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1748,
+        "reasoning_output_tokens": 0
+      },
+      "commandExecutionItems": 2
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "executionCompleted": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 37,
+      "totalChecks": 37,
+      "allArtifactChecksPassed": true,
+      "generations": 7,
+      "usage": {
+        "input_tokens": 384708,
+        "cached_input_tokens": 371968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2269,
+        "reasoning_output_tokens": 617
+      },
+      "commandExecutionItems": 2
+    }
+  ],
+  "segments": {
+    "wholeObserved": {
+      "native": {
+        "launchedTurns": 12,
+        "completedTurns": 12,
+        "artifactPasses": 12,
+        "selftestPasses": 12,
+        "responses": 64,
+        "input_tokens": 1940224,
+        "cached_input_tokens": 1781760,
+        "output_tokens": 18880,
+        "reasoning_output_tokens": 2422,
+        "uncached_input_tokens": 158464,
+        "commandExecutionItems": 23
+      },
+      "structured": {
+        "launchedTurns": 12,
+        "completedTurns": 12,
+        "artifactPasses": 12,
+        "selftestPasses": 12,
+        "responses": 41,
+        "input_tokens": 1154013,
+        "cached_input_tokens": 1063680,
+        "output_tokens": 15902,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 90333,
+        "commandExecutionItems": 25
+      },
+      "descriptiveRatios": {
+        "input_tokens": 0.5947833858358622,
+        "output_tokens": 0.8422669491525424,
+        "responses": 0.640625,
+        "commandExecutionItems": 1.0869565217391304
+      }
+    },
+    "late7-12Observed": {
+      "native": {
+        "launchedTurns": 6,
+        "completedTurns": 6,
+        "artifactPasses": 6,
+        "selftestPasses": 6,
+        "responses": 31,
+        "input_tokens": 1295004,
+        "cached_input_tokens": 1225984,
+        "output_tokens": 9826,
+        "reasoning_output_tokens": 1531,
+        "uncached_input_tokens": 69020,
+        "commandExecutionItems": 11
+      },
+      "structured": {
+        "launchedTurns": 6,
+        "completedTurns": 6,
+        "artifactPasses": 6,
+        "selftestPasses": 6,
+        "responses": 15,
+        "input_tokens": 639803,
+        "cached_input_tokens": 607488,
+        "output_tokens": 8172,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 32315,
+        "commandExecutionItems": 9
+      },
+      "descriptiveRatios": {
+        "input_tokens": 0.49405484461824056,
+        "output_tokens": 0.8316710767351924,
+        "responses": 0.4838709677419355,
+        "commandExecutionItems": 0.8181818181818182
+      }
+    }
+  },
+  "uniqueResponses": 105,
+  "realWorkerPublicationAckCompletion": 12,
+  "artifactSnapshotsHashVerified": true,
+  "bothArmsNoSchema": true,
+  "memoryDisabledAllObservedSessions": true,
+  "continuousDistinctSessions": true,
+  "groupAndFixtureCleanupVerified": true,
+  "readTransportRetries": 0,
+  "failure": null,
+  "efficiency": "Complete single paired coding trajectory with functional24/24 and final37/37 each. Observed experimental usage lower; not universal causal efficiency proof, and documentation equivalence has one minor failure.",
+  "documentation": "README semantic correctness requires manual review; not implied by evaluator passes",
+  "limits": [
+    "One model/sample, not universal or causal comparison",
+    "Cache is subset of input; reasoning subset of output, never add again",
+    "Missing response usage is unknown, not zero",
+    "Prototype Worker lifecycle has bounded private-close-evidence then publication then Kernel terminal window"
+  ],
+  "paidRetries": 0,
+  "firstGeneration": {
+    "native": {
+      "input_tokens": 13082,
+      "cached_input_tokens": 1792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 79,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 13161
+    },
+    "structured": {
+      "input_tokens": 13109,
+      "cached_input_tokens": 6912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 84,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 13193
+    }
+  },
+  "generationClassification": {
+    "native": {
+      "tool-bearing": 52,
+      "final-only": 12,
+      "mixed": 0,
+      "other": 0
+    },
+    "structured": {
+      "tool-bearing": 29,
+      "final-only": 12,
+      "mixed": 0,
+      "other": 0
+    }
+  },
+  "protocolExtraGenerationEvidence": {
+    "observedAdditionalProviderRequestsForPublication": 0,
+    "method": "All12 terminal publications occur after native CLI close; all current-turn response usage records precede close; publisher uses Worker HTTP only and no provider process. Per-round timeline preserved privately.",
+    "businessPathCausality": "52 vs29 tool-bearing generations reflect realized code/tool batching paths, not a measured causal platform tax. Command_execution item counts23/25 exclude file_change actions and are not total business tool calls.",
+    "scope": "Only P149 private24-turn runner, not a global Loom/platform claim"
+  },
+  "stage6AndLater": {
+    "native": {
+      "turns": 7,
+      "allArtifactChecksPassed": true,
+      "stage6HiddenCases": "25/25",
+      "finalHiddenCases": "37/37",
+      "finalSelfTestsPassed": true
+    },
+    "structured": {
+      "turns": 7,
+      "allArtifactChecksPassed": true,
+      "stage6HiddenCases": "25/25",
+      "finalHiddenCases": "37/37",
+      "finalSelfTestsPassed": true
+    }
+  },
+  "readmeManualReview": {
+    "native": "Reviewed final README: API, rounding/validation and file/stdin CLI align with bounded requirements.",
+    "structured": "Minor documentation accuracy failure: inline-code decimal regex displays two backslashes before dot instead of one; Markdown preserves both and copy/paste changes regex semantics. Other requested sections present.",
+    "artifactEditedByAuditor": false,
+    "conclusion": "Functional artifacts both pass; full documentation equivalence not accepted."
+  },
+  "fixtureLimit": "Rounds1\u20135 input row representation not explicitly dict until round6. Both Codex arms passed early cases here; possible early failures in other models must not automatically be labeled model error.",
+  "budgetObservation": {
+    "reportedTotalInput": 3094237,
+    "thresholdInput": 3000000,
+    "overshootPermittedByPlan": "Between-turn threshold checked before final launch; last turn may exceed. No request/round added afterward.",
+    "reportedTotalOutput": 34782,
+    "thresholdOutput": 100000
+  },
+  "cleanup": {
+    "checkedAt": "2026-10-08T14:56:33.166729+00:00",
+    "recordedPidAndPgidCount": 24,
+    "recordedGroupsAbsent": true,
+    "separatelyObservedCodeModeHostAbsent": true,
+    "harnessAbsent": true,
+    "runtimeOpenFileCwdMatches": 0,
+    "workerPortListening": false
+  },
+  "frozenSourcesUnchanged": true,
+  "receiptSessionAudit": {
+    "batch": "P149",
+    "scope": "This private24-turn experiment only; not a platform-wide no-request claim",
+    "successfulPublications": 12,
+    "receiptIdentityMatchesInEitherFullSessionRollout": 0,
+    "checkedReceiptFields": ["eventId", "messageId", "idempotencyKey"],
+    "codeEvidence": [
+      "launch creates stdin only from the frozen task.prompt plus terminal FinalReply notice; input is passed once to runOwnedProcess",
+      "publisher runs in controller after native CLI close; receipt is assigned only to private result row and used for Host completion",
+      "no receipt append/injection or post-publication model continuation call exists in this runner; next ordinary resume receives next frozen business prompt"
+    ],
+    "temporalEvidence": "All12 Worker publication events follow observed corresponding native close; current-turn reported provider usage precedes close",
+    "limits": [
+      "Identity absence corroborates code/data path, not a proof against arbitrary transcript access in another product",
+      "This prototype does not test production scheduler/adapter or platform-wide tool/request behavior",
+      "Receipt remains durable in Room/private controller evidence; it is not erased or converted to a synthetic model ACK"
+    ]
+  }
+}

@@ -246,6 +246,28 @@
   `packages/kernel/test/message-forwarding.test.ts`、`packages/kernel/test/room-files.test.ts`、
   `packages/application-service/test/client-files.test.ts` 与 Web message contract/browser gate。
 
+### 2026-10-08 公开源码复审（只读，未移植）
+
+此前“Raft Server 源码未取得”是当时证据边界，现已有官方公开快照
+`botiverse/raft-source`，本轮固定 `26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6`
+（`v1.21.2-source.1`）。范围包括 Web、API server、daemon、Computer 和 CLI。
+当前许可为 FSL-1.1-ALv2，包含商业竞争用途限制；各版本发布满两年才转为
+Apache 2.0，不能把源码可读当作无限制直接或结构化移植授权。
+本次没有复制产品代码、运行上游测试或改变现有来源授权记录。
+
+Server 产品实体是租户/团队工作区，`packages/server` 是后端服务，Computer/daemon
+是执行宿主。优先参考增量投递/重复通知抑制、队列回执与消费证明分离、恢复与权限撤销
+测试，以及前端滚动锚点/重连/输入交互的源码依据。保留 Loom 既有单一 owner；
+不移植跨频道 Agent 单 lane、自动 session 轮换、实例文件记忆或云多租户栈。
+新版 Raft 已有冷大上下文自动换 session 分支，旧“永久固定 session”表述不能用于
+当前版本；这也不是 Loom 连续 session 合同下的成本解法。源码未证明其 token 倍率。
+
+完整[审查与优先级](../evo/evidence/2026-10-08-raft-source-audit/summary.json)、
+[前端](../evo/evidence/2026-10-08-raft-source-audit/frontend.json)、
+[后端/server](../evo/evidence/2026-10-08-raft-source-audit/server.json)、
+[CLI/runtime](../evo/evidence/2026-10-08-raft-source-audit/runtime.json)
+均固定文件、行号与版本；静态阅读不等于运行验收，未宣称全量审计或效率达标。
+
 ## 4. 每个移植提交必须补充的字段
 
 每个实际吸收模块在提交前必须在本节或对应 `SOURCE.md` 增加：

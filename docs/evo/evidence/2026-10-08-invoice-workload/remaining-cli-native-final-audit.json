@@ -1,0 +1,117 @@
+{
+  "kind": "Remaining CLI native-final-text bounded read-only feasibility audit",
+  "checkedAt": "2026-10-08T15:15:29.909061+00:00",
+  "newCliLaunches": 0,
+  "paidCalls": 0,
+  "credentialReadsOrRefreshes": 0,
+  "globalConfigurationChanges": 0,
+  "newCandidateAcceptance": "Neither Pi nor Kimi plain-native-final-text candidate was implemented or executed by this audit. Existing envelope/MCP evidence does not imply acceptance of the new facade.",
+  "sharedBoundary": "Only explicit per-Run FinalReply mode registered before launch authorizes publication. Model text is body only; Host binds original authenticated Worker, exact current session/launch/final identity, frozen delivered sequence and idempotency. Existing stale/unknown/ACK fences remain. Diagnostics alone never authorize action.",
+  "pi": {
+    "installedPackageVersion": "1.1.0",
+    "entrypoint": "/opt/homebrew/bin/pi -> @earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "feasibility": "Conditionally feasible, but session/current-launch final identity needs a small new guard and two-turn fake proof. No native-final-text acceptance yet.",
+    "observedHistoricalBoundary": "Existing actual-CLI fake stdout shows session header, intermediate assistant message_end(stopReason=toolUse), terminal assistant message_end(stopReason=stop,responseId), agent_end(willRetry=false), then agent_settled(aborted=false). Historical evidence used MCP/body facade, not this candidate.",
+    "sourceSupport": [
+      "print-mode.js emits session header and JSON subscription events, awaits prompt, then disposes/flushed output",
+      "agent-session.js agent_end is not settlement: retry/compaction/follow-up handling can precede agent_settled",
+      "resource-loader.js noContextFiles returns empty context-file list"
+    ],
+    "proposedTerminalProof": [
+      "exit0, complete JSONL, exact session header and current isolated launch",
+      "unique final assistant message_end with stopReason=stop, stable responseId, nonempty bounded text, no toolCall content; all business tool calls settled",
+      "agent_end(willRetry=false) and final agent_settled(aborted=false), no later generation/unfinished tool/error",
+      "cross-check current appended session-tree branch: new user entry and matching final responseId, excluding historical final from resumed session"
+    ],
+    "identityGap": "turn_start/turn_end events represent model/tool steps and do not carry a stable user-turn ID. A fresh launch slice plus fixed session header and new session-tree entry/parent chain must bind the requested turn; timestamps alone are insufficient.",
+    "truncationBoundary": "Reject stopReason=length/error/aborted, missing settlement, incomplete JSONL, pending tools and mismatched/duplicate final. exit0 or agent_end alone is insufficient. Raw provider finish-reason normalization was not exhaustively audited, so do not claim all provider truncation semantics covered.",
+    "memoryStatus": "Historical isolated controls supplied --no-extensions --no-skills --no-context-files --no-prompt-templates with explicit session persistence. Installed loader proves context-file suppression. This audit did not certify an exhaustive Pi automatic-memory feature audit or native memory-off attestation; new candidate must verify every-launch controls/isolated agent directory and reject unknown version behavior. Ordinary same-session history remains enabled.",
+    "authentication": "Not probed; no claim that current paid authentication is usable.",
+    "minimalNextStep": "Reuse ordinary print/json and explicit same --session file in two separate arms; no schema/MCP extension. Two fake-provider turns with one real filesystem tool each, native final text to real Worker only in opted-in arm. Test wrong session/tree branch, intermediate final-looking text, length/aborted/agent_end-with-retry, duplicate/missing settled, unknown write. Verify per-response usage and memory controls before paid admission."
+  },
+  "kimi": {
+    "installedPackageVersion": "0.39.1",
+    "entrypoint": "/opt/homebrew/bin/kimi -> @moonshot-ai/kimi-code/dist/main.mjs",
+    "installedBundleMatchesHistoricalAudit": true,
+    "feasibility": "More directly reusable terminal boundary than Pi: existing envelope validator already correlates explicit turn/step/raw provider stop. Removing only JSON envelope parsing under a new explicit native-final-text mode is plausible; still requires new negative/free proof.",
+    "reliableEvidence": [
+      "stream-json session.resume_hint.session_id matched exact --session across launches",
+      "own-session wire has agentId=main, expected turnId, step.begin uuid, content.part stepUuid, step.end messageId/finishReason/providerFinishReason/rawFinishReason, and turn.ended",
+      "current final step requires end_turn + completed + raw stop; exactly one final text part, no final-step tool calls; all prior tool calls have results; one completed turn.ended with no later model activity"
+    ],
+    "installedSourceSupport": "main.mjs around317055\u2013317085 preserves provider finish metadata; around318250\u2013318305 writes step.end with turnId,stepUuid,messageId and normalized/raw finish reasons.",
+    "identityGap": "Existing private validator itself accepts wire+expectedTurnId and does not independently authenticate session. Existing runner checks session.resume_hint separately and slices wire by wall time. New candidate should bind exact isolated session/wire path and pre-launch byte offset plus session ID, not rely solely on time-window filtering.",
+    "truncationBoundary": "Existing fake negatives reject length despite completed, absent provider reason, wrong step/turn, thinking-only, duplicate end, pending tools and missing opt-in. These tests protected a JSON FinalReply envelope. Plain-text mode must rerun them and ensure arbitrary stdout/intermediate text cannot publish; exact raw stop rule is proven only for the observed provider binding.",
+    "memoryStatus": {
+      "policy": "not-applicable, not a claimed disable flag",
+      "auditedVersion": "0.39.1",
+      "repoSourceRevision": "5efca0c3116743855c28426000073bfe34a4862f",
+      "existingIsolation": "Dedicated KIMI_CODE_HOME/HOME, explicit empty --skills-dir, empty MCP config, no parent AGENTS/CLAUDE/MEMORY files; each-launch version/config guards; normal session history preserved",
+      "limits": "Installed version matches bounded source audit. Not a global guarantee about future versions or all third-party memory/tool features; fail on unaudited upgrades."
+    },
+    "historicalEvidence": {
+      "freeEnvelope": "Existing two-turn actual CLI/fake-provider envelope test reported distinct continuous sessions, business Bash call, two real Worker publications and ACK completions; old report25 tests. This is not new plain-text validation.",
+      "lastPaidAttempt": "P142 stopped on native invalid authorization grant before any completed round; one request intent, no usage record. Cost unknown, not zero. This audit did not recheck or repair authentication."
+    },
+    "minimalNextStep": "Reuse the existing two-turn local fake Chat Completions fixture, ordinary print/stream-json and same --session. Bind per-Run FinalReply before launch, copy only verified current final text without JSON decoding into existing Worker submitter, retain frozen seq/idempotency/unknown-result behavior. Add plain-text positive and stale/unknown/wrong-session/length/intermediate-text negatives. Keep fake network loopback and account files untouched; authentication remains a separate future admission check."
+  },
+  "sourceEvidence": [
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/package.json",
+      "sha256": "c662a36f8bc47843393a60dc8616a34dfcc8376e8fcc96dbc2f1020c60e38e2a"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/print-mode.js",
+      "sha256": "f2eb170b9620c1d37e68b788ff71257a4402a23e7f3999575feee8e5d9e13b3f"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/json-event.js",
+      "sha256": "5f3756470739fa4a1595feeaf1ce2dfd29e36a2cffd9e642f914fc23f540d606"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js",
+      "sha256": "0ba5c847b4fd2fd838f71ea84885b9f3a4f15d9bf4b5493e2e88a41d1507e20b"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/resource-loader.js",
+      "sha256": "0d2ed0d85c39d05d611cd5904c6e696f7e2d16b2316e35d19f9b1f747ee62444"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/package.json",
+      "sha256": "99e02afaeadabef366715ec29a85adcb81ca0035ec07cc24c8578feb23aae3e5"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "sha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/native-memory-version.mjs",
+      "sha256": "33312506b1cd8818afc22a88c6dae856cace9e3741a6949cf997a7a76df0c701"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/kimi-usage.mjs",
+      "sha256": "56bf7b2300af5cc60083760872e4968edb29e248fab1647926952e311c458829"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-08-bound-reply/run.mjs",
+      "sha256": "d67564a5a79cdef4e490c495e18e81046e9b4240cc0d33c6caa824793a1793a6"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/final.mjs",
+      "sha256": "5f66b0bad2b03681387cc431b0f4c031232f4308e4d1a398c50fa0b607936e4f"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply/public-evidence.json",
+      "sha256": "2eb3ac05b05b4ed4df62399da49a16d24a3d9bb977b6099162d4a18182a39b3e"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/public-evidence.json",
+      "sha256": "96ac50c18d5e2dcc94fc1f98c20155a2bba24dd873c1c0e0bbfa2a3a547c8d47"
+    }
+  ],
+  "decision": "Enough source/history to justify two small free prototypes, not enough to claim either new candidate passed or authorize new paid calls."
+}

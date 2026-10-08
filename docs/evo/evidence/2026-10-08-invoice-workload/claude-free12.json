@@ -1,0 +1,3421 @@
+{
+  "kind": "free actual Claude CLI invoice native-final-text",
+  "run": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/runs/1791470447046",
+  "paidCalls": 0,
+  "arms": {
+    "native": {
+      "sameSession": true,
+      "sessionId": "c69e970e-f88e-45e0-a5db-768c3cbe92de",
+      "rounds": 12,
+      "correctRounds": 11,
+      "generations": 60,
+      "syntheticInputTokens": 6000,
+      "syntheticOutputTokens": 600,
+      "usageReconciledToNativeSession": true,
+      "perRound": [
+        {
+          "round": 1,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:50.800Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:50.800Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:50.800Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:50.800Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 1,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 2,
+          "qualityPassed": false,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:53.760Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:53.760Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:53.760Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:53.760Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 2,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": false,
+            "selfTestsExitCode": 1
+          }
+        },
+        {
+          "round": 3,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:55.393Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:55.393Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:55.393Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:55.393Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 3,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 4,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:00.675Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:00.675Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:00.675Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:00.675Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 4,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 5,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:02.703Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:02.703Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:02.703Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:02.703Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 5,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 6,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:08.994Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:08.994Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:08.994Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:08.994Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 6,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 7,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:11.485Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:11.485Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:11.485Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:11.485Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 7,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 8,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:19.305Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:19.305Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:19.305Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:19.305Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 8,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 9,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:21.912Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:21.912Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:21.912Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:21.912Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 9,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 10,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:35.595Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:35.595Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:35.595Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:35.595Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 10,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 11,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:38.765Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:38.765Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:38.765Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:38.765Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 11,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 12,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:48.517Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:48.517Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:48.517Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:48.517Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 12,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty-grouped",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        }
+      ]
+    },
+    "terminal": {
+      "sameSession": true,
+      "sessionId": "9b46b25b-1c79-4f95-92b6-251d162660e2",
+      "rounds": 12,
+      "correctRounds": 11,
+      "generations": 60,
+      "syntheticInputTokens": 6000,
+      "syntheticOutputTokens": 600,
+      "usageReconciledToNativeSession": true,
+      "perRound": [
+        {
+          "round": 1,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:51.783Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:51.783Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:51.783Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:51.783Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 1,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 2,
+          "qualityPassed": false,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:52.734Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:52.734Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:52.734Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:52.734Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 2,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": false,
+            "selfTestsExitCode": 1
+          }
+        },
+        {
+          "round": 3,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:57.157Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:57.157Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:57.157Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:57.157Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 3,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 4,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:40:58.790Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:58.790Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:58.790Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:40:58.790Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 4,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 5,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:04.743Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:04.743Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:04.743Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:04.743Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 5,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 6,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:06.377Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:06.377Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:06.377Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:06.377Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 6,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 7,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:14.086Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:14.086Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:14.086Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:14.086Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 7,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 8,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:16.759Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:16.759Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:16.759Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:16.759Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 8,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 9,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:25.360Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:25.360Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:25.360Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:25.360Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 9,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 10,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:29.417Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:29.417Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:29.417Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:29.417Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 10,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 11,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:41.943Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:41.943Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:41.943Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:41.943Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 11,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        },
+        {
+          "round": 12,
+          "qualityPassed": true,
+          "generations": 5,
+          "toolCalls": [
+            {
+              "at": "2026-10-08T14:41:45.005Z",
+              "name": "Read",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:45.005Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:45.005Z",
+              "name": "Write",
+              "kind": "other"
+            },
+            {
+              "at": "2026-10-08T14:41:45.005Z",
+              "name": "Bash",
+              "kind": "other"
+            }
+          ],
+          "quality": {
+            "round": 12,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty-grouped",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          }
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Synthetic provider is deliberately scripted; files are fixture-written, not evidence of model coding competence.",
+    "Candidate is explicit per-Run ordinary-final-text output protocol, not MCP+hook or output JSON schema.",
+    "No paid cost, model reliability or efficiency acceptance.",
+    "README semantic review remains manual."
+  ],
+  "requests": 120,
+  "kernel": {
+    "completed": 12,
+    "finalMarkers": 12,
+    "runsExited": 12
+  },
+  "protocol": {
+    "modelMcp": false,
+    "hook": false,
+    "outputSchema": false,
+    "normalFinalText": true,
+    "credentialOnlyInHost": true,
+    "frozenActuallyPresentedSeq": true,
+    "perRunOptIn": true
+  },
+  "model": {
+    "binding": "sonnet",
+    "effort": "low",
+    "observedRequestModel": "claude-sonnet-5-5",
+    "cliVersion": "2.1.293"
+  },
+  "currentReviewedSourceHashes": {
+    "run.mjs": "55af2f20eac18f088b6884ca18a4e1fb0042baad6b6f20e18ef0a4d3fcb1ccf7",
+    "final.mjs": "055c434b154d0ac0f36a2048d6b97e91eb2c744eaffdd2b9a3f9238480f85cf9",
+    "final.test.mjs": "8530a32d5dd0b6db947e7de04d32c5cfea8a40cd276de17daa7871266d5c86a9",
+    "kernel.test.mjs": "be644d962dfc42d065eb91c33421f9d5de18e30b4d3cca011d9ed2b1c1e8a128",
+    "fake.mjs": "d5cd52df541f33f0894ec2363065f92a8c9feb9a9361ef1d4c0e85a870bb0735"
+  },
+  "executedSourceHashes": {
+    "planHash": "e367312629435b298e00f45256dd589e6ded00ba4907b19d416b8b99fc55d703",
+    "sources": [
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/lifecycle.mjs",
+        "sha256": "eed59c2638e48cc0d1c000be5fb58867aafc340760e7ae726f6703c2ff992021"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/run.mjs",
+        "sha256": "8690249074e2e8919ecc6771b397b56692c0a46350697bd5748ff01ac6c68a6e"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/kernel.test.mjs",
+        "sha256": "be644d962dfc42d065eb91c33421f9d5de18e30b4d3cca011d9ed2b1c1e8a128"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/fake.mjs",
+        "sha256": "d5cd52df541f33f0894ec2363065f92a8c9feb9a9361ef1d4c0e85a870bb0735"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/admission.test.mjs",
+        "sha256": "8b2bd726793f9be74cdffef0f4e99cc8e62198c384ac58dd46663284cd2d36d4"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/admission.mjs",
+        "sha256": "9faf640904412d24990ae715593730b1b1c01068b5118c9325dbdbfd4d385f74"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/catalog.mjs",
+        "sha256": "b936057fd4063ba4c21dca4aa331c192cdbd32935c92b930b5181d74340b4359"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/final.test.mjs",
+        "sha256": "8530a32d5dd0b6db947e7de04d32c5cfea8a40cd276de17daa7871266d5c86a9"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/final.mjs",
+        "sha256": "055c434b154d0ac0f36a2048d6b97e91eb2c744eaffdd2b9a3f9238480f85cf9"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/lifecycle.test.mjs",
+        "sha256": "bd42318d9a43cd6f150d70deece8abdc032907345b24b0640fb577825111e71f"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/audit.mjs",
+        "sha256": "d17ff84e2e75b8bf16b2f3cbd10e689e93d0823caa523f9fcf2ab8d8a008aec6"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/catalog.json",
+        "sha256": "308e20e65af2c5b38567a6a909d8a7f8a5b9da5e0ffbb9461e1b223c6928fa24"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/process.mjs",
+        "sha256": "29f21c24da1e7f6baeda02e10a26b1de5de7413511ac63a7411ee7089af8cc36"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-bound-reply/host.mjs",
+        "sha256": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/plan.json",
+        "sha256": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/manifest.json",
+        "sha256": "0bab4178af434dc91d4777cf641427b99b39eb4b84dde4c45962ab0c8a2d4b3f"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/evaluator.py",
+        "sha256": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/snapshot.py",
+        "sha256": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/oracle/cases.json",
+        "sha256": "63d2e134e2a822adf50d36f94a62c6f7bc468ab930953958e02ea3bac072b1d7"
+      }
+    ],
+    "reuse": "Owned detached-process cleanup helper reused byte-for-byte from invoice-codex/process.mjs; no changes to upstream private helper."
+  }
+}

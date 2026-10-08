@@ -1,0 +1,120 @@
+{
+  "kind": "read-only success-receipt ownership audit",
+  "repositoryCommit": "ef4a30d7ffe8f74ce3eb0d15c3235ffa5af8e4b1",
+  "ownerSources": [
+    {
+      "path": "packages/kernel/src/worker-message-command.ts",
+      "line": 184,
+      "sha256": "8e3422ab14f12921c67b9038a985c2094c44e89debf9cad3def811d99f1077ff",
+      "finding": "Worker committed-post path delegates ACK/final settlement."
+    },
+    {
+      "path": "packages/kernel/src/held-message-drafts.ts",
+      "line": 332,
+      "sha256": "372ab80e2616b3be32027f6ddeb9226d2ef4e2b1bca7ad968568f065edf0b12b",
+      "finding": "Only committed event branch acknowledges presented coverage; final intent records marker independently of ACK. Held results retain intent without claiming publication."
+    },
+    {
+      "path": "packages/kernel/src/run-attempt-final-reply.ts",
+      "line": 116,
+      "sha256": "93b71e053563228ea85be2ad5b270af585873f438ba7cc1c92d64275304eb4d5",
+      "finding": "Final marker recording occurs inside committing post transaction, with cursor/pending-presented-ACK proof."
+    },
+    {
+      "path": "packages/kernel/src/room-kernel.ts",
+      "line": 5031,
+      "sha256": "84178e97ffb428987af6523a3277f4695cee2191f00d785ba7b3daf5b39d0273",
+      "finding": "Activation completion verifies authenticated host, lease/generation and subscription cursor through toSeq. Provider transcript receipt text is not an input."
+    }
+  ],
+  "runnerSources": [
+    {
+      "ledger": "P149",
+      "sourceScope": "Private runner code facts only; not a new runtime or efficiency acceptance claim.",
+      "behavior": "Host stores row.publication; next native resume prompt does not append a success receipt.",
+      "files": [
+        {
+          "privateSource": "2026-10-08-invoice-codex/run.mjs",
+          "sha256": "55c5ea174193862db54c1dc83d7d20d9aa70da9f771c3b4dd0f9166422419102"
+        },
+        {
+          "privateSource": "2026-10-08-invoice-codex/room.mjs",
+          "sha256": "5fafd96c619eeca4f16d65a2950eae11176d9655e3ac3d5b4d6a62efd34b5c21"
+        },
+        {
+          "privateSource": "2026-10-08-invoice-codex/plain-final.mjs",
+          "sha256": "3ecdac645ab0530290a46dfb707c2c9806ed655ae19c1e715878528e1f599534"
+        }
+      ]
+    },
+    {
+      "ledger": "P150",
+      "sourceScope": "Private runner code facts only; not a new runtime or efficiency acceptance claim.",
+      "behavior": "After confirmed Worker publication, harness appends synthetic noReply diagnostic into native history before Activation completion.",
+      "files": [
+        {
+          "privateSource": "2026-10-08-invoice-opencode/run.mjs",
+          "sha256": "f87ce401b60debebf3482c4d4b80cfc03c7280d07e57020bfda3b488789e5ddf"
+        },
+        {
+          "privateSource": "2026-10-08-invoice-opencode/worker-receipt.mjs",
+          "sha256": "5d360b2ae82163b48e9188d8b2020326f6083e1b5fd3d36e97088918a4812d5c"
+        },
+        {
+          "privateSource": "2026-10-08-invoice-opencode/host.mjs",
+          "sha256": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375"
+        }
+      ]
+    },
+    {
+      "ledger": "P151",
+      "sourceScope": "Private runner code facts only; not a new runtime or efficiency acceptance claim.",
+      "behavior": "Host writes host-receipt file, finishes Run and completes Activation without success receipt injection into native history.",
+      "files": [
+        {
+          "privateSource": "2026-10-08-invoice-claude-paid/run.mjs",
+          "sha256": "55af2f20eac18f088b6884ca18a4e1fb0042baad6b6f20e18ef0a4d3fcb1ccf7"
+        },
+        {
+          "privateSource": "2026-10-08-invoice-claude-paid/lifecycle.mjs",
+          "sha256": "eed59c2638e48cc0d1c000be5fb58867aafc340760e7ae726f6703c2ff992021"
+        },
+        {
+          "privateSource": "2026-10-08-invoice-claude-paid/final.mjs",
+          "sha256": "055c434b154d0ac0f36a2048d6b97e91eb2c744eaffdd2b9a3f9238480f85cf9"
+        }
+      ]
+    }
+  ],
+  "runnerLocations": {
+    "P149": "run.mjs:11–12, room.mjs:5, plain-final.mjs:2",
+    "P150": "run.mjs:41–42",
+    "P151": "run.mjs:58–64"
+  },
+  "conclusion": "Injecting a normal successful publication receipt into OpenCode model history is a harness policy, not a Kernel Worker/ACK invariant. Existing committed Room event, delivery cursor and final marker provide authoritative business evidence; native history injection is a separate presentation operation.",
+  "candidateOnly": "Retain Kernel durable publication/ACK/final evidence and Host transport-to-Run mapping; after explicit current-turn final validation and confirmed publication, complete execution through existing gates. Ordinary native history may retain only its native final text. No implementation or contract change is made by this audit.",
+  "boundaries": [
+    "Explicit per-Run output-action mode remains required; arbitrary stdout or process exit is never publication intent.",
+    "Normal native termination, committed publication, RunAttempt termination and Activation completion remain separate facts.",
+    "Unknown/stale/rejected writes must not resume as normal successful publication.",
+    "Lost response after commit requires reconciliation of the original write; never resend with a fresh key or infer success from native final.",
+    "Host diagnostic persistence references Kernel truth and must not become a second business ledger or queue.",
+    "Success receipts containing warnings or exceptional outcomes must not lose information merely because routine success injection is omitted.",
+    "Provider final identity and same-session persistence proofs remain required; finished Run history cannot be rewritten."
+  ],
+  "requiredNegativeTests": [
+    "Mode absent, wrong session/turn or historical final: zero Room action.",
+    "Length/truncated/ambiguous native final or unfinished tool: reject intent.",
+    "Stale context or revoked credential: no false publication/ACK/completion; record actual execution end.",
+    "Commit followed by lost HTTP response: retain unknown, reconcile original durable result, no new-key resend.",
+    "Host crash after commit but before local receipt bookkeeping: recover from authoritative existing event/marker without duplicate publication.",
+    "Native-history receipt write absent: two valid continuous turns still produce exactly one Worker publication each with correct ACK/fences.",
+    "Warning-bearing or nonroutine receipts remain explicitly handled rather than silently suppressed."
+  ],
+  "limitations": [
+    "No prediction or measurement of token savings from this design conclusion.",
+    "P150 original paid trajectory, receipts, failures and cost remain unchanged.",
+    "P151 paid execution has started; this audit asserts inspected code behavior only, not paid test success.",
+    "No production implementation, target-contract edit, new paid call or receipt-compaction experiment."
+  ]
+}

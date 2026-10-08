@@ -1,0 +1,19 @@
+{
+  "claude": {
+    "version": "2.1.293",
+    "existingEntry": "/Users/sun/.loom/reviews/2026-10-08-bound-claude/run.mjs",
+    "actualCandidate": "body/final MCP reply plus PostToolUse hook, NOT native-final-text",
+    "memory": "Each launch CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 + settings autoMemoryEnabled=false; isolated CLAUDE_CONFIG_DIR/HOME, --setting-sources empty, --disable-slash-commands, empty ancestor context guards. Existing assertNativeMemoryPolicy used.",
+    "approvedBindings": ["sonnet low", "haiku no effort"],
+    "reusable": "Native print stream parser, explicit session-id/resume, usage/OS/model checks. New final-text proof and Host submit integration/free tests needed; no direct paid reuse as same candidate."
+  },
+  "pi": {
+    "version": "1.1.0",
+    "existingEntry": "/Users/sun/.loom/reviews/2026-10-08-bound-reply/run.mjs",
+    "actualCandidate": "body/final MCP wrapper with Pi native terminate; NOT native-final-text",
+    "memory": "No independently audited automatic-memory subsystem in exact installed version; no-context-files/no-skills/no-extensions/no-prompt-templates, isolated PI_CODING_AGENT_DIR and no SYSTEM/APPEND_SYSTEM/AGENTS/project .pi; no-mcp for native. Explicit extension in terminal changes loadout intentionally.",
+    "observedBinding": "aihubmix / deepseek-v4.1-flash / low in earlier authorized private experiments; Pi is absent from formal approved-models.mjs table, do not present as formal gate admission.",
+    "reusable": "JSON lifecycle/usage and explicit session path; needs final-text normal-ending guard, Host explicit-contract submit and free negative tests before paid use."
+  },
+  "scope": "Read-only, no model/account calls. Existing five-CLI results retain their distinct entrypoints; neither Claude nor Pi MCP prototype is proof of final-text parity."
+}

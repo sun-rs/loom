@@ -1,0 +1,115 @@
+{
+  "ledger": "P150",
+  "rawProviderRequests": 118,
+  "nativeGenerations": 71,
+  "terminalGenerations": 47,
+  "allProxyRequestsAndNativeGenerationsMapped": true,
+  "rawRequestResponse0600HashChecksPassed": true,
+  "allMappedRequestsExactModelLow": true,
+  "rawApiDbStepFinishUsageMatches": true,
+  "snapshotHashesMatched": 14,
+  "kernel": {
+    "activationStates": [["completed", 7]],
+    "runStates": [["exited", 0, 7]],
+    "finalMarkers": 7,
+    "pendingAckWindows": 0,
+    "workerCursor": [[58]],
+    "receiptMatchesActualMessageEvents": 7
+  },
+  "manualSnapshotReview": {
+    "scope": "Manual source and README inspection of retained native-7 and terminal-7 snapshots only; R12 never executed.",
+    "native": {
+      "code": "Uses exact integer coefficient/exponent arithmetic, HALF_UP cents, dict validation, cancellation-before-field-read and per-group independent aggregation with global recalculation.",
+      "readme": "Describes implemented R7 API, tax/discount/validation/grouping. Earlier row-attributes paragraph remains stale and conflicts with later list-of-dicts validation section.",
+      "snapshotQuality": "27 activated cumulative hidden cases plus self-tests pass at R7.",
+      "remainingUnexecuted": "R8 category normalization/order, R9/R10 file/stdin CLI, R11 regression request and R12 final README review were not run."
+    },
+    "terminal": {
+      "code": "Uses Fraction constructed from validated integers/Decimal strings, exact aggregation then HALF_UP, dict validation/cancellation and independent groups.",
+      "readme": "Describes R7 API and rounding/validation/grouping; no completed later CLI/documentation contract claim.",
+      "snapshotQuality": "27 activated cumulative hidden cases plus self-tests pass at R7.",
+      "remainingUnexecuted": "R8 category normalization/order, R9/R10 file/stdin CLI, R11 regression request and R12 final README review were not run."
+    },
+    "acceptance": "Neither complete12-round artifact acceptance nor complete README acceptance."
+  },
+  "generationClassification": {
+    "native": {
+      "categories": {
+        "tool_using_generation": {
+          "generations": 64,
+          "inputTokens": 1667658,
+          "outputTokens": 34412,
+          "reasoningOutputTokens": 12518
+        },
+        "normal_final_generation": {
+          "generations": 7,
+          "inputTokens": 208023,
+          "outputTokens": 1368,
+          "reasoningOutputTokens": 372
+        }
+      },
+      "toolCallsByName": {
+        "bash": 14,
+        "read": 10,
+        "write": 5,
+        "edit": 36
+      },
+      "toolStatuses": {
+        "completed": 65
+      },
+      "allProviderRequestsMapped": true,
+      "allPersistedAssistantsMapped": true,
+      "observedReplySchemaTools": 0,
+      "postPublicationExtraObservedRequests": 0,
+      "lastRoundCumulativeCases": 27
+    },
+    "terminal": {
+      "categories": {
+        "tool_using_generation": {
+          "generations": 40,
+          "inputTokens": 1047895,
+          "outputTokens": 29018,
+          "reasoningOutputTokens": 11695
+        },
+        "normal_final_generation": {
+          "generations": 7,
+          "inputTokens": 180658,
+          "outputTokens": 1476,
+          "reasoningOutputTokens": 50
+        }
+      },
+      "toolCallsByName": {
+        "bash": 9,
+        "read": 5,
+        "write": 5,
+        "edit": 22
+      },
+      "toolStatuses": {
+        "completed": 40,
+        "error": 1
+      },
+      "allProviderRequestsMapped": true,
+      "allPersistedAssistantsMapped": true,
+      "observedReplySchemaTools": 0,
+      "postPublicationExtraObservedRequests": 0,
+      "lastRoundCumulativeCases": 27
+    }
+  },
+  "formatAndExtraRequests": {
+    "modelFacingReplySchemaOrReplyToolCalls": 0,
+    "observedPostPublicationExtraRequests": 0,
+    "terminalBusinessEditError": {
+      "round": 6,
+      "count": 1
+    },
+    "limits": "Generation classes reflect observed tool use and finish markers, not a precise decomposition into reasoning necessity, instruction overhead, or stochastic alternatives. No thinking text published."
+  },
+  "accounting": "Raw prompt_tokens includes cached input; native input + cache.read + cache.write reconstructs it. Raw completion_tokens includes reasoning; native output + reasoning reconstructs it. Reasoning counted once, never added again to raw completion_tokens.",
+  "firstGenerationInput": {
+    "native": 7647,
+    "terminal": 7660,
+    "difference": 13,
+    "scope": "First provider generation only, input includes cache; not whole first turn, cumulative overhead or billed cost.",
+    "rootIndependentCheck": "Recomputed from each arm first result usage[0] native input+cache.read+cache.write."
+  }
+}

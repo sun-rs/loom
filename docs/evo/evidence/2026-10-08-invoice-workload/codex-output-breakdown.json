@@ -1,0 +1,35 @@
+{
+  "batch": "P149",
+  "source": "per-response reported usage partitioned by ordered current-turn native items; no explicit item response_id field",
+  "subtotals": {
+    "native": {
+      "final-only": 1062,
+      "tool-bearing": 17818,
+      "mixed": 0,
+      "other": 0
+    },
+    "structured": {
+      "final-only": 1044,
+      "tool-bearing": 14858,
+      "mixed": 0,
+      "other": 0
+    }
+  },
+  "allResponses": 105,
+  "limits": "Tool-bearing may contain commentary. Mixed/other stay separate; no thinking content published. Not a byte-derived token estimate.",
+  "generationCounts": {
+    "native": {
+      "tool-bearing": 52,
+      "final-only": 12,
+      "mixed": 0,
+      "other": 0
+    },
+    "structured": {
+      "tool-bearing": 29,
+      "final-only": 12,
+      "mixed": 0,
+      "other": 0
+    }
+  },
+  "note": "Every final-only generation is a final response without a model-facing Room envelope. Tool-bearing output includes code/commentary and any reported reasoning; reasoning is a subset, not added twice."
+}

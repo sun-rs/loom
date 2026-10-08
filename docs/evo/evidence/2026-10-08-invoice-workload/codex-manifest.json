@@ -1,0 +1,118 @@
+[
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/admission.mjs",
+    "sha256": "a7ec9820b328ec3f4cf828c3c0774a455d5b1750e9a51d0db151f50c1d02d8ae"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/admission.test.mjs",
+    "sha256": "bddda290c3313b732bfeaefc5e0e07be46775a1a93202d654db0635ed395c4db"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/fake-provider.mjs",
+    "sha256": "b7d28ca223475910227204eac2cf31c8bb1c49edfff8c3497022f383a6c7cfa1"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/final.mjs",
+    "sha256": "2dc5410cd3f2e3d2f54a1dd10e029df3ff5d4fdd3050213c823bb71c0f6357e6"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/lifecycle.test.mjs",
+    "sha256": "23dd23cd36f917b25a6667e78b46f191434dbe8911ba1e34ea051ef4ae4ed52a"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/plain-final.mjs",
+    "sha256": "3ecdac645ab0530290a46dfb707c2c9806ed655ae19c1e715878528e1f599534"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/process.mjs",
+    "sha256": "29f21c24da1e7f6baeda02e10a26b1de5de7413511ac63a7411ee7089af8cc36"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/quality.mjs",
+    "sha256": "7ae7c7ac2f566c17b013289557eeaf035eafa007d70697b4597ac536420ccde7"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/read-transport.mjs",
+    "sha256": "03f0b41ade8939fa1c95ba32bae20b5818a3b830e40d7f611c3d06e07185786b"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/read-transport.test.mjs",
+    "sha256": "26c97daa14d1a00e5bdfdbe1d46e55190170ae54e8903b6825bf212f02fa7723"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/room.mjs",
+    "sha256": "5fafd96c619eeca4f16d65a2950eae11176d9655e3ac3d5b4d6a62efd34b5c21"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/run.mjs",
+    "sha256": "55c5ea174193862db54c1dc83d7d20d9aa70da9f771c3b4dd0f9166422419102"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/sandbox.mjs",
+    "sha256": "ee22712f7e8d63eba6ba43eb9761a64f4472058fbc85d69822527b35ee074204"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/sandbox.test.mjs",
+    "sha256": "548945b28a40cd9b76e1c48192675efda491c49d663c45693d29c424e8725bea"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/test-evidence.mjs",
+    "sha256": "e5e89d310c2978b622cf2b64f0c70da1a872c02d7880eb94bf5426e606b91ab0"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/audit.py",
+    "sha256": "c50c8a6e048e56d336056f7648411b2faf4dcebdedc1778e9d531cfd487e34ba"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-codex/evaluate.py",
+    "sha256": "1e84a7e69a0cf54ead01013a236e9dea4b0db013f969592d0782dc04788e5c8b"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/evaluator.py",
+    "sha256": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/manifest.json",
+    "sha256": "0bab4178af434dc91d4777cf641427b99b39eb4b84dde4c45962ab0c8a2d4b3f"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/oracle/cases.json",
+    "sha256": "63d2e134e2a822adf50d36f94a62c6f7bc468ab930953958e02ea3bac072b1d7"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/oracle/reference.py",
+    "sha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/plan.json",
+    "sha256": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/public-evidence.json",
+    "sha256": "fb2711aac3d932b20ef8fdcb8d4e9863777ec104c76bd4a528a6365d18dd0db1"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/schemas.json",
+    "sha256": "f3845a7b135d1943f977b344ca4f46221ab35faec8e63f4879a67ba96da0af0b"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/snapshot.py",
+    "sha256": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/test_evaluator.py",
+    "sha256": "4ad60b13cb36a8da6793b616b1bd563fefa235f9f164028c07203dde355aa286"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/workspace/README.md",
+    "sha256": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+  },
+  {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2/workspace/invoice.py",
+    "sha256": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+  },
+  {
+    "path": "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/approved-models.mjs",
+    "sha256": "612f0d8cfef8956949aa18711b056731b830dd7152026b3589a92849adbbeb44"
+  }
+]

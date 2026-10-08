@@ -1,0 +1,23 @@
+{
+  "status": "prepared-awaiting-root-review-no-paid-launched",
+  "planHash": "4e5a7aa3dea2d3cf6a7a2ed5c16d0b9d83da32cc8be1f3d9c9c95c8486cac850",
+  "manifestHash": "462df7997f7258942e576fc3f6eee99cdb1a34c643ebdca7a3cdededd13ace11",
+  "runnerHash": "55af2f20eac18f088b6884ca18a4e1fb0042baad6b6f20e18ef0a4d3fcb1ccf7",
+  "tests": {
+    "passed": 29,
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/tests-final.tap"
+  },
+  "free12": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/runs/1791470447046/public-evidence.json",
+  "finalSourceFree2": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/runs/1791470576557/public-evidence.json",
+  "freeProviderRequests": 140,
+  "paidRequests": 0,
+  "catalog": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/catalog.json",
+  "supersededDraft": "/Users/sun/.loom/reviews/2026-10-08-invoice-claude-paid/plan-superseded-3m.json",
+  "limits": [
+    "Synthetic file edits prove transport and quality continuation only, no model coding reliability or cost conclusion.",
+    "README starter intentionally unchanged in fake, no manual task acceptance.",
+    "One pair only; early structural ambiguity separated from explicit later quality.",
+    "Final plan adds explanatory budget/publication text after free run; behavior unchanged.",
+    "audit.mjs is fake-only evidence helper; real paid audit must count every usage.json including failed final, and latest cumulative USD per session."
+  ]
+}

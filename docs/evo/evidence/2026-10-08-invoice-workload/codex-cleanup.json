@@ -1,0 +1,13 @@
+{
+  "batch": "P149",
+  "checkedAt": "2026-10-08T14:56:33.166729+00:00",
+  "recordedPidAndPgidCount": 24,
+  "recordedGroupsAbsent": true,
+  "separatelyObservedCodeModeHostAbsent": true,
+  "harnessAbsent": true,
+  "runtimeOpenFileCwdMatches": 0,
+  "workerPortListening": false,
+  "method": "ps PID/PPID/PGID audit, lsof +D exact runtime, lsof exact Worker TCP port; also verified independently observed Code Mode Host PID absent",
+  "sourceHashVerified": true,
+  "database": "12 actual exited Runs and ACK-covered completed Activations; no synthetic completion"
+}

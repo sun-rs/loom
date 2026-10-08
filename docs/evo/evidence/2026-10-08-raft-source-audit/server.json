@@ -1,0 +1,274 @@
+{
+  "schema": "loom.private-upstream-backend-audit.v1",
+  "date": "2026-10-08",
+  "repository": "https://github.com/botiverse/raft-source",
+  "commit": "26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6",
+  "localClone": "/Users/sun/.loom/reviews/2026-10-08-raft-source",
+  "scope": "Static read-only backend/server and managed daemon delivery review; current snapshot only.",
+  "operations": {
+    "upstreamScriptsRun": false,
+    "paidCalls": 0,
+    "productSourceCopied": false,
+    "loomCodeModified": false,
+    "upstreamWorkingTreeCleanAtInspection": true
+  },
+  "summary": "Raft is valuable as a failure-handling and security-design reference, not a backend replacement or demonstrated low-token baseline. Current source already mitigates repeated wake notices, while a managed Agent still owns one current process/session lane across its conversations. Conditional session recycling means the historic fixed-session description is no longer literally complete.",
+  "findings": [
+    {
+      "id": "server-identity",
+      "observed": "Product Server is the servers database tenant/workspace entity. packages/server is the HTTP/backend service hosting that domain. Machine/daemon is a separate entity; Server must not be equated with compute host.",
+      "evidence": [
+        {
+          "path": "packages/server/src/db/schema.ts",
+          "lines": "296-319",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/db/schema.ts#L296"
+        },
+        {
+          "path": "packages/server/src/db/schema.ts",
+          "lines": "939-969",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/db/schema.ts#L939"
+        },
+        {
+          "path": "packages/server/src/db/schema.ts",
+          "lines": "3722",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/db/schema.ts#L3722"
+        },
+        {
+          "path": "packages/server/src/server.ts",
+          "lines": "103",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/server.ts#L103"
+        },
+        {
+          "path": "packages/server/src/server.ts",
+          "lines": "191",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/server.ts#L191"
+        }
+      ],
+      "loomDesignValue": "Keep explicit domain and deployment identities when mapping a UI Server concept to Loom.",
+      "limits": "Raft multi-human tenant plans, public admission and cloud/BYOC belong to a broader product; do not import them into Loom single-Human Channel/Computer ownership."
+    },
+    {
+      "id": "storage",
+      "observed": "Database initializer selects PGlite for its URL scheme, otherwise node-postgres/Drizzle; optional search replica is distinct. Message seq is a bigserial database column.",
+      "evidence": [
+        {
+          "path": "packages/server/src/db/index.ts",
+          "lines": "822-863",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/db/index.ts#L822"
+        },
+        {
+          "path": "packages/server/src/db/schema.ts",
+          "lines": "1967-1969",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/db/schema.ts#L1967"
+        }
+      ],
+      "loomDesignValue": "Review transaction-scoping and recovery test scenarios, not a database replacement.",
+      "limits": "No evidence here that Raft message sequence is Loom per-Room causal sequence or that its whole mutation pipeline provides Loom atomic event/projection/Outbox guarantees. No runtime database tests performed."
+    },
+    {
+      "id": "one-current-agent-lane",
+      "observed": "Agent row has one current sessionId. AgentProcessManager stores AgentProcess by agentId, rebounds starts when already running/starting and handles queued inbox after turn end.",
+      "evidence": [
+        {
+          "path": "packages/server/src/db/schema.ts",
+          "lines": "939-969",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/db/schema.ts#L939"
+        },
+        {
+          "path": "packages/daemon/src/agentProcessManager.ts",
+          "lines": "1376",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentProcessManager.ts#L1376"
+        },
+        {
+          "path": "packages/daemon/src/agentProcessManager.ts",
+          "lines": "3874-3902",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentProcessManager.ts#L3874"
+        },
+        {
+          "path": "packages/daemon/src/agentProcessManager.ts",
+          "lines": "9085-9115",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentProcessManager.ts#L9085"
+        }
+      ],
+      "loomDesignValue": "Supports the reason Loom should use independent Channel instance lanes, rather than sharing a single cross-channel Agent execution lane.",
+      "limits": "Inference from current process ownership: conversations involving one managed Agent share its execution/history lane. Busy steering/notifications exist, so not every new message simply waits idle. Different Agents can run independently. This does not establish a permanently immutable session."
+    },
+    {
+      "id": "session-recycle",
+      "observed": "At-wake recycling can clear sessionId before spawn and reconstruct a briefing after a cold gap with large context. Defaults are one hour and 128000 context tokens. It is server-flag gated; readable resume facts currently exist only for Claude despite a broader enabled runtime set.",
+      "evidence": [
+        {
+          "path": "packages/daemon/src/wakeSessionRecycle.ts",
+          "lines": "11-55",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/wakeSessionRecycle.ts#L11"
+        },
+        {
+          "path": "packages/daemon/src/wakeSessionRecycle.ts",
+          "lines": "95-112",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/wakeSessionRecycle.ts#L95"
+        }
+      ],
+      "loomDesignValue": "Useful as evidence upstream also confronts native context/cache costs, and as a measurement question.",
+      "limits": "Cannot adopt under Loom continuous-session/no-auto-rotation contract. Raft MEMORY.md/notes persistence also differs from Loom platform memory. Source comments claiming cheaper/faster are upstream assertions, not independently measured Loom results."
+    },
+    {
+      "id": "queue-receipt-not-consumption",
+      "observed": "Orchestrator dedupes by seq or message id; requireQueueReceipt means replayable target queue state, explicitly not mere Redis pubsub. Its queued result explicitly does not prove daemon/model consumption.",
+      "evidence": [
+        {
+          "path": "packages/server/src/services/agentOrchestrator.ts",
+          "lines": "1490-1499",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/agentOrchestrator.ts#L1490"
+        },
+        {
+          "path": "packages/server/src/services/agentOrchestrator.ts",
+          "lines": "1552-1572",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/agentOrchestrator.ts#L1552"
+        },
+        {
+          "path": "packages/server/src/services/agentOrchestrator.ts",
+          "lines": "1622-1627",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/agentOrchestrator.ts#L1622"
+        }
+      ],
+      "loomDesignValue": "High-value test/design reference: separate notification, durable queue handoff, runtime delivery and business completion.",
+      "limits": "Transient reminder wakes explicitly bypass replayable enqueue. This exception cannot replace Loom required durable causal chain. Do not transfer queued into Activation completed."
+    },
+    {
+      "id": "duplicate-notice-control",
+      "observed": "Daemon drops duplicate inbox entries by message_id or seq. Before stdin notification it filters already-contributed messages and suppresses a repeated unread-set fingerprint for the same native session, explicitly addressing wedged/rate-limited runtime retry storms.",
+      "evidence": [
+        {
+          "path": "packages/daemon/src/agentInboxDeliveryDebt.ts",
+          "lines": "49-67",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentInboxDeliveryDebt.ts#L49"
+        },
+        {
+          "path": "packages/daemon/src/agentProcessManager.ts",
+          "lines": "9677-9706",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentProcessManager.ts#L9677"
+        }
+      ],
+      "loomDesignValue": "High-value small design reference: derive dedup identity from pending canonical message identity/session generation, retain diagnostics and test repeated re-projections.",
+      "limits": "Contribution to a session is not proof of semantic read/ACK. Empty fingerprint deliberately does not dedupe. Existing safeguards refute a blanket claim that current Raft always reinjects identical notices, but do not quantify residual cost."
+    },
+    {
+      "id": "external-inbox-recovery",
+      "observed": "External-agent push is a signed body-free notice; pull/ACK remain separate and notices never move cursors. Hot-path coalescing plus leased periodic sweep repairs missed notices; pending-state reminders are bounded.",
+      "evidence": [
+        {
+          "path": "packages/server/src/services/agentInboxPushService.ts",
+          "lines": "1-26",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/agentInboxPushService.ts#L1"
+        },
+        {
+          "path": "packages/server/src/services/agentInboxPushService.ts",
+          "lines": "76-106",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/agentInboxPushService.ts#L76"
+        }
+      ],
+      "loomDesignValue": "High-value design reference for hint-only delivery, reconnect recovery and batching without copying peer transcripts into model context.",
+      "limits": "This is the external-agent push path, not proof that all managed runtime delivery paths use identical mechanics. Push backoff/retries are network actions, not necessarily model generations. RisingWave/Postgres sweep architecture is not required by local Loom."
+    },
+    {
+      "id": "durable-followup-work",
+      "observed": "durableTasks stores follow-up work in the state-change transaction, runs after commit, recovers expired claims and fences writes by claimed_by plus attempt. Handler idempotency/revision guards remain necessary.",
+      "evidence": [
+        {
+          "path": "packages/server/src/services/durableTasks.ts",
+          "lines": "10-15",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/durableTasks.ts#L10"
+        },
+        {
+          "path": "packages/server/src/services/durableTasks.ts",
+          "lines": "89-122",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/durableTasks.ts#L89"
+        }
+      ],
+      "loomDesignValue": "Useful failure scenarios: crash after commit, stale worker completion and concurrent recovery. Compare against existing Loom Kernel Outbox/Run fencing instead of creating another owner.",
+      "limits": "These infrastructure tasks are not equivalent to Loom Human business Tasks. No need to transplant a second durable queue."
+    },
+    {
+      "id": "authentication",
+      "observed": "Declared route registry fails closed for unregistered routes under claimed prefixes; agent credential binds actingAgentId and serverId, with live Server and Agent checks. Agent API queued delivery checks current channel/server access. Credential comments explicitly say active session capability intersection is not yet wired.",
+      "evidence": [
+        {
+          "path": "packages/server/src/middleware/authFromRegistry.ts",
+          "lines": "1-17",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/middleware/authFromRegistry.ts#L1"
+        },
+        {
+          "path": "packages/server/src/middleware/auth.ts",
+          "lines": "591-647",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/middleware/auth.ts#L591"
+        },
+        {
+          "path": "packages/server/src/services/agentInboxEvents.ts",
+          "lines": "45-61",
+          "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/agentInboxEvents.ts#L45"
+        }
+      ],
+      "loomDesignValue": "High-value negative tests for wrong principal, forgotten route registration, deleted identity and revoked access between queueing and consumption.",
+      "limits": "Outside claimed prefixes per-route auth applies. Third-party event path bypasses ordinary channel lookup. Do not claim global complete least privilege or substitute Raft capability semantics for Loom authenticated Worker execution grants."
+    }
+  ],
+  "tokenConclusion": {
+    "established": "Current source explicitly handles duplicate pending messages, repeated unread-set notification storms and cold large-session costs.",
+    "notEstablished": [
+      "Native-normalized token or monetary multiplier for any CLI/model.",
+      "Whether eliminating duplicate hints removes remaining model generations.",
+      "Whether warm/cold caching, native history replay, ordinary work, protocol calls or session reconstruction dominate real costs."
+    ],
+    "measurementNeeded": "Same workload, CLI/model/effort, native continuous-session control, memory policy, per-request provider usage, quality, warm/cold cache and notification counts. Preserve failures and do not compare different task quality as equivalent."
+  },
+  "reuseDecision": {
+    "designPriority": [
+      "Queue receipt vs consumer ACK vs explicit business completion separation",
+      "Dedup/reprojection and recovery failure tests",
+      "Credential-bound identity and post-queue authorization checks",
+      "Claim/attempt fencing for asynchronous side effects"
+    ],
+    "doNotPortAsBaseline": [
+      "Agent-global cross-channel lane",
+      "Automatic session recycling or private file memory",
+      "Cloud billing/public multi-human Server policies",
+      "Large centralized orchestration or RisingWave/Redis stack merely to match upstream"
+    ],
+    "codeReuse": "No code adopted. Any future structural port or copy needs explicit license compatibility review, revision/path provenance, notices and local owner/TDD integration; design inspiration is not a claim that restricted source is freely redistributable."
+  },
+  "license": {
+    "identifier": "FSL-1.1-ALv2",
+    "evidence": [
+      {
+        "path": "LICENSE",
+        "lines": "23-51",
+        "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/LICENSE#L23"
+      },
+      {
+        "path": "LICENSE",
+        "lines": "63-69",
+        "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/LICENSE#L63"
+      },
+      {
+        "path": "LICENSE",
+        "lines": "87-95",
+        "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/LICENSE#L87"
+      }
+    ],
+    "factualLimits": "Current grant is subject to Permitted Purpose, excluding defined commercial Competing Use. Future Apache 2.0 grant takes effect on the second anniversary of availability of the relevant version. Do not describe current snapshot as unconditional Apache/MIT-style code reuse. This audit does not decide whether a proposed Loom distribution qualifies."
+  },
+  "suggestedNegativeTests": [
+    "Repeated unchanged unread projection must not create extra native delivery or ACK.",
+    "Crash between canonical commit and wake hint must recover without duplicate Room mutations.",
+    "Replica/transport queued receipt must never complete Activation.",
+    "Membership revoked after enqueue must prevent later delivery.",
+    "Old lease claimant must not overwrite the new attempt.",
+    "Same instance busy with follow-up work retains one lane; separate instances remain concurrent."
+  ],
+  "verificationLimits": [
+    "Source inspection only, not executed upstream tests or deployment acceptance.",
+    "Commented rationale distinguished from benchmark evidence.",
+    "No complete audit of all Raft authorization, transactions or runtime drivers.",
+    "Loom current target ownership remains authoritative."
+  ]
+}

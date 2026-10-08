@@ -1,0 +1,253 @@
+{
+  "status": "free v2 integration complete; not model quality or paid acceptance",
+  "evidence": "runs/1791469008235-free",
+  "fixture": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact-v2",
+  "fixturePlanSha256": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+  "turns": 24,
+  "independentContinuousSessions": 2,
+  "artifactChecks": [
+    {
+      "arm": "native",
+      "round": 1,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 1,
+      "totalChecks": 1
+    },
+    {
+      "arm": "structured",
+      "round": 1,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 1,
+      "totalChecks": 1
+    },
+    {
+      "arm": "structured",
+      "round": 2,
+      "functionalPassed": false,
+      "selfTestsPassed": false,
+      "passedChecks": 0,
+      "totalChecks": 3
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "functionalPassed": false,
+      "selfTestsPassed": false,
+      "passedChecks": 0,
+      "totalChecks": 3
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 4,
+      "totalChecks": 4
+    },
+    {
+      "arm": "structured",
+      "round": 3,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 4,
+      "totalChecks": 4
+    },
+    {
+      "arm": "structured",
+      "round": 4,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 7,
+      "totalChecks": 7
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 7,
+      "totalChecks": 7
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 9,
+      "totalChecks": 9
+    },
+    {
+      "arm": "structured",
+      "round": 5,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 9,
+      "totalChecks": 9
+    },
+    {
+      "arm": "structured",
+      "round": 6,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 25,
+      "totalChecks": 25
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 25,
+      "totalChecks": 25
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 27,
+      "totalChecks": 27
+    },
+    {
+      "arm": "structured",
+      "round": 7,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 27,
+      "totalChecks": 27
+    },
+    {
+      "arm": "structured",
+      "round": 8,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 28,
+      "totalChecks": 28
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 28,
+      "totalChecks": 28
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 29,
+      "totalChecks": 29
+    },
+    {
+      "arm": "structured",
+      "round": 9,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 29,
+      "totalChecks": 29
+    },
+    {
+      "arm": "structured",
+      "round": 10,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 35,
+      "totalChecks": 35
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 35,
+      "totalChecks": 35
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 36,
+      "totalChecks": 36
+    },
+    {
+      "arm": "structured",
+      "round": 11,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 36,
+      "totalChecks": 36
+    },
+    {
+      "arm": "structured",
+      "round": 12,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 37,
+      "totalChecks": 37
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 37,
+      "totalChecks": 37
+    }
+  ],
+  "scriptedFailure": "Both round2 implementations intentionally invalid; selftests and hidden cases fail, then fixed prompts continue without oracle feedback",
+  "scriptedSource": "Fake provider writes developer reference; not model-generated repair performance",
+  "uniqueUsageResponses": 48,
+  "reportedFakeUsage": {
+    "input_tokens": 4800,
+    "cached_input_tokens": 0,
+    "output_tokens": 960,
+    "reasoning_output_tokens": 0
+  },
+  "realWorkerPublicationsAckCompleted": 12,
+  "archivedArtifactHashesVerified": true,
+  "artifactEvaluation": "evaluate_snapshot invoked on archived bytes; case results never added to CLI prompt",
+  "bothArmsNoSchema": true,
+  "memoryDisabledEveryLaunch": true,
+  "recordedGroupsAbsent": true,
+  "fixtureListenerClosed": true,
+  "testsPassed": 8,
+  "requestUserMessagesMatchFixedPromptsOnly": true,
+  "readTransportRetryCount": 2,
+  "paid": "disabled in candidate; no approval/freeze yet",
+  "limits": [
+    "Reference-driven fake CLI proves integration, not model coding ability",
+    "README content semantic accuracy requires manual review",
+    "Single UID path/network sandbox is not full hostile-code security",
+    "Native close privately recorded before Worker submission; Kernel terminal write after submission attempt due existing active Worker grant fence; finally records actual exit even if publication fails"
+  ],
+  "actualCliTimeout": {
+    "evidence": "runs/1791469111371-negative",
+    "timeoutSeconds": 15,
+    "exit": "SIGTERM",
+    "run": "timed_out",
+    "activation": "leased",
+    "ackCount": 0,
+    "nativeFinal": false,
+    "reportedUsage": null,
+    "recordedGroupAbsent": true,
+    "fixturePortClosed": true,
+    "note": "Local fakeprovider intentionally holds request; no paid call; absence of usage is not zero for analogous real-provider timeouts"
+  },
+  "sourceState": "Final free candidate hashed; paid disabled; awaiting lead plan freeze/admission",
+  "historyFailures": [
+    "v1 free integration24turn success preserved separately",
+    "v2 profile address literal rejected before provider",
+    "v2 enumerated sandbox exceeded mac serializer before provider",
+    "v2 compact parent metadata denied canonicalize before provider",
+    "two v2 read-only presentation ECONNRESET failures retained; no model retry; fixed read-only connection handling tested"
+  ],
+  "fixtureShaVerified": {
+    "plan": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+    "evaluator": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d"
+  }
+}

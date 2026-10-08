@@ -1,0 +1,174 @@
+{
+  "kind": "opencode-invoice-artifact-native-final-text-v1",
+  "sourceSha256": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "thinking": "low",
+  "cliVersion": "1.18.35",
+  "arms": ["native", "terminal"],
+  "order": "alternating paired rounds: odd native first, even terminal first",
+  "samples": 1,
+  "tasks": [
+    {
+      "round": 1,
+      "title": "Implement the API",
+      "prompt": "Create invoice.py with summarize(rows, tax_percent=\"0\", group_by=None). For now implement ungrouped rows having quantity and unit_price. Return exactly count (integer number of active input rows), subtotal, discount, tax, total. The four money fields are two-decimal strings. Use Decimal arithmetic and ROUND_HALF_UP. Compute exact quantity × unit_price products and aggregate before rounding; do not round individual lines. Until their later features arrive, discount and tax are \"0.00\", total equals subtotal. Inputs used now are nonnegative integer values or ordinary decimal strings; do not use binary floats internally.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat. Use sufficient Decimal precision or equivalent exact arithmetic: default precision 28 is not guaranteed for the permitted input range."
+    },
+    {
+      "round": 2,
+      "title": "Multiple and zero lines",
+      "prompt": "Support multiple rows and an empty rows list. Count every active row, including zero quantity. Zero quantities contribute zero money. Aggregate exact products before one currency rounding. Empty totals are count zero and all money fields \"0.00\".\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 3,
+      "title": "Cancellation",
+      "prompt": "An optional cancelled flag defaults to false. Skip a row with cancelled exactly true entirely before looking at its other fields; even missing or malformed quantity/price in a cancelled row is ignored. Other active rows retain existing behavior.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 4,
+      "title": "Tax",
+      "prompt": "Implement tax_percent, default \"0\". Compute tax on the exact aggregate net subtotal, round tax once to cents with ROUND_HALF_UP, then total equals the independently rounded net amount plus that rounded tax. Do not compute tax per line or on a prematurely rounded net subtotal.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 5,
+      "title": "Discount",
+      "prompt": "Add each row optional discount_percent, default \"0\". Compute its discount as exact quantity × unit_price × discount_percent / 100; do not round each discount. Return subtotal before discounts, discount as the rounded aggregate discount, tax on the exact aggregate subtotal minus exact aggregate discounts, and total as rounded exact net plus rounded aggregate tax. Each aggregate is rounded independently with ROUND_HALF_UP.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 6,
+      "title": "Validation",
+      "prompt": "Validate every active row: quantity and unit_price required; quantity/unit_price/discount_percent and tax_percent accept only integers from 0 through 999999999999 inclusive (not booleans), or ASCII strings matching [0-9]{1,12}(\\.[0-9]{1,6})?. Reject negatives, floats, exponent notation, whitespace, NaN/infinity, extra fractional digits and malformed or missing fields with ValueError. tax_percent and discount_percent must also be at most 100. rows must be a list of dicts. cancelled when supplied must be a bool. Cancelled=true still skips the rest of that row. Ignore unrelated row keys.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 7,
+      "title": "Category groups",
+      "prompt": "Support group_by=\"category\"; None remains ungrouped. Reject other group_by values with ValueError. Grouped result adds exactly a groups list of objects, each having category plus the same five summary fields. Each group independently follows existing exact aggregation/rounding rules. Grand totals are recalculated from all active rows, never by summing rounded groups. Group list order is not yet constrained; examples this round have nonempty string categories.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 8,
+      "title": "Stable group keys",
+      "prompt": "Sort groups ascending by Python string ordering of category. Missing category, null or empty string means \"uncategorized\"; other category values must be strings or raise ValueError when grouping is requested. Group labels are used verbatim, with no stripping or case folding. Empty grouped input has groups=[]. Ungrouped results omit the groups key.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 9,
+      "title": "File CLI",
+      "prompt": "Add python3 invoice.py FILE. FILE contains a JSON object with required rows and only optional tax_percent/group_by keys; reject other request keys. Print one JSON result plus newline to stdout on success and exit 0. Keep the importable summarize API. Use standard library only.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 10,
+      "title": "Stdin and CLI errors",
+      "prompt": "Support python3 invoice.py - reading the same request from stdin. Wrong argument count, unreadable file, malformed JSON/request, or business ValueError must produce a nonempty error on stderr, no stdout, and nonzero exit. Never overwrite the input file. API validation and all previous behavior remain.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 11,
+      "title": "Regression review",
+      "prompt": "Add and run regression tests covering half-cent aggregate rounding, discounts before tax, cancelled malformed rows and all invalid numeric types. Fix defects you identify while preserving the existing contract. Do not remove earlier features or tests.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 12,
+      "title": "Finish and document",
+      "prompt": "Review invoice.py and your tests, fix defects you find, run unittest discovery, and update README with the API, rounding/validation behavior, file and stdin CLI examples. Preserve all prior requirements. Summarize what you changed and tested naturally; no special chat JSON format is required.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    }
+  ],
+  "limits": [
+    "One model and one trajectory per arm; no statistical or universal CLI claim.",
+    "Same source and business prompts; terminal adds explicit final-body declaration only. Both use ordinary native final text.",
+    "Standalone manual Host/Kernel prototype, not production scheduler/adapter acceptance.",
+    "Quality errors continue without retry; safety/protocol/usage failure stops; all cost retained.",
+    "Path-specific filesystem barrier, not a general network or whole-host security sandbox."
+  ],
+  "toolSelection": "Same OpenCode tools both arms, no StructuredOutput or schema. Terminal adds one explicit final-body declaration per turn.",
+  "revisionReason": "No StructuredOutput tool or JSON body wrapper in either arm. Host per-Run explicit opt-in accepts only current settled stop response with single real final text, then original Worker path.",
+  "workspacePolicy": "OS deny full reviews/oracle and whole source repo, all historical loom-/rah- tmp families in /private/tmp and /private/var/folders; exact own-arm exception only, explicit peer deny. CLI networking restricted to loopback proxy/API.",
+  "retryPolicy": {
+    "harnessRetries": 0,
+    "dependentRoundsStopOnFailure": false,
+    "upstreamTransportRetries": "CLI may retry; every actual HTTP request through transparent proxy is retained and audited. No harness paid retry or discarded failure.",
+    "stopPolicy": "Quality or output JSON scoring failure is recorded without retry and fixed remaining prompts continue. Protocol, capture, transport, usage, isolation, publication unknown, stale, or safety failure stops dependent execution."
+  },
+  "interfaceVersion": "explicit-native-final-text/v1",
+  "terminalModelFields": [],
+  "hostFinal": true,
+  "paidSamples": 1,
+  "budget": {
+    "maxBusinessInvocations": 24,
+    "requestTimeoutMs": 600000,
+    "maxElapsedMs": 5400000,
+    "maxReportedGenerations": 160,
+    "maxReportedInputTokens": 3000000,
+    "maxReportedOutputTokens": 100000,
+    "enforcement": "Check before starting each native turn; retain all costs of completed/failed turns. These are between-turn stop thresholds, not a provider billing hard cap."
+  },
+  "receiptPolicy": "True Worker published receipt written as synthetic Host diagnostic via noReply in same native session, then Activation completion. Failure never resends business action; finally records proven native turn settlement without ACK/completion.",
+  "comparisonRules": [
+    "Same v2 initial workspace file bytes and exact round prompts, continuous separate native session per arm, same CLI/model/effort.",
+    "No StructuredOutput or extra body serialization; terminal has explicit final-body declaration each turn and unchanged full receipt injection.",
+    "Quality uses per-round cumulative hidden cases and self-tests on retained ordinary-file snapshots; report final-round artifact quality separately from per-round quality.",
+    "Quality failures never truncate fixed 12 rounds and are not fed back to model; protocol/security/usage/budget failures stop without retry.",
+    "No fixed chat JSON or short answer requirement. README semantic accuracy requires separate manual review.",
+    "Full and late7-12 usage include all failed answers and actual provider retries visible through proxy; raw streams private, no billed price claim."
+  ],
+  "approvalState": "Frozen free-verified candidate; no paid launch until lead reviews exact plan hash",
+  "ledger": "P150",
+  "diagnosticCostAccounting": "Every persisted native generation is counted, including invalid tool repair, retries visible in session, failed final intent and future input containing full Host diagnostic receipts. No provider request is made solely for noReply receipt persistence.",
+  "nativeMemoryVersionAudit": "Private current-version audit of OpenCode v1.18.35 tag 53d1eabb61e21162157817bf677da0a4ad3332e3; formal repository gate version guard is unchanged.",
+  "capturePolicy": "Host explicit mode before Run; exact current session/new prompt/new response; finish stop; no error/structured/unfinished tool; exactly one completed text, neither synthetic nor ignored; body remains data only. Host supplies final true, fixed seq/auth/idempotency; unknown/stale never resent.",
+  "terminalDeclaration": "FinalReply mode: Your final response is the Room message body.",
+  "streamRecorder": {
+    "sameBothArms": true,
+    "upstreamByteForwarding": "Unchanged raw HTTP entity bytes; only destination Host changes. No transformed SSE or tool result.",
+    "rawPrivate0600": true,
+    "maxCaptureBytesPerRequest": 16777216,
+    "modelEffortGuard": "Exact installed model config id or model key, low; mismatches refused before upstream.",
+    "efficiencyBlocks": [
+      "incomplete stream",
+      "missing DONE or usage",
+      "capture limit exceeded",
+      "encoding cannot be parsed",
+      "SSE parse error"
+    ],
+    "tokens": "raw provider input includes cached input, reconstructed native input=input+read+write. Native output+reasoning reconstructs complete output; raw nested reasoning and cache fields preserved for mapping.",
+    "observedRawMapping": {
+      "model": "deepseek-v4.1-flash",
+      "effort": "low",
+      "basis": "Installed selected model has no id override; two-arm actual CLI fake run emitted this exact raw model/effort."
+    },
+    "countedFields": [
+      "provider request count",
+      "raw entity byte count and SHA256",
+      "finish reasons",
+      "all original usage snapshots",
+      "content UTF-16 code units",
+      "reasoning UTF-16 code units without text",
+      "tool argument UTF-16 code units/UTF8 bytes/whitespace code units",
+      "delta field value types"
+    ],
+    "inFlightLimit": "16MiB local capture cap marks unknown and does not alter forwarding. Token budget is checked before a new native invocation, not a hard provider in-flight cap.",
+    "rawRequestsPrivate0600": true
+  },
+  "fixtureDirectory": "private-reviews/2026-10-08-invoice-artifact-v2",
+  "quality": "After each native turn evaluate_snapshot(workspace, round), persist only case IDs/status and artifact hashes; fixed continuation on quality failure, no oracle feedback; README semantics manual.",
+  "fixtureHashes": {
+    "plan.json": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+    "schemas.json": "f3845a7b135d1943f977b344ca4f46221ab35faec8e63f4879a67ba96da0af0b",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "oracle/cases.json": "63d2e134e2a822adf50d36f94a62c6f7bc468ab930953958e02ea3bac072b1d7",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  },
+  "initialWorkspaceHashes": {
+    "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+  },
+  "artifactRetention": "Host snapshot_workspace rejects links and archives immutable round files privately; evaluate_snapshot reads that archive; returned hashes cover retained source bytes, evaluator output never delivered to model.",
+  "fakeQualityFixture": "Fake provider writes v2 reference implementation inline via actual CLI bash except deliberately wrong R2; synthetic reference output is mechanism validation only, never real-model quality evidence.",
+  "implementationProvenance": {
+    "runner": "Private local adaptation of P148, same Host/Worker and native final-text contract; no production code changes.",
+    "recorder": "P148 byte-forwarding recorder retained; local request-body archival added with red/green test, no auth headers stored.",
+    "sandbox": "Copied reviewed local invoice-codex compact sandbox helper; tests cover own/peer/two temporary roots/loopback/external IP. Not third-party source reuse.",
+    "quality": "Uses frozen invoice-artifact-v2 evaluate_snapshot on retained snapshots; private Host-only results."
+  },
+  "publicCopyNote": "Sanitized metadata copy; frozen canonical private byte hashes remain in manifest/admission, not hashes of this formatted public copy."
+}

@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-08",
+  "commit": "26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6",
+  "release": "v1.21.2-source.1",
+  "method": "只读源码和现有Loom实现对照；未安装依赖、执行上游测试、启动服务或复制产品代码。",
+  "findings": [
+    {
+      "id": "chat-scroll",
+      "observed": "消息ID与视口偏移作锚点；prepend、图片/内容高度变化、窗口宽度变化共用补偿；是否跟随底部由用户手势/明确发送决定。",
+      "source": "packages/web/src/components/message/MessageTimeline.tsx",
+      "line": 16,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/web/src/components/message/MessageTimeline.tsx#L16",
+      "sha256": "9fb24123f67afa72e4cb2f4983d8cf8d004f550ac6518832838d945ac817d06b",
+      "recommendation": "借鉴行为和真实浏览器验收场景；不能整段替换 Loom 虚拟窗口。上游该组件直接 messages.map 渲染，未在本审计证明其整体内存/DOM有界。",
+      "loomOwner": "apps/web/src/components/message-timeline.tsx"
+    },
+    {
+      "id": "sync-core",
+      "observed": "无IO的同步状态机，连续/稀疏序列区分；epoch不匹配重新取快照；同版本不同内容记录冲突；gap暂停应用并请求difference。",
+      "source": "packages/sync-core/src/core.ts",
+      "line": 1,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/sync-core/src/core.ts#L1",
+      "sha256": "36b0498c12ab53b6fd2c4bd5a55d522771002061fb9433fd77e6c33a5f732d69",
+      "recommendation": "优先比较乱序/缺口/重复/旧快照负测；Loom client-core 已有Room有序重建，保留唯一owner，不新增第二同步核心。",
+      "loomOwner": "packages/client-core/src/index.ts"
+    },
+    {
+      "id": "reconnect",
+      "observed": "重连后等待 rooms:joined 再获取未读/Inbox，避免connect和rooms:joined重复请求以及订阅尚未就绪的竞态。",
+      "source": "packages/web/tests/reconnectNoDuplicateLoads.behavior.test.ts",
+      "line": 14,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/web/tests/reconnectNoDuplicateLoads.behavior.test.ts#L14",
+      "sha256": "db082ba71361ab65bdd19d415ff3450d5a9a3e9e89d8cfcbf1ea04692452ff32",
+      "recommendation": "参考可观察请求次数和断连恢复测试；映射本地SSE/WS语义，不移植Socket.IO专属状态。",
+      "loomOwner": "packages/client-core/src/index.ts"
+    },
+    {
+      "id": "composer",
+      "observed": "IME isComposing/keyCode229抑制发送，提及选择、草稿和输入焦点处理可直接阅读源码。",
+      "source": "packages/web/src/components/message/MessageInput.tsx",
+      "line": 2356,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/web/src/components/message/MessageInput.tsx#L2356",
+      "sha256": "703e5380e28ba46815010d4f2e2a55ce7abd9dc706d86b4a1fe6164055c24b38",
+      "recommendation": "作为交互规格参考；Raft触屏竖屏Enter换行、快捷键发Task不同于Loom合同，不随上游改变。",
+      "loomOwner": "apps/web/src"
+    },
+    {
+      "id": "markdown",
+      "observed": "消息HTML转义与白名单清理独立，提及/频道等受控属性限定在指定标签上。",
+      "source": "packages/web/src/components/message/messageMarkdownSecurity.ts",
+      "line": 1,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/web/src/components/message/messageMarkdownSecurity.ts#L1",
+      "sha256": "fa091891f7855fac455df592abe39ee1653b5a6ecab3478b1f1c692c529c8215",
+      "recommendation": "参考恶意HTML/链接/提及回归用例；Loom已有sanitize和图表沙箱，无需重建renderer。",
+      "loomOwner": "apps/web/src/components/message-markdown.tsx"
+    },
+    {
+      "id": "thin-shell",
+      "observed": "Web端统一检测宿主事件桥版本和形状；宿主异常不能阻断本地退出清理。bridge可用性与布局模式分离。",
+      "source": "packages/web/src/embed/hostBridge.ts",
+      "line": 1,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/web/src/embed/hostBridge.ts#L1",
+      "sha256": "969a61ba2026babdfaf18aedd809e423d3690226a19cdba49c04a73c77027e6e",
+      "recommendation": "参考薄壳合同/失效测试，浏览器仍用统一客户端契约；不引入第二业务处理器。",
+      "loomOwner": "packages/client-sdk"
+    },
+    {
+      "id": "visual-source",
+      "observed": "Web提供完整React组件和主题源，但依赖外部 raft-ui 0.5.27、应用store与API，并非可独立拖入的Loom组件库。",
+      "source": "packages/web/package.json",
+      "line": 1,
+      "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/web/package.json#L1",
+      "sha256": "e022fd5cf501788b0de9aa21b898ee676d99e2759d2dfddbe94b86e4de96d7f7",
+      "recommendation": "从原先压缩bundle/截图比对升级为固定源码版本的行为差异审计。保留Loom ui-web/ui-tokens和已批准phase4范围；各第三方包许可单独核实。",
+      "loomOwner": "packages/ui-web"
+    }
+  ],
+  "limits": [
+    "部分上游测试是源码形状断言，不能当作已通过真实布局验收。",
+    "本轮没有完成全部前端行为清单或视觉差分，不能宣称全面对齐。",
+    "源码许可FSL-1.1-ALv2；设计参考不等于直接或结构化移植已获得授权。"
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "kind": "invoice-artifact-v2 independent audit and free acceptance",
+  "v1Preserved": true,
+  "agentCalls": 0,
+  "paidCalls": 0,
+  "testsPassed": 14,
+  "rounds": 12,
+  "oracleCases": 37,
+  "referenceAllRoundsPassed": true,
+  "referenceIsAgentWork": false,
+  "revisionReasons": [
+    "Clarify all integer inputs also bounded 0..999999999999; v1 prose bounded strings explicitly but integers ambiguously. Schema already had integer bound.",
+    "Explicit sufficient precision/exact arithmetic; legal 12+6 digit operands can cause precision28 cent error.",
+    "Add exact unrounded tax-base and unchecked price mutations missed by v1.",
+    "Add small numeric/range and actual CLI malformed JSON/no-argument/missing-file/unknown-key vector set; evaluator now passes raw malformed input unchanged."
+  ],
+  "mutantEvidence": [
+    {
+      "mutant": "precision28",
+      "v1Passed": true,
+      "v2Passed": false,
+      "v2FailedCases": ["large-decimal-precision"]
+    },
+    {
+      "mutant": "unchecked_price",
+      "v1Passed": true,
+      "v2Passed": false,
+      "v2FailedCases": ["negative-price"]
+    },
+    {
+      "mutant": "tax_on_rounded_net",
+      "v1Passed": true,
+      "v2Passed": false,
+      "v2FailedCases": ["tax-on-exact-unrounded-net"]
+    }
+  ],
+  "independentArithmetic": {
+    "passed": true,
+    "caseIds": [
+      "basic",
+      "many-and-zero",
+      "empty",
+      "cancelled-skips-validation",
+      "tax-half-up",
+      "aggregate-tax-once",
+      "discount-before-tax",
+      "fractional-discounts-aggregate",
+      "groups-grand-not-sum-rounded",
+      "missing-groups-sort",
+      "cli-file",
+      "cli-stdin",
+      "no-per-line-rounding",
+      "empty-grouped",
+      "large-decimal-precision",
+      "tax-on-exact-unrounded-net"
+    ],
+    "method": "Independent fractions.Fraction exact rational arithmetic and integer half-up cents; no Decimal/reference implementation import"
+  },
+  "additionalRootReview": "Lead independently confirmed large counterexample using Fraction integer quotient/remainder HALF_UP; all precision64 fields match, precision28 subtotal differs by one cent.",
+  "cancelledValidation": "Existing v1 cancelled=true case with malformed/missing numeric fields already enforces skip-before-validation; cancelled nonboolean case enforces bool. v2 preserves this, global tax validation still applies independently.",
+  "testsAndEvidence": [
+    "green.log",
+    "red-v2-raw-input.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-oracle-audit/mutations.json",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-oracle-audit/fraction-evidence.json"
+  ],
+  "limitations": [
+    "Fixture/evaluator only, no actual model or paid artifact run.",
+    "Reference is oracle check only, never agent accomplishment.",
+    "Snapshot link/special-file rejection, oracle/peer read denial and immutable evaluation preserved from v1.",
+    "Agent CLI integration and memory guards remain runner obligations; README semantic review still manual.",
+    "No broad fuzzing or universal input proof."
+  ],
+  "hashes": {
+    "plan.json": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+    "schemas.json": "f3845a7b135d1943f977b344ca4f46221ab35faec8e63f4879a67ba96da0af0b",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "test_evaluator.py": "4ad60b13cb36a8da6793b616b1bd563fefa235f9f164028c07203dde355aa286",
+    "oracle/cases.json": "63d2e134e2a822adf50d36f94a62c6f7bc468ab930953958e02ea3bac072b1d7",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "green.log": "0045702bdbdbf8b5431b44f5d3e5a81e3ac49e2f2fb8d5b3b361e9833d727f35"
+  }
+}

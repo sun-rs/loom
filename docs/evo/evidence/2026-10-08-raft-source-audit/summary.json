@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-08",
+  "repository": "https://github.com/botiverse/raft-source",
+  "commit": "26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6",
+  "release": "v1.21.2-source.1",
+  "scope": "前端、API/server与daemon/Computer/runtime静态审计；不是上游运行/安全/效率认证。",
+  "license": {
+    "id": "FSL-1.1-ALv2",
+    "source": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/LICENSE",
+    "finding": "当前许可包含商业竞争用途限制；内部使用列为允许用途；各版本公开满两年才有Apache2.0授权。未判断Loom未来分发的具体适用性；未移植代码。"
+  },
+  "serverMeaning": {
+    "product": "servers表中的租户/团队工作区",
+    "backend": "packages/server承载API、实时推送、持久化和集成",
+    "compute": "Computer监督daemon；daemon管理原生Agent进程"
+  },
+  "priority": [
+    "优先：通知/消息增量去重和故障恢复的确定性用例，映射既有Kernel/Host owner。",
+    "优先：前端真实交互、滚动锚点、重连、权限失效测试；仅在已批准phase4范围修已证实差异。",
+    "其次：原生runtime解析与会话/进程隔离的差异审计，避免凭源码声称五CLI通过。",
+    "延后：确有授权与测量收益时再选择独立源码模块结构化移植，固定来源/许可/本地改动/测试。"
+  ],
+  "notRecommended": [
+    "整体替换Loom Kernel或移入第二队列/游标/业务状态。",
+    "恢复跨频道共用一个Agent执行lane。",
+    "自动冷会话轮换及实例文件记忆：不符合现行Loom合同。",
+    "只为跟随上游引入云账号/账单、公共多Human Server、Redis/RisingWave等基础设施。",
+    "整体替换有界虚拟列表或修改Enter/Task交互以追随新版Raft。"
+  ],
+  "costConclusion": "Raft已有增量读取、重复通知抑制，但普通最终文本仍不直接发表，要求显式raft消息命令；冷大上下文自动换session是另一项成本策略。源码不能证明其原生归一成本倍率，也没有证明它解决Loom当前原生final原型的问题。",
+  "evidence": {
+    "frontend": "frontend.json",
+    "backend": "server.json",
+    "runtime": "runtime.json"
+  },
+  "verification": {
+    "sourceRead": true,
+    "upstreamTestsRun": false,
+    "runtimeBenchmarkRun": false,
+    "productChanged": false,
+    "codeAdopted": false
+  }
+}

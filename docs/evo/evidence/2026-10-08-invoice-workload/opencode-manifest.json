@@ -1,0 +1,57 @@
+{
+  "ledger": "P150",
+  "paidStarted": false,
+  "planSha256": "69cd635a7f522703aa7191f53e4873b17d24ace044690f0b0ca6a184601f7ae0",
+  "sourceSha256": {
+    "plan.json": "69cd635a7f522703aa7191f53e4873b17d24ace044690f0b0ca6a184601f7ae0",
+    "run.mjs": "f87ce401b60debebf3482c4d4b80cfc03c7280d07e57020bfda3b488789e5ddf",
+    "intent.mjs": "98c0db66ef32b59237dfc12de4ec778b67b4892233bc9d8cf0060791adbea461",
+    "recorder.mjs": "03e2ec2dfa7ce31fb4fc934c742bff27b7ca418ba3630832736c4f09d065c3b7",
+    "sandbox.mjs": "ee22712f7e8d63eba6ba43eb9761a64f4472058fbc85d69822527b35ee074204",
+    "artifact.mjs": "95c6d328444ad8acc3d67db6addff7ff1774a72ad2fed042052ae6853c5d0fdf",
+    "host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "worker-receipt.mjs": "5d360b2ae82163b48e9188d8b2020326f6083e1b5fd3d36e97088918a4812d5c",
+    "bookkeeping.mjs": "764228db240a5256759bda2c32c1d710e7e96298cf4b0596dca3659ec777af63",
+    "catalog.json": "56f9f0205af43ad13c5e7e4c30e68308db74e2a3c8e4cb919086ef5c7083bd32",
+    "fake.mjs": "b01037118caede7da9ec9aa320359cd35d008e970cc9876db6f9a6fdca0d9f2f",
+    "intent.test.mjs": "8ff620d584470041b56d099a8027989153a39cf819552a7aac872a0e2350d2c2",
+    "recorder.test.mjs": "6c2c4e9a8182b9953e2ead412756ce7611a19c8f73be69e8e405a6a4fdb4d5cf",
+    "sandbox.test.mjs": "548945b28a40cd9b76e1c48192675efda491c49d663c45693d29c424e8725bea",
+    "artifact.test.mjs": "4e2dcea18c74a4c1efae121bcb465bdc4f123e8ae830f55b36ae99e695d75a05",
+    "source-audit/current-tag-memory-audit.json": "a78212a7db0c97451ec64f0259893164fe5f6f5621f1d3ce19e8554c82d4796d",
+    "audit-free.py": "975fd348235057df8872ca43d02d1964d5d2d22d697f6436018edc2557d66553"
+  },
+  "fixtureHashes": {
+    "plan.json": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+    "schemas.json": "f3845a7b135d1943f977b344ca4f46221ab35faec8e63f4879a67ba96da0af0b",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "oracle/cases.json": "63d2e134e2a822adf50d36f94a62c6f7bc468ab930953958e02ea3bac072b1d7",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  },
+  "initialWorkspaceHashes": {
+    "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+  },
+  "free": {
+    "passed": true,
+    "root": "private-reviews/2026-10-08-invoice-opencode/runs/1791468809805",
+    "version": "1.18.35",
+    "rounds": 24,
+    "createdAt": "2026-10-08T14:14:17.927Z"
+  },
+  "freeAudit": "free-public-evidence.json",
+  "budget": {
+    "maxBusinessInvocations": 24,
+    "requestTimeoutMs": 600000,
+    "maxElapsedMs": 5400000,
+    "maxReportedGenerations": 160,
+    "maxReportedInputTokens": 3000000,
+    "maxReportedOutputTokens": 100000,
+    "enforcement": "Check before starting each native turn; retain all costs of completed/failed turns. These are between-turn stop thresholds, not a provider billing hard cap."
+  },
+  "approval": "Await lead review; no paid call authorized internally yet",
+  "publicCopyNote": "Sanitized metadata copy; frozen canonical private byte hashes remain in manifest/admission, not hashes of this formatted public copy."
+}

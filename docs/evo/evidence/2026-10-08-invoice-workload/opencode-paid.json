@@ -1,0 +1,1915 @@
+{
+  "ledger": "P150",
+  "planSha256": "69cd635a7f522703aa7191f53e4873b17d24ace044690f0b0ca6a184601f7ae0",
+  "fixturePlanSha256": "e2581b7e105a1f683b2becd0f1e81f3f3cc64afa90034760cc87f6068652388e",
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(totals.input<plan.budget.maxReportedInputTokens)\n",
+    "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(totals.input<plan.budget.maxReportedInputTokens)\n\n    at checkBudget (file://private-reviews/2026-10-08-invoice-opencode/run.mjs:27:491)\n    at file://private-reviews/2026-10-08-invoice-opencode/run.mjs:37:3"
+  },
+  "arms": {
+    "native": {
+      "rounds": [
+        {
+          "round": 1,
+          "quality": {
+            "round": 1,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": false,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "216b8ceb38c728b81eadae7a567dd23619e372d453201fa43829eeda7c0a33f0",
+              "invoice.py": "987dbfea095adcf16dc5f46d1dd58c76cc5f43fbfc37634ec7a14dc5be016f80",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "d503746f9d8d05d2e7e14d43e62e5b2258860838eb5909c60e11e20e9f18f67b",
+              "__pycache__/invoice.cpython-313.pyc": "ad3b310732d88b318498cbd3ff4ab63bb7fe823a331bfff16d785bbfa52aaf9d",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "3cb8df7c7f935cc857a5bd36f91625a6500582aaeb19a6a261c37ca00ed92177",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": false,
+          "generations": 14,
+          "usage": {
+            "requests": 14,
+            "inputTokens": 170311,
+            "cachedInputTokens": 154368,
+            "uncachedInputTokens": 15943,
+            "outputTokens": 6004,
+            "reasoningOutputTokens": 2381
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 2,
+          "quality": {
+            "round": 2,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "many-and-zero",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "357af5810235def0b9008fca882c270d709adca847f91ea42db78bf506efe4b6",
+              "invoice.py": "987dbfea095adcf16dc5f46d1dd58c76cc5f43fbfc37634ec7a14dc5be016f80",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "30db5d7373f17440e84fae75d4c9143180035c24a0d157c0a4f9f468af1e5c10",
+              "__pycache__/invoice.cpython-313.pyc": "ad3b310732d88b318498cbd3ff4ab63bb7fe823a331bfff16d785bbfa52aaf9d",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "595560d33aa5fab640a626f37a2baa6c2ed4101ead06404d56adffe1de127b2e",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": false,
+          "generations": 8,
+          "usage": {
+            "requests": 8,
+            "inputTokens": 135194,
+            "cachedInputTokens": 132096,
+            "uncachedInputTokens": 3098,
+            "outputTokens": 1424,
+            "reasoningOutputTokens": 238
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 3,
+          "quality": {
+            "round": 3,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "many-and-zero",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": false,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "d278416601c524155e964b1eae6fbc5269caa478f959ef78c9be15f666eb8f6a",
+              "invoice.py": "7f281afed427bd67a7a7aa526766454484c1df2509608beebb268d962fa4780e",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "6004fa1a7d4c05c1380e69b171a632f540b5547a20e193a88cd30f3c409d557d",
+              "__pycache__/invoice.cpython-313.pyc": "bd8eef71e6ff4a1876679c3da855f33f5fcce7f889289591e9124024a1494cab",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "27c268ffd0d14ebf63e4492247dbc5867b1104e1db3e35ef236a4bd80bd095a8",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": false,
+          "generations": 8,
+          "usage": {
+            "requests": 8,
+            "inputTokens": 152523,
+            "cachedInputTokens": 149888,
+            "uncachedInputTokens": 2635,
+            "outputTokens": 1892,
+            "reasoningOutputTokens": 245
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 4,
+          "quality": {
+            "round": 4,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "many-and-zero",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "tax-half-up",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": false,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "29c21f9a4d286a35bfe9fd0c49424116dcda946f0851651dc80fb97f0e2b15f8",
+              "invoice.py": "80a1992d4d960c7ad55b85f8e9f37c998369aefdb1103ffb516209541474a18f",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "8f217f8043480b2e896a07918bb6ce57f2b53bdd6bb2600157a4ba507c877ec5",
+              "__pycache__/invoice.cpython-313.pyc": "be7ee407627836af58c9eed50489dcf551f8b78aaf1401dd48f85f26f538787a",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "51b8ae9a8ec0946943e0d8ef910d9a82f5993975c946592e7d8fe194e1d326b2",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": false,
+          "generations": 14,
+          "usage": {
+            "requests": 14,
+            "inputTokens": 337079,
+            "cachedInputTokens": 329728,
+            "uncachedInputTokens": 7351,
+            "outputTokens": 5356,
+            "reasoningOutputTokens": 2457
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 5,
+          "quality": {
+            "round": 5,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "many-and-zero",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "tax-half-up",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": false,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "e9a1c6f32147c0dc92ccca7d3797da334af33b9079f122169e6ca271ddf6e47e",
+              "invoice.py": "f8375f4d9b5a7c02060882caef73e631e0d856007f5d240626a23a386360d396",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "1a82e0dc4d6725ca3eaff7b0a729eae08a66b0042c240b3308912b5a697abbe2",
+              "__pycache__/invoice.cpython-313.pyc": "559d9fc0f0de110d856a4c1653e943854b9ee71bfa6a851037dea8ad74f549c0",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "b84ed08168f0df8c5f34279c9bba9791a4f99acd77dcf910760689c5370481aa",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": false,
+          "generations": 9,
+          "usage": {
+            "requests": 9,
+            "inputTokens": 266049,
+            "cachedInputTokens": 261120,
+            "uncachedInputTokens": 4929,
+            "outputTokens": 3559,
+            "reasoningOutputTokens": 812
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 6,
+          "quality": {
+            "round": 6,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "ae0006ffe1f9c9b0204784e65e4c7b183ef61667e081a70d19f4befd48da2480",
+              "invoice.py": "9e45212886b93e2f2014f5ba3aad860b59e690b11bb047150ef8831910ab3738",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "885d4368b862f04a3a662fa0d979d1652f3d8942d920faaa80434cce086aa477",
+              "__pycache__/invoice.cpython-313.pyc": "296cca8abdf491aeeb568e723d5e1fcdfd2e5b599dc484eaa22744aa1bba140f",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "4e26b019ea759d69b9aebc1b3784912b6df680c3260ff8498241b9f2f0985398",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": true,
+          "generations": 10,
+          "usage": {
+            "requests": 10,
+            "inputTokens": 412295,
+            "cachedInputTokens": 397568,
+            "uncachedInputTokens": 14727,
+            "outputTokens": 11893,
+            "reasoningOutputTokens": 4838
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "explicit list-of-dicts input contract"
+        },
+        {
+          "round": 7,
+          "quality": {
+            "round": 7,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "460b7b10a6b8065c1e59e397fe4accf1fee5b063c70baef3e10f13b855fc0f15",
+              "invoice.py": "9607b7571045707504ca5e5823ecd6804bf51acfe5997248d9348319dfd1ea9f",
+              "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "tests/test_invoice.py": "0f8e31a2f7a01b1e7ba9b32412359bc71a211ea06c94bec245c33d891a761624",
+              "__pycache__/invoice.cpython-313.pyc": "e98e5789d0d9c526e52988b77a5362e013d6d8527769f551d19e367a2e1416fe",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "817ad210c4d7213c707da6bc9e0439c9cd6ef49c65597d229353c573b90d31e3",
+              "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+            }
+          },
+          "correct": true,
+          "generations": 8,
+          "usage": {
+            "requests": 8,
+            "inputTokens": 402230,
+            "cachedInputTokens": 394496,
+            "uncachedInputTokens": 7734,
+            "outputTokens": 5652,
+            "reasoningOutputTokens": 1919
+          },
+          "activationCompleted": false,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "explicit list-of-dicts input contract"
+        }
+      ],
+      "sameSession": true,
+      "persistedGenerations": 71,
+      "providerRequests": 71,
+      "allRequestsMapped": true,
+      "allAssistantsMapped": true,
+      "unmappedProviderRequestIds": [],
+      "allReportedUsage": {
+        "requests": 71,
+        "inputTokens": 1875681,
+        "cachedInputTokens": 1819264,
+        "uncachedInputTokens": 56417,
+        "outputTokens": 35780,
+        "reasoningOutputTokens": 12890
+      },
+      "qualityPassedRounds": [6, 7],
+      "qualityFailedRounds": [1, 2, 3, 4, 5],
+      "lastObservedArtifactQuality": {
+        "round": 7,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "artifactSha256": {
+          "README.md": "460b7b10a6b8065c1e59e397fe4accf1fee5b063c70baef3e10f13b855fc0f15",
+          "invoice.py": "9607b7571045707504ca5e5823ecd6804bf51acfe5997248d9348319dfd1ea9f",
+          "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tests/test_invoice.py": "0f8e31a2f7a01b1e7ba9b32412359bc71a211ea06c94bec245c33d891a761624",
+          "__pycache__/invoice.cpython-313.pyc": "e98e5789d0d9c526e52988b77a5362e013d6d8527769f551d19e367a2e1416fe",
+          "tests/__pycache__/test_invoice.cpython-313.pyc": "817ad210c4d7213c707da6bc9e0439c9cd6ef49c65597d229353c573b90d31e3",
+          "tests/__pycache__/__init__.cpython-313.pyc": "5404d1d89edf76b995f4910a4e2fa93e74acc034f8342b8af3f2ae42bb8d0c8a"
+        }
+      },
+      "round12ArtifactQuality": null
+    },
+    "terminal": {
+      "rounds": [
+        {
+          "round": 1,
+          "quality": {
+            "round": 1,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "d11fcd0830e5660cc28d048fb673759263bb05b36e4394af407dfb2198b2bcb9",
+              "invoice.py": "53bf1daf26f075fb5ea6633d1a570e73f189f4d402d98a0706642f4d62b4fd0e",
+              "tests/test_invoice.py": "5301e21a899689518d397b144580688a8bbf7056e27418c187b9f93d422112ff",
+              "__pycache__/invoice.cpython-313.pyc": "33d02539f8eea604a5470d2be642f03686b0836b68bccca014c648ac5647648d",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "95d7a12efeafa496463d3e3bb07172fa5a96061d1b4d1d2ecab5f22ae838c1d9"
+            }
+          },
+          "correct": true,
+          "generations": 7,
+          "usage": {
+            "requests": 7,
+            "inputTokens": 74291,
+            "cachedInputTokens": 60416,
+            "uncachedInputTokens": 13875,
+            "outputTokens": 5163,
+            "reasoningOutputTokens": 2316
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 2,
+          "quality": {
+            "round": 2,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "d11fcd0830e5660cc28d048fb673759263bb05b36e4394af407dfb2198b2bcb9",
+              "invoice.py": "53bf1daf26f075fb5ea6633d1a570e73f189f4d402d98a0706642f4d62b4fd0e",
+              "tests/test_invoice.py": "d84cb442221353ee4bd89f47f0c6d6b938310c01ae0c902b9e3f3cb118e4eb07",
+              "__pycache__/invoice.cpython-313.pyc": "33d02539f8eea604a5470d2be642f03686b0836b68bccca014c648ac5647648d",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "afe5441725dd73e0ff6248114236b090ce4920c1990b1f380b79ce9233ccfb88"
+            }
+          },
+          "correct": true,
+          "generations": 3,
+          "usage": {
+            "requests": 3,
+            "inputTokens": 43780,
+            "cachedInputTokens": 41728,
+            "uncachedInputTokens": 2052,
+            "outputTokens": 823,
+            "reasoningOutputTokens": 148
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 3,
+          "quality": {
+            "round": 3,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "38fab4891a214f521286bb7cf35e297d832595eebf7e1b469aed0b9b1381b20a",
+              "invoice.py": "aa284c8f62e8b25002301334119e6cf93bfd4e3c3b510bdd13602b37344f6ce3",
+              "tests/test_invoice.py": "3d3a5f6fc49c88a93a9954a6e35f5a362537eeaee0d12de18643d907ed1167fc",
+              "__pycache__/invoice.cpython-313.pyc": "8d630dccaaaae9e2573deea8c79db2413d38781c7846833e540d58567eed51a9",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "a702ace34214deff32c9a78bb35ad5ffd4ed7338027b38d7f4dcc1e74adcdde2"
+            }
+          },
+          "correct": true,
+          "generations": 5,
+          "usage": {
+            "requests": 5,
+            "inputTokens": 82133,
+            "cachedInputTokens": 80000,
+            "uncachedInputTokens": 2133,
+            "outputTokens": 1521,
+            "reasoningOutputTokens": 107
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 4,
+          "quality": {
+            "round": 4,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "b0224f3b41aa15bd311d37cae94a03ae7bbc8d64d6172a724afcea4c52d0cc40",
+              "invoice.py": "c4b002c2f13d841d7dfc0e4f79dc77732c6c77070d24263be790e151ba34b00d",
+              "tests/test_invoice.py": "8d03ce564cec9c1b8e3172589eb84d5481b8da767b4cd88f67bdb58d044acd11",
+              "__pycache__/invoice.cpython-313.pyc": "845c4a3c458b9533ad9f8c0c5022af9833fde9bd3ec817df4192996f4f090f11",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "4e7330da8926a27010ba8f74caf7e7d7d2d323328b262f5c0bd4070c8ccecf9f"
+            }
+          },
+          "correct": true,
+          "generations": 5,
+          "usage": {
+            "requests": 5,
+            "inputTokens": 97794,
+            "cachedInputTokens": 93952,
+            "uncachedInputTokens": 3842,
+            "outputTokens": 3397,
+            "reasoningOutputTokens": 1453
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 5,
+          "quality": {
+            "round": 5,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "40a93e6c5147e3a85af667e5afc21c0baf325b60a089864fd450879d4e6a0e4d",
+              "invoice.py": "1083d9c6da2e2eba3ded9366223cec7f0a669137d218a5754c2c2b1270c7575c",
+              "tests/test_invoice.py": "6c6aba3a0423ed20bdaceb1e2ecb1ade6bc4070336b85d4c203f4cd626937383",
+              "__pycache__/invoice.cpython-313.pyc": "ff2f970a84f2a22a9ff02d55d7944079ef6201345fd0881819446fbc36ee9ed6",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "5d842ccc3ddf002b0f49a7b615a1639e7e77478d72a48e0dcb035925d43b94a9"
+            }
+          },
+          "correct": true,
+          "generations": 8,
+          "usage": {
+            "requests": 8,
+            "inputTokens": 188797,
+            "cachedInputTokens": 183936,
+            "uncachedInputTokens": 4861,
+            "outputTokens": 4068,
+            "reasoningOutputTokens": 1289
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "ambiguous row container before R6"
+        },
+        {
+          "round": 6,
+          "quality": {
+            "round": 6,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "d23c4e0c1079229e60ad56d1197f46bdb60144cfaf3cff8c3075a12dc51d443b",
+              "invoice.py": "6dec1ce9e8a6655756fe649b8de689de88a0770837a963e76ba13f5d2af2bc34",
+              "tests/test_invoice.py": "7b454253c3152fbfd2865be1539e6b040d55f93f245410554b5673687efce128",
+              "__pycache__/invoice.cpython-313.pyc": "2996a63f0153251bff3d6c134c62e0cf0a08c5800e46dad79771520488197ff9",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "f6ca51d2aeac0aefb50a96296e94632fedbe2cb6b82293d2a8f6760b83085f65"
+            }
+          },
+          "correct": true,
+          "generations": 13,
+          "usage": {
+            "requests": 13,
+            "inputTokens": 466152,
+            "cachedInputTokens": 449024,
+            "uncachedInputTokens": 17128,
+            "outputTokens": 9587,
+            "reasoningOutputTokens": 4289
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "explicit list-of-dicts input contract"
+        },
+        {
+          "round": 7,
+          "quality": {
+            "round": 7,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0,
+            "artifactSha256": {
+              "README.md": "47eec2e54a1eb5b8eeb927f4d46a7f3ab523f0b6cab9f4ef371969bd5c618a14",
+              "invoice.py": "25dba3bfb392488d28df41b27a9f731901bd3fb67c533883d9addd28f154ea9f",
+              "tests/test_invoice.py": "f499e344a4928ab6ab8a0b621f18c94bc1d9e8b0133ac1ba1b9f14f7e9e224f8",
+              "__pycache__/invoice.cpython-313.pyc": "df8d7684c1f2b22929a06ac5f2911af0c9a6824c9ea831d1b3fed39946acfcf5",
+              "tests/__pycache__/test_invoice.cpython-313.pyc": "079cddf9bbfa046db694034621320dbdbd4fea20b6dde262dd75ce5b9fda1622"
+            }
+          },
+          "correct": true,
+          "generations": 6,
+          "usage": {
+            "requests": 6,
+            "inputTokens": 275606,
+            "cachedInputTokens": 268928,
+            "uncachedInputTokens": 6678,
+            "outputTokens": 5935,
+            "reasoningOutputTokens": 2143
+          },
+          "activationCompleted": true,
+          "snapshotRetained": true,
+          "normalFinal": true,
+          "qualityInterpretation": "explicit list-of-dicts input contract"
+        }
+      ],
+      "sameSession": true,
+      "persistedGenerations": 47,
+      "providerRequests": 47,
+      "allRequestsMapped": true,
+      "allAssistantsMapped": true,
+      "unmappedProviderRequestIds": [],
+      "allReportedUsage": {
+        "requests": 47,
+        "inputTokens": 1228553,
+        "cachedInputTokens": 1177984,
+        "uncachedInputTokens": 50569,
+        "outputTokens": 30494,
+        "reasoningOutputTokens": 11745
+      },
+      "qualityPassedRounds": [1, 2, 3, 4, 5, 6, 7],
+      "qualityFailedRounds": [],
+      "lastObservedArtifactQuality": {
+        "round": 7,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "artifactSha256": {
+          "README.md": "47eec2e54a1eb5b8eeb927f4d46a7f3ab523f0b6cab9f4ef371969bd5c618a14",
+          "invoice.py": "25dba3bfb392488d28df41b27a9f731901bd3fb67c533883d9addd28f154ea9f",
+          "tests/test_invoice.py": "f499e344a4928ab6ab8a0b621f18c94bc1d9e8b0133ac1ba1b9f14f7e9e224f8",
+          "__pycache__/invoice.cpython-313.pyc": "df8d7684c1f2b22929a06ac5f2911af0c9a6824c9ea831d1b3fed39946acfcf5",
+          "tests/__pycache__/test_invoice.cpython-313.pyc": "079cddf9bbfa046db694034621320dbdbd4fea20b6dde262dd75ce5b9fda1622"
+        }
+      },
+      "round12ArtifactQuality": null
+    }
+  },
+  "comparisons": {
+    "late7to12": {
+      "totals": {
+        "native": {
+          "requests": 8,
+          "inputTokens": 402230,
+          "cachedInputTokens": 394496,
+          "uncachedInputTokens": 7734,
+          "outputTokens": 5652,
+          "reasoningOutputTokens": 1919
+        },
+        "terminal": {
+          "requests": 6,
+          "inputTokens": 275606,
+          "cachedInputTokens": 268928,
+          "uncachedInputTokens": 6678,
+          "outputTokens": 5935,
+          "reasoningOutputTokens": 2143
+        }
+      },
+      "quality": {
+        "native": {
+          "attempted": 1,
+          "passed": 1
+        },
+        "terminal": {
+          "attempted": 1,
+          "passed": 1
+        }
+      },
+      "equalCompletedRounds": true,
+      "ratios": null,
+      "efficiencyAcceptance": false,
+      "scope": "Only observed R7 within planned R7–12; not a completed late window",
+      "completePlannedWindow": false,
+      "causalInference": "No causal cost claim from this single truncated trajectory and unequal early interpretations.",
+      "unexecutedRounds": [8, 9, 10, 11, 12]
+    },
+    "explicitRounds6to7": {
+      "totals": {
+        "native": {
+          "requests": 18,
+          "inputTokens": 814525,
+          "cachedInputTokens": 792064,
+          "uncachedInputTokens": 22461,
+          "outputTokens": 17545,
+          "reasoningOutputTokens": 6757
+        },
+        "terminal": {
+          "requests": 19,
+          "inputTokens": 741758,
+          "cachedInputTokens": 717952,
+          "uncachedInputTokens": 23806,
+          "outputTokens": 15522,
+          "reasoningOutputTokens": 6432
+        }
+      },
+      "quality": {
+        "native": {
+          "attempted": 2,
+          "passed": 2
+        },
+        "terminal": {
+          "attempted": 2,
+          "passed": 2
+        }
+      },
+      "scope": "Two rounds after explicit row container requirement; prior divergent histories remain",
+      "efficiencyAcceptance": false,
+      "equalCompletedRounds": true,
+      "ratios": {
+        "requests": 1.0555555555555556,
+        "inputTokens": 0.91066327000399,
+        "uncachedInputTokens": 1.0598815725034505,
+        "outputTokens": 0.8846964947278427
+      }
+    },
+    "paired1to7": {
+      "totals": {
+        "native": {
+          "requests": 71,
+          "inputTokens": 1875681,
+          "cachedInputTokens": 1819264,
+          "uncachedInputTokens": 56417,
+          "outputTokens": 35780,
+          "reasoningOutputTokens": 12890
+        },
+        "terminal": {
+          "requests": 47,
+          "inputTokens": 1228553,
+          "cachedInputTokens": 1177984,
+          "uncachedInputTokens": 50569,
+          "outputTokens": 30494,
+          "reasoningOutputTokens": 11745
+        }
+      },
+      "quality": {
+        "native": {
+          "attempted": 7,
+          "passed": 2
+        },
+        "terminal": {
+          "attempted": 7,
+          "passed": 7
+        }
+      },
+      "equalCompletedRounds": true,
+      "ratios": {
+        "requests": 0.6619718309859155,
+        "inputTokens": 0.6549903741627707,
+        "uncachedInputTokens": 0.8963433007781343,
+        "outputTokens": 0.8522638345444382
+      },
+      "efficiencyAcceptance": false,
+      "scope": "Observed rounds 1–7 only, not full12",
+      "completePlannedWindow": false,
+      "causalInference": "No causal cost claim from this single truncated trajectory and unequal early interpretations."
+    },
+    "observedRound7": {
+      "totals": {
+        "native": {
+          "requests": 8,
+          "inputTokens": 402230,
+          "cachedInputTokens": 394496,
+          "uncachedInputTokens": 7734,
+          "outputTokens": 5652,
+          "reasoningOutputTokens": 1919
+        },
+        "terminal": {
+          "requests": 6,
+          "inputTokens": 275606,
+          "cachedInputTokens": 268928,
+          "uncachedInputTokens": 6678,
+          "outputTokens": 5935,
+          "reasoningOutputTokens": 2143
+        }
+      },
+      "quality": {
+        "native": {
+          "attempted": 1,
+          "passed": 1
+        },
+        "terminal": {
+          "attempted": 1,
+          "passed": 1
+        }
+      },
+      "equalCompletedRounds": true,
+      "ratios": {
+        "requests": 0.75,
+        "inputTokens": 0.6851950376650175,
+        "uncachedInputTokens": 0.8634600465477114,
+        "outputTokens": 1.050070771408351
+      },
+      "efficiencyAcceptance": false,
+      "scope": "Single observed R7 only; not the planned six-round late window",
+      "completePlannedWindow": false,
+      "causalInference": "No causal cost claim from this single truncated trajectory and unequal early interpretations."
+    }
+  },
+  "kernel": {
+    "activationStates": [["completed", 7]],
+    "runStates": [["exited", 0, 7]],
+    "finalMarkers": 7,
+    "pendingAckWindows": 0,
+    "workerCursor": [[58]],
+    "receiptMatchesActualMessageEvents": 7
+  },
+  "cleanup": {
+    "native": {
+      "exitCode": null,
+      "signalCode": "SIGTERM",
+      "alive": false,
+      "portOpen": false
+    },
+    "terminal": {
+      "exitCode": null,
+      "signalCode": "SIGTERM",
+      "alive": false,
+      "portOpen": false
+    }
+  },
+  "completed12Each": false,
+  "limits": [
+    "One real model trajectory per arm, not repeatability or cross-model reliability.",
+    "Functional and agent self-test quality are distinct from README semantic review.",
+    "Per-round snapshots archived; hidden oracle checks never sent to model.",
+    "Provider reported usage is not independently verified invoice. Input includes cache; output includes reasoning once.",
+    "Quality failures retain cost and continue; protocol/security/accounting/budget failures stop.",
+    "No product or production adapter change."
+  ],
+  "qualityInterpretation": {
+    "rounds1to5": "Rows input structure was underspecified before round6 explicitly required list of dicts. Native early implementation used attributes. Raw oracle false retained, but these rounds are not labeled proven model business defects.",
+    "rounds6to7": "Both arms pass cumulative activated cases and self-tests after explicit dict contract. Only two unambiguous observed rounds, with different earlier histories.",
+    "rounds8to12": "Not executed because frozen input budget stopped before R8; no final37-vector or complete CLI/documentation quality verdict.",
+    "oracleFeedback": "None; no task rewording, repair hint or restart during paid trajectory."
+  },
+  "stopping": {
+    "kind": "input budget guard before R8",
+    "thresholdInputTokens": 3000000,
+    "observedInputTokens": 3104234,
+    "inputBeforeTerminalR7": 2828628,
+    "remainingBeforeTerminalR7": 171372,
+    "terminalR7InputTokens": 275606,
+    "overshootInputTokens": 104234,
+    "reportedOutputTokens": 66274,
+    "providerRequests": 118,
+    "paidRetry": false,
+    "nextInvocationNotStarted": true,
+    "limit": "Between-turn guard, not an in-flight billing hard cap."
+  },
+  "sourceHashVerified": true,
+  "allPaidSpend": {
+    "scope": "Every observed paid request including early ambiguous-quality rounds and in-flight budget overshoot; no request discarded",
+    "native": {
+      "requests": 71,
+      "inputTokens": 1875681,
+      "cachedInputTokens": 1819264,
+      "uncachedInputTokens": 56417,
+      "outputTokens": 35780,
+      "reasoningOutputTokens": 12890
+    },
+    "terminal": {
+      "requests": 47,
+      "inputTokens": 1228553,
+      "cachedInputTokens": 1177984,
+      "uncachedInputTokens": 50569,
+      "outputTokens": 30494,
+      "reasoningOutputTokens": 11745
+    },
+    "combined": {
+      "requests": 118,
+      "inputTokens": 3104234,
+      "cachedInputTokens": 2997248,
+      "uncachedInputTokens": 106986,
+      "outputTokens": 66274,
+      "reasoningOutputTokens": 24635
+    },
+    "dollarSpend": "unknown; provider invoice/prices not independently verified"
+  },
+  "generationClassification": {
+    "native": {
+      "categories": {
+        "tool_using_generation": {
+          "generations": 64,
+          "inputTokens": 1667658,
+          "outputTokens": 34412,
+          "reasoningOutputTokens": 12518
+        },
+        "normal_final_generation": {
+          "generations": 7,
+          "inputTokens": 208023,
+          "outputTokens": 1368,
+          "reasoningOutputTokens": 372
+        }
+      },
+      "toolCallsByName": {
+        "bash": 14,
+        "read": 10,
+        "write": 5,
+        "edit": 36
+      },
+      "toolStatuses": {
+        "completed": 65
+      },
+      "allProviderRequestsMapped": true,
+      "allPersistedAssistantsMapped": true,
+      "observedReplySchemaTools": 0,
+      "postPublicationExtraObservedRequests": 0,
+      "lastRoundCumulativeCases": 27
+    },
+    "terminal": {
+      "categories": {
+        "tool_using_generation": {
+          "generations": 40,
+          "inputTokens": 1047895,
+          "outputTokens": 29018,
+          "reasoningOutputTokens": 11695
+        },
+        "normal_final_generation": {
+          "generations": 7,
+          "inputTokens": 180658,
+          "outputTokens": 1476,
+          "reasoningOutputTokens": 50
+        }
+      },
+      "toolCallsByName": {
+        "bash": 9,
+        "read": 5,
+        "write": 5,
+        "edit": 22
+      },
+      "toolStatuses": {
+        "completed": 40,
+        "error": 1
+      },
+      "allProviderRequestsMapped": true,
+      "allPersistedAssistantsMapped": true,
+      "observedReplySchemaTools": 0,
+      "postPublicationExtraObservedRequests": 0,
+      "lastRoundCumulativeCases": 27
+    }
+  },
+  "manualSnapshotReview": {
+    "scope": "Manual source and README inspection of retained native-7 and terminal-7 snapshots only; R12 never executed.",
+    "native": {
+      "code": "Uses exact integer coefficient/exponent arithmetic, HALF_UP cents, dict validation, cancellation-before-field-read and per-group independent aggregation with global recalculation.",
+      "readme": "Describes implemented R7 API, tax/discount/validation/grouping. Earlier row-attributes paragraph remains stale and conflicts with later list-of-dicts validation section.",
+      "snapshotQuality": "27 activated cumulative hidden cases plus self-tests pass at R7.",
+      "remainingUnexecuted": "R8 category normalization/order, R9/R10 file/stdin CLI, R11 regression request and R12 final README review were not run."
+    },
+    "terminal": {
+      "code": "Uses Fraction constructed from validated integers/Decimal strings, exact aggregation then HALF_UP, dict validation/cancellation and independent groups.",
+      "readme": "Describes R7 API and rounding/validation/grouping; no completed later CLI/documentation contract claim.",
+      "snapshotQuality": "27 activated cumulative hidden cases plus self-tests pass at R7.",
+      "remainingUnexecuted": "R8 category normalization/order, R9/R10 file/stdin CLI, R11 regression request and R12 final README review were not run."
+    },
+    "acceptance": "Neither complete12-round artifact acceptance nor complete README acceptance."
+  }
+}

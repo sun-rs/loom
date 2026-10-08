@@ -1,0 +1,191 @@
+{
+  "kind": "P151-claude-invoice-native-final-text-paired12",
+  "status": "private frozen fixture/evaluator candidate; no paid CLI integration",
+  "sourceDraft": "docs/evo/evidence/2026-10-08-bound-followup/next-measurement-design.json#artifactWorkloadDraft",
+  "rounds": [
+    {
+      "round": 1,
+      "title": "Implement the API",
+      "prompt": "Create invoice.py with summarize(rows, tax_percent=\"0\", group_by=None). For now implement ungrouped rows having quantity and unit_price. Return exactly count (integer number of active input rows), subtotal, discount, tax, total. The four money fields are two-decimal strings. Use Decimal arithmetic and ROUND_HALF_UP. Compute exact quantity × unit_price products and aggregate before rounding; do not round individual lines. Until their later features arrive, discount and tax are \"0.00\", total equals subtotal. Inputs used now are nonnegative integer values or ordinary decimal strings; do not use binary floats internally.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat. Use sufficient Decimal precision or equivalent exact arithmetic: default precision 28 is not guaranteed for the permitted input range."
+    },
+    {
+      "round": 2,
+      "title": "Multiple and zero lines",
+      "prompt": "Support multiple rows and an empty rows list. Count every active row, including zero quantity. Zero quantities contribute zero money. Aggregate exact products before one currency rounding. Empty totals are count zero and all money fields \"0.00\".\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 3,
+      "title": "Cancellation",
+      "prompt": "An optional cancelled flag defaults to false. Skip a row with cancelled exactly true entirely before looking at its other fields; even missing or malformed quantity/price in a cancelled row is ignored. Other active rows retain existing behavior.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 4,
+      "title": "Tax",
+      "prompt": "Implement tax_percent, default \"0\". Compute tax on the exact aggregate net subtotal, round tax once to cents with ROUND_HALF_UP, then total equals the independently rounded net amount plus that rounded tax. Do not compute tax per line or on a prematurely rounded net subtotal.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 5,
+      "title": "Discount",
+      "prompt": "Add each row optional discount_percent, default \"0\". Compute its discount as exact quantity × unit_price × discount_percent / 100; do not round each discount. Return subtotal before discounts, discount as the rounded aggregate discount, tax on the exact aggregate subtotal minus exact aggregate discounts, and total as rounded exact net plus rounded aggregate tax. Each aggregate is rounded independently with ROUND_HALF_UP.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 6,
+      "title": "Validation",
+      "prompt": "Validate every active row: quantity and unit_price required; quantity/unit_price/discount_percent and tax_percent accept only integers from 0 through 999999999999 inclusive (not booleans), or ASCII strings matching [0-9]{1,12}(\\.[0-9]{1,6})?. Reject negatives, floats, exponent notation, whitespace, NaN/infinity, extra fractional digits and malformed or missing fields with ValueError. tax_percent and discount_percent must also be at most 100. rows must be a list of dicts. cancelled when supplied must be a bool. Cancelled=true still skips the rest of that row. Ignore unrelated row keys.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 7,
+      "title": "Category groups",
+      "prompt": "Support group_by=\"category\"; None remains ungrouped. Reject other group_by values with ValueError. Grouped result adds exactly a groups list of objects, each having category plus the same five summary fields. Each group independently follows existing exact aggregation/rounding rules. Grand totals are recalculated from all active rows, never by summing rounded groups. Group list order is not yet constrained; examples this round have nonempty string categories.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 8,
+      "title": "Stable group keys",
+      "prompt": "Sort groups ascending by Python string ordering of category. Missing category, null or empty string means \"uncategorized\"; other category values must be strings or raise ValueError when grouping is requested. Group labels are used verbatim, with no stripping or case folding. Empty grouped input has groups=[]. Ungrouped results omit the groups key.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 9,
+      "title": "File CLI",
+      "prompt": "Add python3 invoice.py FILE. FILE contains a JSON object with required rows and only optional tax_percent/group_by keys; reject other request keys. Print one JSON result plus newline to stdout on success and exit 0. Keep the importable summarize API. Use standard library only.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 10,
+      "title": "Stdin and CLI errors",
+      "prompt": "Support python3 invoice.py - reading the same request from stdin. Wrong argument count, unreadable file, malformed JSON/request, or business ValueError must produce a nonempty error on stderr, no stdout, and nonzero exit. Never overwrite the input file. API validation and all previous behavior remain.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 11,
+      "title": "Regression review",
+      "prompt": "Add and run regression tests covering half-cent aggregate rounding, discounts before tax, cancelled malformed rows and all invalid numeric types. Fix defects you identify while preserving the existing contract. Do not remove earlier features or tests.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 12,
+      "title": "Finish and document",
+      "prompt": "Review invoice.py and your tests, fix defects you find, run unittest discovery, and update README with the API, rounding/validation behavior, file and stdin CLI examples. Preserve all prior requirements. Summarize what you changed and tested naturally; no special chat JSON format is required.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    }
+  ],
+  "interface": {
+    "api": "invoice.summarize(rows, tax_percent=\"0\", group_by=None)",
+    "moneyFields": ["subtotal", "discount", "tax", "total"],
+    "moneyFormat": "ASCII nonnegative decimal string with exactly two digits after dot",
+    "resultKeysUngrouped": ["count", "subtotal", "discount", "tax", "total"],
+    "resultKeysGrouped": [
+      "count",
+      "subtotal",
+      "discount",
+      "tax",
+      "total",
+      "groups"
+    ],
+    "groupKeys": ["category", "count", "subtotal", "discount", "tax", "total"],
+    "cliInputKeys": ["rows", "tax_percent", "group_by"],
+    "noExtraOutputKeys": true,
+    "jsonTypesStrict": true
+  },
+  "fixtures": {
+    "initialWorkspace": "workspace/",
+    "hiddenCases": "oracle/cases.json",
+    "oracleReference": "oracle/reference.py",
+    "referenceStatus": "Developer oracle validation only, not agent-generated work, never delivered to agent"
+  },
+  "quality": {
+    "R1-R5": "Record functional failures but row dictionary structure is underspecified; attribute-style interpretation not automatically model error.",
+    "R6-R12": "Explicit dictionary semantics; functional quality and final 37 cases reported separately.",
+    "README": "Separate manual semantic review, never inferred from test success.",
+    "continuation": "All 12 fixed tasks continue through quality failures; no evaluator feedback, retries or oracle edits. Transport/model/memory/usage/publication/budget failure stops dependent launches."
+  },
+  "isolation": {
+    "agent": "Before launching any model, run the chosen CLI under an OS sandbox denying all reviews/oracle paths, the source repository including evidence, peer workspaces and prior experiment roots; workspace and CLI-owned runtime may be readable. Prompt instructions are not isolation.",
+    "evaluator": "Controller holds hidden cases/expected values outside workspace. Candidate runs as isolated subprocess receiving only case input, with OS read denial for all reviews and the entire source repository and network denied; no oracle file, expected values or evaluator code is placed in candidate argv/environment/workspace. Other loom-invoice-* workspace roots are denied; candidate workspace is read-only inside the evaluator sandbox. Candidate inputs are temporary host-written files or stdin, never oracle expectations.",
+    "scope": "Current free tests verify candidate subprocess OS denial. No actual agent CLI launched; agent sandbox integration remains unimplemented.",
+    "toolPaths": "Agent workspaces must live outside denied directories. Python runtime and standard library remain readable.",
+    "snapshot": "Controller must use snapshot_workspace before reading candidate artifacts. Directory/file symlinks and special files rejected via lstat/dir_fd and O_NOFOLLOW; never shutil.copytree with followed links. Snapshot destination is fresh and deleted on copy failure."
+  },
+  "measurement": {
+    "usage": "Unique response IDs, native session transcript cross-check; input includes uncached plus cache reads plus writes exactly once.",
+    "USD": "Only latest total_cost_usd per session, provider estimate not bill; never sum cumulative round values.",
+    "randomness": "One paired trajectory, alternating order; no significance or multi-model generalization.",
+    "timing": "Output buffered by owned process helper; per-generation timestamps are parse time, not arrival latency."
+  },
+  "limitations": [
+    "No real model calls, no efficiency acceptance or product change.",
+    "Test workload is bounded and cannot establish multiplayer advantage.",
+    "The reference verifies oracle vectors, not completeness against every possible input.",
+    "Local same-UID sandbox is a path boundary, not a complete hostile-code security system."
+  ],
+  "schemas": "schemas.json",
+  "revisionReason": "Independent v2: clarify integer range same as bounded decimal strings; require sufficient exact precision; add bounded numeric/tax/CLI rejection counterexamples. Original v1 preserved.",
+  "model": "sonnet",
+  "effort": "low",
+  "cliVersion": "2.1.293 (Claude Code)",
+  "tasks": [
+    {
+      "round": 1,
+      "title": "Implement the API",
+      "prompt": "Create invoice.py with summarize(rows, tax_percent=\"0\", group_by=None). For now implement ungrouped rows having quantity and unit_price. Return exactly count (integer number of active input rows), subtotal, discount, tax, total. The four money fields are two-decimal strings. Use Decimal arithmetic and ROUND_HALF_UP. Compute exact quantity × unit_price products and aggregate before rounding; do not round individual lines. Until their later features arrive, discount and tax are \"0.00\", total equals subtotal. Inputs used now are nonnegative integer values or ordinary decimal strings; do not use binary floats internally.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat. Use sufficient Decimal precision or equivalent exact arithmetic: default precision 28 is not guaranteed for the permitted input range."
+    },
+    {
+      "round": 2,
+      "title": "Multiple and zero lines",
+      "prompt": "Support multiple rows and an empty rows list. Count every active row, including zero quantity. Zero quantities contribute zero money. Aggregate exact products before one currency rounding. Empty totals are count zero and all money fields \"0.00\".\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 3,
+      "title": "Cancellation",
+      "prompt": "An optional cancelled flag defaults to false. Skip a row with cancelled exactly true entirely before looking at its other fields; even missing or malformed quantity/price in a cancelled row is ignored. Other active rows retain existing behavior.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 4,
+      "title": "Tax",
+      "prompt": "Implement tax_percent, default \"0\". Compute tax on the exact aggregate net subtotal, round tax once to cents with ROUND_HALF_UP, then total equals the independently rounded net amount plus that rounded tax. Do not compute tax per line or on a prematurely rounded net subtotal.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 5,
+      "title": "Discount",
+      "prompt": "Add each row optional discount_percent, default \"0\". Compute its discount as exact quantity × unit_price × discount_percent / 100; do not round each discount. Return subtotal before discounts, discount as the rounded aggregate discount, tax on the exact aggregate subtotal minus exact aggregate discounts, and total as rounded exact net plus rounded aggregate tax. Each aggregate is rounded independently with ROUND_HALF_UP.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 6,
+      "title": "Validation",
+      "prompt": "Validate every active row: quantity and unit_price required; quantity/unit_price/discount_percent and tax_percent accept only integers from 0 through 999999999999 inclusive (not booleans), or ASCII strings matching [0-9]{1,12}(\\.[0-9]{1,6})?. Reject negatives, floats, exponent notation, whitespace, NaN/infinity, extra fractional digits and malformed or missing fields with ValueError. tax_percent and discount_percent must also be at most 100. rows must be a list of dicts. cancelled when supplied must be a bool. Cancelled=true still skips the rest of that row. Ignore unrelated row keys.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 7,
+      "title": "Category groups",
+      "prompt": "Support group_by=\"category\"; None remains ungrouped. Reject other group_by values with ValueError. Grouped result adds exactly a groups list of objects, each having category plus the same five summary fields. Each group independently follows existing exact aggregation/rounding rules. Grand totals are recalculated from all active rows, never by summing rounded groups. Group list order is not yet constrained; examples this round have nonempty string categories.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 8,
+      "title": "Stable group keys",
+      "prompt": "Sort groups ascending by Python string ordering of category. Missing category, null or empty string means \"uncategorized\"; other category values must be strings or raise ValueError when grouping is requested. Group labels are used verbatim, with no stripping or case folding. Empty grouped input has groups=[]. Ungrouped results omit the groups key.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 9,
+      "title": "File CLI",
+      "prompt": "Add python3 invoice.py FILE. FILE contains a JSON object with required rows and only optional tax_percent/group_by keys; reject other request keys. Print one JSON result plus newline to stdout on success and exit 0. Keep the importable summarize API. Use standard library only.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 10,
+      "title": "Stdin and CLI errors",
+      "prompt": "Support python3 invoice.py - reading the same request from stdin. Wrong argument count, unreadable file, malformed JSON/request, or business ValueError must produce a nonempty error on stderr, no stdout, and nonzero exit. Never overwrite the input file. API validation and all previous behavior remain.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 11,
+      "title": "Regression review",
+      "prompt": "Add and run regression tests covering half-cent aggregate rounding, discounts before tax, cancelled malformed rows and all invalid numeric types. Fix defects you identify while preserving the existing contract. Do not remove earlier features or tests.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    },
+    {
+      "round": 12,
+      "title": "Finish and document",
+      "prompt": "Review invoice.py and your tests, fix defects you find, run unittest discovery, and update README with the API, rounding/validation behavior, file and stdin CLI examples. Preserve all prior requirements. Summarize what you changed and tested naturally; no special chat JSON format is required.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat."
+    }
+  ],
+  "budget": {
+    "inputTokens": 3000000,
+    "outputTokens": 100000,
+    "batchMs": 5400000,
+    "perLaunchMs": 600000
+  },
+  "paidAuthorization": "root-approved preparation; execution requires explicit P151 and exact plan hash",
+  "toolSelection": "Both arms identical native Read Bash Edit Write Glob Grep. No MCP declarations, hooks or chat schema. Terminal opts into ordinary final text Host Worker submission."
+}

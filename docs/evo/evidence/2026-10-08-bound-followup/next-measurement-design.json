@@ -1,5 +1,5 @@
 {
-  "status": "Fixed quality-error continuation tested and used in P145/P146; artifact workload has a free-tested evaluator with model runner pending; paired-session portion remains design only. No product behavior change.",
+  "status": "Fixed trajectories P145/P146 preserved; invoice artifact v2 integrated with private native-final CLI runners in P149–P151. See current evidence for completion, quality and audit limitations. Paired-session portion remains design only; no product behavior change.",
   "objective": "Separate communication cost from model quality and fixed output serialization before multiplayer claims.",
   "invariants": [
     "Same source fixtures, tool availability, CLI/model/effort and normal continuous session per arm.",
@@ -24,7 +24,7 @@
     "limits": "No claim against commercial collaboration libraries without matched implemented baseline and primary-source configuration audit."
   },
   "artifactWorkloadDraft": {
-    "status": "Free evaluator prepared; paid/model CLI runner pending. Private fixture has 12 frozen rounds, 26 independent vectors, 12 passing free tests, strict snapshot and sandbox validation. No agent-model artifact result or efficiency acceptance.",
+    "status": "Historical v1 preparation retained below. Successor v2 has 12 rounds, 37 hidden functional cases and 14 free tests; paid native-final prototypes executed in P149–P151. Current completion and limitations are recorded in successorEvidence.",
     "purpose": "After fixed CSV trajectories give complete accounting, test a real bounded coding task whose accepted output is files rather than a short JSON chat answer.",
     "workspace": "Separate identical per-arm Python-standard-library workspaces. One continuous native session per arm. Agents may create invoice.py, tests and README; no production repository edits.",
     "interface": "invoice.summarize(rows, tax_percent=\"0\", group_by=None) returns JSON-serializable results. CLI reads a JSON file or stdin. Currency outputs are exact two-decimal strings.",
@@ -44,13 +44,14 @@
     ],
     "qualityOracle": "Before paid runs freeze exact schemas, fixture inputs and an independent evaluator; baseline and product receive identical functional requirements. Hidden evaluator remains outside agent-readable roots and never supplies expected answers or repair prompts during the trajectory.",
     "measurement": "Record every model generation, tool call and protocol action. Evaluate artifact snapshots after each round, without invoking any model. Keep quality errors and all costs; no claim based only on final chat text.",
-    "limits": "Not yet frozen for paid use or integrated into a model CLI runner. Candidate evaluator OS sandbox and no-symlink snapshot are free-verified; future agent CLI oracle/peer isolation and automatic-memory guards remain required. README semantic accuracy remains manual review. Reference implementation validates the oracle only, never agent achievement. This does not resume or replace earlier failed batches or create a scenario-specific Loom workflow.",
+    "limits": "One pair per CLI/model; no statistical or five-CLI acceptance. R1–R5 row representation is underspecified; explicit dictionary requirement begins R6. README semantic accuracy is reviewed separately. Scripted reference is not model achievement. P151 temporary per-round snapshots were not retained; final artifacts and original oracle results have different audit strength. No production workflow added.",
     "preparedEvidence": {
       "plan": "../2026-10-08-native-final-text/artifact-plan.json",
       "schema": "../2026-10-08-native-final-text/artifact-schema.json",
       "freeEvidence": "../2026-10-08-native-final-text/artifact-public-evidence.json",
       "manifest": "../2026-10-08-native-final-text/artifact-manifest.json"
-    }
+    },
+    "successorEvidence": "../2026-10-08-invoice-workload/summary.json"
   },
   "fixedTrajectoryEvidence": "../2026-10-08-fixed-trajectory/summary.json"
 }

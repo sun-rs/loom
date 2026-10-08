@@ -1,0 +1,4894 @@
+{
+  "batch": "P151",
+  "actualPaid": true,
+  "root": "private run 1791470752190",
+  "failure": null,
+  "arms": {
+    "native": {
+      "sameSession": true,
+      "roundsObserved": 12,
+      "roundsValidated": 12,
+      "generations": 91,
+      "input": 2624923,
+      "cachedInput": 2558720,
+      "uncachedInput": 66203,
+      "cacheWriteInput": 0,
+      "output": 38352,
+      "latestSessionCumulativeUsdEstimate": 1.02767,
+      "usageReconciled": true,
+      "firstGeneration": {
+        "round": 1,
+        "input": 3867,
+        "cachedInput": 0,
+        "output": 528,
+        "uncachedInput": 3867,
+        "cacheWriteInput": 0,
+        "classification": "tool-call-generation",
+        "stopReason": "tool_use"
+      },
+      "lastSixRounds": {
+        "input": 2117456,
+        "cachedInput": 2080768,
+        "uncachedInput": 36688,
+        "cacheWriteInput": 0,
+        "output": 22182,
+        "generations": 54
+      },
+      "generationClassification": {
+        "tool-call-generation": {
+          "input": 2305332,
+          "cachedInput": 2244096,
+          "uncachedInput": 61236,
+          "cacheWriteInput": 0,
+          "output": 34792,
+          "generations": 79
+        },
+        "final-text-generation": {
+          "input": 319591,
+          "cachedInput": 314624,
+          "uncachedInput": 4967,
+          "cacheWriteInput": 0,
+          "output": 3560,
+          "generations": 12
+        },
+        "other-or-unclassified": {
+          "input": 0,
+          "cachedInput": 0,
+          "uncachedInput": 0,
+          "cacheWriteInput": 0,
+          "output": 0,
+          "generations": 0
+        }
+      },
+      "generationDetails": [
+        {
+          "round": 1,
+          "input": 3867,
+          "cachedInput": 0,
+          "output": 528,
+          "uncachedInput": 3867,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 4485,
+          "cachedInput": 3840,
+          "output": 197,
+          "uncachedInput": 645,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 4772,
+          "cachedInput": 4352,
+          "output": 756,
+          "uncachedInput": 420,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 5617,
+          "cachedInput": 4608,
+          "output": 79,
+          "uncachedInput": 1009,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 5902,
+          "cachedInput": 5376,
+          "output": 228,
+          "uncachedInput": 526,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 2,
+          "input": 6253,
+          "cachedInput": 5888,
+          "output": 373,
+          "uncachedInput": 365,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 2,
+          "input": 6717,
+          "cachedInput": 6144,
+          "output": 79,
+          "uncachedInput": 573,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 2,
+          "input": 7052,
+          "cachedInput": 6656,
+          "output": 183,
+          "uncachedInput": 396,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 3,
+          "input": 7356,
+          "cachedInput": 6912,
+          "output": 276,
+          "uncachedInput": 444,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 7706,
+          "cachedInput": 7168,
+          "output": 235,
+          "uncachedInput": 538,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 8015,
+          "cachedInput": 7680,
+          "output": 409,
+          "uncachedInput": 335,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 8499,
+          "cachedInput": 7936,
+          "output": 79,
+          "uncachedInput": 563,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 8896,
+          "cachedInput": 8448,
+          "output": 208,
+          "uncachedInput": 448,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 4,
+          "input": 9237,
+          "cachedInput": 8704,
+          "output": 411,
+          "uncachedInput": 533,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 9722,
+          "cachedInput": 9216,
+          "output": 1363,
+          "uncachedInput": 506,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 11160,
+          "cachedInput": 9472,
+          "output": 79,
+          "uncachedInput": 1688,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 11669,
+          "cachedInput": 11008,
+          "output": 333,
+          "uncachedInput": 661,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 5,
+          "input": 12158,
+          "cachedInput": 11520,
+          "output": 523,
+          "uncachedInput": 638,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 12755,
+          "cachedInput": 12032,
+          "output": 220,
+          "uncachedInput": 723,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 13049,
+          "cachedInput": 12544,
+          "output": 275,
+          "uncachedInput": 505,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 13398,
+          "cachedInput": 12800,
+          "output": 973,
+          "uncachedInput": 598,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 14446,
+          "cachedInput": 13312,
+          "output": 474,
+          "uncachedInput": 1134,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 15026,
+          "cachedInput": 14336,
+          "output": 122,
+          "uncachedInput": 690,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 15736,
+          "cachedInput": 14848,
+          "output": 255,
+          "uncachedInput": 888,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 6,
+          "input": 16203,
+          "cachedInput": 15616,
+          "output": 2077,
+          "uncachedInput": 587,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 18370,
+          "cachedInput": 16128,
+          "output": 1587,
+          "uncachedInput": 2242,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 20032,
+          "cachedInput": 18176,
+          "output": 242,
+          "uncachedInput": 1856,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 20349,
+          "cachedInput": 19968,
+          "output": 87,
+          "uncachedInput": 381,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 20678,
+          "cachedInput": 20224,
+          "output": 1104,
+          "uncachedInput": 454,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 21857,
+          "cachedInput": 20480,
+          "output": 254,
+          "uncachedInput": 1377,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 22186,
+          "cachedInput": 21760,
+          "output": 730,
+          "uncachedInput": 426,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 23011,
+          "cachedInput": 22016,
+          "output": 96,
+          "uncachedInput": 995,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 23474,
+          "cachedInput": 22784,
+          "output": 425,
+          "uncachedInput": 690,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 23974,
+          "cachedInput": 23296,
+          "output": 328,
+          "uncachedInput": 678,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 24408,
+          "cachedInput": 23808,
+          "output": 158,
+          "uncachedInput": 600,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 24641,
+          "cachedInput": 24320,
+          "output": 85,
+          "uncachedInput": 321,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 24791,
+          "cachedInput": 24576,
+          "output": 339,
+          "uncachedInput": 215,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 7,
+          "input": 25295,
+          "cachedInput": 24576,
+          "output": 1611,
+          "uncachedInput": 719,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 26996,
+          "cachedInput": 25088,
+          "output": 268,
+          "uncachedInput": 1908,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 27354,
+          "cachedInput": 26880,
+          "output": 1144,
+          "uncachedInput": 474,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 28573,
+          "cachedInput": 27136,
+          "output": 85,
+          "uncachedInput": 1437,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 28723,
+          "cachedInput": 28416,
+          "output": 327,
+          "uncachedInput": 307,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 8,
+          "input": 29193,
+          "cachedInput": 28672,
+          "output": 287,
+          "uncachedInput": 521,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 29554,
+          "cachedInput": 29184,
+          "output": 195,
+          "uncachedInput": 370,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 29823,
+          "cachedInput": 29440,
+          "output": 265,
+          "uncachedInput": 383,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 30162,
+          "cachedInput": 29696,
+          "output": 341,
+          "uncachedInput": 466,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 30577,
+          "cachedInput": 29952,
+          "output": 742,
+          "uncachedInput": 625,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 31394,
+          "cachedInput": 30464,
+          "output": 85,
+          "uncachedInput": 930,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 31544,
+          "cachedInput": 31232,
+          "output": 206,
+          "uncachedInput": 312,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 9,
+          "input": 31883,
+          "cachedInput": 31488,
+          "output": 353,
+          "uncachedInput": 395,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 32310,
+          "cachedInput": 31744,
+          "output": 90,
+          "uncachedInput": 566,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 32483,
+          "cachedInput": 32256,
+          "output": 515,
+          "uncachedInput": 227,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 33072,
+          "cachedInput": 32256,
+          "output": 1133,
+          "uncachedInput": 816,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 34297,
+          "cachedInput": 33024,
+          "output": 83,
+          "uncachedInput": 1273,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 34510,
+          "cachedInput": 34048,
+          "output": 1080,
+          "uncachedInput": 462,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 35665,
+          "cachedInput": 34304,
+          "output": 85,
+          "uncachedInput": 1361,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 35858,
+          "cachedInput": 35584,
+          "output": 139,
+          "uncachedInput": 274,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 36339,
+          "cachedInput": 35840,
+          "output": 426,
+          "uncachedInput": 499,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 37091,
+          "cachedInput": 36096,
+          "output": 262,
+          "uncachedInput": 995,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 37428,
+          "cachedInput": 36864,
+          "output": 256,
+          "uncachedInput": 564,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 37747,
+          "cachedInput": 37376,
+          "output": 186,
+          "uncachedInput": 371,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 38007,
+          "cachedInput": 37632,
+          "output": 128,
+          "uncachedInput": 375,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 38209,
+          "cachedInput": 37888,
+          "output": 85,
+          "uncachedInput": 321,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 38397,
+          "cachedInput": 38144,
+          "output": 242,
+          "uncachedInput": 253,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 38714,
+          "cachedInput": 38400,
+          "output": 85,
+          "uncachedInput": 314,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 38862,
+          "cachedInput": 38656,
+          "output": 340,
+          "uncachedInput": 206,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 10,
+          "input": 39337,
+          "cachedInput": 38656,
+          "output": 612,
+          "uncachedInput": 681,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 40023,
+          "cachedInput": 39168,
+          "output": 207,
+          "uncachedInput": 855,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 40304,
+          "cachedInput": 39936,
+          "output": 685,
+          "uncachedInput": 368,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 41064,
+          "cachedInput": 40192,
+          "output": 85,
+          "uncachedInput": 872,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 41218,
+          "cachedInput": 40960,
+          "output": 91,
+          "uncachedInput": 258,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 41654,
+          "cachedInput": 41216,
+          "output": 293,
+          "uncachedInput": 438,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 42037,
+          "cachedInput": 41472,
+          "output": 469,
+          "uncachedInput": 565,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 42581,
+          "cachedInput": 41984,
+          "output": 145,
+          "uncachedInput": 597,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 42801,
+          "cachedInput": 42496,
+          "output": 331,
+          "uncachedInput": 305,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 43207,
+          "cachedInput": 42752,
+          "output": 85,
+          "uncachedInput": 455,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 43355,
+          "cachedInput": 43008,
+          "output": 292,
+          "uncachedInput": 347,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 11,
+          "input": 43766,
+          "cachedInput": 43264,
+          "output": 3216,
+          "uncachedInput": 502,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 47057,
+          "cachedInput": 43520,
+          "output": 227,
+          "uncachedInput": 3537,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 47359,
+          "cachedInput": 46848,
+          "output": 85,
+          "uncachedInput": 511,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 47515,
+          "cachedInput": 47360,
+          "output": 89,
+          "uncachedInput": 155,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 47798,
+          "cachedInput": 47360,
+          "output": 375,
+          "uncachedInput": 438,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 48248,
+          "cachedInput": 47616,
+          "output": 85,
+          "uncachedInput": 632,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 48396,
+          "cachedInput": 48128,
+          "output": 449,
+          "uncachedInput": 268,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 12,
+          "input": 48978,
+          "cachedInput": 48384,
+          "output": 79,
+          "uncachedInput": 594,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 51370,
+          "cachedInput": 48896,
+          "output": 1024,
+          "uncachedInput": 2474,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 52484,
+          "cachedInput": 51200,
+          "output": 1092,
+          "uncachedInput": 1284,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 53665,
+          "cachedInput": 52480,
+          "output": 193,
+          "uncachedInput": 1185,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 53998,
+          "cachedInput": 53504,
+          "output": 443,
+          "uncachedInput": 494,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 54516,
+          "cachedInput": 53760,
+          "output": 86,
+          "uncachedInput": 756,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 54665,
+          "cachedInput": 54272,
+          "output": 400,
+          "uncachedInput": 393,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        }
+      ],
+      "perRound": [
+        {
+          "round": 1,
+          "generations": 5,
+          "input": 24643,
+          "cachedInput": 18176,
+          "output": 1788,
+          "quality": {
+            "round": 1,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 2,
+          "generations": 3,
+          "input": 20022,
+          "cachedInput": 18688,
+          "output": 635,
+          "quality": {
+            "round": 2,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 3,
+          "generations": 5,
+          "input": 40472,
+          "cachedInput": 38144,
+          "output": 1207,
+          "quality": {
+            "round": 3,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 4,
+          "generations": 4,
+          "input": 41788,
+          "cachedInput": 38400,
+          "output": 2186,
+          "quality": {
+            "round": 4,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 5,
+          "generations": 7,
+          "input": 96568,
+          "cachedInput": 91392,
+          "output": 2842,
+          "quality": {
+            "round": 5,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 6,
+          "generations": 13,
+          "input": 283974,
+          "cachedInput": 273152,
+          "output": 7512,
+          "quality": {
+            "round": 6,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 7,
+          "generations": 5,
+          "input": 136941,
+          "cachedInput": 132096,
+          "output": 3435,
+          "quality": {
+            "round": 7,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 8,
+          "generations": 7,
+          "input": 212247,
+          "cachedInput": 208640,
+          "output": 2121,
+          "quality": {
+            "round": 8,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 9,
+          "generations": 17,
+          "input": 610872,
+          "cachedInput": 601600,
+          "output": 5488,
+          "quality": {
+            "round": 9,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 10,
+          "generations": 11,
+          "input": 457581,
+          "cachedInput": 451840,
+          "output": 3295,
+          "quality": {
+            "round": 10,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 11,
+          "generations": 7,
+          "input": 330139,
+          "cachedInput": 324096,
+          "output": 4526,
+          "quality": {
+            "round": 11,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 12,
+          "generations": 7,
+          "input": 369676,
+          "cachedInput": 362496,
+          "output": 3317,
+          "quality": {
+            "round": 12,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty-grouped",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        }
+      ],
+      "toolCallCounts": {
+        "Write": 5,
+        "Edit": 45,
+        "Bash": 26,
+        "Read": 3
+      },
+      "artifactHashes": {
+        "README.md": "cd3433f16a05667d73c4b6b1be838c46f0d168b221a721b8e9b3adaa0a4358eb",
+        "invoice.py": "eb2a1e5129cd0b87e2761241bdea092bfee32e215b00db483aa91badd66ed2fc",
+        "tests/test_invoice.py": "ec61ee0ec2d39fe9ff4ddc5695cded682ac3de73331328683c6b62ffb417a133",
+        "__pycache__/invoice.cpython-313.pyc": "2dccbd3938af56ad22752e8fabfde564d0b4239377c21a4c6e86a5b987464fe7",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "e0161fe5cd0be86847a499824842cebf9ac15c08aeccf1c649c607da291a9c54"
+      }
+    },
+    "terminal": {
+      "sameSession": true,
+      "roundsObserved": 12,
+      "roundsValidated": 12,
+      "generations": 87,
+      "input": 2379632,
+      "cachedInput": 2321152,
+      "uncachedInput": 58480,
+      "cacheWriteInput": 0,
+      "output": 32725,
+      "latestSessionCumulativeUsdEstimate": 0.9084404000000004,
+      "usageReconciled": true,
+      "firstGeneration": {
+        "round": 1,
+        "input": 3910,
+        "cachedInput": 3584,
+        "output": 494,
+        "uncachedInput": 326,
+        "cacheWriteInput": 0,
+        "classification": "tool-call-generation",
+        "stopReason": "tool_use"
+      },
+      "lastSixRounds": {
+        "input": 1810573,
+        "cachedInput": 1779456,
+        "uncachedInput": 31117,
+        "cacheWriteInput": 0,
+        "output": 17813,
+        "generations": 48
+      },
+      "generationClassification": {
+        "tool-call-generation": {
+          "input": 2065777,
+          "cachedInput": 2012160,
+          "uncachedInput": 53617,
+          "cacheWriteInput": 0,
+          "output": 29068,
+          "generations": 75
+        },
+        "final-text-generation": {
+          "input": 313855,
+          "cachedInput": 308992,
+          "uncachedInput": 4863,
+          "cacheWriteInput": 0,
+          "output": 3657,
+          "generations": 12
+        },
+        "other-or-unclassified": {
+          "input": 0,
+          "cachedInput": 0,
+          "uncachedInput": 0,
+          "cacheWriteInput": 0,
+          "output": 0,
+          "generations": 0
+        }
+      },
+      "generationDetails": [
+        {
+          "round": 1,
+          "input": 3910,
+          "cachedInput": 3584,
+          "output": 494,
+          "uncachedInput": 326,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 4495,
+          "cachedInput": 3840,
+          "output": 937,
+          "uncachedInput": 655,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 5522,
+          "cachedInput": 4352,
+          "output": 83,
+          "uncachedInput": 1170,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 1,
+          "input": 5862,
+          "cachedInput": 5376,
+          "output": 285,
+          "uncachedInput": 486,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 2,
+          "input": 6312,
+          "cachedInput": 5632,
+          "output": 505,
+          "uncachedInput": 680,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 2,
+          "input": 6909,
+          "cachedInput": 6144,
+          "output": 83,
+          "uncachedInput": 765,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 2,
+          "input": 7337,
+          "cachedInput": 6912,
+          "output": 202,
+          "uncachedInput": 425,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 3,
+          "input": 7702,
+          "cachedInput": 7168,
+          "output": 310,
+          "uncachedInput": 534,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 8103,
+          "cachedInput": 7680,
+          "output": 157,
+          "uncachedInput": 423,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 8351,
+          "cachedInput": 7936,
+          "output": 469,
+          "uncachedInput": 415,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 8896,
+          "cachedInput": 8192,
+          "output": 83,
+          "uncachedInput": 704,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 3,
+          "input": 9432,
+          "cachedInput": 8704,
+          "output": 190,
+          "uncachedInput": 728,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 4,
+          "input": 9797,
+          "cachedInput": 9216,
+          "output": 491,
+          "uncachedInput": 581,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 10363,
+          "cachedInput": 9728,
+          "output": 174,
+          "uncachedInput": 635,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 10612,
+          "cachedInput": 10240,
+          "output": 241,
+          "uncachedInput": 372,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 10928,
+          "cachedInput": 10496,
+          "output": 1665,
+          "uncachedInput": 432,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 12669,
+          "cachedInput": 10752,
+          "output": 83,
+          "uncachedInput": 1917,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 4,
+          "input": 13325,
+          "cachedInput": 12544,
+          "output": 289,
+          "uncachedInput": 781,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 5,
+          "input": 13812,
+          "cachedInput": 13312,
+          "output": 640,
+          "uncachedInput": 500,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 14527,
+          "cachedInput": 13568,
+          "output": 226,
+          "uncachedInput": 959,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 14828,
+          "cachedInput": 14336,
+          "output": 180,
+          "uncachedInput": 492,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 15083,
+          "cachedInput": 14592,
+          "output": 888,
+          "uncachedInput": 491,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 16047,
+          "cachedInput": 14848,
+          "output": 83,
+          "uncachedInput": 1199,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 17009,
+          "cachedInput": 15872,
+          "output": 246,
+          "uncachedInput": 1137,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 17331,
+          "cachedInput": 16896,
+          "output": 85,
+          "uncachedInput": 435,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 5,
+          "input": 17479,
+          "cachedInput": 17152,
+          "output": 321,
+          "uncachedInput": 327,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 6,
+          "input": 18054,
+          "cachedInput": 17408,
+          "output": 651,
+          "uncachedInput": 646,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 19462,
+          "cachedInput": 17920,
+          "output": 1134,
+          "uncachedInput": 1542,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 20687,
+          "cachedInput": 19456,
+          "output": 469,
+          "uncachedInput": 1231,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 21363,
+          "cachedInput": 20480,
+          "output": 118,
+          "uncachedInput": 883,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 21694,
+          "cachedInput": 21248,
+          "output": 354,
+          "uncachedInput": 446,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 22124,
+          "cachedInput": 21504,
+          "output": 617,
+          "uncachedInput": 620,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 22951,
+          "cachedInput": 22016,
+          "output": 99,
+          "uncachedInput": 935,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 23250,
+          "cachedInput": 22784,
+          "output": 99,
+          "uncachedInput": 466,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 23625,
+          "cachedInput": 23040,
+          "output": 119,
+          "uncachedInput": 585,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 23938,
+          "cachedInput": 23552,
+          "output": 305,
+          "uncachedInput": 386,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 24319,
+          "cachedInput": 23808,
+          "output": 929,
+          "uncachedInput": 511,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 25324,
+          "cachedInput": 24320,
+          "output": 234,
+          "uncachedInput": 1004,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 6,
+          "input": 25627,
+          "cachedInput": 25088,
+          "output": 374,
+          "uncachedInput": 539,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 7,
+          "input": 26208,
+          "cachedInput": 25600,
+          "output": 1548,
+          "uncachedInput": 608,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 27847,
+          "cachedInput": 26112,
+          "output": 237,
+          "uncachedInput": 1735,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 28160,
+          "cachedInput": 27648,
+          "output": 1053,
+          "uncachedInput": 512,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 29289,
+          "cachedInput": 28160,
+          "output": 85,
+          "uncachedInput": 1129,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 29445,
+          "cachedInput": 29184,
+          "output": 89,
+          "uncachedInput": 261,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 29757,
+          "cachedInput": 29440,
+          "output": 209,
+          "uncachedInput": 317,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 30042,
+          "cachedInput": 29696,
+          "output": 85,
+          "uncachedInput": 346,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 7,
+          "input": 30190,
+          "cachedInput": 29952,
+          "output": 397,
+          "uncachedInput": 238,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 8,
+          "input": 30772,
+          "cachedInput": 29952,
+          "output": 327,
+          "uncachedInput": 820,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 31190,
+          "cachedInput": 30720,
+          "output": 267,
+          "uncachedInput": 470,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 31548,
+          "cachedInput": 30976,
+          "output": 284,
+          "uncachedInput": 572,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 31923,
+          "cachedInput": 31488,
+          "output": 777,
+          "uncachedInput": 435,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 32776,
+          "cachedInput": 31744,
+          "output": 85,
+          "uncachedInput": 1032,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 8,
+          "input": 32955,
+          "cachedInput": 32768,
+          "output": 247,
+          "uncachedInput": 187,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 9,
+          "input": 33377,
+          "cachedInput": 32768,
+          "output": 247,
+          "uncachedInput": 609,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 33699,
+          "cachedInput": 33280,
+          "output": 385,
+          "uncachedInput": 419,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 34159,
+          "cachedInput": 33536,
+          "output": 169,
+          "uncachedInput": 623,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 34404,
+          "cachedInput": 34048,
+          "output": 737,
+          "uncachedInput": 356,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 35217,
+          "cachedInput": 34304,
+          "output": 274,
+          "uncachedInput": 913,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 35567,
+          "cachedInput": 35072,
+          "output": 85,
+          "uncachedInput": 495,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 35721,
+          "cachedInput": 35328,
+          "output": 91,
+          "uncachedInput": 393,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 36048,
+          "cachedInput": 35584,
+          "output": 212,
+          "uncachedInput": 464,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 36335,
+          "cachedInput": 35840,
+          "output": 85,
+          "uncachedInput": 495,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 36489,
+          "cachedInput": 36096,
+          "output": 88,
+          "uncachedInput": 393,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 36814,
+          "cachedInput": 36352,
+          "output": 131,
+          "uncachedInput": 462,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 37020,
+          "cachedInput": 36608,
+          "output": 135,
+          "uncachedInput": 412,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 9,
+          "input": 37258,
+          "cachedInput": 36864,
+          "output": 322,
+          "uncachedInput": 394,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 10,
+          "input": 37757,
+          "cachedInput": 37120,
+          "output": 438,
+          "uncachedInput": 637,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 38270,
+          "cachedInput": 37632,
+          "output": 304,
+          "uncachedInput": 638,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 38650,
+          "cachedInput": 38144,
+          "output": 785,
+          "uncachedInput": 506,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 39511,
+          "cachedInput": 38400,
+          "output": 121,
+          "uncachedInput": 1111,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 10,
+          "input": 39738,
+          "cachedInput": 39424,
+          "output": 235,
+          "uncachedInput": 314,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 11,
+          "input": 40134,
+          "cachedInput": 39680,
+          "output": 1392,
+          "uncachedInput": 454,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 41614,
+          "cachedInput": 39936,
+          "output": 229,
+          "uncachedInput": 1678,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 41931,
+          "cachedInput": 41472,
+          "output": 232,
+          "uncachedInput": 459,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 42251,
+          "cachedInput": 41728,
+          "output": 292,
+          "uncachedInput": 523,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 42727,
+          "cachedInput": 42240,
+          "output": 1299,
+          "uncachedInput": 487,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 44102,
+          "cachedInput": 42496,
+          "output": 85,
+          "uncachedInput": 1606,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 11,
+          "input": 44250,
+          "cachedInput": 44032,
+          "output": 456,
+          "uncachedInput": 218,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        },
+        {
+          "round": 12,
+          "input": 44881,
+          "cachedInput": 44032,
+          "output": 82,
+          "uncachedInput": 849,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 46877,
+          "cachedInput": 44800,
+          "output": 752,
+          "uncachedInput": 2077,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 47720,
+          "cachedInput": 46848,
+          "output": 266,
+          "uncachedInput": 872,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 48077,
+          "cachedInput": 47616,
+          "output": 405,
+          "uncachedInput": 461,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 48558,
+          "cachedInput": 47872,
+          "output": 144,
+          "uncachedInput": 686,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 48765,
+          "cachedInput": 48384,
+          "output": 1040,
+          "uncachedInput": 381,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 49895,
+          "cachedInput": 48640,
+          "output": 180,
+          "uncachedInput": 1255,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 50253,
+          "cachedInput": 49664,
+          "output": 86,
+          "uncachedInput": 589,
+          "cacheWriteInput": 0,
+          "classification": "tool-call-generation",
+          "stopReason": "tool_use"
+        },
+        {
+          "round": 12,
+          "input": 50402,
+          "cachedInput": 50176,
+          "output": 339,
+          "uncachedInput": 226,
+          "cacheWriteInput": 0,
+          "classification": "final-text-generation",
+          "stopReason": "end_turn"
+        }
+      ],
+      "perRound": [
+        {
+          "round": 1,
+          "generations": 4,
+          "input": 19789,
+          "cachedInput": 17152,
+          "output": 1799,
+          "quality": {
+            "round": 1,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 2,
+          "generations": 3,
+          "input": 20558,
+          "cachedInput": 18688,
+          "output": 790,
+          "quality": {
+            "round": 2,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 3,
+          "generations": 5,
+          "input": 42484,
+          "cachedInput": 39680,
+          "output": 1209,
+          "quality": {
+            "round": 3,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 4,
+          "generations": 6,
+          "input": 67694,
+          "cachedInput": 62976,
+          "output": 2943,
+          "quality": {
+            "round": 4,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 5,
+          "generations": 8,
+          "input": 126116,
+          "cachedInput": 120576,
+          "output": 2669,
+          "quality": {
+            "round": 5,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "early-underspecified-row-structure"
+        },
+        {
+          "round": 6,
+          "generations": 13,
+          "input": 292418,
+          "cachedInput": 282624,
+          "output": 5502,
+          "quality": {
+            "round": 6,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 7,
+          "generations": 8,
+          "input": 230938,
+          "cachedInput": 225792,
+          "output": 3703,
+          "quality": {
+            "round": 7,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 8,
+          "generations": 6,
+          "input": 191164,
+          "cachedInput": 187648,
+          "output": 1987,
+          "quality": {
+            "round": 8,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 9,
+          "generations": 13,
+          "input": 462108,
+          "cachedInput": 455680,
+          "output": 2961,
+          "quality": {
+            "round": 9,
+            "passed": true,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              }
+            ],
+            "functionalPassed": true,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 10,
+          "generations": 5,
+          "input": 193926,
+          "cachedInput": 190720,
+          "output": 1883,
+          "quality": {
+            "round": 10,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 11,
+          "generations": 7,
+          "input": 297009,
+          "cachedInput": 291584,
+          "output": 3985,
+          "quality": {
+            "round": 11,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        },
+        {
+          "round": 12,
+          "generations": 9,
+          "input": 435428,
+          "cachedInput": 428032,
+          "output": 3294,
+          "quality": {
+            "round": 12,
+            "passed": false,
+            "checks": [
+              {
+                "id": "basic",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "many-and-zero",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cancelled-skips-validation",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-half-up",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "aggregate-tax-once",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-before-tax",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "fractional-discounts-aggregate",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-negative",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-nan",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-boolean",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-exponent",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-whitespace",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "invalid-too-many-decimals",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "discount-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "bad-cancelled",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-over-100",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "groups-grand-not-sum-rounded",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "missing-groups-sort",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-file",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-stdin",
+                "passed": false,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-error",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "no-per-line-rounding",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "empty-grouped",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "large-decimal-precision",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "integer-over-range",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-price",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "negative-discount",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-float",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "tax-on-exact-unrounded-net",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "unsupported-grouping",
+                "passed": true,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-malformed-json",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-unknown-request-key",
+                "passed": true,
+                "exitCode": 1
+              },
+              {
+                "id": "cli-no-argument",
+                "passed": false,
+                "exitCode": 0
+              },
+              {
+                "id": "cli-missing-file",
+                "passed": true,
+                "exitCode": 1
+              }
+            ],
+            "functionalPassed": false,
+            "selfTestsPassed": true,
+            "selfTestsExitCode": 0
+          },
+          "finalValidated": true,
+          "classification": "explicit-dictionary-requirement"
+        }
+      ],
+      "toolCallCounts": {
+        "Write": 5,
+        "Bash": 25,
+        "Edit": 39,
+        "Read": 4,
+        "Grep": 2
+      },
+      "artifactHashes": {
+        "README.md": "7969a08be8d3d35d44407d5fdad704901f244911bb8450b8bda781d3a2cadb38",
+        "invoice.py": "84118144dfe3a9de83b9ea242802498bf7fef7037ee10f45b0486a98cb959dc2",
+        "tests/test_invoice.py": "2fa51af481d20e020e4e152726752c563af102c6553751d769fe34d95363cec9",
+        "__pycache__/invoice.cpython-313.pyc": "195eefa9edd4d8e10cc4fb54c0c68294fd983f668408f7137db86c91a852d0fc",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "f992b8a94c2da2e242f8844937db1d0dd74ecea956fc09404ba9a439709d8aa4"
+      }
+    }
+  },
+  "limits": [
+    "Historical round artifact snapshots were not retained; only contemporaneous oracle results and tool records remain. Final archived artifacts must not be represented as past snapshots.",
+    "One paired trajectory; model randomness prevents causal/general multi-model efficiency conclusions.",
+    "Frozen fixture R1-R5 dictionary structure underspecified, early attribute implementation is not automatically model failure.",
+    "R6 onward explicit dictionaries; final37cases and manual README assessed separately.",
+    "Provider total_cost_usd is cumulative session estimate, not a bill; only final value counted.",
+    "Budget checked at launch boundaries; an in-flight launch may overshoot.",
+    "Frozen plan no-real-model wording describes prelaunch fixture state, not this paid execution.",
+    "Historical per-round artifact snapshots/hashes were not persisted. Their original oracle verdicts and tool records remain, but original artifact bytes cannot be independently replayed. Final artifacts are separately safely archived and independently evaluated.",
+    "Second arm first generation had shared-prefix provider cache hits; uncached/USD differences are confounded by ordering/cache, not pure protocol effect.",
+    "Both final artifacts fail explicit CLI requirements, so this observed efficiency ratio is not quality-qualified product acceptance."
+  ],
+  "kernel": {
+    "activations": [["completed", 12]],
+    "runs": [["exited", 0, 12]],
+    "finalMarkers": 12,
+    "cursorRows": 1
+  },
+  "planHash": "4e5a7aa3dea2d3cf6a7a2ed5c16d0b9d83da32cc8be1f3d9c9c95c8486cac850",
+  "observedRatios": {
+    "input": 0.9065530684138163,
+    "output": 0.8532801418439716,
+    "generations": 0.9560439560439561,
+    "meaning": "single-paired-12-round observation only",
+    "lastSixInput": 0.8550699518667684,
+    "uncachedInput": 0.8833436551213691,
+    "lastSixUncached": 0.8481519843000436,
+    "lastSixOutput": 0.8030384996844289,
+    "cachedInput": 0.9071535767883941,
+    "lastSixCached": 0.8551919291338582
+  },
+  "sourceIntegrity": {
+    "planSha256": "4e5a7aa3dea2d3cf6a7a2ed5c16d0b9d83da32cc8be1f3d9c9c95c8486cac850",
+    "manifestSha256": "462df7997f7258942e576fc3f6eee99cdb1a34c643ebdca7a3cdededd13ace11",
+    "runnerSha256": "55af2f20eac18f088b6884ca18a4e1fb0042baad6b6f20e18ef0a4d3fcb1ccf7",
+    "allFrozenSourceHashesUnchanged": true
+  },
+  "lifecycle": {
+    "launches": 24,
+    "normalExit0": 24,
+    "ownedProcessGroupsCleaned": 24,
+    "timeouts": 0,
+    "publishedReceipts": 12,
+    "allTerminalActivationsCompleted": true,
+    "postPublicationGenerations": 0,
+    "reason": "Host publishes only after owned CLI process completion; there is no further provider launch within that Run."
+  },
+  "memoryAndBinding": {
+    "everyLaunchMemoryDisableVerified": true,
+    "settingsSourcesEmpty": true,
+    "emptyStrictMcpConfig": true,
+    "noHooks": true,
+    "binding": "local:claude-cli/v1:sonnet",
+    "effort": "low",
+    "cliVersion": "2.1.293 (Claude Code)",
+    "observedModels": ["claude-sonnet-5-5"]
+  },
+  "quality": {
+    "native": {
+      "roundsPassed": 9,
+      "rounds": 12,
+      "earlyR1to5Passed": 5,
+      "explicitR6to12Passed": 4,
+      "finalIndependentCasesPassed": 35,
+      "finalIndependentCases": 37,
+      "finalSelfTestsPassed": true,
+      "failedCases": ["cli-stdin", "cli-no-argument"],
+      "failureMeaning": "R10 explicitly requires dash for stdin and rejects wrong arg count. Both final artifacts instead open dash as filename and accept no args as stdin; independent sandbox reproduction confirms actual contract violation, not early dictionary ambiguity."
+    },
+    "terminal": {
+      "roundsPassed": 9,
+      "rounds": 12,
+      "earlyR1to5Passed": 5,
+      "explicitR6to12Passed": 4,
+      "finalIndependentCasesPassed": 35,
+      "finalIndependentCases": 37,
+      "finalSelfTestsPassed": true,
+      "failedCases": ["cli-stdin", "cli-no-argument"],
+      "failureMeaning": "R10 explicitly requires dash for stdin and rejects wrong arg count. Both final artifacts instead open dash as filename and accept no args as stdin; independent sandbox reproduction confirms actual contract violation, not early dictionary ambiguity."
+    }
+  },
+  "readmeManualReview": {
+    "native": {
+      "apiRoundingValidationCoverage": "present",
+      "fileExample": "present",
+      "stdinExample": "incorrect: zero args rather than required explicit dash",
+      "verdict": "fails required stdin CLI semantics",
+      "readmeSha256": "cd3433f16a05667d73c4b6b1be838c46f0d168b221a721b8e9b3adaa0a4358eb"
+    },
+    "terminal": {
+      "apiRoundingValidationCoverage": "present",
+      "fileExample": "present",
+      "stdinExample": "incorrect: zero args rather than required explicit dash",
+      "verdict": "fails required stdin CLI semantics",
+      "readmeSha256": "7969a08be8d3d35d44407d5fdad704901f244911bb8450b8bda781d3a2cadb38"
+    },
+    "method": "Human-style source/document inspection of frozen final snapshots; no model calls and no changes to artifacts."
+  },
+  "oracleAudit": {
+    "native": {
+      "suspiciousPathToolCalls": 0,
+      "observedToolNames": ["Write", "Edit", "Bash", "Read"],
+      "scope": "OS profile denies private reviews, repository, peer and old loom/rah runtimes in both temp roots. No claim of arbitrary same-UID security boundary.",
+      "sourceProfileSha256": "e9ad71b056904578d4fd517dbc7678749634061cdbb96b92a15701e9f84234a0"
+    },
+    "terminal": {
+      "suspiciousPathToolCalls": 0,
+      "observedToolNames": ["Write", "Bash", "Edit", "Read", "Grep"],
+      "scope": "OS profile denies private reviews, repository, peer and old loom/rah runtimes in both temp roots. No claim of arbitrary same-UID security boundary.",
+      "sourceProfileSha256": "7b101647aa2b2ff7f648a75ace9ed306a06e3a8b8192e7a7112a5902ab215f17"
+    }
+  },
+  "finalArtifactEvidence": "private run/final-artifact-evidence.json",
+  "fullTaskQualityAccepted": false,
+  "paidBudgetStopped": false
+}

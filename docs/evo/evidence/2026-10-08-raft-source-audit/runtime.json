@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-08",
+  "method": "Read-only source inspection; no source scripts, builds, model calls or product copying. Checkout clean at inspection.",
+  "source": {
+    "root": "/Users/sun/.loom/reviews/2026-10-08-raft-source",
+    "commit": "26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6",
+    "license": "Functional Source License 1.1, ALv2 Future License; source reference only; no legal determination"
+  },
+  "findings": [
+    {
+      "topic": "One agent primary execution lane",
+      "conclusion": "AgentProcessManager keys live processes by agentId, not channelId; an already-running start rebinds rather than spawning another main process. Busy messages may steer or queue depending on driver. Independent channel lanes for the same agent are not established by this design. Do not describe all busy messages as always FIFO-blocked.",
+      "evidence": [
+        "packages/daemon/src/agentProcessManager.ts:1376",
+        "packages/daemon/src/agentProcessManager.ts:3600",
+        "packages/daemon/src/agentProcessManager.ts:3613",
+        "packages/daemon/src/agentProcessManager.ts:4360",
+        "packages/daemon/src/agentProcessManager.ts:5681",
+        "packages/daemon/src/agentProcessManager.ts:6173"
+      ]
+    },
+    {
+      "topic": "Explicit message action versus ordinary final answer",
+      "conclusion": "Standing instructions make raft CLI the only delivered output channel; ordinary assistant prose is not delivered. Reply requires an explicit message send action, and guidance prefers one raft CLI command per tool call. No native-final-text Host publication path was established in this bounded audit. This establishes protocol work, not a measured cost multiplier.",
+      "evidence": [
+        "packages/daemon/src/drivers/systemPrompt.ts:116",
+        "packages/daemon/src/drivers/systemPrompt.ts:132"
+      ]
+    },
+    {
+      "topic": "Delta delivery and read receipts",
+      "conclusion": "Raft supports unread/after/before/around reads, per-agent per-target boundaries and exact delivered sequences. It is not necessary to reread the whole message box. Unread results from old servers lacking unread_after_seq are rejected. Thread guidance nevertheless asks for a read unless the thread was read in the current turn. Delta transport avoids duplicate delivery but does not remove native session history from provider requests.",
+      "evidence": [
+        "packages/cli/src/commands/message/read.ts:1",
+        "packages/cli/src/commands/message/read.ts:147",
+        "packages/daemon/src/agentVisibleDeliveryLedger.ts:114",
+        "packages/daemon/src/agentVisibleDeliveryLedger.ts:144",
+        "packages/shared/src/raftCliGuide.ts:339"
+      ]
+    },
+    {
+      "topic": "Prompt and manual",
+      "conclusion": "Shared CLI guide is the source for daemon standing prompt, manual and external context, reducing documentation drift. Startup instructions read MEMORY.md and may send an early acknowledgement; subagent guidance delegates execution and keeps main agent communicative. These are additional behavioral requirements versus a bare CLI task. Their token effects require measurements, not prompt-byte estimates.",
+      "evidence": [
+        "packages/shared/src/raftCliGuide.ts:1",
+        "packages/daemon/src/drivers/systemPrompt.ts:42",
+        "packages/daemon/src/drivers/systemPrompt.ts:94",
+        "packages/daemon/src/drivers/systemPrompt.ts:132"
+      ]
+    },
+    {
+      "topic": "Actual cost mitigation: session recycling",
+      "conclusion": "At a cold wake with large prior context, caller clears sessionId and constructs wake context. Defaults are gap >1 hour and context >128000 tokens, gated by server constructedWakeContext and local kill switch. Only Claude has a resume-facts reader in this revision; other enabled runtime names fall back to resume when facts are unavailable. This is automatic session replacement, incompatible with Loom continuous-session/no-auto-rotation contract unless owner changes it. Source comments reporting fleet savings/canaries were not independently verified.",
+      "evidence": [
+        "packages/daemon/src/wakeSessionRecycle.ts:11",
+        "packages/daemon/src/wakeSessionRecycle.ts:33",
+        "packages/daemon/src/wakeSessionRecycle.ts:94",
+        "packages/daemon/src/wakeSessionRecycle.ts:215",
+        "packages/daemon/src/wakeSessionRecycle.ts:230",
+        "packages/daemon/src/agentProcessManager.ts:4041"
+      ]
+    },
+    {
+      "topic": "Pi adapter",
+      "conclusion": "Pi uses an embedded SDK session with diagnostic stdout, sdk_prompt when idle and sdk_steer when busy, not merely ordinary pi CLI exec/resume. Per-session model runtime/client avoids a process.env lock serializing different Pi agents. It does not create separate channel sessions for one agent.",
+      "evidence": [
+        "packages/daemon/src/drivers/pi.ts:1291",
+        "packages/daemon/src/drivers/pi.ts:1460",
+        "packages/daemon/src/drivers/pi.ts:1555",
+        "packages/daemon/src/drivers/pi.ts:1601"
+      ]
+    },
+    {
+      "topic": "Kimi and other runtimes",
+      "conclusion": "Kimi CLI uses wire mode with explicit session id and persistent direct-stdin steer; a separate kimi-sdk driver normalizes SDK events. OpenCode is per-turn native session resume with busy inputs coalesced into pending. Claude/Codex descriptors support persistent steer and resume_or_fresh recovery. Thus runtime-specific adapters remain necessary; these are not proof of identical final-output or error guarantees across providers.",
+      "evidence": [
+        "packages/daemon/src/drivers/kimi.ts:112",
+        "packages/daemon/src/drivers/kimi.ts:134",
+        "packages/daemon/src/drivers/kimi-sdk.ts:198",
+        "packages/daemon/src/drivers/kimi-sdk.ts:314",
+        "packages/daemon/src/drivers/opencode.ts:460",
+        "packages/daemon/src/drivers/claude.ts:36",
+        "packages/daemon/src/drivers/codex.ts:814"
+      ]
+    },
+    {
+      "topic": "Computer and daemon ownership",
+      "conclusion": "A detached computer service reconciles per-server daemon children; daemon owns runtime process management. Host supervision is separate from model tool calls. This solves process hosting/recovery, not same-agent cross-channel concurrency or token amplification by itself.",
+      "evidence": [
+        "packages/computer/src/service.ts:1",
+        "packages/computer/src/service.ts:258",
+        "packages/daemon/src/agentProcessManager.ts:1376"
+      ]
+    }
+  ],
+  "verdict": {
+    "cost": "Mature delta/read-boundary mechanisms exist, but explicit messaging/tool protocol and native history costs remain. Automatic cold-session recycling is a concrete mitigation with different semantics from Loom. No quantitative Raft/native cost verdict without an authorized comparable benchmark.",
+    "concurrency": "Not a solution for independent same-agent cross-channel main execution; busy steering is responsiveness within the existing lane. Different agents and delegated subagents can run concurrently.",
+    "usefulReference": "Compare target-specific consumed boundaries, native runtime descriptors and SDK client isolation as design references; do not port source or relax Loom authentication, freshness, session continuity or receipt requirements.",
+    "unverified": "No runtime tests, deployment-flag state, current fleet usage, universal final-output acceptance or licensing compatibility verified."
+  },
+  "sourceSha256": {
+    "LICENSE": "7b0afda469123fdf2758d16941aa1a5a216e73ba5bc241165a36cac49c20b1b5",
+    "packages/cli/src/commands/message/read.ts": "628f7080b65442779326f3b633d926a3d619a8e3b72c12931e6f5a493d845a53",
+    "packages/computer/src/service.ts": "77a1c1f2f21838a9a04ce3557dbb9d210bd66c83470fea70fcbf1a7bf8691b69",
+    "packages/daemon/src/agentProcessManager.ts": "2a0c50f83149df2740263224b23431d1c76d8dca1f985184c9aff13b74e9b7e9",
+    "packages/daemon/src/agentVisibleDeliveryLedger.ts": "0a733deb5dc4349b250c35e6017c17634b1bd0905813ace8b19902f3a300bfb1",
+    "packages/daemon/src/drivers/claude.ts": "360b95598ba2005431e704db93a4c2bef0f7689c54b909088b13b6d2efa2c174",
+    "packages/daemon/src/drivers/codex.ts": "b6006600f5ea8ee4748c404fe06511e457c22e38836b4acbf8c55cad23eef7bc",
+    "packages/daemon/src/drivers/kimi-sdk.ts": "5a36d250494d3cb4b1d3b04ca6982439a32432c302bc237abfd5f5ac5de9e920",
+    "packages/daemon/src/drivers/kimi.ts": "05fa75204d64fd3160b6fe27d2c31c29ac312f8b4374f8ce1e0e2abeef3eafdd",
+    "packages/daemon/src/drivers/opencode.ts": "81a05c268e33fd931f72bb7fd1163285dd736c6b832e80631a74a9585aa72f71",
+    "packages/daemon/src/drivers/pi.ts": "462121dbbc09c612608c0015f3d3e49fb97352d49c6c597d5eefc1be1bb42b99",
+    "packages/daemon/src/drivers/systemPrompt.ts": "3238bdc4798e240446d094038e40c6e38d7cc355a9e2596e41f245c007cd8904",
+    "packages/daemon/src/wakeSessionRecycle.ts": "aea14ff892d72238a8e1c875c934616f64ea5e2c88abdd0933b5083bfada014e",
+    "packages/shared/src/raftCliGuide.ts": "6b916dddd5803e209184735eff32f585d496e6ba8dc05954d3e55514f0bdf611"
+  }
+}
