@@ -1,0 +1,25 @@
+{
+  "status": "Bounded read-only design comparison, no implementation or paid call",
+  "motivation": "P146 retains extra business-tool and malformed-JSON-repair generations plus unexplained reported output outlier. P145 final-output format is only part of output delta. Avoid assuming all overhead is fixed prompt size.",
+  "candidate": "Explicit per-Run FinalReply mode may designate the current native final text as the message body, so model need not serialize a body JSON wrapper or call StructuredOutput. Host supplies authenticated actor, target, frozen delivered sequence and idempotency, then uses the existing Worker service.",
+  "currentEvidence": {
+    "OpenCode": "P146 native R1 and R11 API results have assistant info.finish=stop, current parent/session, completed text and no error. Terminal R12 structured capture has finish=tool-calls, illustrating why generic time.completed is insufficient for plain-text final mode.",
+    "Codex": "P144/P145 corroborate explicit current-turn final_answer identity. Commentary-only real-CLI negative proves last-message file and exit0 alone insufficient.",
+    "Kimi": "Earlier free FinalReply proof checks normal final step plus raw stop and turn identity; outer completed alone is insufficient."
+  },
+  "requiredGuards": [
+    "Explicit output-action mode registered before this Run; ordinary CLI output remains diagnostic.",
+    "Exact current session, current prompt/turn and unique final output; no historical or intermediate item reuse.",
+    "For OpenCode candidate require normal stop, settled native result, one non-synthetic/non-ignored final text, no error or unfinished tools; length/tool-calls/unknown finish rejects. These combined guards still need actual negative tests.",
+    "No control instructions interpreted from the body; it is only message content.",
+    "Worker retains auth, stale-context hold, frozen deliveredSeq, idempotency and unknown-write no-resend.",
+    "Task and Activation completion stay under existing explicit ACK/fence rules; final text or process exit never completes them alone."
+  ],
+  "limits": [
+    "This is not approval to promote arbitrary provider transcripts to canonical Room actions.",
+    "Exact native-boundary behavior still needs TDD plus installed-CLI/fake-provider negatives before any paid experiment.",
+    "No claim of lower real-model cost, better quality or elimination of stochastic tool paths.",
+    "Production adoption requires resolving this explicit output-action contract against the owner target; target contract and production code unchanged."
+  ],
+  "decision": "Investigate this narrow facade before rebuilding Kernel or requiring every CLI to perform model-facing MCP reply calls."
+}

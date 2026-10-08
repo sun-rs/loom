@@ -1,5 +1,5 @@
 {
-  "status": "Design only; no paid run or product behavior change",
+  "status": "Fixed quality-error continuation tested and used in P145/P146; artifact workload and paired-session portions remain design only. No product behavior change.",
   "objective": "Separate communication cost from model quality and fixed output serialization before multiplayer claims.",
   "invariants": [
     "Same source fixtures, tool availability, CLI/model/effort and normal continuous session per arm.",
@@ -22,5 +22,29 @@
     "fairness": "Same user objective and input artifacts, participant model assignments, intervention rules and stopping criteria. Count both sessions and all failed attempts.",
     "quality": "Independent accepted artifact and demonstrated reviewer contribution, not number of chat messages.",
     "limits": "No claim against commercial collaboration libraries without matched implemented baseline and primary-source configuration audit."
-  }
+  },
+  "artifactWorkloadDraft": {
+    "status": "Design only; fixture/evaluator and CLI integration not executed or accepted.",
+    "purpose": "After fixed CSV trajectories give complete accounting, test a real bounded coding task whose accepted output is files rather than a short JSON chat answer.",
+    "workspace": "Separate identical per-arm Python-standard-library workspaces. One continuous native session per arm. Agents may create invoice.py, tests and README; no production repository edits.",
+    "interface": "invoice.summarize(rows, tax_percent=\"0\", group_by=None) returns JSON-serializable results. CLI reads a JSON file or stdin. Currency outputs are exact two-decimal strings.",
+    "rounds": [
+      "Implement quantity times unit_price aggregation with Decimal; include basic tests.",
+      "Support multiple line items and zero quantity; expand tests.",
+      "Exclude rows explicitly marked cancelled; keep active rows.",
+      "Add optional tax_percent; round the aggregate tax once with ROUND_HALF_UP.",
+      "Add percent discount per row before aggregate tax.",
+      "Reject negative quantity or price and malformed numeric input with ValueError.",
+      "Support grouping by category with totals for each group and the grand total.",
+      "Sort group keys deterministically and give missing category the key uncategorized.",
+      "Add a command-line JSON input file interface and JSON result output.",
+      "Accept stdin when the CLI filename is a dash; errors go to stderr with nonzero exit.",
+      "Add regression tests for rounding, cancelled rows and invalid inputs without removing earlier behavior.",
+      "Review the implementation, fix defects found by the agent, run its tests and document the CLI."
+    ],
+    "qualityOracle": "Before paid runs freeze exact schemas, fixture inputs and an independent evaluator; baseline and product receive identical functional requirements. Hidden evaluator remains outside agent-readable roots and never supplies expected answers or repair prompts during the trajectory.",
+    "measurement": "Record every model generation, tool call and protocol action. Evaluate artifact snapshots after each round, without invoking any model. Keep quality errors and all costs; no claim based only on final chat text.",
+    "limits": "Not yet frozen for paid use. This draft does not resume or replace earlier failed batches, and does not create a scenario-specific Loom workflow."
+  },
+  "fixedTrajectoryEvidence": "../2026-10-08-fixed-trajectory/summary.json"
 }

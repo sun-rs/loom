@@ -1,0 +1,42 @@
+[
+  {
+    "path": "fake-provider.mjs",
+    "sha256": "5bf291823721eef00294b122f5390c83410e387917a75edb9909425d2c36e7a2"
+  },
+  {
+    "path": "final.mjs",
+    "sha256": "2dc5410cd3f2e3d2f54a1dd10e029df3ff5d4fdd3050213c823bb71c0f6357e6"
+  },
+  {
+    "path": "final.test.mjs",
+    "sha256": "13aa4cf3f7cf39b5bdd56034297f99fb98e1e5c671e12c677e2fa4d06f723707"
+  },
+  {
+    "path": "kernel.test.mjs",
+    "sha256": "646baaabd010f0764bc3ea71cf2b5290035db36a210db5df5331f7cb65094814"
+  },
+  {
+    "path": "quality.mjs",
+    "sha256": "7ae7c7ac2f566c17b013289557eeaf035eafa007d70697b4597ac536420ccde7"
+  },
+  {
+    "path": "quality.test.mjs",
+    "sha256": "7a2a7b4a35a90e4d56d17edd50bf79f248fe5f45f708d2953bf99451627a58ab"
+  },
+  {
+    "path": "room.mjs",
+    "sha256": "eb03dfe90de184dbbeaa8ade6d156a410cfb9111f7a6729d95561daa3c70a856"
+  },
+  {
+    "path": "run.mjs",
+    "sha256": "f0d4abc72108b45dae97aa5835d5f10e6195d7538d2088cae4b9d428adb0934e"
+  },
+  {
+    "path": "test-evidence.mjs",
+    "sha256": "e5e89d310c2978b622cf2b64f0c70da1a872c02d7880eb94bf5426e606b91ab0"
+  },
+  {
+    "path": "P145-plan.public.json",
+    "sha256": "99ae8cd1be71e82b4b34ee42ee55aa45b24fd509641537eb5bef3922de9b2ffb"
+  }
+]

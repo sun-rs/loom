@@ -1,0 +1,127 @@
+{
+  "batch": "P145-fixed-trajectory-v2-reserved-not-started",
+  "qualityPolicy": "Record arithmetic and native non-JSON errors without stopping immutable fixed12 trajectory; protocol, identity, usage, authentication failures stop; no oracle feedback; quality failure never efficiency acceptance",
+  "kind": "ordinary-codex-exec-resume-native-vs-body-only-final",
+  "version": "codex-cli 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "tasks": [
+    {
+      "round": 1,
+      "prompt": "Use available tools for exact arithmetic. Audit the immutable CSV. Apply later requested revisions in this conversation, without changing the file. Reply with only a JSON object containing numeric count and total. Read budget.csv for this audit. Return the count and total amount for group A.",
+      "expected": {
+        "count": 15,
+        "total": 4545
+      }
+    },
+    {
+      "round": 2,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the count and total amount for group B.",
+      "expected": {
+        "count": 15,
+        "total": 4650
+      }
+    },
+    {
+      "round": 3,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the count and total amount for group C.",
+      "expected": {
+        "count": 15,
+        "total": 4755
+      }
+    },
+    {
+      "round": 4,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the count and total amount for group D.",
+      "expected": {
+        "count": 15,
+        "total": 4860
+      }
+    },
+    {
+      "round": 5,
+      "prompt": "Reply with only a JSON object containing numeric count and total. For this conversation, increase R001 amount by 100. Return the revised count and total for group A.",
+      "expected": {
+        "count": 15,
+        "total": 4645
+      }
+    },
+    {
+      "round": 6,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the revised count and total across all groups.",
+      "expected": {
+        "count": 60,
+        "total": 18910
+      }
+    },
+    {
+      "round": 7,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Undo only the increase to R001 from turn 5. Return the count and total for group A.",
+      "expected": {
+        "count": 15,
+        "total": 4545
+      }
+    },
+    {
+      "round": 8,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the current count and total across all groups.",
+      "expected": {
+        "count": 60,
+        "total": 18810
+      }
+    },
+    {
+      "round": 9,
+      "prompt": "Reply with only a JSON object containing numeric count and total. For this conversation, increase R002 amount by 200. Return the revised count and total for group B.",
+      "expected": {
+        "count": 15,
+        "total": 4850
+      }
+    },
+    {
+      "round": 10,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the current count and total across groups B and D combined.",
+      "expected": {
+        "count": 30,
+        "total": 9710
+      }
+    },
+    {
+      "round": 11,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the current count and total across groups A and C combined.",
+      "expected": {
+        "count": 30,
+        "total": 9300
+      }
+    },
+    {
+      "round": 12,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the final count and total across all groups, retaining the current conversational revisions.",
+      "expected": {
+        "count": 60,
+        "total": 19010
+      }
+    }
+  ],
+  "sourceSha256": "84a08efe27f2a93b16eb0dc5710903370d3dbbc330d3bda2153090ebb825d16c",
+  "arms": ["native", "structured"],
+  "order": "odd native first; even structured first",
+  "samples": 1,
+  "limits": {
+    "wallMs": 1800000,
+    "turnMs": 120000,
+    "knownInput": 1000000
+  },
+  "native": "plain final answer, no output-schema",
+  "structured": "body-only output schema on EVERY exec/resume; no final routing or seq field for model",
+  "memory": "disabled every initial/resume launch and verified in native session metadata",
+  "completion": "exit0 + current launch fullJSONL completion + unique official output-last-message + current-turn explicit final_answer diagnostic cross-check; Worker receipt required before Activation completion",
+  "usage": "unique per-response token_usage_record from current rollout suffix; exec resume summary is cumulative and MUST NOT be summed across launches",
+  "noRetries": true,
+  "noHistoryRewrite": true,
+  "limitations": [
+    "single Codex model and one paired trajectory",
+    "isolated prototype; no production scheduler/adapter acceptance",
+    "P140 preserved, this is a different entrypoint and body-only method; not silent replacement"
+  ]
+}

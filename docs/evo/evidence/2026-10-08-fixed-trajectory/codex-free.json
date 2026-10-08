@@ -1,0 +1,48 @@
+{
+  "batch": "P145 preparation only; no paid launch",
+  "evidence": "runs/1791463056670-free",
+  "testMode": "Actual Codex 0.161.0 exec/resume against local fake Responses provider and real temporary Kernel",
+  "testsPassed": 11,
+  "turns": 24,
+  "continuousSessions": 2,
+  "round2QualityErrors": [
+    {
+      "arm": "structured",
+      "round": 2,
+      "kind": "business-answer-mismatch"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "kind": "answer-not-json"
+    }
+  ],
+  "continuedToRound12BothArms": true,
+  "realWorkerPublicationsAndCompletedActivations": 12,
+  "actualBusinessToolCalls": 24,
+  "usage": {
+    "native": {
+      "input": 2400,
+      "output": 480,
+      "responses": 24
+    },
+    "structured": {
+      "input": 2400,
+      "output": 480,
+      "responses": 24
+    }
+  },
+  "uniqueResponseIds": 48,
+  "memoryDisabledEveryLaunch": true,
+  "structuredSchemaEveryLaunch": true,
+  "nativeNoSchema": true,
+  "protocolAndWorkerSourcesUnchangedFromP144": true,
+  "sourceCsvUnchanged": true,
+  "limits": [
+    "Fake scripted replies do not measure model quality, cost, or stochastic reliability",
+    "Per-response fake usage audited independently; cumulative resume summaries never summed",
+    "Provider finish_reason not generally exposed; truncation negative is stdout truncation only",
+    "Single paid trajectory planned; quality failures never imply efficiency acceptance"
+  ],
+  "paidStatus": "awaiting root review; not started"
+}

@@ -1,0 +1,73 @@
+{
+  "kind": "read-only P142 authentication diagnosis",
+  "networkRequests": 0,
+  "credentialWrites": 0,
+  "refreshAttempts": 0,
+  "paidCalls": 0,
+  "sourceEvidence": [
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "from": 145705,
+      "through": 145714,
+      "sha256": "f39dc3111ffe23ffda8d95b4eac5b1f2768cec48752dca113539e1d5c0366ff3",
+      "claim": "KimiOAuthToolkit defaults credential storage to its homeDir/credentials"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "from": 143736,
+      "through": 143748,
+      "sha256": "9e2f53c066a057f1b4b29a9647141c2a38ac9d57c31209904769ba5a438a1e1e",
+      "claim": "Refresh lock is per configDir/oauth/provider; isolated homes do not share a refresh lock"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "from": 143810,
+      "through": 143868,
+      "sha256": "358a4b9f57ad5419c0e6d0999eb09a41159c60aff91162ecae466919dd385ebc",
+      "claim": "Refresh reads isolated storage, saves refreshed tokens there, unauthorized saves revoked tombstone"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "from": 141970,
+      "through": 142045,
+      "sha256": "5a38818e8e734327a83274cb0630fff62923ee84d1aede8eefee93658bbb3b54",
+      "claim": "Credential JSON is atomically saved under selected storage directory"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "from": 231378,
+      "through": 231384,
+      "sha256": "f80b438739c1a4e69195ece7bd02ac147087c804bb8a63193ba5705e47546423",
+      "claim": "KIMI_CODE_HOME overrides home fallback"
+    }
+  ],
+  "copyImplementation": {
+    "p141": "e5a9a5f996d3be94df00012bb91ea985b0be77cc3c2ed44150a356942100c28d",
+    "p142": "e5a9a5f996d3be94df00012bb91ea985b0be77cc3c2ed44150a356942100c28d",
+    "behavior": "Both read controller Path.home()/.kimi-code; copy credentials and oauth with copy2 metadata; child HOME and KIMI_CODE_HOME isolated. No back-propagation of refreshed credential state."
+  },
+  "findings": [
+    "Generated P141/P142 config bytes match. No evidence of omitted credential file or wrong configured source.",
+    "P142 unlaunched terminal credential bytes equal current original source; source mtime remains 03:57 UTC.",
+    "P141 native and terminal credentials changed in isolated homes at 11:08/11:09 UTC and both access/refresh hashes differ from the unchanged source.",
+    "P142 native first use rejected its authorization grant and wrote an empty-token revoked tombstone to its isolated home, consistent with installed refresh failure path.",
+    "Copying refreshable credentials into independent homes creates divergent token/lock histories. Recopying the unchanged original source later can select stale refresh material."
+  ],
+  "conclusion": "Strong evidence of a harness credential-lineage hazard, not evidence that the user account itself is broken. P142 copied the intended original file but that file had not received P141 isolated refresh updates. Provider-side exact revocation/rotation policy and causal attribution cannot be proven from local evidence alone.",
+  "limits": [
+    "Source-account authentication was not tested and is neither proven valid nor invalid.",
+    "P141 isolated refreshed tokens are also time-limited and were not reused or refreshed for this diagnosis.",
+    "No fake-auth reproduction or harness behavior change performed: exact real provider refresh policy is not known, and a simulation would not establish that policy.",
+    "P142 unknown usage/cost and failed-batch verdict remain unchanged."
+  ],
+  "nextSafeDesign": "Before any separately approved retry, define a single controlled credential refresh lineage using a CLI-supported account/storage interface while retaining session/memory isolation; or stop preflight on an expired copied snapshot. Do not silently copy isolated refreshed credentials back to global storage, invent a token source, or infer auth validity from presence/expiry alone.",
+  "fileComparisonWithoutCredentials": {
+    "p141AndP142GeneratedConfigEqual": true,
+    "p142UnlaunchedCredentialFileEqualsOriginalSource": true,
+    "sourceCredentialMtimeUtc": "2026-10-08T03:57:14.418640+00:00",
+    "p141NativeRefreshedMtimeUtc": "2026-10-08T11:08:58.905617+00:00",
+    "p141TerminalRefreshedMtimeUtc": "2026-10-08T11:09:16.194529+00:00",
+    "p142NativeRevokedTombstoneMtimeUtc": "2026-10-08T12:01:24.742423+00:00",
+    "noCredentialBytesOrTokenHashesIncluded": true
+  }
+}

@@ -1,0 +1,1408 @@
+{
+  "ledger": "P146",
+  "kind": "one fixed-12-turn trajectory per arm, quality errors retained",
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(totals.output<plan.budget.maxReportedOutputTokens)\n",
+    "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(totals.output<plan.budget.maxReportedOutputTokens)\n\n    at checkBudget (file:///Users/sun/.loom/reviews/2026-10-08-bound-opencode/body-only-v4/paid-plan-v1/run.mjs:24:550)\n    at file:///Users/sun/.loom/reviews/2026-10-08-bound-opencode/body-only-v4/paid-plan-v1/run.mjs:34:3"
+  },
+  "arms": {
+    "native": {
+      "nativeSessionCount": 1,
+      "correctCompletedRounds": 7,
+      "reportedGenerationsWithUsage": 13,
+      "allPersistedAssistantsAccounted": true,
+      "messageStepUsageMatches": true,
+      "finalApiResponseDatabaseMatches": true,
+      "totals": {
+        "generations": 13,
+        "inputTokens": 112603,
+        "cachedInputTokens": 102656,
+        "outputTokens": 800,
+        "reasoningOutputTokens": 517,
+        "uncachedInputTokens": 9947
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 3,
+            "inputTokens": 23546,
+            "cachedInputTokens": 15104,
+            "outputTokens": 326,
+            "reasoningOutputTokens": 183
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "9c55eb3bbf8309d706bca36010a5f622e18023276c052a29850a813229653e42"
+        },
+        {
+          "round": 2,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8524,
+            "cachedInputTokens": 8320,
+            "outputTokens": 65,
+            "reasoningOutputTokens": 51
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "5f558bdd8bb01d36aed11257b7eac3760761fa88610d522b35224f013be6f7e0"
+        },
+        {
+          "round": 3,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8615,
+            "cachedInputTokens": 8448,
+            "outputTokens": 56,
+            "reasoningOutputTokens": 42
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "cbc291e7ed6a295e779b409affb909a9a1983b93b8c059b603840c5143ca235b"
+        },
+        {
+          "round": 4,
+          "businessAnswerCorrect": false,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8697,
+            "cachedInputTokens": 8576,
+            "outputTokens": 50,
+            "reasoningOutputTokens": 36
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "b6d11b6d3891ea2031a355b1281c9ad049cd3fa81157d61c72feb166c93d2b8c"
+        },
+        {
+          "round": 5,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8785,
+            "cachedInputTokens": 8576,
+            "outputTokens": 51,
+            "reasoningOutputTokens": 37
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "81fd6fdfbbfb1f108e2a94be0e357403863119891a57cc7cee8932647018a5ff"
+        },
+        {
+          "round": 6,
+          "businessAnswerCorrect": false,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8862,
+            "cachedInputTokens": 8704,
+            "outputTokens": 90,
+            "reasoningOutputTokens": 76
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "7b05877da5369e287153930b2c415dd4be27ec86728869edf8b50db9db4f5b2a"
+        },
+        {
+          "round": 7,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8990,
+            "cachedInputTokens": 8832,
+            "outputTokens": 33,
+            "reasoningOutputTokens": 19
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "04619c453115c8c29e21501ebf32ea9e68d15c86a1b1cf790dbb1feb6fb52b36"
+        },
+        {
+          "round": 8,
+          "businessAnswerCorrect": false,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9049,
+            "cachedInputTokens": 8960,
+            "outputTokens": 29,
+            "reasoningOutputTokens": 15
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "e424d02bc987c3a9b64f9814ff2c7eceede311b7a183f0ea098a20e71f5e3f1c"
+        },
+        {
+          "round": 9,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9116,
+            "cachedInputTokens": 8960,
+            "outputTokens": 33,
+            "reasoningOutputTokens": 19
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "24824ef200fa49ba181367330396845c4a0ab731947377a4839aadc3d086f3b6"
+        },
+        {
+          "round": 10,
+          "businessAnswerCorrect": false,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9178,
+            "cachedInputTokens": 9088,
+            "outputTokens": 34,
+            "reasoningOutputTokens": 20
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "ba7e60bbba2c0ceab5d185764978b14117ff01dc1391bae1180f5a43636b5819"
+        },
+        {
+          "round": 11,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9241,
+            "cachedInputTokens": 9088,
+            "outputTokens": 33,
+            "reasoningOutputTokens": 19
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "6213ec84f3fbae5ed0de6f815616f75e641bcdd022f10a60486f246d5aab43de"
+        }
+      ],
+      "invalidToolAttempts": 0,
+      "hostReceiptMessages": 0,
+      "observedBinding": {
+        "providerID": "aihubmix",
+        "modelID": "deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      "knownPostPublicationGenerationsWithinSameTurn": null,
+      "unreportedRequestUsage": "unknown",
+      "dollarSpend": null,
+      "reportedEstimatedUsd": 0.0023560186
+    },
+    "terminal": {
+      "nativeSessionCount": 1,
+      "correctCompletedRounds": 12,
+      "reportedGenerationsWithUsage": 22,
+      "allPersistedAssistantsAccounted": true,
+      "messageStepUsageMatches": true,
+      "finalApiResponseDatabaseMatches": true,
+      "totals": {
+        "generations": 22,
+        "inputTokens": 220429,
+        "cachedInputTokens": 207360,
+        "outputTokens": 24954,
+        "reasoningOutputTokens": 889,
+        "uncachedInputTokens": 13069
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 4,
+            "inputTokens": 32831,
+            "cachedInputTokens": 23936,
+            "outputTokens": 490,
+            "reasoningOutputTokens": 265
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "9b0c7c0662239bfc9b3a301af5f57f776ba489d190dd747271651b9a5e2c326c"
+        },
+        {
+          "round": 2,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 18096,
+            "cachedInputTokens": 17536,
+            "outputTokens": 233,
+            "reasoningOutputTokens": 119
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "7a016520907605743407e06ff5132f140e368b66e82609855872a6c711fa52ca"
+        },
+        {
+          "round": 3,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 18776,
+            "cachedInputTokens": 18304,
+            "outputTokens": 217,
+            "reasoningOutputTokens": 103
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "cc6a3abf8a4fe34109e21a104390ac27a60485f011a2e5418a32c89870dac8e1"
+        },
+        {
+          "round": 4,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 4,
+            "inputTokens": 39548,
+            "cachedInputTokens": 38784,
+            "outputTokens": 396,
+            "reasoningOutputTokens": 118
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "6f459f760396fa792a2cc58b0b5fae6619a4ce65341861e181d6ff1c4f4eaa63"
+        },
+        {
+          "round": 5,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10297,
+            "cachedInputTokens": 10112,
+            "outputTokens": 113,
+            "reasoningOutputTokens": 64
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "7c29ea2cca16e2814da9599eb718f7a55bba73bd5cf7ced5f836b116dee2172c"
+        },
+        {
+          "round": 6,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10509,
+            "cachedInputTokens": 10240,
+            "outputTokens": 93,
+            "reasoningOutputTokens": 44
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "3cab5ed395f1b0694196b5201caa1ef54645e84a044b69dc37023e3a340a4ead"
+        },
+        {
+          "round": 7,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10710,
+            "cachedInputTokens": 10496,
+            "outputTokens": 73,
+            "reasoningOutputTokens": 24
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "819878983715b511333ccc5f568007749e479c45f28a411a92651d7ba658c4ae"
+        },
+        {
+          "round": 8,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 21928,
+            "cachedInputTokens": 21376,
+            "outputTokens": 678,
+            "reasoningOutputTokens": 30
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "e511486a2c740f0be269cf4db0464d2c8ed0b3b4aeff8dbe262e68461ddcf507"
+        },
+        {
+          "round": 9,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 11206,
+            "cachedInputTokens": 11008,
+            "outputTokens": 78,
+            "reasoningOutputTokens": 29
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "54a027f5a62c0d7cc9a8ee5aa0ef9e298f30a33f47d162170cfa088854904432"
+        },
+        {
+          "round": 10,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 22938,
+            "cachedInputTokens": 22400,
+            "outputTokens": 165,
+            "reasoningOutputTokens": 28
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "6ec7cb6c4ed43e2dc999a49e84da29b5d74dc351c421bff2ee019606df0e671b"
+        },
+        {
+          "round": 11,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 11705,
+            "cachedInputTokens": 11520,
+            "outputTokens": 77,
+            "reasoningOutputTokens": 28
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "e9e3467d0930e5c64ac2d16460dab4e4e67f48d7f659bbb82d520d7f15c99abe"
+        },
+        {
+          "round": 12,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 11885,
+            "cachedInputTokens": 11648,
+            "outputTokens": 22341,
+            "reasoningOutputTokens": 37
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "9f240dab19998f13f6e46dee0ae4642ffa2f0ee689d4b16929a92b9c070a0235"
+        }
+      ],
+      "invalidToolAttempts": 4,
+      "hostReceiptMessages": 12,
+      "observedBinding": {
+        "providerID": "aihubmix",
+        "modelID": "deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      "knownPostPublicationGenerationsWithinSameTurn": 0,
+      "unreportedRequestUsage": "unknown",
+      "dollarSpend": null,
+      "reportedEstimatedUsd": 0.018139991
+    }
+  },
+  "accounting": {
+    "source": "Persisted assistant tokens, step-finish tokens and final response cross-check; no independent upstream HTTP ledger.",
+    "input": "input + cache.read + cache.write",
+    "output": "output + reasoning; OpenCode stores reasoning separately",
+    "cost": "CLI estimated per-assistant cost, not independently verified invoice"
+  },
+  "scope": "Private prototype, not production runtime or general efficiency acceptance",
+  "kernel": {
+    "activationStates": [
+      {
+        "state": "completed",
+        "n": 12
+      }
+    ],
+    "runStates": [
+      {
+        "state": "exited",
+        "exit_code": 0,
+        "n": 12
+      }
+    ],
+    "finalMarkers": 12,
+    "publishedMessages": 12
+  },
+  "comparisons": {
+    "whole": {
+      "totals": {
+        "native": {
+          "generations": 13,
+          "inputTokens": 112603,
+          "cachedInputTokens": 102656,
+          "outputTokens": 800,
+          "reasoningOutputTokens": 517,
+          "rounds": 11,
+          "uncachedInputTokens": 9947
+        },
+        "terminal": {
+          "generations": 22,
+          "inputTokens": 220429,
+          "cachedInputTokens": 207360,
+          "outputTokens": 24954,
+          "reasoningOutputTokens": 889,
+          "rounds": 12,
+          "uncachedInputTokens": 13069
+        }
+      },
+      "ratios": null,
+      "comparisonWarning": "Unequal invocation counts: totals only, no equal-work ratio",
+      "equalCompletedRounds": false,
+      "correctRounds": {
+        "native": 7,
+        "terminal": 12
+      },
+      "qualityEquivalent": false,
+      "interpretation": "Descriptive equal-prompt-count costs when round counts match; unequal answer quality, not efficiency acceptance."
+    },
+    "late7to12": {
+      "totals": {
+        "native": {
+          "generations": 5,
+          "inputTokens": 45574,
+          "cachedInputTokens": 44928,
+          "outputTokens": 162,
+          "reasoningOutputTokens": 92,
+          "rounds": 5,
+          "uncachedInputTokens": 646
+        },
+        "terminal": {
+          "generations": 8,
+          "inputTokens": 90372,
+          "cachedInputTokens": 88448,
+          "outputTokens": 23412,
+          "reasoningOutputTokens": 176,
+          "rounds": 6,
+          "uncachedInputTokens": 1924
+        }
+      },
+      "ratios": null,
+      "comparisonWarning": "Unequal invocation counts: totals only, no equal-work ratio",
+      "equalCompletedRounds": false,
+      "correctRounds": {
+        "native": 3,
+        "terminal": 6
+      },
+      "qualityEquivalent": false,
+      "interpretation": "Descriptive equal-prompt-count costs when round counts match; unequal answer quality, not efficiency acceptance."
+    },
+    "matched1to11": {
+      "totals": {
+        "native": {
+          "generations": 13,
+          "inputTokens": 112603,
+          "cachedInputTokens": 102656,
+          "outputTokens": 800,
+          "reasoningOutputTokens": 517,
+          "rounds": 11,
+          "uncachedInputTokens": 9947
+        },
+        "terminal": {
+          "generations": 21,
+          "inputTokens": 208544,
+          "cachedInputTokens": 195712,
+          "outputTokens": 2613,
+          "reasoningOutputTokens": 852,
+          "rounds": 11,
+          "uncachedInputTokens": 12832
+        }
+      },
+      "ratios": {
+        "generations": 1.6153846153846154,
+        "inputTokens": 1.8520288091791515,
+        "uncachedInputTokens": 1.2900371971448679,
+        "outputTokens": 3.26625
+      },
+      "equalCompletedRounds": true,
+      "correctRounds": {
+        "native": 7,
+        "terminal": 11
+      },
+      "qualityEquivalent": false,
+      "interpretation": "Descriptive equal-prompt-count costs when round counts match; unequal answer quality, not efficiency acceptance."
+    },
+    "matched7to11": {
+      "totals": {
+        "native": {
+          "generations": 5,
+          "inputTokens": 45574,
+          "cachedInputTokens": 44928,
+          "outputTokens": 162,
+          "reasoningOutputTokens": 92,
+          "rounds": 5,
+          "uncachedInputTokens": 646
+        },
+        "terminal": {
+          "generations": 7,
+          "inputTokens": 78487,
+          "cachedInputTokens": 76800,
+          "outputTokens": 1071,
+          "reasoningOutputTokens": 139,
+          "rounds": 5,
+          "uncachedInputTokens": 1687
+        }
+      },
+      "ratios": {
+        "generations": 1.4,
+        "inputTokens": 1.7221880897002677,
+        "uncachedInputTokens": 2.611455108359133,
+        "outputTokens": 6.611111111111111
+      },
+      "equalCompletedRounds": true,
+      "correctRounds": {
+        "native": 3,
+        "terminal": 5
+      },
+      "qualityEquivalent": false,
+      "interpretation": "Descriptive equal-prompt-count costs when round counts match; unequal answer quality, not efficiency acceptance."
+    }
+  },
+  "completed12Each": false,
+  "limitations": [
+    "One stochastic trajectory per arm, not a significance or cross-model claim.",
+    "Local StructuredOutput captures are not Room publication; Host allows only schema-invalid prefix before one valid last capture.",
+    "No post-receipt persisted assistant generation observed within invocation; hidden provider HTTP retries are not measured.",
+    "All quality errors remain in history and full cost. Protocol or safety error stops execution.",
+    "No production service/configuration changed."
+  ],
+  "frozenSourceHashesVerified": true,
+  "planSha256": "eb9d28a24fe95e302d4ad3018b944e4f45d0b6d4385d7d329aab5ca5c24380ee",
+  "runPath": "/Users/sun/.loom/reviews/2026-10-08-bound-opencode/body-only-v4/paid-plan-v1/runs/1791463362774",
+  "cliVersion": "1.18.35",
+  "catalogBinding": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "quality": {
+    "native": {
+      "correct": 7,
+      "attempted": 11,
+      "incorrectRounds": [4, 6, 8, 10]
+    },
+    "terminal": {
+      "correct": 12,
+      "attempted": 12
+    },
+    "policy": "Quality errors recorded and fixed workload continued without oracle feedback or retry. Lower quality does not cancel cost overhead."
+  },
+  "stopping": {
+    "reason": "Reported output budget checked before native R12",
+    "threshold": 15000,
+    "observedBothArmsOutput": 25754,
+    "invocations": 23,
+    "terminalR12Completed": true,
+    "nativeR12NotStarted": true,
+    "paidRetry": false,
+    "hardProviderCap": false,
+    "outputBeforeTerminalR12": 3413,
+    "remainingThresholdBeforeTerminalR12": 11587,
+    "terminalR12ReportedOutput": 22341,
+    "note": "Between-turn guard passed before R12 at 3413 combined output; one in-flight native request added 22341 output, exceeding remaining 11587. No in-flight provider billing cap; next native invocation correctly refused."
+  },
+  "outputAnomaly": {
+    "arm": "terminal",
+    "round": 12,
+    "generations": 1,
+    "reportedTokens": {
+      "total": 34226,
+      "input": 237,
+      "output": 22304,
+      "reasoning": 37,
+      "cache": {
+        "write": 0,
+        "read": 11648
+      }
+    },
+    "reconstructedInput": 11885,
+    "reconstructedOutput": 22341,
+    "bodyCharacters": 29,
+    "reasoningCharacters": 113,
+    "evidence": "assistant DB, step-finish and final API usage agree; provider independent raw stream/invoice not captured",
+    "interpretation": "Reported output far exceeds retained body/text size; exact cause unknown. Whitespace expansion, discarded stream output, provider/CLI accounting cannot be distinguished with current evidence. All reported usage retained.",
+    "independence": "API/DB/step-finish are same native accounting source, not independently corroborated provider billing."
+  },
+  "generationDiagnostics": [
+    {
+      "arm": "native",
+      "round": 1,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b899bd6001QmdX8s0LjrP3jF",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "bash",
+              "status": "completed"
+            },
+            {
+              "name": "glob",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b89ae01001mcKXMGfoQAmAAS",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "read",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        },
+        {
+          "messageId": "msg_11b89b8d4001XrBSrlgMm4CB4d",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a0d3e001ClmH3zDKNORICU",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4755
+      },
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a15d3001hKeAnwvPBj2YRw",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "correct": false,
+      "expected": {
+        "count": 15,
+        "total": 4860
+      },
+      "answer": {
+        "count": 15,
+        "total": 4440
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a6980001JxFXLy14xzyNtk",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4645
+      },
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a7269001DzZHYptVD0xO4w",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "correct": false,
+      "expected": {
+        "count": 60,
+        "total": 18910
+      },
+      "answer": {
+        "count": 60,
+        "total": 18490
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a9399001j4dxgpiaq045hn",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a9fb4001pmyENDCoJ2aSD9",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "correct": false,
+      "expected": {
+        "count": 60,
+        "total": 18810
+      },
+      "answer": {
+        "count": 60,
+        "total": 18390
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8acff6001nYIXvh6A7wrfRq",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4850
+      },
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8ad8ae001F7R8azkhe18tiz",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "correct": false,
+      "expected": {
+        "count": 30,
+        "total": 9710
+      },
+      "answer": {
+        "count": 30,
+        "total": 9290
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8b0458001SF2y0nv0XTPoU9",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "correct": true,
+      "expected": {
+        "count": 30,
+        "total": 9300
+      },
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8b0eb700179UnxOwa9OceOY",
+          "finish": "stop",
+          "tools": [],
+          "textParts": 1,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b89c4d4001bVGMJxtcw043N6",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "bash",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b89d1b20014TEoUikzVSdNv2",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "read",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        },
+        {
+          "messageId": "msg_11b89da9e001P8OE84gvvdtXHu",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "bash",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b89e78d001zwIXASi9kWLs8l",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 2,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b89f40b00166gcDEDw5g84o6",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "bash",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b8a027a001WPx95A4TdDgoMn",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 3,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4755
+      },
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a22cc001cfoLedkvKGryAw",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "bash",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b8a2bd10017IwXJ2Wyeqn9pv",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 4,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4860
+      },
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a3715001AT4QTxQ7uhlAQw",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "bash",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b8a44a8001gkOAp4ik6gK2mw",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "invalid",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        },
+        {
+          "messageId": "msg_11b8a5366001UcK5yuWo9i7q8H",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "invalid",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        },
+        {
+          "messageId": "msg_11b8a5faa001WsCbWRTDk2puDP",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 5,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4645
+      },
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a7d580012gh62AHnlfXL7A",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 6,
+      "correct": true,
+      "expected": {
+        "count": 60,
+        "total": 18910
+      },
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8a89b5001LAWayPt8EXLGkZ",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 7,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8aab32001GG8Di7Ktolanme",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 8,
+      "correct": true,
+      "expected": {
+        "count": 60,
+        "total": 18810
+      },
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8ab463001yLhvyFN6i2rI4v",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "invalid",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b8abd1e001Yc33n0TKi0UzF1",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 9,
+      "correct": true,
+      "expected": {
+        "count": 15,
+        "total": 4850
+      },
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8ae4c1001pPArVXlRykDJ2b",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 10,
+      "correct": true,
+      "expected": {
+        "count": 30,
+        "total": 9710
+      },
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8aee2e001eFqkNc7wxQeBcF",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "invalid",
+              "status": "completed"
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        },
+        {
+          "messageId": "msg_11b8af800001P0OPixBuQCmXes",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 0
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 11,
+      "correct": true,
+      "expected": {
+        "count": 30,
+        "total": 9300
+      },
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8b195500195eV3AfYAwfRjh",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    },
+    {
+      "arm": "terminal",
+      "round": 12,
+      "correct": true,
+      "expected": {
+        "count": 60,
+        "total": 19010
+      },
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "generations": [
+        {
+          "messageId": "msg_11b8b24b4001tgNyPwra2FuDEp",
+          "finish": "tool-calls",
+          "tools": [
+            {
+              "name": "StructuredOutput",
+              "status": "completed",
+              "bodyType": "string",
+              "keys": ["body"],
+              "metadataValid": true
+            }
+          ],
+          "textParts": 0,
+          "reasoningParts": 1
+        }
+      ]
+    }
+  ],
+  "additionalGenerations": {
+    "terminalBeforeSuccessfulCapture": {
+      "businessTools": {
+        "round1": "bash/read/bash",
+        "round2": "bash",
+        "round3": "bash",
+        "round4": "bash"
+      },
+      "structuredJsonParseRepair": {
+        "round4": 2,
+        "round8": 1,
+        "round10": 1
+      }
+    },
+    "successfulCaptureThenFurtherPersistedGeneration": 0,
+    "postPublicationWithinInvocation": 0,
+    "caveat": "Host publishes after settled native response. Postpublication zero does not imply no StructuredOutput protocol/repair overhead. Native HTTP retries are not independently counted."
+  },
+  "priorEvidencePreserved": {
+    "P139": "unchanged failed",
+    "P143": "unchanged failed"
+  },
+  "freeEvidence": "../public-evidence.json"
+}

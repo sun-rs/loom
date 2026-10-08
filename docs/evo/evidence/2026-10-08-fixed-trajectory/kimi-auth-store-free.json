@@ -1,0 +1,211 @@
+{
+  "kind": "free installed Kimi fake OAuth credential-lineage reproduction and test-only fix",
+  "cliVersion": "0.39.1",
+  "installedCliSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+  "paidModelCalls": 0,
+  "realAccountNetworkCalls": 0,
+  "realCredentialWrites": 0,
+  "red": {
+    "root": "/private/tmp/loom-kimi-fake-auth-nlDFJP",
+    "results": [
+      {
+        "arm": "a",
+        "code": 0,
+        "hasAnswer": true,
+        "error": ""
+      },
+      {
+        "arm": "b",
+        "code": 1,
+        "hasAnswer": false,
+        "error": "error: failed to run prompt: internal: SYNTHETIC consumed one-time fake grant\nSee log: /private/tmp/loom-kimi-fake-auth-nlDFJP/b/config/logs/kimi-code.log\n"
+      }
+    ],
+    "calls": [
+      {
+        "kind": "refresh",
+        "accepted": true
+      },
+      {
+        "kind": "model",
+        "fake": true
+      },
+      {
+        "kind": "refresh",
+        "accepted": false
+      }
+    ],
+    "refresh": 1,
+    "model": 1,
+    "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n",
+    "paidCalls": 0,
+    "network": "OS restricted to loopback; original ~/.kimi-code denied",
+    "sharedCredentials": false,
+    "sharedLockDirectory": false,
+    "independentProfiles": true
+  },
+  "green": {
+    "root": "/private/tmp/loom-kimi-fake-auth-AHvNmo",
+    "results": [
+      {
+        "arm": "a",
+        "code": 0,
+        "hasAnswer": true,
+        "error": ""
+      },
+      {
+        "arm": "b",
+        "code": 0,
+        "hasAnswer": true,
+        "error": ""
+      },
+      {
+        "arm": "a",
+        "code": 0,
+        "hasAnswer": true,
+        "error": ""
+      },
+      {
+        "arm": "b",
+        "code": 0,
+        "hasAnswer": true,
+        "error": ""
+      }
+    ],
+    "calls": [
+      {
+        "kind": "refresh",
+        "accepted": true,
+        "lockInodes": {
+          "a": 739402583,
+          "b": 739402583
+        }
+      },
+      {
+        "kind": "model",
+        "fake": true
+      },
+      {
+        "kind": "refresh",
+        "accepted": true,
+        "lockInodes": {
+          "a": 739402626,
+          "b": 739402626
+        }
+      },
+      {
+        "kind": "model",
+        "fake": true
+      },
+      {
+        "kind": "refresh",
+        "accepted": true,
+        "lockInodes": {
+          "a": 739402727,
+          "b": 739402727
+        }
+      },
+      {
+        "kind": "model",
+        "fake": true
+      },
+      {
+        "kind": "model",
+        "fake": true
+      }
+    ],
+    "refresh": 3,
+    "model": 4,
+    "paidCalls": 0,
+    "network": "OS restricted to loopback; original ~/.kimi-code denied",
+    "sharedCredentials": true,
+    "sharedLockDirectory": true,
+    "independentProfiles": true
+  },
+  "tdd": "Original copy helper failed sequential profile reuse against a single-use fake refresh grant. Replaced helper only with shared fake credential+lock directory links; sequential and concurrent actual installed CLI cases pass. Red preserved.",
+  "mechanism": "Only credentials/ and oauth/ directories are shared. Link both directories, not credential file alone: FileTokenStorage atomic rename must update common parent, and OAuthManager needs the same lock inode across profile paths.",
+  "supportStatus": "Test-only macOS filesystem symlink experiment; no documented normal CLI independent credential/lock-root knob identified. SDK credentialsDir is not normal CLI exposure and alone does not change configDir lock path.",
+  "profiles": {
+    "a": {
+      "configRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/a/config",
+      "home": "/private/tmp/loom-kimi-fake-auth-AHvNmo/a/home",
+      "skills": "/private/tmp/loom-kimi-fake-auth-AHvNmo/a/skills",
+      "sessionsRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/a/config/sessions",
+      "sessionCount": 2,
+      "sharedCredentialRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/fake-store/credentials",
+      "sharedLockRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/fake-store/oauth",
+      "emptySkills": true,
+      "wiresSha256": [
+        "b054c1b3ad4e42273140be917c39857dcdd450ad7ccbac4b387c9059c3d1a8d4",
+        "42b5846e0f00d70918a6e01013c733132d4947e17d4028088f011bd7c06c488b"
+      ]
+    },
+    "b": {
+      "configRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/b/config",
+      "home": "/private/tmp/loom-kimi-fake-auth-AHvNmo/b/home",
+      "skills": "/private/tmp/loom-kimi-fake-auth-AHvNmo/b/skills",
+      "sessionsRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/b/config/sessions",
+      "sessionCount": 2,
+      "sharedCredentialRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/fake-store/credentials",
+      "sharedLockRoot": "/private/tmp/loom-kimi-fake-auth-AHvNmo/fake-store/oauth",
+      "emptySkills": true,
+      "wiresSha256": [
+        "8ba6e00fde77ac54abb85ce6ac3230c9a15d776c2d02ae243de9b2c5f3e809aa",
+        "34615b5ee4da7dddabcc597509833617722615f7b984fe04972260e76a067c04"
+      ]
+    }
+  },
+  "memory": "Current exact Kimi version native automatic memory audited not applicable; HOME/config/session/skills/work roots remain distinct; empty skills directories and no copied instruction/memory state. Normal session state remains per profile, never shared through auth links. This is state separation, not adversarial same-UID security.",
+  "sourceEvidence": [
+    {
+      "startLine": 143736,
+      "endLine": 143782,
+      "claim": "Lock is configDir/oauth/name.lock; proper-lockfile realpath:false uses lexical directory but shared directory symlink reaches identical lock inode",
+      "sha256": "123a59af99eb7db6e2a0b0e2f1c9236c8be6ac26718526e4b99bbbfacf6b12d0"
+    },
+    {
+      "startLine": 143810,
+      "endLine": 143868,
+      "claim": "Refresh rereads after lock then saves latest token; concurrent profile can reuse winner",
+      "sha256": "358a4b9f57ad5419c0e6d0999eb09a41159c60aff91162ecae466919dd385ebc"
+    },
+    {
+      "startLine": 145705,
+      "endLine": 145714,
+      "claim": "SDK credentialsDir option exists",
+      "sha256": "f39dc3111ffe23ffda8d95b4eac5b1f2768cec48752dca113539e1d5c0366ff3"
+    },
+    {
+      "startLine": 145883,
+      "endLine": 145906,
+      "claim": "Manager lock configDir remains homeDir",
+      "sha256": "4093c6638869862a176972e5a5d44898a3e57c309f8893aebad131cfaf6ed240"
+    },
+    {
+      "startLine": 214607,
+      "endLine": 214623,
+      "claim": "Installed services auth facade passes homeDir, no independent credentialsDir",
+      "sha256": "787c70a483ad1041d8f8a202afb7efd88268847a131c3f40d648443c6d74d188"
+    },
+    {
+      "startLine": 223452,
+      "endLine": 223464,
+      "claim": "Installed auth facade passes homeDir, no independent credentialsDir",
+      "sha256": "191d4bb82be1db84041a8d8ba1cd8a0a2a448a922532c9f09257771d247b8825"
+    }
+  ],
+  "networkIsolation": "Actual child sandbox denies network except localhost and denies reads of original ~/.kimi-code; all token/model fixtures use loopback and FAKE_ credential strings. No real source credential linked or consumed.",
+  "limits": [
+    "Fake provider intentionally uses one-time refresh rotation; this demonstrates a possible harness failure mechanism, not proof of the real provider exact revocation policy.",
+    "Shared fake store solves this reproduction, not source-account authentication. No real credential tested or refreshed.",
+    "Do not apply links to the user account without separate explicit scope; credential refresh is account-state mutation even if initiated by a test.",
+    "P142 remains failed with unknown usage/cost; no efficiency ratio changes."
+  ],
+  "hashes": {
+    "store.red.mjs": "5854a87433d685e43849b7ea9079ce92b98893665d00fb1f914812f9a39d05f0",
+    "store.mjs": "e52c5805e0db04fb31ef9089fd9ecdd612d032e80a507a1a0b87b326f5ea8868",
+    "probe.mjs": "222d7d692d279b40e1f12efb7248141bdbd4e133a897731619d23a0713ce7245",
+    "red.json": "85c5ffd1eb91fff29a6126142ae79544ab18f622a267558c4585c8a177e0b558",
+    "green.json": "3cfdd0379d5003a819a89ef91094ab6703de6e5371512ffe43508d9910e76742"
+  }
+}

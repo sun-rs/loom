@@ -1,0 +1,752 @@
+[
+  {
+    "arm": "native",
+    "round": 1,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4545
+    },
+    "answer": {
+      "count": 15,
+      "total": 4545
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b899bd6001QmdX8s0LjrP3jF",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "bash",
+            "status": "completed"
+          },
+          {
+            "name": "glob",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b89ae01001mcKXMGfoQAmAAS",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "read",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      },
+      {
+        "messageId": "msg_11b89b8d4001XrBSrlgMm4CB4d",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 2,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4650
+    },
+    "answer": {
+      "count": 15,
+      "total": 4650
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a0d3e001ClmH3zDKNORICU",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 3,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4755
+    },
+    "answer": {
+      "count": 15,
+      "total": 4755
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a15d3001hKeAnwvPBj2YRw",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 4,
+    "correct": false,
+    "expected": {
+      "count": 15,
+      "total": 4860
+    },
+    "answer": {
+      "count": 15,
+      "total": 4440
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a6980001JxFXLy14xzyNtk",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 5,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4645
+    },
+    "answer": {
+      "count": 15,
+      "total": 4645
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a7269001DzZHYptVD0xO4w",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 6,
+    "correct": false,
+    "expected": {
+      "count": 60,
+      "total": 18910
+    },
+    "answer": {
+      "count": 60,
+      "total": 18490
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a9399001j4dxgpiaq045hn",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 7,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4545
+    },
+    "answer": {
+      "count": 15,
+      "total": 4545
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a9fb4001pmyENDCoJ2aSD9",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 8,
+    "correct": false,
+    "expected": {
+      "count": 60,
+      "total": 18810
+    },
+    "answer": {
+      "count": 60,
+      "total": 18390
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8acff6001nYIXvh6A7wrfRq",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 9,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4850
+    },
+    "answer": {
+      "count": 15,
+      "total": 4850
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8ad8ae001F7R8azkhe18tiz",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 10,
+    "correct": false,
+    "expected": {
+      "count": 30,
+      "total": 9710
+    },
+    "answer": {
+      "count": 30,
+      "total": 9290
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8b0458001SF2y0nv0XTPoU9",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "native",
+    "round": 11,
+    "correct": true,
+    "expected": {
+      "count": 30,
+      "total": 9300
+    },
+    "answer": {
+      "count": 30,
+      "total": 9300
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8b0eb700179UnxOwa9OceOY",
+        "finish": "stop",
+        "tools": [],
+        "textParts": 1,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 1,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4545
+    },
+    "answer": {
+      "count": 15,
+      "total": 4545
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b89c4d4001bVGMJxtcw043N6",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "bash",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b89d1b20014TEoUikzVSdNv2",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "read",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      },
+      {
+        "messageId": "msg_11b89da9e001P8OE84gvvdtXHu",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "bash",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b89e78d001zwIXASi9kWLs8l",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 2,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4650
+    },
+    "answer": {
+      "count": 15,
+      "total": 4650
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b89f40b00166gcDEDw5g84o6",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "bash",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b8a027a001WPx95A4TdDgoMn",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 3,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4755
+    },
+    "answer": {
+      "count": 15,
+      "total": 4755
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a22cc001cfoLedkvKGryAw",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "bash",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b8a2bd10017IwXJ2Wyeqn9pv",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 4,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4860
+    },
+    "answer": {
+      "count": 15,
+      "total": 4860
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a3715001AT4QTxQ7uhlAQw",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "bash",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b8a44a8001gkOAp4ik6gK2mw",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "invalid",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      },
+      {
+        "messageId": "msg_11b8a5366001UcK5yuWo9i7q8H",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "invalid",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      },
+      {
+        "messageId": "msg_11b8a5faa001WsCbWRTDk2puDP",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 5,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4645
+    },
+    "answer": {
+      "count": 15,
+      "total": 4645
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a7d580012gh62AHnlfXL7A",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 6,
+    "correct": true,
+    "expected": {
+      "count": 60,
+      "total": 18910
+    },
+    "answer": {
+      "count": 60,
+      "total": 18910
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8a89b5001LAWayPt8EXLGkZ",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 7,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4545
+    },
+    "answer": {
+      "count": 15,
+      "total": 4545
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8aab32001GG8Di7Ktolanme",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 8,
+    "correct": true,
+    "expected": {
+      "count": 60,
+      "total": 18810
+    },
+    "answer": {
+      "count": 60,
+      "total": 18810
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8ab463001yLhvyFN6i2rI4v",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "invalid",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b8abd1e001Yc33n0TKi0UzF1",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 9,
+    "correct": true,
+    "expected": {
+      "count": 15,
+      "total": 4850
+    },
+    "answer": {
+      "count": 15,
+      "total": 4850
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8ae4c1001pPArVXlRykDJ2b",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 10,
+    "correct": true,
+    "expected": {
+      "count": 30,
+      "total": 9710
+    },
+    "answer": {
+      "count": 30,
+      "total": 9710
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8aee2e001eFqkNc7wxQeBcF",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "invalid",
+            "status": "completed"
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      },
+      {
+        "messageId": "msg_11b8af800001P0OPixBuQCmXes",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 0
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 11,
+    "correct": true,
+    "expected": {
+      "count": 30,
+      "total": 9300
+    },
+    "answer": {
+      "count": 30,
+      "total": 9300
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8b195500195eV3AfYAwfRjh",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  },
+  {
+    "arm": "terminal",
+    "round": 12,
+    "correct": true,
+    "expected": {
+      "count": 60,
+      "total": 19010
+    },
+    "answer": {
+      "count": 60,
+      "total": 19010
+    },
+    "generations": [
+      {
+        "messageId": "msg_11b8b24b4001tgNyPwra2FuDEp",
+        "finish": "tool-calls",
+        "tools": [
+          {
+            "name": "StructuredOutput",
+            "status": "completed",
+            "bodyType": "string",
+            "keys": ["body"],
+            "metadataValid": true
+          }
+        ],
+        "textParts": 0,
+        "reasoningParts": 1
+      }
+    ]
+  }
+]

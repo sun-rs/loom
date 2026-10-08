@@ -1,0 +1,40 @@
+{
+  "ledger": "P146",
+  "sourceSha256": {
+    "plan.json": "eb9d28a24fe95e302d4ad3018b944e4f45d0b6d4385d7d329aab5ca5c24380ee",
+    "run.mjs": "477be5f38cd6039d806986880c8e3669b06017b91b58f944d7ad49ae82205c07",
+    "intent.mjs": "abc6580820e1ecc800844e07a1607840db48464f02f1155b238b6cc1b06ded47",
+    "bookkeeping.mjs": "764228db240a5256759bda2c32c1d710e7e96298cf4b0596dca3659ec777af63",
+    "host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "worker-receipt.mjs": "5d360b2ae82163b48e9188d8b2020326f6083e1b5fd3d36e97088918a4812d5c",
+    "budget.csv": "84a08efe27f2a93b16eb0dc5710903370d3dbbc330d3bda2153090ebb825d16c",
+    "catalog.json": "56f9f0205af43ad13c5e7e4c30e68308db74e2a3c8e4cb919086ef5c7083bd32",
+    "fake.mjs": "3ffa1cfe32711eb68217cfbf9e5f17ddb2afd4965a1c614693291cd4b93ecfdd",
+    "source-audit/current-tag-memory-audit.json": "a78212a7db0c97451ec64f0259893164fe5f6f5621f1d3ce19e8554c82d4796d"
+  },
+  "paidStarted": false,
+  "free": {
+    "passed": true,
+    "root": "/Users/sun/.loom/reviews/2026-10-08-bound-opencode/body-only-v4/paid-plan-v1/runs/1791463148770",
+    "version": "1.18.35",
+    "rounds": 4,
+    "createdAt": "2026-10-08T12:39:14.137Z"
+  },
+  "qualityPolicyFreeEvidence": {
+    "red": "quality-red.txt",
+    "green": "quality-green.txt",
+    "nativeRound1IncorrectRetained": true,
+    "allFourInvocationsCompleted": true,
+    "requests": 6
+  },
+  "approvalState": "Awaiting lead approval; no paid calls in this candidate",
+  "budget": {
+    "maxBusinessInvocations": 24,
+    "requestTimeoutMs": 180000,
+    "maxElapsedMs": 1200000,
+    "maxReportedGenerations": 80,
+    "maxReportedInputTokens": 1000000,
+    "maxReportedOutputTokens": 15000,
+    "enforcement": "Check before starting each native turn; retain all costs of completed/failed turns. These are between-turn stop thresholds, not a provider billing hard cap."
+  }
+}

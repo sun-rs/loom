@@ -1,0 +1,760 @@
+{
+  "batch": "P145",
+  "status": "completed-needs-independent-review",
+  "evidence": "runs/1791463270436-P145",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cli": "codex-cli 0.161.0",
+  "samples": 1,
+  "continuousSessions": 2,
+  "rounds": [
+    {
+      "arm": "native",
+      "round": 1,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 39901,
+        "cached_input_tokens": 16640,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 177,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 2,
+      "responses": 3
+    },
+    {
+      "arm": "structured",
+      "round": 1,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 26191,
+        "cached_input_tokens": 12032,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 185,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 2,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4650
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 26680,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 163,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4650
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27283,
+        "cached_input_tokens": 25088,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 113,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4755
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27621,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 113,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 3,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4755
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27144,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 163,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 4,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4860
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27608,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 163,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4860
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27959,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 113,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4645
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28345,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 137,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 5,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4645
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28138,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 205,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 6,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 18910
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28655,
+        "cached_input_tokens": 27136,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 174,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 18910
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28713,
+        "cached_input_tokens": 27136,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 119,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 29081,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 115,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 7,
+      "correct": false,
+      "answer": {
+        "count": 15,
+        "total": 4445
+      },
+      "quality": {
+        "correct": false,
+        "kind": "business-answer-mismatch",
+        "answer": {
+          "count": 15,
+          "total": 4445
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 29194,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 205,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 8,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 18810
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 29685,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 148,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 18810
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 29403,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 95,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4850
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 29771,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 137,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 9,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4850
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 30200,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 205,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 10,
+      "correct": true,
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 30,
+          "total": 9710
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 30757,
+        "cached_input_tokens": 29184,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 208,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "correct": true,
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 30,
+          "total": 9710
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 30167,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 141,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "correct": true,
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 30,
+          "total": 9300
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 30545,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 119,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 11,
+      "correct": true,
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 30,
+          "total": 9300
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 31275,
+        "cached_input_tokens": 30208,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 166,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 12,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 19010
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 31778,
+        "cached_input_tokens": 30208,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 187,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 19010
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 30907,
+        "cached_input_tokens": 30208,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 119,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    }
+  ],
+  "qualityErrors": [
+    {
+      "arm": "structured",
+      "round": 7,
+      "kind": "business-answer-mismatch"
+    }
+  ],
+  "segments": {
+    "whole": {
+      "native": {
+        "turns": 12,
+        "correct": 12,
+        "responses": 25,
+        "businessTools": 13,
+        "input_tokens": 359696,
+        "cached_input_tokens": 318208,
+        "output_tokens": 1498,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 41488
+      },
+      "structured": {
+        "turns": 12,
+        "correct": 11,
+        "responses": 24,
+        "businessTools": 12,
+        "input_tokens": 347305,
+        "cached_input_tokens": 317696,
+        "output_tokens": 2172,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 29609
+      },
+      "descriptiveRatios": {
+        "input_tokens": 0.9655514656821316,
+        "output_tokens": 1.4499332443257678,
+        "responses": 0.96,
+        "businessTools": 0.9230769230769231
+      }
+    },
+    "late7-12": {
+      "native": {
+        "turns": 6,
+        "correct": 6,
+        "responses": 12,
+        "businessTools": 6,
+        "input_tokens": 179874,
+        "cached_input_tokens": 171008,
+        "output_tokens": 726,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 8866
+      },
+      "structured": {
+        "turns": 6,
+        "correct": 5,
+        "responses": 12,
+        "businessTools": 6,
+        "input_tokens": 182889,
+        "cached_input_tokens": 174080,
+        "output_tokens": 1119,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 8809
+      },
+      "descriptiveRatios": {
+        "input_tokens": 1.0167617332132493,
+        "output_tokens": 1.5413223140495869,
+        "responses": 1.0,
+        "businessTools": 1.0
+      }
+    }
+  },
+  "realWorkerPublicationsAndCompletedActivations": 12,
+  "usage": {
+    "native": {
+      "input": 359696,
+      "cached": 318208,
+      "output": 1498,
+      "reasoning": 0,
+      "responses": 25
+    },
+    "structured": {
+      "input": 347305,
+      "cached": 317696,
+      "output": 2172,
+      "reasoning": 0,
+      "responses": 24
+    }
+  },
+  "uniqueResponseIds": 49,
+  "memoryDisabledEveryLaunch": true,
+  "structuredSchemaEveryLaunch": true,
+  "nativeNoSchema": true,
+  "protocolAndWorkerSourcesUnchangedFromP144": true,
+  "sourceCsvUnchanged": true,
+  "efficiency": "Descriptive single sample only; any quality error prevents equal-quality efficiency acceptance",
+  "protocolGenerations": "Host publication occurs after native final and creates zero additional model requests; other requests are native tool/reasoning/final flow, not inferred as protocol overhead",
+  "limits": [
+    "Single approved model and trajectory; no statistical causality or cross-model conclusion",
+    "Cached input is a subset of input; reasoning is a subset of output; neither added again",
+    "No general provider finish_reason; stdout truncation negative is narrower",
+    "Prototype manual Host, not production adapter/scheduler acceptance",
+    "Wall/input are between-turn thresholds, not hard provider caps"
+  ],
+  "retry": "none; P144 preserved independently",
+  "failureAnalysis": {
+    "round": 7,
+    "arm": "structured",
+    "request": "Undo only conversational +100 from turn5; source CSV immutable",
+    "actual": 4445,
+    "expected": 4545,
+    "nativeActual": 4545,
+    "observedToolBehavior": "Structured executed Python reading original CSV then subtracted100 from original groupA total4545; tool returned4445; native read original sum4545",
+    "classification": "Conversational revision semantics error in generated computation; native tool invocation itself succeeded; not a failure to call tool",
+    "causality": "One observed trajectory cannot attribute this error to output schema; no retry/replacement sample",
+    "followingRound": "Both arms round8 correct without oracle feedback"
+  },
+  "protocolAccounting": {
+    "nativeBusinessToolCalls": 13,
+    "structuredBusinessToolCalls": 12,
+    "nativeModelResponses": 25,
+    "structuredModelResponses": 24,
+    "nativeFinals": 12,
+    "structuredFinals": 12,
+    "modelRequestsForHostWorkerPublication": 0,
+    "meaning": "Observed one generation per business tool plus one final per turn; no separate model generations for Room publication in this prototype"
+  }
+}

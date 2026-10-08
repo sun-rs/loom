@@ -1,0 +1,40 @@
+{
+  "batch": "P145",
+  "method": "Use ordered native current-turn response_item windows ending at each token_usage_record. All49 windows uniquely classify as one tool call (optionally commentary) or one final_answer. No mixed tool/final window. Per-response usage, not text-length token estimates. Response items lack an explicit response_id join; association uses preserved native append order and current-turn identity.",
+  "outputTotals": {
+    "native": 1498,
+    "structured": 2172,
+    "difference": 674
+  },
+  "subtotals": {
+    "native": {
+      "final-only": 168,
+      "tool-bearing": 1330
+    },
+    "structured": {
+      "final-only": 288,
+      "tool-bearing": 1884
+    }
+  },
+  "difference": {
+    "finalOnly": 120,
+    "toolBearing": 554
+  },
+  "finalOnlyObservation": "Every native final generation reports14 output tokens; every structured final24. Twelve final-only generations each; delta10 per turn,120 total. Final JSON body envelope and escaping are the visible format difference. No within-response token attribution available, so not a tokenizer proof assigning each token to punctuation.",
+  "toolBearingObservation": {
+    "delta": 554,
+    "round1MixedToolAndCommentaryDelta": -2,
+    "rounds2Through12ToolOnlyDelta": 556,
+    "structuralDifference": "Structured usually emits Python printing formatted JSON with escaped quotes and numeric formatting; native usually prints count and sum directly. Revision calculations also differ. Model-selected tool programs were not constrained identical.",
+    "caution": "554 is tool-bearing response output delta, not an exact token attribution solely to program text; first round also contains commentary. It is not Room protocol overhead or evidence schema caused the different tool programs."
+  },
+  "sharesOfObservedDelta": {
+    "finalOnly": 0.17804154302670624,
+    "toolBearing": 0.8219584569732937
+  },
+  "reasoningTokens": 0,
+  "extraModelCallsForHostPublication": 0,
+  "paidCallsForThisAnalysis": 0,
+  "rawEvidence": "runs/1791463270436-P145/output-breakdown.private.json",
+  "noThinkingPublished": true
+}

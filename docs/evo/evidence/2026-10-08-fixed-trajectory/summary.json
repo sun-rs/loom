@@ -1,0 +1,72 @@
+{
+  "sourceRevision": "3bceaa6",
+  "status": "Fixed-trajectory measurement works; overall efficiency and production integration remain unaccepted.",
+  "method": {
+    "roundsPerArm": 12,
+    "samplesPerModel": 1,
+    "qualityErrors": "Retain wrong business answers and continue fixed well-defined tasks without oracle feedback or retry.",
+    "stopConditions": "Protocol, identity, authentication, usage, isolation, unknown write or budget failure stops.",
+    "priorFailures": "P142-P144 remain unchanged; P145/P146 are new methods and samples."
+  },
+  "P145": {
+    "cli": "Codex 0.161.0",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "roundsEach": 12,
+    "nativeCorrect": 12,
+    "structuredCorrect": 11,
+    "wholeInputRatio": 0.9655514656821316,
+    "wholeUncachedRatio": 0.7136762437331277,
+    "wholeOutputRatio": 1.4499332443257678,
+    "late7to12InputRatio": 1.0167617332132493,
+    "late7to12UncachedRatio": 0.9935709451838484,
+    "late7to12OutputRatio": 1.5413223140495869,
+    "nativeGenerations": 25,
+    "structuredGenerations": 24,
+    "publicationAndCompletionCount": 12,
+    "evidence": "codex-paid.json",
+    "outputBreakdown": "codex-output-breakdown.json",
+    "interpretation": "Input is close to native in this trajectory, with one initial business-tool difference. Quality differs; no equal-quality efficiency or statistical causality claim. Token ratios are not invoice ratios."
+  },
+  "P146": {
+    "cli": "OpenCode 1.18.35",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low",
+    "nativeRounds": 11,
+    "terminalRounds": 12,
+    "nativeCorrect": 7,
+    "terminalCorrect": 12,
+    "matched1to11InputRatio": 1.8520288091791515,
+    "matched1to11UncachedRatio": 1.2900371971448679,
+    "matched1to11OutputRatio": 3.26625,
+    "allNativeInput": 112603,
+    "allTerminalInput": 220429,
+    "allNativeOutput": 800,
+    "allTerminalOutput": 24954,
+    "budgetStop": "Terminal R12 reported22304 output +37 reasoning; next native turn stopped by budget. Compact saved body does not disprove reported usage. No independent upstream stream or invoice; cause unknown.",
+    "evidence": "opencode-paid.json",
+    "generationBreakdown": "opencode-generation-diagnostics.json",
+    "interpretation": "Matched-round counts do not imply matched quality. Additional business tools and malformed-JSON repair generations observed. No completed12-round efficiency acceptance."
+  },
+  "kimi": {
+    "diagnosis": "Evidence supports stale credential-copy lineage risk, not proof that owner account is broken.",
+    "freeReproduction": "Actual CLI + fake OAuth: copied credentials fail; sharing fake credentials AND refresh locks enables sequential/concurrent rotation while sessions stay isolated.",
+    "limits": "Test-only symlink mechanism, not documented CLI configuration. No real account refresh/write/model request; source-account usability unknown.",
+    "diagnosisEvidence": "kimi-auth-diagnosis.json",
+    "freeEvidence": "kimi-auth-store-free.json"
+  },
+  "decision": "Keep Kernel/Worker authority and fences; reduce model-facing serialization and per-CLI completion overhead. No target-contract or production changes.",
+  "next": [
+    "Observe raw provider output/usage before attributing OpenCode R12 anomaly or repeating paid work.",
+    "Review explicit native-final-text mode to avoid JSON wrappers; require per-Run opt-in and native final identity, never arbitrary stdout.",
+    "Validate the drafted real file-editing workload before broader long-task or multiplayer claims.",
+    "Two single-model trajectories do not establish five-CLI superiority; older Pi/Claude and failed repetitions remain separate."
+  ],
+  "measurementDesign": "../2026-10-08-bound-followup/next-measurement-design.json",
+  "verification": {
+    "repositoryChanges": "Documentation and evidence only",
+    "productionServiceRestarted": false,
+    "paidReruns": "None"
+  },
+  "nativeFinalTextDesign": "native-final-text-design.json"
+}
