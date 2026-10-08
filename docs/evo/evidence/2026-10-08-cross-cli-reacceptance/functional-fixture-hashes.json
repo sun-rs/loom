@@ -1,0 +1,221 @@
+{
+  "kind": "Exact private functional fixtures; original source preserved locally, not production code",
+  "sourceFiles": {
+    "mixed-original": {
+      "api-newrole-premature-negative.mjs": "c0ee621d9209c3300c2c5fe58b3dc6522665acf36973489fcb38bcca257263c1",
+      "api-preflight.mjs": "98dda7ba277c63c3c7638e78f82a18c810fb08c7b21dba7478b18530a79ecd95",
+      "api-premature-negative.mjs": "5113022043356d8370a4d93881ed5f07c11657265270975dad39d36d20e064a0",
+      "bootstrap.mjs": "16f78c2d6fdf4294bb28cdd7505f3d5d1288dc290f9876aebf091f9f74b76c1b",
+      "evidence.mjs": "16c65f98e7d7790ac49c821d16acf69201b1acd57d27094b04851a05a25e374a",
+      "evidence.test.mjs": "8d2544c21b423e9c6833f90ca8173db43167e426e344b06608e2f13b7dd3176d",
+      "live.mjs": "38d092e884f32662f09ee96d1caf3c66af58b531acca62c7d32ec7c2966f0fcb",
+      "plan.mjs": "cfe8a186144c5d9e6937edb0d79a6b3ce2db312de0a336ff65c3dcb4b5cc507c",
+      "plan.test.mjs": "51af29b66b7133971353eff9e17db9d8d5db9ad0eb6b92ecd9591523b5134495",
+      "run.mjs": "f87f47cc081d65d6f9a155b56898b1dbc1d4106ea61333f97a23cb8de39799c2",
+      "task-premature-repro.mjs": "eefb14283285fc7af4a045869cb0a3d3912e36b68356c8ca14ff5ba01c8ea0f6"
+    },
+    "mixed-binding-corrected": {
+      "README.md": "352e58165484f095c825911942f9dfda43e615243fdffde3f5eb6a86ba3fec8d",
+      "api-newrole-premature-negative.mjs": "c0ee621d9209c3300c2c5fe58b3dc6522665acf36973489fcb38bcca257263c1",
+      "api-preflight.mjs": "98dda7ba277c63c3c7638e78f82a18c810fb08c7b21dba7478b18530a79ecd95",
+      "api-premature-negative.mjs": "5113022043356d8370a4d93881ed5f07c11657265270975dad39d36d20e064a0",
+      "bootstrap.mjs": "16f78c2d6fdf4294bb28cdd7505f3d5d1288dc290f9876aebf091f9f74b76c1b",
+      "candidate-plan-v2.json": "ed4428dbe35e2f191114b5f0e9dbb310810d88603af26d896b7c6bb483fee961",
+      "config.test.mjs": "a7779dfb3ae529f1586e6acf1c3e4e5ceb20a94f486caf9fb17fd930c9a426b7",
+      "evidence.mjs": "16c65f98e7d7790ac49c821d16acf69201b1acd57d27094b04851a05a25e374a",
+      "evidence.test.mjs": "8d2544c21b423e9c6833f90ca8173db43167e426e344b06608e2f13b7dd3176d",
+      "live.mjs": "38d092e884f32662f09ee96d1caf3c66af58b531acca62c7d32ec7c2966f0fcb",
+      "plan.mjs": "cfe8a186144c5d9e6937edb0d79a6b3ce2db312de0a336ff65c3dcb4b5cc507c",
+      "plan.test.mjs": "51af29b66b7133971353eff9e17db9d8d5db9ad0eb6b92ecd9591523b5134495",
+      "run.mjs": "23d59fbd928cc082d35266260f3e67018e9ced418185faf3eb42776cbdda585d",
+      "task-premature-repro.mjs": "eefb14283285fc7af4a045869cb0a3d3912e36b68356c8ca14ff5ba01c8ea0f6"
+    },
+    "mixed-remaining": {
+      "run.mjs": "023ff3894f69fca85526d9b97952ff8675f0410c017f6a085f848e9bf7600c9c",
+      "plan.json": "8c7760d869ced3931a29fabfecdd3d334d16fb2a2ab702bf95461403041d70fe",
+      "role-config.mjs": "232066d626bd6683ccbecf55acdb3740f0dcdae9f08be6e00c8099c2b6f0a603",
+      "evidence.mjs": "16c65f98e7d7790ac49c821d16acf69201b1acd57d27094b04851a05a25e374a",
+      "live.mjs": "a6c7fa2487526847dd103949010c5f5b5d93a254014a525bfcc2359c1a977060",
+      "plan.mjs": "19f65a6016a2bf7b0fa2e6ca5be903ba4afa9a31e6a64d64b21190077ff411a2",
+      "README.md": "f56f2060188960a6b9ff7609968ac0b10cfcc6c456cd2bf0e804b39eb1f6cbbb",
+      "channel-home.test.mjs": "1d1b9cb4fb1a88a8159deb3100ecbc35413eededf0c04573f2ccd6cf1418ef0f",
+      "config.test.mjs": "bb0c48cd0ab05bd3d68c663cf41fc7f0c0c204de7b2b6cb0fd33138e490017aa",
+      "plan.test.mjs": "0e54578cd51338174507541531d2f390dcc3bdcb6925a5b1ff34ddd9d21cb9f3",
+      "bootstrap.mjs": "16f78c2d6fdf4294bb28cdd7505f3d5d1288dc290f9876aebf091f9f74b76c1b",
+      "evidence.test.mjs": "8d2544c21b423e9c6833f90ca8173db43167e426e344b06608e2f13b7dd3176d"
+    },
+    "mixed-private": {
+      "api-paths.test.mjs": "6387cf93dc719365aa8defd540624cde1ccb985b2a22a5d6e63dd09c84fdfe2b",
+      "bootstrap.mjs": "16f78c2d6fdf4294bb28cdd7505f3d5d1288dc290f9876aebf091f9f74b76c1b",
+      "capability-evidence.mjs": "ba01ff748ba33a4a267dc155872bd172aeb8516e68d154ff37e23f8c0ac5610f",
+      "capability-evidence.test.mjs": "17e20e9bcfed61f0ee9ba1c5ef0e6f5879e1c3cc834ba215f9024a212e71f960",
+      "channel-home.test.mjs": "1d1b9cb4fb1a88a8159deb3100ecbc35413eededf0c04573f2ccd6cf1418ef0f",
+      "config.test.mjs": "b499a9fb5ed7392be2c8c25c17c1532e0c9f477cd2ec7628ee232cada3a34de1",
+      "evidence.mjs": "16c65f98e7d7790ac49c821d16acf69201b1acd57d27094b04851a05a25e374a",
+      "evidence.test.mjs": "8d2544c21b423e9c6833f90ca8173db43167e426e344b06608e2f13b7dd3176d",
+      "live.mjs": "b44ce67f105b0bc52fe4bc121bac109c5ecb61d8a14cce9629ffc8be2c7a8cf0",
+      "plan.mjs": "fec2fce1a6af2f5d0aecdfa695fb5f7bf852c5b652210a1f6bcd6bc54d6ae8d4",
+      "plan.test.mjs": "2877d99b580bdd76df887042687c9d2b74d39dbc76c3215ad488a9a3b7a2ba66",
+      "prompt-routing.test.mjs": "28d67d8788c57a2165b56e6d9fc7030dada593aa3cf507b030aea6dd384529fa",
+      "prompts.mjs": "4b03af4ee7dfa62c50a79f700e4f00eb6e7b0f6a01c27cfaaaee64710f38c9a0",
+      "role-config.mjs": "232066d626bd6683ccbecf55acdb3740f0dcdae9f08be6e00c8099c2b6f0a603",
+      "run.mjs": "917dc49f760157bb3dc11c211c613af458567cd08a8b85f5e565dfb26090ba3d"
+    },
+    "mixed-core": {
+      "api-paths.test.mjs": "6387cf93dc719365aa8defd540624cde1ccb985b2a22a5d6e63dd09c84fdfe2b",
+      "bootstrap.mjs": "16f78c2d6fdf4294bb28cdd7505f3d5d1288dc290f9876aebf091f9f74b76c1b",
+      "capability-evidence.mjs": "ba01ff748ba33a4a267dc155872bd172aeb8516e68d154ff37e23f8c0ac5610f",
+      "capability-evidence.test.mjs": "17e20e9bcfed61f0ee9ba1c5ef0e6f5879e1c3cc834ba215f9024a212e71f960",
+      "channel-home.test.mjs": "1d1b9cb4fb1a88a8159deb3100ecbc35413eededf0c04573f2ccd6cf1418ef0f",
+      "config.test.mjs": "53fe67150dbda7b566b35a5fe587098ea8f55b03d1ba24b4d032198aff51b957",
+      "evidence.mjs": "16c65f98e7d7790ac49c821d16acf69201b1acd57d27094b04851a05a25e374a",
+      "evidence.test.mjs": "8d2544c21b423e9c6833f90ca8173db43167e426e344b06608e2f13b7dd3176d",
+      "functional-receipt.mjs": "9e43fe9eb17ca979e73f7d2b3ef4a344bb7981d7f75a5c206a9b6a4d8732c56c",
+      "functional-receipt.test.mjs": "c8d770adcb4e52c09006c1912f8aca1480200420653d89f1ce8fa0d861c5b574",
+      "live.mjs": "e91b30d4bf22b0faa9308ed84e47f9a13e9e870666b2574f20ad5af975ac5bea",
+      "plan.mjs": "f3b5e138c3e3fb5ba0506dde7ebae769088cb590e66992c60219699128b6db1c",
+      "plan.test.mjs": "8cdf4a59b6039e71d2bb52490b147fd70adc616a7407d9a5caba94d38438e68f",
+      "prompt-routing.test.mjs": "28d67d8788c57a2165b56e6d9fc7030dada593aa3cf507b030aea6dd384529fa",
+      "prompts.mjs": "4b03af4ee7dfa62c50a79f700e4f00eb6e7b0f6a01c27cfaaaee64710f38c9a0",
+      "role-config.mjs": "232066d626bd6683ccbecf55acdb3740f0dcdae9f08be6e00c8099c2b6f0a603",
+      "run.mjs": "2b1dc77bd2bbc5c2ba22c2cfd3ed1f65d9c16d84b9fb28ac8abec63fcbc9108d"
+    },
+    "mixed-core-continuation": {
+      "api-paths.test.mjs": "6387cf93dc719365aa8defd540624cde1ccb985b2a22a5d6e63dd09c84fdfe2b",
+      "bootstrap.mjs": "83ec110f204aa83c05df794097884ccb26463e06602c4b90ef7cd4589d98a4f0",
+      "capability-evidence.mjs": "ba01ff748ba33a4a267dc155872bd172aeb8516e68d154ff37e23f8c0ac5610f",
+      "capability-evidence.test.mjs": "17e20e9bcfed61f0ee9ba1c5ef0e6f5879e1c3cc834ba215f9024a212e71f960",
+      "channel-home.test.mjs": "1d1b9cb4fb1a88a8159deb3100ecbc35413eededf0c04573f2ccd6cf1418ef0f",
+      "config.test.mjs": "5d0956fb2d5546c316a243c82627e4c25ae9fe55856fd579f49464aee58c0378",
+      "evidence.mjs": "2cb8c61a2949afdcc6bdaef4cb765d3f59e16578acc6457a29040fe2b3345dfc",
+      "evidence.test.mjs": "01ccabda44e233c393e8a7a07c30e420b5c72b6b26355ca2184abf7fec01cd24",
+      "functional-receipt.mjs": "4a6be989e9c10f4f1f1d0620c0e47d19399840a7372185e7c5fd5e3986008231",
+      "functional-receipt.test.mjs": "c8d770adcb4e52c09006c1912f8aca1480200420653d89f1ce8fa0d861c5b574",
+      "live.mjs": "17c58719cf36319249ef0234b3dff600f78165efc81c48d60ffdf453cad685f1",
+      "plan.mjs": "b666cc8d481c405e8d316265001248735ed2c74b2fd269ce89bdc47f9b7ade92",
+      "plan.test.mjs": "60ec3dcd2fba65f92a04fba87c79f7189e4737830970df068ca24db5492679c8",
+      "prompt-routing.test.mjs": "28d67d8788c57a2165b56e6d9fc7030dada593aa3cf507b030aea6dd384529fa",
+      "prompts.mjs": "4b03af4ee7dfa62c50a79f700e4f00eb6e7b0f6a01c27cfaaaee64710f38c9a0",
+      "resume.mjs": "2740f1293e8d0e0030276ff40c104323cbcc3093030643fbd401be3a0939a6e4",
+      "resume.test.mjs": "cdddb8e986c5f184d8f181f8c638c552f371891a4dadd3ed550e349d6f0811d6",
+      "retry-proof.test.mjs": "6aba070c6fc8e8f0783372268007c9666cbaa3a235ddae6fe2c8c168bd021bde",
+      "role-config.mjs": "232066d626bd6683ccbecf55acdb3740f0dcdae9f08be6e00c8099c2b6f0a603",
+      "run.mjs": "01aab7744d0c6fe4879080861bfcc5fa07766bc7e0772e0e4c4e926dfcbb3b27",
+      "resume-freeze.private.json": "6b197c73a8f7a6b4f81e9a02696dff813b2e9b58a44e958ee37849cc74e2596e",
+      "original-result.private.json": "861e870e9cf660e94c220de5473da518ee4897537b3fe8b806124679a0e698fa"
+    },
+    "mixed-core-recovery": {
+      "functional-receipt.test.mjs": "c8d770adcb4e52c09006c1912f8aca1480200420653d89f1ce8fa0d861c5b574",
+      "resume.test.mjs": "cdddb8e986c5f184d8f181f8c638c552f371891a4dadd3ed550e349d6f0811d6",
+      "prompt-routing.test.mjs": "28d67d8788c57a2165b56e6d9fc7030dada593aa3cf507b030aea6dd384529fa",
+      "run.mjs": "14d34c8e8a2c9dec5a099cb63dd15f8267dd7d1b9134000f00676e4e14f9d1b4",
+      "retry-proof.test.mjs": "6aba070c6fc8e8f0783372268007c9666cbaa3a235ddae6fe2c8c168bd021bde",
+      "role-config.mjs": "232066d626bd6683ccbecf55acdb3740f0dcdae9f08be6e00c8099c2b6f0a603",
+      "functional-receipt.mjs": "4a6be989e9c10f4f1f1d0620c0e47d19399840a7372185e7c5fd5e3986008231",
+      "capability-evidence.mjs": "ba01ff748ba33a4a267dc155872bd172aeb8516e68d154ff37e23f8c0ac5610f",
+      "evidence.mjs": "2cb8c61a2949afdcc6bdaef4cb765d3f59e16578acc6457a29040fe2b3345dfc",
+      "api-paths.test.mjs": "6387cf93dc719365aa8defd540624cde1ccb985b2a22a5d6e63dd09c84fdfe2b",
+      "live.mjs": "17c58719cf36319249ef0234b3dff600f78165efc81c48d60ffdf453cad685f1",
+      "plan.mjs": "b8a3366c81ff525f457c51286ac5e2a47fbeb4a0e3d9fec47b3e89ad7a6cb01e",
+      "channel-home.test.mjs": "1d1b9cb4fb1a88a8159deb3100ecbc35413eededf0c04573f2ccd6cf1418ef0f",
+      "config.test.mjs": "5d0956fb2d5546c316a243c82627e4c25ae9fe55856fd579f49464aee58c0378",
+      "plan.test.mjs": "60ec3dcd2fba65f92a04fba87c79f7189e4737830970df068ca24db5492679c8",
+      "prompts.mjs": "4b03af4ee7dfa62c50a79f700e4f00eb6e7b0f6a01c27cfaaaee64710f38c9a0",
+      "resume.mjs": "2740f1293e8d0e0030276ff40c104323cbcc3093030643fbd401be3a0939a6e4",
+      "bootstrap.mjs": "83ec110f204aa83c05df794097884ccb26463e06602c4b90ef7cd4589d98a4f0",
+      "capability-evidence.test.mjs": "17e20e9bcfed61f0ee9ba1c5ef0e6f5879e1c3cc834ba215f9024a212e71f960",
+      "evidence.test.mjs": "01ccabda44e233c393e8a7a07c30e420b5c72b6b26355ca2184abf7fec01cd24"
+    },
+    "mixed-kimi-pair": [
+      {
+        "file": "api-paths.test.mjs",
+        "sha256": "6387cf93dc719365aa8defd540624cde1ccb985b2a22a5d6e63dd09c84fdfe2b"
+      },
+      {
+        "file": "bootstrap-free.test.mjs",
+        "sha256": "bfe2dcfd987f477ae31aac376c00a1b9254ac5a5ea68a31caf23bb950e30a36f"
+      },
+      {
+        "file": "bootstrap.mjs",
+        "sha256": "7208e93759484baa74eb6b0138436e9326f71a57ac3f59ff0dd07027ff334fd3"
+      },
+      {
+        "file": "capability-evidence.mjs",
+        "sha256": "ba01ff748ba33a4a267dc155872bd172aeb8516e68d154ff37e23f8c0ac5610f"
+      },
+      {
+        "file": "capability-evidence.test.mjs",
+        "sha256": "17e20e9bcfed61f0ee9ba1c5ef0e6f5879e1c3cc834ba215f9024a212e71f960"
+      },
+      {
+        "file": "channel-home.test.mjs",
+        "sha256": "1d1b9cb4fb1a88a8159deb3100ecbc35413eededf0c04573f2ccd6cf1418ef0f"
+      },
+      {
+        "file": "config.test.mjs",
+        "sha256": "4e85d986a597ce535c01a9c06d3c9d351ae423ccbea1e4b915db89e049fdafcb"
+      },
+      {
+        "file": "duplicate-provider.test.mjs",
+        "sha256": "6c8ba96bf45d561b36bf7d2bfc42db082205754e74b7fad51192ff70804cb1dd"
+      },
+      {
+        "file": "evidence.mjs",
+        "sha256": "16c65f98e7d7790ac49c821d16acf69201b1acd57d27094b04851a05a25e374a"
+      },
+      {
+        "file": "evidence.test.mjs",
+        "sha256": "8d2544c21b423e9c6833f90ca8173db43167e426e344b06608e2f13b7dd3176d"
+      },
+      {
+        "file": "fixture-runtime.mjs",
+        "sha256": "c2a57812aeae31defaff93ecbb522878df494bce373656aa307d78214a2c4bae"
+      },
+      {
+        "file": "functional-receipt.mjs",
+        "sha256": "9e43fe9eb17ca979e73f7d2b3ef4a344bb7981d7f75a5c206a9b6a4d8732c56c"
+      },
+      {
+        "file": "functional-receipt.test.mjs",
+        "sha256": "c8d770adcb4e52c09006c1912f8aca1480200420653d89f1ce8fa0d861c5b574"
+      },
+      {
+        "file": "live.mjs",
+        "sha256": "14129895a55f883b48a31ae9d86103731a3bbf8c806527b574a685f7a7447422"
+      },
+      {
+        "file": "member-evidence.mjs",
+        "sha256": "be3d4f9a892ba222040de5dab6b77dd4168ccd13c47c140c622b9c4ce9ed8020"
+      },
+      {
+        "file": "plan.mjs",
+        "sha256": "e85c92301977bff8be75ef594d89152ee9e74c05643c7cb88aae4e6dfc0f0370"
+      },
+      {
+        "file": "plan.test.mjs",
+        "sha256": "a77268ca72d6a3aabd1e60de2c87d316878f669eec9739f382a6eaa6852e9c47"
+      },
+      {
+        "file": "prompt-routing.test.mjs",
+        "sha256": "28d67d8788c57a2165b56e6d9fc7030dada593aa3cf507b030aea6dd384529fa"
+      },
+      {
+        "file": "prompts.mjs",
+        "sha256": "4b03af4ee7dfa62c50a79f700e4f00eb6e7b0f6a01c27cfaaaee64710f38c9a0"
+      },
+      {
+        "file": "role-config.mjs",
+        "sha256": "baf719f1106ed9254ce4410e6e9355a2be581d29f2f9aa9e53b19baf0ad5ee70"
+      },
+      {
+        "file": "run.mjs",
+        "sha256": "59f4daa5f2ce84186ac22011826e74e584204d5cc643b8a4a60a5d68a8f5c641"
+      },
+      {
+        "file": "two-provider.test.mjs",
+        "sha256": "3842aac25d52e424cab92b1778c9c8cc23fe5facd0bad3af25e3bcdd02fd7527"
+      }
+    ]
+  },
+  "note": "Original fixtures and revised candidates retained privately; recovery-admission hashes supersede copied old candidate manifest. No provider credentials included."
+}

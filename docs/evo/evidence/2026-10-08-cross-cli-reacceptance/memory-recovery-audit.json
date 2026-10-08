@@ -1,0 +1,72 @@
+{
+  "status": "partial functional evidence; continuation stopped at OpenCode version guard",
+  "sample": "same temporary Channel and existing bindings, original memory-write retained; no repeated write",
+  "versions": {
+    "previousOpenCode": "1.18.32",
+    "currentOpenCode": "1.18.35"
+  },
+  "memoryWrite": {
+    "previousRun": true,
+    "revision": 2,
+    "body": "exact expected token plus one heredoc LF"
+  },
+  "memoryRead": {
+    "provider": "kimi",
+    "model": "kimi-code/k3-256k",
+    "effort": "low",
+    "actualRead": true,
+    "deliveredAndAcked": true,
+    "firstTool": "incorrect UUID used as name returned404; list+correct name recovered",
+    "answerQuality": "returned exact body but misleadingly says entry does not exist"
+  },
+  "memoryDeny": {
+    "policyReadOffPersisted": true,
+    "actualDeniedToolCall": false,
+    "reason": "OpenCode guard rejected changed CLI version before provider serve/session"
+  },
+  "notExecuted": [
+    "memory-restore",
+    "task-submit",
+    "task-complete",
+    "attachment-publish",
+    "attachment-read",
+    "cold",
+    "resume"
+  ],
+  "usage": {
+    "all": {
+      "input": 168753,
+      "cached": 138752,
+      "output": 1020,
+      "uncached": 30001,
+      "reportedGenerations": 7
+    },
+    "newContinuationOnly": {
+      "input": 70176,
+      "cached": 46336,
+      "output": 476,
+      "uncached": 23840,
+      "reportedGenerations": 3
+    },
+    "priorInput": 98577,
+    "complete": false,
+    "kimiRequests": 4,
+    "kimiUsages": 3,
+    "kimiMissingUsage": "fourth post-publication request cancelled, step.end interrupted has no usage",
+    "openCode": "launch blocked before serve; no provider session/generation observed; unavailable cost is not converted to fee estimate"
+  },
+  "completion": {
+    "successfulRuns": 2,
+    "failedPreInferenceRuns": 1,
+    "exactConsumerAckSuccesses": 2,
+    "coldRestartTest": false,
+    "sessionContinuity": "original Claude binding preserved; first Kimi binding created; OpenCode unbound"
+  },
+  "errors": {
+    "primary": "Run failure: Unregistered CLI version",
+    "secondary": "final collection Missing native session binding masks primary at top level"
+  },
+  "integrity": "ok",
+  "notEfficiency": true,
+  "scope": "does not prove restoration, Task, attachment, restart or cross-provider general success"
+}

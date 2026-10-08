@@ -1,0 +1,403 @@
+{
+  "scope": "Four completed v2 attempts; target provider sessions, fixed source and temporary daemon state only",
+  "files": [
+    {
+      "file": "opencode-deepseek/worker-delivery/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/source/AGENTS.md",
+      "bytes": 1277,
+      "sha256": "c05e2489ad967310ecf30ccd053d6c8172f77ff9f098bcaa9a6af13cf5744651",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/room.db",
+      "bytes": 3256320,
+      "sha256": "426e495068e7d2a90e9ad3161961229d379621d040be598bdb0940b6d1af910a",
+      "kind": "consistent-sqlite-backup"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/memory-launch.jsonl",
+      "bytes": 1467,
+      "sha256": "ebca425d9e33762a53bcfdbcfaf1b18575963e483e0e0096a19c0fbec21f0256",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/daemon.log",
+      "bytes": 27679,
+      "sha256": "12a7a3bf175bce54f6d6d1a66d9477cc60b8f2286cecfde821545efc3b90e5c2",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/a-session.private.jsonl",
+      "bytes": 1240,
+      "sha256": "2652edc7d72512535fa6e04660141bc29908d3407902babfe6af500744aaba75",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/a-message.private.jsonl",
+      "bytes": 22775,
+      "sha256": "af4e0457f19a046defe9c0da07ce4ddefea21115610b4db42ef2c0979c1c737e",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/a-part.private.jsonl",
+      "bytes": 95435,
+      "sha256": "9bc0c07e274526af45f2721821b93630843ba3be1ed543c0c49c18d1be700241",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/b-session.private.jsonl",
+      "bytes": 1241,
+      "sha256": "af440b8c2bc5f5c264af07f86fc1191f2d39e8b86c5f8b8cddf08b1ee3d75c41",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/b-message.private.jsonl",
+      "bytes": 21698,
+      "sha256": "3f1f0bb0ae453372a9ae9189f6660d34b221a6ebb75ca3642aba4000d499b78a",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/b-part.private.jsonl",
+      "bytes": 76740,
+      "sha256": "89e705756ade9374ab6b60a7b74f9fce2453cd163c716ecbf8acd779a3c0f3be",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/c-session.private.jsonl",
+      "bytes": 1231,
+      "sha256": "4fd82761d8de126c52a34d60d1e358bdb3d0e161fda17b789a6a76c0bdfff382",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/c-message.private.jsonl",
+      "bytes": 21687,
+      "sha256": "9314759eb8ec09d95301dc38641033465dfd15253678fca9cdb68df6f711d6de",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/worker-delivery/c-part.private.jsonl",
+      "bytes": 74916,
+      "sha256": "4dacc4de04cf28697025be58c658e42de8ac94a26a22c444ea5c14784de26819",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-deepseek/native/source/AGENTS.md",
+      "bytes": 1277,
+      "sha256": "c05e2489ad967310ecf30ccd053d6c8172f77ff9f098bcaa9a6af13cf5744651",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-deepseek/native/a-session.private.jsonl",
+      "bytes": 1168,
+      "sha256": "93fb0e586e17f9932d682469930163fa58ff38523c0261cbd17f784707a43d01",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/a-message.private.jsonl",
+      "bytes": 12838,
+      "sha256": "25b1c49ef3372713f03d1b9cf15723712007c6239f4bb31f39a1c5d5da16b68d",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/a-part.private.jsonl",
+      "bytes": 50001,
+      "sha256": "d8fd161e175147614e86ca3bf7220c368da0c9158c78f3ad956e2fc58b32c9df",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/b-session.private.jsonl",
+      "bytes": 1167,
+      "sha256": "6d018c5dc7ff6ed3bb07696e50a6b76214473eac50aceb3e01f61ce3191b0b4f",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/b-message.private.jsonl",
+      "bytes": 12840,
+      "sha256": "0963308a83a1bbe8f94d357ab5ea01b1ae67eeb30b7021d5cf3a124738b37f50",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/b-part.private.jsonl",
+      "bytes": 50423,
+      "sha256": "069625c3a4005cef8b18144f8720f47a8acc7dda1b9e80e5cd0832e8313844e3",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/c-session.private.jsonl",
+      "bytes": 1155,
+      "sha256": "b25b1738e9610d31e4a3573938ba91667312f646b5ded4b7012a2c5c661c00d1",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/c-message.private.jsonl",
+      "bytes": 12841,
+      "sha256": "a57b5ed5378d5eaf3dc1cdef1b3afce06beafc84fbcaaca81568f53e8c6faa6c",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-deepseek/native/c-part.private.jsonl",
+      "bytes": 50410,
+      "sha256": "e1e3fb843553d2782f8961e1ec7fd8337366723005e7ee17163b7c5b8243d91c",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/source/AGENTS.md",
+      "bytes": 1277,
+      "sha256": "c05e2489ad967310ecf30ccd053d6c8172f77ff9f098bcaa9a6af13cf5744651",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/room.db",
+      "bytes": 3260416,
+      "sha256": "57790d80aa6d276cbafb55da7635de2b687957cf5750d04b6f9da440c3502f2d",
+      "kind": "consistent-sqlite-backup"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/memory-launch.jsonl",
+      "bytes": 1465,
+      "sha256": "53d045748f0b6d7bd53e2ae475f7fb86f04bda5865c8497a777a4fd602ca8d6a",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/daemon.log",
+      "bytes": 27328,
+      "sha256": "b5b9acf202e8989210bc9132532741aab9f3ec1dc84bdf4a38b344d0ea16b978",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/a-session.private.jsonl",
+      "bytes": 1248,
+      "sha256": "d2693d1017223591b1ea810daecc5dd53973f6654c50d1356fed5c50dd49b94a",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/a-message.private.jsonl",
+      "bytes": 21902,
+      "sha256": "18190314dc30fc9bbb5c31afb23fd25c288ffa4deabdc3ef9bf4082724652d03",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/a-part.private.jsonl",
+      "bytes": 82392,
+      "sha256": "ec5493db040b0cd91d0870c033b545e4537a64c743e8e612e9506111b00a82ac",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/b-session.private.jsonl",
+      "bytes": 1248,
+      "sha256": "221b78215661b696f4b32ebee8a617b70d7ca30b932fdc61b03eae052c9ecdd2",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/b-message.private.jsonl",
+      "bytes": 21900,
+      "sha256": "553187843f3a32ae234238817675b0edb36665a14a0538815484ed699bdd5b2c",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/b-part.private.jsonl",
+      "bytes": 77120,
+      "sha256": "801f22c22f604971984d765de8462aa5fd0540350af07a628cb8dfd2a4215737",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/c-session.private.jsonl",
+      "bytes": 1247,
+      "sha256": "6fb3f1fc340d39775b99ec71b24e322ace8268742501384cef19136cf641e3f1",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/c-message.private.jsonl",
+      "bytes": 22987,
+      "sha256": "1915343c614f83b46fdf50bafdba12745f647182c12e52df63c2239c838d08b1",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/worker-delivery/c-part.private.jsonl",
+      "bytes": 95417,
+      "sha256": "c568cf79963fd181620c6bdbdad2f742e555eae89789dba5112a5f05cc655555",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-aihubmix/native/source/AGENTS.md",
+      "bytes": 1277,
+      "sha256": "c05e2489ad967310ecf30ccd053d6c8172f77ff9f098bcaa9a6af13cf5744651",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "opencode-aihubmix/native/a-session.private.jsonl",
+      "bytes": 1172,
+      "sha256": "556e80f6040a162d7ba3141bbc730154c4dd40ee82ec9f40fb744b8f5bd422fe",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/a-message.private.jsonl",
+      "bytes": 12969,
+      "sha256": "b1a621562cbb7a07694ce160f2c0cccc4879bef332aedcea8103d832749f7c81",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/a-part.private.jsonl",
+      "bytes": 50416,
+      "sha256": "1d5c8b748b9fc5baad458e136b60282a41b88ed637432f030df8656f79a43142",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/b-session.private.jsonl",
+      "bytes": 1172,
+      "sha256": "47d3616fcfb3b586d6d8430b633d2b545d632de050a002bec9212163937786a7",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/b-message.private.jsonl",
+      "bytes": 12970,
+      "sha256": "e43366b51f444db7a70bc3daee6a78dfd49ec1852f7ddea6fc8356a11638a444",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/b-part.private.jsonl",
+      "bytes": 50492,
+      "sha256": "8d23ea4ffe9e0ad0506d2db9b6fc521b3a106803d7fd10af236a73c2d9ef22c3",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/c-session.private.jsonl",
+      "bytes": 1162,
+      "sha256": "146772fa171a993a3307157731631b4c0f3ad8f08d1a8088c00a1391d940656b",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/c-message.private.jsonl",
+      "bytes": 12972,
+      "sha256": "ea16d95030882da4eea450a42145fefce9df75669d1d63930054b0d02f554a50",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "opencode-aihubmix/native/c-part.private.jsonl",
+      "bytes": 50503,
+      "sha256": "71547ebdf35cef728021deb532e8f10e4e6e743fcb6d734b211c4a9b3958f416",
+      "kind": "scoped-native-session-export"
+    },
+    {
+      "file": "haiku/worker-delivery/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "haiku/worker-delivery/room.db",
+      "bytes": 6115328,
+      "sha256": "6d0d2f12fec7f15e60cc2636aa5d4e80f34e3e0cf2f43ede7cec9c6fc27aa65f",
+      "kind": "consistent-sqlite-backup"
+    },
+    {
+      "file": "haiku/worker-delivery/memory-launch.jsonl",
+      "bytes": 16863,
+      "sha256": "7f6b6ea06a1e7e6908660ef7f99e12ebe47ba65e63c553b5874fdbb4c60ea7c5",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "haiku/worker-delivery/daemon.log",
+      "bytes": 300,
+      "sha256": "1ae1dc8dd694f5f9d3a97343eb45d6eb5fe8bdc6d06f2952249f00ca17b23780",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "haiku/worker-delivery/a.private.jsonl",
+      "bytes": 393172,
+      "sha256": "6b7e25c68198074b64af4036f918b63be5e9a65db0a9e1324097b01687239c84",
+      "kind": "exact-native-session-log"
+    },
+    {
+      "file": "haiku/worker-delivery/b.private.jsonl",
+      "bytes": 401368,
+      "sha256": "86b34e5d33ca185880d04fc58f33814cfb47220bd8670d455312de0968fd5749",
+      "kind": "exact-native-session-log"
+    },
+    {
+      "file": "haiku/worker-delivery/c.private.jsonl",
+      "bytes": 399528,
+      "sha256": "d67e98688ac3ce86ac0e420e3f5421e5229131c89398ac4facb1c169c57df7b3",
+      "kind": "exact-native-session-log"
+    },
+    {
+      "file": "haiku/native/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "haiku/native/a.private.jsonl",
+      "bytes": 370907,
+      "sha256": "3f7b4b9297242898b885870e911cd2edbf2eb1f687b57f26393ff26a3d5efb12",
+      "kind": "exact-native-session-log"
+    },
+    {
+      "file": "haiku/native/b.private.jsonl",
+      "bytes": 371423,
+      "sha256": "df98fa9e1f9a2044d0a9fc6419494f4f4c5f1619d5f70e3f30eabc5ed8132194",
+      "kind": "exact-native-session-log"
+    },
+    {
+      "file": "haiku/native/c.private.jsonl",
+      "bytes": 371404,
+      "sha256": "48fc424103bd0e65f71d95929b0b8a23d41ad1c151bf4b83de0ccf7530430dee",
+      "kind": "exact-native-session-log"
+    },
+    {
+      "file": "sonnet/worker-delivery/source/evidence.txt",
+      "bytes": 14682,
+      "sha256": "6ae369899978d878a1b11182a9675fbff7aef2a6955ce747d524011c7bca6204",
+      "kind": "fixed-source"
+    },
+    {
+      "file": "sonnet/worker-delivery/room.db",
+      "bytes": 1839104,
+      "sha256": "fcebd1c78ca70a12b8f70d3ce7e19581c65ef894ec53cb7c08601195c28cfd3b",
+      "kind": "consistent-sqlite-backup"
+    },
+    {
+      "file": "sonnet/worker-delivery/memory-launch.jsonl",
+      "bytes": 938,
+      "sha256": "4f8ac5bd9a9061ff85ede3dc685c834614f837902a44eea269c8ad4602ab41ba",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "sonnet/worker-delivery/daemon.log",
+      "bytes": 300,
+      "sha256": "665644c107bb35162a61176e9e796e8844b97802d2e32f3cad7860a514cad155",
+      "kind": "target-runtime-diagnostics-private"
+    },
+    {
+      "file": "sonnet/worker-delivery/a.private.jsonl",
+      "bytes": 174979,
+      "sha256": "97db1f19a66a41e3e1ca1c253f94520b2060daeab27194f4de5de38fed6c61a1",
+      "kind": "exact-native-session-log"
+    }
+  ],
+  "accountConfigurationCopied": false,
+  "walShmCopied": false
+}

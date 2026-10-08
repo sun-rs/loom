@@ -1,0 +1,158 @@
+[
+  {
+    "sample": "binding-preflight",
+    "summary": {
+      "status": "pre-run-harness-configuration-failure",
+      "humanMessages": 0,
+      "completedStages": 0,
+      "durableCounts": {
+        "run_attempts": 0,
+        "run_attempt_usage": 0,
+        "messages": 0,
+        "activations": 0
+      },
+      "cause": "Fixture configured unqualified model names as runtime binding IDs; exact catalog guard rejected before first Role creation/Human message. The real catalogs contain the approved models under qualified local binding IDs.",
+      "coverage": "No business steps executed; no memory/ACL/attachment/session acceptance claim. No provider Run observed. API preflight omitted catalog-qualified identity coverage.",
+      "resultSha256": "f8a3f91d6226f60cd76dd0a88315098e28249dfc0b34d9cfff7710b1d1854000"
+    },
+    "auditSha256": "eba12273b1703a41f12ce67526971e5bfefcc334caba7f592d377935eae2a873"
+  },
+  {
+    "sample": "parallel",
+    "summary": {
+      "status": "failed-fixture-cwd-audit-and-observed-unauthorized-broadcast",
+      "humanMessages": 1,
+      "completedStages": 0,
+      "runs": 5,
+      "completedActivations": 5,
+      "initialThreeLaneOverlapSeconds": 6.952999830245972,
+      "usage": {
+        "records": 16,
+        "input": 378969,
+        "cachedInput": 345984,
+        "output": 3113,
+        "gaps": [
+          {
+            "run_attempt_id": "run_01f9892d-5c23-410f-8552-ec7015bed234",
+            "reason": "parse_error",
+            "provider": "kimi-acp/v1",
+            "occurrences": 1,
+            "first_observed_at": "2026-10-07T15:13:11.774Z",
+            "last_observed_at": "2026-10-07T15:13:11.774Z",
+            "recorded_at": "2026-10-07T15:13:11.776Z"
+          }
+        ],
+        "complete": false,
+        "perRun": [
+          {
+            "run_attempt_id": "run_01f9892d-5c23-410f-8552-ec7015bed234",
+            "provider": "kimi-acp/v1",
+            "generations": 2,
+            "input": 47134,
+            "cached": 34048,
+            "output": 378
+          },
+          {
+            "run_attempt_id": "run_5a6875db-5619-4482-87ac-a823b413e3c8",
+            "provider": "claude-stream-json/v1",
+            "generations": 2,
+            "input": 57806,
+            "cached": 56320,
+            "output": 389
+          },
+          {
+            "run_attempt_id": "run_73a8f792-10f8-47fa-8a60-b6e7fde32406",
+            "provider": "kimi-acp/v1",
+            "generations": 3,
+            "input": 74477,
+            "cached": 72960,
+            "output": 479
+          },
+          {
+            "run_attempt_id": "run_d420eb49-a578-4064-b403-ec7698114540",
+            "provider": "opencode-server/v1",
+            "generations": 2,
+            "input": 18619,
+            "cached": 10880,
+            "output": 632
+          },
+          {
+            "run_attempt_id": "run_eb33f1d1-dc32-49c8-97a5-e3fc095dd7b0",
+            "provider": "claude-stream-json/v1",
+            "generations": 7,
+            "input": 180933,
+            "cached": 171776,
+            "output": 1235
+          }
+        ],
+        "uncachedKnown": 32985
+      },
+      "businessObservation": "OpenCode authored @owner: @all despite no-handoff instruction; that canonical message created two further addressed Activations (Claude/Kimi). It is not evidence of spontaneous platform duplicate delivery. All five Activations completed; extra two runs did not publish additional messages.",
+      "uncovered": [
+        "directed handoff",
+        "private box queue/isolation",
+        "channel memory lifecycle and switches",
+        "Task submission/completion",
+        "attachment publication/read",
+        "restart continuity"
+      ],
+      "finalMarkers": 2
+    },
+    "auditSha256": "4ad842003db58bdc74d4114ab3e29f23603c19f3c48e5bc53f1feee4a70eca07"
+  },
+  {
+    "sample": "handoff",
+    "summary": {
+      "kind": "mixed-remaining-attempt1-terminal-audit",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Receiver activation excludes actual handoff",
+      "humanMessages": 1,
+      "completedStages": 0,
+      "runs": 3,
+      "completedActivations": 3,
+      "exactConsumerAckVerifiedForEveryRun": true,
+      "messageSequence": [
+        {
+          "seq": 8,
+          "actor": "Human",
+          "bodyClass": "Human asks Claude to hand off to Kimi, but includes both canonical @handles",
+          "eventRecipientProjection": ["claude", "kimi", "opencode"],
+          "canonicalAddressedAndInitialWakes": ["claude", "kimi"],
+          "note": "Event recipient projection is not the actual wake set; OpenCode had no Run."
+        },
+        {
+          "seq": 17,
+          "actor": "claude",
+          "bodyClass": "HANDOFF + @Kimi",
+          "eventRecipientProjection": ["kimi"]
+        },
+        {
+          "seq": 21,
+          "actor": "kimi",
+          "bodyClass": "ACK-HANDOFF",
+          "eventRecipientProjection": []
+        }
+      ],
+      "usage": {
+        "records": 5,
+        "knownInput": 122179,
+        "knownCached": 102912,
+        "knownOutput": 1550,
+        "gapCount": 1,
+        "complete": false
+      },
+      "cause": "Fixture Human body directly named both A and B with @, so both were correctly targeted immediately. The receiver reply belongs to the original Human activation, not the subsequent A handoff activation. This sample cannot establish the intended directed handoff; the strict causal assertion correctly rejected it.",
+      "uncovered": "All later private box, channel memory, Task, attachment and restart stages. No provider/functionality pass is inferred.",
+      "retainedPriorResults": "Both earlier mixed attempts, all their observed costs and unauthorized broadcast outcome remain recorded; this sample does not replace them.",
+      "shutdown": [
+        {
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "resultSha256": "345a6f9ee778f3e5dcc9bc92df38d9016babb98e9eda3faa31f3a4569d39df7b",
+      "correction": "Clarified eventRecipientProjection vs canonical Human addressed/wake set; no raw source or earlier result status changed."
+    },
+    "auditSha256": "ab346459433e57247bf9af1f6cc4d18bfc094507aeb97e50ff2f67d263892af4"
+  }
+]

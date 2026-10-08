@@ -1,0 +1,22 @@
+{
+  "rawSHA256": "2dd952929461accd85677714c74d069fd1e8e3c5ac80966a0b9f0002f6345977",
+  "status": "worker-delivery-incomplete",
+  "notRetroactivelyPassed": true,
+  "nativeArmStarted": false,
+  "answerCorrect": true,
+  "attempts": 2,
+  "generations": 2,
+  "input": 44042,
+  "cached": 20992,
+  "uncached": 23050,
+  "output": 156,
+  "usageComplete": true,
+  "cause": "First Run produced native answer only; no Room action/ACK. Second Run same Activation used MCP with basedOnRoomSeq, published exactly once and committed final marker; ACK completed. Both cold Claude Runs lack nativeTurnId, so v2 exact retry-input identity is unavailable and gate stopped. This is measurement scope limitation, not evidence that recovered publication failed.",
+  "canonicalMarkerSelectsSecondRun": true,
+  "consumerAckThrough9": true,
+  "sourceReplyEvidence": "Actual first assistant text equals gold; second tool invocation keys body/final/basedOnRoomSeq with published result.",
+  "limits": [
+    "No complete pair or long performance verdict.",
+    "Retain both attempts and initial no-delivery failure."
+  ]
+}

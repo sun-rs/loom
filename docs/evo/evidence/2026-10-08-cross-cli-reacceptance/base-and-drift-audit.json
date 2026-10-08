@@ -1,0 +1,1934 @@
+{
+  "kind": "read-only independent audit of completed cross-CLI reacceptance evidence",
+  "scope": "3-round single-instance native/cold/warm efficiency plus two12-round OpenCode drift tests; not long multi-instance stability or billing acceptance",
+  "sourceHashes": {
+    "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+    "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2"
+  },
+  "rawResults": [
+    {
+      "batch": "01-codex-paid",
+      "rawSha256": "f90560384dd8edbbc7775aad0dc8405e8dfa0a8651a23fb41c938c7311083f34",
+      "status": "failed",
+      "finishedAt": "2026-10-07T13:47:55.311Z"
+    },
+    {
+      "batch": "02-codex-paid",
+      "rawSha256": "bb678b350f0bc5ac33c5902699f8322ffa46282ba519797928d7d9bad01f16e6",
+      "status": "failed",
+      "finishedAt": "2026-10-07T13:49:13.802Z"
+    },
+    {
+      "batch": "05-kimi-paid",
+      "rawSha256": "86b8d31325b8925310ea8def6397bb4d50ce09d6d079e20acd7dd7e77e31c1ac",
+      "status": "failed",
+      "finishedAt": "2026-10-07T13:49:43.054Z"
+    },
+    {
+      "batch": "06-kimi-paid",
+      "rawSha256": "1cf2b867e463fdad94541a847a5886f1005c56bf27f380f49ffd6e21604d1900",
+      "status": "over-budget",
+      "finishedAt": "2026-10-07T13:52:37.184Z"
+    },
+    {
+      "batch": "07-opencode-drift",
+      "rawSha256": "2f0b7391b6f744a74e45238fde7ba3b98a30e7b3e48b3fa73c0819e654fa43a1",
+      "status": "violated",
+      "finishedAt": "2026-10-07T13:53:10.600Z"
+    },
+    {
+      "batch": "07-opencode-paid",
+      "rawSha256": "01894c30caa414b292dd316aaacf996ebec11179f40e68c3a1b11e6b35caa38d",
+      "status": "over-budget",
+      "finishedAt": "2026-10-07T13:48:17.191Z"
+    },
+    {
+      "batch": "08-opencode-drift",
+      "rawSha256": "3ea207da061ca86837d6e2dffedb1ce98e99b2416cd167063bd81ec5f40af064",
+      "status": "violated",
+      "finishedAt": "2026-10-07T13:54:57.823Z"
+    },
+    {
+      "batch": "08-opencode-paid",
+      "rawSha256": "fd36aba0a62b9facff2e6a59dbf259638d7a59cfb2ff3b1dcd57fd191c1c5e27",
+      "status": "over-budget",
+      "finishedAt": "2026-10-07T13:50:19.594Z"
+    },
+    {
+      "batch": "claude-isolated-haiku-paid",
+      "rawSha256": "5983dcba5ee774cdda698d5786df105ebf9f21385d4336ce70a3df340ed99cb4",
+      "status": "over-budget",
+      "finishedAt": "2026-10-07T13:55:17.093Z"
+    },
+    {
+      "batch": "claude-isolated-sonnet-paid",
+      "rawSha256": "c25002f970c045bcf67969422bc852c0d1760ab9f9b52f2494ebb047c157d424",
+      "status": "over-budget",
+      "finishedAt": "2026-10-07T13:58:19.321Z"
+    }
+  ],
+  "knownReportedArms": [
+    {
+      "combination": "01-codex",
+      "arm": "native",
+      "resultStatus": "failed",
+      "finishedAt": "2026-10-07T13:47:55.311Z",
+      "roundsObserved": 1,
+      "answeredRounds": 0,
+      "metricsRounds": 0,
+      "knownReportedTotals": {
+        "generations": null,
+        "input": null,
+        "cached": null,
+        "uncached": null,
+        "output": null
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "02-codex",
+      "arm": "native",
+      "resultStatus": "failed",
+      "finishedAt": "2026-10-07T13:49:13.802Z",
+      "roundsObserved": 1,
+      "answeredRounds": 0,
+      "metricsRounds": 0,
+      "knownReportedTotals": {
+        "generations": null,
+        "input": null,
+        "cached": null,
+        "uncached": null,
+        "output": null
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "05-kimi",
+      "arm": "native",
+      "resultStatus": "failed",
+      "finishedAt": "2026-10-07T13:49:43.054Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 97464,
+        "cached": 58112,
+        "uncached": 39352,
+        "output": 1410
+      },
+      "wireRequestCoverage": {
+        "requests": 4,
+        "reportedMatchedRequests": 4,
+        "unreportedRequests": 0
+      },
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "05-kimi",
+      "arm": "role",
+      "resultStatus": "failed",
+      "finishedAt": "2026-10-07T13:49:43.054Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 5,
+        "input": 134992,
+        "cached": 116992,
+        "uncached": 18000,
+        "output": 1991
+      },
+      "wireRequestCoverage": {
+        "requests": 8,
+        "reportedMatchedRequests": 5,
+        "unreportedRequests": 3
+      },
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "06-kimi",
+      "arm": "native",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:52:37.184Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 98420,
+        "cached": 81920,
+        "uncached": 16500,
+        "output": 1969
+      },
+      "wireRequestCoverage": {
+        "requests": 4,
+        "reportedMatchedRequests": 4,
+        "unreportedRequests": 0
+      },
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "06-kimi",
+      "arm": "role",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:52:37.184Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 106715,
+        "cached": 90368,
+        "uncached": 16347,
+        "output": 1626
+      },
+      "wireRequestCoverage": {
+        "requests": 7,
+        "reportedMatchedRequests": 4,
+        "unreportedRequests": 3
+      },
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "07-opencode",
+      "arm": "native",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:48:17.191Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 47853,
+        "cached": 37248,
+        "uncached": 10605,
+        "output": 3079
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "07-opencode",
+      "arm": "role",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:48:17.191Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 5,
+        "input": 71143,
+        "cached": 58624,
+        "uncached": 12519,
+        "output": 3571
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "07-opencode",
+      "arm": "role-warm",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:48:17.191Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 56512,
+        "cached": 44160,
+        "uncached": 12352,
+        "output": 4670
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "08-opencode",
+      "arm": "native",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:50:19.594Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 46634,
+        "cached": 34432,
+        "uncached": 12202,
+        "output": 2121
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "08-opencode",
+      "arm": "role",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:50:19.594Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 7,
+        "input": 105821,
+        "cached": 89856,
+        "uncached": 15965,
+        "output": 3712
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "08-opencode",
+      "arm": "role-warm",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:50:19.594Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 7,
+        "input": 108136,
+        "cached": 91136,
+        "uncached": 17000,
+        "output": 4598
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "arm": "native",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:55:17.093Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 112573,
+        "cached": 83968,
+        "uncached": 28605,
+        "output": 2836
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "arm": "role",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:55:17.093Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 5,
+        "input": 143000,
+        "cached": 114944,
+        "uncached": 28056,
+        "output": 4697
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "arm": "role-warm",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:55:17.093Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 7,
+        "input": 203200,
+        "cached": 187136,
+        "uncached": 16064,
+        "output": 4569
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "arm": "native",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:58:19.321Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 76714,
+        "cached": 57856,
+        "uncached": 18858,
+        "output": 1422
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "arm": "role",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:58:19.321Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 75070,
+        "cached": 55040,
+        "uncached": 20030,
+        "output": 1829
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "arm": "role-warm",
+      "resultStatus": "over-budget",
+      "finishedAt": "2026-10-07T13:58:19.321Z",
+      "roundsObserved": 3,
+      "answeredRounds": 3,
+      "metricsRounds": 3,
+      "knownReportedTotals": {
+        "generations": 4,
+        "input": 74977,
+        "cached": 64000,
+        "uncached": 10977,
+        "output": 2040
+      },
+      "wireRequestCoverage": null,
+      "scope": "three-round single-instance efficiency, not long or multi-member stability; reported totals never billing estimate"
+    }
+  ],
+  "qualityRubric": {
+    "meets-substantive-request": "core facts and specific requested test standards consistent with snapshot",
+    "qualified": "core response useful but limited precision/conditional evidence/duplicated test coverage; not unqualified acceptance",
+    "needs-correction": "specific factual error or materially invalid/undefined regression expectation",
+    "pending-manual-review": "not yet independently read",
+    "no-answer-not-graded": "no answer; not zero billed cost"
+  },
+  "qualityCounts": {
+    "no-answer-not-graded": 2,
+    "needs-correction": 10,
+    "qualified": 25,
+    "meets-substantive-request": 13
+  },
+  "qualityPerRound": [
+    {
+      "combination": "01-codex",
+      "provider": "codex",
+      "bindingId": "local:codex-cli/v1:gpt-6-luna",
+      "effort": "low",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "no-answer-not-graded",
+      "findings": [
+        "No completed answer retained at review; missing cost is not zero."
+      ],
+      "fixedSnapshotSourceRefs": [],
+      "answerSha256": null,
+      "unicodeCharacters": null,
+      "cjkCharacterCountDiagnostic": null,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "02-codex",
+      "provider": "codex",
+      "bindingId": "local:codex-cli/v1:gpt-5.6-luna",
+      "effort": "low",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "no-answer-not-graded",
+      "findings": [
+        "No completed answer retained at review; missing cost is not zero."
+      ],
+      "fixedSnapshotSourceRefs": [],
+      "answerSha256": null,
+      "unicodeCharacters": null,
+      "cjkCharacterCountDiagnostic": null,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "05-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+      "effort": "low",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "跨设备 rename 风险未成立：temporary 与最终文件均在同一 state 目录；不是可证明的普通跨文件系统操作。",
+        "不含任何凭据的保证过强：测试只查 TOKEN 子串，write 直接序列化 mode。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:114-123", "mjs:118", "test:95-99"],
+      "answerSha256": "cacad34a33fbbf87945b4d6a65749cd66d8824b3c2fe9b47f75d4ef57813853a",
+      "unicodeCharacters": 1160,
+      "cjkCharacterCountDiagnostic": 317,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "05-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+      "effort": "low",
+      "arm": "native",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "准确区分 PID 字段相等与真实性。第一个建议要求上层新机制，超出两文件但已明确流程层；第二项仅在合法正整数 receipt.pid 前提下成立。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:113"],
+      "answerSha256": "e18c74de30bcc8aba9fe99690a7a04cbf1417c7b54c1dec1f1d7911a0b5e0cd7",
+      "unicodeCharacters": 672,
+      "cjkCharacterCountDiagnostic": 299,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "05-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+      "effort": "low",
+      "arm": "native",
+      "round": 3,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "延续首轮跨设备 rename 风险；两文件未建立此风险。PID 非认证判断正确。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:114-123"],
+      "answerSha256": "29084daba9d75cb26ad338faa6479f9b002382cf9553c7dfca1d9eef6a083d1c",
+      "unicodeCharacters": 680,
+      "cjkCharacterCountDiagnostic": 358,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "05-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+      "effort": "low",
+      "arm": "role",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "核心清键/回放/条件性证书风险可证。写失败不留旧 receipt 过宽：test180-200只验证新空目录；写前 validation 失败不删除既有 receipt。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:112-123", "test:180-200"],
+      "answerSha256": "b0ee117d14a3186dfd9a3ea741b38e66fd5d73178fc89a712f5321edc32c9c5a",
+      "unicodeCharacters": 922,
+      "cjkCharacterCountDiagnostic": 348,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "05-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+      "effort": "low",
+      "arm": "role",
+      "round": 2,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "准确区分内容合法与来源可信；保持 PID 的合法 mode 篡改仍被采用及数值相等边界，两建议可由函数级夹具检验。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99"],
+      "answerSha256": "a75db07f43ec899f5029b71d101f320225e6c7af5ca6a96ef347962f9a5988dc",
+      "unicodeCharacters": 595,
+      "cjkCharacterCountDiagnostic": 300,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "05-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3-256k",
+      "effort": "low",
+      "arm": "role",
+      "round": 3,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "接受限定到函数层；两条测试给出精确返回 env / PID 不等拒绝、相等不检查活性的可执行标准。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99"],
+      "answerSha256": "83451af0e77f1164b9d487921b5de4a68d527a2c1d05ed0a9120f5abc9958020",
+      "unicodeCharacters": 533,
+      "cjkCharacterCountDiagnostic": 276,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "06-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "effort": "high",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "声称 tlsDirectory 不落回执错误；它未回放到 env，但整个 mode 会写进 receipt。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:34-47", "mjs:118", "test:33"],
+      "answerSha256": "df1fe96a16d33f67ff533cdab5f1dacff991f78902f36a7328aabf79a792c734",
+      "unicodeCharacters": 1056,
+      "cjkCharacterCountDiagnostic": 331,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "06-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "effort": "high",
+      "arm": "native",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "PID 非认证和合法扩集可接受均可证；将合法内容接受称 fail-open 是评价性措辞，不能据此确定安全漏洞。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99"],
+      "answerSha256": "20e77909004f8f8de37bfd6500bec305a61d1a222f2196350c219e48271d7c1c",
+      "unicodeCharacters": 539,
+      "cjkCharacterCountDiagnostic": 287,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "06-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "effort": "high",
+      "arm": "native",
+      "round": 3,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "保留 tlsDirectory 不落回执的错误；其余两条测试行为与当前实现一致。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:118", "test:33"],
+      "answerSha256": "28ed47d7ec2f4331088bda9a8d98a762c333a0b73639dc2b5fef65dfda025629",
+      "unicodeCharacters": 548,
+      "cjkCharacterCountDiagnostic": 302,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "06-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "effort": "high",
+      "arm": "role",
+      "round": 1,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "明确整个 mode 持久化与弱 TOKEN 断言的条件性边界；PID 复用、来源限定、核心回放保证有源码依据。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:118", "test:95-99"],
+      "answerSha256": "0c4703e62adfa12bfb468ba91b3e967d116f1182bd4806ec0697310a2f159d0c",
+      "unicodeCharacters": 725,
+      "cjkCharacterCountDiagnostic": 247,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "06-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "effort": "high",
+      "arm": "role",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "额外字段不影响返回 env 正确；第二条只说当前测试无法区分，尚欠具体期望返回值。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62", "mjs:92-99"],
+      "answerSha256": "013932601eca713f32d029eda7afe00c142f5ff0db55fb7919ef14924d434716",
+      "unicodeCharacters": 460,
+      "cjkCharacterCountDiagnostic": 241,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "06-kimi",
+      "provider": "kimi",
+      "bindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "effort": "high",
+      "arm": "role",
+      "round": 3,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "要求不修改实现却断言写盘不含未知字段，与 JSON.stringify({schemaVersion,pid,mode})直接冲突。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:118"],
+      "answerSha256": "760a8c8e1128f399b30cc2864abfcee705d6f7ae6e71f413b014b0f785f1656b",
+      "unicodeCharacters": 350,
+      "cjkCharacterCountDiagnostic": 243,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "基本回放/条件性风险成立；密钥内容一概无法证明是合理范围限定，不应误作已经泄漏。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:29-47", "mjs:97-99"],
+      "answerSha256": "51cd9b6fa8aeec3d30da9071609486d285078c2bbcbdeb500a1ca9b1a45389f7",
+      "unicodeCharacters": 652,
+      "cjkCharacterCountDiagnostic": 201,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "native",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "PID不保证真实性正确，但“只能证明该字段由同号进程写入”仍过强，函数只能证明两个值相等。损坏JSON抛错测试正确。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:101-109"],
+      "answerSha256": "0c73742888e249c765154d8b409f0a4f00dee04627e495f622eb338c86a4c13d",
+      "unicodeCharacters": 477,
+      "cjkCharacterCountDiagnostic": 205,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "native",
+      "round": 3,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "最终限定函数级接受；两个测试的当前预期（合法同PID内容被接受、坏JSON抛SyntaxError）清楚。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-109"],
+      "answerSha256": "58a22bd40c60110a440c964b1a910928132284256b6dcef1f8472e1de3b80aa2",
+      "unicodeCharacters": 493,
+      "cjkCharacterCountDiagnostic": 219,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "role",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "LAN additionalBindHosts 只作为外部历史mode条件性假设，未断言实际产品缺陷，可接受；“去重”须理解为拒绝重复而非静默去重。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:29-62", "mjs:67-86", "test:151-179"],
+      "answerSha256": "19bb40dd1025be22b8e28b56680c79a82ba36a14eb2ecaa85d187cc92873b573",
+      "unicodeCharacters": 641,
+      "cjkCharacterCountDiagnostic": 190,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "role",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "两测试都证明同PID合法内容不绑定实际运行状态，方向正确但高度重叠，独立覆盖价值低。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99"],
+      "answerSha256": "4751af864a4858835a48bddd208c2ebe544c8ec4dcf58ffffacc47a652f306cb",
+      "unicodeCharacters": 474,
+      "cjkCharacterCountDiagnostic": 268,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "role",
+      "round": 3,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "两项标准与源码一致，但保持重复覆盖；不是两种已证产品漏洞。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99"],
+      "answerSha256": "f7aaf2713fb35dcc1fbe8c40164e7da94b4112c14f6adbaa718d1491b8f59ec1",
+      "unicodeCharacters": 365,
+      "cjkCharacterCountDiagnostic": 211,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "mode整体序列化、固定网络键边界可证；跨文件系统原子性不是此同目录 rename 已建立的风险；privateKeyPath本来是路径而非密钥内容。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:15-23", "mjs:114-121", "test:35"],
+      "answerSha256": "e7b7fd85fa2ce6e0fcbc3562a81416620e50a32f3f85e48a0f8e2f4000e8fc3d",
+      "unicodeCharacters": 599,
+      "cjkCharacterCountDiagnostic": 194,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "PID来源边界正确；把read与restart之间有TOCTOU称事实未展示竞争读路径。第二个测试若仅调用这两函数，不可能实际控制网卡扫描参数。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:87-109", "test:122-125"],
+      "answerSha256": "b0d4722691d5ce69b87834dcb2d2e57e0ca211dbd647f9832d4ca1b12ea8dcca",
+      "unicodeCharacters": 479,
+      "cjkCharacterCountDiagnostic": 188,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "07-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:deepseek/deepseek-flash",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 3,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "最终函数层接受合理；端到端扫描测试需要像test122-125那样明确引入workbenchLaunchMode，不只是两个函数串联。"
+      ],
+      "fixedSnapshotSourceRefs": ["test:122-125"],
+      "answerSha256": "12e0e452202a1be7971bab6e38e279bb8f1bcb2e3647431c8fe5bc30c958785c",
+      "unicodeCharacters": 427,
+      "cjkCharacterCountDiagnostic": 176,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "基本行为正确；::1是否拒绝为未读导入函数问题，不能当已证明漏洞。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:74-85"],
+      "answerSha256": "a3c7f4273cfba19e0339130ab004acad65bfe66f3f56a97a1cfb2d70d7b313b2",
+      "unicodeCharacters": 669,
+      "cjkCharacterCountDiagnostic": 193,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "native",
+      "round": 2,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "第一测试可执行；第二项“缺字段/额外字段接受或拒绝”没有指定字段及预期，不能作为完整回归测试标准。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62"],
+      "answerSha256": "246b2f1f8bccbebae3858bd6a343bb7ed77e4f967e16e61df7415239fb2ced55",
+      "unicodeCharacters": 439,
+      "cjkCharacterCountDiagnostic": 208,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "native",
+      "round": 3,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "仍未补第二条测试的具体数据与接受/拒绝结果；“须明确”不是验收标准本身。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62"],
+      "answerSha256": "149d9eee0e624ceaeca9ad8ff6cdb077bc4a8491e39032e627a6188607f2f724",
+      "unicodeCharacters": 394,
+      "cjkCharacterCountDiagnostic": 231,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "role",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "LAN额外地址、证书单边都是有条件风险，已声明需外部输入成立；核心函数事实基本正确。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:29-47"],
+      "answerSha256": "aef392ea22227cc4e7e66f8bd2dd2dd2096380a77203a2b2005bf11df983aa55",
+      "unicodeCharacters": 636,
+      "cjkCharacterCountDiagnostic": 208,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "role",
+      "round": 2,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "合法同PID扩集与并发写完整性两类回归建议具体，未声称函数做来源验证。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:114-123"],
+      "answerSha256": "89b46617ca98f9997322c2cf79493b1f3fcc774b9c61eeae173ea89d41407f56",
+      "unicodeCharacters": 466,
+      "cjkCharacterCountDiagnostic": 203,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "role",
+      "round": 3,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "两条验收返回环境/最终JSON自洽与无临时文件标准清楚；条件性LAN风险不当成全流程已证。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:114-123"],
+      "answerSha256": "4e86ffea4798e629d8252c8257565b8f852388e2f1877707e2b9202dd1b2138b",
+      "unicodeCharacters": 501,
+      "cjkCharacterCountDiagnostic": 226,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "LAN缺RAH_WEB_PORT及可选证书为条件性观察；trusted LAN重复是拒绝而非静默去重。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:29-47", "test:151-179"],
+      "answerSha256": "f902c1364a97f3fd4c8ad4f89ce4f715e085ea52a3cf9b74487f44ec090c1ce8",
+      "unicodeCharacters": 640,
+      "cjkCharacterCountDiagnostic": 203,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "PID不证明来源的主结论正确。第一条拒绝合法同PID模式变化，只有作为新增授权加固目标才成立；回答未明确标为需改实现，不能当当前回归保证。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62", "mjs:92-99"],
+      "answerSha256": "df560806b9c4fdcf3567d9db46bf2027b9b22b9579666c38f6a3ca15ef661303",
+      "unicodeCharacters": 452,
+      "cjkCharacterCountDiagnostic": 186,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "08-opencode",
+      "provider": "opencode",
+      "bindingId": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 3,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "第一标准要求合法kind/地址被篡改后必抛，却未明确是需新增授权机制的未来行为；第二标准才明确区分当前接受与未来nonce拒绝。应补同样的当前/改造后界线，不把硬化提案本身判成错误。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62", "mjs:92-99"],
+      "answerSha256": "bf48225177cff3c971952219127dabdf3029a64991727b074e2fa4922df71d5b",
+      "unicodeCharacters": 454,
+      "cjkCharacterCountDiagnostic": 186,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "回放、清键、版本/PID校验及两项有条件边界有源码依据，没有把外部不确定性定成漏洞。"
+      ],
+      "fixedSnapshotSourceRefs": [
+        "mjs:42-46",
+        "mjs:74-85",
+        "mjs:87-99",
+        "test:108-150"
+      ],
+      "answerSha256": "212e8f6f99821946f9557de84369e0d602dc5469d33aade0bcc4f4fa5595eb36",
+      "unicodeCharacters": 606,
+      "cjkCharacterCountDiagnostic": 239,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "native",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "PID真实性边界正确；修改kind后仍接受需限定为字段完整的合法新kind，不能任意改kind。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62", "mjs:92-99"],
+      "answerSha256": "e6d84b7af4d352cd6c92d832b84417a9645ef8912c485ae25316a55297c2e403",
+      "unicodeCharacters": 515,
+      "cjkCharacterCountDiagnostic": 240,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "native",
+      "round": 3,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "第二条改kind后一概仍接受并把任何抛错当回归缺少合法mode前提；无效kind/缺字段应抛错，不能将正确拒绝标成回归。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:24-62", "test:58-66"],
+      "answerSha256": "6184a55f5fd6d162c870710a5302b90727feac0a9cc336f97ae0faa96f7f3b18",
+      "unicodeCharacters": 433,
+      "cjkCharacterCountDiagnostic": 263,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "role",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "基本事实正确；JSON parse错误向上传播不构成已证风险，已用绕过校验的条件限定。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:101-109"],
+      "answerSha256": "a9a45656e968f0ef38acfa43ab8ca90d73c75770584604ee60bf4106d41e2788",
+      "unicodeCharacters": 732,
+      "cjkCharacterCountDiagnostic": 271,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "role",
+      "round": 2,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "两条测试限定合法同PID输入及连续覆盖写，当前期望明确；不以PID相等证明真实性。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:114-121"],
+      "answerSha256": "21f59537ed168e3042fdaf8e80e440e706217c5c7d5dc956707fecb6ef04ce74",
+      "unicodeCharacters": 450,
+      "cjkCharacterCountDiagnostic": 235,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "role",
+      "round": 3,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "沿前轮测试可执行；“PID仅为字符串比对”技术表述错误，是strict equal无字符串转换，通常为数值。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-96"],
+      "answerSha256": "dccadb0e67059c9c70ce9890acb887112a4c5ac3705b141fdf661b9fa3925bbf",
+      "unicodeCharacters": 410,
+      "cjkCharacterCountDiagnostic": 206,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "role-warm",
+      "round": 1,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "核心回放与fail-closed内容范围正确；外部校验强度、PID复用明确作为条件性边界而非已证漏洞。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:54", "mjs:81", "mjs:92-99"],
+      "answerSha256": "91397879f0e8c4bb5f4d9ac51de12253fad051045ade5e8eabcad33742e87391",
+      "unicodeCharacters": 845,
+      "cjkCharacterCountDiagnostic": 281,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "role-warm",
+      "round": 2,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "具体合法同PID端口变化与合法私网替换均断言当前接受，准确区分当前边界与未来修复。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:49-62", "mjs:92-99"],
+      "answerSha256": "2891f9b0c958b3dcebd6ccd915236379d3d042c02371a725fb519e5d04407691",
+      "unicodeCharacters": 508,
+      "cjkCharacterCountDiagnostic": 248,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-haiku",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:haiku",
+      "effort": null,
+      "arm": "role-warm",
+      "round": 3,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "验收给出明确8080返回值，另一合法地址替换也限定当前接受；未来加固需同步修改测试。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:49-62", "mjs:92-99"],
+      "answerSha256": "4204d39d6438f85a15a95be722bc7a90c560b570edfc9894eb527cd0e13746e2",
+      "unicodeCharacters": 500,
+      "cjkCharacterCountDiagnostic": 259,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "native",
+      "round": 1,
+      "qualityVerdict": "needs-correction",
+      "findings": [
+        "称test133未构造undefined additionalBindHosts不准确：test139的mode确实省略该字段，test143/147明确验证不引入LAN。"
+      ],
+      "fixedSnapshotSourceRefs": ["test:133-149"],
+      "answerSha256": "2d0035a514372966ab949fc2cd07156db73857ce441f2192c893bc0db23a2724",
+      "unicodeCharacters": 775,
+      "cjkCharacterCountDiagnostic": 264,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "native",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "准确指出PID仅数值校验；两测试属于流程加固，明确预计当前缺口，不误判为当前应已实现。但是否必须阻断需产品威胁模型，快照不能决定。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-109"],
+      "answerSha256": "510b2574c18f78e873b777d36cf2dc11bce76100fbcfc203614a1bd0559d1bc7",
+      "unicodeCharacters": 552,
+      "cjkCharacterCountDiagnostic": 190,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "native",
+      "round": 3,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "认可test133覆盖等效undefined情形，基本修正首轮；加固验收明确放集成层且承认当前缺失，非源码事实错。"
+      ],
+      "fixedSnapshotSourceRefs": ["test:133-149", "mjs:92-109"],
+      "answerSha256": "fc6f4ca1b82dab8f86627c1baa57fb7a14afceb580a81459ee6a4d661bfedbed",
+      "unicodeCharacters": 642,
+      "cjkCharacterCountDiagnostic": 314,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "role",
+      "round": 1,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "核心事实准确；列同目录跨文件系统rename风险同时明示正常调用不成立，属于凑风险而非已证风险。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:114-121"],
+      "answerSha256": "55e00b1d0306ce1db4bd4c1a67c3d7c0b4469fb05f45a0e653393c97c551e46a",
+      "unicodeCharacters": 890,
+      "cjkCharacterCountDiagnostic": 305,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "role",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "两建议均明确需先加代际/属主校验，不能因不同于当前代码判错；其必要性依赖目录权限/威胁模型，两文件未证明真实暴露。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-109"],
+      "answerSha256": "c552b0359c86cd668191cdf80ee356ded7b3edbf769d018927ca940f2faff50c",
+      "unicodeCharacters": 648,
+      "cjkCharacterCountDiagnostic": 266,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "role",
+      "round": 3,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "明确撤回跨设备rename，区分增强建议与当前缺陷；测试标TODO/现状预期失败/加固后通过，语义一致。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:114-121", "mjs:92-109"],
+      "answerSha256": "f53e3a7ceb5af40ff677e9f6df07b163a17a7b5c741abe3dedcdec80c15cecdb",
+      "unicodeCharacters": 630,
+      "cjkCharacterCountDiagnostic": 365,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 1,
+      "qualityVerdict": "meets-substantive-request",
+      "findings": [
+        "基本回放与失败关闭范围正确，PID/外部校验风险有明确条件和未知范围。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:29-99"],
+      "answerSha256": "3888a7a77229d3da0677be3cba6d887a6af8fe5959bbef813238820888966ef1",
+      "unicodeCharacters": 619,
+      "cjkCharacterCountDiagnostic": 242,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 2,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "函数和流程分界明确，测试是要求未来流程识别存活/意图；不能当当前已存在保证。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-109"],
+      "answerSha256": "c4ff8e8a024082f85f7a5a58cde85114995391d170f5c79a531240b5a7e59686",
+      "unicodeCharacters": 484,
+      "cjkCharacterCountDiagnostic": 284,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    },
+    {
+      "combination": "claude-isolated-sonnet",
+      "provider": "claude",
+      "bindingId": "local:claude-cli/v1:sonnet",
+      "effort": "low",
+      "arm": "role-warm",
+      "round": 3,
+      "qualityVerdict": "qualified",
+      "findings": [
+        "验收明确修复后或选择信任同用户时文档化当前接受；但“伪造需同用户写且PID复用巧合”过强，能改整个JSON者也可改PID，不必依赖PID复用。"
+      ],
+      "fixedSnapshotSourceRefs": ["mjs:92-99", "mjs:118"],
+      "answerSha256": "8b3cfc03958942888c391b6f6359b292fa53d9974cb2227b7e268beccd4474b2",
+      "unicodeCharacters": 456,
+      "cjkCharacterCountDiagnostic": 327,
+      "sourceEvidence": "Exact copied scripts/workbench-launch-receipt.mjs and .test.mjs under sourceHashes"
+    }
+  ],
+  "independentUsageEvidence": {
+    "claudeNormalization": "input=input_tokens+cache_creation_input_tokens+cache_read_input_tokens; cached=read only; uncached=input+cache_creation. Independently summed unique main assistant message ids, matching all6 arm totals exactly.",
+    "claude": [
+      {
+        "binding": "haiku",
+        "arm": "native",
+        "oneContinuousSession": true,
+        "reportedModels": ["claude-haiku-4-5-20251001"],
+        "rawUsageComponents": {
+          "input_tokens": 28605,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 83968,
+          "output_tokens": 2836
+        },
+        "normalizedTotals": {
+          "generations": 4,
+          "input": 112573,
+          "cached": 83968,
+          "uncached": 28605,
+          "output": 2836
+        },
+        "matchesResult": true,
+        "transcriptSha256": "62cc8045393f1b2401aa162e4957520ea6cf4e77367c1c2b5140249a276f22d4"
+      },
+      {
+        "binding": "haiku",
+        "arm": "role",
+        "oneContinuousSession": true,
+        "reportedModels": ["claude-haiku-4-5-20251001"],
+        "rawUsageComponents": {
+          "input_tokens": 28056,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 114944,
+          "output_tokens": 4697
+        },
+        "normalizedTotals": {
+          "generations": 5,
+          "input": 143000,
+          "cached": 114944,
+          "uncached": 28056,
+          "output": 4697
+        },
+        "matchesResult": true,
+        "transcriptSha256": "1e68ddbd51cee278d408972eb4b6a9347bd4ae6722d37d8df530fbd1151290b4"
+      },
+      {
+        "binding": "haiku",
+        "arm": "role-warm",
+        "oneContinuousSession": true,
+        "reportedModels": ["claude-haiku-4-5-20251001"],
+        "rawUsageComponents": {
+          "input_tokens": 16064,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 187136,
+          "output_tokens": 4569
+        },
+        "normalizedTotals": {
+          "generations": 7,
+          "input": 203200,
+          "cached": 187136,
+          "uncached": 16064,
+          "output": 4569
+        },
+        "matchesResult": true,
+        "transcriptSha256": "1795e4659801d151f75f4c0e0136654efbf467d8d9046ddb82e0590da61ba13e"
+      },
+      {
+        "binding": "sonnet",
+        "arm": "native",
+        "oneContinuousSession": true,
+        "reportedModels": ["claude-sonnet-5-5"],
+        "rawUsageComponents": {
+          "input_tokens": 18858,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 57856,
+          "output_tokens": 1422
+        },
+        "normalizedTotals": {
+          "generations": 4,
+          "input": 76714,
+          "cached": 57856,
+          "uncached": 18858,
+          "output": 1422
+        },
+        "matchesResult": true,
+        "transcriptSha256": "f096fa0ba63e500327e40200b1857b6204d6d24b1e11f0a4b3a2465f475de3cf"
+      },
+      {
+        "binding": "sonnet",
+        "arm": "role",
+        "oneContinuousSession": true,
+        "reportedModels": ["claude-sonnet-5-5"],
+        "rawUsageComponents": {
+          "input_tokens": 20030,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 55040,
+          "output_tokens": 1829
+        },
+        "normalizedTotals": {
+          "generations": 4,
+          "input": 75070,
+          "cached": 55040,
+          "uncached": 20030,
+          "output": 1829
+        },
+        "matchesResult": true,
+        "transcriptSha256": "66aef2151a1366c5fa98afdfaee5f124a8561ee92ed39c5e73349181f5bf5bdd"
+      },
+      {
+        "binding": "sonnet",
+        "arm": "role-warm",
+        "oneContinuousSession": true,
+        "reportedModels": ["claude-sonnet-5-5"],
+        "rawUsageComponents": {
+          "input_tokens": 10977,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 64000,
+          "output_tokens": 2040
+        },
+        "normalizedTotals": {
+          "generations": 4,
+          "input": 74977,
+          "cached": 64000,
+          "uncached": 10977,
+          "output": 2040
+        },
+        "matchesResult": true,
+        "transcriptSha256": "21bee880306beab94c34fa49becb5f27566794cb271bb89aa6ae6b0d631094d3"
+      }
+    ],
+    "kimi": [
+      {
+        "combination": "05-kimi",
+        "wireSha256": "b2d6f4352d7d0bdf170c11e8b294ebdd1b0ef6d58a64766e4bc77e84ec99542c",
+        "requests": [
+          {
+            "line": 18,
+            "timeMs": 1791380857640,
+            "turnStep": "0.1",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 30,
+            "timeMs": 1791380907254,
+            "turnStep": "0.2",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 41,
+            "timeMs": 1791380937592,
+            "turnStep": "0.3",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 51,
+            "timeMs": 1791380951026,
+            "turnStep": "0.4",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 65,
+            "timeMs": 1791380953052,
+            "turnStep": "1.1",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 76,
+            "timeMs": 1791380966153,
+            "turnStep": "1.2",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 90,
+            "timeMs": 1791380969238,
+            "turnStep": "2.1",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          },
+          {
+            "line": 101,
+            "timeMs": 1791380981825,
+            "turnStep": "2.2",
+            "modelAlias": "kimi-code/k3-256k",
+            "thinkingEffort": "low"
+          }
+        ],
+        "stepEnds": [
+          {
+            "line": 28,
+            "timeMs": 1791380907248,
+            "hasUsage": true,
+            "turnId": "0",
+            "step": 1
+          },
+          {
+            "line": 39,
+            "timeMs": 1791380937587,
+            "hasUsage": true,
+            "turnId": "0",
+            "step": 2
+          },
+          {
+            "line": 49,
+            "timeMs": 1791380951020,
+            "hasUsage": true,
+            "turnId": "0",
+            "step": 3
+          },
+          {
+            "line": 53,
+            "timeMs": 1791380951031,
+            "hasUsage": false,
+            "turnId": "0",
+            "step": 4
+          },
+          {
+            "line": 74,
+            "timeMs": 1791380966147,
+            "hasUsage": true,
+            "turnId": "1",
+            "step": 1
+          },
+          {
+            "line": 78,
+            "timeMs": 1791380966158,
+            "hasUsage": false,
+            "turnId": "1",
+            "step": 2
+          },
+          {
+            "line": 99,
+            "timeMs": 1791380981820,
+            "hasUsage": true,
+            "turnId": "2",
+            "step": 1
+          },
+          {
+            "line": 103,
+            "timeMs": 1791380981829,
+            "hasUsage": false,
+            "turnId": "2",
+            "step": 2
+          }
+        ],
+        "cancels": [
+          {
+            "line": 52,
+            "timeMs": 1791380951029,
+            "reason": "user_cancelled"
+          },
+          {
+            "line": 77,
+            "timeMs": 1791380966156,
+            "reason": "user_cancelled"
+          },
+          {
+            "line": 102,
+            "timeMs": 1791380981827,
+            "reason": "user_cancelled"
+          }
+        ],
+        "toolErrors": [
+          {
+            "line": 38,
+            "code": "final_delivery_unconfirmed",
+            "noWriteExplicit": true
+          }
+        ],
+        "requestCount": 8,
+        "reportedStepUsageCount": 5,
+        "unreportedRequestCount": 3,
+        "billingForUnreportedRequests": "unknown; cancelled request may already be admitted, never zero by inference"
+      },
+      {
+        "combination": "06-kimi",
+        "wireSha256": "a59b48b957712a60b51bb3705f0c3e5f3790fb8257797b67f25e9f774ac09a93",
+        "requests": [
+          {
+            "line": 17,
+            "timeMs": 1791381059456,
+            "turnStep": "0.1",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          },
+          {
+            "line": 29,
+            "timeMs": 1791381076458,
+            "turnStep": "0.2",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          },
+          {
+            "line": 40,
+            "timeMs": 1791381101596,
+            "turnStep": "0.3",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          },
+          {
+            "line": 54,
+            "timeMs": 1791381103608,
+            "turnStep": "1.1",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          },
+          {
+            "line": 65,
+            "timeMs": 1791381129883,
+            "turnStep": "1.2",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          },
+          {
+            "line": 79,
+            "timeMs": 1791381132876,
+            "turnStep": "2.1",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          },
+          {
+            "line": 90,
+            "timeMs": 1791381155940,
+            "turnStep": "2.2",
+            "modelAlias": "kimi-code/k3",
+            "thinkingEffort": "high"
+          }
+        ],
+        "stepEnds": [
+          {
+            "line": 27,
+            "timeMs": 1791381076452,
+            "hasUsage": true,
+            "turnId": "0",
+            "step": 1
+          },
+          {
+            "line": 38,
+            "timeMs": 1791381101592,
+            "hasUsage": true,
+            "turnId": "0",
+            "step": 2
+          },
+          {
+            "line": 42,
+            "timeMs": 1791381101600,
+            "hasUsage": false,
+            "turnId": "0",
+            "step": 3
+          },
+          {
+            "line": 63,
+            "timeMs": 1791381129878,
+            "hasUsage": true,
+            "turnId": "1",
+            "step": 1
+          },
+          {
+            "line": 67,
+            "timeMs": 1791381129888,
+            "hasUsage": false,
+            "turnId": "1",
+            "step": 2
+          },
+          {
+            "line": 88,
+            "timeMs": 1791381155934,
+            "hasUsage": true,
+            "turnId": "2",
+            "step": 1
+          },
+          {
+            "line": 92,
+            "timeMs": 1791381155944,
+            "hasUsage": false,
+            "turnId": "2",
+            "step": 2
+          }
+        ],
+        "cancels": [
+          {
+            "line": 41,
+            "timeMs": 1791381101598,
+            "reason": "user_cancelled"
+          },
+          {
+            "line": 66,
+            "timeMs": 1791381129886,
+            "reason": "user_cancelled"
+          },
+          {
+            "line": 91,
+            "timeMs": 1791381155942,
+            "reason": "user_cancelled"
+          }
+        ],
+        "toolErrors": [],
+        "requestCount": 7,
+        "reportedStepUsageCount": 4,
+        "unreportedRequestCount": 3,
+        "billingForUnreportedRequests": "unknown; cancelled request may already be admitted, never zero by inference"
+      }
+    ],
+    "limits": [
+      "Wire llm.request is recorded native request intent/start, not independent provider HTTP accounting.",
+      "Transcript reported model identifiers do not prove remote backend weights.",
+      "No price or cache-causality claim; arm order and response length differ."
+    ]
+  },
+  "independentOpenCodeDrift": {
+    "method": "Read-only canonical SQLite plus actual native OpenCode tool parts, no provider executions",
+    "reports": [
+      {
+        "combination": "07-opencode",
+        "rawResultSha256": "2f0b7391b6f744a74e45238fde7ba3b98a30e7b3e48b3fa73c0819e654fa43a1",
+        "status": "violated",
+        "canonicalFinalMarkerCountAllDb": 0,
+        "nativePosts": [
+          {
+            "round": 1,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "54f553542e478e99b72adb6263e2e17ad821d83da803a938c251ef30306b0591"
+          },
+          {
+            "round": 2,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "50576700c86b25644fad38490f6b337ae76a0cb835e2f6e32d571d35c48fd7f5"
+          },
+          {
+            "round": 4,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "2d61b3945a9a8c1aa622f9bde402d99b7a408548dbdc5745aa244d825a02c02c"
+          },
+          {
+            "round": 6,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "1602bcab2074b8f91abd0691200ffaa0f7b9719dbbf14f0ef3b962ef27800c06"
+          },
+          {
+            "round": 7,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "4cee4fcee97b06d9fcc214df4916b9d2c915f7859af09b46e71135718f178132"
+          },
+          {
+            "round": 9,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "962bcd428aa56713996a9e255bd63a9065b65754a508d886d0ef4fd0248b3490"
+          },
+          {
+            "round": 11,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "010785677fb8e9208ce0f76d9388e4c41b5fdbf62533d545c4998dd4bff5099a"
+          },
+          {
+            "round": 12,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "0c77b1a48f93da48be01f4f74b253abc11989787ac7d215bde8d4e926bf4fbac"
+          }
+        ],
+        "formatFailures": [
+          {
+            "round": 1,
+            "actualCharacters": 70,
+            "allowedCharacters": 40,
+            "prefixOk": true,
+            "includeOk": true
+          },
+          {
+            "round": 4,
+            "actualCharacters": 41,
+            "allowedCharacters": 40,
+            "prefixOk": true,
+            "includeOk": true
+          }
+        ],
+        "retriedRounds": [3],
+        "reportedGenerations": 30,
+        "reportedInput": 386543,
+        "reportedUncached": 17391,
+        "toolObservationMissing": true,
+        "compactionObserved": true
+      },
+      {
+        "combination": "08-opencode",
+        "rawResultSha256": "3ea207da061ca86837d6e2dffedb1ce98e99b2416cd167063bd81ec5f40af064",
+        "status": "violated",
+        "canonicalFinalMarkerCountAllDb": 0,
+        "nativePosts": [
+          {
+            "round": 1,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "e6ad189710bf0091f04ab1f27280be83157bed63ce709eea976ab94a464f6ba8"
+          },
+          {
+            "round": 2,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "ed34a81da9d5a0521fa671ae65385642daa2d8c6cc4477d267c3459c8fe8619e"
+          },
+          {
+            "round": 4,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "95fb92ebd5fea21b3a85ead5e6a7e901da6f5e3dec0e94744a0dc2eb56809867"
+          },
+          {
+            "round": 6,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "8784cb096f4911cbb87f22afe07a9af31b2bc3a585710ed54db7e480153c0759"
+          },
+          {
+            "round": 7,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "c8c0fa54f699909827c95c3a0029390a1b5186423a136f1d3f2314fac8765c12"
+          },
+          {
+            "round": 9,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "9bc9e523cf438118c346fbbcedad57473c36346e1bd6bde4abf25b01049a96d9"
+          },
+          {
+            "round": 11,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "d574b8946e41faabfce302ac65739d272628047554819cc8d2a414c70662bf75"
+          },
+          {
+            "round": 12,
+            "nativeTool": "bash",
+            "completed": true,
+            "explicitFinalFlag": false,
+            "turnArgumentPresent": true,
+            "bodyMatchesCanonicalReply": true,
+            "commandSha256": "c7cd7cd0ac922eba4ca4c618bfd1156ea84877c7020618c57e68ff4980e6c86b"
+          }
+        ],
+        "formatFailures": [
+          {
+            "round": 1,
+            "actualCharacters": 68,
+            "allowedCharacters": 40,
+            "prefixOk": true,
+            "includeOk": true
+          },
+          {
+            "round": 4,
+            "actualCharacters": 41,
+            "allowedCharacters": 40,
+            "prefixOk": true,
+            "includeOk": true
+          }
+        ],
+        "retriedRounds": [5],
+        "reportedGenerations": 30,
+        "reportedInput": 412847,
+        "reportedUncached": 24239,
+        "toolObservationMissing": true,
+        "compactionObserved": true
+      }
+    ],
+    "fieldSemantics": {
+      "finalPosts": "drift-checks.mjs:296,320: number of reply rounds with non-null final check; denominator, not count of markers",
+      "finalOnLastPost": "drift-checks.mjs:224,321: count whose last event matches a durable Run final marker",
+      "turnHandleChecked0": "native tool observer missing; independently actual8/8commands per model have --turn, not proof of failed CLI use",
+      "format": "max40 JavaScript characters from drift-scenario.mjs:7, actual70/68 and41 fail; bodies may otherwise answer correctly"
+    },
+    "limits": [
+      "No final marker is a real explicit-final efficiency criterion failure, not missing business publication: normal post plus ACK and natural native completion can be valid.",
+      "Standing protocol says MAY explicitly add --final only for completed work, not MUST on every successful post; the stricter final95 is this gate criterion.",
+      "No inference that reported generation count equals HTTP requests or price.",
+      "Read-only diagnostic extraction proves argument presence, not a new substitute for Worker authentication/ACK."
+    ]
+  },
+  "privatePreservation": {
+    "manifestSha256": "82cb04a8cb13c785f7f02d867b4f36b1ddd55d6455db7d3956d2ae9c4eda40e2",
+    "files": 80,
+    "gaps": [],
+    "format": "native JSONL; scoped OpenCode session/message/part rows from one read transaction; consistent temporary daemon SQLite backups"
+  },
+  "limits": [
+    "Manual post-hoc review of individual stochastic answers; errors do not establish product-induced quality degradation.",
+    "Model binding/effort are gate metadata except independently inspected Kimi llm.request; do not claim verified backend weights.",
+    "Actual HTTP request totals unknown for providers without direct request evidence; reported generation count is not HTTP count.",
+    "Cancelled Kimi llm.request without usage remains unknown cost; no zero-cost inference.",
+    "Running arms remain provisional and raw hashes may change until finishedAt.",
+    "Quality rubric is post-hoc manual source review, not pre-registered scoring; explicitly conditional hardening proposals are not current-code factual failures.",
+    "Known reported usage is retained for all failures; missing or cancelled-request usage is unknown, never billed zero.",
+    "Differences across arms include answer content/length, actual routes and cache ordering; ratios are descriptive only."
+  ]
+}

@@ -1,0 +1,1674 @@
+{
+  "rawSHA256": "c97ab1e1322fac3cc9576bb64537aa53ef8ad2fff34215aa787fdd018294f3a5",
+  "arms": {
+    "worker-delivery": {
+      "totals": {
+        "input": 1198554,
+        "cached": 1141248,
+        "uncached": 57306,
+        "output": 5869,
+        "generations": 37
+      },
+      "checkpoints": {
+        "1": {
+          "input": 112459,
+          "cached": 86272,
+          "uncached": 26187,
+          "output": 808,
+          "generations": 4
+        },
+        "4": {
+          "input": 379807,
+          "cached": 345600,
+          "uncached": 34207,
+          "output": 2090,
+          "generations": 13
+        },
+        "8": {
+          "input": 769928,
+          "cached": 723968,
+          "uncached": 45960,
+          "output": 3912,
+          "generations": 25
+        },
+        "12": {
+          "input": 1198554,
+          "cached": 1141248,
+          "uncached": 57306,
+          "output": 5869,
+          "generations": 37
+        }
+      },
+      "correct": 36,
+      "sessions": 3,
+      "runs": 36,
+      "rounds": [
+        {
+          "stage": 1,
+          "speaker": "a",
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "metrics": {
+            "input": 56505,
+            "cached": 47360,
+            "uncached": 9145,
+            "output": 404,
+            "generations": 2,
+            "generationsBeforeReply": 2,
+            "generationsAfterReply": 0,
+            "replySeconds": 17.515
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 2,
+          "speaker": "b",
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "metrics": {
+            "input": 28000,
+            "cached": 19456,
+            "uncached": 8544,
+            "output": 213,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.866
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 3,
+          "speaker": "c",
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "metrics": {
+            "input": 27954,
+            "cached": 19456,
+            "uncached": 8498,
+            "output": 191,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 8.54
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 4,
+          "speaker": "a",
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "metrics": {
+            "input": 29188,
+            "cached": 28416,
+            "uncached": 772,
+            "output": 124,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.816
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 5,
+          "speaker": "b",
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "metrics": {
+            "input": 28862,
+            "cached": 27904,
+            "uncached": 958,
+            "output": 162,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.949
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 6,
+          "speaker": "c",
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "metrics": {
+            "input": 28766,
+            "cached": 27904,
+            "uncached": 862,
+            "output": 168,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.432
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 7,
+          "speaker": "a",
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29946,
+            "cached": 29184,
+            "uncached": 762,
+            "output": 121,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.284
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 8,
+          "speaker": "b",
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29649,
+            "cached": 28672,
+            "uncached": 977,
+            "output": 159,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.903
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 9,
+          "speaker": "c",
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29547,
+            "cached": 28672,
+            "uncached": 875,
+            "output": 149,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 9.141
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 10,
+          "speaker": "a",
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "metrics": {
+            "input": 30675,
+            "cached": 29696,
+            "uncached": 979,
+            "output": 113,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.924
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 11,
+          "speaker": "b",
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "metrics": {
+            "input": 30415,
+            "cached": 29440,
+            "uncached": 975,
+            "output": 143,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.517
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 12,
+          "speaker": "c",
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "metrics": {
+            "input": 30300,
+            "cached": 29440,
+            "uncached": 860,
+            "output": 143,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.819
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 13,
+          "speaker": "a",
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "metrics": {
+            "input": 31475,
+            "cached": 30464,
+            "uncached": 1011,
+            "output": 125,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.486
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 14,
+          "speaker": "b",
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "metrics": {
+            "input": 31281,
+            "cached": 30208,
+            "uncached": 1073,
+            "output": 146,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.755
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 15,
+          "speaker": "c",
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "metrics": {
+            "input": 31180,
+            "cached": 30208,
+            "uncached": 972,
+            "output": 147,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.586
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 16,
+          "speaker": "a",
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "metrics": {
+            "input": 32244,
+            "cached": 31232,
+            "uncached": 1012,
+            "output": 159,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.866
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 17,
+          "speaker": "b",
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "metrics": {
+            "input": 32077,
+            "cached": 31232,
+            "uncached": 845,
+            "output": 195,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.012
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 18,
+          "speaker": "c",
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "metrics": {
+            "input": 31952,
+            "cached": 30976,
+            "uncached": 976,
+            "output": 190,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.063
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 19,
+          "speaker": "a",
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "metrics": {
+            "input": 33038,
+            "cached": 32000,
+            "uncached": 1038,
+            "output": 113,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.141
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 20,
+          "speaker": "b",
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "metrics": {
+            "input": 32900,
+            "cached": 32000,
+            "uncached": 900,
+            "output": 161,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.877
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 21,
+          "speaker": "c",
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "metrics": {
+            "input": 32754,
+            "cached": 31744,
+            "uncached": 1010,
+            "output": 161,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.105
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 22,
+          "speaker": "a",
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "metrics": {
+            "input": 33755,
+            "cached": 33024,
+            "uncached": 731,
+            "output": 124,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.526
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 23,
+          "speaker": "b",
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "metrics": {
+            "input": 33797,
+            "cached": 32768,
+            "uncached": 1029,
+            "output": 150,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.301
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 24,
+          "speaker": "c",
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "metrics": {
+            "input": 33668,
+            "cached": 32512,
+            "uncached": 1156,
+            "output": 151,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.215
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 25,
+          "speaker": "a",
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "metrics": {
+            "input": 34521,
+            "cached": 33536,
+            "uncached": 985,
+            "output": 106,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.904
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 26,
+          "speaker": "b",
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "metrics": {
+            "input": 34580,
+            "cached": 33792,
+            "uncached": 788,
+            "output": 139,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.361
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 27,
+          "speaker": "c",
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "metrics": {
+            "input": 34436,
+            "cached": 33536,
+            "uncached": 900,
+            "output": 148,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.222
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 28,
+          "speaker": "a",
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "metrics": {
+            "input": 35311,
+            "cached": 34304,
+            "uncached": 1007,
+            "output": 123,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.634
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 29,
+          "speaker": "b",
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "metrics": {
+            "input": 35338,
+            "cached": 34560,
+            "uncached": 778,
+            "output": 151,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.113
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 30,
+          "speaker": "c",
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "metrics": {
+            "input": 35177,
+            "cached": 34304,
+            "uncached": 873,
+            "output": 145,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.562
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 31,
+          "speaker": "a",
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "metrics": {
+            "input": 36069,
+            "cached": 35072,
+            "uncached": 997,
+            "output": 207,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 9.438
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 32,
+          "speaker": "b",
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "metrics": {
+            "input": 36143,
+            "cached": 35328,
+            "uncached": 815,
+            "output": 220,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.653
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 33,
+          "speaker": "c",
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "metrics": {
+            "input": 35997,
+            "cached": 35072,
+            "uncached": 925,
+            "output": 263,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 8.063
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 34,
+          "speaker": "a",
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "metrics": {
+            "input": 36937,
+            "cached": 35840,
+            "uncached": 1097,
+            "output": 120,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.553
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 35,
+          "speaker": "b",
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "metrics": {
+            "input": 37114,
+            "cached": 36096,
+            "uncached": 1018,
+            "output": 161,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.346
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 36,
+          "speaker": "c",
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "metrics": {
+            "input": 37003,
+            "cached": 35840,
+            "uncached": 1163,
+            "output": 174,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.266
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        }
+      ]
+    },
+    "native": {
+      "totals": {
+        "input": 1092846,
+        "cached": 1052672,
+        "uncached": 40174,
+        "output": 2107,
+        "generations": 36
+      },
+      "checkpoints": {
+        "1": {
+          "input": 85263,
+          "cached": 60928,
+          "uncached": 24335,
+          "output": 230,
+          "generations": 3
+        },
+        "4": {
+          "input": 347526,
+          "cached": 318976,
+          "uncached": 28550,
+          "output": 674,
+          "generations": 12
+        },
+        "8": {
+          "input": 711465,
+          "cached": 677376,
+          "uncached": 34089,
+          "output": 1333,
+          "generations": 24
+        },
+        "12": {
+          "input": 1092846,
+          "cached": 1052672,
+          "uncached": 40174,
+          "output": 2107,
+          "generations": 36
+        }
+      },
+      "correct": 36,
+      "sessions": 3,
+      "runs": 0,
+      "rounds": [
+        {
+          "stage": 1,
+          "speaker": "a",
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "metrics": {
+            "input": 28336,
+            "cached": 4608,
+            "uncached": 23728,
+            "output": 94,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.956
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 2,
+          "speaker": "b",
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "metrics": {
+            "input": 28421,
+            "cached": 28160,
+            "uncached": 261,
+            "output": 85,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.881
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 3,
+          "speaker": "c",
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "metrics": {
+            "input": 28506,
+            "cached": 28160,
+            "uncached": 346,
+            "output": 51,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.99
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 4,
+          "speaker": "a",
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "metrics": {
+            "input": 28743,
+            "cached": 28160,
+            "uncached": 583,
+            "output": 69,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.31
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 5,
+          "speaker": "b",
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "metrics": {
+            "input": 28814,
+            "cached": 28416,
+            "uncached": 398,
+            "output": 66,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.979
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 6,
+          "speaker": "c",
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "metrics": {
+            "input": 28860,
+            "cached": 28416,
+            "uncached": 444,
+            "output": 45,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 8.055
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 7,
+          "speaker": "a",
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29106,
+            "cached": 28672,
+            "uncached": 434,
+            "output": 50,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.071
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 8,
+          "speaker": "b",
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29165,
+            "cached": 28672,
+            "uncached": 493,
+            "output": 48,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.059
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 9,
+          "speaker": "c",
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29181,
+            "cached": 28672,
+            "uncached": 509,
+            "output": 43,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.605
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 10,
+          "speaker": "a",
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "metrics": {
+            "input": 29427,
+            "cached": 28928,
+            "uncached": 499,
+            "output": 43,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.949
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 11,
+          "speaker": "b",
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "metrics": {
+            "input": 29480,
+            "cached": 28928,
+            "uncached": 552,
+            "output": 41,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 3.676
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 12,
+          "speaker": "c",
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "metrics": {
+            "input": 29487,
+            "cached": 29184,
+            "uncached": 303,
+            "output": 39,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.896
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 13,
+          "speaker": "a",
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29747,
+            "cached": 29184,
+            "uncached": 563,
+            "output": 40,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 22.708
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 14,
+          "speaker": "b",
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29812,
+            "cached": 29440,
+            "uncached": 372,
+            "output": 38,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.163
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 15,
+          "speaker": "c",
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "metrics": {
+            "input": 29831,
+            "cached": 29440,
+            "uncached": 391,
+            "output": 37,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 7.381
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 16,
+          "speaker": "a",
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "metrics": {
+            "input": 30094,
+            "cached": 29696,
+            "uncached": 398,
+            "output": 81,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.891
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 17,
+          "speaker": "b",
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "metrics": {
+            "input": 30159,
+            "cached": 29696,
+            "uncached": 463,
+            "output": 84,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.222
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 18,
+          "speaker": "c",
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "metrics": {
+            "input": 30179,
+            "cached": 29696,
+            "uncached": 483,
+            "output": 67,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.127
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 19,
+          "speaker": "a",
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "metrics": {
+            "input": 30474,
+            "cached": 29952,
+            "uncached": 522,
+            "output": 55,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.772
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 20,
+          "speaker": "b",
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "metrics": {
+            "input": 30529,
+            "cached": 29952,
+            "uncached": 577,
+            "output": 50,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 3.825
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 21,
+          "speaker": "c",
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "metrics": {
+            "input": 30519,
+            "cached": 29952,
+            "uncached": 567,
+            "output": 50,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.713
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 22,
+          "speaker": "a",
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "metrics": {
+            "input": 30818,
+            "cached": 30464,
+            "uncached": 354,
+            "output": 58,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.624
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 23,
+          "speaker": "b",
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "metrics": {
+            "input": 30885,
+            "cached": 30464,
+            "uncached": 421,
+            "output": 51,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.871
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 24,
+          "speaker": "c",
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "metrics": {
+            "input": 30892,
+            "cached": 30464,
+            "uncached": 428,
+            "output": 48,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.086
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 25,
+          "speaker": "a",
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "metrics": {
+            "input": 31184,
+            "cached": 30720,
+            "uncached": 464,
+            "output": 36,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.644
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 26,
+          "speaker": "b",
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "metrics": {
+            "input": 31229,
+            "cached": 30720,
+            "uncached": 509,
+            "output": 33,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 3.822
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 27,
+          "speaker": "c",
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "metrics": {
+            "input": 31218,
+            "cached": 30720,
+            "uncached": 498,
+            "output": 31,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 3.698
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 28,
+          "speaker": "a",
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "metrics": {
+            "input": 31497,
+            "cached": 30976,
+            "uncached": 521,
+            "output": 55,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.598
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 29,
+          "speaker": "b",
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "metrics": {
+            "input": 31538,
+            "cached": 31232,
+            "uncached": 306,
+            "output": 51,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 3.707
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 30,
+          "speaker": "c",
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "metrics": {
+            "input": 31524,
+            "cached": 30976,
+            "uncached": 548,
+            "output": 50,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.255
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 31,
+          "speaker": "a",
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "metrics": {
+            "input": 31938,
+            "cached": 31488,
+            "uncached": 450,
+            "output": 164,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 10.962
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 32,
+          "speaker": "b",
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "metrics": {
+            "input": 31994,
+            "cached": 31488,
+            "uncached": 506,
+            "output": 141,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 6.032
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 33,
+          "speaker": "c",
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "metrics": {
+            "input": 31998,
+            "cached": 31488,
+            "uncached": 510,
+            "output": 66,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.211
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 34,
+          "speaker": "a",
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "metrics": {
+            "input": 32428,
+            "cached": 31744,
+            "uncached": 684,
+            "output": 47,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 5.585
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 35,
+          "speaker": "b",
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "metrics": {
+            "input": 32455,
+            "cached": 31744,
+            "uncached": 711,
+            "output": 54,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.31
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 36,
+          "speaker": "c",
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "metrics": {
+            "input": 32378,
+            "cached": 32000,
+            "uncached": 378,
+            "output": 46,
+            "generations": 1,
+            "generationsBeforeReply": 1,
+            "generationsAfterReply": 0,
+            "replySeconds": 4.61
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        }
+      ]
+    }
+  },
+  "canonical": {
+    "verifiedFinalMarkersAndAck": 36,
+    "dbUsageTotals": [37, 1198554, 1141248, 5869],
+    "usageGaps": 0
+  },
+  "rawTranscriptAudit": {
+    "allRoundUsageMatched": true,
+    "models": ["claude-haiku-4-5-20251001"],
+    "toolCalls": 37,
+    "rejections": 1,
+    "syntheticZeroUsageMessagesExcluded": 33,
+    "rawThinkingTokensCombinedArms": 2831,
+    "firstRejection": "final_delivery_unconfirmed: basedOnRoomSeq absent; no write, same Run recovered",
+    "extraReportedGenerations": 1,
+    "afterSuccessObservedGenerations": 0,
+    "preemptionLimit": "Reported generations do not establish no in-flight upstream request or zero unreported billing."
+  },
+  "manifest": [
+    {
+      "file": "haiku-worker-delivery-a.private.jsonl",
+      "sha256": "6b7e25c68198074b64af4036f918b63be5e9a65db0a9e1324097b01687239c84"
+    },
+    {
+      "file": "haiku-worker-delivery-b.private.jsonl",
+      "sha256": "86b34e5d33ca185880d04fc58f33814cfb47220bd8670d455312de0968fd5749"
+    },
+    {
+      "file": "haiku-worker-delivery-c.private.jsonl",
+      "sha256": "d67e98688ac3ce86ac0e420e3f5421e5229131c89398ac4facb1c169c57df7b3"
+    },
+    {
+      "file": "haiku-native-a.private.jsonl",
+      "sha256": "3f7b4b9297242898b885870e911cd2edbf2eb1f687b57f26393ff26a3d5efb12"
+    },
+    {
+      "file": "haiku-native-b.private.jsonl",
+      "sha256": "df98fa9e1f9a2044d0a9fc6419494f4f4c5f1619d5f70e3f30eabc5ed8132194"
+    },
+    {
+      "file": "haiku-native-c.private.jsonl",
+      "sha256": "48fc424103bd0e65f71d95929b0b8a23d41ad1c151bf4b83de0ccf7530430dee"
+    }
+  ],
+  "independentReview": {
+    "quality": "both-arms-all-36-correct-against-predeclared-gold",
+    "canonicalDelivery": "36 unique Room messages and completed Activation consumer ACK verified directly from SQLite",
+    "usage": "all reported generation inputs/cache/outputs matched actual provider logs and product DB; no recorded gaps",
+    "contractPerParticipant": {
+      "a": "over-budget",
+      "b": "within-budget",
+      "c": "within-budget"
+    },
+    "wholeBatchContractPassed": false,
+    "stability": "not-established",
+    "rawVerdictPreserved": "needs-quality-review",
+    "knownUnknowns": [
+      "No independently observed provider HTTP count or billing reconciliation.",
+      "Provider internal/in-flight work absent from usage cannot be quantified.",
+      "Cache/order effects confound monetary interpretation.",
+      "Shared peer answers do not establish independent understanding."
+    ]
+  },
+  "canonicalAudit": {
+    "uniqueReplies": 36,
+    "consumerAckVerified": 36,
+    "markers": 36,
+    "usageGaps": 0,
+    "retryStages": []
+  }
+}

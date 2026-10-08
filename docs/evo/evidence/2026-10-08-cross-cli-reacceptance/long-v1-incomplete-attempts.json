@@ -1,0 +1,293 @@
+{
+  "kind": "original natural-v1 incomplete attempts, costs retained",
+  "attempts": [
+    {
+      "batch": "long-claude-haiku",
+      "rawSha256": "999262ed9fa6fe81dec044623a98a09a22bfb3b8ab2614770e54c399d50c95ea",
+      "codeCommit": "8884f2bbdf30260e81d000bdbcc55cc0c70f1a52",
+      "model": "haiku",
+      "effort": null,
+      "status": "worker-delivery-incomplete",
+      "order": ["native", "worker-delivery"],
+      "arms": {
+        "native": {
+          "status": "complete",
+          "stagesRecorded": 36,
+          "error": null,
+          "observedCosts": {
+            "status": "complete",
+            "roundMetrics": {
+              "knownTotals": {
+                "input": 1091048,
+                "cached": 1048576,
+                "uncached": 42472,
+                "output": 1697,
+                "generations": 36
+              },
+              "totals": {
+                "input": 1091048,
+                "cached": 1048576,
+                "uncached": 42472,
+                "output": 1697,
+                "generations": 36
+              },
+              "issues": []
+            },
+            "issues": [],
+            "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+          }
+        },
+        "worker-delivery": {
+          "status": "failed",
+          "stagesRecorded": 1,
+          "error": "AssertionError [ERR_ASSERTION]: Missing runtime session evidence",
+          "observedCosts": {
+            "status": "unknown",
+            "roundMetrics": {
+              "knownTotals": {
+                "input": 0,
+                "cached": 0,
+                "uncached": 0,
+                "output": 0,
+                "generations": 0
+              },
+              "totals": null,
+              "issues": [
+                "usage-missing:0:input",
+                "usage-missing:0:cached",
+                "usage-missing:0:uncached",
+                "usage-missing:0:output",
+                "usage-missing:0:generations",
+                "usage-inconsistent:0"
+              ]
+            },
+            "durableUsage": {
+              "knownTotals": {
+                "input": 28060,
+                "cached": 4608,
+                "uncached": 23452,
+                "output": 125,
+                "generations": 1
+              },
+              "totals": null,
+              "issues": [
+                "durable-round-mismatch:input",
+                "durable-round-mismatch:cached",
+                "durable-round-mismatch:uncached",
+                "durable-round-mismatch:output",
+                "durable-round-mismatch:generations"
+              ]
+            },
+            "issues": [
+              "usage-missing:0:input",
+              "usage-missing:0:cached",
+              "usage-missing:0:uncached",
+              "usage-missing:0:output",
+              "usage-missing:0:generations",
+              "usage-inconsistent:0",
+              "product-usage-incomplete",
+              "product-usage-mismatch:input",
+              "product-usage-mismatch:cached",
+              "product-usage-mismatch:output",
+              "product-usage-mismatch:generations",
+              "durable-round-mismatch:input",
+              "durable-round-mismatch:cached",
+              "durable-round-mismatch:uncached",
+              "durable-round-mismatch:output",
+              "durable-round-mismatch:generations"
+            ],
+            "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+          }
+        }
+      },
+      "replacement": false
+    },
+    {
+      "batch": "long-claude-sonnet",
+      "rawSha256": "2bd75e9dd0c9b500ad4e95026553c41c6cee6394a47279feb91345aff4b39ba8",
+      "codeCommit": "8884f2bbdf30260e81d000bdbcc55cc0c70f1a52",
+      "model": "sonnet",
+      "effort": "low",
+      "status": "worker-delivery-incomplete",
+      "order": ["worker-delivery", "native"],
+      "arms": {
+        "worker-delivery": {
+          "status": "failed",
+          "stagesRecorded": 1,
+          "error": "AssertionError [ERR_ASSERTION]: Missing runtime session evidence",
+          "observedCosts": {
+            "status": "unknown",
+            "roundMetrics": {
+              "knownTotals": {
+                "input": 0,
+                "cached": 0,
+                "uncached": 0,
+                "output": 0,
+                "generations": 0
+              },
+              "totals": null,
+              "issues": [
+                "usage-missing:0:input",
+                "usage-missing:0:cached",
+                "usage-missing:0:uncached",
+                "usage-missing:0:output",
+                "usage-missing:0:generations",
+                "usage-inconsistent:0"
+              ]
+            },
+            "durableUsage": {
+              "knownTotals": {
+                "input": 19759,
+                "cached": 1280,
+                "uncached": 18479,
+                "output": 127,
+                "generations": 1
+              },
+              "totals": null,
+              "issues": [
+                "durable-round-mismatch:input",
+                "durable-round-mismatch:cached",
+                "durable-round-mismatch:uncached",
+                "durable-round-mismatch:output",
+                "durable-round-mismatch:generations"
+              ]
+            },
+            "issues": [
+              "usage-missing:0:input",
+              "usage-missing:0:cached",
+              "usage-missing:0:uncached",
+              "usage-missing:0:output",
+              "usage-missing:0:generations",
+              "usage-inconsistent:0",
+              "product-usage-incomplete",
+              "product-usage-mismatch:input",
+              "product-usage-mismatch:cached",
+              "product-usage-mismatch:output",
+              "product-usage-mismatch:generations",
+              "durable-round-mismatch:input",
+              "durable-round-mismatch:cached",
+              "durable-round-mismatch:uncached",
+              "durable-round-mismatch:output",
+              "durable-round-mismatch:generations"
+            ],
+            "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+          }
+        }
+      },
+      "replacement": false
+    },
+    {
+      "batch": "long-opencode-aihubmix",
+      "rawSha256": "b7ef3dc2b290df1d0cbeb0110461b9f3669a9bef43848a0d54e9e945845af1f5",
+      "codeCommit": "8884f2bbdf30260e81d000bdbcc55cc0c70f1a52",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "status": "worker-delivery-incomplete",
+      "order": ["worker-delivery", "native"],
+      "arms": {
+        "worker-delivery": {
+          "status": "failed",
+          "stagesRecorded": 1,
+          "error": "AssertionError [ERR_ASSERTION]: Missing uniquely associated final Run",
+          "observedCosts": {
+            "status": "unknown",
+            "roundMetrics": {
+              "knownTotals": {
+                "input": 0,
+                "cached": 0,
+                "uncached": 0,
+                "output": 0,
+                "generations": 0
+              },
+              "totals": null,
+              "issues": [
+                "usage-missing:0:input",
+                "usage-missing:0:cached",
+                "usage-missing:0:uncached",
+                "usage-missing:0:output",
+                "usage-missing:0:generations",
+                "usage-inconsistent:0"
+              ]
+            },
+            "durableUsage": {
+              "knownTotals": {
+                "input": 51962,
+                "cached": 34432,
+                "uncached": 17530,
+                "output": 442,
+                "generations": 3
+              },
+              "totals": null,
+              "issues": [
+                "durable-round-mismatch:input",
+                "durable-round-mismatch:cached",
+                "durable-round-mismatch:uncached",
+                "durable-round-mismatch:output",
+                "durable-round-mismatch:generations"
+              ]
+            },
+            "issues": [
+              "usage-missing:0:input",
+              "usage-missing:0:cached",
+              "usage-missing:0:uncached",
+              "usage-missing:0:output",
+              "usage-missing:0:generations",
+              "usage-inconsistent:0",
+              "product-usage-incomplete",
+              "product-usage-mismatch:input",
+              "product-usage-mismatch:cached",
+              "product-usage-mismatch:output",
+              "product-usage-mismatch:generations",
+              "durable-round-mismatch:input",
+              "durable-round-mismatch:cached",
+              "durable-round-mismatch:uncached",
+              "durable-round-mismatch:output",
+              "durable-round-mismatch:generations"
+            ],
+            "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+          }
+        }
+      },
+      "replacement": false
+    },
+    {
+      "batch": "long-opencode-deepseek",
+      "rawSha256": "e20e834c92319ff7594284d7b07b6d29947a17c55c7758829fe846ee167cbde2",
+      "codeCommit": "8884f2bbdf30260e81d000bdbcc55cc0c70f1a52",
+      "model": "deepseek/deepseek-flash",
+      "effort": "low",
+      "status": "native-incomplete",
+      "order": ["native", "worker-delivery"],
+      "arms": {
+        "native": {
+          "status": "failed",
+          "stagesRecorded": 1,
+          "error": "AssertionError [ERR_ASSERTION]: material retransmission or omission\n\n0 !== 1\n",
+          "observedCosts": {
+            "status": "complete",
+            "roundMetrics": {
+              "knownTotals": {
+                "input": 11989,
+                "cached": 1664,
+                "uncached": 10325,
+                "output": 83,
+                "generations": 1
+              },
+              "totals": {
+                "input": 11989,
+                "cached": 1664,
+                "uncached": 10325,
+                "output": 83,
+                "generations": 1
+              },
+              "issues": []
+            },
+            "issues": [],
+            "accounting": "Round metrics and durable usage overlap; never add them together. Known totals retain observed failures; missing values remain unknown."
+          }
+        }
+      },
+      "replacement": false
+    }
+  ]
+}

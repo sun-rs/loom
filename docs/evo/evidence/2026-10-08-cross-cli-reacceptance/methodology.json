@@ -1,0 +1,12 @@
+{
+  "review": "read-only methodology scope",
+  "sourceCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8",
+  "sampleFile": "long-v2-opencode-deepseek-paid-result.json",
+  "sampleSha256": "06b25007e9b9c4779340009f9a946bcd19faba93a541f35a62d0d0a3cf5f75f6",
+  "contractVerdict": "over-budget",
+  "scope": "fixed fact answers and continuous-session delivery overhead, not general engineering collaboration",
+  "noProviderCalls": true,
+  "noProductChanges": true,
+  "sonnetLimitation": "Claude multi-attempt exact native input to Run association unsupported; missing nativeTurnId is not proof of session replacement",
+  "beforeAfterCausalClaim": false
+}

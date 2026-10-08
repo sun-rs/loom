@@ -1,0 +1,2258 @@
+{
+  "rawSHA256": "9ec5cd3c63e8337eab211d0ef9f1000b98e85dc3d70c36783a5340168e58823f",
+  "status": "needs-quality-review",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "order": ["worker-delivery", "native"],
+  "arms": {
+    "worker-delivery": {
+      "stages": 36,
+      "sessions": 3,
+      "totals": {
+        "input": 1422205,
+        "cached": 1352704,
+        "uncached": 69501,
+        "output": 7093,
+        "generations": 73,
+        "reasoning": 3044
+      },
+      "checkpoints": {
+        "1": {
+          "input": 108121,
+          "cached": 66304,
+          "uncached": 41817,
+          "output": 1172,
+          "generations": 7,
+          "reasoning": 821
+        },
+        "4": {
+          "input": 417664,
+          "cached": 368512,
+          "uncached": 49152,
+          "output": 2531,
+          "generations": 25,
+          "reasoning": 1175
+        },
+        "8": {
+          "input": 886334,
+          "cached": 827392,
+          "uncached": 58942,
+          "output": 4337,
+          "generations": 49,
+          "reasoning": 1638
+        },
+        "12": {
+          "input": 1422205,
+          "cached": 1352704,
+          "uncached": 69501,
+          "output": 7093,
+          "generations": 73,
+          "reasoning": 3044
+        }
+      },
+      "rounds": [
+        {
+          "stage": 1,
+          "speaker": "a",
+          "logicalRound": 1,
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "source": "state-backup.ts:113–117",
+          "runs": 1,
+          "metrics": {
+            "input": 28588,
+            "cached": 15744,
+            "uncached": 12844,
+            "output": 675,
+            "generations": 2,
+            "reasoning": 561
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 14560,
+            "output": 190
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 2,
+          "speaker": "b",
+          "logicalRound": 1,
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "source": "state-backup.ts:113–117",
+          "runs": 1,
+          "metrics": {
+            "input": 28291,
+            "cached": 16000,
+            "uncached": 12291,
+            "output": 292,
+            "generations": 2,
+            "reasoning": 179
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 14312,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 3,
+          "speaker": "c",
+          "logicalRound": 1,
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "source": "state-backup.ts:113–117",
+          "runs": 2,
+          "metrics": {
+            "input": 51242,
+            "cached": 34560,
+            "uncached": 16682,
+            "output": 205,
+            "generations": 3,
+            "reasoning": 81
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 18756,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 2,
+            "materialRetransmissions": 1
+          }
+        },
+        {
+          "stage": 4,
+          "speaker": "a",
+          "logicalRound": 2,
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "source": "state-backup.ts:95–101",
+          "runs": 1,
+          "metrics": {
+            "input": 30712,
+            "cached": 29696,
+            "uncached": 1016,
+            "output": 191,
+            "generations": 2,
+            "reasoning": 80
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 15472,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 5,
+          "speaker": "b",
+          "logicalRound": 2,
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "source": "state-backup.ts:95–101",
+          "runs": 1,
+          "metrics": {
+            "input": 29832,
+            "cached": 28928,
+            "uncached": 904,
+            "output": 177,
+            "generations": 2,
+            "reasoning": 66
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 15025,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 6,
+          "speaker": "c",
+          "logicalRound": 2,
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "source": "state-backup.ts:95–101",
+          "runs": 1,
+          "metrics": {
+            "input": 38693,
+            "cached": 37888,
+            "uncached": 805,
+            "output": 153,
+            "generations": 2,
+            "reasoning": 41
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 19442,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 7,
+          "speaker": "a",
+          "logicalRound": 3,
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "source": "state-backup.ts:104,175–176",
+          "runs": 1,
+          "metrics": {
+            "input": 32096,
+            "cached": 31232,
+            "uncached": 864,
+            "output": 146,
+            "generations": 2,
+            "reasoning": 36
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 16141,
+            "output": 7
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 8,
+          "speaker": "b",
+          "logicalRound": 3,
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "source": "state-backup.ts:104,175–176",
+          "runs": 1,
+          "metrics": {
+            "input": 31184,
+            "cached": 30464,
+            "uncached": 720,
+            "output": 156,
+            "generations": 2,
+            "reasoning": 46
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 15691,
+            "output": 7
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 9,
+          "speaker": "c",
+          "logicalRound": 3,
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "source": "state-backup.ts:104,175–176",
+          "runs": 1,
+          "metrics": {
+            "input": 39966,
+            "cached": 39168,
+            "uncached": 798,
+            "output": 126,
+            "generations": 2,
+            "reasoning": 18
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 20066,
+            "output": 7
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 10,
+          "speaker": "a",
+          "logicalRound": 4,
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "source": "state-backup.ts:93–94",
+          "runs": 1,
+          "metrics": {
+            "input": 33377,
+            "cached": 32640,
+            "uncached": 737,
+            "output": 139,
+            "generations": 2,
+            "reasoning": 26
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 16779,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 11,
+          "speaker": "b",
+          "logicalRound": 4,
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "source": "state-backup.ts:93–94",
+          "runs": 1,
+          "metrics": {
+            "input": 32471,
+            "cached": 31744,
+            "uncached": 727,
+            "output": 135,
+            "generations": 2,
+            "reasoning": 19
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 16322,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 12,
+          "speaker": "c",
+          "logicalRound": 4,
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "source": "state-backup.ts:93–94",
+          "runs": 1,
+          "metrics": {
+            "input": 41212,
+            "cached": 40448,
+            "uncached": 764,
+            "output": 136,
+            "generations": 2,
+            "reasoning": 22
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 20693,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 13,
+          "speaker": "a",
+          "logicalRound": 5,
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "source": "state-backup.ts:175–176",
+          "runs": 1,
+          "metrics": {
+            "input": 34662,
+            "cached": 33920,
+            "uncached": 742,
+            "output": 138,
+            "generations": 2,
+            "reasoning": 28
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 17421,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 14,
+          "speaker": "b",
+          "logicalRound": 5,
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "source": "state-backup.ts:175–176",
+          "runs": 1,
+          "metrics": {
+            "input": 33787,
+            "cached": 33024,
+            "uncached": 763,
+            "output": 151,
+            "generations": 2,
+            "reasoning": 38
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 16989,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 15,
+          "speaker": "c",
+          "logicalRound": 5,
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "source": "state-backup.ts:175–176",
+          "runs": 1,
+          "metrics": {
+            "input": 42527,
+            "cached": 41728,
+            "uncached": 799,
+            "output": 129,
+            "generations": 2,
+            "reasoning": 17
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 21348,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 16,
+          "speaker": "a",
+          "logicalRound": 6,
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "source": "state-backup.ts:190–193",
+          "runs": 1,
+          "metrics": {
+            "input": 36064,
+            "cached": 35200,
+            "uncached": 864,
+            "output": 199,
+            "generations": 2,
+            "reasoning": 86
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 18153,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 17,
+          "speaker": "b",
+          "logicalRound": 6,
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "source": "state-backup.ts:190–193",
+          "runs": 1,
+          "metrics": {
+            "input": 35178,
+            "cached": 34304,
+            "uncached": 874,
+            "output": 178,
+            "generations": 2,
+            "reasoning": 66
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 17698,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 18,
+          "speaker": "c",
+          "logicalRound": 6,
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "source": "state-backup.ts:190–193",
+          "runs": 1,
+          "metrics": {
+            "input": 43920,
+            "cached": 43008,
+            "uncached": 912,
+            "output": 192,
+            "generations": 2,
+            "reasoning": 81
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 22077,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 19,
+          "speaker": "a",
+          "logicalRound": 7,
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "source": "state-backup.ts:177–188",
+          "runs": 1,
+          "metrics": {
+            "input": 37456,
+            "cached": 36608,
+            "uncached": 848,
+            "output": 132,
+            "generations": 2,
+            "reasoning": 18
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 18815,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 20,
+          "speaker": "b",
+          "logicalRound": 7,
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "source": "state-backup.ts:177–188",
+          "runs": 1,
+          "metrics": {
+            "input": 36514,
+            "cached": 35712,
+            "uncached": 802,
+            "output": 130,
+            "generations": 2,
+            "reasoning": 21
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 18343,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 21,
+          "speaker": "c",
+          "logicalRound": 7,
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "source": "state-backup.ts:177–188",
+          "runs": 1,
+          "metrics": {
+            "input": 45261,
+            "cached": 44544,
+            "uncached": 717,
+            "output": 133,
+            "generations": 2,
+            "reasoning": 23
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 22718,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 22,
+          "speaker": "a",
+          "logicalRound": 8,
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "source": "state-backup.ts:157,197–202",
+          "runs": 1,
+          "metrics": {
+            "input": 38781,
+            "cached": 37888,
+            "uncached": 893,
+            "output": 146,
+            "generations": 2,
+            "reasoning": 33
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 19483,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 23,
+          "speaker": "b",
+          "logicalRound": 8,
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "source": "state-backup.ts:157,197–202",
+          "runs": 1,
+          "metrics": {
+            "input": 37864,
+            "cached": 37120,
+            "uncached": 744,
+            "output": 136,
+            "generations": 2,
+            "reasoning": 23
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 19022,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 24,
+          "speaker": "c",
+          "logicalRound": 8,
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "source": "state-backup.ts:157,197–202",
+          "runs": 1,
+          "metrics": {
+            "input": 46656,
+            "cached": 45824,
+            "uncached": 832,
+            "output": 142,
+            "generations": 2,
+            "reasoning": 29
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 23418,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 25,
+          "speaker": "a",
+          "logicalRound": 9,
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "source": "state-backup.ts:208–218",
+          "runs": 1,
+          "metrics": {
+            "input": 40147,
+            "cached": 39424,
+            "uncached": 723,
+            "output": 134,
+            "generations": 2,
+            "reasoning": 21
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 20160,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 26,
+          "speaker": "b",
+          "logicalRound": 9,
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "source": "state-backup.ts:208–218",
+          "runs": 1,
+          "metrics": {
+            "input": 39160,
+            "cached": 38400,
+            "uncached": 760,
+            "output": 119,
+            "generations": 2,
+            "reasoning": 6
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 19660,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 27,
+          "speaker": "c",
+          "logicalRound": 9,
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "source": "state-backup.ts:208–218",
+          "runs": 1,
+          "metrics": {
+            "input": 47923,
+            "cached": 47104,
+            "uncached": 819,
+            "output": 129,
+            "generations": 2,
+            "reasoning": 18
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 24046,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 28,
+          "speaker": "a",
+          "logicalRound": 10,
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "source": "state-backup.ts:220",
+          "runs": 1,
+          "metrics": {
+            "input": 41423,
+            "cached": 40704,
+            "uncached": 719,
+            "output": 149,
+            "generations": 2,
+            "reasoning": 35
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 20804,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 29,
+          "speaker": "b",
+          "logicalRound": 10,
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "source": "state-backup.ts:220",
+          "runs": 1,
+          "metrics": {
+            "input": 40429,
+            "cached": 39680,
+            "uncached": 749,
+            "output": 145,
+            "generations": 2,
+            "reasoning": 30
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 20307,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 30,
+          "speaker": "c",
+          "logicalRound": 10,
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "source": "state-backup.ts:220",
+          "runs": 1,
+          "metrics": {
+            "input": 49200,
+            "cached": 48384,
+            "uncached": 816,
+            "output": 144,
+            "generations": 2,
+            "reasoning": 30
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 24693,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 31,
+          "speaker": "a",
+          "logicalRound": 11,
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "source": "state-backup.ts:114–117; restart-local-workbench.mjs:152–156",
+          "runs": 1,
+          "metrics": {
+            "input": 43527,
+            "cached": 41984,
+            "uncached": 1543,
+            "output": 922,
+            "generations": 2,
+            "reasoning": 810
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 22243,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 32,
+          "speaker": "b",
+          "logicalRound": 11,
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "source": "state-backup.ts:114–117; restart-local-workbench.mjs:152–156",
+          "runs": 1,
+          "metrics": {
+            "input": 41957,
+            "cached": 40960,
+            "uncached": 997,
+            "output": 303,
+            "generations": 2,
+            "reasoning": 191
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 21150,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 33,
+          "speaker": "c",
+          "logicalRound": 11,
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "source": "state-backup.ts:114–117; restart-local-workbench.mjs:152–156",
+          "runs": 1,
+          "metrics": {
+            "input": 50697,
+            "cached": 49664,
+            "uncached": 1033,
+            "output": 232,
+            "generations": 2,
+            "reasoning": 123
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 25484,
+            "output": 8
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 34,
+          "speaker": "a",
+          "logicalRound": 12,
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "source": "workbench-restart-guard.mjs:19–28",
+          "runs": 1,
+          "metrics": {
+            "input": 45723,
+            "cached": 44800,
+            "uncached": 923,
+            "output": 169,
+            "generations": 2,
+            "reasoning": 57
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 22965,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 35,
+          "speaker": "b",
+          "logicalRound": 12,
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "source": "workbench-restart-guard.mjs:19–28",
+          "runs": 1,
+          "metrics": {
+            "input": 43515,
+            "cached": 42752,
+            "uncached": 763,
+            "output": 160,
+            "generations": 2,
+            "reasoning": 48
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 21858,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 36,
+          "speaker": "c",
+          "logicalRound": 12,
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "source": "workbench-restart-guard.mjs:19–28",
+          "runs": 1,
+          "metrics": {
+            "input": 52170,
+            "cached": 51456,
+            "uncached": 714,
+            "output": 150,
+            "generations": 2,
+            "reasoning": 37
+          },
+          "tools": 1,
+          "toolNames": ["bash"],
+          "postToolGenerationsByNativeCreatedAt": 1,
+          "postToolUsage": {
+            "input": 26181,
+            "output": 9
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        }
+      ],
+      "usageComplete": true,
+      "nativeDBUsageMatched": true,
+      "correct": 36,
+      "runs": 37,
+      "postToolGenerations": 36,
+      "postToolInput": 708295,
+      "postToolOutput": 481
+    },
+    "native": {
+      "stages": 36,
+      "sessions": 3,
+      "totals": {
+        "input": 492947,
+        "cached": 469760,
+        "uncached": 23187,
+        "output": 2026,
+        "generations": 36,
+        "reasoning": 1726
+      },
+      "checkpoints": {
+        "1": {
+          "input": 35970,
+          "cached": 25472,
+          "uncached": 10498,
+          "output": 158,
+          "generations": 3,
+          "reasoning": 131
+        },
+        "4": {
+          "input": 149505,
+          "cached": 135808,
+          "uncached": 13697,
+          "output": 521,
+          "generations": 12,
+          "reasoning": 422
+        },
+        "8": {
+          "input": 313614,
+          "cached": 295296,
+          "uncached": 18318,
+          "output": 1130,
+          "generations": 24,
+          "reasoning": 932
+        },
+        "12": {
+          "input": 492947,
+          "cached": 469760,
+          "uncached": 23187,
+          "output": 2026,
+          "generations": 36,
+          "reasoning": 1726
+        }
+      },
+      "rounds": [
+        {
+          "stage": 1,
+          "speaker": "a",
+          "logicalRound": 1,
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "source": "state-backup.ts:113–117",
+          "runs": 0,
+          "metrics": {
+            "input": 11905,
+            "cached": 1792,
+            "uncached": 10113,
+            "output": 57,
+            "generations": 1,
+            "reasoning": 48
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 2,
+          "speaker": "b",
+          "logicalRound": 1,
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "source": "state-backup.ts:113–117",
+          "runs": 0,
+          "metrics": {
+            "input": 11990,
+            "cached": 11776,
+            "uncached": 214,
+            "output": 37,
+            "generations": 1,
+            "reasoning": 28
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 3,
+          "speaker": "c",
+          "logicalRound": 1,
+          "answer": "审查结论：credential_field=absent",
+          "expected": "审查结论：credential_field=absent",
+          "correct": true,
+          "source": "state-backup.ts:113–117",
+          "runs": 0,
+          "metrics": {
+            "input": 12075,
+            "cached": 11904,
+            "uncached": 171,
+            "output": 64,
+            "generations": 1,
+            "reasoning": 55
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 1,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 4,
+          "speaker": "a",
+          "logicalRound": 2,
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "source": "state-backup.ts:95–101",
+          "runs": 0,
+          "metrics": {
+            "input": 12240,
+            "cached": 11904,
+            "uncached": 336,
+            "output": 65,
+            "generations": 1,
+            "reasoning": 57
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 5,
+          "speaker": "b",
+          "logicalRound": 2,
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "source": "state-backup.ts:95–101",
+          "runs": 0,
+          "metrics": {
+            "input": 12303,
+            "cached": 11904,
+            "uncached": 399,
+            "output": 56,
+            "generations": 1,
+            "reasoning": 48
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 6,
+          "speaker": "c",
+          "logicalRound": 2,
+          "answer": "审查结论：credentials=reject",
+          "expected": "审查结论：credentials=reject",
+          "correct": true,
+          "source": "state-backup.ts:95–101",
+          "runs": 0,
+          "metrics": {
+            "input": 12413,
+            "cached": 12032,
+            "uncached": 381,
+            "output": 49,
+            "generations": 1,
+            "reasoning": 41
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 7,
+          "speaker": "a",
+          "logicalRound": 3,
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "source": "state-backup.ts:104,175–176",
+          "runs": 0,
+          "metrics": {
+            "input": 12569,
+            "cached": 12160,
+            "uncached": 409,
+            "output": 42,
+            "generations": 1,
+            "reasoning": 35
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 8,
+          "speaker": "b",
+          "logicalRound": 3,
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "source": "state-backup.ts:104,175–176",
+          "runs": 0,
+          "metrics": {
+            "input": 12612,
+            "cached": 12288,
+            "uncached": 324,
+            "output": 35,
+            "generations": 1,
+            "reasoning": 28
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 9,
+          "speaker": "c",
+          "logicalRound": 3,
+          "answer": "审查结论：socket=omit",
+          "expected": "审查结论：socket=omit",
+          "correct": true,
+          "source": "state-backup.ts:104,175–176",
+          "runs": 0,
+          "metrics": {
+            "input": 12704,
+            "cached": 12288,
+            "uncached": 416,
+            "output": 24,
+            "generations": 1,
+            "reasoning": 17
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 10,
+          "speaker": "a",
+          "logicalRound": 4,
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "source": "state-backup.ts:93–94",
+          "runs": 0,
+          "metrics": {
+            "input": 12849,
+            "cached": 12544,
+            "uncached": 305,
+            "output": 35,
+            "generations": 1,
+            "reasoning": 26
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 11,
+          "speaker": "b",
+          "logicalRound": 4,
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "source": "state-backup.ts:93–94",
+          "runs": 0,
+          "metrics": {
+            "input": 12883,
+            "cached": 12544,
+            "uncached": 339,
+            "output": 27,
+            "generations": 1,
+            "reasoning": 18
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 12,
+          "speaker": "c",
+          "logicalRound": 4,
+          "answer": "审查结论：symlink=reject",
+          "expected": "审查结论：symlink=reject",
+          "correct": true,
+          "source": "state-backup.ts:93–94",
+          "runs": 0,
+          "metrics": {
+            "input": 12962,
+            "cached": 12672,
+            "uncached": 290,
+            "output": 30,
+            "generations": 1,
+            "reasoning": 21
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 13,
+          "speaker": "a",
+          "logicalRound": 5,
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "source": "state-backup.ts:175–176",
+          "runs": 0,
+          "metrics": {
+            "input": 13130,
+            "cached": 12800,
+            "uncached": 330,
+            "output": 45,
+            "generations": 1,
+            "reasoning": 37
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 14,
+          "speaker": "b",
+          "logicalRound": 5,
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "source": "state-backup.ts:175–176",
+          "runs": 0,
+          "metrics": {
+            "input": 13167,
+            "cached": 12800,
+            "uncached": 367,
+            "output": 29,
+            "generations": 1,
+            "reasoning": 21
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 15,
+          "speaker": "c",
+          "logicalRound": 5,
+          "answer": "审查结论：sidecars=omit",
+          "expected": "审查结论：sidecars=omit",
+          "correct": true,
+          "source": "state-backup.ts:175–176",
+          "runs": 0,
+          "metrics": {
+            "input": 13260,
+            "cached": 12928,
+            "uncached": 332,
+            "output": 40,
+            "generations": 1,
+            "reasoning": 32
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 16,
+          "speaker": "a",
+          "logicalRound": 6,
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "source": "state-backup.ts:190–193",
+          "runs": 0,
+          "metrics": {
+            "input": 13447,
+            "cached": 13056,
+            "uncached": 391,
+            "output": 90,
+            "generations": 1,
+            "reasoning": 82
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 17,
+          "speaker": "b",
+          "logicalRound": 6,
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "source": "state-backup.ts:190–193",
+          "runs": 0,
+          "metrics": {
+            "input": 13472,
+            "cached": 13056,
+            "uncached": 416,
+            "output": 93,
+            "generations": 1,
+            "reasoning": 85
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 18,
+          "speaker": "c",
+          "logicalRound": 6,
+          "answer": "审查结论：mode=0700",
+          "expected": "审查结论：mode=0700",
+          "correct": true,
+          "source": "state-backup.ts:190–193",
+          "runs": 0,
+          "metrics": {
+            "input": 13580,
+            "cached": 13184,
+            "uncached": 396,
+            "output": 97,
+            "generations": 1,
+            "reasoning": 89
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 19,
+          "speaker": "a",
+          "logicalRound": 7,
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "source": "state-backup.ts:177–188",
+          "runs": 0,
+          "metrics": {
+            "input": 13806,
+            "cached": 13440,
+            "uncached": 366,
+            "output": 41,
+            "generations": 1,
+            "reasoning": 33
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 20,
+          "speaker": "b",
+          "logicalRound": 7,
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "source": "state-backup.ts:177–188",
+          "runs": 0,
+          "metrics": {
+            "input": 13823,
+            "cached": 13440,
+            "uncached": 383,
+            "output": 35,
+            "generations": 1,
+            "reasoning": 27
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 21,
+          "speaker": "c",
+          "logicalRound": 7,
+          "answer": "审查结论：db=backup",
+          "expected": "审查结论：db=backup",
+          "correct": true,
+          "source": "state-backup.ts:177–188",
+          "runs": 0,
+          "metrics": {
+            "input": 13924,
+            "cached": 13568,
+            "uncached": 356,
+            "output": 25,
+            "generations": 1,
+            "reasoning": 17
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 22,
+          "speaker": "a",
+          "logicalRound": 8,
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "source": "state-backup.ts:157,197–202",
+          "runs": 0,
+          "metrics": {
+            "input": 14111,
+            "cached": 13696,
+            "uncached": 415,
+            "output": 44,
+            "generations": 1,
+            "reasoning": 35
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 23,
+          "speaker": "b",
+          "logicalRound": 8,
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "source": "state-backup.ts:157,197–202",
+          "runs": 0,
+          "metrics": {
+            "input": 14140,
+            "cached": 13696,
+            "uncached": 444,
+            "output": 36,
+            "generations": 1,
+            "reasoning": 27
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 24,
+          "speaker": "c",
+          "logicalRound": 8,
+          "answer": "审查结论：changed_files=reject",
+          "expected": "审查结论：changed_files=reject",
+          "correct": true,
+          "source": "state-backup.ts:157,197–202",
+          "runs": 0,
+          "metrics": {
+            "input": 14249,
+            "cached": 13824,
+            "uncached": 425,
+            "output": 34,
+            "generations": 1,
+            "reasoning": 25
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 25,
+          "speaker": "a",
+          "logicalRound": 9,
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "source": "state-backup.ts:208–218",
+          "runs": 0,
+          "metrics": {
+            "input": 14436,
+            "cached": 14080,
+            "uncached": 356,
+            "output": 19,
+            "generations": 1,
+            "reasoning": 11
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 26,
+          "speaker": "b",
+          "logicalRound": 9,
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "source": "state-backup.ts:208–218",
+          "runs": 0,
+          "metrics": {
+            "input": 14437,
+            "cached": 14080,
+            "uncached": 357,
+            "output": 21,
+            "generations": 1,
+            "reasoning": 13
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 27,
+          "speaker": "c",
+          "logicalRound": 9,
+          "answer": "审查结论：quick_check=ok",
+          "expected": "审查结论：quick_check=ok",
+          "correct": true,
+          "source": "state-backup.ts:208–218",
+          "runs": 0,
+          "metrics": {
+            "input": 14524,
+            "cached": 14208,
+            "uncached": 316,
+            "output": 22,
+            "generations": 1,
+            "reasoning": 14
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 28,
+          "speaker": "a",
+          "logicalRound": 10,
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "source": "state-backup.ts:220",
+          "runs": 0,
+          "metrics": {
+            "input": 14696,
+            "cached": 14336,
+            "uncached": 360,
+            "output": 40,
+            "generations": 1,
+            "reasoning": 31
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 29,
+          "speaker": "b",
+          "logicalRound": 10,
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "source": "state-backup.ts:220",
+          "runs": 0,
+          "metrics": {
+            "input": 14700,
+            "cached": 14336,
+            "uncached": 364,
+            "output": 42,
+            "generations": 1,
+            "reasoning": 33
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 30,
+          "speaker": "c",
+          "logicalRound": 10,
+          "answer": "审查结论：foreign_keys=reject",
+          "expected": "审查结论：foreign_keys=reject",
+          "correct": true,
+          "source": "state-backup.ts:220",
+          "runs": 0,
+          "metrics": {
+            "input": 14789,
+            "cached": 14464,
+            "uncached": 325,
+            "output": 35,
+            "generations": 1,
+            "reasoning": 26
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 31,
+          "speaker": "a",
+          "logicalRound": 11,
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "source": "state-backup.ts:114–117; restart-local-workbench.mjs:152–156",
+          "runs": 0,
+          "metrics": {
+            "input": 15000,
+            "cached": 14592,
+            "uncached": 408,
+            "output": 220,
+            "generations": 1,
+            "reasoning": 212
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 32,
+          "speaker": "b",
+          "logicalRound": 11,
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "source": "state-backup.ts:114–117; restart-local-workbench.mjs:152–156",
+          "runs": 0,
+          "metrics": {
+            "input": 15026,
+            "cached": 14592,
+            "uncached": 434,
+            "output": 220,
+            "generations": 1,
+            "reasoning": 212
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 33,
+          "speaker": "c",
+          "logicalRound": 11,
+          "answer": "审查结论：stable=reject",
+          "expected": "审查结论：stable=reject",
+          "correct": true,
+          "source": "state-backup.ts:114–117; restart-local-workbench.mjs:152–156",
+          "runs": 0,
+          "metrics": {
+            "input": 15128,
+            "cached": 14720,
+            "uncached": 408,
+            "output": 130,
+            "generations": 1,
+            "reasoning": 122
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 34,
+          "speaker": "a",
+          "logicalRound": 12,
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "source": "workbench-restart-guard.mjs:19–28",
+          "runs": 0,
+          "metrics": {
+            "input": 15517,
+            "cached": 14976,
+            "uncached": 541,
+            "output": 38,
+            "generations": 1,
+            "reasoning": 29
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 35,
+          "speaker": "b",
+          "logicalRound": 12,
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "source": "workbench-restart-guard.mjs:19–28",
+          "runs": 0,
+          "metrics": {
+            "input": 15537,
+            "cached": 14976,
+            "uncached": 561,
+            "output": 53,
+            "generations": 1,
+            "reasoning": 44
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        },
+        {
+          "stage": 36,
+          "speaker": "c",
+          "logicalRound": 12,
+          "answer": "审查结论：stop_calls=0",
+          "expected": "审查结论：stop_calls=0",
+          "correct": true,
+          "source": "workbench-restart-guard.mjs:19–28",
+          "runs": 0,
+          "metrics": {
+            "input": 15543,
+            "cached": 15104,
+            "uncached": 439,
+            "output": 56,
+            "generations": 1,
+            "reasoning": 47
+          },
+          "tools": 0,
+          "toolNames": [],
+          "postToolGenerationsByNativeCreatedAt": 0,
+          "postToolUsage": {
+            "input": 0,
+            "output": 0
+          },
+          "inputObservation": {
+            "materialDeliveries": 0,
+            "materialRetransmissions": 0
+          }
+        }
+      ],
+      "usageComplete": true,
+      "nativeDBUsageMatched": true,
+      "correct": 36,
+      "runs": 0,
+      "postToolGenerations": 0,
+      "postToolInput": 0,
+      "postToolOutput": 0
+    }
+  },
+  "limits": {
+    "perArmInput": 1500000,
+    "perArmMs": 1200000,
+    "maxProductRuns": 72
+  },
+  "limitsOfInference": [
+    "Reported generations are not independently measured HTTP calls.",
+    "Input ratios are not prices; cache and arm order confound comparisons.",
+    "Peers see each others actual answers; correctness is not independent comprehension.",
+    "One completed sample does not establish stability."
+  ],
+  "descriptiveRatios": {
+    "input": 2.88510732391109,
+    "cached": 2.8795640326975476,
+    "uncached": 2.997412343123302,
+    "output": 3.5009871668311945,
+    "generations": 2.0277777777777777,
+    "reasoning": 1.7636152954808806
+  },
+  "independentReview": {
+    "quality": "both-arms-all-36-correct-against-predeclared-gold",
+    "canonicalDelivery": "36 unique Room messages and completed Activation consumer ACK verified directly from SQLite",
+    "usage": "all reported generation inputs/cache/outputs matched actual provider logs and product DB; no recorded gaps",
+    "contractPerParticipant": {
+      "a": "over-budget",
+      "b": "over-budget",
+      "c": "over-budget"
+    },
+    "wholeBatchContractPassed": false,
+    "stability": "not-established",
+    "rawVerdictPreserved": "needs-quality-review",
+    "knownUnknowns": [
+      "No independently observed provider HTTP count or billing reconciliation.",
+      "Provider internal/in-flight work absent from usage cannot be quantified.",
+      "Cache/order effects confound monetary interpretation.",
+      "Shared peer answers do not establish independent understanding."
+    ]
+  },
+  "canonicalAudit": {
+    "uniqueReplies": 36,
+    "consumerAckVerified": 36,
+    "markers": 0,
+    "usageGaps": 0,
+    "retryStages": [
+      {
+        "stage": 3,
+        "speaker": "c",
+        "attempts": 2
+      }
+    ]
+  }
+}

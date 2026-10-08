@@ -1,0 +1,50 @@
+[
+  {
+    "file": "long-v2-claude-haiku-paid-result.json",
+    "sha256": "c97ab1e1322fac3cc9576bb64537aa53ef8ad2fff34215aa787fdd018294f3a5",
+    "status": "needs-quality-review",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-claude-haiku-paid-result.redacted.json",
+    "sha256": "5be208e9c7804a5d9a2d84eee7ab3625006d9d0055765362c902b88d04ba7443",
+    "status": "needs-quality-review",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-claude-sonnet-paid-result.json",
+    "sha256": "2dd952929461accd85677714c74d069fd1e8e3c5ac80966a0b9f0002f6345977",
+    "status": "worker-delivery-incomplete",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-claude-sonnet-paid-result.redacted.json",
+    "sha256": "f92f67e5fa8ce503188b09ba8b001df12265cda173ccb72dffa65b8f8c791503",
+    "status": "worker-delivery-incomplete",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-opencode-aihubmix-paid-result.json",
+    "sha256": "9ec5cd3c63e8337eab211d0ef9f1000b98e85dc3d70c36783a5340168e58823f",
+    "status": "needs-quality-review",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-opencode-aihubmix-paid-result.redacted.json",
+    "sha256": "6e664d0ca12186ddda71188dd2c83b181c7db557e7c719b9f51ae3f398ee8254",
+    "status": "needs-quality-review",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-opencode-deepseek-paid-result.json",
+    "sha256": "06b25007e9b9c4779340009f9a946bcd19faba93a541f35a62d0d0a3cf5f75f6",
+    "status": "needs-quality-review",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  },
+  {
+    "file": "long-v2-opencode-deepseek-paid-result.redacted.json",
+    "sha256": "42059fd6079f737f249da10f4742db9878643189445d85817bc9ea371df84498",
+    "status": "needs-quality-review",
+    "codeCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8"
+  }
+]

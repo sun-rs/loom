@@ -1,0 +1,63 @@
+{
+  "status": "raw gate failed; offline Task submission delivery proven, remaining stages uncovered",
+  "scope": "two same-provider same-model Kimi instances configured; only assignee instance ran, no cross-instance collaboration result",
+  "provider": "kimi",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "version": "0.39.1",
+  "fixtureError": "Task-progress canonical auto-message counted as duplicate ordinary message; Task-submit auto-message excluded but Task-progress not excluded",
+  "task": {
+    "createdBy": "Human",
+    "finalState": "submitted",
+    "result": "2+3=5",
+    "ordinaryFinalPosts": 1,
+    "taskProgressAutoMessages": 1,
+    "taskSubmitAutoMessages": 1,
+    "instanceCompletedTask": false,
+    "humanCompletionTested": false,
+    "observedTaskEvents": [
+      "task.created",
+      "task.claimed",
+      "task.started",
+      "task.progressed",
+      "task.submitted"
+    ]
+  },
+  "delivery": {
+    "runs": 1,
+    "successRunState": "exited",
+    "activationState": "completed",
+    "exactConsumerAck": true,
+    "finalMarkers": 1
+  },
+  "toolFollowing": {
+    "firstTaskGet": "invalid positional UUID refused INVALID_ARG",
+    "recovery": "read Task help then used target/number correctly",
+    "quality": "correct arithmetic and explicitly left completion to Human",
+    "helpText": "Task help itself directs progress then submit, each publishing canonical Task messages"
+  },
+  "usage": {
+    "knownInput": 180388,
+    "knownCachedInput": 171520,
+    "knownUncachedInput": 8868,
+    "knownOutput": 709,
+    "requests": 8,
+    "reportedGenerations": 7,
+    "complete": false,
+    "gap": "eighth request after final publication cancelled; interrupted step has no usage"
+  },
+  "unexecuted": [
+    "task-complete",
+    "attachment-publish",
+    "attachment-read",
+    "cold",
+    "resume"
+  ],
+  "service": {
+    "temporaryGracefulExitCode": 0,
+    "formalServiceChanged": false
+  },
+  "integrity": "ok",
+  "notEfficiency": true,
+  "noRetest": true
+}

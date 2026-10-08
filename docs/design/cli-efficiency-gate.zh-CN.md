@@ -334,3 +334,13 @@ node --test scripts/cli-efficiency/request-accounting.test.mjs
 `requestOutsideInput` 包含 input 之外的 JSON 字段与语法，并非模型上下文的同义词。数组分隔符独立计数，嵌套 MCP 结果不再重复相加。工具不设置新预算或输出倍率；目标预算仍只在目标合同 §6。
 
 首次执行结果与基线数字见 [状态历史日志](../evo/log/status-history-2026-09.zh-CN.md)的"效率基线"一节；全部付费运行见 [付费运行台账](../evo/paid-runs.zh-CN.md)。
+
+### 跨 CLI 连续业务观察（2026-10-08）
+
+`test-cli-business-natural-long.mjs` 与 `test-cli-business-natural-long-v2.mjs` 是独立版本的观察入口；原严格 final-marker 门禁不变。通过 `RAH_EFFICIENCY_PROVIDER/MODEL/EFFORT` 选择批准组合，`--plan --pair=N` 只计划，`--paid --pair=N` 才调用真实 CLI。每臂三参与者、每人十二轮，固定材料首次提供、实际同伴答案原样传递；错答与恢复成本保留，不因首轮差异推断长期倍率。原生每次启动/resume必须验证官方自动记忆关闭或该精确版本不适用。
+
+v2 显式使用 OpenCode stdin 传原生题面，避免官方 positional argv 的引用转义改变材料；旧入口 argv 默认不变。Claude/Kimi 冷进程通过权威 Role session 与 ProviderSessionStore 绑定核对，不要求不存在的 warm runtime 行。自然完成需要唯一显式 Room 回复、正确作者/目标、成功 Run、已完成 Activation 与真实消费者 ACK；多次执行还需精确原生 turn、调用/输出和权威回执关联。OpenCode 已覆盖该关联；Claude 多次冷执行缺原生输入身份时仍停止，不以时间窗猜测。final marker 可选不等于可省 ACK、可从 stdout 推断发布或可接受未知写入。
+
+结果 `needs-quality-review` 只表示观察链完成，必须独立复核答案和原生用量，并另按目标合同 §6 比较。正常续轮不重投材料与 provider 后续生成携带已有会话上下文是不同事实。记录生成数、缓存/未缓存输入、输出、恢复和成功工具后的生成；这些不是 HTTP 次数或账单金额。输出字节变化不是 token 优化的付费证据。
+
+[本次结果](../evo/evidence/2026-10-08-cross-cli-reacceptance.md)包含三个完整配对与全部不完整样本。每绑定一组、产品先运行、短事实题及可见同伴回答，不能建立稳定分布、复杂开发质量或跨 CLI 普遍收益。功能验收需遵守实际业务协议；不得把此短答实验的受限 shell/flag 白名单、唯一普通回复规则套到合法私聊地址、附件和 Task 自动进度/提交消息上。版本升级必须重新核实，旧版证据不能自动扩展；本轮新版 OpenCode/Claude 未放行。

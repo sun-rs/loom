@@ -1,0 +1,66 @@
+{
+  "productCommit": "630ca56b0d0d7db55b99b0c2a5eebaf62975c0e7",
+  "gateCommit": "cdc2ef9815f8ff228438d4eddf60b37c60faf9a8",
+  "checkedWorktreeCommit": "bd388cb86a8a5737639842e4957afad9757dd0c1",
+  "equalTree": "127c548b78de988153940027b7e99b09e3009580",
+  "fullCheck": {
+    "command": "npm run check",
+    "exit": 0,
+    "efficiencyTests": 478,
+    "logSha256": "4dbee1df33389ffecc9177b266dfc960a5556100c21505fe3ba4228fca251dc7"
+  },
+  "formatCheck": {
+    "command": "npm run format:check",
+    "exit": 0,
+    "logSha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  },
+  "diffCheck": {
+    "command": "git diff --check",
+    "exit": 0
+  },
+  "browser": {
+    "sourceCommit": "cbd985c211aa0498f88fd4ca280eb5372a593883",
+    "checks": [
+      {
+        "gate": "web-build",
+        "exitCode": 0,
+        "sha256": "64b70eaead1cbf1a88498fa104d8b66c546fc4c1357ad609ef0de2232292d0fb",
+        "scope": "Build or real browser with isolated Fake CLI; no paid-provider quality claim"
+      },
+      {
+        "gate": "web-roles",
+        "exitCode": 0,
+        "sha256": "58fe2a33ab0fc9f642b08101cbf7ab2cc26d652ec6423626827612b42c7bb2b4",
+        "scope": "Build or real browser with isolated Fake CLI; no paid-provider quality claim"
+      },
+      {
+        "gate": "web-role-activity",
+        "exitCode": 0,
+        "sha256": "557d56999acdc6d0c29d70ade58d79811c347777e7cce28ea7d03ebb94e94554",
+        "scope": "Build or real browser with isolated Fake CLI; no paid-provider quality claim"
+      },
+      {
+        "gate": "console-browser",
+        "exitCode": 0,
+        "sha256": "39882de3413758fb6545cb6efb94ce9d248eb28c6b9d8dd06724b33465cb8a14",
+        "scope": "Build or real browser with isolated Fake CLI; no paid-provider quality claim"
+      }
+    ],
+    "formalPage": {
+      "at": "2026-10-07T14:14:44.011Z",
+      "httpStatus": 200,
+      "title": "RAH OS",
+      "bodyLength": 3151,
+      "hasRole": false,
+      "hasChannel": true,
+      "hasLogin": false,
+      "pageErrors": 0,
+      "scope": "Fresh formal-service page read only; no messages, account settings, or lifecycle mutations"
+    }
+  },
+  "deployment": "Unchanged; no product source changes or formal service restart",
+  "limitations": [
+    "Deterministic/Fake CLI checks do not establish real model quality or paid efficiency.",
+    "Initial isolated-worktree dependency-link check failure retained; exact workspace package links corrected before successful full check."
+  ]
+}

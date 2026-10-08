@@ -1,0 +1,65 @@
+{
+  "status": "failed",
+  "finishedAt": "2026-10-07T16:05:11.054Z",
+  "error": "AssertionError [ERR_ASSERTION]: Missing correlated publication receipt",
+  "steps": [
+    {
+      "id": "busy-private",
+      "status": "completed",
+      "error": null,
+      "busyCoverage": "observed"
+    },
+    {
+      "id": "private-b",
+      "status": "completed",
+      "error": null,
+      "busyCoverage": null
+    },
+    {
+      "id": "private-c",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Missing correlated publication receipt",
+      "busyCoverage": null
+    }
+  ],
+  "humanMessages": 4,
+  "runs": 4,
+  "completedActivations": 4,
+  "exactConsumerAckRuns": 4,
+  "finalMarkers": 3,
+  "usageRecords": 11,
+  "knownUsage": {
+    "input_tokens": 207155,
+    "cached_input_tokens": 188416,
+    "output_tokens": 1974
+  },
+  "usageGapOccurrences": 1,
+  "costComplete": false,
+  "nativeEvidenceFiles": 4,
+  "review": "Independent terminal durable/usage and actual tool output review complete; raw status remains failed.",
+  "diagnosis": {
+    "kind": "functional-fixture-receipt-parser-gap",
+    "detail": "Strict efficiency inspector already permits --target, but its flag value character class excludes @ in dm:@owner. Legitimate private post succeeded; receipt was not collected. Offline command/result/canonical-event/consumer-ACK join confirms actual delivery. No paid retry performed by reviewer."
+  },
+  "capabilities": {
+    "busyPrivate": "observed actual injection while channel running, private starts 4ms after channel ends, same Claude session",
+    "otherMemberPrivateReads": "Kimi and OpenCode actual message-read of Claude private Room each returned HTTP404 NOT_FOUND, no body disclosed; exact own private replies and no token Channel leakage verified",
+    "memory": "not executed",
+    "tasks": "not executed",
+    "attachments": "not executed",
+    "idleRestart": "not executed",
+    "defaultChannelHome": "actual launch evidence for all three providers matches new Channel home"
+  },
+  "limitations": [
+    "Kimi 6 requests vs 5 usage; whole cost unknown",
+    "Kimi first guessed unsupported history command, then help, then actual refused message-read; its claim no other tools used is overbroad",
+    "Kimi first final omitted seq and was definitively rejected without message/marker; corrected same Run request succeeded",
+    "Only observed worker API access refusal, not same-UID filesystem isolation",
+    "No product failure inferred from fixture parser stop; later features uncovered",
+    "No efficiency comparison"
+  ],
+  "cleanup": {
+    "daemonExit": 0,
+    "runtimeTermination": "warm runtime terminated on host shutdown"
+  }
+}
