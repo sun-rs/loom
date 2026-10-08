@@ -1,0 +1,250 @@
+{
+  "kind": "Five-CLI terminal-tool feasibility audit; Pi real isolated prototype",
+  "sourceRevision": "4b55f8a",
+  "productionChanged": false,
+  "paidAuthorization": "Owner ongoing multi-CLI prototype authorization; bounded Pi aihubmix deepseek-v4.1-flash low and attempted Claude haiku",
+  "pi": {
+    "version": "1.1.0",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "thinking": "low",
+    "implementation": "Native extension exposes loom_reply wrapper, calls actual MCP using ctx.executeTool, preserves real result, returns terminate only for successful final published receipt. No abort/kill/fake ACK. Each batch terminates only if every completed tool opts in.",
+    "sessionMode": "one original session file resumed by two CLI processes, one fresh authorized cold-stdio bridge per Run",
+    "freeTests": {
+      "receiptPredicateCases": 9,
+      "passingCases": 9,
+      "beforeImplementation": "Same successful real Kernel publication plus nonterminal wrapper produced 2 requests; expected 1 failed.",
+      "terminalBatch": "2 rounds, 2 actual local fake-provider requests, complete real Kernel writes",
+      "mixedToolBatch": "2 rounds, 4 local fake-provider requests; nonterminal sibling prevents premature termination",
+      "setupFailures": "Initial missing extension file and nested-tool wiring errors retained privately; zero paid requests."
+    },
+    "rounds": [
+      {
+        "round": 1,
+        "answer": "46",
+        "generations": 1,
+        "inputIncludingCache": 938,
+        "uncachedInput": 938,
+        "cachedInput": 0,
+        "outputIncludingReasoning": 81,
+        "settled": true,
+        "rawSha256": "7d89faa2774197e964dbc5ad52612f64700b65c1d8843d8231241936e9d7436d"
+      },
+      {
+        "round": 2,
+        "answer": "59",
+        "generations": 1,
+        "inputIncludingCache": 1119,
+        "uncachedInput": 223,
+        "cachedInput": 896,
+        "outputIncludingReasoning": 81,
+        "settled": true,
+        "rawSha256": "6124d6ce78b308b92d36d89f7b3308fe392fac72cbb738d8ccfba7fbe8874508"
+      }
+    ],
+    "totals": {
+      "generations": 2,
+      "inputIncludingCache": 2057,
+      "uncachedInput": 1161,
+      "cachedInput": 896,
+      "outputIncludingReasoning": 162
+    },
+    "receiptBodiesPreserved": true,
+    "completedActivations": 2,
+    "sameNativeSession": true,
+    "postPublicationGenerations": 0,
+    "cancellationUsed": false,
+    "rawSessionSha256": "376941d1de67fbc4247cc621a80f266c206de1b8ea9db7378ef1de1de3291f36",
+    "prototypeDirectory": "~/.loom/reviews/2026-10-08-terminal-pi",
+    "implementationFiles": {
+      "terminal.ts": {
+        "sha256": "9497919878694930f8b06a42857ddd2f293a7f7abc91b613c18ad5cd8589bd88",
+        "text": "import { isFinalPublished } from './receipt.mjs';\nimport { WORKER_REPLY_MCP_TOOL } from '/Users/sun/Code/repos/rah_os/packages/protocol/src/index.ts';\nexport default function(pi) {\n if(process.env.PROBE_SIBLING==='1')pi.registerTool({name:'synthetic_other',label:'SYNTHETIC other tool',description:'Free deterministic sibling test only',parameters:{type:'object',properties:{}},async execute(){return {content:[{type:'text',text:'SYNTHETIC sibling complete'}],details:{}};}});\n pi.registerTool({\n  name:'loom_reply',label:'Loom reply',description:WORKER_REPLY_MCP_TOOL.description,\n  parameters:WORKER_REPLY_MCP_TOOL.inputSchema,\n  prepareLoadout(){return {hiddenDeclarations:['mcp__loom_worker__loom_reply']};},\n  async execute(id,args,signal,onUpdate,ctx) {\n   const result=await ctx.executeTool('mcp__loom_worker__loom_reply',args,{signal});\n   const output={...result.result,isError:result.isError};\n   return {...output,terminate:isFinalPublished(args,output)};\n  }\n });\n}\n"
+      },
+      "receipt.mjs": {
+        "sha256": "dcbde4a78bc84a08788cb74a7ea04c64ad333de661dde367a5476db944f3b4ea",
+        "text": "export function isFinalPublished(args,result) {\n if(args?.final!==true || result?.isError!==false || result?.content?.length!==1 || result.content[0].type!=='text')return false;\n try {\n  const receipt=JSON.parse(result.content[0].text);\n  return receipt.state==='published' && typeof receipt.messageId==='string' && receipt.messageId.length>0 && Number.isSafeInteger(receipt.roomSeq) && receipt.roomSeq>0;\n } catch{return false;}\n}\n"
+      }
+    },
+    "limits": [
+      "Two arithmetic rounds and one model only; not a long native-paired efficiency gate",
+      "P130 historical 4 generations is mechanism reference, not randomized matched token-price baseline",
+      "No automatic scheduling or production Pi adapter; Host/offer from controlled fixture",
+      "Official automatic-memory disablement not fully audited; not admitted as native benchmark",
+      "No new model approval/catalog gate or CLI-version guard changed"
+    ],
+    "monetaryCost": "Unknown: provider price metadata absent; no invoice-cost claim"
+  },
+  "claude": {
+    "schema": "loom.terminal-tool-prototype.v1",
+    "provider": "claude",
+    "cliVersion": "2.1.293",
+    "requestedModel": "haiku",
+    "effort": null,
+    "scope": "private prototype; no repository/global config/service changes",
+    "freeChecks": {
+      "hookPredicateCases": 8,
+      "passed": 8,
+      "cases": [
+        "published final true stops",
+        "wrong event does not stop",
+        "wrong tool does not stop",
+        "nonfinal does not stop",
+        "isError does not stop",
+        "held does not stop",
+        "invalid receipt does not stop",
+        "missing receipt does not stop"
+      ],
+      "runnerSyntax": "passed",
+      "installedImplementation": "PostToolUse preventContinuation -> hook_stopped_continuation -> main-loop reason hook_stopped, separate from aborted_tools",
+      "officialDocumentation": "https://code.claude.com/docs/en/hooks"
+    },
+    "paidAttempt": {
+      "status": "blocked-before-provider-spawn",
+      "providerRequests": 0,
+      "blocker": "Current user configuration maps ANTHROPIC_DEFAULT_HAIKU_MODEL to kimi-k3. Existing nativeClaudeEnvironment family assertion rejected substitution. No alias or connection changed.",
+      "aliasObserved": "kimi-k3"
+    },
+    "plannedMemoryPolicy": {
+      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+      "autoMemoryEnabled": false,
+      "settingSources": []
+    },
+    "unverified": [
+      "actual Claude hook invocation against real Worker MCP",
+      "receipt saved into Claude session",
+      "one generation per successful final publication",
+      "same-session next-turn continuation",
+      "complete native usage"
+    ],
+    "artifacts": {
+      "hook.mjs": "db124fa14964ffdcc52837472b00c581046f206aa0e8e70be3b0f45ead1e3b9e",
+      "hook.test.mjs": "9aa5544b9f3b883ee8d20f7ed1d9f800e35de5b066028b71318e89a7aa61d9e8",
+      "run.mjs": "be144910798cf62e06db31a5af8d4775e65e9c13448a6527dccd2dc6891fdc81"
+    }
+  },
+  "codex": {
+    "version": "0.161.0",
+    "paidCalls": 0,
+    "verdict": "No public successful terminal-tool mechanism found in this audit. PostToolUse continue:false modifies tool feedback and continues; turn/interrupt ends as interrupted, not accepted as equivalent.",
+    "sources": [
+      "https://learn.chatgpt.com/docs/hooks",
+      "https://learn.chatgpt.com/docs/app-server"
+    ]
+  },
+  "kimi": {
+    "version": "0.39.1",
+    "paidCalls": 0,
+    "verdict": "Internal stopTurn exists with normal result/usage persistence, but MCP adapter does not forward it; external PostToolUse is asynchronous. No supported configuration entry found.",
+    "installedBundleSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+    "sourceLocations": {
+      "toolAndUsagePersistence": "main.mjs:318138-318264",
+      "loopStop": "main.mjs:318419",
+      "mcpConversion": "main.mjs:318723,318837",
+      "externalHook": "main.mjs:277797"
+    }
+  },
+  "opencode": {
+    "version": "1.18.35",
+    "paidCalls": 0,
+    "verdict": "No generic MCP/tool.execute.after terminal flag found. Native json_schema StructuredOutput has a normal loop-exit branch; separate output-submission candidate, not Loom receipt integration.",
+    "sources": [
+      "https://github.com/anomalyco/opencode/blob/v1.18.35/packages/opencode/src/session/prompt.ts",
+      "https://github.com/anomalyco/opencode/blob/v1.18.35/packages/opencode/src/session/tools.ts",
+      "https://github.com/anomalyco/opencode/blob/v1.18.35/packages/plugin/src/index.ts"
+    ],
+    "freePrototype": {
+      "ok": true,
+      "version": "1.18.35",
+      "kind": "deterministic local fake-provider transport proof; not paid or Loom acceptance",
+      "providerRequests": 2,
+      "rounds": [
+        {
+          "structured": {
+            "answer": 46
+          },
+          "usage": {
+            "total": 112,
+            "input": 101,
+            "output": 11,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "tool": {
+            "type": "tool",
+            "tool": "StructuredOutput",
+            "callID": "call_probe_1",
+            "state": {
+              "status": "completed",
+              "input": {
+                "answer": 46
+              },
+              "output": "Structured output captured successfully.",
+              "metadata": {
+                "valid": true
+              },
+              "title": "Structured Output",
+              "time": {
+                "start": 1791443292376,
+                "end": 1791443292378
+              }
+            }
+          },
+          "finish": "tool-calls",
+          "timeCompleted": 1791443292384
+        },
+        {
+          "structured": {
+            "answer": 59
+          },
+          "usage": {
+            "total": 114,
+            "input": 102,
+            "output": 12,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "tool": {
+            "type": "tool",
+            "tool": "StructuredOutput",
+            "callID": "call_probe_2",
+            "state": {
+              "status": "completed",
+              "input": {
+                "answer": 59
+              },
+              "output": "Structured output captured successfully.",
+              "metadata": {
+                "valid": true
+              },
+              "title": "Structured Output",
+              "time": {
+                "start": 1791443292711,
+                "end": 1791443292712
+              }
+            }
+          },
+          "finish": "tool-calls",
+          "timeCompleted": 1791443292714
+        }
+      ],
+      "secondRequestContainsPriorToolCallAndResult": true,
+      "sqliteVerifiedAfterProcessExit": true,
+      "auxiliaryRequests": 0,
+      "harnessLimitation": "Trailing GET /session/:id/message returned 400 because paging query was omitted. Saved POST responses and post-exit SQLite independently verify both rounds; no retry/model calls were used to recover evidence.",
+      "limitations": [
+        "Provider outputs and usage numbers are deterministic fixture values, not real model behavior or billed tokens.",
+        "StructuredOutput is OpenCode built-in final output, not Loom MCP tool. No Room, Worker service, receipt, ACK or execution fences tested.",
+        "Normal loop termination retains finish=tool-calls plus structured output and time.completed. Do not infer errors or native completion from finish alone.",
+        "No restart-and-resume validation. Same running server/session continued twice.",
+        "Only successful schema-valid calls tested; rejected submission, unknown writes and parallel tool batch not tested."
+      ]
+    }
+  },
+  "decision": "Retain Kernel/Worker authority; prototype per-CLI terminal adapters. Do not replace explicit Room actions with inferred stdout or claim universal efficiency from Pi."
+}
