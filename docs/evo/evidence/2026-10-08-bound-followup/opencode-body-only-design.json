@@ -1,0 +1,55 @@
+{
+  "kind": "Body-only native terminal reply facade candidate",
+  "status": "design only; no implementation or paid rerun; P139 remains failed",
+  "motivation": "P139 OpenCode StructuredOutput marked valid a final string true. Host correctly rejected it. Native terminal reply mode already carries final intent, so asking the model for the same boolean may be redundant.",
+  "notCoercion": "Do not convert string true to boolean. Under the proposed body-only schema any extra final key remains invalid. Existing P139 body/final schema and failed verdict are unchanged.",
+  "nativeSchema": {
+    "title": "LoomFinalReply",
+    "type": "object",
+    "properties": {
+      "body": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000000
+      }
+    },
+    "required": ["body"],
+    "additionalProperties": false
+  },
+  "hostOptIn": [
+    "Host explicitly selects this terminal reply facade for this particular activated native turn. A frozen descriptor records facade kind, schema identity/hash, native session, current prompt identity, RunAttempt/execution binding, unique authorized target and presentedThroughSeq.",
+    "The OpenCode built-in function is still StructuredOutput. Its generic name alone does not authorize publication. Only the current invocation explicitly using the approved LoomFinalReply schema is eligible."
+  ],
+  "acceptanceChecks": [
+    "Return belongs to the exact awaited current native invocation; current assistant ID is newly produced, parent is the newly persisted current business prompt, session and configured model match.",
+    "Exactly one completed StructuredOutput capture with nonempty call ID belongs to that same assistant/session. Tool input and captured structured object match. Native tool batch and response have settled with durable usage and no unresolved failure.",
+    "Host independently enforces object shape: body string only, nonempty and bounded; rejects all other properties. Native metadata.valid and JSON-schema declaration are not trusted as validation.",
+    "No arbitrary stdout text, CLI exit, generic assistant final text, historical latest message or tool status alone becomes a Room action."
+  ],
+  "workerCommandConstruction": {
+    "body": "validated native terminal intent.body",
+    "final": true,
+    "basedOnRoomSeq": "Host-frozen presentedThroughSeq; never reread current room seq to bypass stale hold",
+    "idempotencyKey": "stable from this authorized current capture/Run binding, not a new retry key"
+  },
+  "publicationAndCompletion": [
+    "Send through the same authenticated Worker application service and Kernel as ordinary MCP. Preserve ACL, execution fence, unique target, idempotency and stale-context hold.",
+    "Native StructuredOutput success means intent capture only. Only real Worker published receipt confirms Room publication. Held/error/unknown does not complete the Activation or imply successful delivery.",
+    "Persist successful receipt into the same native session as explicitly labeled synthetic Host diagnostic with noReply. Never create a Room Human message or task.",
+    "If Room publication succeeds but session receipt write fails or is unknown, retain partial/unknown status, reconcile existing native receipt identity before writing again, and never resend original business mutation with a fresh key.",
+    "Finalize actual native runtime provenance even on Host intent rejection; do not leave RunAttempt running merely because validation failed. Activation remains incomplete on failure."
+  ],
+  "progressBoundary": [
+    "This facade is exclusively an explicit final reply. Progress updates must use an independently declared ordinary MCP/Worker action; they do not enter this terminal facade.",
+    "Kimi and generic MCP tools can publish either progress or final replies and lack this native final-event mode. Do not remove their final field by analogy or treat any tool call as terminal."
+  ],
+  "requiredFreeTests": [
+    "Body-only valid capture yields exactly one real published message and final marker, receipt persists without additional generation and same session continues.",
+    "Wrong schema descriptor, wrong session/parent, stale capture, duplicate capture, plain text final, extra final property, empty body and unresolved sibling tools all reject before Worker call.",
+    "Newer Human facts produce real Worker held response, no successful receipt/completion.",
+    "Published then lost response / native receipt write failure never creates duplicate Room write; restoration reads authoritative state.",
+    "RunAttempt receives true exit provenance even when schema validation rejects intent; Activation does not complete."
+  ],
+  "evaluation": "If approved for the next experiment, pre-register one new interface version and paid sample; do not overwrite P139, reuse its sample as a pass, or compare its truncated costs as a full long-task ratio.",
+  "productContract": "Standalone design candidate; production adoption changes the permitted native output submission boundary and needs explicit owner contract approval. No production adapter or protocol changed."
+}

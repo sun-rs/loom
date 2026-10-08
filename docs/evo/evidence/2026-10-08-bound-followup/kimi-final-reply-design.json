@@ -1,0 +1,300 @@
+{
+  "kind": "read-only design feasibility; not implementation or acceptance",
+  "version": "0.39.1",
+  "candidate": "Explicit per-Run FinalReply envelope as a protocol facade, submitted by Host after verified natural final response",
+  "verdict": "Conditionally feasible for a narrow private prototype; not a currently supported product action or native schema-guaranteed feature. Owner contract/protocol approval and negative-path fake verification required before adoption.",
+  "paidCalls": 0,
+  "implementationChanges": 0,
+  "explicitContract": {
+    "example": {
+      "FinalReply": {
+        "body": "Message to publish"
+      }
+    },
+    "activation": "Host explicitly enables this output contract only for this Run/normal turn, before delivering the scoped prompt; it is not a global stdout parser.",
+    "schema": "Exactly one object key FinalReply; value exactly one nonempty bounded string key body. Reject duplicate JSON keys, trailing prose, markdown fences, multiple values, unknown fields and invalid Unicode/size according to canonical protocol. No repair, extraction, or model retry.",
+    "meaning": "Named envelope is an explicit requested Room reply command only when the contract is enabled and the final-response proof passes. Any arbitrary JSON, prose, thinking, intermediate segment, exit code, or other-run replay is diagnostic only.",
+    "modelFields": ["body"],
+    "hostBindings": [
+      "authenticated assigned Worker credential",
+      "Room/Instance/RunAttempt and execution lease",
+      "frozen actually presentedThroughSeq",
+      "stable idempotency key bound to this Run and accepted response identity",
+      "final=true as the predefined meaning of FinalReply"
+    ],
+    "submit": "Host invokes the same authenticated Worker reply application service once. No inferred Message/Task/Inbox mutation from provider logs. Kernel remains authoritative for ACL, execution, stale hold, idempotency and delivery ACK.",
+    "completion": "Successful publication receipt required before the normal existing Run/Activation close flow. Task completion stays independent and is never derived from FinalReply or CLI exit.",
+    "unknown": "Unknown write outcome remains unknown; verify through existing service/idempotency recovery or abandon. Never resubmit a new key or let resumed transcript consumption repost the envelope.",
+    "history": "Do not rewrite/delete/filter native session content. Final envelope remains in native history. Host does not fabricate a tool receipt or tell the model publication succeeded; future delivery should explicitly convey failure/held outcome if necessary."
+  },
+  "requiredFinalProof": [
+    "Bind exact CLI session, main agent, activated normal turn and fresh append range. Reject background/subagent/multiple-turn/steered ambiguity; correlate IDs, never timestamps alone.",
+    "Find the unique last completed step for that turn, matched to exactly one llm.request and complete native usage. Correlate content.part by turnId, step and stepUuid to step.end.uuid and response messageId.",
+    "Use only content.part.part.type=text belonging to that final step; ignore think parts entirely. Conservative first prototype requires one visible text part. Never parse stream-json final text by itself.",
+    "Require final step finishReason=end_turn, providerFinishReason=completed, rawFinishReason=stop for this exact Kimi provider binding. Missing/other/truncated/max_tokens/filtered/error/interrupted all fail closed.",
+    "Require exactly one subsequent matching turn.ended reason=completed and native natural process completion as an additional transport check, not as the business-action trigger.",
+    "No final-step tool call. All prior tool calls have unique matching results and no interrupted/failed pending execution; reject any tool stream after the chosen last step. No relevant later step/request before turn closure.",
+    "Only after all terminal proof and explicit envelope schema checks succeed may Host call Worker. Failure retains output and all usage, makes no Room write and does not request format repair."
+  ],
+  "truncationPitfall": "turn.ended reason=completed is insufficient. beginLoopStep returns {type:completed,truncated:lastStopReason===truncated}; TurnEnded publishes reason=result.type and drops that truncated boolean. The wire step.end still retains normalized max_tokens and provider/raw finish reasons, so require those too.",
+  "schemaConfiguration": {
+    "nativePromptCliJsonSchema": false,
+    "cliOutputFormatChoices": ["text", "stream-json"],
+    "providerConfigFields": [
+      "modelSource",
+      "baseUrl",
+      "customHeaders",
+      "defaultModel",
+      "type",
+      "apiKey",
+      "oauth",
+      "env",
+      "source"
+    ],
+    "modelOverrides": "ModelOverrideSchema does not expose responseFormat/response_format/JSON schema. ModelRecord passthrough alone does not wire fields into requests.",
+    "sdkOnly": "generateInputSchema and ProviderChat runRequest expose responseFormat, but normal AgentLlmRequester.runRequest constructs input with systemPrompt/tools/messages only. No formal normal-CLI response schema configuration found. Do not claim SDK support equals CLI support."
+  },
+  "sourceEvidence": [
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 318183,
+      "endLine": 318205,
+      "sha256": "fdecef86ee10b8ca897edabba461185efba9fb130ddb5f7e2b94a5c146d09090",
+      "claim": "Complete response content and interrupted content both use content.part; step proof is mandatory."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 318245,
+      "endLine": 318268,
+      "sha256": "ec402c0878a2c8d54722c703c12ef86e5a8b8a4dc6399a1462f1745ea7bf777f",
+      "claim": "step.end persists normalized/provider/raw finish reasons and provider messageId."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 317985,
+      "endLine": 318032,
+      "sha256": "8527e8070d74e597748164c84f6cd9d6e326fc8bf3957774a07a4ed5290f947b",
+      "claim": "Turn can be completed yet truncated; turn reason alone insufficient."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 317865,
+      "endLine": 317889,
+      "sha256": "3615d8bc0a38a18ae90c62045a6e878702e917c4bec6adfe7ea27e3f6c45c6b9",
+      "claim": "TurnEnded carries result.type, not the truncated flag."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 317434,
+      "endLine": 317439,
+      "sha256": "7f85e4c06a63260a1d3b114c6b214e43fa369bf514d0bfad4744fcd236b67ed7",
+      "claim": "Finish reasons normalize completed to end_turn and truncated to max_tokens."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 243649,
+      "endLine": 243660,
+      "sha256": "864bee86394c2d6c5e40349dcd8025bb44be984eb7c3b679dea0192d74d9439a",
+      "claim": "Actual provider configuration schema."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 243700,
+      "endLine": 243729,
+      "sha256": "d6bb27c4742d17affe0fab573f09636c4bf1b5cf0fb861358b81613ae7218edf",
+      "claim": "Model/override schema lacks output-schema field."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 317003,
+      "endLine": 317009,
+      "sha256": "cfc40a6bcfd3e1a67354fdf5c47b058c4cbb19b38b5b5a1297012ac36912dc60",
+      "claim": "Normal CLI model input excludes responseFormat."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 262096,
+      "endLine": 262106,
+      "sha256": "da2418d7b6de04b91365df94096e44e7bb364b7e8cc1912656333272b0cc2f9b",
+      "claim": "Low-level provider call accepts input.responseFormat."
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "startLine": 324939,
+      "endLine": 324944,
+      "sha256": "870d35a6e77a7b732b73a7c2ca09f4f2b7ad034fdbaab1f0ea815f0e36f2ef1d",
+      "claim": "Generic generateInput schema supports responseFormat, not proof of CLI exposure."
+    }
+  ],
+  "observedEvidence": {
+    "run": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi-paid/runs/1791457737294",
+    "wireSha256": "1954f16e011c3536939f18690b0f928826fedd79ba5de4f109c47a4b46885e11",
+    "naturalFinalBoundaries": [
+      {
+        "turnId": "0",
+        "lastStep": 3,
+        "stepUuid": "bf4d4a25-bc32-4ba7-b98f-df836df5831a",
+        "responseId": "chatcmpl-qIgJ92qn4or5DYrMZvoDsBUE",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 2,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "1",
+        "lastStep": 2,
+        "stepUuid": "5e1c2dbb-013c-4d73-b486-6797fd6e8a3c",
+        "responseId": "chatcmpl-GicVZRQBi33hRYdCEOfFXFKO",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 1,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "2",
+        "lastStep": 2,
+        "stepUuid": "0ffdc468-1014-42f5-a072-1f9f9f89b5eb",
+        "responseId": "chatcmpl-lgIrYOIu66pu9nCQeq5NyFA0",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 1,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "3",
+        "lastStep": 2,
+        "stepUuid": "f7d463f2-5ec0-44da-9866-39f74a727014",
+        "responseId": "chatcmpl-mXYEBtnVkoELvzFmJJNwtTB6",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 1,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "4",
+        "lastStep": 1,
+        "stepUuid": "1de85c5d-53ce-4a9f-b7c7-9c7e7b16327e",
+        "responseId": "chatcmpl-w2j3bnKwOzw6cIE4VLFTUSL7",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "5",
+        "lastStep": 1,
+        "stepUuid": "ad340fa4-451d-4821-a326-1ff91bc018b3",
+        "responseId": "chatcmpl-cTYEVDgDJMvu1RemsE4cTrGn",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "6",
+        "lastStep": 1,
+        "stepUuid": "1d832981-7d45-4a7d-a712-54af6a1f3681",
+        "responseId": "chatcmpl-qFfMJnadwp0cfKVpPZ4vtf7L",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "7",
+        "lastStep": 1,
+        "stepUuid": "1e918dd8-e30d-4968-b2e1-1d0c3933c419",
+        "responseId": "chatcmpl-fc64YsKtg2fsDXUMl6LEkuU7",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "8",
+        "lastStep": 1,
+        "stepUuid": "c03d35a2-7c76-46e2-a210-0c54b5eb4aa3",
+        "responseId": "chatcmpl-bAYr54oHQcTnOHvmwB6Gacri",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "9",
+        "lastStep": 1,
+        "stepUuid": "c9488481-42b9-4c97-a3cd-adfaba47c124",
+        "responseId": "chatcmpl-sMNWFYXsX5wHP3frpM1wY53A",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "10",
+        "lastStep": 1,
+        "stepUuid": "7aeb3882-08a7-454d-a44e-98eceff5fbf4",
+        "responseId": "chatcmpl-hQ8lCrWQxiXOkVKcLjsA5J7A",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      },
+      {
+        "turnId": "11",
+        "lastStep": 1,
+        "stepUuid": "e5ab9e77-d0a7-42e3-8b50-ac1ffb668377",
+        "responseId": "chatcmpl-E1k1PFxq86Mj9z2C0bZOxMmR",
+        "visibleTextParts": 1,
+        "toolCallsClosed": 0,
+        "lastStepToolCalls": 0,
+        "finishReason": "end_turn",
+        "providerFinishReason": "completed",
+        "rawFinishReason": "stop",
+        "turnReason": "completed"
+      }
+    ],
+    "limitations": "Existing P141 plain answers establish readable terminal boundaries only; they were not FinalReply envelopes and were not converted into Room actions."
+  },
+  "blockingBeforeAcceptance": [
+    "Approval of explicit new output-action protocol; no silent reinterpretation of existing diagnostic output.",
+    "Fake-provider tests for truncated-but-completed, interrupted partial valid JSON, duplicate/missing terminal events, mismatched stepUuid, multiple text parts, pending tools, wrong turn, stderr/stdout noise and background turns.",
+    "Real Worker tests for stale newer Human, expired lease, removed member, unknown write, crash/restart replay, delivery ACK, and Task independence.",
+    "Native wire is version-specific diagnostic evidence, not a cryptographic authenticity boundary. Same-UID agent can tamper with files; do not claim adversarial isolation.",
+    "Only a new controlled paid paired test after free proof can show actual efficiency. Subtracting P141 post-publication tokens is a counterfactual, not an achieved result."
+  ],
+  "installedSourceSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337"
+}

@@ -1,0 +1,24 @@
+{
+  "status": "Design only; no paid run or product behavior change",
+  "objective": "Separate communication cost from model quality and fixed output serialization before multiplayer claims.",
+  "invariants": [
+    "Same source fixtures, tool availability, CLI/model/effort and normal continuous session per arm.",
+    "Disable native automatic memory on every launch; collect actual reported input/cache/output/reasoning subset and gaps.",
+    "Preserve failed and truncated attempts; never rerun until pass or compute full-run ratios from unequal coverage.",
+    "Host binds exact delivered causal context; only explicit authenticated actions publish.",
+    "Do not add scenario-specific product roles, workflows or prompts."
+  ],
+  "singleSessionNext": {
+    "workload": "A bounded real file-editing task with successive user-requested changes and independently executed artifact checks.",
+    "quality": "Check final files and calculations independently of conversational response format; keep protocol/schema errors a separate failure category.",
+    "controls": "Freeze tasks, expected artifact invariants, cutoff, model binding, paired order and sample count before models run.",
+    "report": "Whole-task cost, per-round cost, first request, late window, number of business tool calls, extra protocol generations, output serialization and incomplete-usage events. No automatic attribution of all differences to Loom."
+  },
+  "pairedSessionNext": {
+    "baseline": "Two native CLI sessions with the same public replies manually relayed; actual Herdr baseline only from a verified Herdr-managed environment.",
+    "loom": "Two instances exchange only intended Room reply deltas under existing auth/delivery fences.",
+    "fairness": "Same user objective and input artifacts, participant model assignments, intervention rules and stopping criteria. Count both sessions and all failed attempts.",
+    "quality": "Independent accepted artifact and demonstrated reviewer contribution, not number of chat messages.",
+    "limits": "No claim against commercial collaboration libraries without matched implemented baseline and primary-source configuration audit."
+  }
+}

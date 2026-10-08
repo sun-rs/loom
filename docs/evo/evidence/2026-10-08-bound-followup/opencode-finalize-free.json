@@ -1,0 +1,92 @@
+{
+  "kind": "free actual OpenCode native settlement bookkeeping repair",
+  "version": "1.18.35",
+  "paidCalls": 0,
+  "fakeProviderRequests": 3,
+  "testsFirst": {
+    "red": 3,
+    "green": 4
+  },
+  "originalP139RunnerUnchanged": true,
+  "originalP139RunnerSha256": "1f7bd583f40996e169ec833aa2b39940a97cdc34b4721805d27746c7112d59eb",
+  "originalP139FailureAndSnapshotUnchanged": true,
+  "results": [
+    {
+      "caseName": "invalid-final",
+      "nativeSettled": true,
+      "nativeCaptureFinalType": "string",
+      "expectedFailure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'true' !== true\n",
+      "failureStage": "host-intent",
+      "finalizer": {
+        "recorded": true,
+        "alreadyFinished": false,
+        "nativeMessageId": "msg_11b3c38fb001vxbPC77jHebkfx",
+        "nativeCompletedAt": 1791458294865
+      },
+      "run": {
+        "state": "exited",
+        "exit_code": 0,
+        "finished_at": "2026-10-08T11:18:14.870Z"
+      },
+      "workerCalls": 0,
+      "publications": 0,
+      "finalMarkers": 0,
+      "ackRows": 0,
+      "activationState": "leased"
+    },
+    {
+      "caseName": "stale",
+      "nativeSettled": true,
+      "nativeCaptureFinalType": "boolean",
+      "workerState": "held",
+      "expectedFailure": "AssertionError [ERR_ASSERTION]: Worker did not publish",
+      "failureStage": "worker-publication",
+      "finalizer": {
+        "recorded": true,
+        "alreadyFinished": false,
+        "nativeMessageId": "msg_11b3c3caa001NRnnWImbH3ngZ4",
+        "nativeCompletedAt": 1791458295016
+      },
+      "run": {
+        "state": "exited",
+        "exit_code": 0,
+        "finished_at": "2026-10-08T11:18:15.026Z"
+      },
+      "workerCalls": 1,
+      "publications": 0,
+      "finalMarkers": 0,
+      "ackRows": 0,
+      "activationState": "leased"
+    },
+    {
+      "caseName": "receipt-write-failure",
+      "nativeSettled": true,
+      "nativeCaptureFinalType": "boolean",
+      "workerState": "published",
+      "expectedFailure": "Error: HTTP 400",
+      "failureStage": "native-diagnostic-write",
+      "finalizer": {
+        "recorded": true,
+        "alreadyFinished": true,
+        "nativeMessageId": "msg_11b3c3d3d0018olSV7yC1dtw3z",
+        "nativeCompletedAt": 1791458295117
+      },
+      "run": {
+        "state": "exited",
+        "exit_code": 0,
+        "finished_at": "2026-10-08T11:18:15.123Z"
+      },
+      "workerCalls": 1,
+      "publications": 1,
+      "finalMarkers": 1,
+      "ackRows": 1,
+      "activationState": "leased"
+    }
+  ],
+  "scope": "Temporary manually driven RunAttempt per native API turn. Native result time.completed is turn settlement evidence, not the long-lived serve process OS exit. No business completion is inferred.",
+  "limitations": [
+    "Success of publication may already ACK delivery through existing Worker semantics. Diagnostic persistence failure leaves that legitimate ACK and publication intact; the finalizer neither creates nor erases them.",
+    "No witness means no fabricated runtime exit; provider error/unknown settlement recovery is outside this narrow repair.",
+    "Fake provider values/usage only; no paid model or product acceptance."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "kind": "free body-only explicitly selected native FinalReply prototype",
+  "version": "1.18.35",
+  "paidCalls": 0,
+  "fakeProviderRequests": 2,
+  "sameNativeSession": true,
+  "sameKernelInstanceAndRoom": true,
+  "modelDeclaredFields": ["body"],
+  "ordinaryStdoutNeverSubmitted": true,
+  "hostFinalOnlyFromExplicitModeAndCurrentUniqueCapture": true,
+  "testsFirst": {
+    "green": 14,
+    "initialFailures": 12
+  },
+  "results": [
+    {
+      "round": 1,
+      "published": true,
+      "body": "46",
+      "nativeFinalFieldAbsent": true,
+      "hostFinalTrue": true,
+      "workerRequests": 1,
+      "receiptPersisted": true,
+      "requestsWithinRound": 1,
+      "runState": "exited",
+      "activationState": "completed",
+      "finalizer": {
+        "recorded": true,
+        "alreadyFinished": true,
+        "nativeMessageId": "msg_11b4a24a4001ByBWHa25orXqK6",
+        "nativeCompletedAt": 1791459207213
+      }
+    },
+    {
+      "round": 2,
+      "published": true,
+      "body": "59",
+      "nativeFinalFieldAbsent": true,
+      "hostFinalTrue": true,
+      "workerRequests": 1,
+      "receiptPersisted": true,
+      "requestsWithinRound": 1,
+      "runState": "exited",
+      "activationState": "completed",
+      "finalizer": {
+        "recorded": true,
+        "alreadyFinished": true,
+        "nativeMessageId": "msg_11b4a28cd0013doXJ4y0cA3H6w",
+        "nativeCompletedAt": 1791459207390
+      }
+    }
+  ],
+  "originalP139RunnerSha256": "1f7bd583f40996e169ec833aa2b39940a97cdc34b4721805d27746c7112d59eb",
+  "originalP139UnchangedAndStillFailed": true,
+  "limitations": [
+    "Deterministic fake provider only, not real-model reliability/efficiency acceptance.",
+    "Native metadata.valid is not trusted; Host separately validates type and shape.",
+    "Terminal facade only; ordinary Kimi/MCP progress actions still need their own final/progress distinction.",
+    "No production runtime/contract change.",
+    "Original bound bridge safety tests are rerun separately for frozen seq, stale hold, idempotency, unknown outcome and revoked execution."
+  ],
+  "workerBoundaryTests": {
+    "passed": 5,
+    "cases": [
+      "successful replay retains one publication and ACK",
+      "new Human fact holds frozen-seq reply",
+      "model cannot override bound seq",
+      "unknown result not resent under new ID",
+      "progress no final marker; revoked execution refuses"
+    ]
+  },
+  "artifacts": {
+    "intent.mjs": "0cbff6172360f41867d9f457b3e42e95954ad691433be49b5bfece4a54b882cc",
+    "intent.test.mjs": "ac808ec27ff0483229212358955ca6645681898a8ed1eace40ff4ef095608512",
+    "free.mjs": "e9ea058ea8a3c74ac68193f7322d7d5b3500303e345c2cc8ed17aadf62bb835f",
+    "worker-boundary-tests.txt": "3a5b0f4560ba21e66d95b45d0c19d2a248d0a93d73384e680e9f13c7b184bff4"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "batch": "P140",
+  "prototype": "Codex native outputSchema body/final; Host binds actual delivered Room sequence and immutable Run credential",
+  "sourceCommit": "098e7fd",
+  "cli": "codex-cli 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "free": {
+    "unitAndRealKernelTests": 7,
+    "twoRoundPairedFakeCli": {
+      "roundsPerArm": 2,
+      "correctAnswers": 4,
+      "businessToolExecutions": 4,
+      "structuredPublications": 2,
+      "exactAckAndCompletedActivations": 2,
+      "sqliteIntegrity": "ok"
+    },
+    "boundaries": [
+      "unique final_answer item from original thread/turn plus successful native turn/completed",
+      "official Worker mutation schema validated; idempotency from Run/thread/turn/native item",
+      "new Human after actual delivery refuses stale publication without ACK/completion",
+      "finished Run old credential cannot publish",
+      "unknown response after commit neither resent nor completed",
+      "no model-tool waiting loop, turn interrupt, or synthetic ACK"
+    ],
+    "nativeMemory": "config/read verifies features.memories=false, generate_memories=false, use_memories=false in both isolated homes; thread/start repeats flags",
+    "catalog": "exact gpt-6-luna/low verified before inference"
+  },
+  "paid": {
+    "status": "stopped at native first turn: tool-host negotiation failure",
+    "authentication": "actual model responses obtained; previous auth-refresh blocker not observed in this sample",
+    "nativeCompletedTurns": 1,
+    "nativeCorrectTurns": 0,
+    "structuredBusinessTurns": 0,
+    "structuredThreadStarted": true,
+    "toolAttempts": 2,
+    "toolError": "timed out negotiating with the code-mode host",
+    "finalAnswer": {
+      "count": null,
+      "total": null
+    },
+    "reportedGenerations": 3,
+    "usage": {
+      "input_tokens": 39243,
+      "cached_input_tokens": 25856,
+      "output_tokens": 150,
+      "reasoning_output_tokens": 0
+    },
+    "uncachedInput": 13387,
+    "usageCrossCheck": "three unique response token_usage_record sums equal app-server cumulative totals",
+    "noEfficiencyRatio": true,
+    "noRerun": true,
+    "failureClassification": "execution/tool-host availability failure; model attempted tools; not authentication failure or proof of arithmetic inability",
+    "unprovenRootCause": "macOS approval dialog was not observed; isolation/process startup or macOS approval causes remain undetermined",
+    "allChildrenExited": true
+  },
+  "limitations": [
+    "paid structured-output behavior not exercised; only free real-service safety evidence",
+    "single approved model sample; no multiCLI conclusion",
+    "prototype bypasses product scheduler/adapter composition; not production acceptance",
+    "native internal retry policy was CLI default; no sample retries",
+    "no actual fee comparison or efficiency acceptance"
+  ],
+  "references": {
+    "official": "https://learn.chatgpt.com/docs/app-server",
+    "local": "generated0.161.0 protocol/v2/TurnStartParams.ts outputSchema, item/completed final_answer, turn/completed",
+    "perTurnSchema": "passed each structured turn; no thread/inject_items or history changes"
+  },
+  "artifacts": {
+    "paidResult": "runs/1791457245474-P140/result.private.json",
+    "fakeResult": "runs/1791457226472-fake/result.private.json",
+    "tests": "full-free.log",
+    "preflight": "runs/1791457154974-preflight/result.private.json"
+  }
+}

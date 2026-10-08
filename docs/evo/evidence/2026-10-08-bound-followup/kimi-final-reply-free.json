@@ -1,0 +1,108 @@
+{
+  "kind": "private explicit FinalReply protocol candidate - free verification only",
+  "paidCalls": 0,
+  "run": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply/runs/1791459351033",
+  "arms": {
+    "native": {
+      "sessionId": "session_f3dc2464-3029-44f7-93d5-b94bba9e323d",
+      "sameSession": true,
+      "correct": 2,
+      "generations": [2, 1],
+      "requestCount": 3,
+      "completeUsageRecords": 3,
+      "syntheticUsage": {
+        "inputOther": 3,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0,
+        "output": 3
+      },
+      "nativeMcpTools": 0,
+      "toolCalls": [
+        {
+          "name": "Bash",
+          "args": {
+            "command": "cat budget.csv"
+          }
+        }
+      ],
+      "normalCompletedTurns": 2,
+      "thinkingEffort": "low"
+    },
+    "terminal": {
+      "sessionId": "session_84e68814-f3b6-458b-9b0f-82e0add59b06",
+      "sameSession": true,
+      "correct": 2,
+      "generations": [2, 1],
+      "requestCount": 3,
+      "completeUsageRecords": 3,
+      "syntheticUsage": {
+        "inputOther": 3,
+        "inputCacheRead": 0,
+        "inputCacheCreation": 0,
+        "output": 3
+      },
+      "nativeMcpTools": 0,
+      "toolCalls": [
+        {
+          "name": "Bash",
+          "args": {
+            "command": "cat budget.csv"
+          }
+        }
+      ],
+      "normalCompletedTurns": 2,
+      "thinkingEffort": "low"
+    }
+  },
+  "kernel": {
+    "published": 2,
+    "finalReplyMarkers": 2,
+    "completedActivations": 2,
+    "frozenDeliveredSeq": true,
+    "originalWorkerAuthFences": true
+  },
+  "tests": {
+    "initialRed": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply/red.tap",
+    "orderingRed": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply/red-order.tap",
+    "green": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply/kernel.tap",
+    "passed": 25,
+    "negativeCases": [
+      "per-Run opt-in absent",
+      "wrong turn",
+      "wrong step",
+      "thinking-only",
+      "intermediate envelope",
+      "ordinary text",
+      "length/truncated even when turn completed",
+      "missing provider stop",
+      "duplicate end",
+      "unclosed/final-step tool",
+      "unknown fields",
+      "duplicate JSON keys",
+      "text after step.end",
+      "turn end before step end",
+      "stale newer Human held",
+      "unknown write no retry"
+    ],
+    "idempotentReplay": "one real publication and one request"
+  },
+  "transport": "No model-facing MCP registered. Host reuses existing bound Worker bridge locally as authenticated application-service client after strict FinalReply validation; bridge credential is not passed to Kimi environment. No CLI exit/text-only inference.",
+  "history": "Unmodified native session retains explicit FinalReply envelope; no fabricated receipt or deletion. Publication happens after natural provider completion and creates no next model request.",
+  "limits": [
+    "Fake provider deterministically obeys envelope; no real-model reliability or efficiency claim.",
+    "Not a production capability or target-contract change; P141 ordinary-MCP result unchanged.",
+    "Native diagnostic wire is version-pinned, not cryptographic authority. Explicit named output contract is required on each Run.",
+    "Strict fail-closed candidate rejects alternate formatting/trace shapes; no repair or resubmission.",
+    "Host publication after provider finish may be stale/unknown; tested failure remains held/unknown, Task completion independent.",
+    "No general multi-agent or long-task claim."
+  ],
+  "hashes": {
+    "final.mjs": "5f66b0bad2b03681387cc431b0f4c031232f4308e4d1a398c50fa0b607936e4f",
+    "final.test.mjs": "de4b62da3a819300af1a93319f3c604818d9b0d6971503c67f128a661fefaf9d",
+    "kernel.test.mjs": "387635a1e1597b6bc0ea95ea09b4596e6eccc5c823f28a8581bc7316f19e8968",
+    "run.mjs": "55596b3d48932c415908affc12d90202169e8d9b71abebbaaf90ab310b1ab8da",
+    "fake.mjs": "67e598bf77e19f4816fd5884a871dce09084fde541f3391237ff90c592deb2b3",
+    "config.py": "e5a9a5f996d3be94df00012bb91ea985b0be77cc3c2ed44150a356942100c28d",
+    "kernel.tap": "77d72eee6972c67305cd61ca8aff13ff343301a325c83bacf06ed8d532502438"
+  }
+}

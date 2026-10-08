@@ -1,0 +1,58 @@
+{
+  "status": "localized to native host executable startup; no paid rerun",
+  "paidCalls": 0,
+  "method": "installed Codex0.161 app-server with local unauthenticated fake Responses server, replay native custom_tool_call exec -> tools.exec_command; real tool output collected",
+  "controls": [
+    {
+      "readBarriers": true,
+      "isolatedHome": false,
+      "freshCodexHome": true,
+      "providerRequests": 2,
+      "toolSuccess": false,
+      "actualToolError": "timed out negotiating with the code-mode host"
+    },
+    {
+      "readBarriers": false,
+      "isolatedHome": false,
+      "freshCodexHome": true,
+      "providerRequests": 2,
+      "toolSuccess": false,
+      "actualToolError": "timed out negotiating with the code-mode host"
+    },
+    {
+      "readBarriers": false,
+      "isolatedHome": true,
+      "freshCodexHome": true,
+      "providerRequests": 2,
+      "toolSuccess": false,
+      "actualToolError": "timed out negotiating with the code-mode host"
+    }
+  ],
+  "proxyControl": {
+    "allChildHttpHttpsAllProxyVars": "explicit empty",
+    "NO_PROXY": "*",
+    "outcome": "same negotiation failure",
+    "directHostHasNetworkSocket": false,
+    "directHostDescriptors": "stdin/stdout/stderr pipes; no observed TCP socket"
+  },
+  "directExecutableControl": {
+    "sandboxExec": false,
+    "isolatedHome": true,
+    "isolatedCodexHome": true,
+    "credentialsProvided": false,
+    "proxyVars": "empty",
+    "sample": "782 samples all _dyld_start +0,112KiB footprint,no binary images loaded",
+    "stderr": "empty",
+    "terminatedByProbe": "SIGTERM after readonly sampling"
+  },
+  "interpretation": "Read barriers, sandbox-exec wrapper, inherited HOME files and inherited proxy environment do not explain failure by themselves. Even direct host stays at loader entry before observed application execution. Local executable/OS startup gate is strongest remaining explanation; specific macOS approval window not observed. Cannot claim Gatekeeper as confirmed root cause.",
+  "metadata": {
+    "quarantine": "present on both working main codex binary and stalled host, therefore not sufficient alone",
+    "codeSignature": "both OpenAI Developer ID signed; readonly metadata only",
+    "spctl": "execute assessment says valid code but not an app; non-app assessment is not proof of block",
+    "policyLogs": "no relevant visible policy event, only our log query entries"
+  },
+  "initialFreeAttempt": "127.0.0.1 fake URL intercepted with503 and0serverrequests; localhost endpoint allowed actualfree replay, initialfailurepreserved",
+  "changes": "no account/globalconfig/quarantine/signature/provider or formalservice modifications",
+  "nextSafeAction": "Resolve current installed host startup outside Loom, then rerun identical free replay successfully before any new paid comparison; do not disable code-mode or silently alter baseline"
+}

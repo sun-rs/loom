@@ -1,0 +1,399 @@
+{
+  "schema": "loom.bound-structured-reply-opencode.v1",
+  "ledger": "P139",
+  "status": "failed strict terminal intent type validation; stopped without retry",
+  "cliVersion": "1.18.35",
+  "sourceTagCommit": "53d1eabb61e21162157817bf677da0a4ad3332e3",
+  "catalogBinding": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+  "variant": "low",
+  "plannedRoundsPerArm": 12,
+  "completedPairedRounds": 5,
+  "paidTrajectories": 1,
+  "sourceSha256": "84a08efe27f2a93b16eb0dc5710903370d3dbbc330d3bda2153090ebb825d16c",
+  "freeChecks": {
+    "version": "1.18.35",
+    "catalogBinding": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+    "reasoning": "low",
+    "fakeProviderRequests": 7,
+    "freeRealCliRoundsPerArm": 2,
+    "additionalStaleFailureRound": 1,
+    "noModelRequestForReceipt": true,
+    "noAutomaticMemory": "Current-tag audit of 732 CLI/core sources; no automatic persistent memory implementation; pure+disable Claude+disable external skills+disable project config+fresh XDG config/data.",
+    "schemaAndIntentPredicateTests": 14,
+    "failure": "Native valid StructuredOutput then newer Human makes Worker hold; no published receipt/final marker/completion; attempted completion rejected by Kernel."
+  },
+  "arms": {
+    "native": {
+      "nativeSessionCount": 1,
+      "correctCompletedRounds": 5,
+      "reportedGenerationsWithUsage": 11,
+      "allPersistedAssistantsAccounted": true,
+      "messageStepUsageMatches": true,
+      "finalApiResponseDatabaseMatches": true,
+      "totals": {
+        "generations": 11,
+        "inputTokens": 94684,
+        "cachedInputTokens": 84992,
+        "outputTokens": 947,
+        "reasoningOutputTokens": 276,
+        "uncachedInputTokens": 9692
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 3,
+            "inputTokens": 24092,
+            "cachedInputTokens": 15488,
+            "outputTokens": 393,
+            "reasoningOutputTokens": 214
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f22bd0d6ec6fc7e36186b21d73e2b6d79a9b46093fdb940d91231f0c092cc6a2"
+        },
+        {
+          "round": 2,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 17125,
+            "cachedInputTokens": 16896,
+            "outputTokens": 136,
+            "reasoningOutputTokens": 15
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "9f93ba2c1db758ba19f413ebf61bb29ab4ba45df964213dfa4e36156f49cb35f"
+        },
+        {
+          "round": 3,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 17468,
+            "cachedInputTokens": 17152,
+            "outputTokens": 121,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "c4d96a06b81e64af30ec553364fc578e1d0e4e2dbf6cbe110dc32c80d89a969e"
+        },
+        {
+          "round": 4,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 17796,
+            "cachedInputTokens": 17536,
+            "outputTokens": 121,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "31ae493ecbe00bf7412a59712ee429864c5d34d4413bc92202dd0f22c88c9c96"
+        },
+        {
+          "round": 5,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 18203,
+            "cachedInputTokens": 17920,
+            "outputTokens": 176,
+            "reasoningOutputTokens": 47
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "ff7ed25f2afb554940ee01f78de217ad29e169799ab00ff04ca74f5ce465e463"
+        }
+      ],
+      "invalidToolAttempts": 0,
+      "hostReceiptMessages": 0,
+      "observedBinding": {
+        "providerID": "aihubmix",
+        "modelID": "deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      "knownPostPublicationGenerationsWithinSameTurn": null,
+      "unreportedRequestUsage": "unknown",
+      "dollarSpend": null,
+      "reportedEstimatedUsd": 0.0023528751999999996
+    },
+    "terminal": {
+      "nativeSessionCount": 1,
+      "correctCompletedRounds": 5,
+      "reportedGenerationsWithUsage": 15,
+      "allPersistedAssistantsAccounted": true,
+      "messageStepUsageMatches": true,
+      "finalApiResponseDatabaseMatches": true,
+      "totals": {
+        "generations": 15,
+        "inputTokens": 138876,
+        "cachedInputTokens": 127488,
+        "outputTokens": 1594,
+        "reasoningOutputTokens": 320,
+        "uncachedInputTokens": 11388
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 4,
+            "inputTokens": 32683,
+            "cachedInputTokens": 23808,
+            "outputTokens": 496,
+            "reasoningOutputTokens": 228
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "2d110a0c818191c146d9aca9d908d155eece1a64ff16d11939c331da6529b92b"
+        },
+        {
+          "round": 2,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 17916,
+            "cachedInputTokens": 17536,
+            "outputTokens": 178,
+            "reasoningOutputTokens": 7
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "50b144d3aab0a708b114e01c58af65720b2c9907f333bf3ad9200cae8939fb2a"
+        },
+        {
+          "round": 3,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 3,
+            "inputTokens": 27992,
+            "cachedInputTokens": 27264,
+            "outputTokens": 316,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "19f2bf6c0d8c131abf9f568fbdfad878392f3ca8a08ce15612c35d9fb2429756"
+        },
+        {
+          "round": 4,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 3,
+            "inputTokens": 29386,
+            "cachedInputTokens": 28800,
+            "outputTokens": 261,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "23aebd247f8375655eda4456bf9c08c73f10d7239b8f94204bb2aa3a8b89746d"
+        },
+        {
+          "round": 5,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10109,
+            "cachedInputTokens": 9856,
+            "outputTokens": 112,
+            "reasoningOutputTokens": 40
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "a08460d1970c85a6399f4cbe0f8e8ea35aa6664963f21a9a0ab3fff5860a90ff"
+        },
+        {
+          "round": 6,
+          "businessAnswerCorrect": false,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 20790,
+            "cachedInputTokens": 20224,
+            "outputTokens": 231,
+            "reasoningOutputTokens": 45
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f450adad1b2546e140fb1545574efd479d72ee197423c089d54ae80543a3211e"
+        }
+      ],
+      "invalidToolAttempts": 2,
+      "hostReceiptMessages": 5,
+      "observedBinding": {
+        "providerID": "aihubmix",
+        "modelID": "deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      "knownPostPublicationGenerationsWithinSameTurn": 0,
+      "unreportedRequestUsage": "unknown",
+      "dollarSpend": null,
+      "reportedEstimatedUsd": 0.0031486327999999996
+    }
+  },
+  "accounting": {
+    "source": "Installed CLI durable assistant messages and step-finish parts, with returned final API response cross-check. No independent upstream HTTP or provider invoice capture.",
+    "generationMeaning": "Persisted model generations, not an asserted total upstream HTTP request count.",
+    "inputTokens": "tokens.input + tokens.cache.read + tokens.cache.write. OpenCode subtracts both caches from normalized provider input before storing tokens.input.",
+    "cachedInputTokens": "tokens.cache.read only; cache.write is separately counted.",
+    "outputTokens": "tokens.output + tokens.reasoning. OpenCode getUsage stores output minus reasoning; summing restores complete output without duplication.",
+    "sourceUrl": "https://github.com/anomalyco/opencode/blob/53d1eabb61e21162157817bf677da0a4ad3332e3/packages/opencode/src/session/session.ts#L338",
+    "cost": "Sum per-assistant CLI cost estimates (not cumulative session snapshots); pricing and provider invoice were not independently verified. Actual dollar spend remains unknown."
+  },
+  "interface": {
+    "modelDeclaredFields": ["body", "final"],
+    "hostOwns": [
+      "current invocation identity",
+      "execution credential",
+      "fixed presentedThroughSeq",
+      "idempotency key from native message ID"
+    ],
+    "nativeCaptureIsPublication": false,
+    "publication": "Host sends only validated current StructuredOutput intent through existing bound-reply bridge to Worker service. Kernel completes only after real published receipt and native noReply receipt persistence.",
+    "receipt": "Synthetic explicitly labeled Host delivery diagnostic, metadata.humanMessage=false; no new Room Human message or task; noReply does not run the model.",
+    "scope": "Standalone prototype; no production adapter/scheduler or product-contract implementation"
+  },
+  "limitations": [
+    "One model and one truncated trajectory per arm. No twelve-round acceptance and no universal cross-CLI efficiency conclusion.",
+    "Native and terminal chose different working-tool paths and terminal made invalid tool attempts; their full reported costs are retained.",
+    "Native structured marker metadata.valid=true did not prove JSON types; Host strict independent validation rejected string true.",
+    "No independent upstream HTTP ledger: hidden transport retries and unreported usage cannot be ruled out.",
+    "No compaction occurred. Delay budgets not evaluated while other providers could run concurrently.",
+    "No production code, global account config or service modified.",
+    "Failure stopped before cleanup could finalize the sixth Kernel RunAttempt; its temporary snapshot remains running/leased despite settled native CLI and stopped isolated server. This is prototype bookkeeping, not successful Activation."
+  ],
+  "failure": {
+    "arm": "terminal",
+    "round": 6,
+    "stage": "Host validates native structured intent before Worker call",
+    "nativeCaptureMetadataValid": true,
+    "actualFinalType": "string",
+    "actualFinalValue": "true",
+    "requiredFinalType": "boolean",
+    "bodyNumericResultCorrect": true,
+    "workerCallMade": false,
+    "published": false,
+    "activationCompleted": false,
+    "remainingRoundsNotRun": true,
+    "paidRetry": false,
+    "failedRoundUsage": {
+      "generations": 2,
+      "inputTokens": 20790,
+      "cachedInputTokens": 20224,
+      "outputTokens": 231,
+      "reasoningOutputTokens": 45
+    }
+  },
+  "kernel": {
+    "activationStates": [
+      {
+        "state": "completed",
+        "n": 5
+      },
+      {
+        "state": "leased",
+        "n": 1
+      }
+    ],
+    "runStates": [
+      {
+        "state": "exited",
+        "exit_code": 0,
+        "n": 5
+      },
+      {
+        "state": "running",
+        "exit_code": null,
+        "n": 1
+      }
+    ],
+    "finalMarkers": 5,
+    "publishedMessages": 5
+  },
+  "completedPrefixOnly": {
+    "scope": "Rounds 1–5 descriptive comparison, not full-run acceptance; failed R6 spend retained separately in all-paid totals",
+    "totals": {
+      "native": {
+        "generations": 11,
+        "inputTokens": 94684,
+        "cachedInputTokens": 84992,
+        "outputTokens": 947,
+        "reasoningOutputTokens": 276,
+        "uncachedInputTokens": 9692
+      },
+      "terminal": {
+        "generations": 13,
+        "inputTokens": 118086,
+        "cachedInputTokens": 107264,
+        "outputTokens": 1363,
+        "reasoningOutputTokens": 275,
+        "uncachedInputTokens": 10822
+      }
+    },
+    "ratios": {
+      "generations": 1.1818181818181819,
+      "inputTokens": 1.2471589708926534,
+      "uncachedInputTokens": 1.1165910028889805,
+      "outputTokens": 1.4392819429778247
+    }
+  },
+  "allPaidSpend": {
+    "scope": "Both all observed trajectories including failed terminal R6; not comparable equal-work ratio",
+    "totals": {
+      "native": {
+        "generations": 11,
+        "inputTokens": 94684,
+        "cachedInputTokens": 84992,
+        "outputTokens": 947,
+        "reasoningOutputTokens": 276,
+        "uncachedInputTokens": 9692
+      },
+      "terminal": {
+        "generations": 15,
+        "inputTokens": 138876,
+        "cachedInputTokens": 127488,
+        "outputTokens": 1594,
+        "reasoningOutputTokens": 320,
+        "uncachedInputTokens": 11388
+      }
+    }
+  },
+  "isolation": {
+    "freshSeparateRuntimeConfigAndDataPerArm": true,
+    "oldRuntimeDirectoriesDenied": 208,
+    "oldPiLongRuntimeDirectoriesDenied": 11,
+    "osDenyProbesBeforeModelLaunch": [
+      "reviews/plan.json",
+      "repository public evidence file",
+      "peer budget.csv"
+    ],
+    "nativeAndTerminalShareIdenticalSourceHash": true,
+    "globalAccountsUnchanged": true,
+    "settingSources": "Fresh XDG config/data; --pure; disable Claude prompts/skills, external skills, and project config; instructions/plugins/MCP empty",
+    "continuousSessions": "One served native session per arm; noReply Host diagnostics use the terminal session",
+    "isolationLimit": "Path-scoped local OS file-read denials, not a general whole-host/network security sandbox"
+  },
+  "artifacts": {
+    "run.mjs": "1f7bd583f40996e169ec833aa2b39940a97cdc34b4721805d27746c7112d59eb",
+    "intent.mjs": "5d360b2ae82163b48e9188d8b2020326f6083e1b5fd3d36e97088918a4812d5c",
+    "intent.test.mjs": "2490546783eedbf55d73c979e153b7c0e7ff4ebe0caa00b61e07b65995ab0582",
+    "fake.mjs": "501582e1b4702a44abf39a06e663800270e79fed3ca8c61fbabcdfe3e52cbe93",
+    "body-only-design.json": "88e1d698a92ba1cdba2ed758fa9e1f7ee4b79385c39a4d86eaf62c4b389ec136"
+  }
+}

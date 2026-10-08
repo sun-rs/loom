@@ -1,0 +1,30 @@
+{
+  "kind": "P138 cumulative cost accounting correction",
+  "field": "Claude result.total_cost_usd",
+  "semantics": "Cumulative for this native session; use final result once, do not sum resumed rounds.",
+  "perRoundCumulativeUsd": {
+    "native": [
+      0.011084799999999999, 0.013224, 0.0151004, 0.0172228, 0.0190044, 0.021082,
+      0.0227228, 0.0246596, 0.026357600000000002, 0.028387600000000002,
+      0.030643600000000003, 0.032778800000000004
+    ],
+    "terminal": [
+      0.0081156, 0.011152, 0.014249600000000001, 0.017534400000000002,
+      0.020495600000000003, 0.023658000000000002, 0.026809600000000003,
+      0.030100400000000003, 0.0329756, 0.036236000000000004,
+      0.039565600000000006, 0.04312640000000001
+    ]
+  },
+  "supersededIncorrectSumUsd": {
+    "native": 0.2622684,
+    "terminal": 0.30401880000000003
+  },
+  "correctFinalCumulativeUsd": {
+    "native": 0.032778800000000004,
+    "terminal": 0.04312640000000001
+  },
+  "correctRatio": 1.3156796466008518,
+  "tokenAccountingChanged": false,
+  "paidRerun": false,
+  "reason": "Original private audit incorrectly summed cumulative per-round results. Raw values are retained; prior summed USD estimates and their ratio are withdrawn."
+}

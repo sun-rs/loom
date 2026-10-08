@@ -1,0 +1,1252 @@
+{
+  "batch": "P141",
+  "verdict": "quality-and-accounting-pass; ordinary MCP has measured continuation overhead; not formal efficiency-gate acceptance",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "version": "0.39.1",
+  "run": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi-paid/runs/1791457737294",
+  "synthetic": false,
+  "arms": {
+    "native": {
+      "sessionId": "session_851a3da4-451d-4117-a015-7e11aa4d1480",
+      "sameSession": true,
+      "rounds": 12,
+      "correct": 12,
+      "generations": 17,
+      "usage": {
+        "inputTokens": 380829,
+        "uncachedInputTokens": 36509,
+        "cacheReadInputTokens": 344320,
+        "cacheCreationInputTokens": 0,
+        "outputTokens": 874
+      },
+      "window7to12Usage": {
+        "inputTokens": 138973,
+        "uncachedInputTokens": 2013,
+        "cacheReadInputTokens": 136960,
+        "cacheCreationInputTokens": 0,
+        "outputTokens": 293
+      },
+      "postPublicationGenerations": 0,
+      "postPublicationUsage": {
+        "inputTokens": 0,
+        "uncachedInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "outputTokens": 0
+      },
+      "compactions": 0,
+      "retries": 0,
+      "requestCoverage": "complete",
+      "usageRecordMirrorsNotDoubleCounted": true,
+      "perRound": [
+        {
+          "round": 1,
+          "correct": true,
+          "generations": 3,
+          "usage": {
+            "inputTokens": 64974,
+            "uncachedInputTokens": 21966,
+            "cacheReadInputTokens": 43008,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 164
+          },
+          "cumulativeUsage": {
+            "inputTokens": 64974,
+            "uncachedInputTokens": 21966,
+            "cacheReadInputTokens": 43008,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 164
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 3,
+            "matchedRequests": 3,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": ["Read", "Bash"]
+        },
+        {
+          "round": 2,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 43498,
+            "uncachedInputTokens": 9962,
+            "cacheReadInputTokens": 33536,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 104
+          },
+          "cumulativeUsage": {
+            "inputTokens": 108472,
+            "uncachedInputTokens": 31928,
+            "cacheReadInputTokens": 76544,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 268
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": ["Bash"]
+        },
+        {
+          "round": 3,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 44096,
+            "uncachedInputTokens": 832,
+            "cacheReadInputTokens": 43264,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 104
+          },
+          "cumulativeUsage": {
+            "inputTokens": 152568,
+            "uncachedInputTokens": 32760,
+            "cacheReadInputTokens": 119808,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 372
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": ["Bash"]
+        },
+        {
+          "round": 4,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 44694,
+            "uncachedInputTokens": 918,
+            "cacheReadInputTokens": 43776,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 104
+          },
+          "cumulativeUsage": {
+            "inputTokens": 197262,
+            "uncachedInputTokens": 33678,
+            "cacheReadInputTokens": 163584,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 476
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": ["Bash"]
+        },
+        {
+          "round": 5,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 22193,
+            "uncachedInputTokens": 433,
+            "cacheReadInputTokens": 21760,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 48
+          },
+          "cumulativeUsage": {
+            "inputTokens": 219455,
+            "uncachedInputTokens": 34111,
+            "cacheReadInputTokens": 185344,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 524
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 6,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 22401,
+            "uncachedInputTokens": 385,
+            "cacheReadInputTokens": 22016,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 57
+          },
+          "cumulativeUsage": {
+            "inputTokens": 241856,
+            "uncachedInputTokens": 34496,
+            "cacheReadInputTokens": 207360,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 581
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 7,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 22629,
+            "uncachedInputTokens": 357,
+            "cacheReadInputTokens": 22272,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 42
+          },
+          "cumulativeUsage": {
+            "inputTokens": 264485,
+            "uncachedInputTokens": 34853,
+            "cacheReadInputTokens": 229632,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 623
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 8,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 22831,
+            "uncachedInputTokens": 303,
+            "cacheReadInputTokens": 22528,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 64
+          },
+          "cumulativeUsage": {
+            "inputTokens": 287316,
+            "uncachedInputTokens": 35156,
+            "cacheReadInputTokens": 252160,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 687
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 9,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 23067,
+            "uncachedInputTokens": 283,
+            "cacheReadInputTokens": 22784,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 42
+          },
+          "cumulativeUsage": {
+            "inputTokens": 310383,
+            "uncachedInputTokens": 35439,
+            "cacheReadInputTokens": 274944,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 729
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 10,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 23272,
+            "uncachedInputTokens": 232,
+            "cacheReadInputTokens": 23040,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 47
+          },
+          "cumulativeUsage": {
+            "inputTokens": 333655,
+            "uncachedInputTokens": 35671,
+            "cacheReadInputTokens": 297984,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 776
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 11,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 23482,
+            "uncachedInputTokens": 442,
+            "cacheReadInputTokens": 23040,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 44
+          },
+          "cumulativeUsage": {
+            "inputTokens": 357137,
+            "uncachedInputTokens": 36113,
+            "cacheReadInputTokens": 321024,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 820
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        },
+        {
+          "round": 12,
+          "correct": true,
+          "generations": 1,
+          "usage": {
+            "inputTokens": 23692,
+            "uncachedInputTokens": 396,
+            "cacheReadInputTokens": 23296,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 54
+          },
+          "cumulativeUsage": {
+            "inputTokens": 380829,
+            "uncachedInputTokens": 36509,
+            "cacheReadInputTokens": 344320,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 874
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 1,
+            "matchedRequests": 1,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 0,
+          "postPublicationGenerations": 0,
+          "postPublicationUsage": {
+            "inputTokens": 0,
+            "uncachedInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 0
+          },
+          "tools": []
+        }
+      ],
+      "toolCalls": [
+        {
+          "round": 1,
+          "tool": "Read",
+          "arguments": {
+            "path": "budget.csv"
+          }
+        },
+        {
+          "round": 1,
+          "tool": "Bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1 && $2==\"A\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "round": 2,
+          "tool": "Bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1 && $2==\"B\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "round": 3,
+          "tool": "Bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1 && $2==\"C\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "round": 4,
+          "tool": "Bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1 && $2==\"D\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        }
+      ],
+      "wireSha256": "1954f16e011c3536939f18690b0f928826fedd79ba5de4f109c47a4b46885e11"
+    },
+    "terminal": {
+      "sessionId": "session_a73c59fe-8ff8-4f7b-ae99-38996cbbc758",
+      "sameSession": true,
+      "rounds": 12,
+      "correct": 12,
+      "generations": 25,
+      "usage": {
+        "inputTokens": 593800,
+        "uncachedInputTokens": 31880,
+        "cacheReadInputTokens": 561920,
+        "cacheCreationInputTokens": 0,
+        "outputTokens": 1972
+      },
+      "window7to12Usage": {
+        "inputTokens": 300132,
+        "uncachedInputTokens": 6244,
+        "cacheReadInputTokens": 293888,
+        "cacheCreationInputTokens": 0,
+        "outputTokens": 880
+      },
+      "postPublicationGenerations": 12,
+      "postPublicationUsage": {
+        "inputTokens": 291829,
+        "uncachedInputTokens": 6389,
+        "cacheReadInputTokens": 285440,
+        "cacheCreationInputTokens": 0,
+        "outputTokens": 548
+      },
+      "compactions": 0,
+      "retries": 0,
+      "requestCoverage": "complete",
+      "usageRecordMirrorsNotDoubleCounted": true,
+      "perRound": [
+        {
+          "round": 1,
+          "correct": true,
+          "generations": 3,
+          "usage": {
+            "inputTokens": 65341,
+            "uncachedInputTokens": 11325,
+            "cacheReadInputTokens": 54016,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 266
+          },
+          "cumulativeUsage": {
+            "inputTokens": 65341,
+            "uncachedInputTokens": 11325,
+            "cacheReadInputTokens": 54016,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 266
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 3,
+            "matchedRequests": 3,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 22110,
+            "uncachedInputTokens": 350,
+            "cacheReadInputTokens": 21760,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 53
+          },
+          "tools": ["Read", "mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 2,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 44032,
+            "uncachedInputTokens": 9984,
+            "cacheReadInputTokens": 34048,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 168
+          },
+          "cumulativeUsage": {
+            "inputTokens": 109373,
+            "uncachedInputTokens": 21309,
+            "cacheReadInputTokens": 88064,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 434
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 22519,
+            "uncachedInputTokens": 503,
+            "cacheReadInputTokens": 22016,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 50
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 3,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 44846,
+            "uncachedInputTokens": 1070,
+            "cacheReadInputTokens": 43776,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 168
+          },
+          "cumulativeUsage": {
+            "inputTokens": 154219,
+            "uncachedInputTokens": 22379,
+            "cacheReadInputTokens": 131840,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 602
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 22927,
+            "uncachedInputTokens": 655,
+            "cacheReadInputTokens": 22272,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 50
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 4,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 45661,
+            "uncachedInputTokens": 1117,
+            "cacheReadInputTokens": 44544,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 168
+          },
+          "cumulativeUsage": {
+            "inputTokens": 199880,
+            "uncachedInputTokens": 23496,
+            "cacheReadInputTokens": 176384,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 770
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 23334,
+            "uncachedInputTokens": 550,
+            "cacheReadInputTokens": 22784,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 50
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 5,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 46490,
+            "uncachedInputTokens": 922,
+            "cacheReadInputTokens": 45568,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 162
+          },
+          "cumulativeUsage": {
+            "inputTokens": 246370,
+            "uncachedInputTokens": 24418,
+            "cacheReadInputTokens": 221952,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 932
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 23744,
+            "uncachedInputTokens": 448,
+            "cacheReadInputTokens": 23296,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 51
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 6,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 47298,
+            "uncachedInputTokens": 1218,
+            "cacheReadInputTokens": 46080,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 160
+          },
+          "cumulativeUsage": {
+            "inputTokens": 293668,
+            "uncachedInputTokens": 25636,
+            "cacheReadInputTokens": 268032,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1092
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 24153,
+            "uncachedInputTokens": 601,
+            "cacheReadInputTokens": 23552,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 41
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 7,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 48101,
+            "uncachedInputTokens": 997,
+            "cacheReadInputTokens": 47104,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 143
+          },
+          "cumulativeUsage": {
+            "inputTokens": 341769,
+            "uncachedInputTokens": 26633,
+            "cacheReadInputTokens": 315136,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1235
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 24546,
+            "uncachedInputTokens": 482,
+            "cacheReadInputTokens": 24064,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 39
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 8,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 48855,
+            "uncachedInputTokens": 983,
+            "cacheReadInputTokens": 47872,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 130
+          },
+          "cumulativeUsage": {
+            "inputTokens": 390624,
+            "uncachedInputTokens": 27616,
+            "cacheReadInputTokens": 363008,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1365
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 24920,
+            "uncachedInputTokens": 600,
+            "cacheReadInputTokens": 24320,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 32
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 9,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 49622,
+            "uncachedInputTokens": 982,
+            "cacheReadInputTokens": 48640,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 156
+          },
+          "cumulativeUsage": {
+            "inputTokens": 440246,
+            "uncachedInputTokens": 28598,
+            "cacheReadInputTokens": 411648,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1521
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 25308,
+            "uncachedInputTokens": 476,
+            "cacheReadInputTokens": 24832,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 46
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 10,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 50408,
+            "uncachedInputTokens": 1256,
+            "cacheReadInputTokens": 49152,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 146
+          },
+          "cumulativeUsage": {
+            "inputTokens": 490654,
+            "uncachedInputTokens": 29854,
+            "cacheReadInputTokens": 460800,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1667
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 25701,
+            "uncachedInputTokens": 613,
+            "cacheReadInputTokens": 25088,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 42
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 11,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 51184,
+            "uncachedInputTokens": 1008,
+            "cacheReadInputTokens": 50176,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 142
+          },
+          "cumulativeUsage": {
+            "inputTokens": 541838,
+            "uncachedInputTokens": 30862,
+            "cacheReadInputTokens": 510976,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1809
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 26088,
+            "uncachedInputTokens": 488,
+            "cacheReadInputTokens": 25600,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 39
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        },
+        {
+          "round": 12,
+          "correct": true,
+          "generations": 2,
+          "usage": {
+            "inputTokens": 51962,
+            "uncachedInputTokens": 1018,
+            "cacheReadInputTokens": 50944,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 163
+          },
+          "cumulativeUsage": {
+            "inputTokens": 593800,
+            "uncachedInputTokens": 31880,
+            "cacheReadInputTokens": 561920,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 1972
+          },
+          "coverage": {
+            "status": "complete",
+            "requests": 2,
+            "matchedRequests": 2,
+            "unreportedRequests": 0,
+            "unmatchedUsageRecords": 0
+          },
+          "published": 1,
+          "postPublicationGenerations": 1,
+          "postPublicationUsage": {
+            "inputTokens": 26479,
+            "uncachedInputTokens": 623,
+            "cacheReadInputTokens": 25856,
+            "cacheCreationInputTokens": 0,
+            "outputTokens": 55
+          },
+          "tools": ["mcp__loom_worker__loom_reply"]
+        }
+      ],
+      "toolCalls": [
+        {
+          "round": 1,
+          "tool": "Read",
+          "arguments": {
+            "path": "budget.csv"
+          }
+        },
+        {
+          "round": 1,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4545}",
+            "final": true
+          }
+        },
+        {
+          "round": 2,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4650}",
+            "final": true
+          }
+        },
+        {
+          "round": 3,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4755}",
+            "final": true
+          }
+        },
+        {
+          "round": 4,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4860}",
+            "final": true
+          }
+        },
+        {
+          "round": 5,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4645}",
+            "final": true
+          }
+        },
+        {
+          "round": 6,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 60, \"total\": 18910}",
+            "final": true
+          }
+        },
+        {
+          "round": 7,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4545}",
+            "final": true
+          }
+        },
+        {
+          "round": 8,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 60, \"total\": 18810}",
+            "final": true
+          }
+        },
+        {
+          "round": 9,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 15, \"total\": 4850}",
+            "final": true
+          }
+        },
+        {
+          "round": 10,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 30, \"total\": 9710}",
+            "final": true
+          }
+        },
+        {
+          "round": 11,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 30, \"total\": 9300}",
+            "final": true
+          }
+        },
+        {
+          "round": 12,
+          "tool": "mcp__loom_worker__loom_reply",
+          "arguments": {
+            "body": "{\"count\": 60, \"total\": 19010}",
+            "final": true
+          }
+        }
+      ],
+      "wireSha256": "344f86a544fd8681703b0dc675dccb364efd4fc86d39ad9f80f15b2682fd971f"
+    }
+  },
+  "limits": [
+    "One paired 12-turn trajectory per arm, not a confidence interval. Model arithmetic/tool choices are stochastic.",
+    "Ordinary MCP returns full published receipt to model and naturally continues. This is not Pi terminal-tool or Claude-hook equivalence.",
+    "No monetary cost ratio asserted: cache reads, cache creation, uncached input and output differ in billing weight; reasoning output unavailable as separate native metric.",
+    "Same-session history preserved; no session rotation. Default native tools and system prompt retained.",
+    "OS denies known oracle/evidence/peer/prior runtimes, not a universal security boundary; local agent retains general filesystem access.",
+    "Runtime provenance driver label inherited pi-prototype-manual from prototype fixture; actual process and all wire requests are Kimi.",
+    "Provider default compaction behavior retained, observed compaction count reported."
+  ],
+  "ratios": {
+    "usage": {
+      "inputTokens": 1.5592299956148297,
+      "uncachedInputTokens": 0.8732093456408009,
+      "cacheReadInputTokens": 1.6319702602230484,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 2.2562929061784898
+    },
+    "window7to12Usage": {
+      "inputTokens": 2.1596425204895917,
+      "uncachedInputTokens": 3.1018380526577247,
+      "cacheReadInputTokens": 2.1457943925233645,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 3.0034129692832763
+    }
+  },
+  "cumulativeRatios": [
+    {
+      "round": 1,
+      "inputTokens": 1.0056484132114385,
+      "uncachedInputTokens": 0.5155695165255395,
+      "cacheReadInputTokens": 1.255952380952381,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.6219512195121952
+    },
+    {
+      "round": 2,
+      "inputTokens": 1.0083062910244118,
+      "uncachedInputTokens": 0.6674079178150839,
+      "cacheReadInputTokens": 1.1505016722408026,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.6194029850746268
+    },
+    {
+      "round": 3,
+      "inputTokens": 1.0108214042263122,
+      "uncachedInputTokens": 0.6831196581196581,
+      "cacheReadInputTokens": 1.1004273504273505,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.618279569892473
+    },
+    {
+      "round": 4,
+      "inputTokens": 1.013271689428273,
+      "uncachedInputTokens": 0.6976661321931231,
+      "cacheReadInputTokens": 1.078247261345853,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.6176470588235294
+    },
+    {
+      "round": 5,
+      "inputTokens": 1.1226447335444625,
+      "uncachedInputTokens": 0.7158394652751312,
+      "cacheReadInputTokens": 1.1975138121546962,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.7786259541984732
+    },
+    {
+      "round": 6,
+      "inputTokens": 1.2142266472611802,
+      "uncachedInputTokens": 0.7431586270871985,
+      "cacheReadInputTokens": 1.2925925925925925,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.8795180722891567
+    },
+    {
+      "round": 7,
+      "inputTokens": 1.2922056071232773,
+      "uncachedInputTokens": 0.7641522967893725,
+      "cacheReadInputTokens": 1.3723522853957637,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.9823434991974318
+    },
+    {
+      "round": 8,
+      "inputTokens": 1.3595622937810634,
+      "uncachedInputTokens": 0.7855273637501422,
+      "cacheReadInputTokens": 1.4395939086294416,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 1.9868995633187774
+    },
+    {
+      "round": 9,
+      "inputTokens": 1.4183959817386906,
+      "uncachedInputTokens": 0.8069640791218714,
+      "cacheReadInputTokens": 1.4972067039106145,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 2.0864197530864197
+    },
+    {
+      "round": 10,
+      "inputTokens": 1.4705429260763363,
+      "uncachedInputTokens": 0.8369263547419472,
+      "cacheReadInputTokens": 1.5463917525773196,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 2.1481958762886597
+    },
+    {
+      "round": 11,
+      "inputTokens": 1.5171712816090184,
+      "uncachedInputTokens": 0.8545952980920998,
+      "cacheReadInputTokens": 1.59170653907496,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 2.2060975609756097
+    },
+    {
+      "round": 12,
+      "inputTokens": 1.5592299956148297,
+      "uncachedInputTokens": 0.8732093456408009,
+      "cacheReadInputTokens": 1.6319702602230484,
+      "cacheCreationInputTokens": null,
+      "outputTokens": 2.2562929061784898
+    }
+  ],
+  "kernel": {
+    "completedActivations": 12,
+    "successfulRunExits": 12,
+    "sentPresentedWindowsWithNoPendingAck": 12,
+    "workerCursor": 103,
+    "actualPresentationSeqFrozen": true,
+    "modelSuppliedSeqOrTarget": false,
+    "hostPreservesWorkerAuthStaleIdempotencyFences": true
+  },
+  "oracleAudit": {
+    "unexpectedReadTools": 0,
+    "observedReadTargets": ["own budget.csv"],
+    "ownSessionOrConfigReads": 0,
+    "successfulOracleReads": 0,
+    "profileHashes": {
+      "native": "7b875bd1328e449c5a62f26d787f99712ef4cfcde9c97cca651889699102f61a",
+      "terminal": "54066e296c0b52e43a73d0de242ac42810899c0e54cb74af920f0157af59288a"
+    },
+    "priorRuntimeDenyCount": 1099,
+    "freeOSAdmission": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi-paid/free-verified.json"
+  },
+  "memory": {
+    "source": "scripts/cli-efficiency/native-memory-version.mjs",
+    "version": "0.39.1",
+    "status": "not-applicable: audited installed version has no independent native automatic memory subsystem",
+    "isolation": "Each initial/resume has isolated HOME, KIMI_CODE_HOME and empty --skills-dir; normal session retained",
+    "cronDisabled": true,
+    "account": "existing same-source provider/account copied only into private runtime; no global change",
+    "thinking": "isolated [thinking] enabled=true effort=low plus KIMI_MODEL_THINKING_EFFORT=low; all 42 wire requests exact",
+    "maxAttemptsPerStep": 1
+  },
+  "hashes": {
+    "run.mjs": "8b6d0eb527215198bb82e78c9b589388aba93fc280e0eff0a834e090e8915ddd",
+    "config.py": "e5a9a5f996d3be94df00012bb91ea985b0be77cc3c2ed44150a356942100c28d",
+    "fake.mjs": "e136c213041c2b202f07efe66ae33fa245d626232a4c653ecc175a86c32ee851",
+    "free-verified.json": "98d0568f0a974a381ffeb63f8cb3f4cec285dd3d08f415e8e627dfb4989fa6d3",
+    "installedCli": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+    "plan": "ac718c7400854544b59c469dd9b85e7f1691836e5e283fec7fd4a2c168d21f3b",
+    "state.db": "81d2b64a5da6a1b96c72749a1d331ec51f81da8b9c5dee6f1ca6c4da625f1fce"
+  }
+}

@@ -107,10 +107,10 @@
     },
     "quality": "Both all12 strict-correct; independent stream/session usage reconciliation and hook_stopped normal termination verified.",
     "cliReportedEstimatedUsd": {
-      "native": 0.2622684,
-      "terminal": 0.3040188,
-      "ratio": 1.159189593561405,
-      "qualification": "CLI-reported estimate only, not an independently verified provider invoice."
+      "native": 0.032778800000000004,
+      "terminal": 0.04312640000000001,
+      "ratio": 1.3156796466008518,
+      "qualification": "Final cumulative CLI session estimate only, not provider invoice. Prior sums of per-round cumulative values were incorrect and withdrawn; see claude-cost-correction.json."
     }
   },
   "inferenceLimits": [

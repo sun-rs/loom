@@ -1,0 +1,118 @@
+{
+  "schema": "loom.kimi-terminal-mechanism-audit.v1",
+  "cliVersion": "0.39.1",
+  "verdict": "No supported CLI/MCP terminal mechanism found; current MCP path ignores supplied stopTurn/terminate and generates a follow-up request. Preserve ordinary MCP cost rather than fake success with cancellation.",
+  "scope": "Installed executable source/help plus real installed CLI with localhost fake provider and synthetic MCP; NOT real Room action acceptance and NOT paid model evidence.",
+  "paidModelRequests": 0,
+  "source": {
+    "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+    "sha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+    "spans": [
+      {
+        "finding": "MCP result conversion drops terminal fields",
+        "startLine": 318722,
+        "endLine": 318760,
+        "sha256": "47e6593b3e4a118cef7f294afdb0567f84312bd27c4dcee3883d66af6cb6f3d9"
+      },
+      {
+        "finding": "MCP executable calls that converter",
+        "startLine": 318848,
+        "endLine": 318875,
+        "sha256": "1b3ece9911be720ee7d7f69a65c23ef7620b46bab3e152cbc4ffd497ecc88735"
+      },
+      {
+        "finding": "External PostToolUse is notification-only",
+        "startLine": 277797,
+        "endLine": 277808,
+        "sha256": "5eaa4d00895e70a3fdff62880de9b1e2eaa31ba9d4ed9fe041f5a034ad77451f"
+      },
+      {
+        "finding": "External fireAndForget returns no control result",
+        "startLine": 277662,
+        "endLine": 277673,
+        "sha256": "aaeda5b66bd4ea37c7f07e446ea5959a3d4c5b638f99ed56566436322fc03d7c"
+      },
+      {
+        "finding": "Internal stopTurn affects loop if actually propagated",
+        "startLine": 318224,
+        "endLine": 318243,
+        "sha256": "badabf5eb537681ef8064bce3ce09c78163328a1945faae7abd3221039b95dc2"
+      },
+      {
+        "finding": "Continuation queues another request absent stopTurn",
+        "startLine": 318408,
+        "endLine": 318426,
+        "sha256": "fb99eeda08e1d1ea1ae02690b981da7bed36b0d3dea1ce814a415c5ca7480360"
+      }
+    ]
+  },
+  "publicApiAudit": {
+    "cliOutputFormats": ["text", "stream-json"],
+    "nativeStructuredFinalSubmission": "No official CLI output-schema/final-submit callback flag found. Provider SDK response_format support inside bundle is not proof of CLI exposure.",
+    "nativeToolExtension": "Internal result.stopTurn exists but MCP adaptation reconstructs output and isError only; no exposed custom executable-tool plugin contract identified in CLI/plugin schema.",
+    "postToolHook": "External PostToolUse fireAndForget notification does not consume stop decisions. Source verified; no external-hook subprocess installed in this probe.",
+    "interrupt": "Not used; cannot claim safe terminal boundary or complete provider usage by racing cancellation."
+  },
+  "freeProbe": {
+    "runtimeRoot": "/tmp/loom-kimi-mcp-ICFgyM",
+    "sessionId": "session_487466c1-809e-4319-a7b8-6041c10d8d9b",
+    "rounds": 2,
+    "sameSession": true,
+    "cliExitCodes": [0, 0],
+    "httpModelRequests": 4,
+    "requestsPerRound": [2, 2],
+    "postReceiptRequests": 2,
+    "mcpInjectedTopLevelFields": {
+      "stopTurn": true,
+      "terminate": true
+    },
+    "syntheticReceiptNotRealPublication": true,
+    "usageRecords": 4,
+    "llmRequestWireRecords": 4,
+    "usageTotalsSynthetic": {
+      "inputOther": 4,
+      "output": 4,
+      "inputCacheRead": 0,
+      "inputCacheCreation": 0
+    },
+    "usageAccounting": "Only usage.record counted; mirrored step-end/turn/context tokens excluded. Synthetic values test delivery only, not real cost.",
+    "wireSha256": "ee37ad6651452a76dd15002feea3f8868d6716ac12e84ab9dae88e070b7c014c"
+  },
+  "harnessPreflightFailures": [
+    {
+      "root": "/tmp/loom-kimi-mcp-erEZ2D",
+      "error": "Cannot combine --prompt with --auto",
+      "modelRequests": 0
+    },
+    {
+      "root": "/tmp/loom-kimi-mcp-gREOYP",
+      "error": "Cannot combine --prompt with --yolo",
+      "modelRequests": 0
+    }
+  ],
+  "reproduce": "node /Users/sun/.loom/reviews/2026-10-08-bound-kimi/probe.mjs",
+  "prototypeHashes": {
+    "probe.mjs": "335d31c9ae7f0c8e94e633ca8a5449aad1caf2d2f76a811aaa1d16dea3465729",
+    "mcp.mjs": "8e72aefcc037fe3edffff6b6287f2f4d4dc1b0f2e48a853dbe1f69ca1713bf97"
+  },
+  "recommendation": "Keep Kimi on normal explicit Worker MCP with visible extra continuation cost, same-session history and native usage. Host-bound body/final transport may still reduce prompt cost independently, but this audit does not establish terminal support. Do not patch installed CLI or turn stdout into Room messages implicitly.",
+  "normalMcpPaidComparisonFeasibility": {
+    "verdict": "feasible in principle; no paid calls started",
+    "plannedModel": "kimi-code/k3-256k",
+    "plannedEffort": "low",
+    "completion": "Allow normal post-MCP assistant continuation and process exit; no interrupt/kill used as successful completion. Timeout remains failed unknown-cost evidence.",
+    "nativeMemory": {
+      "status": "not-applicable by exact-version audit: no independent automatic native memory subsystem",
+      "version": "0.39.1",
+      "repoEvidence": "scripts/cli-efficiency/native-memory-version.mjs",
+      "sourceRevision": "5efca0c3116743855c28426000073bfe34a4862f",
+      "requiredIsolation": "Dedicated KIMI_CODE_HOME and controlled cwd, no inherited profiles/hooks/MCP/skills in native; empty --skills-dir as applicable. Preserve same-session history. Connection/account copying requires same origin/credential binding, no global edits."
+    },
+    "usage": {
+      "source": "native agents/main/wire.jsonl usage.record or matched step.end usage, never both",
+      "freeCoverage": "4 llm.request / 4 usage.record",
+      "paidRequirement": "Every llm.request matched to reported usage and model/effort; gaps remain unknown and block quantitative efficiency acceptance. Do not extrapolate free synthetic token values to real model cost."
+    },
+    "scopeLimit": "This mechanism probe used synthetic MCP, so real Host-bound Worker publication and ACK must still be tested separately."
+  }
+}
