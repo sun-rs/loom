@@ -1,0 +1,111 @@
+{
+  "kind": "Pi native MCP isolated prototype, not production adapter or efficiency acceptance",
+  "sourceRevision": "845bfb1",
+  "cliVersion": "1.1.0",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "reportedResponseModel": "deepseek-v4-1-flash-260910",
+  "thinking": "low",
+  "configuration": {
+    "agentDirectory": "~/.loom/reviews/2026-10-08-pi-mcp/agent",
+    "mcpFile": "mcp.json",
+    "server": "loom_worker",
+    "tool": "loom_reply",
+    "exposure": "direct",
+    "builtinExtensionExplicitlyEnabled": true,
+    "automaticCacheWarming": "off"
+  },
+  "architecture": {
+    "automaticSchedulerStarted": false,
+    "realKernelAndWorkerApplicationService": true,
+    "manuallyLeasedActivations": true,
+    "hostAndOffer": "test fixture, not production Pi runtime discovery",
+    "transport": "existing cold-stdio/v1 bridge (Kimi-named implementation), fresh nonce/bridge each Run",
+    "session": "same exact Pi session file, resumed across two native process launches",
+    "reading": "driver calls authenticated message-present and supplies current Human message body; MCP itself exposes reply only",
+    "writing": "Pi calls existing Worker MCP -> WorkerApplicationService -> Kernel",
+    "nativeTurnIdRecordedInKernel": false,
+    "explicitHarnessCursorAcknowledgement": false
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "answer": "46",
+      "generations": 2,
+      "toolCalls": 1,
+      "inputIncludingCache": 2045,
+      "uncachedInput": 1149,
+      "cachedInput": 896,
+      "outputIncludingReasoning": 121,
+      "postPublicationGenerations": 1,
+      "postPublicationInput": 1106,
+      "settled": true,
+      "rawSha256": "9a70b548f92ce83e52f5063e8479fa5d1f5e1b3afd87a4a165704a750f4c1ded"
+    },
+    {
+      "round": 2,
+      "answer": "59",
+      "generations": 2,
+      "toolCalls": 1,
+      "inputIncludingCache": 2471,
+      "uncachedInput": 295,
+      "cachedInput": 2176,
+      "outputIncludingReasoning": 100,
+      "postPublicationGenerations": 1,
+      "postPublicationInput": 1307,
+      "settled": true,
+      "rawSha256": "038977e956f60b1dd3480c47c34e0b4b8fab82e054ed2203ae2f6dc43a29936c"
+    }
+  ],
+  "durableChecks": {
+    "completedActivations": 2,
+    "exitedRuns": 2,
+    "messages": ["46", "59"],
+    "attemptsPerActivation": [1, 1]
+  },
+  "totalsSuccessfulAttempt": {
+    "generations": 4,
+    "inputIncludingCache": 4516,
+    "uncachedInput": 1444,
+    "cachedInput": 3072,
+    "outputIncludingReasoning": 221,
+    "postPublicationGenerations": 2,
+    "postPublicationInput": 2413
+  },
+  "retainedFailedAttempt": {
+    "reason": "Harness --no-extensions also disabled built-in MCP. Corrected to --no-extensions -e builtin:mcp. Not a model tool-following failure.",
+    "generations": 1,
+    "inputIncludingCache": 522,
+    "uncachedInput": 522,
+    "outputIncludingReasoning": 143,
+    "publishedMessages": 0,
+    "rawSha256": "4cde071e397f2a36134f7865f686eecae454da6f8a34c1bb0f60f61b9f263f74"
+  },
+  "batchTotalsIncludingFailure": {
+    "generations": 5,
+    "inputIncludingCache": 5038,
+    "outputIncludingReasoning": 364
+  },
+  "limits": [
+    "Two-turn single-model connectivity/continuity probe, not long-conversation or multi-agent acceptance",
+    "No native paired control; no overhead ratio or invoice-cost claim",
+    "Provider automatic-memory disablement not fully audited; isolated config, no skills/context files, cache warming off",
+    "Price metadata absent; reported zero cost does not mean free",
+    "No Pi production adapter, automatic scheduling, restart recovery, multi-target/attachment/private-box/read-MCP acceptance",
+    "Formal service and product source untouched"
+  ],
+  "research": [
+    {
+      "source": "https://microsoft.github.io/autogen/stable/user-guide/agentchat-user-guide/selector-group-chat.html",
+      "finding": "AutoGen model-based speaker selection is additional inference; custom deterministic selector can replace it. No directly comparable native-CLI overhead benchmark on this page."
+    },
+    {
+      "source": "https://docs.langchain.com/oss/python/langchain/multi-agent",
+      "finding": "Official illustrative pattern comparison: repeat-request totals subagents 8, handoffs/skills 5, router 6 calls; multi-domain examples 9K-15K tokens. These are architecture examples, not matched Loom/native experiments."
+    },
+    {
+      "source": "https://www.anthropic.com/engineering/multi-agent-research-system",
+      "finding": "Reports agents ~4x and multiagent ~15x chat token usage. Baseline is chat, not native CLI doing equal work; cannot use to justify Loom channel-delivery overhead."
+    }
+  ]
+}

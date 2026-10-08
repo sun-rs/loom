@@ -9,6 +9,7 @@ P95 有界真实验收：两个 Codex gpt-6-luna/low 各两轮，Task 提交／�
 P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-directory-p93.md)。当前原生CLI在新建/resume中都会呈现附加目录，同模型原生续轮直接读取正确路径；P92长期会话亦曾收到路径、未压缩。尚未做同历史消融，不宣称Loom协议或模型单方根因。
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
+- Pi 接入状态：已有隔离 MCP 原型（P130），手动 Run 绑定、真实 Worker API/Kernel、同原生 session 两轮发表通过；每轮仍有一次发表后生成。尚无生产 Pi adapter、自动调度或配对效率验收；[证据与限制](evidence/2026-10-08-pi-loom-mcp-prototype.json)。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
 - Jev 研究与取舍：[P80–P84 结论及经验](jev-research-decision.zh-CN.md)：不引入核心调度或默认上下文过滤；按需检索仅保留为实验。
 - 效率门禁合同：[cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)；漂移门禁：[long-session-drift-gate](../design/long-session-drift-gate.zh-CN.md)。
