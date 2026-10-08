@@ -1,0 +1,123 @@
+{
+  "batch": "P147",
+  "method": "Ordered current-turn response_item windows ending at token_usage_record; one tool-bearing or final-only window, no mixed tool/final; response_id join uses preserved append order not explicit item response_id field. Counts are reported usage, not byte estimates.",
+  "responses": 27,
+  "outputTotals": {
+    "native": 761,
+    "structured": 449
+  },
+  "subtotals": {
+    "native": {
+      "final-only": 98,
+      "tool-bearing": 663
+    },
+    "structured": {
+      "final-only": 98,
+      "tool-bearing": 351
+    }
+  },
+  "differenceStructuredMinusNative": {
+    "final-only": 0,
+    "tool-bearing": -312
+  },
+  "perRound": [
+    {
+      "arm": "native",
+      "round": 1,
+      "final-only": 14,
+      "tool-bearing": 142
+    },
+    {
+      "arm": "structured",
+      "round": 1,
+      "final-only": 14,
+      "tool-bearing": 112
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "final-only": 14,
+      "tool-bearing": 84
+    },
+    {
+      "arm": "structured",
+      "round": 2,
+      "final-only": 14,
+      "tool-bearing": 0
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "final-only": 14,
+      "tool-bearing": 84
+    },
+    {
+      "arm": "structured",
+      "round": 3,
+      "final-only": 14,
+      "tool-bearing": 0
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "final-only": 14,
+      "tool-bearing": 84
+    },
+    {
+      "arm": "structured",
+      "round": 4,
+      "final-only": 14,
+      "tool-bearing": 77
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "final-only": 14,
+      "tool-bearing": 96
+    },
+    {
+      "arm": "structured",
+      "round": 5,
+      "final-only": 14,
+      "tool-bearing": 0
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "final-only": 14,
+      "tool-bearing": 89
+    },
+    {
+      "arm": "structured",
+      "round": 6,
+      "final-only": 14,
+      "tool-bearing": 85
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "final-only": 14,
+      "tool-bearing": 84
+    },
+    {
+      "arm": "structured",
+      "round": 7,
+      "final-only": 14,
+      "tool-bearing": 77
+    }
+  ],
+  "inFlightUsage": "structured8 timed out without usage; not included and not treated as zero",
+  "completedRoundsPerArm": 7,
+  "limits": [
+    "Incomplete trajectory; not a whole12/late6 cost result",
+    "Both arms no output schema; no JSON body envelope requirement",
+    "Tool-bearing output may include commentary; not all attributed exactly to tool code",
+    "Single realized trajectory; cannot infer causal format/prompt effect"
+  ],
+  "reasoningTokens": 0,
+  "extraModelCallsForHostPublication": 0,
+  "paidCallsForThisAnalysis": 0,
+  "rawEvidence": "runs/1791465971294-P147/output-breakdown.private.json",
+  "noThinkingPublished": true,
+  "observation": "Completed finals both report14 output tokens per turn,98 total. Observed output delta -312 lies entirely in tool-bearing generations; terminal used5 tools vs native8. No schema envelope in either arm."
+}

@@ -1,0 +1,562 @@
+{
+  "ledger": "P148",
+  "kind": "one fixed-12-turn trajectory per arm, quality errors retained",
+  "failure": null,
+  "arms": {
+    "native": {
+      "nativeSessionCount": 1,
+      "correctCompletedRounds": 12,
+      "reportedGenerationsWithUsage": 15,
+      "allPersistedAssistantsAccounted": true,
+      "messageStepUsageMatches": true,
+      "finalApiResponseDatabaseMatches": true,
+      "totals": {
+        "generations": 15,
+        "inputTokens": 128681,
+        "cachedInputTokens": 118656,
+        "outputTokens": 758,
+        "reasoningOutputTokens": 432,
+        "uncachedInputTokens": 10025
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 4,
+            "inputTokens": 31726,
+            "cachedInputTokens": 23168,
+            "outputTokens": 336,
+            "reasoningOutputTokens": 131
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "18ab7e933990646983c7fa3c652475627360cb53c24f6f50b3f27c9ff4ea84b2"
+        },
+        {
+          "round": 2,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8468,
+            "cachedInputTokens": 8320,
+            "outputTokens": 51,
+            "reasoningOutputTokens": 40
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "44931ffda9577d4c7a431a9f896602f0411a54b1154d99415a5849f5d5c62845"
+        },
+        {
+          "round": 3,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8545,
+            "cachedInputTokens": 8448,
+            "outputTokens": 40,
+            "reasoningOutputTokens": 29
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "4e00e1a4dd8715024a300db005cafcb8efd874ae2787d9552b2dbcc9c915fea5"
+        },
+        {
+          "round": 4,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8611,
+            "cachedInputTokens": 8448,
+            "outputTokens": 40,
+            "reasoningOutputTokens": 29
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "b18934c8685515c511d0ec0ec42e6b0bc21c721164f05b429d83ce68794e2b8a"
+        },
+        {
+          "round": 5,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8689,
+            "cachedInputTokens": 8576,
+            "outputTokens": 41,
+            "reasoningOutputTokens": 30
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "7bbd011bc79e92cff3e592caa401d6915a6a12daeab6757100f6dc8c41333fd8"
+        },
+        {
+          "round": 6,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8756,
+            "cachedInputTokens": 8576,
+            "outputTokens": 43,
+            "reasoningOutputTokens": 32
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "7893c5dc9f121959f040a1c4507d1a83e72f7240c233c92d2a9173c8863a5fd0"
+        },
+        {
+          "round": 7,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8837,
+            "cachedInputTokens": 8704,
+            "outputTokens": 11,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "93c30027a8e35bc36653e1101e16c0558902c012582182194f533de351fe6330"
+        },
+        {
+          "round": 8,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8874,
+            "cachedInputTokens": 8832,
+            "outputTokens": 35,
+            "reasoningOutputTokens": 24
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f429648d975845f47260f860e27939f69c698dedb8f1996e4933eed555e34708"
+        },
+        {
+          "round": 9,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 8947,
+            "cachedInputTokens": 8832,
+            "outputTokens": 39,
+            "reasoningOutputTokens": 28
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "a2c8c6f15a8efb1bdef6b0fe333a632b4856681eb252503183a893c44aeec47e"
+        },
+        {
+          "round": 10,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9015,
+            "cachedInputTokens": 8832,
+            "outputTokens": 32,
+            "reasoningOutputTokens": 21
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f16b8c699eaa2f0b1b6392319424096d998b42db7a17892352911a43f3c80854"
+        },
+        {
+          "round": 11,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9076,
+            "cachedInputTokens": 8960,
+            "outputTokens": 29,
+            "reasoningOutputTokens": 18
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "274fd9b98d441b54a521efc844bd9ed00b78bb977961db2334f4387497a28d71"
+        },
+        {
+          "round": 12,
+          "businessAnswerCorrect": true,
+          "activationCompleted": false,
+          "modelIntentCaptured": false,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9137,
+            "cachedInputTokens": 8960,
+            "outputTokens": 61,
+            "reasoningOutputTokens": 50
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "ad8b1900badd26c6fd8e581ece0025f3feddbe1cb75cb9a9b266c80780b06ecf"
+        }
+      ],
+      "invalidToolAttempts": 0,
+      "hostReceiptMessages": 0,
+      "observedBinding": {
+        "providerID": "aihubmix",
+        "modelID": "deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      "knownPostPublicationGenerationsWithinSameTurn": null,
+      "dollarSpend": null,
+      "observedProxyRequests": 15,
+      "providerInternalUnobservableWork": "unknown"
+    },
+    "terminal": {
+      "nativeSessionCount": 1,
+      "correctCompletedRounds": 12,
+      "reportedGenerationsWithUsage": 19,
+      "allPersistedAssistantsAccounted": true,
+      "messageStepUsageMatches": true,
+      "finalApiResponseDatabaseMatches": true,
+      "totals": {
+        "generations": 19,
+        "inputTokens": 179186,
+        "cachedInputTokens": 167040,
+        "outputTokens": 1624,
+        "reasoningOutputTokens": 852,
+        "uncachedInputTokens": 12146
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 4,
+            "inputTokens": 31799,
+            "cachedInputTokens": 23168,
+            "outputTokens": 678,
+            "reasoningOutputTokens": 465
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "049d1dd54552f4d5e14353010afd61718cd2d6482a5d51f81481dab7ee55c996"
+        },
+        {
+          "round": 2,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 17962,
+            "cachedInputTokens": 17152,
+            "outputTokens": 175,
+            "reasoningOutputTokens": 61
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f985fb4db86eda310ef4b31fb69701929d940e7679e73451606a750100085252"
+        },
+        {
+          "round": 3,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 18475,
+            "cachedInputTokens": 18048,
+            "outputTokens": 114,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "c46f7cd0496f356b0461bc6903ea4551b95c4eb27dfefed3168b06102212a4d6"
+        },
+        {
+          "round": 4,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 18927,
+            "cachedInputTokens": 18560,
+            "outputTokens": 114,
+            "reasoningOutputTokens": 0
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "c083a6b273935955ad43ec39855d41cd0eb532fa9794436712924b07ed739cd4"
+        },
+        {
+          "round": 5,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 9639,
+            "cachedInputTokens": 9472,
+            "outputTokens": 67,
+            "reasoningOutputTokens": 53
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "b0764c41023d5a6d83a7056f762402b5162b2483aea8d9a3c9a94b81b9553b07"
+        },
+        {
+          "round": 6,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 2,
+            "inputTokens": 19772,
+            "cachedInputTokens": 19328,
+            "outputTokens": 163,
+            "reasoningOutputTokens": 44
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "c550f2ee5f3befbc4df360392c3be43911255a01849dd2cde652eb017fe1286d"
+        },
+        {
+          "round": 7,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10092,
+            "cachedInputTokens": 9856,
+            "outputTokens": 33,
+            "reasoningOutputTokens": 19
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "bcc38057a418155f2f301f4adde425b5b6dcfbc47c31c631e0373d771f388166"
+        },
+        {
+          "round": 8,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10220,
+            "cachedInputTokens": 9984,
+            "outputTokens": 33,
+            "reasoningOutputTokens": 19
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "6a091bae8cf5d5b1e0b8c24825163c0896ba304213d9214844f8ff7def2c7c96"
+        },
+        {
+          "round": 9,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10360,
+            "cachedInputTokens": 10112,
+            "outputTokens": 44,
+            "reasoningOutputTokens": 30
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f8435ded4a2344b8d8dcf0e07b8dedeb38ec024100faa6fe7e14d26d40d7d932"
+        },
+        {
+          "round": 10,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10501,
+            "cachedInputTokens": 10240,
+            "outputTokens": 40,
+            "reasoningOutputTokens": 26
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "f619faa31da8392ce76bef379b1bca75484faedbba0d021cdb964d28b2f09ee2"
+        },
+        {
+          "round": 11,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10638,
+            "cachedInputTokens": 10496,
+            "outputTokens": 63,
+            "reasoningOutputTokens": 49
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "0fd042f345d893b70044ccbd951ab1d1a8e235d9d73188387b8fcf085ac46083"
+        },
+        {
+          "round": 12,
+          "businessAnswerCorrect": true,
+          "activationCompleted": true,
+          "modelIntentCaptured": true,
+          "usage": {
+            "generations": 1,
+            "inputTokens": 10801,
+            "cachedInputTokens": 10624,
+            "outputTokens": 100,
+            "reasoningOutputTokens": 86
+          },
+          "currentPromptParentVerified": true,
+          "nativeResponseSha256": "d81ddc10e37705855923adc3de496ab4a8fb080d01165351b1d498674ddb8a0c"
+        }
+      ],
+      "invalidToolAttempts": 0,
+      "hostReceiptMessages": 12,
+      "observedBinding": {
+        "providerID": "aihubmix",
+        "modelID": "deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      "knownPostPublicationGenerationsWithinSameTurn": 0,
+      "dollarSpend": null,
+      "observedProxyRequests": 19,
+      "providerInternalUnobservableWork": "unknown"
+    }
+  },
+  "accounting": {
+    "source": "Provider SSE usage captured through the identical transparent proxy in both arms, mapped per request to persisted assistant/step-finish and final API response.",
+    "generationMeaning": "15/19 persisted model generations and exactly matching 15/19 observed provider HTTP requests through this proxy. Provider-internal invisible work is unknown.",
+    "inputTokens": "raw prompt_tokens = native tokens.input + cache.read + cache.write; raw prompt_tokens_details.cached_tokens = cache.read. Observed cache.write=0.",
+    "outputTokens": "raw completion_tokens = native output + reasoning; raw completion_tokens_details.reasoning_tokens = native reasoning; reasoning is included in reconstructed/raw output and never double-counted.",
+    "billing": "Provider-reported usage, not independent invoice verification. No price ratio claimed."
+  },
+  "scope": "Private prototype, not production runtime or general efficiency acceptance",
+  "kernel": {
+    "activationStates": [
+      {
+        "state": "completed",
+        "n": 12
+      }
+    ],
+    "runStates": [
+      {
+        "state": "exited",
+        "exit_code": 0,
+        "n": 12
+      }
+    ],
+    "finalMarkers": 12,
+    "publishedMessages": 12
+  },
+  "comparisons": {
+    "whole": {
+      "totals": {
+        "native": {
+          "generations": 15,
+          "inputTokens": 128681,
+          "cachedInputTokens": 118656,
+          "outputTokens": 758,
+          "reasoningOutputTokens": 432,
+          "rounds": 12,
+          "uncachedInputTokens": 10025
+        },
+        "terminal": {
+          "generations": 19,
+          "inputTokens": 179186,
+          "cachedInputTokens": 167040,
+          "outputTokens": 1624,
+          "reasoningOutputTokens": 852,
+          "rounds": 12,
+          "uncachedInputTokens": 12146
+        }
+      },
+      "ratios": {
+        "generations": 1.2666666666666666,
+        "inputTokens": 1.3924821846271012,
+        "uncachedInputTokens": 1.211571072319202,
+        "outputTokens": 2.142480211081794
+      },
+      "equalCompletedRounds": true,
+      "correctRounds": {
+        "native": 12,
+        "terminal": 12
+      },
+      "observedQualityEqual": true,
+      "efficiencyAccepted": false
+    },
+    "late7to12": {
+      "totals": {
+        "native": {
+          "generations": 6,
+          "inputTokens": 53886,
+          "cachedInputTokens": 53120,
+          "outputTokens": 207,
+          "reasoningOutputTokens": 141,
+          "rounds": 6,
+          "uncachedInputTokens": 766
+        },
+        "terminal": {
+          "generations": 6,
+          "inputTokens": 62612,
+          "cachedInputTokens": 61312,
+          "outputTokens": 313,
+          "reasoningOutputTokens": 229,
+          "rounds": 6,
+          "uncachedInputTokens": 1300
+        }
+      },
+      "ratios": {
+        "generations": 1,
+        "inputTokens": 1.1619344542181642,
+        "uncachedInputTokens": 1.6971279373368147,
+        "outputTokens": 1.5120772946859904
+      },
+      "equalCompletedRounds": true,
+      "correctRounds": {
+        "native": 6,
+        "terminal": 6
+      },
+      "observedQualityEqual": true,
+      "efficiencyAccepted": false
+    }
+  },
+  "completed12Each": true,
+  "limitations": [
+    "One paid trajectory per arm and one model only; not repeatability, cross-model reliability, or general efficiency acceptance.",
+    "Terminal input/output remain above native despite removing StructuredOutput. Full Host receipt/history and stochastic business tools differ.",
+    "All 34 observed raw streams complete, no capture truncation or usage mismatch; no claim of independently audited provider invoices.",
+    "Explicit native final-text facade remains private prototype; no production or target-contract change."
+  ],
+  "planSha256": "1d9425685d11cf489a06f282b1063156666d4d92321dc588215fc67c796423ad",
+  "sourceHashVerified": true,
+  "quality": {
+    "native": {
+      "correct": 12,
+      "attempted": 12
+    },
+    "terminal": {
+      "correct": 12,
+      "attempted": 12
+    }
+  },
+  "additionalGenerations": {
+    "businessBashRounds": [2, 3, 4, 6],
+    "nativeTerminalFirstRoundBoth": ["glob", "read", "bash", "final text"],
+    "formatRepairGenerations": 0,
+    "successfulFinalThenFurtherProviderRequestWithinInvocation": 0,
+    "caveat": "Tool choice is stochastic. Single trajectory does not identify the causal share of explicit declaration, full receipt history or chance."
+  },
+  "cliVersion": "1.18.35",
+  "catalogBinding": "local:opencode-cli/v1:aihubmix/deepseek-v4.1-flash",
+  "variant": "low",
+  "originalP146Unchanged": true,
+  "independentKernelAudit": {
+    "publishedReceiptAndFinalMarkerMatches": 12,
+    "activationCompleted": 12,
+    "runExitedZero": 12,
+    "presentedWindowMatchesActivationToSeq": 12,
+    "pendingAckCleared": 12,
+    "workerCursorThroughSeq": 103,
+    "latestActivationToSeq": 103,
+    "ackEvidenceLimit": "ACK is a cursor/projection mutation, not a separate per-round ACK event. Twelve successful Worker publications, cleared presented pending ACKs and successful completion fences corroborate delivery ACK; final snapshot cursor alone would not prove per-round timing."
+  }
+}

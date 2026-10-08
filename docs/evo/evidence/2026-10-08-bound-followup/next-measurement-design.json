@@ -1,5 +1,5 @@
 {
-  "status": "Fixed quality-error continuation tested and used in P145/P146; artifact workload and paired-session portions remain design only. No product behavior change.",
+  "status": "Fixed quality-error continuation tested and used in P145/P146; artifact workload has a free-tested evaluator with model runner pending; paired-session portion remains design only. No product behavior change.",
   "objective": "Separate communication cost from model quality and fixed output serialization before multiplayer claims.",
   "invariants": [
     "Same source fixtures, tool availability, CLI/model/effort and normal continuous session per arm.",
@@ -13,7 +13,7 @@
     "quality": "Check final files and calculations independently of conversational response format; keep protocol/schema errors a separate failure category.",
     "controls": "Freeze tasks, expected artifact invariants, cutoff, model binding, paired order and sample count before models run.",
     "report": "Whole-task cost, per-round cost, first request, late window, number of business tool calls, extra protocol generations, output serialization and incomplete-usage events. No automatic attribution of all differences to Loom.",
-    "codexInvocation": "Use ordinary codex exec and explicit-session exec resume as the native control, with automatic memory disabled on every launch. Both commands expose --output-schema for the experimental final-reply arm. Record CLI entry point separately from the internal code-mode tool backend. If an invocation-local backend feature is changed to avoid an OS startup blocker, apply it equally to both arms and label it a configured variant, not the unchanged default baseline. P140 app-server control is retained as its own failed experiment.",
+    "codexInvocation": "Use ordinary codex exec and explicit-session exec resume with automatic memory disabled on every launch. P147 native-final-text uses no output schema in either arm; earlier body-only schema candidates remain separate evidence. Record CLI entry point separately from its internal code-mode backend; ordinary exec still uses that backend. No global configuration changes or silent backend substitution.",
     "qualityFailureHandling": "For a future separately preregistered design, distinguish transport/security/usage failure from a wrong business answer. If later tasks remain well-defined and no unsafe state mutation occurred, execute the fixed remaining paired sequence, record each answer error without supplying the oracle or rerunning it, and report whole-trajectory usage jointly with quality. Unequal quality never qualifies as an efficiency win. Existing P137/P139/P144 stop-at-first-error plans and observations remain unchanged; this is not authorization to resume them under altered rules."
   },
   "pairedSessionNext": {
@@ -24,7 +24,7 @@
     "limits": "No claim against commercial collaboration libraries without matched implemented baseline and primary-source configuration audit."
   },
   "artifactWorkloadDraft": {
-    "status": "Design only; fixture/evaluator and CLI integration not executed or accepted.",
+    "status": "Free evaluator prepared; paid/model CLI runner pending. Private fixture has 12 frozen rounds, 26 independent vectors, 12 passing free tests, strict snapshot and sandbox validation. No agent-model artifact result or efficiency acceptance.",
     "purpose": "After fixed CSV trajectories give complete accounting, test a real bounded coding task whose accepted output is files rather than a short JSON chat answer.",
     "workspace": "Separate identical per-arm Python-standard-library workspaces. One continuous native session per arm. Agents may create invoice.py, tests and README; no production repository edits.",
     "interface": "invoice.summarize(rows, tax_percent=\"0\", group_by=None) returns JSON-serializable results. CLI reads a JSON file or stdin. Currency outputs are exact two-decimal strings.",
@@ -44,7 +44,13 @@
     ],
     "qualityOracle": "Before paid runs freeze exact schemas, fixture inputs and an independent evaluator; baseline and product receive identical functional requirements. Hidden evaluator remains outside agent-readable roots and never supplies expected answers or repair prompts during the trajectory.",
     "measurement": "Record every model generation, tool call and protocol action. Evaluate artifact snapshots after each round, without invoking any model. Keep quality errors and all costs; no claim based only on final chat text.",
-    "limits": "Not yet frozen for paid use. This draft does not resume or replace earlier failed batches, and does not create a scenario-specific Loom workflow."
+    "limits": "Not yet frozen for paid use or integrated into a model CLI runner. Candidate evaluator OS sandbox and no-symlink snapshot are free-verified; future agent CLI oracle/peer isolation and automatic-memory guards remain required. README semantic accuracy remains manual review. Reference implementation validates the oracle only, never agent achievement. This does not resume or replace earlier failed batches or create a scenario-specific Loom workflow.",
+    "preparedEvidence": {
+      "plan": "../2026-10-08-native-final-text/artifact-plan.json",
+      "schema": "../2026-10-08-native-final-text/artifact-schema.json",
+      "freeEvidence": "../2026-10-08-native-final-text/artifact-public-evidence.json",
+      "manifest": "../2026-10-08-native-final-text/artifact-manifest.json"
+    }
   },
   "fixedTrajectoryEvidence": "../2026-10-08-fixed-trajectory/summary.json"
 }

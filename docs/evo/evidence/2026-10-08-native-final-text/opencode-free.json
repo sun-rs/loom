@@ -1,0 +1,266 @@
+{
+  "ledger": "P148-prepaid-free",
+  "paidCalls": 0,
+  "intentTests": 23,
+  "recorderTests": 13,
+  "arms": {
+    "native": {
+      "sameContinuousSession": true,
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "providerRequests": 3,
+      "persistedGenerations": 3,
+      "rawStreamComplete": true,
+      "allRawFiles0600": true,
+      "rawApiDbStepUsageMatch": true,
+      "noStructuredOutputDeclared": true,
+      "quality": [
+        {
+          "round": 1,
+          "correct": false
+        },
+        {
+          "round": 2,
+          "correct": true
+        }
+      ],
+      "streamCounters": [
+        {
+          "request": {
+            "bodySha256": "f2e0f6f9bc357593e2cf9094f06323170b034bc4143924d3259380cc33c5f7c5",
+            "bytes": 31245,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "stream": true
+          },
+          "complete": true,
+          "done": true,
+          "captureLimitExceeded": false,
+          "responseBytes": 705,
+          "contentCharacters": 0,
+          "reasoningCharacters": 0,
+          "toolArgumentCharacters": 25,
+          "toolArgumentBytes": 25,
+          "toolArgumentWhitespaceCharacters": 0,
+          "finishReasons": ["tool_calls"],
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 10,
+            "total_tokens": 110,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "deltaTypes": {
+            "role:string": 1,
+            "tool_calls:array": 1
+          }
+        },
+        {
+          "request": {
+            "bodySha256": "05c7e17828518caf3c6b3eeb5550cc88ad47e979b7a620273bc8d9e17dbedffb",
+            "bytes": 32598,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "stream": true
+          },
+          "complete": true,
+          "done": true,
+          "captureLimitExceeded": false,
+          "responseBytes": 609,
+          "contentCharacters": 23,
+          "reasoningCharacters": 0,
+          "toolArgumentCharacters": 0,
+          "toolArgumentBytes": 0,
+          "toolArgumentWhitespaceCharacters": 0,
+          "finishReasons": ["stop"],
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 10,
+            "total_tokens": 110,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "deltaTypes": {
+            "role:string": 1,
+            "content:string": 1
+          }
+        },
+        {
+          "request": {
+            "bodySha256": "bf0bdaf6f2443ff45f4d492002f0bed674831dcede4df1b1aa2b735992c33309",
+            "bytes": 32823,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "stream": true
+          },
+          "complete": true,
+          "done": true,
+          "captureLimitExceeded": false,
+          "responseBytes": 611,
+          "contentCharacters": 25,
+          "reasoningCharacters": 0,
+          "toolArgumentCharacters": 0,
+          "toolArgumentBytes": 0,
+          "toolArgumentWhitespaceCharacters": 0,
+          "finishReasons": ["stop"],
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 10,
+            "total_tokens": 110,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "deltaTypes": {
+            "role:string": 1,
+            "content:string": 1
+          }
+        }
+      ]
+    },
+    "terminal": {
+      "sameContinuousSession": true,
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "providerRequests": 3,
+      "persistedGenerations": 3,
+      "rawStreamComplete": true,
+      "allRawFiles0600": true,
+      "rawApiDbStepUsageMatch": true,
+      "noStructuredOutputDeclared": true,
+      "quality": [
+        {
+          "round": 1,
+          "correct": true
+        },
+        {
+          "round": 2,
+          "correct": true
+        }
+      ],
+      "streamCounters": [
+        {
+          "request": {
+            "bodySha256": "5717c62922fee9e26dafd389e3c28e023bb653fe55a676b43ac032b4cfc933ca",
+            "bytes": 31311,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "stream": true
+          },
+          "complete": true,
+          "done": true,
+          "captureLimitExceeded": false,
+          "responseBytes": 705,
+          "contentCharacters": 0,
+          "reasoningCharacters": 0,
+          "toolArgumentCharacters": 25,
+          "toolArgumentBytes": 25,
+          "toolArgumentWhitespaceCharacters": 0,
+          "finishReasons": ["tool_calls"],
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 10,
+            "total_tokens": 110,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "deltaTypes": {
+            "role:string": 1,
+            "tool_calls:array": 1
+          }
+        },
+        {
+          "request": {
+            "bodySha256": "7bf218bc32190c81d6c00d4a2a382acf0adbd818ea8ddab04c5ba587383839e5",
+            "bytes": 32666,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "stream": true
+          },
+          "complete": true,
+          "done": true,
+          "captureLimitExceeded": false,
+          "responseBytes": 611,
+          "contentCharacters": 25,
+          "reasoningCharacters": 0,
+          "toolArgumentCharacters": 0,
+          "toolArgumentBytes": 0,
+          "toolArgumentWhitespaceCharacters": 0,
+          "finishReasons": ["stop"],
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 10,
+            "total_tokens": 110,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "deltaTypes": {
+            "role:string": 1,
+            "content:string": 1
+          }
+        },
+        {
+          "request": {
+            "bodySha256": "53165829b071c78668dd847a49d7badc5282899fde536b4cb23c9c7e682b1e4d",
+            "bytes": 33165,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "stream": true
+          },
+          "complete": true,
+          "done": true,
+          "captureLimitExceeded": false,
+          "responseBytes": 611,
+          "contentCharacters": 25,
+          "reasoningCharacters": 0,
+          "toolArgumentCharacters": 0,
+          "toolArgumentBytes": 0,
+          "toolArgumentWhitespaceCharacters": 0,
+          "finishReasons": ["stop"],
+          "usage": {
+            "prompt_tokens": 100,
+            "completion_tokens": 10,
+            "total_tokens": 110,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "deltaTypes": {
+            "role:string": 1,
+            "content:string": 1
+          }
+        }
+      ]
+    }
+  },
+  "kernel": {
+    "activationStates": [
+      {
+        "state": "completed",
+        "n": 2
+      }
+    ],
+    "runStates": [
+      {
+        "state": "exited",
+        "n": 2
+      }
+    ],
+    "finalMarkers": 2
+  },
+  "qualityFailureDidNotTruncate": true,
+  "bodyDeclarationOnly": true,
+  "workerPathUnchanged": true,
+  "priorP146Unchanged": true,
+  "limitations": [
+    "Deterministic free fixture, no real-model cost claim.",
+    "Raw response stream captured privately, public counters exclude thinking/content/auth.",
+    "Recorder preserves response entity bytes; upstream destination Host changes.",
+    "Incomplete captures block efficiency conclusions; raw usage is provider-reported, not independently verified billing.",
+    "Native final text is an explicit per-Run facade only, not general stdout promotion."
+  ]
+}

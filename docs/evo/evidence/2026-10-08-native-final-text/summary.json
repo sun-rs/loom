@@ -1,0 +1,60 @@
+{
+  "scope": "Private explicit per-Run native-final-text prototype; no production, deployment or target-contract changes.",
+  "baseRevision": "672a67ef91046c4acd057f639836d1f67a880fff",
+  "method": {
+    "reply": "Host binds mode, Run, identity, target and actual delivered sequence before invocation; validated current native final text is published verbatim through existing Worker service.",
+    "controls": "Ordinary CLI conversation, native memory disabled on every launch, same model/effort and continuous session per arm; no model-facing reply schema.",
+    "trajectory": "One preregistered 12-turn pair per model; business errors remain in history and do not trigger reruns; protocol, identity, isolation, missing usage and budget faults stop.",
+    "accounting": "Report provider usage with cache/reasoning conventions, not billing estimates or tokens inferred from byte counts."
+  },
+  "verdict": "Not general efficiency acceptance; this batch covers only Codex and OpenCode models, not all five CLI families or multi-instance cooperation.",
+  "opencode": {
+    "ledger": "P148",
+    "quality": "12/12 correct in both arms",
+    "inputRatio": 1.3924821846271012,
+    "outputRatio": 2.142480211081794,
+    "lateInputRatio": 1.1619344542181642,
+    "lateOutputRatio": 1.5120772946859904,
+    "generations": {
+      "native": 15,
+      "experimental": 19
+    },
+    "finding": "Four additional generations were business arithmetic tools; zero format-repair or post-final model generations. All 34 observed upstream requests have complete raw-stream usage matching native records.",
+    "limit": "One trajectory does not identify causal shares of stochastic tools, declaration, receipts or accumulated history. P146 anomalous output remains unexplained; new captures do not retrospectively resolve it.",
+    "evidence": "opencode-paid.json",
+    "receiptAudit": "opencode-receipt-byte-audit.json"
+  },
+  "artifact": {
+    "state": "Free evaluator prepared; model CLI runner, CLI-side isolation and native-memory admission remain pending.",
+    "evidence": "artifact-public-evidence.json",
+    "purpose": "Measure accepted files and tests over a continuous coding task; final chat format is not the quality oracle.",
+    "paidCalls": 0,
+    "rootVerification": "Root independently reran 12 evaluator tests successfully; no model calls."
+  },
+  "nextDecision": "Prepare free end-to-end file-workload runners for multiple CLI/model bindings before a separately frozen paid batch; do not declare success or redesign production from a single short arithmetic trajectory.",
+  "codex": {
+    "ledger": "P147",
+    "model": "gpt-6-luna low",
+    "quality": "Both arms 7 completed and correct; planned 12 each. Experimental round 8 timed out at 120 seconds.",
+    "completedInput": {
+      "native": 208292,
+      "experimental": 165012
+    },
+    "completedOutput": {
+      "native": 761,
+      "experimental": 449
+    },
+    "completedUncachedInput": {
+      "native": 29604,
+      "experimental": 38036
+    },
+    "finalReplyOutput": {
+      "native": 98,
+      "experimental": 98
+    },
+    "inFlightUsage": "Round 8 unknown, not zero; no complete-task or full late-window ratio.",
+    "publication": "7 real publications and completed Activations; timeout has no post or ACK. Private harness leaves timeout Run running/Activation leased, not proof process remains alive.",
+    "finding": "Completed final-reply serialization costs equal; 312 fewer output tokens occurred in tool-bearing generations. Single trajectory does not prove a causal optimization.",
+    "evidence": "codex-paid.json"
+  }
+}

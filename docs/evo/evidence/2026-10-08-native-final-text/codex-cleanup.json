@@ -1,0 +1,15 @@
+{
+  "batch": "P147",
+  "checkedAt": "2026-10-08T13:48:55.974179+00:00",
+  "methods": [
+    "ps -axo pid,ppid,pgid,command searched exact runtime directory, harness entrypoint, session ID and launch nonce; no matches",
+    "lsof -nP +D on exact temporary runtime directory and evidence directory returned no open descriptors/cwd and no warnings",
+    "Captured current TCP LISTEN process inventory privately; WorkerApplicationService ran inside the now-absent harness process, not a separately spawned service"
+  ],
+  "observed": "No live process or open resource attributable to P147 found. Timeout Codex child closed with SIGTERM and harness process is absent; in-process fixture service owner is absent. No additional process killed.",
+  "limitations": [
+    "Harness did not persist the OS child PID/PGID or fixture port, so a historical exact-PGID kill(0) or exact-port connect check cannot be reconstructed. Do not claim a recorded process-group proof.",
+    "ps/path/open-descriptor checks are an ownership-based current-state audit; unrelated Codex and Node processes remain untouched."
+  ],
+  "database": "Unchanged. Timeout Run stays running / Activation leased as documented; no synthetic completion or ACK."
+}

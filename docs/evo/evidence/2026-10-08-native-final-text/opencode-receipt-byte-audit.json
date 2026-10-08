@@ -1,0 +1,211 @@
+{
+  "ledger": "P148",
+  "kind": "Offline receipt/history byte audit, no token estimates",
+  "receiptRows": [
+    {
+      "round": 1,
+      "receiptTextUtf8Bytes": 168,
+      "persistedPartJsonUtf8Bytes": 295,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 2,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 3,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 4,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 5,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 6,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 7,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 8,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 9,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 10,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 11,
+      "receiptTextUtf8Bytes": 169,
+      "persistedPartJsonUtf8Bytes": 296,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    },
+    {
+      "round": 12,
+      "receiptTextUtf8Bytes": 170,
+      "persistedPartJsonUtf8Bytes": 297,
+      "receiptPayloadFieldTypes": {
+        "state": "str",
+        "messageId": "str",
+        "roomSeq": "int"
+      },
+      "modeDeclarationUtf8BytesIncludingNewline": 63,
+      "declarationRepeatedThisRound": true
+    }
+  ],
+  "late7to12": [
+    {
+      "round": 7,
+      "priorPersistedReceipts": 6,
+      "priorReceiptTextUtf8Bytes": 1013,
+      "priorPersistedPartJsonUtf8Bytes": 1775,
+      "priorDeclarationsInSession": 6,
+      "currentDeclarationUtf8BytesIncludingNewline": 63
+    },
+    {
+      "round": 8,
+      "priorPersistedReceipts": 7,
+      "priorReceiptTextUtf8Bytes": 1182,
+      "priorPersistedPartJsonUtf8Bytes": 2071,
+      "priorDeclarationsInSession": 7,
+      "currentDeclarationUtf8BytesIncludingNewline": 63
+    },
+    {
+      "round": 9,
+      "priorPersistedReceipts": 8,
+      "priorReceiptTextUtf8Bytes": 1351,
+      "priorPersistedPartJsonUtf8Bytes": 2367,
+      "priorDeclarationsInSession": 8,
+      "currentDeclarationUtf8BytesIncludingNewline": 63
+    },
+    {
+      "round": 10,
+      "priorPersistedReceipts": 9,
+      "priorReceiptTextUtf8Bytes": 1520,
+      "priorPersistedPartJsonUtf8Bytes": 2663,
+      "priorDeclarationsInSession": 9,
+      "currentDeclarationUtf8BytesIncludingNewline": 63
+    },
+    {
+      "round": 11,
+      "priorPersistedReceipts": 10,
+      "priorReceiptTextUtf8Bytes": 1689,
+      "priorPersistedPartJsonUtf8Bytes": 2959,
+      "priorDeclarationsInSession": 10,
+      "currentDeclarationUtf8BytesIncludingNewline": 63
+    },
+    {
+      "round": 12,
+      "priorPersistedReceipts": 11,
+      "priorReceiptTextUtf8Bytes": 1858,
+      "priorPersistedPartJsonUtf8Bytes": 3255,
+      "priorDeclarationsInSession": 11,
+      "currentDeclarationUtf8BytesIncludingNewline": 63
+    }
+  ],
+  "totals": {
+    "receiptTextUtf8Bytes": 2028,
+    "persistedPartJsonUtf8Bytes": 3552
+  },
+  "limits": [
+    "Persisted part JSON includes local IDs/metadata that are not necessarily sent verbatim to provider; do not treat it as provider payload bytes.",
+    "Paid proxy kept request hash/model/effort but not request bodies. Prior receipts are exactly present in continuous native history; per-request provider inclusion is supported by the earlier fake two-round trace but not byte-confirmed from paid request bodies.",
+    "Each terminal prompt repeats the explicit final-body declaration. No compaction enabled.",
+    "No token estimate or attribution of all input difference to receipt/declaration; business-tool choices and reasoning are stochastic."
+  ],
+  "futureCandidate": "Keep canonical Host receipts durable; separately test whether native history needs only minimal confirmed-success facts, with full detail on errors/unknown outcomes. No implementation change in P148."
+}

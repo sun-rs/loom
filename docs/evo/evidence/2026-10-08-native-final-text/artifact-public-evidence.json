@@ -1,0 +1,71 @@
+{
+  "kind": "private invoice artifact workload fixture and external evaluator free acceptance",
+  "paidCalls": 0,
+  "agentModelCalls": 0,
+  "productionChanges": false,
+  "targetContractChanges": false,
+  "testsPassed": 12,
+  "testLog": "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/green.log",
+  "redEvidence": [
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-cli-newline.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-groups.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-mutation.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-peer.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-selftests.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-snapshot-eval.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red-snapshot.log",
+    "/Users/sun/.loom/reviews/2026-10-08-invoice-artifact/red.log"
+  ],
+  "rounds": 12,
+  "hiddenCases": 26,
+  "activatedCaseCounts": {
+    "1": 1,
+    "2": 3,
+    "3": 4,
+    "4": 6,
+    "5": 8,
+    "6": 19,
+    "7": 20,
+    "8": 21,
+    "9": 22,
+    "10": 24,
+    "11": 25,
+    "12": 26
+  },
+  "reference": "oracle/reference.py passed all cumulative round vectors; developer-authored oracle check only, not agent accomplishment",
+  "negativeChecks": [
+    "stub implementation fails",
+    "wrong ROUND_DOWN implementation fails",
+    "missing agent self-tests fails",
+    "malformed group output fails without evaluator crash",
+    "CLI missing final newline fails",
+    "candidate cannot read private oracle or source-repository evidence",
+    "candidate cannot read peer workspace, including macOS /var/folders temp roots",
+    "candidate cannot mutate artifact snapshot",
+    "snapshot controller rejects oracle file symlink and oracle directory symlink before reading contents"
+  ],
+  "safeSnapshot": "Root dirfd walk with follow_symlinks=false, lstat directory/file validation, normal-file fd opened O_NOFOLLOW, fstat checked, fresh destination, failed snapshots deleted. No followed-link copy.",
+  "isolation": {
+    "candidateEvaluator": "OS-sandboxed actual Python subprocess; network denied, private reviews and repository denied, peer temporary workspaces denied, own artifact snapshot read-only. Expected answers stay in parent controller memory; subprocess sees only business case input.",
+    "agentCLI": "Not launched or integrated. Future runner must apply OS read denial for private oracle/reviews/repo/peers/prior runtimes before any model; prompt prohibition is insufficient.",
+    "memory": "No model launched; native automatic-memory guard remains future paid CLI runner obligation."
+  },
+  "limits": [
+    "Not yet a paid-ready multi-CLI runner or efficiency result.",
+    "README semantic accuracy requires manual review; not claimed from functional checks.",
+    "Hidden vector coverage is bounded, not proof of all inputs.",
+    "No hostile same-UID isolation claim or generic security framework."
+  ],
+  "manifest": {
+    "plan.json": "b567729980cd8fda5ae4765ade4c157a874645daa9347bdf375fb6a7fdc2f9b5",
+    "schemas.json": "9ac3d87a11de036231bf88dc1d45df1fd47a80e69ed330e40da13dd50583cd52",
+    "evaluator.py": "c9c66ab24a2378aee72e61b571777d4e6fe7dc31ccf4d39bc579bd6f88fb7de0",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "test_evaluator.py": "4fbb209411a7fc07e67c856806a434b52b842fb1cff6422b6b6007e5e881f725",
+    "oracle/cases.json": "2ad267b0c2655366bce1eaf33bbb6fdffae870731d5dc8e904888d79c91e3dd4",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "green.log": "0c19e7763f60bde774c58f2913a9a68af49c03f58faf2a2640d9504d31a9a5e4"
+  }
+}

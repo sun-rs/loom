@@ -1,0 +1,505 @@
+{
+  "batch": "P147",
+  "status": "stopped at predetermined launch timeout; incomplete 12-round pair",
+  "evidence": "runs/1791465971294-P147",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cli": "codex-cli 0.161.0",
+  "samples": 1,
+  "continuousSessions": 2,
+  "rounds": [
+    {
+      "arm": "native",
+      "round": 1,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 39895,
+        "cached_input_tokens": 18944,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 156,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 2,
+      "responses": 3
+    },
+    {
+      "arm": "structured",
+      "round": 1,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 39911,
+        "cached_input_tokens": 26880,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 126,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 2,
+      "responses": 3
+    },
+    {
+      "arm": "structured",
+      "round": 2,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4650
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 13581,
+        "cached_input_tokens": 1792,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 14,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 0,
+      "responses": 1
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4650
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27243,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 98,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4755
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27561,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 98,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 3,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4755
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 13647,
+        "cached_input_tokens": 13056,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 14,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 0,
+      "responses": 1
+    },
+    {
+      "arm": "structured",
+      "round": 4,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4860
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27531,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 91,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4860
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 27879,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 98,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4645
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28233,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 110,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 5,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4645
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 13896,
+        "cached_input_tokens": 13056,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 14,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 0,
+      "responses": 1
+    },
+    {
+      "arm": "structured",
+      "round": 6,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 18910
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28037,
+        "cached_input_tokens": 19968,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 99,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "correct": true,
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 60,
+          "total": 18910
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28568,
+        "cached_input_tokens": 27136,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 103,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28913,
+        "cached_input_tokens": 28160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 98,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 7,
+      "correct": true,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "quality": {
+        "correct": true,
+        "kind": "correct",
+        "answer": {
+          "count": 15,
+          "total": 4545
+        }
+      },
+      "reportedUsage": {
+        "input_tokens": 28409,
+        "cached_input_tokens": 26112,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 91,
+        "reasoning_output_tokens": 0
+      },
+      "businessTools": 1,
+      "responses": 2
+    },
+    {
+      "arm": "structured",
+      "round": 8,
+      "correct": null,
+      "answer": null,
+      "quality": null,
+      "reportedUsage": null,
+      "businessTools": null,
+      "responses": null
+    }
+  ],
+  "qualityErrors": [],
+  "segments": {
+    "completedRounds1-7": {
+      "native": {
+        "turns": 7,
+        "correct": 7,
+        "responses": 15,
+        "businessTools": 8,
+        "input_tokens": 208292,
+        "cached_input_tokens": 178688,
+        "output_tokens": 761,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 29604
+      },
+      "structured": {
+        "turns": 7,
+        "correct": 7,
+        "responses": 12,
+        "businessTools": 5,
+        "input_tokens": 165012,
+        "cached_input_tokens": 126976,
+        "output_tokens": 449,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 38036
+      },
+      "descriptiveRatios": {
+        "input_tokens": 0.7922147754114416,
+        "output_tokens": 0.5900131406044679,
+        "responses": 0.8,
+        "businessTools": 0.625
+      }
+    },
+    "lateWindowObservedRound7Only": {
+      "native": {
+        "turns": 1,
+        "correct": 1,
+        "responses": 2,
+        "businessTools": 1,
+        "input_tokens": 28913,
+        "cached_input_tokens": 28160,
+        "output_tokens": 98,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 753
+      },
+      "structured": {
+        "turns": 1,
+        "correct": 1,
+        "responses": 2,
+        "businessTools": 1,
+        "input_tokens": 28409,
+        "cached_input_tokens": 26112,
+        "output_tokens": 91,
+        "reasoning_output_tokens": 0,
+        "uncached_input_tokens": 2297
+      },
+      "descriptiveRatios": {
+        "input_tokens": 0.9825683948396915,
+        "output_tokens": 0.9285714285714286,
+        "responses": 1.0,
+        "businessTools": 1.0
+      }
+    }
+  },
+  "realWorkerPublicationsAndCompletedActivations": 7,
+  "usage": {
+    "native": {
+      "input": 208292,
+      "cached": 178688,
+      "output": 761,
+      "reasoning": 0,
+      "responses": 15
+    },
+    "structured": {
+      "input": 165012,
+      "cached": 126976,
+      "output": 449,
+      "reasoning": 0,
+      "responses": 12
+    }
+  },
+  "inFlightUsage": "structured8 unknown, not zero; no response usage emitted before timeout",
+  "uniqueResponseIds": 27,
+  "memoryDisabledEveryLaunch": true,
+  "structuredNoSchema": true,
+  "explicitFinalReplyModeBoundBeforeLaunch": true,
+  "nativeNoSchema": true,
+  "nativeIdentityAndRoomSourcesUnchangedFromP144": true,
+  "sourceCsvUnchanged": true,
+  "efficiency": "Not accepted: incomplete pair, later rounds unobserved, in-flight usage unknown. Completed7-round ratios only.",
+  "protocolGenerations": "Host publication occurs after native final and creates zero additional model requests; other requests are native tool/reasoning/final flow, not inferred as protocol overhead",
+  "limits": [
+    "Single approved model and trajectory; no statistical causality or cross-model conclusion",
+    "Cached input is a subset of input; reasoning is a subset of output; neither added again",
+    "No general provider finish_reason; stdout truncation negative is narrower",
+    "Prototype manual Host, not production adapter/scheduler acceptance",
+    "Wall/input are between-turn thresholds, not hard provider caps"
+  ],
+  "retry": "none; P144 and P145 preserved independently",
+  "plannedRoundsPerArm": 12,
+  "completedRoundsPerArm": 7,
+  "failure": {
+    "arm": "structured",
+    "round": 8,
+    "timeoutSeconds": 120,
+    "exitSignal": "SIGTERM",
+    "nativeFinal": false,
+    "reportedResponseUsage": null,
+    "billing": "unknown; absence of usage is not zero",
+    "diagnostics": [
+      "installed CLI model catalog refresh request timed out",
+      "provider-owned ps/mcp HTTP transport closed"
+    ],
+    "classification": "Native CLI launch/provider transport timeout; no evidence of model answer or business tool execution; cannot identify one definitive root cause",
+    "kernelActivationState": "leased",
+    "kernelRunState": "running",
+    "kernelLimitation": "Private harness stores no successful final/ACK and does not reconcile timeout Run to terminated state; DB running is prototype state, not evidence process remains alive",
+    "newRoomPosts": 0,
+    "retry": false
+  }
+}

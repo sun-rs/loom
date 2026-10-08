@@ -1,0 +1,63 @@
+{
+  "batch": "P147 preparation only; no paid launch",
+  "evidence": "runs/1791465283165-free",
+  "testMode": "Actual Codex 0.161.0 exec/resume against local fake Responses provider and real temporary Kernel",
+  "testsPassed": 16,
+  "turns": 24,
+  "continuousSessions": 2,
+  "round2QualityErrors": [
+    {
+      "arm": "structured",
+      "round": 2,
+      "kind": "business-answer-mismatch"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "kind": "answer-not-json"
+    }
+  ],
+  "continuedToRound12BothArms": true,
+  "realWorkerPublicationsAndCompletedActivations": 12,
+  "actualBusinessToolCalls": 24,
+  "usage": {
+    "native": {
+      "input": 2400,
+      "output": 480,
+      "responses": 24
+    },
+    "structured": {
+      "input": 2400,
+      "output": 480,
+      "responses": 24
+    }
+  },
+  "uniqueResponseIds": 48,
+  "memoryDisabledEveryLaunch": true,
+  "structuredNoSchema": true,
+  "explicitFinalReplyModeBoundBeforeLaunch": true,
+  "nativeNoSchema": true,
+  "nativeIdentityAndRoomSourcesUnchangedFromP144": true,
+  "newPublisher": "Explicit per-Run FinalReply mode; plain final text copied verbatim into Worker body; no command parsing",
+  "sourceCsvUnchanged": true,
+  "limits": [
+    "Fake scripted replies do not measure model quality, cost, or stochastic reliability",
+    "Per-response fake usage audited independently; cumulative resume summaries never summed",
+    "Provider finish_reason not generally exposed; truncation negative is stdout truncation only",
+    "Single paid trajectory planned; quality failures never imply efficiency acceptance"
+  ],
+  "paidStatus": "awaiting root review; not started",
+  "actualCliCommentaryNegative": {
+    "evidence": "runs/1791465403638-negative",
+    "exitCode": 0,
+    "outputLastMessagePresent": true,
+    "rejected": "No current-turn explicit final_answer",
+    "publishedMessages": 0,
+    "ackCursors": 0,
+    "activation": "leased",
+    "usageResponses": 2
+  },
+  "planLimits": "30min wall /1M known input are between-turn stop thresholds;120s per launch; not hard provider billing caps",
+  "promptNoticeEveryTerminalTurn": "FinalReply mode is enabled for this run. Your final answer will be posted verbatim as your message in the channel.",
+  "scope": "Private candidate only; production owner contract unchanged and adoption not accepted"
+}

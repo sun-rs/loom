@@ -1,0 +1,186 @@
+{
+  "kind": "opencode-explicit-native-final-text-fixed-12-turn-v1",
+  "sourceSha256": "84a08efe27f2a93b16eb0dc5710903370d3dbbc330d3bda2153090ebb825d16c",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "thinking": "low",
+  "cliVersion": "1.18.35",
+  "arms": ["native", "terminal"],
+  "order": "alternating paired rounds: odd native first, even terminal first",
+  "samples": 1,
+  "tasks": [
+    {
+      "round": 1,
+      "prompt": "Use available tools for exact arithmetic. Audit the immutable CSV. Apply later requested revisions in this conversation, without changing the file. Reply with only a JSON object containing numeric count and total. Read budget.csv for this audit. Return the count and total amount for group A.",
+      "expected": {
+        "count": 15,
+        "total": 4545
+      }
+    },
+    {
+      "round": 2,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the count and total amount for group B.",
+      "expected": {
+        "count": 15,
+        "total": 4650
+      }
+    },
+    {
+      "round": 3,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the count and total amount for group C.",
+      "expected": {
+        "count": 15,
+        "total": 4755
+      }
+    },
+    {
+      "round": 4,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the count and total amount for group D.",
+      "expected": {
+        "count": 15,
+        "total": 4860
+      }
+    },
+    {
+      "round": 5,
+      "prompt": "Reply with only a JSON object containing numeric count and total. For this conversation, increase R001 amount by 100. Return the revised count and total for group A.",
+      "expected": {
+        "count": 15,
+        "total": 4645
+      }
+    },
+    {
+      "round": 6,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the revised count and total across all groups.",
+      "expected": {
+        "count": 60,
+        "total": 18910
+      }
+    },
+    {
+      "round": 7,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Undo only the increase to R001 from turn 5. Return the count and total for group A.",
+      "expected": {
+        "count": 15,
+        "total": 4545
+      }
+    },
+    {
+      "round": 8,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the current count and total across all groups.",
+      "expected": {
+        "count": 60,
+        "total": 18810
+      }
+    },
+    {
+      "round": 9,
+      "prompt": "Reply with only a JSON object containing numeric count and total. For this conversation, increase R002 amount by 200. Return the revised count and total for group B.",
+      "expected": {
+        "count": 15,
+        "total": 4850
+      }
+    },
+    {
+      "round": 10,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the current count and total across groups B and D combined.",
+      "expected": {
+        "count": 30,
+        "total": 9710
+      }
+    },
+    {
+      "round": 11,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the current count and total across groups A and C combined.",
+      "expected": {
+        "count": 30,
+        "total": 9300
+      }
+    },
+    {
+      "round": 12,
+      "prompt": "Reply with only a JSON object containing numeric count and total. Return the final count and total across all groups, retaining the current conversational revisions.",
+      "expected": {
+        "count": 60,
+        "total": 19010
+      }
+    }
+  ],
+  "limits": [
+    "One model and one trajectory per arm; no statistical or universal CLI claim.",
+    "Same source and business prompts; terminal adds explicit final-body declaration only. Both use ordinary native final text.",
+    "Standalone manual Host/Kernel prototype, not production scheduler/adapter acceptance.",
+    "Quality errors continue without retry; safety/protocol/usage failure stops; all cost retained.",
+    "Path-specific filesystem barrier, not a general network or whole-host security sandbox."
+  ],
+  "toolSelection": "Same OpenCode tools both arms, no StructuredOutput or schema. Terminal adds one explicit final-body declaration per turn.",
+  "revisionReason": "No StructuredOutput tool or JSON body wrapper in either arm. Host per-Run explicit opt-in accepts only current settled stop response with single real final text, then original Worker path.",
+  "workspacePolicy": "Prior control and peer denials plus repository docs/evo/evidence denial (published answer oracle).",
+  "retryPolicy": {
+    "harnessRetries": 0,
+    "dependentRoundsStopOnFailure": false,
+    "upstreamTransportRetries": "CLI-owned; not independently observed or advertised as disabled",
+    "stopPolicy": "Quality or output JSON scoring failure is recorded without retry and fixed remaining prompts continue. Protocol, capture, transport, usage, isolation, publication unknown, stale, or safety failure stops dependent execution."
+  },
+  "interfaceVersion": "explicit-native-final-text/v1",
+  "terminalModelFields": [],
+  "hostFinal": true,
+  "paidSamples": 1,
+  "budget": {
+    "maxBusinessInvocations": 24,
+    "requestTimeoutMs": 180000,
+    "maxElapsedMs": 1200000,
+    "maxReportedGenerations": 80,
+    "maxReportedInputTokens": 1000000,
+    "maxReportedOutputTokens": 15000,
+    "enforcement": "Check before starting each native turn; retain all costs of completed/failed turns. These are between-turn stop thresholds, not a provider billing hard cap."
+  },
+  "receiptPolicy": "True Worker published receipt written as synthetic Host diagnostic via noReply in same native session, then Activation completion. Failure never resends business action; finally records proven native turn settlement without ACK/completion.",
+  "comparisonRules": [
+    "Same immutable budget.csv and exact business prompts as P136/P138/P139.",
+    "One continuous independent native session per arm; alternating odd native-first/even terminal-first.",
+    "Native and terminal disable external memories/instructions/skills and have isolated config/data/workspaces.",
+    "No same-branch legacy response substitution, stdout inference, string true coercion, discarded failure or paid rerun.",
+    "Output JSON parse rule unchanged from P139 (outer markdown code fence tolerated, trailing commentary rejected).",
+    "No full efficiency verdict when incomplete; failed-turn usage stays in full batch totals and completed-prefix comparison labeled separately.",
+    "All 24 invocations, including wrong answers and their subsequent context effects, count in full trajectory cost; quality rate reported separately. No answer repairs or oracle feedback.",
+    "Full and late-round ratios require matching attempted round counts, with quality rate shown separately; never label unequal quality as efficiency acceptance. All raw reported cost retained, including abnormal usage."
+  ],
+  "approvalState": "prepared; internal lead review required before --paid launch; no paid launch performed",
+  "ledger": "P148",
+  "diagnosticCostAccounting": "Every persisted native generation is counted, including invalid tool repair, retries visible in session, failed final intent and future input containing full Host diagnostic receipts. No provider request is made solely for noReply receipt persistence.",
+  "nativeMemoryVersionAudit": "Private current-version audit of OpenCode v1.18.35 tag 53d1eabb61e21162157817bf677da0a4ad3332e3; formal repository gate version guard is unchanged.",
+  "capturePolicy": "Host explicit mode before Run; exact current session/new prompt/new response; finish stop; no error/structured/unfinished tool; exactly one completed text, neither synthetic nor ignored; body remains data only. Host supplies final true, fixed seq/auth/idempotency; unknown/stale never resent.",
+  "terminalDeclaration": "FinalReply mode: Your final response is the Room message body.",
+  "streamRecorder": {
+    "sameBothArms": true,
+    "upstreamByteForwarding": "Unchanged raw HTTP entity bytes; only destination Host changes. No transformed SSE or tool result.",
+    "rawPrivate0600": true,
+    "maxCaptureBytesPerRequest": 16777216,
+    "modelEffortGuard": "Exact installed model config id or model key, low; mismatches refused before upstream.",
+    "efficiencyBlocks": [
+      "incomplete stream",
+      "missing DONE or usage",
+      "capture limit exceeded",
+      "encoding cannot be parsed",
+      "SSE parse error"
+    ],
+    "tokens": "raw provider input includes cached input, reconstructed native input=input+read+write. Native output+reasoning reconstructs complete output; raw nested reasoning and cache fields preserved for mapping.",
+    "observedRawMapping": {
+      "model": "deepseek-v4.1-flash",
+      "effort": "low",
+      "basis": "Installed selected model has no id override; two-arm actual CLI fake run emitted this exact raw model/effort."
+    },
+    "countedFields": [
+      "provider request count",
+      "raw entity byte count and SHA256",
+      "finish reasons",
+      "all original usage snapshots",
+      "content UTF-16 code units",
+      "reasoning UTF-16 code units without text",
+      "tool argument UTF-16 code units/UTF8 bytes/whitespace code units",
+      "delta field value types"
+    ],
+    "inFlightLimit": "16MiB local capture cap marks unknown and does not alter forwarding. Token budget is checked before a new native invocation, not a hard provider in-flight cap."
+  }
+}
