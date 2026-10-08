@@ -1,0 +1,50 @@
+{
+  "kind": "Pi native configuration and two-round smoke, not Loom acceptance",
+  "version": "1.1.0",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "thinking": "low",
+  "configurationSource": "Existing OpenCode same-provider endpoint and credential; no credential included",
+  "nativeSessionContinuous": true,
+  "isolation": [
+    "--offline",
+    "--no-extensions",
+    "--no-mcp",
+    "--no-skills",
+    "--no-context-files",
+    "--no-prompt-templates"
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "answer": ["87"],
+      "generations": 2,
+      "inputIncludingCache": 1848,
+      "uncachedInput": 1080,
+      "cachedInput": 768,
+      "output": 58,
+      "toolCalls": 1,
+      "settled": true,
+      "rawSha256": "82ca3c79fd3d09f0877957bb821c89c8718488dcbf681a1380f5378c794a0f15"
+    },
+    {
+      "round": 2,
+      "answer": ["100"],
+      "generations": 1,
+      "inputIncludingCache": 995,
+      "uncachedInput": 99,
+      "cachedInput": 896,
+      "output": 2,
+      "toolCalls": 0,
+      "settled": true,
+      "rawSha256": "7339bb43e25172640519605921793ea4ad55b0e00983578055bf4f39f963f26e"
+    }
+  ],
+  "limits": [
+    "No Loom adapter or Room delivery tested",
+    "No paired efficiency or multiple-model conclusion",
+    "Pi catalog default context/output metadata not independently verified",
+    "Reported zero monetary cost is absent price metadata, not free usage",
+    "Isolation flags do not constitute a full provider automatic-memory audit"
+  ]
+}
