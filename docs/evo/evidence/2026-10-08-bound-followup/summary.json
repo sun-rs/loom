@@ -42,7 +42,7 @@
   "findings": [
     "Kimi post-publication requests are real: 12 extra generations and 291829 input/548 output in this trajectory; late-window input remains 2.160x. Lower whole-run uncached input does not remove that overhead.",
     "OpenCode native StructuredOutput metadata.valid did not establish type validity. Strict Host validation prevented malformed explicit intent from becoming a Room message.",
-    "Codex local tool host fails even directly without benchmark sandbox, isolated HOME and proxies; evidence does not establish a macOS approval popup as cause.",
+    "P140 tool host startup failed; owner subsequently reported an unattended macOS Open Code Mode Host dialog. A later free actual codex exec/resume replay now succeeds and also starts that host. The exact approval time was not observed. app-server is not required for output-schema, and disabling only code_mode_host returns host disabled rather than a shell fallback. See codex-exec-free.json.",
     "Token accounting differs across CLIs: OpenCode output excludes stored reasoning, Pi includes it; cumulative USD session fields must not be summed."
   ],
   "nextPrototype": {
@@ -53,13 +53,14 @@
       "Not ordinary stdout-to-Room inference. No turn-exit-only completion.",
       "Wrong or old native identity, disabled mode, malformed body, truncation, incomplete tools and failed publication must remain failures.",
       "No production code, target contract, account configuration or service deployment changed.",
-      "Real models have not been tested on this new body-only variant. No new efficiency claim."
+      "At the original 1c79710 milestone, the body-only variants had free evidence only. Subsequent P142-P144 real-model attempts are recorded separately in ../2026-10-08-finalreply-cli/summary.json; none completed the planned long comparison."
     ]
   },
   "remaining": [
-    "Confirm/recover local Codex tool-host startup before another paid comparison.",
+    "Use normal codex exec/resume as the next native control now that its actual tool path passes the free replay; validate strict explicit FinalReply publication separately before paid comparison.",
     "Predeclare real-model comparisons of the free-verified explicit FinalReply candidates; keep all costs and failures and require the same native-memory and accounting controls.",
     "Measure longer real artifact work and multiplayer collaboration after single-session reply path is stable.",
     "Retain all failure costs and compare per-model quality separately; do not repeat until a preferred ratio appears."
-  ]
+  ],
+  "subsequentEvidence": "../2026-10-08-finalreply-cli/summary.json"
 }

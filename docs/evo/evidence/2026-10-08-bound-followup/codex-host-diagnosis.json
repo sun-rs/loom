@@ -54,5 +54,11 @@
   },
   "initialFreeAttempt": "127.0.0.1 fake URL intercepted with503 and0serverrequests; localhost endpoint allowed actualfree replay, initialfailurepreserved",
   "changes": "no account/globalconfig/quarantine/signature/provider or formalservice modifications",
-  "nextSafeAction": "Resolve current installed host startup outside Loom, then rerun identical free replay successfully before any new paid comparison; do not disable code-mode or silently alter baseline"
+  "nextSafeAction": "Resolve current installed host startup outside Loom, then rerun identical free replay successfully before any new paid comparison; do not disable code-mode or silently alter baseline",
+  "ownerFollowup": {
+    "date": "2026-10-08",
+    "observation": "Owner confirms macOS asked the user to allow opening Code Mode Host and the prompt was left unattended. This explains the observed startup blocker; prior entries preserve the diagnostic evidence available before this observation.",
+    "distinction": "P140 private harness used codex app-server for both arms. The existing repository native benchmark uses codex exec/resume. app-server is a control interface; codex-code-mode-host is a separate tool-execution component, not an alternative user session mode.",
+    "correction": "Do not treat app-server as required for final-response schemas: installed codex exec and exec resume both expose --output-schema. Do not assume changing the entry command alone avoids the tool host; verify using a free actual-CLI replay."
+  }
 }

@@ -1,0 +1,22 @@
+{
+  "batch": "P143",
+  "authorizedBy": "owner persistent authorization, lead reviewed unique frozen 12-round batch",
+  "paidStarted": true,
+  "sourceHashes": {
+    "plan.json": "b24698dd263f4445d9d48390bbf0a159d5553fe4ba7c514a14de97530c0b0b97",
+    "run.mjs": "94a7243e6c86e610241c550b73f5cd04f2363e5f6e417dad4b11bcf602a8ee63",
+    "intent.mjs": "0cbff6172360f41867d9f457b3e42e95954ad691433be49b5bfece4a54b882cc",
+    "bookkeeping.mjs": "764228db240a5256759bda2c32c1d710e7e96298cf4b0596dca3659ec777af63",
+    "host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "worker-receipt.mjs": "5d360b2ae82163b48e9188d8b2020326f6083e1b5fd3d36e97088918a4812d5c",
+    "catalog.json": "56f9f0205af43ad13c5e7e4c30e68308db74e2a3c8e4cb919086ef5c7083bd32",
+    "free-verified.json": "8dd4ee4157d480e4e5d621e163594a12b4d491a17f76e77bc0b15f89843959d8"
+  },
+  "scope": "body-only FinalReply versus native; no retries; existing free positive and safety tests retained",
+  "harnessPreflightFailure": {
+    "error": "tsx import unavailable",
+    "providerLaunched": false,
+    "log": "P143.private.log",
+    "correction": "Use installed Node 25 native TypeScript support; no code or plan change"
+  }
+}

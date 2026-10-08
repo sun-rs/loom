@@ -1,0 +1,46 @@
+{
+  "sourceRevision": "1c79710",
+  "status": "Private candidate follow-up; no production deployment or overall efficiency acceptance.",
+  "codexEntryPoint": {
+    "answer": "Ordinary codex exec/resume is sufficient and is restored as native control. Its current tool path also starts codex-code-mode-host; app-server is not required for output-schema.",
+    "ownerObservation": "Prior macOS open confirmation was left unattended.",
+    "freeEvidence": "../2026-10-08-bound-followup/codex-exec-free.json",
+    "limit": "Current replay succeeds; exact user approval time was not observed. Disabling only code_mode_host produced host-disabled errors, not a direct shell fallback."
+  },
+  "batches": {
+    "P142": {
+      "cli": "Kimi",
+      "result": "First native request failed authentication; terminal arm never started. One request has no reported usage; cost unknown, no ratio.",
+      "evidence": "kimi-public-evidence.json"
+    },
+    "P144": {
+      "cli": "Codex",
+      "result": "Plain exec/resume tool and explicit final publication work. Structured round2 arithmetic was wrong; stopped as planned. Native round2 not executed; cannot attribute error to schema or compute long ratio.",
+      "reportedResponses": 7,
+      "inputIncludingCache": 93522,
+      "cachedInput": 70144,
+      "output": 337,
+      "evidence": "codex-paid.json"
+    },
+    "P143": {
+      "cli": "OpenCode",
+      "result": "First pair correct. Terminal round2 first submitted body as object, then as valid string; both native valid flags true. Exact-one-capture Host check rejected before publication. Native round2 not executed. No long ratio.",
+      "reportedGenerations": 9,
+      "inputIncludingCache": 73911,
+      "outputIncludingReasoning": 1327,
+      "evidence": "opencode-paid.json"
+    }
+  },
+  "findings": [
+    "Native exec output-last-message plus exit0 does not prove final_answer: a real CLI fake-provider commentary-only negative test also writes that file. Require current native turn final identity corroboration before the explicitly enabled Worker mutation.",
+    "exec resume usage summaries are session cumulative. Count unique reported responses rather than adding every summary.",
+    "Publication and Activation completion prove delivery/execution; they do not prove the model answer correct. Wrong business answers remain visible in the Room.",
+    "One malformed intermediate native StructuredOutput followed by a valid final submission is distinguishable from duplicate canonical business writes; a future separately tested policy must define this boundary without hiding repair cost. Current P143 exact-one rejection remains unchanged."
+  ],
+  "nextDesign": "../2026-10-08-bound-followup/next-measurement-design.json",
+  "unchanged": [
+    "Original P140/P141 and all prior failures retained.",
+    "No production source, global account settings, OS quarantine or formal service changed.",
+    "No claim that fake-provider passes establish real-model reliability or token efficiency."
+  ]
+}

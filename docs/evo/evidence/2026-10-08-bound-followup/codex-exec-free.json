@@ -1,0 +1,71 @@
+{
+  "kind": "codex exec and resume real CLI tool path plus output schema free acceptance",
+  "version": "codex-cli 0.161.0",
+  "paidCalls": 0,
+  "fixture": "loopback fake Responses provider, isolated HOME/CODEX_HOME, no account credentials, memory disabled everylaunch",
+  "cases": [
+    {
+      "configuration": "default-exec-baseline",
+      "rounds": [
+        {
+          "round": 1,
+          "mode": "exec",
+          "sameSession": true,
+          "outputSchemaSent": true,
+          "actualToolSucceeded": true,
+          "actualToolOutput": "Script completed\nWall time 0.5 seconds\nOutput:\n\n{\"count\": 15, \"total\": 4545}\n",
+          "nativeToolSelected": "custom exec through code mode",
+          "spawnedCodeModeHost": true,
+          "hostExecutable": "/opt/homebrew/Caskroom/codex/0.161.0/bin/codex-code-mode-host",
+          "exitCode": 0
+        },
+        {
+          "round": 2,
+          "mode": "exec resume",
+          "sameSession": true,
+          "outputSchemaSent": true,
+          "actualToolSucceeded": true,
+          "actualToolOutput": "Script completed\nWall time 0.1 seconds\nOutput:\n\n{\"count\": 15, \"total\": 4650}\n",
+          "nativeToolSelected": "custom exec through code mode",
+          "spawnedCodeModeHost": true,
+          "hostExecutable": "/opt/homebrew/Caskroom/codex/0.161.0/bin/codex-code-mode-host",
+          "exitCode": 0
+        }
+      ]
+    },
+    {
+      "configuration": "explicit-code_mode_host=false",
+      "rounds": [
+        {
+          "round": 1,
+          "mode": "exec",
+          "sameSession": true,
+          "outputSchemaSent": true,
+          "actualToolSucceeded": false,
+          "actualToolOutput": "code-mode host is disabled",
+          "nativeToolSelected": "custom exec through code mode",
+          "spawnedCodeModeHost": false,
+          "hostExecutable": null,
+          "exitCode": 0
+        },
+        {
+          "round": 2,
+          "mode": "exec resume",
+          "sameSession": true,
+          "outputSchemaSent": true,
+          "actualToolSucceeded": false,
+          "actualToolOutput": "code-mode host is disabled",
+          "nativeToolSelected": "custom exec through code mode",
+          "spawnedCodeModeHost": false,
+          "hostExecutable": null,
+          "exitCode": 0
+        }
+      ]
+    }
+  ],
+  "correction": "raw toolSucceeded=false used String(array) on rich tool output; offline audit reads actual content.text, no replay or discarded sample",
+  "baselineBoundary": "Repository production native benchmark scripts/cli-efficiency/native.mjs already uses codex exec/resume. P140 private prototype used app-server for both arms; its observations must not be generalized to all prior gates.",
+  "userObservation": "User reports prior macOS Open Code Mode Host dialog was left unattended. Exact approval time is not observed by this audit.",
+  "scope": "No model reasoning, token efficiency, or product publication acceptance; fake Responses forces calls. No quarantine/global settings changed.",
+  "conclusion": "Ordinary codex exec also starts native Code Mode Host by default. Both initial and same-session resume tool execution now succeed. Setting only code_mode_host=false does not restore a built-in shell path; exposed exec calls fail with code-mode host is disabled. output-schema works on initial and resume launches."
+}

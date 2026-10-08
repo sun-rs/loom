@@ -1,0 +1,292 @@
+{
+  "batch": "P143",
+  "cli": "OpenCode 1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "status": "Stopped on multiple native StructuredOutput captures; no retry or relaxed parsing",
+  "evidenceRoot": "/Users/sun/.loom/reviews/2026-10-08-bound-opencode/body-only-v3/paid-plan-v1/runs/1791461995054",
+  "totals": {
+    "native": {
+      "turns": 1,
+      "generations": 4,
+      "input": 31808,
+      "cached": 23168,
+      "uncached": 8640,
+      "output": 381,
+      "reasoning": 183
+    },
+    "terminal": {
+      "turns": 2,
+      "generations": 5,
+      "input": 42103,
+      "cached": 32768,
+      "uncached": 9335,
+      "output": 946,
+      "reasoning": 224
+    }
+  },
+  "rounds": [
+    {
+      "arm": "native",
+      "round": 1,
+      "generations": 4,
+      "usage": [
+        {
+          "messageId": "msg_11b74bb52001oTTu8Li5N9qvJB",
+          "tokens": {
+            "total": 7578,
+            "input": 7510,
+            "output": 41,
+            "reasoning": 27,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.00120621,
+          "error": null,
+          "finish": "tool-calls"
+        },
+        {
+          "messageId": "msg_11b74c8e5001gxonsyOI8oFleY",
+          "tokens": {
+            "total": 7668,
+            "input": 186,
+            "output": 58,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 7424
+            }
+          },
+          "cost": 8.78044e-5,
+          "error": null,
+          "finish": "tool-calls"
+        },
+        {
+          "messageId": "msg_11b74d4b600199Ngwud66BEcfF",
+          "tokens": {
+            "total": 8456,
+            "input": 663,
+            "output": 85,
+            "reasoning": 156,
+            "cache": {
+              "write": 0,
+              "read": 7552
+            }
+          },
+          "cost": 0.0002755962,
+          "error": null,
+          "finish": "tool-calls"
+        },
+        {
+          "messageId": "msg_11b74dfa00015DO0OlYU7pS5Oz",
+          "tokens": {
+            "total": 8487,
+            "input": 281,
+            "output": 14,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 8192
+            }
+          },
+          "cost": 7.76302e-5,
+          "error": null,
+          "finish": "stop"
+        }
+      ],
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "correct": true
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "generations": 3,
+      "usage": [
+        {
+          "messageId": "msg_11b74e82a0011IKfejqyjwzvyS",
+          "tokens": {
+            "total": 7796,
+            "input": 7707,
+            "output": 69,
+            "reasoning": 20,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.001249765,
+          "error": null,
+          "finish": "tool-calls"
+        },
+        {
+          "messageId": "msg_11b74f3c3001aBQU5eijVTkJf0",
+          "tokens": {
+            "total": 8277,
+            "input": 229,
+            "output": 368,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 7680
+            }
+          },
+          "cost": 0.000287463,
+          "error": null,
+          "finish": "tool-calls"
+        },
+        {
+          "messageId": "msg_11b75040e001pM5IyQrISODS1p",
+          "tokens": {
+            "total": 8705,
+            "input": 805,
+            "output": 49,
+            "reasoning": 43,
+            "cache": {
+              "write": 0,
+              "read": 7808
+            }
+          },
+          "cost": 0.0002060198,
+          "error": null,
+          "finish": "tool-calls"
+        }
+      ],
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "correct": true,
+      "publicationState": "published",
+      "activationCompleted": true
+    },
+    {
+      "arm": "terminal",
+      "round": 2,
+      "generations": 2,
+      "usage": [
+        {
+          "messageId": "msg_11b750e0b001T0ZYM5S6O7XL3f",
+          "tokens": {
+            "total": 9054,
+            "input": 226,
+            "output": 91,
+            "reasoning": 161,
+            "cache": {
+              "write": 0,
+              "read": 8576
+            }
+          },
+          "cost": 0.0002178556,
+          "error": null,
+          "finish": "tool-calls"
+        },
+        {
+          "messageId": "msg_11b751b2e001EI60OI6nEs3UEX",
+          "tokens": {
+            "total": 9217,
+            "input": 368,
+            "output": 145,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 8704
+            }
+          },
+          "cost": 0.0001739224,
+          "error": null,
+          "finish": "tool-calls"
+        }
+      ],
+      "correct": false
+    }
+  ],
+  "failure": {
+    "round": 2,
+    "arm": "terminal",
+    "nativeStructuredFinal": {
+      "body": "{\"count\": 15, \"total\": 4650}"
+    },
+    "captures": [
+      {
+        "tool": "StructuredOutput",
+        "status": "completed",
+        "input": {
+          "body": {
+            "count": 15,
+            "total": 4650
+          }
+        },
+        "metadata": {
+          "valid": true
+        }
+      },
+      {
+        "tool": "StructuredOutput",
+        "status": "completed",
+        "input": {
+          "body": "{\"count\": 15, \"total\": 4650}"
+        },
+        "metadata": {
+          "valid": true
+        }
+      }
+    ],
+    "classification": "First capture body is object, second capture body is valid string. Both native metadata.valid true. Host exact-one-capture invariant rejected before Worker publication. Numerical answer is correct, not a proved arithmetic failure.",
+    "nativeRound2Executed": false
+  },
+  "kernel": {
+    "messages": 1,
+    "activationStates": [
+      ["completed", 1],
+      ["leased", 1]
+    ],
+    "runStates": [["exited", 0, 2]],
+    "firstReceiptPersistedWithoutGeneration": true,
+    "failedRoundPublished": false,
+    "failedRoundAckOrCompletion": false,
+    "integrity": "ok"
+  },
+  "accounting": {
+    "persistedUsageMatchesResponseRecords": true,
+    "allNineAssistantUsageRecordsCounted": true,
+    "inputIncludesCache": true,
+    "outputIncludesSeparatelyStoredReasoning": true,
+    "invoiceVerified": false
+  },
+  "initialHarnessFailure": {
+    "error": "Optional tsx package absent",
+    "beforeProviderLaunch": true,
+    "providerCalls": 0,
+    "preservedLog": "P143.private.log",
+    "correction": "Run unchanged source with installed Node native TypeScript support"
+  },
+  "limitations": [
+    "Only one complete pair and one rejected terminal round; no full-task efficiency ratio.",
+    "Same native sessions preserved; no model retry initiated by controller. Native model may self-correct within a turn, fully counted.",
+    "Raw row.correct false is a placeholder for rejected protocol, not proof of wrong numerical answer.",
+    "Private Host prototype, not production adapter or full gate acceptance."
+  ],
+  "sourceHashes": {
+    "plan.json": "b24698dd263f4445d9d48390bbf0a159d5553fe4ba7c514a14de97530c0b0b97",
+    "run.mjs": "94a7243e6c86e610241c550b73f5cd04f2363e5f6e417dad4b11bcf602a8ee63",
+    "intent.mjs": "0cbff6172360f41867d9f457b3e42e95954ad691433be49b5bfece4a54b882cc",
+    "bookkeeping.mjs": "764228db240a5256759bda2c32c1d710e7e96298cf4b0596dca3659ec777af63",
+    "host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "worker-receipt.mjs": "5d360b2ae82163b48e9188d8b2020326f6083e1b5fd3d36e97088918a4812d5c",
+    "catalog.json": "56f9f0205af43ad13c5e7e4c30e68308db74e2a3c8e4cb919086ef5c7083bd32",
+    "free-verified.json": "8dd4ee4157d480e4e5d621e163594a12b4d491a17f76e77bc0b15f89843959d8"
+  }
+}

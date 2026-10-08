@@ -1,0 +1,63 @@
+{
+  "candidate": "ordinary codex exec/resume body-only native FinalReply",
+  "version": "codex-cli 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "paidCalls": 0,
+  "P144": "reserved; root review required before paid start",
+  "freeTests": 8,
+  "realCliFakeProvider": {
+    "roundsPerArm": 2,
+    "correctBusinessResults": 4,
+    "actualBusinessToolExecutions": 4,
+    "sameSessionPerArm": true,
+    "distinctArmSessions": true,
+    "nativeHasSchema": false,
+    "structuredEveryRequestBodyOnlySchema": true,
+    "publications": 2,
+    "exactConsumerAckAndCompletedActivations": 2,
+    "sqliteIntegrity": "ok"
+  },
+  "negativeRealCli": {
+    "providerPhase": "commentary only",
+    "exitCode": 0,
+    "outputLastMessagePopulated": true,
+    "bodyOnlyShapeValid": true,
+    "candidateRejected": true,
+    "canonicalAgentPosts": 0,
+    "ACKs": 0,
+    "activationCompleted": false,
+    "conclusion": "exit0 + turn.completed + unique exec agent_message + populated output-last-message cannot distinguish native final_answer; explicit current-turn diagnostic identity cross-check required"
+  },
+  "publicationBoundary": [
+    "Action source is current launch official output-last-message under body-only schema, not arbitrary stdout/transcript text",
+    "Requires same-session current launch full stdout and exactly one successful completion",
+    "Cross-checks one native final_answer with exact current turn ID and native message identity plus matching task_complete",
+    "Only verified Worker receipt allows Host completion; frozen deliveredSeq and old credential cannot rebind",
+    "Stale new Human, failed Run, duplicate final, schema extras, truncated output all rejected; unknown write never resent or completed"
+  ],
+  "usageFinding": {
+    "execResumeSummaryIsSessionCumulative": true,
+    "perArmFirstExecSummaryInput": 200,
+    "perArmResumeSummaryInput": 400,
+    "incorrectSumOfSummaries": 600,
+    "correctPerArmUniqueResponseInput": 400,
+    "source": "current-launch rollout token_usage_record response IDs, also confirms current turn/thread"
+  },
+  "plan": {
+    "roundsPerArm": 12,
+    "samples": 1,
+    "order": "alternating native/structured by round",
+    "native": "plain final, no schema",
+    "structured": "body-only schema every exec/resume",
+    "autoMemory": "disabled each launch and verified native session_meta memory_mode",
+    "originalP140": "retained; different entrypoint/method, not replacement",
+    "paidStarted": false
+  },
+  "evidence": {
+    "positive": "runs/1791461069845-free",
+    "negative": "runs/1791461041855-negative",
+    "unitKernel": "full-free.log",
+    "plan": "P144-plan.public.json"
+  }
+}

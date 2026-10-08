@@ -1,0 +1,128 @@
+{
+  "batch": "P144",
+  "status": "stopped at first wrong business answer, no rerun",
+  "cli": "codex-cli 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "method": "Both arms ordinary exec/resume; plain native final vs body-only native output schema submitted by Host through Worker service",
+  "plannedRoundsPerArm": 12,
+  "executed": {
+    "native": {
+      "turns": 1,
+      "correct": 1,
+      "generations": 3,
+      "input": 39850,
+      "cached": 32000,
+      "output": 132,
+      "uncached": 7850
+    },
+    "structured": {
+      "turns": 2,
+      "correct": 1,
+      "generations": 4,
+      "input": 53672,
+      "cached": 38144,
+      "output": 205,
+      "uncached": 15528
+    }
+  },
+  "results": [
+    {
+      "arm": "native",
+      "round": 1,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "correct": true,
+      "actualBusinessTools": 2,
+      "nativeExit": 0
+    },
+    {
+      "arm": "structured",
+      "round": 1,
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "correct": true,
+      "actualBusinessTools": 2,
+      "nativeExit": 0
+    },
+    {
+      "arm": "structured",
+      "round": 2,
+      "answer": {
+        "count": 15,
+        "total": 4590
+      },
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "correct": false,
+      "actualBusinessTools": 0,
+      "nativeExit": 0
+    }
+  ],
+  "failure": {
+    "arm": "structured",
+    "round": 2,
+    "requested": "group B count and total",
+    "actual": {
+      "count": 15,
+      "total": 4590
+    },
+    "expected": {
+      "count": 15,
+      "total": 4650
+    },
+    "toolCalls": 0,
+    "classification": "model answered incorrectly from conversation without arithmetic tool; native transport and output contract completed",
+    "nativeRound2Executed": false,
+    "causality": "Cannot attribute error to schema or claim native would succeed; one realized trajectory, no paired round2 observation"
+  },
+  "publication": {
+    "realNativeFinals": 2,
+    "WorkerReceipts": 2,
+    "exactConsumerAck": 2,
+    "completedActivations": 2,
+    "nativeTurnInterrupts": 0,
+    "correctRoomBodies": 1,
+    "incorrectRoomBodies": 1,
+    "bodyPreservedExactly": true,
+    "sameStructuredSessionAcrossResume": true,
+    "noSyntheticACK": true,
+    "note": "Run/Activation completion proves execution and delivery, not answer correctness; wrong model output is retained in temporary Room"
+  },
+  "usage": {
+    "reportedResponses": 7,
+    "uniqueResponseIds": 7,
+    "input": 93522,
+    "cached": 70144,
+    "output": 337,
+    "reasoning": 0,
+    "allExecutedTurnsHaveUsage": true,
+    "source": "unique token_usage_record records in current native turn slices, never summing cumulative exec resume totals",
+    "fees": "not calculated"
+  },
+  "efficiency": "Not accepted: planned long pair incomplete and equal-quality condition failed; no long-task multiplier",
+  "memory": "Actual initial/resume memory_mode disabled and model/effort matched every executed native turn",
+  "sqliteIntegrity": "ok",
+  "limitations": [
+    "One approved model trajectory, not all-Codex or multiCLI conclusion",
+    "Prototype manual Host composition, not production scheduler/adapter/session-registration acceptance",
+    "No generally exposed provider finish_reason; truncation tests cover stdout/missing native completion only",
+    "CLI stdout transport fields have version-specific diagnostic corroboration; unknown identity fails closed"
+  ],
+  "priorP140": "Preserved independently; no silent replacement",
+  "evidenceRoot": "runs/1791461357994-P144"
+}

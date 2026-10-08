@@ -1,0 +1,30 @@
+[
+  {
+    "file": "fake-provider.mjs",
+    "sha256": "6d625c76911defd6da13233b64f67ca47a6925f73ca3b6c8a107b91ba894f8ce"
+  },
+  {
+    "file": "final.mjs",
+    "sha256": "2dc5410cd3f2e3d2f54a1dd10e029df3ff5d4fdd3050213c823bb71c0f6357e6"
+  },
+  {
+    "file": "final.test.mjs",
+    "sha256": "13aa4cf3f7cf39b5bdd56034297f99fb98e1e5c671e12c677e2fa4d06f723707"
+  },
+  {
+    "file": "kernel.test.mjs",
+    "sha256": "646baaabd010f0764bc3ea71cf2b5290035db36a210db5df5331f7cb65094814"
+  },
+  {
+    "file": "room.mjs",
+    "sha256": "eb03dfe90de184dbbeaa8ade6d156a410cfb9111f7a6729d95561daa3c70a856"
+  },
+  {
+    "file": "run.mjs",
+    "sha256": "6585147ae14943831a81a81e6a9e8f01d1596d4676a60709a0a2836f439f52ff"
+  },
+  {
+    "file": "test-evidence.mjs",
+    "sha256": "e5e89d310c2978b622cf2b64f0c70da1a872c02d7880eb94bf5426e606b91ab0"
+  }
+]

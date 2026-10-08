@@ -1,0 +1,70 @@
+{
+  "batch": "P142",
+  "verdict": "blocked-authentication; no quality or efficiency result",
+  "run": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460882891",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "version": "0.39.1",
+  "attemptedLaunches": 1,
+  "nativeRoundsCompleted": 0,
+  "finalReplyLaunches": 0,
+  "observedRequests": 1,
+  "observedGenerationUsageRecords": 0,
+  "reportedUsage": null,
+  "actualCost": null,
+  "missingUsageRequests": 1,
+  "retryCount": 0,
+  "failure": {
+    "nativeError": "internal: The provided authorization grant is invalid",
+    "exitCode": 1,
+    "timedOut": false,
+    "signal": null,
+    "runnerAssertion": "Missing native session id",
+    "interpretation": "Runner assertion is secondary to native authentication failure. No assistant output or correctness trial occurred. llm.request intent is recorded but no provider usage; do not call this zero-cost or model arithmetic failure."
+  },
+  "kernel": {
+    "activations": 0,
+    "published": 0,
+    "runAttempts": 0,
+    "description": "Fixture state seeded, but no activated business RunAttempt/Activation or instance reply; terminal arm never launched."
+  },
+  "preservation": {
+    "rawStdout": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460882891/native-1.raw.jsonl",
+    "stderr": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460882891/native-1.stderr",
+    "wire": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460882891/native.wire.jsonl",
+    "retainedWire": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460882891/native.retained-wire-0.jsonl",
+    "runtime": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460882891/runtime.json"
+  },
+  "limits": [
+    "No ratio may be computed. Missing usage is unknown, not zero.",
+    "No automatic retry, account change or credential refresh initiated by the test controller after failure.",
+    "P141 ordinary MCP and free FinalReply verification remain unchanged.",
+    "One planned paid batch attempted once; no dependent launch continued."
+  ],
+  "hashes": {
+    "plan.json": "1addb0324bcf5dd96f0966121da818756b13d563636fbbc0ff7ff0569782c9a0",
+    "result.json": "be3405272c48f6f5ee4336c2394ede37c9678eed9592b892f8557069ce2e9992",
+    "native.wire.jsonl": "94f0d18bca26d0241837a57c65c39c22f4a045626285953c0460ab9252c7a6a1",
+    "native-1.raw.jsonl": "3cbc1a870faf9117cfca4ab08a15e03b1842fdf4922fe9be25f630fad198199b",
+    "native-1.stderr": "f6ca1f77966d04bbb70ca9553a233c4aca65ae9e6f1a62428d6226f8a47aef6e",
+    "state.db": "330a54a38c760bf137a79b89a5e7ae548b5d963c1f3e250d00a305a2eba76a24"
+  },
+  "sourceHashes": {
+    "plan.json": "1addb0324bcf5dd96f0966121da818756b13d563636fbbc0ff7ff0569782c9a0",
+    "run.mjs": "25b682fec96a7b45bcd8add7914e90e14349b4734c5d16074d3c2c91a76421ff",
+    "final.mjs": "5f66b0bad2b03681387cc431b0f4c031232f4308e4d1a398c50fa0b607936e4f",
+    "config.py": "e5a9a5f996d3be94df00012bb91ea985b0be77cc3c2ed44150a356942100c28d",
+    "fake.mjs": "db526e3e286cd224ef8fac51a791705a96973a7c63c4148cfa5aa325fa61c64b",
+    "final.test.mjs": "de4b62da3a819300af1a93319f3c604818d9b0d6971503c67f128a661fefaf9d",
+    "kernel.test.mjs": "387635a1e1597b6bc0ea95ea09b4596e6eccc5c823f28a8581bc7316f19e8968"
+  },
+  "installedCliSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+  "exactRequests": [
+    {
+      "kind": "loop",
+      "modelAlias": "kimi-code/k3-256k",
+      "thinkingEffort": "low"
+    }
+  ],
+  "efficiencyRatio": null
+}

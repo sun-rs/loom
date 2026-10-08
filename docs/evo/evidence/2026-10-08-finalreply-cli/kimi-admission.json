@@ -1,0 +1,91 @@
+{
+  "passed": true,
+  "paidStarted": false,
+  "freeRun": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/runs/1791460773426",
+  "fakeRequests": 6,
+  "publishedAndCompleted": 2,
+  "osChecks": [
+    {
+      "arm": "native",
+      "target": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/plan.json",
+      "allowed": false,
+      "code": 1,
+      "stderr": "cat: /Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/plan.json: Operation not permitted\n"
+    },
+    {
+      "arm": "native",
+      "target": "/private/tmp/loom-kimi-bound-qKHmWo/terminal/work/budget.csv",
+      "allowed": false,
+      "code": 1,
+      "stderr": "cat: /private/tmp/loom-kimi-bound-qKHmWo/terminal/work/budget.csv: Operation not permitted\n"
+    },
+    {
+      "arm": "native",
+      "target": "/private/tmp/loom-kimi-bound-qKHmWo/native/work/budget.csv",
+      "allowed": true,
+      "code": 0,
+      "stderr": ""
+    },
+    {
+      "arm": "native",
+      "target": "/Users/sun/Code/repos/rah_os/docs/evo/evidence",
+      "allowed": false,
+      "code": 1,
+      "stderr": "ls: /Users/sun/Code/repos/rah_os/docs/evo/evidence: Operation not permitted\n"
+    },
+    {
+      "arm": "terminal",
+      "target": "/Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/plan.json",
+      "allowed": false,
+      "code": 1,
+      "stderr": "cat: /Users/sun/.loom/reviews/2026-10-08-bound-kimi/finalreply-paid/plan.json: Operation not permitted\n"
+    },
+    {
+      "arm": "terminal",
+      "target": "/private/tmp/loom-kimi-bound-qKHmWo/native/work/budget.csv",
+      "allowed": false,
+      "code": 1,
+      "stderr": "cat: /private/tmp/loom-kimi-bound-qKHmWo/native/work/budget.csv: Operation not permitted\n"
+    },
+    {
+      "arm": "terminal",
+      "target": "/private/tmp/loom-kimi-bound-qKHmWo/terminal/work/budget.csv",
+      "allowed": true,
+      "code": 0,
+      "stderr": ""
+    },
+    {
+      "arm": "terminal",
+      "target": "/Users/sun/Code/repos/rah_os/docs/evo/evidence",
+      "allowed": false,
+      "code": 1,
+      "stderr": "ls: /Users/sun/Code/repos/rah_os/docs/evo/evidence: Operation not permitted\n"
+    }
+  ],
+  "sourceHashes": {
+    "plan.json": "1addb0324bcf5dd96f0966121da818756b13d563636fbbc0ff7ff0569782c9a0",
+    "run.mjs": "25b682fec96a7b45bcd8add7914e90e14349b4734c5d16074d3c2c91a76421ff",
+    "final.mjs": "5f66b0bad2b03681387cc431b0f4c031232f4308e4d1a398c50fa0b607936e4f",
+    "config.py": "e5a9a5f996d3be94df00012bb91ea985b0be77cc3c2ed44150a356942100c28d",
+    "fake.mjs": "db526e3e286cd224ef8fac51a791705a96973a7c63c4148cfa5aa325fa61c64b",
+    "final.test.mjs": "de4b62da3a819300af1a93319f3c604818d9b0d6971503c67f128a661fefaf9d",
+    "kernel.test.mjs": "387635a1e1597b6bc0ea95ea09b4596e6eccc5c823f28a8581bc7316f19e8968"
+  },
+  "externalSources": {
+    "/Users/sun/.loom/reviews/2026-10-08-bound-reply/host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/kimi-usage.mjs": "56bf7b2300af5cc60083760872e4968edb29e248fab1647926952e311c458829",
+    "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/native-memory-version.mjs": "33312506b1cd8818afc22a88c6dae856cace9e3741a6949cf997a7a76df0c701"
+  },
+  "modelPreflight": {
+    "binding": "kimi-code/k3-256k",
+    "model": "k3-256k",
+    "allowedEffort": "low",
+    "providerType": "kimi",
+    "sameSourceAccount": true,
+    "endpointSha256": "f5acde8ba5d28ed325557d2d0afc837363987e8e599c77d9e38c1d0d2548050d",
+    "configCopiedOnlyForTestProcess": true,
+    "noPaidInvocation": true
+  },
+  "memory": "0.39.1 audited no independent automatic memory; each launch isolates HOME/KIMI_CODE_HOME/empty skills, forbids unexpected instruction/memory files, pins exact installed binary and unchanged per-arm config, keeps normal same-session history",
+  "reviewStatus": "Lead approved unique P142 paid batch after correcting descriptive fields only; prior plan retained as superseded-preflight."
+}
