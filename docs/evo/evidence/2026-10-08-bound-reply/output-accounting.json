@@ -1,0 +1,29 @@
+{
+  "basis": "Provider-reported usage counters only; reasoning is a subset of output, never added twice. No reasoning text published.",
+  "arms": {
+    "native": {
+      "output": 972,
+      "reasoningSubset": 752,
+      "nonReasoning": 220,
+      "answerNonReasoningPerTurn": [
+        14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
+      ]
+    },
+    "terminal": {
+      "output": 1507,
+      "reasoningSubset": 656,
+      "nonReasoning": 851,
+      "answerNonReasoningPerTurn": [
+        67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67
+      ]
+    }
+  },
+  "interpretation": "In this trajectory, extra output comes from non-reasoning reply tool serialization, not more reported reasoning. It is not a five-CLI or fixed-price claim.",
+  "difference": {
+    "output": 535,
+    "reasoningSubset": -96,
+    "nonReasoning": 631,
+    "answerSerialization": 636,
+    "firstBusinessToolCall": -5
+  }
+}

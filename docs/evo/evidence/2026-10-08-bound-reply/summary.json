@@ -1,0 +1,138 @@
+{
+  "sourceRevision": "f891159",
+  "verdict": "Promising ordinary-reply prototype in two CLI/model combinations; not production deployment or five-CLI efficiency acceptance. All attempted trajectories retained.",
+  "implementation": {
+    "owner": "Host holds original authenticated Run binding and frozen delivered sequence; Kernel remains authorization, stale-context, target, idempotency, publication and ACK owner.",
+    "modelFacingFields": ["body", "final"],
+    "pi": "Native terminate after valid published final; short model receipt, full diagnostics.",
+    "claude": "Synchronous PostToolUse continue:false after valid published final; full receipt retained in subsequent model history.",
+    "limits": [
+      "Ordinary unique-target replies only; no held-draft repair or multi-target selection implemented in this facade.",
+      "Manual real Kernel/Worker service, no automatic Loom scheduler or production Pi adapter.",
+      "No native auto-memory; native session history retained.",
+      "Body/sequence presentation assertions and OS oracle denials checked."
+    ]
+  },
+  "piTrajectories": [
+    {
+      "runId": "1791454589545",
+      "failure": null,
+      "arms": {
+        "native": {
+          "rounds": 12,
+          "strictCorrect": 12,
+          "generations": 13,
+          "inputIncludingCache": 35760,
+          "uncachedInput": 4144,
+          "output": 972
+        },
+        "terminal": {
+          "rounds": 12,
+          "strictCorrect": 12,
+          "generations": 13,
+          "inputIncludingCache": 40448,
+          "uncachedInput": 4864,
+          "output": 1507
+        }
+      }
+    },
+    {
+      "runId": "1791454729146",
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "arms": {
+        "native": {
+          "rounds": 2,
+          "strictCorrect": 1,
+          "generations": 5,
+          "inputIncludingCache": 10496,
+          "uncachedInput": 2688,
+          "output": 359
+        },
+        "terminal": {
+          "rounds": 2,
+          "strictCorrect": 2,
+          "generations": 5,
+          "inputIncludingCache": 11334,
+          "uncachedInput": 2886,
+          "output": 494
+        }
+      }
+    },
+    {
+      "runId": "1791454786541",
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "arms": {
+        "native": {
+          "rounds": 10,
+          "strictCorrect": 9,
+          "generations": 16,
+          "inputIncludingCache": 43289,
+          "uncachedInput": 4505,
+          "output": 985
+        },
+        "terminal": {
+          "rounds": 10,
+          "strictCorrect": 10,
+          "generations": 15,
+          "inputIncludingCache": 44333,
+          "uncachedInput": 4653,
+          "output": 1465
+        }
+      }
+    }
+  ],
+  "claude": {
+    "batch": "P138",
+    "actualModel": "claude-sonnet-5-5",
+    "binding": "sonnet",
+    "effort": "low",
+    "native": {
+      "rounds": 12,
+      "generations": 13,
+      "inputIncludingCache": 63372,
+      "uncachedInput": 7308,
+      "output": 695
+    },
+    "terminal": {
+      "rounds": 12,
+      "generations": 13,
+      "inputIncludingCache": 78129,
+      "uncachedInput": 7217,
+      "output": 1451
+    },
+    "ratios": {
+      "inputIncludingCache": 1.2328630941109637,
+      "uncachedInput": 0.9875478927203065,
+      "output": 2.0877697841726617
+    },
+    "quality": "Both all12 strict-correct; independent stream/session usage reconciliation and hook_stopped normal termination verified.",
+    "cliReportedEstimatedUsd": {
+      "native": 0.2622684,
+      "terminal": 0.3040188,
+      "ratio": 1.159189593561405,
+      "qualification": "CLI-reported estimate only, not an independently verified provider invoice."
+    }
+  },
+  "inferenceLimits": [
+    "No repeat-until-pass: after first Pi trajectory exactly two additional pairs preregistered, unchanged interface, both stopped on native quality failure.",
+    "The successful Pi first pair and Claude pair support feasibility of one ordinary reply without extra post-publication generation; they do not establish low variance or five-CLI performance.",
+    "Native quality failures are retained separately from communication failures; no claim Loom improves model quality.",
+    "Pi output inflation here is non-reasoning serialization; no general causal claim across CLI/model families.",
+    "No dollar-cost conclusion without actual pricing. Output and cached/uncached input must stay separate.",
+    "No latency-budget, long-context compaction, multiplayer collaboration, or comparative-framework advantage acceptance."
+  ],
+  "next": [
+    "Extend the same frozen-context boundary to remaining CLI native completion mechanisms; do not use interruption to conceal missing usage.",
+    "Validate held-reply recovery and explicit multi-target cases before any production adoption.",
+    "Use longer representative work and all five CLI/model families; retain per-task quality and every failed paid attempt.",
+    "Only then compare paired-session collaboration against Herdr and multi-instance exchange against other libraries at equal output quality."
+  ],
+  "productionChanged": false,
+  "serviceRestarted": false,
+  "paidConsumptionAllAttempts": {
+    "generations": 93,
+    "inputIncludingCache": 327161,
+    "uncachedInput": 38265,
+    "output": 7928
+  }
+}

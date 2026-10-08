@@ -1,0 +1,909 @@
+{
+  "schema": "loom.bound-reply-preregistered-repeat-audit.v1",
+  "frozenHashesMatch": {
+    "run.mjs": true,
+    "plan.json": true,
+    "host.mjs": true,
+    "model.mjs": true,
+    "terminal.ts": true
+  },
+  "runs": [
+    {
+      "runId": "1791454729146",
+      "verdict": "failed strict acceptance; prefix costs retained; long-task ratio invalid",
+      "longTaskRatio": null,
+      "failureClassification": "native round2 answered4935 instead of4650 without calling a tool; arithmetic failure",
+      "failedVisibleFinal": "{\"count\": 15, \"total\": 4935}",
+      "arms": {
+        "native": {
+          "rounds": 2,
+          "strictCorrect": 1,
+          "generations": 5,
+          "usage": {
+            "input": 2688,
+            "cacheRead": 7808,
+            "cacheWrite": 0,
+            "output": 359,
+            "reasoning": 145,
+            "inputIncludingCache": 10496
+          },
+          "sessionId": "01a11b05-d555-7369-8e81-774aad06c56f"
+        },
+        "terminal": {
+          "rounds": 2,
+          "strictCorrect": 2,
+          "generations": 5,
+          "usage": {
+            "input": 2886,
+            "cacheRead": 8448,
+            "cacheWrite": 0,
+            "output": 494,
+            "reasoning": 180,
+            "inputIncludingCache": 11334
+          },
+          "sessionId": "01a11b05-fab1-7442-adc9-872739b190a9"
+        }
+      },
+      "perRound": [
+        {
+          "arm": "native",
+          "round": 1,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4545
+          },
+          "expected": {
+            "count": 15,
+            "total": 4545
+          },
+          "generations": 4,
+          "usage": {
+            "input": 2646,
+            "cacheRead": 5376,
+            "cacheWrite": 0,
+            "output": 345,
+            "reasoning": 145,
+            "inputIncludingCache": 8022
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 1,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4545
+          },
+          "expected": {
+            "count": 15,
+            "total": 4545
+          },
+          "generations": 3,
+          "usage": {
+            "input": 2528,
+            "cacheRead": 3712,
+            "cacheWrite": 0,
+            "output": 346,
+            "reasoning": 165,
+            "inputIncludingCache": 6240
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 2,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4650
+          },
+          "expected": {
+            "count": 15,
+            "total": 4650
+          },
+          "generations": 2,
+          "usage": {
+            "input": 358,
+            "cacheRead": 4736,
+            "cacheWrite": 0,
+            "output": 148,
+            "reasoning": 15,
+            "inputIncludingCache": 5094
+          }
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "correct": false,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4935
+          },
+          "expected": {
+            "count": 15,
+            "total": 4650
+          },
+          "generations": 1,
+          "usage": {
+            "input": 42,
+            "cacheRead": 2432,
+            "cacheWrite": 0,
+            "output": 14,
+            "reasoning": 0,
+            "inputIncludingCache": 2474
+          }
+        }
+      ],
+      "toolTrace": [
+        {
+          "arm": "native",
+          "round": 1,
+          "line": 50,
+          "tool": "bash",
+          "arguments": {
+            "command": "ls -la && find . -name 'budget.csv' -o -name '*.csv' | head -50"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 1,
+          "line": 75,
+          "tool": "read",
+          "arguments": {
+            "path": "budget.csv"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 1,
+          "line": 188,
+          "tool": "bash",
+          "arguments": {
+            "command": "python3 -c \"\nimport csv\nrows=list(csv.DictReader(open('budget.csv')))\na=[int(r['amount']) for r in rows if r['group']=='A']\nprint(len(a), sum(a))\n\""
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 1,
+          "line": 37,
+          "tool": "bash",
+          "arguments": {
+            "command": "cat budget.csv 2>/dev/null || ls -la"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 1,
+          "line": 141,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1 && $2==\"A\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 2,
+          "line": 56,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1 && $2==\"B\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        }
+      ],
+      "toolErrors": [],
+      "publications": [
+        {
+          "round": 1,
+          "roomSeq": 9,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 2,
+          "roomSeq": 18,
+          "newAssistantStartsAfterPublished": 0
+        }
+      ],
+      "oracleAttempts": [],
+      "priorRuntimeRootsDenied": 7,
+      "database": {
+        "activationStates": {
+          "completed": 2
+        },
+        "runStates": [
+          {
+            "state": "exited",
+            "exitCode": 0,
+            "count": 2
+          }
+        ],
+        "finalReplyMarkers": 2,
+        "workerCursor": 13,
+        "maxToSeq": 13
+      },
+      "checks": [
+        "starts=ends; raw usage=result.json",
+        "unique responseIds; session mirrors reconciled, not double-counted",
+        "same native session each round",
+        "approved provider/model/effort",
+        "published has full details receipt and no later model generation"
+      ]
+    },
+    {
+      "runId": "1791454786541",
+      "verdict": "failed strict acceptance; prefix costs retained; long-task ratio invalid",
+      "longTaskRatio": null,
+      "failureClassification": "native round10 visible answer has correct numeric JSON9710 followed by explanation; strict only-JSON format failed",
+      "failedVisibleFinal": "{\"count\": 30, \"total\": 9710}\n\nWait, let me compute: 4850 + 4860 = 9710. Count 15+15=30.",
+      "arms": {
+        "native": {
+          "rounds": 10,
+          "strictCorrect": 9,
+          "generations": 16,
+          "usage": {
+            "input": 4505,
+            "cacheRead": 38784,
+            "cacheWrite": 0,
+            "output": 985,
+            "reasoning": 470,
+            "inputIncludingCache": 43289
+          },
+          "sessionId": "01a11b06-b57d-770e-8cee-6f9bf3462273"
+        },
+        "terminal": {
+          "rounds": 10,
+          "strictCorrect": 10,
+          "generations": 15,
+          "usage": {
+            "input": 4653,
+            "cacheRead": 39680,
+            "cacheWrite": 0,
+            "output": 1465,
+            "reasoning": 408,
+            "inputIncludingCache": 44333
+          },
+          "sessionId": "01a11b06-d076-7312-8cfe-31ed01bbd524"
+        }
+      },
+      "perRound": [
+        {
+          "arm": "native",
+          "round": 1,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4545
+          },
+          "expected": {
+            "count": 15,
+            "total": 4545
+          },
+          "generations": 3,
+          "usage": {
+            "input": 2518,
+            "cacheRead": 3584,
+            "cacheWrite": 0,
+            "output": 309,
+            "reasoning": 191,
+            "inputIncludingCache": 6102
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 1,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4545
+          },
+          "expected": {
+            "count": 15,
+            "total": 4545
+          },
+          "generations": 3,
+          "usage": {
+            "input": 2400,
+            "cacheRead": 3712,
+            "cacheWrite": 0,
+            "output": 291,
+            "reasoning": 92,
+            "inputIncludingCache": 6112
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 2,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4650
+          },
+          "expected": {
+            "count": 15,
+            "total": 4650
+          },
+          "generations": 2,
+          "usage": {
+            "input": 419,
+            "cacheRead": 4608,
+            "cacheWrite": 0,
+            "output": 195,
+            "reasoning": 43,
+            "inputIncludingCache": 5027
+          }
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4650
+          },
+          "expected": {
+            "count": 15,
+            "total": 4650
+          },
+          "generations": 2,
+          "usage": {
+            "input": 311,
+            "cacheRead": 4608,
+            "cacheWrite": 0,
+            "output": 78,
+            "reasoning": 3,
+            "inputIncludingCache": 4919
+          }
+        },
+        {
+          "arm": "native",
+          "round": 3,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4755
+          },
+          "expected": {
+            "count": 15,
+            "total": 4755
+          },
+          "generations": 2,
+          "usage": {
+            "input": 294,
+            "cacheRead": 4864,
+            "cacheWrite": 0,
+            "output": 75,
+            "reasoning": 0,
+            "inputIncludingCache": 5158
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 3,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4755
+          },
+          "expected": {
+            "count": 15,
+            "total": 4755
+          },
+          "generations": 2,
+          "usage": {
+            "input": 287,
+            "cacheRead": 5248,
+            "cacheWrite": 0,
+            "output": 187,
+            "reasoning": 35,
+            "inputIncludingCache": 5535
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 4,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4860
+          },
+          "expected": {
+            "count": 15,
+            "total": 4860
+          },
+          "generations": 2,
+          "usage": {
+            "input": 275,
+            "cacheRead": 5760,
+            "cacheWrite": 0,
+            "output": 187,
+            "reasoning": 35,
+            "inputIncludingCache": 6035
+          }
+        },
+        {
+          "arm": "native",
+          "round": 4,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4860
+          },
+          "expected": {
+            "count": 15,
+            "total": 4860
+          },
+          "generations": 2,
+          "usage": {
+            "input": 280,
+            "cacheRead": 5120,
+            "cacheWrite": 0,
+            "output": 81,
+            "reasoning": 6,
+            "inputIncludingCache": 5400
+          }
+        },
+        {
+          "arm": "native",
+          "round": 5,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4645
+          },
+          "expected": {
+            "count": 15,
+            "total": 4645
+          },
+          "generations": 1,
+          "usage": {
+            "input": 106,
+            "cacheRead": 2688,
+            "cacheWrite": 0,
+            "output": 65,
+            "reasoning": 51,
+            "inputIncludingCache": 2794
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 5,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4645
+          },
+          "expected": {
+            "count": 15,
+            "total": 4645
+          },
+          "generations": 1,
+          "usage": {
+            "input": 139,
+            "cacheRead": 3072,
+            "cacheWrite": 0,
+            "output": 96,
+            "reasoning": 29,
+            "inputIncludingCache": 3211
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 6,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 60,
+            "total": 18910
+          },
+          "expected": {
+            "count": 60,
+            "total": 18910
+          },
+          "generations": 1,
+          "usage": {
+            "input": 153,
+            "cacheRead": 3200,
+            "cacheWrite": 0,
+            "output": 152,
+            "reasoning": 85,
+            "inputIncludingCache": 3353
+          }
+        },
+        {
+          "arm": "native",
+          "round": 6,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 60,
+            "total": 18910
+          },
+          "expected": {
+            "count": 60,
+            "total": 18910
+          },
+          "generations": 2,
+          "usage": {
+            "input": 466,
+            "cacheRead": 5504,
+            "cacheWrite": 0,
+            "output": 197,
+            "reasoning": 121,
+            "inputIncludingCache": 5970
+          }
+        },
+        {
+          "arm": "native",
+          "round": 7,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4545
+          },
+          "expected": {
+            "count": 15,
+            "total": 4545
+          },
+          "generations": 1,
+          "usage": {
+            "input": 65,
+            "cacheRead": 3072,
+            "cacheWrite": 0,
+            "output": 33,
+            "reasoning": 19,
+            "inputIncludingCache": 3137
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 7,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4545
+          },
+          "expected": {
+            "count": 15,
+            "total": 4545
+          },
+          "generations": 1,
+          "usage": {
+            "input": 235,
+            "cacheRead": 3328,
+            "cacheWrite": 0,
+            "output": 82,
+            "reasoning": 15,
+            "inputIncludingCache": 3563
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 8,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 60,
+            "total": 18810
+          },
+          "expected": {
+            "count": 60,
+            "total": 18810
+          },
+          "generations": 1,
+          "usage": {
+            "input": 235,
+            "cacheRead": 3456,
+            "cacheWrite": 0,
+            "output": 83,
+            "reasoning": 16,
+            "inputIncludingCache": 3691
+          }
+        },
+        {
+          "arm": "native",
+          "round": 8,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 60,
+            "total": 18810
+          },
+          "expected": {
+            "count": 60,
+            "total": 18810
+          },
+          "generations": 1,
+          "usage": {
+            "input": 124,
+            "cacheRead": 3072,
+            "cacheWrite": 0,
+            "output": 35,
+            "reasoning": 21,
+            "inputIncludingCache": 3196
+          }
+        },
+        {
+          "arm": "native",
+          "round": 9,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4850
+          },
+          "expected": {
+            "count": 15,
+            "total": 4850
+          },
+          "generations": 1,
+          "usage": {
+            "input": 197,
+            "cacheRead": 3072,
+            "cacheWrite": 0,
+            "output": 46,
+            "reasoning": 32,
+            "inputIncludingCache": 3269
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 9,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 15,
+            "total": 4850
+          },
+          "expected": {
+            "count": 15,
+            "total": 4850
+          },
+          "generations": 1,
+          "usage": {
+            "input": 248,
+            "cacheRead": 3584,
+            "cacheWrite": 0,
+            "output": 93,
+            "reasoning": 26,
+            "inputIncludingCache": 3832
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 10,
+          "correct": true,
+          "parsedAnswer": {
+            "count": 30,
+            "total": 9710
+          },
+          "expected": {
+            "count": 30,
+            "total": 9710
+          },
+          "generations": 1,
+          "usage": {
+            "input": 262,
+            "cacheRead": 3712,
+            "cacheWrite": 0,
+            "output": 99,
+            "reasoning": 32,
+            "inputIncludingCache": 3974
+          }
+        },
+        {
+          "arm": "native",
+          "round": 10,
+          "correct": false,
+          "parsedAnswer": null,
+          "expected": {
+            "count": 30,
+            "total": 9710
+          },
+          "generations": 1,
+          "usage": {
+            "input": 144,
+            "cacheRead": 3200,
+            "cacheWrite": 0,
+            "output": 66,
+            "reasoning": 26,
+            "inputIncludingCache": 3344
+          }
+        }
+      ],
+      "toolTrace": [
+        {
+          "arm": "native",
+          "round": 1,
+          "line": 32,
+          "tool": "bash",
+          "arguments": {
+            "command": "ls -la && cat budget.csv"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 1,
+          "line": 126,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, '$2==\"A\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 1,
+          "line": 27,
+          "tool": "read",
+          "arguments": {
+            "path": "budget.csv"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 1,
+          "line": 109,
+          "tool": "bash",
+          "arguments": {
+            "command": "cd /private/tmp/loom-pi-long-kdEFze/terminal/work && awk -F, 'NR>1 && $2==\"A\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 2,
+          "line": 86,
+          "tool": "bash",
+          "arguments": {
+            "command": "cd /private/tmp/loom-pi-long-kdEFze/terminal/work && awk -F, 'NR>1 && $2==\"B\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "line": 47,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, '$2==\"B\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 3,
+          "line": 43,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, '$2==\"C\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 3,
+          "line": 79,
+          "tool": "bash",
+          "arguments": {
+            "command": "cd /private/tmp/loom-pi-long-kdEFze/terminal/work && awk -F, 'NR>1 && $2==\"C\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "terminal",
+          "round": 4,
+          "line": 78,
+          "tool": "bash",
+          "arguments": {
+            "command": "cd /private/tmp/loom-pi-long-kdEFze/terminal/work && awk -F, 'NR>1 && $2==\"D\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 4,
+          "line": 48,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, '$2==\"D\"{c++; s+=$3} END{print c, s}' budget.csv"
+          }
+        },
+        {
+          "arm": "native",
+          "round": 6,
+          "line": 85,
+          "tool": "bash",
+          "arguments": {
+            "command": "awk -F, 'NR>1{c++; s+=$3} END{print c, s+100}' budget.csv"
+          }
+        }
+      ],
+      "toolErrors": [],
+      "publications": [
+        {
+          "round": 1,
+          "roomSeq": 9,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 2,
+          "roomSeq": 18,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 3,
+          "roomSeq": 27,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 4,
+          "roomSeq": 36,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 5,
+          "roomSeq": 45,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 6,
+          "roomSeq": 54,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 7,
+          "roomSeq": 63,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 8,
+          "roomSeq": 72,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 9,
+          "roomSeq": 81,
+          "newAssistantStartsAfterPublished": 0
+        },
+        {
+          "round": 10,
+          "roomSeq": 90,
+          "newAssistantStartsAfterPublished": 0
+        }
+      ],
+      "oracleAttempts": [],
+      "priorRuntimeRootsDenied": 8,
+      "database": {
+        "activationStates": {
+          "completed": 10
+        },
+        "runStates": [
+          {
+            "state": "exited",
+            "exitCode": 0,
+            "count": 10
+          }
+        ],
+        "finalReplyMarkers": 10,
+        "workerCursor": 85,
+        "maxToSeq": 85
+      },
+      "checks": [
+        "starts=ends; raw usage=result.json",
+        "unique responseIds; session mirrors reconciled, not double-counted",
+        "same native session each round",
+        "approved provider/model/effort",
+        "published has full details receipt and no later model generation"
+      ]
+    }
+  ],
+  "firstRunOutputDecomposition": {
+    "runId": "1791454589545",
+    "native": {
+      "output": 972,
+      "reasoningSubset": 752,
+      "nonReasoning": 220
+    },
+    "terminal": {
+      "output": 1507,
+      "reasoningSubset": 656,
+      "nonReasoning": 851
+    },
+    "nonReasoningDifference": 631,
+    "note": "Reported usage arithmetic only; reasoning is subset of output, not additional tokens."
+  },
+  "limits": [
+    "Both predeclared extra trajectories failed native strict acceptance; do not manufacture successful 12-round efficiency ratios from prefixes.",
+    "Native second failure is format-only; numerical answer correct. Preserve original strict verdict.",
+    "One CLI/provider/model; tool selection and answer behavior stochastic.",
+    "Known oracle paths denied; no observed oracle reads, but not general host/network isolation.",
+    "No repeated paid calls by this auditor; no source modifications.",
+    "Cache read/write counted separately; no monetary cost because price metadata unavailable."
+  ]
+}

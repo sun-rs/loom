@@ -1,0 +1,374 @@
+{
+  "schema": "loom.bound-reply-claude-comparison.v1",
+  "ledger": "P138",
+  "cli": "Claude Code",
+  "version": "2.1.293",
+  "approvedBinding": "sonnet",
+  "requestedEffort": "low",
+  "observedModels": ["claude-sonnet-5-5"],
+  "sampleCount": 1,
+  "roundsPerArm": 12,
+  "order": "paired rounds; odd native first, even terminal first",
+  "sourceSha256": "84a08efe27f2a93b16eb0dc5710903370d3dbbc330d3bda2153090ebb825d16c",
+  "arms": {
+    "native": {
+      "correct": 12,
+      "usage": {
+        "generations": 13,
+        "inputTokens": 63372,
+        "cachedInputTokens": 56064,
+        "outputTokens": 695,
+        "uncachedInputTokens": 7308
+      },
+      "rawInputBreakdown": {
+        "input": 7308,
+        "cacheRead": 56064,
+        "cacheCreation": 0
+      },
+      "reportedEstimatedUsd": 0.2622684,
+      "models": ["claude-sonnet-5-5"],
+      "transcriptEfforts": ["low"],
+      "streamTranscriptUsageMatch": true,
+      "perRoundStreamTranscriptMatch": true,
+      "sidechainGenerations": 0,
+      "compactions": 0,
+      "rounds": [
+        {
+          "round": 1,
+          "correct": true,
+          "generations": 2,
+          "inputTokens": 8033,
+          "cachedInputTokens": 3584,
+          "outputTokens": 147,
+          "streamTranscriptMatch": true,
+          "rawSha256": "5bfaf3d7c3b36af0123cd17b20b43a8f346a32c2305cce2f00789dc57b771b65"
+        },
+        {
+          "round": 2,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 4431,
+          "cachedInputTokens": 4096,
+          "outputTokens": 65,
+          "streamTranscriptMatch": true,
+          "rawSha256": "928e86b5cac8b88d8d7f31eaac5f096803ef21c6c1e24cd65589ce3ddcddce04"
+        },
+        {
+          "round": 3,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 4560,
+          "cachedInputTokens": 4352,
+          "outputTokens": 59,
+          "streamTranscriptMatch": true,
+          "rawSha256": "d57166e7f306abc3a9ffe5e25aba82d7f0d9589a5c7d36ec7459336468bebce4"
+        },
+        {
+          "round": 4,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 4683,
+          "cachedInputTokens": 4352,
+          "outputTokens": 59,
+          "streamTranscriptMatch": true,
+          "rawSha256": "d6b7e7a80e4dc31113f8c73630e815e02939366d933f9122b017801b01a03068"
+        },
+        {
+          "round": 5,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 4818,
+          "cachedInputTokens": 4608,
+          "outputTokens": 44,
+          "streamTranscriptMatch": true,
+          "rawSha256": "74e2ff6f0d97bd78c9b04ebfe9e5ec96efe36b6291a31302caf475cad3771116"
+        },
+        {
+          "round": 6,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 4926,
+          "cachedInputTokens": 4608,
+          "outputTokens": 52,
+          "streamTranscriptMatch": true,
+          "rawSha256": "d6dd1a32d50234b70be74e28e080e8c83463f6589b55db185aa745fedf6f3264"
+        },
+        {
+          "round": 7,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5053,
+          "cachedInputTokens": 4864,
+          "outputTokens": 29,
+          "streamTranscriptMatch": true,
+          "rawSha256": "687edbf38b3f658f6e97575f7aa986fd7e1541b21c45f9376307457f7751adf7"
+        },
+        {
+          "round": 8,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5146,
+          "cachedInputTokens": 4864,
+          "outputTokens": 40,
+          "streamTranscriptMatch": true,
+          "rawSha256": "2285e7b43f96b6e0f837a964491e56ecb81f81adb5c45dd4630840f88a082f13"
+        },
+        {
+          "round": 9,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5262,
+          "cachedInputTokens": 5120,
+          "outputTokens": 39,
+          "streamTranscriptMatch": true,
+          "rawSha256": "b5a0dac595b00b145d7fe275cd27028a3386c108a1f45c5d2cc6bd1b8fb86aed"
+        },
+        {
+          "round": 10,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5368,
+          "cachedInputTokens": 5120,
+          "outputTokens": 51,
+          "streamTranscriptMatch": true,
+          "rawSha256": "4935994d83f4e4cac42b7023e7a8f481040a24c8e490e4ead2bb692309e96830"
+        },
+        {
+          "round": 11,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5486,
+          "cachedInputTokens": 5120,
+          "outputTokens": 50,
+          "streamTranscriptMatch": true,
+          "rawSha256": "6b09a7f2bfe748ef93da36ddff2dfac884975718e3e428708066c5c5fb9a9c62"
+        },
+        {
+          "round": 12,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5606,
+          "cachedInputTokens": 5376,
+          "outputTokens": 60,
+          "streamTranscriptMatch": true,
+          "rawSha256": "6d71e30eab565b1f6ae7dbe5704af956066d4d9c4bda9275ae0b39023853e3f5"
+        }
+      ]
+    },
+    "terminal": {
+      "correct": 12,
+      "usage": {
+        "generations": 13,
+        "inputTokens": 78129,
+        "cachedInputTokens": 70912,
+        "outputTokens": 1451,
+        "uncachedInputTokens": 7217
+      },
+      "rawInputBreakdown": {
+        "input": 7217,
+        "cacheRead": 70912,
+        "cacheCreation": 0
+      },
+      "reportedEstimatedUsd": 0.30401880000000003,
+      "models": ["claude-sonnet-5-5"],
+      "transcriptEfforts": ["low"],
+      "streamTranscriptUsageMatch": true,
+      "perRoundStreamTranscriptMatch": true,
+      "sidechainGenerations": 0,
+      "compactions": 0,
+      "rounds": [
+        {
+          "round": 1,
+          "correct": true,
+          "generations": 2,
+          "inputTokens": 8202,
+          "cachedInputTokens": 5888,
+          "outputTokens": 231,
+          "streamTranscriptMatch": true,
+          "rawSha256": "f204a60afdb0f8f1ac1abf3dc2ad94dc952725be013b42d9e5d394f5c96a4f4f"
+        },
+        {
+          "round": 2,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 4740,
+          "cachedInputTokens": 4352,
+          "outputTokens": 139,
+          "streamTranscriptMatch": true,
+          "rawSha256": "02baf02b91d7473ffe97f61fcc5f36f49ecbe75c5c10d5d4045fd7b0216be6bd"
+        },
+        {
+          "round": 3,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5081,
+          "cachedInputTokens": 4608,
+          "outputTokens": 123,
+          "streamTranscriptMatch": true,
+          "rawSha256": "c488c94c00341f6a85960089b0df335efd04fbd0d777fb2fd2e7bead5414f573"
+        },
+        {
+          "round": 4,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5405,
+          "cachedInputTokens": 4864,
+          "outputTokens": 123,
+          "streamTranscriptMatch": true,
+          "rawSha256": "a45ac6da5b626e7259bace3cdba0e7b0d4bfeeb48fd40926e6be698932891234"
+        },
+        {
+          "round": 5,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 5744,
+          "cachedInputTokens": 5376,
+          "outputTokens": 115,
+          "streamTranscriptMatch": true,
+          "rawSha256": "c646ef2de9f895b9ceb5c405de212fd78c51832338d07c4b56a9554fa6f5246f"
+        },
+        {
+          "round": 6,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 6060,
+          "cachedInputTokens": 5632,
+          "outputTokens": 118,
+          "streamTranscriptMatch": true,
+          "rawSha256": "c8e3d63cb4688b2701d580e4f29884ba6df60dd320ce1fc71cb0205e6806bc27"
+        },
+        {
+          "round": 7,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 6395,
+          "cachedInputTokens": 5888,
+          "outputTokens": 96,
+          "streamTranscriptMatch": true,
+          "rawSha256": "a9791f9b28ae5bf4ee3205c681a82995d8c33fe71a78f762c357748c81ff3db6"
+        },
+        {
+          "round": 8,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 6690,
+          "cachedInputTokens": 6144,
+          "outputTokens": 97,
+          "streamTranscriptMatch": true,
+          "rawSha256": "a419fbaaba314dfa2bf4b250ee81528d3756ba7160840c264e13f9e163eea5a6"
+        },
+        {
+          "round": 9,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 7003,
+          "cachedInputTokens": 6656,
+          "outputTokens": 85,
+          "streamTranscriptMatch": true,
+          "rawSha256": "36565436991c28a4c33d8cb79bbdad36f1e24bab8e85febac1fb68c4e513fa67"
+        },
+        {
+          "round": 10,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 7291,
+          "cachedInputTokens": 6912,
+          "outputTokens": 112,
+          "streamTranscriptMatch": true,
+          "rawSha256": "4881bd88d76749e33fd25f9820b07b0418fe889bac3088973a7670f5acb7192f"
+        },
+        {
+          "round": 11,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 7606,
+          "cachedInputTokens": 7168,
+          "outputTokens": 102,
+          "streamTranscriptMatch": true,
+          "rawSha256": "3b02bd2482cba53c3adeea16000cc0aa9065a756373ee273125bfa1e04425924"
+        },
+        {
+          "round": 12,
+          "correct": true,
+          "generations": 1,
+          "inputTokens": 7912,
+          "cachedInputTokens": 7424,
+          "outputTokens": 110,
+          "streamTranscriptMatch": true,
+          "rawSha256": "2ce81db748a4ad376abbbb273f3c1a48814bae55eb51e30bade6b036ce312c4c"
+        }
+      ],
+      "publishedReceiptsPersisted": 12,
+      "postPublicationGenerations": 0,
+      "normalHookStops": 12,
+      "activationCompletions": 12,
+      "receiptHistory": "Full JSON {state:published,messageId,roomSeq}; not compacted",
+      "hookEfforts": ["low"]
+    }
+  },
+  "freePreflight": {
+    "catalogSonnetLow": true,
+    "actualCliFakeProviderRequests": 6,
+    "roundsPerArm": 2,
+    "bodyFinalOnlySchemaVerifiedInProviderRequests": true,
+    "actualRequestEffortLow": true,
+    "hookContinuesFalseOnlyOnPublishedFinal": true,
+    "activationCompletion": true,
+    "firstFixtureErrorRetained": "Fake provider incorrectly used trailing system message as the last user; corrected only fake request classifier. First free attempt and its extra fake requests retained; no paid retry."
+  },
+  "isolation": {
+    "providerNativeAutomaticMemoryDisabledEveryInitialAndResume": true,
+    "environment": "CLAUDE_CODE_DISABLE_AUTO_MEMORY=1",
+    "settingsAutoMemoryEnabled": false,
+    "settingSources": [],
+    "separateEmptyConfigDirectories": true,
+    "separateNativeSessions": true,
+    "systemAndAgentsFilesAbsentInRuntimeAndAncestorPaths": true,
+    "realOsDeniedPaths": [
+      "reviews tree",
+      "repository docs/evo/evidence",
+      "other arm runtime",
+      "all 11 pre-existing Pi long runtimes",
+      "earlier Claude prototype runtimes"
+    ],
+    "sameBuiltInTools": ["Read", "Bash", "Edit", "Write", "Glob", "Grep"],
+    "noGlobalConfigChanges": true,
+    "noProductionChanges": true
+  },
+  "limitations": [
+    "Single Sonnet sample; no universal CLI/model or statistical claim.",
+    "Isolated manual Host/real Kernel/MCP prototype, not production scheduling/adapter/restart acceptance.",
+    "Claude keeps full published receipt with messageId and roomSeq in native history; Pi experiment uses compact Published. receipt. Cross-CLI comparison is not identical implementation.",
+    "Cache warming is shared provider behavior; alternating arm order does not eliminate cross-arm prompt-cache effects.",
+    "Stream/transcript token accounting is complete for reported generations; no provider billing statement was obtained.",
+    "No compaction occurred; longer-task compaction regime remains untested.",
+    "Output includes model thinking tokens in provider output totals; private thinking is not published.",
+    "No retries or rejected paid trajectories removed."
+  ],
+  "ratios": {
+    "generations": 1,
+    "inputTokens": 1.2328630941109637,
+    "cachedInputTokens": 1.264840182648402,
+    "uncachedInputTokens": 0.9875478927203065,
+    "outputTokens": 2.0877697841726617,
+    "reportedEstimatedUsd": 1.1591895935614052
+  },
+  "kernel": {
+    "activationStates": [
+      {
+        "state": "completed",
+        "n": 12
+      }
+    ],
+    "runStates": [
+      {
+        "state": "exited",
+        "exit_code": 0,
+        "exit_signal": null,
+        "n": 12
+      }
+    ],
+    "finalMarkers": 12,
+    "publishedMessages": 12
+  }
+}

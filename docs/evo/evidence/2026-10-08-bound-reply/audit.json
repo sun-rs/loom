@@ -1,0 +1,1242 @@
+{
+  "schema": "loom.bound-reply-independent-audit.v1",
+  "runId": "1791454589545",
+  "verdict": "business answers and successful-publication terminal boundary passed in one isolated trajectory; token ratios are sample-specific",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "responseModel": "deepseek-v4-1-flash-260910",
+  "thinking": "low",
+  "cliVersion": "1.1.0",
+  "arms": {
+    "native": {
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "rounds": 12,
+      "generations": 13,
+      "usage": {
+        "inputIncludingCache": 35760,
+        "uncachedInput": 4144,
+        "cachedInput": 31616,
+        "output": 972,
+        "reasoningSubsetOfOutput": 752
+      },
+      "rawMatchesSessionResponseIds": true
+    },
+    "terminal": {
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "rounds": 12,
+      "generations": 13,
+      "usage": {
+        "inputIncludingCache": 40448,
+        "uncachedInput": 4864,
+        "cachedInput": 35584,
+        "output": 1507,
+        "reasoningSubsetOfOutput": 656
+      },
+      "rawMatchesSessionResponseIds": true
+    }
+  },
+  "perRound": [
+    {
+      "arm": "native",
+      "round": 1,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "0217914545905505ffee7bd9f8ed62699b3e2c08b3f2375e04671",
+        "0217914545922018f73c0f4c1cfed8ed110ca0c5c8795446aa05a"
+      ],
+      "usage": {
+        "inputIncludingCache": 3744,
+        "uncachedInput": 2208,
+        "cachedInput": 1536,
+        "output": 297,
+        "reasoningSubsetOfOutput": 231
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "af0d0098916a8729f2b5b9174a6039d3b024b6c364a13f0f394156959c96e520"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "02179145459599258f2fcd7b6996c2abcdc77dac59912ac1e4a1a",
+        "02179145459824964679ac7d60129ae9e4930c44bc9a1c4b242e6"
+      ],
+      "usage": {
+        "inputIncludingCache": 3923,
+        "uncachedInput": 2259,
+        "cachedInput": 1664,
+        "output": 286,
+        "reasoningSubsetOfOutput": 172
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 132,
+          "messageId": "message_7c22d33c-2816-40d5-bec1-cb524badce58",
+          "roomSeq": 9,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "36e5b263ba83efacf67f48ee5a4f30014bad80e3e6f9bad427b8d53c71ec9161"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454606474139663acfcb9459f67ee30b34f6b9765378fd0"],
+      "usage": {
+        "inputIncludingCache": 2391,
+        "uncachedInput": 343,
+        "cachedInput": 2048,
+        "output": 107,
+        "reasoningSubsetOfOutput": 93
+      },
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "0a20dc5d7bbcb7bc223089dbb3ac8515c245e777c6067dd54cd6dd276e9af9c1"
+    },
+    {
+      "arm": "terminal",
+      "round": 2,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546039538e05db81a26ab4b44637eb56f02aba94ba2cd0"],
+      "usage": {
+        "inputIncludingCache": 2492,
+        "uncachedInput": 316,
+        "cachedInput": 2176,
+        "output": 126,
+        "reasoningSubsetOfOutput": 59
+      },
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 63,
+          "messageId": "message_7c91a720-a140-4f49-b844-0bcb12c946e1",
+          "roomSeq": 18,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "ca5b7204af6499a4feb836277586c1041b5341d66645c71522c487f9a9e5f8d0"
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454609101fb87220ce050dbb1e4aff42e9a7ec1b1c15cb8"],
+      "usage": {
+        "inputIncludingCache": 2524,
+        "uncachedInput": 220,
+        "cachedInput": 2304,
+        "output": 123,
+        "reasoningSubsetOfOutput": 109
+      },
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "expected": {
+        "count": 15,
+        "total": 4755
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "e844c3b9bbc23750af19777b021aecad0f0fa014652b3b11e12382d600cc5f9e"
+    },
+    {
+      "arm": "terminal",
+      "round": 3,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454612882f7b571b3147c8053e664bd4ad440a263d2c55f"],
+      "usage": {
+        "inputIncludingCache": 2664,
+        "uncachedInput": 232,
+        "cachedInput": 2432,
+        "output": 122,
+        "reasoningSubsetOfOutput": 55
+      },
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "expected": {
+        "count": 15,
+        "total": 4755
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 58,
+          "messageId": "message_461447db-8ca3-4875-86d0-ace9163f80df",
+          "roomSeq": 27,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "cb72280f9bbbe8ed7f1b1bcc9c65fb583dfefb849f267588da0e98b53f74fdd9"
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454618506a28a523199212da973704da21f2917eb54b6f9"],
+      "usage": {
+        "inputIncludingCache": 2673,
+        "uncachedInput": 241,
+        "cachedInput": 2432,
+        "output": 64,
+        "reasoningSubsetOfOutput": 50
+      },
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "expected": {
+        "count": 15,
+        "total": 4860
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "df0621b30a0a437518e364893ee3d880da29d18a41f353b2b3fecc3db0e29a6b"
+    },
+    {
+      "arm": "terminal",
+      "round": 4,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546157777e51cc0b12bcea53e8635276e1c9d8767d7ff6"],
+      "usage": {
+        "inputIncludingCache": 2832,
+        "uncachedInput": 272,
+        "cachedInput": 2560,
+        "output": 125,
+        "reasoningSubsetOfOutput": 58
+      },
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "expected": {
+        "count": 15,
+        "total": 4860
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 59,
+          "messageId": "message_1abbeb01-e443-418a-b6b0-30b40f56c4e3",
+          "roomSeq": 36,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "3de59b5e5202630dcb4380a43bf64d926ae9d1f9b8ec357ccd7a2271264625b0"
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546213222d2adc5f67699b5065fc2ee83bfd4d905a0508"],
+      "usage": {
+        "inputIncludingCache": 2775,
+        "uncachedInput": 215,
+        "cachedInput": 2560,
+        "output": 60,
+        "reasoningSubsetOfOutput": 46
+      },
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "expected": {
+        "count": 15,
+        "total": 4645
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "3e66b4bae62e76b80a00d687d23e57953e464b9b03094ca9e90ae5123ddc5d61"
+    },
+    {
+      "arm": "terminal",
+      "round": 5,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179145462384514537b8110db3a4fe3c298b5fc7a850a4eb2cc"],
+      "usage": {
+        "inputIncludingCache": 3015,
+        "uncachedInput": 199,
+        "cachedInput": 2816,
+        "output": 90,
+        "reasoningSubsetOfOutput": 23
+      },
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "expected": {
+        "count": 15,
+        "total": 4645
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 53,
+          "messageId": "message_d16661fe-8049-4941-9b7f-ae0658ebc9be",
+          "roomSeq": 45,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "991dc66699f482fe73a12cb64ebe8dea78f0b24a544ce2a5cbedd7b7336b6a8b"
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546305502d60f60bba313662d1f7bb8a224af9f4275b2c"],
+      "usage": {
+        "inputIncludingCache": 2861,
+        "uncachedInput": 173,
+        "cachedInput": 2688,
+        "output": 59,
+        "reasoningSubsetOfOutput": 45
+      },
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "expected": {
+        "count": 60,
+        "total": 18910
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "537328bcfd7e44a32ed6143adc11bc4dbdaa350fdb515db5f252bf228afce9e8"
+    },
+    {
+      "arm": "terminal",
+      "round": 6,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179145462740056b91a760308be63bbfdbcf334da2c5c84a279"],
+      "usage": {
+        "inputIncludingCache": 3151,
+        "uncachedInput": 207,
+        "cachedInput": 2944,
+        "output": 180,
+        "reasoningSubsetOfOutput": 113
+      },
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "expected": {
+        "count": 60,
+        "total": 18910
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 77,
+          "messageId": "message_c0050b26-717d-4022-b3ba-30c1773afb97",
+          "roomSeq": 54,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "e21cc79ecfa1697becb6377aac86a8c87f711c336a7dba956528dc1be1c23d4f"
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546327682d60f60bba313662d1f7bb8a224af9f4835db3"],
+      "usage": {
+        "inputIncludingCache": 2958,
+        "uncachedInput": 142,
+        "cachedInput": 2816,
+        "output": 33,
+        "reasoningSubsetOfOutput": 19
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "b065decade593cc7981c2bea1fb5858709f76e9ad1cccf8f438ed161f80a6545"
+    },
+    {
+      "arm": "terminal",
+      "round": 7,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546355483906a72ab000b5ec26f7911656631d3578087f"],
+      "usage": {
+        "inputIncludingCache": 3389,
+        "uncachedInput": 317,
+        "cachedInput": 3072,
+        "output": 83,
+        "reasoningSubsetOfOutput": 16
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 52,
+          "messageId": "message_4ccb95ea-1f4e-4131-a0d8-784af067a131",
+          "roomSeq": 63,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "91ea8e8f9fdb1e20e01af8658cf0f608ade21a5eb60bdf95251c39ee152684e4"
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454641163402c3547e09b7409e300241a04980e22753b81"],
+      "usage": {
+        "inputIncludingCache": 3017,
+        "uncachedInput": 73,
+        "cachedInput": 2944,
+        "output": 40,
+        "reasoningSubsetOfOutput": 26
+      },
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "expected": {
+        "count": 60,
+        "total": 18810
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "308af88262dc6cea5496f2257961ffcf41c022654c0d9940cb51e996d2c3c262"
+    },
+    {
+      "arm": "terminal",
+      "round": 8,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454638042bb3fbf3dabf37e3128b6921120665470e50846"],
+      "usage": {
+        "inputIncludingCache": 3518,
+        "uncachedInput": 190,
+        "cachedInput": 3328,
+        "output": 82,
+        "reasoningSubsetOfOutput": 15
+      },
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "expected": {
+        "count": 60,
+        "total": 18810
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 49,
+          "messageId": "message_417531c8-9508-49ff-a853-79cd42eddb70",
+          "roomSeq": 72,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "b7e5d9818f423d8b8b987670f4fbcb7f7007e2360753c4c82d0407a21dcbcc66"
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546436074ec3e2d763ce0a518bca21e33c72fe68ab32f2"],
+      "usage": {
+        "inputIncludingCache": 3095,
+        "uncachedInput": 151,
+        "cachedInput": 2944,
+        "output": 45,
+        "reasoningSubsetOfOutput": 31
+      },
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "expected": {
+        "count": 15,
+        "total": 4850
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "bc80f1b448f4b4d3f643af5e97b2fd75670d3b93694e42fedf513e2f55a7d21b"
+    },
+    {
+      "arm": "terminal",
+      "round": 9,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546469264ca67e9480bca887386e68bd4f0aad86f6f898"],
+      "usage": {
+        "inputIncludingCache": 3658,
+        "uncachedInput": 202,
+        "cachedInput": 3456,
+        "output": 85,
+        "reasoningSubsetOfOutput": 18
+      },
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "expected": {
+        "count": 15,
+        "total": 4850
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 49,
+          "messageId": "message_4626cbd2-c4a8-4bbf-8320-d2460c9de06f",
+          "roomSeq": 81,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "4ebcf48645fc3a50596e5ad2c7db4da6b760b986b6b465389e5a1b01e58e469a"
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454652757f7b571b3147c8053e664bd4ad440a2635cf091"],
+      "usage": {
+        "inputIncludingCache": 3169,
+        "uncachedInput": 97,
+        "cachedInput": 3072,
+        "output": 44,
+        "reasoningSubsetOfOutput": 30
+      },
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "expected": {
+        "count": 30,
+        "total": 9710
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "485a8f4e52e2300e61d5299cf0067b022fdcec6bec6256607aec6aacfc225467"
+    },
+    {
+      "arm": "terminal",
+      "round": 10,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546496206033fcbcb0f378053cf6d69e36d1abc254d5e4"],
+      "usage": {
+        "inputIncludingCache": 3792,
+        "uncachedInput": 208,
+        "cachedInput": 3584,
+        "output": 94,
+        "reasoningSubsetOfOutput": 27
+      },
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "expected": {
+        "count": 30,
+        "total": 9710
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 55,
+          "messageId": "message_6c20044b-62b2-4081-9d14-3d35da540962",
+          "roomSeq": 90,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "6427b699cd8d4eebd89c71c486cb6e3abd8d4bb5d89060e55b1d52525cb93a60"
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914546553779436a70d8fd44afb73ab39bbb6df35baed56e7"],
+      "usage": {
+        "inputIncludingCache": 3242,
+        "uncachedInput": 170,
+        "cachedInput": 3072,
+        "output": 37,
+        "reasoningSubsetOfOutput": 23
+      },
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "expected": {
+        "count": 30,
+        "total": 9300
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "4077b92e45ced52b29d992f4ba3dda4addcb8454872a86b5a087322f456fc4cb"
+    },
+    {
+      "arm": "terminal",
+      "round": 11,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454658551c023b1fb2f77c622a3f5432d0f62226810a329"],
+      "usage": {
+        "inputIncludingCache": 3935,
+        "uncachedInput": 223,
+        "cachedInput": 3712,
+        "output": 92,
+        "reasoningSubsetOfOutput": 25
+      },
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "expected": {
+        "count": 30,
+        "total": 9300
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 54,
+          "messageId": "message_756b4c27-0c40-462d-9c2f-53c3657b9d76",
+          "roomSeq": 99,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "09d9fac03a4a416e4fe7ac74dcb365b16e30d7c17cda5e4bf7d591b7c25466df"
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "sessionId": "01a11b03-b415-7670-815c-3f09f598062e",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179145466444715a741db9058723ed34b56d0ce5c7d9c1613df"],
+      "usage": {
+        "inputIncludingCache": 3311,
+        "uncachedInput": 111,
+        "cachedInput": 3200,
+        "output": 63,
+        "reasoningSubsetOfOutput": 49
+      },
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "expected": {
+        "count": 60,
+        "total": 19010
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "9306baad7cacd4d5c6ff308aa25bbd084a7311c024ba8b9410984acdc040f29f"
+    },
+    {
+      "arm": "terminal",
+      "round": 12,
+      "sessionId": "01a11b03-c771-756a-ac08-25106ae1050c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791454661652bb3fbf3dabf37e3128b6921120665470483f69"],
+      "usage": {
+        "inputIncludingCache": 4079,
+        "uncachedInput": 239,
+        "cachedInput": 3840,
+        "output": 142,
+        "reasoningSubsetOfOutput": 75
+      },
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "expected": {
+        "count": 60,
+        "total": 19010
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 63,
+          "messageId": "message_54b72027-791d-453d-ae11-4d933abe8ab4",
+          "roomSeq": 108,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "d5dcd11157beaa9d7d396c0c1974af76be71021b5133ac1e946b24f89c371848"
+    }
+  ],
+  "cumulative": [
+    {
+      "throughRound": 1,
+      "native": {
+        "inputIncludingCache": 3744,
+        "uncachedInput": 2208,
+        "cachedInput": 1536,
+        "output": 297,
+        "reasoningSubsetOfOutput": 231
+      },
+      "terminal": {
+        "inputIncludingCache": 3923,
+        "uncachedInput": 2259,
+        "cachedInput": 1664,
+        "output": 286,
+        "reasoningSubsetOfOutput": 172
+      },
+      "ratio": {
+        "inputIncludingCache": 1.047809829059829,
+        "uncachedInput": 1.0230978260869565,
+        "output": 0.9629629629629629
+      }
+    },
+    {
+      "throughRound": 2,
+      "native": {
+        "inputIncludingCache": 6135,
+        "uncachedInput": 2551,
+        "cachedInput": 3584,
+        "output": 404,
+        "reasoningSubsetOfOutput": 324
+      },
+      "terminal": {
+        "inputIncludingCache": 6415,
+        "uncachedInput": 2575,
+        "cachedInput": 3840,
+        "output": 412,
+        "reasoningSubsetOfOutput": 231
+      },
+      "ratio": {
+        "inputIncludingCache": 1.045639771801141,
+        "uncachedInput": 1.0094080752646022,
+        "output": 1.0198019801980198
+      }
+    },
+    {
+      "throughRound": 3,
+      "native": {
+        "inputIncludingCache": 8659,
+        "uncachedInput": 2771,
+        "cachedInput": 5888,
+        "output": 527,
+        "reasoningSubsetOfOutput": 433
+      },
+      "terminal": {
+        "inputIncludingCache": 9079,
+        "uncachedInput": 2807,
+        "cachedInput": 6272,
+        "output": 534,
+        "reasoningSubsetOfOutput": 286
+      },
+      "ratio": {
+        "inputIncludingCache": 1.0485044462409054,
+        "uncachedInput": 1.0129916997473836,
+        "output": 1.0132827324478177
+      }
+    },
+    {
+      "throughRound": 4,
+      "native": {
+        "inputIncludingCache": 11332,
+        "uncachedInput": 3012,
+        "cachedInput": 8320,
+        "output": 591,
+        "reasoningSubsetOfOutput": 483
+      },
+      "terminal": {
+        "inputIncludingCache": 11911,
+        "uncachedInput": 3079,
+        "cachedInput": 8832,
+        "output": 659,
+        "reasoningSubsetOfOutput": 344
+      },
+      "ratio": {
+        "inputIncludingCache": 1.0510942463819273,
+        "uncachedInput": 1.0222443559096945,
+        "output": 1.1150592216582065
+      }
+    },
+    {
+      "throughRound": 5,
+      "native": {
+        "inputIncludingCache": 14107,
+        "uncachedInput": 3227,
+        "cachedInput": 10880,
+        "output": 651,
+        "reasoningSubsetOfOutput": 529
+      },
+      "terminal": {
+        "inputIncludingCache": 14926,
+        "uncachedInput": 3278,
+        "cachedInput": 11648,
+        "output": 749,
+        "reasoningSubsetOfOutput": 367
+      },
+      "ratio": {
+        "inputIncludingCache": 1.0580562841142696,
+        "uncachedInput": 1.0158041524635886,
+        "output": 1.1505376344086022
+      }
+    },
+    {
+      "throughRound": 6,
+      "native": {
+        "inputIncludingCache": 16968,
+        "uncachedInput": 3400,
+        "cachedInput": 13568,
+        "output": 710,
+        "reasoningSubsetOfOutput": 574
+      },
+      "terminal": {
+        "inputIncludingCache": 18077,
+        "uncachedInput": 3485,
+        "cachedInput": 14592,
+        "output": 929,
+        "reasoningSubsetOfOutput": 480
+      },
+      "ratio": {
+        "inputIncludingCache": 1.0653583215464404,
+        "uncachedInput": 1.025,
+        "output": 1.3084507042253521
+      }
+    },
+    {
+      "throughRound": 7,
+      "native": {
+        "inputIncludingCache": 19926,
+        "uncachedInput": 3542,
+        "cachedInput": 16384,
+        "output": 743,
+        "reasoningSubsetOfOutput": 593
+      },
+      "terminal": {
+        "inputIncludingCache": 21466,
+        "uncachedInput": 3802,
+        "cachedInput": 17664,
+        "output": 1012,
+        "reasoningSubsetOfOutput": 496
+      },
+      "ratio": {
+        "inputIncludingCache": 1.0772859580447656,
+        "uncachedInput": 1.0734048560135516,
+        "output": 1.3620457604306864
+      }
+    },
+    {
+      "throughRound": 8,
+      "native": {
+        "inputIncludingCache": 22943,
+        "uncachedInput": 3615,
+        "cachedInput": 19328,
+        "output": 783,
+        "reasoningSubsetOfOutput": 619
+      },
+      "terminal": {
+        "inputIncludingCache": 24984,
+        "uncachedInput": 3992,
+        "cachedInput": 20992,
+        "output": 1094,
+        "reasoningSubsetOfOutput": 511
+      },
+      "ratio": {
+        "inputIncludingCache": 1.0889595955193305,
+        "uncachedInput": 1.1042876901798064,
+        "output": 1.397190293742018
+      }
+    },
+    {
+      "throughRound": 9,
+      "native": {
+        "inputIncludingCache": 26038,
+        "uncachedInput": 3766,
+        "cachedInput": 22272,
+        "output": 828,
+        "reasoningSubsetOfOutput": 650
+      },
+      "terminal": {
+        "inputIncludingCache": 28642,
+        "uncachedInput": 4194,
+        "cachedInput": 24448,
+        "output": 1179,
+        "reasoningSubsetOfOutput": 529
+      },
+      "ratio": {
+        "inputIncludingCache": 1.1000076810814963,
+        "uncachedInput": 1.1136484333510355,
+        "output": 1.423913043478261
+      }
+    },
+    {
+      "throughRound": 10,
+      "native": {
+        "inputIncludingCache": 29207,
+        "uncachedInput": 3863,
+        "cachedInput": 25344,
+        "output": 872,
+        "reasoningSubsetOfOutput": 680
+      },
+      "terminal": {
+        "inputIncludingCache": 32434,
+        "uncachedInput": 4402,
+        "cachedInput": 28032,
+        "output": 1273,
+        "reasoningSubsetOfOutput": 556
+      },
+      "ratio": {
+        "inputIncludingCache": 1.1104872119697333,
+        "uncachedInput": 1.1395288635775305,
+        "output": 1.459862385321101
+      }
+    },
+    {
+      "throughRound": 11,
+      "native": {
+        "inputIncludingCache": 32449,
+        "uncachedInput": 4033,
+        "cachedInput": 28416,
+        "output": 909,
+        "reasoningSubsetOfOutput": 703
+      },
+      "terminal": {
+        "inputIncludingCache": 36369,
+        "uncachedInput": 4625,
+        "cachedInput": 31744,
+        "output": 1365,
+        "reasoningSubsetOfOutput": 581
+      },
+      "ratio": {
+        "inputIncludingCache": 1.1208049554685815,
+        "uncachedInput": 1.146788990825688,
+        "output": 1.5016501650165017
+      }
+    },
+    {
+      "throughRound": 12,
+      "native": {
+        "inputIncludingCache": 35760,
+        "uncachedInput": 4144,
+        "cachedInput": 31616,
+        "output": 972,
+        "reasoningSubsetOfOutput": 752
+      },
+      "terminal": {
+        "inputIncludingCache": 40448,
+        "uncachedInput": 4864,
+        "cachedInput": 35584,
+        "output": 1507,
+        "reasoningSubsetOfOutput": 656
+      },
+      "ratio": {
+        "inputIncludingCache": 1.1310961968680089,
+        "uncachedInput": 1.1737451737451738,
+        "output": 1.550411522633745
+      }
+    }
+  ],
+  "windowRounds7Through12": {
+    "native": {
+      "inputIncludingCache": 18792,
+      "uncachedInput": 744,
+      "cachedInput": 18048,
+      "output": 262,
+      "reasoningSubsetOfOutput": 178
+    },
+    "terminal": {
+      "inputIncludingCache": 22371,
+      "uncachedInput": 1379,
+      "cachedInput": 20992,
+      "output": 578,
+      "reasoningSubsetOfOutput": 176
+    },
+    "ratio": {
+      "inputIncludingCache": 1.1904533844189016,
+      "uncachedInput": 1.853494623655914,
+      "output": 2.2061068702290076
+    }
+  },
+  "database": {
+    "activations": {
+      "completed": 12
+    },
+    "runs": [
+      {
+        "state": "exited",
+        "exitCode": 0,
+        "count": 12
+      }
+    ],
+    "finalReplyMarkers": 12,
+    "sentPresentedWindows": 12,
+    "workerCursor": 103,
+    "maxActivationToSeq": 103,
+    "activationFinishedEvents": 12,
+    "ackEvidence": "12 completed activations pass room-kernel.ts completeActivation cursor>=toSeq guard. ACK is not 12 separately retained receipt rows; completed delivery/read receipts are cleaned up."
+  },
+  "sandboxProfiles": {
+    "native": "(version 1)\n(allow default)\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-8QsQA7\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-BJ6Sdc\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-pOqsol\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-t5gJzF\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-wBQZQv\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-zwkgXr\"))\n(deny file-read* (subpath \"/Users/sun/Code/repos/rah_os/docs/evo/evidence\"))\n(deny file-read* (subpath \"/Users/sun/.loom/reviews\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-it2wgk/terminal\"))\n",
+    "terminal": "(version 1)\n(allow default)\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-8QsQA7\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-BJ6Sdc\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-pOqsol\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-t5gJzF\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-wBQZQv\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-zwkgXr\"))\n(deny file-read* (subpath \"/Users/sun/Code/repos/rah_os/docs/evo/evidence\"))\n(deny file-read* (subpath \"/Users/sun/.loom/reviews\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-it2wgk/native\"))\n"
+  },
+  "oracleAudit": {
+    "observedOracleReadCommands": [],
+    "verdict": "No observed direct oracle reads; reviews and peer paths denied by saved OS profiles. Does not claim full machine/network isolation.",
+    "toolTraceSummary": "Exactly two business tool calls across both arms: native round1 bash lists cwd and reads budget.csv; terminal round1 bash reads budget.csv and lists cwd. No own/peer session, configuration, prior runtime or oracle read attempts observed."
+  },
+  "allBusinessToolCommands": [
+    {
+      "arm": "native",
+      "round": 1,
+      "line": 41,
+      "command": "ls -la; echo \"---\"; cat budget.csv 2>/dev/null"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 36,
+      "command": "cat budget.csv; echo \"---\"; ls -la"
+    }
+  ],
+  "interpretation": "Both arms first round only inspect source CSV/directory, then respond. Terminal model-facing tool only body/final; host binds actual delivered sequence. No observed integration/session/config exploration. This combined interface experiment changes schema, instruction and receipt projection, not a single-variable causal estimate against v3.",
+  "accounting": "Unique responseId per assistant message_end only; mirrored native session responseIds reconciled, starts=ends, result.json usage reconciled. Input includes cacheRead+cacheWrite; reasoning is subset output. Pi zero cost metadata is not free pricing.",
+  "limits": [
+    "One model and one trajectory per arm; not a multi-model or five-CLI efficiency result.",
+    "Twelve turns with compaction off do not cover long context compaction.",
+    "Alternating run order reduces timing bias but cache effects and model/tool randomness remain.",
+    "Natural tool traces differ materially; cumulative ratio measures full observed outcome, not fixed per-transport tax.",
+    "Manual real Kernel/Worker bridge only; not automatic scheduler or production Pi adapter acceptance.",
+    "OS denies specified reviews/peer paths only; same UID and allow-default profile are not general security isolation.",
+    "No extra request after publication does not imply low total task cost.",
+    "No provider monetary price metadata; report token measures separately, not financial cost."
+  ],
+  "deliveryBindingAudit": [
+    {
+      "round": 1,
+      "presentedThroughSeq": 4,
+      "eventRoomSeq": 4,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 2,
+      "presentedThroughSeq": 13,
+      "eventRoomSeq": 13,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 3,
+      "presentedThroughSeq": 22,
+      "eventRoomSeq": 22,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 4,
+      "presentedThroughSeq": 31,
+      "eventRoomSeq": 31,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 5,
+      "presentedThroughSeq": 40,
+      "eventRoomSeq": 40,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 6,
+      "presentedThroughSeq": 49,
+      "eventRoomSeq": 49,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 7,
+      "presentedThroughSeq": 58,
+      "eventRoomSeq": 58,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 8,
+      "presentedThroughSeq": 67,
+      "eventRoomSeq": 67,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 9,
+      "presentedThroughSeq": 76,
+      "eventRoomSeq": 76,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 10,
+      "presentedThroughSeq": 85,
+      "eventRoomSeq": 85,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 11,
+      "presentedThroughSeq": 94,
+      "eventRoomSeq": 94,
+      "bodyMatchesBusinessPrompt": true
+    },
+    {
+      "round": 12,
+      "presentedThroughSeq": 103,
+      "eventRoomSeq": 103,
+      "bodyMatchesBusinessPrompt": true
+    }
+  ],
+  "replyToolArgumentAudit": [
+    {
+      "round": 1,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 2,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 3,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 4,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 5,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 6,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 7,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 8,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 9,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 10,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 11,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    },
+    {
+      "round": 12,
+      "argumentKeys": ["body", "final"],
+      "final": true
+    }
+  ],
+  "isolationAudit": {
+    "priorRuntimeRootsDenied": 6,
+    "reviewsDenied": true,
+    "publicEvidenceDirectoryDenied": true,
+    "peerRuntimeDenied": true
+  },
+  "sourceHashes": {
+    "host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "model.mjs": "5e0c8016b0fd9fb96e460763ef395524f795bb6058fe781c046273d8ed809785",
+    "terminal.ts": "a14ef19532b339ed2799a3a513e7c481eabcbe9be94d305b748460a2facac8e0",
+    "run.mjs": "d67564a5a79cdef4e490c495e18e81046e9b4240cc0d33c6caa824793a1793a6"
+  }
+}

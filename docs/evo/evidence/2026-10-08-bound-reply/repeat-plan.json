@@ -1,0 +1,13 @@
+{
+  "purpose": "Two predeclared additional paired trajectories for variability, retaining first trajectory and every failed attempt. No interface, business workload or model changes. Not a cross-model acceptance.",
+  "additionalPairedRuns": 2,
+  "firstRun": "1791454589545",
+  "stopPolicy": "Each run stops dependent tasks on quality failure; no within-run retries. Execute exactly two independent runs unless environment/authorization guard blocks. No repeat until pass.",
+  "files": {
+    "run.mjs": "d67564a5a79cdef4e490c495e18e81046e9b4240cc0d33c6caa824793a1793a6",
+    "plan.json": "aaa7cb5c77e2249a38c0b7be784a7af6e4944092e306ce11c680bcc4a8799909",
+    "host.mjs": "df8484c51e2e216a49e30b7a06505c24da25079614047f8e271c0ddb119fe375",
+    "model.mjs": "5e0c8016b0fd9fb96e460763ef395524f795bb6058fe781c046273d8ed809785",
+    "terminal.ts": "a14ef19532b339ed2799a3a513e7c481eabcbe9be94d305b748460a2facac8e0"
+  }
+}
