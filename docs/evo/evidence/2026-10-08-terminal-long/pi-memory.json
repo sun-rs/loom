@@ -1,0 +1,32 @@
+{
+  "schema": "loom.pi-memory-audit.v1",
+  "version": "1.1.0",
+  "verdict": "admissible with enumerated isolated launch conditions; normal same-session history retained",
+  "discoveredIndependentAutomaticLongTermMemorySubsystem": false,
+  "evidenceScope": "installed documentation and core implementation audit, not a universal guarantee across versions or arbitrary extensions",
+  "conditions": [
+    "new explicit session per arm, same session resumed per round",
+    "isolated agentDir with only reviewed model/auth/settings/MCP configuration",
+    "empty or controlled cwd without .pi",
+    "no SYSTEM.md or APPEND_SYSTEM.md in agentDir or cwd/.pi",
+    "every launch --no-context-files --no-skills --no-extensions --no-prompt-templates; native also --no-mcp",
+    "no explicit skill, prompt or unreviewed -e paths",
+    "product only explicitly loads audited MCP and terminal extensions",
+    "cacheWarming off; version asserted on each launch",
+    "controlled settings do not load unreviewed package/resource paths"
+  ],
+  "implementationEvidence": {
+    "dist/main.js:633-639": "CLI noExtensions/noSkills/noContextFiles forwarded to loader",
+    "dist/core/resource-loader.js:405": "noExtensions admits only explicitly requested extension paths",
+    "dist/core/resource-loader.js:420": "noSkills removes automatic skill discovery; explicit skill paths are exception",
+    "dist/core/resource-loader.js:462": "noContextFiles sets agentsFiles to [] instead of ancestor/context discovery",
+    "dist/core/resource-loader.js:941-959": "SYSTEM.md/APPEND_SYSTEM.md discovery is independent of noContextFiles; only agentDir and trusted cwd/.pi candidates",
+    "docs/settings.md:19-21": "cacheWarming defaults streaming and may send refresh requests; off explicitly prevents that confound"
+  },
+  "notClaims": [
+    "not strong filesystem isolation",
+    "not automatic erasure of old session context",
+    "not admission for another Pi version",
+    "compaction disabled in current 12-round experiment limits generality; session compaction itself is normal conversation state rather than separate long-term memory"
+  ]
+}

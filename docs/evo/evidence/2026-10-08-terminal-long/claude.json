@@ -1,0 +1,111 @@
+{
+  "schema": "loom.terminal-tool-prototype.v1",
+  "provider": "claude",
+  "cliVersion": "2.1.293",
+  "requestedModel": "haiku",
+  "effort": null,
+  "scope": "private prototype; no repository/global config/service changes",
+  "freeChecks": {
+    "hookPredicateCases": 9,
+    "passed": 9,
+    "cases": [
+      "published final true stops",
+      "wrong event does not stop",
+      "wrong tool does not stop",
+      "nonfinal does not stop",
+      "isError does not stop",
+      "held does not stop",
+      "invalid receipt does not stop",
+      "missing receipt does not stop"
+    ],
+    "runnerSyntax": "passed",
+    "installedImplementation": "PostToolUse preventContinuation -> hook_stopped_continuation -> main-loop reason hook_stopped, separate from aborted_tools",
+    "officialDocumentation": "https://code.claude.com/docs/en/hooks"
+  },
+  "paidAttempt": {
+    "status": "failed-prototype-assumptions",
+    "roundsRun": 1,
+    "roundsPlanned": 2,
+    "providerGenerations": 2,
+    "sessionId": "41d0df29-8be7-445f-86f8-eef91205a260",
+    "models": ["claude-haiku-5-5"],
+    "modelFamilyMatched": true,
+    "generations": [
+      {
+        "provider": "claude-stream-json/v1",
+        "responseId": "msg_yUwuA8DjuQvYj1EE8ZlMBEvy",
+        "inputTokens": 1955,
+        "cachedInputTokens": 0,
+        "outputTokens": 107,
+        "reasoningOutputTokens": null,
+        "contextWindow": null,
+        "contextUsedTokens": null
+      },
+      {
+        "provider": "claude-stream-json/v1",
+        "responseId": "msg_ystTMDa6xkZCta2hArObmYIf",
+        "inputTokens": 2158,
+        "cachedInputTokens": 1792,
+        "outputTokens": 69,
+        "reasoningOutputTokens": null,
+        "contextWindow": null,
+        "contextUsedTokens": null
+      }
+    ],
+    "gaps": [],
+    "result": {
+      "subtype": "success",
+      "isError": false,
+      "numTurns": 2,
+      "at": 123
+    },
+    "actualHookOutput": {},
+    "correctedOfflineHookOutput": {
+      "continue": false,
+      "stopReason": "Loom final reply published; this turn is complete."
+    },
+    "blockers": [
+      "Actual Claude tool_response is MCP content array, initial predicate expected content object; hook did not stop.",
+      "Runner initially supplied raw objects to parser expecting {line,at}; failed after first run.",
+      "No --effort passed, but new Claude reports medium effort and emits thinking tokens; no-effort semantics require audit."
+    ],
+    "isolation": "Same connection pair; aliases removed only in isolated process, empty temporary CLAUDE_CONFIG_DIR",
+    "noAutomaticRetry": true
+  },
+  "plannedMemoryPolicy": {
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "autoMemoryEnabled": false,
+    "settingSources": []
+  },
+  "unverified": [
+    "corrected hook actually stops runtime",
+    "one generation per final reply",
+    "same-session second-turn continuation",
+    "new Claude Haiku no-effort semantics"
+  ],
+  "artifacts": {
+    "hook.mjs": "df6f5bda621c435c22a9fbc1fff18c8eba7bff76f463faa75fdc11fdf6ab5074",
+    "hook.test.mjs": "5f8c087179ce17b46b06ee986719f6477218ed420844fb6e2afcfe5b2de92732",
+    "run.mjs": "5be17161aa6a45fd34bcb5d2c8d0c8e7e35b3cc890b3182c9e192f6835ca85b8"
+  },
+  "initialPreflight": {
+    "status": "blocked-before-spawn",
+    "requests": 0,
+    "cause": "global Haiku alias kimi-k3; retained as diagnostic, resolved using established process-only alias isolation"
+  },
+  "effortAudit": {
+    "catalog": {
+      "binding": "haiku",
+      "displayName": "Haiku 4.5",
+      "supportedReasoning": [],
+      "source": "free probeLocalModelCatalog on installed 2.1.293"
+    },
+    "actualModel": "claude-haiku-5-5",
+    "actualHookEffort": "medium",
+    "actualThinkingOutputTokens": 16,
+    "officialSource": "https://code.claude.com/docs/en/model-config#extended-thinking",
+    "officialFinding": "Haiku 5.5 thinking cannot be disabled; MAX_THINKING_TOKENS=0 and alwaysThinkingEnabled:false have no effect.",
+    "verdict": "No further paid run; exact approved no-reasoning semantics not verified on this binding."
+  },
+  "timestampNote": "Replay parser observation offsets are not wall-clock timestamps; omitted from public generation rows."
+}

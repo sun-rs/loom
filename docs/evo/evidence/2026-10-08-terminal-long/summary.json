@@ -1,0 +1,43 @@
+{
+  "sourceRevision": "30cef9d",
+  "verdict": "No efficiency acceptance; terminal mechanism works but complete Pi task trajectory remains expensive. Prior failed/contaminated runs retained.",
+  "sourceFiles": [
+    "pi-v3.json",
+    "pi-invalid-v1-v2.json",
+    "claude.json",
+    "pi-memory.json",
+    "pi-v3-plan.json"
+  ],
+  "paidBatches": {
+    "P132": "Claude corrected process isolation; first round hook-shape and runner assumptions failed; no rerun after observed default-effort discrepancy",
+    "P133": "Pi v1 read-only-tools arithmetic quality failure",
+    "P134": "Pi v2 full tools; control/answer leakage invalidates comparison",
+    "P135": "Pi v3 OS control/peer read barrier; valid 12-turn single trajectory, cost target failed"
+  },
+  "freeVerification": {
+    "sandboxProbeCases": 22,
+    "sandboxProbePasses": 22,
+    "v3PairedFixtureRounds": 24,
+    "v3FakeProviderRequests": 26,
+    "scope": "Synthetic output/usage verifies transport only, not model quality or efficiency",
+    "retainedHarnessFailure": "Initial free v1 tool allowlist omitted nested MCP registration, fake provider repeated until timeout (4883 synthetic requests). No paid requests. Explicit tool selection corrected before v1 paid; subsequent v2/v3 use native defaults. A free request budget was added."
+  },
+  "nextDesign": {
+    "status": "proposal only, not implemented or efficiency accepted",
+    "owner": "AgentHost holds original authenticated execution binding; Kernel remains cursor, stale-context, idempotency and publication owner",
+    "principle": "Reduce unnecessary model-visible execution metadata and clarify delivery completeness; no automatic canonicalization of stdout",
+    "modelTool": "Prototype body/final only for the unique delivered target; host supplies the frozen sequence from actual delivery, never latest DB head",
+    "receipts": "Explore concise model projection while retaining full original receipt in native diagnostics; held/errors remain actionable, never masked as published",
+    "safetyTests": [
+      "later relevant Room event must still produce stale-context hold",
+      "unknown/held/nonfinal must not terminate",
+      "old transport cannot acquire a new Run binding",
+      "mixed tool batch and continued native session retain correct behavior"
+    ],
+    "measurement": "Freeze business workload and separate protocol ablation from wording changes; multiple models/CLIs and repeated trajectories before general conclusions",
+    "benchmarkIsolation": "Deny model access to control/answer keys, peer sessions and published benchmark evidence; keep fixture data separate from diagnostics; record all failed runs"
+  },
+  "productionChanged": false,
+  "automaticSchedulerTested": false,
+  "monetaryCost": "Unknown; token ratios are not invoice-price ratios"
+}

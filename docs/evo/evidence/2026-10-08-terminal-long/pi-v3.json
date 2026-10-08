@@ -1,0 +1,1155 @@
+{
+  "schema": "loom.pi-long-v3-independent-audit.v1",
+  "runId": "1791448457435",
+  "verdict": "business answers and successful-publication terminal boundary passed in one isolated trajectory; efficiency far above native",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "responseModel": "deepseek-v4-1-flash-260910",
+  "thinking": "low",
+  "cliVersion": "1.1.0",
+  "arms": {
+    "native": {
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "rounds": 12,
+      "generations": 13,
+      "usage": {
+        "inputIncludingCache": 33018,
+        "uncachedInput": 3962,
+        "cachedInput": 29056,
+        "output": 640,
+        "reasoningSubsetOfOutput": 410
+      },
+      "rawMatchesSessionResponseIds": true
+    },
+    "terminal": {
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "rounds": 12,
+      "generations": 25,
+      "usage": {
+        "inputIncludingCache": 324109,
+        "uncachedInput": 18573,
+        "cachedInput": 305536,
+        "output": 3561,
+        "reasoningSubsetOfOutput": 1339
+      },
+      "rawMatchesSessionResponseIds": true
+    }
+  },
+  "perRound": [
+    {
+      "arm": "native",
+      "round": 1,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "0217914484584643749365b55318faa75db47eb4778acb3e6497a",
+        "0217914484604182d028257773b48b117f8c4bedc94f46bcdf9b4"
+      ],
+      "usage": {
+        "inputIncludingCache": 3758,
+        "uncachedInput": 2222,
+        "cachedInput": 1536,
+        "output": 190,
+        "reasoningSubsetOfOutput": 114
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "4475d6b4a560b9d2de96d58263b71d601737445142d1c20729376fc9c5efb816"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 10,
+      "assistantStarts": 10,
+      "responseIds": [
+        "02179144846438166701df21cea91c839fa89f5ad11c1c2e854a3",
+        "021791448466812bba9dcb446c9769753d8e06563bdd07f96fdd6",
+        "0217914484691324aa8fafbe9055982037cfb2f5ec29c22cd9445",
+        "0217914484715386c88a39b89e3e3930a4a1be3bade8084f0f63e",
+        "021791448474269223e95793e6cdc610dbdf3940c51460213556b",
+        "0217914484767660bbf51ace819fab93059a10f5630b348107ad9",
+        "021791448480149d5261995f9623e565b5d66b9043981651f98f0",
+        "021791448484539668004fc1d5fde2a506b4986f050f7e84fb196",
+        "021791448491099946cfb140b96a874358f5d78c70e711458f4dc",
+        "02179144849434655f48989dd9b25108c9006ab2514b48943ee75"
+      ],
+      "usage": {
+        "inputIncludingCache": 87794,
+        "uncachedInput": 14706,
+        "cachedInput": 73088,
+        "output": 1909,
+        "reasoningSubsetOfOutput": 1038
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 1052,
+          "messageId": "message_12559dfa-9616-4560-97e4-a99eed58c86c",
+          "roomSeq": 9,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "60dc098c88b307df490ca8dc6c4313719ed48cd00af2c1837179767c932be81d"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179144850464910ac68a140479f93d63741c4458c3d48431f7c"],
+      "usage": {
+        "inputIncludingCache": 2286,
+        "uncachedInput": 238,
+        "cachedInput": 2048,
+        "output": 71,
+        "reasoningSubsetOfOutput": 57
+      },
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "f24df11e416ea412525107ad8d1db9cbd9a12403d73d99665be9b39ca8bcb37f"
+    },
+    {
+      "arm": "terminal",
+      "round": 2,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "021791448498036600632cde03e2cf85ca25a1fd03fe18aa084f4",
+        "021791448501035a27e7864c44f7b8eec4115790316fa6e4ab8f9"
+      ],
+      "usage": {
+        "inputIncludingCache": 29129,
+        "uncachedInput": 457,
+        "cachedInput": 28672,
+        "output": 247,
+        "reasoningSubsetOfOutput": 57
+      },
+      "answer": {
+        "count": 15,
+        "total": 4650
+      },
+      "expected": {
+        "count": 15,
+        "total": 4650
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 156,
+          "messageId": "message_034b9ecb-bf2f-4973-b664-3925f5c5fe4e",
+          "roomSeq": 18,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "dc1eb47a08bde13d82f59a9f0f4ba26e7972179c6671d8a5dfbdf0f08f9ff859"
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448507387e9364cfcb645e8222cc1f22dec5fb736f504b8"],
+      "usage": {
+        "inputIncludingCache": 2383,
+        "uncachedInput": 207,
+        "cachedInput": 2176,
+        "output": 64,
+        "reasoningSubsetOfOutput": 50
+      },
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "expected": {
+        "count": 15,
+        "total": 4755
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "f8127642d7d9ed39488c335521525d81bdf740fa3b62267a4b9edb625e3e8957"
+    },
+    {
+      "arm": "terminal",
+      "round": 3,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "021791448510247ecb0d1ecabc2ef46c8096e92eb2855828430ad",
+        "021791448512939650199c56ec016826a8a57eb1bcd9630e15a46"
+      ],
+      "usage": {
+        "inputIncludingCache": 29814,
+        "uncachedInput": 502,
+        "cachedInput": 29312,
+        "output": 190,
+        "reasoningSubsetOfOutput": 0
+      },
+      "answer": {
+        "count": 15,
+        "total": 4755
+      },
+      "expected": {
+        "count": 15,
+        "total": 4755
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 141,
+          "messageId": "message_c33d1236-945a-4a4a-9f10-00b25e231c44",
+          "roomSeq": 27,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "87d3880b3f214b05e2addd083559be060b2ca630587bd63c47736e0ebaf6ce91"
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448521673618be72f3907769bd1896ffa0351d575b75939"],
+      "usage": {
+        "inputIncludingCache": 2473,
+        "uncachedInput": 169,
+        "cachedInput": 2304,
+        "output": 14,
+        "reasoningSubsetOfOutput": 0
+      },
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "expected": {
+        "count": 15,
+        "total": 4860
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "4334a56012cfe044beb709c30def429d1d6870ef2d037f3c3dc495439f872030"
+    },
+    {
+      "arm": "terminal",
+      "round": 4,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "0217914485159413ae70deb993b0580bab03c74c65afc7c2a74fa",
+        "021791448518145b5bbc295b386b4b249d67905c97ffef8afb20b"
+      ],
+      "usage": {
+        "inputIncludingCache": 30442,
+        "uncachedInput": 490,
+        "cachedInput": 29952,
+        "output": 190,
+        "reasoningSubsetOfOutput": 0
+      },
+      "answer": {
+        "count": 15,
+        "total": 4860
+      },
+      "expected": {
+        "count": 15,
+        "total": 4860
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 141,
+          "messageId": "message_5b6ce16f-39ae-4c85-87c5-d74b5d4ec8c9",
+          "roomSeq": 36,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "948122ea7d5c02cf10ce660469fd5dd12a411a3ac80102c15811d506840d3cc0"
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448523970a494df944a230ff836cdfb3920056d77148844"],
+      "usage": {
+        "inputIncludingCache": 2525,
+        "uncachedInput": 93,
+        "cachedInput": 2432,
+        "output": 34,
+        "reasoningSubsetOfOutput": 20
+      },
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "expected": {
+        "count": 15,
+        "total": 4645
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "218987da3bf7c1819d382a9a4ebdb1792c92d5336787da7225991ce98ba73852"
+    },
+    {
+      "arm": "terminal",
+      "round": 5,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179144852657845323167f444566161ccbd236f48bec598ec03"],
+      "usage": {
+        "inputIncludingCache": 15488,
+        "uncachedInput": 256,
+        "cachedInput": 15232,
+        "output": 132,
+        "reasoningSubsetOfOutput": 49
+      },
+      "answer": {
+        "count": 15,
+        "total": 4645
+      },
+      "expected": {
+        "count": 15,
+        "total": 4645
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 63,
+          "messageId": "message_e763f58b-ff98-4098-b9ba-01c582a69822",
+          "roomSeq": 45,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "39e18c0a77082abf63d30f49e09817aed1e72df96c1590220a70a58fd3a53647"
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448536236618be72f3907769bd1896ffa0351d575e440c3"],
+      "usage": {
+        "inputIncludingCache": 2585,
+        "uncachedInput": 153,
+        "cachedInput": 2432,
+        "output": 59,
+        "reasoningSubsetOfOutput": 45
+      },
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "expected": {
+        "count": 60,
+        "total": 18910
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "d9588be009f6a870d82bfbf39c8e2a016822d8fe7aef01fd65cc0db5e06fd37c"
+    },
+    {
+      "arm": "terminal",
+      "round": 6,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 2,
+      "assistantStarts": 2,
+      "responseIds": [
+        "021791448529897bb2261858b80157748884c1e1786c924dc4b2e",
+        "0217914485331473e1d45c2e42a445361f900407e7e03ea67e2e3"
+      ],
+      "usage": {
+        "inputIncludingCache": 31620,
+        "uncachedInput": 516,
+        "cachedInput": 31104,
+        "output": 240,
+        "reasoningSubsetOfOutput": 40
+      },
+      "answer": {
+        "count": 60,
+        "total": 18910
+      },
+      "expected": {
+        "count": 60,
+        "total": 18910
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 164,
+          "messageId": "message_00eac0a2-0517-4431-959d-62ef761d3be0",
+          "roomSeq": 54,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "e052a5fbd0d9357ebb5a6739992d2ac5194b182bc9d2f59b2e3055851ecff549"
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448539602b41cdf8444809c3dc7e829c918a03a80cf670a"],
+      "usage": {
+        "inputIncludingCache": 2682,
+        "uncachedInput": 122,
+        "cachedInput": 2560,
+        "output": 23,
+        "reasoningSubsetOfOutput": 9
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "0080110103a8b16f858bd74d890254191026808a54ec0729bc4c8e6f9482427e"
+    },
+    {
+      "arm": "terminal",
+      "round": 7,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914485427584ebcb86fd234a9cf7780741b795c6db0bf3aa2"],
+      "usage": {
+        "inputIncludingCache": 16098,
+        "uncachedInput": 226,
+        "cachedInput": 15872,
+        "output": 102,
+        "reasoningSubsetOfOutput": 19
+      },
+      "answer": {
+        "count": 15,
+        "total": 4545
+      },
+      "expected": {
+        "count": 15,
+        "total": 4545
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 57,
+          "messageId": "message_203895e7-d125-4b31-9f0b-1c0ed6422982",
+          "roomSeq": 63,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "6b280d93dd5cfc303fd716c6ef028798186e41eed9c5594822fece30fa9578aa"
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179144854957397ebbf7316b3ea9a3b0d136bee84b96391fef5"],
+      "usage": {
+        "inputIncludingCache": 2731,
+        "uncachedInput": 171,
+        "cachedInput": 2560,
+        "output": 33,
+        "reasoningSubsetOfOutput": 19
+      },
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "expected": {
+        "count": 60,
+        "total": 18810
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "1c335c3b972f755687914213dd23f749a7ff7aeaaeb6c638e7b210c6432e52d9"
+    },
+    {
+      "arm": "terminal",
+      "round": 8,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448546059cd483641bd2945773645203cda9eaa1385186b"],
+      "usage": {
+        "inputIncludingCache": 16306,
+        "uncachedInput": 306,
+        "cachedInput": 16000,
+        "output": 103,
+        "reasoningSubsetOfOutput": 20
+      },
+      "answer": {
+        "count": 60,
+        "total": 18810
+      },
+      "expected": {
+        "count": 60,
+        "total": 18810
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 57,
+          "messageId": "message_bcef142b-1f5e-4123-9c1c-4c2e2094b931",
+          "roomSeq": 72,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "19777d45f6067aeeaf75cef712c01249aec46131ab337d069f3f7224dc99cb44"
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914485525545f505d6745d4b07a5efbd0dd2f16cfcb54327a"],
+      "usage": {
+        "inputIncludingCache": 2802,
+        "uncachedInput": 114,
+        "cachedInput": 2688,
+        "output": 33,
+        "reasoningSubsetOfOutput": 19
+      },
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "expected": {
+        "count": 15,
+        "total": 4850
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "5e41b82b1d56c033d75ac2b71bd58c82acf84e3a582302a77519e67e00e109cb"
+    },
+    {
+      "arm": "terminal",
+      "round": 9,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914485563583462842069ee0828bfbcf630188a27c1797dac"],
+      "usage": {
+        "inputIncludingCache": 16530,
+        "uncachedInput": 274,
+        "cachedInput": 16256,
+        "output": 101,
+        "reasoningSubsetOfOutput": 18
+      },
+      "answer": {
+        "count": 15,
+        "total": 4850
+      },
+      "expected": {
+        "count": 15,
+        "total": 4850
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 56,
+          "messageId": "message_efdcbf2e-313f-46ed-b1b0-985ff130bede",
+          "roomSeq": 81,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "860f6e94a032762c096d8ea9b2a9da3d8946830e5d7db975007cf2835bd7521d"
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448563762b41cdf8444809c3dc7e829c918a03a8090c6ab"],
+      "usage": {
+        "inputIncludingCache": 2864,
+        "uncachedInput": 176,
+        "cachedInput": 2688,
+        "output": 37,
+        "reasoningSubsetOfOutput": 23
+      },
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "expected": {
+        "count": 30,
+        "total": 9710
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "ce0ebab0d8e773b3383865960187037c4a27fa3b8841d5b8cc958d111acf2bc4"
+    },
+    {
+      "arm": "terminal",
+      "round": 10,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["02179144856008788a480d877f824556f2559e19636edcd932400"],
+      "usage": {
+        "inputIncludingCache": 16738,
+        "uncachedInput": 226,
+        "cachedInput": 16512,
+        "output": 116,
+        "reasoningSubsetOfOutput": 33
+      },
+      "answer": {
+        "count": 30,
+        "total": 9710
+      },
+      "expected": {
+        "count": 30,
+        "total": 9710
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 61,
+          "messageId": "message_eae69041-9099-4a4c-9665-d2750c3d884a",
+          "roomSeq": 90,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "8eb96b5c965c32f34887ff26dc25c38a103b9c986a4acfa86c5c1ba7b6441edd"
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448566761463b2e7ab2e4caf441b2615bb02bf158904a82"],
+      "usage": {
+        "inputIncludingCache": 2930,
+        "uncachedInput": 114,
+        "cachedInput": 2816,
+        "output": 37,
+        "reasoningSubsetOfOutput": 23
+      },
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "expected": {
+        "count": 30,
+        "total": 9300
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "e6772b2de879f60a4379cdcaeed277df7457872c72ac9bc0005dd7134c0a2b56"
+    },
+    {
+      "arm": "terminal",
+      "round": 11,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914485698572a8a12ba4ff96db35a2adc2caf7562c359ad13"],
+      "usage": {
+        "inputIncludingCache": 16962,
+        "uncachedInput": 322,
+        "cachedInput": 16640,
+        "output": 115,
+        "reasoningSubsetOfOutput": 32
+      },
+      "answer": {
+        "count": 30,
+        "total": 9300
+      },
+      "expected": {
+        "count": 30,
+        "total": 9300
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 58,
+          "messageId": "message_4088becb-34d3-43d2-a089-318f887a57c7",
+          "roomSeq": 99,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "3d023efe4621d2343433c6cdecc53b09bebfd929a5165580416fbe0d9a2ce828"
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "sessionId": "01a11aa6-229c-759e-bed7-278dffca73d2",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["021791448577957512ed3a70d67442f5607912a998d4736724167"],
+      "usage": {
+        "inputIncludingCache": 2999,
+        "uncachedInput": 183,
+        "cachedInput": 2816,
+        "output": 45,
+        "reasoningSubsetOfOutput": 31
+      },
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "expected": {
+        "count": 60,
+        "total": 19010
+      },
+      "qualityMatched": true,
+      "publication": [],
+      "rawSha256": "c85b538005de0446b24160b2f3211721ab976d6a8ba31e403e4d253f6a9b5dc6"
+    },
+    {
+      "arm": "terminal",
+      "round": 12,
+      "sessionId": "01a11aa6-37a9-7605-a044-3a474826655c",
+      "generations": 1,
+      "assistantStarts": 1,
+      "responseIds": ["0217914485734672d417bd9da6e7dfe27ae15305eaa9a4fe04f8a"],
+      "usage": {
+        "inputIncludingCache": 17188,
+        "uncachedInput": 292,
+        "cachedInput": 16896,
+        "output": 116,
+        "reasoningSubsetOfOutput": 33
+      },
+      "answer": {
+        "count": 60,
+        "total": 19010
+      },
+      "expected": {
+        "count": 60,
+        "total": 19010
+      },
+      "qualityMatched": true,
+      "publication": [
+        {
+          "line": 61,
+          "messageId": "message_6050708d-0244-4c54-bc2b-4c1b07a5ed22",
+          "roomSeq": 108,
+          "assistantStartsAfterReceipt": 0
+        }
+      ],
+      "rawSha256": "32eed708302c800472f8e3bcf5c9d66ab245a41c3030de17e6a7b4dca9a29f57"
+    }
+  ],
+  "cumulative": [
+    {
+      "throughRound": 1,
+      "native": {
+        "inputIncludingCache": 3758,
+        "uncachedInput": 2222,
+        "cachedInput": 1536,
+        "output": 190,
+        "reasoningSubsetOfOutput": 114
+      },
+      "terminal": {
+        "inputIncludingCache": 87794,
+        "uncachedInput": 14706,
+        "cachedInput": 73088,
+        "output": 1909,
+        "reasoningSubsetOfOutput": 1038
+      },
+      "ratio": {
+        "inputIncludingCache": 23.361894624800424,
+        "uncachedInput": 6.6183618361836185,
+        "output": 10.047368421052632
+      }
+    },
+    {
+      "throughRound": 2,
+      "native": {
+        "inputIncludingCache": 6044,
+        "uncachedInput": 2460,
+        "cachedInput": 3584,
+        "output": 261,
+        "reasoningSubsetOfOutput": 171
+      },
+      "terminal": {
+        "inputIncludingCache": 116923,
+        "uncachedInput": 15163,
+        "cachedInput": 101760,
+        "output": 2156,
+        "reasoningSubsetOfOutput": 1095
+      },
+      "ratio": {
+        "inputIncludingCache": 19.345301125082727,
+        "uncachedInput": 6.163821138211382,
+        "output": 8.260536398467433
+      }
+    },
+    {
+      "throughRound": 3,
+      "native": {
+        "inputIncludingCache": 8427,
+        "uncachedInput": 2667,
+        "cachedInput": 5760,
+        "output": 325,
+        "reasoningSubsetOfOutput": 221
+      },
+      "terminal": {
+        "inputIncludingCache": 146737,
+        "uncachedInput": 15665,
+        "cachedInput": 131072,
+        "output": 2346,
+        "reasoningSubsetOfOutput": 1095
+      },
+      "ratio": {
+        "inputIncludingCache": 17.412721015782605,
+        "uncachedInput": 5.873640794900638,
+        "output": 7.218461538461538
+      }
+    },
+    {
+      "throughRound": 4,
+      "native": {
+        "inputIncludingCache": 10900,
+        "uncachedInput": 2836,
+        "cachedInput": 8064,
+        "output": 339,
+        "reasoningSubsetOfOutput": 221
+      },
+      "terminal": {
+        "inputIncludingCache": 177179,
+        "uncachedInput": 16155,
+        "cachedInput": 161024,
+        "output": 2536,
+        "reasoningSubsetOfOutput": 1095
+      },
+      "ratio": {
+        "inputIncludingCache": 16.254954128440367,
+        "uncachedInput": 5.696403385049365,
+        "output": 7.480825958702065
+      }
+    },
+    {
+      "throughRound": 5,
+      "native": {
+        "inputIncludingCache": 13425,
+        "uncachedInput": 2929,
+        "cachedInput": 10496,
+        "output": 373,
+        "reasoningSubsetOfOutput": 241
+      },
+      "terminal": {
+        "inputIncludingCache": 192667,
+        "uncachedInput": 16411,
+        "cachedInput": 176256,
+        "output": 2668,
+        "reasoningSubsetOfOutput": 1144
+      },
+      "ratio": {
+        "inputIncludingCache": 14.351359404096835,
+        "uncachedInput": 5.602936155684534,
+        "output": 7.152815013404826
+      }
+    },
+    {
+      "throughRound": 6,
+      "native": {
+        "inputIncludingCache": 16010,
+        "uncachedInput": 3082,
+        "cachedInput": 12928,
+        "output": 432,
+        "reasoningSubsetOfOutput": 286
+      },
+      "terminal": {
+        "inputIncludingCache": 224287,
+        "uncachedInput": 16927,
+        "cachedInput": 207360,
+        "output": 2908,
+        "reasoningSubsetOfOutput": 1184
+      },
+      "ratio": {
+        "inputIncludingCache": 14.009181761399125,
+        "uncachedInput": 5.492212848799481,
+        "output": 6.731481481481482
+      }
+    },
+    {
+      "throughRound": 7,
+      "native": {
+        "inputIncludingCache": 18692,
+        "uncachedInput": 3204,
+        "cachedInput": 15488,
+        "output": 455,
+        "reasoningSubsetOfOutput": 295
+      },
+      "terminal": {
+        "inputIncludingCache": 240385,
+        "uncachedInput": 17153,
+        "cachedInput": 223232,
+        "output": 3010,
+        "reasoningSubsetOfOutput": 1203
+      },
+      "ratio": {
+        "inputIncludingCache": 12.860314573079393,
+        "uncachedInput": 5.353620474406991,
+        "output": 6.615384615384615
+      }
+    },
+    {
+      "throughRound": 8,
+      "native": {
+        "inputIncludingCache": 21423,
+        "uncachedInput": 3375,
+        "cachedInput": 18048,
+        "output": 488,
+        "reasoningSubsetOfOutput": 314
+      },
+      "terminal": {
+        "inputIncludingCache": 256691,
+        "uncachedInput": 17459,
+        "cachedInput": 239232,
+        "output": 3113,
+        "reasoningSubsetOfOutput": 1223
+      },
+      "ratio": {
+        "inputIncludingCache": 11.982028660785138,
+        "uncachedInput": 5.173037037037037,
+        "output": 6.379098360655738
+      }
+    },
+    {
+      "throughRound": 9,
+      "native": {
+        "inputIncludingCache": 24225,
+        "uncachedInput": 3489,
+        "cachedInput": 20736,
+        "output": 521,
+        "reasoningSubsetOfOutput": 333
+      },
+      "terminal": {
+        "inputIncludingCache": 273221,
+        "uncachedInput": 17733,
+        "cachedInput": 255488,
+        "output": 3214,
+        "reasoningSubsetOfOutput": 1241
+      },
+      "ratio": {
+        "inputIncludingCache": 11.278472652218783,
+        "uncachedInput": 5.082545141874463,
+        "output": 6.1689059500959695
+      }
+    },
+    {
+      "throughRound": 10,
+      "native": {
+        "inputIncludingCache": 27089,
+        "uncachedInput": 3665,
+        "cachedInput": 23424,
+        "output": 558,
+        "reasoningSubsetOfOutput": 356
+      },
+      "terminal": {
+        "inputIncludingCache": 289959,
+        "uncachedInput": 17959,
+        "cachedInput": 272000,
+        "output": 3330,
+        "reasoningSubsetOfOutput": 1274
+      },
+      "ratio": {
+        "inputIncludingCache": 10.703938868175275,
+        "uncachedInput": 4.9001364256480215,
+        "output": 5.967741935483871
+      }
+    },
+    {
+      "throughRound": 11,
+      "native": {
+        "inputIncludingCache": 30019,
+        "uncachedInput": 3779,
+        "cachedInput": 26240,
+        "output": 595,
+        "reasoningSubsetOfOutput": 379
+      },
+      "terminal": {
+        "inputIncludingCache": 306921,
+        "uncachedInput": 18281,
+        "cachedInput": 288640,
+        "output": 3445,
+        "reasoningSubsetOfOutput": 1306
+      },
+      "ratio": {
+        "inputIncludingCache": 10.22422465771678,
+        "uncachedInput": 4.837523154273617,
+        "output": 5.7899159663865545
+      }
+    },
+    {
+      "throughRound": 12,
+      "native": {
+        "inputIncludingCache": 33018,
+        "uncachedInput": 3962,
+        "cachedInput": 29056,
+        "output": 640,
+        "reasoningSubsetOfOutput": 410
+      },
+      "terminal": {
+        "inputIncludingCache": 324109,
+        "uncachedInput": 18573,
+        "cachedInput": 305536,
+        "output": 3561,
+        "reasoningSubsetOfOutput": 1339
+      },
+      "ratio": {
+        "inputIncludingCache": 9.816130595432794,
+        "uncachedInput": 4.687783947501262,
+        "output": 5.5640625
+      }
+    }
+  ],
+  "windowRounds7Through12": {
+    "native": {
+      "inputIncludingCache": 17008,
+      "uncachedInput": 880,
+      "cachedInput": 16128,
+      "output": 208,
+      "reasoningSubsetOfOutput": 124
+    },
+    "terminal": {
+      "inputIncludingCache": 99822,
+      "uncachedInput": 1646,
+      "cachedInput": 98176,
+      "output": 653,
+      "reasoningSubsetOfOutput": 155
+    },
+    "ratio": {
+      "inputIncludingCache": 5.86912041392286,
+      "uncachedInput": 1.8704545454545454,
+      "output": 3.139423076923077
+    }
+  },
+  "database": {
+    "activations": {
+      "completed": 12
+    },
+    "runs": [
+      {
+        "state": "exited",
+        "exitCode": 0,
+        "count": 12
+      }
+    ],
+    "finalReplyMarkers": 12,
+    "sentPresentedWindows": 12,
+    "workerCursor": 103,
+    "maxActivationToSeq": 103,
+    "activationFinishedEvents": 12,
+    "ackEvidence": "12 completed activations pass room-kernel.ts completeActivation cursor>=toSeq guard. ACK is not 12 separately retained receipt rows; completed delivery/read receipts are cleaned up."
+  },
+  "sandboxProfiles": {
+    "native": "(version 1)\n(allow default)\n(deny file-read* (subpath \"/Users/sun/.loom/reviews\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-wBQZQv/terminal\"))\n",
+    "terminal": "(version 1)\n(allow default)\n(deny file-read* (subpath \"/Users/sun/.loom/reviews\"))\n(deny file-read* (subpath \"/private/tmp/loom-pi-long-wBQZQv/native\"))\n"
+  },
+  "oracleAudit": {
+    "observedOracleReadCommands": [],
+    "verdict": "No observed direct oracle reads; reviews and peer paths denied by saved OS profiles. Does not claim full machine/network isolation."
+  },
+  "terminalFirstRoundToolCommands": [
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 41,
+      "command": "ls -la; echo \"---\"; cat budget.csv 2>/dev/null"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 117,
+      "command": "ls -la ..; find . -type f | head; echo \"---env---\"; env | grep -i -E 'loom|room|seq' | head -50"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 151,
+      "command": "cat ../session.jsonl"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 289,
+      "command": "ls -la /private/tmp/loom-pi-long-wBQZQv/agent/bin 2>/dev/null; echo \"---\"; ls -la /private/tmp/loom-pi-long-wBQZQv/agent 2>/dev/null; echo \"---sock---\"; ls -la /tmp/pi-long-84637.sock 2>/dev/null"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 404,
+      "command": "cd /private/tmp/loom-pi-long-wBQZQv/agent; echo \"==receipt.mjs==\"; cat receipt.mjs; echo; echo \"==terminal.ts==\"; cat terminal.ts; echo; echo \"==mcp.json==\"; cat mcp.json; echo; echo \"==settings.json==\"; cat settings.json"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 507,
+      "command": "sed -n '1,200p' /Users/sun/Code/repos/rah_os/packages/agent-host/src/worker-mcp-entry.ts 2>/dev/null"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 637,
+      "command": "ls /Users/sun/Code/repos/rah_os/packages/ 2>/dev/null; echo \"---\"; find /Users/sun/Code/repos/rah_os -iname '*worker*' -maxdepth 4 2>/dev/null | head -50"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 862,
+      "command": "find /private/tmp/loom-pi-long-wBQZQv -type f 2>/dev/null; echo \"---\"; find /tmp -maxdepth 1 -iname '*loom*' 2>/dev/null; echo \"===ws===\"; ls -la /private/tmp/loom-pi-long-wBQZQv"
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "line": 984,
+      "command": "cd /private/tmp/loom-pi-long-wBQZQv/terminal/work && python3 -c \"\nimport csv\nrows=list(csv.DictReader(open('budget.csv')))\na=[int(r['amount']) for r in rows if r['group']=='A']\nprint(len(a), sum(a))\n\""
+    }
+  ],
+  "interpretation": "Terminal first round investigates own session, integration/config and repository before publication; retained large tool outputs expand later same-session inputs. Additional early calls are before publication, not post-publication repeat-answer cost. No causal size attribution or counterfactual savings inferred.",
+  "accounting": "Unique responseId per assistant message_end only; mirrored native session responseIds reconciled, starts=ends, result.json usage reconciled. Input includes cacheRead+cacheWrite; reasoning is subset output. Pi zero cost metadata is not free pricing.",
+  "limits": [
+    "One model and one trajectory per arm; not a multi-model or five-CLI efficiency result.",
+    "Twelve turns with compaction off do not cover long context compaction.",
+    "Alternating run order reduces timing bias but cache effects and model/tool randomness remain.",
+    "Natural tool traces differ materially; cumulative ratio measures full observed outcome, not fixed per-transport tax.",
+    "Manual real Kernel/Worker bridge only; not automatic scheduler or production Pi adapter acceptance.",
+    "OS denies specified reviews/peer paths only; same UID and allow-default profile are not general security isolation.",
+    "No extra request after publication does not imply low total task cost.",
+    "No provider monetary price metadata; report token measures separately, not financial cost."
+  ]
+}

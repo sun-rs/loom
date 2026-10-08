@@ -9,7 +9,7 @@ P95 有界真实验收：两个 Codex gpt-6-luna/low 各两轮，Task 提交／�
 P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-directory-p93.md)。当前原生CLI在新建/resume中都会呈现附加目录，同模型原生续轮直接读取正确路径；P92长期会话亦曾收到路径、未压缩。尚未做同历史消融，不宣称Loom协议或模型单方根因。
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
-- Pi 接入状态：P131 隔离终结工具原型已完成真实同 session 两轮：2 次生成、2 次显式发表及 Activation 完成、回执保留，发表后额外生成 0；免费混合工具批次证明不会提前终止其他非终结工具。P130 的原 MCP 路径每轮仍有额外生成；尚无生产 Pi adapter、自动调度或长期配对效率验收。五 CLI 能力差异及 Claude 模型映射阻断见[证据](evidence/2026-10-08-terminal-tool-feasibility.json)。
+- Pi 接入状态：P131 的终结工具原型已消除成功发表后的额外生成；P135 加 OS 读取隔离的 12 轮真实对照双方答案正确、连续 session/真实发表/完成 fence 通过，但该单模型轨迹输入含缓存为原生 9.816 倍、未缓存 4.688 倍，效率未通过。首轮发表前探索自身会话/集成配置造成大量历史残留，不能归为发表后收尾成本；P133 错答和 P134 标准答案泄漏批次均保留且不接受倍率。Claude P132 隔离后命中 Haiku，但 Hook 返回形状修正尚未真实复验，新版默认 reasoning 差异未解决。尚无生产 Pi adapter 或跨模型效率结论；[本批汇总](evidence/2026-10-08-terminal-long/summary.json)、[有效失败轨迹](evidence/2026-10-08-terminal-long/pi-v3.json)。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
 - Jev 研究与取舍：[P80–P84 结论及经验](jev-research-decision.zh-CN.md)：不引入核心调度或默认上下文过滤；按需检索仅保留为实验。
 - 效率门禁合同：[cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)；漂移门禁：[long-session-drift-gate](../design/long-session-drift-gate.zh-CN.md)。

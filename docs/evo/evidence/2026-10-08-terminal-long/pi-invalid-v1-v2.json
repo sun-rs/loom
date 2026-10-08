@@ -1,0 +1,1401 @@
+{
+  "schema": "loom.invalid-paid-pi-runs-audit.v1",
+  "scope": "v1/v2 only; v3 not read or evaluated",
+  "provider": "aihubmix",
+  "model": "deepseek-v4.1-flash",
+  "thinking": "low",
+  "cliVersion": "1.1.0",
+  "accounting": "Count only raw message_end assistant usage once per globally unique responseId per experiment. Cross-check each round against result.json. Do not add session transcript mirror, cumulative totals, tool_result echoes or message_update usage. Reasoning is an output subset, not added twice. Price metadata is absent: zero Pi cost does not mean free.",
+  "runs": [
+    {
+      "version": "v1",
+      "runId": "1791446604140",
+      "synthetic": false,
+      "verdict": "failed semantic acceptance; no efficiency verdict",
+      "ratio": null,
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "arms": {
+        "native": {
+          "roundsObserved": 1,
+          "generations": 2,
+          "assistantStarts": 2,
+          "usage": {
+            "inputIncludingCache": 2263,
+            "uncachedInput": 1367,
+            "cacheReadInput": 896,
+            "cacheWriteInput": 0,
+            "output": 230,
+            "reasoningSubsetOfOutput": 177,
+            "totalInputAndOutput": 2493
+          },
+          "qualityRows": [
+            {
+              "round": 1,
+              "answer": {
+                "count": 15,
+                "total": 4545
+              },
+              "expected": {
+                "count": 15,
+                "total": 4545
+              },
+              "matchedExpected": true
+            }
+          ],
+          "rawExpectedMatches": 1,
+          "qualityVerdict": "first round matched; longer task unrun",
+          "records": [
+            {
+              "round": 1,
+              "responseId": "021791446605113d0772768801c6f53364f86e86ee82bc433f91c",
+              "usage": {
+                "input": 920,
+                "output": 45,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "reasoning": 6,
+                "totalTokens": 965,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "021791446607905aef91fec3a81c53339a5720099214cde88a58b",
+              "usage": {
+                "input": 447,
+                "output": 185,
+                "cacheRead": 896,
+                "cacheWrite": 0,
+                "reasoning": 171,
+                "totalTokens": 1528,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            }
+          ],
+          "rawFiles": [
+            {
+              "name": "native-1.raw.jsonl",
+              "sha256": "7379f91653b6dc47ef528ed91802bfea2ecf746a1cb338ca0909a76f9e9e84e0"
+            }
+          ]
+        },
+        "terminal": {
+          "roundsObserved": 1,
+          "generations": 2,
+          "assistantStarts": 2,
+          "usage": {
+            "inputIncludingCache": 2728,
+            "uncachedInput": 1576,
+            "cacheReadInput": 1152,
+            "cacheWriteInput": 0,
+            "output": 305,
+            "reasoningSubsetOfOutput": 180,
+            "totalInputAndOutput": 3033
+          },
+          "qualityRows": [
+            {
+              "round": 1,
+              "answer": {
+                "count": 15,
+                "total": 2025
+              },
+              "expected": {
+                "count": 15,
+                "total": 4545
+              },
+              "matchedExpected": false
+            }
+          ],
+          "rawExpectedMatches": 0,
+          "qualityVerdict": "failed: incorrect arithmetic in first round",
+          "records": [
+            {
+              "round": 1,
+              "responseId": "0217914466126493335ce5dc727daeef6b2fdeb6cd96fc2379055",
+              "usage": {
+                "input": 1152,
+                "output": 46,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "reasoning": 7,
+                "totalTokens": 1198,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "0217914466155743472b452131530d7d1d28285be3fe78bdfe066",
+              "usage": {
+                "input": 424,
+                "output": 259,
+                "cacheRead": 1152,
+                "cacheWrite": 0,
+                "reasoning": 173,
+                "totalTokens": 1835,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            }
+          ],
+          "rawFiles": [
+            {
+              "name": "terminal-1.raw.jsonl",
+              "sha256": "65c98f866b70fbd989b79e2c8886e7a9ad79ea868bc27d464a6ed93726be4a8c"
+            }
+          ]
+        }
+      },
+      "leakEvidence": [],
+      "uniqueResponseIds": 4
+    },
+    {
+      "version": "v2",
+      "runId": "1791447974928",
+      "synthetic": false,
+      "verdict": "invalid for efficiency and quality comparison: answer-key/prior-result contamination",
+      "ratio": null,
+      "failure": null,
+      "arms": {
+        "native": {
+          "roundsObserved": 12,
+          "generations": 19,
+          "assistantStarts": 19,
+          "usage": {
+            "inputIncludingCache": 55353,
+            "uncachedInput": 4921,
+            "cacheReadInput": 50432,
+            "cacheWriteInput": 0,
+            "output": 1124,
+            "reasoningSubsetOfOutput": 456,
+            "totalInputAndOutput": 56477
+          },
+          "qualityRows": [
+            {
+              "round": 1,
+              "answer": {
+                "count": 15,
+                "total": 4545
+              },
+              "expected": {
+                "count": 15,
+                "total": 4545
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 2,
+              "answer": {
+                "count": 15,
+                "total": 4650
+              },
+              "expected": {
+                "count": 15,
+                "total": 4650
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 3,
+              "answer": {
+                "count": 15,
+                "total": 4755
+              },
+              "expected": {
+                "count": 15,
+                "total": 4755
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 4,
+              "answer": {
+                "count": 15,
+                "total": 4860
+              },
+              "expected": {
+                "count": 15,
+                "total": 4860
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 5,
+              "answer": {
+                "count": 15,
+                "total": 4645
+              },
+              "expected": {
+                "count": 15,
+                "total": 4645
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 6,
+              "answer": {
+                "count": 60,
+                "total": 18910
+              },
+              "expected": {
+                "count": 60,
+                "total": 18910
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 7,
+              "answer": {
+                "count": 15,
+                "total": 4545
+              },
+              "expected": {
+                "count": 15,
+                "total": 4545
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 8,
+              "answer": {
+                "count": 60,
+                "total": 18810
+              },
+              "expected": {
+                "count": 60,
+                "total": 18810
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 9,
+              "answer": {
+                "count": 15,
+                "total": 4850
+              },
+              "expected": {
+                "count": 15,
+                "total": 4850
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 10,
+              "answer": {
+                "count": 30,
+                "total": 9710
+              },
+              "expected": {
+                "count": 30,
+                "total": 9710
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 11,
+              "answer": {
+                "count": 30,
+                "total": 9300
+              },
+              "expected": {
+                "count": 30,
+                "total": 9300
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 12,
+              "answer": {
+                "count": 60,
+                "total": 19010
+              },
+              "expected": {
+                "count": 60,
+                "total": 19010
+              },
+              "matchedExpected": true
+            }
+          ],
+          "rawExpectedMatches": 12,
+          "qualityVerdict": "not accepted: contaminated experiment",
+          "records": [
+            {
+              "round": 1,
+              "responseId": "021791447976866b159bc84c5a1b130ed538fa9e56f3b2696d70a",
+              "usage": {
+                "input": 1630,
+                "output": 59,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "reasoning": 7,
+                "totalTokens": 1689,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "0217914479785842d417bd9da6e7dfe27ae15305eaa9a4fc4e59a",
+              "usage": {
+                "input": 604,
+                "output": 243,
+                "cacheRead": 1536,
+                "cacheWrite": 0,
+                "reasoning": 168,
+                "totalTokens": 2383,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "021791447981502d0772768801c6f53364f86e86ee82bc48d0eeb",
+              "usage": {
+                "input": 355,
+                "output": 26,
+                "cacheRead": 2048,
+                "cacheWrite": 0,
+                "reasoning": 12,
+                "totalTokens": 2429,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 2,
+              "responseId": "0217914480050726f6053399c9cd9a88fffa867c82088336c3fbe",
+              "usage": {
+                "input": 151,
+                "output": 138,
+                "cacheRead": 2304,
+                "cacheWrite": 0,
+                "reasoning": 63,
+                "totalTokens": 2593,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 2,
+              "responseId": "0217914480080575758257d42a91c1c96a520305082a02d5f7008",
+              "usage": {
+                "input": 181,
+                "output": 14,
+                "cacheRead": 2432,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 2627,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 3,
+              "responseId": "021791448010950a04a47ac73179d3e64c063d7b69771fc2aa69a",
+              "usage": {
+                "input": 93,
+                "output": 75,
+                "cacheRead": 2560,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 2728,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 3,
+              "responseId": "021791448012421c2531bd3ff98f8d456851518a83e6729a57702",
+              "usage": {
+                "input": 188,
+                "output": 14,
+                "cacheRead": 2560,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 2762,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 4,
+              "responseId": "021791448029909e9cb6370e1c023d3432663e680fc5c294738b4",
+              "usage": {
+                "input": 100,
+                "output": 75,
+                "cacheRead": 2688,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 2863,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 4,
+              "responseId": "021791448032623160995723eabea0b8c1f90eb8f6ac3e3ed3f67",
+              "usage": {
+                "input": 195,
+                "output": 14,
+                "cacheRead": 2688,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 2897,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 5,
+              "responseId": "0217914480360631dd291674643982da436c46312b5f1c9c6c80c",
+              "usage": {
+                "input": 119,
+                "output": 115,
+                "cacheRead": 2816,
+                "cacheWrite": 0,
+                "reasoning": 38,
+                "totalTokens": 3050,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 5,
+              "responseId": "0217914480390828d04290f080f41f1dcb9c4b0d68f093033db77",
+              "usage": {
+                "input": 254,
+                "output": 14,
+                "cacheRead": 2816,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 3084,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 6,
+              "responseId": "021791448049822c1c101af9eebb417c253ad03e8acb941df0334",
+              "usage": {
+                "input": 166,
+                "output": 107,
+                "cacheRead": 2944,
+                "cacheWrite": 0,
+                "reasoning": 36,
+                "totalTokens": 3217,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 6,
+              "responseId": "0217914480521071023f1f6cf081335b7e69d5fdf9a9368e451f4",
+              "usage": {
+                "input": 165,
+                "output": 14,
+                "cacheRead": 3072,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 3251,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 7,
+              "responseId": "02179144805510776f8256debb8f03d2da9dea6cc2a650d1193dd",
+              "usage": {
+                "input": 89,
+                "output": 32,
+                "cacheRead": 3200,
+                "cacheWrite": 0,
+                "reasoning": 18,
+                "totalTokens": 3321,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 8,
+              "responseId": "0217914480645923694b53d1b7644bc84f9058822e8eff21b5fee",
+              "usage": {
+                "input": 147,
+                "output": 29,
+                "cacheRead": 3200,
+                "cacheWrite": 0,
+                "reasoning": 15,
+                "totalTokens": 3376,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 9,
+              "responseId": "0217914480686367097180e458ae3c6e16036676cea376ff1b877",
+              "usage": {
+                "input": 86,
+                "output": 33,
+                "cacheRead": 3328,
+                "cacheWrite": 0,
+                "reasoning": 19,
+                "totalTokens": 3447,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 10,
+              "responseId": "021791448078553d6bdab3051f46472bfd942e874cc5db0f76112",
+              "usage": {
+                "input": 148,
+                "output": 40,
+                "cacheRead": 3328,
+                "cacheWrite": 0,
+                "reasoning": 26,
+                "totalTokens": 3516,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 11,
+              "responseId": "0217914480809630ee260dfd2a9fd54be3b56f3e8884a83ce72bf",
+              "usage": {
+                "input": 89,
+                "output": 40,
+                "cacheRead": 3456,
+                "cacheWrite": 0,
+                "reasoning": 26,
+                "totalTokens": 3585,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            },
+            {
+              "round": 12,
+              "responseId": "0217914480932342d028257773b48b117f8c4bedc94f46bcbbe77",
+              "usage": {
+                "input": 161,
+                "output": 42,
+                "cacheRead": 3456,
+                "cacheWrite": 0,
+                "reasoning": 28,
+                "totalTokens": 3659,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "stop"
+            }
+          ],
+          "rawFiles": [
+            {
+              "name": "native-1.raw.jsonl",
+              "sha256": "841995805b32cbca2c17fa2b070bf9b9eaba970b186e4def0d8d0e7986e2df49"
+            },
+            {
+              "name": "native-2.raw.jsonl",
+              "sha256": "0a5612d1167bbfa6e2b8f6556a8991b9f4e0beab126f5d1900d8f0656df5f8a3"
+            },
+            {
+              "name": "native-3.raw.jsonl",
+              "sha256": "f7b0fc1fc6f1883eff37d9b163259f2fa9fff4a915279f6c53032c306a3e9e48"
+            },
+            {
+              "name": "native-4.raw.jsonl",
+              "sha256": "887896df14edfeaf981f84ad76997007f2b3f1fd93480ce49cd72dc705b39b85"
+            },
+            {
+              "name": "native-5.raw.jsonl",
+              "sha256": "311012a12389b640b796c8c69a947b3bd21b0f7905e55b75e32f42a34875f02f"
+            },
+            {
+              "name": "native-6.raw.jsonl",
+              "sha256": "0f4a1ff4d6c9804221de31be296c307786f831115e40e0fb84234cf8f1b806d8"
+            },
+            {
+              "name": "native-7.raw.jsonl",
+              "sha256": "32f98db2afdf38699747e47f5901b46022ce8ff4b1faaf6e91fb2d613dd6d309"
+            },
+            {
+              "name": "native-8.raw.jsonl",
+              "sha256": "5701387a49646f1f79fe67bcf6bab73316e771e7343941e2e2fe82de4b647062"
+            },
+            {
+              "name": "native-9.raw.jsonl",
+              "sha256": "1583c784b9fc638b1680dde14b1fb4ee1d26af5cee6087b5d00a56e9fb5c036f"
+            },
+            {
+              "name": "native-10.raw.jsonl",
+              "sha256": "35be21c55b511ece84dd019ee548567770a7d3e3786e24b9dfd6695b9808e5f7"
+            },
+            {
+              "name": "native-11.raw.jsonl",
+              "sha256": "8b63567e7c5e7359aee1e44daa8a28e8597714b7cd883e22665543c72119a81a"
+            },
+            {
+              "name": "native-12.raw.jsonl",
+              "sha256": "82cf8fb61a50685b63255275e904953e66c3ae180286cef010a6e462cfdfb3ed"
+            }
+          ]
+        },
+        "terminal": {
+          "roundsObserved": 12,
+          "generations": 18,
+          "assistantStarts": 18,
+          "usage": {
+            "inputIncludingCache": 189459,
+            "uncachedInput": 14611,
+            "cacheReadInput": 174848,
+            "cacheWriteInput": 0,
+            "output": 2593,
+            "reasoningSubsetOfOutput": 923,
+            "totalInputAndOutput": 192052
+          },
+          "qualityRows": [
+            {
+              "round": 1,
+              "answer": {
+                "count": 15,
+                "total": 4545
+              },
+              "expected": {
+                "count": 15,
+                "total": 4545
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 2,
+              "answer": {
+                "count": 15,
+                "total": 4650
+              },
+              "expected": {
+                "count": 15,
+                "total": 4650
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 3,
+              "answer": {
+                "count": 15,
+                "total": 4755
+              },
+              "expected": {
+                "count": 15,
+                "total": 4755
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 4,
+              "answer": {
+                "count": 15,
+                "total": 4860
+              },
+              "expected": {
+                "count": 15,
+                "total": 4860
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 5,
+              "answer": {
+                "count": 15,
+                "total": 4645
+              },
+              "expected": {
+                "count": 15,
+                "total": 4645
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 6,
+              "answer": {
+                "count": 60,
+                "total": 18910
+              },
+              "expected": {
+                "count": 60,
+                "total": 18910
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 7,
+              "answer": {
+                "count": 15,
+                "total": 4545
+              },
+              "expected": {
+                "count": 15,
+                "total": 4545
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 8,
+              "answer": {
+                "count": 60,
+                "total": 18810
+              },
+              "expected": {
+                "count": 60,
+                "total": 18810
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 9,
+              "answer": {
+                "count": 15,
+                "total": 4850
+              },
+              "expected": {
+                "count": 15,
+                "total": 4850
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 10,
+              "answer": {
+                "count": 30,
+                "total": 9710
+              },
+              "expected": {
+                "count": 30,
+                "total": 9710
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 11,
+              "answer": {
+                "count": 30,
+                "total": 9300
+              },
+              "expected": {
+                "count": 30,
+                "total": 9300
+              },
+              "matchedExpected": true
+            },
+            {
+              "round": 12,
+              "answer": {
+                "count": 60,
+                "total": 19010
+              },
+              "expected": {
+                "count": 60,
+                "total": 19010
+              },
+              "matchedExpected": true
+            }
+          ],
+          "rawExpectedMatches": 12,
+          "qualityVerdict": "not accepted: contaminated experiment",
+          "records": [
+            {
+              "round": 1,
+              "responseId": "021791447984188034d021d1c7434dbb2c855dd0aef562f9b0a7d",
+              "usage": {
+                "input": 1862,
+                "output": 134,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "reasoning": 12,
+                "totalTokens": 1996,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "0217914479863434b8de4e4bcc885b4197a5e365ab4902c3c7889",
+              "usage": {
+                "input": 668,
+                "output": 243,
+                "cacheRead": 1792,
+                "cacheWrite": 0,
+                "reasoning": 73,
+                "totalTokens": 2703,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "0217914479894022aa527f157b6a110efda50fc2be4a17acf1823",
+              "usage": {
+                "input": 863,
+                "output": 257,
+                "cacheRead": 2432,
+                "cacheWrite": 0,
+                "reasoning": 73,
+                "totalTokens": 3552,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 1,
+              "responseId": "021791447992768a9d3d132e652feb8a0dea50a67fd1a453f9fca",
+              "usage": {
+                "input": 7326,
+                "output": 357,
+                "cacheRead": 3200,
+                "cacheWrite": 0,
+                "reasoning": 274,
+                "totalTokens": 10883,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 2,
+              "responseId": "021791447998822c023b1fb2f77c622a3f5432d0f6222687d2cc0",
+              "usage": {
+                "input": 488,
+                "output": 204,
+                "cacheRead": 10496,
+                "cacheWrite": 0,
+                "reasoning": 138,
+                "totalTokens": 11188,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 2,
+              "responseId": "021791448002283cdb985060772518cf2b73708fa98016e245a24",
+              "usage": {
+                "input": 325,
+                "output": 83,
+                "cacheRead": 10880,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 11288,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 3,
+              "responseId": "0217914480159477ca105f5574cf73b805fb1b9d3d8cfa03d7c8f",
+              "usage": {
+                "input": 258,
+                "output": 113,
+                "cacheRead": 11136,
+                "cacheWrite": 0,
+                "reasoning": 47,
+                "totalTokens": 11507,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 3,
+              "responseId": "0217914480190443df9cb2113c39e36864453bb6f372e35806ef9",
+              "usage": {
+                "input": 132,
+                "output": 83,
+                "cacheRead": 11392,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 11607,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 4,
+              "responseId": "0217914480229812d028257773b48b117f8c4bedc94f46b7ac6b2",
+              "usage": {
+                "input": 192,
+                "output": 112,
+                "cacheRead": 11520,
+                "cacheWrite": 0,
+                "reasoning": 46,
+                "totalTokens": 11824,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 4,
+              "responseId": "021791448026240873b68ad3a5b1c0a1311de00f33c0857d18401",
+              "usage": {
+                "input": 193,
+                "output": 83,
+                "cacheRead": 11648,
+                "cacheWrite": 0,
+                "reasoning": 0,
+                "totalTokens": 11924,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 5,
+              "responseId": "0217914480418973df9cb2113c39e36864453bb6f372e3597fdbd",
+              "usage": {
+                "input": 266,
+                "output": 118,
+                "cacheRead": 11776,
+                "cacheWrite": 0,
+                "reasoning": 35,
+                "totalTokens": 12160,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 6,
+              "responseId": "0217914480456096bc656bbd49cfaee971fadc31892ba5b7f61cb",
+              "usage": {
+                "input": 233,
+                "output": 131,
+                "cacheRead": 12032,
+                "cacheWrite": 0,
+                "reasoning": 48,
+                "totalTokens": 12396,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 7,
+              "responseId": "021791448058201a7468c13ae862cf181a1dbcac0db1f822f6061",
+              "usage": {
+                "input": 357,
+                "output": 101,
+                "cacheRead": 12160,
+                "cacheWrite": 0,
+                "reasoning": 18,
+                "totalTokens": 12618,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 8,
+              "responseId": "021791448061839c4b4c21807da17f108ce4c4545791d8e3bf4f3",
+              "usage": {
+                "input": 306,
+                "output": 107,
+                "cacheRead": 12416,
+                "cacheWrite": 0,
+                "reasoning": 24,
+                "totalTokens": 12829,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 9,
+              "responseId": "02179144807159552e41e2783ec5c4cff790c8cff2820f6cd3f9e",
+              "usage": {
+                "input": 273,
+                "output": 113,
+                "cacheRead": 12672,
+                "cacheWrite": 0,
+                "reasoning": 30,
+                "totalTokens": 13058,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 10,
+              "responseId": "021791448075642fb89e181bd9b21545a0eb5a18e7fe8de907111",
+              "usage": {
+                "input": 237,
+                "output": 117,
+                "cacheRead": 12928,
+                "cacheWrite": 0,
+                "reasoning": 34,
+                "totalTokens": 13282,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 11,
+              "responseId": "0217914480847125f505d6745d4b07a5efbd0dd2f16cfcb324cf2",
+              "usage": {
+                "input": 333,
+                "output": 109,
+                "cacheRead": 13056,
+                "cacheWrite": 0,
+                "reasoning": 26,
+                "totalTokens": 13498,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            },
+            {
+              "round": 12,
+              "responseId": "0217914480893941fabb13063b3e354601db29cbe6491e1359b96",
+              "usage": {
+                "input": 299,
+                "output": 128,
+                "cacheRead": 13312,
+                "cacheWrite": 0,
+                "reasoning": 45,
+                "totalTokens": 13739,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "stopReason": "toolUse"
+            }
+          ],
+          "rawFiles": [
+            {
+              "name": "terminal-1.raw.jsonl",
+              "sha256": "aa7a6ce331578abca4c008f49fde58e74d50e2096602aed48fb571bf759eb5fe"
+            },
+            {
+              "name": "terminal-2.raw.jsonl",
+              "sha256": "5409224adabcc8c767f46058fa35fcce54cbd318c7ed4af556d502f243f479f3"
+            },
+            {
+              "name": "terminal-3.raw.jsonl",
+              "sha256": "bd64fe90cb08f420a3bfc9de244cc2578dab1dc9d08733801c00fea3bcf4eefe"
+            },
+            {
+              "name": "terminal-4.raw.jsonl",
+              "sha256": "fb44561f8072f318c25d7862ec1ff56f23a1ced9d68097b5c1cca7a243adce95"
+            },
+            {
+              "name": "terminal-5.raw.jsonl",
+              "sha256": "ecb94571c57eee9be2e102311e3b1444837bcdaab97c8932eb3ad0eb30ed91d3"
+            },
+            {
+              "name": "terminal-6.raw.jsonl",
+              "sha256": "f888bf40317b9698638343269d749fcc1b437c919811e0a0793441b6e6b895c1"
+            },
+            {
+              "name": "terminal-7.raw.jsonl",
+              "sha256": "7584986c2ca75f60ff1cf315f18b5f4776e4cf53b8233d1899cd109a1423b220"
+            },
+            {
+              "name": "terminal-8.raw.jsonl",
+              "sha256": "b04e7fb1ae6b0c180500aace2ef000e316d0550ece69a5f8aaf4bef39d18d966"
+            },
+            {
+              "name": "terminal-9.raw.jsonl",
+              "sha256": "4bde720589621ee121a0437094de58ad3ab4953e7f86655a9398c56facdbcd57"
+            },
+            {
+              "name": "terminal-10.raw.jsonl",
+              "sha256": "3257b6cbe98b37f02670c3a66efd2ba15ce452e12b2bde0dc1736949cf0a9e6f"
+            },
+            {
+              "name": "terminal-11.raw.jsonl",
+              "sha256": "ac6f99dc7e2dae7b3bd1dcd8b9b2c2d679dfb08a049758050d15332eef96ad48"
+            },
+            {
+              "name": "terminal-12.raw.jsonl",
+              "sha256": "e88869e5170f34f97ef7c946ae7ed37a38e4a08f39f59b4fd0fb4821bf8c75d4"
+            }
+          ]
+        }
+      },
+      "leakEvidence": [
+        {
+          "rawFile": "terminal-1.raw.jsonl",
+          "toolCallLine": 454,
+          "toolCallId": "call_00_8e03ikfql25pzmmm51yq90w1",
+          "tool": "bash",
+          "command": "echo \"=== result.json ===\"; cat /Users/sun/.loom/reviews/2026-10-08-pi-long/runs/1791447974928/result.json; echo; echo \"=== plan.json ===\"; cat /Users/sun/.loom/reviews/2026-10-08-pi-long/runs/1791447974928/plan.json",
+          "toolResultLine": 466,
+          "isError": false,
+          "resultBytes": 7266,
+          "resultSha256": "43d98098134c22c4fd406fc4b58940f2d0b373e52e662675407b96527494126b",
+          "provesExpectedAnswerDisclosure": true,
+          "provesPriorNativeResultDisclosure": true,
+          "provesOwnTranscriptDisclosure": false,
+          "resultPrefix": "=== result.json ===\n{\n  \"kind\": \"pi-native-vs-terminal-mcp-12-turn-budget-audit-v2\",\n  \"synthetic\": false,\n  \"results\": [\n    {\n      \"arm\": \"native\",\n      \"round\": 1,\n      \"exitCode\": 0,\n      \"answer\": {\n        \"count\": 15,\n        \"total\": 4545\n      },\n"
+        },
+        {
+          "rawFile": "terminal-1.raw.jsonl",
+          "toolCallLine": 454,
+          "toolCallId": "call_01_c6ze5e2k3vh2n7o6i89svt23",
+          "tool": "bash",
+          "command": "echo \"=== terminal.jsonl ===\"; cat /Users/sun/.loom/reviews/2026-10-08-pi-long/runs/1791447974928/terminal.jsonl",
+          "toolResultLine": 468,
+          "isError": false,
+          "resultBytes": 16309,
+          "resultSha256": "a5a2bb8a5383347cad8d64cd3811005b8bab05dcac18edaa88863b49830ba717",
+          "provesExpectedAnswerDisclosure": false,
+          "provesPriorNativeResultDisclosure": false,
+          "provesOwnTranscriptDisclosure": true,
+          "resultPrefix": "=== terminal.jsonl ===\n{\"type\":\"session\",\"version\":3,\"id\":\"01a11a9e-e475-7022-854c-029386807f26\",\"timestamp\":\"2026-10-08T08:26:23.222Z\",\"cwd\":\"/Users/sun/.loom/reviews/2026-10-08-pi-long/runs/1791447974928/terminal-work\"}\n{\"type\":\"model_change\",\"id\":\"6389076d\""
+        }
+      ],
+      "uniqueResponseIds": 37
+    }
+  ],
+  "paidGrandTotal": {
+    "inputIncludingCache": 249803,
+    "uncachedInput": 22475,
+    "cacheReadInput": 227328,
+    "cacheWriteInput": 0,
+    "output": 4252,
+    "reasoningSubsetOfOutput": 1736,
+    "totalInputAndOutput": 254055
+  },
+  "generationsGrandTotal": 41,
+  "claudeSeparate": "Claude failed prototype input including cache 4113/output176 is not included in these Pi totals."
+}
