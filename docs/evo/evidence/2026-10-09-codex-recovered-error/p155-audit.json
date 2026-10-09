@@ -1,0 +1,84 @@
+{
+  "batch": "P155",
+  "readOnlyOfflineAudit": true,
+  "paidCalls": 0,
+  "productChanges": false,
+  "nativeOutcome": {
+    "code": 0,
+    "signal": null,
+    "timedOut": false,
+    "overflow": false
+  },
+  "nativeFinalProof": {
+    "oneUserInputAndCurrentTurnModelEffortAccepted": true,
+    "uniqueAssistantFinal": true,
+    "uniqueTaskComplete": true,
+    "stdoutFinalEqualsRolloutEqualsOutputFile": true,
+    "stdoutLastFrame": "turn.completed",
+    "rolloutErrorEvents": 0,
+    "observedCompletedCommands": [
+      {
+        "status": "completed",
+        "exitCode": 0
+      },
+      {
+        "status": "completed",
+        "exitCode": 0
+      },
+      {
+        "status": "completed",
+        "exitCode": 0
+      }
+    ]
+  },
+  "recoveredDiagnostics": [
+    {
+      "type": "error",
+      "message": "Reconnecting... 2/5 (stream disconnected before completion: tls handshake eof)"
+    },
+    {
+      "type": "error",
+      "message": "Reconnecting... 2/5 (stream disconnected before completion: tls handshake eof)"
+    },
+    {
+      "type": "error",
+      "message": "Reconnecting... 3/5 (request timed out)"
+    }
+  ],
+  "collectorReplay": {
+    "original": false,
+    "removeOnlyStdoutErrorFrames": true,
+    "explanation": "Current product collector also rejects this otherwise-consistent native completion solely because any stdout error is forbidden. Diagnostic frame removal is an offline differential experiment only, not repaired provider evidence or a Room action.",
+    "provenanceLimit": "Offline reconstruction from retained native-control stdout, copied rollout and retained output file. Fresh-file prelaunch identities and launchId are reconstructed assumptions, not real AgentHost capture or new publication."
+  },
+  "businessVerdict": "Native execution/final response reached consistent success. Full invoice task correctness was not evaluated by this audit; original paid batch remains failed and unpaired.",
+  "usage": {
+    "knownGenerations": 5,
+    "known": {
+      "input_tokens": 40471,
+      "cached_input_tokens": 33536,
+      "output_tokens": 3000,
+      "reasoning_output_tokens": 443
+    },
+    "stdoutCompletedUsageMatches": true,
+    "completeness": "Unknown for recovered failed network attempts. Five recorded responses reconcile internally, but there is no upstream request ledger proving all retried attempts unbilled or represented.",
+    "noRatio": true
+  },
+  "additionalDiagnosticDistinction": "stderr includes model-catalog refresh timeouts and response-websocket TLS failures. Catalog timeouts are not model generation evidence; none can establish total billable requests.",
+  "minimumTddSuggestion": [
+    "First use sanitized retained frame order plus valid final/output/rollout identities to make existing collector and native-control recovered-reconnect case fail red. Keep any fake/captured provenance explicit.",
+    "Add tightly bounded recovered transport diagnostic case that still requires exit0, one matching final, terminal turn.completed/task_complete, exact input/session/turn and all tool completions. Distinguish diagnostic reconnect from turn.failed; do not simply drop all errors.",
+    "Negative controls: turn.failed, nonzero exit, aborted rollout, missing/duplicate final, unknown error class, pending tool, diagnostic after terminal completion remain rejected.",
+    "Separate outcome and accounting: emit an incomplete-usage diagnostic for unreconciled retries while preserving five known response records; never convert unavailable retry spend to zero.",
+    "Apply same verified semantics to product collector and native-control; then actual CLI+loopback deterministic transport-failure/recovery integration before any new paid run."
+  ],
+  "hashes": {
+    "stdout": "08dd54eab0e421703b7d510a4543f4192412b655bf2047992a591b6105ad0ff0",
+    "rollout": "d06ca1c999ed3baf0a19e3895a84350639e26b273de055133d8653c8784491db",
+    "output": "bca156723b6708981458c3642609c3fc8b392385112f2f0026f3837193979b70"
+  },
+  "sourceHashes": {
+    "/Users/sun/Code/repos/rah_os/packages/agent-host/src/codex-exec-final-output.js": "fc403097ea52d3a5886bcd9e73567e8489d3df2bf9e2b9828fb03de2610b6e2a",
+    "PRIVATE_REVIEWS/2026-10-09-codex-56-postfix-v4/runs/1791533090147-P155/native-control.mjs": "1ce4fbd5e4fc0ef67f70dc268174f0049ec668338daee423c8ca17c8e05fa69e"
+  }
+}

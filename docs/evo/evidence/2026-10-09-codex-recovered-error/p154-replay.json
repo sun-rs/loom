@@ -1,0 +1,43 @@
+{
+  "batch": "P154",
+  "round": 7,
+  "scope": "Offline differential eligibility only, not original Host capture. Original output file deleted by driver; bytes reconstructed from matching retained stdout/rollout final, file identity and launch binding reconstructed. No business action or historical status repaired.",
+  "prefixExact": true,
+  "stdoutUnchanged": true,
+  "inputProof": true,
+  "oldAccepts": false,
+  "newAccepts": true,
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "errors": [
+    {
+      "type": "error",
+      "message": "Reconnecting... 2/5 (request timed out)"
+    }
+  ],
+  "lastFrame": "turn.completed",
+  "stdoutSummaryNotUsedForPerTurnAccounting": {
+    "input_tokens": 604533,
+    "cached_input_tokens": 535296,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 10854,
+    "reasoning_output_tokens": 1104
+  },
+  "knownCurrentTurnUsage": {
+    "generations": 5,
+    "input_tokens": 136780,
+    "cached_input_tokens": 128768,
+    "output_tokens": 2505,
+    "reasoning_output_tokens": 354
+  },
+  "finalSha256": "e1a8f0186d0737fe7e850f14a081eb473c2be018d995c3fd0b451d2dfc244f82",
+  "hashes": {
+    "stdout": "5b3d0fe5614f17ead3129976b079b29bc7ac34528b2904de4fddd7eb09458740",
+    "rollout": "f62cc1aa6cdfbdca224553a2d573f8ea0338a196e6873ea7317234b16f7da442",
+    "prefix": "ce1ba156239b7602ec50018cff17fed4b81ff1cde8069561c5557b6944fc3954"
+  },
+  "originalOutputRetained": false,
+  "paidCalls": 0
+}

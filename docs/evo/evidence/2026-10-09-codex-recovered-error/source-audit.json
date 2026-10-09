@@ -1,0 +1,30 @@
+{
+  "baseCommit": "bf0252a",
+  "upstream": {
+    "repository": "https://github.com/openai/codex",
+    "tag": "rust-v0.161.0",
+    "commit": "979011409de0a60b52f179721948e65531d26144",
+    "files": [
+      {
+        "url": "https://github.com/openai/codex/blob/979011409de0a60b52f179721948e65531d26144/codex-rs/exec/src/exec_events.rs",
+        "sha256": "dafa872d7e86a099e56e28a329dcb9c03db90ed768c3b88cca8c91d46dc1d0e5"
+      },
+      {
+        "url": "https://github.com/openai/codex/blob/979011409de0a60b52f179721948e65531d26144/codex-rs/exec/src/event_processor_with_jsonl_output.rs",
+        "sha256": "bc296541b385f9b4ca2c28cc638e25a8d6b1332b2cd67f5a03eaa97a3d612b19"
+      }
+    ]
+  },
+  "sourceFinding": "ThreadErrorEvent comment calls error unrecoverable, but processor ServerNotification::Error emits it and returns Running. Terminal TurnCompleted switch uses TurnStatus::Completed or Failed to choose turn.completed versus turn.failed; last_critical_error is fallback only for Failed.",
+  "adoption": "Behavioral reference only; no upstream source copied or structurally ported. Local collector still requires original binding, native final/output/rollout, exit0, complete tool closure and terminal evidence.",
+  "scope": "Known exact error event shape with nonempty message, strictly after current turn start and before proved native final; no message-text whitelist. Missing message, unrecognized fields, preturn/late diagnostics remain rejected.",
+  "tdd": {
+    "red": "red.log",
+    "green": "green.log",
+    "tests": 25
+  },
+  "replay": "Original retained P155 stdout now accepted unchanged in offline reconstructed collector evidence; new publication not attempted and prelaunch file identities not retrospectively proven.",
+  "accountingLimit": "Only final eligibility changed. Retry attempt billing completeness remains unknown; no accounting policy change and no frozen benchmark helper changed. P155 still a failed paid batch with no ratio.",
+  "freeOnly": true,
+  "dependencies": "node_modules copied into detached worktree; scanned no links resolving to root repo source."
+}

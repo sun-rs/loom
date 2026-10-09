@@ -1,0 +1,64 @@
+{
+  "scope": "Installed Codex 0.161.0 against localhost synthetic Responses server through real Role/daemon/channel home. Actual CLI emits recovery diagnostics after two intentional SSE socket disconnects; not injected stdout. No model-quality or cost conclusion.",
+  "paidCalls": 0,
+  "sourceRoot": "/private/tmp/loom-p155-recovered-error-fix",
+  "run": "1791536207317",
+  "providerRequests": 5,
+  "injectedDisconnects": 2,
+  "rounds": 2,
+  "sameNativeSession": true,
+  "publicationMarkersPerRound": [1, 1],
+  "messagesPerRound": [1, 1],
+  "activations": {
+    "completed": 2
+  },
+  "traces": [
+    {
+      "sha256": "bd79ce6119b7aff023618b41b3fe9a24ad9efd27995ee2f7d509be0daccd78fb",
+      "errors": [
+        {
+          "type": "error",
+          "message": "Reconnecting... 1/5 (stream disconnected before completion: Transport error: network error: error decoding response body)"
+        },
+        {
+          "type": "error",
+          "message": "Reconnecting... 2/5 (stream disconnected before completion: Transport error: network error: error decoding response body)"
+        }
+      ],
+      "lastType": "turn.completed",
+      "memoryOff": true,
+      "appServer": false
+    },
+    {
+      "sha256": "ee6be5475b5098914fcdb2e37eb4ad78e4c7316b4ec6e4245043992e47b0caae",
+      "errors": [],
+      "lastType": "turn.completed",
+      "memoryOff": true,
+      "appServer": false
+    }
+  ],
+  "allOwnedPidsAbsent": true,
+  "allChildExitsZero": true,
+  "hashes": {
+    "request-1.private.json": "ef87f363fe1216b7980e86ccbc399f31b57713c8c4626f8610120f6ab7182ce6",
+    "request-5.private.json": "6929bb261c477873eddc0c2d089737aefeb7571bac1b08d3a1230009534c49ca",
+    "request-2.private.json": "d3f5358df57a9d1a3d2204fbbccabe4d33749109ba4883181739fd319f78075f",
+    "request-3.private.json": "0f1ddd9523f1890beee19664d0261a7020b06e0b8f909f3b5284d0fd2928e8d2",
+    "request-4.private.json": "9d7e3c451fbe447a44d97a056bdf8af74a912bfbc2e94ac264853dafecbcd30a"
+  },
+  "helperHashes": {
+    "run-helper.mjs": "e657ed08ac0bc7872c84d373967693749f04952755736a52b5a35f005a805627",
+    "product-arm.mjs": "79ee01b28aca7627f4f49ed563e8b18af4692d9b7d03ef363d13d38427afbeae",
+    "wrapper.mjs": "5365b4cd5e1d4c91cd2057a20ec99b4b3c93cad2c81a0200215f4736840cd6ed"
+  },
+  "sourceHashes": {
+    "packages/agent-host/src/codex-exec-final-output.js": "e5a74b56bce98fa6743ccaccff2197fff7f28bc4fa43d247d115d3927bcd1775",
+    "packages/agent-host/src/codex-exec-driver.mjs": "c259b1b3d3bc49da659eefba0cdbe71efbc182d64a006307e7c97798219dd14e",
+    "packages/agent-host/src/codex-exec-runtime.ts": "d41cd151624ee38d65b093634689a54c3a41e53fc71e96e6876687d79a879e7f"
+  },
+  "limits": [
+    "Fake provider responses, no paid quality/efficiency evidence",
+    "Initial helper command used missing tsx and exited before any provider; native TypeScript invocation succeeded; both logs retained",
+    "No source changes or historical batch status changes"
+  ]
+}

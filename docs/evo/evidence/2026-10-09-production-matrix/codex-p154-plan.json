@@ -1,0 +1,47 @@
+{
+  "batch": "P154",
+  "provider": "codex",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cliVersion": "codex-cli 0.161.0",
+  "fixturePlanSha256": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+  "rounds": 12,
+  "pairedTrajectories": 1,
+  "order": "odd native first, even Loom first; no reruns",
+  "arms": [
+    "native ordinary exec/resume",
+    "production daemon Role/Channel ordinary codex-exec native final trial"
+  ],
+  "limits": {
+    "input": 6000000,
+    "output": 150000,
+    "wallMs": 5400000,
+    "turnMs": 600000,
+    "interpretation": "between-launch thresholds, not hard in-flight provider billing caps"
+  },
+  "memory": "disabled on every initial/resume, rollout metadata verified",
+  "businessInstruction": "Follow the user's requests.",
+  "businessInstructionPlacement": "Loom frozen Role instruction; native prepends identical instruction to first user turn; round task requirements identical",
+  "usage": "unique native response per session; cumulative exec summaries excluded; all failed/censored costs retained and unknown usage never zero",
+  "quality": "capture archived bytes every round; cumulative hidden cases and selftests; failures continue frozen prompts without oracle feedback",
+  "stops": [
+    "auth/model/effort/session/memory drift",
+    "usage gap",
+    "protocol failure",
+    "snapshot failure",
+    "between-turn input/output/wall ceiling"
+  ],
+  "limitsOfInference": [
+    "one paired trajectory is not generalized efficiency acceptance",
+    "CLI business tool paths are stochastic; no retries to select favorable results",
+    "no five-CLI or multi-instance conclusion"
+  ],
+  "humanClientTransport": "Loopback Human API uses Connection: close; no automatic mutation retries. Provider and Worker connections unchanged.",
+  "status": "frozen for one authorized paired trajectory",
+  "revision": "bf0252a89128855c2b0572482862c13d14759184",
+  "predecessor": "P152 remains failed; new revision acceptance after terminal-proof repair, never replacement of P152.",
+  "preflight": "actual Codex + loopback fake only until lead admission",
+  "modelCatalogEvidence": "catalog.json",
+  "hostConditions": "Concurrent paired provider experiments may overlap; no quiet-host latency claim.",
+  "qualityComparison": "All rounds retained; unequal task quality prevents equal-quality cost acceptance."
+}

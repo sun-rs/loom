@@ -1,0 +1,341 @@
+{
+  "kind": "P155-independent-audit",
+  "batch": "P155",
+  "status": "independently-audited-incomplete-run",
+  "complete": false,
+  "model": "gpt-5.6-luna",
+  "effort": "low",
+  "cliVersion": "codex-cli 0.161.0",
+  "frozenRevision": "bf0252a89128855c2b0572482862c13d14759184",
+  "rounds": [],
+  "aggregate": {
+    "native": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loom": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loomToNative": {
+      "input": null,
+      "output": null,
+      "generations": null,
+      "toolCalls": null
+    }
+  },
+  "firstSix": {
+    "native": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loom": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loomToNative": {
+      "input": null,
+      "output": null,
+      "generations": null,
+      "toolCalls": null
+    }
+  },
+  "lastSix": {
+    "native": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loom": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loomToNative": {
+      "input": null,
+      "output": null,
+      "generations": null,
+      "toolCalls": null
+    },
+    "coverage": "No completed paired rounds 7\u201312"
+  },
+  "categoryTotals": {
+    "native": {
+      "business-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "communication-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "terminal-final": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "other-generation": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      }
+    },
+    "loom": {
+      "business-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "communication-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "terminal-final": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "other-generation": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      }
+    }
+  },
+  "launchAudit": {
+    "native": {
+      "execProcesses": 1,
+      "noAppServerTransport": true,
+      "memoryDisabledEveryLaunch": true,
+      "sameCwdEveryLaunch": true,
+      "modelAndEffortExactEveryLaunch": true
+    },
+    "loom": {
+      "execProcesses": 0,
+      "noAppServerTransport": true,
+      "memoryDisabledEveryLaunch": true,
+      "sameCwdEveryLaunch": true,
+      "modelAndEffortExactEveryLaunch": true
+    }
+  },
+  "allObservedUsageIndependent": {
+    "native": {
+      "archivedFiles": 1,
+      "known": {
+        "input": 40471,
+        "cachedInput": 33536,
+        "output": 3000,
+        "generations": 5
+      },
+      "gaps": [],
+      "nativeSessionCount": 1
+    },
+    "loom": {
+      "archivedFiles": 0,
+      "known": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "generations": 0
+      },
+      "gaps": [],
+      "nativeSessionCount": 0
+    }
+  },
+  "cleanup": {
+    "native": {
+      "launchCount": 4,
+      "exitCount": 4,
+      "allLaunchesHaveExitRecords": true,
+      "nonzeroExits": [],
+      "ownedProcessesStillAlive": 0
+    },
+    "loom": {
+      "launchCount": 2,
+      "exitCount": 2,
+      "allLaunchesHaveExitRecords": true,
+      "nonzeroExits": [],
+      "ownedProcessesStillAlive": 0
+    }
+  },
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(!frames.some(f=>['error','turn.failed'].includes(f.type)))\n"
+  },
+  "usageStatus": "incomplete-known-usage; unknown is not zero",
+  "incompleteUsage": [
+    {
+      "arm": "native",
+      "round": 1,
+      "usage": "unknown, not zero"
+    }
+  ],
+  "evidenceHashes": [
+    {
+      "file": "result.private.json",
+      "sha256": "df13d9bea8cd64d6cafda037fd2bed0f265efd75d90c08898c903fce73fad021"
+    },
+    {
+      "file": "native/turn-1.stdout",
+      "sha256": "08dd54eab0e421703b7d510a4543f4192412b655bf2047992a591b6105ad0ff0"
+    },
+    {
+      "file": "codex-all-usage.mjs",
+      "sha256": "5ccda73823c024444617642ff1f32039aa7e8ba9d4be34674cc7cd608230058a"
+    },
+    {
+      "file": "native-control.mjs",
+      "sha256": "1ce4fbd5e4fc0ef67f70dc268174f0049ec668338daee423c8ca17c8e05fa69e"
+    },
+    {
+      "file": "product-arm.mjs",
+      "sha256": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa"
+    },
+    {
+      "file": "human-connection.mjs",
+      "sha256": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1"
+    },
+    {
+      "file": "codex-wrapper.mjs",
+      "sha256": "e1480f8c4080c2daf4f0c74859bb1566f7fba5d40f686794b25ccfb495dcd202"
+    },
+    {
+      "file": "codex-run.mjs",
+      "sha256": "954d54a0d415af918cd7b1639d940c6dd810d382f4ed502ee8671130d8317417"
+    },
+    {
+      "file": "codex-plan.json",
+      "sha256": "3c6672ac9fedd7285f525e574791b1a3d257f5374bb8b5c12162056c433cf30c"
+    }
+  ],
+  "limits": [
+    "One paired trajectory for this model, not a stable causal overhead estimate.",
+    "Both arms use ordinary Codex exec/resume; product adds the real Role/daemon/Worker path.",
+    "Generation categories are inferred from native rollout order preceding each unique token_usage_record, not a separate intercepted provider request trace.",
+    "Total input includes cached tokens; no provider invoice or dollar-price claim.",
+    "First-generation context includes prior stochastic history; it is not all fixed protocol input.",
+    "Quality failures stay visible and never feed the fixed prompt sequence.",
+    "Recovered transient CLI reconnect diagnostics were rejected by the frozen benchmark/collector; CLI itself exited successfully.",
+    "Known native usage includes failed benchmark attempts; unreported reconnect work cannot be priced or assumed zero.",
+    "Failed batch remains permanent evidence; no retries or new model requests were made during audit."
+  ],
+  "finishedAt": "2026-10-09T08:11:40.692Z",
+  "daemonExits": [
+    {
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "authCleanupFailures": [],
+  "accountingFailures": [],
+  "qualitySummary": {
+    "native": {
+      "passedRounds": [],
+      "failedRounds": []
+    },
+    "loom": {
+      "passedRounds": [],
+      "failedRounds": []
+    }
+  },
+  "benchmarkVerdict": "No completed 12-round paired efficiency verdict",
+  "originalRunnerStatus": "failed",
+  "admissionBudget": {
+    "input": 6000000,
+    "output": 150000,
+    "minutes": 90,
+    "meaning": "between-launch admission thresholds, not hard in-flight caps",
+    "stoppedByBudget": false
+  },
+  "sessionContinuity": {
+    "native": {
+      "observedSessions": 1,
+      "continuous": true
+    },
+    "loom": {
+      "observedSessions": 0,
+      "continuous": null
+    }
+  },
+  "failureClassification": {
+    "round": 1,
+    "arm": "native",
+    "cliExitCode": 0,
+    "nativeTurnCompleted": true,
+    "nativeFinalPresent": true,
+    "transientReconnectErrors": 3,
+    "turnFailedFrames": 0,
+    "selfReportedUnitTestsPassed": 5,
+    "loomStarted": false,
+    "cause": "Native-control assertion rejected any error frame, including recovered TLS EOF/timeouts.",
+    "knownFailedAttemptUsage": {
+      "input": 40471,
+      "cachedInput": 33536,
+      "output": 3000,
+      "reasoningOutput": 443,
+      "generations": 5
+    }
+  },
+  "readmeReview": {
+    "verdict": "No frozen accepted snapshot; no completed-workload documentation verdict."
+  },
+  "snapshotCount": 0,
+  "postFailureSnapshotCount": 0,
+  "auditNoAdditionalProviderRequests": true
+}

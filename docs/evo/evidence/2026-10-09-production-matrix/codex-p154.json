@@ -1,0 +1,1324 @@
+{
+  "kind": "P154-independent-audit",
+  "batch": "P154",
+  "status": "independently-audited-incomplete-run",
+  "complete": false,
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "cliVersion": "codex-cli 0.161.0",
+  "frozenRevision": "bf0252a89128855c2b0572482862c13d14759184",
+  "rounds": [
+    {
+      "arm": "native",
+      "round": 1,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 1,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "15d45814b0998dbdf2dbaca112fda21123394105de5bb934b9a0b86fbd9a623d",
+        "invoice.py": "f301d322bea930445997d154487050748bc571b491225b17802c7cf85a83c9f5",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "cf1a93bda48ae3030f84868e8e76d532c346609c71bc84172b2914f175c227d6",
+        "tests/test_invoice.py": "e7ccfc639f7ffde71ee40a1246a7e1644366d4182f48d9a3709289fb239bea75"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 6,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 8836,
+          "cachedInput": 0,
+          "output": 71,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 8936,
+          "cachedInput": 7936,
+          "output": 70,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 9118,
+          "cachedInput": 7936,
+          "output": 1160,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 10312,
+          "cachedInput": 8960,
+          "output": 148,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 11331,
+          "cachedInput": 9984,
+          "output": 51,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "terminal-final",
+          "input": 11526,
+          "cachedInput": 11008,
+          "output": 117,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 60059,
+        "cachedInput": 45824,
+        "output": 1617,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 8836,
+      "finalGenerationInput": 11526,
+      "toolCalls": 5,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 1,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+        "invoice.py": "ab59991f9052f18bfcebda2fdd6b679455d957bf9f5e77fa4ade8608ffebd782",
+        "tests/test_invoice.py": "dfc2f06d982b855c16345b169302063ec39411ab8f2132e75010db1b6b8d3fe5"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 9,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 10549,
+          "cachedInput": 0,
+          "output": 103,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 10745,
+          "cachedInput": 9984,
+          "output": 64,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 10916,
+          "cachedInput": 9984,
+          "output": 44,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 10983,
+          "cachedInput": 9984,
+          "output": 41,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 11048,
+          "cachedInput": 9984,
+          "output": 514,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 11586,
+          "cachedInput": 0,
+          "output": 601,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 12211,
+          "cachedInput": 9984,
+          "output": 187,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 12422,
+          "cachedInput": 11008,
+          "output": 49,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "terminal-final",
+          "input": 12582,
+          "cachedInput": 12032,
+          "output": 226,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 103042,
+        "cachedInput": 72960,
+        "output": 1829,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 10549,
+      "finalGenerationInput": 12582,
+      "toolCalls": 8,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 3,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+        "invoice.py": "ab59991f9052f18bfcebda2fdd6b679455d957bf9f5e77fa4ade8608ffebd782",
+        "tests/test_invoice.py": "b162ab2d8e3b6c77e1409c9b61e1e0d69782316f48c6d4c4c591bc8f4a1d4478"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 12946,
+          "cachedInput": 12032,
+          "output": 136,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 13958,
+          "cachedInput": 12032,
+          "output": 154,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 14136,
+          "cachedInput": 13056,
+          "output": 49,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 14296,
+          "cachedInput": 12032,
+          "output": 41,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 55336,
+        "cachedInput": 49152,
+        "output": 380,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 12946,
+      "finalGenerationInput": 14296,
+      "toolCalls": 3,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 3,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "15d45814b0998dbdf2dbaca112fda21123394105de5bb934b9a0b86fbd9a623d",
+        "invoice.py": "f301d322bea930445997d154487050748bc571b491225b17802c7cf85a83c9f5",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "f7560a55c62068a4cfe03312b9f535e2982fa116fd782567d094219687c523ea",
+        "tests/test_invoice.py": "68ceb5d1a57874ce3a3f4dcc51fd56c4fb9dc6cb7d94d037a56a1cff3b277301"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 3,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 11730,
+          "cachedInput": 11008,
+          "output": 105,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 12674,
+          "cachedInput": 11008,
+          "output": 275,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "terminal-final",
+          "input": 13118,
+          "cachedInput": 12032,
+          "output": 57,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 37522,
+        "cachedInput": 34048,
+        "output": 437,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 11730,
+      "finalGenerationInput": 13118,
+      "toolCalls": 2,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 4,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "09f923e54705898b7220dbdfb03e0b706e9ffa22011a7b4b647cdda49d5c7b7b",
+        "invoice.py": "f994b5879ebd6e7f8276655582846094f750e461190d75c1da29efcf08c1bbef",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "88bd6e0e420a92ff8238917858ce87c64044f6ff48f6499ffd4b92beb488e472",
+        "tests/test_invoice.py": "3fbf337bac60e1a70813bc229382aa14be3540bac36d8980d8a12eccf70b8ac6"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 2,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 13260,
+          "cachedInput": 12032,
+          "output": 476,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "terminal-final",
+          "input": 13965,
+          "cachedInput": 13056,
+          "output": 48,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 27225,
+        "cachedInput": 25088,
+        "output": 524,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 13260,
+      "finalGenerationInput": 13965,
+      "toolCalls": 1,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 4,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+        "invoice.py": "98c9736bb0eaf1782ae85da5332e4bb5106e24da928a741b866ca32d48359e63",
+        "tests/test_invoice.py": "2ff8493728ff678f0eba5bb4fb344a5802b54db68725ec3406373a6146fb312b"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 14470,
+          "cachedInput": 14080,
+          "output": 128,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 14622,
+          "cachedInput": 13056,
+          "output": 347,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 14993,
+          "cachedInput": 14080,
+          "output": 49,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 15196,
+          "cachedInput": 14080,
+          "output": 68,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 59281,
+        "cachedInput": 55296,
+        "output": 592,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 14470,
+      "finalGenerationInput": 15196,
+      "toolCalls": 3,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 7,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+        "invoice.py": "47e044e18b42f9f0797fb21ab9a468245676bacee41c81c713ee9a0be569c0b5",
+        "tests/test_invoice.py": "d7e170fc5debf9fccd47d26359df664419bba71e70b1403e851502c7ed501720"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 3,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 15409,
+          "cachedInput": 14080,
+          "output": 854,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 16288,
+          "cachedInput": 14080,
+          "output": 91,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "terminal-final",
+          "input": 16581,
+          "cachedInput": 16128,
+          "output": 55,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 48278,
+        "cachedInput": 44288,
+        "output": 1000,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 15409,
+      "finalGenerationInput": 16581,
+      "toolCalls": 2,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 7,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "cf559fc487a22a396a1d6c674441465cfdcb775b390e4f378a9fa78829795e49",
+        "invoice.py": "47abd45751b9357d67333e27f8dddf1d727599c6952dd1a5134dc582911a5b9b",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "01dbea504d1fb343b48b093f8fc78e08ae6efb3742deb8508ad7a585dee5517a",
+        "tests/test_invoice.py": "101dc2513f4e684ecbb6cc6f09763a361ffb1c14803c55ea77e7b7b5a688bd9e"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 3,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 14108,
+          "cachedInput": 13056,
+          "output": 91,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 15380,
+          "cachedInput": 13056,
+          "output": 1181,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "terminal-final",
+          "input": 16904,
+          "cachedInput": 15104,
+          "output": 53,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 46392,
+        "cachedInput": 41216,
+        "output": 1325,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 14108,
+      "finalGenerationInput": 16904,
+      "toolCalls": 2,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 9,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "54f25b5e268711d97225e536e952c521d3dad23845adbcdaac844288e6419ab2",
+        "invoice.py": "a4d01a5c2e0465c3478f663756154a696094c8dee6c1e80f8794a974a5ac94e2",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "9472b6e7d1776aee09e7a5f6f5bb7afc07344ecea4c28937df17b21592d9fbf7",
+        "tests/test_invoice.py": "f93e8fa42d6ea42a5009acc7d2fc74ebd68577de8a79663685d3e54aadc3e84b"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 3,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 17075,
+          "cachedInput": 16128,
+          "output": 117,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 18858,
+          "cachedInput": 16128,
+          "output": 1183,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "terminal-final",
+          "input": 20463,
+          "cachedInput": 18176,
+          "output": 73,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 56396,
+        "cachedInput": 50432,
+        "output": 1373,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 17075,
+      "finalGenerationInput": 20463,
+      "toolCalls": 2,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 9,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+        "invoice.py": "c66aae7b541762ef38d39334f09e7dd3aa7ab34e4d67b141f63cf54bdf6b955e",
+        "tests/test_invoice.py": "0c7867afb4fc379915e55ea2fba0349cda651c59442723e916152d3c224561f0"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 16803,
+          "cachedInput": 15104,
+          "output": 646,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 17473,
+          "cachedInput": 16128,
+          "output": 470,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 17967,
+          "cachedInput": 16128,
+          "output": 49,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 18540,
+          "cachedInput": 17152,
+          "output": 135,
+          "reasoningOutput": 31,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 18924,
+          "cachedInput": 18176,
+          "output": 57,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 89707,
+        "cachedInput": 82688,
+        "output": 1357,
+        "reasoningOutput": 31
+      },
+      "firstGenerationInput": 16803,
+      "finalGenerationInput": 18924,
+      "toolCalls": 4,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 25,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+        "invoice.py": "87db5028cdd44db44b3b3eac1cf1d07ed0aecfe261066ec3e61b86030826c736",
+        "tests/test_invoice.py": "cb76cca476db83f79bf00c83d85c9cc193c5bbe88c85acce8c9e918451dd8bfb"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 19207,
+          "cachedInput": 18176,
+          "output": 88,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 21117,
+          "cachedInput": 18176,
+          "output": 1293,
+          "reasoningOutput": 260,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 22435,
+          "cachedInput": 20224,
+          "output": 1465,
+          "reasoningOutput": 417,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 24387,
+          "cachedInput": 22272,
+          "output": 283,
+          "reasoningOutput": 42,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 24963,
+          "cachedInput": 23296,
+          "output": 62,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 112109,
+        "cachedInput": 102144,
+        "output": 3191,
+        "reasoningOutput": 719
+      },
+      "firstGenerationInput": 19207,
+      "finalGenerationInput": 24963,
+      "toolCalls": 4,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 25,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "c30c02724ac474945cd7b45fb0fa7a57bc16de1abd1a09a2b4eef3f918c5d305",
+        "invoice.py": "8a378ac96b37052e4e96edfd5d5a7694694ec5785ebf24d20cca5f989a36ce16",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "bb132c5ba341cb5e608bc5dec9b10c4e141d62776eca4fdac11c915748a6ae8d",
+        "tests/test_invoice.py": "a95878c61a80dc571556b71b30767786ff52148fee4993370d0c442a1ee69628"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 20713,
+          "cachedInput": 20224,
+          "output": 89,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 22918,
+          "cachedInput": 20224,
+          "output": 1150,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 25244,
+          "cachedInput": 22272,
+          "output": 1494,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 27479,
+          "cachedInput": 24320,
+          "output": 148,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 28211,
+          "cachedInput": 26368,
+          "output": 137,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 124565,
+        "cachedInput": 113408,
+        "output": 3018,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 20713,
+      "finalGenerationInput": 28211,
+      "toolCalls": 4,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "quality": {
+        "passed": true,
+        "hiddenCaseCount": 27,
+        "failedChecks": [],
+        "selfTestsPassed": true
+      },
+      "artifactHashes": {
+        "README.md": "07c96e65324ca0014d47573d5d13d38ada1cd004319302aa0130e842fc1b114f",
+        "__pycache__/invoice.cpython-313.pyc": "6dcea91b817939aa21bf3d43be34fdec0212784694e2fdf53075f65c2563ac70",
+        "invoice.py": "a5958eb0d145f1716d27e3817db59d01597cc6ae0f5e1eb24852f71ba05bb015",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "9c4ae4f3b0f25709b0c29cf1eba66ed9968cdbb12709aa7dd7cf129f6d26042a",
+        "tests/test_invoice.py": "a16f72d74f286fb1e970b67e28bfbd38be769acd3d9774325758e0bf38269421"
+      },
+      "snapshotHashIndependentlyVerified": true,
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 28477,
+          "cachedInput": 27392,
+          "output": 95,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 31537,
+          "cachedInput": 27392,
+          "output": 1496,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 34060,
+          "cachedInput": 30464,
+          "output": 200,
+          "reasoningOutput": 0,
+          "toolNames": [["exec", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 36019,
+          "cachedInput": 33536,
+          "output": 115,
+          "reasoningOutput": 0,
+          "toolNames": []
+        }
+      ],
+      "totals": {
+        "input": 130093,
+        "cachedInput": 118784,
+        "output": 1906,
+        "reasoningOutput": 0
+      },
+      "firstGenerationInput": 28477,
+      "finalGenerationInput": 36019,
+      "toolCalls": 3,
+      "communicationGenerations": 0,
+      "currentTurnModelAndEffortVerified": true
+    }
+  ],
+  "aggregate": {
+    "native": {
+      "rounds": 6,
+      "input": 352159,
+      "cachedInput": 310016,
+      "output": 8294,
+      "reasoningOutput": 0,
+      "generations": 22,
+      "firstGenerationInput": 85722,
+      "finalGenerationInput": 104187,
+      "toolCalls": 16,
+      "communicationGenerations": 0
+    },
+    "loom": {
+      "rounds": 6,
+      "input": 467753,
+      "cachedInput": 406528,
+      "output": 8349,
+      "reasoningOutput": 750,
+      "generations": 30,
+      "firstGenerationInput": 89384,
+      "finalGenerationInput": 102542,
+      "toolCalls": 24,
+      "communicationGenerations": 0
+    },
+    "loomToNative": {
+      "input": 1.3282437762487966,
+      "output": 1.006631299734748,
+      "generations": 1.3636363636363635,
+      "toolCalls": 1.5
+    }
+  },
+  "firstSix": {
+    "native": {
+      "rounds": 6,
+      "input": 352159,
+      "cachedInput": 310016,
+      "output": 8294,
+      "reasoningOutput": 0,
+      "generations": 22,
+      "firstGenerationInput": 85722,
+      "finalGenerationInput": 104187,
+      "toolCalls": 16,
+      "communicationGenerations": 0
+    },
+    "loom": {
+      "rounds": 6,
+      "input": 467753,
+      "cachedInput": 406528,
+      "output": 8349,
+      "reasoningOutput": 750,
+      "generations": 30,
+      "firstGenerationInput": 89384,
+      "finalGenerationInput": 102542,
+      "toolCalls": 24,
+      "communicationGenerations": 0
+    },
+    "loomToNative": {
+      "input": 1.3282437762487966,
+      "output": 1.006631299734748,
+      "generations": 1.3636363636363635,
+      "toolCalls": 1.5
+    }
+  },
+  "lastSix": {
+    "native": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loom": {
+      "rounds": 0,
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "reasoningOutput": 0,
+      "generations": 0,
+      "firstGenerationInput": 0,
+      "finalGenerationInput": 0,
+      "toolCalls": 0,
+      "communicationGenerations": 0
+    },
+    "loomToNative": {
+      "input": null,
+      "output": null,
+      "generations": null,
+      "toolCalls": null
+    },
+    "coverage": "No completed paired rounds 7\u201312"
+  },
+  "categoryTotals": {
+    "native": {
+      "business-tool": {
+        "input": 342046,
+        "cachedInput": 299520,
+        "output": 9600,
+        "reasoningOutput": 0
+      },
+      "communication-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "terminal-final": {
+        "input": 140206,
+        "cachedInput": 129280,
+        "output": 600,
+        "reasoningOutput": 0
+      },
+      "other-generation": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      }
+    },
+    "loom": {
+      "business-tool": {
+        "input": 365211,
+        "cachedInput": 310784,
+        "output": 7840,
+        "reasoningOutput": 750
+      },
+      "communication-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      },
+      "terminal-final": {
+        "input": 102542,
+        "cachedInput": 95744,
+        "output": 509,
+        "reasoningOutput": 0
+      },
+      "other-generation": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "reasoningOutput": 0
+      }
+    }
+  },
+  "launchAudit": {
+    "native": {
+      "execProcesses": 7,
+      "noAppServerTransport": true,
+      "memoryDisabledEveryLaunch": true,
+      "sameCwdEveryLaunch": true,
+      "modelAndEffortExactEveryLaunch": true
+    },
+    "loom": {
+      "execProcesses": 7,
+      "noAppServerTransport": true,
+      "memoryDisabledEveryLaunch": true,
+      "sameCwdEveryLaunch": true,
+      "modelAndEffortExactEveryLaunch": true
+    }
+  },
+  "allObservedUsageIndependent": {
+    "native": {
+      "archivedFiles": 1,
+      "known": {
+        "input": 482252,
+        "cachedInput": 428800,
+        "output": 10200,
+        "generations": 26
+      },
+      "gaps": [],
+      "nativeSessionCount": 1
+    },
+    "loom": {
+      "archivedFiles": 1,
+      "known": {
+        "input": 604533,
+        "cachedInput": 535296,
+        "output": 10854,
+        "generations": 35
+      },
+      "gaps": [],
+      "nativeSessionCount": 1
+    }
+  },
+  "cleanup": {
+    "native": {
+      "launchCount": 28,
+      "exitCount": 28,
+      "allLaunchesHaveExitRecords": true,
+      "nonzeroExits": [],
+      "ownedProcessesStillAlive": 0
+    },
+    "loom": {
+      "launchCount": 30,
+      "exitCount": 30,
+      "allLaunchesHaveExitRecords": true,
+      "nonzeroExits": [],
+      "ownedProcessesStillAlive": 0
+    }
+  },
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: Activation quarantined"
+  },
+  "usageStatus": "incomplete-known-usage; unknown is not zero",
+  "incompleteUsage": [
+    {
+      "arm": "loom",
+      "round": 7,
+      "usage": "unknown, not zero"
+    }
+  ],
+  "evidenceHashes": [
+    {
+      "file": "native/turn-1.rollout.private.jsonl",
+      "sha256": "d6aca1b35390d190678d47fcfd1174c39b1aebef6acd455ddaf5de70dc699c81"
+    },
+    {
+      "file": "loom/turn-1.rollout.private.jsonl",
+      "sha256": "5ea31bf259de36839b62840d25d2077214cc7afccd795ddb37c79bb9de6e8873"
+    },
+    {
+      "file": "loom/turn-2.rollout.private.jsonl",
+      "sha256": "eafa71d5cd2070df0318f137e37953cad51999d7dcf5798cd701c16417f323f2"
+    },
+    {
+      "file": "native/turn-2.rollout.private.jsonl",
+      "sha256": "3d43c47b69324662a7b444cb5f982021ba8f8bc6d231c3ae56cc05ebd25b71f4"
+    },
+    {
+      "file": "native/turn-3.rollout.private.jsonl",
+      "sha256": "92ea7ec8a18623a73d839019ef53fa6430277b7894f635ade691dbec4293eb87"
+    },
+    {
+      "file": "loom/turn-3.rollout.private.jsonl",
+      "sha256": "e25dca9deb454938e1207ebd9ed4099fc1279b2307bc0c7fd9dc541e933410bc"
+    },
+    {
+      "file": "loom/turn-4.rollout.private.jsonl",
+      "sha256": "e1731a9dc4923e3a163ede386c50209d276f82545cb7b50ccfc7b378475e479b"
+    },
+    {
+      "file": "native/turn-4.rollout.private.jsonl",
+      "sha256": "fe3466c7ee465ba1dc01c6faa00cf8ba22d1a0883a184cd77514c4e5ba4c35bc"
+    },
+    {
+      "file": "native/turn-5.rollout.private.jsonl",
+      "sha256": "762f0b1fc1f6bf96315e0ab208e61c465e9cd9183bdbe60b7dbaee760b36bc77"
+    },
+    {
+      "file": "loom/turn-5.rollout.private.jsonl",
+      "sha256": "2f01d2b1a1350c53d6d974bfe4f4a94844a88f64cd881abf716e0d390e9480a9"
+    },
+    {
+      "file": "loom/turn-6.rollout.private.jsonl",
+      "sha256": "ce1ba156239b7602ec50018cff17fed4b81ff1cde8069561c5557b6944fc3954"
+    },
+    {
+      "file": "native/turn-6.rollout.private.jsonl",
+      "sha256": "61a3be5480dd05d6a8f5232648ec0988b46bdf0d88c611398c59b017819db266"
+    },
+    {
+      "file": "native/turn-7.rollout.private.jsonl",
+      "sha256": "b962130508ab78a81a52a3fd604064d842706adb2888326d243c47a9fff61851"
+    },
+    {
+      "file": "result.private.json",
+      "sha256": "605df5ffbdf8e0d6b983e950babf6cb04f62dbb6566841f6b79e633d0be87209"
+    },
+    {
+      "file": "post-failure-audit/loom-round-7.evidence.json",
+      "sha256": "3dbe0a9fc07d1f718cadc0332427bfab28822dee473a5c6568c969192f1492d0"
+    },
+    {
+      "file": "loom/launch-1791534202943-70123.stdout",
+      "sha256": "5b3d0fe5614f17ead3129976b079b29bc7ac34528b2904de4fddd7eb09458740"
+    },
+    {
+      "file": "codex-all-usage.mjs",
+      "sha256": "5ccda73823c024444617642ff1f32039aa7e8ba9d4be34674cc7cd608230058a"
+    },
+    {
+      "file": "native-control.mjs",
+      "sha256": "1ce4fbd5e4fc0ef67f70dc268174f0049ec668338daee423c8ca17c8e05fa69e"
+    },
+    {
+      "file": "product-arm.mjs",
+      "sha256": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa"
+    },
+    {
+      "file": "human-connection.mjs",
+      "sha256": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1"
+    },
+    {
+      "file": "codex-wrapper.mjs",
+      "sha256": "e1480f8c4080c2daf4f0c74859bb1566f7fba5d40f686794b25ccfb495dcd202"
+    },
+    {
+      "file": "codex-run.mjs",
+      "sha256": "31fba415848fdfa00bc5a61e467e5e15a108e48e013e79c0baf7cf460cdbbe3d"
+    },
+    {
+      "file": "codex-plan.json",
+      "sha256": "a40a1feee13b2d3d277c55d2e9d145754ef07acc4e82b75d517334edfbd3f64a"
+    }
+  ],
+  "limits": [
+    "One paired trajectory for this model, not a stable causal overhead estimate.",
+    "Both arms use ordinary Codex exec/resume; product adds the real Role/daemon/Worker path.",
+    "Generation categories are inferred from native rollout order preceding each unique token_usage_record, not a separate intercepted provider request trace.",
+    "Total input includes cached tokens; no provider invoice or dollar-price claim.",
+    "First-generation context includes prior stochastic history; it is not all fixed protocol input.",
+    "Quality failures stay visible and never feed the fixed prompt sequence.",
+    "Recovered transient CLI reconnect diagnostics were rejected by the frozen benchmark/collector; CLI itself exited successfully.",
+    "Known native usage includes failed benchmark attempts; unreported reconnect work cannot be priced or assumed zero.",
+    "Failed batch remains permanent evidence; no retries or new model requests were made during audit."
+  ],
+  "finishedAt": "2026-10-09T08:25:19.125Z",
+  "daemonExits": [
+    {
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "authCleanupFailures": [],
+  "accountingFailures": [],
+  "qualitySummary": {
+    "native": {
+      "passedRounds": [1, 2, 3, 4, 5, 6, 7],
+      "failedRounds": []
+    },
+    "loom": {
+      "passedRounds": [1, 2, 3, 4, 5, 6],
+      "failedRounds": []
+    }
+  },
+  "benchmarkVerdict": "No completed 12-round paired efficiency verdict",
+  "originalRunnerStatus": "failed",
+  "admissionBudget": {
+    "input": 6000000,
+    "output": 150000,
+    "minutes": 90,
+    "meaning": "between-launch admission thresholds, not hard in-flight caps",
+    "stoppedByBudget": false
+  },
+  "sessionContinuity": {
+    "native": {
+      "observedSessions": 1,
+      "continuous": true
+    },
+    "loom": {
+      "observedSessions": 1,
+      "continuous": true
+    }
+  },
+  "failureClassification": {
+    "round": 7,
+    "arm": "loom",
+    "cliExitCode": 0,
+    "nativeTurnCompleted": true,
+    "nativeFinalPresent": true,
+    "transientReconnectErrors": 1,
+    "turnFailedFrames": 0,
+    "activationState": "quarantined",
+    "lastError": "Final output was not one valid explicit room.reply command; nothing was sent.",
+    "roomPublicationSucceeded": false,
+    "knownFailedAttemptUsage": {
+      "input": 136780,
+      "cachedInput": 128768,
+      "output": 2505,
+      "generations": 5
+    },
+    "cause": "Frozen collector rejects recovered top-level error even with completed native turn."
+  },
+  "postFailureQuality": {
+    "round": 7,
+    "arm": "loom",
+    "passed": true,
+    "hiddenChecks": 27,
+    "selfTestsPassed": true,
+    "artifactHashes": {
+      "README.md": "d80311b75f1edc392db3ed938e31134610bc8f14657358485c4ccd4ee16c5022",
+      "invoice.py": "fcfae8223f649f09b3f4e32828ea92a3029fe1fabeee7f977194bf07508b2bf8",
+      "tests/test_invoice.py": "d0acb61b80a7e4f8875698482c41392bf83a3728561e5ccc4ea7874a1ada28cd"
+    },
+    "independentHashVerification": true,
+    "limitation": "Post-hoc filesystem capture after failure; not an accepted runner round, publication or Activation completion."
+  },
+  "readmeReview": {
+    "nativeSnapshotRound": 7,
+    "loomSnapshotRound": 6,
+    "loomPostFailureRound": 7,
+    "verdict": "Both READMEs stale: describe only ungrouped input, zero discount/tax and total=subtotal despite later implemented behavior. Hidden functional checks do not prove documentation quality.",
+    "completedFinalReadmeReview": false
+  },
+  "snapshotCount": 13,
+  "postFailureSnapshotCount": 1,
+  "auditNoAdditionalProviderRequests": true
+}

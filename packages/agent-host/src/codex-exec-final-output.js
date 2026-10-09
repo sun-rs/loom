@@ -187,9 +187,7 @@ export function createCodexExecFinalOutput(input) {
           binding,
           evidence,
         );
-        requireProof(
-          !frames.some((row) => ["error", "turn.failed"].includes(row.type)),
-        );
+        requireProof(!frames.some((row) => row.type === "turn.failed"));
         const start = one(frames.filter((row) => row.type === "turn.started"));
         const completed = one(
           frames.filter((row) => row.type === "turn.completed"),
@@ -302,6 +300,21 @@ export function createCodexExecFinalOutput(input) {
         requireProof(messages.at(-1) === nativeItem);
         const finalFramePosition = frames.indexOf(nativeItem);
         requireProof(finalFramePosition > frames.indexOf(start));
+        // Codex 0.161.0 emits ServerNotification::Error while still Running;
+        // only its terminal TurnStatus selects turn.completed or turn.failed.
+        // Diagnostic wording is not a success signal. Admit the known event
+        // shape only inside this fully proven turn, before its native final.
+        for (const [index, row] of frames.entries()) {
+          if (row.type !== "error") continue;
+          requireProof(
+            nonempty(row.message) &&
+              Object.keys(row).every((key) =>
+                ["type", "message"].includes(key),
+              ) &&
+              index > frames.indexOf(start) &&
+              index < finalFramePosition,
+          );
+        }
         const inflight = new Set();
         for (const [index, row] of frames.entries()) {
           if (!row.type.startsWith("item.")) continue;

@@ -1,0 +1,46 @@
+{
+  "base": "bf0252a89128855c2b0572482862c13d14759184",
+  "worktree": "REPAIR_CHECKOUT",
+  "changedFiles": {
+    "packages/agent-host/src/codex-exec-final-output.js": "e5a74b56bce98fa6743ccaccff2197fff7f28bc4fa43d247d115d3927bcd1775",
+    "packages/agent-host/test/codex-exec-final-output.test.ts": "5bbfff2888e189fe3c3f42f15235ec1fcbcf161ff683e0c98637f0db95ada26f"
+  },
+  "checks": {
+    "tdd": "new recovery positive fails before implementation; 25 collector/driver cases green",
+    "npmRunCheckExit": 0,
+    "formatCheckExit": 0,
+    "gitDiffCheckExit": 0,
+    "mainSuite": {
+      "tests": 3028,
+      "passed": 3006,
+      "skipped": 22,
+      "failed": 0
+    },
+    "efficiencySuite": {
+      "tests": 503,
+      "failed": 0
+    }
+  },
+  "evidenceHashes": {
+    "change.patch": "1aa2fadffbdc47395af2f5e4eaa993337c66bccf932ba0cb1ea11a53cd7efae9",
+    "red.log": "6babd990b6983f8a25ddfaa94ac9381a388635768c016d3d30ad8a4ead75389e",
+    "green.log": "e8fbba290cec38d50254859ba3553277a9972b332ab5b64f340912e4770d6c7f",
+    "check-final.log": "d1ffac50959a1c51efcad721623be64247bb0e1b9703190e1539db06b7bbab89",
+    "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "source-audit.json": "ec7b117754c1916b5c126d4cf1b90972adfb4270056bd34f7622a09d046f4d6f",
+    "replay.private.json": "482cf01557df060d4311c037c02b1f08dcdfccbc0abc3208da43b066b33b9c40",
+    "p154-replay.json": "0a80231832bfc9f1dbf0ee1753e9743b3c86039e36ebb10e9cee75f363d4917c"
+  },
+  "scope": "Known Codex stdout diagnostic event shape inside fully proved successful turn; terminal failure, malformed diagnostics, rollout/output/identity/tool closure failures still rejected. No string-based success inference.",
+  "replay": {
+    "P155": "Unchanged native trace accepted after fix; reconstructed launch/prelaunch identities; original output retained. Not original Host capture.",
+    "P154": "Old rejects/new accepts resumed product trace; output bytes and launch binding reconstructed, not original Host capture."
+  },
+  "limits": [
+    "No new paid calls or business publication",
+    "No benchmark helper or historical paid verdict changed",
+    "Retried-attempt cost completeness remains unknown",
+    "No root repository changes, commits, pushes or deployment by this agent"
+  ],
+  "paidCalls": 0
+}

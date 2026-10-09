@@ -536,3 +536,86 @@ test("failed final, unknown failed item and unclosed failed tool remain rejected
     );
   }
 });
+
+test("complete native proof survives in-turn recoverable error diagnostics", () => {
+  const f = fixture(false);
+  for (const message of [
+    "Reconnecting... 2/5 (stream disconnected before completion: tls handshake eof)",
+    "Reconnecting... 3/5 (request timed out)",
+    "Provider emitted a diagnostic whose wording is not a completion signal",
+  ]) {
+    const frames = structuredClone(f.frames);
+    frames.splice(2, 0, { type: "error", message });
+    assert.ok(
+      createCodexExecFinalOutput(f.binding).settle({
+        ...f.evidence,
+        stdout: lines(frames),
+      }),
+    );
+  }
+});
+
+test("diagnostics cannot rescue incomplete, failed, foreign or late native proof", () => {
+  const changes: Array<(f: ReturnType<typeof fixture>) => void> = [
+    (f) => {
+      f.frames[0]!.thread_id = "foreign";
+    },
+    (f) => {
+      f.frames.pop();
+    },
+    (f) => {
+      f.frames.at(-1)!.type = "turn.failed";
+    },
+    (f) => {
+      f.delta.splice(-1, 0, { type: "event_msg", payload: { type: "error" } });
+    },
+    (f) => {
+      f.delta.pop();
+    },
+    (f) => {
+      f.frames.splice(3, 1);
+    },
+    (f) => {
+      f.evidence.exitCode = 1;
+    },
+    (f) => {
+      f.evidence.signal = "SIGTERM";
+    },
+  ];
+  for (const change of changes) {
+    const f = fixture();
+    change(f);
+    f.frames.splice(2, 0, {
+      type: "error",
+      message: "Reconnecting... 2/5 (request timed out)",
+    });
+    const suffix = lines(f.delta);
+    assert.equal(
+      createCodexExecFinalOutput(f.binding).settle({
+        ...f.evidence,
+        stdout: lines(f.frames),
+        rollout: {
+          ...f.evidence.rollout,
+          bytes: Buffer.concat([f.prefix, suffix]),
+        },
+      }),
+      undefined,
+    );
+  }
+  for (const [position, frame] of [
+    [0, { type: "error", message: "before start" }],
+    [5, { type: "error", message: "after final" }],
+    [2, { type: "error", message: "" }],
+    [2, { type: "error", message: "unknown shape", code: "unverified" }],
+  ] as const) {
+    const f = fixture();
+    f.frames.splice(position, 0, frame);
+    assert.equal(
+      createCodexExecFinalOutput(f.binding).settle({
+        ...f.evidence,
+        stdout: lines(f.frames),
+      }),
+      undefined,
+    );
+  }
+});
