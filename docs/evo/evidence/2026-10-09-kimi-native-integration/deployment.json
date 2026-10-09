@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-09",
+  "sourceCommit": "2d13f7f548cbe68c1ee9ed3f9e9c880946468a38",
+  "remoteEvoVerified": true,
+  "sourceSha256": "b311657dd142aeec30eb55bc3926c55bcb1ec1f88f1bfcf7075a97398a5c38e4",
+  "service": "com.loom.evo",
+  "restartedAt": "2026-10-09T15:06:49.125Z",
+  "deployment": {
+    "restartMethod": "Exact idle service SIGTERM after backup verification, then launchd KeepAlive successor; no forced kill or unmanaged daemon.",
+    "backupVerified": true,
+    "databases": 2,
+    "stateFiles": 302,
+    "businessTablesUnchanged": 11,
+    "persistentStateHomeUnchanged": true,
+    "successorOwnsExpectedDatabaseAndListener": true,
+    "sourceHashUnchangedDuringRestart": true,
+    "sixFinalOutputTrialFlagsDisabledInPlistAndExactSuccessor": true
+  },
+  "checks": "verification.json",
+  "page": {
+    "at": "2026-10-09T15:06:57.432Z",
+    "browser": "Fresh headless Chrome, 1440x900, service workers blocked",
+    "origin": "http://127.0.0.1:4176/",
+    "title": "RAH OS",
+    "realServiceNotFixture": true,
+    "existingHistoryVisible": true,
+    "pageErrors": [],
+    "roleListCount": 39,
+    "memoryListRequestSucceeded": true,
+    "memoryResponseShapeChecked": [
+      "channelId",
+      "entries",
+      "total",
+      "truncated"
+    ],
+    "healthState": "online",
+    "limits": [
+      "Specific existing history and read requests, not all UI interactions or mobile acceptance.",
+      "Role count does not audit every Role; memory response shape does not verify all memory bodies.",
+      "Frontend unchanged; existing build identity does not attest this backend revision.",
+      "No model call or cost acceptance follows from deployment."
+    ]
+  },
+  "evidenceHashes": {
+    "restart.mjs": "19368596817d52d0a043bf39063d190843803b841f727702157dc9d185c6eea6",
+    "restart.json": "e243d2cad573a4dab7194ecfb11861b2dadd2b8163c1307195d7d476c14719e6",
+    "restart.log": "0170f2168cca092122ba3f50dcd4dd27565b8db9207bcb6fc8eba08161e104fe",
+    "page.mjs": "9fc98712744fb692438082534d767cab3949d7194410b866beeb0b00eae28cab",
+    "page.json": "dfa2dfbc2080c4980b980d127d89e055170473459a30f4a16cd40b0f4f63173e",
+    "page.png": "b50dd39aacf5dccbb8fe4b3fce1dfa47cf321e87d9aa6921225011d6e49cd2c9",
+    "running-trial-flags.json": "80a0d450a3a6baf346b44c761647654c48cf7b52c73c0f9c921041bd0f53a82f",
+    "format-handoff.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  }
+}
