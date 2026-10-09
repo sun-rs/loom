@@ -1,0 +1,128 @@
+{
+  "kind": "Kimi explicit Run native-final-text free prototype",
+  "date": "2026-10-09",
+  "run": "/Users/sun/.loom/reviews/2026-10-09-kimi-native-final/runs/1791503531187",
+  "paidCalls": 0,
+  "productImplementation": false,
+  "actualCLI": {
+    "version": "0.39.1",
+    "installedSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+    "modelBinding": "fixture",
+    "rawModel": "fake",
+    "effort": "low",
+    "sameSession": true,
+    "rounds": 2
+  },
+  "memory": {
+    "version": "0.39.1",
+    "sourceRevision": "5efca0c3116743855c28426000073bfe34a4862f",
+    "status": "not-applicable",
+    "evidence": "audited-cli-version"
+  },
+  "mechanism": {
+    "modelFacingMCP": false,
+    "JSONEnvelopeRequired": false,
+    "perRunFinalReplyOptIn": true,
+    "hostFrozenDeliveredSeq": true,
+    "onlyUniqueCompletedNativeFinal": true,
+    "firstRoundBinding": "Host freezes mode/Run/delivery and empty dedicated session root with offset 0 before launch; native session ID and exact wire path are bound at first fake-provider request before any response bytes. CLI chooses ID; not claimed known prelaunch.",
+    "continuationBinding": "Exact original session/path and prelaunch byte offset plus SHA256 of immutable prefix; no timestamp-based selection of publication evidence.",
+    "usageExtraction": "Existing parser receives only new byte suffix; timestamps are secondary usage filtering, not final authority.",
+    "publication": "After successful native exit and complete verified step/tool/end evidence, Host calls unchanged authenticated bound Worker bridge; receipt success authorizes Activation completion. No model receipt injected.",
+    "sessionDiagnosticTrust": "Version-pinned local wire is not cryptographically authenticated; no general stdout-to-message rule."
+  },
+  "results": {
+    "generationsPerRound": [2, 2],
+    "actualFakeHTTPRequests": 4,
+    "usageRecords": 4,
+    "toolCalls": {
+      "Bash": 2
+    },
+    "normalCompletedTurns": 2,
+    "bodyMatchedFixture": 2,
+    "syntheticUsage": {
+      "inputOther": 4,
+      "inputCacheRead": 0,
+      "inputCacheCreation": 0,
+      "output": 4
+    },
+    "kernel": {
+      "publications": 2,
+      "finalMarkers": 2,
+      "completedActivations": 2,
+      "exitedRuns": 2,
+      "deliverySeqs": [4, 13],
+      "workerAckCursor": 13
+    },
+    "postPublicationAdditionalGeneration": 0
+  },
+  "tests": {
+    "red": "/Users/sun/.loom/reviews/2026-10-09-kimi-native-final/red.tap",
+    "green": "/Users/sun/.loom/reviews/2026-10-09-kimi-native-final/green.tap",
+    "executed": 31,
+    "note": "final.test is imported by kernel.test, so its 11 cases execute twice; 20 distinct cases.",
+    "negativeCases": [
+      "mode off",
+      "wrong session",
+      "wrong path",
+      "wrong turn",
+      "historical/prefix mismatch",
+      "truncated offset",
+      "length/unknown finish",
+      "pending tool",
+      "duplicate end",
+      "stale Worker hold",
+      "unknown result never resent",
+      "duplicate success idempotency"
+    ]
+  },
+  "isolation": {
+    "dedicatedHOMEAndKimiHome": true,
+    "emptyExtraSkillsAndMCP": true,
+    "realCLIBashDeniedReads": [
+      "private reviews sentinel",
+      "repo AGENTS.md",
+      "peer arm budget.csv"
+    ],
+    "sameSandboxNetworkProbe": {
+      "loopbackAllowed": true,
+      "externalDeniedByOS": true
+    },
+    "credentialFilesReadOrRefreshed": false
+  },
+  "cleanup": {
+    "actualCLIPidsExited": true,
+    "hostRunnerExited": true,
+    "fakeProviderPortClosed": true,
+    "runtimeRemoved": true,
+    "serviceClosed": true
+  },
+  "retainedAttempts": [
+    {
+      "run": "1791503483614",
+      "result": "initial two-round pass; before additional actual CLI forbidden-read and memory-policy evidence"
+    },
+    {
+      "run": "1791503531187",
+      "result": "final two-round pass"
+    }
+  ],
+  "limits": [
+    "Fake provider correctness is deterministic transport evidence, not real-model reliability or efficiency.",
+    "No paid test, no native-control cost comparison, no token savings or price claim.",
+    "Only two business turns and a narrow file tool workload.",
+    "Original byte suffix and native wire are private; no thinking text or credentials published.",
+    "First-round binding occurs after process startup but before provider response, unlike continuation prelaunch exact-session binding.",
+    "Uses previous private bound Worker bridge, not new repository native-text trial helper; no production capability or contract change."
+  ],
+  "sourceHashes": {
+    "final.mjs": "089e4e0617033ea67c05337209f4839d331617a57ccb3fc1fc23b842960e42bc",
+    "final.test.mjs": "843e7f9cb796d6d30806a00509fedfee6c6c108e8ad0af9a966645e369ddb60b",
+    "kernel.test.mjs": "9aec29bee74f2b7fee124b044a2d6db74f51ec1abd03c7f1fe957e50d7d0edff",
+    "run.mjs": "ce6b29ded195e2b3093843df3940a0d44c472294c8045676df42e240f633321a",
+    "fake.mjs": "f7acb207cbb854f066db3ad014a50aaca10c67da6e82606ab867b9aefceb22eb",
+    "config.py": "028dd8312709ca46a2e05b89d4e8c30880b5e4ae44551497e070272bdeada1dc",
+    "isolation-check.mjs": "e0a03777bc3286c14169d623438341e6d6b2132a3b0817ceb9b172693e1ff581",
+    "green.tap": "e9bc3c7c17190e2f00fe6bf41b82e3f6031476815283acdfefc2ce8316776476"
+  }
+}

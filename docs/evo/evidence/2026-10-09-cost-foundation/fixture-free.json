@@ -1,0 +1,90 @@
+{
+  "kind": "invoice-v3-free-fixture-foundation",
+  "date": "2026-10-09",
+  "state": "free helper verified; actual CLI runner integration pending",
+  "paidCalls": 0,
+  "realCliInvocations": 0,
+  "privateFixture": "/Users/sun/.loom/reviews/2026-10-09-cost-fixture-v3",
+  "planSha256": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+  "manifestSha256": "b1fe297130d60470299efe19b4fbae70cbc07e69fc7a0555cccf85aede0607eb",
+  "files": {
+    "plan.json": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+    "schemas.json": "5a41752182bfc0c7cd6c0a8ff3911d9859377123ba021713ea4c07ad628dd566",
+    "capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "policy.mjs": "d7b646f4dfc21e3ed4434956bd3cca8b16ee593e5dd39dda72056b54472e4d59",
+    "policy.test.mjs": "65ce80dec94b8be119d5f032358d3d4f7b03051e385a7e561e147c7d00045f22",
+    "test_v3.py": "532b927ba8f124364461b5de7fe7f2139778c8969f9d199f41504e3d54a0d6af",
+    "test_evaluator.py": "4ad60b13cb36a8da6793b616b1bd563fefa235f9f164028c07203dde355aa286",
+    "integration.json": "d09616b89e5db28a223bb80cd07890d734990a8981dc6a9a083e4714696da2a6",
+    "oracle/cases.json": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+  },
+  "changes": [
+    "R1 explicitly list[dict] and dictionary-key access, removing attribute interpretation ambiguity.",
+    "R9 exactly one FILE argument; R10 exactly one FILE or literal dash sentinel; no arguments explicitly error.",
+    "Existing cli-no-argument case activates atR9; one new cli-two-arguments case atR9; 38 total vectors. Monetary reference and evaluator unchanged.",
+    "Persist immutable per-round candidate snapshot and sidecar; hash before and after evaluating copied archive bytes; no overwrite.",
+    "Quality failure continues fixed tasks without feedback; protocol/usage/budget failures stop. Pure policy only; no scheduling owner moved.",
+    "Generation ledger deduplicates provider/session/response identity and rejects conflicting duplicate or cumulative summary. Provider-native parser remains owner of metric mapping."
+  ],
+  "freeTests": {
+    "python": 18,
+    "node": 2,
+    "cliSmokeCases": 38,
+    "referenceMeaning": "Reference implementation verifies oracle; never treated as an agent outcome.",
+    "redEvidence": {
+      "red-python.log": "211b8fa9b5f6307356f14a7c600625781eb83229b1e4c2f6953200bd276a2bc2",
+      "red-node.log": "7acbccd7f0bb7dc6c056d6512b4a6836c285e1149e68141a591ade8d6164fecb",
+      "red-cli-arity.log": "ee281abc63b6bc51a3013a942eb005f8277efd240dd06b2f86dd9b123d9de15b"
+    },
+    "greenEvidence": {
+      "green-python-final.log": "0b862d125ce2b25f1472a19679b7a58c5d22ceb04434f2273b25d735e3946788",
+      "green-node-final.log": "00c710de0982ceef1c0fdc449f5cd472caa4c1bfbe08c41aaa39c4ebbccfe9de",
+      "cli-smoke.json": "72e748e7bc3b9456d9b59b5c1c27e725d5d11b2cb908168f5732e17d5aae563c"
+    },
+    "invariants": [
+      "stub/mutants rejected, reference passes all rounds",
+      "real evaluator sandbox denies oracle/repo/peers and snapshot writes",
+      "oracle symlink rejected before copy",
+      "archive persists original bytes after live workspace changes",
+      "quality false gets durable evidence, cannot overwrite prior archive",
+      "generation replay does not duplicate totals; cumulative summary rejected"
+    ]
+  },
+  "historicalV2Unchanged": true,
+  "reuse": {
+    "snapshot.py": "Byte-exact local v2 reuse",
+    "evaluator.py": "Byte-exact local v2 reuse; BASE now refers v3 oracle",
+    "capture.py": "Small structural adaptation of Codex evaluate.py with durable sidecar and post-evaluation hash verification",
+    "policy.mjs": "New pure measurement helper; not a provider adapter"
+  },
+  "runnerReview": {
+    "codex": "Current evaluate.py already captures+hashes+evaluates archived bytes. To use v3, freeze new fixture hash, route capture output to existing row.artifact/row.quality; optionally use capture.py. Preserve token_usage_record current-turn suffix and native response identity; do not add exec cumulative summary.",
+    "opencode": "Current artifact.mjs supports durable archive and returns artifactSha256 plus evaluation flat. Supply required archive always, adapt v3 output shape, preserve native DB message-ID delta. Normalize input as input+cache.read+cache.write, output as output+reasoning per current provider convention, without adding native cumulative totals.",
+    "claude": "Current paid runner evaluates temporary snapshot only: replace that call in a NEW runner version with capture.py and persist sidecar/row.artifact before next launch. Preserve unique responseId stream-vs-transcript reconciliation. total_cost_usd remains latest per-session estimate only, never sum rounds."
+  },
+  "pending": [
+    "No runner source modified or actual CLI invoked in this batch",
+    "No cross-CLI free12 or paid validation for v3 yet",
+    "No common runner framework implemented",
+    "Runner auth/memory/model/timeout/Worker/ACK guards remain their original owners",
+    "Safe archive destination and shared sandbox denial still need validation per runner before adoption",
+    "Quality continuation tests validate pure decision only, not end-to-end provider failures"
+  ],
+  "limits": [
+    "No shared runner framework or actual CLI acceptance completed.",
+    "Normalized ledger cannot establish provider usage correctness; original per-provider response/session reconciliation still required.",
+    "Runner must pass a controller-private archive denied to model and retain raw failed-turn usage before stopping.",
+    "README semantics remain manual; files/selftests alone do not establish full task acceptance.",
+    "No new cost/reliability claim or authorization to start paid tests."
+  ],
+  "initialModelWorkspace": {
+    "files": ["invoice.py", "README.md"],
+    "sameBytesAsV2": true,
+    "oracleAndExpectedAnswersPresent": false
+  }
+}

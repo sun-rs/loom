@@ -1,0 +1,201 @@
+{
+  "kind": "Claude actual CLI with invoice-v3 durable round capture \u2014 free integration only",
+  "date": "2026-10-09",
+  "run": "/Users/sun/.loom/reviews/2026-10-09-claude-artifact-free/runs/1791503799223",
+  "paidCalls": 0,
+  "actualCLI": "Claude Code 2.1.293",
+  "configuredModel": "sonnet",
+  "effort": "low",
+  "provider": "localhost deterministic fake Anthropic SSE",
+  "reportedModel": "claude-sonnet-5-5 (fixture-controlled, not real-provider proof)",
+  "scope": "Three rounds in each of two continuous native sessions; no full twelve-round acceptance.",
+  "tdd": {
+    "red": "Old evaluate-only adapter returned quality but failed persistent archive assertion.",
+    "redLogSha256": "e2e6e0de09256ec1c81f746882c8f3dece2d2e631f515c5a72439d1f6eb700ea",
+    "green": "Minimal adapter invokes v3 capture_evaluate, preserving exact evaluated archive and adjacent evidence sidecar.",
+    "greenLogSha256": "524730683b6b7c42385583c65df292c2c1aaaf92e86e40a041fe759bef547df1"
+  },
+  "arms": {
+    "native": {
+      "sameSession": true,
+      "qualityPattern": [true, false, true],
+      "generations": [5, 5, 5],
+      "syntheticUsage": {
+        "inputTokens": 1500,
+        "cachedInputTokens": 0,
+        "outputTokens": 150
+      },
+      "streamTranscriptUsageReconciled": true,
+      "memoryDisabledEveryLaunch": true
+    },
+    "terminal": {
+      "sameSession": true,
+      "qualityPattern": [true, false, true],
+      "generations": [5, 5, 5],
+      "syntheticUsage": {
+        "inputTokens": 1500,
+        "cachedInputTokens": 0,
+        "outputTokens": 150
+      },
+      "streamTranscriptUsageReconciled": true,
+      "memoryDisabledEveryLaunch": true
+    }
+  },
+  "archives": [
+    {
+      "arm": "native",
+      "round": 1,
+      "qualityPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 1,
+      "checks": 1,
+      "files": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "__pycache__/invoice.cpython-313.pyc": "dcefb58a72fc9d5ea2e3b98a3e555bf7266ac57236c277ec65983e4cb01bf578",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "0088cf76042abe6980001cad0262d00d60dc96d1faa4b84d124dc105b6014880",
+        "tests/test_invoice.py": "0382824de934084089b2b3d593dc834387cd40dd4806d205078bbcd854af7bce"
+      },
+      "sameBytesVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "qualityPassed": false,
+      "selfTestsPassed": false,
+      "passedChecks": 2,
+      "checks": 3,
+      "files": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "__pycache__/invoice.cpython-313.pyc": "7648ea43ac1ce0d2141cac70c4d326aab4ea8af6b97f1cc7f313ca163ddf466e",
+        "invoice.py": "3da79d5b44b5d73843de2bd5762f9b9cdea8f929d13a73db9e7fc04f9d1a3b82",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "d1e5dd77a480b816861ab69b0a89e81a03024974f3b325003ecc23d21114184d",
+        "tests/test_invoice.py": "0382824de934084089b2b3d593dc834387cd40dd4806d205078bbcd854af7bce"
+      },
+      "sameBytesVerified": true
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "qualityPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 4,
+      "checks": 4,
+      "files": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "__pycache__/invoice.cpython-313.pyc": "9f64a33e82c541ba2f5441be107d216231a83deb29d3ed24420642a6b78bf994",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "d1e5dd77a480b816861ab69b0a89e81a03024974f3b325003ecc23d21114184d",
+        "tests/test_invoice.py": "0382824de934084089b2b3d593dc834387cd40dd4806d205078bbcd854af7bce"
+      },
+      "sameBytesVerified": true
+    },
+    {
+      "arm": "terminal",
+      "round": 1,
+      "qualityPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 1,
+      "checks": 1,
+      "files": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "__pycache__/invoice.cpython-313.pyc": "9ec3f7f65cd735b5a9376137afceff7c49d433cc871385cefcc9dc81a0852dab",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "8e1c0570f0cf46efa744c7fafe6a0fc2bb5fb1435ee4c21e27cb99fdf4510ff7",
+        "tests/test_invoice.py": "0382824de934084089b2b3d593dc834387cd40dd4806d205078bbcd854af7bce"
+      },
+      "sameBytesVerified": true
+    },
+    {
+      "arm": "terminal",
+      "round": 2,
+      "qualityPassed": false,
+      "selfTestsPassed": false,
+      "passedChecks": 2,
+      "checks": 3,
+      "files": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "__pycache__/invoice.cpython-313.pyc": "9eda68017ccfac7a772c876f6e0afb56f29ee3d091e2df2a40b1bf27cbce99bd",
+        "invoice.py": "3da79d5b44b5d73843de2bd5762f9b9cdea8f929d13a73db9e7fc04f9d1a3b82",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "8e1c0570f0cf46efa744c7fafe6a0fc2bb5fb1435ee4c21e27cb99fdf4510ff7",
+        "tests/test_invoice.py": "0382824de934084089b2b3d593dc834387cd40dd4806d205078bbcd854af7bce"
+      },
+      "sameBytesVerified": true
+    },
+    {
+      "arm": "terminal",
+      "round": 3,
+      "qualityPassed": true,
+      "selfTestsPassed": true,
+      "passedChecks": 4,
+      "checks": 4,
+      "files": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "__pycache__/invoice.cpython-313.pyc": "7774c7109cbddef186b66b4a6b38ac896f66994e3f79563b723614e2adb25526",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "70af49f74276c859ed00e14967f7b82dce6c8961da7e35a7567f1e31ebb066f4",
+        "tests/test_invoice.py": "0382824de934084089b2b3d593dc834387cd40dd4806d205078bbcd854af7bce"
+      },
+      "sameBytesVerified": true
+    }
+  ],
+  "kernel": {
+    "realWorkerPublications": 3,
+    "finalMarkers": 3,
+    "completedActivations": 3,
+    "exitedRuns": 3,
+    "qualityFailureDoesNotBlockProtocolCompletion": true
+  },
+  "qualityIsolation": {
+    "R2IntentionalDefect": "Fake Write omits zero-quantity row; evaluator and native self-tests both fail.",
+    "R3Recovery": "Fake Write restores reference implementation; cumulative round-3 checks and self-tests pass.",
+    "hiddenOracleFeedbackToModel": false,
+    "hiddenOraclePassedToCLI": false,
+    "referenceSource": "Host fake provider supplies reference as synthetic tool arguments; this is intentionally not model-generated coding quality.",
+    "normalSelfTestOutputVisible": true
+  },
+  "usage": {
+    "fakeMessageRequests": 30,
+    "completeNativeGenerations": 30,
+    "noDroppedFailedQualityRound": true,
+    "allPerGenerationStreamTranscriptUsageMatched": true,
+    "reasoningTokens": "not separately provided; not estimated",
+    "costConclusion": null
+  },
+  "isolation": {
+    "samePriorLoopbackSandbox": true,
+    "prelaunchOSReadDenials": ["v3 oracle", "repo evidence", "peer workspace"],
+    "perLaunchMemoryOff": true,
+    "connectionEnvironment": "Only explicit fixture origin/auth constants; no account configuration read or refresh.",
+    "globalConfigChanged": false
+  },
+  "cleanup": {
+    "runtimeRemoved": true,
+    "serviceClosed": true,
+    "allSixCLIProcessesAndGroupsExited": true,
+    "fakeServerClosedByRunner": true
+  },
+  "limits": [
+    "Fake provider produces all business changes, including deliberate defect/recovery; no real model quality or efficiency claim.",
+    "Only R1-R3 exercised; final R12 README/manual acceptance not performed.",
+    "Archives retain synthetic pycache files too; every retained file hash is included and verified.",
+    "No hidden oracle feedback; ordinary CLI self-test failure is naturally visible.",
+    "Private runner plan inherits old unused comparison metadata; this limited report asserts only explicit three-round v3 free scope and does not endorse inherited P151 paid-plan fields.",
+    "No product source or old runner changed."
+  ],
+  "sourceHashes": {
+    "run.mjs": "59ddd9b59878e12d267d51a6ce055e608791360878b6c184244f6e65e0cdfb42",
+    "fake.mjs": "85ec9eaa4f65589767d634a368300fd98a073eb71974d157aa3630d308516c76",
+    "capture-adapter.py": "af83d210a0eb0ba990033a98a8b0ca9bdadf5fd6fdaa3d58ec108c2f4db58af9",
+    "capture.test.py": "1751e05779a1c97000835dd8c6c8f0a1bf880a6a04c8ab170012abc612171702",
+    "final.mjs": "055c434b154d0ac0f36a2048d6b97e91eb2c744eaffdd2b9a3f9238480f85cf9",
+    "lifecycle.mjs": "eed59c2638e48cc0d1c000be5fb58867aafc340760e7ae726f6703c2ff992021"
+  },
+  "fixtureHashes": {
+    "capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "plan.json": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "kind": "bounded-read-only-production-integration-plan",
+  "date": "2026-10-09",
+  "commit": "a1643353daca87a2b0737f9e3932a4f0faa8b9db",
+  "implemented": false,
+  "deployed": false,
+  "newCLILaunches": 0,
+  "recommendation": "First narrow candidate: Claude warm stream-json native final, reusing the existing shared warm adapter settlement and WorkerFinalOutput transaction slot. Ordinary Codex exec remains an explicit separate follow-up; never substitute app-server or host mode for its baseline.",
+  "why": [
+    "Shared warm adapter already holds original Run credential through native drain and final-output submission, then releases it before returning RunExit.",
+    "Claude warm driver already attributes result to accepted input UUID, tracks tools and drains native work; it currently does not emit a finalOutputCandidate.",
+    "Generic cold close currently revokes activation environment before activity finish; implementing cold submission there would require careful changes to both direct and supervised exit ordering, not a one-line stdout hook."
+  ],
+  "currentEvidence": [
+    {
+      "file": "packages/agent-host/src/codex-warm-adapter.ts",
+      "lines": "275-281",
+      "finding": "Explicit final-output is currently restricted to Codex and OpenCode warm drivers; Claude is excluded."
+    },
+    {
+      "file": "packages/agent-host/src/codex-warm-adapter.ts",
+      "lines": "339-355,965-998",
+      "finding": "Issue original Worker credential; drain collector/integrity writes; submit only clean completed outcome without inflight tools, supervision or cancellation; close submission then release/revoke original turn handle."
+    },
+    {
+      "file": "packages/agent-host/src/claude-warm-driver.mjs",
+      "lines": "582-612,719-750",
+      "finding": "Tool set and result-to-input UUID attribution exist; turn.drained carries Run/native wake IDs/status/tool count but no finalOutputCandidate."
+    },
+    {
+      "file": "packages/agent-host/src/generic-process-adapter.ts",
+      "lines": "1156-1172,1549-1560",
+      "finding": "Both direct and supervised child close call releaseEnvironment before activity.finish; no WorkerFinalOutput currently wired."
+    },
+    {
+      "file": "packages/agent-host/src/runtime-implementation-registry.ts",
+      "lines": "161-185,666-720,811-841",
+      "finding": "generic, Claude stream-json and Codex app-server are distinct adapters. Claude cold wraps GenericProcessAdapter with a per-Run Worker lease; app-server Codex is not an exec baseline."
+    },
+    {
+      "file": "packages/agent-host/src/codex-final-output.js",
+      "lines": "1-65",
+      "finding": "Existing Codex final collector requires app-server threadId/turnId/item final_answer/turn completed; cannot reuse its event contract as proof for ordinary exec JSON."
+    },
+    {
+      "file": "packages/agent-host/src/agent-host.ts",
+      "lines": "1280-1339",
+      "finding": "Host records actual execution outcome; nonpublished final-output with no durable marker goes action_required, completion remains Kernel ACK-gated."
+    },
+    {
+      "file": "packages/agent-host/src/worker-final-output.ts",
+      "lines": "40-125",
+      "finding": "Existing dedicated final-output HTTP endpoint, one cached submission promise, no retry, held/rejected/unknown receipts. No new protocol owner needed."
+    }
+  ],
+  "minimumOwnerChanges": [
+    {
+      "owner": "AgentHost native evidence",
+      "files": ["packages/agent-host/src/claude-warm-driver.mjs"],
+      "change": "Collect one bounded final assistant text from original accepted native input/session/Run; require matching normal successful result and end_turn evidence, unique message identity, no unresolved tools or unattributed/intermediate/error output. Emit candidate via existing finalOutputCandidate field only after clean drain. Multiple busy inputs/finals initially reject as ambiguous; do not guess which prose is business intent."
+    },
+    {
+      "owner": "AgentHost warm lifecycle",
+      "files": [
+        "packages/agent-host/src/codex-warm-adapter.ts",
+        "packages/agent-host/src/final-output-instructions.js"
+      ],
+      "change": "Explicitly opt in only supported Claude native-final mode. Bind body to Host frozen delivery seq, serialize existing envelope internally for WorkerFinalOutput; model emits ordinary text. Retain old provider envelope guidance where still in use. Do not blindly add Claude to existing flag since that flag currently requests JSON."
+    },
+    {
+      "owner": "AgentHost composition/session policy",
+      "files": ["packages/agent-host/src/runtime-implementation-registry.ts"],
+      "change": "Verify candidate mode only selected for the tested warm path and included in runtime reuse identity; preserve same native session, memory settings and access grants. Cold/fallback must remain explicitly old supported mode or reject candidate admission; never silently claim native-final coverage."
+    },
+    {
+      "owner": "AgentHost disposition",
+      "files": ["packages/agent-host/src/agent-host.ts"],
+      "change": "Prefer no behavior change: assert existing durable-marker lookup and action_required handling for held/unknown/rejected/invalid; if proof lacks candidate under opted-in mode it must yield explicit invalid/rejected receipt, not silently undefined and generic auto-retry."
+    }
+  ],
+  "requiredOrdering": [
+    "Before delivery: freeze explicit mode, original Run credential, native session/turn or accepted input UUID, delivered sequence.",
+    "Native final evidence and all tools complete; drain activity/usage/integrity writes. Runtime normal close/drain alone is not business completion.",
+    "While original execution authority remains valid, submit once through WorkerFinalOutput. Never release/rebind token first.",
+    "Persist receipt/disposition, then revoke/close handle. Record actual Run termination independently, including rejection and unknown.",
+    "Only successful committed final marker plus delivery ACK permit Activation completion. Unknown verifies durable marker; absent/unavailable proof holds action_required, no resend or fresh model retry."
+  ],
+  "codexExecFollowup": {
+    "scope": "Ordinary installed codex exec --json, initial/resume same native session; no explicit app-server command or silent host-mode conversion.",
+    "needed": "Dedicated exec evidence binding to launch, thread/session and current turn lifecycle; partial agent_message or process exit is insufficient. Audit actual exec event availability first, then reuse same WorkerFinalOutput owner. The app-server collector is not evidence compatibility.",
+    "coldIntegrationOwners": [
+      "packages/agent-host/src/generic-process-adapter.ts",
+      "packages/agent-host/src/runtime-implementation-registry.ts"
+    ],
+    "orderingRisk": "Both direct and supervised close paths release credentials too early for a post-final publication hook. Avoid globally reordering all providers without scoped tests, preserve spawn-error/cancel/crash cleanup and actual Run exit provenance."
+  },
+  "existingTestsToExtend": [
+    "packages/agent-host/test/claude-warm-driver-close.test.ts",
+    "packages/agent-host/test/claude-warm-runtime.test.ts",
+    "packages/agent-host/test/claude-busy-driver.test.ts",
+    "packages/agent-host/test/worker-final-output.test.ts",
+    "packages/agent-host/test/host-final-output-failure.test.ts",
+    "packages/agent-host/test/runtime-implementation-registry.test.ts",
+    "packages/agent-host/test/process-runtime.test.ts",
+    "packages/agent-host/test/process-recovery-integration.test.ts",
+    "packages/agent-host/test/claude-cold-worker-mcp.test.ts"
+  ],
+  "negativeAcceptance": [
+    "Mode off / unrelated stdout never publishes.",
+    "Wrong session/input UUID/Run, historical replay, conflicting finals, intermediate/length/error final, pending tools and busy ambiguity never publish.",
+    "Candidate missing in enabled mode cannot silently become auto-retry or completion.",
+    "Worker credential remains valid until submission settles; revoke after success, held, invalid, unknown and cancellation; no replacement token.",
+    "Stale remains held; lost response does not duplicate canonical post or start a new model turn.",
+    "Durable committed marker plus ACK may recover unknown success; unavailable marker lookup remains action_required.",
+    "Run termination preserves actual runtime outcome even if publication fails; no rewriting exited Run.",
+    "Native same-session continuation, usage/context/memory policy unchanged."
+  ],
+  "notDone": [
+    "No production code changes, tests, CLI launches or service restart in this planning task.",
+    "Claude warm busy-steering and native input attribution need actual test proof; private cold fake success does not establish warm production readiness.",
+    "No new framework, protocol endpoint or business state owner proposed.",
+    "No paid acceptance or efficiency target claim."
+  ]
+}

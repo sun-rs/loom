@@ -1,0 +1,181 @@
+{
+  "kind": "Pi native-final-text private free prototype",
+  "date": "2026-10-09",
+  "paidCalls": 0,
+  "credentialReadsOrRefreshes": 0,
+  "productionChanges": false,
+  "verdict": "Passed narrow actual CLI/fake-provider two-turn proof, now also through shared native-text trial with two trusted final-output markers. Not paid quality or efficiency acceptance. Original v1 results preserved.",
+  "cliVersion": "1.1.0",
+  "sourceHashesMatchPriorAudit": true,
+  "runPath": "/Users/sun/.loom/reviews/2026-10-09-pi-native-final/runs/1791503474153",
+  "method": {
+    "entry": "ordinary pi --print --mode json --session; same explicit session per arm, separate sessions between arms",
+    "output": "plain native final text; no response schema, no MCP or reply tool",
+    "binding": "per-Run FinalReply opt-in before launch, immutable launch id and prelaunch session bytes; current appended branch user and final response identity crosschecked",
+    "terminal": "exit0, complete JSONL, unique final stop/raw stop, settled non-aborted with no retry, all tools settled, no late generation",
+    "publication": "body copied unchanged via existing authenticated Worker; frozen delivered seq and original Run idempotency; receipt only then explicit Activation completion after actual Run termination"
+  },
+  "freeResults": {
+    "roundsPerArm": 2,
+    "completedLaunches": 4,
+    "realFilesystemWrites": 4,
+    "fakeProviderResponses": 8,
+    "sameSessionResume": true,
+    "secondTurnRequestsContainTwoUserTurns": true,
+    "realWorkerPublications": 2,
+    "activationCompletions": 2,
+    "duplicatePublisherCallsCreateNoExtraPosts": true,
+    "syntheticUsage": {
+      "input": 836,
+      "output": 80,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "usageCaveat": "Deterministic invented fake-provider token counts verify accounting plumbing only; no efficiency/cost result."
+  },
+  "tests": {
+    "redLogs": ["tdd-red.log", "binding-red.log"],
+    "unitPasses": 16,
+    "kernelPasses": 3,
+    "negativeCases": [
+      "wrong session",
+      "old branch/prelaunch replay",
+      "wrong parent chain",
+      "wrong prompt",
+      "incomplete JSONL",
+      "missing settlement",
+      "retry pending",
+      "aborted",
+      "length",
+      "duplicate final",
+      "post-settlement generation",
+      "live process",
+      "no explicit mode",
+      "wrong launch bound at publisher",
+      "unknown mutation sticky",
+      "real Kernel newer Human stale hold: zero post",
+      "lost HTTP response after real commit: one post, committed ACK retained; no retry, synthetic ACK or Activation completion",
+      "owned timeout: real timed_out Run, no post or ACK"
+    ]
+  },
+  "memory": {
+    "basis": "Installed 1.1.0 source matched prior audit; no independent automatic-memory subsystem found within that bounded audit",
+    "everyLaunch": [
+      "isolated empty HOME and PI_CODING_AGENT_DIR",
+      "--no-context-files",
+      "--no-skills",
+      "--no-extensions",
+      "--no-prompt-templates",
+      "--no-mcp",
+      "cacheWarming off",
+      "no SYSTEM.md/APPEND_SYSTEM.md/cwd .pi",
+      "compaction and provider retries disabled"
+    ],
+    "sameSessionHistory": "retained",
+    "limits": "Not a guarantee for future Pi versions or arbitrary extensions; no user account files copied/read."
+  },
+  "network": {
+    "osSandbox": "deny outbound except loopback; actual external 1.1.1.1 socket EPERM probe passed",
+    "provider": "loopback fake server only",
+    "modelConfig": "new isolated fake-local/fake-final with synthetic token; minimal child environment"
+  },
+  "cleanup": {
+    "recordedOwnedGroups": 5,
+    "allAbsentByPs": true,
+    "providerAndWorkerPortsClosed": true,
+    "privateEvidence": "/Users/sun/.loom/reviews/2026-10-09-pi-native-final/cleanup.json"
+  },
+  "limitations": [
+    "No paid Pi model tested or admitted; synthetic replies do not establish model quality.",
+    "No long-task cost ratio or cross-model claim.",
+    "Raw stop reason validation is specific to observed OpenAI-completions fake binding; other providers require source/negative checks.",
+    "Underlying native same-user filesystem access is not a security boundary; this prototype disables automatic resources and blocks known account roots, not all possible secret paths.",
+    "Worker submission occurs after durable process-close evidence but before Kernel runtime termination, because existing Worker authorization requires live Run; this bounded controller window does not change production Kernel.",
+    "No production deployment or service restart; private prototype only."
+  ],
+  "sources": {
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/package.json": "c662a36f8bc47843393a60dc8616a34dfcc8376e8fcc96dbc2f1020c60e38e2a",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/print-mode.js": "f2eb170b9620c1d37e68b788ff71257a4402a23e7f3999575feee8e5d9e13b3f",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/json-event.js": "5f3756470739fa4a1595feeaf1ce2dfd29e36a2cffd9e642f914fc23f540d606",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js": "0ba5c847b4fd2fd838f71ea84885b9f3a4f15d9bf4b5493e2e88a41d1507e20b",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/resource-loader.js": "0d2ed0d85c39d05d611cd5904c6e696f7e2d16b2316e35d19f9b1f747ee62444"
+  },
+  "prototypeSha256": {
+    "run.mjs": "a9510ef187cacddb86f20df5c93b027df72e00fb153cc80541e2f7034889f250",
+    "process.mjs": "29f21c24da1e7f6baeda02e10a26b1de5de7413511ac63a7411ee7089af8cc36",
+    "read-transport.mjs": "03f0b41ade8939fa1c95ba32bae20b5818a3b830e40d7f611c3d06e07185786b",
+    "kernel.test.mjs": "62f91923537b4f83997c1977fc8a2ba38d62c1f5678b7adc0bddb8445e162421",
+    "final.test.mjs": "c424e9e23eead7aede05763649d2364dfb4f4c6249879c1a9cd76f2a3d81582f",
+    "final.mjs": "dd46b9dd75f8cc7ae4f70bd716d69959e173c7434e55b33f7eff264c8628183f",
+    "room.mjs": "5fafd96c619eeca4f16d65a2950eae11176d9655e3ac3d5b4d6a62efd34b5c21"
+  },
+  "unknownOutcomeAudit": {
+    "correction": "Earlier no-ACK wording was incorrect; earlier test only asserted Activation remained leased. Successful Worker post atomically retained the actual delivery ACK despite client-side response loss.",
+    "lostResponse": {
+      "mode": "lost-response",
+      "toSeq": 4,
+      "workerCursor": 4,
+      "posts": 1,
+      "activationState": "leased"
+    },
+    "stale": {
+      "mode": "stale",
+      "toSeq": 4,
+      "workerCursor": null,
+      "posts": 0,
+      "activationState": "leased"
+    },
+    "kernelSource": "packages/kernel/src/room-kernel.ts:1991 acknowledgePresentedDeliveryInTransaction updates worker cursor as part of successful Worker mutation",
+    "syntheticControllerAction": "No synthetic ACK or Activation completion; rejected promise cached, no mutation resend."
+  },
+  "sharedHelperV2Integration": {
+    "runPath": "/Users/sun/.loom/reviews/2026-10-09-pi-native-final/runs-v2/1791504048191",
+    "paidCalls": 0,
+    "actualCliLaunches": 4,
+    "twoRoundsPerIndependentNativeSession": true,
+    "responses": 8,
+    "realFilesystemWrites": 4,
+    "workerEndpoint": "/v1/worker/messages/final-output",
+    "sharedHelper": "scripts/final-output-trial/native-text.mjs createNativeTextTrial -> existing WorkerFinalOutput",
+    "modelOutput": "unchanged plain final text; no schema/MCP reply tool; only Host serializes existing envelope",
+    "identity": "Before launch freezes explicit Run intent, launchId and session-before bytes. Pi generates first session and current user entry IDs; original validator proves append-only current branch and final. These native IDs are frozen before helper construction/submission; userEntryId is the native turn identity, not a provider model-step id.",
+    "kernelSqlAudit": {
+      "markers": [["final-output", 2]],
+      "activations": [["completed", 2]],
+      "runs": [["exited", 2]]
+    },
+    "usageSyntheticOnly": {
+      "input": 836,
+      "output": 80,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "cleanup": {
+      "recordedPidPgid": [59283, 59297, 59338, 59494],
+      "psMatches": [],
+      "ports": {
+        "provider": {
+          "port": 55514,
+          "listenerAbsent": true
+        },
+        "worker": {
+          "port": "55513",
+          "listenerAbsent": true
+        }
+      }
+    },
+    "sourceSha256": {
+      "/Users/sun/.loom/reviews/2026-10-09-pi-native-final/run-v2.mjs": "e1a907ff44bc50fa7a3589cd706922a739e16d361a5a2044442233ebd2acc6e2",
+      "/Users/sun/.loom/reviews/2026-10-09-pi-native-final/publisher-v2.mjs": "736339c96d70f4abc95d6aad510450aec5c29cb3421d3f090907dee5111fdd5a",
+      "/Users/sun/.loom/reviews/2026-10-09-pi-native-final/final.mjs": "dd46b9dd75f8cc7ae4f70bd716d69959e173c7434e55b33f7eff264c8628183f",
+      "/Users/sun/Code/repos/rah_os/scripts/final-output-trial/native-text.mjs": "f4009a8ebf2987a114c3370df9872110786dc97e2a1f774f2cc1dadff89ac3d4",
+      "/Users/sun/Code/repos/rah_os/packages/agent-host/src/worker-final-output.ts": "8d20be4fd1acb0d2baa561a327bf21eca89337575833102a3633b4c89ac3fbf1"
+    },
+    "limits": [
+      "No paid quality/efficiency claim.",
+      "Original v1 unknown/stale tests remain labeled v1; v2 full-loop success verifies shared final-output markers. Shared helper negative/mutual-exclusion tests are separate root-owned evidence, not claimed as Pi runtime scenarios.",
+      "No production code/helper modifications."
+    ]
+  }
+}

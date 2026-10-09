@@ -2,6 +2,40 @@
 
 2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。随后 P108 真实三轮传输和数值预算通过（输入1.140倍，双方生成2/1/1），但实质审查质量失败，**不是整体验收通过**。 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
+## 2026-10-09 原生最终文本实验边界（未接入生产）
+
+负责人批准成本优先路线后，将此前私有原型的提交边界整理为可重跑的
+[实验提交器](../../scripts/final-output-trial/native-text.mjs)及
+[专项测试](../../scripts/final-output-trial/native-text.test.mjs)。
+这是与下文历史 JSON 命令不同的显式 Run 模式：启动前冻结原 Worker 身份、交付序号和
+模式；各 CLI 的适配器独立证明本轮原生 final 后，只将正文提交给已有 Worker。
+模型不生成 schema、目标或因果字段；普通诊断文字、进程退出码本身仍不能授权发表。
+当前正式 JSON 入口、默认工具入口和实验开关均未改。
+
+实验提交器复用 `WorkerFinalOutput` 和已有 `/v1/worker/messages/final-output` 的
+事务发布槽、跨入口 final 冲突与 unknown 处理；Host 在本地构造旧传输所需 JSON，
+模型仍只生成正文。首版普通 Worker 入口的 marker 来源为空，新增测试明确失败后
+改为专用入口；没有修改 Kernel 或另建发布槽。
+没有向模型注册 MCP 回复工具，也不新建 ACK 或业务状态。原身份与交付值在创建时捕获，
+调用方之后修改配置不能重绑定；一个 Run 固定一个提交槽。Worker 成功发表仍不等于
+Run 结束、Activation 完成或 Task 完成。原生成功结束后，实际发表须在原授权有效窗口内
+完成，再记录真实运行结束；不得重开已终止的 Run 来补发。
+
+执行 `node --test scripts/final-output-trial/native-text.test.mjs`：
+测试原身份唯一发表、同槽冲突、工具与原生 final 两种先后顺序互斥、
+旧/错误/不完整候选拒绝、新 Human 事实触发 held、
+提交后丢响应不重发、已确认结果重建同槽去重，以及缺交付/撤权/结束/移除成员拒绝。
+unknown-after-commit 必须保留已经提交的 ACK 和消息，同时不能据丢失响应自动完成
+Activation；不得将“未补 ACK”误报成“数据库没有 ACK”。
+手工测试传入的 `completed` 只是夹具，不替代 CLI 原生终结验证。
+
+Pi/Kimi 两轮真实安装 CLI 加 loopback 假模型已验证普通 final 与各自的身份、续轮边界；
+Pi 后续 v2 免费双臂两轮已实际接入仓库实验提交器，产生两个可信 final-output marker；
+Kimi 本批仍用原私有桥。Pi 的闭环也不包含正式调度，不能声称生产全链通过。
+[本批证据与剩余工作](evidence/2026-10-09-cost-foundation/summary.json)；
+[成本优先路线](evidence/2026-10-09-cost-foundation/roadmap.json)。
+本批不报告真实模型成本收益，不覆盖完整调度、繁忙插话、压缩或五 CLI 产品效率。
+
 ## 最小协议及所有者
 
 产品试验采用完整、单一的 JSON 对象（123仅为示例，模型必须回填本轮 Reply context 的实际序号）：

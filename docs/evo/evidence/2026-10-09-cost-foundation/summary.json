@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-09",
+  "baseRevision": "a1643353daca87a2b0737f9e3932a4f0faa8b9db",
+  "scope": "Cost-first foundation: laboratory submission boundary, actual installed CLI with loopback fake providers, retained artifact measurement. No production runtime or deployment change.",
+  "status": "Foundation implementation and free CLI integration complete; repository checks passed. Production integration and paid efficiency acceptance remain open.",
+  "implemented": {
+    "laboratorySubmitter": "scripts/final-output-trial/native-text.mjs",
+    "owner": "Reuses existing WorkerFinalOutput HTTP transport and Kernel final-output transaction slot. Host serializes existing envelope internally; model emits plain text. No new Kernel handler, queue or ACK owner.",
+    "mode": "Explicit Run-selected mode and frozen original native identity/delivered sequence; provider-specific adapter remains responsible for terminal proof.",
+    "failureBoundary": "Held/rejected/unknown never become successful Activation completion. Commit-response loss preserves actual committed message/ACK; never resend unknown writes. Actual Run termination remains recorded independently.",
+    "crossFacadeDiscovery": "Initial use of generic WorkerMcpExecution left submission_kind null. New required final-output provenance test failed; switched lab helper to existing dedicated transaction path. Tool-first and native-first tests each yield exactly one committed message. Previous private measurements are not retrospectively upgraded to this path.",
+    "defaultVerification": "Both old envelope and new native-text laboratory suites added to test:cli:efficiency:unit; no real CLI or paid calls added to default suite."
+  },
+  "freeCli": {
+    "pi": "pi-free.json",
+    "kimi": "kimi-free.json",
+    "claudeArtifact": "claude-artifact-free.json",
+    "sharedHelperIntegration": "Pi v2 actually calls repository native-text helper and existing WorkerFinalOutput, producing two trusted final-output markers; Kimi retains its private bridge."
+  },
+  "fixture": {
+    "evidence": "fixture-free.json",
+    "rounds": 12,
+    "hiddenCases": 38,
+    "independentTests": "18 Python +2 Node; reference all38 cases. Root rerun passed.",
+    "fixes": "Explicit dictionary input from R1; exact argument count and dash sentinel; retain and hash per-round artifacts; keep all quality failures and per-generation costs.",
+    "actualIntegration": "Claude actual CLI/fake three rounds per arm: pass/fail/pass; six archives/sidecars. Not full12 or paid quality/efficiency."
+  },
+  "validation": {
+    "labTests": {
+      "newNativeText": 9,
+      "oldEnvelope": 9,
+      "command": "node --test scripts/final-output-trial/native-text.test.mjs scripts/final-output-trial/submission.test.mjs",
+      "result": "passed"
+    },
+    "rootPrivateReruns": "Pi19 tests, Kimi31 executions/20 distinct, fixture18 Python+2 Node passed. These are bounded synthetic checks, not statistical model reliability.",
+    "npmCheck": "passed; final efficiency unit stage includes all 18 laboratory tests (496 tests in that stage)",
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "artifactHashes": "Root independently verified all six Claude archive sidecars against retained file bytes; matched."
+  },
+  "paidCalls": 0,
+  "accountConfigurationChanged": false,
+  "productionDeployed": false,
+  "serviceRestarted": false,
+  "next": "First bounded production candidate: Claude warm native-final text through existing settlement and WorkerFinalOutput. Ordinary Codex exec needs separate native evidence and cold-lifecycle ordering work; never substitute app-server. Plan only, not implemented.",
+  "limits": [
+    "No new token or billing ratio measured.",
+    "No paid authentication recovery for Kimi verified.",
+    "No five-CLI actual-product matrix, busy steering, compaction, long-task or multiplayer acceptance.",
+    "Private prototype source hashes/version bindings do not authorize copied upstream Raft code; no upstream code adopted.",
+    "Original P149–P151 quality, completion and snapshot limitations remain unchanged."
+  ],
+  "roadmap": "roadmap.json",
+  "tddEvidence": {
+    "missingImplementation": "First new lab test failed with module not found before implementing native-text.mjs.",
+    "causalFixture": "Initial fake fixture omitted HTTP credential delivery registration; real service correctly rejected causal_cursor_not_delivered. Corrected fixture to perform actual message-present before marking sent, without weakening authority.",
+    "publicationSlot": "New transaction-level provenance test failed with submission_kind=null using generic WorkerMcpExecution. Reused existing dedicated final-output route; marker provenance and both tool/native order tests now pass.",
+    "scope": "No Kernel production behavior changed."
+  },
+  "sourceHashes": {
+    "scripts/final-output-trial/native-text.mjs": "d8b02cad8d3960c369e391c6b93e31f5f8a251afa247cbc7fcb223b3fc151559",
+    "scripts/final-output-trial/native-text.test.mjs": "a70e46905b389cae4fbb8505295aea42cf2b12410f63a7aa734e7d362ffc06fe"
+  },
+  "formattingNote": "Pi v2 source hash records pre-Prettier bytes. Final repository source was subsequently format-normalized only; final source hashes are recorded here and laboratory tests rerun. No provider result was regraded.",
+  "productionIntegrationPlan": "production-integration-plan.json"
+}
