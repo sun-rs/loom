@@ -3,7 +3,10 @@ import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 
-import { WorkerMessagePresentResponseSchema } from "@rah-os/protocol";
+import {
+  WorkerMessagePresentResponseSchema,
+  type WorkerMessagePresentResponse,
+} from "@rah-os/protocol";
 
 import type {
   ActivationEnvironmentLease,
@@ -79,6 +82,8 @@ export async function renderBodiedWake(input: {
   /** Warm runtimes: the turn handle each named command must carry. */
   turnHandle?: string | undefined;
   fetch?: typeof globalThis.fetch;
+  /** Host-only snapshot of the exact rendered window, never a latest-head read. */
+  onPresented?: (present: WorkerMessagePresentResponse) => void;
 }): Promise<string | undefined> {
   const env = input.env;
   const origin = env[RAH_WORKER_API_URL_ENV];
@@ -107,7 +112,7 @@ export async function renderBodiedWake(input: {
     ...env,
     RAH_PARTICIPANT_ID: input.participantId,
   });
-  return formatBodiedWakeInput({
+  const text = formatBodiedWakeInput({
     present,
     turnHandle: input.turnHandle,
     ...(index === undefined || index.matchesSystem
@@ -122,6 +127,8 @@ export async function renderBodiedWake(input: {
           },
         }),
   });
+  if (text !== undefined) input.onPresented?.(present);
+  return text;
 }
 
 /**

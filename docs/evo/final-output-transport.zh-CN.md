@@ -1,8 +1,31 @@
-# 显式最终回复输出：OpenCode／Codex 纵向接入
+# 最终回复传输：显式 JSON 与原生正文
 
 2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。随后 P108 真实三轮传输和数值预算通过（输入1.140倍，双方生成2/1/1），但实质审查质量失败，**不是整体验收通过**。 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
-## 2026-10-09 原生最终文本实验边界（未接入生产）
+## 2026-10-09 Claude warm 原生正文纵向接入（默认关闭）
+
+此前实验提交器现在有一条正式运行链路候选：仅 Claude warm 显式设置
+`LOOM_CLAUDE_NATIVE_FINAL_TRIAL=1`。Driver 验证原 session、原输入 UUID、完整
+`end_turn` 流、同正文的成功 result 及工具结束；Host 用启动前实际渲染的完整单目标
+消息窗口绑定因果序号。模型只生成正文，Host 在本地组装现有传输 JSON，复用
+`WorkerFinalOutput` 与 Kernel 事务入口；不读取最新 Room head 来冒充模型上下文。
+
+发表发生在诊断/完整性写入结束后、原 Worker 凭据撤销前。丢响应后，只有持久 final
+标记与交付 ACK 能恢复成功；没有证明时进入待处理，不重新发表或自动重跑模型。
+正文发表不自动完成 Task，也不证明答案实质正确。默认工具路径及其他 CLI 的 JSON
+开关保留；没有把普通 Codex exec 切为 app-server。
+
+实际 Host/调度/Worker/Kernel＋假 CLI 已验证连续两轮、撤权、缺失/截断证明、stale、
+提交前后丢响应和 HTTP 待决期间取消；真实安装 Claude 2.1.293 配合本地假模型已完成
+同 session 两轮（第一轮真实 Write 后回答，第二轮回答，共三个假模型响应）。没有
+模型发帖工具或发表后的额外模型请求；这不是付费成本或真实模型质量结论。
+[完整证据与部署状态](evidence/2026-10-09-claude-native-final/summary.json)。
+
+当前边界很窄：忙时 Human 插话使候选失效；Task、多目标、截断或缺失交付窗口不走
+原生正文选择，没有显式 Worker final 时会进入待处理。不得把这个开关当成全部
+Claude 场景已验收。长期付费对照与五 CLI 产品矩阵仍待完成。
+
+## 2026-10-09 原生最终文本实验基础（历史切片）
 
 负责人批准成本优先路线后，将此前私有原型的提交边界整理为可重跑的
 [实验提交器](../../scripts/final-output-trial/native-text.mjs)及
@@ -36,7 +59,7 @@ Kimi 本批仍用原私有桥。Pi 的闭环也不包含正式调度，不能声
 [成本优先路线](evidence/2026-10-09-cost-foundation/roadmap.json)。
 本批不报告真实模型成本收益，不覆盖完整调度、繁忙插话、压缩或五 CLI 产品效率。
 
-## 最小协议及所有者
+## 显式 JSON 路径的最小协议及所有者（不适用于上述原生正文选择）
 
 产品试验采用完整、单一的 JSON 对象（123仅为示例，模型必须回填本轮 Reply context 的实际序号）：
 

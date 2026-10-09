@@ -1,0 +1,109 @@
+{
+  "kind": "actual-cli-local-fake-provider-production-chain",
+  "date": "2026-10-09",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-claude-warm-native/runs/1791510971545",
+  "version": "2.1.293 (Claude Code)",
+  "paidCalls": 0,
+  "realProvider": false,
+  "productionDeployment": false,
+  "passed": true,
+  "scope": "Actual installed Claude warm stream-json; real AgentHost/InstanceRuntimePool/CodexWarmAdapter/Claude driver/Worker HTTP/Kernel; temporary state with scripted localhost Messages API.",
+  "model": {
+    "binding": "sonnet",
+    "effort": "low",
+    "fakeResponseModel": "claude-sonnet-5-5",
+    "synthetic": true
+  },
+  "outcome": {
+    "turns": 2,
+    "warmProcesses": 1,
+    "providerSessions": 1,
+    "providerGenerations": 3,
+    "generationsPerTurn": [2, 1],
+    "actualToolCalls": ["Write"],
+    "actualWriteContentAsserted": true,
+    "canonicalReplies": 2,
+    "trustedFinalOutputMarkers": 2,
+    "completedActivations": 2,
+    "exitedRunAttempts": 2,
+    "replyToolsExposed": [],
+    "replyToolCalls": 0,
+    "automaticMemoryOffEveryLaunch": true,
+    "credentials": ["issued", "revoked", "issued", "revoked"]
+  },
+  "nativeProof": {
+    "streamFrames": 37,
+    "responseIds": ["msg_free_1", "msg_free_2", "msg_free_3"],
+    "resultInputUuids": [
+      "74373082-d1c4-47f1-bca8-35e2f1d27a94",
+      "0a5e026d-41c6-4eb4-aedc-efe6047eaccb"
+    ],
+    "resultStopReasons": ["end_turn", "end_turn"],
+    "allSuccessful": true,
+    "oneSession": true
+  },
+  "syntheticUsage": {
+    "inputTokens": 300,
+    "outputTokens": 30,
+    "cachedInputTokens": 0,
+    "costInterpretation": "Scripted fake usage only; not real spend, efficiency ratio or model quality."
+  },
+  "isolation": {
+    "newTemporaryHomeAndClaudeConfig": true,
+    "fakeCredentialsOnly": true,
+    "realAccountFilesRead": false,
+    "repoAndOracleReadDeniedAndProbed": true,
+    "externalNetworkDenied": true,
+    "networkProbe": {
+      "errno": 1,
+      "error": "[Errno 1] Operation not permitted"
+    },
+    "nativeBusinessTools": ["Bash", "Read", "Write"],
+    "noMcpTools": true
+  },
+  "cleanup": {
+    "normalCliExit": {
+      "code": 0,
+      "signal": null
+    },
+    "pidAbsent": {
+      "driver": true,
+      "processGroup": true,
+      "wrapper": true,
+      "cli": true
+    },
+    "temporaryCwdRemoved": true,
+    "workerAndFakeServersClosed": true,
+    "processCancellationTested": false,
+    "note": "Clean two-turn shutdown verified. Cancellation behavior is covered separately by deterministic suite, not this actual CLI trace. Database snapshot was captured before pool shutdown, so its runtime row is idle."
+  },
+  "sourceHashesRecordedAfterRun": {
+    "packages/agent-host/src/claude-final-output.js": "67dbf04e8469d3436bfe934952d45089c160dbe528743b5f1143da36f36ac036",
+    "packages/agent-host/src/claude-warm-driver.mjs": "63b16fc1c17248806a575a10c1aff3732e2733f965bd05b8165827f54b45b000",
+    "packages/agent-host/src/codex-warm-adapter.ts": "4a8b6ffad421082a6e9d6d22102c119be93e1eeca46299ef8dc294e3c483659b",
+    "packages/agent-host/src/native-final-transport.ts": "451498691b90a4d688e8e54321bbc6f3918fb19b4d5d7ea7e3820954201f4193",
+    "packages/agent-host/src/worker-final-output.ts": "8d20be4fd1acb0d2baa561a327bf21eca89337575833102a3633b4c89ac3fbf1",
+    "packages/agent-host/test/claude-warm-test-harness.ts": "e798cd5aa2aae48c1e92d31819133279ac33991c9dab726df7c143db2102183e"
+  },
+  "privateHashes": {
+    "raw.jsonl": "e4230e123ee19ad24f7179ace8bc173ab7db3b396013ca848152bebc6d8bfdda",
+    "requests.json": "521bdf62c1a208a31b5ce65f2f3a7e8582d807e688c6e3a8ba9f9eca9e2e8746",
+    "result.json": "b1c462bb5dbab14455ea93723ff336b4331f49f245113fb0819d4487a465bb5a",
+    "accepted.json": "937787df23b010a05a3bac1145e8daf2139461eb11489fdc438aa0d7927aff44",
+    "state.db": "03c436ac1de2fc4a0cdea692ce998a775706c69a992a41abb0be1605367c1aa1",
+    "launch.json": "8b03ddab9fbe786c9c07053792bf981a49e9a7b107c65932d0e7e60eb60643c4",
+    "process.json": "39fa81867be2ff55909aad7dff8c70a1f65533d350fa68f991b9b2aa5c2fbd65",
+    "exit.json": "1aff36f796932c34d424461078ea28c3b7feef0b4538624958a98e8dc7e4bca4"
+  },
+  "privateRunnerHashes": {
+    "run.mjs": "d8553f900bcda7cd3b23dd766ab5d3d88f3b5e8e4ea1ad13b98928f7e768383f",
+    "wrapper.mjs": "9597a8d17aec95301f5530d63040268c42df5a3039bf64a0d593acac10e142e8"
+  },
+  "limits": [
+    "No real model calls, benchmark ratio, real-model reasoning or long-task acceptance.",
+    "Fake provider scripted one file write and two replies; this proves native execution and Host publication flow only.",
+    "Single wake per Activation; busy-input native publication deliberately rejected.",
+    "No native control arm; no transcript reconciliation in this bounded run.",
+    "No active cancellation in this successful trace; shutdown and no remaining process group verified."
+  ]
+}

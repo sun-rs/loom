@@ -3,6 +3,10 @@ import {
   withFinalOutputGuidance,
 } from "./worker-final-output.ts";
 import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
+import {
+  nativeFinalEnvelope,
+  nativeFinalSequence,
+} from "./native-final-transport.ts";
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import { isSea } from "node:sea";
@@ -17,6 +21,7 @@ import {
   RuntimeFailureSchema,
   type ResolvedModel,
   type RuntimeFailure,
+  type WorkerMessagePresentResponse,
 } from "@rah-os/protocol";
 
 import {
@@ -179,6 +184,8 @@ export type WarmWorkerCredential = {
 export type CodexWarmAdapterOptions = {
   /** Opt-in Codex/OpenCode terminal command path; not a model-owned setting. */
   explicitFinalOutput?: boolean;
+  /** Claude warm only: Host publishes proved native text. Opt-in trial. */
+  nativeFinalText?: boolean;
   /** The warm driver; Codex when omitted. */
   driver?: WarmDriverDescriptor;
   pool: InstanceRuntimePool;
@@ -207,6 +214,7 @@ export type CodexWarmAdapterOptions = {
     participantId: string;
     /** This turn's handle, carried on every command the wake names. */
     turnHandle: string;
+    onPresented?: (present: WorkerMessagePresentResponse) => void;
   }) => Promise<string | undefined>;
   recordProviderSessionEvidence?: (
     input: ActivationEnvelope,
@@ -234,6 +242,7 @@ type LaunchCapture = {
 };
 
 type TurnBinding = {
+  nativeFinalSeq?: number;
   finalOutput?: WorkerFinalOutput;
   finalOutputDone?: boolean;
   activationId: string;
@@ -280,6 +289,13 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     );
   }
 
+  #nativeFinalText(): boolean {
+    return (
+      this.#options.nativeFinalText === true &&
+      this.#driver === CLAUDE_WARM_DRIVER
+    );
+  }
+
   #warm(input: ActivationEnvelope): boolean {
     if (isSea()) return false; // the packaged product has no warm entry yet
     return (
@@ -303,7 +319,11 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       driver: this.#driver.kind,
       key:
         this.#options.runtimeKey(input) +
-        (this.#explicitFinalOutput() ? ":final-output/v1" : ""),
+        (this.#nativeFinalText()
+          ? ":native-final-text/v1"
+          : this.#explicitFinalOutput()
+            ? ":final-output/v1"
+            : ""),
       launch: async (layout) => await this.#launch(input, layout, launched),
       participantId: input.participantId,
     });
@@ -338,7 +358,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       runAttemptId: input.runAttemptId,
     });
     const credential = await this.#options.issueWorkerCredential(input);
-    if (this.#explicitFinalOutput()) {
+    if (this.#explicitFinalOutput() || this.#nativeFinalText()) {
       binding.finalOutput = new WorkerFinalOutput({
         origin: this.#options.workerApiOrigin,
         accessToken: credential.accessToken,
@@ -429,6 +449,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     if (this.#driver.bindSession === "ready")
       await this.#bindSession(input, runtime, lifecycle, runtimeRunId);
     const wake = await this.#wakeText(input, runtime, turn);
+    if (wake.nativeFinalSeq !== undefined)
+      binding.nativeFinalSeq = wake.nativeFinalSeq;
     const fullDigest = createHash("sha256")
       .update(wake.text, "utf8")
       .digest("hex");
@@ -563,8 +585,11 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       args: [
         isSea() ? this.#driver.seaEntry : this.#driver.entry,
         ...this.#options.driverArgs,
-        ...(this.#explicitFinalOutput()
-          ? ["--final-output-mode", "enabled"]
+        ...(this.#nativeFinalText() || this.#explicitFinalOutput()
+          ? [
+              "--final-output-mode",
+              this.#nativeFinalText() ? "native-text" : "enabled",
+            ]
           : []),
         ...(model?.source === "custom_model" ||
         model?.source === "explicit_binding"
@@ -910,9 +935,15 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     input: ActivationEnvelope,
     runtime: WarmRuntime,
     turn: WarmTurn,
-  ): Promise<{ bodied: boolean; noticed: boolean; text: string }> {
+  ): Promise<{
+    bodied: boolean;
+    noticed: boolean;
+    text: string;
+    nativeFinalSeq?: number;
+  }> {
     const handle = turn.handle!.handle;
     let bodied: string | undefined;
+    let nativeFinalSeq: number | undefined;
     if (this.#options.renderWake !== undefined) {
       try {
         bodied = await this.#options.renderWake({
@@ -924,8 +955,16 @@ export class CodexWarmAdapter implements RuntimeAdapter {
           },
           participantId: input.participantId,
           turnHandle: handle,
+          ...(this.#nativeFinalText()
+            ? {
+                onPresented: (present: WorkerMessagePresentResponse) => {
+                  nativeFinalSeq = nativeFinalSequence(present);
+                },
+              }
+            : {}),
         });
       } catch (error) {
+        nativeFinalSeq = undefined;
         this.#options.pool.diagnostic(
           `[${runtime.instanceRuntimeId}] bodied wake unavailable, using the startup wake: ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -939,6 +978,9 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       .slice(0, RUNTIME_NOTICE_LIMIT);
     const protocol = this.#options.protocolNotice?.(input) ?? "";
     return {
+      ...(bodied !== undefined && nativeFinalSeq !== undefined
+        ? { nativeFinalSeq }
+        : {}),
       bodied: bodied !== undefined,
       noticed: notice !== "",
       text:
@@ -949,6 +991,11 @@ export class CodexWarmAdapter implements RuntimeAdapter {
           ),
           this.#explicitFinalOutput(),
         ) +
+        (this.#nativeFinalText() &&
+        bodied !== undefined &&
+        nativeFinalSeq !== undefined
+          ? "\nReply transport: native-final-text for this delivery's single target."
+          : "") +
         (notice === "" ? "" : `\n${notice}`) +
         (protocol === "" ? "" : `\n${protocol}`),
     };
@@ -985,7 +1032,12 @@ export class CodexWarmAdapter implements RuntimeAdapter {
       !turn.cancelRequested &&
       (await runtime.processGroupAlive(pool.processTable))
         ? await binding.finalOutput.submit(
-            outcome.finalOutputCandidate?.text ?? "",
+            this.#nativeFinalText()
+              ? nativeFinalEnvelope(
+                  outcome.finalOutputCandidate?.text,
+                  binding.nativeFinalSeq,
+                )
+              : (outcome.finalOutputCandidate?.text ?? ""),
           )
         : undefined;
     binding.finalOutputDone = true;

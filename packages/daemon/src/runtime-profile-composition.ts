@@ -359,6 +359,10 @@ export function createConfiguredRuntime(input: {
           input.probeReport,
           creationOptions,
           {
+            nativeFinalText:
+              input.runtimeProfileRevision.manifest.adapter.kind ===
+                "claude-stream-json/v1" &&
+              process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1",
             explicitFinalOutput:
               (input.runtimeProfileRevision.manifest.adapter.kind ===
                 "opencode-server/v1" &&

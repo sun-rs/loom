@@ -221,7 +221,8 @@ async function runTurn(turn) {
   if (ownHandle !== undefined) lastHandle = ownHandle;
   const handle = ownHandle ?? lastHandle;
   record({ event: "turn", uuid: turn.uuid, handle, text: turn.text });
-  send({ type: "stream_event", event: { type: "message_start" } });
+  if (!has("native-final") && !has("native-missing") && !has("native-length"))
+    send({ type: "stream_event", event: { type: "message_start" } });
   const crashMarker = stateDirectory ? join(stateDirectory, "crashed") : "";
   if (has("crash-during") && crashMarker && !existsSync(crashMarker)) {
     writeFileSync(crashMarker, "1");
@@ -270,6 +271,47 @@ async function runTurn(turn) {
     if (turn.receipt !== undefined) setTimeout(turn.receipt, 0);
     lifecycle(turn.uuid, "cancelled");
     record({ event: "turn-completed", uuid: turn.uuid, interrupted: true });
+    return;
+  }
+  if (has("native-final") || has("native-missing") || has("native-length")) {
+    const body = `FAKE NATIVE ANSWER ${turnCounter}`;
+    const id = `native-${process.pid}-${turnCounter}`;
+    const stop = has("native-length") ? "max_tokens" : "end_turn";
+    if (!has("native-missing")) {
+      send({
+        type: "stream_event",
+        parent_tool_use_id: null,
+        event: { type: "message_start", message: { id } },
+      });
+      send({
+        type: "assistant",
+        parent_tool_use_id: null,
+        message: {
+          id,
+          role: "assistant",
+          content: [{ type: "text", text: body }],
+        },
+      });
+      send({
+        type: "stream_event",
+        parent_tool_use_id: null,
+        event: { type: "message_delta", delta: { stop_reason: stop } },
+      });
+      send({
+        type: "stream_event",
+        parent_tool_use_id: null,
+        event: { type: "message_stop" },
+      });
+    }
+    result(turn, {
+      subtype: "success",
+      is_error: false,
+      stop_reason: stop,
+      result: body,
+      parent_tool_use_id: null,
+    });
+    lifecycle(turn.uuid, "completed");
+    record({ event: "native-completed", uuid: turn.uuid });
     return;
   }
   send({

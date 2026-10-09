@@ -75,6 +75,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 
+import { createClaudeFinalOutput } from "./claude-final-output.js";
+import { nativeFinalTextInstructions } from "./final-output-instructions.js";
 import {
   createClaudeFinalInterrupt,
   isAbortedClaudeResult,
@@ -129,7 +131,14 @@ const options = parseArguments(
 const promptDirectory = mkdtempSync(join(tmpdir(), "loom-claude-warm-"));
 chmodSync(promptDirectory, 0o700);
 const promptPath = join(promptDirectory, "room-worker.md");
-writeFileSync(promptPath, options.prompt, { mode: 0o600 });
+writeFileSync(
+  promptPath,
+  nativeFinalTextInstructions(
+    options.prompt,
+    options.finalOutputMode === "native-text",
+  ),
+  { mode: 0o600 },
+);
 
 const resumed = options.resumeSession !== undefined;
 const sessionId = options.resumeSession ?? randomUUID();
@@ -257,6 +266,11 @@ function createTurn(runAttemptId, text) {
     tools: new Set(),
     wakeUuid: randomUUID(),
   };
+  if (options.finalOutputMode === "native-text")
+    turn.finalOutput = createClaudeFinalOutput({
+      sessionId,
+      inputUuid: turn.wakeUuid,
+    });
   const writeFrame = (line) => {
     for (const part of String(line).split("\n")) {
       if (part.trim() === "") continue;
@@ -286,6 +300,7 @@ function writeInput(turn, uuid, text, kind, done) {
     started: false,
   });
   turn.order.push(uuid);
+  if (kind !== "wake") turn.finalOutput?.invalidate();
   claude.stdin.write(
     `${JSON.stringify({
       type: "user",
@@ -551,6 +566,7 @@ function observe(turn, frame) {
       turnId: turn.wakeUuid,
     });
   }
+  turn.finalOutput?.observe(frame);
   turn.finalInterrupt.observe(frame);
   const toolsBefore = turn.tools.size;
   trackTools(turn, frame);
@@ -735,6 +751,9 @@ async function closeTurn(turn) {
         ? "interrupted"
         : "completed";
   emit("turn.drained", {
+    ...(status === "completed" && turn.tools.size === 0
+      ? { finalOutputCandidate: turn.finalOutput?.candidate() }
+      : {}),
     inFlightToolCount: turn.tools.size,
     lastFrameSeq: turn.lastFrameSeq,
     nativeTurnId: turn.wakeUuid,
@@ -899,6 +918,8 @@ function parseArguments(argv) {
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")
       parsed.prompt = readProviderPromptFile(value);
+    else if (name === "--final-output-mode" && value === "native-text")
+      parsed.finalOutputMode = value;
     else if (name === "--model") parsed.model = value;
     else if (name === "--effort" || name === "--reasoning")
       parsed.effort = value;

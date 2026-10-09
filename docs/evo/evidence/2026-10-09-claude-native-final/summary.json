@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-09",
+  "baseRevision": "4532da8d2f4fa9968331c4b1823f1846a57f3a85",
+  "scope": "Claude warm opt-in native final text in actual AgentHost/scheduler/Worker/Kernel path; no frontend or Kernel transaction change.",
+  "selection": {
+    "environment": "LOOM_CLAUDE_NATIVE_FINAL_TRIAL=1",
+    "default": "off",
+    "provider": "claude-stream-json/v1 warm only",
+    "otherProviders": "Existing Codex/OpenCode JSON flags unchanged; ordinary Codex exec not replaced by host mode."
+  },
+  "owner": {
+    "nativeEvidence": "Claude driver: same session, original accepted input UUID, complete end_turn stream and successful exact result, settled tools; no stdout guessing.",
+    "delivery": "Host retains scalar presentedThroughSeq from exact rendered complete single-target message window before input. Never substitutes latest Room head; Kernel remains sole durable cursor/ACK owner.",
+    "publication": "Existing WorkerFinalOutput and Kernel final-output transaction slot. Host constructs transport envelope; model emits only text.",
+    "ordering": "Drain native activity/integrity, submit once using original Worker credential, then revoke and record actual Run outcome.",
+    "unknown": "Existing durable committed marker can recover success; absent proof holds action_required without automatic model retry or resend."
+  },
+  "validation": {
+    "newNativeIntegration": "9 passed: two-turn same-session, credential lifecycle, missing/length/delivery proof, stale, pre/postcommit response loss, mode off, cancellation during pending HTTP.",
+    "existingClaudeWarm": "16 passed after shared harness extraction.",
+    "nativeCollectorAndDriver": "passed in complete repository check",
+    "nativeTransport": "3 passed.",
+    "daemonSelection": "CLI-specific native flag and existing JSON flag combinations passed.",
+    "tdd": "Initial absent-module/unsupported-mode failures and 7 integration failures recorded before implementation. Native harness required actual markPresentedDeliverySent; old fake message-check had hidden this fixture gap. No authority assertion weakened.",
+    "npmCheck": "passed (exit 0); includes native collector, driver, Host integration and existing provider suites",
+    "format": "passed",
+    "diff": "passed",
+    "rootEvidenceCheck": "Six source hashes and eight retained actual-CLI evidence hashes independently matched by root; new documentation links resolve.",
+    "checkLogSha256": "b316d1505a1c603610d45736483ee6e309e75d6c7fbd4ff8bd4e5a1f6aaa4ac9"
+  },
+  "realCli": "free-cli.json",
+  "paidCalls": 0,
+  "efficiencyVerdict": "Not measured; scripted fake model generations and usage are not real model cost, quality or stochastic reliability.",
+  "deployment": {
+    "status": "pending",
+    "trialDefaultEnabled": false
+  },
+  "limits": [
+    "Busy Human input invalidates the current candidate in this bounded trial; no guessing of merged intent.",
+    "Only complete single directed message target is admitted. Task/multiple-target/truncated/missing-delivery windows without an explicit Worker final require action; not general Claude adoption.",
+    "No paid long-task, multi-model or five-CLI product cost acceptance.",
+    "Pi/Kimi remain laboratory paths. Ordinary Codex exec integration remains separate.",
+    "No automatic Task completion; native final proof proves transport completion, not substantive answer correctness."
+  ],
+  "next": "Paid long-task controls only after candidate admission/frozen plans; extend native provider paths independently. Keep failed quality and all paid attempts in totals.",
+  "review": "Independent read-only review found no confirmed authority/unknown/cancellation defect. Busy-input and ineligible-window trial limitations are explicitly retained."
+}

@@ -264,6 +264,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
             const saved = [
               process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL,
               process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL,
+              process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL,
             ];
             const pool = new InstanceRuntimePool({
               control: createKernelAgentHostControlPort(kernel, host),
@@ -276,6 +277,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
               stateDirectory: join(directory, "warm"),
             });
             let selected: boolean | undefined;
+            let nativeSelected: boolean | undefined;
             t.mock.method(
               implementations,
               "createWarmRuntime",
@@ -286,11 +288,19 @@ for (const mode of ["direct", "gated", undefined] as const) {
               ) => {
                 const warm = args[3];
                 selected = warm.explicitFinalOutput;
+                nativeSelected = warm.nativeFinalText === true;
                 return adapter;
               },
             );
             try {
-              for (const [codexFlag, openCodeFlag, adapterKind, expected] of [
+              for (const [
+                codexFlag,
+                openCodeFlag,
+                adapterKind,
+                expected,
+                nativeFlag,
+                nativeExpected = false,
+              ] of [
                 [undefined, undefined, "codex-app-server/v1", false],
                 ["1", undefined, "codex-app-server/v1", true],
                 [undefined, "1", "codex-app-server/v1", false],
@@ -298,6 +308,31 @@ for (const mode of ["direct", "gated", undefined] as const) {
                 [undefined, "1", "opencode-server/v1", true],
                 ["1", "1", "claude-stream-json/v1", false],
                 ["true", undefined, "codex-app-server/v1", false],
+                [
+                  undefined,
+                  undefined,
+                  "claude-stream-json/v1",
+                  false,
+                  "1",
+                  true,
+                ],
+                [
+                  undefined,
+                  undefined,
+                  "codex-app-server/v1",
+                  false,
+                  "1",
+                  false,
+                ],
+                [undefined, undefined, "opencode-server/v1", false, "1", false],
+                [
+                  undefined,
+                  undefined,
+                  "claude-stream-json/v1",
+                  false,
+                  "true",
+                  false,
+                ],
               ] as const) {
                 if (codexFlag === undefined)
                   delete process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL;
@@ -306,6 +341,9 @@ for (const mode of ["direct", "gated", undefined] as const) {
                   delete process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL;
                 else
                   process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL = openCodeFlag;
+                if (nativeFlag === undefined)
+                  delete process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL;
+                else process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL = nativeFlag;
                 selected = undefined;
                 assert.equal(
                   createConfiguredRuntime({
@@ -336,11 +374,17 @@ for (const mode of ["direct", "gated", undefined] as const) {
                   expected,
                   `${adapterKind}: codex=${codexFlag}, opencode=${openCodeFlag}`,
                 );
+                assert.equal(
+                  nativeSelected,
+                  nativeExpected,
+                  `native text ${adapterKind}: ${nativeFlag}`,
+                );
               }
             } finally {
               for (const [key, value] of [
                 ["LOOM_CODEX_FINAL_OUTPUT_TRIAL", saved[0]],
                 ["LOOM_OPENCODE_FINAL_OUTPUT_TRIAL", saved[1]],
+                ["LOOM_CLAUDE_NATIVE_FINAL_TRIAL", saved[2]],
               ] as const) {
                 if (value === undefined) delete process.env[key];
                 else process.env[key] = value;

@@ -117,6 +117,7 @@ export type RuntimeCreationOptions = Pick<
  * separately and delivered only through that turn's handle.
  */
 export type WarmRuntimeCreation = {
+  nativeFinalText?: boolean;
   explicitFinalOutput?: boolean;
   issueWorkerCredential: (
     input: ActivationEnvelope,
@@ -1021,6 +1022,7 @@ function createWarmInstanceRuntime(
   return new CodexWarmAdapter({
     driver,
     ...(warm.explicitFinalOutput === true ? { explicitFinalOutput: true } : {}),
+    ...(warm.nativeFinalText === true ? { nativeFinalText: true } : {}),
     acceptSessionProtocol: async (input) => await protocolUpgrade.accept(input),
     protocolNotice: (input) => protocolUpgrade.noticeFor(input),
     // S2-b: an idle runtime restarts when the probed binary changes.
@@ -1106,11 +1108,7 @@ function createWarmInstanceRuntime(
       ? {}
       : {
           recordDeliveryAcceptance,
-          renderWake: async (input: {
-            env: Readonly<Record<string, string | undefined>>;
-            participantId: string;
-            turnHandle: string;
-          }) => await renderBodiedWake(input),
+          renderWake: async (input) => await renderBodiedWake(input),
         }),
     ...(store === undefined
       ? {}

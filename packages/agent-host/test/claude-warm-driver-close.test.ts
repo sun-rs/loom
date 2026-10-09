@@ -39,7 +39,7 @@ const FAKE = fileURLToPath(
 
 type Json = Record<string, any>;
 
-async function startDriver(env: Record<string, string> = {}) {
+async function startDriver(env: Record<string, string> = {}, native = false) {
   const directory = mkdtempSync(join(tmpdir(), "loom-claude-warm-close-"));
   chmodSync(directory, 0o700);
   const executable = join(directory, "claude");
@@ -80,6 +80,7 @@ async function startDriver(env: Record<string, string> = {}) {
       "rt-1",
       "--host-generation",
       "gen-1",
+      ...(native ? ["--final-output-mode", "native-text"] : []),
     ],
     {
       cwd: directory,
@@ -200,6 +201,7 @@ async function acceptedWake(h: Driver) {
   h.claude({
     type: "user",
     isReplay: true,
+    session_id: h.frames.find((f) => f.type === "ready")!.threadId,
     uuid: wake.uuid,
     message: { role: "user", content: [{ type: "text", text: "FAKE wake" }] },
   });
@@ -801,6 +803,88 @@ test("P90: incomplete Claude usage is reported before the warm turn drains", asy
     assert.ok(gapIndex >= 0, "unfinished generation must mark usage partial");
     assert.ok(gapIndex < h.frames.findIndex((f) => f.type === "turn.drained"));
     assert.equal(h.frames[gapIndex]?.runAttemptId, "run-1");
+  } finally {
+    await h.close();
+  }
+});
+
+for (const native of [false, true])
+  test(`Claude driver native final opt-in=${String(native)}`, async () => {
+    const h = await startDriver({}, native);
+    try {
+      const wake = await acceptedWake(h);
+      const session = h.frames.find((f) => f.type === "ready")!.threadId;
+      const send = (f: Json) =>
+        h.claude({ session_id: session, parent_tool_use_id: null, ...f });
+      send({
+        type: "stream_event",
+        event: { type: "message_start", message: { id: "native-final" } },
+      });
+      send({
+        type: "assistant",
+        message: {
+          id: "native-final",
+          content: [{ type: "text", text: "done" }],
+        },
+      });
+      send({
+        type: "stream_event",
+        event: { type: "message_delta", delta: { stop_reason: "end_turn" } },
+      });
+      send({ type: "stream_event", event: { type: "message_stop" } });
+      send(
+        result(wake, { ...success, result: "done", stop_reason: "end_turn" }),
+      );
+      const end = await h.frame((f) => f.type === "turn.drained", "drained");
+      assert.deepEqual(
+        end.finalOutputCandidate,
+        native ? { text: "done", nativeMessageId: "native-final" } : undefined,
+      );
+    } finally {
+      await h.close();
+    }
+  });
+
+test("Claude native final rejects an admitted busy input instead of assigning its prose to the wake", async () => {
+  const h = await startDriver({}, true);
+  try {
+    const wake = await acceptedWake(h);
+    const busy = await notice(h);
+    h.claude(lifecycle(busy, "started"));
+    const session = h.frames.find((f) => f.type === "ready")!.threadId;
+    const send = (f: Json) =>
+      h.claude({ session_id: session, parent_tool_use_id: null, ...f });
+    send({
+      type: "stream_event",
+      event: { type: "message_start", message: { id: "native-final" } },
+    });
+    send({
+      type: "assistant",
+      message: {
+        id: "native-final",
+        content: [{ type: "text", text: "done" }],
+      },
+    });
+    send({
+      type: "stream_event",
+      event: { type: "message_delta", delta: { stop_reason: "end_turn" } },
+    });
+    send({ type: "stream_event", event: { type: "message_stop" } });
+    send(
+      result(wake, {
+        ...success,
+        result: "done",
+        stop_reason: "end_turn",
+        user_message_uuids: [wake, busy],
+      }),
+    );
+    const end = await h.frame((f) => f.type === "turn.drained", "drained");
+    assert.equal(end.status, "completed", "native execution still succeeded");
+    assert.equal(
+      end.finalOutputCandidate,
+      undefined,
+      "no unproved business reply",
+    );
   } finally {
     await h.close();
   }
