@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-09",
+  "sourceCommit": "f3f403984fc52a9b4b2467d350b6dee66e65e748",
+  "remoteEvoVerified": true,
+  "sourceSha256": "68f65ce87e77c7c2854ccf35c804536de1aee7be4b18a4088b677a909a360e0f",
+  "service": "com.loom.evo",
+  "restartedAt": "2026-10-09T08:59:55.231Z",
+  "deployment": {
+    "restartMethod": "Exact service process SIGTERM after idle/state checks, then launchd KeepAlive successor; no forced kill or unmanaged process.",
+    "backupVerified": true,
+    "databases": 2,
+    "stateFiles": 302,
+    "backupStillPresentAtReadOnlyAudit": true,
+    "businessTablesUnchanged": 11,
+    "persistentStateHomeUnchanged": true,
+    "successorOwnsExpectedDatabaseAndListener": true,
+    "successorSourceHashMatchesRestart": true,
+    "trackedWorkingTreeCleanAtAudit": true,
+    "allFiveFinalOutputTrialFlagsDisabled": true
+  },
+  "checks": {
+    "fullCheck": "passed on isolated exact patch; root targeted tests and full format passed before deployment",
+    "packageTests": {
+      "tests": 3028,
+      "passed": 3006,
+      "skipped": 22,
+      "failed": 0
+    },
+    "efficiencyUnitTests": {
+      "tests": 503,
+      "passed": 503,
+      "failed": 0
+    },
+    "format": "passed",
+    "diff": "passed"
+  },
+  "page": {
+    "at": "2026-10-09T09:02:46.385Z",
+    "browser": "Fresh headless Chrome context, 1440x900, service workers blocked",
+    "title": "RAH OS",
+    "realServiceNotFixture": true,
+    "existingHistoryVisible": true,
+    "pageErrors": [],
+    "roleListCount": 39,
+    "memoryListRequestSucceeded": true,
+    "memoryResponseShapeChecked": [
+      "channelId",
+      "entries",
+      "total",
+      "truncated"
+    ],
+    "healthState": "online",
+    "frontendBuildIdentity": {
+      "schemaVersion": 1,
+      "kind": "development",
+      "version": "0.0.0-dev+local",
+      "builtAt": "2026-10-03T03:43:43.718Z",
+      "buildId": "85a2d52a33dc2848"
+    },
+    "limits": [
+      "Specific existing conversation text assertions and one screenshot only, not all UI interactions or mobile acceptance.",
+      "Role listing returned 39 roles; this did not inspect each role configuration.",
+      "Memory request succeeded and recorded response keys; page script did not assert individual memory bodies or semantics.",
+      "Existing frontend build identity predates this backend source commit and does not attest backend revision.",
+      "No new model call or cost conclusion follows from restart/page verification."
+    ]
+  },
+  "evidenceHashes": {
+    "check-final.log": "d1ffac50959a1c51efcad721623be64247bb0e1b9703190e1539db06b7bbab89",
+    "root-targeted.log": "71b76f9d4560b43b5bc087939152e7a6e2d1d915fe344729739738dfc683c088",
+    "root-format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "restart.json": "ad832bcf007c97db770f3ad1983d8b3467a2ed2446e797676e7fcd678d1a3913",
+    "restart.mjs": "2c6306eda8710a0a5cc1da7e3bc30950fd507d40305c2cdb48e6ea08ee2b180b",
+    "page.json": "7c3ce09afaf4ea0e73e0362c1eef972bd0a7d3b779d66e846ed36c88a3641d87",
+    "page.mjs": "cd359ac478fa3a562717dda3fa8fc6ee16744ebdecc6ffbf81acb0cd8d7530a8",
+    "page.png": "510949d20a81ff75e64ce6a6cf816896c8432d5fb1fa27e7a1d8c069b6684f37"
+  },
+  "readOnlyAudit": "Repair commit pushed before restart; exact service identity checked before SIGTERM, successor DB/listener and packages/scripts source hash verified by restart. No forced termination."
+}
