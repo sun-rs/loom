@@ -1,0 +1,44 @@
+{
+  "sourceCommit": "2b47258b8792afb8eacba78f81672a58e1143a2f",
+  "pushedBranch": "origin/evo",
+  "checks": {
+    "check": {
+      "exit": 0,
+      "corePassed": 3038,
+      "coreSkipped": 22,
+      "efficiencyUnitPassed": 532
+    },
+    "formatCheck": {
+      "exit": 0
+    },
+    "diffCheck": {
+      "exit": 0
+    },
+    "check.log": {
+      "sha256": "f23a17ec399813b20fd9eb791b6ab71387350c4e6a902ae225198c1e2bcbe2be"
+    },
+    "format.log": {
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    }
+  },
+  "changes": [
+    "Shared OpenCode accounting separates request identity/stream coverage from each usage dimension; missing optional detail does not erase primary totals.",
+    "Shared paired summary preserves failed quality and unfinished known costs; preregistered full/late windows and contiguous prefix remain separate.",
+    "Shared macOS Worker sandbox permits exact per-instance turn scope/token reads; no sibling/oracle/root-list authority."
+  ],
+  "negativeCases": [
+    "P164 request19 present18927input/283output but missing optional details",
+    "missing or duplicate identities",
+    "truncated stream and native usage disagreement",
+    "empty observations and unsafe aggregation",
+    "cross-round response duplicate in final private Claude runner",
+    "actual old Worker TOKEN_FILE_UNREADABLE",
+    "quality failure preserves costs"
+  ],
+  "boundaries": [
+    "Arithmetic helper cannot prove no capture bypass or invoice accuracy.",
+    "Real raw/native/Kernel request reconciliation remains per CLI and batch.",
+    "Product backend/frontend/runtime unchanged; formal deployment not replaced by benchmark.",
+    "Old interrupted runs retained; new paid results require separate acceptance."
+  ]
+}

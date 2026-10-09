@@ -1,0 +1,471 @@
+{
+  "batch": "P168",
+  "status": "free-preflight-passed-final-imports",
+  "paidCalls": 0,
+  "run": "1791563644897-paid-runner-free",
+  "startedAt": "2026-10-09T16:34:04.898Z",
+  "finishedAt": "2026-10-09T16:34:24.557Z",
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "frozenHead": null,
+  "paidAdmission": "Not released; no admission file or paid claim created. Await lead final source freeze/release.",
+  "requests": [
+    {
+      "arm": "native",
+      "request": 1,
+      "requestSha256": "a8f854d9bf08200f7e987d5d547efb1aaf3d5115bd85898865120e69265214eb",
+      "responseSha256": "c4b3c2ff3af3c00aa3b00f4a6ae7792dc8e651412a1a649d0723fcbddc2ad27e",
+      "primaryUsage": {
+        "prompt_tokens": 103,
+        "completion_tokens": 13
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    },
+    {
+      "arm": "native",
+      "request": 2,
+      "requestSha256": "a42a544f33b0113bd1d29822650d1aab3d4838cd4d245c5c1dffb9bf6f1e9687",
+      "responseSha256": "cbbeae4676edd25cc01b9bac4027fd94f9ca98277c02dafc9f47aa564c3980eb",
+      "primaryUsage": {
+        "prompt_tokens": 104,
+        "completion_tokens": 14
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    },
+    {
+      "arm": "native",
+      "request": 3,
+      "requestSha256": "4e8dbca9637be207f2f4427ca359e724d0fe53689e2068d7f9e2668c7ac26a2e",
+      "responseSha256": "58eadd1d51c0449697030a3db131368253b96ea33747bcadae937dc83c3c2bba",
+      "primaryUsage": {
+        "prompt_tokens": 105,
+        "completion_tokens": 15
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    },
+    {
+      "arm": "native",
+      "request": 4,
+      "requestSha256": "c8a58713553dbbaf1c0dc133076217fd6ab5ff6e1550eed463695fd16c270dfc",
+      "responseSha256": "d01ccd332bc07362767ccedeeaa6f62d01e7bcff1b16b7dd60db9f65f7900936",
+      "primaryUsage": {
+        "prompt_tokens": 106,
+        "completion_tokens": 16
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    },
+    {
+      "arm": "loom",
+      "request": 1,
+      "requestSha256": "837b85d7a8a43fe709a456fb846605e216aee1649b8635be6515eb30671996d2",
+      "responseSha256": "e7eeb9016bd818f696f62bcc575d27de6feca771e6f373fd5c3600b130d52f82",
+      "primaryUsage": {
+        "prompt_tokens": 101,
+        "completion_tokens": 11
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    },
+    {
+      "arm": "loom",
+      "request": 2,
+      "requestSha256": "1e9925fd5cec3b8b6184401c1c16cbc690af29ec21c2c5f2638aaacf0beb9b31",
+      "responseSha256": "383c86a194b423cca0b5ac16f58f474b5286f9a3924363be7b80315b257ba3c9",
+      "primaryUsage": {
+        "prompt_tokens": 102,
+        "completion_tokens": 12
+      },
+      "cachedDetailPresent": false,
+      "reasoningDetailPresent": false
+    },
+    {
+      "arm": "loom",
+      "request": 3,
+      "requestSha256": "655a9407011fd421abeebc8cdc1bf138d177ed8801a6ffda592475e3b3f9907c",
+      "responseSha256": "d3107a4ba33f60e52b1d443b8e786427b016c5aa168de92ecc77a714a3901198",
+      "primaryUsage": {
+        "prompt_tokens": 107,
+        "completion_tokens": 17
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    },
+    {
+      "arm": "loom",
+      "request": 4,
+      "requestSha256": "f36f04fd9276362851431f20cff93d9d8a34c43c2d9f5eb8d56d7c1bf5058363",
+      "responseSha256": "2ca3edef76950657ee30266cc12d0662dd0a14a58b14d68fdc7bed0052d3a711",
+      "primaryUsage": {
+        "prompt_tokens": 108,
+        "completion_tokens": 18
+      },
+      "cachedDetailPresent": true,
+      "reasoningDetailPresent": true
+    }
+  ],
+  "workerReadWindows": [
+    {
+      "round": 1,
+      "summary": "Read window: 1 returned, seq 4, oldest to newest. No older. No newer.",
+      "targetVerified": true,
+      "currentWakeDeduplicated": true,
+      "sha256": "580c64337c254d865081307a775d1e74bf68c06419898db7070d586d4827a6cb"
+    },
+    {
+      "round": 2,
+      "summary": "Read window: 3 returned, seq 4-13, oldest to newest. No older. No newer.",
+      "targetVerified": true,
+      "currentWakeDeduplicated": true,
+      "sha256": "16d3decaa43c7fc207f6612b5901bb355540d3f557d3c221d9b30862442d80b1"
+    }
+  ],
+  "isolation": [
+    {
+      "arm": "native",
+      "round": 1,
+      "oracleRepoPeerDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "oracleRepoPeerDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "oracleRepoPeerDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "oracleRepoPeerDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    }
+  ],
+  "cleanup": {
+    "native": {
+      "recordedLaunches": 2,
+      "matchingOwnedProcessesAlive": 0
+    },
+    "loom": {
+      "recordedLaunches": 8,
+      "matchingOwnedProcessesAlive": 0
+    },
+    "daemonExits": [
+      {
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "temporaryProviderConfigsRemoved": true
+  },
+  "memory": {
+    "native": {
+      "versionAudit": "1.18.35",
+      "pureEveryLaunch": true,
+      "launchesSha256": "718d0572184a65a209742e23a17a6b92012d894b8330ab27bb8b52f01a1bdc21"
+    },
+    "loom": {
+      "versionAudit": "1.18.35",
+      "pureEveryLaunch": true,
+      "launchesSha256": "e87261eabb3554da732e10eb22e2e9c247e5a02aff5323a75f0e49af1501eb8f"
+    }
+  },
+  "sameSessionEachArm": true,
+  "nativePublicationMarkers": 2,
+  "activationStates": {
+    "completed": 2
+  },
+  "allActualToolSchemasModelEffortStandingVerified": true,
+  "rawNativeKernelPrimaryReconciled": true,
+  "pairedUsage": {
+    "comparable": true,
+    "comparisonIssues": [],
+    "full": {
+      "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "native": {
+        "input": {
+          "known": 418,
+          "complete": false,
+          "total": null
+        },
+        "output": {
+          "known": 58,
+          "complete": false,
+          "total": null
+        },
+        "cachedInput": {
+          "known": 100,
+          "complete": false,
+          "total": null
+        },
+        "reasoningOutput": {
+          "known": 8,
+          "complete": false,
+          "total": null
+        }
+      },
+      "loom": {
+        "input": {
+          "known": 418,
+          "complete": false,
+          "total": null
+        },
+        "output": {
+          "known": 58,
+          "complete": false,
+          "total": null
+        },
+        "cachedInput": {
+          "known": 75,
+          "complete": false,
+          "total": null
+        },
+        "reasoningOutput": {
+          "known": 6,
+          "complete": false,
+          "total": null
+        }
+      },
+      "finished": false,
+      "ratios": {
+        "input": null,
+        "output": null,
+        "cachedInput": null,
+        "reasoningOutput": null
+      }
+    },
+    "late": {
+      "rounds": [7, 8, 9, 10, 11, 12],
+      "native": {
+        "input": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "output": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "reasoningOutput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "loom": {
+        "input": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "output": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "reasoningOutput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "finished": false,
+      "ratios": {
+        "input": null,
+        "output": null,
+        "cachedInput": null,
+        "reasoningOutput": null
+      }
+    },
+    "prefix": {
+      "rounds": [1, 2],
+      "native": {
+        "input": {
+          "known": 418,
+          "complete": true,
+          "total": 418
+        },
+        "output": {
+          "known": 58,
+          "complete": true,
+          "total": 58
+        },
+        "cachedInput": {
+          "known": 100,
+          "complete": true,
+          "total": 100
+        },
+        "reasoningOutput": {
+          "known": 8,
+          "complete": true,
+          "total": 8
+        }
+      },
+      "loom": {
+        "input": {
+          "known": 418,
+          "complete": true,
+          "total": 418
+        },
+        "output": {
+          "known": 58,
+          "complete": true,
+          "total": 58
+        },
+        "cachedInput": {
+          "known": 75,
+          "complete": false,
+          "total": null
+        },
+        "reasoningOutput": {
+          "known": 6,
+          "complete": false,
+          "total": null
+        }
+      },
+      "finished": true,
+      "ratios": {
+        "input": 1,
+        "output": 1,
+        "cachedInput": null,
+        "reasoningOutput": null
+      }
+    },
+    "observed": {
+      "native": {
+        "input": {
+          "known": 418,
+          "complete": true,
+          "total": 418
+        },
+        "output": {
+          "known": 58,
+          "complete": true,
+          "total": 58
+        },
+        "cachedInput": {
+          "known": 100,
+          "complete": true,
+          "total": 100
+        },
+        "reasoningOutput": {
+          "known": 8,
+          "complete": true,
+          "total": 8
+        }
+      },
+      "loom": {
+        "input": {
+          "known": 418,
+          "complete": true,
+          "total": 418
+        },
+        "output": {
+          "known": 58,
+          "complete": true,
+          "total": 58
+        },
+        "cachedInput": {
+          "known": 75,
+          "complete": false,
+          "total": null
+        },
+        "reasoningOutput": {
+          "known": 6,
+          "complete": false,
+          "total": null
+        }
+      }
+    },
+    "quality": {
+      "native": {
+        "allPassed": false,
+        "failedRounds": [2]
+      },
+      "loom": {
+        "allPassed": false,
+        "failedRounds": [2]
+      }
+    },
+    "interpretation": "Ratios are observed arithmetic for the labeled window, not an efficiency verdict. Comparability and quality are independent. Prefixes do not replace the planned full task. Observed known expense includes unfinished work; unknown is never zero. Tokens are not invoices."
+  },
+  "qualityMeaning": "Fake deliberately leaves R2 incorrect in both arms; failures retained independently of primary usage.",
+  "measurementMeaning": "Synthetic tokens demonstrate arithmetic/coverage handling only, never efficiency or actual cost.",
+  "sourceHashes": [
+    {
+      "name": "paid-run.mjs",
+      "sha256": "031a4bfbd17078a54654c8e74f75d5626d5713d376dc7a0a8ab9792918523148"
+    },
+    {
+      "name": "wrapper.mjs",
+      "sha256": "b669f96698f38f4a384ea9313ea1b790e08d4282c7943d45e80d46783bb36209"
+    },
+    {
+      "name": "fake.mjs",
+      "sha256": "00ef6d93228e9ebf3929449a66150f5a5867a7a66cb1be376a0a2e461305665e"
+    },
+    {
+      "name": "paid-plan.json",
+      "sha256": "c4d407e0a1706a4ac553c285cd2d61e8fdac6f8e0c287cd98e784a4308c6df8b"
+    },
+    {
+      "name": "expected-tools.json",
+      "sha256": "c91fc96592dc76eb0a73f711b5768275b82178701f15ec57e908e7d5ac4aa73d"
+    },
+    {
+      "name": "official/opencode-request-accounting.mjs",
+      "sha256": "a3b0366f74000ff01832a304539111912f07dad35391538c14f60c4a6fa5740a"
+    },
+    {
+      "name": "official/paired-usage-summary.mjs",
+      "sha256": "f3675e75c117c753c9a59062aeba4f89d5392f94f216da32a707a791f02c546b"
+    },
+    {
+      "name": "official/worker-turn-sandbox.mjs",
+      "sha256": "93294d0d31d5eada0e906c02e5feed389ba953d11a6e6103c766eeed0f8cbca5"
+    }
+  ],
+  "failureRetentionProof": {
+    "run": "1791563427555-paid-runner-free",
+    "injectedFailure": "after first arm consumed responses, before per-round accounting",
+    "knownInput": 203,
+    "knownOutput": 23,
+    "fullRatio": null,
+    "configCleanup": true,
+    "resultSha256": "e5cfbee69c9109cbb8a61773e57642847f10f3fff6b63221757bb2edc9273ea9",
+    "revisionLimit": "Earlier connection revision; failure consumed203/23 remained in final allUsage and paired observed. Current final free uses independent identity/request/field coverage and whole-arm/round-partition checks."
+  },
+  "resultSha256": "d54d1d3cb2f1928d740623c96da388359317e68effc6858d11edb71f64b7ff0d",
+  "independentAuditSha256": "31838a5258e6b8fc05ed90b9651a537370624e414ec2e64f08792b3504fac5d2",
+  "limitations": [
+    "No paid cost conclusion.",
+    "Same model/schema and exact business task do not imply identical platform envelope or stochastic trajectory.",
+    "Source freeze is pending; module hashes identify audited current imports.",
+    "Cleanup proves recorded matching processes absent and awaited daemon exit, not an independent all-port census."
+  ],
+  "globalAccountingConnection": {
+    "wholeArmAndRoundKnownSumsAgree": true,
+    "identityAndStreamAndDimensionsCheckedSeparately": true,
+    "globalFailureComparisonIssueAndUnknownPartitionFailsClosed": true
+  }
+}

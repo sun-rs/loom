@@ -1,0 +1,106 @@
+{
+  "batch": "P169",
+  "status": "failed-product-final-coexistence",
+  "runDirectory": "runs/1791564545861-P169",
+  "finishedAt": "2026-10-09T16:50:59.116Z",
+  "sourceHead": "2b47258b8792afb8eacba78f81672a58e1143a2f",
+  "sourceVerification": {
+    "files": 3706,
+    "mismatches": 0,
+    "performedBeforeSubsequentDocumentationUpdates": true
+  },
+  "admissionSha256": "57f85d8d8bffcfcb0e90c68e1299a1f51bfc625b8ea121a692b9a77be5902279",
+  "resultSha256": "ec15ff2245f7fd83b8c04fe30a009a21ac9f787c17ff746bc63dce9b422d0b5e",
+  "arms": {
+    "native": {
+      "responses": 9,
+      "usage": {
+        "input": 121515,
+        "cachedInput": 105984,
+        "cacheCreationInput": 0,
+        "baseInput": 15531,
+        "output": 2725
+      },
+      "allRawResponsesComplete": true,
+      "allTranscriptResponsesMatch": true,
+      "allLaunchMemoryOff": true,
+      "observedSessionCount": 1,
+      "sameSessionContinuationTested": false,
+      "firstGenerationInput": 11694,
+      "toolCalls": 9,
+      "protocolRelatedToolCalls": 0,
+      "allActualSchemaEqual": true,
+      "actualModelIds": ["claude-sonnet-5-5"]
+    },
+    "loom": {
+      "responses": 9,
+      "usage": {
+        "input": 137603,
+        "cachedInput": 128512,
+        "cacheCreationInput": 0,
+        "baseInput": 9091,
+        "output": 2732
+      },
+      "allRawResponsesComplete": true,
+      "allTranscriptResponsesMatch": true,
+      "allLaunchMemoryOff": true,
+      "observedSessionCount": 0,
+      "sameSessionContinuationTested": false,
+      "firstGenerationInput": 13359,
+      "toolCalls": 9,
+      "protocolRelatedToolCalls": 1,
+      "allActualSchemaEqual": true,
+      "actualModelIds": ["claude-sonnet-5-5"]
+    }
+  },
+  "failedRunKernelReconciliation": {
+    "rows": 9,
+    "rawResponseIdsExact": true,
+    "perResponseUsageEqual": true
+  },
+  "completion": {
+    "plannedPairs": 12,
+    "completedPairs": 0,
+    "nativeCompletedRounds": [1],
+    "loomAttemptedFailedRounds": [1],
+    "full12Ratio": null,
+    "plannedLate6Ratio": null,
+    "completedPairedPrefixRatio": null
+  },
+  "quality": {
+    "nativeRound1OriginalSnapshot": true,
+    "loomRound1OriginalSnapshot": null,
+    "finalReadme": null
+  },
+  "failure": {
+    "classification": "Product coexistence gap; legal Worker post succeeded, native final then encountered self-created freshness hold",
+    "originalSelectedSeq": 4,
+    "explicitOrdinaryMessagePostSeq": 9,
+    "explicitPostFinalFlag": false,
+    "nativeCandidateSuccessfulProviderResult": true,
+    "heldDraftBasedOnSeq": 4,
+    "heldDraftSeenUpToSeq": 9,
+    "heldDraftFinal": true,
+    "committedFinalMarkers": 0,
+    "activationState": "quarantined",
+    "automaticRetry": false,
+    "sandboxWorkerAccessFailure": false
+  },
+  "cleanup": {
+    "knownOwnedPidsChecked": 15,
+    "allExited": true,
+    "isolatedConfigsRemoved": true,
+    "daemonExitCode": 0,
+    "errors": []
+  },
+  "evidence": {
+    "terminal-raw-audit.json": "df3d4e9b307db44b6d011c97a2b0dc5b8e7f57155e97ef46bff7f32d75769057",
+    "cleanup-audit.json": "88a20340da517c0953de572b7929d4b7e399cff2ae84fa3a8cd9709152d0951a"
+  },
+  "limitations": [
+    "All failed-run known expense retained; no full-task efficiency ratio is valid.",
+    "A normal message-post cannot be inferred to be final from natural-language content.",
+    "No source fixes, additional paid calls, or favorable reruns performed for this audit.",
+    "Recorded token totals are provider/CLI usage evidence, not a billing invoice."
+  ]
+}

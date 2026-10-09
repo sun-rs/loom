@@ -1,0 +1,445 @@
+{
+  "kind": "independent-offline-raw-and-native-audit",
+  "paidCalls": 0,
+  "batches": {
+    "P168": {
+      "resultSha256": "6c657297a669850b53625121ed12d0e806621dba38b3dab3705020836827aedf",
+      "arms": {
+        "native": {
+          "requests": 106,
+          "input": 4901108,
+          "output": 58949,
+          "allRawHashesMatched": true,
+          "allRequestsModelEffortMatched": true,
+          "allHttp200CompleteTerminal": true,
+          "nativeSessionCount": 1,
+          "late": {
+            "input": 3689399,
+            "output": 35663
+          }
+        },
+        "loom": {
+          "requests": 99,
+          "input": 3444949,
+          "output": 52633,
+          "allRawHashesMatched": true,
+          "allRequestsModelEffortMatched": true,
+          "allHttp200CompleteTerminal": true,
+          "nativeSessionCount": 1,
+          "late": {
+            "input": 2296845,
+            "output": 32581
+          }
+        }
+      },
+      "ratios": {
+        "full": {
+          "input": 0.7028918766940047,
+          "output": 0.892856537006565
+        },
+        "late": {
+          "input": 0.6225526162933313,
+          "output": 0.913579900737459
+        }
+      },
+      "qualitySnapshots": [
+        {
+          "arm": "native",
+          "round": 1,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "18c46e9b0c67c5c5ca74600051d38f9bb63c5c2a4765f2319e7ec49386ab2b02"
+        },
+        {
+          "arm": "native",
+          "round": 10,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "4451c3004dbbba1250acccb8f315b8cc17d9f5511e7d0bba5b9e01129976802a"
+        },
+        {
+          "arm": "native",
+          "round": 11,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "18787518af2f1d04a4131acfdf217de03de6c0bd195ae86bc0e7bb4b7145907b"
+        },
+        {
+          "arm": "native",
+          "round": 12,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "47cee6b8d4ead6b66c74d72883bdb6446d178fbe394c8213fc44c31ac192a74f"
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "d4140949f7f81a1b07ae0382fec6bda56db165ba3d309b0497d1847b41326003"
+        },
+        {
+          "arm": "native",
+          "round": 3,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "58901ba82478dd1b8eee4940364d240866b871aec47e6383b18c4eb31da96c03"
+        },
+        {
+          "arm": "native",
+          "round": 4,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "625e9af91dfd0c45dee659c3b4763a3268a227b6e3277b46170253bc0537e2ed"
+        },
+        {
+          "arm": "native",
+          "round": 5,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "e4ad79a5a0e38426954cdb8a17b72b0605852ca496806e211c29382c8aa1fece"
+        },
+        {
+          "arm": "native",
+          "round": 6,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "489eb6a52aab7dfdf997a345ac72cf3c5dea4dfd17ca5392b92fcc2cdcf1f342"
+        },
+        {
+          "arm": "native",
+          "round": 7,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "45f2c584e8748372447caff93bc34cd934490767e206ec647fb5e6ee0026387f"
+        },
+        {
+          "arm": "native",
+          "round": 8,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "c6854ca6c0f7a0e61dab1e4cb3a67fe24b44275f15cf3f8d0789e46747143e26"
+        },
+        {
+          "arm": "native",
+          "round": 9,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "16e15408128866473fea92357eec0bfc6a9fea2a63b5a36ea475795be3b81f2c"
+        },
+        {
+          "arm": "loom",
+          "round": 1,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "1f4130ba4792a96dcc782eb91b42778ed2b9db32f8e66aa9fb5e8645c7d0ce80"
+        },
+        {
+          "arm": "loom",
+          "round": 10,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "62142a2e552ef335805492fb73f394b49366abd1a406a809789741d03f190ba2"
+        },
+        {
+          "arm": "loom",
+          "round": 11,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "d13c87086c090180ac5c2faecc13295e9aed6e52438a710b64e7e141abde8e50"
+        },
+        {
+          "arm": "loom",
+          "round": 12,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "f25c8999d51f70967fc53c2b514d1f6fbe0eddc1cbf2df16516d7ab7788fbcc5"
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "46de516369f6571fd549c414b352b2fa2b4518df8ff61d23982d76307b9a2b15"
+        },
+        {
+          "arm": "loom",
+          "round": 3,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "385f675683f8cf317c40fa6d83e395e954118ace06b564bcbda13a858298d196"
+        },
+        {
+          "arm": "loom",
+          "round": 4,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "cf64f2ae2d648686295746b715f8ba687bbf35cf7113e2623c6dea7a47e33ec3"
+        },
+        {
+          "arm": "loom",
+          "round": 5,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "e8f2b895692d9941e5e10d1b90d19dea3d40f20ff4f4780f1c38a23f8de9d7c7"
+        },
+        {
+          "arm": "loom",
+          "round": 6,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "93ddabc50829e704942c028258ee0af6160ace148f8b09df41588d0691e7cf5f"
+        },
+        {
+          "arm": "loom",
+          "round": 7,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "48fa5586b5d58ddcb3a1378bf8f197a275c9257628d98aab012d0b1a276debfb"
+        },
+        {
+          "arm": "loom",
+          "round": 8,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "bde2aa4265eddfa3e9f2c0c04739993848002e66a13507b894449fd3888e8997"
+        },
+        {
+          "arm": "loom",
+          "round": 9,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "e1296143f7ecf2152333d1eaddcf8ddbdede68c1f1415a1f3d819ae73ccf6492"
+        }
+      ],
+      "qualityCheckedBy": "Read-only recomputation of archived file hashes and frozen evaluator receipt; no new candidate execution.",
+      "cleanup": {
+        "recordedOwnedPidCount": 41,
+        "liveRecordedPids": [],
+        "temporaryConfigurationPathsAbsent": true,
+        "daemonExits": [
+          {
+            "code": 0,
+            "signal": null
+          }
+        ],
+        "recordedWrapperExits": [
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          }
+        ]
+      },
+      "qualityAllArchivedSnapshotsPassed": true
+    },
+    "P169": {
+      "resultSha256": "ec15ff2245f7fd83b8c04fe30a009a21ac9f787c17ff746bc63dce9b422d0b5e",
+      "arms": {
+        "native": {
+          "requests": 9,
+          "input": 121515,
+          "output": 2725,
+          "allRawHashesMatched": true,
+          "allRequestsModelEffortMatched": true,
+          "allHttp200CompleteTerminal": true,
+          "nativeSessionCount": 1,
+          "extraUnmatchedNativeGenerations": 0,
+          "auxiliaryRequests": 0,
+          "rejectedRoutes": 0
+        },
+        "loom": {
+          "requests": 9,
+          "input": 137603,
+          "output": 2732,
+          "allRawHashesMatched": true,
+          "allRequestsModelEffortMatched": true,
+          "allHttp200CompleteTerminal": true,
+          "nativeSessionCount": 1,
+          "extraUnmatchedNativeGenerations": 0,
+          "auxiliaryRequests": 0,
+          "rejectedRoutes": 0
+        }
+      },
+      "ratios": "unavailable: no completed paired task/prefix",
+      "qualitySnapshots": [
+        {
+          "arm": "native",
+          "round": 1,
+          "passed": true,
+          "snapshotHashesMatched": true,
+          "evidenceSha256": "452772fe2b9fc6088a9476b4d8fc8d814a84d1e6c416a11ad3815eca9d8957ad"
+        }
+      ],
+      "qualityCheckedBy": "Read-only recomputation of archived file hashes and frozen evaluator receipt; no new candidate execution.",
+      "cleanup": {
+        "recordedOwnedPidCount": 13,
+        "liveRecordedPids": [],
+        "temporaryConfigurationPathsAbsent": true,
+        "daemonExits": [
+          {
+            "code": 0,
+            "signal": null
+          }
+        ],
+        "recordedWrapperExits": [
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "native",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 143,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          },
+          {
+            "arm": "loom",
+            "code": 0,
+            "signal": null
+          }
+        ],
+        "shutdownCaveat": "One Loom wrapper exited143 during shutdown; native print exited0. Native turn success is separately evidenced, not inferred from process shutdown."
+      },
+      "failureCausality": {
+        "businessMessagesAfterWake": [
+          {
+            "seq": 9,
+            "sameInstance": true,
+            "basedOnRoomSeq": 0
+          }
+        ],
+        "heldDrafts": [
+          {
+            "based_on_room_seq": 4,
+            "seen_up_to_seq": 9,
+            "reply_based_on_room_seq": 4,
+            "reply_final": 1,
+            "state": "held"
+          }
+        ],
+        "activationStates": ["quarantined"],
+        "nativeTurnResults": ["success"],
+        "nativeFinalPublicationReceipts": 0,
+        "kernelUsage": {
+          "generations": 9,
+          "input": 137603,
+          "output": 2732
+        }
+      },
+      "billingLimit": "All recorded model attempts have complete provider-reported usage; external invoice not observed. No billing-zero inference.",
+      "qualityAllArchivedSnapshotsPassed": true
+    }
+  },
+  "limitations": [
+    "One stochastic sample per CLI/model; no cross-CLI aggregate multiplier.",
+    "Provider-reported tokens are not invoice cost.",
+    "Recorded-process absence is not independent all-port or all-host process census.",
+    "P169 task failure prevents full/late/completed-prefix efficiency comparison; known failure expense retained."
+  ]
+}

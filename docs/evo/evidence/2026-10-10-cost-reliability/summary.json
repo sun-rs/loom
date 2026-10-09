@@ -1,0 +1,104 @@
+{
+  "status": "measurement-repair-implemented-and-complete-OpenCode-long-pair-verified; multi-CLI-efficiency-not-accepted",
+  "sourceCommit": "2b47258b8792afb8eacba78f81672a58e1143a2f",
+  "productCodeChanged": false,
+  "formalDeploymentChanged": false,
+  "causes": [
+    {
+      "kind": "test-environment",
+      "cause": "Private warm wrapper omitted actual per-turn Worker credential path; legal message-read failed and provoked recovery attempts.",
+      "repair": "Shared exact-instance sandbox rules, real CLI two-round Worker/negative-isolation preflight."
+    },
+    {
+      "kind": "accounting",
+      "cause": "Complete primary input/output was discarded because optional cache/reasoning fields were absent.",
+      "repair": "Independent request coverage and per-dimension completeness; unknown is not zero."
+    },
+    {
+      "kind": "reporting",
+      "cause": "Quality failure, task interruption, field absence and accounting incompleteness were merged into one unusable outcome.",
+      "repair": "Known costs, quality, comparability, full/late/prefix windows are separate; failures retained."
+    },
+    {
+      "kind": "accounting-integrity",
+      "cause": "Audit found missing IDs and cross-round duplicate IDs could falsely establish complete totals.",
+      "repair": "Identity validation, global response ownership, duplicate/conflict tests and whole-arm reconciliation."
+    },
+    {
+      "kind": "external-blocker",
+      "cause": "Kimi native authentication invalid grant; Haiku approved effort/catalog mismatch.",
+      "repair": "No repeated paid launch against known blockers; do not substitute model or claim zero cost."
+    }
+  ],
+  "results": {
+    "P168": {
+      "cli": "OpenCode1.18.35",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "pairs": 12,
+      "completeResponses": 205,
+      "quality": {
+        "native": 12,
+        "loom": 12
+      },
+      "native": {
+        "input": 4901108,
+        "output": 58949
+      },
+      "loom": {
+        "input": 3444949,
+        "output": 52633
+      },
+      "fullRatios": {
+        "input": 0.7028918766940047,
+        "output": 0.892856537006565
+      },
+      "lateR7to12Ratios": {
+        "input": 0.6225526162933313,
+        "output": 0.913579900737459
+      },
+      "limitation": "One trajectory, zero communication tool calls; stochastic business-tool paths differ. No causal savings or general multi-model conclusion."
+    },
+    "P169": {
+      "cli": "Claude2.1.293",
+      "model": "sonnet -> claude-sonnet-5-5",
+      "effort": "low",
+      "pairsCompleted": 0,
+      "completeResponses": 18,
+      "nativeKnown": {
+        "input": 121515,
+        "output": 2725
+      },
+      "loomKnown": {
+        "input": 137603,
+        "output": 2732
+      },
+      "fullRatio": null,
+      "failure": "Explicit successful Worker post followed by automatic native-final publication hit freshness hold; Activation quarantined. Product coexistence boundary, not missing primary usage.",
+      "next": "Reproduce deterministic post-plus-native-final conflict and design repair preserving progress, explicit final, freshness, ACK and no retry of unknown writes.",
+      "repairDesign": {
+        "status": "design only; not implemented or accepted",
+        "owner": "Kernel",
+        "existingReference": "worker-target-context.ts already distinguishes own publications; origin final route has no equivalent floor.",
+        "proposal": "Preserve original basedOnRoomSeq. Exclude only new messages durably proved to be authored by the current Run on the same target when assessing native-final freshness; inspect every relevant intervening fact rather than jumping to latest own sequence.",
+        "mustRemainHeld": [
+          "Human or other instance facts",
+          "messages by a different Run",
+          "different target changes where relevant"
+        ],
+        "mustNotDo": [
+          "Treat ordinary post as explicit final or discard later native final by text heuristics",
+          "Rebase to latest head or max own seq and skip an intervening Human message",
+          "Retry an unknown write or waive ACK/cancellation fences"
+        ],
+        "reproduction": "Actual Worker ordinary post followed by native final in claude-native-final-runtime.test.ts; Kernel tests for own progress, intervening Human, different Run/target, explicit final, cancel and unknown receipt."
+      }
+    }
+  },
+  "limits": [
+    "Provider token accounting is not invoice billing.",
+    "Matched native mode is labeled; not evidence of default interactive mode equivalence.",
+    "No five-CLI/multi-model/multi-participant efficiency acceptance.",
+    "Historical failed and unfavorable batches preserved."
+  ]
+}
