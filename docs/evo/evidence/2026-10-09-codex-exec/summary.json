@@ -22,7 +22,7 @@
     "typecheck": "Final npx tsc --noEmit passed (exit 0).",
     "fullCheck": "npm run check passed (exit 0): backend 2993 passed/22 skipped, Web 487, console 59, efficiency units 496. Final service-tier guard and exact-binding helper additionally passed full 10-test ordinary-Codex integration regression and tsc after the broader run had started.",
     "actualCli": "Passed: installed Codex 0.161.0, gpt-6-luna/low, two same-session turns via exec/resume, one actual file tool, three local fake Responses requests [2,1], two dedicated final markers and completed Activations. See free-cli.json; no cost or quality verdict.",
-    "deployment": "pending",
+    "deployment": "Passed: full backup, graceful launchd restart, source hash, 11 unchanged business tables, fresh real page/history/39 Roles/memory API and no page errors. All four trial flags unset.",
     "independentReconciliation": "Root inspected retained state.db and native rollout: 2 exited Runs, 2 completed Activations, 2 final-output markers, 1 session, both model/effort contexts match, memory disabled, 3 unique response usage records exactly match Kernel, no usage gaps; actual file content verified.",
     "configurationGuard": "After the free run, a new red test reproduced silently ignored serviceTier. Factory now explicitly refuses any serviceTier override; tested no-tier path unchanged. Final targeted regression recorded separately.",
     "checkLogSha256": "114c496a2627c7b21cd0b2e093ba207794acf920be4efc238aad15eba9b3390c",
@@ -56,5 +56,7 @@
     "service-tier-red.log": "622dfe8eca003585548172f1ba9395e9cba62877aab8c31f3334b8311b9c1306",
     "final-integration.log": "6a6f07d6d779fcdb27d157e77d6c17f20431d490bd0ed4efd5d85750bd9d8989",
     "final-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  }
+  },
+  "deploymentEvidence": "deployment.json",
+  "sourceRevision": "55170634ec16120db1e8b023bf1467c22a459acb"
 }
