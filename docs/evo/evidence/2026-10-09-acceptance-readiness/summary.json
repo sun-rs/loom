@@ -1,0 +1,74 @@
+{
+  "scope": "Acceptance infrastructure checkpoint, not a product efficiency milestone",
+  "baseCommit": "b6924e314b073937c41f190e622579d821adf482",
+  "paidCalls": 0,
+  "productSourceChanged": false,
+  "formalDeploymentChanged": false,
+  "implementedAndFreeVerified": {
+    "evaluator": {
+      "version": 4,
+      "workloadVersion": 3,
+      "pythonTests": 25,
+      "policyTests": 2,
+      "historicalSnapshotsRechecked": 23,
+      "originalVerdictsPreserved": true,
+      "evidence": "evaluator-v4.json"
+    },
+    "opencodeText": {
+      "firstAndResumedTurnExact": true,
+      "actualRequests": 8,
+      "toolsAndStandingPreserved": true,
+      "evidence": "opencode-stdin.json",
+      "historicalRedEvidence": "opencode-historical-text-mismatch.json",
+      "tddLimit": "Historical argv failure was replayed after stdin verification; not claimed as a prior red run."
+    },
+    "codexAccounting": {
+      "moduleTests": 8,
+      "actualCliOrdinaryExecResume": true,
+      "syntheticRequests": 3,
+      "reportedResponses": 2,
+      "upstreamUsageComplete": true,
+      "actualBillingUnknown": true,
+      "evidence": "codex-request-coverage.json",
+      "research": "codex-research.json",
+      "independentReview": "codex-independent-review.json"
+    },
+    "combinedOpenCode": {
+      "evidence": "opencode-stdin-v4.json",
+      "actualRequests": 8,
+      "sameSessionTwoTurnsEachArm": true,
+      "v4ManifestFilesVerified": 14,
+      "actualV4CaptureEveryRound": true,
+      "expectedFailurePreserved": true,
+      "originalSnapshotsUnchanged": true
+    }
+  },
+  "nextSteps": [
+    {
+      "owner": "benchmark harness",
+      "work": "Freeze a new OpenCode long-session plan using the jointly free-verified evaluator v4 and stdin; retain exact tools/standing, memory-off, per-request accounting, predetermined limits and all failures."
+    },
+    {
+      "owner": "benchmark capture",
+      "work": "Verify Codex real provider/auth/wire-path preservation without paid calls, then integrate request-level accounting; do not use this HTTP-only free prototype as paid admission."
+    },
+    {
+      "owner": "cross-CLI acceptance",
+      "work": "Repair remaining Claude tool-parity and Kimi/Pi product-integration gaps independently; no one CLI result substitutes for the five-CLI/model evidence matrix."
+    }
+  ],
+  "notProven": [
+    "New paid long-session or cost-ratio acceptance",
+    "Five-CLI or multi-instance efficiency",
+    "Codex paid HTTP/WebSocket interception equivalence",
+    "Codex request collector integrated into Kernel/product gate",
+    "Invoice README semantic equality"
+  ],
+  "verification": {
+    "rootIndependentPythonTests": 25,
+    "rootIndependentCoverageTests": 8,
+    "rootVerifiedFinalCodexFileHashes": 28,
+    "rootVerifiedOpenCodeRequestBodies": 8,
+    "repositoryChangeScope": "Documentation and sanitized evidence only; no product build or service restart in this batch."
+  }
+}

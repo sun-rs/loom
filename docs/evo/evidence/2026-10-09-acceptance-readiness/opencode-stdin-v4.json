@@ -1,0 +1,263 @@
+{
+  "task": "Composed OpenCode stdin + evaluator v4 actual CLI free proof",
+  "status": "passed free two rounds per arm",
+  "paidCalls": 0,
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "run": "1791543483807-paid-runner-free",
+  "startedAt": "2026-10-09T10:58:03.808Z",
+  "finishedAt": "2026-10-09T10:58:20.425Z",
+  "sameSessionEachArm": true,
+  "actualUpstreamRequests": 8,
+  "exactNativeBusinessTextInitialAndResume": true,
+  "sameTenToolsEveryRequest": true,
+  "productRoleAndNativeFinalStandingRetained": true,
+  "probe": "Both prompts contain literal double quotes, backslash, Chinese text and newline. Native provider user content equals input exactly; product contains exact task body inside its platform envelope.",
+  "memory": [
+    {
+      "arm": "native",
+      "round": 1,
+      "mechanism": "nativeMemoryVersionEvidence executed before spawn; --pure and both disable flags injected by frozen private wrapper",
+      "launchEvidenceSha256": "6c21f6ea315ccab8af9540cfd42489d863ce37c71aaa172e773242afc8546c2c"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "mechanism": "nativeMemoryVersionEvidence executed before spawn; --pure and both disable flags injected by frozen private wrapper",
+      "launchEvidenceSha256": "21d687349e74c6c7293bbb0520704628bd1366a75840e3b5680c9a401697ff58"
+    },
+    {
+      "arm": "loom",
+      "launchEvidenceSha256": "f622bfa94a2f596b7c71349eaa93177240f9ebf68e85f817626af1f3b865d920",
+      "records": [
+        {
+          "provider": "opencode",
+          "version": "1.18.35",
+          "memoryPolicy": {
+            "provider": "opencode",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "1.18.35",
+            "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3"
+          },
+          "evidence": "actual-guarded-launch-options/v1"
+        }
+      ]
+    }
+  ],
+  "quality": {
+    "native": [true, false],
+    "loom": [true, false],
+    "explanation": "Fake provider deliberately solves R1 then leaves R2 invalid. False R2 is preserved, no business-quality or cost claim."
+  },
+  "cleanup": {
+    "recordedPidsExited": 21,
+    "temporaryProviderConfigsRemoved": true,
+    "serversClosedByAwaitedRunner": true
+  },
+  "requests": [
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "5d4e522f5b58892dd9a555ef757847ce44fa6c70c35dc72833ebafcfa454f77a",
+      "responseSha256": "6a54825403c847300882b939f21fe7bf68bed2ef7be9b3da5b3b0b4c7feb4db2",
+      "businessSha256": "95912e08d16fdeaadc087382e97440b1793055cb668a1b29e4e3b2d8f1c57085",
+      "businessCharacters": 1116,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "757e95d83dcf040a31c8f2a9476fa54f6df83ef2c011f19b4cac27d5a1124e5f",
+      "responseSha256": "20ee367be7197c1f8a1760c94031b516d1a985877e2b012038bd7a556e923951",
+      "businessSha256": "95912e08d16fdeaadc087382e97440b1793055cb668a1b29e4e3b2d8f1c57085",
+      "businessCharacters": 1116,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "a2b83eb2cbacb658604170074fc9f30c6deb1a17254a780931323781d5eba077",
+      "responseSha256": "b441e21ebe09a918baecda2aff0a983611d2ddf9ea2a4cf7cb80d1e0bd4f39fa",
+      "businessSha256": "1c946861c022226f20a48b016fa588a721e6214c57cf0c98d9bbdf80b80cd0b0",
+      "businessCharacters": 517,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "8708583760d0d75d10ee4031c671e2ddecf27740513cc585021838f0d137bfc3",
+      "responseSha256": "2ca3edef76950657ee30266cc12d0662dd0a14a58b14d68fdc7bed0052d3a711",
+      "businessSha256": "1c946861c022226f20a48b016fa588a721e6214c57cf0c98d9bbdf80b80cd0b0",
+      "businessCharacters": 517,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "1e3e1309e456137b532645c6643df5166e98de0e83f046414654d2ba664812bd",
+      "responseSha256": "66b9852469b17f9cb3be627c258ea15d8cb53d441c8296b37cc7e2d39c859c86",
+      "businessSha256": "95912e08d16fdeaadc087382e97440b1793055cb668a1b29e4e3b2d8f1c57085",
+      "businessCharacters": 1116,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "227a126628089c5fe328e43b03e6a4fb959ffe5dab0537446416e1892844b870",
+      "responseSha256": "cbbeae4676edd25cc01b9bac4027fd94f9ca98277c02dafc9f47aa564c3980eb",
+      "businessSha256": "95912e08d16fdeaadc087382e97440b1793055cb668a1b29e4e3b2d8f1c57085",
+      "businessCharacters": 1116,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "64929153f519b3185ee60c8e20d1a5d096644d9ba629874ea3bfca82c211d875",
+      "responseSha256": "6503181006b1a5e7ac7bbc7499ba296dc33fba1bcbd265f092a4ceb2f4e51680",
+      "businessSha256": "1c946861c022226f20a48b016fa588a721e6214c57cf0c98d9bbdf80b80cd0b0",
+      "businessCharacters": 517,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "4a0c545cdb41771fe437e43cedd31304786f8b3e56993a0ae6682197847217ec",
+      "responseSha256": "d01ccd332bc07362767ccedeeaa6f62d01e7bcff1b16b7dd60db9f65f7900936",
+      "businessSha256": "1c946861c022226f20a48b016fa588a721e6214c57cf0c98d9bbdf80b80cd0b0",
+      "businessCharacters": 517,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    }
+  ],
+  "sources": [
+    {
+      "name": "paid-run.mjs",
+      "sha256": "a74a0dd87aba13632fe56d91bcf12e276376d1a959135fe376ff0bdd79d7ccb0"
+    },
+    {
+      "name": "native-turn.mjs",
+      "sha256": "3725b50b2364cdd50b24b91f5cbfb4c6edb350e5b6acd9f7642e5b58ccf5a745"
+    },
+    {
+      "name": "wrapper.mjs",
+      "sha256": "b20d7c013cf316d07750c30823c06402bc45b9b5961f5fbbce70f179beead008"
+    },
+    {
+      "name": "request-admission.mjs",
+      "sha256": "d3c315860149f78670aaf57abfc2ec965dc928f8bcdc55e1d2d6593b90cd17d7"
+    },
+    {
+      "name": "expected-tools.json",
+      "sha256": "c91fc96592dc76eb0a73f711b5768275b82178701f15ec57e908e7d5ac4aa73d"
+    },
+    {
+      "name": "product-arm.mjs",
+      "sha256": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa"
+    },
+    {
+      "name": "official/opencode-usage.mjs",
+      "sha256": "8db56bf522214db1c678bd522b26c7470a0a91b9c8d2887c7d35b2975390177a"
+    },
+    {
+      "name": "official/native-opencode.mjs",
+      "sha256": "d5a87365a5bf150ba8bae6f2bb12bcb496c0cb4abec43569b0ccbfed937e81b0"
+    },
+    {
+      "name": "official/native-memory-version.mjs",
+      "sha256": "8032195cfa16e3f285d40f5e7d4c69b0fc25124a648c9fd43b308a37916a62f6"
+    }
+  ],
+  "resultSha256": "1e096ed994f7eacb329b9d546103354de9bba699fa92b4612500328992fd80dc",
+  "businessPromptsSha256": "ccdc4b52968f31795f654eedba55eb733c7c7116fe6535b50c7ee12e89f96d47",
+  "verificationCommand": "node --experimental-strip-types paid-run.mjs --fake --two; python3 audit.py",
+  "limitations": [
+    "No paid-provider request. Synthetic usage is not cost evidence.",
+    "Same exact business text does not make total system/user envelopes identical; Loom standing guidance remains.",
+    "Private P157 helper adapted to existing official promptTransport stdin argument generator; no product source changed.",
+    "OpenCode memory policy is exact-version audited not-applicable plus isolation switches, not a transcript memory_mode field."
+  ],
+  "fixtureComposition": {
+    "manifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+    "manifestKind": "invoice-evaluator-v4-manifest",
+    "evaluatorVersion": 4,
+    "workloadVersion": 3,
+    "allManifestFileHashesVerified": 14,
+    "runnerActualCaptureReceipts": [
+      {
+        "arm": "native",
+        "round": 1,
+        "entryPoint": "fixture-v4/capture.py",
+        "captureSha256": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+        "evaluatorSha256": "bd792664925e906188c284929ae63366104429d089686af51c1bbbdfe263ec22",
+        "manifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+        "archivedSnapshotUnchanged": true,
+        "passed": true,
+        "evaluatorV4DiagnosticFieldsPresent": true
+      },
+      {
+        "arm": "loom",
+        "round": 1,
+        "entryPoint": "fixture-v4/capture.py",
+        "captureSha256": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+        "evaluatorSha256": "bd792664925e906188c284929ae63366104429d089686af51c1bbbdfe263ec22",
+        "manifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+        "archivedSnapshotUnchanged": true,
+        "passed": true,
+        "evaluatorV4DiagnosticFieldsPresent": true
+      },
+      {
+        "arm": "loom",
+        "round": 2,
+        "entryPoint": "fixture-v4/capture.py",
+        "captureSha256": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+        "evaluatorSha256": "bd792664925e906188c284929ae63366104429d089686af51c1bbbdfe263ec22",
+        "manifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+        "archivedSnapshotUnchanged": true,
+        "passed": false,
+        "evaluatorV4DiagnosticFieldsPresent": true
+      },
+      {
+        "arm": "native",
+        "round": 2,
+        "entryPoint": "fixture-v4/capture.py",
+        "captureSha256": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+        "evaluatorSha256": "bd792664925e906188c284929ae63366104429d089686af51c1bbbdfe263ec22",
+        "manifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+        "archivedSnapshotUnchanged": true,
+        "passed": false,
+        "evaluatorV4DiagnosticFieldsPresent": true
+      }
+    ],
+    "oldV3FreePreserved": true
+  },
+  "planSha256": "8c8e6be825d6e0e1cd61173495a25b90dca7fcdb0ddf5899fdab995b1cb618a7",
+  "auditScriptSha256": "381291bdf2c6ddaf1cc6a676eebe720bb926f57cfd786fa6556d253a6d152be4",
+  "limits": "Hardlocked --fake and --two; no paid admission exists for this new runner."
+}

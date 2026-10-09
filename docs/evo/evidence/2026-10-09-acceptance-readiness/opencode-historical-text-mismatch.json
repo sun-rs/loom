@@ -1,0 +1,29 @@
+{
+  "kind": "post-hoc red regression replay paired with prior real CLI stdin green",
+  "recordedAt": "2026-10-09T10:52:13.038023+00:00",
+  "newCliLaunches": 0,
+  "paidCalls": 0,
+  "chronology": "The new stdin two-round green completed before this offline red assertion was replayed. This is not claimed as preimplementation TDD. The frozen P157 source/request/plan and verdict are unchanged.",
+  "red": {
+    "command": "python3 replay-p157-argv-red.py",
+    "exitCode": 1,
+    "assertion": "actual provider user text equals submitted task plus business instruction",
+    "expectedCharacters": 1072,
+    "actualCharacters": 1078,
+    "actualEqualsQuotedAndInnerQuoteEscapedOriginal": true,
+    "failure": "CLI argv transport added outer double quotes and escaped internal double quotes",
+    "rawRequestSha256": "d1bc5e9ed7dab823eee530d1e051ab8203e6f7f629a4167b5048dc02919f9119",
+    "originalFixturePlanSha256": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+    "p157FrozenPlanSha256": "9606877247d5eae22a7a089d3ef5e5799bdaef3705bb81a37b9c196fd31b8f4d",
+    "testSourceSha256": "a0fdf04ff6bfde62750b2871b6820795eeee70407ede95fa22e0591dea16b9af",
+    "redLogSha256": "d26f8023371a854b205ef16b0f78117b23edbd134a20a07ac2fbe83eeeb60af6"
+  },
+  "green": {
+    "evidence": "public-evidence.json",
+    "sha256": "74d5c6bc7307f462c59579c1ba4d0b850046a511f8c0b70b12a7e87053ec203e",
+    "actualCli": "OpenCode1.18.35",
+    "initialAndSameSessionResumeExactBusinessText": true,
+    "actualRequestsVerified": 8,
+    "limitations": "Loopback fake provider; no cost evidence; no change to P157 interpretation."
+  }
+}

@@ -1,6 +1,6 @@
 # evo 分支现状
 
-更新：2026-10-09（P157完成11对＋Loom第12轮后按输入阈值停止；前11对input0.90263/output0.85314，仅单轨迹观察。P158同turn多final被旧collector拒绝，修复已通过完整检查与真实CLI免费验证并部署；P159原生首轮超时，未启动产品对照）。目标以[目标合同](target-contract.zh-CN.md)为准。[本批](evidence/2026-10-09-fixed-long-batch/opencode-p157-independent.json)。五CLI产品效率仍未验收。
+更新：2026-10-09（验收准备：v4隔离自测通过25项Python/2项策略回归，P157全部23快照统一复验通过且原判定不改；OpenCode stdin实际CLI首轮/续轮逐字文本验证通过；Codex免费请求采集复现CLI漏记恢复请求并保留完整上游用量）。目标以[目标合同](target-contract.zh-CN.md)为准。[本批证据与边界](evidence/2026-10-09-acceptance-readiness/summary.json)。无新增付费，五CLI产品效率仍未验收；P157不完整、P158/P159失败及已知费用继续保留。
 
 P94 同会话重试暴露的旧 claim/start 回执问题已有代码修复：执行认领的默认身份区分 Run，业务创建／交付幂等不变；同 Activation 前次 Run 终止后可重新认领，状态入口不再把过期租约当作有效。确定性回归通过；P95 普通 Task／频道四轮通过，但未真实制造同 Activation 过期故障；[原始证据](evidence/2026-10-02-task-retry-p94.md)、[修复边界](conversation-delivery-design.zh-CN.md#p94-续办修复执行认领与业务幂等分开)。
 
@@ -10,6 +10,7 @@ P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-dire
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
 - 轻量回复：Claude warm、普通Codex exec/resume、OpenCode warm已接入显式选择的native-text路径；Host验证原始Run/身份/交付序号和原生结束证据，再经原WorkerFinalOutput事务发表。权限、stale、幂等及delivery ACK保持，Task/Inbox不因回复自动完成，未知写不重发；五个final/native实验开关在正式服务仍关闭。Codex工具失败和已恢复error诊断已修复部署；本批多final修复已通过完整检查与实际CLI免费验证并部署，只选与task_complete/最后stdout/新输出文件一致的终态正文。Kimi/Pi仍仅有实际CLI＋loopback原型证据，忙时插话绑定、五CLI/多人质量与效率未验收。[接入](evidence/2026-10-09-opencode-native-integration/implementation.json)、[本批免费多final验证](evidence/2026-10-09-fixed-long-batch/codex-multiple-final-free.json)、[修复与全检](evidence/2026-10-09-fixed-long-batch/codex-multiple-final-fix.json)。P157实际工具schema一致、standing已加载；11完整对输入0.90263/输出0.85314，首代固定输入仍多1832tokens，不能把一次较少的生成历史解释为协议必然省钱。累计已知输入8020381导致native第12轮未启动；23快照隐藏功能通过，Loom R10–12原自测被只读evaluator阻断，统一可写隔离副本全部通过，原false保留。原生argv会引号化任务，非逐字提示词对照。[完整观察](evidence/2026-10-09-fixed-long-batch/opencode-p157.json)。历史P153另证原生20工具/产品16工具且Bash描述不同；P156工具和standing失配、P154/P155不完整样本全部保留，均非五CLI成本通过。[历史代表性复审](evidence/2026-10-09-fixed-long-batch/historical-representativeness.json)。
+- 当前验收准备：未来invoice评估使用v4不可变归档入口，隐藏功能检查与可写自测副本分离；OpenCode原生对照用已验证stdin传输，保留standing与工具schema。Codex已报告记录、独立请求用量覆盖、真实账单分开；无请求证据时不据多final或时间间隔推算token。本批仅完成免费HTTP/SSE采集原型，真实付费路径保真、完整出口覆盖与Loom门禁接入仍未完成，不能直接用于付费验收。[范围与下一步](evidence/2026-10-09-acceptance-readiness/summary.json)。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
 - Jev 研究与取舍：[P80–P84 结论及经验](jev-research-decision.zh-CN.md)：不引入核心调度或默认上下文过滤；按需检索仅保留为实验。
 - 效率门禁合同：[cli-efficiency-gate](../design/cli-efficiency-gate.zh-CN.md)；漂移门禁：[long-session-drift-gate](../design/long-session-drift-gate.zh-CN.md)。

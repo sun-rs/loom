@@ -1,0 +1,41 @@
+{
+  "scope": "Hashes of original private evidence bytes before repository formatting",
+  "files": {
+    "evaluator-v4.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-cost-fixture-v4/summary.json",
+      "sourceSha256": "26c5582215189a69ea6e3b12e434b7bf19f25d9d96ddab957ff54d55065690b6"
+    },
+    "evaluator-v4-manifest.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-cost-fixture-v4/manifest.json",
+      "sourceSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c"
+    },
+    "evaluator-revalidation.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-acceptance-readiness/evaluator-revalidation-compact.json",
+      "sourceSha256": "febf61e6af91d06788bd5e869dcd56d6d1490b5507dd868633ad5d331f976275"
+    },
+    "opencode-stdin.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-stdin-free/public-evidence.json",
+      "sourceSha256": "74d5c6bc7307f462c59579c1ba4d0b850046a511f8c0b70b12a7e87053ec203e"
+    },
+    "opencode-historical-text-mismatch.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-stdin-free/transport-regression-evidence.json",
+      "sourceSha256": "7b46886c01d6acb420d7acff1ce5c1ecc8330d33d63f8e172c992d979871faab"
+    },
+    "codex-request-coverage.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-codex-request-coverage-free/public-evidence.json",
+      "sourceSha256": "cabfbdf40963f8d0b03e67c8052bad95cac87e961f088d08a8313ca3510a849a"
+    },
+    "codex-research.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-codex-request-coverage-free/research.json",
+      "sourceSha256": "b507e83a7122612bbce9e382c29fb8c3e7ec1d108a5ea4e37beecf757a112059"
+    },
+    "codex-independent-review.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-acceptance-readiness/codex-independent-review.json",
+      "sourceSha256": "967da45fa74e56bfc537d2868e2ddfc384a4a5649e0d650b5c82aa623a0d6f47"
+    },
+    "opencode-stdin-v4.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-stdin-v4-free/public-evidence.json",
+      "sourceSha256": "cbb7b256b3ee5ca0a4f5a78d836da207b2a43c6b40418e4a03ebcbacb87d56b0"
+    }
+  }
+}

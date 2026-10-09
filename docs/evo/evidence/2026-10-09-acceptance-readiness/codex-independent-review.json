@@ -1,0 +1,37 @@
+{
+  "scope": "root independent review of final HTTP-status-hardened free prototype",
+  "sourceSummarySha256": "cabfbdf40963f8d0b03e67c8052bad95cac87e961f088d08a8313ca3510a849a",
+  "verifiedHashCounts": {
+    "helperHashes": 4,
+    "artifactHashes": 24
+  },
+  "completedResponses": [
+    {
+      "responseId": "synthetic-response-1",
+      "input": 10,
+      "output": 2
+    },
+    {
+      "responseId": "synthetic-response-2",
+      "input": 10,
+      "output": 2
+    },
+    {
+      "responseId": "synthetic-response-3",
+      "input": 10,
+      "output": 2
+    }
+  ],
+  "moduleTestsIndependentlyPassed": 8,
+  "actualCliWasNotRerunByReviewer": true,
+  "limitations": [
+    "Upstream and proxy both localhost synthetic; no accounts or paid endpoints accessed.",
+    "HTTP Responses/SSE only; WebSocket unsupported and refused.",
+    "Upstream terminal usage attests provider-reported tokens, not billed amount or invoice accuracy.",
+    "Real paid transport/auth/provider preservation has not been verified, so proxy is not admitted for representative paid runs.",
+    "This module authorizes no efficiency pass: task quality, session, model, memory and contract budget gates remain separately required.",
+    "Restored complete request usage can be used in a new explicitly designed benchmark source; it does not silently replace current Kernel gate records.",
+    "SSE parser supports this synthetic LF-delimited, single data-line fixture only; no CRLF/multiline/complex framing coverage, no production-grade bounded capture."
+  ],
+  "result": "free evidence verified; no paid transport admission"
+}

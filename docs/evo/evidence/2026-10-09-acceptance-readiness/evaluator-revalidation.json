@@ -1,0 +1,627 @@
+{
+  "sourceSha256": "8b953aaa083315b2221f57eb8b021eb3eef61913d8c23ad363f93cdcdd3b9ae8",
+  "kind": "new-evaluator-retrospective-validation",
+  "historicalP157Unchanged": true,
+  "all23Included": true,
+  "rows": [
+    {
+      "arm": "native",
+      "round": 1,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "f5c30f178bcb4e4cfa36210ae0d52a6cdbe66750e34e07cf9fbc686f8da6d447",
+        "invoice.py": "5bf21cdc7fa239a83efe0cce68a722142fff30fefd2812ddbb4518519ed1b859",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "8f6fbcd724dd7964efecda532cc1d9edec97903175a87e25f87ed6d91667e30a"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 1,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 1,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "6489afd28e0c1412c421a8c2006b77fb00bddaff9984753a7b9f0f0eaae6bb06",
+        "invoice.py": "96079a22a4adfd20b37df9d3b0f28e94051a162c2cee4a7f35677cdc905bc6d5",
+        "tests/test_invoice.py": "786424fe38c1c2ba271f288a11b6d93f23e177be21f898502be8d87bc21ed8eb"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 1,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 1,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "892ab958f12b011f379d8299c180352a0ec078e5c6666888e661c6bee87a1dc2",
+        "invoice.py": "96079a22a4adfd20b37df9d3b0f28e94051a162c2cee4a7f35677cdc905bc6d5",
+        "tests/test_invoice.py": "1cd6ac385ea8419a4c86e57af8e77f77489df2274f3898e2fe177562ba011913"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 3,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 3,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "a8038434c4cee0851a09b834b6c438e32a5a694ae37fa88fd862325ee7145e81",
+        "invoice.py": "50d37497644d4a60178222260adf2e8b9c04d16ccbad3bf1645130f7001def0e",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "23e977076c9ae1f4dc0b858bdaf21f0efe92432fbdbca24aa77ed42c6c899c17"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 3,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 3,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "b1349168ef56ea35efdc409a431ec209c30d4536ecae5b0bb4df7df2ce104cc9",
+        "invoice.py": "56d2f405ab6853d80f72dfc875be655a2753b4b2a534d76a0176b48c4c5f44aa",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "09caae8c42cd1191d5ab6769ccb912394cc8f82f5843e46dd942cc2b1f04b141"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 4,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 4,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "4d10f292245ad145b610a73619be44e05b307d5ef695c8808d14c7b9a134b1e4",
+        "invoice.py": "48fd95d4f479b077c98ccdcee6d9012ff676ed7267c5cde2bc3336682d453605",
+        "tests/test_invoice.py": "996102048fc868af349aade3e9dbadf518e4e8144c8509c963ddf15478b8b892"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 4,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 4,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "4c38898b76e9590ebdc8f7a0e9aa4a79efebb5738d58b8a7dbe8914133873079",
+        "invoice.py": "5507809f88053977a0b651f2fbb91332b80100a7c77588e19ea3dd38b7c75d56",
+        "tests/test_invoice.py": "0878f00ab4f1946fdd187a6b31599bf8b92f43a123fb1f2001d43a4d618617ad"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 7,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 7,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "875848cf91c6d918a7f8c9d8dbba710f4acc68c2c4aa00a7aa3b227c69a50b43",
+        "invoice.py": "b2fb0b578c24bb41df874010e913103ff1d60abcdabd43d26aa03c2573e65ab1",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "bdd143c66ce169719b1fe422a9d02516089e991f50c34f39a32328e2799e2b9b"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 7,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 7,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "6b93dfbb2c15978c444bb8a0deff65e1b22e2c6ab553e2ff93ab9a208e1608c3",
+        "invoice.py": "7f17e1cae85e5d044b40bd6a48bc172c69617b15f841e1fe2f293d47ef2db6af",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "3bdca89a329a0c280d207cacdefd5604375ea12d585c887fb0084c3d8f05ca44"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 9,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 9,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "f2a168f2e168e9bf5f3350b03534c7e902e2f8d0d79aa041d1c743c816cc8bc5",
+        "invoice.py": "faff7f2a2d065796bb9e4b15f0383df343f8c034134b06025e06e8c9b6a4b37c",
+        "tests/test_invoice.py": "6872093962d7fd9e8c28a5bc5d074c6e597bff4b9f1c6fcfd53920aab770d04c"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 9,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 9,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "46724bfef5d027cd676c8965b724f81f0e3642a038fc534e0ed5220f6ca7274a",
+        "invoice.py": "bc30187912d17ab11dc48452f52b5f821ee561810c445270c69eb7f324132879",
+        "tests/test_invoice.py": "34533510134b4b50a725eb17991f87b7b1a4de72320391b1e8bc0b5bafadc40b"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 25,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 25,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "1db801fcb59f9b54ea3742cb42acbcfb3022a59960bf06f4e213d238a9cab0d9",
+        "invoice.py": "fb95871a262e38d95247a1ef14f6280632d128fb1d35643466102af52beb6d02",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "09e800b8ae043d62e489f49dbf9d5d7caf5bf39ad910edcde9458f1e99cdaf96"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 25,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 25,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "813888925a5315fb36aaf72425ffa6f9bc92db659fc274bde5445f846e4856bd",
+        "invoice.py": "76bf1bb86f9ae5bacdc1d325fd4301c5cc1477b632c4ca1e0a527019ccd196dc",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "fce70d2cbf8a31d96c8a6bc6aafcb4fabb2107b5cc14d06b40226843ab1178d0"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 27,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 27,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "09a4f883cdc2eeb0d029b0635c141894cb637d6c9453047b31da4d690f894b76",
+        "invoice.py": "38dcd1abc170a3dccbb3f5e58e92155d707585fef6364834f81ba6ee9d664b29",
+        "tests/test_invoice.py": "dd996022ca13ada6ac91a4cec7327a2ce1b04ac0bc1c28edb5a62a5fdc66e21c"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 27,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 27,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "13b1374fd6cb4ad34cf2ddf6890bb0807aa0d88dbd9844fab9c69332fca6cd94",
+        "invoice.py": "bf70986b08819bce5653c259abb7c8a6268dc369a8636fc2e4bbe17c7807c67b",
+        "tests/test_invoice.py": "929917d453804d8c4bff33be7e6b6e2330c8e8c8f30c7a851e624da47711a2dc"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 28,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 28,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "a7709ad75efe707052f59b48dd8f954c4b51b292e48434cc63fb2bd04cdbe292",
+        "invoice.py": "0e1f45e6e8176889d2987ca9f10e71f10361a2138ddb5995e8c6d912db7f0594",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "cd8b28c6e4b58751541ac82de7629fa3b500376d1ad7d7d356b3942d85741934"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 28,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 28,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "12bd3f3cc9940db9eaaff7bc372c751dac47e692d7e26045fa669a56ddd7c2b2",
+        "invoice.py": "7cb4dc552dbb532df6636e02034bc484e706b2c901d1503854f9ab0fe2084ad0",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_cli.py": "9914f3a46964bb489e153271c9bd6b8bcc5988cd0e74a788326c2ae6b849ff26",
+        "tests/test_invoice.py": "cd8b28c6e4b58751541ac82de7629fa3b500376d1ad7d7d356b3942d85741934"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 31,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 31,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "150d929650375d20699c049e77c6e211aa7d8cfa9d56227b23a963089c2b020b",
+        "invoice.py": "13cca2320d6312db5bb8cbcd8a886890ad2a842ce3bc47f96345aa140d951901",
+        "tests/test_cli.py": "a4ab7343e403bc99702b628d5ed5a32f4fa51f5eaec0903dff83c392ac2aaff1",
+        "tests/test_invoice.py": "929917d453804d8c4bff33be7e6b6e2330c8e8c8f30c7a851e624da47711a2dc"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 31,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 31,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "3d4170392410392b613d372db14bcc519b86195877e0833149ee57d967395781",
+        "invoice.py": "25dea9e969f064317b73d2ca408e49bd38a7d1ad0f8e15571a7980f63258ce57",
+        "tests/test_cli.py": "736d28cce1cb6c3999a7d339261bf737362bb12f9b30fd48b29d90575fdd1946",
+        "tests/test_invoice.py": "929917d453804d8c4bff33be7e6b6e2330c8e8c8f30c7a851e624da47711a2dc"
+      },
+      "frozenV3Verdict": {
+        "passed": false,
+        "functionalPassed": true,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1,
+        "functionalChecks": 36,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 36,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "f6eafe820046ac3d0e7d2bdec2f86b59d70d1b34f1cbaf77a2aea74c58dcd839",
+        "invoice.py": "94dcd18076036ec9d1956c836fadebdd4d91fdac6782df1e3cd8de0394af6be0",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_cli.py": "abad5208d279ec51471572ea0f4e057525e9b883767f760c58194becf2f8a80e",
+        "tests/test_invoice.py": "cd8b28c6e4b58751541ac82de7629fa3b500376d1ad7d7d356b3942d85741934"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 36,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 36,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "f6eafe820046ac3d0e7d2bdec2f86b59d70d1b34f1cbaf77a2aea74c58dcd839",
+        "invoice.py": "94dcd18076036ec9d1956c836fadebdd4d91fdac6782df1e3cd8de0394af6be0",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_cli.py": "abad5208d279ec51471572ea0f4e057525e9b883767f760c58194becf2f8a80e",
+        "tests/test_invoice.py": "cd8b28c6e4b58751541ac82de7629fa3b500376d1ad7d7d356b3942d85741934",
+        "tests/test_regression.py": "8cb6952bc041add600afc72805cfcf4410325514bebe888b3fa937a278c11973"
+      },
+      "frozenV3Verdict": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 37,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 37,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "3d4170392410392b613d372db14bcc519b86195877e0833149ee57d967395781",
+        "invoice.py": "25dea9e969f064317b73d2ca408e49bd38a7d1ad0f8e15571a7980f63258ce57",
+        "tests/test_cli.py": "736d28cce1cb6c3999a7d339261bf737362bb12f9b30fd48b29d90575fdd1946",
+        "tests/test_invoice.py": "929917d453804d8c4bff33be7e6b6e2330c8e8c8f30c7a851e624da47711a2dc",
+        "tests/test_regression.py": "86b56e3089cda925db176a614d45acd7eb76f6439e9a4a8a45d6c8cf94552f73"
+      },
+      "frozenV3Verdict": {
+        "passed": false,
+        "functionalPassed": true,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1,
+        "functionalChecks": 37,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 37,
+        "failedChecks": []
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "originalHashAndModeUnchanged": true,
+      "sourceArtifactHashes": {
+        "README.md": "7f2f8889ede43a679aff567ab337f4df57b88b66d0a558e322274145c9c768b7",
+        "invoice.py": "25dea9e969f064317b73d2ca408e49bd38a7d1ad0f8e15571a7980f63258ce57",
+        "tests/test_cli.py": "f3750dc0a8566eaa2704d0facee66e12f5a5bb64a3856e6fcc2d765fd3ef0866",
+        "tests/test_invoice.py": "929917d453804d8c4bff33be7e6b6e2330c8e8c8f30c7a851e624da47711a2dc",
+        "tests/test_regression.py": "86b56e3089cda925db176a614d45acd7eb76f6439e9a4a8a45d6c8cf94552f73"
+      },
+      "frozenV3Verdict": {
+        "passed": false,
+        "functionalPassed": true,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1,
+        "functionalChecks": 38,
+        "failedChecks": []
+      },
+      "v4Diagnostic": {
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "functionalChecks": 38,
+        "failedChecks": []
+      }
+    }
+  ]
+}

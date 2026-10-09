@@ -1,0 +1,96 @@
+{
+  "scope": "Private/free prototype; not integrated into production or historical v5 runners.",
+  "paidCalls": 0,
+  "run": "run-1791543352290",
+  "actualCli": "Codex 0.161.0 ordinary exec/resume",
+  "sameSessionTwoTurns": true,
+  "memoryOffEveryLaunchAndRollout": true,
+  "equalToolSchemaAllRequests": true,
+  "nativeErrorDiagnostics": [
+    {
+      "type": "error",
+      "message": "Reconnecting... 1/5 (stream disconnected before completion: error sending request)"
+    }
+  ],
+  "coverage": {
+    "reportedUsageComplete": true,
+    "knownReportedTokens": {
+      "input": 20,
+      "cache": 0,
+      "output": 4,
+      "reasoning": 0
+    },
+    "requestCoverage": "complete",
+    "billingCoverage": "unknown",
+    "providerReportedTokens": {
+      "input": 30,
+      "cache": 0,
+      "output": 6,
+      "reasoning": 0
+    },
+    "cliCoverageOfCapturedResponses": "partial",
+    "providerTokenComparisonReady": true,
+    "issues": []
+  },
+  "allOwnedProcessesExited": true,
+  "knownUpstreamRequestCount": 3,
+  "requestCaptureSealed": true,
+  "helperHashes": {
+    "run-free.mjs": "f226c59947828909bcb11785ba92395510b4e76e8e2b03d2571ff1bb67001c91",
+    "coverage.test.mjs": "d1fee1c436e37d38e46eea73fa135ba596f833bc2f486609a4739632bd724e37",
+    "proxy.mjs": "105b643ecf1cfa135f8f0c8e62ab4c484b54082b3c4fe0a3f1eac3d0af43a3c9",
+    "coverage.mjs": "8a23a1419c6afc24f7a0ec8b97430101bbcd22c17cb264cd34261de8253c4799"
+  },
+  "artifactHashes": {
+    "evidence.json": "758b7a67ed1e347b90478a666130ac5080f8be3189416ab75d8db3627d4601b0",
+    "turn-2.stdout": "4ca70872de65a86e08f269fdddc6dc52949526e60ba2746c3a781fb8751ceaa1",
+    "turn-1.binding.json": "b19186e3cc6ac44a5de81845ee0e2032912161be51373e57e8873996171f674a",
+    "launch-1791543353389-98314.stdout": "22054e4b428e0a164a766c17aa80feb64ce2fab392aa0abb260d2164b10e4f18",
+    "wrapper-config.json": "4a315e3ab1ec78e8825169b1d159a26469dbb39223fe677920fef252f3084a44",
+    "launch-1791543355034-98439.stdout": "4ca70872de65a86e08f269fdddc6dc52949526e60ba2746c3a781fb8751ceaa1",
+    "attempt-1.response.private.sse": "0042aaf16d10be7fcacb510fe0a882fe41e3458eb6f4fa026d5f59e61096a4ce",
+    "attempt-1.request.private.json": "8c6b0273ab1df69fab1c3d0362a32bac7d1e1b9f40fb45bfa57227632c36733d",
+    "launch-1791543354661-98415.stdout": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "turn-1.proof.json": "6a9cda6f3b6b05ea32f2047dc0b00905dd8ffa8a3ae720e6f6b7c80346d8a16f",
+    "attempt-2.response.private.sse": "4ed2f5fb3b3e906df55e5e17b9dcc122f4696942b5d47a68282f9f9afd411563",
+    "attempt-2.request.private.json": "72ab88990f8563ee432edb21b7b58e5bdbae326091e34d970b14506366249d3f",
+    "launch-1791543353468-98335.stdout": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "turn-2.proof.json": "5937492d2d60e1daac7c9e6d304426e11f173a0407e71f9837773611e55c42b3",
+    "turn-1.stdout": "dbbccaac81be3e118acb7d1a9154d6cf0ac93789269c6cc0aa1f71dd37db2e18",
+    "launch-1791543353750-98351.stdout": "22054e4b428e0a164a766c17aa80feb64ce2fab392aa0abb260d2164b10e4f18",
+    "turn-1.launch.json": "753d869b51157be737d8af18e58805dfa6f31b48984dd059d9b3f5426a4d4870",
+    "turn-2.launch.json": "c7c4a2d8fb0003a816b90dde0a328836fc7583e04a0f9cf0be4d1df3659d849e",
+    "launch-1791543353832-98357.stdout": "dbbccaac81be3e118acb7d1a9154d6cf0ac93789269c6cc0aa1f71dd37db2e18",
+    "attempt-3.request.private.json": "fd52c0fb6dc5309bf1cb854f214cdd078187b24007cc03caab5068475f2f4a7f",
+    "turn-2.binding.json": "3c1748e942b1ddaf11de279e8b090159b7baaf1f895e35113bddd1d017aa0795",
+    "attempt-3.response.private.sse": "1d24482478fd15475e938a2f948d0d3cd6ee5a3bc88573581cf3aeaa17f084cc",
+    "launch-1791543354950-98430.stdout": "22054e4b428e0a164a766c17aa80feb64ce2fab392aa0abb260d2164b10e4f18",
+    "launch-1791543354579-98408.stdout": "22054e4b428e0a164a766c17aa80feb64ce2fab392aa0abb260d2164b10e4f18"
+  },
+  "limits": [
+    "Upstream and proxy both localhost synthetic; no accounts or paid endpoints accessed.",
+    "HTTP Responses/SSE only; WebSocket unsupported and refused.",
+    "Upstream terminal usage attests provider-reported tokens, not billed amount or invoice accuracy.",
+    "Real paid transport/auth/provider preservation has not been verified, so proxy is not admitted for representative paid runs.",
+    "This module authorizes no efficiency pass: task quality, session, model, memory and contract budget gates remain separately required.",
+    "Restored complete request usage can be used in a new explicitly designed benchmark source; it does not silently replace current Kernel gate records.",
+    "SSE parser supports this synthetic LF-delimited, single data-line fixture only; no CRLF/multiline/complex framing coverage, no production-grade bounded capture."
+  ],
+  "actualRunUsageEvidence": "Native CLI token_usage_record read and validated against proxy completed-response IDs/counts. No Kernel/Role path in this prototype; no new Kernel comparison claim.",
+  "statusEvidence": {
+    "httpStatuses": [200, 200, 200],
+    "explicitResponseStatuses": ["completed", "completed", "completed"],
+    "terminalConflicts": [false, false, false]
+  },
+  "tests": {
+    "count": 8,
+    "red": "http-status-red.log",
+    "green": "http-status-green.log",
+    "cases": "HTTP non2xx, absent/failed/incomplete response.status and conflicting terminal events cannot cover a request."
+  },
+  "supersededRun": {
+    "run": "run-1791542889455",
+    "reason": "Initial fake response omitted explicit response.status. Kept intact; under corrected conservative criterion request coverage is partial, not accepted.",
+    "retainedSummary": "public-evidence-initial.json"
+  }
+}

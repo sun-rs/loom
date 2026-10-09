@@ -1,0 +1,75 @@
+{
+  "evaluatorVersion": 4,
+  "workloadVersion": 3,
+  "status": "implemented-free-verified-not-paid",
+  "publicEntryPoints": [
+    "capture.capture_evaluate",
+    "evaluator.evaluate_snapshot"
+  ],
+  "immutableBoundary": "These public entry points copy the original archive before functional evaluation. Private evaluate/evaluate_artifacts work on disposable copies and may write then remove functional input files; they are not immutable-source APIs.",
+  "design": [
+    "Original archive is never a candidate cwd; functional checks use read-only candidate in disposable copy.",
+    "Selftests receive a distinct writable clone plus isolated HOME/TMPDIR; original hash and mode preserved.",
+    "Global write deny with only isolated evaluator temporary root and /dev/null allowed. Network/user-home/shared-temp reads denied except exact own candidate and temporary root.",
+    "Symlink roots and nested links rejected by snapshot owner before reading; source canonicalization happens after symlink rejection.",
+    "Sandbox launch errors and snapshot-copy errors retain nonzero result; no unsandboxed fallback."
+  ],
+  "tdd": {
+    "initialRed": "red.log",
+    "symlinkRed": "symlink-red.log",
+    "legacyRegressionRed": "regression-red.log",
+    "legacyRegressionCause": "macOS /var alias read allow needed canonical child path; fixed without weakening read isolation",
+    "greenPython": "all-python.log",
+    "pythonTests": 25,
+    "greenPolicy": "all-node.log",
+    "nodeTests": 2
+  },
+  "retrospectiveValidation": {
+    "file": "p157-all23-v4-revalidation.json",
+    "allSnapshots": 23,
+    "allFunctionalAndSelftestsPassed": true,
+    "allOriginalHashesAndModesUnchanged": true,
+    "historicalFrozenVerdictsPreserved": true,
+    "label": "Post-hoc diagnostic of future evaluator; not a replacement P157 verdict or paid retry."
+  },
+  "limits": [
+    "macOS Seatbelt-specific tested profile; no universal same-UID security claim.",
+    "README semantics remain manual acceptance.",
+    "3-second per candidate/test subprocess timeout retained.",
+    "No provider/model requests or repository source changes."
+  ],
+  "v3UntouchedEvidence": {
+    "evaluatorSha256": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "captureSnapshotPlanByteIdenticalCopies": false,
+    "captureSnapshotByteIdenticalCopies": true,
+    "planTaskRoundsUnchanged": true
+  },
+  "files": {
+    "revalidate.py": "106552350ce73655e7048f49303a12baf8aa4053054693849643eb7745dae82e",
+    "plan.json": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d",
+    "red.log": "2f436ca9254161807dc884313eea30fbbdd4386d0577d0c261b63b18a20c1277",
+    "test_selftest_sandbox.py": "355455737bd24d1c45b7d502638715cdf5a5d31f4b7f2d62ce9adaa182f46050",
+    "green.log": "f196ff7bce99da07cdc36420bc7e35cd95e69a878795380a22ce9b3808b5be3a",
+    "test_evaluator.py": "4ad60b13cb36a8da6793b616b1bd563fefa235f9f164028c07203dde355aa286",
+    "revalidation-initial-failed.log": "adbfe3e76a44a124cb35836c6665ec593b9b5f0aa42dfe9a5bdac4c15c6e1cef",
+    "capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+    "p157-all23-v4-revalidation.json": "8b953aaa083315b2221f57eb8b021eb3eef61913d8c23ad363f93cdcdd3b9ae8",
+    "policy.mjs": "d7b646f4dfc21e3ed4434956bd3cca8b16ee593e5dd39dda72056b54472e4d59",
+    "regression-red.log": "a670c87efb07739a67367ea39c45bea323e1f40e1f2d9a4e2d87a424b2ec9e4e",
+    "all-python.log": "0c91f62ec4197d4b611bbfe4b9bb94695d1f5accce1581883f4e7ba001795434",
+    "policy.test.mjs": "65ce80dec94b8be119d5f032358d3d4f7b03051e385a7e561e147c7d00045f22",
+    "manifest.json": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+    "schemas.json": "5a41752182bfc0c7cd6c0a8ff3911d9859377123ba021713ea4c07ad628dd566",
+    "test_v3.py": "532b927ba8f124364461b5de7fe7f2139778c8969f9d199f41504e3d54a0d6af",
+    "all-node.log": "80ab5abb847b9c2525057fbef8c3c1e66452ccf8f1ec4473220d9971c946e8dc",
+    "revalidation.log": "d00024f34bb98842e4d4c961408a7bd220523c7666f44555cd40428bd29f44a7",
+    "evaluator.py": "bd792664925e906188c284929ae63366104429d089686af51c1bbbdfe263ec22",
+    "symlink-red.log": "6a83bfbc784818ff4237ec2cb616474ccaa5065c6a49c2ee8b0280f278c47ae0",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "oracle/cases.json": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  },
+  "versionMetadata": "plan metadata explicitly evaluator v4/workload v3; no task text changed"
+}

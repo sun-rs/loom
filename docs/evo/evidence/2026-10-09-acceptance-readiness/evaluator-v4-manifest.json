@@ -1,0 +1,29 @@
+{
+  "kind": "invoice-evaluator-v4-manifest",
+  "evaluatorVersion": 4,
+  "workloadVersion": 3,
+  "entryPoint": "capture.py",
+  "entryPointChain": [
+    "capture.capture_evaluate",
+    "evaluator.evaluate_snapshot"
+  ],
+  "originalSnapshotNeverCandidateCwd": true,
+  "roundsUnchangedFromV3": true,
+  "legacyFixtureUntouched": true,
+  "files": {
+    "capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+    "evaluator.py": "bd792664925e906188c284929ae63366104429d089686af51c1bbbdfe263ec22",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "plan.json": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d",
+    "schemas.json": "5a41752182bfc0c7cd6c0a8ff3911d9859377123ba021713ea4c07ad628dd566",
+    "policy.mjs": "d7b646f4dfc21e3ed4434956bd3cca8b16ee593e5dd39dda72056b54472e4d59",
+    "policy.test.mjs": "65ce80dec94b8be119d5f032358d3d4f7b03051e385a7e561e147c7d00045f22",
+    "test_evaluator.py": "4ad60b13cb36a8da6793b616b1bd563fefa235f9f164028c07203dde355aa286",
+    "test_v3.py": "532b927ba8f124364461b5de7fe7f2139778c8969f9d199f41504e3d54a0d6af",
+    "test_selftest_sandbox.py": "355455737bd24d1c45b7d502638715cdf5a5d31f4b7f2d62ce9adaa182f46050",
+    "oracle/cases.json": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+  }
+}

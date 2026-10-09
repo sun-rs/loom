@@ -1,0 +1,132 @@
+{
+  "scope": "Read-only P158/P159 study plus future admission design. No new CLI run, account edits, product or prior-run changes.",
+  "samples": {
+    "P158": {
+      "file": "/Users/sun/.loom/reviews/2026-10-09-codex-recovery-v5/runs/1791538885130-P158/loom/sessions/2026/10/09/rollout-2026-10-09T17-42-26-01a1200a-cea1-7c20-9aaa-42e3d6a1e8b9.jsonl",
+      "sha256": "67cfc27644788187128b8c3a08dec71a5791dba8b1a9723f153266362ebdeb19",
+      "allRecords": 98,
+      "deepScannedIdentityKeyPaths": {
+        ".payload.response_id": 13
+      },
+      "independentRequestOrResponseLifecycleEventTypes": {},
+      "reportedUsageRows": 13,
+      "assistantMetadataFields": [
+        "content_item_kinds",
+        "create_time",
+        "turn_id"
+      ],
+      "finalAnswerItems": 4,
+      "taskCompleteEvents": 3,
+      "R3": {
+        "turnId": "01a1200d-5655-7392-b51d-ccaf3d4c78a4",
+        "finalAnswerItems": 2,
+        "firstFinalTimestamp": "2026-10-09T09:46:07.391Z",
+        "laterTokenCountTimestamp": "2026-10-09T09:51:07.398Z",
+        "elapsedSeconds": 300.007,
+        "tokenCountIdenticalToPreFinalSnapshot": true,
+        "tokenCountPreviousTimestamp": "2026-10-09T09:46:05.562Z",
+        "unchangedTotals": {
+          "input_tokens": 159107,
+          "cached_input_tokens": 121344,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2370,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 161477
+        },
+        "reportedResponseRows": 4,
+        "rawKernelResponseIdAndUsageMatch": true,
+        "knownTokens": {
+          "input": 61198,
+          "cache": 43264,
+          "output": 534,
+          "reasoning": 0
+        },
+        "usageAssociationLimit": "No explicit response association on message items; cannot prove first final is a separate response or identify its charge from these files."
+      }
+    },
+    "P159": {
+      "file": "/Users/sun/.loom/reviews/2026-10-09-codex-56-recovery-v5/runs/1791539787814-P159/native/sessions/2026/10/09/rollout-2026-10-09T17-56-36-01a12017-c7fb-7730-9ce9-99b77fc28fde.jsonl",
+      "sha256": "6d3fb6d60d9f349e71b12226045994f0819731b2db9026014abf9e7020eec4bc",
+      "allRecords": 84,
+      "deepScannedIdentityKeyPaths": {
+        ".payload.response_id": 10
+      },
+      "independentRequestOrResponseLifecycleEventTypes": {},
+      "reportedUsageRows": 10,
+      "assistantMetadataFields": [
+        "content_item_kinds",
+        "create_time",
+        "turn_id"
+      ],
+      "finalAnswerItems": 0,
+      "taskCompleteEvents": 0,
+      "termination": "Native timeout after 600 seconds, Host close SIGKILL; no final or task_complete, product paid round not started."
+    }
+  },
+  "ownerMap": {
+    "protocol": "packages/protocol/src/runtime-usage.ts owns normalized usage/gap schemas. Existing gaps: inconsistent_total, correction_frame, parse_error, unsupported_provider.",
+    "driver": "packages/agent-host/src/codex-exec-driver.mjs reportUsage enumerates native token_usage_record for exact session/turn and exact response_id, validates counts and deduplicates immutable records.",
+    "kernel": "packages/kernel/src/run-attempt-usage.ts is sole durable product usage owner. Complete currently means known records with no capture gaps/late frames; it is not an invoice or independent request census.",
+    "benchmark": "Private read-only assessment can compare independent request evidence to native/Kernel reported records without fabricating records or changing product ledger."
+  },
+  "conclusions": [
+    "No independent response.created/completed or request/retry identities found in either retained rollout; response_id appears only in token_usage_record.",
+    "Repeated token_count and final cumulative stdout are consistency checks over reported values, not independent evidence that unreported work cost zero.",
+    "Multiple final items may belong to one response. Do not map final count to response count, infer identifiers from prefixes, match by timestamps, or estimate token counts from text.",
+    "P158 4 reported R3 records match Kernel exactly, but request-attempt coverage cannot be proved from rollout alone. P159 timeout leaves tail coverage unknown.",
+    "Separate CLI reported-record integrity, independent provider-reported request usage coverage, and actual billing coverage. Only the last requires billing evidence; correct provider-reported token comparisons need not wait for invoices."
+  ],
+  "freePrototype": {
+    "evidence": "public-evidence.json",
+    "run": "run-1791543352290",
+    "tests": "8 cases red/green, including non2xx, missing/failed/incomplete status and terminal conflicts",
+    "result": "Actual Codex same-session two turns. Deliberate downstream disconnect caused native retry; upstream recorder retained all three HTTP200 completed/status=completed usage records. CLI reported two. Provider-reported request token coverage complete, billing unknown.",
+    "limits": "Local fake HTTP/SSE, simple LF/single-data-line framing only; no WebSocket/TLS/complex SSE or bounded production capture. Native-only, no new Kernel comparison. Old missing-status fake run kept and superseded."
+  },
+  "nextPaidPathFidelityPlan": [
+    {
+      "step": 1,
+      "action": "Read-only identify actual installed CLI provider/auth mode/model/effort and negotiated wire transport from safe metadata, without printing credential values or calling paid endpoints. Freeze CLI binary and native launch policy.",
+      "blockingCondition": "Actual paid HTTP versus WebSocket path not identified."
+    },
+    {
+      "step": 2,
+      "action": "Find and free-verify a supported transparent interception mechanism preserving the same built-in provider identity, auth lifecycle, model/effort, tools and session behavior. No replacement custom provider solely to obtain logs. Use isolated process configuration; never mutate user account settings.",
+      "blockingCondition": "Endpoint override requires a different provider/auth scope, forces HTTP from WebSocket, or alters native tool/system configuration."
+    },
+    {
+      "step": 3,
+      "action": "Implement bounded capture for the verified real transport, including every dispatch/retry and full native response lifecycle with exact IDs/status/usage. Preserve request body/tool schemas and response frame order byte-for-byte; do not log Authorization/cookies or signed credentials.",
+      "blockingCondition": "Current HTTP-only/simple-SSE prototype is insufficient for WebSocket, TLS interception, framing or credential handling. A CONNECT tunnel without decoded lifecycle cannot prove request usage coverage."
+    },
+    {
+      "step": 4,
+      "action": "Free-verify normal, retry-after-downstream-loss, upstream abort, cancellation, response failure/incomplete, duplicate IDs, buffer limit and late-frame cases. Begin capture before CLI launch and seal after all owned requests/processes close.",
+      "blockingCondition": "Any attempted request lacks independently proven terminal provider usage; preserve known records and mark unknown, never zero."
+    },
+    {
+      "step": 5,
+      "action": "Freeze a new benchmark plan explicitly naming provider-reported request tokens as the request-coverage source. Keep native/Kernel reported capture and omissions visible; do not silently redefine existing product completeness or backfill synthetic ledger rows.",
+      "blockingCondition": "Tool/prompt/memory/session parity or source provenance not verified; budget/quality or other existing contract gates remain unsatisfied."
+    },
+    {
+      "step": 6,
+      "action": "Only after distinct lead-authorized paid admission run one fixed comparison with unchanged provider path and all failure costs retained. Report actual paid schema evidence only if that path was captured, not because free schemas matched.",
+      "blockingCondition": "No representative paid transport or credential preservation proof yet; this prototype currently cannot be used for paid admission."
+    }
+  ],
+  "proposedInvariants": [
+    "Same-response multi-final does not itself create a request or a usage gap.",
+    "Missing independent request capture yields requestCoverage unknown even when reported records match.",
+    "A complete upstream response can account for a request lost downstream, so recovery is not intrinsically unmeasurable.",
+    "Non2xx, missing/failed/incomplete status or conflicting terminal evidence cannot cover a request.",
+    "Each known reported response matches captured exact ID/counts; duplicate or conflicting identities cannot inflate totals.",
+    "Failed/uncertain requests preserve known counts and never become fabricated zero generations.",
+    "Request token readiness is not a quality, budget, product completion or actual invoice verdict."
+  ],
+  "sourceHashes": {
+    "packages/agent-host/src/codex-exec-driver.mjs": "c259b1b3d3bc49da659eefba0cdbe71efbc182d64a006307e7c97798219dd14e",
+    "packages/kernel/src/run-attempt-usage.ts": "e22a837ed8664ec4186ea7faab733752c61d50bd3c2e19bc5001eb3fbdc6d2cf",
+    "packages/protocol/src/runtime-usage.ts": "d78e7bee14f31f7b3d26fdbc396a56db85d071d8c28246e4042cbb6560ceab14"
+  }
+}
