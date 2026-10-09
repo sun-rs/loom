@@ -1,0 +1,41 @@
+{
+  "sourceBaseCommit": "43acadbf241f329e3d6ba34b2c9c012ce5280eff",
+  "owner": "AgentHost native Codex exec terminal-proof collector; no Kernel state change",
+  "problem": "Completed failed business tool incorrectly rejected an otherwise valid native final",
+  "change": "Allow failed only on completed command_execution, file_change and mcp_tool_call items; keep native turn, output identity, tool closure and successful final checks",
+  "safetyReview": [
+    "No inferred Task completion or synthetic delivery ACK",
+    "Original Worker publication authorization and idempotency remain unchanged",
+    "Failed/incomplete/cancelled turn, failed final, unknown failed item and unfinished tool remain rejected",
+    "No paid failed trajectory was retried or rewritten"
+  ],
+  "replay": {
+    "stdoutSha256": "37a7c30a8e8227b4ecfb44a35099fe6b5a38c1f93d4318fec8747e8f97627b27",
+    "rolloutSha256": "843e4b8d04c0481b179931b313c7d41bc10b5371277721473db178bcdf2052bd",
+    "before": "rejected",
+    "after": "accepted",
+    "limitation": "Offline algorithm replay only: file identity, launch capture and output bytes reconstructed; no new Host or paid proof."
+  },
+  "tdd": {
+    "red": "11 passed, 1 failed; failure was new completed-failed-tool regression",
+    "green": "12 collector tests passed; collector plus driver 23 passed"
+  },
+  "fullCheck": "passed in isolated repair worktree, same exact patched source later applied to evo",
+  "realCliFreeEvidence": "Actual Codex0.161.0, two turns, one failed exit1 tool then valid final, two publications and continuous session; separate evidence file",
+  "limitations": [
+    "No new paid validation of the repaired code",
+    "Terminal declined status remains excluded; no broader status relaxation",
+    "Completed tool failure alone does not prove task quality"
+  ],
+  "formatCheck": "passed",
+  "diffCheck": "passed",
+  "evidenceHashes": {
+    "check.log": "9d514dd483361fda716e06cc98d1757a69c02fb74331443481e58988f373ba50",
+    "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "red.log": "9683fcb491fd11f5ceac8e62f92bb47b99d0801592f5c53e90d9556ccec57399",
+    "green.log": "79ca4d58ad858e7ca11a70d34342861b6e4b702cb13c1d816609812101826a52",
+    "repair.patch": "30aa098d6f3bac0eacfabd2ce9e59d3d2acca578a819ba5bb6eb4da92892027e"
+  },
+  "rootTargetedVerification": "23 collector/driver tests passed again after exact-byte patch application",
+  "appliedSourceIdenticalToCheckedWorktree": true
+}

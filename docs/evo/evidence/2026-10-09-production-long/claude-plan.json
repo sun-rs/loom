@@ -1,0 +1,22 @@
+{
+  "kind": "production-invoice-v3-sonnet-pair",
+  "provider": "claude",
+  "model": "sonnet",
+  "effort": "low",
+  "cliVersion": "2.1.293 (Claude Code)",
+  "rounds": 12,
+  "businessInstructions": "Follow the user's requests.",
+  "limits": {
+    "input": 6000000,
+    "output": 150000,
+    "wallMs": 5400000,
+    "turnMs": 600000
+  },
+  "order": "odd native then loom; even loom then native",
+  "quality": "frozen v3 tasks; capture each round; quality failures continue without oracle feedback",
+  "scope": "one exploratory pair; no multi-model conclusion",
+  "isolation": "same connection tuple, process-only alias removal, distinct temporary config and continuous sessions, official auto-memory disabled both arms",
+  "fixturePlanSha256": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+  "humanClientConnectionPolicy": "Connection: close for localhost v3/client and v1/local only; no automatic mutation retry",
+  "failureAccounting": "After graceful shutdown reconcile all owned transcripts, including incomplete rounds; knownTotals are lower bound if any accounting gaps/unfinished runs"
+}

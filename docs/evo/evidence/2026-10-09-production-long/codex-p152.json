@@ -1,0 +1,91 @@
+{
+  "batch": "P152",
+  "sourceCommit": "43acadbf241f329e3d6ba34b2c9c012ce5280eff",
+  "provider": "codex",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "fixture": "invoice-v3",
+  "plannedRoundsPerArm": 12,
+  "verdict": "incomplete; production first-turn publication rejected; no efficiency acceptance",
+  "rerun": false,
+  "knownUsage": {
+    "native": {
+      "known": {
+        "input": 86377,
+        "cachedInput": 71680,
+        "output": 1472,
+        "generations": 9
+      },
+      "gaps": [],
+      "files": 1
+    },
+    "loom": {
+      "known": {
+        "input": 91269,
+        "cachedInput": 73984,
+        "output": 1622,
+        "generations": 8
+      },
+      "gaps": [],
+      "files": 1
+    }
+  },
+  "accountingStatus": "incomplete-known-usage; unknown is not zero",
+  "failure": "AssertionError [ERR_ASSERTION]: Activation quarantined",
+  "cause": "Final collector rejected an item.completed command_execution with status failed, despite subsequent valid native final and exit 0. Tool command attempted ls tests before tests existed.",
+  "nativeRound1Quality": {
+    "round": 1,
+    "artifactHashes": {
+      "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+      "invoice.py": "eff2ab306a2c77e9510e6011b6ca7b1853cb818ee80ce8c6b2b23ff8c0949b2e",
+      "tests/test_invoice.py": "590981366e8ea90a7120131d640528936a66bc01bd5a6542e123d3b8b1384d78"
+    },
+    "evaluation": {
+      "round": 1,
+      "passed": true,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    "sameBytesVerified": true
+  },
+  "loomRound1QualityPostFailure": {
+    "round": 1,
+    "artifactHashes": {
+      "README.md": "2018e12bc7971117da7042f620cfee8fa21c4e88f69d7f24ad4a0d9ab9ecdb23",
+      "invoice.py": "71ac01c6c1a977d0561090b9deced7612ac408194aef95f6164067d68d91f0d3",
+      "tests/test_invoice.py": "8743b3d3b9303c669f27ad613f677ab468f034ef6a38775715a01fe9e9ad29da"
+    },
+    "evaluation": {
+      "round": 1,
+      "passed": true,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    "sameBytesVerified": true
+  },
+  "qualityLimit": "Loom snapshot was taken by Host after run failure, not by the frozen runner during normal round completion; delivery remains failed.",
+  "rawResultSha256": "cacafd5370a06d2e51e3525567154981242ce14c08601d9dcdd3d94f62d29d5a",
+  "planSha256": "18481feea490a338245e594e292a01c3390a229666756d7721ad164f78be2847",
+  "admissionSha256": "ba668805b06dc3cba0259a0d3b5534fae0c1c99aea85a60968c224b73554799f",
+  "limits": [
+    "Only one observed pair prefix; no full 12-round or late-window ratio.",
+    "Random business tool/output trajectories differ; input delta is not solely protocol overhead.",
+    "Offline replay with reconstructed file metadata cannot prove fresh Host capture."
+  ]
+}

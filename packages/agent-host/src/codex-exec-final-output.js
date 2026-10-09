@@ -315,8 +315,16 @@ export function createCodexExecFinalOutput(input) {
             inflight.add(item.id);
           }
           if (row.type === "item.completed") {
+            // A failed business tool is terminal, not a failed native turn.
             requireProof(
-              item.status === undefined || item.status === "completed",
+              item.status === undefined ||
+                item.status === "completed" ||
+                (item.status === "failed" &&
+                  [
+                    "command_execution",
+                    "file_change",
+                    "mcp_tool_call",
+                  ].includes(item.type)),
             );
             inflight.delete(item.id);
           }

@@ -1,0 +1,140 @@
+{
+  "kind": "Actual ordinary Codex failed-command followed by successful final — free Role/daemon regression",
+  "date": "2026-10-09",
+  "paidCalls": 0,
+  "cliVersion": "codex-cli 0.161.0",
+  "sourceBaseCommit": "43acadbf241f329e3d6ba34b2c9c012ce5280eff",
+  "patchedSourceHashes": {
+    "packages/agent-host/src/codex-exec-final-output.js": "fc403097ea52d3a5886bcd9e73567e8489d3df2bf9e2b9828fb03de2610b6e2a",
+    "packages/agent-host/test/codex-exec-final-output.test.ts": "1fc05ef90c273a18805eb02476896af111f598e61afd6153964b6d015d81b47c"
+  },
+  "sourceIsolation": "Independent repair checkout; original repo and P153 shared helpers unchanged. Copied private runner imports every product source from repair checkout.",
+  "provider": "Loopback deterministic fake Responses; no external model endpoint/account access",
+  "binding": "gpt-6-luna",
+  "effort": "low",
+  "productPath": "Actual daemon HTTP create Channel, Role create/instantiate, default Channel home, Kernel scheduling, AgentHost ordinary exec/resume, original Worker publication and final marker.",
+  "result": {
+    "rounds": 2,
+    "sameNativeSession": true,
+    "fakeResponses": 3,
+    "firstRoundNativeFailedCommand": {
+      "event": "item.completed",
+      "type": "command_execution",
+      "status": "failed",
+      "exit_code": 1
+    },
+    "successfulFinalAfterFailedCommand": true,
+    "publicationsPerRound": [1, 1],
+    "finalOutputMarkersPerRound": [1, 1],
+    "completedActivations": 2,
+    "runExitCodes": [0, 0],
+    "proofFileWrittenBeforeExit1": true
+  },
+  "guards": {
+    "actualInstalledExecutable": true,
+    "appServerNotUsed": true,
+    "exactModelAndLowEveryExec": true,
+    "threeMemoryOffFlagsEveryExec": true,
+    "initialThenResume": true,
+    "loopbackOnlySandbox": true,
+    "oracleAndRepairSourceReadDenied": true
+  },
+  "cleanup": {
+    "daemonExit0": true,
+    "allRecordedCliProcessesExited": true,
+    "allRecordedCliExitsZero": true,
+    "loopbackServerClosed": true
+  },
+  "limits": [
+    "Fake model deliberately chooses tool and final answer; no real model recovery ability, quality or token-cost conclusion.",
+    "True turn.failed, failed final and pending-tool rejection are separate collector tests, not exercised by this two-round success script.",
+    "Synthetic fake usage is not paid accounting evidence."
+  ],
+  "scriptHashes": {
+    "run-helper.mjs": "4b9b1224ee206d701abd839da27da46fc4d8d33928173aebafbfb137244556d0",
+    "product-arm.mjs": "2aa7d731317423449bf2a9defa5d88b27a3ef5fb5ffe94a656393035d83b10c2",
+    "wrapper.mjs": "7ac9fd7adcad7ace12166f6c99df888096a2d5076561b154ac3a24456a170072"
+  },
+  "resultHash": "cdaef04ce292fe7ea36619fd72206e0a3b7ad43b2868044b6181910b6b9a5172",
+  "sourceHashes": {
+    "packages/agent-host/src/codex-exec-final-output.js": "fc403097ea52d3a5886bcd9e73567e8489d3df2bf9e2b9828fb03de2610b6e2a",
+    "packages/agent-host/src/codex-exec-driver.mjs": "c259b1b3d3bc49da659eefba0cdbe71efbc182d64a006307e7c97798219dd14e",
+    "packages/agent-host/src/codex-exec-runtime.ts": "d41cd151624ee38d65b093634689a54c3a41e53fc71e96e6876687d79a879e7f",
+    "packages/agent-host/src/generic-process-adapter.ts": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+    "packages/agent-host/test/codex-exec-final-output.test.ts": "1fc05ef90c273a18805eb02476896af111f598e61afd6153964b6d015d81b47c",
+    "packages/daemon/src/local-workbench-bootstrap.ts": "921d17cdd3526cc1f9dbc0c324c7f4658008fe28da8b43dcdb90eaef98876d96",
+    "scripts/cli-efficiency/gate-daemon.mjs": "0183beda9291fa6ec5f3b196965c1e8622695ca4daef5a4c4cfae42815dea5a4",
+    "scripts/cli-efficiency/codex-exec-guard.mjs": "5d90217151e9923a4c7a9c5145addec3f3bef1642bea9b79263af07d3572a9a9",
+    "scripts/cli-efficiency/guarded-shim.mjs": "67d0215b115a411eb947b4f3e8682cb762fa48f15fbba3f3385be82bf1cdbe22"
+  },
+  "rawInputEvidence": {
+    "disclosure": "Hashes only. Raw request bodies, credentials, native session IDs, paths and command prompts remain private.",
+    "loopbackRequests": [
+      {
+        "ordinal": 1,
+        "sha256": "85549cf8dd2829e5b5882ccb28d8fabb1621313633a25f577eecf8d3b854b2fc",
+        "bytes": 50127,
+        "permissions": "0o600"
+      },
+      {
+        "ordinal": 2,
+        "sha256": "9d3eae5f442b0d3420ddb6decb1cd3f87fe5832f6ca098203c33a76dcc85f835",
+        "bytes": 50761,
+        "permissions": "0o600"
+      },
+      {
+        "ordinal": 3,
+        "sha256": "b3b6160b7ff36d9698e8442657bc7f30d9dda8a08afba3df0818aca680739a21",
+        "bytes": 51267,
+        "permissions": "0o600"
+      }
+    ],
+    "rawLaunchRecordSha256": "5912e10d29cacf231534c6089704b07b33d6d04e8f4e2ae41a465a76efedb67a",
+    "nativeStdoutSha256ByRound": [
+      {
+        "round": 1,
+        "sha256": "d6e2d22318c483ba44b90cc2443fc8e76adc7cf4c197c7474b06fe29fa3c9271"
+      },
+      {
+        "round": 2,
+        "sha256": "29ed747773590c96a9aad538580d44b192638e6cc9cd45801b48a4b77d1ea004"
+      }
+    ]
+  },
+  "argvVerification": [
+    {
+      "round": 1,
+      "command": "exec",
+      "argvSha256": "9cff4a67ec65b32818db6f8ec9855c3e17ad78d5792332c794235ce0de3ce6ca",
+      "hashEncoding": "UTF-8 compact JSON array, ensure_ascii=false",
+      "model": "gpt-6-luna",
+      "reasoningConfig": "model_reasoning_effort=\"low\"",
+      "memoryConfigs": [
+        "features.memories=false",
+        "memories.generate_memories=false",
+        "memories.use_memories=false"
+      ],
+      "hasJson": true,
+      "hasOutputLastMessage": true,
+      "stdinPrompt": true,
+      "appServerAbsent": true
+    },
+    {
+      "round": 2,
+      "command": "exec resume",
+      "argvSha256": "528b2666435da9270ea17e27f37281a5dc2e583c93c90ccec61d07859e9f1330",
+      "hashEncoding": "UTF-8 compact JSON array, ensure_ascii=false",
+      "model": "gpt-6-luna",
+      "reasoningConfig": "model_reasoning_effort=\"low\"",
+      "memoryConfigs": [
+        "features.memories=false",
+        "memories.generate_memories=false",
+        "memories.use_memories=false"
+      ],
+      "hasJson": true,
+      "hasOutputLastMessage": true,
+      "stdinPrompt": true,
+      "appServerAbsent": true
+    }
+  ]
+}

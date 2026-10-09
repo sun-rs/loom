@@ -1,0 +1,5190 @@
+{
+  "kind": "P153-independent-read-only-audit",
+  "status": "independently-audited-complete",
+  "complete": true,
+  "model": "sonnet",
+  "effort": "low",
+  "cliVersion": "2.1.293 (Claude Code)",
+  "transportContrast": "Native uses one ordinary -p process per round with --resume; product uses one persistent warm stream-json process. This mode difference is part of the measured treatment, not independently isolated protocol overhead.",
+  "sample": "one fixed 12-stage paired exploratory trajectory; no multi-model/general acceptance claim",
+  "rounds": [
+    {
+      "arm": "native",
+      "round": 1,
+      "quality": {
+        "round": 1,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "57377f03511f87957db03e7c43983ed7d47bc49d4d4c585cb3aec3a4207fa03e",
+        "tests/test_invoice.py": "5b7a149abf26085ebdb21b79a988b190aeb9a6d0a5addee549cbaa3a785ba80c"
+      },
+      "generations": 8,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 14059,
+          "cachedInput": 10752,
+          "output": 968,
+          "tools": [["Write", 2]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 15181,
+          "cachedInput": 13824,
+          "output": 79,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 15628,
+          "cachedInput": 15104,
+          "output": 311,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 16032,
+          "cachedInput": 15616,
+          "output": 79,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 16479,
+          "cachedInput": 15872,
+          "output": 467,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 17039,
+          "cachedInput": 16384,
+          "output": 475,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 17607,
+          "cachedInput": 16896,
+          "output": 79,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "terminal-final",
+          "input": 17876,
+          "cachedInput": 17408,
+          "output": 277,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 129901,
+        "cachedInput": 121856,
+        "output": 2735
+      },
+      "firstGenerationInput": 14059,
+      "finalGenerationInput": 17876,
+      "toolCounts": {
+        "Write": 2,
+        "Bash": 3,
+        "Edit": 3
+      },
+      "toolErrors": 2,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "quality": {
+        "round": 1,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "d7a52827c0b01a900d248030f1633018d140bbd669c89bb16c54c88f8bccad5d",
+        "tests/test_invoice.py": "0ae3afca8464d44168ac23c0f54cdcf8154511374d71ff4a9bc7825fb9229573"
+      },
+      "generations": 11,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 13347,
+          "cachedInput": 768,
+          "output": 979,
+          "tools": [["Write", 2]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 14564,
+          "cachedInput": 13312,
+          "output": 689,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 15388,
+          "cachedInput": 14336,
+          "output": 140,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 15593,
+          "cachedInput": 15360,
+          "output": 144,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 15901,
+          "cachedInput": 15360,
+          "output": 296,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 16333,
+          "cachedInput": 15872,
+          "output": 247,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 16716,
+          "cachedInput": 16128,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 17234,
+          "cachedInput": 16640,
+          "output": 248,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "business-tool",
+          "input": 17547,
+          "cachedInput": 17152,
+          "output": 203,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 10,
+          "category": "business-tool",
+          "input": 17886,
+          "cachedInput": 17408,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 11,
+          "category": "terminal-final",
+          "input": 18239,
+          "cachedInput": 17664,
+          "output": 343,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 178748,
+        "cachedInput": 160000,
+        "output": 3573
+      },
+      "firstGenerationInput": 13347,
+      "finalGenerationInput": 18239,
+      "toolCounts": {
+        "Write": 2,
+        "Edit": 4,
+        "Bash": 5
+      },
+      "toolErrors": 2,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "quality": {
+        "round": 2,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "d7a52827c0b01a900d248030f1633018d140bbd669c89bb16c54c88f8bccad5d",
+        "tests/test_invoice.py": "bdf728d234e785029bdf9ea488f69c1403315f06315fe35b168858a52901e698"
+      },
+      "generations": 3,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 18770,
+          "cachedInput": 18176,
+          "output": 349,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 19255,
+          "cachedInput": 18688,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "terminal-final",
+          "input": 19596,
+          "cachedInput": 19200,
+          "output": 276,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 57621,
+        "cachedInput": 56064,
+        "output": 767
+      },
+      "firstGenerationInput": 18770,
+      "finalGenerationInput": 19596,
+      "toolCounts": {
+        "Edit": 1,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "quality": {
+        "round": 2,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "57377f03511f87957db03e7c43983ed7d47bc49d4d4c585cb3aec3a4207fa03e",
+        "tests/test_invoice.py": "9701845eede3f34d18e2d19d5cae09f942c3a7bbb9df8a4bdd5527b960d84468"
+      },
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 18276,
+          "cachedInput": 17664,
+          "output": 342,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 18710,
+          "cachedInput": 18176,
+          "output": 496,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 19300,
+          "cachedInput": 18688,
+          "output": 79,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 19639,
+          "cachedInput": 19200,
+          "output": 226,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 75925,
+        "cachedInput": 73728,
+        "output": 1143
+      },
+      "firstGenerationInput": 18276,
+      "finalGenerationInput": 19639,
+      "toolCounts": {
+        "Bash": 2,
+        "Edit": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "quality": {
+        "round": 3,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "f3f23f851a63c071c11f58414c5e410061c49afcfb8dec33f4d731c42f5c9b60",
+        "tests/test_invoice.py": "55b65bdee76a1b86c27d44144f85e9391f8db9f9c69fe5b9f4e7b5b423095576"
+      },
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 19986,
+          "cachedInput": 19456,
+          "output": 113,
+          "tools": [["Read", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 20584,
+          "cachedInput": 19968,
+          "output": 212,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 20889,
+          "cachedInput": 20480,
+          "output": 463,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 21430,
+          "cachedInput": 20736,
+          "output": 79,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 21826,
+          "cachedInput": 21248,
+          "output": 186,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 104715,
+        "cachedInput": 101888,
+        "output": 1053
+      },
+      "firstGenerationInput": 19986,
+      "finalGenerationInput": 21826,
+      "toolCounts": {
+        "Read": 1,
+        "Edit": 2,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "quality": {
+        "round": 3,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "b6a0abd0faca170316a6e88cdfb243dc0fda3f998c4e7681652206ab372dadcf",
+        "tests/test_invoice.py": "766ad6c6b561d2aaa945c36a76e0880b85263057d84c9ae04757e3228c322c51"
+      },
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 20058,
+          "cachedInput": 19456,
+          "output": 300,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 20493,
+          "cachedInput": 19968,
+          "output": 514,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 21143,
+          "cachedInput": 20480,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 21543,
+          "cachedInput": 20992,
+          "output": 271,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 83237,
+        "cachedInput": 80896,
+        "output": 1227
+      },
+      "firstGenerationInput": 20058,
+      "finalGenerationInput": 21543,
+      "toolCounts": {
+        "Edit": 2,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "quality": {
+        "round": 4,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "6c333e77e07e40a3473f0f6369d5dff5f1aee425e8396dc50aac571e29fd8a77",
+        "tests/test_invoice.py": "577bfe7ba5c526e72cac324c9ab54c816917e4b1bfc5fa36aebe18028370f8d6"
+      },
+      "generations": 8,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 22014,
+          "cachedInput": 21504,
+          "output": 312,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 22461,
+          "cachedInput": 22016,
+          "output": 670,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 23266,
+          "cachedInput": 22272,
+          "output": 1287,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 24689,
+          "cachedInput": 23040,
+          "output": 984,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 25809,
+          "cachedInput": 24576,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 26363,
+          "cachedInput": 25600,
+          "output": 603,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 27101,
+          "cachedInput": 26112,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "terminal-final",
+          "input": 27624,
+          "cachedInput": 26880,
+          "output": 401,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 199327,
+        "cachedInput": 192000,
+        "output": 4541
+      },
+      "firstGenerationInput": 22014,
+      "finalGenerationInput": 27624,
+      "toolCounts": {
+        "Edit": 5,
+        "Bash": 2
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "quality": {
+        "round": 4,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "f216cc972db7e085a5f3454cd0be7c792892d6bf1ca386402d4e63a9be9c6764",
+        "tests/test_invoice.py": "b5056e13116a0bc096898ef4375cda72f663268e607b974ad408a9bd8ccca9b7"
+      },
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 22145,
+          "cachedInput": 21760,
+          "output": 495,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 22717,
+          "cachedInput": 22016,
+          "output": 1004,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 23799,
+          "cachedInput": 22528,
+          "output": 219,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 24481,
+          "cachedInput": 23552,
+          "output": 298,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 93142,
+        "cachedInput": 89856,
+        "output": 2016
+      },
+      "firstGenerationInput": 22145,
+      "finalGenerationInput": 24481,
+      "toolCounts": {
+        "Edit": 2,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "quality": {
+        "round": 5,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "878cb314add3bce99e2b7500815b837ba14a7101e16d4d3fd90d9c72c24011f9",
+        "tests/test_invoice.py": "34438e530c3f4f6f4c12287fdb123262369a4fca42a9ec5c34ce04b4cbd47abf"
+      },
+      "generations": 8,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 24935,
+          "cachedInput": 24320,
+          "output": 733,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 25745,
+          "cachedInput": 24832,
+          "output": 351,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 26173,
+          "cachedInput": 25600,
+          "output": 1117,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 27368,
+          "cachedInput": 26112,
+          "output": 302,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 27748,
+          "cachedInput": 27136,
+          "output": 353,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 28179,
+          "cachedInput": 27648,
+          "output": 235,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 28492,
+          "cachedInput": 28160,
+          "output": 79,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "terminal-final",
+          "input": 29173,
+          "cachedInput": 28416,
+          "output": 278,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 217813,
+        "cachedInput": 212224,
+        "output": 3448
+      },
+      "firstGenerationInput": 24935,
+      "finalGenerationInput": 29173,
+      "toolCounts": {
+        "Edit": 6,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "quality": {
+        "round": 5,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "d519779266b39b59aae145f6f4f600d4767850540a5327a75496f370b9aedd57",
+        "tests/test_invoice.py": "5cabd5f250f5a40293afe05843f11c010e5b2ad7fb24624ea281680b5fd8d591"
+      },
+      "generations": 9,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 28245,
+          "cachedInput": 27392,
+          "output": 305,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 28685,
+          "cachedInput": 28160,
+          "output": 807,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 29627,
+          "cachedInput": 28672,
+          "output": 284,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 30046,
+          "cachedInput": 29440,
+          "output": 1123,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 31305,
+          "cachedInput": 29952,
+          "output": 573,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 32014,
+          "cachedInput": 31232,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 32924,
+          "cachedInput": 32000,
+          "output": 548,
+          "tools": [["Edit", 2]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 33713,
+          "cachedInput": 32768,
+          "output": 142,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "terminal-final",
+          "input": 34319,
+          "cachedInput": 33536,
+          "output": 451,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 280878,
+        "cachedInput": 273152,
+        "output": 4375
+      },
+      "firstGenerationInput": 28245,
+      "finalGenerationInput": 34319,
+      "toolCounts": {
+        "Edit": 7,
+        "Bash": 2
+      },
+      "toolErrors": 1,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "quality": {
+        "round": 6,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "f06148dc213bdd432c8cbaf9b83f22888e54d6c5d227988246f129bfe4f390fd",
+        "tests/test_invoice.py": "ae71014128988e58a57672527c6a0de761bfb06cace4957eec3063982a5a83fc"
+      },
+      "generations": 9,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 35046,
+          "cachedInput": 34304,
+          "output": 829,
+          "tools": [["Read", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 36566,
+          "cachedInput": 34816,
+          "output": 1133,
+          "tools": [["Write", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 37834,
+          "cachedInput": 36352,
+          "output": 458,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 38428,
+          "cachedInput": 37632,
+          "output": 1201,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 39765,
+          "cachedInput": 38400,
+          "output": 149,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 40385,
+          "cachedInput": 39680,
+          "output": 575,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 41053,
+          "cachedInput": 40192,
+          "output": 825,
+          "tools": [["Edit", 2]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 42119,
+          "cachedInput": 40960,
+          "output": 147,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "terminal-final",
+          "input": 42334,
+          "cachedInput": 41984,
+          "output": 527,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 353530,
+        "cachedInput": 344320,
+        "output": 5844
+      },
+      "firstGenerationInput": 35046,
+      "finalGenerationInput": 42334,
+      "toolCounts": {
+        "Read": 1,
+        "Write": 1,
+        "Edit": 4,
+        "Bash": 3
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "quality": {
+        "round": 6,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "49316ac123467eb040dbf67ab46ccb046a533f0e2916f112f1cdcbec2cb91164",
+        "tests/test_invoice.py": "378dcca5870314d554422c0f9416c6210cb51cb8a54717959b1c52396b39d944"
+      },
+      "generations": 7,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 29663,
+          "cachedInput": 28928,
+          "output": 1324,
+          "tools": [["Write", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 31080,
+          "cachedInput": 29440,
+          "output": 1519,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 32677,
+          "cachedInput": 30976,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 33061,
+          "cachedInput": 32512,
+          "output": 383,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 33522,
+          "cachedInput": 33024,
+          "output": 316,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 33916,
+          "cachedInput": 33280,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "terminal-final",
+          "input": 34070,
+          "cachedInput": 33792,
+          "output": 467,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 227989,
+        "cachedInput": 221952,
+        "output": 4179
+      },
+      "firstGenerationInput": 29663,
+      "finalGenerationInput": 34070,
+      "toolCounts": {
+        "Write": 1,
+        "Edit": 3,
+        "Bash": 2
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "quality": {
+        "round": 7,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "c11df5aed981f5bf3ee501b9e73f405769d4e956a1b8d743b2527636fb503666",
+        "tests/test_invoice.py": "15c3cd43c6984b027094ed6ed3e49aae9d33bacf920d967d82274607c27c366a"
+      },
+      "generations": 12,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 34702,
+          "cachedInput": 34048,
+          "output": 1403,
+          "tools": [["Write", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 36198,
+          "cachedInput": 34560,
+          "output": 291,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 36567,
+          "cachedInput": 36096,
+          "output": 1108,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 37753,
+          "cachedInput": 36352,
+          "output": 93,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 37988,
+          "cachedInput": 37632,
+          "output": 323,
+          "tools": [["Edit", 2]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 38436,
+          "cachedInput": 37888,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 38726,
+          "cachedInput": 38400,
+          "output": 193,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 38997,
+          "cachedInput": 38656,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "business-tool",
+          "input": 39153,
+          "cachedInput": 38912,
+          "output": 90,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 10,
+          "category": "business-tool",
+          "input": 39416,
+          "cachedInput": 38912,
+          "output": 221,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 11,
+          "category": "business-tool",
+          "input": 39715,
+          "cachedInput": 39168,
+          "output": 87,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 12,
+          "category": "terminal-final",
+          "input": 39914,
+          "cachedInput": 39680,
+          "output": 372,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 457565,
+        "cachedInput": 450304,
+        "output": 4351
+      },
+      "firstGenerationInput": 34702,
+      "finalGenerationInput": 39914,
+      "toolCounts": {
+        "Write": 1,
+        "Edit": 6,
+        "Bash": 5
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "quality": {
+        "round": 7,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "e4c9dc8ffb17149dfd4930ba496ec1129ca2635d3990cf135e3c9cb8e1e4bdb6",
+        "tests/test_invoice.py": "61c828fbacac9e97d8ad402ce4722679dde3ec6d9b132f8882c26af8d20ab28e"
+      },
+      "generations": 11,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 43089,
+          "cachedInput": 42240,
+          "output": 1689,
+          "tools": [["Write", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 44913,
+          "cachedInput": 43008,
+          "output": 1546,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 46595,
+          "cachedInput": 44800,
+          "output": 296,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 47027,
+          "cachedInput": 46592,
+          "output": 149,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 47376,
+          "cachedInput": 46848,
+          "output": 242,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 48375,
+          "cachedInput": 47360,
+          "output": 713,
+          "tools": [["Edit", 2]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 49327,
+          "cachedInput": 48128,
+          "output": 836,
+          "tools": [["Edit", 2]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 50404,
+          "cachedInput": 49152,
+          "output": 149,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "business-tool",
+          "input": 50633,
+          "cachedInput": 50176,
+          "output": 285,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 10,
+          "category": "business-tool",
+          "input": 51054,
+          "cachedInput": 50432,
+          "output": 147,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 11,
+          "category": "terminal-final",
+          "input": 51264,
+          "cachedInput": 50944,
+          "output": 365,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 530057,
+        "cachedInput": 519680,
+        "output": 6417
+      },
+      "firstGenerationInput": 43089,
+      "finalGenerationInput": 51264,
+      "toolCounts": {
+        "Write": 1,
+        "Edit": 7,
+        "Bash": 4
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "quality": {
+        "round": 8,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "36d11c98c4a6766c34fe76b60f5666e9ee2ebdf437648285b4de1030686ec354",
+        "tests/test_invoice.py": "dd54babfe5c3ee3187a4c01722e7de31f484112835bba2af25901c4b88a51f13"
+      },
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 51839,
+          "cachedInput": 51200,
+          "output": 651,
+          "tools": [["Edit", 2]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 52729,
+          "cachedInput": 51712,
+          "output": 843,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 53708,
+          "cachedInput": 52480,
+          "output": 147,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 53918,
+          "cachedInput": 53504,
+          "output": 284,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 212194,
+        "cachedInput": 208896,
+        "output": 1925
+      },
+      "firstGenerationInput": 51839,
+      "finalGenerationInput": 53918,
+      "toolCounts": {
+        "Edit": 3,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "quality": {
+        "round": 8,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "961f5e7cd62bac67a3cbec2cf163db6223d9952e31956ff7b646e47434cf032e",
+        "tests/test_invoice.py": "6780fa21c565f8e7b3aa28eb9d0a811b380c831989c9834bb8d322e58e5e6172"
+      },
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 40429,
+          "cachedInput": 39680,
+          "output": 251,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 40773,
+          "cachedInput": 40192,
+          "output": 185,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 41051,
+          "cachedInput": 40704,
+          "output": 841,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 41970,
+          "cachedInput": 40960,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 42120,
+          "cachedInput": 41728,
+          "output": 238,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 206343,
+        "cachedInput": 203264,
+        "output": 1600
+      },
+      "firstGenerationInput": 40429,
+      "finalGenerationInput": 42120,
+      "toolCounts": {
+        "Edit": 3,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "quality": {
+        "round": 9,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 2
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 2
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "28bc37ccfc86c717ffe71e320b77f406f13419fee4e157cec86432ed5e42a349",
+        "tests/test_invoice.py": "ec90069266d78d3633ae1135e5b670cf477751e994682a5e5b214b27424dc7fa"
+      },
+      "generations": 6,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 42530,
+          "cachedInput": 41984,
+          "output": 268,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 42875,
+          "cachedInput": 42496,
+          "output": 397,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 43380,
+          "cachedInput": 42752,
+          "output": 421,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 43878,
+          "cachedInput": 43264,
+          "output": 1138,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 45094,
+          "cachedInput": 43776,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "terminal-final",
+          "input": 45275,
+          "cachedInput": 45056,
+          "output": 315,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 263032,
+        "cachedInput": 259328,
+        "output": 2624
+      },
+      "firstGenerationInput": 42530,
+      "finalGenerationInput": 45275,
+      "toolCounts": {
+        "Edit": 4,
+        "Bash": 1
+      },
+      "toolErrors": 1,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "quality": {
+        "round": 9,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 1
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "9dc16b04bddba8b0f5241d55aa0d0499e613cb4f484c8a3b0da03ca03fbbdf7d",
+        "tests/test_invoice.py": "e132f808b3154fb17dc4b75cc511358d472230388d3245a38b238e5411ff9328"
+      },
+      "generations": 8,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 54439,
+          "cachedInput": 53760,
+          "output": 330,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 54904,
+          "cachedInput": 54272,
+          "output": 465,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 55504,
+          "cachedInput": 54784,
+          "output": 1004,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 56644,
+          "cachedInput": 55296,
+          "output": 150,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 56874,
+          "cachedInput": 56576,
+          "output": 154,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 57313,
+          "cachedInput": 56832,
+          "output": 312,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 57761,
+          "cachedInput": 57088,
+          "output": 148,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "terminal-final",
+          "input": 57972,
+          "cachedInput": 57600,
+          "output": 345,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 451411,
+        "cachedInput": 446208,
+        "output": 2908
+      },
+      "firstGenerationInput": 54439,
+      "finalGenerationInput": 57972,
+      "toolCounts": {
+        "Edit": 4,
+        "Bash": 3
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "quality": {
+        "round": 10,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-stdin",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-error",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-malformed-json",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-unknown-request-key",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-missing-file",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 1
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "3d1a035dc33d8ef6f24e482afb7a3289fe90b51d1c85db4ad11fd61233720f8e",
+        "tests/test_invoice.py": "91707c448aba45bfb4fc7e442a31a6833079d83ec56a8ee94945b7896b17eb5e"
+      },
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 58564,
+          "cachedInput": 57856,
+          "output": 438,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 59137,
+          "cachedInput": 58368,
+          "output": 246,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 59519,
+          "cachedInput": 59136,
+          "output": 663,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 60318,
+          "cachedInput": 59392,
+          "output": 148,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 60529,
+          "cachedInput": 60160,
+          "output": 356,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 298067,
+        "cachedInput": 294912,
+        "output": 1851
+      },
+      "firstGenerationInput": 58564,
+      "finalGenerationInput": 60529,
+      "toolCounts": {
+        "Edit": 3,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "quality": {
+        "round": 10,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-stdin",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-error",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-malformed-json",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-unknown-request-key",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 2
+          },
+          {
+            "id": "cli-missing-file",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 2
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "2bf2b7b82912142a64740ee8570f82dd2d8b9f2efe14e83973e018549a4cb706",
+        "tests/test_invoice.py": "e7f0a509fae9aa45ce0d6453d642015e673cdd6c8e1e98518a29293ba177379b"
+      },
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 45770,
+          "cachedInput": 45056,
+          "output": 215,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 46062,
+          "cachedInput": 45568,
+          "output": 206,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 46346,
+          "cachedInput": 45824,
+          "output": 1014,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 47438,
+          "cachedInput": 46336,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 47588,
+          "cachedInput": 47360,
+          "output": 251,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 233204,
+        "cachedInput": 230144,
+        "output": 1771
+      },
+      "firstGenerationInput": 45770,
+      "finalGenerationInput": 47588,
+      "toolCounts": {
+        "Edit": 3,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "quality": {
+        "round": 11,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-stdin",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-error",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "no-per-line-rounding",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-malformed-json",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-unknown-request-key",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 2
+          },
+          {
+            "id": "cli-missing-file",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 2
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "2bf2b7b82912142a64740ee8570f82dd2d8b9f2efe14e83973e018549a4cb706",
+        "tests/test_invoice.py": "70707dcdda41aa2b4b1d9ba24029a0d767723fb5456456f9e83a629ae63688aa"
+      },
+      "generations": 4,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 47958,
+          "cachedInput": 47360,
+          "output": 1264,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 49420,
+          "cachedInput": 47872,
+          "output": 2182,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 51680,
+          "cachedInput": 49408,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "terminal-final",
+          "input": 51836,
+          "cachedInput": 51456,
+          "output": 590,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 200894,
+        "cachedInput": 196096,
+        "output": 4121
+      },
+      "firstGenerationInput": 47958,
+      "finalGenerationInput": 51836,
+      "toolCounts": {
+        "Bash": 2,
+        "Edit": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "quality": {
+        "round": 11,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-stdin",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-error",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "no-per-line-rounding",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-malformed-json",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-unknown-request-key",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-missing-file",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 1
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "3d1a035dc33d8ef6f24e482afb7a3289fe90b51d1c85db4ad11fd61233720f8e",
+        "tests/test_invoice.py": "d12ffdddc7c1e6baac5ea368f1edf56df0e60e28ab068eb4941fc7cdcb1ac2bf"
+      },
+      "generations": 6,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 61068,
+          "cachedInput": 60416,
+          "output": 355,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 61512,
+          "cachedInput": 60928,
+          "output": 1832,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 63480,
+          "cachedInput": 61440,
+          "output": 148,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 63709,
+          "cachedInput": 63232,
+          "output": 364,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 64209,
+          "cachedInput": 63488,
+          "output": 148,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "terminal-final",
+          "input": 64420,
+          "cachedInput": 64000,
+          "output": 478,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 378398,
+        "cachedInput": 373504,
+        "output": 3325
+      },
+      "firstGenerationInput": 61068,
+      "finalGenerationInput": 64420,
+      "toolCounts": {
+        "Bash": 3,
+        "Edit": 2
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "quality": {
+        "round": 12,
+        "passed": true,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-stdin",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-error",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "no-per-line-rounding",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty-grouped",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-malformed-json",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-unknown-request-key",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-missing-file",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 1
+          }
+        ],
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "252ff7c1fcb87cf58b1ba63275dc51364063b9e7594bfc7ff0c5dae421eaf4fd",
+        "invoice.py": "3d1a035dc33d8ef6f24e482afb7a3289fe90b51d1c85db4ad11fd61233720f8e",
+        "tests/test_invoice.py": "51a125601604aa55ba335b3ce3a11fb914d3fd827439c5716c892f6ceb7b8726"
+      },
+      "generations": 5,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 65095,
+          "cachedInput": 64256,
+          "output": 127,
+          "tools": [["Read", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 67154,
+          "cachedInput": 65024,
+          "output": 1109,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 68399,
+          "cachedInput": 67072,
+          "output": 1390,
+          "tools": [["Write", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 69923,
+          "cachedInput": 68352,
+          "output": 387,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "terminal-final",
+          "input": 70547,
+          "cachedInput": 69888,
+          "output": 411,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 341118,
+        "cachedInput": 334592,
+        "output": 3424
+      },
+      "firstGenerationInput": 65095,
+      "finalGenerationInput": 70547,
+      "toolCounts": {
+        "Read": 1,
+        "Edit": 1,
+        "Write": 1,
+        "Bash": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "quality": {
+        "round": 12,
+        "passed": false,
+        "checks": [
+          {
+            "id": "basic",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "many-and-zero",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cancelled-skips-validation",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-half-up",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "aggregate-tax-once",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-before-tax",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "fractional-discounts-aggregate",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-negative",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-nan",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-boolean",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-exponent",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-whitespace",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "invalid-too-many-decimals",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "discount-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "bad-cancelled",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-over-100",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "groups-grand-not-sum-rounded",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "missing-groups-sort",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-file",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-stdin",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-error",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "no-per-line-rounding",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "empty-grouped",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "large-decimal-precision",
+            "passed": false,
+            "exitCode": 0
+          },
+          {
+            "id": "integer-over-range",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-price",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "negative-discount",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-float",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "tax-on-exact-unrounded-net",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "unsupported-grouping",
+            "passed": true,
+            "exitCode": 0
+          },
+          {
+            "id": "cli-malformed-json",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-unknown-request-key",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-no-argument",
+            "passed": true,
+            "exitCode": 2
+          },
+          {
+            "id": "cli-missing-file",
+            "passed": true,
+            "exitCode": 1
+          },
+          {
+            "id": "cli-two-arguments",
+            "passed": true,
+            "exitCode": 2
+          }
+        ],
+        "functionalPassed": false,
+        "selfTestsPassed": false,
+        "selfTestsExitCode": 1
+      },
+      "snapshotByteVerified": true,
+      "snapshotHashVerifiedIndependently": true,
+      "snapshotArtifactHashes": {
+        "README.md": "df1e5763fcd73c4fafeb42768172aa090857564d104ef459a1e44438e15d9937",
+        "invoice.py": "dd401247d8b2f0906492aa9937e7ad1030b709967e0da7ac8d172975ef28d49f",
+        "tests/test_invoice.py": "d76677bbe889bcaeeeff036c684d09871b69483a13e6d1154d3886d9615dce3d"
+      },
+      "generations": 13,
+      "generationBreakdown": [
+        {
+          "ordinal": 1,
+          "category": "business-tool",
+          "input": 52559,
+          "cachedInput": 51712,
+          "output": 95,
+          "tools": [["Read", 1]]
+        },
+        {
+          "ordinal": 2,
+          "category": "business-tool",
+          "input": 54488,
+          "cachedInput": 52480,
+          "output": 1499,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 3,
+          "category": "business-tool",
+          "input": 56080,
+          "cachedInput": 54272,
+          "output": 101,
+          "tools": [["Read", 1]]
+        },
+        {
+          "ordinal": 4,
+          "category": "business-tool",
+          "input": 56715,
+          "cachedInput": 56064,
+          "output": 332,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 5,
+          "category": "business-tool",
+          "input": 57125,
+          "cachedInput": 56576,
+          "output": 189,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 6,
+          "category": "business-tool",
+          "input": 57392,
+          "cachedInput": 57088,
+          "output": 250,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 7,
+          "category": "business-tool",
+          "input": 57720,
+          "cachedInput": 57344,
+          "output": 307,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 8,
+          "category": "business-tool",
+          "input": 58105,
+          "cachedInput": 57600,
+          "output": 266,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 9,
+          "category": "business-tool",
+          "input": 58449,
+          "cachedInput": 57856,
+          "output": 284,
+          "tools": [["Edit", 1]]
+        },
+        {
+          "ordinal": 10,
+          "category": "business-tool",
+          "input": 58811,
+          "cachedInput": 58368,
+          "output": 85,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 11,
+          "category": "business-tool",
+          "input": 58961,
+          "cachedInput": 58624,
+          "output": 1194,
+          "tools": [["Write", 1]]
+        },
+        {
+          "ordinal": 12,
+          "category": "business-tool",
+          "input": 60247,
+          "cachedInput": 58880,
+          "output": 233,
+          "tools": [["Bash", 1]]
+        },
+        {
+          "ordinal": 13,
+          "category": "terminal-final",
+          "input": 60583,
+          "cachedInput": 60160,
+          "output": 414,
+          "tools": []
+        }
+      ],
+      "totals": {
+        "input": 747235,
+        "cachedInput": 737024,
+        "output": 5249
+      },
+      "firstGenerationInput": 52559,
+      "finalGenerationInput": 60583,
+      "toolCounts": {
+        "Read": 2,
+        "Edit": 7,
+        "Bash": 2,
+        "Write": 1
+      },
+      "toolErrors": 0,
+      "missingToolResults": 0,
+      "actualModels": ["claude-sonnet-5-5"],
+      "observedEfforts": ["low"]
+    }
+  ],
+  "aggregate": {
+    "native": {
+      "rounds": 12,
+      "input": 2957758,
+      "cachedInput": 2897664,
+      "output": 34290,
+      "generations": 81,
+      "tools": 71,
+      "toolErrors": 3,
+      "firstGenerationInput": 393012,
+      "finalGenerationInput": 434381
+    },
+    "loom": {
+      "rounds": 12,
+      "input": 3364586,
+      "cachedInput": 3284224,
+      "output": 40177,
+      "generations": 83,
+      "tools": 77,
+      "toolErrors": 3,
+      "firstGenerationInput": 471574,
+      "finalGenerationInput": 522305
+    },
+    "loomToNative": {
+      "input": 1.1375460737491032,
+      "output": 1.1716827063283757,
+      "generations": 1.0246913580246915,
+      "tools": 1.0845070422535212
+    }
+  },
+  "firstSix": {
+    "native": {
+      "rounds": 6,
+      "input": 849485,
+      "cachedInput": 821504,
+      "output": 14574,
+      "generations": 36,
+      "tools": 31,
+      "toolErrors": 2,
+      "firstGenerationInput": 129064,
+      "finalGenerationInput": 147065
+    },
+    "loom": {
+      "rounds": 6,
+      "input": 1153341,
+      "cachedInput": 1106432,
+      "output": 20327,
+      "generations": 44,
+      "tools": 41,
+      "toolErrors": 3,
+      "firstGenerationInput": 137480,
+      "finalGenerationInput": 163655
+    },
+    "loomToNative": {
+      "input": 1.357694367763998,
+      "output": 1.3947440647728833,
+      "generations": 1.2222222222222223,
+      "tools": 1.3225806451612903
+    }
+  },
+  "lastSix": {
+    "native": {
+      "rounds": 6,
+      "input": 2108273,
+      "cachedInput": 2076160,
+      "output": 19716,
+      "generations": 45,
+      "tools": 40,
+      "toolErrors": 1,
+      "firstGenerationInput": 263948,
+      "finalGenerationInput": 287316
+    },
+    "loom": {
+      "rounds": 6,
+      "input": 2211245,
+      "cachedInput": 2177792,
+      "output": 19850,
+      "generations": 39,
+      "tools": 36,
+      "toolErrors": 0,
+      "firstGenerationInput": 334094,
+      "finalGenerationInput": 358650
+    },
+    "loomToNative": {
+      "input": 1.0488418719966532,
+      "output": 1.0067965104483667,
+      "generations": 0.8666666666666667,
+      "tools": 0.9
+    }
+  },
+  "categoryTotals": {
+    "native": {
+      "business-tool": {
+        "input": 2523377,
+        "cachedInput": 2468608,
+        "output": 30378
+      },
+      "worker-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0
+      },
+      "terminal-final": {
+        "input": 434381,
+        "cachedInput": 429056,
+        "output": 3912
+      },
+      "other-no-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0
+      }
+    },
+    "loom": {
+      "business-tool": {
+        "input": 2842281,
+        "cachedInput": 2767872,
+        "output": 35669
+      },
+      "worker-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0
+      },
+      "terminal-final": {
+        "input": 522305,
+        "cachedInput": 516352,
+        "output": 4508
+      },
+      "other-no-tool": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0
+      }
+    }
+  },
+  "distinctSessionsPerArm": {
+    "native": 1,
+    "loom": 1
+  },
+  "launchAudit": {
+    "native": {
+      "turnProcesses": 12,
+      "automaticMemoryDisabledEveryLaunch": true,
+      "oneCwd": true,
+      "modelAndEffortExact": true
+    },
+    "loom": {
+      "turnProcesses": 1,
+      "automaticMemoryDisabledEveryLaunch": true,
+      "oneCwd": true,
+      "modelAndEffortExact": true
+    }
+  },
+  "cliReportedCost": {
+    "native": {
+      "completedResults": 12,
+      "lastSessionCumulativeCliReportedUSD": 1.0426208,
+      "cumulativeMonotonic": true,
+      "notProviderInvoice": true
+    },
+    "loom": {
+      "completedResults": 12,
+      "lastSessionCumulativeCliReportedUSD": 1.2193388000000005,
+      "cumulativeMonotonic": true,
+      "notProviderInvoice": true
+    }
+  },
+  "knownAccounting": {
+    "native": {
+      "knownTotals": {
+        "input": 2957758,
+        "cachedInput": 2897664,
+        "output": 34290,
+        "generations": 81
+      },
+      "unknown": []
+    },
+    "loom": {
+      "knownTotals": {
+        "input": 3364586,
+        "cachedInput": 3284224,
+        "output": 40177,
+        "generations": 83
+      },
+      "unknown": []
+    }
+  },
+  "incompleteUsage": [],
+  "failure": null,
+  "evidenceHashes": [
+    {
+      "source": "native/turn-1.transcript.private.jsonl",
+      "sha256": "02ac2a5ab777d9dbaba0a22c590571e6750bbe76f8d8292a792cece0873ac9ef"
+    },
+    {
+      "source": "loom/turn-1.transcript.private.jsonl",
+      "sha256": "0d074546a739a1e6b6916a1a79b61dc3bc6958fcf983b71ac387250d49f02ae7"
+    },
+    {
+      "source": "loom/turn-2.transcript.private.jsonl",
+      "sha256": "6a8470eaae88c94ff9a91d77ed77b9c841862072bf130a8a5cda84b28327fbdc"
+    },
+    {
+      "source": "native/turn-2.transcript.private.jsonl",
+      "sha256": "8e9043861e0ab380b599c1824f10510351d4203103576a1909b9cfa8fd46c05e"
+    },
+    {
+      "source": "native/turn-3.transcript.private.jsonl",
+      "sha256": "abb005f07e383f480c88de2611b8602ffe133fa673bc03e112d0d61fde5ff772"
+    },
+    {
+      "source": "loom/turn-3.transcript.private.jsonl",
+      "sha256": "e86f5731f715206a8342e5db008290e6e787e0d93dc51854721662bee2ced721"
+    },
+    {
+      "source": "loom/turn-4.transcript.private.jsonl",
+      "sha256": "cf00860f096bbb7c6776df958b503ae44e5fc9aca18fd63413339258c471bdb9"
+    },
+    {
+      "source": "native/turn-4.transcript.private.jsonl",
+      "sha256": "f01a3baec20aa73bdf8cf1ba3f1bf3c1697901224abda20d56150a5992ec7f34"
+    },
+    {
+      "source": "native/turn-5.transcript.private.jsonl",
+      "sha256": "dc7596ec68351902e095c0e274233b583574155d6ed4b30dbd5dde72e4bba04f"
+    },
+    {
+      "source": "loom/turn-5.transcript.private.jsonl",
+      "sha256": "87dc6c7d9e368aa507ceeb86eebc2483abb9734f65d86f5fa90a6393ea84b1d8"
+    },
+    {
+      "source": "loom/turn-6.transcript.private.jsonl",
+      "sha256": "5696c440ae28c70a34938cc82d5aa4cf8f45f1e2d5362c4d210a9bb31cffcb8b"
+    },
+    {
+      "source": "native/turn-6.transcript.private.jsonl",
+      "sha256": "1de2e5fd078ad51b91c9c67e241c3fc81b848513a8369a7ec0487307339b0794"
+    },
+    {
+      "source": "native/turn-7.transcript.private.jsonl",
+      "sha256": "1751beb74b1e64d9a0fa7a62888e382a8b789993bc1ee89e58286a81bd3772c9"
+    },
+    {
+      "source": "loom/turn-7.transcript.private.jsonl",
+      "sha256": "942ffb87b2ea4c8eafeaadea06da06ebb5449d5d29f358a67d38b479349be49f"
+    },
+    {
+      "source": "loom/turn-8.transcript.private.jsonl",
+      "sha256": "0a7149775a449f413d15c0734ea424b6904ad76fe340020c26eb029ea6ca945d"
+    },
+    {
+      "source": "native/turn-8.transcript.private.jsonl",
+      "sha256": "2df0e07b51a2ee8139a457c4696faf77474b040535030bb583ef02bf28ec7196"
+    },
+    {
+      "source": "native/turn-9.transcript.private.jsonl",
+      "sha256": "1945ed6b686b583c4c9c1f05588893d368b78d1a051abf5fe0a686aa743e90b5"
+    },
+    {
+      "source": "loom/turn-9.transcript.private.jsonl",
+      "sha256": "17abdb68fa4c5a10bd30af19e63d08c654cf0f5ad3aaa2d5b08d378138d67978"
+    },
+    {
+      "source": "loom/turn-10.transcript.private.jsonl",
+      "sha256": "5b715e409eb5be6aca23b2b8b9d0b32e7b586fbcf113083929b6abdcf3b918f6"
+    },
+    {
+      "source": "native/turn-10.transcript.private.jsonl",
+      "sha256": "5f4c5d644ec5ad4bf59387701f7193127a5e2f1c56b2d3a743405893fee2fd53"
+    },
+    {
+      "source": "native/turn-11.transcript.private.jsonl",
+      "sha256": "8194e3dd879f4457cf0c7e05be1a6555c502d83d5c36285d626f59b03ce992d7"
+    },
+    {
+      "source": "loom/turn-11.transcript.private.jsonl",
+      "sha256": "01aace3cdfa377d3c584ddf77f0497995915923362ee9b2e15dd7231b1da780c"
+    },
+    {
+      "source": "loom/turn-12.transcript.private.jsonl",
+      "sha256": "22b714f5da649a561c786651b51433d817db0e99ad0ba3c687c6862077437cdb"
+    },
+    {
+      "source": "native/turn-12.transcript.private.jsonl",
+      "sha256": "c35319f6afc0135d4c858d19e7cd8919ef25db3b5e523344de2433b8e2f16241"
+    },
+    {
+      "source": "result.private.json",
+      "sha256": "adcdb8b3b9659dc3b347739e021780fe0891ede76fe3d34a956934b447dab0fe"
+    },
+    {
+      "source": "../../claude-plan.json",
+      "sha256": "cb7c1b96a70fcc411907b33bbf25c07751f3f537f1f6abacfd8fe9621944812c"
+    },
+    {
+      "source": "claude-admission.json",
+      "sha256": "15082324bf5c20697faea470d0ceea8d42453c177271b68c90c40a5c924b8a97"
+    }
+  ],
+  "limitations": [
+    "First-generation context includes previous stochastic trajectory, so per-round first-input differences are not pure protocol overhead.",
+    "CLI cumulative reported USD is diagnostic rather than a verified provider invoice.",
+    "Input totals include cached reads; token volume and billed cost differ.",
+    "Quality uses independent per-round hidden cases plus retained snapshots; no oracle feedback reached either model.",
+    "Native final quality failed the precision case, so token/cost ratios are not evidence of equal-quality completed work."
+  ],
+  "specificFindings": {
+    "round4": {
+      "nativeGenerations": 4,
+      "loomGenerations": 8,
+      "nativeTools": {
+        "Edit": 2,
+        "Bash": 1
+      },
+      "loomTools": {
+        "Edit": 5,
+        "Bash": 2
+      },
+      "toolErrorsBoth": 0,
+      "nativeFirstInput": 22145,
+      "loomFirstInput": 22014,
+      "interpretation": "Extra business edits and retesting, not observed Worker tool retries; stochastic trajectory confounds protocol attribution."
+    },
+    "nativeRound6": {
+      "failedCase": "large-decimal-precision",
+      "field": "subtotal",
+      "actual": "999998938757699633383970.43",
+      "expected": "999998938757699633383970.42",
+      "selfTestsPassed": true,
+      "inputWithinPublishedContract": true,
+      "interpretation": "Insufficient Decimal intermediate precision introduces double rounding; no oracle feedback was sent.",
+      "laterPerRoundStatus": [
+        {
+          "round": 6,
+          "passed": false
+        },
+        {
+          "round": 7,
+          "passed": false
+        },
+        {
+          "round": 8,
+          "passed": false
+        },
+        {
+          "round": 9,
+          "passed": false
+        },
+        {
+          "round": 10,
+          "passed": false
+        },
+        {
+          "round": 11,
+          "passed": false
+        },
+        {
+          "round": 12,
+          "passed": false
+        }
+      ]
+    }
+  },
+  "cleanup": {
+    "daemonExits": [
+      {
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "ownedProviderOrWrapperProcessesAlive": [],
+    "providerExitEvidence": {
+      "native": {
+        "allLaunchesHaveExitRecords": true,
+        "launchRecordsIncludingReadOnlyVersionAndCatalog": 24,
+        "nonzeroExits": []
+      },
+      "loom": {
+        "allLaunchesHaveExitRecords": true,
+        "launchRecordsIncludingReadOnlyVersionAndCatalog": 4,
+        "nonzeroExits": [
+          {
+            "code": 143,
+            "signal": null
+          }
+        ]
+      }
+    },
+    "warmExit143Interpretation": "Persistent warm wrapper forwards the authorized graceful shutdown SIGTERM; this is after all twelve successful turn proofs, not a failed business turn.",
+    "finishedAt": "2026-10-09T05:37:21.503Z"
+  },
+  "sourceEvidence": {
+    "admittedCommit": "43acadbf241f329e3d6ba34b2c9c012ce5280eff",
+    "manifestSha256": "15082324bf5c20697faea470d0ceea8d42453c177271b68c90c40a5c924b8a97",
+    "admissionFrozenAt": "2026-10-09T05:04:17.312972+00:00",
+    "fileHashesInManifest": 36,
+    "sourceFreezeReleasedAfter": "2026-10-09T05:37:21.503Z",
+    "note": "Lead released freeze after run termination, then applied an unrelated Codex fix. Run provenance uses the frozen manifest, not the subsequently modified working tree."
+  },
+  "readmeIndependentReview": {
+    "loom": {
+      "sha256": "252ff7c1fcb87cf58b1ba63275dc51364063b9e7594bfc7ff0c5dae421eaf4fd",
+      "apiDocumented": true,
+      "roundingAndValidationDocumented": true,
+      "fileAndStdinExamplesDocumented": true,
+      "exampleAmountsManuallyChecked": true,
+      "reported71TestsCorroboratedByNativeTranscript": true,
+      "verdict": "Documented API, grouping, exact rounding/validation and both CLI forms agree with the final hidden-case acceptance and retained examples."
+    },
+    "native": {
+      "sha256": "df1e5763fcd73c4fafeb42768172aa090857564d104ef459a1e44438e15d9937",
+      "apiDocumented": true,
+      "roundingAndValidationDocumented": true,
+      "fileAndStdinExamplesDocumented": true,
+      "exampleAmountsManuallyChecked": true,
+      "verdict": "Required documentation exists, but its exact-arithmetic/large-input guarantee contradicts the still-failing large-decimal-precision case. Self-tests passed (96) and do not override that independent failure."
+    }
+  },
+  "qualitySummary": {
+    "native": {
+      "passingRounds": [1, 2, 3, 4, 5],
+      "failingRounds": [
+        {
+          "round": 6,
+          "checks": ["large-decimal-precision"]
+        },
+        {
+          "round": 7,
+          "checks": ["large-decimal-precision"]
+        },
+        {
+          "round": 8,
+          "checks": ["large-decimal-precision"]
+        },
+        {
+          "round": 9,
+          "checks": ["large-decimal-precision"]
+        },
+        {
+          "round": 10,
+          "checks": ["large-decimal-precision"]
+        },
+        {
+          "round": 11,
+          "checks": ["large-decimal-precision"]
+        },
+        {
+          "round": 12,
+          "checks": ["large-decimal-precision"]
+        }
+      ],
+      "finalHiddenCases": 38
+    },
+    "loom": {
+      "passingRounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "failingRounds": [],
+      "finalHiddenCases": 38
+    }
+  },
+  "budgetAudit": {
+    "inputAdmissionThreshold": 6000000,
+    "actualInput": 6322344,
+    "beforeLastAdmittedTurnInput": 5575109,
+    "lastAdmittedTurnInput": 747235,
+    "exceededThresholdBy": 322344,
+    "interpretation": "Admission-only cap. Last turn began below threshold; its observed usage exceeded the threshold. This is not a strict hard token ceiling.",
+    "actualOutput": 74467,
+    "outputAdmissionThreshold": 150000,
+    "wallSeconds": 1977.408,
+    "wallThresholdSeconds": 5400
+  },
+  "costRatioCliReported": 1.1694940288933433,
+  "inputDeltaDecomposition": {
+    "total": 406828,
+    "businessToolGenerations": 318904,
+    "terminalFinalGenerations": 87924,
+    "workerToolGenerations": 0,
+    "interpretation": "Disjoint attribution by observed generation category; it does not establish causal protocol overhead."
+  },
+  "resultStatus": "completed-needs-independent-review",
+  "efficiencyVerdict": "One Sonnet pair only. Aggregate input 1.1375x, later six rounds 1.0488x, while quality differs. This does not establish multi-model efficiency acceptance or a stable causal overhead factor."
+}

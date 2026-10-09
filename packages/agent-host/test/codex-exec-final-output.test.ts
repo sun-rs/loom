@@ -482,3 +482,57 @@ test("native final trailing newlines survive exact output and CLI-added newline"
     undefined,
   );
 });
+
+test("settled failed business tools do not invalidate a successful native final", () => {
+  for (const type of ["command_execution", "file_change", "mcp_tool_call"]) {
+    const f = fixture();
+    f.frames[2]!.item.type = type;
+    Object.assign(f.frames[3]!.item, { type, status: "failed", exit_code: 1 });
+    f.evidence.stdout = lines(f.frames);
+    assert.equal(
+      createCodexExecFinalOutput(f.binding).settle(f.evidence)?.text,
+      f.text,
+      type,
+    );
+  }
+});
+
+test("failed final, unknown failed item and unclosed failed tool remain rejected", () => {
+  const mutations: Array<(f: ReturnType<typeof fixture>) => void> = [
+    (f) => {
+      f.frames[4]!.item.status = "failed";
+    },
+    (f) => {
+      Object.assign(f.frames[3]!.item, {
+        type: "unknown_tool",
+        status: "failed",
+      });
+    },
+    (f) => {
+      f.frames[3]!.type = "item.updated";
+      f.frames[3]!.item.status = "failed";
+    },
+    (f) => {
+      f.frames[3]!.item.status = "cancelled";
+    },
+    (f) => {
+      f.frames[3]!.item.status = "failed";
+      f.frames[5]!.type = "turn.failed";
+    },
+    (f) => {
+      f.frames[3]!.item.status = "failed";
+      f.delta.splice(4, 1);
+    },
+  ];
+  for (const [index, mutate] of mutations.entries()) {
+    const f = fixture();
+    mutate(f);
+    f.evidence.stdout = lines(f.frames);
+    f.evidence.rollout.bytes = Buffer.concat([f.prefix, lines(f.delta)]);
+    assert.equal(
+      createCodexExecFinalOutput(f.binding).settle(f.evidence),
+      undefined,
+      String(index),
+    );
+  }
+});

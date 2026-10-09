@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-09",
+  "sourceCommit": "43acadbf241f329e3d6ba34b2c9c012ce5280eff",
+  "remoteEvoVerified": true,
+  "sourceSha256": "7e39a1decc8f86e324d25de9e052675afec8466b4618eff3bae4df3d11b5f2c9",
+  "service": "com.loom.evo",
+  "restartedAt": "2026-10-09T05:06:16.724Z",
+  "deployment": {
+    "restartMethod": "Exact service process SIGTERM after idle/state checks, then launchd KeepAlive successor; no forced kill or unmanaged process.",
+    "backupVerified": true,
+    "databases": 2,
+    "stateFiles": 302,
+    "backupStillPresentAtReadOnlyAudit": true,
+    "businessTablesUnchanged": 11,
+    "persistentStateHomeUnchanged": true,
+    "successorOwnsExpectedDatabaseAndListener": true,
+    "successorSourceHashMatchesRestart": true,
+    "allFourFinalOutputTrialFlagsDisabled": true,
+    "trackedWorkingTreeCleanAtAudit": true
+  },
+  "checks": {
+    "fullCheck": "completed; every emitted suite has zero failures",
+    "packageTests": {
+      "tests": 3017,
+      "passed": 2995,
+      "skipped": 22,
+      "failed": 0
+    },
+    "efficiencyUnitTests": {
+      "tests": 502,
+      "passed": 502,
+      "failed": 0
+    },
+    "format": "passed",
+    "diff": "passed",
+    "earlierFailure": "First full check preserved one connection fixture ENOENT caused by spawnSync EOF shutdown race. Deterministically reproduced with delayed fixture and fixed in test Host lifetime only; final full check passed."
+  },
+  "page": {
+    "at": "2026-10-09T05:06:42.701Z",
+    "browser": "Fresh headless Chrome context, 1440x900, service workers blocked",
+    "title": "RAH OS",
+    "realServiceNotFixture": true,
+    "existingHistoryVisible": true,
+    "pageErrors": [],
+    "roleListCount": 39,
+    "memoryListRequestSucceeded": true,
+    "memoryResponseShapeChecked": [
+      "channelId",
+      "entries",
+      "total",
+      "truncated"
+    ],
+    "healthState": "online",
+    "frontendBuildIdentity": {
+      "schemaVersion": 1,
+      "kind": "development",
+      "version": "0.0.0-dev+local",
+      "builtAt": "2026-10-03T03:43:43.718Z",
+      "buildId": "85a2d52a33dc2848"
+    },
+    "limits": [
+      "Specific existing conversation text assertions and one screenshot only, not all UI interactions or mobile acceptance.",
+      "Role listing returned 39 roles; this did not inspect each role configuration.",
+      "Memory request succeeded and recorded response keys; page script did not assert individual memory bodies or semantics.",
+      "Existing frontend build identity predates this backend source commit and does not attest backend revision.",
+      "No new model call or cost conclusion follows from restart/page verification."
+    ]
+  },
+  "evidenceHashes": {
+    "restart.json": "faff03e1a069055bf1c4eb9b593fc51da9567cca957a0eda5866ca7c578e23e6",
+    "restart.mjs": "3da9108d34627b6288cd8c2af6ae260517e2bbe98a776bba7be78912511b8061",
+    "page.json": "6a2462d46e3752024c54fa386aa1d5ceec176ce85be25bb68bd98a4dabb5c6ec",
+    "page.mjs": "69a1a9b5668bf39623830c5b6edd7a720e07d77b8f0d409376141fb148495a44",
+    "page.png": "f1e516845475ae57024c52601238be8be34d12dc30103262d229bb68d0c3c48b",
+    "check-final.log": "e69fbf6ea27e6b437260bf46bc5b982e715d7156638c87ef2d36305484638010",
+    "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  },
+  "readOnlyAudit": "Local HEAD, origin/evo and live remote refs/heads/evo agree; current launchd process identity, cwd, DB/listener ownership and packages/scripts source hash rechecked. No restart or account mutation performed by this audit."
+}
