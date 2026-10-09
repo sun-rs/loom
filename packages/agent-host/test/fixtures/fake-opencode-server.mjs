@@ -390,12 +390,13 @@ async function runPrompt(s, body, res) {
     status(s, "idle");
     send(res, 200, {
       info,
-      parts: tokens.has("final-envelope")
-        ? (
-            s.messages.find((message) => message.info.id === info.id)?.parts ??
-            []
-          ).map((part) => ({ ...part, sessionID: s.id }))
-        : [],
+      parts:
+        tokens.has("final-envelope") || tokens.has("native-final")
+          ? (
+              s.messages.find((message) => message.info.id === info.id)
+                ?.parts ?? []
+            ).map((part) => ({ ...part, sessionID: s.id }))
+          : [],
     });
     const mark = `${env.FAKE_RECORD ?? ""}.autonomous`;
     if (tokens.has("autonomous") && !existsSync(mark)) {
@@ -425,7 +426,7 @@ async function runPrompt(s, body, res) {
   run.current = first;
   modelRequest(s, lastUser, "step");
   updatePart(s, { id: nextId("prt"), messageID: first.id, type: "step-start" });
-  if (tokens.has("final-envelope")) {
+  if (tokens.has("final-envelope") || tokens.has("native-final")) {
     if (tokens.has("envelope-wait")) {
       record({ event: "envelope-waiting" });
       while (!run.cancelled && !existsSync(env.FAKE_RELEASE)) {
@@ -448,16 +449,34 @@ async function runPrompt(s, body, res) {
       id: nextId("prt"),
       messageID: first.id,
       type: "text",
-      text: JSON.stringify({
-        kind: "room.reply",
-        version: 1,
-        body: `FAKE FINAL ENVELOPE ${promptIndex}`,
-        basedOnRoomSeq: Number(/--based-on-room-seq (\d+)/u.exec(text)?.[1]),
-        final: true,
-      }),
+      text: tokens.has("native-final")
+        ? `FAKE NATIVE FINAL ${promptIndex}`
+        : JSON.stringify({
+            kind: "room.reply",
+            version: 1,
+            body: `FAKE FINAL ENVELOPE ${promptIndex}`,
+            basedOnRoomSeq: Number(
+              /--based-on-room-seq (\d+)/u.exec(text)?.[1],
+            ),
+            final: true,
+          }),
       time: { start: Date.now(), end: Date.now() },
     });
-    first.finish = "stop";
+    if (tokens.has("native-tool-error"))
+      updatePart(s, {
+        id: nextId("prt"),
+        messageID: first.id,
+        type: "tool",
+        callID: "recovered-tool",
+        state: {
+          status: "error",
+          input: {},
+          error: "FAKE recoverable business error",
+        },
+      });
+    if (tokens.has("native-parent-mismatch"))
+      first.parentID = "synthetic-compaction-input";
+    first.finish = tokens.has("native-length") ? "length" : "stop";
     first.time = { ...first.time, completed: Date.now() };
     updateMessage(s, first);
     return finish(first);

@@ -24,10 +24,9 @@ export function classifyCodexExecLaunch(args, approved) {
     model: approved.model,
     effort: approved.effort,
   });
-  assert.equal(
-    approved.model,
-    "gpt-6-luna",
-    "This exec gate batch is bound to gpt-6-luna",
+  assert.ok(
+    ["gpt-6-luna", "gpt-5.6-luna"].includes(approved.model),
+    "Ordinary exec gates require an explicitly approved Luna binding",
   );
   assert.equal(
     approved.effort,

@@ -1,4 +1,7 @@
-import { finalOutputInstructions } from "./final-output-instructions.js";
+import {
+  finalOutputInstructions,
+  nativeFinalTextInstructions,
+} from "./final-output-instructions.js";
 // S2-c3 warm OpenCode driver (S2 spec §2/§4/§11, contract §6a): one
 // long-lived `opencode serve` per Role instance with one persistent `/event`
 // subscription. The driver is the process-group leader and speaks the same
@@ -921,6 +924,7 @@ async function settleTurn(turn, response, error) {
           finalOutputCandidate: openCodeFinalOutputCandidate(response, {
             sessionId,
             parentId: turn.messageId,
+            nativeText: options.finalOutputMode === "native-text",
           }),
         }
       : {}),
@@ -964,7 +968,10 @@ async function startServer() {
   const port = await allocatePort();
   const rules = prepareOpenCodeInstructionsFile(
     finalOutputInstructions(
-      options.prompt,
+      nativeFinalTextInstructions(
+        options.prompt,
+        options.finalOutputMode === "native-text",
+      ),
       options.finalOutputMode === "enabled",
     ),
   );
@@ -1246,7 +1253,10 @@ function parseArguments(argv) {
     if (value === undefined) throw new Error(`missing value for ${name}`);
     if (name === "--executable") parsed.executable = value;
     else if (name === "--tool-access-mode") parsed.toolAccessMode = value;
-    else if (name === "--final-output-mode" && value === "enabled")
+    else if (
+      name === "--final-output-mode" &&
+      (value === "enabled" || value === "native-text")
+    )
       parsed.finalOutputMode = value;
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")

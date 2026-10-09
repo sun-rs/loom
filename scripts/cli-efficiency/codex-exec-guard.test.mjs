@@ -18,7 +18,7 @@ const approved = {
   effort: "low",
   execTransport: "codex-exec/v1",
 };
-function args(session) {
+function args(session, model = "gpt-6-luna") {
   return [
     "exec",
     ...(session ? ["resume"] : []),
@@ -29,7 +29,7 @@ function args(session) {
     "--skip-git-repo-check",
     "--dangerously-bypass-approvals-and-sandbox",
     "--model",
-    "gpt-6-luna",
+    model,
     ...(session ? [session] : []),
     "-",
   ];
@@ -173,5 +173,24 @@ test("official guarded shim refuses invalid launch before fake CLI and preserves
     assert.throws(() => assertNoGuardViolations(shim));
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("ordinary exec admits both approved Luna bindings and never substitutes between them", () => {
+  for (const model of ["gpt-6-luna", "gpt-5.6-luna"]) {
+    const binding = { ...approved, model };
+    for (const session of [undefined, "original-session"]) {
+      assert.equal(
+        classifyCodexLaunch(args(session, model), binding).kind,
+        "exec",
+      );
+      const other = model === "gpt-6-luna" ? "gpt-5.6-luna" : "gpt-6-luna";
+      assert.throws(() => classifyCodexLaunch(args(session, other), binding));
+    }
+  }
+  for (const model of ["gpt-6-sol", "gpt-6-astra", "arbitrary-model"]) {
+    assert.throws(() =>
+      classifyCodexLaunch(args(undefined, model), { ...approved, model }),
+    );
   }
 });

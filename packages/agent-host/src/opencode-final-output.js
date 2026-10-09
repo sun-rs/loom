@@ -1,7 +1,7 @@
 /** Extract native final text only; this is not a Room command validator. */
 export function openCodeFinalOutputCandidate(
   response,
-  { sessionId, parentId },
+  { sessionId, parentId, nativeText = false },
 ) {
   const info = response?.info;
   if (
@@ -32,6 +32,22 @@ export function openCodeFinalOutputCandidate(
     typeof part.text !== "string" ||
     part.text.length === 0 ||
     Buffer.byteLength(part.text, "utf8") > 64 * 1024
+  )
+    return undefined;
+  if (
+    nativeText &&
+    (info.structured !== undefined ||
+      info.summary === true ||
+      part.synthetic === true ||
+      part.ignored === true ||
+      !Number.isFinite(part.time?.end) ||
+      response.parts.some(
+        (entry) =>
+          entry?.sessionID !== sessionId ||
+          entry?.messageID !== info.id ||
+          (entry.type === "tool" &&
+            !["completed", "error"].includes(entry.state?.status)),
+      ))
   )
     return undefined;
   return { text: part.text, nativeMessageId: info.id };

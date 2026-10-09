@@ -1,0 +1,40 @@
+{
+  "kind": "actual-cli-loopback-preflight",
+  "paidCalls": 0,
+  "model": "gpt-5.6-luna",
+  "effort": "low",
+  "sourceRevisionBase": "62476eb",
+  "uncommittedChange": "exact approved two-Luna guard support only",
+  "run": "PRIVATE_REVIEWS/2026-10-09-codex-56-postfix-v4/runs/1791530093000-free",
+  "quality": "24 scripted fake artifacts false; no model quality or efficiency claim",
+  "arms": {
+    "native": {
+      "rounds": 12,
+      "uniqueResponses": 13,
+      "sessionId": "01a11f83-dbe5-73e0-ae1e-dbe25d1ab94a",
+      "snapshotsRehashed": 12,
+      "recordedProcessesExited": true,
+      "usage": {
+        "input": 1300,
+        "cachedInput": 0,
+        "output": 260,
+        "generations": 13
+      }
+    },
+    "loom": {
+      "rounds": 12,
+      "uniqueResponses": 13,
+      "sessionId": "01a11f83-e51d-7de1-8702-a6e2636e4996",
+      "snapshotsRehashed": 12,
+      "recordedProcessesExited": true,
+      "usage": {
+        "input": 1300,
+        "cachedInput": 0,
+        "output": 260,
+        "generations": 13
+      }
+    }
+  },
+  "fakePortsClosed": true,
+  "daemonsExited": true
+}

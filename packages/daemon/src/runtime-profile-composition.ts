@@ -364,13 +364,17 @@ export function createConfiguredRuntime(input: {
           creationOptions,
           {
             nativeFinalText:
-              input.runtimeProfileRevision.manifest.adapter.kind ===
+              (input.runtimeProfileRevision.manifest.adapter.kind ===
                 "claude-stream-json/v1" &&
-              process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1",
+                process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1") ||
+              (input.runtimeProfileRevision.manifest.adapter.kind ===
+                "opencode-server/v1" &&
+                process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL === "1"),
             explicitFinalOutput:
               (input.runtimeProfileRevision.manifest.adapter.kind ===
                 "opencode-server/v1" &&
-                process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL === "1") ||
+                process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL === "1" &&
+                process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL !== "1") ||
               (input.runtimeProfileRevision.manifest.adapter.kind ===
                 "codex-app-server/v1" &&
                 process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL === "1"),

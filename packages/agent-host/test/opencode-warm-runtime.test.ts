@@ -53,6 +53,7 @@ async function harness(
   options: {
     env?: Record<string, string>;
     explicitFinalOutput?: boolean;
+    nativeFinalText?: boolean;
     skipDeliveryRegistration?: boolean;
     leaseMs?: number;
     leaseRenewIntervalMs?: number;
@@ -138,6 +139,7 @@ async function harness(
     const adapter = new CodexWarmAdapter({
       driver: OPENCODE_WARM_DRIVER,
       ...(options.explicitFinalOutput ? { explicitFinalOutput: true } : {}),
+      ...(options.nativeFinalText ? { nativeFinalText: true } : {}),
       cwd: directory,
       driverArgs: [
         "--executable",
@@ -185,6 +187,7 @@ async function harness(
           env: input.env,
           participantId: input.participantId,
           turnHandle: input.turnHandle,
+          ...(input.onPresented ? { onPresented: input.onPresented } : {}),
         }),
       runtimeEnvironment: async (input) => {
         const previous = sessions.get(input.participantId);
@@ -218,6 +221,7 @@ async function harness(
 
   return {
     acceptances,
+    actor,
     current,
     databasePath,
     kernel,
@@ -1401,6 +1405,170 @@ test("warm OpenCode explicit final output: runtime death during unknown submissi
     assert.equal(calls, 1);
   } finally {
     globalThis.fetch = originalFetch;
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode native text publishes twice without reply tools; native mode wins over old JSON", async () => {
+  const state = await harness({
+    nativeFinalText: true,
+    explicitFinalOutput: true,
+    env: { FAKE_SCENARIO: "native-final+native-tool-error" },
+  });
+  try {
+    for (let turn = 1; turn <= 2; turn++) {
+      state.post(`native question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+      const posts = sql(
+        state,
+        "SELECT body FROM messages WHERE actor_id=? ORDER BY rowid",
+        state.participantId,
+      );
+      assert.equal(posts.length, turn);
+      assert.equal(posts.at(-1)?.body, `FAKE NATIVE FINAL ${turn}`);
+    }
+    assert.equal(spawns(state).length, 1);
+    assert.equal(requests(state, "POST", "/session").length, 1);
+    assert.equal(events(state, "model-request").length, 2);
+    assert.equal(events(state, "command").length, 0);
+    for (const prompt of prompts(state)) {
+      assert.match(String(prompt.text), /Reply transport: native-final-text/);
+      assert.doesNotMatch(String(prompt.text), /Reply transport: final-output/);
+    }
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM run_attempt_final_replies WHERE submission_kind='final-output'",
+      ).length,
+      2,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+for (const scenario of ["native-length", "native-parent-mismatch"]) {
+  test(`warm OpenCode native text rejects ${scenario} without retry`, async () => {
+    const state = await harness({
+      nativeFinalText: true,
+      env: { FAKE_SCENARIO: `native-final+${scenario}` },
+    });
+    try {
+      state.post("no unproved final publication");
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "failed");
+      assert.equal(
+        sql(state, "SELECT * FROM run_attempt_final_replies").length,
+        0,
+      );
+      assert.equal(
+        sql(
+          state,
+          "SELECT * FROM activation_retry_fences WHERE retry_disposition='action_required'",
+        ).length,
+        1,
+      );
+      assert.equal(events(state, "model-request").length, 1);
+    } finally {
+      await state.cleanup();
+    }
+  });
+}
+
+test("warm OpenCode native text falls back on truncated delivery then resumes native in the same session", async () => {
+  const state = await harness({
+    nativeFinalText: true,
+    env: { FAKE_SCRIPT: "check,native-final" },
+  });
+  try {
+    for (let index = 0; index < 25; index++)
+      state.post(`queued message ${index}`);
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    assert.equal(
+      sql(state, "SELECT * FROM run_attempt_final_replies").length,
+      0,
+    );
+    assert.doesNotMatch(
+      String(prompts(state)[0]?.text),
+      /Reply transport: native-final-text/,
+    );
+    state.post("next eligible delivery");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    assert.equal(
+      sql(
+        state,
+        "SELECT * FROM run_attempt_final_replies WHERE submission_kind='final-output'",
+      ).length,
+      1,
+    );
+    assert.equal(spawns(state).length, 1);
+    assert.equal(requests(state, "POST", "/session").length, 1);
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode default mode never publishes native prose", async () => {
+  const state = await harness({ env: { FAKE_SCENARIO: "native-final" } });
+  try {
+    state.post("ordinary output is diagnostic without opt-in");
+    await state.current.agentHost.reconcileOnce();
+    assert.equal(
+      sql(
+        state,
+        "SELECT body FROM messages WHERE actor_id=?",
+        state.participantId,
+      ).length,
+      0,
+    );
+    assert.equal(
+      sql(state, "SELECT * FROM run_attempt_final_replies").length,
+      0,
+    );
+    assert.doesNotMatch(
+      String(prompts(state)[0]?.text),
+      /Reply transport: native-final-text/,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("warm OpenCode native Task fallback acknowledges via Worker but never silently completes the Task", async () => {
+  const state = await harness({
+    nativeFinalText: true,
+    env: { FAKE_SCENARIO: "check" },
+  });
+  try {
+    state.kernel.createTask(state.actor, {
+      assigneeId: state.participantId,
+      idempotencyKey: "native-task-fallback",
+      reviewerIds: [],
+      roomId: state.roomId,
+      title: "Explicit task remains open",
+    });
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "failed");
+    assert.match(JSON.stringify(result), /task|obligation/i);
+    assert.doesNotMatch(JSON.stringify(result), /Final output was not/);
+    assert.equal(
+      sql(state, "SELECT * FROM run_attempt_final_replies").length,
+      0,
+    );
+    assert.equal(sql(state, "SELECT state FROM tasks")[0]?.state, "todo");
+    assert.doesNotMatch(
+      String(prompts(state)[0]?.text),
+      /Reply transport: native-final-text/,
+    );
+    assert.equal(events(state, "command").length, 1);
+  } finally {
     await state.cleanup();
   }
 });

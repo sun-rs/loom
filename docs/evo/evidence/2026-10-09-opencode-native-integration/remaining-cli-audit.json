@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-09",
+  "readOnly": true,
+  "paidCalls": 0,
+  "accountChanges": 0,
+  "kimi": {
+    "version": "0.39.1",
+    "installedSourceHashMatchesPriorAudit": true,
+    "catalogVerified": [
+      {
+        "binding": "kimi-code/k3",
+        "approvedEffort": "high"
+      },
+      {
+        "binding": "kimi-code/k3-256k",
+        "approvedEffort": "low"
+      }
+    ],
+    "automaticMemory": "exact-version audit not-applicable; no invented disable switch",
+    "product": "kimi-acp/v1 Worker MCP and ACP cancel; no native-final settlement",
+    "prototype": "actual CLI two same-session turns, four fake responses/usage, two Worker publications; private print/wire bridge, not production ACP",
+    "usage": "wire.jsonl usage.record/step.end with request coverage required; P141 complete42, P142 one request zero usage remains unknown",
+    "offlineNext": "existing ACP native-final collector+settlement with real Role/daemon loopback regression",
+    "onlineBlocker": "isolated credential copies diverged refresh lineage; fake OAuth reproduces possibility, real account validity untested; no silent refresh/writeback"
+  },
+  "pi": {
+    "version": "1.1.0",
+    "installedSixSourceHashesMatchPriorAudit": true,
+    "approvedGateRows": 0,
+    "productAdapter": false,
+    "prototype": "actual CLI two turns per arm, shared repository native-text helper, two final-output markers; private scheduling",
+    "memory": "bounded source audit plus isolated HOME/resources disabled every launch; same session preserved",
+    "offlineNext": "only if prioritized, minimal production discovery/catalog/runtime/session/cancel/accounting integration",
+    "paidBlocker": "exact CLI/model/effort gate approval absent"
+  },
+  "evidence": [
+    "docs/evo/evidence/2026-10-09-cost-foundation/kimi-free.json",
+    "docs/evo/evidence/2026-10-09-cost-foundation/pi-free.json",
+    "docs/evo/evidence/2026-10-08-fixed-trajectory/kimi-auth-diagnosis.json",
+    "docs/evo/evidence/2026-10-08-fixed-trajectory/kimi-auth-store-free.json"
+  ]
+}

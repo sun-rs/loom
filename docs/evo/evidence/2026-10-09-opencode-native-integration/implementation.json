@@ -1,0 +1,125 @@
+{
+  "kind": "opencode-warm-native-final-product-integration-tdd",
+  "recordedAt": "2026-10-09T07:39:15.550258+00:00",
+  "baseCommit": "62476ebe02eba7c544aa27374921013cf40271f6",
+  "sourceState": "uncommitted slice, frozen for lead full check",
+  "implemented": true,
+  "defaultEnabled": false,
+  "paidTestsRunByThisAgent": 0,
+  "serviceDeploymentVerifiedByThisAgent": false,
+  "entry": "LOOM_OPENCODE_NATIVE_FINAL_TRIAL=1, warm OpenCode only; native mode disables old explicit JSON mode when both requested",
+  "owner": "AgentHost proves native terminal output; existing WorkerFinalOutput and Kernel own fenced publication and durable ACK; daemon only selects opt-in mode",
+  "changes": [
+    "Reuse warm settlement and nativeFinalSequence/nativeFinalEnvelope exactly; no new queue, endpoint, cursor or bridge.",
+    "Driver accepts native-text and uses shared native guidance; original response session/parent identity must match the current POST messageID.",
+    "Native-only collector rejects structured/summary/synthetic/ignored/incomplete text and unresolved tools. Completed/error tool states are terminal, so recovered business tool failure is not a turn failure.",
+    "Legacy JSON final-output and default Worker paths remain available unchanged; missing or invalid selected proof fails closed."
+  ],
+  "tdd": {
+    "red": {
+      "tests": 5,
+      "pass": 0,
+      "fail": 5,
+      "intendedFailures": [
+        "Native-only proof exclusions absent",
+        "Plain-text publication not enabled",
+        "Rejected native finals missing action-required disposition",
+        "Truncated fallback could not resume native publication"
+      ]
+    },
+    "green": {
+      "tests": 5,
+      "pass": 5
+    },
+    "regression": {
+      "tests": 53,
+      "pass": 53,
+      "suites": [
+        "OpenCode final-output collector",
+        "Full OpenCode warm runtime including legacy JSON behavior",
+        "Claude native-final runtime",
+        "Claude native-final fallback"
+      ]
+    },
+    "tscNoEmit": "passed",
+    "prettierOwnedFiles": "passed",
+    "gitDiffCheck": "passed",
+    "fullRepositoryCheck": "lead running; no claim here"
+  },
+  "covered": [
+    "Two normal native turns publish once each, same server/session, zero reply tools and one fake model request per turn",
+    "Native wins over old JSON setting",
+    "Length finish and mismatched/synthetic compaction parent do not publish or retry",
+    "Truncated 25-message window uses Worker then next eligible wake returns to native mode in the same session",
+    "Default off never publishes diagnostic prose",
+    "Task fallback uses Worker ACK without silently completing the Task",
+    "Strict native collector accepts terminal business tool error but rejects pending/running/unknown tool state"
+  ],
+  "limitations": [
+    "Only warm OpenCode path; cold/SEA paths retain existing behavior.",
+    "Compaction that changes the final parent to a synthetic input is deliberately unsupported for native publication: fail closed, do not guess ancestry or replace session.",
+    "Busy steering remains the existing OpenCode refusal behavior; no new concurrent in-session execution.",
+    "Native mode still requires one bounded final text part and exact eligible single-target delivered window.",
+    "No paid efficiency acceptance or multi-model cost conclusion is implied by fake/local-provider verification.",
+    "Public interface comment in CodexWarmAdapterOptions still says Claude warm only; behavior now includes OpenCode. This minor comment correction is deferred under source freeze."
+  ],
+  "provenance": {
+    "category": "local glue and existing local owner reuse",
+    "copiedOrStructurallyPortedUpstreamCode": false,
+    "newUpstreamSourceDependency": false,
+    "references": [
+      "Existing in-repository OpenCode response/parent/stop collector and warm native drain",
+      "Private P148/P150 intent validation was inspected as experimental evidence, not copied as a new business bridge",
+      "Existing Claude native-text selection and WorkerFinalOutput settlement reused"
+    ],
+    "licenseNoticeChangesRequired": false
+  },
+  "logs": [
+    {
+      "file": "tdd-red.log",
+      "sha256": "81f42d2050ee4ea3ae62120f57b40e1bdfcb97b6b9d76e9effb33cdb37392020"
+    },
+    {
+      "file": "tdd-green.log",
+      "sha256": "bf269c9e2a64f36ecbf4a4a7dc8e58db78ff59f0c311d91942b8544aabc1bf68"
+    },
+    {
+      "file": "targeted-53.log",
+      "sha256": "0767302d0c7e751fc5cb15563849b417b1025ea01ef5ed3b10a447fbdb83b1de"
+    },
+    {
+      "file": "tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "sources": [
+    {
+      "file": "packages/agent-host/src/codex-warm-adapter.ts",
+      "sha256": "171b5dba530c64d93f23723d86f57976558af55dd8dca5e3b1665285dfa47010"
+    },
+    {
+      "file": "packages/agent-host/src/opencode-warm-driver.mjs",
+      "sha256": "713b755698bffe00cf148dce75d9d8540c97902b2d3c775a559b61fc6132b346"
+    },
+    {
+      "file": "packages/agent-host/src/opencode-final-output.js",
+      "sha256": "210c283cb5708959d0a6baa52633f5d4591cff2f2c5a7ceef57b39835798269e"
+    },
+    {
+      "file": "packages/agent-host/src/opencode-final-output.d.ts",
+      "sha256": "df83e6a4835d6eb135208de738c98b636ac2533430e4444a95622d4d6f3e316c"
+    },
+    {
+      "file": "packages/agent-host/test/fixtures/fake-opencode-server.mjs",
+      "sha256": "a51cb70d59fb899e5112b30a1ce5e73a113ffb2fe834842dbe8ff9eef68d8139"
+    },
+    {
+      "file": "packages/agent-host/test/opencode-final-output.test.ts",
+      "sha256": "be8ef6707870daa9630aced6821549f043d22c9239fe4db147ac85e1a1366989"
+    },
+    {
+      "file": "packages/agent-host/test/opencode-warm-runtime.test.ts",
+      "sha256": "fdd0148ea66fabec9b123431fb94bf03fc8686261c3e485b7f7f8648b0aac6a4"
+    }
+  ]
+}

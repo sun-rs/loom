@@ -265,6 +265,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
               process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL,
               process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL,
               process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL,
+              process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL,
             ];
             const pool = new InstanceRuntimePool({
               control: createKernelAgentHostControlPort(kernel, host),
@@ -300,6 +301,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
                 expected,
                 nativeFlag,
                 nativeExpected = false,
+                openCodeNativeFlag,
               ] of [
                 [undefined, undefined, "codex-app-server/v1", false],
                 ["1", undefined, "codex-app-server/v1", true],
@@ -333,6 +335,51 @@ for (const mode of ["direct", "gated", undefined] as const) {
                   "true",
                   false,
                 ],
+                [
+                  undefined,
+                  undefined,
+                  "opencode-server/v1",
+                  false,
+                  undefined,
+                  true,
+                  "1",
+                ],
+                [
+                  undefined,
+                  "1",
+                  "opencode-server/v1",
+                  false,
+                  undefined,
+                  true,
+                  "1",
+                ],
+                [
+                  undefined,
+                  undefined,
+                  "opencode-server/v1",
+                  false,
+                  undefined,
+                  false,
+                  "true",
+                ],
+                [
+                  undefined,
+                  undefined,
+                  "claude-stream-json/v1",
+                  false,
+                  undefined,
+                  false,
+                  "1",
+                ],
+                [
+                  undefined,
+                  undefined,
+                  "codex-app-server/v1",
+                  false,
+                  undefined,
+                  false,
+                  "1",
+                ],
               ] as const) {
                 if (codexFlag === undefined)
                   delete process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL;
@@ -344,6 +391,11 @@ for (const mode of ["direct", "gated", undefined] as const) {
                 if (nativeFlag === undefined)
                   delete process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL;
                 else process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL = nativeFlag;
+                if (openCodeNativeFlag === undefined)
+                  delete process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL;
+                else
+                  process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL =
+                    openCodeNativeFlag;
                 selected = undefined;
                 assert.equal(
                   createConfiguredRuntime({
@@ -385,6 +437,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
                 ["LOOM_CODEX_FINAL_OUTPUT_TRIAL", saved[0]],
                 ["LOOM_OPENCODE_FINAL_OUTPUT_TRIAL", saved[1]],
                 ["LOOM_CLAUDE_NATIVE_FINAL_TRIAL", saved[2]],
+                ["LOOM_OPENCODE_NATIVE_FINAL_TRIAL", saved[3]],
               ] as const) {
                 if (value === undefined) delete process.env[key];
                 else process.env[key] = value;

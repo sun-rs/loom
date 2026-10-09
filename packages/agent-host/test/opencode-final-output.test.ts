@@ -124,3 +124,61 @@ test("missing original identity cannot match equally missing response identity",
   value.parts[0]!.sessionID = "";
   assert.equal(openCodeFinalOutputCandidate(value, binding), undefined);
 });
+
+test("native text proof excludes synthetic, unfinished and structured output; terminal tool errors remain recoverable", () => {
+  const value = response("plain final");
+  const binding = { ...expected, nativeText: true };
+  const finalPart = { ...value.parts[0]!, time: { start: 1, end: 2 } };
+  assert.deepEqual(
+    openCodeFinalOutputCandidate(
+      {
+        ...value,
+        parts: [
+          finalPart,
+          {
+            type: "tool",
+            sessionID: expected.sessionId,
+            messageID: value.info.id,
+            state: { status: "error" },
+          },
+        ],
+      },
+      binding,
+    ),
+    { text: "plain final", nativeMessageId: value.info.id },
+  );
+  for (const patch of [{ synthetic: true }, { ignored: true }, { time: {} }])
+    assert.equal(
+      openCodeFinalOutputCandidate(
+        { ...value, parts: [{ ...finalPart, ...patch }] },
+        binding,
+      ),
+      undefined,
+    );
+  for (const status of ["pending", "running", undefined])
+    assert.equal(
+      openCodeFinalOutputCandidate(
+        {
+          ...value,
+          parts: [
+            finalPart,
+            {
+              type: "tool",
+              sessionID: expected.sessionId,
+              messageID: value.info.id,
+              state: { status },
+            },
+          ],
+        },
+        binding,
+      ),
+      undefined,
+    );
+  assert.equal(
+    openCodeFinalOutputCandidate(
+      { ...value, info: { ...value.info, structured: {} }, parts: [finalPart] },
+      binding,
+    ),
+    undefined,
+  );
+});

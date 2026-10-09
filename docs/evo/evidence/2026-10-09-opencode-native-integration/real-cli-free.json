@@ -1,0 +1,485 @@
+{
+  "kind": "Actual OpenCode native-text product Role/daemon invoice-v3 free integration",
+  "date": "2026-10-09",
+  "paidCalls": 0,
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "provider": "Loopback synthetic OpenAI-compatible SSE; no user account files read or modified",
+  "product": "Actual Channel/Role/daemon/warm runtime and WorkerFinalOutput; old JSON trial off, new native-text on",
+  "twoTurnRuns": {
+    "native": "1791530842380-free",
+    "product": "1791531006320-free",
+    "actualBashFileTools": true,
+    "sameSession": true
+  },
+  "longRun": "1791531035171-free",
+  "arms": {
+    "native": {
+      "rounds": 12,
+      "sameSession": true,
+      "generations": 24,
+      "syntheticInput": 2988,
+      "syntheticOutput": 828,
+      "failedQualityRounds": [2],
+      "allRequestsAndDbUsageReconciled": true
+    },
+    "loom": {
+      "rounds": 12,
+      "sameSession": true,
+      "generations": 24,
+      "syntheticInput": 2988,
+      "syntheticOutput": 828,
+      "failedQualityRounds": [2],
+      "allRequestsAndDbUsageReconciled": true
+    }
+  },
+  "kernel": {
+    "uniqueFinalOutputMarkers": 12,
+    "completedActivations": 12,
+    "productGenerationsReconciledWithOfficialUsage": 24
+  },
+  "snapshots": [
+    {
+      "arm": "native",
+      "round": 1,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "649af9bc124ef5f904be97c513572a6d6e5af6da73ff0421e27168f4c879d864",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "ea8fca9527eafca63ee8e098c0ddb8f10e273f515df3451ff9270cfc8a211909"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "qualityPassed": false,
+      "artifactHashes": {
+        "README.md": "dd9386b0ae945645562c0ce6f942a7b8f4fa2629a9deb4d67011976bc1824632",
+        "invoice.py": "ba5931793a3f9cfa7d557fef5d5a2ece0f8d69e364a3bfec0f27dacb5b26142b",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "926fa5f194d5b8fba1dce836e54ec43d76cfbaec65c72a23c1841fe4841d4c5d"
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "80cc4dfe6dcea38d53a3bea0da7c9027c356fc33f4750be66a2e12ea48b841c0",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "e38462be2aa70cae60796dfd5b62bef7c85b5d06fe744e9af3e05e4ebf58a996"
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "8b95febf5755d24fc0ac2d6f91f60c995fc79ef07b051c2d664f95e7892ac151",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "7822a8d410da6416af118215e0c3b2e0a6f14b4e55a3e8b86d808621ea6351a0"
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "81e93366b70e714b40c818862c3ddf36117c006e7c1f6a9ca5d9a9ba0eb9bd22",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "ecda563ec4cd72fd0d87835953f0c305e3d4f01a9f890e81fe438e23cc469669"
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "4bd3bb7a6bc73a0f54fae11bdd3715111616695860195d74b1a759b2eb90e35b",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "d5c8156eb3ee16d7f01685b1f6d28b5f22abbd4ffb8ce3bf0bca80b4df7ee015"
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "0a6375b4c49a753f29fb24c2e833aab01da69a73ba9ac90ce010b603ba7cf761",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "376d0dc0395ade16c19e3a353aa92e8b3338c94a45e0749c399da70061f2ce12"
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "767d3b676cb934674933c1433f80f1a779ba4192f5a9b783b8e21f222897c4c4",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "e42a0bca5e17b61747def39439e3cec8b05355dc428e38fb9715f42d6680841c"
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "1756f56c147f6c4236038b5e41c134a78e82318ce394e5b62b557955b74556a9",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "d4403ec317742dd74a9e81079a36e7fce28d769e27c3bb5d718df2668d243404"
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "44471e5192f891932a94a916c072e6e7cd15ed2ad1487f9003bbb37a19d73fcd",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "4e447f9911666c8d97e4a79cc40c4427f6ef73dbbb6c67d9ed5b06d3bc6118fb"
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "108385dd0b39c961ef49329b077f8119a8c1b0aefc5dc698a4af8757f29a44bc",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "a3b4586471c15abf18596a744769df5a7915108691e98d1ba9cdc50459933d65"
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "f043810540ee296f5ba00147a3395a660ac5cf789b7538dca62130e7380f07ca",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "022c95ab57f5fbea5611fb3c2c5d29af578f1a612cc1e358cec92823ddbfd0f8"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "649af9bc124ef5f904be97c513572a6d6e5af6da73ff0421e27168f4c879d864",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "ea8fca9527eafca63ee8e098c0ddb8f10e273f515df3451ff9270cfc8a211909"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "qualityPassed": false,
+      "artifactHashes": {
+        "README.md": "dd9386b0ae945645562c0ce6f942a7b8f4fa2629a9deb4d67011976bc1824632",
+        "invoice.py": "ba5931793a3f9cfa7d557fef5d5a2ece0f8d69e364a3bfec0f27dacb5b26142b",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "926fa5f194d5b8fba1dce836e54ec43d76cfbaec65c72a23c1841fe4841d4c5d"
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "80cc4dfe6dcea38d53a3bea0da7c9027c356fc33f4750be66a2e12ea48b841c0",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "e38462be2aa70cae60796dfd5b62bef7c85b5d06fe744e9af3e05e4ebf58a996"
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "8b95febf5755d24fc0ac2d6f91f60c995fc79ef07b051c2d664f95e7892ac151",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "7822a8d410da6416af118215e0c3b2e0a6f14b4e55a3e8b86d808621ea6351a0"
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "81e93366b70e714b40c818862c3ddf36117c006e7c1f6a9ca5d9a9ba0eb9bd22",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "ecda563ec4cd72fd0d87835953f0c305e3d4f01a9f890e81fe438e23cc469669"
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "4bd3bb7a6bc73a0f54fae11bdd3715111616695860195d74b1a759b2eb90e35b",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "d5c8156eb3ee16d7f01685b1f6d28b5f22abbd4ffb8ce3bf0bca80b4df7ee015"
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "0a6375b4c49a753f29fb24c2e833aab01da69a73ba9ac90ce010b603ba7cf761",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "376d0dc0395ade16c19e3a353aa92e8b3338c94a45e0749c399da70061f2ce12"
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "767d3b676cb934674933c1433f80f1a779ba4192f5a9b783b8e21f222897c4c4",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "e42a0bca5e17b61747def39439e3cec8b05355dc428e38fb9715f42d6680841c"
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "1756f56c147f6c4236038b5e41c134a78e82318ce394e5b62b557955b74556a9",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "d4403ec317742dd74a9e81079a36e7fce28d769e27c3bb5d718df2668d243404"
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "44471e5192f891932a94a916c072e6e7cd15ed2ad1487f9003bbb37a19d73fcd",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "4e447f9911666c8d97e4a79cc40c4427f6ef73dbbb6c67d9ed5b06d3bc6118fb"
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "108385dd0b39c961ef49329b077f8119a8c1b0aefc5dc698a4af8757f29a44bc",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "a3b4586471c15abf18596a744769df5a7915108691e98d1ba9cdc50459933d65"
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "qualityPassed": true,
+      "artifactHashes": {
+        "README.md": "f043810540ee296f5ba00147a3395a660ac5cf789b7538dca62130e7380f07ca",
+        "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+        "isolation-proof.txt": "d4a38ddf3e6fa41d4aa02aa140da3fe44f3a266c1ac57f4ad7b0af6939c85e1a",
+        "tests/test_invoice.py": "e41051814b3aaf635ee3dc5274087fbca604e0a7ca8974c0f70316c633907899"
+      },
+      "sidecarSha256": "022c95ab57f5fbea5611fb3c2c5d29af578f1a612cc1e358cec92823ddbfd0f8"
+    }
+  ],
+  "rawEvidenceHashes": {
+    "requests": [
+      "34c2d896f943801b7004e582584cc9aa8a1728ed1d1357f6d4f8265847347b01",
+      "351fcc26095f9fc2a0ba167b0d1bf4c20c14cb90530764a5d701416d06b0de28",
+      "366316f807b6ff6f8d8cbac78dc28fba128f6b8ce3849afd3b015082bbfc86db",
+      "2ea4c516f761c95fe6b8127c230197d69217d4bea30c437331911f1bbab61193",
+      "f1f083803c36dc875436806d148e965c1ffb43fe0584d4336398af7039165723",
+      "267e17775d7446ac956ad4e0f6620bc6d053a215966935c1f0d7dc3fe73c1e1c",
+      "a6c18271a40ac5475d7217421bdfeebe5aae35adeb63c85ed234e88089120bed",
+      "785374b389040f72713e5a3445002c0fc4624df3dbd9403e90ff8ad4cf1adf83",
+      "a345069729e041683248a6fc443a656f633306915e650e1aba629fcd655410ba",
+      "5f2d1fb8313fa37443ae0f0095d76f56ce5544e929bb34ea1de9082aa47d3590",
+      "6f65902487d738df1daeb8b86d45295fc078f7acf9423b82c218f16ffe25dfd9",
+      "36bb12bf955662951aab0c4f0241027464cbc9edcfec0725b1c71aa06a69624f",
+      "2dad8faaec02495d2acc0d960b4f97a181b637a2d167a27f1083022484bf7bb1",
+      "7d7e971a8bb31b0fcea62a8ae76d3a82664a946dfbff60001a9c7329805924f4",
+      "1b4bc51392b917216225412f31aa9a766f81b61ad558945cc87d00a0ea0b1726",
+      "2372e8a1f834eaad90f688b612774d089aa4e80c9eeedd9d3fe55e63a97736dd",
+      "064de8d50d603aa2d57664bfcb5eb831fafa63c7b68eb7047e2003684493f987",
+      "3181eabcac4c73fb435ee8ddabb9df6a79851f78849879b80ddb1e6e7efb33d3",
+      "256d7e1109d1aa7e3fcb073b308b6fb77d86ce02e31e4dbbf23d299ec3c5bede",
+      "893a9e891b59e02a1310ab66e77d640c0b662812b4014cfa14bf7ea499abdfb9",
+      "df7fb5904cc32a66e17336883d6489465bb2e9e42b98e1ab55c762dcc7bf5c53",
+      "8026a62db62e78da7953eb15275ed960b1c1e175863b35f803f1f95cc7525658",
+      "55f4f6a906c7bb63a8a4be387c204af1a70522157651ee11ee4d6d503acacde3",
+      "8001089d717beb058771272f8df9983fbe398e8aeaaff508be4d82ed83660fe2",
+      "269cdf4965847d8b45ae6da40695e5ca4ccf30783eb9b731b50defca33f9a2a6",
+      "edb401b0b5421fe158410410412ef6c813c530b7e31a21e5987b8d07289710a9",
+      "ee72baf545ea03d3aa5f861239425ab0c7c22758eff865c3434250145dbedd46",
+      "3c777e3c0d8cafc3ba195f94d375790c352891c5be16c07c41202f0775f4b473",
+      "1551b230c6ff244aa8e1d0609e68a20154ec980376065d57702984d3f12b8d57",
+      "6a919547fff77e7e84b19a0feda9449e38920cef04e4ff601dae49e270234c45",
+      "f2e11161cebff303e910f719e2337b7cdae543e7efb7bef469e044c05524ffd7",
+      "f2b8aac6a41f17e14fc1883e0c589ccd55b1ca05b799344bf8d3a83aa0a61844",
+      "6c35687726e6f3a21002985e456d7691c17e9a30a24d24c6f853717ae3c3fffb",
+      "f80d0bef9fa4923e7c36c662d2fca11f05b7c8a6b6ee2645a57c6bbd2ea72afe",
+      "f2ac67789c0a80f1887b1825075b4993a6a988ee2ee8d0bf31cfd1f57bb90d82",
+      "399ae4f5f8669fc4e17a46c4cb15a8db1e5abf6472db7e235bf6be4694880c80",
+      "f81e65fc48004504d3ac5ef37acfe8042f7a217bb70b8fc1009dbacb8577e75e",
+      "ba5b7424580f0b5ec4b7d02ec911f3406b08de445e1b04dc5a69930d49786428",
+      "f506ac9263f9256d45970e66678989b89650fbb97693367591ac4d741cad95ca",
+      "6712e83b94c41054f7bd10cf73a7ff9e0c3b2b310e62988072f790c3122c94e6",
+      "69bd255ad7aa9b82c227c9f0cc58bb030411b6e3856edab9e937d1a0eb37cbda",
+      "223d0e8cb51dab0729fd248583455996f0d268d7f86304801c6d2fad60577d12",
+      "0d4d4640523dd7b6c17858bbf6144f54f8f2f9f4f77ae8f6e0bec2e586527028",
+      "946bbf8295784516d8417a9ac2fcf71f64c61afff5b87dadb79b9a373c6ae104",
+      "b4d1c0852c8c5341ff47ef07b8c081168eec29662506baa7d5abd3ec6d7ecc9d",
+      "ebb31ad6d2d596032f3e45f93fd3fe5b6f042e96462c852a64b9ea161d208350",
+      "d4163e985f34b6ab6065c06fea226ba46cc204f825bf69a5025e1d66b7abcbf7",
+      "84275b597612cd1881c7dc0adf1cd55a6bdc9a536a7d992b7c9347c6799cc289"
+    ],
+    "responses": [
+      "3886604822c66f99afccc32b82b415a461e94f137e31238d482ef199e45abe42",
+      "20ee367be7197c1f8a1760c94031b516d1a985877e2b012038bd7a556e923951",
+      "1f003b7ad4efe5bc8107577a31787e420c6b8f2d978ae6cd0dec4a0df848b2dc",
+      "cbbeae4676edd25cc01b9bac4027fd94f9ca98277c02dafc9f47aa564c3980eb",
+      "e96f076ff2aa2aeb4d2f0d8b843118256da1861baa8354d7340bdea5a9aeec6e",
+      "d01ccd332bc07362767ccedeeaa6f62d01e7bcff1b16b7dd60db9f65f7900936",
+      "722c7590400980cfc93aef1e6a3a17e55592dda3a3db9a49132be152632f1d4d",
+      "2ca3edef76950657ee30266cc12d0662dd0a14a58b14d68fdc7bed0052d3a711",
+      "5c277ff372455b7ea71474deae2aefc657ba164299fd6b8b73ad7f8045e8da99",
+      "ce26dd457e44e811ff4c9f09300b2f651fe19f1a5be4ba7b636a6f173f466ea0",
+      "1ddeffab9643f0e06866a508009d06ef95bf38f471c5efe39ef22107c7388547",
+      "25d9ce6d43c6d026d59c55c8c648105e01f2593533fda20ff7eddf4811962142",
+      "b204ffd80d3030e80828dbb0e88ed59b80b8b1a4a21cd649ede9d7ff95c77e72",
+      "1b6f46eca616ed8f220ca0881eba196512074227dfee6a230c25c25f10fcfe1d",
+      "05702148849dcc2ac5f5579baea85e62cb4d6bfe8c986a18131ec2e2585bba43",
+      "72c3a5e9087a7db8d0d35b8ce0aa944c8fbd9f66387f53079c613c06eee13e78",
+      "33764a2f4adead58aa63a6c69b1bf23f6ce401b7b8ed9f0850c633b82bcf1d4c",
+      "a92c5796a3c41754a0bad5d5d54ced116333f2693df0685e8d095d43f179f2c0",
+      "9f98554bdc345c97f3e041a9ebc2d560a4779283b61e7826123387f173e96160",
+      "73feec2c8957965e12c7c990fd8233395665a24c6f3c772a31c4ad4f8e03d94a",
+      "6f989407bd3fc620dcab05a8dec472770305d23ae45ce1ceea21ac56af98a9c3",
+      "fdeebb98cd468e65fe5c98d0d693395c952e03aeb62b77327d1727043d3ad0f7",
+      "14a88850b876efbc7d53415d06f5f935b361e1416643900baf141579d25729e0",
+      "565c66ff6af042a397f4a1f88b54979645afd45e496dec9a3c890d3fe0420fd2",
+      "842290be4d3637a53b6f4617d76e22d966444a4e31b4d0324d995b7a61d83467",
+      "8556222e55aaac3cb68d7deabbda18a4436df1e1f2e2ce63d837a1b3bb3a2c6a",
+      "a027332f99980d43995d04a6693c1caecf1b2b6f2f9dde9a8c460e9385100271",
+      "9c1616cac0e7c5e807ddd3393c2ad37569162bb4f8fd28442cb63c093f3c327e",
+      "73982a346d7db3daa56acce2fa03a1bc5f7ca3fd87dbc4e77332bfd8f26e83ba",
+      "a5a387986e57d8a029af587e4b5d605b945f456e80f2d448d3e9babab032e474",
+      "ce9b80f615014ceb1a57a6b4f69cff351812553da601c83ea1799752fac74f88",
+      "7806543a134ac4149fb0fd08299a4c588aec81cdd2508b7ca1fba38b21e94674",
+      "886e7eead09a314d0432ac4f3211689d9182f7c4d115af162af65c6360a472fb",
+      "41556676507e1abf5f2fa246b1b247521ddfb32d340cbb1c038153c844462b2e",
+      "2b255428adbe4ff629decaec2168974a44b9ff327c467ddaac511de05f7ce068",
+      "dba180300211ddd73717a10410b453229e5d5e0a7cd72783cfdf09cace6f0c63",
+      "3532f9b11f8848527b2e5e22cb561cd780940486e7c401564213b75fed52e383",
+      "ae960ed8fe32c8713c86a26624c9b3d3a67632e58b777cb4c2b7143f0709d019",
+      "19c4ef4646def4064599a8f936edcbfd14641ef98229a6bb7c6cae0d106f3754",
+      "7fdcd48c600c7a0e47835f0d758e1a08ac147795e0ebaa00d43c28aed6eb2fb3",
+      "c0c94e3e20e4894159f94c6b04a9d11885e96bcc71170c616bac92f8e810ce90",
+      "c2370c786a105e9e8f3893f1a0ce0411c8d4dae76dc42022fb379cf04f56936d",
+      "6e6f1b373ca3417041fbb29c63b4d7d0555b56a22f09f0f3ae37bb94691a444e",
+      "69501da834c75f1bb57d2bdd99a9d7060aa74ee2bd26c7e28b4ac54876d52a57",
+      "c5bc28c7735edd9ea86c4cbf5428f91694e168ffeac7fe4717450428fb79700d",
+      "e487e09478f00da78ee066319d7f8af945ed4f552a669b3c0c30046a88bad835",
+      "00dbcb66b9a7cc028f4f09a156ae7d778026528d9e5757d0b0273ba8a647c6c9",
+      "b5ee8acc5fc9c30a8bafbc43ef743e9034c0c4b789de6b81f2dce1ba0636ebbb"
+    ],
+    "result": "f2fda721c97a1932e5574d783a2395b4fc8c40bac2e2d6e082e552df71da6e59"
+  },
+  "retainedPreflightFailures": [
+    {
+      "run": "1791530822452-free",
+      "requests": 0,
+      "failure": "Error: Native audited CLI version could not be verified"
+    },
+    {
+      "run": "1791530988538-free",
+      "requests": 0,
+      "failure": "Error: Command failed: /private/tmp/loom-oc-production-pltVON/loom/bin/opencode models aihubmix --verbose --pure"
+    }
+  ],
+  "failedAccountingNegative": {
+    "run": "1791530917520-free",
+    "failure": "intentional throw after responses before per-round accounting",
+    "requests": 2,
+    "generations": 2,
+    "input": 200,
+    "output": 20,
+    "complete": true
+  },
+  "cleanup": {
+    "allRecordedCliAndDaemonProcessesAbsent": true,
+    "fakeServerClosedByRunner": true,
+    "processRecordLimitation": "Shared gate helper wrote daemon close status into last appended native-process row. Audit relies on original daemon PID absence; subsequent private runner uses separate process arrays."
+  },
+  "memory": "Exact1.18.35 audit; pure, external Claude/skills disabled, isolated config/data; same-session history retained",
+  "sourceHashesAfterRun": {
+    "packages/agent-host/src/opencode-warm-driver.mjs": "713b755698bffe00cf148dce75d9d8540c97902b2d3c775a559b61fc6132b346",
+    "packages/agent-host/src/opencode-final-output.js": "210c283cb5708959d0a6baa52633f5d4591cff2f2c5a7ceef57b39835798269e",
+    "packages/agent-host/src/codex-warm-adapter.ts": "171b5dba530c64d93f23723d86f57976558af55dd8dca5e3b1665285dfa47010",
+    "packages/agent-host/src/runtime-implementation-registry.ts": "81b5c499a80fa35d69add1fda0416c941177fb984b82f988a01188fb931a58ac",
+    "packages/daemon/src/local-workbench-bootstrap.ts": "921d17cdd3526cc1f9dbc0c324c7f4658008fe28da8b43dcdb90eaef98876d96"
+  },
+  "sourceHashLimit": "Driver agent formatted source during the free run, with no reported logic change; these are final hashes, not prelaunch-frozen paid admission.",
+  "runnerSnapshotHashes": {
+    "run.mjs": "bae1cad5395b66bf4371273a9440a77174d0515acfce470106018c0c726eb72d",
+    "wrapper.mjs": "9e15eb2b4c3470e602c26540a8a49b8b6dedea9dbe2f41736f08daf347e460c4",
+    "fake.mjs": "c006ef5ce45122705af3777d0f6bd386113e7b69eb50678ad3f129d1057861fa",
+    "product-arm.mjs": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa",
+    "sandbox.mjs": "ee22712f7e8d63eba6ba43eb9761a64f4472058fbc85d69822527b35ee074204",
+    "human-connection.mjs": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1"
+  },
+  "limits": [
+    "Fake provider writes reference code; passing artifact cases are fixture plumbing, not model quality.",
+    "R2 intentionally defective in each arm, retained as failed; R3 recovers.",
+    "Synthetic README is not manual documentation-quality acceptance even though automated round12 checks pass.",
+    "Synthetic token counts deliberately vary per response to verify mapping; no efficiency or cost ratio.",
+    "Only one binding in free test; no cross-model/provider conclusion."
+  ]
+}

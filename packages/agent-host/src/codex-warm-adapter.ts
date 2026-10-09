@@ -284,6 +284,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   #explicitFinalOutput(): boolean {
     return (
       this.#options.explicitFinalOutput === true &&
+      !this.#nativeFinalText() &&
       (this.#driver === CODEX_WARM_DRIVER ||
         this.#driver === OPENCODE_WARM_DRIVER)
     );
@@ -292,7 +293,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   #nativeFinalText(): boolean {
     return (
       this.#options.nativeFinalText === true &&
-      this.#driver === CLAUDE_WARM_DRIVER
+      (this.#driver === CLAUDE_WARM_DRIVER ||
+        this.#driver === OPENCODE_WARM_DRIVER)
     );
   }
 
