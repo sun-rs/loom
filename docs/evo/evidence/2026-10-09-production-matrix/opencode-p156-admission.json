@@ -1,0 +1,213 @@
+{
+  "batch": "P156",
+  "frozenAt": "2026-10-09T08:20:12.644249+00:00",
+  "commit": "bf0252a89128855c2b0572482862c13d14759184",
+  "planSha256": "ab638f39d1b1ee16e124819330b6e50f06a917cf1df1b6738e0c72fbd95b78cb",
+  "sources": [
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/capture.py",
+      "sha256": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/cli-smoke-archive/invoice.py",
+      "sha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/cli-smoke-archive/tests/test_invoice.py",
+      "sha256": "ac3fe89929cbb4c43cbc55d20bae9670acf6363fffb300bd2ab88d073e0def46"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/cli-smoke-archive.evidence.json",
+      "sha256": "a5f2c559334bc198499d310ceaf12c215f26675db363fb3275a68c10d71c9cfe"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/cli-smoke.json",
+      "sha256": "72e748e7bc3b9456d9b59b5c1c27e725d5d11b2cb908168f5732e17d5aae563c"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/evaluator.py",
+      "sha256": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/green-node-final.log",
+      "sha256": "00c710de0982ceef1c0fdc449f5cd472caa4c1bfbe08c41aaa39c4ebbccfe9de"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/green-node.log",
+      "sha256": "5d965eb391753599f54a0ad61ac47b5803e0305abdfaa03e8297b02e53cb1da3"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/green-python-final.log",
+      "sha256": "0b862d125ce2b25f1472a19679b7a58c5d22ceb04434f2273b25d735e3946788"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/green-python.log",
+      "sha256": "82c336badf1f1dac7e4fcb14266eb7b5df0b3f463ad0b89d6c780ebc605228bc"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/integration.json",
+      "sha256": "d09616b89e5db28a223bb80cd07890d734990a8981dc6a9a083e4714696da2a6"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/manifest.json",
+      "sha256": "b1fe297130d60470299efe19b4fbae70cbc07e69fc7a0555cccf85aede0607eb"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/oracle/cases.json",
+      "sha256": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/oracle/reference.py",
+      "sha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/plan.json",
+      "sha256": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/policy.mjs",
+      "sha256": "d7b646f4dfc21e3ed4434956bd3cca8b16ee593e5dd39dda72056b54472e4d59"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/policy.test.mjs",
+      "sha256": "65ce80dec94b8be119d5f032358d3d4f7b03051e385a7e561e147c7d00045f22"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/public-evidence.json",
+      "sha256": "03eeef7bb1268f8112be09883e532a73d18f2aefff6b5647abb4fd11a70c4453"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/red-cli-arity.log",
+      "sha256": "ee281abc63b6bc51a3013a942eb005f8277efd240dd06b2f86dd9b123d9de15b"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/red-node.log",
+      "sha256": "7acbccd7f0bb7dc6c056d6512b4a6836c285e1149e68141a591ade8d6164fecb"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/red-python.log",
+      "sha256": "211b8fa9b5f6307356f14a7c600625781eb83229b1e4c2f6953200bd276a2bc2"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/schemas.json",
+      "sha256": "5a41752182bfc0c7cd6c0a8ff3911d9859377123ba021713ea4c07ad628dd566"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/snapshot.py",
+      "sha256": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/test_evaluator.py",
+      "sha256": "4ad60b13cb36a8da6793b616b1bd563fefa235f9f164028c07203dde355aa286"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/test_v3.py",
+      "sha256": "532b927ba8f124364461b5de7fe7f2139778c8969f9d199f41504e3d54a0d6af"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/workspace/README.md",
+      "sha256": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-cost-fixture-v3/workspace/invoice.py",
+      "sha256": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/accounting.mjs",
+      "sha256": "876d58e86c6e0762545737ad70e8159267ad7703e9e91a8624b2e5cde46b672a"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/accounting.test.mjs",
+      "sha256": "3acd8eaecb27ca78264574adbf19bb5902b6ec40a1998e602324cfbd95f42b2b"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/catalog-free.mjs",
+      "sha256": "8c818a29b9a75fce987d2b19f557347a0dfcb36c41b5169624222aa4bb07d116"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/credentials.mjs",
+      "sha256": "1d850616d6f3f97ca0bc53c2fb851ab3e4fb0605223637175b00e56bff0ab5a1"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/credentials.test.mjs",
+      "sha256": "d443f5513ce0d52b86d47f8c1e2d0e5837088ddaf0c8014b8bd9f32a7b5df50e"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/fake.mjs",
+      "sha256": "c006ef5ce45122705af3777d0f6bd386113e7b69eb50678ad3f129d1057861fa"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/fixture.mjs",
+      "sha256": "f7178a40f2c3cd77cc2dccc28876a279f7b656969b05f0f1ab1f39b0c2dddcce"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/fixture.test.mjs",
+      "sha256": "66407d85364e568b34ebb5cd57a015755f2f6c526797142a977ae4b1b64399b4"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/free-evidence.json",
+      "sha256": "662df4fe5ff671a62302680b67c99293389bbb85532d83632f051239a14f1138"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/human-connection.mjs",
+      "sha256": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/kimi-pi-audit.json",
+      "sha256": "8bc0123d5b135d87e83e9ee9129d5a884c6f00e879e68631a0a1651ce6c8ea35"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/native-turn.mjs",
+      "sha256": "9d6a046b6ff77d99a4474a33236ec7446b2dd49004063f94a5907709bff81f00"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/native-turn.test.mjs",
+      "sha256": "6329b5bb328564d709dd9c905fd35c0e63f119932dd7e18cd92756ef0f5aa495"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/paid-plan.json",
+      "sha256": "ab638f39d1b1ee16e124819330b6e50f06a917cf1df1b6738e0c72fbd95b78cb"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/paid-run.mjs",
+      "sha256": "568bb6f0b2a25b2ae61db27f9bd326f300c456f242f907b0b134f66349f3de96"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/paid-runner-free-evidence.json",
+      "sha256": "f6d7a09cc5fe0ff5e2215283d885ef2447e2cee17598c71510dab9f508f2ac80"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/plan.preparation.json",
+      "sha256": "117bf153f09d024c1710c9ea86fe67a377766cf1e0a7b8487eb1f6f69d1685bb"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/product-arm.mjs",
+      "sha256": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/ready-for-lead-freeze.json",
+      "sha256": "69fb07a697d4fdf2364b249ba237e4fc27d076137163f1c26c7e36655f13f8f5"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/recorder.mjs",
+      "sha256": "03e2ec2dfa7ce31fb4fc934c742bff27b7ca418ba3630832736c4f09d065c3b7"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/run.mjs",
+      "sha256": "35dc56f54365360bbc7ed73e553099c0b102825be526606029cf0cd8f3040f02"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/sandbox.mjs",
+      "sha256": "ee22712f7e8d63eba6ba43eb9761a64f4472058fbc85d69822527b35ee074204"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/worker-source-allowlist.json",
+      "sha256": "b00dea930915be610d674a072a5fd0e1593abb1541ce31ca83af939824e66cf2"
+    },
+    {
+      "path": "PRIVATE_REVIEWS/2026-10-09-opencode-production-v3/wrapper.mjs",
+      "sha256": "9e15eb2b4c3470e602c26540a8a49b8b6dedea9dbe2f41736f08daf347e460c4"
+    }
+  ],
+  "review": "Independent review complete; duplicates/conflicts, temp credential cleanup, exact step/session identity and every-arm admission addressed before launch"
+}

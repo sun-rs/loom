@@ -1,0 +1,38 @@
+{
+  "batch": "P156",
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "rounds": 12,
+  "fixtureHashes": {
+    "plan.json": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+    "capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  },
+  "limits": {
+    "input": 6000000,
+    "output": 150000,
+    "requests": 400,
+    "wallMs": 3600000,
+    "turnMs": 600000
+  },
+  "admission": "Frozen for one authorized paired trajectory; no result-selected reruns",
+  "rules": [
+    "continuous same session per arm; independent arms",
+    "same first-turn business instruction; identical per-round user task and initial workspace",
+    "odd rounds native first, even rounds product first",
+    "keep failed quality and consumed requests; no reruns to select favorable result",
+    "all upstream requests/native usage/Kernel usage reconciled",
+    "budget thresholds before each arm turn; not a hard in-flight cost cap"
+  ],
+  "initialWorkspaceHashes": {
+    "invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+  },
+  "revision": "bf0252a89128855c2b0572482862c13d14759184",
+  "authorization": "Owner ongoing multi-CLI paid authorization and latest continue",
+  "hostConditions": "Other provider experiments may overlap; no quiet-host latency verdict",
+  "interpretation": "Single trajectory; task quality, whole-task and late-window token ratios separately; no pooled five-CLI or actual-bill claim"
+}
