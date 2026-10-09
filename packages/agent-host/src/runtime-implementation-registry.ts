@@ -1,3 +1,4 @@
+import { createKimiNativeFinalTransport } from "./kimi-native-final-lease.ts";
 import { createCodexExecRuntime } from "./codex-exec-runtime.ts";
 import {
   createStandingPromptDigestLedger,
@@ -101,7 +102,7 @@ export type RuntimeCreationOptions = Pick<
   GenericProcessAdapterOptions,
   "activationEnvironment" | "beforeStart" | "cwd" | "supervisorDirectory"
 > & {
-  /** Explicit ordinary-Codex native-final trial; never converts another profile. */
+  /** Explicit cold native-final trial; never converts another profile. */
   nativeFinalText?: boolean;
   /**
    * Owner 2026-09-26: the channel home's Human-attached directories. Each
@@ -1196,8 +1197,12 @@ function createKimiAcpRuntime(
     additionalDirectories,
     providerSessionStore,
     recordDeliveryAcceptance,
+    nativeFinalText = false,
     ...processOptions
   } = options;
+  if (nativeFinalText && isSea())
+    throw new Error("Kimi native-final trial requires the source runtime");
+  const native = nativeFinalText ? createKimiNativeFinalTransport() : undefined;
   const args = [
     isSea() ? "__kimi-acp-driver" : KIMI_ACP_DRIVER_PATH,
     "--executable",
@@ -1234,6 +1239,12 @@ function createKimiAcpRuntime(
     provider: "kimi-acp/v1",
     recordDeliveryAcceptance,
     wakePreface: (input) => preparedCards.get(input.runAttemptId),
+    ...(native === undefined
+      ? {}
+      : {
+          onPresented: native.presented,
+          wakeSuffix: native.suffix,
+        }),
   });
   return new GenericProcessAdapter({
     ...processOptions,
@@ -1241,66 +1252,82 @@ function createKimiAcpRuntime(
       await protocolUpgrade.accept(input);
       await rulesCard.accept(input);
     },
-    // The driver ends the prompt with the native ACP `session/cancel`.
+    // Worker fallback retains its interrupt; the selected native-final driver
+    // ignores this signal because it must prove an ordinary normal terminal.
     finalReplyInterrupt: true,
     beforeLaunch: wake.beforeLaunch,
     ...(wake.recordDeliveryAcceptance === undefined
       ? {}
-      : { recordDeliveryAcceptance: wake.recordDeliveryAcceptance }),
+      : {
+          recordDeliveryAcceptance: async (input, acceptance) => {
+            const result = await wake.recordDeliveryAcceptance!(
+              input,
+              acceptance,
+            );
+            native?.accepted(input, acceptance);
+            return result;
+          },
+        }),
     activationEnvironment: async (input) => {
-      const lease = await kimiWorkerMcpLease(
-        input.runAttemptId,
-        (await baseActivationEnvironment?.(input)) ?? { env: {} },
-      );
-      standingPromptDigests.remember(input, lease.standingPromptDigest);
-      preparedCards.delete(input.runAttemptId);
-      const key = providerSessionKey(
-        input,
-        revision,
-        "kimi-acp/v1",
-        lease.standingPromptDigest,
-      );
-      if (providerSessionStore === undefined || key === undefined)
-        return await wake.withBodiedWake(input, lease);
-      const previous = await providerSessionStore.load(key, {
-        requireExisting: input.agent?.instanceSessionRequired === true,
-        instance: input.agent?.instanceChannelId !== undefined,
-        instanceGeneration: input.agent?.instanceSessionGeneration,
-      });
-      const protocolNotice = protocolUpgrade.prepare(
-        input,
-        lease,
-        key,
-        previous,
-      );
-      const rules = rulesCard.prepare(
-        input,
-        key,
-        previous,
-        protocolNotice !== undefined,
-      );
-      if (previous === null) return await wake.withBodiedWake(input, lease);
-      // S6 batch B: the card also re-provides the channel memory index; a
-      // plain resume keeps the index its first prompt carried.
-      const resumed = resumedMemoryIndexLease(rules, lease);
-      const card = resumed.card;
-      if (card !== undefined) {
-        if (preparedCards.size >= 64)
-          preparedCards.delete(preparedCards.keys().next().value!);
-        preparedCards.set(input.runAttemptId, card);
+      const base = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const lease =
+        native === undefined
+          ? await kimiWorkerMcpLease(input.runAttemptId, base)
+          : await native.prepare(input, base);
+      try {
+        standingPromptDigests.remember(input, lease.standingPromptDigest);
+        preparedCards.delete(input.runAttemptId);
+        const key = providerSessionKey(
+          input,
+          revision,
+          "kimi-acp/v1",
+          lease.standingPromptDigest,
+        );
+        if (providerSessionStore === undefined || key === undefined)
+          return await wake.withBodiedWake(input, lease);
+        const previous = await providerSessionStore.load(key, {
+          requireExisting: input.agent?.instanceSessionRequired === true,
+          instance: input.agent?.instanceChannelId !== undefined,
+          instanceGeneration: input.agent?.instanceSessionGeneration,
+        });
+        const protocolNotice = protocolUpgrade.prepare(
+          input,
+          lease,
+          key,
+          previous,
+        );
+        const rules = rulesCard.prepare(
+          input,
+          key,
+          previous,
+          protocolNotice !== undefined,
+        );
+        if (previous === null) return await wake.withBodiedWake(input, lease);
+        // S6 batch B: the card also re-provides the channel memory index; a
+        // plain resume keeps the index its first prompt carried.
+        const resumed = resumedMemoryIndexLease(rules, lease);
+        const card = resumed.card;
+        if (card !== undefined) {
+          if (preparedCards.size >= 64)
+            preparedCards.delete(preparedCards.keys().next().value!);
+          preparedCards.set(input.runAttemptId, card);
+        }
+        return await wake.withBodiedWake(input, {
+          // The card states the current rules itself; the notice line would
+          // only repeat that they changed.
+          ...(card === undefined
+            ? protocolUpgrade.withNotice(resumed.lease, protocolNotice)
+            : resumed.lease),
+          args: [
+            ...(lease.args ?? []),
+            "--resume-session",
+            previous.providerSessionId,
+          ],
+        });
+      } catch (error) {
+        await lease.release?.();
+        throw error;
       }
-      return await wake.withBodiedWake(input, {
-        // The card states the current rules itself; the notice line would
-        // only repeat that they changed.
-        ...(card === undefined
-          ? protocolUpgrade.withNotice(resumed.lease, protocolNotice)
-          : resumed.lease),
-        args: [
-          ...(lease.args ?? []),
-          "--resume-session",
-          previous.providerSessionId,
-        ],
-      });
     },
     args,
     beforeStart: async () => {
@@ -1348,33 +1375,29 @@ function createKimiAcpRuntime(
               compaction,
             );
           },
-          recordProviderSessionEvidence: async (input, evidence) => {
-            if (evidence.provider !== "kimi-acp/v1") {
-              throw new Error(
-                `unexpected Provider session evidence: ${evidence.provider}`,
-              );
-            }
-            const key = providerSessionKey(
-              input,
-              revision,
-              "kimi-acp/v1",
-              standingPromptDigests.digestFor(input),
-            );
-            if (key !== undefined) {
-              await providerSessionStore.record(
-                key,
-                evidence.providerSessionId,
-                {
-                  instance: input.agent?.instanceChannelId !== undefined,
-                  instanceGeneration: input.agent?.instanceSessionGeneration,
-                  standingProtocolVersion:
-                    protocolUpgrade.currentVersion(input),
-                },
-              );
-              await rulesCard.afterBinding(input);
-            }
-          },
         }),
+    recordProviderSessionEvidence: async (input, evidence) => {
+      if (evidence.provider !== "kimi-acp/v1") {
+        throw new Error(
+          `unexpected Provider session evidence: ${evidence.provider}`,
+        );
+      }
+      native?.session(input, evidence);
+      const key = providerSessionKey(
+        input,
+        revision,
+        "kimi-acp/v1",
+        standingPromptDigests.digestFor(input),
+      );
+      if (key !== undefined && providerSessionStore !== undefined) {
+        await providerSessionStore.record(key, evidence.providerSessionId, {
+          instance: input.agent?.instanceChannelId !== undefined,
+          instanceGeneration: input.agent?.instanceSessionGeneration,
+          standingProtocolVersion: protocolUpgrade.currentVersion(input),
+        });
+        await rulesCard.afterBinding(input);
+      }
+    },
     ...(config.supervisorControlTimeoutMs === undefined
       ? {}
       : { supervisorControlTimeoutMs: config.supervisorControlTimeoutMs }),

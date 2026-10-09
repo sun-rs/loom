@@ -206,6 +206,12 @@ export function createHostBodiedWake(input: {
    * after a compaction). Read once when the lease is prepared.
    */
   wakePreface?: (activation: ActivationEnvelope) => string | undefined;
+  /** Volatile transport selection, bound to the exact presented wake. */
+  onPresented?: (
+    activation: ActivationEnvelope,
+    present: WorkerMessagePresentResponse,
+  ) => void;
+  wakeSuffix?: (activation: ActivationEnvelope) => string;
 }): {
   enabled: boolean;
   withBodiedWake: (
@@ -261,6 +267,7 @@ export function createHostBodiedWake(input: {
           bodied = await renderBodiedWake({
             env: lease.env,
             participantId: activation.participantId,
+            onPresented: (present) => input.onPresented?.(activation, present),
           });
         } catch (error) {
           process.stderr.write(
@@ -289,7 +296,8 @@ export function createHostBodiedWake(input: {
       }
       const digest = await writeWakeInputFile(
         path,
-        withPreface(withRuntimeNotice(bodied, notice, protocolNotice)),
+        withPreface(withRuntimeNotice(bodied, notice, protocolNotice)) +
+          (input.wakeSuffix?.(activation) ?? ""),
       );
       remember(preparedWakeDigests, activation.runAttemptId, digest);
       if (notice !== "")

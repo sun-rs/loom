@@ -46,6 +46,7 @@ const sha256 = (text: string) =>
 
 type Scenario = {
   scenario: string;
+  nativeFinal?: boolean;
   wake?: string;
   resume?: string;
   toolCommand?: string;
@@ -94,6 +95,20 @@ async function runTurn(input: Scenario) {
       process.execPath,
       [
         DRIVER,
+        ...(input.nativeFinal
+          ? [
+              "--native-final-text",
+              "true",
+              "--launch-id",
+              "test-launch",
+              "--final-proof-file",
+              join(directory, "final.json"),
+              "--model",
+              "kimi-code/k3-256k",
+              "--thinking-level",
+              "low",
+            ]
+          : []),
         "--executable",
         executable,
         "--tool-access-mode",
@@ -752,4 +767,32 @@ test("review P1-1: UpdateGoal and SetGoalBudget permissions (resume or reshape a
       ["SetGoalBudget", { optionId: "reject", outcome: "selected" }],
     ],
   );
+});
+
+test("native trial without a selected wake retains the existing ACP path", async () => {
+  const r = await runTurn({ scenario: "reply", wake: WAKE, nativeFinal: true });
+  assert.equal(r.code, 0, r.stderr);
+});
+test("native selected refuses missing pre-prompt wire instead of guessing offset zero", async () => {
+  const r = await runTurn({
+    scenario: "reply",
+    wake:
+      WAKE +
+      "\nReply transport: native-final-text for this delivery's single target.",
+    nativeFinal: true,
+  });
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /wire unavailable/);
+  assert.equal(sentFrames(r.records, "session\/prompt").length, 0);
+});
+
+test("native trial writes the same compiled guidance in standing file and fresh inline", async () => {
+  const r = await runTurn({ scenario: "reply", wake: WAKE, nativeFinal: true });
+  assert.equal(r.code, 0, r.stderr);
+  const p = r.records.find((x) => x.event === "prompt")!;
+  assert.match(
+    String(p.standingText),
+    /When the current wake selects native-final-text/,
+  );
+  assert.ok(String(p.text).startsWith(String(p.standingText) + "\n\n"));
 });

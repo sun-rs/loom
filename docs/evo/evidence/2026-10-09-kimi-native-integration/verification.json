@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-09",
+  "baseCommit": "963f7704b5c743878c0507b61ac3af20a75368fe",
+  "scope": "Kimi cold ACP native final through existing Role/daemon and original Worker publication; default off; no frontend or Kernel business semantics change",
+  "implemented": true,
+  "checks": {
+    "npmRunCheck": {
+      "exitCode": 0,
+      "packageTests": {
+        "total": 3060,
+        "passed": 3038,
+        "skipped": 22,
+        "failed": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 59,
+      "efficiencyUnit": 503,
+      "finalCollectorStatuslessRegressionIncluded": true
+    },
+    "formatCheck": {
+      "exitCode": 0
+    },
+    "gitDiffCheck": {
+      "exitCode": 0
+    },
+    "finalTargeted": {
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "scope": "11 collector + 8 Host/Kernel integration"
+    },
+    "finalTypecheck": {
+      "exitCode": 0
+    },
+    "embeddedKimiDriverBundleAndSyntax": "passed; source-only native trial remains unavailable in SEA",
+    "documentLocalLinkTargets": 441
+  },
+  "initialCheckFailure": {
+    "command": "npm run check",
+    "reason": "Vite ephemeral-port allocation failed before choice-row browser gate",
+    "preserved": true,
+    "retry": "Unmodified choice-row gate passed; subsequent full npm run check passed; no assertion or product patch for this environment failure"
+  },
+  "tdd": {
+    "runtimeWiring": "Four expected pre-wiring behavior failures preserved; existing cancellation invariant already passed",
+    "collectorInitialRunnerSetup": "First command mistakenly used unavailable tsx; corrected native test runner and baseline stub red retained. Do not claim that baseline red preceded the first draft implementation.",
+    "actualCliFinding": "Actual known-tool statusless display delta reproduced red before minimal fix; pending/unknown-ID/explicit invalid status remain rejected",
+    "lease": "Credential, proof binding, cancellation, release and out-of-order identity regressions red/green retained"
+  },
+  "realCliFree": "free-cli.json",
+  "independentReview": "independent-review.json",
+  "paidProviderCalls": 0,
+  "efficiencyGateAccepted": false,
+  "limits": [
+    "Synthetic provider usage proves transport accounting only, not true token or price ratios.",
+    "No new multi-CLI/multi-model or multi-party long-task acceptance.",
+    "New trial session and same-session continuation only; switching existing MCP sessions and post-compaction model behavior remain unverified.",
+    "Formal service trial flags remain off; deployment is recorded separately after restart."
+  ],
+  "sourceHashes": {
+    "packages/agent-host/src/bodied-wake.ts": "e3be1949d7c336af05bbbff330cc4eec28a15bc9508ba46ad255a05164e50894",
+    "packages/agent-host/src/kimi-acp-driver.mjs": "daa965671a6db0f2e8bb2cae448801680917b193ff9dc36265054930a5610e54",
+    "packages/agent-host/src/kimi-acp-final-capture.d.mts": "e1529b8a11c85533c24710372f3021e2702241a1038d54543dcd34dd63c0bbcc",
+    "packages/agent-host/src/kimi-acp-final-capture.mjs": "7e1aebe9130b1239e84329d9139734a6a12456b61458ade2e02366cd74b2c060",
+    "packages/agent-host/src/kimi-acp-final-output.d.ts": "87e985197f5ead98d13daff49058f9c065d217c1b9a5fdb10b892bce1ca3011e",
+    "packages/agent-host/src/kimi-acp-final-output.js": "aea6e36b7be85f3db635fc11b63dec9ccf121074b9b6943ca827ed0e4f9b3267",
+    "packages/agent-host/src/kimi-native-final-lease.ts": "32cb6804c63ecbe56ba84f3fe1ac510eba910108681c8e2609cd679b9e88cb85",
+    "packages/agent-host/src/runtime-implementation-registry.ts": "c2dd435b30f26cecb2a54886a2d4f51bb10cfa6d98e1fd215393ad89563b37d1",
+    "packages/agent-host/test/fixtures/fake-kimi-acp.mjs": "cf202b2917f0e0fde996ad2561c96ea672da45a0baa8b6b92979ea4b0ade0f70",
+    "packages/agent-host/test/fixtures/fake-kimi-native-final.mjs": "bd2bc4b2023af0a30d7bf71c0dca401932f88f2dae83c2d4c76981f45b85f214",
+    "packages/agent-host/test/kimi-acp-driver.test.ts": "f7444905bc484f1012e1b490b5456b19bf45f1080a5c8ff26db7f72879712f47",
+    "packages/agent-host/test/kimi-acp-final-capture.test.ts": "d209525b1d6ec6cfd9bc964f7a3fc2e671bfb1e1e746eeb67428e108747023fe",
+    "packages/agent-host/test/kimi-acp-final-output.test.ts": "0d1b71ae1e765f4daf10c69fbf1cedf0491b8fd5a26631940778f0ff23e646df",
+    "packages/agent-host/test/kimi-native-final-lease.test.ts": "05f52e999f7fe680d13363d612bc702cc14cb7afe0d1b1146c40d635a616702d",
+    "packages/agent-host/test/kimi-native-final-runtime.test.ts": "8311fe45c9219e6abecd667fc8e22daecd04c1dc5f4277a7298f60196c0e3a64",
+    "packages/agent-host/test/kimi-native-final-test-harness.ts": "8c8b07ec2515f51d3a5fca9ea8696a6d09b6ae425109ea8ca59b4b07f6aed15b",
+    "packages/daemon/src/runtime-profile-composition.ts": "30e84efc74416d3d5ecedc2328b0eb29f717e0d596a49cbf8c25bb7eb071ff18"
+  },
+  "evidenceHashes": {
+    "check.log": "ea1096d27e7c16b1251d2bfb724b988f737d5716e08a594de9acd728d5c0356f",
+    "choice-retry.log": "88933e4c4cd596c2c3e680b86047e50d5cc0828c2a2b0cf575ba11809704f82a",
+    "check-final.log": "0412b3f88083cebc7bbf8571ea3d5c8ed4b842931ffbfcb7ec3993d32721b933",
+    "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "final-targeted.log": "ed694086f5dacff9aac1e00eb10e380a3edbf5b9edf1253e4c3f5e81df6fa108",
+    "typecheck-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "publicEvidenceHashes": {
+    "free-cli.json": "e4be6dfbad90f6d4b3a816145f1022464677d5d6983c721da250cb7c30fb762f",
+    "independent-review.json": "fba999ba2bf2d3afd00d00f089b60949919ff73dc2a895fc1431134485b96b4a"
+  }
+}

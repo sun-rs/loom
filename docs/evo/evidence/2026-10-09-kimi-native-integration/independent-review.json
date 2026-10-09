@@ -1,0 +1,124 @@
+{
+  "kind": "Kimi native final independent runtime integration and source review",
+  "paidCallsByReviewer": 0,
+  "realProviderCallsByReviewer": 0,
+  "scope": "Real Host/Kernel/Worker HTTP with fake ACP process; separate actualCLI free gate owned elsewhere",
+  "ownedFiles": [
+    {
+      "path": "packages/agent-host/test/kimi-native-final-runtime.test.ts",
+      "sha256": "8311fe45c9219e6abecd667fc8e22daecd04c1dc5f4277a7298f60196c0e3a64"
+    },
+    {
+      "path": "packages/agent-host/test/kimi-native-final-test-harness.ts",
+      "sha256": "8c8b07ec2515f51d3a5fca9ea8696a6d09b6ae425109ea8ca59b4b07f6aed15b"
+    },
+    {
+      "path": "packages/agent-host/test/fixtures/fake-kimi-native-final.mjs",
+      "sha256": "bd2bc4b2023af0a30d7bf71c0dca401932f88f2dae83c2d4c76981f45b85f214"
+    }
+  ],
+  "tdd": {
+    "red": {
+      "file": "red-ready.log",
+      "sha256": "9d357ad0207ba12b1b19617e6ad2a3549df5579f788e271ac3028a4194944a2b",
+      "tests": 5,
+      "failed": 4,
+      "passed": 1,
+      "reason": "Native-final not wired: no publication and no final-output ACK; cancellation already preserves no publication"
+    },
+    "finalGreen": {
+      "file": "green-final.log",
+      "sha256": "1cee918111a22157a4455d4b15f6dc08998e3a025cbeac2914ca944299a7c38e",
+      "tests": 8,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "initialCommandAndHarnessSetupErrorsPreserved": [
+      "initial-command-error.log",
+      "red.log"
+    ]
+  },
+  "invariants": [
+    "Two separate cold processes, one provider session, one publication each",
+    "Original Worker credential live until settlement then revoked with subsequent HTTP401",
+    "Unknown response before or after commit is not resent; durable marker reconciles committed result",
+    "Newer Human fact holds final rather than publishing stale reply",
+    "Cancel before provider final or after provider exit but before HTTP produces no publication",
+    "Default-off and Task window keep Worker completion authority; ordinary native text does not complete explicit Task"
+  ],
+  "independentReview": {
+    "verdict": "no remaining blocking issue identified",
+    "fixedFindings": [
+      "Reject native content.part.text coercion instead of allowing damaged wire to match literal ACP text",
+      "Reject accepted session identity switch before session evidence arrives; author reproducing test red then green confirmed"
+    ],
+    "preserved": [
+      "Current-session/input/prompt/step identity and immutable wire prefix",
+      "Native normal terminal with closed tools; failed tools are terminal rather than turn failure",
+      "Compaction notices excluded from final text",
+      "Original final-output authority and single-attempt HTTP semantics",
+      "Default finalReplyInterrupt remains for Worker fallback; selected capture ignores legacy arm"
+    ],
+    "limitations": [
+      "Only new trial session and same-session continuation validated here; switching existing MCP sessions and model behavior after compaction are not established",
+      "Free/fake runtime success is not cost-efficiency acceptance",
+      "Root owns full check/format/deployment gates; this report does not claim those completed",
+      "Optional status absent on known tool update is now supported; explicit unknown/null status and unknown tool IDs remain conservative rejection.",
+      "Actual CLI free attempt exposing this issue also exposed delegated terminal sandbox isolation failure; no final actual CLI/free acceptance is claimed by this review.",
+      "Existing eight runtime integration checks preceded this narrow collector correction; root full check covers final source, no redundant rerun by reviewer."
+    ]
+  },
+  "provenance": {
+    "type": "local test adaptation",
+    "source": "Existing codex-exec-test-harness.ts and runtime tests; local fake ACP shapes based on installed Kimi source and local collector contract",
+    "thirdPartySourceCopied": false
+  },
+  "supersedes": {
+    "file": "independent-summary.before-statusless-discovery.json",
+    "sha256": "8bd65d72d93fb374de1bbe39bd509fa80749c034b767fc02e154859b19f6a38b",
+    "reason": "Actual installed CLI terminal association emitted statusless tool_call_update; previous observed-always-status statement was incomplete and is explicitly withdrawn."
+  },
+  "statuslessCorrection": {
+    "reviewVerdict": "Minimal state-preserving fix correct; no remaining blocker in this difference",
+    "actualEvidence": {
+      "run": "1791557207587",
+      "file": "launch-1791557212055-21165.stdout",
+      "sha256": "2641a078c47c1c1d489eca5f7335d043896602ccb40e00ecffdfc357320d5369",
+      "event": {
+        "sessionUpdate": "tool_call_update",
+        "toolCallId": "0:file_1",
+        "content": [
+          {
+            "type": "terminal",
+            "terminalId": "rah-acp-terminal-1"
+          }
+        ]
+      }
+    },
+    "semantics": [
+      "Only known tool_call_update without status uses the new branch",
+      "Display metadata leaves prior pending/completed/failed state unchanged",
+      "Unknown tool ID cannot be introduced by display update",
+      "Pending tool remains pending, so final settlement still rejects",
+      "Explicit invalid status remains sticky-invalid even if a later terminal update arrives",
+      "No changes to wire prefix/session/prompt/terminal/Worker submission fences"
+    ],
+    "sourceSha256": "aea6e36b7be85f3db635fc11b63dec9ccf121074b9b6943ca827ed0e4f9b3267",
+    "testSha256": "0d1b71ae1e765f4daf10c69fbf1cedf0491b8fd5a26631940778f0ff23e646df",
+    "authorRedGreen": [
+      {
+        "file": "statusless-red.log",
+        "sha256": "f02b3b2521d9f151ad0227249cb566ffca11f7daf287e16d6a72260c90f8645a"
+      },
+      {
+        "file": "statusless-green.log",
+        "sha256": "51d59979fb16d63c254225f9e315dea14b8d2ad70ee8149461955b522f4a9a1a"
+      },
+      {
+        "file": "statusless-offline-replay.json",
+        "sha256": "b353c4f39ef6cd0ad7c3e49edcf1b78d561e3bcd37e36ff13e36da8292d65361"
+      }
+    ],
+    "replayLimitation": "Author replay reconstructed file identity/prefix binding; it proves parsing correction, not actual Host acceptance."
+  }
+}

@@ -349,8 +349,10 @@ export function createConfiguredRuntime(input: {
           ),
         }),
     nativeFinalText:
-      input.runtimeProfileRevision.manifest.adapter.kind === "codex-exec/v1" &&
-      process.env.LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL === "1",
+      (input.runtimeProfileRevision.manifest.adapter.kind === "codex-exec/v1" &&
+        process.env.LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL === "1") ||
+      (input.runtimeProfileRevision.manifest.adapter.kind === "kimi-acp/v1" &&
+        process.env.LOOM_KIMI_NATIVE_FINAL_TRIAL === "1"),
     supervisorDirectory: input.supervisorDirectory,
   } satisfies RuntimeCreationOptions;
   runtime =

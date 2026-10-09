@@ -1,0 +1,409 @@
+{
+  "kind": "actual-installed-Kimi-cold-ACP-native-final-real-Role-daemon-free",
+  "paidCalls": 0,
+  "realProviderRequests": 0,
+  "realAccountReadOrRefresh": false,
+  "formalServiceChanged": false,
+  "productPath": "Actual client API Role/create+instantiate→Channel home→Kernel/Host→kimi-acp/v1→same native session→WorkerFinalOutput→durable markers+ACK. Private wrapper supplies fake provider and OS isolation; no manual Kernel run completion or direct private publisher.",
+  "cli": {
+    "version": "0.39.1",
+    "installedSourceSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+    "binding": "local:kimi-cli/v1:kimi-code/k3-256k",
+    "effort": "low",
+    "fakeRawModel": "fake-k3-256k",
+    "catalogLimit": "Actual CLI validated independently configured synthetic binding; not authenticated live provider catalog availability."
+  },
+  "memory": {
+    "policy": "exact0.39.1 audited not-applicable",
+    "everyLaunch": "Guard/sourcehash pinned; dedicated HOME/KIMI_CODE_HOME, empty skills dir, cron disabled; native history preserved",
+    "accountRoots": "OS deny real .kimi-code/.codex/.claude/.agents/.config and Keychains; no copied real auth"
+  },
+  "successfulRun": "1791557719218",
+  "result": {
+    "rounds": 2,
+    "nativeSessionId": "session_d477eccf-2217-4eb6-9c9b-cc285b060020",
+    "sameSession": true,
+    "coldAcpProcesses": 2,
+    "publications": 2,
+    "markers": [
+      {
+        "submission_kind": "final-output",
+        "interrupt_sent": null,
+        "interrupt_requested": null,
+        "interrupt_accepted": null
+      },
+      {
+        "submission_kind": "final-output",
+        "interrupt_sent": null,
+        "interrupt_requested": null,
+        "interrupt_accepted": null
+      }
+    ],
+    "activations": [
+      {
+        "to_seq": 4,
+        "state": "completed"
+      },
+      {
+        "to_seq": 13,
+        "state": "completed"
+      }
+    ],
+    "workerCursor": 13,
+    "files": [
+      {
+        "round": 1,
+        "bytes": 18,
+        "sha256": "abe77ba1a03d9de33e6a6957736f140414ce64c9d6853e45c37664cf59e5eff6",
+        "body": "filesystem-round-1"
+      },
+      {
+        "round": 2,
+        "bytes": 18,
+        "sha256": "e49df677354ad78f02eb52e583f1fdf31da107e7dbc8065839f637e38f7c4389",
+        "body": "filesystem-round-2"
+      }
+    ],
+    "actualTools": [
+      {
+        "name": "Bash",
+        "id": "file_1"
+      },
+      {
+        "name": "Bash",
+        "id": "file_2"
+      }
+    ],
+    "actualToolResults": [
+      {
+        "id": "file_1",
+        "isError": false
+      },
+      {
+        "id": "file_2",
+        "isError": false
+      }
+    ],
+    "rawRequests": 4,
+    "wireRequests": 4,
+    "wireUsage": 4,
+    "kernelGenerations": 4,
+    "accounting": {
+      "responses": 4,
+      "rawWireKernelMatched": true
+    },
+    "modelCommunicationToolCalls": 0,
+    "replyMcpSchemaPresent": false,
+    "additionalPostFinalRequests": 0,
+    "syntheticTokens": {
+      "input": 40,
+      "output": 8,
+      "cached": 0
+    },
+    "syntheticTokenCaveat": "Invented loopback usage verifies accounting only; no model quality/cost inference."
+  },
+  "isolation": {
+    "wholeDaemon": true,
+    "delegatedAcpBashCovered": true,
+    "negativeReads": ["private sentinel", "repository AGENTS.md"],
+    "actualNegativeReadAndFileWrite": "Both Bash commands test forbidden reads before writing; second also reads+compares first file before writing second. Host verifies exact bytes.",
+    "probe": {
+      "sentinelReadDenied": true,
+      "repoAgentReadDenied": true,
+      "sandboxPsReturnedActualPidUid": true
+    },
+    "ps": {
+      "originalSha256": "3bbba882e30d91fc4ff6e6844ca7c59fef4351b9a3fea35dca55708d6d487d1c",
+      "signedSha256": "46d0545004748a17ac5228f2d40d1d39286defe7e4456c99ce88927fe28a3f6a",
+      "otoolTextSha256": "7a98084e387e972e899037c5394ffe5e181156977f88d5031a2447ccd3cca755",
+      "codeSectionEqual": true,
+      "mode": "0o755",
+      "sandboxReturnedActualPidAndUid": true,
+      "sandboxExitCode": 0,
+      "privateExecutable": "/private/tmp/loom-ps-signed-ue8cs16b/ps",
+      "systemPsUnchanged": true
+    },
+    "nativeSandbox": "Inherited from daemon, not reapplied; outside-daemon preflights use explicit wrapper sandbox."
+  },
+  "retainedAttempts": [
+    {
+      "run": "1791557122823",
+      "status": "failed",
+      "requests": 0,
+      "completedResponseUsage": [],
+      "usageGaps": [],
+      "note": "Fixture omitted thinking capability; ACP correctly rejected low before requests.",
+      "liveOwnedPids": [],
+      "daemonExits": [
+        {
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "resultSha256": "1d99deb7be3dadcf7c114d2a3ccef3ce5d592827c8169ee9ac371580bc6af01d"
+    },
+    {
+      "run": "1791557207587",
+      "status": "failed",
+      "requests": 2,
+      "completedResponseUsage": [
+        {
+          "response_id": "fake_acp_1",
+          "input_tokens": 10,
+          "cached_input_tokens": 0,
+          "output_tokens": 2
+        },
+        {
+          "response_id": "fake_acp_2",
+          "input_tokens": 10,
+          "cached_input_tokens": 0,
+          "output_tokens": 2
+        }
+      ],
+      "usageGaps": [],
+      "note": "Two fake requests; real delegated Bash read sentinel and exited61 because initial sandbox covered CLI only. Also exposed product collector rejection of known-tool statusless terminal display delta; subsequently fixed by separate owner TDD.",
+      "liveOwnedPids": [],
+      "daemonExits": [
+        {
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "resultSha256": "a86467cc87f6a670aa9f17520efb63abafcce1bc55e2902df87abac57f1337d9"
+    },
+    {
+      "run": "1791557314861",
+      "status": "failed",
+      "requests": 0,
+      "completedResponseUsage": [],
+      "usageGaps": [],
+      "note": "Zero-request sandbox bootstrap failure: SQLite parent metadata denied; cleanup helper obscured startup error, daemon log retained.",
+      "liveOwnedPids": [],
+      "daemonExits": [],
+      "resultSha256": "f9b94d201c5d9e0de5a5f5c47e6c253f0322bde146a26e9572a00c28751a768f"
+    },
+    {
+      "run": "1791557383399",
+      "status": "failed",
+      "requests": 0,
+      "completedResponseUsage": [],
+      "usageGaps": [],
+      "note": "Zero-request sandbox admission failure: system setuid ps spawnEPERM, Host janitor correctly refused admission.",
+      "liveOwnedPids": [],
+      "daemonExits": [
+        {
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "resultSha256": "4b0b800b16a6584d326d8438f032ae1513952ffdb5fc4e7d409d60de82d0d632"
+    },
+    {
+      "run": "1791557617750",
+      "status": "failed",
+      "requests": 0,
+      "completedResponseUsage": [],
+      "usageGaps": [],
+      "note": "Zero-request wrapper import parent metadata denial; direct diagnostic also caught prohibited nested sandbox_apply. Fixed private inherited sandbox launch path.",
+      "liveOwnedPids": [],
+      "daemonExits": [
+        {
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "resultSha256": "127b06a559c4298578cec8baf47d3ee1a996d304469466a621c3722162549f2d"
+    },
+    {
+      "run": "1791557719218",
+      "status": "completed",
+      "requests": 4,
+      "completedResponseUsage": [
+        {
+          "response_id": "fake_acp_1",
+          "input_tokens": 10,
+          "cached_input_tokens": 0,
+          "output_tokens": 2
+        },
+        {
+          "response_id": "fake_acp_2",
+          "input_tokens": 10,
+          "cached_input_tokens": 0,
+          "output_tokens": 2
+        },
+        {
+          "response_id": "fake_acp_3",
+          "input_tokens": 10,
+          "cached_input_tokens": 0,
+          "output_tokens": 2
+        },
+        {
+          "response_id": "fake_acp_4",
+          "input_tokens": 10,
+          "cached_input_tokens": 0,
+          "output_tokens": 2
+        }
+      ],
+      "usageGaps": [],
+      "note": "Full real Role/daemon two-turn pass after product statusless-display fix and private whole-daemon sandbox corrections.",
+      "liveOwnedPids": [],
+      "daemonExits": [
+        {
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "resultSha256": "beafc4471b48aed92ac8d10685311a23767a6d1cdb5b38291c0d1ecddcdd7c88"
+    }
+  ],
+  "totalSyntheticResponsesAcrossAllAttempts": 6,
+  "cleanup": {
+    "allRecordedCliWrapperDaemonPidsAbsent": true,
+    "successfulDaemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "providerServerClosed": true,
+    "noRealCredentialMaterialCreated": true
+  },
+  "tests": {
+    "config": 2,
+    "accounting": 2,
+    "daemonSandbox": 2,
+    "inheritedSandboxLaunch": 2,
+    "redAndGreenLogsPreserved": true
+  },
+  "limits": [
+    "Two fake-provider turns, not paid quality or long-task cost acceptance.",
+    "Current authenticated Kimi account refresh/copy lineage issue remains untested.",
+    "This actual free slice does not separately exercise stale/unknown/cancel or credential revocation; owner automated runtime tests cover those separately.",
+    "Temporary configuration contains fake token only; no external endpoints or real account edits.",
+    "Earlier failures remain failures; final success does not erase initial tool isolation breach or product parser defect."
+  ],
+  "sourceAtLaunch": {
+    "packages/agent-host/src/kimi-acp-driver.mjs": "daa965671a6db0f2e8bb2cae448801680917b193ff9dc36265054930a5610e54",
+    "packages/agent-host/src/kimi-acp-final-capture.mjs": "7e1aebe9130b1239e84329d9139734a6a12456b61458ade2e02366cd74b2c060",
+    "packages/agent-host/src/kimi-acp-final-output.js": "aea6e36b7be85f3db635fc11b63dec9ccf121074b9b6943ca827ed0e4f9b3267",
+    "packages/agent-host/src/generic-process-adapter.ts": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+    "packages/agent-host/src/runtime-implementation-registry.ts": "c2dd435b30f26cecb2a54886a2d4f51bb10cfa6d98e1fd215393ad89563b37d1",
+    "packages/agent-host/src/worker-final-output.ts": "8d20be4fd1acb0d2baa561a327bf21eca89337575833102a3633b4c89ac3fbf1",
+    "packages/daemon/src/agent-deletion-reconciler.ts": "ea458fcef33acf8242891c59b9894af475d64d4ed6282385b5e5a454acf54536",
+    "packages/daemon/src/build-identity.ts": "34e76cbdf847541a6fa976fe97f30e1c03f0e31492ff166f391432d0c408547d",
+    "packages/daemon/src/channel-attached-directory-validator.ts": "3a0a181aaf14f2d1144d1a498effc2788d652ce63827c4d9534612c176018f25",
+    "packages/daemon/src/cli-update-watcher.ts": "18f9cef4bd446c6785062b1728c67ea7cf13785c48629f6d6538cd87683f5941",
+    "packages/daemon/src/cli.ts": "4c9ef20e7e4a75aebe09bd16d50efa32d10138a5225e965e8829e0e878909e61",
+    "packages/daemon/src/config.ts": "1b4fe74ae9fc44dda2dc2d8f41faab04138f66b348ba221e85e1471d5b1924da",
+    "packages/daemon/src/daemon-agent-skills.ts": "3a6a4c24089d466d3acbde03dc5ece14fd6c856e96b51975ab9ae348a7a1f0ad",
+    "packages/daemon/src/daemon-application-support.ts": "e2e4547913fe814c09544080c44012a700cf4a5193848bb6f1d514399c2471b5",
+    "packages/daemon/src/daemon-application.ts": "3b91f0e8d14b7863122583467e431b0ae8fec2d7b8dfbdbc5dfb5d17e93f7f08",
+    "packages/daemon/src/daemon-execution-workspace-composition.ts": "5e81a024ed73aa262c6712ec0484cd0c853a26fec7700cfdefcd1932c806733e",
+    "packages/daemon/src/daemon-health.ts": "2fbb815612d3606578ee9bd52a048fc02580c95183bff1416398dc28c3e14679",
+    "packages/daemon/src/daemon-process-hygiene.ts": "2393bc6dce7cf84a05a8e8b77086b360835ea1a7d867c37eaf904890e2cc8cc6",
+    "packages/daemon/src/daemon-runtime-settings.ts": "3db6d967737f58d49463b2d7431e710c489ef9174f96fbc7f05dedbe5eac5e01",
+    "packages/daemon/src/daemon-web-push.ts": "bbda02bc86ed50d1a3f0ecbacef1626589dfca19889fd17dc922b9d5978ae1c0",
+    "packages/daemon/src/daemon-worker-profile-metadata.ts": "24fb2eb65cd2ffc09db07f5d3af7d4c0101b51723cc72ff419907a5f4accf3ac",
+    "packages/daemon/src/delivery-acceptance-registration.ts": "71b50f2c63c96cdeda1d75a6702cc2b2f9c0308715c6da046c73ac263edea416",
+    "packages/daemon/src/ensure-all-channel.ts": "b2f4cdf41edf55cd9ef128fe1f62dd1b62b42261fd8fb6c129c908e61bd357f7",
+    "packages/daemon/src/git-task-delivery-evidence.ts": "49b231dd0a09c524fd8596283d02a65bbaf8b27adf27c8e93d9986d796b8e5d3",
+    "packages/daemon/src/index.ts": "7c79923ef0bdca84da8f6a54368615841455339f9e4e742e11d8b3248f370551",
+    "packages/daemon/src/instance-runtime-hint-dispatcher.ts": "29e587eab0c2b666eff417cebd081465dc2ca0ce6f047ca90dcc23dd1b827068",
+    "packages/daemon/src/lan-certificate-provisioning.ts": "3146fd8a89fa3cc88e23083309b2c54d5379d8367fba74313c86082eabce3526",
+    "packages/daemon/src/lan-workbench-access-store.ts": "92a5f8a460bdaec2b7321f1804fbd7a6919cc6201617cc0cd1f386d7e8edd80c",
+    "packages/daemon/src/lan-workbench-gateway.ts": "14cdc7e77cb078d776284ef2b28934f050188e2a90aa4210f56357cd8a6551b9",
+    "packages/daemon/src/local-cli-runtime-spec.ts": "f84590a33c5d7ad9518274b2b6f03f3087618d5da4864f901dadfbc4681283b6",
+    "packages/daemon/src/local-computer-profile-store.ts": "bf92c7cad2a738d13b673c4d6e6014e1afa39fb5e4c609e7aaa5e1248ada2759",
+    "packages/daemon/src/local-core-cli-dispatch.ts": "35e84ebe946c0ba0fa0e8fa1d52ea5e00c03e25c0a1383ab7f63ba03fe3ca8e3",
+    "packages/daemon/src/local-core-cli.ts": "0f3cc35a495bc4fd82dd9da27fa32176a316afdb14780ba67210607381764ddc",
+    "packages/daemon/src/local-core-doctor.ts": "78039d15baf6f8924f93b8304407aaf896c05cb4bb5adf583b5d557f0dd546ee",
+    "packages/daemon/src/local-core-product.ts": "0c91d426571c8b946ddefab569175d6cbf244dfd9e9e5abe5194ed3a422d024a",
+    "packages/daemon/src/local-core-workbench.ts": "a03220726cff3dd0e4565587dda548cf07eaa596ba6cdec31b4026d520512554",
+    "packages/daemon/src/local-runtime-inventory.ts": "67616adfeb96b35fbb0c18c69fa5f4ed52ed16de005513e4b8e823e01283da38",
+    "packages/daemon/src/local-workbench-bootstrap.ts": "921d17cdd3526cc1f9dbc0c324c7f4658008fe28da8b43dcdb90eaef98876d96",
+    "packages/daemon/src/local-workbench-entry.ts": "5cddee65d51dae5acecfbe03b2827159ee18da323da1edd2711f3844df0eae84",
+    "packages/daemon/src/local-workbench-gateway.ts": "b4b58a3837fb4c4aaf54e0c168d6a68b868997c7dc1354abc8d0df24e1134e7d",
+    "packages/daemon/src/local-workbench-runtime-bindings.ts": "244165573d208c6c383582f57dfb117a5a66a769c89b01c7f23be3d1bf6f9c9e",
+    "packages/daemon/src/local-workbench-session.ts": "930ad37c0ee07f1981899c4b1de95abde2a1f598815e76b6c26a6b8e9ca7fa1d",
+    "packages/daemon/src/macos-local-core-install-command.ts": "fdff72b2af07214b4098eae44bd41de51b90d217611bc709a132d83bbb081b1e",
+    "packages/daemon/src/macos-local-core-launch-agent.ts": "5abd19e32328a853017e584b006b8e210b2692727a1f09cf0594d4f7f82b48d9",
+    "packages/daemon/src/macos-local-core-product-operator.ts": "f55c82bc115bff64ca7e4817b32679320dbbfcc478802b282717fe3fde6fb0fc",
+    "packages/daemon/src/outbox-wake-dispatcher.ts": "7d4f1b956d1a8c36d39d7e05dd3e8a6177ae3a26322f8c945fa59392989b0c67",
+    "packages/daemon/src/profile-image-gc-reconciler.ts": "12fdea8b18c67c838340e3f4c118f0aafab2109544431551b982b2798548cf1e",
+    "packages/daemon/src/profile-image-store.ts": "e100651357239b4314195dc34e27c9aed0bf99c02d89d306eb7da60d1b243fe9",
+    "packages/daemon/src/rah-data-home.ts": "097e32faf83dc0845191adbef437c962d3a0ec64f6b5010c98fd50b5aed8bf64",
+    "packages/daemon/src/registry-runtime-recovery.ts": "ecb19a68f1482d2a545a84df95a70bdd3144fbf0b6188520a42ecb1c67e1ff82",
+    "packages/daemon/src/restartable-local-workbench.ts": "09faf725bfed1ccdcc4e549c322340133e495266afc6146792b13f92370b8609",
+    "packages/daemon/src/room-file-gc-reconciler.ts": "dbf1b35caee86921cdb5cdd24824793076c8f644cbbce9d598e93c7a98bbc087",
+    "packages/daemon/src/runtime-catalog-refresh.ts": "543afb1b6215cfa8f8ed2e717f666cd3f82e3083a1d95ac5078423510af21179",
+    "packages/daemon/src/runtime-guide-settings.ts": "0ca9f8bc2e12e5acadb9acee6f6021effe8f53fe05c19f5eb80e4a52d653bed0",
+    "packages/daemon/src/runtime-launch-overlays.ts": "6eaf64c494b23a5d7d1ed9c94ba8297b6dea45a6c40624b4e044d0efaab8b59f",
+    "packages/daemon/src/runtime-offer-publisher.ts": "420407c5f80bec57b751b4678836cd95eb778cacc391c745cc91fb4f37af9b5a",
+    "packages/daemon/src/runtime-profile-composition.ts": "30e84efc74416d3d5ecedc2328b0eb29f717e0d596a49cbf8c25bb7eb071ff18",
+    "packages/daemon/src/runtime-settings.ts": "214eca0eff90987dd2cc650c826d4e161960c5e44935487d474db0eeb6b34673",
+    "packages/daemon/src/secret-provider.ts": "c12bc9a4993a61feef52243cec264c494e7ba8c40f440f1d6660b63d1bbc1ecf",
+    "packages/daemon/src/standing-prompt-compiler.ts": "ca82065e431909e55cdc210e7f011784c4860da439e091119f345622c00e51f4",
+    "packages/daemon/src/standing-prompt-delivery.ts": "56a0eb2f27939621cf0f520660ea19ae8f82dc60b3bb3e9f77e608b09c94fb9f",
+    "packages/daemon/src/standing-prompt-lease.ts": "d1536b7f4cfc3dd8bf127c95b9028b7d42d905506e2bbe1480a02b57736da14b",
+    "packages/daemon/src/startup-memory-system-lease.ts": "7ffeca1c7572d4620ed70a362b42e2ae83bde3932b4ffe741ba976c3bb8cd039",
+    "packages/daemon/src/state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+    "packages/daemon/src/state-restore-proof.ts": "2469743573d76b65aa73a72ada896d6ee6544f1b5c661199b7175925756e43bc",
+    "packages/daemon/src/static-file-response.ts": "978ab0fddd2e8573506b1b2674f8f288ca5b2413dc8935045d37a8001043935b",
+    "packages/daemon/src/web-build-metadata.ts": "5a903639080aa5b3118a23d621de3eed494ff91612ceab5ad882a0fed3195a98",
+    "packages/daemon/src/web-push-administration.ts": "00e27b84e2bc69c9db33584e0daa0d4477a442a056221fe7ff1104625e46dae7",
+    "packages/daemon/src/web-push-dispatcher.ts": "e2e21cd43f924ae9c563d6b21882ece0f07675db76af47252f572d168fbe5ebb",
+    "packages/daemon/src/web-push-state.ts": "fd0c5a5dc1c684046221f867a752eefa8e5e5b190e27e0fe5c617a1aee1f360d",
+    "packages/daemon/src/web-recovery-assets.ts": "13b6b2a8ea495a8d29352f6729b01d1f8f637e60faf25876fcaf3f490655f4d4",
+    "packages/daemon/src/workbench-service-control.ts": "f4a7016d12a978297ac82d28e0a333577a17b4d4e797548d17a18e8d19500bab"
+  },
+  "finalSourceHashes": {
+    "packages/agent-host/src/kimi-acp-driver.mjs": "daa965671a6db0f2e8bb2cae448801680917b193ff9dc36265054930a5610e54",
+    "packages/agent-host/src/kimi-acp-events.d.ts": "f8323cd8a45a8bf76b066d48782efa6546517647588c6d1cb2d4f5f6efa33fc0",
+    "packages/agent-host/src/kimi-acp-events.js": "18077d2bb3c616064bd394205a2fe1325eeb60f5b72abbf834b444c4bc7ea825",
+    "packages/agent-host/src/kimi-acp-final-capture.d.mts": "e1529b8a11c85533c24710372f3021e2702241a1038d54543dcd34dd63c0bbcc",
+    "packages/agent-host/src/kimi-acp-final-capture.mjs": "7e1aebe9130b1239e84329d9139734a6a12456b61458ade2e02366cd74b2c060",
+    "packages/agent-host/src/kimi-acp-final-output.d.ts": "87e985197f5ead98d13daff49058f9c065d217c1b9a5fdb10b892bce1ca3011e",
+    "packages/agent-host/src/kimi-acp-final-output.js": "aea6e36b7be85f3db635fc11b63dec9ccf121074b9b6943ca827ed0e4f9b3267",
+    "packages/agent-host/src/kimi-cold-worker-mcp.ts": "a96d4fb7d563333a5483bfc178ce929c306cb705dc99df5651e76226f1dd09e5",
+    "packages/agent-host/src/kimi-final-interrupt.d.ts": "71ef493c65f66c4939024d6e7e53edb4387ddd591ee6c93c0db5f783510f05df",
+    "packages/agent-host/src/kimi-final-interrupt.js": "cb51f929bdcb27d711e717195f03856ecfe8928acfb642b26ba8ea7b9ca2a32c",
+    "packages/agent-host/src/kimi-native-autonomy.d.ts": "706b05e24aacffcb8df2d3d28307a0e025f8740a7681b5230d0a16810cb94f1e",
+    "packages/agent-host/src/kimi-native-autonomy.js": "5576e5db4cf702be1679313c38a6e069523d2567113fabc954dedc6a8d75a6ed",
+    "packages/agent-host/src/kimi-native-final-lease.ts": "32cb6804c63ecbe56ba84f3fe1ac510eba910108681c8e2609cd679b9e88cb85",
+    "packages/agent-host/src/kimi-wire-usage.d.ts": "165d4b92de5e5cff71039bcf9ef6f0605706101b63f54542232de8cac9306ee5",
+    "packages/agent-host/src/kimi-wire-usage.js": "6b31b057f580aaeadd4bfd7bad308067357fcbd5d10c15632ef6f6318f601e03",
+    "packages/agent-host/src/kimi-worker-mcp-ready.d.ts": "ba1b6fa0a40117a704bd1636a5a409f9c63dc8627dc458da1c7495b9fa2ed59a",
+    "packages/agent-host/src/kimi-worker-mcp-ready.js": "469157546c5cf0ea59842db9d77fd92d6546e3e331c5449729964d717125c9aa",
+    "packages/agent-host/src/runtime-implementation-registry.ts": "c2dd435b30f26cecb2a54886a2d4f51bb10cfa6d98e1fd215393ad89563b37d1"
+  },
+  "privateHelperHashes": {
+    "accounting.mjs": "e4774fdfa95950d097790fe2d34048f607f5ac52fc8675d9d8a716f41a11c483",
+    "accounting.test.mjs": "b4d14d942109cfca64bf24995972ef7f73c0e2eb51ed2817145f89cf214ae3a0",
+    "config.mjs": "d64b57eb8ae93b681980aac4966a395d84eaaa9afc74f18d5e41b791ab9c398f",
+    "config.test.mjs": "66ac3105db58f1da8a146ba85068267e32b3db6a1659f807b4552f07cf63710e",
+    "daemon-sandbox.mjs": "3e0d4c40e2e60fe54a3d0fabc6d1f43ad83b1f2534f5ce93d0d445ec0632f744",
+    "daemon-sandbox.test.mjs": "d4a8bbfe05617187ecfa6859347bc2a031af1408eacd3d7fc32a31ba071f8aad",
+    "fake.mjs": "2d7dda4009ed527abccbfaf56a2ccfe496e6573302e8b10b365537534aa96e9c",
+    "gate-daemon.mjs": "de89daa86d767475cb09a0f80f2ba7c6a41798f0d6f701e299f14345eba17e66",
+    "human-connection.mjs": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1",
+    "preflight.mjs": "c2886d184a54318b4419d8c3ad55680e9e8a6975b492dcbe8b61e2fa5202454e",
+    "prepared.json": "78616f3fb906371443e0a8cfb049fbd2d295ff3c2224e151ee5444b741d69fcb",
+    "product-arm.mjs": "dc5acab60e9bdad054244ccd5139fe631a0095b7c3ced131a63c0ad34a3e6b55",
+    "ps-sandbox-initial.json": "2fc41ea9c484a078ddeb66ed88d4a6becd24224054c71589bcacdd5e76a1d15a",
+    "ps-signed-probe.json": "41a63f17d7c7078e1b09a57814e45a2e146b924ba1fb4af5bc16a7beff728ca4",
+    "run.mjs": "3cb2574c7bd387cb8a52cb2628647e35749ccdb7eaf15e5b544b76974ddd2336",
+    "sandbox-launch.mjs": "9cc66afc8479893209d656a13498abd7f090a5787bc27b299759decb5c0320b1",
+    "sandbox-launch.test.mjs": "0ab560331cb01aa4875fa53b945a834a72ae4d0eac200209fbeead976af4c7e8",
+    "sandbox.mjs": "ee22712f7e8d63eba6ba43eb9761a64f4472058fbc85d69822527b35ee074204",
+    "summarize.mjs": "aee4b82fa985f91105640edae355be092a59d38d7d72e052c92768ad3b88506c",
+    "worker-source-allowlist.json": "b00dea930915be610d674a072a5fd0e1593abb1541ce31ca83af939824e66cf2",
+    "wrapper.mjs": "5cfd1b186e4ba2c7bd902adf593191386ef298006aecff0b6a4762f767dedcb5"
+  },
+  "rawEvidenceHashes": {
+    "wire.private.jsonl": "85776283a13b21eab82b0e6e1542053c8deef07fe2c4f6a7687016a2ba336c44",
+    "result.private.json": "beafc4471b48aed92ac8d10685311a23767a6d1cdb5b38291c0d1ecddcdd7c88",
+    "daemon-isolation.json": "09321e7296dcd3d94de7368aac847c713c27cc592eb361bf5f776ed9091b9001",
+    "request-1.private.json": "d5042f5f70d00de51a4b6b4d28f64f6497d00b27bff1339951f11b8f520d7234",
+    "request-2.private.json": "4106ea6a093fb481fda16557f3c565edfa90e866663acf5efa58fd6a9fb6d63a",
+    "request-3.private.json": "01778a77d69b047b9246bcf57f77d4bc1802197a42f956ebc7e4ea81f8432c66",
+    "request-4.private.json": "e63fd5c783e2ec51c8c4a219ffd1322a9623596d3563e4c74ae3abe6503a0fb2"
+  }
+}

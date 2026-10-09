@@ -1,3 +1,5 @@
+import { createKimiFinalCapture } from "./kimi-acp-final-capture.mjs";
+import { nativeFinalTextInstructions } from "./final-output-instructions.js";
 import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
 import { KimiWorkerMcpReady } from "./kimi-worker-mcp-ready.js";
 import {
@@ -91,10 +93,15 @@ const options = parseArguments(driverArguments(process.argv.slice(2)));
 // appended the notice lines and any rules card, so the acceptance digest
 // covers them); otherwise the fixed startup wake plus the env notices.
 const TURN_INPUT = options.wakeInput ?? providerActivationInput();
+const standingPrompt = nativeFinalTextInstructions(
+  options.prompt,
+  options.nativeFinal === true,
+);
 const promptDirectory = mkdtempSync(join(tmpdir(), "rah-os-kimi-prompt-"));
 chmodSync(promptDirectory, 0o700);
 const promptPath = join(promptDirectory, "standing-instructions.md");
-writeFileSync(promptPath, options.prompt, { mode: 0o600 });
+writeFileSync(promptPath, standingPrompt, { mode: 0o600 });
+const finalCapture = createKimiFinalCapture(options, TURN_INPUT, process.env);
 const terminals = new Map();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 let terminalSequence = 0;
@@ -327,6 +334,13 @@ try {
     await processExited;
   }
   await cleanupTerminals();
+  const nativeExit = await processExited;
+  finalCapture?.write(
+    stopping ||
+      cancelRequested ||
+      nativeExit.code !== 0 ||
+      nativeExit.signal !== null,
+  );
 } catch (error) {
   if (stopping) {
     await cleanupTerminals();
@@ -376,6 +390,12 @@ async function runTurn(resumeSessionId, mcpServers) {
   if (sessionId === undefined) {
     throw new Error(`${method} returned no sessionId`);
   }
+  if (
+    finalCapture &&
+    resumeSessionId !== undefined &&
+    sessionId !== resumeSessionId
+  )
+    throw new Error("Kimi native session identity changed");
   activeSessionId = sessionId;
   await configureSession(sessionId);
   if (workerMcpReady) await workerMcpReady.wait(sessionId, request);
@@ -402,7 +422,7 @@ async function runTurn(resumeSessionId, mcpServers) {
   const promptText = [
     ...(resumeSessionId === undefined
       ? [
-          options.prompt,
+          standingPrompt,
           `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
         ]
       : []),
@@ -410,6 +430,7 @@ async function runTurn(resumeSessionId, mcpServers) {
   ].join("\n\n");
   const wire = kimiWireStart(sessionId, resumeSessionId !== undefined);
   wire.promptText = promptText;
+  finalCapture?.start(sessionId, promptText);
   activePrompt = prompt;
   acceptCurrentTurnUpdates = true;
   let settlePrompt;
@@ -427,11 +448,16 @@ async function runTurn(resumeSessionId, mcpServers) {
       0,
       (id) => {
         prompt.requestId = id;
+        finalCapture?.sent(id);
       },
     );
     prompt.finalInterrupt.settle(stringField(promptResult, "stopReason"));
     settlePrompt(promptResult);
     await emitKimiTurnUsage(wire, { promptSettled: true });
+    finalCapture?.settle(
+      stringField(promptResult, "stopReason"),
+      cancelRequested || stopping || prompt.finalInterrupt.issued,
+    );
     return { finalInterrupt: prompt.finalInterrupt, promptResult, sessionId };
   } catch (error) {
     prompt.finalInterrupt.settle(undefined);
@@ -731,6 +757,7 @@ function observePromptUpdate(frame) {
           .digest("hex"),
       });
   }
+  finalCapture?.observe(prompt.sessionId, update);
   prompt.finalInterrupt.observe(update);
 }
 
@@ -740,6 +767,7 @@ function promptTurnId(prompt) {
 
 /** The Host's signal: end THIS prompt at its next tool boundary. */
 function armFinalReply(frame) {
+  if (finalCapture) return;
   const prompt = activePrompt;
   if (
     prompt === undefined ||
@@ -1122,7 +1150,13 @@ function parseArguments(args) {
     const value = args[index + 1];
     if (value === undefined)
       throw new Error(`missing value for ${String(flag)}`);
-    if (flag === "--executable") parsed.executable = value;
+    if (flag === "--native-final-text") {
+      if (value !== "true")
+        throw new Error("invalid native final selection flag");
+      parsed.nativeFinal = true;
+    } else if (flag === "--launch-id") parsed.launchId = value;
+    else if (flag === "--final-proof-file") parsed.proofPath = value;
+    else if (flag === "--executable") parsed.executable = value;
     else if (flag === "--additional-dir")
       parsed.additionalDirectories.push(parseAttachedDirectory(value));
     else if (flag === "--mcp-config-file") parsed.mcpConfigFile = value;

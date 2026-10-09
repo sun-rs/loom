@@ -224,3 +224,37 @@ Role原始配置和指令、memory、权限、Task、held/unknown、ACK以及Ker
 [本批免费证据](evidence/2026-10-05-context-compaction-free.json)：相同Role/runtime/memory输入，旧24a6ea8与当前正式编译器及最终指引渲染7168→6860字符，wake尾140→40字符。真实Codex+正式guard+fake验证新session两轮2+1请求；另以旧真实接线建session、关pool后用当前接线恢复同ID，三轮2+1+1请求，三个可信发表/ACK完成，协议notice仅第二轮当前wake出现、完成后接受新版本。各请求strict schema，原生memory_mode=disabled。升级夹具组合了正式store/upgrade owner，但不是完整daemon配置迁移验证；三次夹具路径/descriptor设置失败保留，未放宽guard。
 
 [P112真实付费结果](evidence/2026-10-05-context-compaction-p112.md)未通过：首轮误选MCP并把频道填入threadId，scope拒绝后读help并转CLI --final，后续两轮也走CLI。三条marker均无final-output来源；ACK成功但首轮多两次协议生成，累计输入1.921倍、未缓存1.444倍，整批over-budget。outputSchema只约束最终文本，不能限制模型先选工具。已恢复全部产品源码到24a6ea8，未保留任何未经独立验收的精简子集，也未追加付费抽样。P111的成功只证明该路径可工作，不证明稳定采用；本里程碑是保留可复现基线和明确失败边界，不是宣告效率问题解决。
+
+## Kimi cold ACP 原生正文接入（2026-10-09）
+
+本节补充早期“cold 接入未来再做”的边界：Kimi 沿用正式 `kimi-acp/v1`
+与原生 session/resume，源码部署由 `LOOM_KIMI_NATIVE_FINAL_TRIAL=1` 显式选择，
+默认关闭，SEA 不开放该试验。只有 Host 已完整呈现、无 notice 缺口且只有一个
+可回复消息目标的 wake 才选择 `native-final-text`。Task、多目标等仍用 Worker
+工具；不从原生退出或自然语言推断 Task 完成。试验路径不启动只负责最终回复的
+MCP bridge，其他 Worker CLI 操作保留；默认路径保持原 MCP 与 final interrupt。
+
+所有权不变：`kimi-acp-final-output` / `kimi-acp-final-capture` 只验证本轮原生证据；
+`kimi-native-final-lease` 只持有原 Run 的易失传输状态与原 Worker 凭据；
+`GenericProcessAdapter` 继续拥有退出、fd3 排空、取消及凭据释放次序；
+`WorkerFinalOutput` / Kernel 继续独占一次提交、权限、新鲜度、幂等、held 与消费确认。
+没有第二份队列、历史游标或业务完成状态，也没有后台自动重发。
+
+候选必须同时满足原 launch/session/prompt 绑定、ACP 正常 `end_turn`、所有工具结束、
+原生进程正常退出，以及本轮 wire 最后 step 的 `end_turn` 和 `turn.ended completed`。
+ACP 文本必须与最后 step 正文一致；压缩通知不混入正文。已知工具的无状态终端展示
+更新只保留原执行状态，不能证明工具结束；明确非法状态或陌生工具仍拒绝。wire 在 prompt 前记录
+inode/device/offset 与前缀 SHA256，收尾流式复核前缀并只解析有界新增区间；
+截断、替换、前缀篡改、超限、缺记录、模型或 effort 不符均不能产生候选。
+这会读取旧前缀以核验完整性，但不会重新把旧历史发送给模型。
+
+Host 校验私有 proof 文件的 launch/session/turn 与已验证 wake 接受记录，
+在原凭据仍有效且尚未记录 Run 结束时提交。取消信号在进程退出后仍有效；
+未知回执不重试，较新 Human 事实进入既有 held/action-required 路径。
+proof 随租约释放删除，进程恢复不能据它重新发表。standing 文件和首轮 inline
+使用相同试验指引，防止压缩后读文件丢失传输说明；这不声称压缩后的真实模型行为已验收。
+本批范围是新建试验 session 后原 session 续轮，既有 MCP session 切换模式仍未验收。
+
+实现、自动测试、真实安装 CLI 加本地假模型以及付费效率的结论分开记录于
+[当前状态](status.zh-CN.md)和[运行账本](paid-runs.zh-CN.md)。免费运行的合成
+usage 只验证请求到 Kernel 的核账完整性，不能替代多 CLI、多模型长任务成本对照。

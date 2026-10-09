@@ -280,7 +280,17 @@ async function runPrompt(frame) {
     .filter((block) => block.type === "text")
     .map((block) => block.text)
     .join("");
-  record({ event: "prompt", text, tokens: [...tokens] });
+  const standingPath = /Current standing instructions file: ("[^"\n]+")/.exec(
+    text,
+  )?.[1];
+  record({
+    event: "prompt",
+    text,
+    tokens: [...tokens],
+    ...(standingPath
+      ? { standingText: readFileSync(JSON.parse(standingPath), "utf8") }
+      : {}),
+  });
   appendPromptWire(text);
   if (tokens.has("wirefail") || tokens.has("wiredrop")) {
     appendTurnWire();
