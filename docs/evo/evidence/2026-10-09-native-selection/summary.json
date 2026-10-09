@@ -21,7 +21,9 @@
   "newInstalledCLIRuns": 2,
   "efficiencyVerdict": "No real model cost or quality measurement. Actual installed CLI uses scripted local fake provider; no native control or cost ratio.",
   "deployment": {
-    "status": "pending",
+    "status": "Verified graceful restart; fresh real page and business state preservation verified.",
+    "sourceRevision": "93c656b62a815892a8dd0a4f5432813108752ed1",
+    "evidence": "deployment.json",
     "trialEnabled": false
   },
   "busyInput": {
