@@ -23,6 +23,17 @@ effort、明确 final phase、工具结束和正常终态均须可证。rollout 
 诊断证据，不能重建 Room、推断 Task 完成或自造 ACK。usage 只接收本轮唯一
 per-response 记录，不能把 resume 的累计摘要再加一遍。
 
+同一已绑定 turn 可以含多条原生 `final_answer`。普通 exec 路径按原生 last-message
+语义只取最后一条：它必须与 `task_complete.last_agent_message`、最后一个 stdout
+助手消息和本轮新输出文件一致；更早的 final 仍须属于原 turn、具有不同消息身份且
+无异常状态。同正文不同身份也不重复发表，重复身份、跨轮内容、晚到工具及不一致
+终态仍拒绝。该规则不改变上面的 app-server JSON 路径。
+
+最终回复资格与费用覆盖分开：多 final 可伴随未结束的上游响应。已有 per-response
+用量的 `complete` 不证明未报告尝试的费用完整；当前投影对这类缺口仍有限制，
+验收账单将其标为 unknown，不填零、不从业务成功推导成本通过。
+[本批真实CLI免费验证](../evo/evidence/2026-10-09-fixed-long-batch/codex-multiple-final-free.json)。
+
 GenericProcessAdapter 的可选 `settleFinalOutput` 租约回调在运行证据处理完后、
 原凭据撤销前执行；只增加提交收据，保留实际退出事实。取消覆盖原生进程已结束但
 HTTP 仍待决的窗口。Host 崩溃恢复时，volatile 标记只报告结果未知，绝不重发正文

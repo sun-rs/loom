@@ -17,6 +17,19 @@ Driver 交叉校验完整 exec stdout、本轮独占 last-message 文件、rollo
 stdout 最后一段文字、exit0 或旧 final 单独都不能发表。
 Session 身份独立于 final 成功，失败后不能重新开始一个新 session。
 
+P158 暴露普通 exec 同 turn 多 final 的兼容边界：原生 last-message 采用最后一条
+完成消息。collector 允许更早的同 turn、不同身份、正常 final，仅选择与原生
+`task_complete.last_agent_message`、最后 stdout 助手消息和新输出文件一致的末条；
+同文也不拼接或重复发表。异 turn、重复身份、异常状态、尾随工具和不一致结束仍拒绝。
+该选择不替代原输入/文件前缀/模型/effort/工具闭合证明，也不放宽 app-server 路径。
+实际 CLI＋loopback 已复现旧拒绝、不同正文和相同正文的新终态发表及同 session 续轮。
+[免费证据](evidence/2026-10-09-fixed-long-batch/codex-multiple-final-free.json)。
+
+本批还确认了计费证据边界：首条 partial final 缺少独立响应用量时，即便最终
+正常退出且记录的 generation 用量标记 complete，未报告尝试的费用覆盖仍未知。
+本修复只解决回复资格，不补造 token 或修改用量字段；P158 原失败和费用缺口保留，
+不因免费修复通过而重写付费结果。
+
 Host 处理完运行证据，随后通过原 Worker 的同一 final-output 事务槽提交正文，再撤销
 凭据。取消覆盖进程退出后的 HTTP 待决窗口。缺证据/unknown/held 保持显式待处理；
 崩溃恢复只核验持久标记，不重发表或用新模型轮次补偿。

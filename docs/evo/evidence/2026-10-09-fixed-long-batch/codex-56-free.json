@@ -1,0 +1,184 @@
+{
+  "scope": "Actual installed Codex against synthetic loopback Responses only; no model quality, paid cost, or broad performance inference.",
+  "paidCalls": 0,
+  "run": "1791538072084-free",
+  "model": "gpt-5.6-luna",
+  "effort": "low",
+  "binding": {
+    "modelBindingId": "local:codex-cli/v1:gpt-5.6-luna",
+    "provider": "openai",
+    "modelId": "gpt-5.6-luna",
+    "displayName": "GPT-5.6-Luna",
+    "description": "Older fast and efficient model.",
+    "capabilityClasses": ["deep_coding"],
+    "supportedReasoning": ["low", "medium", "high", "xhigh", "max"],
+    "supportedServiceTiers": ["default", "priority"],
+    "reasoningOptions": [
+      {
+        "value": "low",
+        "label": "Low",
+        "description": "Fast responses with lighter reasoning"
+      },
+      {
+        "value": "medium",
+        "label": "Medium",
+        "description": "Balances speed and reasoning depth for everyday tasks"
+      },
+      {
+        "value": "high",
+        "label": "High",
+        "description": "Greater reasoning depth for complex problems"
+      },
+      {
+        "value": "xhigh",
+        "label": "Extra high",
+        "description": "Extra high reasoning depth for complex problems"
+      },
+      {
+        "value": "max",
+        "label": "Max",
+        "description": "Maximum reasoning depth for the hardest problems"
+      }
+    ],
+    "defaultReasoning": "medium",
+    "evidence": "probed"
+  },
+  "sourceCommit": "d04e3a69b8854eeb4adec1520a9cbfb2b3e6c0c2",
+  "requestCount": 10,
+  "injectedDisconnects": 4,
+  "businessSuccess": true,
+  "usageStatus": "incomplete-known-usage; recovered transport attempts have unknown billing",
+  "knownUsage": {
+    "native": {
+      "input": 300,
+      "cachedInput": 0,
+      "output": 60,
+      "generations": 3
+    },
+    "loom": {
+      "input": 300,
+      "cachedInput": 0,
+      "output": 60,
+      "generations": 3
+    }
+  },
+  "pricingConclusion": "Unknown failed-attempt billing is not zero; paid runner stops after current snapshot on any recovery diagnostic. Fake execution deliberately continues solely to test same-session recovery.",
+  "toolSchemaExactlyEqualBothArmsEveryRequest": true,
+  "toolSchemaSha256": "06b7e90fce22b38777726153bb5185a2f50c4847348b364fdf994fea43671a45",
+  "actualProductStandingPresent": true,
+  "sameNativeFirstBusinessInstruction": true,
+  "arms": {
+    "native": {
+      "sameSessionTwoTurns": true,
+      "ordinaryExecResume": true,
+      "memoryDisabledEveryLaunch": true,
+      "rolloutMemoryDisabled": true,
+      "traces": [
+        {
+          "sha256": "75c3cd19e216677d6b63b4bdecae74cbfb69bb957ef3a98751c8f4c77f51a556",
+          "errors": [
+            {
+              "type": "error",
+              "message": "Reconnecting... 1/5 (stream disconnected before completion: Transport error: network error: error decoding response body)"
+            },
+            {
+              "type": "error",
+              "message": "Reconnecting... 2/5 (stream disconnected before completion: Transport error: network error: error decoding response body)"
+            }
+          ],
+          "completed": true
+        },
+        {
+          "sha256": "01b1d78fb037aa7c21bd951248eed81ae76066416646a6095b86130a8fa085c4",
+          "errors": [],
+          "completed": true
+        }
+      ],
+      "rolloutSha256": "bfc684ee9b915796f4c979910104b21bc6744b7b8a2dda05a029c5a3558f994a",
+      "snapshotHashes": {
+        "native/snapshot-2/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "native/snapshot-2/proof.txt": "3117116e29dd468faf5861180ef5c34761f6bcde5018f45dc5ac3766fa05ff44",
+        "native/snapshot-2/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+        "native/snapshot-1/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "native/snapshot-1/proof.txt": "3117116e29dd468faf5861180ef5c34761f6bcde5018f45dc5ac3766fa05ff44",
+        "native/snapshot-1/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+      }
+    },
+    "loom": {
+      "sameSessionTwoTurns": true,
+      "ordinaryExecResume": true,
+      "memoryDisabledEveryLaunch": true,
+      "rolloutMemoryDisabled": true,
+      "traces": [
+        {
+          "sha256": "aa9b388fbe7cda0e02e12fa6e59889fb84720de4ec527cdb9f1c45b8bbbebec7",
+          "errors": [
+            {
+              "type": "error",
+              "message": "Reconnecting... 1/5 (stream disconnected before completion: Transport error: network error: error decoding response body)"
+            },
+            {
+              "type": "error",
+              "message": "Reconnecting... 2/5 (stream disconnected before completion: Transport error: network error: error decoding response body)"
+            }
+          ],
+          "completed": true
+        },
+        {
+          "sha256": "8dfd2111895176d1edb0f903ede338772f663964a427d5ba80bab6e75dd6798f",
+          "errors": [],
+          "completed": true
+        }
+      ],
+      "rolloutSha256": "9c5c2124780b8d6ab68a52c0bd4cc1dbac770532bd5bbe3b38b20f18d828f6b8",
+      "snapshotHashes": {
+        "loom/snapshot-2/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "loom/snapshot-2/proof.txt": "3117116e29dd468faf5861180ef5c34761f6bcde5018f45dc5ac3766fa05ff44",
+        "loom/snapshot-2/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+        "loom/snapshot-1/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "loom/snapshot-1/proof.txt": "3117116e29dd468faf5861180ef5c34761f6bcde5018f45dc5ac3766fa05ff44",
+        "loom/snapshot-1/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+      },
+      "activations": {
+        "completed": 2
+      }
+    }
+  },
+  "allOwnedProcessesExited": true,
+  "requestHashes": {
+    "request-1.private.json": "41642ea95aebab1949812d4a79ace76426d9943419f46b0316a09272636ef069",
+    "request-2.private.json": "33ceef8560b95a62a552f9034010619a3ef0a909d52838f9b33dfeb0e5704f7d",
+    "request-3.private.json": "0555bd7e82d43bf03715cf9ef401872a760653b481b248cb1c26e761f23a5f7a",
+    "request-4.private.json": "27999792c74406ad3ddd1825b5b5143e788de93766ffecbb06a0a0c4861b5e13",
+    "request-5.private.json": "2d8f4cbb06e19aaf8411f70bb4975f48dcf612bb211c9aae76044bcbb23c5b03",
+    "request-6.private.json": "f896e5d02bfadd10ae85cd84ba0c86fc9a395972cfa72e17fe6ac60c0cfcad1c",
+    "request-7.private.json": "864b3080c18ce689aab0c83f5cb4b14c9eaaa0770c26f85b87134db48655d318",
+    "request-8.private.json": "5aefb462133887af2ea524854955855191de750f686a1a56c4d43cd68c15b33d",
+    "request-9.private.json": "024d9dd210268dbffa7d34c10a37d446748905de8739c019c296f4b9d8302b22",
+    "request-10.private.json": "563488b36d6cc7d3a7f78a110f1fbe04254c388b4ea59758baf80e324f559d35"
+  },
+  "sourceHashes": {
+    "packages/agent-host/src/codex-exec-final-output.js": "e5a74b56bce98fa6743ccaccff2197fff7f28bc4fa43d247d115d3927bcd1775",
+    "packages/agent-host/src/codex-exec-driver.mjs": "c259b1b3d3bc49da659eefba0cdbe71efbc182d64a006307e7c97798219dd14e",
+    "packages/agent-host/src/codex-exec-runtime.ts": "d41cd151624ee38d65b093634689a54c3a41e53fc71e96e6876687d79a879e7f",
+    "packages/agent-host/src/provider-launch-arguments.js": "91ebd5b8d188c3ee917502d50c116ead15a4ee8962436145260af52b5a3ea620",
+    "scripts/cli-efficiency/model-guard.mjs": "d2c4891ecb48dabf43796c41f3b10d4d324adb9aca6f5c3240cb929960c026b8",
+    "scripts/cli-efficiency/guarded-shim.mjs": "67d0215b115a411eb947b4f3e8682cb762fa48f15fbba3f3385be82bf1cdbe22",
+    "scripts/cli-efficiency/approved-models.mjs": "612f0d8cfef8956949aa18711b056731b830dd7152026b3589a92849adbbeb44"
+  },
+  "runnerHashes": {
+    "codex-all-usage.mjs": "5ccda73823c024444617642ff1f32039aa7e8ba9d4be34674cc7cd608230058a",
+    "codex-plan.json": "5fdd64a6c424fd3a8625ab13590461c9574ea0f42fd3997ae952f4207c4b5d3a",
+    "native-proof.mjs": "57b89d923b7d7b57a2fec185e66550b407a1f1ff8d24a724450dc81e15525248",
+    "worker-source-allowlist.json": "b00dea930915be610d674a072a5fd0e1593abb1541ce31ca83af939824e66cf2",
+    "transport-audit.mjs": "c226787e8d3321d20d8ec89f5fd184e6042ae151b052ba943b52976f9a01caa1",
+    "native-control.mjs": "5370bbb4c4f3ab5e339f62d5bfd34a87720e683bc5c53cc26be76381b69141ad",
+    "native-proof.test.mjs": "668899f6f29805c0fb96c34824bf118bda1ac7d7ed0e989a623da1cc95a24341",
+    "product-arm.mjs": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa",
+    "human-connection.mjs": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1",
+    "codex-wrapper.mjs": "e1480f8c4080c2daf4f0c74859bb1566f7fba5d40f686794b25ccfb495dcd202",
+    "transport-audit.test.mjs": "9a2951a843fe2d9f6725c707f404d5a8be0d77e0d37fbaea3fc091ad8af4c8c7",
+    "codex-run.mjs": "d90dc5cb3092b6a2d91a469f9a5e332ab0c28ee71afdd4ed12b7dc82f9a48773"
+  },
+  "priorRunsRetained": ["1791538018979-free"]
+}

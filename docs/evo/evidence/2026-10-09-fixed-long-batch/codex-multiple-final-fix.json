@@ -1,0 +1,77 @@
+{
+  "baseCommit": "d04e3a69b8854eeb4adec1520a9cbfb2b3e6c0c2",
+  "worktree": "/private/tmp/loom-p158-multiple-final-fix",
+  "status": "isolated-validation-passed; exact patch applied to root",
+  "files": [
+    "packages/agent-host/src/codex-exec-final-output.js",
+    "packages/agent-host/test/codex-exec-final-output.test.ts"
+  ],
+  "sourceSha256": "e10a69c6663ad8757175da5a3dc3d5be5a374102e4c4ddaa160c43011020fd3c",
+  "patchSha256": "b4b1bf8f7506faf0a9109e02e541a79258d2824758126f7cc34bcdd6e2e721ac",
+  "design": "Multiple distinct native final_answer identities inside the original bound turn are allowed; only the last final is published, after agreement with task_complete.last_agent_message, the last stdout agent_message and the fresh last-output file. Identical text with distinct identities is legitimate; repeated identities are not.",
+  "preserved": [
+    "original session/input/turn/model/effort/prefix/inode/file provenance",
+    "unique normal terminal completion and exit0",
+    "all earlier finals current-turn, nonempty, unique identity and normal state",
+    "closed native and exec tools; late tools fail closed",
+    "current output exact bytes with only permitted CLI newline",
+    "original Room publication owner; no business mutation from collector"
+  ],
+  "tdd": {
+    "firstRed": "red.log",
+    "sameBodyRed": "same-text-red.log",
+    "green": "green.log",
+    "tests": 17,
+    "existingAssertionsWeakened": false
+  },
+  "gates": {
+    "format": {
+      "status": "passed",
+      "log": "format-final.log"
+    },
+    "diff": {
+      "status": "passed",
+      "log": "diff-final.log"
+    },
+    "check": {
+      "status": "passed",
+      "log": "check-final.log",
+      "exitCode": 0
+    },
+    "supersededCheck": {
+      "status": "explicitly terminated after same-body behavior change; not a failure or pass",
+      "log": "check-superseded.log",
+      "exactOwnedCheckTreeStopped": 7
+    }
+  },
+  "reference": {
+    "repository": "https://github.com/openai/codex",
+    "revision": "979011409de0a60b52f179721948e65531d26144",
+    "tag": "rust-v0.161.0",
+    "file": "codex-rs/exec/src/event_processor_with_jsonl_output.rs",
+    "sourceSha256": "bc296541b385f9b4ca2c28cc638e25a8d6b1332b2cd67f5a03eaa97a3d612b19",
+    "lines": [484, 489, 631, 635],
+    "finding": "Each completed AgentMessage overwrites final_message; print_final_output writes that last message.",
+    "adoption": "Behavioral reference only, local glue; no upstream source copied or structurally ported."
+  },
+  "paidEvidenceLimit": "P158 remains failed. First final lacks corresponding token_usage_record and has a 300-second gap; final-output eligibility is separate from billing completeness. No usage fabrication or model request performed by this change.",
+  "verificationBoundary": "Actual installed CLI loopback same-body evidence belongs to the independent free-run agent, collector source hash identical. No paid run, root source edit, commit/push or deployment by this agent.",
+  "evidenceHashes": {
+    "red.log": "8b9306cc63276b057e3716b6ffd4efaf833b210da8b05aada64ffe6db1d6cced",
+    "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "same-text-red.log": "bf22c81ef4391a7cd20174d1fba971be99e5b42f58d1d102daff4e8721e926aa",
+    "page.mjs": "129fdc9f0a589a6b389ff064eb728cb00cb5665855c31c11b04c5522e68ed219",
+    "green.log": "c29b264402d9a9126cb161292ed6b746af3b3c2a94ba81e0f1d7e1b32e958997",
+    "diff-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-final.log": "9df071a17e5a6b57e8c9e64413afca9d8399ccad0dc6d25697bf4208c18b925f",
+    "check-superseded.log": "af3a49ae2f0da0f175d77e2ce697ea1f2ad69415cb7fc2cc16afe670c901050b",
+    "restart.mjs": "e2dc0532dbb9a973c6cb0a9b64f293100bf869542391a5b138b37a3a85e2d17e",
+    "change.patch": "b4b1bf8f7506faf0a9109e02e541a79258d2824758126f7cc34bcdd6e2e721ac"
+  },
+  "rootApplication": {
+    "sourceAndTestBytesIdentical": true,
+    "targetedTests": "28 passed, 0 failed",
+    "targetedLogSha256": "7762d152038bf0bcd49a1635a33aa9f45b7884ba3255e8bb89175cea97ac3b0c",
+    "deployment": "recorded separately after restart"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "scope": "Post-stop offline file snapshot/evaluation only; not a successfully published product round and not part of completed paired evidence.",
+  "exit": 0,
+  "capture": {
+    "round": 3,
+    "artifactHashes": {
+      "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+      "invoice.py": "e223ff6ba538d3cfa41323e0f836bbdb60cf560312fdd32649935d16dd7e03e0",
+      "tests/test_invoice.py": "d45e34a5edff7b39198fdd93bea1ca1479dcd20d41b009e2a23f65223012e164"
+    },
+    "evaluation": {
+      "round": 3,
+      "passed": true,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    "sameBytesVerified": true
+  },
+  "stderr": ""
+}

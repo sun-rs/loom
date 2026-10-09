@@ -1,0 +1,50 @@
+{
+  "batch": "P157",
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "rounds": 12,
+  "fixtureHashes": {
+    "plan.json": "eb1d542bee39a592c81ed62f6acbbb3414a35426c632624cd8f49e9ef3aa8022",
+    "capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+    "snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+    "evaluator.py": "bddaecfa2616446a294e08e935a07288fc21f2627b902898ac26564e04f6743d",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  },
+  "limits": {
+    "input": 8000000,
+    "output": 150000,
+    "requests": 400,
+    "wallMs": 3600000,
+    "turnMs": 600000
+  },
+  "admission": "One new paid paired trajectory only; exact model/effort, clean pinned HEAD, source+fixture hashes, source admission, exclusive paid-launch claim. No replacement of P156 or favorable rerun.",
+  "rules": [
+    "continuous same session per arm; independent arms",
+    "same first-turn business instruction; identical per-round user task and initial workspace",
+    "odd rounds native first, even rounds product first",
+    "keep failed quality and consumed requests; no reruns to select favorable result",
+    "all upstream requests/native usage/Kernel usage reconciled",
+    "budget thresholds before each arm turn; not a hard in-flight cost cap"
+  ],
+  "initialWorkspaceHashes": {
+    "invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+  },
+  "revision": "d04e3a69b8854eeb4adec1520a9cbfb2b3e6c0c2",
+  "authorization": "Owner new start instruction via lead agent on 2026-10-09: repaired OpenCode long-task paid comparison, one pair of 12 rounds.",
+  "hostConditions": "Other provider experiments may overlap; no quiet-host latency verdict",
+  "interpretation": "Single trajectory; task quality, whole-task and late-window token ratios separately; no pooled five-CLI or actual-bill claim",
+  "toolParity": "All actual request tool schemas must exactly match frozen default native schema (including descriptions); both arms remove experimental build.tools disables; no reduction of product permissions.",
+  "standingParity": "Host-generated exact rules file read literal permitted; before every product upstream request Role instruction and native-final guidance must appear in actual system. Otherwise reject before forwarding.",
+  "history": "P156 costs retained as unmatched due tool/schema and sandbox standing failures; this is a new measurement.",
+  "budgets": "Combined observed upstream usage/request total checked before EACH arm launch, not a hard in-flight bill cap.",
+  "comparability": "Single CLI/model paired trajectory, ordinary native run/resume vs real Role warm server; no universal multi-CLI conclusion.",
+  "freeProof": "Previous actual-CLI two-round parity-free proof plus new directory preflight; synthetic tokens never evidence of model efficiency.",
+  "preRunBudgetDecision": {
+    "inputAdmissionThreshold": 8000000,
+    "previousBatchObservedInput": 6387088,
+    "reason": "Lead explicitly adjusted before any P157 paid claim/freeze: P156 already used 6,387,088 input; restored product standing and matched default tools plausibly require more context. Bounded prospective design for this one batch, not a result-driven relaxation.",
+    "unchanged": "150k output / 400 requests / 60 min wall / 10 min turn; thresholds remain fixed once paid starts."
+  }
+}

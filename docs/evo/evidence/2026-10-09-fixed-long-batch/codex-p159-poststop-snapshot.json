@@ -1,0 +1,28 @@
+{
+  "scope": "Post-timeout offline file snapshot only; not a completed native turn or paired efficiency evidence.",
+  "exit": 0,
+  "capture": {
+    "round": 1,
+    "artifactHashes": {
+      "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+      "invoice.py": "e3b9027931d1cc509d49899fac967fedd540880453a2d7fdb3519f38a7e05cfd",
+      "tests/test_invoice.py": "7b1312af0dc6bd9c64def42639d30f415d943944ecd445335299588b48b4670c"
+    },
+    "evaluation": {
+      "round": 1,
+      "passed": false,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsExitCode": 1
+    },
+    "sameBytesVerified": true
+  },
+  "stderr": ""
+}

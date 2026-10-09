@@ -1,0 +1,854 @@
+{
+  "batch": "P157",
+  "sourceRevision": "d04e3a69b8854eeb4adec1520a9cbfb2b3e6c0c2",
+  "status": "failed",
+  "fake": false,
+  "rows": [
+    {
+      "arm": "loom",
+      "round": 1,
+      "requests": 8,
+      "input": 94241,
+      "cachedInput": 79872,
+      "output": 4294,
+      "reasoning": 1452,
+      "firstGenerationInput": 9397,
+      "tools": {
+        "bash": 3,
+        "write": 3,
+        "edit": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9012,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "shell/other": 3,
+        "implementation": 1,
+        "tests": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "requests": 9,
+      "input": 117326,
+      "cachedInput": 98944,
+      "output": 9639,
+      "reasoning": 6386,
+      "firstGenerationInput": 7565,
+      "tools": {
+        "bash": 4,
+        "read": 2,
+        "write": 4,
+        "edit": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 10656,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "shell/other": 4,
+        "implementation": 2,
+        "README": 2,
+        "tests": 3
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "requests": 5,
+      "input": 75302,
+      "cachedInput": 73216,
+      "output": 1101,
+      "reasoning": 148,
+      "firstGenerationInput": 14377,
+      "tools": {
+        "bash": 2,
+        "edit": 2
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 2342,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "shell/other": 2,
+        "tests": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "requests": 5,
+      "input": 95547,
+      "cachedInput": 93184,
+      "output": 1132,
+      "reasoning": 157,
+      "firstGenerationInput": 18297,
+      "tools": {
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 2875,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "requests": 5,
+      "input": 85333,
+      "cachedInput": 83072,
+      "output": 1799,
+      "reasoning": 308,
+      "firstGenerationInput": 16068,
+      "tools": {
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 4360,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "requests": 5,
+      "input": 104909,
+      "cachedInput": 102528,
+      "output": 1574,
+      "reasoning": 254,
+      "firstGenerationInput": 19895,
+      "tools": {
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 4253,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "requests": 9,
+      "input": 185357,
+      "cachedInput": 180480,
+      "output": 3849,
+      "reasoning": 1407,
+      "firstGenerationInput": 18108,
+      "tools": {
+        "edit": 5,
+        "bash": 3
+      },
+      "toolErrors": 1,
+      "toolInputCharacters": 6648,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 3,
+        "shell/other": 3,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "requests": 9,
+      "input": 241957,
+      "cachedInput": 234112,
+      "output": 5409,
+      "reasoning": 2500,
+      "firstGenerationInput": 22096,
+      "tools": {
+        "read": 1,
+        "edit": 6,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9480,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 4,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 2
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "requests": 5,
+      "input": 121873,
+      "cachedInput": 118272,
+      "output": 3047,
+      "reasoning": 681,
+      "firstGenerationInput": 22558,
+      "tools": {
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 7460,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "requests": 7,
+      "input": 236702,
+      "cachedInput": 229120,
+      "output": 5647,
+      "reasoning": 2419,
+      "firstGenerationInput": 29464,
+      "tools": {
+        "read": 1,
+        "edit": 4,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 11495,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 2
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "requests": 17,
+      "input": 645484,
+      "cachedInput": 625664,
+      "output": 12998,
+      "reasoning": 6353,
+      "firstGenerationInput": 25931,
+      "tools": {
+        "read": 2,
+        "write": 1,
+        "bash": 7,
+        "edit": 6
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 20943,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 6,
+        "shell/other": 7,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "requests": 9,
+      "input": 445824,
+      "cachedInput": 427264,
+      "output": 11339,
+      "reasoning": 6456,
+      "firstGenerationInput": 36941,
+      "tools": {
+        "write": 1,
+        "read": 2,
+        "edit": 4,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 17787,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 4,
+        "shell/other": 1,
+        "README": 2
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "requests": 6,
+      "input": 289313,
+      "cachedInput": 282880,
+      "output": 4728,
+      "reasoning": 888,
+      "firstGenerationInput": 44730,
+      "tools": {
+        "read": 1,
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 13810,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "requests": 7,
+      "input": 415328,
+      "cachedInput": 406784,
+      "output": 6265,
+      "reasoning": 2440,
+      "firstGenerationInput": 54825,
+      "tools": {
+        "edit": 4,
+        "read": 1,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 14269,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 3,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "requests": 7,
+      "input": 364493,
+      "cachedInput": 361088,
+      "output": 2672,
+      "reasoning": 536,
+      "firstGenerationInput": 50612,
+      "tools": {
+        "edit": 5,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 6524,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 2
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "requests": 6,
+      "input": 384689,
+      "cachedInput": 381568,
+      "output": 2434,
+      "reasoning": 765,
+      "firstGenerationInput": 62763,
+      "tools": {
+        "edit": 4,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 5962,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "requests": 7,
+      "input": 391033,
+      "cachedInput": 386560,
+      "output": 3502,
+      "reasoning": 998,
+      "firstGenerationInput": 53595,
+      "tools": {
+        "read": 1,
+        "edit": 3,
+        "write": 1,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 8041,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 3,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "requests": 8,
+      "input": 542942,
+      "cachedInput": 538240,
+      "output": 3884,
+      "reasoning": 1273,
+      "firstGenerationInput": 65428,
+      "tools": {
+        "edit": 3,
+        "read": 1,
+        "write": 1,
+        "bash": 2
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9410,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 3,
+        "tests": 1,
+        "shell/other": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 5
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "requests": 6,
+      "input": 354099,
+      "cachedInput": 350848,
+      "output": 2587,
+      "reasoning": 419,
+      "firstGenerationInput": 57753,
+      "tools": {
+        "edit": 4,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 6638,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 2,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": false,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "requests": 7,
+      "input": 497680,
+      "cachedInput": 494592,
+      "output": 2300,
+      "reasoning": 363,
+      "firstGenerationInput": 69712,
+      "tools": {
+        "edit": 5,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 6346,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 3,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 5
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "requests": 11,
+      "input": 763727,
+      "cachedInput": 746240,
+      "output": 13801,
+      "reasoning": 8695,
+      "firstGenerationInput": 60582,
+      "tools": {
+        "read": 2,
+        "bash": 7,
+        "write": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 15252,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "shell/other": 7,
+        "tests": 1
+      },
+      "quality": false,
+      "snapshotFiles": 5
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "requests": 8,
+      "input": 650917,
+      "cachedInput": 636288,
+      "output": 14116,
+      "reasoning": 8573,
+      "firstGenerationInput": 72202,
+      "tools": {
+        "write": 1,
+        "bash": 5,
+        "edit": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 18213,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "tests": 2,
+        "shell/other": 5
+      },
+      "quality": true,
+      "snapshotFiles": 6
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "requests": 11,
+      "input": 916305,
+      "cachedInput": 906752,
+      "output": 6313,
+      "reasoning": 2509,
+      "firstGenerationInput": 78074,
+      "tools": {
+        "read": 1,
+        "bash": 6,
+        "write": 1,
+        "grep": 1,
+        "edit": 1
+      },
+      "toolErrors": 1,
+      "toolInputCharacters": 10907,
+      "communicationToolCalls": 0,
+      "fileTargets": {
+        "README": 2,
+        "shell/other": 7,
+        "tests": 1
+      },
+      "quality": false,
+      "snapshotFiles": 5
+    }
+  ],
+  "arms": {
+    "native": {
+      "observedRequests": 80,
+      "rawRequestsVerified": 80,
+      "unknownRequests": [],
+      "knownInput": 3733821,
+      "knownCachedInput": 3642624,
+      "knownOutput": 63739,
+      "completedRounds": 11,
+      "oneContinuousSession": true
+    },
+    "loom": {
+      "observedRequests": 97,
+      "rawRequestsVerified": 97,
+      "unknownRequests": [],
+      "knownInput": 4286560,
+      "knownCachedInput": 4194944,
+      "knownOutput": 60691,
+      "completedRounds": 12,
+      "oneContinuousSession": true
+    }
+  },
+  "limitations": [
+    "One paired trajectory; not generalized multi-model acceptance.",
+    "Provider-reported tokens, not currency cost.",
+    "Post-run independent artifact hashes; quality verdicts from archived runner evaluation."
+  ],
+  "frozenSourcesVerified": 2210,
+  "startedAt": "2026-10-09T09:25:42.816Z",
+  "finishedAt": "2026-10-09T09:45:04.312Z",
+  "all24QualityPassed": false,
+  "unknownUsage": 0,
+  "errors": [
+    {
+      "message": "AssertionError [ERR_ASSERTION]: Input budget",
+      "stack": "AssertionError [ERR_ASSERTION]: Input budget\n    at file://PRIVATE_REVIEWS/2026-10-09-opencode-p157/paid-run.mjs:26:541\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    }
+  ],
+  "windows": {
+    "pairedPrefixR1to11": {
+      "native": {
+        "requests": 80,
+        "input": 3733821,
+        "cachedInput": 3642624,
+        "output": 63739,
+        "reasoning": 31586,
+        "communicationToolCalls": 0,
+        "toolErrors": 0,
+        "uncachedInput": 91197,
+        "totalTokens": 3797560,
+        "tools": {
+          "bash": 19,
+          "read": 8,
+          "write": 7,
+          "edit": 38
+        },
+        "meanInputPerRequest": 46672.7625
+      },
+      "loom": {
+        "requests": 86,
+        "input": 3370255,
+        "cachedInput": 3288192,
+        "output": 54378,
+        "reasoning": 21885,
+        "communicationToolCalls": 0,
+        "toolErrors": 1,
+        "uncachedInput": 82063,
+        "totalTokens": 3424633,
+        "tools": {
+          "bash": 28,
+          "write": 6,
+          "edit": 35,
+          "read": 6
+        },
+        "meanInputPerRequest": 39189.01162790698
+      },
+      "loomOverNative": {
+        "requests": 1.075,
+        "input": 0.9026289690909125,
+        "uncachedInput": 0.8998431965963792,
+        "output": 0.8531354429783963,
+        "totalTokens": 0.9017982599353269,
+        "meanInputPerRequest": 0.8396548549682907
+      },
+      "interpretation": "Observed paired prefix, not complete planned12turn acceptance"
+    },
+    "posthocLast6CompletedPairsR6to11": {
+      "native": {
+        "requests": 45,
+        "input": 2937380,
+        "cachedInput": 2884736,
+        "output": 40338,
+        "reasoning": 19870,
+        "communicationToolCalls": 0,
+        "toolErrors": 0,
+        "uncachedInput": 52644,
+        "totalTokens": 2977718,
+        "tools": {
+          "write": 3,
+          "read": 4,
+          "edit": 21,
+          "bash": 11
+        },
+        "meanInputPerRequest": 65275.11111111111
+      },
+      "loom": {
+        "requests": 54,
+        "input": 2808149,
+        "cachedInput": 2753280,
+        "output": 40288,
+        "reasoning": 17889,
+        "communicationToolCalls": 0,
+        "toolErrors": 0,
+        "uncachedInput": 54869,
+        "totalTokens": 2848437,
+        "tools": {
+          "read": 6,
+          "write": 3,
+          "bash": 18,
+          "edit": 21
+        },
+        "meanInputPerRequest": 52002.75925925926
+      },
+      "loomOverNative": {
+        "requests": 1.2,
+        "input": 0.9560046708291062,
+        "uncachedInput": 1.042265025453993,
+        "output": 0.9987604739947444,
+        "totalTokens": 0.9565838672433051,
+        "meanInputPerRequest": 0.7966705590242552
+      },
+      "interpretation": "Post-hoc descriptive window R6–11, not prespecified late6 R7–12"
+    }
+  },
+  "cleanup": {
+    "recordedPidsExited": 39,
+    "temporaryProviderConfigsRemoved": true,
+    "daemonExitCode": 0,
+    "guardViolationFiles": 0,
+    "ports": "Recorder services closed by awaited runner cleanup; no retained listener PID. No port-number receipt persisted for independent socket recheck."
+  },
+  "memory": {
+    "cliVersion": "1.18.35",
+    "nativeEveryLaunch": "Every initial/resume launch uses --pure; frozen native-turn invokes nativeMemoryVersionEvidence before each launch; frozen wrapper injects OPENCODE_DISABLE_CLAUDE_CODE=1 and OPENCODE_DISABLE_EXTERNAL_SKILLS=1",
+    "product": "Warm serve --pure plus formal guarded launch memory evidence; one continuous provider server/session",
+    "limitation": "Exact-version audit not-applicable status and switches; no invented transcript memory_mode."
+  },
+  "budget": {
+    "inputAdmissionThreshold": 8000000,
+    "totalObservedInput": 8020381,
+    "rule": "Prospectively raised from 6M to 8M before this batch freeze based on old P156 aggregate6.387M, not on P157 outcome. Combined pre-arm admission threshold; not hard in-flight cost cap. No mid-run change.",
+    "inputBeforeLoomR12": 7104076,
+    "loomR12Input": 916305,
+    "inputBeforeRejectedNativeR12": 8020381,
+    "nativeR12ProviderRequests": 0,
+    "thresholdExceededBy": 20381,
+    "status": "Budget stopped run before native R12; permitted in-flight Loom R12 completed. No threshold change, retry or substitution."
+  },
+  "comparability": {
+    "actualToolSchema": "All actual request tool schemas exactly equal to frozen10tool schema; separately hashed request-structure audit.",
+    "standingInstructions": "Role business and native-final guidance verified in every Loom actual system request before forwarding and independently in raw records.",
+    "businessTasks": "Same frozen tasks and initial files; native CLI itself quotes/escapes task text containing double quotes whereas Loom does not. Semantic task equivalence, not byte-identical user prompt.",
+    "environment": "Private isolated homes and account configuration, same provider/model/low and continuous session each; native ordinary CLI versus actual Role/Channel Host route.",
+    "sampleSize": "One planned12turn trajectory, completed11pairs plus unmatched Loom R12; no full12turn or five-CLI acceptance.",
+    "userPromptEncoding": "Native CLI wraps/escapes tasks containing double quotes after receiving accurate argv; Loom retains plain task text. Semantic tasks shared, byte-identical prompts not established.",
+    "temporaryFiles": "Native R11 used /tmp/opencode/fuzz.py and fuzz2.py; generic temp is not fully isolated by peer-root sandbox. No observed peer-arm reads, but no claim of complete same-UID filesystem isolation."
+  },
+  "evidenceHashes": {
+    "plan": "9606877247d5eae22a7a089d3ef5e5799bdaef3705bb81a37b9c196fd31b8f4d",
+    "admission": "c722860eab2b600262e1ea4492fc3a44ec01a7dd14021fb9641e57911f7b307e",
+    "result": "24aed6faf099e752cd04d7778d36bca61f4992aeab34f756bfcf022b7ac31f46",
+    "requestStructure": "0a90cfb4c2282747c74f2522436cfe570ec6df0a175773e9c51a32f7a723def0",
+    "runner": "fad94b3e8b88e8de0b1bb06916f2e5a6639f301f5b0f2480101df542bf041508",
+    "nativeHelper": "9d6a046b6ff77d99a4474a33236ec7446b2dd49004063f94a5907709bff81f00",
+    "wrapper": "dd497bbf1466a3c15c0a32f9921a4cc475201e2faa1c8ab7001b5cbcd009fb22",
+    "memoryProduct": "115153e3ff4adee9bcd143b887048f9cb38e5bb271278c86e0a18dc1194d3d9e",
+    "qualityDiagnostic": "c11797110964f3093d307928991cbad3be84ec12380241021bc2d106d06534b5",
+    "nativeUpstreamMetadata": "c354cb95f43bd4569ba54b5f8f6606c6f0cc09dbc3b8926229ac33604caf6bc3",
+    "loomUpstreamMetadata": "032f738f4d3ac3bf3b5560a42aca548da568d4af4d56a7e457b71e24de4d4301"
+  },
+  "readmeReview": {
+    "nativeSnapshotRound": 11,
+    "loomSnapshotRound": 12,
+    "sameStage": false,
+    "native": "API, validation, exact arithmetic, grouping and file/stdin behavior accurately documented at R11. Native R12 documentation task never ran.",
+    "loom": "R12 README documents API, exact arithmetic and validation, file/stdin/error examples. Manually checked file subtotal8.25/tax0.83/total9.08 and grouped stdin grand12.00 with10.00+2.00 groups.",
+    "limitation": "Manual review only; no claim of matched final R12 documentation because native R12 absent.",
+    "hashes": {
+      "nativeR11": "f6eafe820046ac3d0e7d2bdec2f86b59d70d1b34f1cbaf77a2aea74c58dcd839",
+      "loomR12": "7f2f8889ede43a679aff567ab337f4df57b88b66d0a558e322274145c9c768b7"
+    }
+  },
+  "plannedLate6R7to12": {
+    "available": false,
+    "reason": "Native R12 was never launched because cumulative input after Loom R12 exceeded the frozen pre-arm budget."
+  },
+  "complete12TurnRatio": null,
+  "firstGeneration": {
+    "native": 7565,
+    "loom": 9397,
+    "additionalInput": 1832
+  },
+  "descriptiveDecomposition": {
+    "scope": "completed paired R1–11 only",
+    "requestCountFactor": 1.075,
+    "meanInputPerRequestFactor": 0.8396548549682907,
+    "productEqualsInputRatio": 0.9026289690909125,
+    "nativeMeanInputPerRequest": 46672.7625,
+    "loomMeanInputPerRequest": 39189.01162790698,
+    "warning": "Arithmetic identity only, not causal identification. All real business work retained. First-generation overhead exists but does not predict the stochastic full trajectory."
+  },
+  "allObservedCosts": {
+    "native": {
+      "requests": 80,
+      "uniqueRequests": 80,
+      "assistants": 80,
+      "input": 3733821,
+      "output": 63739,
+      "cachedInput": 3642624,
+      "unknownRequests": 0,
+      "complete": true,
+      "errors": [],
+      "label": "complete provider-reported tokens"
+    },
+    "loom": {
+      "requests": 97,
+      "uniqueRequests": 97,
+      "assistants": 97,
+      "input": 4286560,
+      "output": 60691,
+      "cachedInput": 4194944,
+      "unknownRequests": 0,
+      "complete": true,
+      "errors": [],
+      "label": "complete provider-reported tokens"
+    }
+  },
+  "quality": {
+    "completedSnapshots": 23,
+    "allFunctionalPassed": true,
+    "nativeOriginalPassed": 11,
+    "loomOriginalPassed": 9,
+    "loomOriginalFailedRounds": [10, 11, 12],
+    "originalFalsePreserved": true,
+    "diagnostic": "Every false is self-test only. The legitimate test creates candidate/- to verify stdin sentinel; frozen evaluator denies all candidate writes. Offline copies reproduced PermissionError and pass without evaluator write prohibition. This diagnoses a harness limitation; it does not rewrite original verdicts.",
+    "diagnosticEvidenceSha256": "c11797110964f3093d307928991cbad3be84ec12380241021bc2d106d06534b5"
+  },
+  "observations": [
+    "No observed Worker/readbox/help communication tool calls; actual tool usage confined to business bash/read/write/edit.",
+    "Loom R6 used17generations versus native9;6extra business Python calculations investigated precision boundary examples. Both paid trajectories retained fully.",
+    "Native R11 used8generations and14116output tokens for regression/fuzz work; Loom R11 used11generations and13801output tokens. These divergent histories persist in subsequent context.",
+    "Raw request structural diagnostics show same10tool schemas, plus7043system characters and167user characters in the Loom first request; first-generation provider input is1832tokens higher. Character differences are not token attribution.",
+    "On completed R1–11 the actual Loom trajectory is cheaper in total provider tokens; this does not establish completion of the planned efficiency gate or a universal cost advantage.",
+    "Budget failure and all unmatched Loom R12 costs remain in allObservedCosts; no full12ratio is calculated."
+  ],
+  "sourceFreezeRelease": "P157 own runner, daemon and recorded CLI processes exited; all177 upstream streams closed;2210 frozen source hashes verified. Does not authorize edits while other batches still use shared source."
+}

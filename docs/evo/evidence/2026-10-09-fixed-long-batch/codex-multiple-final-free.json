@@ -1,0 +1,240 @@
+{
+  "task": "P158 multi-final recovery actual CLI free proof",
+  "paidCalls": 0,
+  "cliVersion": "codex-cli 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "sourceRevision": "d04e3a69b8854eeb4adec1520a9cbfb2b3e6c0c2",
+  "isolatedRepairTree": "/private/tmp/loom-p158-multiple-final-fix",
+  "collectorBeforeSha256": "e5a74b56bce98fa6743ccaccff2197fff7f28bc4fa43d247d115d3927bcd1775",
+  "collectorAfterSha256": "e10a69c6663ad8757175da5a3dc3d5be5a374102e4c4ddaa160c43011020fd3c",
+  "harnessSha256": "2c1f69df8487e3f47aae5fc1a9dd334ea851e66c9678b80f282172ead645f4a2",
+  "rows": [
+    {
+      "stage": "red",
+      "run": "1791540198413-free",
+      "resultSha256": "46fc480ac295b95b357d31fc4213df8850e071bbe9e0eefb09ee8aad5778ab95",
+      "rolloutSha256": "6f7a2abe635c9e78b94dec481181ef65925bff41c36ec1665970e1aa6c516ee2",
+      "status": "failed",
+      "fakeRequests": 2,
+      "finals": [
+        {
+          "id": "native-final-1",
+          "turnId": "01a1201e-0ac0-7b33-b48d-12830b4d693f",
+          "text": "SYNTHETIC SUPERSEDED FIRST FINAL"
+        },
+        {
+          "id": "native-final-2",
+          "turnId": "01a1201e-0ac0-7b33-b48d-12830b4d693f",
+          "text": "SYNTHETIC TERMINAL FINAL 1"
+        }
+      ],
+      "tokenUsageRecords": 1,
+      "originalCliExitCodes": [0],
+      "actualStdoutReconnectErrorFrames": 1,
+      "activations": [
+        {
+          "state": "quarantined",
+          "from_seq": 4,
+          "to_seq": 4
+        }
+      ],
+      "finalMarkers": 0,
+      "deliveryCursors": [],
+      "inboxStates": ["pending"],
+      "memory": {
+        "metadataDisabled": true,
+        "allContextsExactModelEffort": true,
+        "configurationEvidence": [
+          {
+            "sha256": "052e3bb398927bef47174943a94793b54fd940703c5e5a8ee32bc027db33f09d",
+            "autoMemoryDisabled": true
+          }
+        ]
+      },
+      "cleanup": {
+        "recordedPidsExited": 13,
+        "temporaryConfigFilesRemoved": 1,
+        "noAuthEverCopied": true,
+        "serverClosedByAwaitedRunnerFinally": true
+      },
+      "usageCompleteness": "unknown: first delivered final response lacks terminal provider usage; synthetic100/20 tokens are not cost evidence",
+      "rawArtifacts": [
+        {
+          "name": "response-1.sse",
+          "sha256": "7592913ed2e70143f54d4aa576e7f6143cb53b9c4ad2f98ece1042dc0b7f089a"
+        },
+        {
+          "name": "response-2.sse",
+          "sha256": "e5b342502b4273c950869c29e5d4cd89cadc60448514f9ae8be961542fc8bc64"
+        }
+      ]
+    },
+    {
+      "stage": "green",
+      "run": "1791540256793-free",
+      "resultSha256": "d8baa6f699157e5009e39c73753529f12a316a6428fe9b1e752564bdffdeb11a",
+      "rolloutSha256": "1265366d359e031deca923de5047bc44237abadc7a47494a8b31548ae54ce805",
+      "status": "completed-needs-independent-review",
+      "fakeRequests": 3,
+      "finals": [
+        {
+          "id": "native-final-1",
+          "turnId": "01a1201e-efce-7852-aff3-f66ff2c18d32",
+          "text": "SYNTHETIC SUPERSEDED FIRST FINAL"
+        },
+        {
+          "id": "native-final-2",
+          "turnId": "01a1201e-efce-7852-aff3-f66ff2c18d32",
+          "text": "SYNTHETIC TERMINAL FINAL 1"
+        },
+        {
+          "id": "native-final-3",
+          "turnId": "01a1201e-f824-7e82-9688-2cd88d4c1a78",
+          "text": "SYNTHETIC TERMINAL FINAL 2"
+        }
+      ],
+      "tokenUsageRecords": 2,
+      "originalCliExitCodes": [0, 0],
+      "actualStdoutReconnectErrorFrames": 1,
+      "activations": [
+        {
+          "state": "completed",
+          "from_seq": 4,
+          "to_seq": 4
+        },
+        {
+          "state": "completed",
+          "from_seq": 13,
+          "to_seq": 13
+        }
+      ],
+      "finalMarkers": 2,
+      "deliveryCursors": [
+        {
+          "last_seq": 13
+        }
+      ],
+      "inboxStates": ["pending", "pending"],
+      "memory": {
+        "metadataDisabled": true,
+        "allContextsExactModelEffort": true,
+        "configurationEvidence": [
+          {
+            "sha256": "f4d6c43fe9afe1b35dd2aafa69ec677ec206628377b96197037bbe7c7540986d",
+            "autoMemoryDisabled": true
+          }
+        ]
+      },
+      "cleanup": {
+        "recordedPidsExited": 23,
+        "temporaryConfigFilesRemoved": 1,
+        "noAuthEverCopied": true,
+        "serverClosedByAwaitedRunnerFinally": true
+      },
+      "usageCompleteness": "unknown: first delivered final response lacks terminal provider usage; synthetic100/20 tokens are not cost evidence",
+      "rawArtifacts": [
+        {
+          "name": "response-1.sse",
+          "sha256": "7592913ed2e70143f54d4aa576e7f6143cb53b9c4ad2f98ece1042dc0b7f089a"
+        },
+        {
+          "name": "response-2.sse",
+          "sha256": "e5b342502b4273c950869c29e5d4cd89cadc60448514f9ae8be961542fc8bc64"
+        },
+        {
+          "name": "response-3.sse",
+          "sha256": "1d4bde41a923cccddf4b6a19636b76ee13166d1a4509f03953417ecc0659954d"
+        }
+      ]
+    },
+    {
+      "stage": "final-same-body-green",
+      "run": "1791540400513-free",
+      "resultSha256": "4ebfbb9079d8ec42982be54036f396689a20664c2629ccccdcfb24ebff1abd97",
+      "rolloutSha256": "f51ada8b39d94819c487739b322411448b297d15b169c0555b4b17c856964b8b",
+      "status": "completed-needs-independent-review",
+      "fakeRequests": 3,
+      "finals": [
+        {
+          "id": "native-final-1",
+          "turnId": "01a12021-1f31-7173-92b8-a0e26996da5e",
+          "text": "SYNTHETIC TERMINAL FINAL 1"
+        },
+        {
+          "id": "native-final-2",
+          "turnId": "01a12021-1f31-7173-92b8-a0e26996da5e",
+          "text": "SYNTHETIC TERMINAL FINAL 1"
+        },
+        {
+          "id": "native-final-3",
+          "turnId": "01a12021-27d9-7ab2-aed6-62c41d0f4b1b",
+          "text": "SYNTHETIC TERMINAL FINAL 2"
+        }
+      ],
+      "tokenUsageRecords": 2,
+      "originalCliExitCodes": [0, 0],
+      "actualStdoutReconnectErrorFrames": 1,
+      "activations": [
+        {
+          "state": "completed",
+          "from_seq": 4,
+          "to_seq": 4
+        },
+        {
+          "state": "completed",
+          "from_seq": 13,
+          "to_seq": 13
+        }
+      ],
+      "finalMarkers": 2,
+      "deliveryCursors": [
+        {
+          "last_seq": 13
+        }
+      ],
+      "inboxStates": ["pending", "pending"],
+      "memory": {
+        "metadataDisabled": true,
+        "allContextsExactModelEffort": true,
+        "configurationEvidence": [
+          {
+            "sha256": "9cae7e977689ea183d7891ba800e122fb82427acda9daf3ca19b0a4f483f54eb",
+            "autoMemoryDisabled": true
+          }
+        ]
+      },
+      "cleanup": {
+        "recordedPidsExited": 23,
+        "temporaryConfigFilesRemoved": 1,
+        "noAuthEverCopied": true,
+        "serverClosedByAwaitedRunnerFinally": true
+      },
+      "usageCompleteness": "unknown: first delivered final response lacks terminal provider usage; synthetic100/20 tokens are not cost evidence",
+      "rawArtifacts": [
+        {
+          "name": "response-1.sse",
+          "sha256": "a07dd09b779c593aa90b0b4434972c18e7cfc65f30fc7f2e8fae66431962fcfe"
+        },
+        {
+          "name": "response-2.sse",
+          "sha256": "e5b342502b4273c950869c29e5d4cd89cadc60448514f9ae8be961542fc8bc64"
+        },
+        {
+          "name": "response-3.sse",
+          "sha256": "1d4bde41a923cccddf4b6a19636b76ee13166d1a4509f03953417ecc0659954d"
+        }
+      ]
+    }
+  ],
+  "scope": "Actual installed CLI stdout and rollout; fake Responses server sends first final then destroys connection without response.completed. CLI retries, yielding second distinct final in same turn. Old rejects; repaired collector publishes only terminal final and resumes original session.",
+  "limitations": [
+    "Free disconnect emits Reconnecting error frame. This reproduces a possible mechanism, not proof that P158 without such an error had identical upstream cause.",
+    "Product response usage currently marks recorded generations complete; experiment separately marks overall coverage unknown. Collector repair does not repair accounting completeness.",
+    "Activation delivery acknowledgement is separate from Inbox ACK: Inbox remains pending, and no Task completion is inferred.",
+    "Synthetic task replies intentionally fail invoice quality; this lifecycle proof is not business task or token efficiency acceptance."
+  ],
+  "status": "Final patch actual CLI same-body recovery and resume verified",
+  "intermediateRevisionNote": "Different-body green used intermediate collector; final-same-body-green uses final collector hash.",
+  "firstIntermediateCollectorSha256": "21bf084c589fb54fb0985b6565cae817c5e90e7181052e2d5d631f261863d418"
+}

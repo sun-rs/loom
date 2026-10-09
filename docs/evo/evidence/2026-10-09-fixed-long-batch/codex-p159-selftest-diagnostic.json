@@ -1,0 +1,8 @@
+{
+  "scope": "Frozen evaluator execute on byte-copy in private temporary directory; archive unchanged. Prior direct archive attempt was blocked by review-root sandbox and is not the selftest result.",
+  "result": {
+    "code": 1,
+    "stdout": "",
+    "stderr": "..F.\n======================================================================\nFAIL: test_large_exact_values_do_not_depend_on_context_precision (test_invoice.SummarizeTests.test_large_exact_values_do_not_depend_on_context_precision)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-invoice-diagnostic-_b0fg0h3/candidate/tests/test_invoice.py\", line 31, in test_large_exact_values_do_not_depend_on_context_precision\n    self.assertEqual(result[\"subtotal\"], expected)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: '8888[18 chars]8888888888888888872361111111111111111111111111111111111111.88' != '8888[18 chars]8888888888888888872361111111111111111111111111111111111111.875'\n- 88888888888888888888888888888888888888872361111111111111111111111111111111111111.88\n?                                                                                   ^\n+ 88888888888888888888888888888888888888872361111111111111111111111111111111111111.875\n?                                                                                   ^^\n\n\n----------------------------------------------------------------------\nRan 4 tests in 0.001s\n\nFAILED (failures=1)\n"
+  }
+}

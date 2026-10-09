@@ -619,3 +619,104 @@ test("diagnostics cannot rescue incomplete, failed, foreign or late native proof
     );
   }
 });
+
+function multipleFinals() {
+  const f = fixture();
+  const earlier = structuredClone(f.delta[5]!);
+  earlier.payload.id = "earlier-native-final";
+  earlier.payload.content[0].text = "Intermediate answer";
+  f.delta.splice(3, 0, earlier);
+  f.frames.splice(2, 0, {
+    type: "item.completed",
+    item: {
+      id: "earlier-exec-final",
+      type: "agent_message",
+      text: "Intermediate answer",
+    },
+  });
+  return f;
+}
+function settleMultiple(f: ReturnType<typeof fixture>) {
+  return createCodexExecFinalOutput(f.binding).settle({
+    ...f.evidence,
+    stdout: lines(f.frames),
+    rollout: {
+      ...f.evidence.rollout,
+      bytes: Buffer.concat([f.prefix, lines(f.delta)]),
+    },
+  });
+}
+
+test("same-turn multiple final answers select only the native last-output answer", () => {
+  const f = multipleFinals();
+  assert.deepEqual(settleMultiple(f), {
+    launchId: "launch",
+    sessionId: "session",
+    turnId: "turn",
+    nativeMessageId: "native-final",
+    execItemId: "final",
+    text: f.text,
+  });
+});
+
+test("multiple final answers cannot hide foreign, repeated, incomplete or late evidence", () => {
+  const mutations: Array<(f: ReturnType<typeof fixture>) => void> = [
+    (f) => {
+      f.delta[3]!.payload.internal_chat_message_metadata_passthrough.turn_id =
+        "other";
+    },
+    (f) => {
+      f.delta[3]!.payload.id = "native-final";
+    },
+    (f) => {
+      f.delta[3]!.payload.status = "incomplete";
+    },
+    (f) => {
+      f.delta[3]!.payload.content = [{ type: "output_text", text: " " }];
+    },
+    (f) => {
+      f.frames[2]!.item.id = "final";
+    },
+    (f) => {
+      f.delta.at(-1)!.payload.last_agent_message = "Intermediate answer";
+    },
+    (f) => {
+      f.evidence.output.bytes = Buffer.from("Intermediate answer\n");
+    },
+    (f) => {
+      f.frames.at(-2)!.item.text = "Unmatched terminal answer";
+    },
+    (f) => {
+      f.delta.push(structuredClone(f.delta.at(-1)!));
+    },
+    (f) => {
+      f.frames.push(structuredClone(f.frames.at(-1)!));
+    },
+    (f) => {
+      f.delta.splice(-1, 0, ...structuredClone(f.delta.slice(4, 6)));
+    },
+    (f) => {
+      f.frames.splice(-1, 0, {
+        type: "item.completed",
+        item: {
+          id: "late-tool",
+          type: "command_execution",
+          status: "completed",
+        },
+      });
+    },
+  ];
+  for (const [index, change] of mutations.entries()) {
+    const f = multipleFinals();
+    change(f);
+    assert.equal(settleMultiple(f), undefined, String(index));
+  }
+});
+
+test("retried final text may repeat when native and exec identities remain distinct", () => {
+  const f = multipleFinals();
+  f.delta[3]!.payload.content[0].text = f.text;
+  f.frames[2]!.item.text = f.text;
+  assert.equal(settleMultiple(f)?.nativeMessageId, "native-final");
+  assert.equal(settleMultiple(f)?.execItemId, "final");
+});

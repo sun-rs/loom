@@ -1,0 +1,676 @@
+{
+  "batch": "P158",
+  "model": "gpt-6-luna",
+  "run": "1791538885130-P158",
+  "status": "failed",
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: Activation quarantined",
+    "stack": "AssertionError [ERR_ASSERTION]: Activation quarantined\n    at file://PRIVATE_REVIEWS/2026-10-09-codex-recovery-v5/product-arm.mjs:30:346\n    at wait (file://REPO/scripts/cli-efficiency/common.mjs:21:18)\n    at async Object.turn (file://PRIVATE_REVIEWS/2026-10-09-codex-recovery-v5/product-arm.mjs:30:2)\n    at async file://PRIVATE_REVIEWS/2026-10-09-codex-recovery-v5/codex-run.mjs:52:358"
+  },
+  "startedAt": "2026-10-09T09:41:25.131Z",
+  "finishedAt": "2026-10-09T09:51:35.211Z",
+  "usageStatus": "incomplete-known-usage; unknown is not zero",
+  "allObservedUsage": {
+    "native": {
+      "known": {
+        "input": 159129,
+        "cachedInput": 103936,
+        "output": 2975,
+        "generations": 14
+      },
+      "gaps": [],
+      "files": 1,
+      "sessionIds": ["01a1200a-017d-7761-a819-48765a255993"]
+    },
+    "loom": {
+      "known": {
+        "input": 174864,
+        "cachedInput": 136448,
+        "output": 2390,
+        "generations": 13
+      },
+      "gaps": [],
+      "files": 1,
+      "sessionIds": ["01a1200a-cea1-7c20-9aaa-42e3d6a1e8b9"]
+    }
+  },
+  "totals": {
+    "native": {
+      "input": 159129,
+      "cachedInput": 103936,
+      "output": 2975,
+      "generations": 14
+    },
+    "loom": {
+      "input": 174864,
+      "cachedInput": 136448,
+      "output": 2390,
+      "generations": 13
+    }
+  },
+  "incompleteUsage": [
+    {
+      "arm": "loom",
+      "round": 3,
+      "usage": "unknown, not zero"
+    }
+  ],
+  "accountingFailures": [],
+  "authCleanupFailures": [],
+  "recoveredDiagnostics": [],
+  "sessions": {
+    "native": {
+      "completedRoundSessionCount": 1,
+      "rawObservedSessionCount": 1,
+      "completedRounds": 3,
+      "sameSessionContinuationVerified": true,
+      "limit": "A raw observed session does not prove a completed round or continuation."
+    },
+    "loom": {
+      "completedRoundSessionCount": 1,
+      "rawObservedSessionCount": 1,
+      "completedRounds": 2,
+      "sameSessionContinuationVerified": true,
+      "limit": "A raw observed session does not prove a completed round or continuation."
+    }
+  },
+  "quality": [
+    {
+      "arm": "native",
+      "round": 1,
+      "status": "completed",
+      "correct": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "sameSnapshotBytesVerified": true,
+      "artifactHashes": {
+        "README.md": "9a97c7234652f5da41fd82d84a19f7724d40796788f92750ac34e1e23d333de9",
+        "invoice.py": "eddf48bea14773ac70046cc34898c7cbe3438c6a926279cdca85230d7c5f5397",
+        "tests/test_invoice.py": "1fa16f831aeab6317129c58a91b4774d3ae16645d4ddcdd3b90f26909393a033"
+      },
+      "knownUsage": {
+        "input_tokens": 58714,
+        "cached_input_tokens": 34816,
+        "output_tokens": 1704,
+        "reasoning_output_tokens": 0
+      },
+      "generations": 6,
+      "publications": null
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "status": "completed",
+      "correct": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "sameSnapshotBytesVerified": true,
+      "artifactHashes": {
+        "README.md": "9a97c7234652f5da41fd82d84a19f7724d40796788f92750ac34e1e23d333de9",
+        "invoice.py": "eddf48bea14773ac70046cc34898c7cbe3438c6a926279cdca85230d7c5f5397",
+        "tests/test_invoice.py": "8218a12a1dc85da47039c7fbfa0695c1adb252c5944fb5692919d8142f3e941c"
+      },
+      "knownUsage": {
+        "input_tokens": 47677,
+        "cached_input_tokens": 22016,
+        "output_tokens": 467,
+        "reasoning_output_tokens": 0
+      },
+      "generations": 4,
+      "publications": null
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "status": "completed",
+      "correct": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "sameSnapshotBytesVerified": true,
+      "artifactHashes": {
+        "README.md": "9a97c7234652f5da41fd82d84a19f7724d40796788f92750ac34e1e23d333de9",
+        "invoice.py": "319b210012480a40bf7ec3d7e5aa71e17f4b7480314a64afa4bab57ea31ebbb6",
+        "tests/test_invoice.py": "8394de73e62b4e73596a7cfb26cacf5af715d4af39935ebc97def2925a73a620"
+      },
+      "knownUsage": {
+        "input_tokens": 52738,
+        "cached_input_tokens": 47104,
+        "output_tokens": 804,
+        "reasoning_output_tokens": 0
+      },
+      "generations": 4,
+      "publications": null
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "status": "completed",
+      "correct": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "sameSnapshotBytesVerified": true,
+      "artifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "2b91411eb1ad3e202714d95dac9084d3d06ceb31df690a3860e39e2cc1ad2572",
+        "tests/test_invoice.py": "cb8face02272d2cd628a4c1280373399453e2f5cf462ef1eaab030bc7129bef3"
+      },
+      "knownUsage": {
+        "input_tokens": 57181,
+        "cached_input_tokens": 40960,
+        "output_tokens": 1311,
+        "reasoning_output_tokens": 0
+      },
+      "generations": 5,
+      "publications": 1
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "status": "completed",
+      "correct": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "sameSnapshotBytesVerified": true,
+      "artifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "2b91411eb1ad3e202714d95dac9084d3d06ceb31df690a3860e39e2cc1ad2572",
+        "tests/test_invoice.py": "f0e84b5f7e7712d10530b9e0aef27bd9f26882a93d91c9388135e3caeb62ac29"
+      },
+      "knownUsage": {
+        "input_tokens": 56485,
+        "cached_input_tokens": 52224,
+        "output_tokens": 545,
+        "reasoning_output_tokens": 0
+      },
+      "generations": 4,
+      "publications": 1
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "status": "running",
+      "correct": null,
+      "functionalPassed": null,
+      "selfTestsPassed": null,
+      "selfTestsExitCode": null,
+      "checks": null,
+      "sameSnapshotBytesVerified": null,
+      "artifactHashes": null,
+      "knownUsage": null,
+      "generations": 0,
+      "publications": 0
+    }
+  ],
+  "developerHistory": {
+    "native": [
+      {
+        "round": 1,
+        "cumulativeCount": 3,
+        "prefixPreserved": true,
+        "newCount": 3,
+        "items": [
+          {
+            "characters": 1282,
+            "utf8Bytes": 1282,
+            "sha256": "3af63c16c4a48df93ec9cfe1a4abb89dda124993af40b274f07e119564021561"
+          },
+          {
+            "characters": 2429,
+            "utf8Bytes": 2429,
+            "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+          },
+          {
+            "characters": 271,
+            "utf8Bytes": 271,
+            "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+          }
+        ],
+        "rolloutSha256": "d823d7c630d308f355d629a424a37af3443ccbb6071d1bc870271ce13b174dcb"
+      },
+      {
+        "round": 2,
+        "cumulativeCount": 3,
+        "prefixPreserved": true,
+        "newCount": 0,
+        "items": [
+          {
+            "characters": 1282,
+            "utf8Bytes": 1282,
+            "sha256": "3af63c16c4a48df93ec9cfe1a4abb89dda124993af40b274f07e119564021561"
+          },
+          {
+            "characters": 2429,
+            "utf8Bytes": 2429,
+            "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+          },
+          {
+            "characters": 271,
+            "utf8Bytes": 271,
+            "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+          }
+        ],
+        "rolloutSha256": "9605cc236ae1db79f1570b6e0bcf7ebf8602f08ab8c278e136ca327677dbd037"
+      },
+      {
+        "round": 3,
+        "cumulativeCount": 3,
+        "prefixPreserved": true,
+        "newCount": 0,
+        "items": [
+          {
+            "characters": 1282,
+            "utf8Bytes": 1282,
+            "sha256": "3af63c16c4a48df93ec9cfe1a4abb89dda124993af40b274f07e119564021561"
+          },
+          {
+            "characters": 2429,
+            "utf8Bytes": 2429,
+            "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+          },
+          {
+            "characters": 271,
+            "utf8Bytes": 271,
+            "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+          }
+        ],
+        "rolloutSha256": "430cdb8d41ca3caacef3a704f90d15d5cd5361d80f285124c1b3273172734e17"
+      }
+    ],
+    "loom": [
+      {
+        "round": 1,
+        "cumulativeCount": 3,
+        "prefixPreserved": true,
+        "newCount": 3,
+        "items": [
+          {
+            "characters": 8064,
+            "utf8Bytes": 8078,
+            "sha256": "68806b6469e6d2386dc51f07f639b4c271ae0b15d1feb2d42afc7b6a791acf64"
+          },
+          {
+            "characters": 2429,
+            "utf8Bytes": 2429,
+            "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+          },
+          {
+            "characters": 271,
+            "utf8Bytes": 271,
+            "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+          }
+        ],
+        "rolloutSha256": "6e2875bc0e248797ce623de900975a4df5d2946ad401144d07501c9a0ac5bf27"
+      },
+      {
+        "round": 2,
+        "cumulativeCount": 3,
+        "prefixPreserved": true,
+        "newCount": 0,
+        "items": [
+          {
+            "characters": 8064,
+            "utf8Bytes": 8078,
+            "sha256": "68806b6469e6d2386dc51f07f639b4c271ae0b15d1feb2d42afc7b6a791acf64"
+          },
+          {
+            "characters": 2429,
+            "utf8Bytes": 2429,
+            "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+          },
+          {
+            "characters": 271,
+            "utf8Bytes": 271,
+            "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+          }
+        ],
+        "rolloutSha256": "2dc1f6444e05990f64e6977ba1098f7c57aea2907a98ccab995347e46d072645"
+      }
+    ]
+  },
+  "developerEvidenceLimit": "Native rollout append counts and text hashes only. Not HTTP retransmission or model-read proof; character counts are not token estimates.",
+  "cleanup": {
+    "native": {
+      "recordedPidsStillPresent": [],
+      "authFilesAbsent": true,
+      "recordedExitOutcomes": [
+        {
+          "prefix": "launch-1791538888546-84577",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538888627-84590",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538888931-84610",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538889018-84619",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539027697-90483",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539027784-90493",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539028093-90512",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539028180-90534",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539063799-92065",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539063879-92071",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539064149-92086",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539064231-92093",
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "missingExitReceiptPrefixes": []
+    },
+    "loom": {
+      "recordedPidsStillPresent": [],
+      "authFilesAbsent": true,
+      "recordedExitOutcomes": [
+        {
+          "prefix": "launch-1791538886400-84463",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538886481-84485",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538940957-86749",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538941073-86757",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538941400-86773",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538941508-86780",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538990108-88798",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538990214-88805",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538990529-88822",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791538990637-88830",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539106786-93990",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539106893-93998",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539107210-94017",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539107327-94027",
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "missingExitReceiptPrefixes": []
+    }
+  },
+  "daemonProcesses": [
+    {
+      "pid": 84494,
+      "startedAt": "2026-10-09T09:41:27.618Z",
+      "finishedAt": "2026-10-09T09:51:35.200Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "evidenceHashes": {
+    "result.private.json": "8c2ee9c5b13cc0fa6823256a70c54db8bf824dd28beb4740546b9fcac36e17f0",
+    "codex-admission.json": "a0e41544856bd20dbe0d79847844efbcaa79ec00d3cbf2f427d6c0ec62057300",
+    "codex-plan.json": "ff97349d9970b845fbd6e0853b597b29aaf4a5e4f1cfaf6c09d1f8a6360d9879"
+  },
+  "paidToolEvidence": "Paid HTTP request schemas are not captured. Exact schema equality is verified only in actual-CLI loopback free preflight. Fixed installed CLI, launch configuration, source and memory settings are frozen; this does not prove per-request paid schema identity.",
+  "verdict": "Failed/censored. No completed 12-round pair, no efficiency acceptance, no valid full-task cost ratio. No rerun performed.",
+  "poststopDeveloperHistory": {
+    "native": {
+      "cumulativeCount": 3,
+      "items": [
+        {
+          "characters": 1282,
+          "sha256": "3af63c16c4a48df93ec9cfe1a4abb89dda124993af40b274f07e119564021561"
+        },
+        {
+          "characters": 2429,
+          "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+        },
+        {
+          "characters": 271,
+          "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+        }
+      ],
+      "scope": "Full retained session at process shutdown, includes failed turn if present."
+    },
+    "loom": {
+      "cumulativeCount": 3,
+      "items": [
+        {
+          "characters": 8064,
+          "sha256": "68806b6469e6d2386dc51f07f639b4c271ae0b15d1feb2d42afc7b6a791acf64"
+        },
+        {
+          "characters": 2429,
+          "sha256": "47091490938505958b0c22ff42db6fd79b272a2af6923166f4c2cc53c4fe0df4"
+        },
+        {
+          "characters": 271,
+          "sha256": "6ded806e3cdbb35599ecaf8742574bc5274908472b1729090010c404c2151e8e"
+        }
+      ],
+      "scope": "Full retained session at process shutdown, includes failed turn if present."
+    }
+  },
+  "failedRoundFileSnapshot": "P158-failed-round-snapshot.json",
+  "nativeSessionEvidence": {
+    "native": [
+      {
+        "sessionId": "01a1200a-017d-7761-a819-48765a255993",
+        "memoryMode": "disabled",
+        "rolloutSha256": "430cdb8d41ca3caacef3a704f90d15d5cd5361d80f285124c1b3273172734e17",
+        "taskStarts": 3,
+        "taskCompletes": 3
+      }
+    ],
+    "loom": [
+      {
+        "sessionId": "01a1200a-cea1-7c20-9aaa-42e3d6a1e8b9",
+        "memoryMode": "disabled",
+        "rolloutSha256": "67cfc27644788187128b8c3a08dec71a5791dba8b1a9723f153266362ebdeb19",
+        "taskStarts": 3,
+        "taskCompletes": 3
+      }
+    ]
+  },
+  "failureClassification": "CLI business execution reached actual exit0, turn.completed and task_complete; frozen collector rejected multiple final_answer records, so publication/Activation did not complete. Separate follow-up fix does not alter this batch. First final followed by 300-second pause lacks independently complete response usage; cost coverage remains unknown.",
+  "poststopChecks": {
+    "source": "P158-failed-round-snapshot.json",
+    "includedInCompletedRounds": false,
+    "evaluation": {
+      "round": 3,
+      "passed": true,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    }
+  },
+  "freezeVerification": "P158-postrun-freeze-verification.json",
+  "exclusiveClaim": {
+    "path": "paid-P158.claim",
+    "retained": true,
+    "sha256": "41811d2dbaf87763116d2f4f6e86541ea77bf80ecda34f13c95504ef574c9177"
+  },
+  "originalPlanRetained": {
+    "path": "codex-plan.json",
+    "sha256": "ff97349d9970b845fbd6e0853b597b29aaf4a5e4f1cfaf6c09d1f8a6360d9879",
+    "runCopySha256": "ff97349d9970b845fbd6e0853b597b29aaf4a5e4f1cfaf6c09d1f8a6360d9879"
+  },
+  "failedRunKernelUsageCrosscheck": "P158-failed-run-usage-crosscheck.json",
+  "finalizedAt": "2026-10-09T10:14:19.881344+00:00"
+}

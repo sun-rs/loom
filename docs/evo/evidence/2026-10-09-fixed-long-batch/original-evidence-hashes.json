@@ -1,0 +1,20 @@
+{
+  "opencode-p157-independent.json": "64109e88d0a6a8fc925b5e49858d13dd82267eaaf0164ada60130c1e1077f51c",
+  "opencode-p157.json": "f8b49d22f859ea97850284e77890fd70abcf0f4742d7c9c7262c4ca4cb0abc0c",
+  "opencode-p157-request-structure.json": "0a90cfb4c2282747c74f2522436cfe570ec6df0a175773e9c51a32f7a723def0",
+  "opencode-p157-posthoc-selftests.json": "bdfaf433a3254657098a0b821fb672976cd8eb8e2fd57a95c7d255c1a96a1b8f",
+  "opencode-p157-plan.json": "9606877247d5eae22a7a089d3ef5e5799bdaef3705bb81a37b9c196fd31b8f4d",
+  "historical-representativeness.json": "e0083f5ad368700ebc6eb50a1cc0f07ef9787ffb3f1c063e494eb2c7345b9fb1",
+  "codex-6-free.json": "96cb0c631f6ced1357f9dc1dbabf55d4b87d771166a6d29e3faa00ba7870e714",
+  "codex-56-free.json": "da82cf86c1f75e1eb659f40126bf0347e42649f8f291d656206cd8198ce24341",
+  "codex-multiple-final-free.json": "abea04db75d586cdff540eac23c06419cb89f3d08b4d29b614fb5225a77d6517",
+  "codex-p158.json": "904f3b84446aa8162cbcf7210f9ed7378d0d913c8a94284b2821defb176196b0",
+  "codex-p158-plan.json": "ff97349d9970b845fbd6e0853b597b29aaf4a5e4f1cfaf6c09d1f8a6360d9879",
+  "codex-p158-poststop-snapshot.json": "e6c7ae70c22ca60a08386fb7ff17636e84d8739a8c5f71a13f98fd108d388ee3",
+  "codex-p158-failed-run-usage.json": "d59a62ebbc88324f9a1f948cbff586f980ab4554c3d9639126df8fbd94393164",
+  "codex-p159.json": "e2251976695dfcf472c7d101ca205b0a21a33dbf3e2579e44da3bf3f1e304b34",
+  "codex-p159-plan.json": "60d0ae2f7191bdcd247e23a6ed8faadc0d0614b6a2a80bcaf73778f60ae761cf",
+  "codex-p159-poststop-snapshot.json": "1a0f74735db029fb8ce2fc35dde694456e007d9f23782a2645df471fac9a3c9e",
+  "codex-p159-selftest-diagnostic.json": "49579866c18fb4327df4a9e818d2be7900ce76e51a0c1d653eec4c344d40269a",
+  "codex-multiple-final-fix.json": "76f8fc47b05537e79ce2240a49ac008a3d2f92f11c01ded9251ebe523b4d48e1"
+}

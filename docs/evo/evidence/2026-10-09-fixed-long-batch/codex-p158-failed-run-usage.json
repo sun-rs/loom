@@ -1,0 +1,69 @@
+{
+  "scope": "Failed publication run, persisted Kernel per-response usage against original native token_usage_record. Matching reported records does not prove missing/unreported attempted-response billing complete.",
+  "run": {
+    "state": "exited",
+    "exitCode": 0,
+    "exitSignal": null,
+    "finishedAt": "2026-10-09T09:51:35.086Z"
+  },
+  "rawRecords": 4,
+  "kernelRecords": 4,
+  "matched": [
+    {
+      "responseIdSha256": "7c17526c4f9df923c60ddb20d8dfe444514641ce417f3d57a480aef2357bfdd2",
+      "rawAndKernelUsageEqual": true,
+      "usage": {
+        "input_tokens": 14906,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 15086
+      }
+    },
+    {
+      "responseIdSha256": "dd2651604a90a43709f545b37b66f7cfc2139b9a49d5c13fea704e192453aedf",
+      "rawAndKernelUsageEqual": true,
+      "usage": {
+        "input_tokens": 15110,
+        "cached_input_tokens": 14080,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 291,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 15401
+      }
+    },
+    {
+      "responseIdSha256": "209af22fb29e904cb53f79ea646d5d76493f909c8408f84ffbfdbd8c122b78d0",
+      "rawAndKernelUsageEqual": true,
+      "usage": {
+        "input_tokens": 15425,
+        "cached_input_tokens": 14080,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 43,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 15468
+      }
+    },
+    {
+      "responseIdSha256": "8bf5508ff4674fcde010b8ad15b73bcdf717f3d023cb0533fc8cf8127c1d57cb",
+      "rawAndKernelUsageEqual": true,
+      "usage": {
+        "input_tokens": 15757,
+        "cached_input_tokens": 15104,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 20,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 15777
+      }
+    }
+  ],
+  "reportedTotals": {
+    "input_tokens": 61198,
+    "cached_input_tokens": 43264,
+    "output_tokens": 534,
+    "reasoning_output_tokens": 0
+  },
+  "kernelGapRows": [],
+  "coverage": "unknown: first final emitted 300 seconds before recovery lacked independently complete response usage"
+}

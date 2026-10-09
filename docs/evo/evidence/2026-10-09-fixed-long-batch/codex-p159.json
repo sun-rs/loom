@@ -1,0 +1,218 @@
+{
+  "batch": "P159",
+  "model": "gpt-5.6-luna",
+  "run": "1791539787814-P159",
+  "status": "failed",
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\ntrue !== false\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\ntrue !== false\n\n    at nativeControlTurn (file://PRIVATE_REVIEWS/2026-10-09-codex-56-recovery-v5/native-control.mjs:31:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file://PRIVATE_REVIEWS/2026-10-09-codex-56-recovery-v5/codex-run.mjs:52:35"
+  },
+  "startedAt": "2026-10-09T09:56:27.814Z",
+  "finishedAt": "2026-10-09T10:06:31.507Z",
+  "usageStatus": "incomplete-known-usage; unknown is not zero",
+  "allObservedUsage": {
+    "native": {
+      "known": {
+        "input": 91783,
+        "cachedInput": 65536,
+        "output": 3253,
+        "generations": 10
+      },
+      "gaps": [],
+      "files": 1,
+      "sessionIds": ["01a12017-c7fb-7730-9ce9-99b77fc28fde"]
+    },
+    "loom": {
+      "known": {
+        "input": 0,
+        "cachedInput": 0,
+        "output": 0,
+        "generations": 0
+      },
+      "gaps": [],
+      "files": 0,
+      "sessionIds": []
+    }
+  },
+  "totals": {
+    "native": {
+      "input": 91783,
+      "cachedInput": 65536,
+      "output": 3253,
+      "generations": 10
+    },
+    "loom": {
+      "input": 0,
+      "cachedInput": 0,
+      "output": 0,
+      "generations": 0
+    }
+  },
+  "incompleteUsage": [
+    {
+      "arm": "native",
+      "round": 1,
+      "usage": "unknown, not zero"
+    }
+  ],
+  "accountingFailures": [],
+  "authCleanupFailures": [],
+  "recoveredDiagnostics": [],
+  "sessions": {
+    "native": {
+      "completedRoundSessionCount": 0,
+      "rawObservedSessionCount": 1,
+      "completedRounds": 0,
+      "sameSessionContinuationVerified": false,
+      "limit": "A raw observed session does not prove a completed round or continuation."
+    },
+    "loom": {
+      "completedRoundSessionCount": 0,
+      "rawObservedSessionCount": 0,
+      "completedRounds": 0,
+      "sameSessionContinuationVerified": false,
+      "limit": "A raw observed session does not prove a completed round or continuation."
+    }
+  },
+  "quality": [
+    {
+      "arm": "native",
+      "round": 1,
+      "status": "running",
+      "correct": null,
+      "functionalPassed": null,
+      "selfTestsPassed": null,
+      "selfTestsExitCode": null,
+      "checks": null,
+      "sameSnapshotBytesVerified": null,
+      "artifactHashes": null,
+      "knownUsage": null,
+      "generations": 0,
+      "publications": null
+    }
+  ],
+  "developerHistory": {
+    "native": [],
+    "loom": []
+  },
+  "developerEvidenceLimit": "Native rollout append counts and text hashes only. Not HTTP retransmission or model-read proof; character counts are not token estimates.",
+  "cleanup": {
+    "native": {
+      "recordedPidsStillPresent": [],
+      "authFilesAbsent": true,
+      "recordedExitOutcomes": [
+        {
+          "prefix": "launch-1791539791358-17939",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539791438-17952",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539791724-17967",
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "missingExitReceiptPrefixes": ["launch-1791539791803-17974"]
+    },
+    "loom": {
+      "recordedPidsStillPresent": [],
+      "authFilesAbsent": true,
+      "recordedExitOutcomes": [
+        {
+          "prefix": "launch-1791539789127-17815",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "prefix": "launch-1791539789208-17835",
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "missingExitReceiptPrefixes": []
+    }
+  },
+  "daemonProcesses": [
+    {
+      "pid": 17844,
+      "startedAt": "2026-10-09T09:56:30.446Z",
+      "finishedAt": "2026-10-09T10:06:31.501Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "evidenceHashes": {
+    "result.private.json": "80596d8da419fad06eadc727563849b5056ec2b755888286fb25dd492eddfbec",
+    "codex-admission.json": "698819c152def73b50e4696341537cd23104fd6b94fba0cab6e24c316c666c01",
+    "codex-plan.json": "60d0ae2f7191bdcd247e23a6ed8faadc0d0614b6a2a80bcaf73778f60ae761cf"
+  },
+  "paidToolEvidence": "Paid HTTP request schemas are not captured. Exact schema equality is verified only in actual-CLI loopback free preflight. Fixed installed CLI, launch configuration, source and memory settings are frozen; this does not prove per-request paid schema identity.",
+  "verdict": "Failed/censored. No completed 12-round pair, no efficiency acceptance, no valid full-task cost ratio. No rerun performed.",
+  "failedRoundFileSnapshot": "P159-failed-round-snapshot.json",
+  "nativeSessionEvidence": {
+    "native": [
+      {
+        "sessionId": "01a12017-c7fb-7730-9ce9-99b77fc28fde",
+        "memoryMode": "disabled",
+        "rolloutSha256": "6d3fb6d60d9f349e71b12226045994f0819731b2db9026014abf9e7020eec4bc",
+        "taskStarts": 1,
+        "taskCompletes": 0
+      }
+    ],
+    "loom": []
+  },
+  "failureClassification": "Native control timeout at 600 seconds; no final_answer or task_complete, no Loom paid round. Tail billing unknown.",
+  "selfTestDiagnostic": "P159-selftest-diagnostic.json",
+  "poststopChecks": {
+    "source": "P159-failed-round-snapshot.json",
+    "includedInCompletedRounds": false,
+    "evaluation": {
+      "round": 1,
+      "passed": false,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsExitCode": 1
+    }
+  },
+  "freezeVerification": "P159-postrun-freeze-verification.json",
+  "exclusiveClaim": {
+    "path": "paid-P159.claim",
+    "retained": true,
+    "sha256": "219a65a239b400c722e243416b6e528012f4c567cec28e2319e2b258841ea86b"
+  },
+  "originalPlanRetained": {
+    "path": "codex-plan.json",
+    "sha256": "60d0ae2f7191bdcd247e23a6ed8faadc0d0614b6a2a80bcaf73778f60ae761cf",
+    "runCopySha256": "60d0ae2f7191bdcd247e23a6ed8faadc0d0614b6a2a80bcaf73778f60ae761cf"
+  },
+  "nativeControlTermination": {
+    "startedAt": "2026-10-09T09:56:31.483Z",
+    "finishedAt": "2026-10-09T10:06:31.487Z",
+    "code": null,
+    "signal": "SIGKILL",
+    "timedOut": true,
+    "overflow": false,
+    "inputSha256": "9cc840933e8111747375d77f52a9c61b52ea4ae692b0484fa93eb541331473a8",
+    "inputBytes": 1073,
+    "model": "gpt-5.6-luna",
+    "effort": "low",
+    "expectedSessionId": null
+  },
+  "exitReceiptLimit": "SIGKILL to the entire detached native process group prevented its wrapper from writing the ordinary child exit receipt. Host close recorded signal SIGKILL and timedOut=true; all recorded owned PIDs were absent. No fabricated zero exit.",
+  "productPaidExecution": "Not started: zero exec launches/generations; product only initialized and probed catalog. Native tail billing remains unknown.",
+  "finalizedAt": "2026-10-09T10:14:19.883626+00:00"
+}

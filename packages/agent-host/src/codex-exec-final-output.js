@@ -213,17 +213,36 @@ export function createCodexExecFinalOutput(input) {
               ),
           ),
         );
-        const finalRow = one(
-          suffix.filter(
-            (row) =>
-              row.type === "response_item" &&
-              row.payload?.type === "message" &&
-              row.payload.role === "assistant" &&
-              row.payload.phase === "final_answer",
-          ),
+        const finals = suffix.filter(
+          (row) =>
+            row.type === "response_item" &&
+            row.payload?.type === "message" &&
+            row.payload.role === "assistant" &&
+            row.payload.phase === "final_answer",
         );
+        requireProof(finals.length > 0);
+        const finalIds = new Set();
+        for (const row of finals) {
+          const p = row.payload;
+          requireProof(
+            nativeTurn(p) === turnId && nonempty(p.id) && !finalIds.has(p.id),
+          );
+          finalIds.add(p.id);
+          requireProof(textContent(p, "output_text").trim() !== "");
+          requireProof(
+            suffix.indexOf(row) >
+              suffix.findIndex((r) => r.type === "turn_context"),
+          );
+        }
+        // Native exec overwrites last-output on every completed agent message.
+        // Earlier same-turn finals are diagnostics, never concatenated or posted.
+        const finalRow = finals.at(-1);
         const final = finalRow.payload;
-        for (const terminal of [final, done.payload, completed]) {
+        for (const terminal of [
+          ...finals.map((r) => r.payload),
+          done.payload,
+          completed,
+        ]) {
           requireProof(
             ![
               terminal.finish_reason,
@@ -285,19 +304,14 @@ export function createCodexExecFinalOutput(input) {
           }
         }
         requireProof(pending.size === 0);
-        const matches = frames.filter(
-          (row) =>
-            row.type === "item.completed" &&
-            row.item?.type === "agent_message" &&
-            row.item.text === text,
-        );
-        const nativeItem = one(matches);
-        requireProof(nonempty(nativeItem.item.id));
         const messages = frames.filter(
           (row) =>
             row.type === "item.completed" && row.item?.type === "agent_message",
         );
-        requireProof(messages.at(-1) === nativeItem);
+        const nativeItem = messages.at(-1);
+        requireProof(
+          nonempty(nativeItem?.item.id) && nativeItem.item.text === text,
+        );
         const finalFramePosition = frames.indexOf(nativeItem);
         requireProof(finalFramePosition > frames.indexOf(start));
         // Codex 0.161.0 emits ServerNotification::Error while still Running;
@@ -316,6 +330,7 @@ export function createCodexExecFinalOutput(input) {
           );
         }
         const inflight = new Set();
+        const completedIds = new Set();
         for (const [index, row] of frames.entries()) {
           if (!row.type.startsWith("item.")) continue;
           requireProof(
@@ -328,6 +343,8 @@ export function createCodexExecFinalOutput(input) {
             inflight.add(item.id);
           }
           if (row.type === "item.completed") {
+            requireProof(!completedIds.has(item.id));
+            completedIds.add(item.id);
             // A failed business tool is terminal, not a failed native turn.
             requireProof(
               item.status === undefined ||
