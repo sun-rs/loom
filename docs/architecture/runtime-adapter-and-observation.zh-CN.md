@@ -8,6 +8,33 @@ Claude 具体版本自定义模型的显式 effort 由 Protocol 提交许可表�
 
 OpenCode/Codex warm 的可选最终输出路径接收严格 `room.reply` JSON 命令，而非自动发表 stdout 或自然语言答案。模型显式提供本轮因果序号；原生正常终态和原请求身份只证明传输，Worker 身份、原目标、freshness、幂等与消费确认仍由 Kernel 校验。Host 在原 Run 凭据释放前完成有界提交，并保持续租和取消；业务收据不改写原生退出事实。结果未知或 held 不自动重新执行。Codex仅接受原thread/turn的唯一完整final_answer项与正常completed终态，commentary不参与发布；各CLI开关独立，默认关闭。Claude/Kimi与远程Computer协议不扩展。开关、迁移和验收边界见[实现记录](../evo/final-output-transport.zh-CN.md)。
 
+## evo 普通 Codex exec 原生正文（2026-10-09 可选接入）
+
+`codex-exec/v1` 是独立 RuntimeProfile，使用普通 `codex exec/resume`；不会改写
+已有 `codex-app-server/v1` 的实例、原生 session 或冻结配置。普通配置须显式指定模型
+及 reasoning。`LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL=1` 仅为该配置启用原生正文传输，
+默认关闭。此窄切片未提供默认配置迁移；SEA、附加目录续接、service tier 覆盖及旧 app-server argv
+覆盖尚未验证，明确拒绝，不能静默降级或忽略。
+
+AgentHost 独占原生证据验证与每 Run 提交：完整 exec JSONL、当前新建的
+last-message 文件与绑定 rollout 的本轮增量必须一致。续接验证精确文件身份、字节
+边界及原前缀哈希；首轮排除启动前已有文件。当前输入摘要、session/turn、模型、
+effort、明确 final phase、工具结束和正常终态均须可证。rollout 只作传输和用量
+诊断证据，不能重建 Room、推断 Task 完成或自造 ACK。usage 只接收本轮唯一
+per-response 记录，不能把 resume 的累计摘要再加一遍。
+
+GenericProcessAdapter 的可选 `settleFinalOutput` 租约回调在运行证据处理完后、
+原凭据撤销前执行；只增加提交收据，保留实际退出事实。取消覆盖原生进程已结束但
+HTTP 仍待决的窗口。Host 崩溃恢复时，volatile 标记只报告结果未知，绝不重发正文
+或重新运行模型；是否已完成由原有持久 final marker 与交付义务决定。
+打开试验但本轮不适合原生发表时沿用 Worker；该轮若恰逢 Host 崩溃，当前恢复
+仍保守进入待处理。这项罕见限制不能伪装成自动成功。
+
+普通 exec 没有忙时原生输入通道，新增消息沿现有持久后续 Activation 处理。
+长 rollout 的本地扫描/哈希仍有 I/O 和内存上限，超限拒绝而不轮换 session；
+当前不代表压缩、长任务效率、五 CLI 或多人验收完成。
+[实现与验收](../evo/final-output-transport.zh-CN.md)。
+
 ## Agent 默认执行目录
 
 支持私有工作区的本地 daemon 以 `supportsAgentPrivateWorkspace` 发布可信能力；新建 Agent 定义显式保存 `executionWorkspace: agent_private`。旧定义缺字段保持既有 mount，显式 `existing_mount` 只接受 Host 已授权的非私有 mount。缺能力的旧 Host 与独立 Computer 不发布该能力，也不能调度私有 Agent。

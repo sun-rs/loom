@@ -1,0 +1,156 @@
+{
+  "kind": "ordinary-codex-exec-real-cli-local-fake-production-chain",
+  "date": "2026-10-09",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-codex-exec-product-free/runs/1791517902244",
+  "passed": true,
+  "paidCalls": 0,
+  "realProvider": false,
+  "productionDeployment": false,
+  "cli": {
+    "version": "0.161.0",
+    "binary": "/opt/homebrew/bin/codex",
+    "resolvedBinary": "/opt/homebrew/Caskroom/codex/0.161.0/bin/codex",
+    "binarySha256RecordedAfterRun": "12ac11d2c7eee27cfae34393986d7b7c9ed0dea537cb749831cdd7033893e6de",
+    "invocation": ["exec", "exec resume"],
+    "appServer": false,
+    "hostMode": false,
+    "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "catalog": "Actual installed debug models --bundled under isolated HOME/config; exact binding selected; no first-binding fallback."
+  },
+  "scope": "Actual installed CLI through new codex-exec/v1 factory/GenericProcessAdapter/supervisor/AgentHost/Worker HTTP/Kernel. Local scripted Responses API, temporary account-free state; no old prototype publication bridge.",
+  "outcome": {
+    "turns": 2,
+    "providerProcesses": 2,
+    "continuousSessions": 1,
+    "providerGenerations": 3,
+    "generationsPerTurn": [2, 1],
+    "actualBusinessTools": 1,
+    "actualTool": "functions.exec -> exec_command writes proof.txt",
+    "fileContentVerified": true,
+    "fileSha256": "2fbe70aa5ba327ef880fac3dc8cceab2b3e74033024397a8cb40e6fb7a0f9b14",
+    "canonicalReplies": 2,
+    "trustedFinalOutputMarkers": 2,
+    "completedMessageActivations": 2,
+    "exitedRunAttempts": 2,
+    "replyToolCalls": 0,
+    "postPublicationExtraProviderRequests": 0,
+    "originalCredentialValidAtEachPublication": true,
+    "credentialOrder": ["issued", "revoked", "issued", "revoked"]
+  },
+  "nativeProof": {
+    "sessionId": "01a11ec9-c8a8-7a53-9e07-4edaa0693630",
+    "currentTurnIds": [
+      "01a11ec9-c8c5-7dd3-9d45-ab3e9ffc9084",
+      "01a11ec9-caef-7721-82fb-d6be88954236"
+    ],
+    "finalPhases": ["final_answer", "final_answer"],
+    "allNativeExitsZero": true,
+    "lastMessageOutputPathsUnique": true,
+    "automaticMemoryOffEveryLaunch": true,
+    "rolloutMemoryMode": "disabled"
+  },
+  "usage": {
+    "synthetic": true,
+    "nativeResponseIds": [
+      "fake-response-1",
+      "fake-response-2",
+      "fake-response-3"
+    ],
+    "kernelRecords": 3,
+    "kernelValuesEqualNativePerResponse": true,
+    "gaps": 0,
+    "inputTokens": 300,
+    "outputTokens": 60,
+    "cachedInputTokens": 0,
+    "execSummaryNotSummed": true,
+    "contextWindow": null,
+    "contextUsedTokens": null,
+    "meaning": "Fake response usage only; not price, real-model consumption or efficiency ratio."
+  },
+  "isolation": {
+    "freshHomeAndCodexHome": true,
+    "noRealCredentials": true,
+    "realAccountFilesRead": false,
+    "providerEndpoint": "localhost fake Responses API only; requires_openai_auth=false",
+    "proxy": "Cleared HTTP/HTTPS/ALL_PROXY in child environment only; user settings unchanged.",
+    "repoOracleReviewsAccountRootsReadDenied": true,
+    "repoAndOracleDenialsProbedBeforeEachLaunch": true,
+    "osExternalNetworkProbe": {
+      "errno": 1,
+      "error": "[Errno 1] Operation not permitted"
+    },
+    "outputDirectoryException": "Exact fresh native output directory plus parent metadata; no broad peer-state access."
+  },
+  "cleanup": {
+    "allRecordedProviderAndWrapperPidsAbsent": true,
+    "workerClosed": true,
+    "fakeProviderClosed": true,
+    "temporaryCwdRemoved": true,
+    "runtimeProcessRows": ["terminated", "terminated"],
+    "noMatchingPrivateRunProcessesAtAudit": true,
+    "actualActiveCancellationTested": false
+  },
+  "retainedAttempts": [
+    {
+      "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-codex-exec-product-free/runs/1791517845803",
+      "resultSha256": "ec8da3956f5f8d8350d9cee7f2378c859fc81e4a87cf1618edf3e994af8fe51d",
+      "status": "blocked_before_exec",
+      "reason": "Requested plain model id instead of exact internal catalog binding; refused without selecting a fallback; zero model requests."
+    },
+    {
+      "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-codex-exec-product-free/runs/1791517871792",
+      "resultSha256": "3bb3f23b5bef12ac3ba0e3ecb13130645c61e75b16e70a61224c318a9dce63af",
+      "status": "native_cli_failed_without_publication",
+      "reason": "127.0.0.1 request returned proxy 503 and never reached fake endpoint. Isolated child proxy variables were then explicitly cleared and localhost was used; no product code or account settings changed."
+    }
+  ],
+  "sourceHashesRecordedAfterRun": {
+    "packages/agent-host/src/codex-exec-driver.mjs": "26805df796fb388bd40a439610d6676085d464cb47b9741a6f5ae13808c1a176",
+    "packages/agent-host/src/codex-exec-final-output.js": "59258fc96fc0714889b11e8a240b9c96101dc2d815091d654d63772e56708115",
+    "packages/agent-host/src/codex-exec-runtime.ts": "041441a45e945df9233235b8dd1935438a8e6ccc4d211f51270367ecf04f7e24",
+    "packages/agent-host/src/generic-process-adapter.ts": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+    "packages/agent-host/test/codex-exec-test-harness.ts": "17fac95fa0e6c8aac3e1135b9f08b8df112d8dac980d4df7d3611da3212f364f"
+  },
+  "privateHashes": {
+    "result.json": "b5d0aa578c3951a6358319dd3376966c74e57c4b017c08ac1d9bbe57562e85a9",
+    "accepted.json": "8ed02b684439411009c1887bc6ead6b775ed45111eb28ed12730cc4455e887ad",
+    "requests.json": "4b7b3f0b4594e88e153cbb86fe338a161f9da59f2cdf3acfba20b5b104dfc8e7",
+    "launches.jsonl": "713b0b634af4efd3f426c3eee2770bbbf2357e637a18031546bd053c11f23f55",
+    "exits.jsonl": "779ee5b2f7ca4be08a9aeb975504f58eff5bd5a0fbdfdf7b0856f24bca66a73d",
+    "state.db": "ac376658232c60374388824c72d8c182b5e6070764a6cdc7ebe963e779286151",
+    "proof.txt": "2fbe70aa5ba327ef880fac3dc8cceab2b3e74033024397a8cb40e6fb7a0f9b14"
+  },
+  "nativeRolloutSha256": "1dd296236526fea4fb2ac6c8961d6c324526ad5607694cdcd26e0df205226bba",
+  "privateRunnerHashes": {
+    "run.mjs": "04af7cefcda672b2f8198153c29f87f41eccf4830288146a8490463c10762297",
+    "wrapper.mjs": "4d05f79d39431785c34116b5ece39b8252fae458c036bad643d310ce8ac8e055",
+    "evidence.mjs": "432119e96b056c71ab987fc462a0f519f626013b44e8f0c5476362a1e3b7d2ff"
+  },
+  "limits": [
+    "No real model or paid-provider calls; no reasoning/adherence/cost conclusion.",
+    "Only two same-session turns; no native control arm or long-task efficiency acceptance.",
+    "Current profile is explicit opt-in; defaults unchanged.",
+    "Task/multiplayer/busy steering not exercised here.",
+    "Driver currently provides start/end trajectory only, no per-tool/thinking UI mapping or compaction frames; context metrics stay unknown.",
+    "Attached directories, old transport overrides and SEA are explicitly unsupported.",
+    "Resume still scans sessions and reads bounded rollout history; 256 MiB total-file and 16 MiB current-evidence limits remain, with no automatic session rotation.",
+    "This actual trace verifies clean completion and cleanup; active cancellation is tested deterministically elsewhere."
+  ],
+  "attemptAccounting": {
+    "admissionFailureExecInvocations": 0,
+    "proxyFailureExecInvocations": 1,
+    "successfulTrajectoryExecInvocations": 2,
+    "totalExecInvocations": 3,
+    "successfulTrajectoryFakeProviderRequests": 3,
+    "failedAttemptsFakeProviderRequests": 0,
+    "paidCalls": 0
+  },
+  "postRunSourceChange": {
+    "file": "packages/agent-host/src/codex-exec-runtime.ts",
+    "change": "After this free trace, explicit serviceTier overrides now fail before launch instead of being silently ignored. The tested no-tier path is unchanged. Reproducing red and final integration tests passed.",
+    "testedSourceCopy": "/Users/sun/.loom/reviews/2026-10-09-codex-exec-product-free/runtime-at-free-run.ts",
+    "currentSha256": "8b967b6b264d62ae7d97041a0d6734b380fab94007d1ddc487d65638f7d274ba"
+  }
+}

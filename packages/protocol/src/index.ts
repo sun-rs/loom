@@ -437,6 +437,7 @@ export const RuntimeProfileManifestV3Schema = z
           "generic-process/v1",
           "claude-stream-json/v1",
           "codex-app-server/v1",
+          "codex-exec/v1",
           "kimi-acp/v1",
           "opencode-server/v1",
         ]),
@@ -496,13 +497,13 @@ export const RuntimeProfileManifestV3Schema = z
       });
     }
     if (
-      manifest.adapter.kind === "codex-app-server/v1" &&
+      (manifest.adapter.kind === "codex-app-server/v1" ||
+        manifest.adapter.kind === "codex-exec/v1") &&
       manifest.modelCatalogProbe.kind !== "codex-cli/v1"
     ) {
       context.addIssue({
         code: "custom",
-        message:
-          "codex-app-server/v1 requires the codex-cli/v1 model catalog probe",
+        message: `${manifest.adapter.kind} requires the codex-cli/v1 model catalog probe`,
         path: ["modelCatalogProbe", "kind"],
       });
     }

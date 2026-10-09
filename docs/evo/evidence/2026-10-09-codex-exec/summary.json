@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-09",
+  "baseRevision": "fc77f027031edd2f047cd5ff36fdaa74f7d1ddde",
+  "scope": "Explicit ordinary Codex exec/resume RuntimeProfile; native-final-text reuses existing Worker and Kernel final-output slot. Existing app-server profiles and sessions remain unchanged.",
+  "owner": "AgentHost owns native evidence and per-Run settlement. Kernel retains Room, Inbox, cursors, Task, final marker, idempotency and authority.",
+  "trial": {
+    "profile": "codex-exec/v1",
+    "flag": "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL",
+    "default": false
+  },
+  "implemented": [
+    "Explicit adapter and registry/daemon composition, ordinary exec and exact-session resume, no app-server conversion.",
+    "Complete bounded stdout plus fresh last-message and exact rollout boundary/input/session/turn/model/effort/final-phase proof.",
+    "Session evidence independent from final success, missing bound rollout fails closed without replacement.",
+    "Selected single-target native text submitted with original Worker grant after evidence drain and before lease release.",
+    "Cancellation aborts post-exit settlement; recovery reports unknown without replay, durable marker remains authoritative.",
+    "Native per-response usage only; duplicate response capture times do not double count, conflicting usage becomes a gap."
+  ],
+  "verification": {
+    "tdd": "Protocol, collector, driver and settlement tests first failed; final-newline preservation and duplicate-usage timestamp cases reproduced before fixes.",
+    "integration": "10 fake-CLI tests passed using real temporary Kernel/Host/Worker HTTP; continuous exec/resume, final slot, grant lifecycle, missing/wrong proof, cancellation, Task fallback, stale, unknown before/after commit, mode off and registry.",
+    "typecheck": "Final npx tsc --noEmit passed (exit 0).",
+    "fullCheck": "npm run check passed (exit 0): backend 2993 passed/22 skipped, Web 487, console 59, efficiency units 496. Final service-tier guard and exact-binding helper additionally passed full 10-test ordinary-Codex integration regression and tsc after the broader run had started.",
+    "actualCli": "Passed: installed Codex 0.161.0, gpt-6-luna/low, two same-session turns via exec/resume, one actual file tool, three local fake Responses requests [2,1], two dedicated final markers and completed Activations. See free-cli.json; no cost or quality verdict.",
+    "deployment": "pending",
+    "independentReconciliation": "Root inspected retained state.db and native rollout: 2 exited Runs, 2 completed Activations, 2 final-output markers, 1 session, both model/effort contexts match, memory disabled, 3 unique response usage records exactly match Kernel, no usage gaps; actual file content verified.",
+    "configurationGuard": "After the free run, a new red test reproduced silently ignored serviceTier. Factory now explicitly refuses any serviceTier override; tested no-tier path unchanged. Final targeted regression recorded separately.",
+    "checkLogSha256": "114c496a2627c7b21cd0b2e093ba207794acf920be4efc238aad15eba9b3390c",
+    "rootHashAudit": "7 successful-run artifacts, 2 retained failed-attempt results and native rollout hashes matched independently; 4 unchanged source hashes matched and the pre-service-tier-guard factory source was reconstructed byte-exactly and retained.",
+    "format": "npm run format:check passed",
+    "diff": "git diff --check passed; changed documentation links and evidence JSON validated"
+  },
+  "paidCalls": 0,
+  "efficiencyVerdict": "No new real-model cost, quality or long-task verdict. Fake-provider values are not a cost benchmark.",
+  "limits": [
+    "No default profile migration or existing-instance transport/session replacement.",
+    "SEA packaging, attached-directory resume, service-tier overrides and old app-server launch overrides are explicitly unsupported.",
+    "No native busy input; durable follow-up remains the owner.",
+    "With trial enabled, a Worker-only fallback interrupted by Host crash conservatively retains unknown settlement recovery.",
+    "Native sessions inventory and prefix hashing consume Host I/O/memory; 256 MiB rollout cap blocks continuation rather than rotating a session.",
+    "Compaction, long paid tasks, five-CLI matrix and multiplayer efficiency remain open.",
+    "This narrow driver exposes start/end trajectory and per-response token usage; per-tool/thinking UI mapping, native context occupancy and compaction observation are not implemented. Missing occupancy is null, not estimated.",
+    "Native resume system-prompt/channel-memory retention and compaction transport need dedicated acceptance before general rollout."
+  ],
+  "freeCliEvidence": "free-cli.json",
+  "newOrdinaryExecLaunches": 3,
+  "privateEvidenceRoot": "/Users/sun/.loom/reviews/2026-10-09-codex-exec-product",
+  "privateTestHashes": {
+    "collector-red.log": "730e1ed72d5a7a28ac00b45723b388c7e96666a79dc6bba6fcd64d38b31e3a00",
+    "collector-termination-red.log": "beef966398a02a1975209cdfcfa7a817524bfba83dcb16dc64ec3e37db5c00d9",
+    "settlement-red.log": "a80c5b74568c70e20e83509ae9f7155e7447f451f48dba87321bc062ea0d24e4",
+    "settlement-green.log": "31bd21fc63f42bdfe92849dcb4761003ff36e7eebe92c4359e140d2271b530dd",
+    "registry-regression.log": "4206683c20a7209ef0561177f6ef48c070e0619fdb6a5fa570c05029010afb71",
+    "integration-first-failure.log": "06691425bb1bd3a5ba44f7e2f20525b6615b67200c48f125770a6d9d77c7cdc4",
+    "integration-before-drain-fix.log": "de92039d02460ed3fc059f4364bbb20d254632fc0d202a1ef47977dc2b4cc0f5",
+    "service-tier-red.log": "622dfe8eca003585548172f1ba9395e9cba62877aab8c31f3334b8311b9c1306",
+    "final-integration.log": "6a6f07d6d779fcdb27d157e77d6c17f20431d490bd0ed4efd5d85750bd9d8989",
+    "final-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

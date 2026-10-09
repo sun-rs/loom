@@ -2,6 +2,41 @@
 
 2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。随后 P108 真实三轮传输和数值预算通过（输入1.140倍，双方生成2/1/1），但实质审查质量失败，**不是整体验收通过**。 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
+## 2026-10-09 普通 Codex exec/resume 纵向接入（默认关闭）
+
+新增显式 RuntimeProfile `codex-exec/v1`，使用普通 `codex exec --json` 与
+`codex exec resume`。原 `codex-app-server/v1` 配置及已有实例不变；不迁移或
+静默替换 session。新配置只有在 `LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL=1` 时启用
+原生正文发表，开关关闭仍使用 Worker 工具。模型与 reasoning 必须显式绑定，
+每次初始/续接启动都沿既有策略关闭官方自动记忆。
+
+Host 在发送前绑定原 Worker 凭据与实际渲染窗口，只为完整单目标消息选择原生发表。
+Driver 交叉校验完整 exec stdout、本轮独占 last-message 文件、rollout 当前增量：
+精确输入 SHA、原 session/turn、明确 final phase、工具结束、正常终态及正文一致。
+续接绑定精确路径、文件身份、字节偏移和旧前缀 SHA；首轮排除启动前已有文件。
+stdout 最后一段文字、exit0 或旧 final 单独都不能发表。
+Session 身份独立于 final 成功，失败后不能重新开始一个新 session。
+
+Host 处理完运行证据，随后通过原 Worker 的同一 final-output 事务槽提交正文，再撤销
+凭据。取消覆盖进程退出后的 HTTP 待决窗口。缺证据/unknown/held 保持显式待处理；
+崩溃恢复只核验持久标记，不重发表或用新模型轮次补偿。
+用量只来自原生当前 turn 的唯一 per-response 记录，不累加 exec 的会话累计摘要。
+这条路径不需要模型调用发帖工具或读取发表收据。
+
+自动化检查使用真实 Kernel/Worker/Host 与假 CLI，覆盖两轮连续会话、原凭据发表、
+撤权、缺 final、错 session、取消、Task 回退、stale、提交前后丢响应、关闭开关及
+显式 registry 配置。实际 CLI、完整检查和部署结果记录在
+[本批证据](evidence/2026-10-09-codex-exec/summary.json)，不能以假 CLI 通过代替。
+
+本切片限制：普通 exec 的忙时输入继续使用持久后续 Activation；没有原生 steer。
+SEA 打包、附加目录续接、service tier 覆盖和旧 app-server argv override 明确未支持，不静默忽略。
+试验开启但本轮回退 Worker 时，Host 崩溃恢复仍保守报告 unknown。
+当前只有开始/结束 trajectory 与逐响应 token；逐工具/思考 UI、context 占用与
+compaction 观察尚未接入，缺失占用显示 unknown，不估算。
+每次启动扫描原生 sessions 目录；resume 的前缀 SHA 校验仍读取本地旧字节，
+rollout 超过 256 MiB 时拒绝续接而不轮换 session。这是 Host I/O/内存边界，
+不会把旧字节再次送给模型；长任务、压缩、五 CLI 和多人付费效率仍未验收。
+
 ## 2026-10-09 Claude warm 原生正文纵向接入（默认关闭）
 
 此前实验提交器现在有一条正式运行链路候选：仅 Claude warm 显式设置

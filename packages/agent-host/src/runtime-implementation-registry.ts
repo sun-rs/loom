@@ -1,3 +1,9 @@
+import { createCodexExecRuntime } from "./codex-exec-runtime.ts";
+import {
+  createStandingPromptDigestLedger,
+  providerSessionKey,
+  requireModelBinding,
+} from "./provider-runtime-binding.ts";
 import { kimiWorkerMcpLease } from "./cold-worker-mcp-lease.ts";
 import { claudeWorkerMcpLease } from "./claude-worker-mcp-lease.ts";
 import { ProviderSystemMemory } from "./provider-system-memory.ts";
@@ -95,6 +101,8 @@ export type RuntimeCreationOptions = Pick<
   GenericProcessAdapterOptions,
   "activationEnvironment" | "beforeStart" | "cwd" | "supervisorDirectory"
 > & {
+  /** Explicit ordinary-Codex native-final trial; never converts another profile. */
+  nativeFinalText?: boolean;
   /**
    * Owner 2026-09-26: the channel home's Human-attached directories. Each
    * CLI receives them natively (Claude `--add-dir`, Codex workspace roots,
@@ -181,6 +189,11 @@ export class RuntimeImplementationRegistry {
           toolAccessMode,
         ),
       implementationVersion: CLAUDE_STREAM_JSON_IMPLEMENTATION_VERSION,
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("codex-exec/v1", {
+      create: createCodexExecRuntime,
+      implementationVersion: "codex-exec-driver/v1",
       recoveryDrivers,
     });
     this.#adapterImplementations.set("codex-app-server/v1", {
@@ -1144,72 +1157,6 @@ function createWarmInstanceRuntime(
 }
 
 /**
- * Per-RunAttempt memory of the standing prompt digest delivered by the daemon
- * activation lease, so recorded Provider session evidence lands on the same
- * key the launch resumed from. Adapters only carry this value; the daemon
- * compiler remains the only place a standing prompt is composed or digested.
- */
-function createStandingPromptDigestLedger(): {
-  digestFor(input: ActivationEnvelope): string | undefined;
-  remember(input: ActivationEnvelope, digest: string | undefined): void;
-} {
-  const digests = new Map<string, string>();
-  return {
-    digestFor: (input) => digests.get(input.runAttemptId),
-    remember: (input, digest) => {
-      if (digest === undefined) {
-        digests.delete(input.runAttemptId);
-        return;
-      }
-      if (digests.size >= 64 && !digests.has(input.runAttemptId)) {
-        const oldest = digests.keys().next();
-        if (oldest.done !== true) digests.delete(oldest.value);
-      }
-      digests.set(input.runAttemptId, digest);
-    },
-  };
-}
-
-function providerSessionKey(
-  input: ActivationEnvelope,
-  revision: RuntimeProfileRevision,
-  provider: string,
-  standingPromptDigest?: string,
-): ProviderSessionKey | undefined {
-  const context = input.contextManifest;
-  const placement = context?.placement;
-  if (context === undefined || placement === undefined) return undefined;
-  if (
-    context.activationId !== input.activationId ||
-    context.participantId !== input.participantId ||
-    context.roomId !== input.roomId ||
-    context.runAttemptId !== input.runAttemptId
-  ) {
-    throw new Error(
-      "Provider session context identity does not match activation",
-    );
-  }
-  if (
-    placement.runtimeProfileRevisionId !== revision.runtimeProfileRevisionId ||
-    placement.runtimeProfileDigest !== revision.contentDigest
-  ) {
-    throw new Error(
-      "Provider session placement does not match the configured RuntimeProfile",
-    );
-  }
-  return {
-    participantId: input.participantId,
-    provider,
-    runtimeProfileRevisionId: placement.runtimeProfileRevisionId,
-    // Optional so a session recorded before compiled standing prompts keeps
-    // its stored key. A launch that now carries a digest keys a different
-    // record, so an edited role never resumes a session started without it.
-    ...(standingPromptDigest === undefined ? {} : { standingPromptDigest }),
-    workspaceMountRevisionId: placement.workspaceMountRevisionId,
-  };
-}
-
-/**
  * Structured port of Multica's Kimi ACP lifecycle at commit
  * 64ec7f54163d918d5d7fd4dcae857f241b7842d0. Provider session continuity is
  * Host-private transport evidence; the durable product owner remains the
@@ -1635,24 +1582,6 @@ function createOpenCodeServerRuntime(
   });
 }
 
-function requireModelBinding(
-  report: RuntimeProfileProbeReport | undefined,
-  modelBindingId: string,
-): RuntimeModelBinding {
-  const binding =
-    report?.reportVersion === 2
-      ? report.modelBindings.find(
-          (candidate) => candidate.modelBindingId === modelBindingId,
-        )
-      : undefined;
-  if (binding === undefined) {
-    throw new Error(
-      `Runtime probe does not contain model binding ${modelBindingId}`,
-    );
-  }
-  return binding;
-}
-
 export class RuntimeCredentialEnvironmentBinding {
   readonly #manifest: RuntimeProfileManifest;
   readonly #resolvers: Readonly<Record<string, () => Promise<string>>>;
@@ -1876,7 +1805,7 @@ async function resolveExecutableIdentity(
   return { available: false, failureCode: lastFailure };
 }
 
-async function assertExecutableIdentityCurrent(expected: {
+export async function assertExecutableIdentityCurrent(expected: {
   byteLength: number;
   contentDigest: string;
   resolvedExecutablePath: string;
@@ -1943,7 +1872,8 @@ function customModelRuntime(
 ): "claude" | "codex" | undefined {
   return revision.manifest.adapter.kind === "claude-stream-json/v1"
     ? "claude"
-    : revision.manifest.adapter.kind === "codex-app-server/v1"
+    : revision.manifest.adapter.kind === "codex-app-server/v1" ||
+        revision.manifest.adapter.kind === "codex-exec/v1"
       ? "codex"
       : undefined;
 }

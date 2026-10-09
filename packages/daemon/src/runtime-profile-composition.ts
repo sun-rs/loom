@@ -163,6 +163,7 @@ export function createConfiguredRuntime(input: {
     const runtimeId = (
       {
         "codex-app-server/v1": "codex",
+        "codex-exec/v1": "codex",
         "claude-stream-json/v1": "claude",
         "kimi-acp/v1": "kimi",
         "opencode-server/v1": "opencode",
@@ -347,6 +348,9 @@ export function createConfiguredRuntime(input: {
             ),
           ),
         }),
+    nativeFinalText:
+      input.runtimeProfileRevision.manifest.adapter.kind === "codex-exec/v1" &&
+      process.env.LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL === "1",
     supervisorDirectory: input.supervisorDirectory,
   } satisfies RuntimeCreationOptions;
   runtime =

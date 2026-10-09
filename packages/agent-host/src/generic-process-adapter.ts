@@ -46,6 +46,7 @@ import {
   RAH_RUNTIME_NOTICE_ENV,
 } from "./leftover-process-sweeper.ts";
 
+import type { FinalOutputReceipt } from "./worker-final-output.ts";
 import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
 import {
   parseProviderCompaction,
@@ -165,6 +166,13 @@ export type ActivationEnvironmentLease = {
   env: Readonly<Record<string, string>>;
   redactions?: readonly string[];
   release?: () => Promise<void> | void;
+  /** Original-lease transport only: called after native exit and fd3 drain,
+   * before release. Never changes native termination or infers business state.
+   * Cancellation aborts this signal even after the native process has exited. */
+  settleFinalOutput?: (
+    exit: Readonly<RunExit>,
+    signal: AbortSignal,
+  ) => FinalOutputReceipt | undefined | Promise<FinalOutputReceipt | undefined>;
   /**
    * Digest of the daemon-compiled standing prompt this lease delivers. It keys
    * Provider session continuity so an edited Agent role or instructions cannot
@@ -202,6 +210,8 @@ type ProcessRun = {
   child: ChildProcess;
   exitPromise: Promise<RunExit>;
   exited: boolean;
+  settlementAbort: AbortController;
+  hasFinalSettlement: boolean;
   stderr: BoundedOutput;
   stdout: BoundedOutput;
   supervisorDescriptor?: SupervisorDescriptor;
@@ -1148,6 +1158,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       child,
       exitPromise,
       exited: false,
+      settlementAbort: new AbortController(),
+      hasFinalSettlement: environmentLease?.settleFinalOutput !== undefined,
       stderr,
       stdout,
     };
@@ -1155,17 +1167,27 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     let spawned = false;
     child.once("close", async (code, signal) => {
       run.exited = true;
-      await releaseEnvironment();
+      if (!run.hasFinalSettlement) await releaseEnvironment();
       await activity.finish();
-      stdout.finish();
-      stderr.finish();
-      resolveExit({
+      let exit: RunExit = {
         code,
         ...(activity.terminalFailure === undefined
           ? {}
           : { failure: activity.terminalFailure }),
         ...(signal === null ? {} : { signal }),
-      });
+      };
+      try {
+        exit = await settleProcessFinalOutput(
+          exit,
+          environmentLease,
+          run.settlementAbort.signal,
+        );
+      } finally {
+        await releaseEnvironment();
+      }
+      stdout.finish();
+      stderr.finish();
+      resolveExit(exit);
       if (spawned) this.#retainCompletedRun(runId);
     });
 
@@ -1264,6 +1286,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
   async cancel(handle: RunHandle): Promise<RunExit> {
     const run = this.#run(handle);
+    run.settlementAbort.abort();
     if (run.exited) return await run.exitPromise;
 
     if (run.supervisorDescriptor !== undefined) {
@@ -1271,7 +1294,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         run.supervisorDescriptor,
         true,
       );
-      if (existingResult !== null) return existingResult;
+      if (existingResult !== null)
+        return run.hasFinalSettlement ? await run.exitPromise : existingResult;
       await this.#requestSupervisorControl(
         run.supervisorDescriptor,
         "terminate",
@@ -1321,6 +1345,17 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   async recover(
     input: Parameters<NonNullable<RuntimeAdapter["recover"]>>[0],
   ): Promise<RunExit> {
+    const recovered = (exit: RunExit): RunExit =>
+      input.recoveryDescriptor.metadata.finalOutputSettlement === "volatile/v1"
+        ? {
+            ...exit,
+            finalOutput: {
+              state: "unknown",
+              detail:
+                "Original native final settlement proof was volatile and is unavailable after recovery. Nothing was re-published; verify the durable Room marker.",
+            },
+          }
+        : exit;
     const descriptor = this.#parseSupervisorDescriptor(
       input.recoveryDescriptor,
       input.runAttemptId,
@@ -1332,16 +1367,16 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       resolve(this.#supervisorDirectory, descriptor.supervisorId),
     );
     const existingResult = await this.#readTerminalResult(descriptor, true);
-    if (existingResult !== null) return existingResult;
+    if (existingResult !== null) return recovered(existingResult);
 
     try {
       await this.#requestSupervisorControl(descriptor, "terminate");
     } catch (error) {
       const racedResult = await this.#readTerminalResult(descriptor, true);
-      if (racedResult !== null) return racedResult;
+      if (racedResult !== null) return recovered(racedResult);
       throw error;
     }
-    return await this.#readTerminalResult(descriptor, false);
+    return recovered(await this.#readTerminalResult(descriptor, false));
   }
 
   diagnostics(handle: RunHandle): ProcessDiagnostics {
@@ -1541,6 +1576,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       child,
       exitPromise,
       exited: false,
+      settlementAbort: new AbortController(),
+      hasFinalSettlement: environmentLease?.settleFinalOutput !== undefined,
       stderr,
       stdout,
       supervisorDescriptor: descriptor,
@@ -1548,28 +1585,43 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     let durablePrepared = false;
     child.once("close", async () => {
       run.exited = true;
-      await releaseEnvironment();
-      await activity.finish();
-      stdout.finish();
-      stderr.finish();
+      if (!run.hasFinalSettlement) await releaseEnvironment();
+      let exit: RunExit | undefined;
+      let failure: unknown;
       try {
+        await activity.finish();
         const terminal = await this.#readTerminalResult(descriptor, false);
-        resolveExit({
-          ...terminal,
-          ...(activity.terminalFailure === undefined
-            ? {}
-            : { failure: activity.terminalFailure }),
-        });
+        exit = await settleProcessFinalOutput(
+          {
+            ...terminal,
+            ...(activity.terminalFailure === undefined
+              ? {}
+              : { failure: activity.terminalFailure }),
+          },
+          environmentLease,
+          run.settlementAbort.signal,
+        );
       } catch (error) {
-        rejectExit(error);
+        failure = error;
+      } finally {
+        await releaseEnvironment();
+        stdout.finish();
+        stderr.finish();
       }
+      if (exit !== undefined) resolveExit(exit);
+      else rejectExit(failure);
       if (durablePrepared) this.#retainCompletedRun(runId);
     });
     this.#runs.set(runId, run);
 
     const recoveryDescriptor = {
       driver: SUPERVISOR_DRIVER,
-      metadata: { controlToken: descriptor.controlToken },
+      metadata: {
+        controlToken: descriptor.controlToken,
+        ...(environmentLease?.settleFinalOutput === undefined
+          ? {}
+          : { finalOutputSettlement: "volatile/v1" }),
+      },
       ...this.#recoveryDescriptorProvenance(SUPERVISOR_DRIVER),
       recoveryKey: supervisorId,
     };
@@ -1754,8 +1806,11 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     const metadataKeys = Object.keys(recoveryDescriptor.metadata);
     const controlToken = recoveryDescriptor.metadata.controlToken;
     if (
-      metadataKeys.length !== 1 ||
-      metadataKeys[0] !== "controlToken" ||
+      metadataKeys.some(
+        (key) => key !== "controlToken" && key !== "finalOutputSettlement",
+      ) ||
+      (recoveryDescriptor.metadata.finalOutputSettlement !== undefined &&
+        recoveryDescriptor.metadata.finalOutputSettlement !== "volatile/v1") ||
       typeof controlToken !== "string" ||
       !/^[0-9a-f]{64}$/.test(controlToken)
     ) {
@@ -2151,4 +2206,28 @@ function isRunExit(value: unknown): value is RunExit {
   return Object.keys(value).every((key) =>
     ["code", "failure", "signal"].includes(key),
   );
+}
+
+async function settleProcessFinalOutput(
+  exit: RunExit,
+  lease: ActivationEnvironmentLease | undefined,
+  signal: AbortSignal,
+): Promise<RunExit> {
+  if (lease?.settleFinalOutput === undefined) return exit;
+  try {
+    const receipt = await lease.settleFinalOutput(
+      Object.freeze({ ...exit }),
+      signal,
+    );
+    return receipt === undefined ? exit : { ...exit, finalOutput: receipt };
+  } catch {
+    return {
+      ...exit,
+      finalOutput: {
+        state: "unknown",
+        detail:
+          "Final settlement failed after a possible publication. Nothing was retried; verify the Room before recovery.",
+      },
+    };
+  }
 }
