@@ -32,7 +32,9 @@
   "paidCalls": 0,
   "efficiencyVerdict": "Not measured; scripted fake model generations and usage are not real model cost, quality or stochastic reliability.",
   "deployment": {
-    "status": "pending",
+    "status": "Verified backend source deployed by graceful launchd restart; fresh real page and business state preservation verified.",
+    "sourceRevision": "445d89a34b94783caabcb83a9f01078b17b30e4c",
+    "evidence": "deployment.json",
     "trialDefaultEnabled": false
   },
   "limits": [
