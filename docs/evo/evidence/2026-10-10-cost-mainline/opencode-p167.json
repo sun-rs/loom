@@ -1,0 +1,157 @@
+{
+  "batch": "P167",
+  "status": "interrupted-invalid-tool-availability",
+  "finishedAt": "2026-10-09T15:42:55.811Z",
+  "reason": "Lead stopped after confirmed inherited benchmark sandbox cannot read warm Worker turn credentials; no favorable rerun.",
+  "rounds": [
+    {
+      "arm": "loom",
+      "round": 1,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "status": "completed",
+      "quality": true
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "status": "running",
+      "quality": null
+    }
+  ],
+  "full12Ratios": null,
+  "prespecifiedLate6Ratios": null,
+  "allUsage": {
+    "native": {
+      "requests": 31,
+      "uniqueRequests": 31,
+      "assistants": 31,
+      "input": 494460,
+      "output": 12653,
+      "cachedInput": null,
+      "reasoningOutput": null,
+      "unknownRequests": 0,
+      "dimensions": {
+        "input": {
+          "known": 494460,
+          "knownRequests": 31,
+          "unknownRequests": 0
+        },
+        "output": {
+          "known": 12653,
+          "knownRequests": 31,
+          "unknownRequests": 0
+        },
+        "cachedInput": {
+          "known": 451840,
+          "knownRequests": 30,
+          "unknownRequests": 1
+        },
+        "reasoningOutput": {
+          "known": 5620,
+          "knownRequests": 29,
+          "unknownRequests": 2
+        }
+      },
+      "streamCoverageComplete": true,
+      "complete": true,
+      "errors": [],
+      "label": "complete refers to primary input/output and request/native coverage; optional detail completeness is reported independently; observed usage on incomplete streams is partial, not a final total"
+    },
+    "loom": {
+      "requests": 26,
+      "uniqueRequests": 26,
+      "assistants": 26,
+      "input": 480596,
+      "output": 14071,
+      "cachedInput": null,
+      "reasoningOutput": null,
+      "unknownRequests": 1,
+      "dimensions": {
+        "input": {
+          "known": 480596,
+          "knownRequests": 25,
+          "unknownRequests": 1
+        },
+        "output": {
+          "known": 14071,
+          "knownRequests": 25,
+          "unknownRequests": 1
+        },
+        "cachedInput": {
+          "known": 451072,
+          "knownRequests": 25,
+          "unknownRequests": 1
+        },
+        "reasoningOutput": {
+          "known": 6330,
+          "knownRequests": 25,
+          "unknownRequests": 1
+        }
+      },
+      "streamCoverageComplete": false,
+      "complete": false,
+      "errors": [],
+      "label": "complete refers to primary input/output and request/native coverage; optional detail completeness is reported independently; observed usage on incomplete streams is partial, not a final total"
+    }
+  },
+  "sourceHashesVerified": 3644,
+  "changedSourceFiles": [],
+  "cleanup": {
+    "daemonExits": [
+      {
+        "pid": 27351,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "finishedAt": "2026-10-09T15:42:55.800Z"
+      }
+    ],
+    "temporaryProviderConfigsRemoved": true,
+    "native": {
+      "recordedLaunches": 4,
+      "matchingRecordedProcessesAlive": 0
+    },
+    "loom": {
+      "recordedLaunches": 8,
+      "matchingRecordedProcessesAlive": 0
+    }
+  },
+  "resultSha256": "141c034e1b91b4c4f7262d25829952ebab089735d9afedf8d7597f0d775d2083",
+  "leadStopSha256": "b7a95e835c7abbd0ce5ede40c9eee2ba76524f6c8a946db39896c1aaf84c0098"
+}

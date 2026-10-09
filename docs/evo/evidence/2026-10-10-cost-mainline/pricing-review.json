@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-09T15:29:17.471898+00:00",
+  "sources": [
+    {
+      "url": "https://aihubmix.com/blog/deepseek-v4-1-flash-api-pricing-compared-aihubmix-30-off-vs-openrouter",
+      "verdict": "Not sufficient for actual bill: promotion ends Sep27; route-specific and time-dependent, actual selected route not established. Do not apply headline rates to Oct9 captured tokens."
+    },
+    {
+      "url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+      "inputPerMillionUSD": 2,
+      "outputPerMillionUSD": 10,
+      "verdict": "Official public API base prices only; Claude subscription/routing bill not established. Cache create/read need separate exact prices for hypothetical API-equivalent, do not label real invoice."
+    }
+  ],
+  "policy": "Raw total/cache/uncached/output token ratios reported separately. Observed billing unknown remains unknown."
+}

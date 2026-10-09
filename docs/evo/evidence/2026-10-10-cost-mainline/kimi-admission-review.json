@@ -1,0 +1,64 @@
+{
+  "status": "admission-pass",
+  "reviewedAt": "2026-10-09T16:06:23.966562+00:00",
+  "reviewerPaidRequests": 0,
+  "batches": [
+    {
+      "batch": "P165",
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "admissionSha256": "fb5dc373329473d9f6b210aab6ace55b30ae0fab332141ad003b9aadf68f4c10",
+      "sourcesVerified": 3690,
+      "mismatches": 0
+    },
+    {
+      "batch": "P166",
+      "model": "kimi-code/k3",
+      "effort": "high",
+      "admissionSha256": "07c3176ceef4140f0a65d037134d39e7fa3f770985a930299368d0d3b0066d13",
+      "sourcesVerified": 3690,
+      "mismatches": 0
+    }
+  ],
+  "closedFindings": [
+    "Paid parent sandbox allows ordinary native network and exact shared native credentials/oauth stores; official config remains denied.",
+    "Each arm peer evidence/temp roots and historical free/paid directories denied; current root/Worker reads retained.",
+    "Close before rescan; both arms final capture+wire reread; all Kernel runs included; malformed capture preserves known amounts and marks unknown."
+  ],
+  "freeEvidence": [
+    {
+      "run": "free-paid-path-1791561691321-P165",
+      "model": "kimi-code/k3-256k",
+      "effort": "low"
+    },
+    {
+      "run": "free-paid-path-1791561719541-P166",
+      "model": "kimi-code/k3",
+      "effort": "high"
+    }
+  ],
+  "freeProof": "Each model: native2/product2 turns, same session per arm,8 complete raw responses, exact25tool schema hash equality, actual Worker read/file checks,40input/8output per arm synthetic primary accounting. Raw-body hashes independently rechecked.",
+  "sandboxTDD": {
+    "file": "daemon-sandbox-reviewed.mjs",
+    "sha256": "fa02f8a7eb543aab80d871f30f03f9af1abd2375749d3ec955bb39eeb66ce3ad",
+    "tests": 3,
+    "redLogSha256": "aaacce949f74ab35d5f73c721853397d373956fe0217543848a853736f8e613f",
+    "greenLogSha256": "b3f6437c8e30d3b58276e1c0cc5abaa88b760d511b9fedcf517ec801578318e0",
+    "finalProbeSha256": "71a443aaef5968d169d11255fde8ccb0031c84563bba8a4ea81f63b8c835cb88"
+  },
+  "limits": {
+    "input": 12000000,
+    "output": 150000,
+    "requests": 400,
+    "wallMs": 5400000,
+    "turnMs": 600000
+  },
+  "limitations": [
+    "Prelaunch thresholds are not hard invoice caps.",
+    "Free uses synthetic account store and loopback, not proof of real account availability or model quality/cost.",
+    "Native cold print and product cold ACP remain different transport/tool-routing modes despite equal model-visible tools.",
+    "Kimi memory uses exact0.39.1 source/version-audited not-applicable, not an invented memory-off switch.",
+    "Two-arm2turn CLI proof preceded final additional historical-directory denies; final sandbox-exec current/peer/history/oracle probes cover that narrow policy change.",
+    "Interruption accounting regression is offline; no claim of paid interrupted-provider success."
+  ]
+}

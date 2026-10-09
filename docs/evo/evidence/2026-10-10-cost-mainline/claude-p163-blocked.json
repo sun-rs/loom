@@ -1,0 +1,9 @@
+{
+  "batch": "P163",
+  "model": "haiku",
+  "effort": null,
+  "status": "blocked-before-provider-launch",
+  "paidRequests": 0,
+  "reason": "Current catalog publishes reasoning levels; approved none is not admissible under existing product guard. No substitution.",
+  "catalogEvidence": "/Users/sun/.loom/reviews/2026-10-09-claude-isolated-preflight/runs/1791559652729/result.json"
+}

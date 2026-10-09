@@ -1,0 +1,157 @@
+{
+  "paidCalls": 0,
+  "kind": "actual-installed-Kimi-native-print-and-formal-cold-ACP-product-loopback-preflight",
+  "runs": [
+    {
+      "path": "free-paid-path-1791561691321-P165",
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "status": "completed",
+      "finalAccountingComplete": true,
+      "arms": {
+        "native": {
+          "accounting": {
+            "complete": true,
+            "errors": [],
+            "input": 40,
+            "output": 8,
+            "cachedInput": 0,
+            "reasoning": 0,
+            "httpAttempts": 4,
+            "reportedGenerations": 4,
+            "failedHttpAttempts": 0,
+            "billingCoverage": "not-observed"
+          },
+          "sessionIds": ["session_eee35ef8-f5b7-42da-8646-434dccba4e55"]
+        },
+        "loom": {
+          "accounting": {
+            "complete": true,
+            "errors": [],
+            "input": 40,
+            "output": 8,
+            "cachedInput": 0,
+            "reasoning": 0,
+            "httpAttempts": 4,
+            "reportedGenerations": 4,
+            "failedHttpAttempts": 0,
+            "billingCoverage": "not-observed"
+          },
+          "sessionIds": ["session_daf8916b-d9f3-474e-8327-30e52f7ac007"]
+        }
+      },
+      "rounds": [
+        {
+          "arm": "native",
+          "round": 1,
+          "status": "completed"
+        },
+        {
+          "arm": "loom",
+          "round": 1,
+          "status": "completed",
+          "uniquePublication": 1,
+          "acknowledgedActivation": true
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "status": "completed"
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "status": "completed",
+          "uniquePublication": 1,
+          "acknowledgedActivation": true
+        }
+      ],
+      "authLinksRemoved": true
+    },
+    {
+      "path": "free-paid-path-1791561719541-P166",
+      "model": "kimi-code/k3",
+      "effort": "high",
+      "status": "completed",
+      "finalAccountingComplete": true,
+      "arms": {
+        "native": {
+          "accounting": {
+            "complete": true,
+            "errors": [],
+            "input": 40,
+            "output": 8,
+            "cachedInput": 0,
+            "reasoning": 0,
+            "httpAttempts": 4,
+            "reportedGenerations": 4,
+            "failedHttpAttempts": 0,
+            "billingCoverage": "not-observed"
+          },
+          "sessionIds": ["session_983f27b5-13ea-4f92-8ba0-66899955fd65"]
+        },
+        "loom": {
+          "accounting": {
+            "complete": true,
+            "errors": [],
+            "input": 40,
+            "output": 8,
+            "cachedInput": 0,
+            "reasoning": 0,
+            "httpAttempts": 4,
+            "reportedGenerations": 4,
+            "failedHttpAttempts": 0,
+            "billingCoverage": "not-observed"
+          },
+          "sessionIds": ["session_62f67532-30c7-411e-97ed-5537076073f8"]
+        }
+      },
+      "rounds": [
+        {
+          "arm": "native",
+          "round": 1,
+          "status": "completed"
+        },
+        {
+          "arm": "loom",
+          "round": 1,
+          "status": "completed",
+          "uniquePublication": 1,
+          "acknowledgedActivation": true
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "status": "completed"
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "status": "completed",
+          "uniquePublication": 1,
+          "acknowledgedActivation": true
+        }
+      ],
+      "authLinksRemoved": true
+    }
+  ],
+  "finalPolicyProbe": {
+    "currentOwnReadable": true,
+    "peerDenied": true,
+    "oldRunDenied": true,
+    "oracleDenied": true
+  },
+  "failedPreflightRetained": [
+    "runs/1791559927285 zero-request catalog assertion",
+    "native-free-1791560360688 zero-request preload metadata deny",
+    "native-free-1791561056168 nominal high but actual wire low; withdrawn as high proof",
+    "native-free high interim rewrite also retained",
+    "free-paid-path-1791561611336-P165: native Worker probe wrongly applied, product wrapper peer realpath denied before HTTP"
+  ],
+  "limitations": [
+    "Synthetic model proves tools/transport/accounting but not model quality, price, or paid efficiency.",
+    "Signed private ps workaround only harness; code section audited unchanged.",
+    "Final history deny was added after full 2x2 runs; direct actual sandbox recheck passed.",
+    "Fullaccess native credential store access is allowed only when paid; no strong sameUID secret isolation claim."
+  ]
+}

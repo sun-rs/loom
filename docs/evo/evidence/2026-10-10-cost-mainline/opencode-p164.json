@@ -1,0 +1,1389 @@
+{
+  "batch": "P164",
+  "status": "independently-audited-failed",
+  "sourceAdmission": {
+    "revision": "f02da8346c6bf22a809dd0c8fae5af5638864347",
+    "planHashVerified": true,
+    "frozenSourceCount": 3643,
+    "changedFiles": []
+  },
+  "arms": {
+    "native": {
+      "capturedRequests": 25,
+      "completedRequests": 25,
+      "requests": [
+        {
+          "id": 1,
+          "input": 7565,
+          "output": 76,
+          "cached": 0,
+          "reasoning": 8,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "cc0bd046eb43f5c6607ea5b4aebaae6f8a3ba8717b0e7e80f77f9efefb8d688c",
+          "requestSha256": "79cccdf0e5c7e3206bc25f974b9b804c4a1df4e0114d6e977b6b67911393f30f",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 35
+        },
+        {
+          "id": 2,
+          "input": 7758,
+          "output": 106,
+          "cached": 7552,
+          "reasoning": 0,
+          "tools": ["read", "read"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "02ac613ae7666f6aad8cd88b8bdd3c5a55d0d1dd6d876d7a3dc6bb38f3e26be4",
+          "requestSha256": "130d6a2203058ba84cd741ad729e0cec89189a7f9d699f4addd3d9de824bfb99",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 3,
+          "input": 8066,
+          "output": 2261,
+          "cached": 7680,
+          "reasoning": 1729,
+          "tools": ["write"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "81799ec1db08d77838b4324edc8969d7a797d527ff610e10ae594941d6f9c9af",
+          "requestSha256": "7e5576c38bb75cccbf4ed5850232d56a9b7c0553424de0f33c4e12ae988dae0a",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 7457
+        },
+        {
+          "id": 4,
+          "input": 10343,
+          "output": 1725,
+          "cached": 8064,
+          "reasoning": 647,
+          "tools": ["write"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "8d3d92a6993e6202e1306a18e0d415be1cab44514705b66b8eb3077fab1d5e7f",
+          "requestSha256": "bf5689b57352cf80f6d380e164d98ee08a0808b486245a7af9faf513a69d3256",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 2068
+        },
+        {
+          "id": 5,
+          "input": 12084,
+          "output": 212,
+          "cached": 10240,
+          "reasoning": 127,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "68ea410a1a9c855c29f031fb324c5a830ee57626a27963b85e91b51197f024b9",
+          "requestSha256": "d20687557e3301db706645ff6889a3d2b86338bc11b9cf52d495955677998906",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 337
+        },
+        {
+          "id": 6,
+          "input": 12860,
+          "output": 402,
+          "cached": 12032,
+          "reasoning": 168,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "fa392704e6f6f13915bd200302b07c89122731d39a07bbf7941e284545b0925d",
+          "requestSha256": "568ad92b2d499654538dd5a30096e026077ee8de469a75f918b3e40ca297e765",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 772
+        },
+        {
+          "id": 7,
+          "input": 13277,
+          "output": 227,
+          "cached": 12800,
+          "reasoning": 142,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "c9f01010c7913170120f2c04830e178cb216b11f8312701dc481944c20cbdf16",
+          "requestSha256": "2fbd4e0aa3c0d25c2838d9e6e81159f261b1e4f2a53055989ef1e37948dc48da",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 486
+        },
+        {
+          "id": 8,
+          "input": 14045,
+          "output": 276,
+          "cached": 13184,
+          "reasoning": 93,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "80df8d5c65ecb6e315e4a1b99d83c7333d175e375f9fa696c294a543e886bac7",
+          "requestSha256": "6ea92d8623fbcc3ab5106d73fe862e0e66ad8130e60d85c2c58b687dfe22c4d9",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 386
+        },
+        {
+          "id": 9,
+          "input": 14336,
+          "output": 89,
+          "cached": 13952,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "9e57447ef6fbe8d4f1722eb72c51fec74f316b80ce65df5461a8ae174f5b40a5",
+          "requestSha256": "9375c343079e2fa6bd8df393e225c4f2c79043a27f5057b892fbe9bdec161c46",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 10,
+          "input": 14452,
+          "output": 319,
+          "cached": 14336,
+          "reasoning": 123,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "a227d81654446cb3791df96bf200323912ee680b9635e14a1a7f0af1328ff1a1",
+          "requestSha256": "bf2ceb85be63a1a232d09ccdf70fdb547e5ad39849a80c028dfe2cd7ecf21b73",
+          "systemCharacters": 9604,
+          "textCharacters": 691,
+          "reasoningCharacters": 562
+        },
+        {
+          "id": 11,
+          "input": 14858,
+          "output": 597,
+          "cached": 14336,
+          "reasoning": 167,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "7a86cd4b087165ff010ad4a8d1ec785a632118ce012f7070c9308edc926c0372",
+          "requestSha256": "2e92e5700b82afc587cfbfb179e346e08e383af1b93c4a1763fc7c9ae20d888f",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 799
+        },
+        {
+          "id": 12,
+          "input": 15470,
+          "output": 89,
+          "cached": 14848,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "f9d981ca85372550dfb500b5b595fca86e3f933fb786935fd1682852f1f03856",
+          "requestSha256": "e59a0e194e77d36d54621a528f2d99165e612ecad90034a2019f63224a552b38",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 13,
+          "input": 15617,
+          "output": 96,
+          "cached": 15360,
+          "reasoning": 14,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "e760ddafd856a183368b224aa227609e99c48514b8791dd5690b9e0541e35fd7",
+          "requestSha256": "2499f5c74c8430898da8339127723d54648e105b2639ec5ea781eb5927b6bb78",
+          "systemCharacters": 9604,
+          "textCharacters": 304,
+          "reasoningCharacters": 66
+        },
+        {
+          "id": 14,
+          "input": 15799,
+          "output": 412,
+          "cached": 15616,
+          "reasoning": 206,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "8573448510cf91ce59ab642677a3791907328962ccc7e438647a1fe960344060",
+          "requestSha256": "2d7a52a2e68120d1f97b746cd71e0a8f9c9d8a9f026dccd9eee53493bd2501bc",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 796
+        },
+        {
+          "id": 15,
+          "input": 16226,
+          "output": 814,
+          "cached": 15744,
+          "reasoning": 241,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "d78bfbaa767153b23bb2f725e4b544747865cbf506c360ba2abc658263c2231a",
+          "requestSha256": "c42aa9ba4003133b44a25bdb1c1e6c085444ee3c3db24474abcd4d738658682f",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 1092
+        },
+        {
+          "id": 16,
+          "input": 17055,
+          "output": 89,
+          "cached": 16128,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "f1411c74841733b93b753a2dbb372e49248b36894702e488fe232a70af9e7e80",
+          "requestSha256": "27f18871686b7857f956896bbec81ccdcd0105304445e4f981c17f5fcf4ba24f",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 17,
+          "input": 17202,
+          "output": 133,
+          "cached": 17024,
+          "reasoning": 63,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "1ec3f7be16e04508e3a711f69b3fd67d4002c496e4ff9601f576652a9de5589d",
+          "requestSha256": "f99b175e4f39fa5362b61d53b2d2e80d12f28519ef8639756de931c8c1c712b4",
+          "systemCharacters": 9604,
+          "textCharacters": 294,
+          "reasoningCharacters": 258
+        },
+        {
+          "id": 18,
+          "input": 17437,
+          "output": 819,
+          "cached": 17152,
+          "reasoning": 761,
+          "tools": ["read"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "615ab64f3cd6f8e3e1700f02abee76a72ff6f5d2615a87e6c7031ea30b331264",
+          "requestSha256": "f7f8fdc15a206a6c022b8e612ae00a6f9f7ad51f3479468c0bfe6bd2b8207778",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 3028
+        },
+        {
+          "id": 19,
+          "input": 18927,
+          "output": 283,
+          "cached": null,
+          "reasoning": null,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "3e70fe45788b626250cc9206978a48d54c72e92ca44855e3d5cabb8f629fc2f7",
+          "requestSha256": "f736c58837b23afe7b5b4887b85a24f6122bd8b78782391a5f2ec2e572ae078e",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 20,
+          "input": 19225,
+          "output": 463,
+          "cached": 17408,
+          "reasoning": 0,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "32c1fd296497d0de261a2fe3771f4d3f969d1ec62656d83e17e7946854a712b0",
+          "requestSha256": "14bc5e1f80406cb1822c1feb22ff81023b2abc86355a0b7a6cdacb7f3fc57f41",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 21,
+          "input": 19703,
+          "output": 737,
+          "cached": 18816,
+          "reasoning": 323,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "0f118f7fe1fd1b633c7a8ea6289dc90e527a8173892418df4227f20f746d1d76",
+          "requestSha256": "f69c635e3ff72495f04089f5efe571b8a33f5fd748d4434fdee4da86608427cc",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 1370
+        },
+        {
+          "id": 22,
+          "input": 20455,
+          "output": 1330,
+          "cached": 19200,
+          "reasoning": 585,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "b568e2e31ad21d5d9135b284249bac06376e307c4ee47d56c73e99a816caa02d",
+          "requestSha256": "bc81fbe88337dbc3b51ab1ae079b8d33260db25a30abfd84dfe920111356648c",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 1665
+        },
+        {
+          "id": 23,
+          "input": 21800,
+          "output": 269,
+          "cached": 20352,
+          "reasoning": 50,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "5a97c3d03ad27b3ca0d26158ad400614ed967606370cc14d1ae394eac6851ea9",
+          "requestSha256": "09e7c410d9b091d3cdb2467659c7b4bc54c1855cb991756980740260c7a52540",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 177
+        },
+        {
+          "id": 24,
+          "input": 22084,
+          "output": 89,
+          "cached": 21760,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "c4013d770683adf257f437e23089c3617a314a335adb67e4e08329d1745fdced",
+          "requestSha256": "97391e7dd193d42a75b512de5aad2d8caab8a6356620ec7a04ba14278889aff9",
+          "systemCharacters": 9604,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 25,
+          "input": 22290,
+          "output": 295,
+          "cached": 22016,
+          "reasoning": 212,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "e2dafb9d6ad8c98559cff3b427f926a15bf20c647e275e2842af6fdfb736bdbc",
+          "requestSha256": "515fa4ff147678236183472699ed27d3997ead89fe54f98b3476955fe6de3721",
+          "systemCharacters": 9604,
+          "textCharacters": 322,
+          "reasoningCharacters": 610
+        }
+      ],
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd",
+      "toolCount": 10,
+      "allCompletedRequestsStandingAndBindingVerified": true,
+      "totals": {
+        "input": 388934,
+        "output": 12208,
+        "cached": null,
+        "reasoning": null
+      },
+      "unknownRequests": 0,
+      "nativePartsToReportedGenerationsVerified": 17,
+      "nativeDbAllUsageVerified": true,
+      "nativeDbSha256": "efcbcffdf53a5b3a624de15dde4ddb53a1b21b295fcc5b500cdb46d438a541ed",
+      "sessionCount": 1,
+      "usageDetailCoverage": {
+        "cached": {
+          "knownPartialSum": 345600,
+          "unknownRequests": 1
+        },
+        "reasoning": {
+          "knownPartialSum": 5659,
+          "unknownRequests": 1
+        }
+      }
+    },
+    "loom": {
+      "capturedRequests": 26,
+      "completedRequests": 26,
+      "requests": [
+        {
+          "id": 1,
+          "input": 9395,
+          "output": 91,
+          "cached": 0,
+          "reasoning": 19,
+          "tools": ["bash", "glob"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "d683f3b0dd465920ee656f30ba5f0853fbbd3d994ddbf724f696888169dd4c13",
+          "requestSha256": "e50158e9b511b5d461eee9b2e1ea5bd667777235f83d700c810a83c54b1fa688",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 95
+        },
+        {
+          "id": 2,
+          "input": 9664,
+          "output": 215,
+          "cached": 9344,
+          "reasoning": 21,
+          "tools": ["read", "read"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "83bf9fb1c253c357d6c5c5ebfc50318d9896973d3f3f1d83915d0b3ccdeef30f",
+          "requestSha256": "6a6c68b90d3a15a29f111b2d7c83b26b18489f466dfc3eea2bd60ceee4645394",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 93
+        },
+        {
+          "id": 3,
+          "input": 10169,
+          "output": 1998,
+          "cached": 9600,
+          "reasoning": 1892,
+          "tools": ["bash", "bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "2c62ab4b47c56dfbf9b75b6f42b1c4080b730d623c601497141f05795d91cd20",
+          "requestSha256": "6c156a1a25ec8b68df6504da432ec43b6bc8dcc3600cef10da7e7724a6cf0091",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 8563
+        },
+        {
+          "id": 4,
+          "input": 12760,
+          "output": 80,
+          "cached": 10112,
+          "reasoning": 12,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "a704013c3543c86a98fab565e9cadc9973487a59085a997131dc9e68635ab779",
+          "requestSha256": "b31d85b5ae9861f06719ab6d0b9deb342780681bd1b254f6bddf18bdbac1c4c7",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 68
+        },
+        {
+          "id": 5,
+          "input": 12888,
+          "output": 86,
+          "cached": 12672,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "9e0d0741bf546107719d7a262cbc20dbef0a416e7217a82afd8be3ec520aeaa6",
+          "requestSha256": "ba965fc2fdfdfd69720706a0a0112197df682ed555331cc86b2228fa1edafd57",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 6,
+          "input": 13008,
+          "output": 178,
+          "cached": 12800,
+          "reasoning": 106,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "c72c2b806f22459775b0001bef05f80e23c0aa90fa505f46f80654fe149efdcd",
+          "requestSha256": "4c7bbd70dfc2d9e23a780e5bf189fbda3f156f0562d50343a6f8f5dde04b1274",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 420
+        },
+        {
+          "id": 7,
+          "input": 14247,
+          "output": 75,
+          "cached": 12928,
+          "reasoning": 22,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "4a05bad4f0e3af3b3299fd197e8d2b6ad93c8d59033a1bc07df32cdfa693dd4b",
+          "requestSha256": "79e07175dc8c38e245d418a7730ee0a57ca713c92df9b10b33425e64de223df9",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 74
+        },
+        {
+          "id": 8,
+          "input": 14413,
+          "output": 298,
+          "cached": 14208,
+          "reasoning": 201,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "8140d8c7ad16aa996b6c7e6f3102376d7889f1e37c59d261ad6bf12fd88125e4",
+          "requestSha256": "2eef99d8824a737ad7075956165753307461a4afd74c5fcf7ecac18ad0779f54",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 859
+        },
+        {
+          "id": 9,
+          "input": 14750,
+          "output": 172,
+          "cached": 14336,
+          "reasoning": 90,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "6b2a6c6da6be465edbbc7e676b9bafd4784873b425fde571cee115741dd79ede",
+          "requestSha256": "0d56f63c08b90dd8162d41293e28cf4d549b4a12c3fefea03549c1f812569600",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 372
+        },
+        {
+          "id": 10,
+          "input": 14956,
+          "output": 3641,
+          "cached": 14720,
+          "reasoning": 2736,
+          "tools": ["write"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "93666601ec31d14ccbaa118e2c839b4f44b9b99b0d6df72e7e87d68b1d1ab84c",
+          "requestSha256": "34e05c5611618ff157e993ebf874bc73f86a4682d35f20ae13c96467e38b4a6b",
+          "systemCharacters": 16647,
+          "textCharacters": 127,
+          "reasoningCharacters": 11200
+        },
+        {
+          "id": 11,
+          "input": 18613,
+          "output": 1279,
+          "cached": 14848,
+          "reasoning": 0,
+          "tools": ["write"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "a426d4061bff290abbab1c0f1a952d0a72ecc93ab77066d67682301ec14dde56",
+          "requestSha256": "d1b4fb2f346b1fc5d4c89d7931e87b05aa248fa63384a7718db6c515f1e31e13",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 12,
+          "input": 19908,
+          "output": 129,
+          "cached": 18560,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "20a32211743827c803de668eedcf8572f015bbf3f8b380369817f61ea8c5af01",
+          "requestSha256": "85f86067a0e3974751efdedcd02ddc479b61c765f7d6e0c8ca6668e48fdbedf6",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 13,
+          "input": 20848,
+          "output": 229,
+          "cached": 19840,
+          "reasoning": 46,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "c5c98757c60fa425de7862adef965a76795137f3307446ce2a8f12efbcc9af78",
+          "requestSha256": "d4a4fb5c2b53aac40ae7a7989a18665040484085c5a6d3236d5912bbd85bbd60",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 119
+        },
+        {
+          "id": 14,
+          "input": 21092,
+          "output": 129,
+          "cached": 20736,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "395e2431b2b738d9b46e71556548f4adcb88d528917a9512183ad19ab6d100b6",
+          "requestSha256": "7f496b34b05d81c0f25a399a3da480df45e9f3eef9c1f7a20cc21ddc30b3cef1",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 15,
+          "input": 21570,
+          "output": 452,
+          "cached": 20992,
+          "reasoning": 0,
+          "tools": ["write"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "0b5d80579344785397018786795ab30753cae14eb22ad4310d5b35cc3faf086c",
+          "requestSha256": "80c9cfeef5f2a273523a91a26d2a780d659d57fb346572b3fc3a0b4f023eec17",
+          "systemCharacters": 16647,
+          "textCharacters": 22,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 16,
+          "input": 22038,
+          "output": 343,
+          "cached": 21504,
+          "reasoning": 96,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "3dc8b8e2581846b660362617f6df1f9738491dea3c2a3ca26b16d643f4cff67a",
+          "requestSha256": "682747e3a9c5fa699fb4b718068c0196dcc09e4859869699429de29e0fa7bd11",
+          "systemCharacters": 16647,
+          "textCharacters": 958,
+          "reasoningCharacters": 453
+        },
+        {
+          "id": 17,
+          "input": 22534,
+          "output": 294,
+          "cached": 22016,
+          "reasoning": 132,
+          "tools": ["read"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "d8ac2ab943182896726688ca2874bca89f505e434c881214ef09e181061740d7",
+          "requestSha256": "c5a99c58a0a53aebdd3c387e8ef73e3f60aaf8367dd94c51821773e265e7b3bd",
+          "systemCharacters": 16647,
+          "textCharacters": 163,
+          "reasoningCharacters": 672
+        },
+        {
+          "id": 18,
+          "input": 23304,
+          "output": 223,
+          "cached": 22528,
+          "reasoning": 36,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "3cb8efd65d277a1fe816bdd6c840f453d21c998081aa14c218c20ecfcdedf36d",
+          "requestSha256": "53d8c47d7174e22bde0b4c424af9fb65b6cc25c31718f837ed6d20f6bed32cfb",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 154
+        },
+        {
+          "id": 19,
+          "input": 23542,
+          "output": 423,
+          "cached": 23296,
+          "reasoning": 0,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "7112f991029a81ad2e07d40ad2a742ed987a0d4275231f1e3204de5b64ceab33",
+          "requestSha256": "a59355f5dbf7027f3bc443e9785396c6e4e4b5f97dfd4099b20e3d33082089cf",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 20,
+          "input": 23980,
+          "output": 129,
+          "cached": 23424,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "6247137a94a428cf0d2227662847bc64c0b5fcf80b6c31f5448becb7d7bf75a1",
+          "requestSha256": "45080f3504f92eb4b9608886575e0ae8bd270ecb66fe1803cf0135810230c061",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 21,
+          "input": 24530,
+          "output": 137,
+          "cached": 23936,
+          "reasoning": 0,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "e2c30a23dd50cab96bdf0b911305fba2d4414be442b87e46264203005abf1acb",
+          "requestSha256": "c50016acfc002119a1aff6977fbfd25d739050cb8111abedfc419d28d206edca",
+          "systemCharacters": 16647,
+          "textCharacters": 484,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 22,
+          "input": 24819,
+          "output": 497,
+          "cached": 24448,
+          "reasoning": 174,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "8d0f08521ac62be4ad39be2d95360431420cbb8f3ccb378214eb1c57ba8f5907",
+          "requestSha256": "4945f7bcba70aa9f337590b427674068472387ba1e8b15a5e2e9c2a46013cb83",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 687
+        },
+        {
+          "id": 23,
+          "input": 25331,
+          "output": 623,
+          "cached": 24704,
+          "reasoning": 154,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "2b71c8a504c6c913b85884ececfb997a2b0db01c42ae6f3a1ec96fb812c0c887",
+          "requestSha256": "b00b37600c8e462e40008e07668678daddeb830eda503c9ef6da1d8e49eeffe0",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 704
+        },
+        {
+          "id": 24,
+          "input": 25969,
+          "output": 129,
+          "cached": 25216,
+          "reasoning": 0,
+          "tools": ["bash"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "32a2f2ecc5bee6ec7e6967bf44abf1a6aef71b53195710dabf958c5103b0f4b5",
+          "requestSha256": "17391c34324275f72ca6707c5976e55b908bb41e78c50bc23e2c573503894d86",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 0
+        },
+        {
+          "id": 25,
+          "input": 26591,
+          "output": 302,
+          "cached": 25856,
+          "reasoning": 14,
+          "tools": ["edit"],
+          "finishReasons": ["tool_calls"],
+          "responseSha256": "844b533809c109eb406f2d90f64afa1c85e0f702c4c27ae8ed9d52e6908ac4be",
+          "requestSha256": "96353445819b48de5445b491db2bba60728e1499ab28732a054e139643dd35d5",
+          "systemCharacters": 16647,
+          "textCharacters": 0,
+          "reasoningCharacters": 61
+        },
+        {
+          "id": 26,
+          "input": 26908,
+          "output": 131,
+          "cached": 26496,
+          "reasoning": 0,
+          "tools": [],
+          "finishReasons": ["stop"],
+          "responseSha256": "10ed6629836b0dcf2ac3763df08f2f4a15b881ddb9e816dad4de1cce784ea8c7",
+          "requestSha256": "61e23ee1695ac41f3d5eab4af94a440413ea0d93eb8b3c6bf913a295a7a0d4ac",
+          "systemCharacters": 16647,
+          "textCharacters": 531,
+          "reasoningCharacters": 0
+        }
+      ],
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd",
+      "toolCount": 10,
+      "allCompletedRequestsStandingAndBindingVerified": true,
+      "totals": {
+        "input": 497827,
+        "output": 12283,
+        "cached": 469120,
+        "reasoning": 5751
+      },
+      "unknownRequests": 0,
+      "nativePartsToReportedGenerationsVerified": 26,
+      "kernelUsageRowsIndependentlyVerified": 26,
+      "activationStates": {
+        "completed": 3
+      },
+      "nativePublicationMarkers": 3,
+      "nativeDbAllUsageVerified": true,
+      "nativeDbSha256": "f2c0d4653f6661e96de207c5bd0d800d4430490446b6ba2bba731e857592af12",
+      "sessionCount": 1,
+      "usageDetailCoverage": {
+        "cached": {
+          "knownPartialSum": 469120,
+          "unknownRequests": 0
+        },
+        "reasoning": {
+          "knownPartialSum": 5751,
+          "unknownRequests": 0
+        }
+      }
+    }
+  },
+  "rounds": [
+    {
+      "actualRequestBusinessTextExactSubstring": true,
+      "arm": "native",
+      "round": 1,
+      "input": 114786,
+      "output": 5693,
+      "requests": 10,
+      "firstRequestInput": 7565,
+      "finalRequestInput": 14452,
+      "toolCalls": 10,
+      "quality": true,
+      "failedChecks": [],
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "2e684c3b976d9bde689162cdd354314b68abb5db1d079c57a8e0523c27f214bc",
+        "tests/test_invoice.py": "d5d327b4af304271cdbc0947aecefeaf596cb64fef4472d89d6930bac48cef54"
+      },
+      "snapshotHashesVerified": true
+    },
+    {
+      "actualRequestBusinessTextExactSubstring": true,
+      "arm": "native",
+      "round": 2,
+      "input": 45945,
+      "output": 782,
+      "requests": 3,
+      "firstRequestInput": 14858,
+      "finalRequestInput": 15617,
+      "toolCalls": 2,
+      "quality": true,
+      "failedChecks": [],
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "2e684c3b976d9bde689162cdd354314b68abb5db1d079c57a8e0523c27f214bc",
+        "tests/test_invoice.py": "70392d6298b120f8d602761c499b1e26085c394ebda5e672c5f0a8c649c519f0"
+      },
+      "snapshotHashesVerified": true
+    },
+    {
+      "actualRequestBusinessTextExactSubstring": true,
+      "arm": "native",
+      "round": 3,
+      "input": 66282,
+      "output": 1448,
+      "requests": 4,
+      "firstRequestInput": 15799,
+      "finalRequestInput": 17202,
+      "toolCalls": 3,
+      "quality": true,
+      "failedChecks": [],
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+        "invoice.py": "6028b6b842f05380cf48de68c8e3e7f9cb5b32861bab30f7f56e79d3073f9d5a",
+        "tests/test_invoice.py": "22b6a6d6e3682d7bb7b78cf0f23508d6ed5091c894b088ff77113eb461818509"
+      },
+      "snapshotHashesVerified": true
+    },
+    {
+      "actualRequestBusinessTextExactSubstring": true,
+      "arm": "loom",
+      "round": 1,
+      "input": 250319,
+      "output": 9395,
+      "requests": 16,
+      "firstRequestInput": 9395,
+      "finalRequestInput": 22038,
+      "toolCalls": 18,
+      "quality": true,
+      "failedChecks": [],
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "README.md": "ebf84a1f2f01d247a827b2e883c45a3b7b9ca24f4ebd9d3afc9565a55feed946",
+        "invoice.py": "811a87a704edef6badfaef33eb66a86c3c2b33ffdd7b254e860b3b3d595f6223",
+        "tests/test_invoice.py": "940b78a49259df129ad92d1b85b61bf9136526fd19446842896e85681859eaa0"
+      },
+      "snapshotHashesVerified": true
+    },
+    {
+      "actualRequestBusinessTextExactSubstring": true,
+      "arm": "loom",
+      "round": 2,
+      "input": 117890,
+      "output": 1206,
+      "requests": 5,
+      "firstRequestInput": 22534,
+      "finalRequestInput": 24530,
+      "toolCalls": 4,
+      "quality": true,
+      "failedChecks": [],
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "README.md": "ebf84a1f2f01d247a827b2e883c45a3b7b9ca24f4ebd9d3afc9565a55feed946",
+        "invoice.py": "00e2c39085420f6c4d1607ce39c00d5de748846935870991d532f782283c315e",
+        "tests/test_invoice.py": "44f94fc28276a612ed9fe07c3118a0630bb73b924d124d55b9ee651303002932"
+      },
+      "snapshotHashesVerified": true
+    },
+    {
+      "actualRequestBusinessTextExactSubstring": true,
+      "arm": "loom",
+      "round": 3,
+      "input": 129618,
+      "output": 1682,
+      "requests": 5,
+      "firstRequestInput": 24819,
+      "finalRequestInput": 26908,
+      "toolCalls": 4,
+      "quality": true,
+      "failedChecks": [],
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "README.md": "1fc0c918e527570735ecb56c12ea6a210c72fa72a1e9ac99cf99bc8af64500e0",
+        "invoice.py": "42353a93b53a3d7ffa06d0d74189899759df706dd059e1d9d72a1ead6991a624",
+        "tests/test_invoice.py": "0836a229780cef30d186655da39d5822de4fab8f896e77110e24784ae084fc5c"
+      },
+      "snapshotHashesVerified": true
+    }
+  ],
+  "limitations": [
+    "Single model and single trajectory; native run/resume versus warm product server.",
+    "All consumed tokens retained; no subtraction for model randomness.",
+    "Official automatic memory is version-audited not-applicable for OpenCode 1.18.35, not a fabricated disable switch.",
+    "Role sentence user-level in native versus system-level in product.",
+    "Budget thresholds govern admission between turns, not in-flight maximum charges.",
+    "Private sandbox blocked warm Worker turn credentials, so protocol retry overhead cannot be attributed solely to normal Loom operation."
+  ],
+  "firstSix": {
+    "native": {
+      "input": 227013,
+      "output": 7923,
+      "requests": 17,
+      "firstRequestInput": 38222,
+      "finalRequestInput": 47271,
+      "toolCalls": 15
+    },
+    "loom": {
+      "input": 497827,
+      "output": 12283,
+      "requests": 26,
+      "firstRequestInput": 56748,
+      "finalRequestInput": 73476,
+      "toolCalls": 26
+    },
+    "pairedRounds": [1, 2, 3],
+    "ratios": {
+      "input": 2.1929448974287817,
+      "output": 1.550296604821406,
+      "requests": 1.5294117647058822
+    }
+  },
+  "lastSix": {
+    "native": {
+      "input": 0,
+      "output": 0,
+      "requests": 0,
+      "firstRequestInput": 0,
+      "finalRequestInput": 0,
+      "toolCalls": 0
+    },
+    "loom": {
+      "input": 0,
+      "output": 0,
+      "requests": 0,
+      "firstRequestInput": 0,
+      "finalRequestInput": 0,
+      "toolCalls": 0
+    },
+    "pairedRounds": [],
+    "ratios": {
+      "input": null,
+      "output": null,
+      "requests": null
+    }
+  },
+  "finishedAt": "2026-10-09T15:32:39.486Z",
+  "errors": [
+    {
+      "message": "AssertionError [ERR_ASSERTION]: {\"requests\":8,\"uniqueRequests\":8,\"assistants\":8,\"input\":142994,\"output\":4002,\"cachedInput\":136704,\"unknownRequests\":1,\"complete\":false,\"errors\":[\"usage mismatch at 1\"],\"label\":\"unique valid captured tokens only; unknown expense and integrity errors retained\"}\n\nfalse !== true\n"
+    }
+  ],
+  "fullTwelveRoundPairComplete": false,
+  "plannedLateSixComplete": false,
+  "quality": {
+    "snapshotCount": 6,
+    "failedRounds": []
+  },
+  "allConsumedTotals": {
+    "input": 886761,
+    "output": 24491,
+    "cached": null,
+    "reasoning": null,
+    "requests": 51,
+    "knownPartialCachedInput": 814720,
+    "knownPartialReasoningOutput": 11410
+  },
+  "unknownRequests": 0,
+  "budget": {
+    "frozenThresholds": {
+      "input": 12000000,
+      "output": 150000,
+      "requests": 400,
+      "wallMs": 5400000,
+      "turnMs": 600000
+    },
+    "semantics": "Checked before each arm launch; never an in-flight hard charge cap",
+    "beforeLastCompletedArmInput": 724840,
+    "elapsedMs": 260065
+  },
+  "cleanup": {
+    "native": {
+      "launchCount": 4,
+      "exitReceiptCount": 4,
+      "missingExitReceipts": 0,
+      "ownedProcessesStillAlive": 0,
+      "nonzeroExitReceipts": []
+    },
+    "loom": {
+      "launchCount": 8,
+      "exitReceiptCount": 7,
+      "missingExitReceipts": 1,
+      "ownedProcessesStillAlive": 0,
+      "nonzeroExitReceipts": []
+    },
+    "daemonExits": [
+      {
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "temporaryProviderConfigsRemoved": true,
+    "limits": "One product wrapper exit receipt absent; all recorded matching processes absent and daemon exit0. No claim about unrecorded descendants or independent socket closure."
+  },
+  "toolActivity": {
+    "native": {
+      "nativeToolParts": 22,
+      "protocolRelatedToolParts": 0,
+      "businessToolParts": 22,
+      "errorToolParts": 0,
+      "sharedTmpOpencodeReferenced": false
+    },
+    "loom": {
+      "nativeToolParts": 26,
+      "protocolRelatedToolParts": 7,
+      "businessToolParts": 19,
+      "errorToolParts": 1,
+      "sharedTmpOpencodeReferenced": false,
+      "workerCliInvocations": 6,
+      "historyReadsAttempted": 4,
+      "historyReadsSucceeded": 0,
+      "standaloneTurnDirectoryProbe": 1
+    }
+  },
+  "finalRequestPlacement": {
+    "native": [
+      {
+        "round": 1,
+        "requestsAfterLastNativeStop": 0,
+        "stopResponses": 1
+      },
+      {
+        "round": 2,
+        "requestsAfterLastNativeStop": 0,
+        "stopResponses": 1
+      },
+      {
+        "round": 3,
+        "requestsAfterLastNativeStop": 0,
+        "stopResponses": 1
+      }
+    ],
+    "loom": [
+      {
+        "round": 1,
+        "requestsAfterLastNativeStop": 0,
+        "stopResponses": 1
+      },
+      {
+        "round": 2,
+        "requestsAfterLastNativeStop": 0,
+        "stopResponses": 1
+      },
+      {
+        "round": 3,
+        "requestsAfterLastNativeStop": 0,
+        "stopResponses": 1
+      }
+    ]
+  },
+  "memoryEvidence": {
+    "native": {
+      "actualLaunches": 4,
+      "pureAndExactVersionAuditAll": true,
+      "policy": "Provider-native automatic memory not applicable under exact-version source audit; not an invented disable flag."
+    },
+    "loom": {
+      "actualLaunches": 1,
+      "pureAndExactVersionAuditAll": true,
+      "policy": "Provider-native automatic memory not applicable under exact-version source audit; not an invented disable flag."
+    }
+  },
+  "structureLimits": [
+    "Character counts describe actual request structure only, never converted to estimated tokens.",
+    "Input includes cache reads and all business/recovery work; no deduction for stochastic trajectories.",
+    "Request placement is proved by captured order and per-turn boundaries; recorder does not attest precise publication wall-clock timing.",
+    "First/final-generation inputs include prior native history and are not isolated fixed-protocol overhead."
+  ],
+  "firstGenerationActualInput": {
+    "native": 7565,
+    "loom": 9395,
+    "loomMinusNative": 1830
+  },
+  "readmeReview": {
+    "status": "Final documentation requirement is R12; neither arm reached R12. No final README acceptance and no early-round failure inferred from documentation."
+  },
+  "evidenceHashes": [
+    {
+      "file": "result.private.json",
+      "sha256": "1535166eff915b02dcc5b16b0c47912aed3a73df5436d081e86ffb533321177b"
+    },
+    {
+      "file": "paid-admission.json",
+      "sha256": "5d9b09e0e155b5e72c869624d4172e0902bffbd7c257a5ce8707a01ad1770448"
+    },
+    {
+      "file": "paid-plan.json",
+      "sha256": "1b1bcc0bd75aeecb4312757e58e1b127398ac7ecebdfe8e03b0010715b95b9e4"
+    }
+  ],
+  "measurementFailure": {
+    "cause": "Native request19 has full primary usage and normal HTTP200/DONE but omits optional cached/reasoning detail. Frozen accounting rejects entire response. It is a measurement classification defect, not a missing generation or primary token count.",
+    "rawResponseSha256": "3e70fe45788b626250cc9206978a48d54c72e92ca44855e3d5cabb8f629fc2f7",
+    "knownPrimaryUsageRecovered": {
+      "input": 18927,
+      "output": 283
+    },
+    "optionalDetails": {
+      "cachedInput": null,
+      "reasoningOutput": null
+    },
+    "nativeDiagnosticDefaults": {
+      "cachedInput": 0,
+      "reasoningOutput": 0
+    },
+    "preservedRunVerdict": "failed; no resume or favorable rerun; current source unchanged"
+  },
+  "primaryAccountingComplete": true,
+  "optionalDetailAccountingComplete": false,
+  "pairedPrefix": {
+    "native": {
+      "input": 227013,
+      "output": 7923,
+      "requests": 17,
+      "firstRequestInput": 38222,
+      "finalRequestInput": 47271,
+      "toolCalls": 15
+    },
+    "loom": {
+      "input": 497827,
+      "output": 12283,
+      "requests": 26,
+      "firstRequestInput": 56748,
+      "finalRequestInput": 73476,
+      "toolCalls": 26
+    },
+    "pairedRounds": [1, 2, 3],
+    "ratios": {
+      "input": 2.1929448974287817,
+      "output": 1.550296604821406,
+      "requests": 1.5294117647058822
+    },
+    "interpretation": "Posthoc completed R1\u20133 prefix only; cannot answer planned 12-round or R7\u201312 efficiency."
+  },
+  "whole12Ratios": null,
+  "prespecifiedLate6Ratios": null,
+  "unpairedNativeR4": {
+    "input": 161921,
+    "output": 4285,
+    "requests": 8,
+    "status": "CLI completed; runner failed at accounting before quality snapshot",
+    "quality": null
+  },
+  "orderClarification": {
+    "batch": "P164",
+    "intentBeforeLaunch": "paid-plan.scope and frozen paid-run.mjs explicitly reverse P160 order: odd Loom first/even native first; fake preflight ran this order",
+    "documentationDefect": "paid-plan.rules inherited one stale line odd native first; historical plan remains immutable. Scope, executable and preflight agree on reversed order. No task, threshold or run behavior changes.",
+    "comparison": "P160 odd native first; P164 odd Loom first; report both separately."
+  },
+  "actualChronology": [
+    {
+      "round": 1,
+      "arm": "loom",
+      "status": "completed"
+    },
+    {
+      "round": 1,
+      "arm": "native",
+      "status": "completed"
+    },
+    {
+      "round": 2,
+      "arm": "native",
+      "status": "completed"
+    },
+    {
+      "round": 2,
+      "arm": "loom",
+      "status": "completed"
+    },
+    {
+      "round": 3,
+      "arm": "loom",
+      "status": "completed"
+    },
+    {
+      "round": 3,
+      "arm": "native",
+      "status": "completed"
+    },
+    {
+      "round": 4,
+      "arm": "native",
+      "status": "running"
+    }
+  ],
+  "comparison": {
+    "n": 1,
+    "wholeTaskVerdict": "incomplete and benchmark Worker availability impaired",
+    "prefixInputFactor": 2.1929448974287817,
+    "prefixRequestFactor": 1.5294117647058822,
+    "prefixMeanInputFactor": 1.4338485867803574,
+    "causalLimit": "All cost retained. Business/history trajectories differ; no pure protocol causal isolation or multi-CLI generalization.",
+    "matchedToolAvailability": false
+  },
+  "billingCoverage": "51 captured completed provider responses and primary totals independently verified against native DB; product26 also Kernel. Optional provider details absent for one response; actual invoice money unavailable.",
+  "reportSources": [
+    {
+      "file": "audit.py",
+      "sha256": "b1fe1dcf98e35cdaf41d12fcdd27627feb5815dfffa0260530217cc9bf872750"
+    },
+    {
+      "file": "finalize.py",
+      "sha256": "36faaa014ce111790f17080406397f0273a19eb8463bb016e0330c6348c80c18"
+    },
+    {
+      "file": "request-structure.py",
+      "sha256": "a9448a6e636cca9c7d9fdb26a0acdf1bf1ba46a4c9c2b7f667f6a9f6d27925a6"
+    },
+    {
+      "file": "p164-request-structure.json",
+      "sha256": "785f77afb657334f51ccc5865eee2f46e17bd351632914edb161a203ce5530ea"
+    },
+    {
+      "file": "admission-review.json",
+      "sha256": "789946b0d4ab5cbae164c9e4acce3e09751f6b2bc35f3d6d9cce96718c070112"
+    },
+    {
+      "file": "attribution.py",
+      "sha256": "dbbe17a5f34112a55c846e51599efc6bd07ef40a6885bb2fc489dbfcc704720f"
+    }
+  ],
+  "attribution": {
+    "scope": "Completed paired R1\u20133 only",
+    "arms": {
+      "native": {
+        "toolCounts": {
+          "business-workspace-inspection": 1,
+          "business-file-read-or-search": 2,
+          "business-implementation-change": 3,
+          "business-tests-change": 4,
+          "business-selftest": 5
+        },
+        "protocolAttempts": [],
+        "generationCategories": {
+          "protocol-containing": {
+            "generations": 0,
+            "input": 0,
+            "output": 0,
+            "cached": 0,
+            "reasoning": 0
+          },
+          "business-tools-only": {
+            "generations": 14,
+            "input": 179742,
+            "output": 7375,
+            "cached": 162176,
+            "reasoning": 3528
+          },
+          "text-only": {
+            "generations": 3,
+            "input": 47271,
+            "output": 548,
+            "cached": 46720,
+            "reasoning": 200
+          }
+        },
+        "prefixInput": 227013,
+        "prefixOutput": 7923,
+        "prefixCachedInput": 208896,
+        "prefixUncachedInput": 18117
+      },
+      "loom": {
+        "toolCounts": {
+          "business-workspace-inspection": 2,
+          "business-file-read-or-search": 4,
+          "protocol-help-and-environment": 2,
+          "protocol-history-read": 4,
+          "protocol-environment": 1,
+          "business-implementation-change": 4,
+          "business-tests-change": 3,
+          "business-selftest": 4,
+          "business-documentation-change": 2
+        },
+        "protocolAttempts": [
+          {
+            "request": 3,
+            "category": "protocol-help-and-environment",
+            "errorCodes": [],
+            "sandboxDenial": false
+          },
+          {
+            "request": 4,
+            "category": "protocol-history-read",
+            "errorCodes": ["TURN_HANDLE_REQUIRED"],
+            "sandboxDenial": false
+          },
+          {
+            "request": 5,
+            "category": "protocol-history-read",
+            "errorCodes": ["TOKEN_FILE_UNREADABLE"],
+            "sandboxDenial": false
+          },
+          {
+            "request": 6,
+            "category": "protocol-help-and-environment",
+            "errorCodes": [],
+            "sandboxDenial": false
+          },
+          {
+            "request": 7,
+            "category": "protocol-environment",
+            "errorCodes": [],
+            "sandboxDenial": true
+          },
+          {
+            "request": 8,
+            "category": "protocol-history-read",
+            "errorCodes": ["TURN_HANDLE_INVALID"],
+            "sandboxDenial": false
+          },
+          {
+            "request": 9,
+            "category": "protocol-history-read",
+            "errorCodes": ["TOKEN_FILE_UNREADABLE"],
+            "sandboxDenial": false
+          }
+        ],
+        "generationCategories": {
+          "protocol-containing": {
+            "generations": 7,
+            "input": 92235,
+            "output": 2887,
+            "cached": 86656,
+            "reasoning": 2323
+          },
+          "business-tools-only": {
+            "generations": 16,
+            "input": 332116,
+            "output": 8785,
+            "cached": 310528,
+            "reasoning": 3332
+          },
+          "text-only": {
+            "generations": 3,
+            "input": 73476,
+            "output": 611,
+            "cached": 71936,
+            "reasoning": 96
+          }
+        },
+        "prefixInput": 497827,
+        "prefixOutput": 12283,
+        "prefixCachedInput": 469120,
+        "prefixUncachedInput": 28707
+      }
+    },
+    "noReasoningTextExported": true,
+    "interpretation": {
+      "observed": "Loom spent seven generations on Worker help/history/environment exploration, including four failed history reads; six Worker CLI calls plus a turn-directory probe. One generation also includes a business directory listing.",
+      "knownEnvironmentDefect": "Benchmark sandbox admits legacy RAH_WORKER_SESSION_FILE but not warm RAH_WORKER_TURN_ROOT/current scope.json/token; correct-handle history attempts fail TOKEN_FILE_UNREADABLE. Root directory listing restrictions are also native capability policy, so inability to list alone does not prove the defect.",
+      "wake": "First wake contains complete original business body, seq4, exact reply turn handle and native-final marker; no missing-delta instruction. Standing explicitly says complete wakes need no message-read first, while exposing history/help. Business task says preserve earlier-turn requirements.",
+      "causality": "Protocol exploration is observed, not purely hypothetical random business variance. Which wording caused initial exploration is not identifiable from this one trajectory. Permission failures plausibly prolonged it; do not subtract these costs or call this a matched estimate of unaffected product operation.",
+      "minimalNext": "Fix only private sandbox access to current-instance authorized turn capability paths; free positive Worker read plus oracle/peer rejection before further paid. Separately consider clearer complete-delta presentation using actual delivery facts, never fake read ACK or remove authorized history."
+    }
+  }
+}

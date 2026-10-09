@@ -1,0 +1,134 @@
+{
+  "scope": "Completed paired R1\u20133 only",
+  "arms": {
+    "native": {
+      "toolCounts": {
+        "business-workspace-inspection": 1,
+        "business-file-read-or-search": 2,
+        "business-implementation-change": 3,
+        "business-tests-change": 4,
+        "business-selftest": 5
+      },
+      "protocolAttempts": [],
+      "generationCategories": {
+        "protocol-containing": {
+          "generations": 0,
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "reasoning": 0
+        },
+        "business-tools-only": {
+          "generations": 14,
+          "input": 179742,
+          "output": 7375,
+          "cached": 162176,
+          "reasoning": 3528
+        },
+        "text-only": {
+          "generations": 3,
+          "input": 47271,
+          "output": 548,
+          "cached": 46720,
+          "reasoning": 200
+        }
+      },
+      "prefixInput": 227013,
+      "prefixOutput": 7923,
+      "prefixCachedInput": 208896,
+      "prefixUncachedInput": 18117
+    },
+    "loom": {
+      "toolCounts": {
+        "business-workspace-inspection": 2,
+        "business-file-read-or-search": 4,
+        "protocol-help-and-environment": 2,
+        "protocol-history-read": 4,
+        "protocol-environment": 1,
+        "business-implementation-change": 4,
+        "business-tests-change": 3,
+        "business-selftest": 4,
+        "business-documentation-change": 2
+      },
+      "protocolAttempts": [
+        {
+          "request": 3,
+          "category": "protocol-help-and-environment",
+          "errorCodes": [],
+          "sandboxDenial": false
+        },
+        {
+          "request": 4,
+          "category": "protocol-history-read",
+          "errorCodes": ["TURN_HANDLE_REQUIRED"],
+          "sandboxDenial": false
+        },
+        {
+          "request": 5,
+          "category": "protocol-history-read",
+          "errorCodes": ["TOKEN_FILE_UNREADABLE"],
+          "sandboxDenial": false
+        },
+        {
+          "request": 6,
+          "category": "protocol-help-and-environment",
+          "errorCodes": [],
+          "sandboxDenial": false
+        },
+        {
+          "request": 7,
+          "category": "protocol-environment",
+          "errorCodes": [],
+          "sandboxDenial": true
+        },
+        {
+          "request": 8,
+          "category": "protocol-history-read",
+          "errorCodes": ["TURN_HANDLE_INVALID"],
+          "sandboxDenial": false
+        },
+        {
+          "request": 9,
+          "category": "protocol-history-read",
+          "errorCodes": ["TOKEN_FILE_UNREADABLE"],
+          "sandboxDenial": false
+        }
+      ],
+      "generationCategories": {
+        "protocol-containing": {
+          "generations": 7,
+          "input": 92235,
+          "output": 2887,
+          "cached": 86656,
+          "reasoning": 2323
+        },
+        "business-tools-only": {
+          "generations": 16,
+          "input": 332116,
+          "output": 8785,
+          "cached": 310528,
+          "reasoning": 3332
+        },
+        "text-only": {
+          "generations": 3,
+          "input": 73476,
+          "output": 611,
+          "cached": 71936,
+          "reasoning": 96
+        }
+      },
+      "prefixInput": 497827,
+      "prefixOutput": 12283,
+      "prefixCachedInput": 469120,
+      "prefixUncachedInput": 28707
+    }
+  },
+  "noReasoningTextExported": true,
+  "interpretation": {
+    "observed": "Loom spent seven generations on Worker help/history/environment exploration, including four failed history reads; six Worker CLI calls plus a turn-directory probe. One generation also includes a business directory listing.",
+    "knownEnvironmentDefect": "Benchmark sandbox admits legacy RAH_WORKER_SESSION_FILE but not warm RAH_WORKER_TURN_ROOT/current scope.json/token; correct-handle history attempts fail TOKEN_FILE_UNREADABLE. Root directory listing restrictions are also native capability policy, so inability to list alone does not prove the defect.",
+    "wake": "First wake contains complete original business body, seq4, exact reply turn handle and native-final marker; no missing-delta instruction. Standing explicitly says complete wakes need no message-read first, while exposing history/help. Business task says preserve earlier-turn requirements.",
+    "causality": "Protocol exploration is observed, not purely hypothetical random business variance. Which wording caused initial exploration is not identifiable from this one trajectory. Permission failures plausibly prolonged it; do not subtract these costs or call this a matched estimate of unaffected product operation.",
+    "minimalNext": "Fix only private sandbox access to current-instance authorized turn capability paths; free positive Worker read plus oracle/peer rejection before further paid. Separately consider clearer complete-delta presentation using actual delivery facts, never fake read ACK or remove authorized history."
+  }
+}

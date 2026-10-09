@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-09",
+  "ownerDecision": "Continue true whole-task cost validation first; owner states full authorization from both Raft and Aexus authors for code reuse. Absorb useful code after the cost problem is addressed.",
+  "sourceAuthorization": "Owner statement in this conversation; no external license document was inspected in this batch. Record provenance/notices/local modifications/tests for actual reuse.",
+  "changesNow": "No upstream code copied; no product subsystem changes.",
+  "order": [
+    "Finish fair continuous-session single-instance cost samples across supported CLIs/models; preserve blocked/unavailable rows and variance.",
+    "Only after single-instance result is acceptable, compare two-session collaboration against native manual relay; account all participants and failure work.",
+    "Use cost conclusion to select narrow Raft/Aexus components with a concrete product gap and independent tests; preserve Kernel ledger, Instance lanes and original Worker authority."
+  ],
+  "aexusReference": {
+    "revision": "202181f9ce1312aeeb6db523a9f52376b3baa5c1",
+    "url": "https://github.com/Daijunfan/Aexus/tree/202181f9ce1312aeeb6db523a9f52376b3baa5c1",
+    "candidates": [
+      "Pi RPC request correlation and UTF-8 framing",
+      "late tool response/cancellation regression tests",
+      "on-demand API schema lookup for uncommon operations",
+      "deterministic background notification deduplication"
+    ],
+    "excludedAsCostDefaults": [
+      "model-generated read/ACK turn",
+      "awareness-only model generations",
+      "cross-channel employee-global execution lane"
+    ]
+  },
+  "raftCandidates": "Use previously reviewed UI/interaction and lifecycle gaps; re-pin source revision at actual adoption, not broad server replacement."
+}

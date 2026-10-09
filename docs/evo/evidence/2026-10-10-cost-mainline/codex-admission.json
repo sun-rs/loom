@@ -1,0 +1,173 @@
+{
+  "kind": "ordinary-codex-paid-admission-readonly",
+  "createdAt": "2026-10-09T15:28:18.805884+00:00",
+  "paidCalls": 0,
+  "modelInferenceCalls": 0,
+  "cliCommandsExecuted": ["codex --version", "codex exec --help"],
+  "productChanges": false,
+  "accountChanges": false,
+  "installedVersion": "0.161.0",
+  "binarySha256": "12ac11d2c7eee27cfae34393986d7b7c9ed0dea537cb749831cdd7033893e6de",
+  "sameBinaryAsPriorHTTPWSFree": true,
+  "safeConfig": {
+    "customProviders": 0,
+    "modelProviderConfigured": null,
+    "otelConfigured": false
+  },
+  "catalogEvidence": {
+    "source": "existing local models_cache.json; no fresh account request",
+    "clientVersion": "0.162.0",
+    "fetchedAt": "2026-10-09T15:27:14.890912Z",
+    "approvedVisible": [
+      {
+        "binding": "gpt-6-astra",
+        "lowAdvertised": true
+      },
+      {
+        "binding": "gpt-6-sol",
+        "lowAdvertised": true
+      },
+      {
+        "binding": "gpt-6-luna",
+        "lowAdvertised": true
+      },
+      {
+        "binding": "gpt-5.6-luna",
+        "lowAdvertised": true
+      }
+    ],
+    "limitation": "Cache producer0.162.0 differs from tested executable0.161.0; catalog is not current paid entitlement proof."
+  },
+  "ordinaryGuardAdmittedBindings": [
+    {
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    }
+  ],
+  "approvedButNotInOrdinaryExecGuard": ["gpt-6-sol/low", "gpt-6-astra/low"],
+  "paidLongTaskAdmission": false,
+  "blockers": [
+    "Native JSONL has reported token_usage_record response IDs but lacks independent all-attempt census.",
+    "HTTP-only capture changes representative ChatGPT builtin WS+workspace routing path; cannot force HTTP for measurement.",
+    "Native OTLP does not change provider transport and improves diagnostics, but successful exit does not prove all telemetry exported; collectorHTTP400 actualfree demonstrated silent missing export.",
+    "No native exported attempt-count/sequence end receipt; previously unseen dropped batches cannot be ruled out."
+  ],
+  "usableEvidenceNow": [
+    "Exact CLI-reported known usage, including failed completed generations, remains valid known usage.",
+    "Native OTel log/trace supplemental request errors/attempt associations remain useful, with census unknown."
+  ],
+  "minimumAdmissionResolution": "A transport-preserving provider-native complete request/response receipt source or verifiable native exporter sealing; not achieved by current sources. Do not substitute host/app-server, different account/model provider, or supports_websockets=false.",
+  "piNotAdmitted": [
+    "No registered formal Loom Pi runtime/Role native session lifecycle gate; earlier print prototype and upstream Aexus RPC code are not current product acceptance.",
+    "AGENTS/approved-models has no Pi binding row. Existing user approval for approved models does not create a Pi mapping by reusing OpenCode model settings."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-09-codex-request-coverage-free/public-evidence.json",
+      "sha256": "cabfbdf40963f8d0b03e67c8052bad95cac87e961f088d08a8313ca3510a849a"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-09-codex-transport-fidelity/transport-research.json",
+      "sha256": "7faafd103d31c858cf35a1f05b4f6bd0b9fe0ae7fea1c43d6af3bcfcc5992b08"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-09-codex-otel-sealing-free/public-evidence.json",
+      "sha256": "735382a95e5a88838336895c4e779281ef72c58bc6bc34046ed0a0d24141dff0"
+    }
+  ],
+  "officialDocumentation": "https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry",
+  "officialDocsLimit": "Documents API/SSE/WS telemetry and async flush, not lossless census guarantees.",
+  "commandTemplates": {
+    "status": "Not executed; no paid admission yet. Invoke through formal codex-exec/v1 guard with original provider/auth; isolated baseline config must disable discovered provider-owned MCP servers exactly as approved guard permits.",
+    "initial": [
+      "codex",
+      "exec",
+      "--json",
+      "--skip-git-repo-check",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "-c",
+      "notify=[]",
+      "-c",
+      "features.memories=false",
+      "-c",
+      "memories.generate_memories=false",
+      "-c",
+      "memories.use_memories=false",
+      "-c",
+      "features.multi_agent=false",
+      "-c",
+      "features.goals=false",
+      "-c",
+      "features.sleep_tool=false",
+      "-c",
+      "features.in_app_local_automation=false",
+      "-c",
+      "features.plugins=false",
+      "-c",
+      "features.apps=false",
+      "-c",
+      "features.hooks=false",
+      "-c",
+      "skills.include_instructions=false",
+      "-c",
+      "web_search=\"disabled\"",
+      "-m",
+      "<exact-approved-Luna-binding>",
+      "-c",
+      "model_reasoning_effort=\"low\"",
+      "-"
+    ],
+    "resume": [
+      "codex",
+      "exec",
+      "resume",
+      "--json",
+      "--skip-git-repo-check",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "-c",
+      "notify=[]",
+      "-c",
+      "features.memories=false",
+      "-c",
+      "memories.generate_memories=false",
+      "-c",
+      "memories.use_memories=false",
+      "-c",
+      "features.multi_agent=false",
+      "-c",
+      "features.goals=false",
+      "-c",
+      "features.sleep_tool=false",
+      "-c",
+      "features.in_app_local_automation=false",
+      "-c",
+      "features.plugins=false",
+      "-c",
+      "features.apps=false",
+      "-c",
+      "features.hooks=false",
+      "-c",
+      "skills.include_instructions=false",
+      "-c",
+      "web_search=\"disabled\"",
+      "-m",
+      "<exact-approved-Luna-binding>",
+      "-c",
+      "model_reasoning_effort=\"low\"",
+      "<original-session-id>",
+      "-"
+    ],
+    "stdin": "Exact business prompt, no argv quoting or native Loom standing guidance.",
+    "diagnostics": "Native JSONL + supplemental local OTel exporter with log_user_prompt=false, OTEL_TRACES_SAMPLER=always_on at innermost process. No origin/provider/WS overrides. OTel is diagnostic, not full-census acceptance."
+  },
+  "admissionInterpretationClarification": {
+    "scope": "This batch has no successful real ordinary-Codex trajectory independently cross-checked to all captured attempt/response evidence. It is not claimed that every normal successful trajectory necessarily loses accounting.",
+    "failureEvidence": "The free induced-disconnect example actually omitted consumed upstream response usage in CLI JSONL; the separate deliberately rejected-export example shows successful CLI exit alone does not certify telemetry delivery. These are specific observed counterexamples, not a universal inference from theoretical network loss.",
+    "minimalNextPath": "Use the existing native OTel receiver with unmodified real provider transport plus native JSONL on an explicitly authorized bounded successful run, cross-check unique attempt/response IDs, usage and available receiver/exporter completion diagnostics. State the observable coverage limit and stop on concrete gaps. No additional proxy framework or forced HTTP/host substitution is required.",
+    "paidThisAudit": false
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "officialConfigReadScope": "parsed provider/model safe routing fields; no token store contents read",
+  "providerType": "kimi",
+  "oauthStorage": "file",
+  "oauthKeyIsKimiCode": false,
+  "nativeHomeRealpath": "/Users/sun/.kimi-code",
+  "authSubdirectories": {
+    "credentials": {
+      "exists": true,
+      "realpath": "/Users/sun/.kimi-code/credentials",
+      "inode": 665702725
+    },
+    "oauth": {
+      "exists": true,
+      "realpath": "/Users/sun/.kimi-code/oauth",
+      "inode": 665708909
+    }
+  },
+  "setupImplementation": "paid-config.py creates os.symlink(src/d,dst/d) for credentials/oauth; no credential copy; copies only device_id/region",
+  "historicalLinkStatLimitation": "Per-link realpath/inode was not separately captured before cleanup; frozen source and successful setup establish requested target, not a post-cleanup lstat observation.",
+  "providerConfigPreservation": "selected provider table and nested OAuth fields recursively serialized unchanged; default model/thinking fixed to approved binding",
+  "nativeDiagnostic": "The provided authorization grant is invalid",
+  "nativeObserverReceipt": {
+    "type": "process-exit",
+    "time": "2026-10-09T16:06:16.308Z",
+    "observedAttempts": 0,
+    "active": [],
+    "fault": false
+  },
+  "authHttpCoverage": "Observer scope /chat/completions only; auth HTTP count/status not independently captured. Native diagnostic reports authorization grant rejection, not proof of a specific HTTP status.",
+  "billing": "unknown; 0 observed model attempts is not total bill zero",
+  "accountManipulation": "No login, manual refresh, credential reading/copy, or official config mutation. Only native CLI normal authorized auth path ran.",
+  "oauthKeyPresent": true,
+  "providerNameIsKimiCode": false,
+  "oauthKeyResolution": "Installed resolveKimiTokenStorageName normalizes oauth/ prefix; selected original key preserved, native file exists. No token bytes read.",
+  "resolvedNativeCredentialPathExists": true,
+  "resolvedNativeCredentialIsStandardKimiCode": true,
+  "credentialContentsRead": false,
+  "nativeLockPathSource": "native-lock-routing-source.txt: configDir/oauth/providerName, KIMI_DISABLE_OAUTH_LOCK not set by wrapper",
+  "nativeTokenPathSource": "native-token-routing-source.txt: original OAuth key normalization",
+  "authHTTPUnknown": true,
+  "proofDoesNotDistinguish": "Revoked/expired invalid grant vs another account-side reason; no manual credential contents inspected."
+}

@@ -1,0 +1,45 @@
+{
+  "batch": "P165",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "status": "stopped-before-model-request-authentication-rejected",
+  "attemptedTaskRound": 1,
+  "completedPairedRounds": 0,
+  "observedModelHttpAttempts": 0,
+  "reportedGenerations": 0,
+  "reportedInputTokens": 0,
+  "reportedOutputTokens": 0,
+  "totalBilledCost": "unknown; model generation not observed, authentication activity not metered",
+  "nativeExit": {
+    "code": 1,
+    "diagnostic": "The provided authorization grant is invalid"
+  },
+  "nativeSessionContinuity": "not-established; print did not return session resume proof",
+  "productBusinessExecuted": false,
+  "sourceHashesUnchanged": true,
+  "authLinksRemoved": true,
+  "liveOwnedPids": [],
+  "batchClaimPreserved": true,
+  "accountActiveLockRemoved": true,
+  "P166": {
+    "status": "not-started",
+    "claimExists": false,
+    "reason": "Shared native OAuth account rejected; do not repeat the same structural authentication failure on second model"
+  },
+  "forbiddenActionsPerformed": {
+    "reauthenticate": false,
+    "copyRotatingCredentials": false,
+    "changeOfficialAccountConfiguration": false
+  },
+  "evidence": {
+    "result": "paid-P165/result.private.json",
+    "stderr": "paid-P165/native/turn-1.stderr",
+    "capture": "paid-P165/native/http-capture",
+    "plan": "P165-admission.json",
+    "claim": "P165.claim"
+  },
+  "authRoutingAudit": "kimi-auth-boundary.json",
+  "modelObserverSealedZero": true,
+  "authenticationHttpAttempts": "unknown; observer intentionally excludes OAuth payload",
+  "privateEvidenceRoot": "/Users/sun/.loom/reviews/2026-10-09-kimi-native-final-long"
+}

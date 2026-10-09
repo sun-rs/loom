@@ -1,0 +1,70 @@
+{
+  "startedOn": "2026-10-09",
+  "closedOn": "2026-10-10",
+  "sourceHead": "f02da8346c6bf22a809dd0c8fae5af5638864347",
+  "verdict": "Multi-CLI/multi-model near-native cost acceptance remains open. One complete new Claude observed trajectory; OpenCode comparator impaired/interrupted, Kimi native auth blocked, other admissions retained.",
+  "authorization": "Owner explicitly continues multi-CLI multi-model real long-task tests and authorizes Raft/Aexus reuse after cost close-out; approved-model matrix unchanged.",
+  "claude": {
+    "batch": "P162",
+    "binding": "sonnet",
+    "actualModel": "claude-sonnet-5-5",
+    "effort": "low",
+    "roundsPerArm": 12,
+    "responses": 150,
+    "wholeInputRatio": 0.971554444207874,
+    "wholeOutputRatio": 0.9376317532975968,
+    "late6InputRatio": 1.0797540438838498,
+    "late6OutputRatio": 1.047241045498548,
+    "quality": "Loom12/12; nativeR1-8passed, R9-12functionchecks passed but selftests failed from Python SyntaxWarning on stderr. All failed work retained.",
+    "restriction": "Same inherited Worker sandbox availability defect as OpenCode, but no Worker calls occurred. Conditional observed path, not complete tool-parity acceptance, causal savings or universal result.",
+    "evidence": "claude-p162.json"
+  },
+  "opencode": {
+    "batches": ["P164", "P167"],
+    "full12Ratio": null,
+    "late6Ratio": null,
+    "finding": "P164 has known complete primary usage for51responses; one omitted optionalcache/reasoning caused overstrict accounting stop. Independent repair preserves primary sums and leaves missing detail null.",
+    "confound": "Currentturn Worker scope/token blocked by private test sandbox; P164 had7protocol-related tool calls (6WorkerCLI invocations plus1directory probe), including failed legitimate reads. Prefix2.19294input/1.55030output retained, not normal-product cost multiplier.",
+    "P167": "Stopped exact owned temporary server after discovering shared defect; one in-flight request cost unknown. No subsequent paid replacement.",
+    "freeRepair": "Actual authorized Worker windows readable, peer/oracle/repo denied,8synthetic requests/accounting/session/publication checked; no paid cost claim.",
+    "evidence": [
+      "opencode-p164.json",
+      "opencode-p164-attribution.json",
+      "opencode-p167.json",
+      "opencode-worker-capability-free.json"
+    ]
+  },
+  "kimi": {
+    "P165": "NativeCLI invalid authorization grant before observed model requests; authentication blocker, no cost ratio.",
+    "P166": "Not launched because same native auth store; no blind same-cause retry.",
+    "freeScope": "Actual low/high paths and Worker access/capture/effort checked with fake providers; synthetic usage is not a cost result.",
+    "evidence": [
+      "kimi-p165-p166.json",
+      "kimi-auth-boundary.json",
+      "kimi-free.json",
+      "kimi-admission-review.json"
+    ],
+    "boundary": "0 observed modelHTTP attempts is sealed; authHTTP count and billedcost remainunknown. No manual login/account mutation/copied rotating credentials. Native invalid grant reason is not independently classified as expiry/revocation."
+  },
+  "blocked": {
+    "P163": "Installed haiku binding now publishes effort levels; approved none no longer matches. No unapproved substitution.",
+    "codex": "Current ordinary exec real-path full request census not established; no additional paid call in this batch. Known usage/OTel are supplementary, not silently zero missing usage.",
+    "pi": "Formal adapter and approved paid binding remain absent; prototype/config reuse is not formal acceptance."
+  },
+  "productChanged": false,
+  "formalDeploymentChanged": false,
+  "interpretation": [
+    "Whole-task and late-window costs both reported; full ratios remain null on incomplete trajectories.",
+    "Single trajectories and different business/tool paths cannot establish causal savings; all unfavorable and failed samples retained.",
+    "Token counts, CLI estimated cost, and actual invoices are distinct; invoice coverage unknown.",
+    "Qualify prior evidence that reused the same affected private wrapper according to whether Worker access was exercised; this does not invalidate all warm runtimes or all historical experiments. Historical files and ratios remain unchanged."
+  ],
+  "next": [
+    "Use the free-verified corrected harness for a future fixed OpenCode comparison; do not tune on favorable sampled replies.",
+    "Recover native Kimi CLI authentication before any future paid Kimi batch; do not install/configure accounts automatically.",
+    "Resolve Codex request evidence and Pi formal integration as distinct gaps; do not block other valid providers.",
+    "After valid near-native single-session results, test two-session manual-relay baseline and then multiple roles.",
+    "Only after cost decision, adopt concrete Raft/Aexus components with provenance and tests; keep Room/Worker authority and per-instance lanes."
+  ],
+  "reuseDecision": "reuse-owner-decision.json"
+}

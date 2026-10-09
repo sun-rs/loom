@@ -1,0 +1,201 @@
+{
+  "task": "Actual OpenCode warm Worker capability availability and benchmark isolation",
+  "paidCalls": 0,
+  "hardlockedFake": true,
+  "status": "passed-two-rounds-per-arm",
+  "run": "1791561092162-paid-runner-free",
+  "startedAt": "2026-10-09T15:51:32.162Z",
+  "finishedAt": "2026-10-09T15:51:46.077Z",
+  "productSourceChanged": false,
+  "requests": 8,
+  "toolSchemaMatchedAll": true,
+  "standingVerifiedAllProductRequests": true,
+  "sameSessionEachArm": true,
+  "primaryRawNativeKernelAccountingVerified": true,
+  "syntheticTokensAreCostEvidence": false,
+  "scope": "Only private wrapper sandbox changed. Read access to current instance scope.json/token; no oracle, peer or repo content allowance; existing native turn-handle policy still enforced.",
+  "workerReadProofs": [
+    {
+      "round": 1,
+      "sha256": "f8661340493fccdfc30c2352f2752e17b5f696a8411f86bcd4046c6ba29718a1",
+      "responseSummary": "Read window: 1 returned, seq 4, oldest to newest. No older. No newer.",
+      "authorizedTargetVerified": true,
+      "currentWakeTextDeduplicated": true,
+      "priorHistoryReturned": false
+    },
+    {
+      "round": 2,
+      "sha256": "595aa162ec2fafebe429a0e17f1cda3e75c8b722dbff4fefc0dc2d6365c65fcf",
+      "responseSummary": "Read window: 3 returned, seq 4-13, oldest to newest. No older. No newer.",
+      "authorizedTargetVerified": true,
+      "currentWakeTextDeduplicated": true,
+      "priorHistoryReturned": true
+    }
+  ],
+  "isolationProofs": [
+    {
+      "arm": "native",
+      "round": 1,
+      "oracleDenied": true,
+      "repoDenied": true,
+      "peerArmDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "oracleDenied": true,
+      "repoDenied": true,
+      "peerArmDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "oracleDenied": true,
+      "repoDenied": true,
+      "peerArmDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "oracleDenied": true,
+      "repoDenied": true,
+      "peerArmDenied": true,
+      "sha256": "e8382a64ccd016b46b60828f18711eb060a0b6780fb2c200a869334475772b94"
+    }
+  ],
+  "cleanup": {
+    "native": {
+      "recordedLaunches": 2,
+      "matchingOwnedProcessesAlive": 0
+    },
+    "loom": {
+      "recordedLaunches": 8,
+      "matchingOwnedProcessesAlive": 0
+    },
+    "daemonExits": [
+      {
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "temporaryProviderConfigsRemoved": true
+  },
+  "quality": [
+    {
+      "round": 1,
+      "arm": "loom",
+      "passed": true
+    },
+    {
+      "round": 1,
+      "arm": "native",
+      "passed": true
+    },
+    {
+      "round": 2,
+      "arm": "native",
+      "passed": false
+    },
+    {
+      "round": 2,
+      "arm": "loom",
+      "passed": false
+    }
+  ],
+  "qualityMeaning": "R1 true and deliberately invalid R2 false retained for both arms.",
+  "failedRunsRetained": [
+    {
+      "run": "1791560866080-paid-runner-free",
+      "status": "failed",
+      "requestsRecorded": 9,
+      "resultSha256": "2ad4bc3af31787e5b6acada8d5186e9c862b9d2827b364ea33cbc552ccc067a4"
+    },
+    {
+      "run": "1791560925262-paid-runner-free",
+      "status": "failed",
+      "requestsRecorded": 0,
+      "resultSha256": "34a3eb34325e097de4d77b9a28bacc067174f6b82c22adf0a68b7810f430d490"
+    },
+    {
+      "run": "1791560970777-paid-runner-free",
+      "status": "failed",
+      "requestsRecorded": 11,
+      "resultSha256": "70e670b8541e0c97ada15b379fc3c29521c6c0816e10461df7e12ae14d680cae"
+    },
+    {
+      "run": "1791561043765-paid-runner-free",
+      "status": "failed",
+      "requestsRecorded": 11,
+      "resultSha256": "ecda2757da430f2115c6a0e75e578ab25d59f4c1c96cfbbdd40ffd5b77d8343d"
+    }
+  ],
+  "memory": {
+    "native": {
+      "version": "1.18.35",
+      "pureEveryLaunch": true,
+      "launchSha256": "25133bf371888fdef28e3bcfe07c7ccaabb95f35dcd8d713be058f1cfeeef64b"
+    },
+    "loom": {
+      "version": "1.18.35",
+      "pureEveryLaunch": true,
+      "launchSha256": "17c9aae5aa4d2eb26d89c2bdff7c90a335d394c10344c15e8cf5387328e0b2e1"
+    }
+  },
+  "red": "First actual correct-handle Worker read returned TOKEN_FILE_UNREADABLE under unchanged old sandbox. Subsequent private policy syntax/escaping and over-specific fake-output assertions failed separately; retained, not product failures.",
+  "finalPublication": {
+    "markers": 2,
+    "activationStates": {
+      "completed": 2
+    },
+    "deliveryAckDoesNotAcknowledgeInbox": true
+  },
+  "sourceHashes": [
+    {
+      "name": "paid-run.mjs",
+      "sha256": "fb28f33ba965d2038649f6c695ab1c77e61f740f32d5bdef1f4dcbd816dde811"
+    },
+    {
+      "name": "fake.mjs",
+      "sha256": "00ef6d93228e9ebf3929449a66150f5a5867a7a66cb1be376a0a2e461305665e"
+    },
+    {
+      "name": "wrapper.mjs",
+      "sha256": "7d4ad1176d2dd11f03e914dca96dc38c929e1bd3109926f72b9102f0e6c4afcf"
+    },
+    {
+      "name": "worker-turn-sandbox.mjs",
+      "sha256": "8541a37e12243a1766f9728421bfca63ae30c56325d6e92c7a56e805524c3a2b"
+    },
+    {
+      "name": "accounting.mjs",
+      "sha256": "4a5ee34c3720c47056c0bcf8fd044f6ffbe339f2a5f31684e17d152d6ca2f71e"
+    },
+    {
+      "name": "request-admission.mjs",
+      "sha256": "d3c315860149f78670aaf57abfc2ec965dc928f8bcdc55e1d2d6593b90cd17d7"
+    },
+    {
+      "name": "expected-tools.json",
+      "sha256": "c91fc96592dc76eb0a73f711b5768275b82178701f15ec57e908e7d5ac4aa73d"
+    }
+  ],
+  "rawEvidenceHashes": [
+    {
+      "file": "result.private.json",
+      "sha256": "7b057427265f8970a01dbf087e3fcc16d28c65ce829de9997bd575002969695c"
+    },
+    {
+      "file": "independent-full-audit",
+      "sha256": "da51144f48ff143d315cd8dad62410b5db1fb35e8239e0c579d0933531b5119e"
+    }
+  ],
+  "limitations": [
+    "No paid cost conclusion or restored validity of P164/P167.",
+    "Current-instance capability root pattern admits scope/token files only; no same-UID malicious process isolation claim.",
+    "Memory not-applicable is exact-version-audited, not a provider memory_mode field.",
+    "No independent listening-port closure assertion; owned recorded processes absent and awaited shutdown recorded."
+  ]
+}
