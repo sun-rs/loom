@@ -1,0 +1,213 @@
+{
+  "kind": "OpenCode parity repair free-only preflight",
+  "cli": "OpenCode 1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "paidCalls": 0,
+  "run": "1791536984385-paid-runner-free",
+  "status": "two rounds per arm passed; NOT paid efficiency acceptance",
+  "arms": {
+    "native": {
+      "rounds": 2,
+      "requests": 4,
+      "continuousSession": true,
+      "quality": [true, false],
+      "allUsageComplete": true
+    },
+    "loom": {
+      "rounds": 2,
+      "requests": 4,
+      "continuousSession": true,
+      "quality": [true, false],
+      "allUsageComplete": true
+    }
+  },
+  "requestAssertions": {
+    "all8ExactSameToolSchemas": true,
+    "toolCount": 10,
+    "toolNames": [
+      "bash",
+      "edit",
+      "glob",
+      "grep",
+      "read",
+      "skill",
+      "task",
+      "todowrite",
+      "webfetch",
+      "write"
+    ],
+    "roleBusinessAndNativeFinalGuidancePresentEveryProductRequest": true,
+    "all4ProductRequestsCheckedBeforeForwarding": true,
+    "nativeBusinessInstructionPresent": true,
+    "commonConfigChange": "Removed identical experimental build.tools false map from both arms; product session permission policy untouched."
+  },
+  "sandbox": {
+    "grant": "Only actual Host instructions file canonical realpath, nonsymlink regular owner-private file in expected Host rules directory; ancestor metadata only.",
+    "checks": [
+      {
+        "target": "exact Host standing file",
+        "allowed": true,
+        "exitCode": 0
+      },
+      {
+        "target": "denied oracle/repository/peer/sibling rules",
+        "allowed": false,
+        "exitCode": 1
+      },
+      {
+        "target": "denied oracle/repository/peer/sibling rules",
+        "allowed": false,
+        "exitCode": 1
+      },
+      {
+        "target": "denied oracle/repository/peer/sibling rules",
+        "allowed": false,
+        "exitCode": 1
+      },
+      {
+        "target": "denied oracle/repository/peer/sibling rules",
+        "allowed": false,
+        "exitCode": 1
+      }
+    ]
+  },
+  "negativeTests": {
+    "missingGuidanceRejectedBeforeForward": true,
+    "unequalSchemaRejectedBeforeForward": true,
+    "upstreamRequests": 0,
+    "httpStatus": 422,
+    "unitRed": "admission-red.log: no-op rejects neither bad request, 2 expected failures",
+    "unitGreen": "admission-green.log: 3 passed",
+    "transportGreen": "egress-negative-422.log: 1 passed"
+  },
+  "cleanup": {
+    "recordedPidsExited": 21,
+    "temporaryProviderConfigsRemoved": true
+  },
+  "preservedFailedPreparations": [
+    {
+      "run": "1791536538583-paid-runner-free",
+      "reason": "Old P156 task schema lacked default explore/general list; new native default correctly rejected by schema fence; no upstream requests."
+    },
+    {
+      "run": "1791536948064-paid-runner-free",
+      "reason": "Overstrict original-path == canonical-path comparison rejected macOS /var alias before product launch; native completed1, product requests0."
+    }
+  ],
+  "limitations": [
+    "Scripted fake replies do not establish real provider cost/quality.",
+    "Exact matched schema baseline comes from new native free default capture and is checked against every real product request; old P156 schema is preserved as rejected evidence.",
+    "Old P156 costs/quality remain retained but not matched-tool/standing-guidance acceptance.",
+    "No new paid run started; paid mode hard-disabled in this private runner."
+  ],
+  "sourceRevisionAtAudit": "34a9beac332eab2fd688131a668bc81a57ff207b",
+  "rootCause": {
+    "standing": "P156 archived actual sandbox denies reading its exact 6801-byte Host rules file; repaired exact canonical-file grant permits it and leaves oracle/repository/peer/sibling blocked.",
+    "toolSchema": "P156 native DB session.permission contains only question/plan denies; product DB adds wildcard allow before same denies. With experiment build.tools:false in both configs, product session wildcard overrides agent-level bans while native retains them. Removing those experimental bans in BOTH configs yields byte-equivalent 10-tool schemas, including task explore/general descriptions; no product permission change."
+  },
+  "evidenceHashes": {
+    "runnerSources": {
+      "paid-run.mjs": "03ab98e8bd064f6acc0b00b37f66ba5f97c70f44a956b83b333b65d4d0fe52d3",
+      "wrapper.mjs": "dd497bbf1466a3c15c0a32f9921a4cc475201e2faa1c8ab7001b5cbcd009fb22",
+      "request-admission.mjs": "d3c315860149f78670aaf57abfc2ec965dc928f8bcdc55e1d2d6593b90cd17d7",
+      "expected-tools.json": "c91fc96592dc76eb0a73f711b5768275b82178701f15ec57e908e7d5ac4aa73d",
+      "native-turn.mjs": "9d6a046b6ff77d99a4474a33236ec7446b2dd49004063f94a5907709bff81f00",
+      "recorder.mjs": "76c0facab9fcff809c0fe5c49c92ec38a5da066ae356987edb7899b38c0f97a7",
+      "fake.mjs": "c006ef5ce45122705af3777d0f6bd386113e7b69eb50678ad3f129d1057861fa",
+      "product-arm.mjs": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa",
+      "sandbox.mjs": "ee22712f7e8d63eba6ba43eb9761a64f4472058fbc85d69822527b35ee074204",
+      "accounting.mjs": "876d58e86c6e0762545737ad70e8159267ad7703e9e91a8624b2e5cde46b672a",
+      "credentials.mjs": "1d850616d6f3f97ca0bc53c2fb851ab3e4fb0605223637175b00e56bff0ab5a1",
+      "paid-plan.json": "9e14f492b7f3e24e9b69dc9d24f4b983f411c223f6c5ecb73d892cf86457d8f5"
+    },
+    "rawRequestResponseDigests": [
+      {
+        "arm": "native",
+        "requestIndex": 1,
+        "requestSha256": "73633392e9d5a9ed0084115fc2b0c458cbbeb4f8f25d7904a1e76a3aa396df7a",
+        "responseSha256": "3886604822c66f99afccc32b82b415a461e94f137e31238d482ef199e45abe42",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "native",
+        "requestIndex": 2,
+        "requestSha256": "9115dc5f5fee8df1fc82a2e4ede41dcadd7e79b1001cf09d976ca03e88aa6f58",
+        "responseSha256": "20ee367be7197c1f8a1760c94031b516d1a985877e2b012038bd7a556e923951",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "native",
+        "requestIndex": 3,
+        "requestSha256": "86a815fc1c94c9c22f10c6f263752de9a0890451c698740a751d100a967d9048",
+        "responseSha256": "722c7590400980cfc93aef1e6a3a17e55592dda3a3db9a49132be152632f1d4d",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "native",
+        "requestIndex": 4,
+        "requestSha256": "66bababa36069f598ca53f08903a4a63d9de96fe4bbff1a317b37e3374c41d38",
+        "responseSha256": "2ca3edef76950657ee30266cc12d0662dd0a14a58b14d68fdc7bed0052d3a711",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "loom",
+        "requestIndex": 1,
+        "requestSha256": "779afb78b6be66b38152a4147345e7b5d91874503178c173c4955f25424c3227",
+        "responseSha256": "1f003b7ad4efe5bc8107577a31787e420c6b8f2d978ae6cd0dec4a0df848b2dc",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "loom",
+        "requestIndex": 2,
+        "requestSha256": "84b57e3f278c4612938cce611b7516a390ce9d0f506c6321ed2dca76730eaeb5",
+        "responseSha256": "cbbeae4676edd25cc01b9bac4027fd94f9ca98277c02dafc9f47aa564c3980eb",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "loom",
+        "requestIndex": 3,
+        "requestSha256": "77973e4996cb6a72f6c6bb7dce6951fbed14f38828ae51992a20c15982f44560",
+        "responseSha256": "e96f076ff2aa2aeb4d2f0d8b843118256da1861baa8354d7340bdea5a9aeec6e",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      },
+      {
+        "arm": "loom",
+        "requestIndex": 4,
+        "requestSha256": "aad85d7744839088ae8be584e79d0e7a1c42a43b0e1963893d0731ac8bd9034c",
+        "responseSha256": "d01ccd332bc07362767ccedeeaa6f62d01e7bcff1b16b7dd60db9f65f7900936",
+        "canonicalToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+      }
+    ],
+    "result": "f70a0223cf46076b43c06911ff7367f44374fc498f722d03bf5dc849369a379f",
+    "negativeTransportLog": "054c61e67792b16fc6d2b4cdd76f33d9675a5de6daf30082e9ef08f771dccd69"
+  },
+  "memoryEvidence": {
+    "native": {
+      "launches": 2,
+      "eachLaunchPure": true,
+      "implementation": "Archived native-turn.mjs invokes nativeMemoryVersionEvidence before every initial/resume spawn; archived wrapper.mjs injects OPENCODE_DISABLE_CLAUDE_CODE=1 and OPENCODE_DISABLE_EXTERNAL_SKILLS=1. Source hashes above.",
+      "launchSha256": [
+        "3439c0e741fc165a23e5f02af11c2b3c4dbec55316671dd434aebc479dbd1eec",
+        "ddd1891852efd874ea29f63674d48dd5c57bca8bdeefe3afd497c80a19916661"
+      ]
+    },
+    "product": {
+      "warmServerLaunches": 1,
+      "formalGuardedMemoryEvidenceSha256": "2303d4c1046518cfb1afa054cbc47be4e29f59c86c6ebc5b22072297129ea06a",
+      "version": "1.18.35",
+      "memoryPolicy": {
+        "provider": "opencode",
+        "supported": true,
+        "status": "not-applicable",
+        "scope": "provider-native-auto-memory",
+        "mechanism": "version-audit",
+        "version": "1.18.35",
+        "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3"
+      },
+      "continuousTwoTurnSession": true
+    },
+    "preciseClaim": "Installed OpenCode native auto-memory is version-audited not-applicable; provider-owned Claude/external instruction sources disabled and --pure used. No invented transcript memory_mode assertion."
+  },
+  "qualityExplanation": "Both arms R1=true and R2=false are intentionally scripted fixtures: fake provider writes reference implementation in R1 and replaces summarize with {} in R2. Demonstrates immutable snapshot and failure preservation only; neither synthetic token usage nor these quality outcomes measure real model cost/capability."
+}

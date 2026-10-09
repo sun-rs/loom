@@ -1,6 +1,6 @@
 # evo 分支现状
 
-更新：2026-10-09（P154/P155均遇网络重连后正常完成但被保守error判断拒绝；原生正文collector已TDD修复，真实Codex＋断流假上游两轮通过。P156双12轮质量通过，但实际工具集不等、测试sandbox拒读standing文件；输入1.4503倍仅为失配轨迹观察，不判效率通过）。目标以[目标合同](target-contract.zh-CN.md)为准。[P154](evidence/2026-10-09-production-matrix/codex-p154.json)、[P155](evidence/2026-10-09-production-matrix/codex-p155.json)、[恢复修复](evidence/2026-10-09-codex-recovered-error/summary.json)。[P156及对照缺陷](evidence/2026-10-09-production-matrix/opencode-p156.json)。五CLI产品效率仍未验收。
+更新：2026-10-09（P154/P155均遇网络重连后正常完成但被保守error判断拒绝；原生正文collector已TDD修复，真实Codex＋断流假上游两轮通过。P156双12轮质量通过，但实际工具集不等、测试sandbox拒读standing文件；输入1.4503倍仅为失配轨迹观察，不判效率通过）。目标以[目标合同](target-contract.zh-CN.md)为准。[P154](evidence/2026-10-09-production-matrix/codex-p154.json)、[P155](evidence/2026-10-09-production-matrix/codex-p155.json)、[恢复修复](evidence/2026-10-09-codex-recovered-error/summary.json)。[P156及对照缺陷](evidence/2026-10-09-production-matrix/opencode-p156.json)。新免费双2轮已证明8请求工具schema完全一致、4产品请求含standing指令，错配在转发前拒绝；合成回复不判成本。[修正预检](evidence/2026-10-09-opencode-parity-free.json)。五CLI产品效率仍未验收。
 
 P94 同会话重试暴露的旧 claim/start 回执问题已有代码修复：执行认领的默认身份区分 Run，业务创建／交付幂等不变；同 Activation 前次 Run 终止后可重新认领，状态入口不再把过期租约当作有效。确定性回归通过；P95 普通 Task／频道四轮通过，但未真实制造同 Activation 过期故障；[原始证据](evidence/2026-10-02-task-retry-p94.md)、[修复边界](conversation-delivery-design.zh-CN.md#p94-续办修复执行认领与业务幂等分开)。
 
