@@ -1,0 +1,60 @@
+{
+  "scope": "Actual Anthropic request structure in characters, not tokens or causal cost attribution",
+  "run": "1791553036570-P161",
+  "arms": {
+    "native": {
+      "requests": 63,
+      "input": 1761454,
+      "output": 24432,
+      "meanInput": 27959.5873015873,
+      "meanCharacters": {
+        "assistant.text": 4541.666666666667,
+        "assistant.thinking": 59006.69841269841,
+        "assistant.tool_use": 28210.04761904762,
+        "system": 3865,
+        "system.text": 11116.650793650793,
+        "tools": 37036,
+        "user.text": 3340.031746031746,
+        "user.tool_result": 18402.84126984127
+      },
+      "omittedRows": 63
+    },
+    "loom": {
+      "requests": 48,
+      "input": 1385388,
+      "output": 26605,
+      "meanInput": 28862.25,
+      "meanCharacters": {
+        "assistant.text": 4868.541666666667,
+        "assistant.thinking": 62000.229166666664,
+        "assistant.tool_use": 27228.625,
+        "system": 10727,
+        "system.text": 10746.458333333334,
+        "tools": 37036,
+        "user.text": 4242.145833333333,
+        "user.tool_result": 13709.791666666666
+      },
+      "omittedRows": 48
+    }
+  },
+  "selection": {
+    "rounds": [1, 2, 3, 4, 5, 6, 7],
+    "meaning": "Post-termination descriptive paired prefix only; NOT the planned full12 or R7-12 window."
+  },
+  "arithmetic": {
+    "requestRatio": 0.7619047619047619,
+    "meanInputRatio": 1.0322845501500466,
+    "inputRatio": 0.7865025144000354,
+    "identity": "requestRatio * meanInputRatio = inputRatio; descriptive identity, not a causal decomposition"
+  },
+  "limitations": [
+    "No tokenizer allocation is inferred from character lengths.",
+    "Business-generated histories and fixed platform instructions both vary.",
+    "This analysis does not subtract random model decisions, retries or tool failures from consumed tokens."
+  ],
+  "condensedFrom": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-p161-lead/paired-prefix-request-structure.json",
+    "sha256": "1c73791d992f3cf77fbe6fe06bd6301b063d61eecb414600ce7de900239b9c50",
+    "transformation": "Per-request rows omitted, aggregate fields retained; per-request hashes remain in independent reports"
+  }
+}

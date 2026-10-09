@@ -1,0 +1,52 @@
+{
+  "claude-free.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/free-public-evidence.json",
+    "originalSha256": "7026692f87959b53438350b3417012fb42071d81d08008ab9f303cbaa5caa2dc",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "claude-free-independent.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/handoff-audit/free-independent.json",
+    "originalSha256": "cf225031b5c74b88935ed084e9751fe79e0c5661832dea9620b74c5cb5babfcb",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "claude-admission-independent.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/handoff-audit/admission-independent.json",
+    "originalSha256": "7b62fc3a7aebb951a2281753ef4c8fe6928083de8ac0ab6fbcf3ba27f9cd3634",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "claude-plan.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/paid-plan.json",
+    "originalSha256": "a82a41593119d027dd7b109d8d346420e14e5fe9440897fd5614d10f5d0eb27b",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "claude-runner-audit.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/handoff-draft/p161-independent-final.json",
+    "originalSha256": "fdc3caa48055fee1d9d45d1a2ae8dbe9eab76b311ddd8be12fee28a977f9d2ea",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "claude-historical-parser-replay.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/handoff-audit/p153-parser-replay.json",
+    "originalSha256": "cf02ccc146bebb15aff3e870673c5f938029fa4fe1eb8782c8c79c43b0f2d234",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "codex-otel-free.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-codex-otel-sealing-free/public-evidence.json",
+    "originalSha256": "735382a95e5a88838336895c4e779281ef72c58bc6bc34046ed0a0d24141dff0",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "paired-prefix-request-structure.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-p161-lead/paired-prefix-request-structure.json",
+    "sha256": "1c73791d992f3cf77fbe6fe06bd6301b063d61eecb414600ce7de900239b9c50",
+    "transformation": "Per-request rows omitted, aggregate fields retained; per-request hashes remain in independent reports"
+  },
+  "claude-independent.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-claude-p161/handoff-audit/public-evidence.json",
+    "originalSha256": "8bc032062771254aa87af2296295b4ecd76a5ace11527041f651fefef8dcee0d",
+    "transformation": "JSON formatting only; no fields removed"
+  },
+  "next-runtime-matrix.json": {
+    "privateSource": "/Users/sun/.loom/reviews/2026-10-09-kimi-pi-next/next-matrix.json",
+    "originalSha256": "0c1642a45252ce68b9bba639468104be007fd1ddcd27905fac0371b541998832",
+    "transformation": "JSON formatting only; no fields removed"
+  }
+}

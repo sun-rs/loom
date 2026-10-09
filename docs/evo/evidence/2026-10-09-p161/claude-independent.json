@@ -1,0 +1,982 @@
+{
+  "batch": "P161",
+  "status": "failed",
+  "finishedAt": "2026-10-09T14:00:10.066Z",
+  "reviewerStartedPaidCalls": 0,
+  "admissionSha256": "58a6689ac8bd53b93cbbcf989575177a028b3bb3cbf208060b73757c3240df10",
+  "rawAuditSha256": "9b731e32141098b0efd97e1ce2269974dac8424364f8cfb0a22d2619791b1312",
+  "cleanupAuditSha256": "02472d7697f89b493a7e7410520a0cb7e5eee0f141464a03f679ab4515a5e0a1",
+  "sourcesChecked": 3657,
+  "sourceHashMismatchCount": 0,
+  "independentIssues": [],
+  "arms": {
+    "native": {
+      "requests": 72,
+      "totals": {
+        "input": 1854945,
+        "cachedInput": 1800448,
+        "cacheCreationInput": 0,
+        "baseInput": 54497,
+        "output": 24905,
+        "nonCacheReadInput": 54497,
+        "generations": 65
+      },
+      "continuousSessionCount": 1,
+      "memoryDisabledAllActualLaunches": true,
+      "actualLaunches": 2,
+      "incompleteRequests": [66, 67, 68, 69, 70, 71, 72],
+      "conflictingResponses": [],
+      "allActualToolsEqual": true,
+      "allOriginalBusinessPresent": true,
+      "allStandingPresent": true,
+      "tools": {
+        "Bash": 19,
+        "Read": 2,
+        "Write": 8,
+        "Edit": 29
+      },
+      "generationCategoriesOverlappingIfMixedTools": {
+        "withBusinessTools": {
+          "generations": 58,
+          "input": 1644469,
+          "output": 22506
+        },
+        "withProtocolRelatedTools": {
+          "generations": 0,
+          "input": 0,
+          "output": 0
+        },
+        "noTools": {
+          "generations": 7,
+          "input": 210476,
+          "output": 2399
+        }
+      },
+      "firstGeneration": {
+        "input": 11694,
+        "cachedInput": 768,
+        "cacheCreationInput": 0,
+        "baseInput": 10926,
+        "output": 190
+      },
+      "cliCostDiagnostic": {
+        "scope": "last cumulative total per actual process; not invoice",
+        "streams": [
+          {
+            "processStreamSha256": "437028daac8c0fd8037cda0eab35671b263c63b340afd9ef5d14ade67acecf66",
+            "resultCount": 7,
+            "lastCumulativeReportedUsd": 0.6923096000000001
+          }
+        ],
+        "sumFinalCumulativeUsd": 0.6923096000000001
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "completed": true,
+          "quality": true,
+          "requests": 16,
+          "usage": {
+            "input": 242221,
+            "cachedInput": 222976,
+            "cacheCreationInput": 0,
+            "baseInput": 19245,
+            "output": 3885
+          },
+          "toolCalls": 15,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 10503,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 1044,
+              "matchingUserBlockChars": [1072],
+              "wrapperChars": [28]
+            }
+          },
+          "firstGenerationInput": 11694,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 2,
+          "completed": true,
+          "quality": true,
+          "requests": 5,
+          "usage": {
+            "input": 97821,
+            "cachedInput": 94976,
+            "cacheCreationInput": 0,
+            "baseInput": 2845,
+            "output": 1446
+          },
+          "toolCalls": 4,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 64821,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 445,
+              "matchingUserBlockChars": [445],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 18715,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 3,
+          "completed": true,
+          "quality": true,
+          "requests": 7,
+          "usage": {
+            "input": 154990,
+            "cachedInput": 150784,
+            "cacheCreationInput": 0,
+            "baseInput": 4206,
+            "output": 1621
+          },
+          "toolCalls": 6,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 81889,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 445,
+              "matchingUserBlockChars": [445],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 20818,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 4,
+          "completed": true,
+          "quality": true,
+          "requests": 7,
+          "usage": {
+            "input": 186647,
+            "cachedInput": 180224,
+            "cacheCreationInput": 0,
+            "baseInput": 6423,
+            "output": 4755
+          },
+          "toolCalls": 6,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 101172,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 476,
+              "matchingUserBlockChars": [476],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 23692,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 5,
+          "completed": true,
+          "quality": true,
+          "requests": 5,
+          "usage": {
+            "input": 155909,
+            "cachedInput": 151808,
+            "cacheCreationInput": 0,
+            "baseInput": 4101,
+            "output": 2641
+          },
+          "toolCalls": 4,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 133669,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 624,
+              "matchingUserBlockChars": [624],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 29486,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 6,
+          "completed": true,
+          "quality": true,
+          "requests": 15,
+          "usage": {
+            "input": 568385,
+            "cachedInput": 558336,
+            "cacheCreationInput": 0,
+            "baseInput": 10049,
+            "output": 5800
+          },
+          "toolCalls": 14,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 156967,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 791,
+              "matchingUserBlockChars": [791],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 33170,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 7,
+          "completed": true,
+          "quality": true,
+          "requests": 8,
+          "usage": {
+            "input": 355481,
+            "cachedInput": 349184,
+            "cacheCreationInput": 0,
+            "baseInput": 6297,
+            "output": 4284
+          },
+          "toolCalls": 7,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 216133,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 663,
+              "matchingUserBlockChars": [663],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 41491,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 8,
+          "completed": false,
+          "quality": null,
+          "requests": 9,
+          "usage": {
+            "input": 93491,
+            "cachedInput": 92160,
+            "cacheCreationInput": 0,
+            "baseInput": 1331,
+            "output": 473
+          },
+          "toolCalls": 2,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 3865,
+            "historyChars": 249861,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 549,
+              "matchingUserBlockChars": [549],
+              "wrapperChars": [0]
+            }
+          },
+          "firstGenerationInput": 46556,
+          "snapshotUnchanged": false,
+          "failedChecks": null,
+          "selfTestsPassed": null,
+          "completionBeforeCapture": null,
+          "requestsAfterPublication": []
+        }
+      ]
+    },
+    "loom": {
+      "requests": 56,
+      "totals": {
+        "input": 1806487,
+        "cachedInput": 1753600,
+        "cacheCreationInput": 0,
+        "baseInput": 52887,
+        "output": 30218,
+        "nonCacheReadInput": 52887,
+        "generations": 56
+      },
+      "continuousSessionCount": 1,
+      "memoryDisabledAllActualLaunches": true,
+      "actualLaunches": 4,
+      "incompleteRequests": [],
+      "conflictingResponses": [],
+      "allActualToolsEqual": true,
+      "allOriginalBusinessPresent": true,
+      "allStandingPresent": true,
+      "tools": {
+        "Bash": 14,
+        "Read": 5,
+        "Write": 3,
+        "Edit": 26
+      },
+      "generationCategoriesOverlappingIfMixedTools": {
+        "withBusinessTools": {
+          "generations": 48,
+          "input": 1539876,
+          "output": 27060
+        },
+        "withProtocolRelatedTools": {
+          "generations": 0,
+          "input": 0,
+          "output": 0
+        },
+        "noTools": {
+          "generations": 8,
+          "input": 266611,
+          "output": 3158
+        }
+      },
+      "firstGeneration": {
+        "input": 13348,
+        "cachedInput": 8448,
+        "cacheCreationInput": 0,
+        "baseInput": 4900,
+        "output": 143
+      },
+      "cliCostDiagnostic": {
+        "scope": "last cumulative total per actual process; not invoice",
+        "streams": [
+          {
+            "processStreamSha256": "643fbaac0d3c74357155c638871675262841af34f366da22a08b16011758e532",
+            "resultCount": 8,
+            "lastCumulativeReportedUsd": 0.7586740000000001
+          }
+        ],
+        "sumFinalCumulativeUsd": 0.7586740000000001
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "completed": true,
+          "quality": true,
+          "requests": 10,
+          "usage": {
+            "input": 153396,
+            "cachedInput": 142848,
+            "cacheCreationInput": 0,
+            "baseInput": 10548,
+            "output": 3482
+          },
+          "toolCalls": 9,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 10775,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 1044,
+              "matchingUserBlockChars": [1245],
+              "wrapperChars": [201],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": null
+            }
+          },
+          "firstGenerationInput": 13348,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 2,
+          "completed": true,
+          "quality": true,
+          "requests": 3,
+          "usage": {
+            "input": 57435,
+            "cachedInput": 55552,
+            "cacheCreationInput": 0,
+            "baseInput": 1883,
+            "output": 976
+          },
+          "toolCalls": 2,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 56255,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 445,
+              "matchingUserBlockChars": [648],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 18548,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 3,
+          "completed": true,
+          "quality": true,
+          "requests": 6,
+          "usage": {
+            "input": 129247,
+            "cachedInput": 125440,
+            "cacheCreationInput": 0,
+            "baseInput": 3807,
+            "output": 1806
+          },
+          "toolCalls": 5,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 66455,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 445,
+              "matchingUserBlockChars": [648],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 20064,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 4,
+          "completed": true,
+          "quality": true,
+          "requests": 6,
+          "usage": {
+            "input": 153366,
+            "cachedInput": 148736,
+            "cacheCreationInput": 0,
+            "baseInput": 4630,
+            "output": 3167
+          },
+          "toolCalls": 5,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 91606,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 476,
+              "matchingUserBlockChars": [679],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 23295,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 5,
+          "completed": true,
+          "quality": true,
+          "requests": 6,
+          "usage": {
+            "input": 182497,
+            "cachedInput": 176128,
+            "cacheCreationInput": 0,
+            "baseInput": 6369,
+            "output": 4343
+          },
+          "toolCalls": 5,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 120405,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 624,
+              "matchingUserBlockChars": [827],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 27679,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 6,
+          "completed": true,
+          "quality": true,
+          "requests": 11,
+          "usage": {
+            "input": 427756,
+            "cachedInput": 416768,
+            "cacheCreationInput": 0,
+            "baseInput": 10988,
+            "output": 7047
+          },
+          "toolCalls": 10,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 159373,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 791,
+              "matchingUserBlockChars": [994],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 33447,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 7,
+          "completed": true,
+          "quality": true,
+          "requests": 6,
+          "usage": {
+            "input": 281691,
+            "cachedInput": 273152,
+            "cacheCreationInput": 0,
+            "baseInput": 8539,
+            "output": 5784
+          },
+          "toolCalls": 5,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 221759,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 663,
+              "matchingUserBlockChars": [866],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 42906,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        },
+        {
+          "round": 8,
+          "completed": true,
+          "quality": true,
+          "requests": 8,
+          "usage": {
+            "input": 421099,
+            "cachedInput": 414976,
+            "cacheCreationInput": 0,
+            "baseInput": 6123,
+            "output": 3613
+          },
+          "toolCalls": 7,
+          "protocolRelatedToolCalls": 0,
+          "firstRequestStructure": {
+            "systemChars": 10727,
+            "historyChars": 264067,
+            "schemaChars": 37036,
+            "taskStructure": {
+              "taskChars": 549,
+              "matchingUserBlockChars": [752],
+              "wrapperChars": [203],
+              "previousRoomReplyRepeatedInCurrentTaskBlock": false
+            }
+          },
+          "firstGenerationInput": 50364,
+          "snapshotUnchanged": true,
+          "failedChecks": [],
+          "selfTestsPassed": true,
+          "completionBeforeCapture": true,
+          "requestsAfterPublication": []
+        }
+      ]
+    }
+  },
+  "windows": {
+    "full12": {
+      "complete": false,
+      "native": {
+        "input": 1854945,
+        "cachedInput": 1800448,
+        "cacheCreationInput": 0,
+        "baseInput": 54497,
+        "output": 24905,
+        "generations": 65,
+        "toolCalls": 58,
+        "protocolRelatedToolCalls": 0
+      },
+      "loom": {
+        "input": 1806487,
+        "cachedInput": 1753600,
+        "cacheCreationInput": 0,
+        "baseInput": 52887,
+        "output": 30218,
+        "generations": 56,
+        "toolCalls": 48,
+        "protocolRelatedToolCalls": 0
+      },
+      "ratios": null
+    },
+    "plannedLastSix": {
+      "complete": false,
+      "native": {
+        "input": 448972,
+        "cachedInput": 441344,
+        "cacheCreationInput": 0,
+        "baseInput": 7628,
+        "output": 4757,
+        "generations": 10,
+        "toolCalls": 9,
+        "protocolRelatedToolCalls": 0
+      },
+      "loom": {
+        "input": 702790,
+        "cachedInput": 688128,
+        "cacheCreationInput": 0,
+        "baseInput": 14662,
+        "output": 9397,
+        "generations": 14,
+        "toolCalls": 12,
+        "protocolRelatedToolCalls": 0
+      },
+      "ratios": null
+    }
+  },
+  "cleanup": {
+    "knownOwnedPids": 15,
+    "liveKnownPids": 0,
+    "allRecordedConfigPathsRemoved": true,
+    "wrapperReceipts": {
+      "native": {
+        "launches": 2,
+        "exits": 2,
+        "missingExitPrefixes": [],
+        "unexpectedExitPrefixes": [],
+        "exitCodes": [
+          {
+            "code": 0,
+            "signal": null
+          },
+          {
+            "code": 143,
+            "signal": null
+          }
+        ]
+      },
+      "loom": {
+        "launches": 4,
+        "exits": 4,
+        "missingExitPrefixes": [],
+        "unexpectedExitPrefixes": [],
+        "exitCodes": [
+          {
+            "code": 0,
+            "signal": null
+          },
+          {
+            "code": 143,
+            "signal": null
+          },
+          {
+            "code": 0,
+            "signal": null
+          },
+          {
+            "code": 0,
+            "signal": null
+          }
+        ]
+      }
+    },
+    "cleanupErrors": {}
+  },
+  "readmeReview": {
+    "status": "Final R12 documentation acceptance unavailable because R12 never ran",
+    "manuallyRead": [
+      "native snapshot-7 README",
+      "loom snapshot-7 README",
+      "loom snapshot-8 README"
+    ],
+    "nativeStage7": "Contains voluntary incremental API, exact rounding, validation and grouping documentation. All this work remains in measured cost. Earlier feature-arrival wording persists; no final-document verdict claimed.",
+    "loomStage7And8": "Still original exercise template; README update was required at R12, so this is a stage difference, not R1–8 instruction-following failure.",
+    "sourceHashes": {
+      "native-R7": "3598396d829583347e8fb88b7865b938c1c17da294785bdd4b0688ee4d9c0115",
+      "loom-R7": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+      "loom-R8": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+    }
+  },
+  "limits": [
+    "Wire usage is provider-reported accounting, not invoice.",
+    "No subtraction for different stochastic business paths.",
+    "Characters are structural metrics, never converted to token estimates.",
+    "README semantics and process cleanup audited separately.",
+    "Thresholds checked before each arm; in-flight requests may overshoot.",
+    "Generation categories may overlap when a request emits both business and protocol-related tools.",
+    "Protocol classification is an audit of tool input, not a precise marginal token cost.",
+    "nonCacheReadInput = baseInput + cacheCreationInput; baseInput alone excludes cache creation.",
+    "Both controls use persistent Claude stream-json with identical actual tool schema, not the historical cold -p baseline.",
+    "One fixed sonnet/low trajectory, not a general multi-model efficiency result."
+  ],
+  "completedPairedPrefix": {
+    "scope": "post-hoc completed rounds 1–7 only; not replacement for planned full12 or R7–12",
+    "native": {
+      "input": 1761454,
+      "cachedInput": 1708288,
+      "baseInput": 53166,
+      "cacheCreationInput": 0,
+      "output": 24432,
+      "generations": 63
+    },
+    "loom": {
+      "input": 1385388,
+      "cachedInput": 1338624,
+      "baseInput": 46764,
+      "cacheCreationInput": 0,
+      "output": 26605,
+      "generations": 48
+    },
+    "ratios": {
+      "input": 0.7865025144000354,
+      "output": 1.088940733464309,
+      "generations": 0.7619047619047619,
+      "baseInput": 0.8795846969867961
+    },
+    "quality": "All 14 stage-specific hidden functional and selftest verdicts true"
+  },
+  "unpairedRound8": {
+    "native": {
+      "input": 93491,
+      "cachedInput": 92160,
+      "baseInput": 1331,
+      "cacheCreationInput": 0,
+      "output": 473,
+      "generations": 2,
+      "completed": false,
+      "quality": null,
+      "http429MissingUsageRequests": [66, 67, 68, 69, 70, 71],
+      "stoppedInFlightMissingStatusAndUsageRequest": 72
+    },
+    "loom": {
+      "input": 421099,
+      "cachedInput": 414976,
+      "baseInput": 6123,
+      "cacheCreationInput": 0,
+      "output": 3613,
+      "generations": 8,
+      "completed": true,
+      "quality": true
+    }
+  },
+  "termination": {
+    "reason": "Lead ordered graceful native stop after repeated HTTP429 with missing usage made fixed full-run accounting incomplete",
+    "signal": "SIGTERM",
+    "at": "2026-10-09T14:00:09.801272+00:00",
+    "scope": "Owned native process group only; runner finally preserved all evidence",
+    "receiptSha256": "5c7aba58cb21abf964823e2bbf1479350ea7f2b01374cee0ed162b117062d86a",
+    "automaticCliRetries": "Observed and retained; no evaluator retry or paid rerun",
+    "knownResponseCount": 121,
+    "unknownRequests": 7,
+    "fullPaidCost": "unknown"
+  },
+  "allKnownTotals": {
+    "input": 3661432,
+    "cachedInput": 3554048,
+    "cacheCreationInput": 0,
+    "baseInput": 107384,
+    "nonCacheReadInput": 107384,
+    "output": 55123,
+    "generations": 121
+  },
+  "snapshotCount": 15,
+  "missingPlannedSnapshots": 9,
+  "firstGenerationInputDifference": 1654,
+  "taskBlockReview": {
+    "scope": "New current-task user block, not the full persistent CLI history",
+    "rounds": [
+      {
+        "round": 1,
+        "taskChars": 1044,
+        "matchingUserBlockChars": [1245],
+        "wrapperChars": [201],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": null
+      },
+      {
+        "round": 2,
+        "taskChars": 445,
+        "matchingUserBlockChars": [648],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      },
+      {
+        "round": 3,
+        "taskChars": 445,
+        "matchingUserBlockChars": [648],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      },
+      {
+        "round": 4,
+        "taskChars": 476,
+        "matchingUserBlockChars": [679],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      },
+      {
+        "round": 5,
+        "taskChars": 624,
+        "matchingUserBlockChars": [827],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      },
+      {
+        "round": 6,
+        "taskChars": 791,
+        "matchingUserBlockChars": [994],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      },
+      {
+        "round": 7,
+        "taskChars": 663,
+        "matchingUserBlockChars": [866],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      },
+      {
+        "round": 8,
+        "taskChars": 549,
+        "matchingUserBlockChars": [752],
+        "wrapperChars": [203],
+        "previousRoomReplyRepeatedInCurrentTaskBlock": false
+      }
+    ],
+    "previousRoomReplyRepeatedInAnyObservedCurrentTaskBlock": false,
+    "historyRetention": "Ordinary prior session history remains visible; no claim that prior tokens cease to be billed",
+    "charactersAreNotTokens": true
+  },
+  "publicationReview": {
+    "completedProductRounds": 8,
+    "uniqueHostPublications": 8,
+    "allBeforeSnapshotCapture": true,
+    "requestsStartedAfterPublicationForSameRound": 0,
+    "modelVisibleProtocolRelatedToolCalls": 0,
+    "interpretation": "No observed extra reply/post tool or protocol environment exploration; no subtraction of stochastic business costs.",
+    "uniqueMarkerEventIds": 8,
+    "rawFinalTextChecks": [
+      {
+        "round": 1,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 2,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 3,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 4,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 5,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 6,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 7,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      },
+      {
+        "round": 8,
+        "rawFinalTextEqualsPublication": true,
+        "trimmedEquals": true
+      }
+    ]
+  },
+  "approvedBinding": "sonnet",
+  "actualResponseModel": "claude-sonnet-5-5",
+  "reasoning": "low",
+  "budgetReview": {
+    "preArmChecksPreserved": true,
+    "lastArmAdmission": {
+      "input": 3567941,
+      "cachedInput": 3461888,
+      "cacheCreationInput": 0,
+      "uncachedInput": 106053,
+      "output": 54650,
+      "generations": 119
+    },
+    "stopWasCoverageLossNotBudgetExhaustion": true,
+    "combinedKnownInput": 3661432,
+    "combinedKnownOutput": 55123,
+    "requestCount": 128,
+    "limits": {
+      "input": 12000000,
+      "output": 150000,
+      "requests": 400,
+      "wallMs": 5400000,
+      "turnMs": 600000
+    }
+  }
+}

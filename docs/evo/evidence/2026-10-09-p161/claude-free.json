@@ -1,0 +1,208 @@
+{
+  "batch": "P161",
+  "scope": "New matched persistent-stream Claude ordinary CLI and real Role/daemon free preflight only; not paid admission",
+  "paidCalls": 0,
+  "run": "1791552728275-free",
+  "actualCli": "ClaudeCode2.1.293",
+  "model": "sonnet resolved claude-sonnet-5-5",
+  "effort": "low",
+  "status": "two rounds each arm complete",
+  "currentToolCount": 16,
+  "previousFreeToolCount": 17,
+  "difference": "DesignSync absent on both current actual arms. Historical17 expectation rejected before upstream; preserved.",
+  "sameSessionEachArm": true,
+  "all8RequestsExactSchemasAndBinding": true,
+  "businessText": "Native exact full business input block; product verbatim original task inside its Room envelope; no added probe.",
+  "nativePersistentProcessCount": 1,
+  "memoryDisabledEveryObservedCliLaunch": true,
+  "memoryLaunchEvidenceHashes": {
+    "native": "e77302f42bf53a7211dd6e1b474cbe17f916f19753ddaa034128ee09da3be1e9",
+    "loom": "61460daac856c9659b76d317fa83391e4f43e0c615c558735e54b0f162d91f6c"
+  },
+  "allResponseUsageMatchedTranscriptAndProductKernel": true,
+  "timing": "Native result observation and product durable publication/observed Activation completion precede capture; evaluator time excluded. No latency claim from fake provider.",
+  "v4ManifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+  "snapshots": 4,
+  "originalSnapshotBytesPreserved": true,
+  "quality": {
+    "native": [true, false],
+    "loom": [true, false]
+  },
+  "qualityMeaning": "Fake writes correct R1 and deliberate failing R2, so true/false preserved; no real model quality or token cost conclusion.",
+  "cleanup": {
+    "ownedRecordedPidsExited": 14,
+    "nativeExitCode": 0,
+    "daemonExitCode": 0,
+    "bothTemporaryConfigDirectoriesRemoved": true,
+    "loopbackServersClosedByAwaitedFinally": true
+  },
+  "requests": [
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "a760eeb091609b288146966ad1b81d35f8e3af9d0a21eb7f28166837c9454617",
+      "responseSha256": "8b507fa11969070da19ec0500a3764103c79cb156b9a00130b6addd4b450d9cf",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_1",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "f58e8399cf1e8dbce4fde2f2343f99bb94bd5701ce507a5c00ef25e7b643e6f8",
+      "responseSha256": "e0c207387049428dd67409df674a3d7844665c63b6b1e5bda05971ffba03197e",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_2",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "85dd6ec58d5bd03cd47c4ef6113c16489346e5401dda430bad313a0cbad65d8c",
+      "responseSha256": "d055a8b8f2c7aae32710f92e0f91d8aee177623db34e3ab903a20717391c3470",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_7",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "2f427f9f0606503a92c1d02f0bd58b3462095ab28be3ea241ee62494441f1c06",
+      "responseSha256": "f4c045d24e5c4d63093efc34007b707a6b7139a46e5074d32f6b30f2713e12b2",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_8",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "44e9ea5e54983bd43d8260f145abc1bdb74c8d9e56adce9ee41cec8b724fae02",
+      "responseSha256": "cff1b17ca443d65443cccb139bcd418532eb8f5e6f5d4b770c98d6fe38a565fa",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_3",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "b98b9d3742907f50eb6c7332d131ef72899587f94c97d351a4bfc74ead1ec5f7",
+      "responseSha256": "b4f28b7c478aaa4ebb465b65f0b99f05cd0e4f73e4e0afa33c71e391a71a31b6",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_4",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "e4d6781d515be11991a8b6587da1d37074ccbed81697a575c7095d929f74f754",
+      "responseSha256": "5ae6d4982c559e59be46cd8412e2731d2f9f4c51d7e40e4fd9aa60a1ce5f6112",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_5",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "d3e79301e9f400ab6d22c96c8dea6fb6e7107b6937d29712a21d61c7ec459b5d",
+      "responseSha256": "2216e6aa990fd1d8ec4b7cb29bcf5a3e35a01823165afd1b99a9351e82998460",
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "responseId": "msg_v3_6",
+      "knownSyntheticUsage": {
+        "input": 100,
+        "cachedInput": 0,
+        "cacheCreationInput": 0,
+        "uncachedInput": 100,
+        "output": 10
+      }
+    }
+  ],
+  "sources": {
+    "request-admission.test.mjs": "02ab6d0787ccfc6eb366eeb6713038ed8d570a1372ed480e196d2770876a3163",
+    "native-persistent.mjs": "c04661a6ed67df8b1f92109a65732c26ca475b6a263ecc60affe173af3d95b37",
+    "run.mjs": "d8cb4519986ee35de350beddebbff6deed1c708e728623eebfcca89d53feb246",
+    "request-admission.mjs": "dae32bca45af020c8aa8450d1c784a10fac1093725d5eba15d0a13f1d24af7f5",
+    "claude-response-coverage.test.mjs": "a872efe80cb6b69853a437272ee7a9d988a4926252200dc40f9fe4eaef5601ef",
+    "claude-accounting.mjs": "2f92b154e39fa9e85e317c4fa95142ad4aaca1ceae387d5586a76676c098b28a",
+    "wrapper.mjs": "fdb91b0f4b925fd9551197522cb1a6aec6bf7066b945041635e727edfeb6686a",
+    "environment.mjs": "9d16ef3f23771340060b20dd3396b9c993f55c5c9d8917426257ffcc927cdc0c",
+    "fake.mjs": "dbd747666b427fe7496516a4a16aaca77f837167f5eceeaf76d3329acda005f9",
+    "product-arm.mjs": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa",
+    "human-connection.mjs": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1",
+    "recorder.test.mjs": "15a9e472e53e8724d8f95e452d84189658da6ece406782142bbc89deda7e93b0",
+    "claude-response-coverage.mjs": "3a7cd2fcfa3b69b8dc5ef6f1d01b20dce75615c0e5cbc5fb54bdcee4866147ac",
+    "recorder.mjs": "705ec83c220cb30cf1dc41bea50daf818882d2fc54c97ac5d988337c63cdd5c0",
+    "native-persistent.test.mjs": "55874ff654fe28d24529ca6ed0f0e4a4a9e1512ed859f4d499f7f0aa485f557f"
+  },
+  "resultSha256": "9f7a75176cf67a84de83df9af5cc03babef741d7fe5d6fe7ecd8228d0499dae3",
+  "manifestNegativeHistory": [
+    {
+      "run": "1791552327728-free",
+      "reason": "expected17 vs actual16 schema rejected; zero upstream model responses"
+    },
+    {
+      "run": "1791552686737-free",
+      "reason": "fake tool-result detection inspected trailing system block; synthetic repeated calls hit protective cap. Preserved, not a product defect."
+    }
+  ],
+  "limitations": [
+    "Original provider base/auth kept in process environment and transparent recorder design; actual paid route not exercised by this localhost preflight.",
+    "Any model/effort/tool schema divergence including sideagent requests blocks forwarding; this may stop a future batch and its consumed usage remains visible.",
+    "Provider-reported tokens are not invoice costs.",
+    "Shared source and admission not yet frozen; lead release required before any paid invocation."
+  ],
+  "paidAdmissionNegative": {
+    "exitCode": 1,
+    "beforeCli": true,
+    "logSha256": "f8c0bc867aa22d059b3e3bc549659b5b63e583a50ec594e1d4c5c4575c0b709f"
+  }
+}

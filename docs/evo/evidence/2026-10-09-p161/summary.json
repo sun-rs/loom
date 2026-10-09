@@ -1,0 +1,118 @@
+{
+  "batch": "P161",
+  "sourceHead": "bf71ab3455a1b7ff5109c1486bb32c5777a29bab",
+  "verdict": "Incomplete fixed long-task acceptance; retained provider-429 interruption. No rerun.",
+  "model": {
+    "cli": "Claude Code 2.1.293",
+    "binding": "sonnet",
+    "actualModel": "claude-sonnet-5-5",
+    "effort": "low"
+  },
+  "control": "Direct persistent stream-json, matched native tool policy, automatic memory disabled every launch. Product real Role/daemon warm native-final; different from historical cold CLI control.",
+  "planned": {
+    "pairedRounds": 12,
+    "lateWindow": [7, 8, 9, 10, 11, 12],
+    "full12Ratio": null,
+    "late6Ratio": null
+  },
+  "observed": {
+    "completedNativeRounds": 7,
+    "completedLoomRounds": 8,
+    "functionalAndSelftestSnapshotsPassed": 15,
+    "completeResponses": 121,
+    "knownInput": 3661432,
+    "knownOutput": 55123,
+    "unknownRequests": {
+      "upstream429": 6,
+      "inFlightAtTermination": 1
+    },
+    "nativeFailedRound8KnownUsage": {
+      "responses": 2,
+      "input": 93491,
+      "output": 473
+    }
+  },
+  "pairedPrefix": {
+    "rounds": [1, 2, 3, 4, 5, 6, 7],
+    "scope": "Post-termination descriptive prefix, not a substitute for the planned full12 or late6 result",
+    "native": {
+      "requests": 63,
+      "input": 1761454,
+      "output": 24432,
+      "nonCachedInput": 53166
+    },
+    "loom": {
+      "requests": 48,
+      "input": 1385388,
+      "output": 26605,
+      "nonCachedInput": 46764
+    },
+    "loomOverNative": {
+      "input": 0.7865025144000354,
+      "output": 1.088940733464309,
+      "nonCachedInput": 0.8795846969867961
+    },
+    "causality": "Different stochastic business/tool histories; all consumed tokens retained. Not evidence that Loom causes a21percent saving."
+  },
+  "transportFindings": {
+    "sameFullToolSchema": true,
+    "actualTools": 16,
+    "firstGenerationInput": {
+      "native": 11694,
+      "loom": 13348,
+      "extra": 1654
+    },
+    "newTaskEnvelopeExtraCharacters": {
+      "round1": 201,
+      "rounds2to8": 203
+    },
+    "previousRoomReplyDuplicatedInNewTaskBlock": false,
+    "protocolToolExplorationCalls": 0,
+    "uniqueNativeFinalPublications": 8,
+    "sameTurnRequestsAfterPublication": 0,
+    "characterCountsAreNotTokenEstimates": true
+  },
+  "qualityBoundary": "Fifteen completed stage snapshots passed functional/selftest checks. README update is explicitly required only at R12, which neither arm reached; native earlier documentation is retained business-path variation, not a Loom prefix failure.",
+  "termination": "Lead stopped only the owned native process group gracefully after confirmed repeated429/usage gaps; runner finally retained all known usage and cleaned up. Native exit143, runner exit1, daemon exit0. No favorable retry or threshold extension.",
+  "verification": {
+    "frozenSourceHashesBeforeAndAfter": 3657,
+    "rootPrivateClaudeTestsPassed": 17,
+    "independentResponseLedgerAgreement": true,
+    "recordedPidsAbsent": 15,
+    "wrapperLaunchesAndExitReceipts": [6, 6],
+    "temporaryCliConfigurationsRemoved": true,
+    "scope": "Recorded owned processes; not a proof that every possible unrecorded descendant is absent."
+  },
+  "codexFree": {
+    "actualSamplerAdoptionVerified": true,
+    "customLoopbackWebSocketTwoTurnsSameSession": true,
+    "exporterRejectionStillAllowsCliExit0": true,
+    "completeExportCensus": "Not established by current public native interface",
+    "use": "Supplementary missing-usage diagnosis only, not standalone efficiency admission",
+    "paidCalls": 0,
+    "evidence": "codex-otel-free.json"
+  },
+  "productSourceChanged": false,
+  "formalDeploymentChanged": false,
+  "limitations": [
+    "Single Claude/model trajectory interrupted before all planned rounds. Five-CLI/multi-model/multi-instance acceptance remains open.",
+    "Tokens include cached input; they are not an invoice or a price multiplier.",
+    "Matched persistent native mode and existing tool restrictions differ from cold default CLI.",
+    "Alternating order does not remove cache/provider/model randomness.",
+    "Normal native conversation history is preserved; task-block checks do not claim the whole API context omits older messages."
+  ],
+  "next": [
+    "Keep P161 closed as interrupted; do not resume it or replace its evidence with a favorable rerun.",
+    "Prioritize free Kimi formal cold ACP native-final integration using existing scoped settlement, then Pi formal adapter; their saved private prototypes are not real Role/daemon equivalence. See next-runtime-matrix.json. Pi has no approved paid gate binding row.",
+    "A future Claude long batch requires a new fixed sample after upstream availability; do not extrapolate the seven-round prefix.",
+    "Use Codex native OTel as bounded supplementary diagnostics; avoid an indefinite proxy/auth/exporter framework."
+  ],
+  "evidence": {
+    "independent": "claude-independent.json",
+    "runner": "claude-runner-audit.json",
+    "plan": "claude-plan.json",
+    "free": "claude-free.json",
+    "prefixStructure": "paired-prefix-request-structure.json",
+    "nextRuntimeMatrix": "next-runtime-matrix.json"
+  }
+}

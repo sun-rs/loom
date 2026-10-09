@@ -1,0 +1,118 @@
+{
+  "kind": "P161 actual CLI loopback independent audit",
+  "run": "1791552728275-free",
+  "paidCalls": 0,
+  "fake": true,
+  "status": "completed",
+  "arms": {
+    "native": {
+      "requests": 4,
+      "rawTotals": {
+        "input": 400,
+        "output": 40
+      },
+      "responseIdsUnique": true,
+      "schemaCount": 16,
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "sameSession": true,
+      "actualLaunchMemoryDisabled": true,
+      "launches": 2,
+      "originalBusinessTextVerified": true,
+      "completionPrecedesCapture": true,
+      "sources": [
+        {
+          "requestSha256": "a760eeb091609b288146966ad1b81d35f8e3af9d0a21eb7f28166837c9454617",
+          "responseSha256": "8b507fa11969070da19ec0500a3764103c79cb156b9a00130b6addd4b450d9cf"
+        },
+        {
+          "requestSha256": "f58e8399cf1e8dbce4fde2f2343f99bb94bd5701ce507a5c00ef25e7b643e6f8",
+          "responseSha256": "e0c207387049428dd67409df674a3d7844665c63b6b1e5bda05971ffba03197e"
+        },
+        {
+          "requestSha256": "85dd6ec58d5bd03cd47c4ef6113c16489346e5401dda430bad313a0cbad65d8c",
+          "responseSha256": "d055a8b8f2c7aae32710f92e0f91d8aee177623db34e3ab903a20717391c3470"
+        },
+        {
+          "requestSha256": "2f427f9f0606503a92c1d02f0bd58b3462095ab28be3ea241ee62494441f1c06",
+          "responseSha256": "f4c045d24e5c4d63093efc34007b707a6b7139a46e5074d32f6b30f2713e12b2"
+        }
+      ],
+      "snapshots": [
+        {
+          "round": 1,
+          "hashes": {
+            "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+            "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+            "tests/test_invoice.py": "636b41ddeae368ceaea61132f041472aff2a743b1304274b0c5a35a666afca0b"
+          }
+        },
+        {
+          "round": 2,
+          "hashes": {
+            "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+            "invoice.py": "ba5931793a3f9cfa7d557fef5d5a2ece0f8d69e364a3bfec0f27dacb5b26142b",
+            "tests/test_invoice.py": "636b41ddeae368ceaea61132f041472aff2a743b1304274b0c5a35a666afca0b"
+          }
+        }
+      ]
+    },
+    "loom": {
+      "requests": 4,
+      "rawTotals": {
+        "input": 400,
+        "output": 40
+      },
+      "responseIdsUnique": true,
+      "schemaCount": 16,
+      "schemaSha256": "6ccb062fdd9013b6fcfda64a96ec43b50777b0dc4d576d4c223ef05950c121eb",
+      "sameSession": true,
+      "actualLaunchMemoryDisabled": true,
+      "launches": 4,
+      "originalBusinessTextVerified": true,
+      "completionPrecedesCapture": true,
+      "sources": [
+        {
+          "requestSha256": "44e9ea5e54983bd43d8260f145abc1bdb74c8d9e56adce9ee41cec8b724fae02",
+          "responseSha256": "cff1b17ca443d65443cccb139bcd418532eb8f5e6f5d4b770c98d6fe38a565fa"
+        },
+        {
+          "requestSha256": "b98b9d3742907f50eb6c7332d131ef72899587f94c97d351a4bfc74ead1ec5f7",
+          "responseSha256": "b4f28b7c478aaa4ebb465b65f0b99f05cd0e4f73e4e0afa33c71e391a71a31b6"
+        },
+        {
+          "requestSha256": "e4d6781d515be11991a8b6587da1d37074ccbed81697a575c7095d929f74f754",
+          "responseSha256": "5ae6d4982c559e59be46cd8412e2731d2f9f4c51d7e40e4fd9aa60a1ce5f6112"
+        },
+        {
+          "requestSha256": "d3e79301e9f400ab6d22c96c8dea6fb6e7107b6937d29712a21d61c7ec459b5d",
+          "responseSha256": "2216e6aa990fd1d8ec4b7cb29bcf5a3e35a01823165afd1b99a9351e82998460"
+        }
+      ],
+      "snapshots": [
+        {
+          "round": 1,
+          "hashes": {
+            "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+            "invoice.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+            "tests/test_invoice.py": "636b41ddeae368ceaea61132f041472aff2a743b1304274b0c5a35a666afca0b"
+          }
+        },
+        {
+          "round": 2,
+          "hashes": {
+            "README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+            "invoice.py": "ba5931793a3f9cfa7d557fef5d5a2ece0f8d69e364a3bfec0f27dacb5b26142b",
+            "tests/test_invoice.py": "636b41ddeae368ceaea61132f041472aff2a743b1304274b0c5a35a666afca0b"
+          }
+        }
+      ]
+    }
+  },
+  "quality": "Fake R1 success/R2 intentional false; not paid task quality or efficiency proof",
+  "limitations": [
+    "Synthetic usage is not efficiency evidence",
+    "Schema hash canonicalized independently with Python unicode JSON; full structures directly compared",
+    "Official memory-off recorded from actual launch; no claim of stronger same-UID isolation",
+    "Paid final manifest not yet reviewed"
+  ]
+}

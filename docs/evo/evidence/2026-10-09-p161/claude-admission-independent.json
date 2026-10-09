@@ -1,0 +1,20 @@
+{
+  "kind": "P161 independent final admission",
+  "verdict": "pass-await-parent-release",
+  "at": "2026-10-09T13:36:44.089349+00:00",
+  "admissionSha256": "58a6689ac8bd53b93cbbcf989575177a028b3bb3cbf208060b73757c3240df10",
+  "planSha256": "a82a41593119d027dd7b109d8d346420e14e5fe9440897fd5614d10f5d0eb27b",
+  "head": "bf71ab3455a1b7ff5109c1486bb32c5777a29bab",
+  "sourcesChecked": 3657,
+  "sourceMismatches": [],
+  "workingTreeClean": true,
+  "paidLaunchClaimAbsent": true,
+  "freeAuditSha256": "cf225031b5c74b88935ed084e9751fe79e0c5661832dea9620b74c5cb5babfcb",
+  "limitations": [
+    "Only sonnet low approved single batch; reviewer did not launch paid",
+    "One trajectory cannot establish multi-model efficiency",
+    "Pre-arm budgets are not inflight hard caps",
+    "Provider wire coverage is not invoice; preserve incomplete/conflicting response evidence",
+    "Non-cache-read input comparison equals uncachedInput plus cacheCreationInput"
+  ]
+}

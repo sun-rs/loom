@@ -1,0 +1,388 @@
+{
+  "paidCalls": 0,
+  "productCodeModified": false,
+  "accountConfigurationModified": false,
+  "installedCli": "Codex 0.161.0",
+  "binaryPath": "/opt/homebrew/Caskroom/codex/0.161.0/bin/codex",
+  "binarySha256": "12ac11d2c7eee27cfae34393986d7b7c9ed0dea537cb749831cdd7033893e6de",
+  "scope": "Ordinary exec/resume with existing exact model/memory launch guard, isolated temporary HOME/CODEX_HOME, localhost-only sandbox. HTTP and WS custom fake provider without auth. NOT real ChatGPT routing/TLS validation.",
+  "cases": [
+    {
+      "case": "off",
+      "run": "run-1791551857723",
+      "spans": 0,
+      "logs": 17,
+      "samplers": ["always_off"],
+      "batches": [
+        {
+          "file": "otel-1.private.json",
+          "bytes": 45796,
+          "sha256": "e6ba407977b291037a62762e8560360b61b75c7a0057239bb6019d21566f9de9"
+        }
+      ],
+      "requestLogs": [
+        {
+          "event": "codex.api_request",
+          "traceId": "a480b545031fccff3ce9b8b980c99526",
+          "spanId": "1694461681d9ae03",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.api_request",
+          "traceId": "a480b545031fccff3ce9b8b980c99526",
+          "spanId": "1f2a90918ad9f149",
+          "samplingAttempt": null
+        }
+      ],
+      "usageSpans": [],
+      "ownedPidsStillAlive": [],
+      "completedTurns": 1,
+      "sameSession": null,
+      "rejectedHttpStatus": null
+    },
+    {
+      "case": "on",
+      "run": "run-1791551872363",
+      "spans": 513,
+      "logs": 17,
+      "samplers": ["always_on"],
+      "batches": [
+        {
+          "file": "otel-1.private.json",
+          "bytes": 1222114,
+          "sha256": "e344fbc9618200d72e5d8dceff8d6f52ac0f97279d6b1dc540d5ceddb6ed9e74"
+        },
+        {
+          "file": "otel-2.private.json",
+          "bytes": 3778,
+          "sha256": "1059a5722aaa63560fa5ae3cd592eeb3e64c8b379a73a5bbac79bac27d54a340"
+        },
+        {
+          "file": "otel-3.private.json",
+          "bytes": 45796,
+          "sha256": "e3549171f97a9adcadcbf0df92ac3200f8b85114b505b883f0d6a8e01433c73d"
+        }
+      ],
+      "requestLogs": [
+        {
+          "event": "codex.api_request",
+          "traceId": "3f97cce77b4a46e2e027f8d82e0ccb05",
+          "spanId": "831cdf18aa04439f",
+          "samplingAttempt": "265bc9dc657d3db0"
+        },
+        {
+          "event": "codex.api_request",
+          "traceId": "3f97cce77b4a46e2e027f8d82e0ccb05",
+          "spanId": "be78838b039d3346",
+          "samplingAttempt": "7ec912e931ed2de6"
+        }
+      ],
+      "usageSpans": [
+        {
+          "traceId": "3f97cce77b4a46e2e027f8d82e0ccb05",
+          "spanId": "3df4aed598aa8a6b",
+          "input": "10",
+          "output": "2",
+          "samplingAttempt": "7ec912e931ed2de6"
+        }
+      ],
+      "ownedPidsStillAlive": [],
+      "completedTurns": 1,
+      "sameSession": null,
+      "rejectedHttpStatus": null
+    },
+    {
+      "case": "rejected",
+      "run": "run-1791551901551",
+      "spans": 513,
+      "logs": 17,
+      "samplers": ["always_on"],
+      "batches": [
+        {
+          "file": "otel-1.private.json",
+          "bytes": 1222146,
+          "sha256": "cbd14601ebe61a1cff09e6acb8acd4d2f0b5a9e11fb9e87861f52fdb29f73bde"
+        },
+        {
+          "file": "otel-2.private.json",
+          "bytes": 3778,
+          "sha256": "cfa7b536211c6bdecb93941e85894614d04bd494f69c50e7a09a82845095456f"
+        },
+        {
+          "file": "otel-3.private.json",
+          "bytes": 45796,
+          "sha256": "f2a36251bbb72d36580a7936a24d9be36d58010f34c833410f5c0c488bf493e7"
+        }
+      ],
+      "requestLogs": [
+        {
+          "event": "codex.api_request",
+          "traceId": "57bd893bedf5b54191a9f860e019a4dc",
+          "spanId": "144432f4d2bf1406",
+          "samplingAttempt": "3d67705bfd974265"
+        },
+        {
+          "event": "codex.api_request",
+          "traceId": "57bd893bedf5b54191a9f860e019a4dc",
+          "spanId": "21db756d054a3a76",
+          "samplingAttempt": "28df771a15667fc3"
+        }
+      ],
+      "usageSpans": [
+        {
+          "traceId": "57bd893bedf5b54191a9f860e019a4dc",
+          "spanId": "07e9959a166d343d",
+          "input": "10",
+          "output": "2",
+          "samplingAttempt": "28df771a15667fc3"
+        }
+      ],
+      "ownedPidsStillAlive": [],
+      "completedTurns": 1,
+      "sameSession": null,
+      "rejectedHttpStatus": 400
+    },
+    {
+      "case": "wsTooSmall",
+      "run": "run-1791551902727",
+      "spans": 12,
+      "logs": 30,
+      "samplers": ["always_on"],
+      "batches": [
+        {
+          "file": "otel-2.private.json",
+          "bytes": 24966,
+          "sha256": "9b35caee492f26f6cab60e3da14b715ac0244a6dd2b24b66cb37a1535f02fbc3"
+        },
+        {
+          "file": "otel-3.private.json",
+          "bytes": 45491,
+          "sha256": "1b3ad23bb426cc099c294b5f051428a1ad5a1b2e8a27410a926cdd5c2aa4d682"
+        },
+        {
+          "file": "otel-5.private.json",
+          "bytes": 8632,
+          "sha256": "a6587cdc65acaa33530ebe44733e3e9b9c02e70e712d1d4ae3449bf4ea4b2f7c"
+        },
+        {
+          "file": "otel-6.private.json",
+          "bytes": 40537,
+          "sha256": "cc84d1c0a1825b56bcaa306cbf2f25de226ce74e179e0f581437fde96ab2df14"
+        }
+      ],
+      "requestLogs": [
+        {
+          "event": "codex.websocket_connect",
+          "success": "true",
+          "traceId": "30c8128bac3fc20c609b99264805e191",
+          "spanId": "480d7d1eba3085d7",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "30c8128bac3fc20c609b99264805e191",
+          "spanId": "199706dd42883929",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "7a73d34b129555e04f69b10b2a763b39",
+          "spanId": "7c2b59bf05edeaa3",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_connect",
+          "success": "true",
+          "traceId": "0182d7c69ccaa147471ddd440b8d9019",
+          "spanId": "0bda6aee6a7181d2",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "0182d7c69ccaa147471ddd440b8d9019",
+          "spanId": "8fa4ef26c0ea3622",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "a9f8026a1323eae2825bdc0fcd6aa976",
+          "spanId": "b83c67e7760fc8bd",
+          "samplingAttempt": null
+        }
+      ],
+      "usageSpans": [],
+      "ownedPidsStillAlive": [],
+      "completedTurns": 2,
+      "sameSession": true,
+      "rejectedHttpStatus": null
+    },
+    {
+      "case": "ws",
+      "run": "run-1791551963556",
+      "spans": 1036,
+      "logs": 30,
+      "samplers": ["always_on"],
+      "batches": [
+        {
+          "file": "otel-1.private.json",
+          "bytes": 1242197,
+          "sha256": "b963bca48bc01526e0e2693b427baf6af5210ee9a98ed31d7e8eae1cede0443d"
+        },
+        {
+          "file": "otel-2.private.json",
+          "bytes": 24966,
+          "sha256": "e6e427c70ad4f0097ee6dfe198f45b28dcfb90ea1cc96e7ff5d55187ba919117"
+        },
+        {
+          "file": "otel-3.private.json",
+          "bytes": 45491,
+          "sha256": "3a19626523239ec01edc902a3605cdf3552dcb86fada2055a091098ef85fd644"
+        },
+        {
+          "file": "otel-4.private.json",
+          "bytes": 1237411,
+          "sha256": "803a349aea362f872e22504e6d06d5a6e3958a8a31215cb9a36a2000eac763f3"
+        },
+        {
+          "file": "otel-5.private.json",
+          "bytes": 8632,
+          "sha256": "3f7bd022faa755bff33877b7ef6c501185180d208389f05edf5a07ce08135cd4"
+        },
+        {
+          "file": "otel-6.private.json",
+          "bytes": 40533,
+          "sha256": "51feeac15f90ffd0d2a71d1a6fc325030a03079916f0d63d7f23fa8eda5199b8"
+        }
+      ],
+      "requestLogs": [
+        {
+          "event": "codex.websocket_connect",
+          "success": "true",
+          "traceId": "03dcb9813b994d6c7a17fa0424bd3a08",
+          "spanId": "7513c60db502341e",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "03dcb9813b994d6c7a17fa0424bd3a08",
+          "spanId": "cd6cf2a7107fd794",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "c320ab94eda970deadbe70e2353565b0",
+          "spanId": "2ef459dd87e2bc0f",
+          "samplingAttempt": "b11d0691a950c3be"
+        },
+        {
+          "event": "codex.websocket_connect",
+          "success": "true",
+          "traceId": "f99795a9c6452abd2f65607f8ab151c4",
+          "spanId": "4277846a5316d989",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "f99795a9c6452abd2f65607f8ab151c4",
+          "spanId": "2e7045749f9f31a8",
+          "samplingAttempt": null
+        },
+        {
+          "event": "codex.websocket_request",
+          "success": "true",
+          "traceId": "3f0a507ac4dc225c74959e996e0c6def",
+          "spanId": "ab9fa21188543554",
+          "samplingAttempt": "ebc5ba9402eb6fdd"
+        }
+      ],
+      "usageSpans": [
+        {
+          "traceId": "c320ab94eda970deadbe70e2353565b0",
+          "spanId": "c1bb4c4d63fd14d6",
+          "input": "10",
+          "output": "2",
+          "samplingAttempt": "b11d0691a950c3be"
+        },
+        {
+          "traceId": "3f0a507ac4dc225c74959e996e0c6def",
+          "spanId": "16c824bbdb9cacd8",
+          "input": "10",
+          "output": "2",
+          "samplingAttempt": "ebc5ba9402eb6fdd"
+        }
+      ],
+      "ownedPidsStillAlive": [],
+      "completedTurns": 2,
+      "sameSession": true,
+      "rejectedHttpStatus": null
+    }
+  ],
+  "findings": {
+    "samplerAdoption": "Verified for this installed binary: innermost process environment always_off produced 0 spans/17 logs, always_on 513 spans/17 logs on same synthetic HTTP scenario. This establishes sampler configuration adoption, not lossless export.",
+    "flush": "Not externally provable as a complete census with current public native interface. Explicit collector HTTP400 on every received batch still permits exit0/valid final; native stderr contains no exporter warning. Audited native shutdown ignores exporter shutdown errors. No terminal export sequence/count receipt exists in observed OTLP.",
+    "receiverSealing": "A private receiver can durably seal bytes it actually received after its own writes drain, but cannot certify absence of dropped native batches. Sender completion acknowledgment/count would be necessary for global completeness. Quiet period or process exit alone never supplies that.",
+    "websocket": "Actual free WS upgrades succeeded across ordinary exec/resume same session. Two real sampling requests each parent-link to a usage span10input/2output. Two additional WS request logs are startup/prewarm outside sampling attempts; do not count them as billed model generations. Wire fixture confirms generate=false prewarm.",
+    "unknowns": [
+      "Real ChatGPT auth/workspace routing and TLS remain untested.",
+      "Custom fake WS success does not prove coverage of a production WS fallback/recovery path.",
+      "No provider response ID in these sampled usage associations; mapping is native attempt-tree evidence, not response-level invoice reconciliation.",
+      "Native silent drop before export can still be invisible. Actual billed usage remains unknown; valid provider-reported records stay usable as reported records.",
+      "P158 no-stdout-error incident is not reproduced or explained by this experiment."
+    ]
+  },
+  "retainedProblems": [
+    {
+      "runs": ["run-1791551807519", "run-1791551834492"],
+      "note": "Initial copied runner still invoked old wrapper, so sampler env was filtered. First run fails expected off assertion; second pre-fix baseline cannot prove always_on adoption. Keep logs, no sampling claim. Exact directory for second baseline is recorded in on.log."
+    },
+    {
+      "run": "run-1791551902727",
+      "note": "Initial aiohttp default1MB receiver retained only12 spans; otel-1 and otel-4 files absent despite handler counters advancing, while both CLI turns succeeded. Diagnosis is default body-size rejection; HTTP413 was not independently recorded in that historical run, so label inferred. Deterministic HTTP regression now proves1.3MB accepted and5MB rejected after4MiB setting; separate run retains1036spans. This is a capture failure, not model failure."
+    }
+  ],
+  "tests": {
+    "telemetryEnvironment": "3 Node tests red/green including intended wrapper path regression",
+    "boundedReceiver": "1 async HTTP behavior test red/green:1.3MB accepted,5MB rejected",
+    "priorOfflineValidator": "Previous codex-otel-free 5 tests continue as separate evidence; no changes to old evidence"
+  },
+  "nextStep": {
+    "usableNow": "Attach native local OTLP as supplementary diagnosis without changing original provider/transport. Explicitly preserve always_on at innermost exec environment, prompt logging off, bounded private receiver, received-batch hashes and rejection accounting. Report observed attempt usage gaps even when stdout shows no error.",
+    "notPaidAdmission": "Do not treat OTel alone as complete request/usage coverage gate. Native lacks verifiable end-to-end exporter seal. Do not reject all valid normal token records merely because actual invoice is absent; separately state reported usage and independently unknown census.",
+    "minimalUnresolved": "Complete request census requires provider-native response/usage receipts or a native diagnostic/export completion manifest (batch sequence/count, drop/export errors). Changing CLI build or provider transport would require new fidelity evidence, not silently substitute current path. No broad proxy/auth framework proposed."
+  },
+  "hashes": {
+    "reject-export.log": "37df197f034256ccc925d82c15c1bbe4af356f418cf6823f941db4e8cd794f48",
+    "wrapper-green.log": "63934f85dcdd8467c5193816f4a461d7633d145f0de7fd5a6107bfdedb04087d",
+    "run.mjs": "1ece7b967511bf948c245df980f568256a446b729227b8c8f2d9e709e649b666",
+    "ws.log": "690cdf21417cfe87ff9b7c3b72f6665ff41952e8dc8bd56449d42c6105721341",
+    "test_receiver.py": "bd71fa2e49493ad171d2162c64eda59212a5489e5200b13f4c29f1458999bd42",
+    "red.log": "cef7ead87e8737c7dff9b4a16e9eae873551d8ac3d146d2e5938c434ec3246c1",
+    "on-verified-wrapper.log": "6beb6a2aaa14bf19fc326b015e89b659ffa0d95d399438e7a7be7df81233d366",
+    "green.log": "2845fe6f7bcc8d55baf426311b31dcd74a44bf58c32c90f9f6b047ca4f4b5b54",
+    "ws-bounded-receiver.log": "3989a76ec1607362b11b4f9a89a2e8e20604a065bd3bf1acf24a3f97c3ebc407",
+    "run-ws.mjs": "4ed59a6015ad82c73c4a857faab021380dfcc46f2c0caf1a1fdcd59703138fae",
+    "wrapper-red.log": "84d4663e0eea2013b3a86c7619b7c7d550dbacd0fafc3a936dbd3ebd58967194",
+    "receiver-green.log": "1739f77c9ec9038d29571fba769bab074fc22ceaafbf9739a126e757ef33c667",
+    "fake-ws.py": "3366ba4c9b4058440e3b7c2c5327b5f08cbb8a4aaebfd7d3d80e8fd5a2bfe326",
+    "receiver-red.log": "734aecbf267fdd652cf8d175075f6abceaa057f0f77a8a6d1a2cf4fb39e693cd",
+    "telemetry-env.test.mjs": "88e9cc6821f0fcbacdb3bd8e59931f15d61ca754efc25a4a67501adf56207598",
+    "analyze.mjs": "42fec6feafb521e5a348acf122c51a2933ccae9ef3df08d887456eec98cbe5bd",
+    "codex-wrapper.mjs": "06ecc2682a5a024dc7f8e7cbbd83f87daa5361a1195dcbdd0318094ec0e6cd2c",
+    "off-verified-wrapper.log": "98536798cda80c971fb4c150fdccdc51a08c0085f8f6d281501757e604b84566",
+    "on.log": "1eba8a4d3f0b95fcea87c61b618038e9c0d835e90703a99bfbb1ab52143a5ab5",
+    "telemetry-env.mjs": "f8fb799eab7b0b2cc94ae9d2ce06addee8808429f138bcfe4483ac666153d2d0",
+    "off.log": "b2c0f74c19919796bcf1977226fdaf96fa6d249d16ee47130a72cbf9f5f05f28"
+  },
+  "sourceEvidence": {
+    "nativeShutdown": "/Users/sun/.loom/reviews/2026-10-09-codex-otel-free/provider.rs:96-108,158-190",
+    "sourceManifest": "/Users/sun/.loom/reviews/2026-10-09-codex-otel-free/sources.json",
+    "sourceManifestSha256": "c71cf33e0eaeb1222fef752f51fae14d80efffcf365c5184fc0be89ec5c9338c"
+  }
+}

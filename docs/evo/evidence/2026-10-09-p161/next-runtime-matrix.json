@@ -1,0 +1,111 @@
+{
+  "kind": "read-only-next-runtime-matrix",
+  "newCliLaunches": 0,
+  "paidCalls": 0,
+  "accountSecretsRead": false,
+  "productChanges": false,
+  "head": "bf71ab3455a1b7ff5109c1486bb32c5777a29bab",
+  "recommendation": "Prepare Kimi formal cold ACP native-final integration first, independently of Claude429/Codex request-coverage blockers. Pi remains a second integration slice, not an already-supported runtime. No new paid batch admitted here.",
+  "matrix": [
+    {
+      "cli": "Kimi",
+      "lastAuditedVersion": "0.39.1",
+      "currentlyInstalledReprobed": false,
+      "approvedBindings": [
+        {
+          "id": "kimi-code/k3-256k",
+          "effort": "low"
+        },
+        {
+          "id": "kimi-code/k3",
+          "effort": "high"
+        }
+      ],
+      "catalog": "Both previously verified in private opencode-production-v3/kimi-pi-audit.json; no new live catalog query in this task. Exact binding/version must be revalidated before future launch.",
+      "memory": "Pinned0.39.1 source audit: provider automatic memory not-applicable. Do not invent disabling switch; retain native same-session history.",
+      "actualFreePrototype": {
+        "source": "docs/evo/evidence/2026-10-09-cost-foundation/kimi-free.json",
+        "realCLI": true,
+        "fakeProvider": true,
+        "sameSessionTurns": 2,
+        "fileToolCalls": 2,
+        "requests": 4,
+        "usageRecords": 4,
+        "workerPublications": 2,
+        "activationCompletions": 2,
+        "distinctTests": 20,
+        "productRoleDaemon": false,
+        "transportDifference": "Private print/wire controller and old bound Worker bridge; production uses kimi-acp/v1. Not a tested native-final production adapter."
+      },
+      "production": "Existing cold ACP Role/MCP/Worker path; driver settles session/prompt and emits exact wire usage suffix. No native-final settlement in Kimi registry lease. GenericProcessAdapter now has scoped settleFinalOutput(RunExit, AbortSignal) before lease release from later Codex work, so historical plan saying this hook is absent is superseded.",
+      "usageEvidence": {
+        "P141": "Private natural-end MCP paired12:42requests/42usage; input1.559/output2.256,12post-publication natural generations cost291829input/548output. Not current native-final cost result.",
+        "P142": "Native firstrequest auth-grant failure,1request0usage; finalReply arm never launched, unknown fees.",
+        "P107": "Production cancellation after final left4requests withoutusage. Native-final should wait natural completion rather than count cancellation as a free stop.",
+        "proofNeeded": "Keep per-request start/completion coverage independent of emitted usage records and count failed/inflight requests as unknown, not zero."
+      },
+      "minimalNext": [
+        "Read-only revalidate exact CLI source hash and both approved catalog bindings without provider inference or auth refresh.",
+        "TDD narrow ACP candidate collector: bind original session/prompt/launch and wire offset+immutable prefix; require native end_turn, valid terminal text, tools settled, no cancel; unknown evidence action_required. Do not silently substitute print prototype for ACP.",
+        "Reuse existing GenericProcessAdapter lease settlement and WorkerFinalOutput transaction while original credentials remain valid. Keep mode explicit, cold serial same-session lane, Task/Inbox unchanged; disable model reply-MCP only in selected native mode.",
+        "Actual installedCLI+localhost fake provider through real Role/daemon:2same-session turns with filetool, single publication each; invalid/no-final, stale, response-loss, cancellation-during-submit, failedturn and failedtool closure tests.",
+        "Only after free product equivalence and usage coverage, prepare one fixed paired12 workload for approved k3-256k/low first. Same business instructions/tools/memory/cwd; freeze snapshots, count all failures and no repair reruns."
+      ],
+      "freePreparationReady": true,
+      "paidReady": false,
+      "remainingOnlineBoundary": "P142 isolated copied refresh grants can diverge; fakeOAuth reproduced lineage failure. Real account current validity remains untested. Future benchmark must not independently clone rotating credentials per arm or silently refresh/writeback; preserve owner-account boundary and prove test credential ownership strategy before paid."
+    },
+    {
+      "cli": "Pi",
+      "lastAuditedVersion": "1.1.0",
+      "currentlyInstalledReprobed": false,
+      "approvedGateRows": 0,
+      "actualFreePrototype": {
+        "source": "docs/evo/evidence/2026-10-09-cost-foundation/pi-free.json",
+        "entry": "ordinary pi --print --mode json --session",
+        "realCLI": true,
+        "fakeProvider": true,
+        "turnsPerArm": 2,
+        "totalLaunches": 4,
+        "requests": 8,
+        "filesystemWrites": 4,
+        "workerPublications": 2,
+        "activationCompletions": 2,
+        "sharedWorkerFinalOutputHelper": true,
+        "realProductRoleDaemon": false
+      },
+      "production": "No registered/discoverable Pi runtime adapter. Private shared-helper publication proves Kernel boundary only; it does not establish lifecycle/catalog/session/cancel/usage ownership in actual Role/daemon.",
+      "memory": "Bounded1.1.0 installed-source audit; isolated HOME/PI_CODING_AGENT_DIR, automatic resources disabled every launch, compaction/retries off in prototype, normal session retained. No current version refresh in this task.",
+      "usage": "Fake8responses synthetic token plumbing only for native-final. P131 historical paid MCP2turn sample is a different extension/terminal mechanism and is not current native-final or long-task cost evidence. Current approved-models has no Pi rows despite historical narrow owner authorization.",
+      "minimalNext": [
+        "If prioritized after Kimi, revalidate installed source hashes and retain fake-only existing run-v2 harness.",
+        "TDD narrow formal runtime profile/catalog/session/cancel/usage integration with GenericProcessAdapter lease settlement, then real Role/daemon two-turn fake provider test. Do not add scenario scheduler or new ledger.",
+        "Carry current-branch prelaunch bytes, user-entry identity, native settlement and raw-stop evidence into collector; test stale, unknown result, timeout, wrongbranch and post-settlement generation.",
+        "Before any paid gate, owner must explicitly approve exact Pi provider/model/effort binding and update AGENTS plus approved-models together, then authorize one batch. No inferred approval from copying OpenCode connection config."
+      ],
+      "freePreparationReady": true,
+      "paidReady": false,
+      "offlineSolvable": "Formal integration and fake-provider transport/negative tests; these require implementation authorization and TDD, not paid calls.",
+      "notOfflineSolvable": "New exact model authorization and actual paid model/credential path acceptance."
+    }
+  ],
+  "boundaries": [
+    "Claude429 does not block free Kimi/Pi work.",
+    "This task only read saved evidence and current source; no new tests, CLI, catalog, auth or paid requests.",
+    "Prototype success must not be reported as product integration; no cross-CLI pooled efficiency ratio.",
+    "Kimi credential diagnosis demonstrates possible isolated-copy lineage failure, not that the user account is broken."
+  ],
+  "sourceHashes": {
+    "docs/evo/status.zh-CN.md": "92b793d18eecd702db2cdc48ac341de7dedbeb0cedc6a377ab49e4df81d50e1f",
+    "docs/evo/evidence/2026-10-09-cost-foundation/kimi-free.json": "03b9040f1c63c518762beca7717dfacea1e15d0eeb876dfd7c73f7e9ca4bb5c3",
+    "docs/evo/evidence/2026-10-09-cost-foundation/pi-free.json": "6afa95077b72c6af02c15dcd8418fce53e2cc1d8283f68b83753e349a4d4ac02",
+    "docs/evo/evidence/2026-10-08-bound-followup/kimi.json": "1dacf549139997dac21511f5a32c5528103b83042bb1a8042f0157bf398d8619",
+    "docs/evo/evidence/2026-10-08-finalreply-cli/kimi-public-evidence.json": "39af20646a24022d9661c79eb756a4a889d167220e7b2e4187f65c67f8764624",
+    "docs/evo/evidence/2026-10-08-fixed-trajectory/kimi-auth-store-free.json": "58e1066c8f15ac1ad44b4c0abd43266f13aa38faf7ab6a771d3c57053b6658c6",
+    "packages/agent-host/src/runtime-implementation-registry.ts": "81b5c499a80fa35d69add1fda0416c941177fb984b82f988a01188fb931a58ac",
+    "packages/agent-host/src/generic-process-adapter.ts": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+    "packages/agent-host/src/kimi-acp-driver.mjs": "9a44972949c57e4ee5cd0017ebbd85c1dc89601b4846adebb912656d1036e265",
+    "scripts/cli-efficiency/approved-models.mjs": "612f0d8cfef8956949aa18711b056731b830dd7152026b3589a92849adbbeb44"
+  },
+  "privatePriorAudit": "/Users/sun/.loom/reviews/2026-10-09-opencode-production-v3/kimi-pi-audit.json"
+}
