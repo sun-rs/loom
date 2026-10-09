@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-09",
+  "baseRevision": "04c1b5cbb80f9dc197e482fdf27c37f4ebb29657",
+  "scope": "Repair per-turn Claude native-text selection, without broadening native proof or changing Kernel semantics.",
+  "problem": "A rendered window explicitly not eligible for native final still owned a native submitter. A completed Worker path was then incorrectly rejected as missing native final.",
+  "change": "Host distinguishes a complete eligible native selection, an explicitly ineligible rendered window retaining Worker tools, and absent/unverified delivery. Only explicitly ineligible closes the unused native submitter before input. Missing proof still fails closed.",
+  "owner": "Existing AgentHost per-Run transport binding; no second cursor, queue, final marker or Task owner.",
+  "tests": {
+    "red": "Original adapter fails truncated-window completion and replaces Task obligation refusal with a native JSON transport error.",
+    "green": "28 targeted tests passed: new fallback3, prior native9 and classic Claude warm16. Truncated message window completes by actual Worker check, next eligible turn publishes natively on same process/session. Task stays todo and business obligation refusal is preserved with flag off and on.",
+    "existingSafety": "Missing delivery, invalid/length final, stale, unknown, credential revocation and cancellation remain covered by prior native9.",
+    "fixtureCorrection": "Initial channel+Thread fixture produced separate Activations rather than one multi-target window, so it was removed from fallback integration coverage. Existing native-selection unit tests reject mixed targets; do not claim new multi-target business acceptance. Task initial state is schema todo, corrected from mistaken fixture wording open.",
+    "npmCheck": "passed (exit 0); new fallback invariants and existing provider suites included",
+    "format": "passed",
+    "diff": "passed",
+    "actualCli": "Claude2.1.293 three turns in one session/process: native -> actual Worker check on truncated window -> native. Valid second-turn native candidate independently replayed but not published. Prior sandbox metadata failure retained; no product change to obtain success.",
+    "rootEvidenceHashVerification": "Six current source hashes, nine success artifacts and two prior-failure artifacts independently matched.",
+    "checkLogSha256": "4e4e1c7ae21870a2a5dc1cadfa1d169d2c616547e04aab630d5a5fb6dfef1e13"
+  },
+  "paidCalls": 0,
+  "newInstalledCLIRuns": 2,
+  "efficiencyVerdict": "No real model cost or quality measurement. Actual installed CLI uses scripted local fake provider; no native control or cost ratio.",
+  "deployment": {
+    "status": "pending",
+    "trialEnabled": false
+  },
+  "busyInput": {
+    "status": "Not changed; narrow native trial still rejects busy candidates.",
+    "finding": "Notice carries ids/targets hints, not message bodies or read/ACK proof. Original sequence alone cannot force held: a notice in another Thread may leave the original target fresh. Therefore removing current rejection can publish a mixed answer to the wrong target.",
+    "next": "Typed target binding in Kernel notice and Host admission, then native folded-input proof; retain original seq and existing durable follow-up. Separate slice; never parse notification prose or infer a newer read cursor."
+  },
+  "ordinaryCodexPlan": "ordinary-codex-plan.json",
+  "limits": [
+    "No native publication for multi-target or Task windows; Worker behavior is retained, not replaced.",
+    "Absent rendered delivery still requires recovery when no explicit final proof exists.",
+    "Busy Human input, long paid tasks, five-CLI matrix and multiplayer cost acceptance remain open."
+  ],
+  "privateEvidence": {
+    "red.log": "537f0c7cccd481f2082156ecafbb2929c1146818a7fa7ec518849167eb04a6d8",
+    "targeted-green.log": "b2cb8605030a32c9e767a4aa4fe6a22c8325fa9eca8e0bafe66c59c890c97fd5"
+  },
+  "independentReview": "No blocking issue found. Explicit null arises only from successfully rendered ineligible native-mode windows; thrown rendering or missing callback remains undefined and fail-closed. Codex/OpenCode cannot produce this null and retain old transport. Actual CLI replay subsequently proved a valid candidate in the ineligible turn remained unsubmitted.",
+  "realCli": "free-cli.json"
+}

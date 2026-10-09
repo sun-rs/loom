@@ -1,0 +1,154 @@
+{
+  "kind": "actual-cli-local-fake-provider-native-selection",
+  "date": "2026-10-09",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-claude-native-selection/runs/1791513273340",
+  "version": "2.1.293 (Claude Code)",
+  "paidCalls": 0,
+  "realProvider": false,
+  "productionDeployment": false,
+  "passed": true,
+  "scope": "Actual installed Claude warm stream-json and real AgentHost/pool/adapter/driver/Worker HTTP/Kernel, temporary state and scripted localhost provider.",
+  "model": {
+    "binding": "sonnet",
+    "effort": "low",
+    "fakeResponseModel": "claude-sonnet-5-5",
+    "synthetic": true
+  },
+  "outcome": {
+    "turns": 3,
+    "warmProcesses": 1,
+    "providerSessions": 1,
+    "providerGenerations": 4,
+    "generationsPerTurn": [1, 2, 1],
+    "humanMessagesPerTurn": [1, 25, 1],
+    "nativeSelectedPerTurn": [true, false, true],
+    "actualToolCalls": [
+      "Bash: Worker message-check --turn <exact current handle>"
+    ],
+    "canonicalReplies": 2,
+    "trustedFinalOutputMarkers": 2,
+    "completedMessageActivations": 3,
+    "exitedRunAttempts": 3,
+    "replyToolCalls": 0,
+    "automaticMemoryOffEveryLaunch": true,
+    "credentials": [
+      "issued",
+      "revoked",
+      "issued",
+      "revoked",
+      "issued",
+      "revoked"
+    ],
+    "noActionRequiredRetryFence": true
+  },
+  "fallbackProof": {
+    "truncatedWakeShows": 20,
+    "notShown": 5,
+    "actualWorkerToolSucceeded": true,
+    "workerReportedCursor": {
+      "from": 3,
+      "to": 36,
+      "through": 36
+    },
+    "validNativeCandidateReplayedFromActualFrames": {
+      "text": "SYNTHETIC warm answer 2",
+      "nativeMessageId": "msg_free_3"
+    },
+    "hostFinalOutputReceiptPresent": false,
+    "finalReplyMarkerForFallbackRun": 0,
+    "ordinaryFinalTextNotPublished": true,
+    "nextEligibleTurnPublishedInSameSession": true,
+    "meaning": "Message delivery ACK and Activation settlement only. No Task completion or business reply is inferred from message-check."
+  },
+  "nativeProof": {
+    "streamFrames": 51,
+    "responseIds": ["msg_free_1", "msg_free_2", "msg_free_3", "msg_free_4"],
+    "resultInputUuids": [
+      "058753fc-fed5-4565-9fa2-3e9405674020",
+      "023652a3-3def-44c8-aaad-b0459a085bd8",
+      "3ba470a1-6e64-451e-85e2-76a7bf263a3c"
+    ],
+    "resultStopReasons": ["end_turn", "end_turn", "end_turn"],
+    "allSuccessful": true,
+    "oneSession": true
+  },
+  "syntheticUsage": {
+    "inputTokens": 400,
+    "outputTokens": 40,
+    "cachedInputTokens": 0,
+    "costInterpretation": "Synthetic usage only; not actual spend or efficiency."
+  },
+  "isolation": {
+    "newTemporaryHomeAndClaudeConfig": true,
+    "fakeCredentialsOnly": true,
+    "realAccountFilesRead": false,
+    "oracleAndRepoDocsReadDeniedAndProbed": true,
+    "workerRuntimeReadException": [
+      "repo packages",
+      "repo node_modules",
+      "repo package.json",
+      "repo root metadata",
+      "issued Worker executable and turn credential directories"
+    ],
+    "externalNetworkDenied": true,
+    "networkProbe": {
+      "errno": 1,
+      "error": "[Errno 1] Operation not permitted"
+    },
+    "nativeBusinessTools": ["Bash", "Read", "Write"],
+    "noMcpTools": true
+  },
+  "cleanup": {
+    "normalCliExit": {
+      "code": 0,
+      "signal": null
+    },
+    "pidAbsent": {
+      "driver": true,
+      "processGroup": true,
+      "wrapper": true,
+      "cli": true
+    },
+    "temporaryCwdRemoved": true,
+    "workerAndFakeServersClosed": true,
+    "processCancellationTested": false,
+    "note": "Snapshot precedes pool shutdown; native runtime row is idle in archived DB. Actual PIDs/PGID are absent after shutdown."
+  },
+  "retainedPriorFailure": {
+    "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-claude-native-selection/runs/1791512914760",
+    "resultSha256": "5e2ec45f48163dd7833af31a79286353a50514d75e590e2984168de764af3fa4",
+    "rawSha256": "319466654f095f592f46ee5d8395754d5064bd05a48fb30e4c70a5f2c67ece83",
+    "reason": "Sandbox denied Node lstat repo root while actual Worker CLI started; command failed, delivery stayed unacknowledged, Activation failed. No native fallback publication.",
+    "fix": "Added repo-root file-read-metadata only; preserved read denial for docs, oracle, private reviews and account roots. No product or execution-authority change."
+  },
+  "sourceHashesRecordedAfterRun": {
+    "packages/agent-host/src/claude-final-output.js": "67dbf04e8469d3436bfe934952d45089c160dbe528743b5f1143da36f36ac036",
+    "packages/agent-host/src/claude-warm-driver.mjs": "63b16fc1c17248806a575a10c1aff3732e2733f965bd05b8165827f54b45b000",
+    "packages/agent-host/src/codex-warm-adapter.ts": "b2f6fce6197fe6a7889f2b5d4fd2ceaccfe7a5d40b0a64953ce4ce90f4341fe5",
+    "packages/agent-host/src/native-final-transport.ts": "451498691b90a4d688e8e54321bbc6f3918fb19b4d5d7ea7e3820954201f4193",
+    "packages/agent-host/src/worker-final-output.ts": "8d20be4fd1acb0d2baa561a327bf21eca89337575833102a3633b4c89ac3fbf1",
+    "packages/agent-host/test/claude-warm-test-harness.ts": "e798cd5aa2aae48c1e92d31819133279ac33991c9dab726df7c143db2102183e"
+  },
+  "privateHashes": {
+    "raw.jsonl": "4536955dccacc93f3ee0cf6ae486430a2ce7e41f621c81da9a6a5d71d18050db",
+    "requests.json": "d82d5852880b0e4b0e74b1b7a56585a011ce12cb6fec723029841f47ade842ab",
+    "result.json": "56c2486183f7d1d0194b5a39f824d45eb744ad614e296c5cff2718315e714fe5",
+    "accepted.json": "f157f67d9d4f7431150393fd625f3dae6d3197d777ab51ea2158ba67f11223ce",
+    "state.db": "cf1885f55cb23ee995a1b59c8b5f489108d5897abc9ee8f146da2cf9cc67158d",
+    "launch.json": "b35c1bee0744240dbf89a1eac9f09c69a0ca37ffae4c3de9835f60653d187adc",
+    "process.json": "81ca28de12ebcd0d71b0a081fad8f8e14171a650a1adacd7692683859bbf467e",
+    "exit.json": "1aff36f796932c34d424461078ea28c3b7feef0b4538624958a98e8dc7e4bca4",
+    "sandbox.sb": "5f1d65fadc4b57a8e8eae120fb29d241aa307dbebfcc76d4123e1509076ae1fc"
+  },
+  "privateRunnerHashes": {
+    "run.mjs": "029786046aa8e4ad1ab8ff16c34e0d0f6c6b388f609bdb8134202279d7ded03f",
+    "wrapper.mjs": "bd888ed602e3ab1a14dc12413ef349084cbccff97dbafb2328f97a8ff5cefe5a",
+    "evidence.mjs": "ce1007d2dfb52a7df683b232e80b3b1637ff93bc4966070f0a6801761aaaf23e"
+  },
+  "limits": [
+    "Fake provider scripts choices; no real-model adherence, quality, price or long-task acceptance.",
+    "One truncated message window; Task/multi-target business behavior not tested by this real CLI trace.",
+    "No native control arm, transcript reconciliation or efficiency ratio.",
+    "No actual active cancellation; clean shutdown and process cleanup only."
+  ]
+}

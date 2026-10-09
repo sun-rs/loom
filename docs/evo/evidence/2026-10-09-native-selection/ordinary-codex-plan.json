@@ -1,0 +1,144 @@
+{
+  "kind": "bounded-read-only-ordinary-codex-integration-plan",
+  "date": "2026-10-09",
+  "repositoryHeadAtWrite": "04c1b5cbb80f9dc197e482fdf27c37f4ebb29657",
+  "status": "planned-not-implemented",
+  "implemented": false,
+  "deployed": false,
+  "newCLILaunches": 0,
+  "paidCalls": 0,
+  "scope": "Explicit opt-in ordinary Codex exec/resume native-final transport, preserving one native session per instance. Never substitute app-server, host mode, or a fresh session for this path.",
+  "installedVersionEvidence": {
+    "method": "Read-only filesystem symlink resolution; no version command or fresh CLI execution",
+    "entry": "/opt/homebrew/bin/codex",
+    "resolvedTarget": "/opt/homebrew/Caskroom/codex/0.161.0/bin/codex",
+    "limitation": "The path identifies the installation inspected, not a fresh executable digest or current native event conformance result. Revalidate executable identity before implementation acceptance."
+  },
+  "historicalEvidence": {
+    "validator": "/Users/sun/.loom/reviews/2026-10-08-bound-codex-exec/final.mjs",
+    "tests": "/Users/sun/.loom/reviews/2026-10-08-bound-codex-exec/final.test.mjs",
+    "runner": "/Users/sun/.loom/reviews/2026-10-08-bound-codex-exec/native-final-text/run.mjs",
+    "realStdoutInspected": "/Users/sun/.loom/reviews/2026-10-08-bound-codex-exec/native-final-text/runs/1791465971294-P147/native-1.stdout.jsonl",
+    "observedExecFields": {
+      "thread.started": ["type", "thread_id"],
+      "turn.started": ["type"],
+      "item.completed.agent_message": ["id", "type", "text"],
+      "turn.completed": ["type", "usage"]
+    },
+    "finding": "Exec stdout alone does not expose native turn identity or distinguish final_answer from commentary. A final-looking agent_message or exit zero is insufficient.",
+    "existingProof": "validateExecTerminal cross-checks complete current-launch exec JSONL, a fresh output-last-message file, and current rollout suffix containing matching task_started, turn_context, assistant final_answer and task_complete. This is historical prototype proof, not product integration acceptance.",
+    "publicationLimitation": "The historical prototype uses a private Worker messages/post bridge; it is not evidence that ordinary exec already uses the production final-output transaction slot."
+  },
+  "currentSourceEvidence": [
+    {
+      "file": "packages/agent-host/src/runtime-implementation-registry.ts",
+      "finding": "Registered Codex implementation is codex-app-server/v1; there is no ordinary exec adapter. Generic process construction does not add Codex session continuity or native-final proof."
+    },
+    {
+      "file": "packages/agent-host/src/provider-launch-arguments.js",
+      "finding": "Codex base launch arguments select app-server. Reuse isolation and memory policy deliberately, not this transport default."
+    },
+    {
+      "file": "packages/protocol/src/index.ts",
+      "finding": "RuntimeProfileManifestV3 adapter kind enum includes codex-app-server/v1 but no explicit codex-exec kind."
+    },
+    {
+      "file": "packages/agent-host/src/generic-process-adapter.ts",
+      "finding": "Both direct and supervised close release the activation environment before activity.finish. recover returns supervisor terminal status without reconstructing a final-output candidate or publication disposition."
+    },
+    {
+      "file": "packages/daemon/src/runtime-profile-composition.ts",
+      "finding": "Runtime kind mapping and warm admission distinguish known provider adapters; an exec path needs explicit Codex configuration ownership without warm app-server selection."
+    }
+  ],
+  "proposedOwnerPatches": [
+    {
+      "owner": "Protocol runtime configuration",
+      "files": ["packages/protocol/src/index.ts"],
+      "change": "Add an explicit codex-exec/v1 runtime adapter kind bound to the codex-cli/v1 catalog probe. Do not add Room business commands or silently reinterpret existing app-server profiles."
+    },
+    {
+      "owner": "AgentHost provider driver and native evidence",
+      "files": [
+        "packages/agent-host/src/codex-exec-driver.mjs (proposed)",
+        "packages/agent-host/src/codex-exec-final-output.js (proposed)",
+        "packages/agent-host/src/provider-launch-arguments.js"
+      ],
+      "change": "Launch ordinary exec/resume with explicit model/effort and existing isolation policy. Freeze launch, session expectation, output file and rollout boundary. Collect native final evidence and usage; emit proof to Host, never mutate Room state in the driver. Disable provider automatic memory on every launch; preserve normal session history."
+    },
+    {
+      "owner": "AgentHost runtime composition and session continuity",
+      "files": ["packages/agent-host/src/runtime-implementation-registry.ts"],
+      "change": "Register the explicit exec adapter, reuse ProviderSessionStore, original Worker lease and Host-bodied wake. Existing instances must not silently change transport or replace their native session. Missing required continuity fails closed."
+    },
+    {
+      "owner": "AgentHost process settlement",
+      "files": ["packages/agent-host/src/generic-process-adapter.ts"],
+      "change": "Add a scoped native-final settlement path: drain proof and pending lifecycle writes, submit once through WorkerFinalOutput while original authority is live, then release environment and return actual RunExit plus publication receipt. Keep non-opted-in behavior unchanged; test direct and supervised cleanup separately."
+    },
+    {
+      "owner": "Daemon runtime configuration composition",
+      "files": ["packages/daemon/src/runtime-profile-composition.ts"],
+      "change": "Map explicit exec runtime to existing Codex settings, credentials and standing prompt. Do not route it into the warm app-server adapter. Initially leave selection opt-in."
+    },
+    {
+      "owner": "Existing Worker and Kernel transaction",
+      "files": [
+        "packages/agent-host/src/worker-final-output.ts",
+        "packages/kernel/src/worker-final-output.ts",
+        "packages/agent-host/src/agent-host.ts"
+      ],
+      "change": "Reuse existing final-output endpoint, trusted submission slot, freshness check and ACK rules; no new queue, cursor or Task owner. Assert existing action_required handling for invalid, held, rejected and unknown receipts."
+    }
+  ],
+  "prototypeHardeningRequired": [
+    "Replace line-count rollout suffix selection with an exact path, byte offset and verified unchanged prefix hash; reject truncated, replaced or historical evidence.",
+    "Validate model and effort against the frozen runtime binding instead of the prototype's hard-coded gpt-6-luna/low.",
+    "On first launch, bind unique launch and output-file identities before spawn. Bind native session once proven by current thread.started and matching session metadata; never find authority by newest file or wall-clock window.",
+    "Require unique matching native turn, final phase, message identity, task completion and output file, plus complete error-free exec stream and normal exit; ambiguous or missing proof yields an explicit nonpublished receipt.",
+    "Do not use bounded diagnostic stdout as an implicitly complete authority buffer. Track truncation and reject incomplete evidence; use bounded provider-specific parsing.",
+    "Use unique per-response usage from current native evidence. Resume turn.completed usage may be cumulative and must not be summed as per-turn usage.",
+    "Provider rollout remains diagnostic evidence for explicit opted-in final transport; it never reconstructs Room history, Task completion or delivery ACK."
+  ],
+  "requiredLifecycleOrdering": [
+    "Freeze supported transport selection and original Run credential/delivery binding before launch.",
+    "Prove native completion and drain session-binding, delivery and usage writes.",
+    "Publish at most once with the original execution authority through WorkerFinalOutput.",
+    "Preserve receipt, release credentials and resources, and return actual runtime exit independently from business disposition.",
+    "On Host crash or lost reply, verify existing durable marker where supported; absent or unavailable proof requires visible action_required, never blind resend or automatic replacement model turn."
+  ],
+  "testPlan": {
+    "existingSuitesToExtend": [
+      "packages/agent-host/test/process-runtime.test.ts",
+      "packages/agent-host/test/process-recovery-integration.test.ts",
+      "packages/agent-host/test/runtime-implementation-registry.test.ts",
+      "packages/agent-host/test/worker-final-output.test.ts",
+      "packages/agent-host/test/host-final-output-failure.test.ts"
+    ],
+    "newCollectorNegatives": [
+      "commentary-only or missing final phase",
+      "wrong session, turn or launch",
+      "changed prefix, replaced file, historical replay or truncated JSONL",
+      "missing or preexisting output-last-message file",
+      "duplicate or conflicting finals",
+      "pending tool, error, length termination or abnormal process exit",
+      "transport mode off or unsupported target selection"
+    ],
+    "lifecycle": [
+      "Original Worker credential remains valid until submission settles and is then released on success, held, unknown, rejected and cancellation.",
+      "Direct and supervised paths retain actual exit provenance and cleanup on spawn failure and crash.",
+      "Publication committed but response lost does not duplicate a message or initiate a replacement model turn.",
+      "Crash before publication, missing proof and revoked credentials fail closed instead of degrading to ordinary auto-retry.",
+      "Tool-first and native-final-first share the existing dedicated final submission fence."
+    ],
+    "freeRealCLIIntegration": "After deterministic red/green tests, run installed ordinary Codex CLI against a local fake provider for two turns of one native session, including a real file tool. Verify exec arguments, memory-off every launch, native evidence, one final-output marker per turn, no model-side posting tool and no post-publication model request. This free run has not been launched by this planning task."
+  },
+  "explicitLimits": [
+    "No source implementation, new tests, CLI launch, deployment or cost acceptance in this task; only this plan artifact is written.",
+    "Busy steering and multi-target correctness are separate slices. Do not pretend ordinary exec has app-server steering; unsupported busy delivery retains existing durable follow-up behavior.",
+    "Existing Codex app-server collectors and tests are not exec compatibility evidence.",
+    "Initial first-session native IDs are generated by the CLI, not known before spawn; prelaunch binding and post-start identity proof must remain distinct claims.",
+    "A same-UID full-access CLI is not cryptographically isolated from local diagnostic files. This plan does not claim stronger isolation.",
+    "One free fake-model trajectory proves transport behavior only, not model compliance, long-task quality, multi-model performance or economic viability."
+  ]
+}

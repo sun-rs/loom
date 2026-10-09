@@ -449,7 +449,12 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     if (this.#driver.bindSession === "ready")
       await this.#bindSession(input, runtime, lifecycle, runtimeRunId);
     const wake = await this.#wakeText(input, runtime, turn);
-    if (wake.nativeFinalSeq !== undefined)
+    if (wake.nativeFinalSeq === null) {
+      // The exact rendered window explicitly retained the Worker path. This
+      // is different from missing delivery proof (undefined), which fails closed.
+      binding.finalOutput?.close();
+      delete binding.finalOutput;
+    } else if (wake.nativeFinalSeq !== undefined)
       binding.nativeFinalSeq = wake.nativeFinalSeq;
     const fullDigest = createHash("sha256")
       .update(wake.text, "utf8")
@@ -939,11 +944,11 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     bodied: boolean;
     noticed: boolean;
     text: string;
-    nativeFinalSeq?: number;
+    nativeFinalSeq?: number | null;
   }> {
     const handle = turn.handle!.handle;
     let bodied: string | undefined;
-    let nativeFinalSeq: number | undefined;
+    let nativeFinalSeq: number | null | undefined;
     if (this.#options.renderWake !== undefined) {
       try {
         bodied = await this.#options.renderWake({
@@ -958,7 +963,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
           ...(this.#nativeFinalText()
             ? {
                 onPresented: (present: WorkerMessagePresentResponse) => {
-                  nativeFinalSeq = nativeFinalSequence(present);
+                  nativeFinalSeq = nativeFinalSequence(present) ?? null;
                 },
               }
             : {}),
@@ -993,7 +998,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         ) +
         (this.#nativeFinalText() &&
         bodied !== undefined &&
-        nativeFinalSeq !== undefined
+        nativeFinalSeq != null
           ? "\nReply transport: native-final-text for this delivery's single target."
           : "") +
         (notice === "" ? "" : `\n${notice}`) +
