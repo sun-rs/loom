@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-09",
+  "scope": "Exact CLI format admission for diagnostics and launch evidence; no new provider requests, account changes, product capability or efficiency acceptance.",
+  "versions": {
+    "claude": {
+      "retained": "2.1.287 (Claude Code)",
+      "added": "2.1.293 (Claude Code)",
+      "evidence": "../2026-10-09-cost-foundation/claude-artifact-free.json",
+      "parserEvidence": "Actual CLI local fake provider: 30 responses across two same-session arms, official parseClaudeStreamRound and claudeTranscriptRound reconciled input/cache/output by response ID with no gaps. The private runner imports current maintained parser directly.",
+      "warmProductEvidence": "../2026-10-09-claude-native-final/free-cli.json",
+      "memory": "CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 on each launch; strict MCP and project,local settings isolation still required."
+    },
+    "opencode": {
+      "retained": "1.18.32",
+      "added": "1.18.35",
+      "evidence": "../2026-10-08-invoice-workload/opencode-audit.json",
+      "memoryEvidence": "../2026-10-09-opencode-memory-audit.json",
+      "parserEvidence": "P150 original audit maps all 118 upstream raw responses to persisted assistant and step-finish usage. Current maintained parseOpenCodeRunRound replayed all retained step-finish parts read-only, restoring part id and sessionID from DB columns (DB data omits identity columns). No parser changes.",
+      "replay": {
+        "native": {
+          "generations": 71,
+          "input": 1875681,
+          "output": 35780,
+          "gaps": 0
+        },
+        "terminal": {
+          "generations": 47,
+          "input": 1228553,
+          "output": 30494,
+          "gaps": 0
+        }
+      },
+      "semantics": "Input includes uncached input plus cache read/write; output includes separate reasoning. Each parsed response ID and token tuple matches its persisted step-finish part. P150 is a private native-text prototype; this admits observable format, not that prototype as a formal product implementation."
+    }
+  },
+  "tests": {
+    "red": "New OpenCode current-version launch test failed Unregistered CLI version before exact admission. Claude separate TDD performed by driver agent.",
+    "green": "27 current launch-evidence, multi-provider, Claude usage and OpenCode usage tests passed. Existing versions retained; unknown/custom suffix versions rejected; removing required memory isolation still rejected."
+  },
+  "limits": [
+    "No paid tests or new model trajectories.",
+    "No approval expansion; actual model binding and effort remain guarded separately.",
+    "Per-CLI results must stay separate; format admission establishes neither task quality nor cost advantage."
+  ],
+  "logSha256": {
+    "multi-version-opencode-red.log": "3e75d8bf1a76ddaf0f2afa5fb72ed8878cbf123e5a39e12d58ed1c43b8925b6f",
+    "multi-version-green.log": "b8720697d27de1c3f8a95bfafd599770a141c65fc084c5e500fdf96134882dd7",
+    "opencode-p150-parser-replay.log": "108a9be7845d8c6abe1b18156b0e7baa9404c27b7d55566fd88e4884540f5bb6"
+  }
+}

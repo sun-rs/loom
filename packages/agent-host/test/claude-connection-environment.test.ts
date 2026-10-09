@@ -8,7 +8,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -16,7 +17,7 @@ for (const driver of [
   "claude-stream-json-driver.mjs",
   "claude-warm-driver.mjs",
 ]) {
-  test(`${driver}: isolated CLI still receives user connection without user behavior`, () => {
+  test(`${driver}: isolated CLI still receives user connection without user behavior`, async () => {
     const home = mkdtempSync(join(tmpdir(), "loom-claude-auth-"));
     try {
       mkdirSync(join(home, ".claude"));
@@ -39,10 +40,10 @@ for (const driver of [
       const executable = join(home, "fake-claude");
       writeFileSync(
         executable,
-        `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(output)},JSON.stringify({env:process.env,args:process.argv.slice(2)}));process.exit(1);`,
+        `#!${process.execPath}\n${driver.includes("warm") ? "Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_200);" : ""}require('node:fs').writeFileSync(${JSON.stringify(output)},JSON.stringify({env:process.env,args:process.argv.slice(2)}));process.exit(1);`,
         { mode: 0o700 },
       );
-      spawnSync(
+      const child = spawn(
         process.execPath,
         [
           fileURLToPath(new URL(`../src/${driver}`, import.meta.url)),
@@ -67,6 +68,17 @@ for (const driver of [
           stdio: ["pipe", "pipe", "pipe", "pipe"],
         },
       );
+      // Keep the Host input open until the fixture exits. EOF means shutdown
+      // to the warm driver, so spawnSync would race its one-second kill grace
+      // against provider startup under suite load. The delayed warm fixture
+      // deliberately exceeds that grace to exercise the Host lifetime here.
+      child.stdout?.resume();
+      child.stderr?.resume();
+      const activity = child.stdio[3];
+      if (activity && "resume" in activity) activity.resume();
+      const [code, signal] = await once(child, "close");
+      assert.equal(signal, null, "fixture driver must exit without timeout");
+      assert.equal(code, 1, "fixture CLI deliberately exits after recording");
       const captured = JSON.parse(readFileSync(output, "utf8"));
       assert.equal(captured.env.ANTHROPIC_AUTH_TOKEN, "fixture-only-token");
       assert.equal(captured.env.ANTHROPIC_BASE_URL, "https://fixture.invalid");

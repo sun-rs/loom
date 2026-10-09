@@ -231,6 +231,7 @@ test("audited native versions are not-applicable, never falsely memory-off, and 
     for (const [provider, version] of [
       ["kimi", "0.39.1"],
       ["opencode", "1.18.32"],
+      ["opencode", "1.18.35"],
     ]) {
       const executable = join(dir, provider);
       writeFileSync(
@@ -263,7 +264,33 @@ test("audited native versions are not-applicable, never falsely memory-off, and 
         assert.equal(evidence.evidence, "audited-cli-version");
         assert.equal(evidence.version, version);
         assert.ok(evidence.sourceRevision);
+        if (provider === "opencode")
+          assert.equal(
+            evidence.sourceRevision,
+            version === "1.18.35"
+              ? "53d1eabb61e21162157817bf677da0a4ad3332e3"
+              : "545f51d26cc39a907d2867492d498d9607ea5fa4",
+          );
         assert.equal(JSON.stringify(evidence).includes("private-value"), false);
+        if (provider === "opencode") {
+          for (const key of [
+            "OPENCODE_DISABLE_CLAUDE_CODE",
+            "OPENCODE_DISABLE_EXTERNAL_SKILLS",
+          ]) {
+            const incompleteEnv = { ...env };
+            delete incompleteEnv[key];
+            assert.throws(
+              () =>
+                assertNativeMemoryPolicy({
+                  provider,
+                  args,
+                  env: incompleteEnv,
+                  executable,
+                }),
+              /isolation/u,
+            );
+          }
+        }
         if (provider === "opencode")
           assert.throws(
             () =>
@@ -304,7 +331,7 @@ test("audited Kimi/OpenCode actual native first and resume spawns record bounded
   try {
     for (const [provider, version] of [
       ["kimi", "0.39.1"],
-      ["opencode", "1.18.32"],
+      ["opencode", "1.18.35"],
     ]) {
       writeFileSync(
         join(dir, provider),

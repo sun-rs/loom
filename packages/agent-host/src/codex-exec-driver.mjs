@@ -427,7 +427,7 @@ function parseArguments(args) {
   );
   if (
     launchOverride.runtimeId === "codex" &&
-    (launchOverride.overrideArgs !== undefined ||
+    (launchOverride.overrideArgs != null ||
       (launchOverride.additionalArgs?.length ?? 0) > 0)
   )
     throw new Error(

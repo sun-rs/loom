@@ -23,7 +23,7 @@ export function multiLaunchEvidence({
           : args[0] === "app-server";
   if (!turn || args.includes("--no-session-persistence")) return null;
   assertMultiProviderVersion(provider, version);
-  const memoryPolicy = describeNativeMemoryPolicy(provider);
+  const memoryPolicy = describeNativeMemoryPolicy(provider, version);
   if (provider === "claude") {
     assert.equal(
       env.CLAUDE_CODE_DISABLE_AUTO_MEMORY,

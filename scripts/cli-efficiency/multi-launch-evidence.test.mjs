@@ -190,3 +190,58 @@ test("cold proof binds every actual Run; warm proof binds runtime parent pid and
     /Missing/,
   );
 });
+test("Claude 2.1.293 launch evidence retains memory and exact-version admission", () => {
+  const input = {
+    provider: "claude",
+    args: [
+      "--print",
+      "--setting-sources",
+      "project,local",
+      "--strict-mcp-config",
+    ],
+    env: { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" },
+    cwd,
+    version: "2.1.293 (Claude Code)",
+  };
+  assert.equal(multiLaunchEvidence(input).memoryPolicy.status, "enforced");
+  assert.throws(() => multiLaunchEvidence({ ...input, env: {} }), /memory/);
+  assert.throws(
+    () => multiLaunchEvidence({ ...input, version: "2.1.294 (Claude Code)" }),
+    /Unregistered CLI version/,
+  );
+});
+
+test("audited OpenCode formats admit launch evidence without admitting unknown versions", () => {
+  for (const [provider, versions, args, env] of [
+    [
+      "opencode",
+      ["1.18.32", "1.18.35"],
+      ["serve", "--pure"],
+      {
+        OPENCODE_DISABLE_CLAUDE_CODE: "1",
+        OPENCODE_DISABLE_EXTERNAL_SKILLS: "1",
+      },
+    ],
+  ]) {
+    for (const version of versions) {
+      const receipt = multiLaunchEvidence({
+        provider,
+        version,
+        args,
+        env,
+        cwd,
+      });
+      assert.equal(receipt.provider, provider);
+      assert.equal(receipt.version, version);
+      assert.throws(
+        () => multiLaunchEvidence({ provider, version, args, env: {}, cwd }),
+        /memory|isolation/,
+      );
+    }
+    for (const version of ["next", ...versions.map((v) => v + "-custom")])
+      assert.throws(
+        () => multiLaunchEvidence({ provider, version, args, env, cwd }),
+        /Unregistered CLI version/,
+      );
+  }
+});

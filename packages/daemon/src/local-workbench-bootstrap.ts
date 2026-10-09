@@ -50,6 +50,7 @@ export type LocalWorkbenchRuntimeSpec = {
   adapterKind:
     | "claude-stream-json/v1"
     | "codex-app-server/v1"
+    | "codex-exec/v1"
     | "generic-process/v1"
     | "kimi-acp/v1"
     | "opencode-server/v1";

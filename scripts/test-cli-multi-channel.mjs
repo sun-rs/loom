@@ -138,7 +138,7 @@ export function multiPlan(
       "independent arm histories; fixed business questions; own peer replies relayed without editing",
     routingIdentity:
       "native logical aliases; product actual instance handles including unique suffix; raw cost retained",
-    nativeMemory: describeNativeMemoryPolicy(config.provider),
+    nativeMemory: describeNativeMemoryPolicy(config.provider, version),
     nativeInvocationPolicy: {
       ...nativeInvocationPolicy(config.provider),
       ...(nativePromptTransport ? { inputTransport: "stdin/v1" } : {}),

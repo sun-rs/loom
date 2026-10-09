@@ -1,6 +1,7 @@
 import {
   nativeMemoryVersionEvidence,
   NATIVE_MEMORY_VERSION_AUDITS,
+  nativeMemoryAuditForVersion,
 } from "./native-memory-version.mjs";
 // Launch evidence only: official auto-memory settings, not file isolation or
 // recall of memory already present in a resumed session. Never serialize env.
@@ -9,9 +10,17 @@ import {
   providerMemoryConfig,
 } from "../../packages/agent-host/src/provider-launch-arguments.js";
 
-export function describeNativeMemoryPolicy(provider) {
+export function describeNativeMemoryPolicy(provider, version) {
   if (!["codex", "claude", "kimi", "opencode"].includes(provider))
     throw new Error(`Unknown provider ${provider}`);
+  const audit =
+    version === undefined
+      ? NATIVE_MEMORY_VERSION_AUDITS[provider]
+      : nativeMemoryAuditForVersion(provider, version);
+  if (version !== undefined && NATIVE_MEMORY_VERSION_AUDITS[provider] && !audit)
+    throw new Error(
+      `Native audited CLI version differs for ${provider}: ${version}`,
+    );
   return {
     provider,
     supported: true,
@@ -23,7 +32,7 @@ export function describeNativeMemoryPolicy(provider) {
         : provider === "claude"
           ? "environment"
           : "version-audit",
-    ...NATIVE_MEMORY_VERSION_AUDITS[provider],
+    ...audit,
   };
 }
 

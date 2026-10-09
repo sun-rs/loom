@@ -7,17 +7,27 @@ export const NATIVE_MEMORY_VERSION_AUDITS = Object.freeze({
     sourceRevision: "5efca0c3116743855c28426000073bfe34a4862f",
   }),
   opencode: Object.freeze({
-    version: "1.18.32",
-    sourceRevision: "545f51d26cc39a907d2867492d498d9607ea5fa4",
+    version: "1.18.35",
+    sourceRevision: "53d1eabb61e21162157817bf677da0a4ad3332e3",
   }),
 });
+// Historical exact-version evidence remains verifiable; this is not a semver range.
+const PREVIOUS_OPENCODE_AUDIT = Object.freeze({
+  version: "1.18.32",
+  sourceRevision: "545f51d26cc39a907d2867492d498d9607ea5fa4",
+});
+export function nativeMemoryAuditForVersion(provider, version) {
+  const current = NATIVE_MEMORY_VERSION_AUDITS[provider];
+  if (current?.version === version) return current;
+  if (provider === "opencode" && version === PREVIOUS_OPENCODE_AUDIT.version)
+    return PREVIOUS_OPENCODE_AUDIT;
+}
 export function nativeMemoryVersionEvidence({
   provider,
   executable,
   args,
   env,
 }) {
-  const audit = NATIVE_MEMORY_VERSION_AUDITS[provider];
   if (typeof executable !== "string" || !isAbsolute(executable))
     throw new Error(
       "Native memory audit requires the actual absolute executable",
@@ -44,7 +54,8 @@ export function nativeMemoryVersionEvidence({
   } catch {
     throw new Error("Native audited CLI version could not be verified");
   }
-  if (version !== audit?.version)
+  const audit = nativeMemoryAuditForVersion(provider, version);
+  if (!audit)
     throw new Error(
       `No audited native auto-memory policy for ${provider} version ${version.slice(0, 80)}`,
     );

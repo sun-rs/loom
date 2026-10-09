@@ -29,7 +29,7 @@ baselineId 还包含模型绑定、effort、CLI 版本、原生调用参数形�
 
 原生对照关闭官方自动记忆，首次启动和每次 resume 都在模型回合启动前检查实际参数或环境，并在 round.nativeMemoryPolicy 中记录白名单证据：Codex 强制 `features.memories=false`、`memories.generate_memories=false`、`memories.use_memories=false`；Claude 强制 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`。这些关闭设置此前已来自共享启动策略，本批新增强制核验与逐轮证据，不能据此断言旧样本曾开启记忆。正常同 session 对话上下文仍保留；这不是文件系统隔离，也不会抹除已进入上下文的内容。
 
-Codex、Claude 使用已核验的显式关闭机制。Kimi 0.39.1 与 OpenCode 1.18.32 经[精确版本装配链审计](../audits/2026-10-04-native-memory-version-audit.zh-CN.md)，原生自动记忆记为 `not-applicable`，不伪称 `enforced`；其他版本在任一付费臂之前拒绝，每次原生 spawn 再核对实际 executable 版本。OpenCode 必须保持产品同款 `--pure` 与指令来源隔离环境。用户插件、规则文件、连续 session 历史不是本审计宣称关闭的官方自动记忆，既有文件隔离局限保留。
+Codex、Claude 使用已核验的显式关闭机制。Kimi 0.39.1 与 OpenCode 1.18.32 经[精确版本装配链审计](../audits/2026-10-04-native-memory-version-audit.zh-CN.md)，OpenCode 1.18.35 经[后续源码差异审计](../evo/evidence/2026-10-09-opencode-memory-audit.json)，原生自动记忆记为 `not-applicable`，不伪称 `enforced`；其他版本在任一付费臂之前拒绝，每次原生 spawn 再核对实际 executable 版本。OpenCode 必须保持产品同款 `--pure` 与指令来源隔离环境。用户插件、规则文件、连续 session 历史不是本审计宣称关闭的官方自动记忆，既有文件隔离局限保留。
 
 Claude 原生组复用产品的 connection-only 解析器，只读取连接和模型 alias 白名单，不执行 `apiKeyHelper`、不启用用户 hooks 或行为配置，也不修改账号。显式连接环境优先，凭据不与另一来源的 endpoint 混配；baseline 只记解析策略标识，不记 key／URL。规划及每次原生启动前检查所选 alias 属于许可模型族，不匹配就在付费前拒绝，不能静默换模型或删除 alias 绕过配置。
 

@@ -34,6 +34,27 @@ export function gateRuntimeSettings({ prewarm = false } = {}) {
   return { revision: 0, prewarm: { enabled: prewarm } };
 }
 
+export function gateRuntimeSpec({
+  provider,
+  cwd,
+  effort,
+  shimPath,
+  shimOptions = {},
+}) {
+  if (shimOptions.execTransport !== undefined) {
+    assert.equal(provider, "codex");
+    assert.equal(shimOptions.execTransport, "codex-exec/v1");
+  }
+  return {
+    ...localCliRuntimeSpec(provider, cwd),
+    ...(shimOptions.execTransport === undefined
+      ? {}
+      : { adapterKind: shimOptions.execTransport }),
+    reasoning: effort ?? "default",
+    executable: shimPath,
+  };
+}
+
 // The isolated daemon's config: Channel homes (created at room.create, evo
 // status §39) stay under the gate's own temporary root instead of the
 // default ~/.loom/channel-workspaces; canonical, as the Host requires.
@@ -86,11 +107,13 @@ export async function prepareGateDaemon({
     memoryRecordPath,
   });
   // effort null (effortless Claude Haiku): the product sends no effort.
-  const spec = {
-    ...localCliRuntimeSpec(provider, cwd),
-    reasoning: effort ?? "default",
-    executable: shimPath,
-  };
+  const spec = gateRuntimeSpec({
+    provider,
+    cwd,
+    effort,
+    shimPath,
+    shimOptions: options,
+  });
   const prepared = await prepareLocalWorkbench({
     runtimeSpecs: [spec],
     stateDirectory,

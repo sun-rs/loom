@@ -1,0 +1,56 @@
+{
+  "kind": "real installed Codex through official guard and production daemon with local fake Responses",
+  "date": "2026-10-09",
+  "paidCalls": 0,
+  "syntheticProvider": true,
+  "version": "codex-cli 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "path": "Human API create Channel/Role/instance -> production daemon -> actual CLI exec/resume -> original Worker final output -> Kernel",
+  "channelHomeVerified": true,
+  "memoryDisabledEveryLaunch": true,
+  "continuousSessions": 1,
+  "humanRounds": 2,
+  "modelResponses": 3,
+  "businessToolCalls": 1,
+  "finalOutputMarkers": 2,
+  "afterPublicationModelRequests": 0,
+  "daemonExit": {
+    "code": 0,
+    "signal": null
+  },
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-09-codex-role-free/runs/1791520038350",
+  "hashes": {
+    "result.json": "4d6c4f6b95d9ef3075a06511b3a133f1ffede611229f05bbc8dc0c3fa5c9b915",
+    "accepted.json": "e2bae676941131754b219a552f4f669413376df060bdc72751051135e92cf0f8",
+    "launches.jsonl": "ecd0f9d55584ec9bd982d2b521d358a498fc1d6edc53ac5d8c5b0ecf6af9ec5d",
+    "guard-launches.jsonl": "a13ea949689bfefe546be54c0163e4c45675838b67c217a759f205b398a72cd6",
+    "exits.jsonl": "69a7cb0e31b9b27df3b93ef9146d2556dbf1286b1626e02aa8bb44dba128abc0"
+  },
+  "retainedTrials": [
+    {
+      "run": "1791519800937",
+      "result": "daemon probe rejected missing placement binding",
+      "modelRequests": 0
+    },
+    {
+      "run": "1791519914296",
+      "result": "default null launch override was rejected",
+      "modelRequests": 0
+    },
+    {
+      "run": "1791519977091",
+      "result": "two turns passed with explicit existing_mount; not Channel-home acceptance",
+      "modelRequests": 3
+    },
+    {
+      "run": "1791520038350",
+      "result": "two turns passed in default platform Channel home",
+      "modelRequests": 3
+    }
+  ],
+  "limits": [
+    "Fake usage is not a cost benchmark.",
+    "Two deterministic turns do not establish long-task quality, compaction, busy input or cross-model efficiency."
+  ]
+}

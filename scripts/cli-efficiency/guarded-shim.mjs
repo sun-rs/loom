@@ -16,7 +16,7 @@ const MODULES = {
 // P2-1). The approved model/effort come only from the approval table, so an
 // option can never carry or override them.
 const TRANSPORT_OPTIONS = {
-  codex: new Set(["socketRecordPath", "requestRecordPath"]),
+  codex: new Set(["socketRecordPath", "requestRecordPath", "execTransport"]),
   claude: new Set(["injectRecordPath"]),
   kimi: new Set(),
   opencode: new Set([
@@ -60,7 +60,9 @@ export function assertNoGuardViolations(shimPath) {
     );
 }
 
-// options: codex {socketRecordPath}; claude {injectRecordPath} (warm drift);
+// options: codex {socketRecordPath, requestRecordPath, execTransport?};
+// execTransport is the explicit ordinary exec mode; its violations are recorded.
+// claude {injectRecordPath} (warm drift);
 // opencode {compactionOptions, controlRecordPath?}. Claude effort null is the
 // effortless (Haiku) approval. Claude additionally records post-hoc model
 // violations next to the shim (see assertNoGuardViolations).
@@ -85,6 +87,12 @@ export function writeGuardedShim({
       throw new Error(
         `Unsupported guarded shim option for ${provider}: ${key}`,
       );
+  if (
+    provider === "codex" &&
+    options.execTransport !== undefined &&
+    options.execTransport !== "codex-exec/v1"
+  )
+    throw new Error("Unsupported Codex exec transport");
   // A guarded serve without them refuses to start (withCompactionOptions).
   const compaction = options?.compactionOptions;
   if (
@@ -97,7 +105,16 @@ export function writeGuardedShim({
   const [module, fn] = entry;
   const href = new URL(module, import.meta.url).href;
   const approved =
-    provider === "codex" ? { model, effort, ...options } : { model, effort };
+    provider === "codex"
+      ? {
+          model,
+          effort,
+          ...options,
+          ...(options.execTransport === undefined
+            ? {}
+            : { violationRecordPath: guardViolationPath(path) }),
+        }
+      : { model, effort };
   // Validate exactly what the shim will pass to the guard.
   assertApprovedGateModel({
     provider,

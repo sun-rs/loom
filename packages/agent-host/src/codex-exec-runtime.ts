@@ -91,23 +91,27 @@ export function createCodexExecRuntime(
   if (manifest.adapter.fixedArgs.length > 1)
     throw new Error("codex-exec/v1 accepts at most one fixed standing prompt");
   if (
-    !resolvedModel ||
-    resolvedModel.source === "runtime_default" ||
-    resolvedModel.reasoning === undefined ||
-    resolvedModel.reasoning === "default"
+    resolvedModel !== undefined &&
+    (resolvedModel.source === "runtime_default" ||
+      resolvedModel.reasoning === undefined ||
+      resolvedModel.reasoning === "default")
   )
     throw new Error(
       "codex-exec/v1 requires an explicit model and reasoning binding",
     );
-  if (resolvedModel.source === "explicit_binding") {
-    if (resolvedModel.serviceTier !== undefined)
+  if (resolvedModel?.source === "explicit_binding") {
+    // The placement owner treats "default" as absence of a tier override.
+    if (
+      resolvedModel.serviceTier !== undefined &&
+      resolvedModel.serviceTier !== "default"
+    )
       throw new Error(
         "codex-exec/v1 service tier override is not yet verified",
       );
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
   }
   if (
-    resolvedModel.source === "custom_model" &&
+    resolvedModel?.source === "custom_model" &&
     resolvedModel.runtime !== "codex"
   )
     throw new Error("custom model does not match Codex");
@@ -138,10 +142,14 @@ export function createCodexExecRuntime(
       identity?.resolvedExecutablePath ?? manifest.adapter.executable,
       "--tool-access-mode",
       toolAccessMode,
-      "--model",
-      resolvedModel.modelId,
-      "--reasoning",
-      resolvedModel.reasoning,
+      ...(resolvedModel === undefined
+        ? []
+        : [
+            "--model",
+            resolvedModel.modelId,
+            "--reasoning",
+            resolvedModel.reasoning!,
+          ]),
       ...(manifest.adapter.fixedArgs[0] === undefined
         ? []
         : ["--prompt", manifest.adapter.fixedArgs[0]]),
@@ -161,6 +169,12 @@ export function createCodexExecRuntime(
     },
     acceptSessionProtocol: async (input) => await protocol.accept(input),
     activationEnvironment: async (input) => {
+      // Daemon startup probes an offer before a placement selects a model.
+      // That probe-only instance must never issue authority or launch a turn.
+      if (resolvedModel === undefined)
+        throw new Error(
+          "codex-exec/v1 requires an explicit model and reasoning binding",
+        );
       let lease: ActivationEnvironmentLease = (await activationEnvironment?.(
         input,
       )) ?? { env: {} };

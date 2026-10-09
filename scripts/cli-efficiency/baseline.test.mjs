@@ -184,11 +184,15 @@ test("a denominator must be this complete native arm with memory enforcement on 
 test("version-audited providers reject upgrades before either arm and require exact per-spawn audit evidence", async () => {
   const { describeNativeMemoryPolicy } =
     await import("./native-memory-policy.mjs");
-  for (const provider of ["kimi", "opencode"]) {
+  for (const [provider, version] of [
+    ["kimi", "0.39.1"],
+    ["opencode", "1.18.32"],
+    ["opencode", "1.18.35"],
+  ]) {
     const input = fixture();
     input.config.provider = provider;
-    input.memoryPolicy = describeNativeMemoryPolicy(provider);
-    input.cliVersion = provider === "kimi" ? "0.39.1" : "1.18.32";
+    input.memoryPolicy = describeNativeMemoryPolicy(provider, version);
+    input.cliVersion = version;
     assert.throws(
       () => createCostBaseline({ ...input, cliVersion: "999.0.0" }),
       /audit.*version/i,

@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { RuntimeImplementationRegistry } from "../src/index.ts";
+import {
+  RuntimeImplementationRegistry,
+  type ActivationEnvelope,
+} from "../src/index.ts";
+import { join } from "node:path";
 import { codexExecHarness, sql, waitFor } from "./codex-exec-test-harness.ts";
 
 // Real Host/Kernel/Worker path, fake ordinary exec process; no paid provider.
 test("ordinary Codex: two native finals publish once each, exec then resume same session with memory off", async () => {
-  const state = await codexExecHarness();
+  const state = await codexExecHarness({ serviceTier: "default" });
   const fetcher = globalThis.fetch;
   let publications = 0;
   globalThis.fetch = async (input, init) => {
@@ -43,6 +47,11 @@ test("ordinary Codex: two native finals publish once each, exec then resume same
       const argv = launch.args as string[];
       assert.equal(argv[0], "exec");
       assert.equal(argv.includes("app-server"), false);
+      assert.equal(
+        argv.some((arg) => /service[_-]tier/u.test(arg)),
+        false,
+        "default service tier adds no CLI override",
+      );
       assert.ok(argv.includes("--json"));
       assert.ok(argv.includes("--output-last-message"));
       for (const setting of [
@@ -375,17 +384,92 @@ test("ordinary Codex: registry accepts its explicit profile without substituting
       /service tier.*not.*verified/i,
       "unverified service tier must fail before launching rather than be silently ignored",
     );
-    assert.throws(
-      () =>
-        implementations.createRuntime(
-          active,
-          report,
-          { cwd: state.directory },
-          undefined,
-          "full_access",
-        ),
-      /explicit model and reasoning/,
+    let credentialsIssued = 0;
+    let prepared = 0;
+    const unbound = implementations.createRuntime(
+      active,
+      report,
+      {
+        cwd: state.directory,
+        supervisorDirectory: join(state.directory, "probe-supervisors"),
+        activationEnvironment: async () => {
+          credentialsIssued++;
+          return { env: {} };
+        },
+      },
+      undefined,
+      "full_access",
     );
+    assert.equal(
+      (await unbound.probe()).available,
+      true,
+      "daemon startup must probe an offer before a Role placement selects its model",
+    );
+    for (const id of ["unbound-fresh", "unbound-required-resume"]) {
+      await assert.rejects(
+        unbound.start(
+          {
+            runAttemptId: id,
+            ...(id.endsWith("resume")
+              ? {
+                  agent: {
+                    instanceChannelId: "channel",
+                    instanceSessionRequired: true,
+                  },
+                }
+              : {}),
+          } as ActivationEnvelope,
+          {
+            registerPrepared: async () => {
+              prepared++;
+            },
+            recordInstanceSessionBinding: async () => {},
+          },
+        ),
+        /explicit model and reasoning/,
+      );
+    }
+    assert.equal(
+      credentialsIssued,
+      0,
+      "unbound execution refuses before obtaining Worker authority",
+    );
+    assert.equal(
+      prepared,
+      0,
+      "unbound execution never prepares a provider process",
+    );
+    for (const model of [
+      {
+        source: "runtime_default" as const,
+        selection: "no_model_selector_sent" as const,
+      },
+      {
+        source: "explicit_binding" as const,
+        modelBindingId: binding.modelBindingId,
+        provider: binding.provider,
+        modelId: binding.modelId,
+      },
+      {
+        source: "explicit_binding" as const,
+        modelBindingId: binding.modelBindingId,
+        provider: binding.provider,
+        modelId: binding.modelId,
+        reasoning: "default",
+      },
+    ]) {
+      assert.throws(
+        () =>
+          implementations.createRuntime(
+            active,
+            report,
+            { cwd: state.directory },
+            model,
+            "full_access",
+          ),
+        /explicit model and reasoning/,
+      );
+    }
     assert.equal(
       state.records().length,
       0,

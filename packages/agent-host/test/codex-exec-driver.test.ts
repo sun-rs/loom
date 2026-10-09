@@ -299,3 +299,63 @@ for (const conflict of [false, true])
       h.close();
     }
   });
+
+test("daemon default null launch override supports initial and resumed ordinary exec", async () => {
+  const h = setup();
+  const environment = {
+    RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+      runtimeId: "codex",
+      overrideArgs: null,
+      additionalArgs: [],
+    }),
+  };
+  try {
+    const first = await h.run(
+      "Daemon first wake",
+      undefined,
+      [],
+      undefined,
+      environment,
+    );
+    assert.equal(first.code, 0, first.err);
+    const session = JSON.parse(readFileSync(first.proof, "utf8")).sessionId;
+    const second = await h.run(
+      "Daemon resumed wake",
+      session,
+      [],
+      undefined,
+      environment,
+    );
+    assert.equal(second.code, 0, second.err);
+    assert.equal(
+      JSON.parse(readFileSync(second.proof, "utf8")).sessionId,
+      session,
+    );
+  } finally {
+    h.close();
+  }
+});
+
+test("real launch overrides and additions remain rejected before provider launch", async () => {
+  for (const options of [
+    { overrideArgs: [] },
+    { overrideArgs: ["app-server"] },
+    { overrideArgs: "exec" },
+    { overrideArgs: null, additionalArgs: ["--extra"] },
+  ]) {
+    const h = setup();
+    try {
+      const result = await h.run("must not run", undefined, [], undefined, {
+        RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+          runtimeId: "codex",
+          ...options,
+        }),
+      });
+      assert.notEqual(result.code, 0);
+      assert.match(result.err, /launch override/);
+      assert.equal(existsSync(h.record), false);
+    } finally {
+      h.close();
+    }
+  }
+});

@@ -55,7 +55,10 @@ assert.ok(
 const config = parseEfficiencyEnv(process.env);
 const { provider, model, effort, bindingId, order } = config;
 if (provider === "claude") nativeClaudeEnvironment(config);
-const nativeMemoryPolicy = describeNativeMemoryPolicy(provider);
+const cliVersion = execFileSync(provider, ["--version"], {
+  encoding: "utf8",
+}).trim();
+const nativeMemoryPolicy = describeNativeMemoryPolicy(provider, cliVersion);
 assert.ok(
   nativeMemoryPolicy.supported,
   `Native memory policy unsupported: ${nativeMemoryPolicy.reason}`,
@@ -93,9 +96,7 @@ const result = {
   model,
   effort,
   bindingId,
-  cliVersion: execFileSync(provider, ["--version"], {
-    encoding: "utf8",
-  }).trim(),
+  cliVersion,
   ...provenance,
   order,
   questions,

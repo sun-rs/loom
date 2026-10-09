@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { NATIVE_MEMORY_VERSION_AUDITS } from "./native-memory-version.mjs";
+import {
+  NATIVE_MEMORY_VERSION_AUDITS,
+  nativeMemoryAuditForVersion,
+} from "./native-memory-version.mjs";
 import { isEffectiveAnswer } from "./metrics.mjs";
 
 // P97's direct-answer workload. Product HEAD is deliberately NOT the question
@@ -63,8 +66,9 @@ export function createCostBaseline({
       memoryPolicy.provider === config.provider,
     "Native memory-off policy is not verified for this provider",
   );
-  const audit = NATIVE_MEMORY_VERSION_AUDITS[config.provider];
-  if (audit) {
+  if (NATIVE_MEMORY_VERSION_AUDITS[config.provider]) {
+    const audit = nativeMemoryAuditForVersion(config.provider, cliVersion);
+    assert.ok(audit, "Native audited CLI version differs");
     assert.equal(
       cliVersion,
       audit.version,
@@ -179,7 +183,7 @@ export function nativePairEvidence({ baseline, native }) {
       "Native effective delivery missing",
     );
     const policy = round.nativeMemoryPolicy;
-    const audit =
+    const versionAudited =
       NATIVE_MEMORY_VERSION_AUDITS[baseline.identity.runtime.provider];
     assert.equal(
       policy?.provider,
@@ -187,7 +191,12 @@ export function nativePairEvidence({ baseline, native }) {
       "Native memory provider differs",
     );
     assert.equal(policy?.scope, "provider-native-auto-memory");
-    if (audit) {
+    if (versionAudited) {
+      const audit = nativeMemoryAuditForVersion(
+        baseline.identity.runtime.provider,
+        baseline.identity.runtime.cliVersion,
+      );
+      assert.ok(audit, "Native audited CLI version differs");
       assert.equal(
         policy.status,
         "not-applicable",

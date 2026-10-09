@@ -28,6 +28,7 @@ export async function codexExecHarness(
     nativeFinalText?: boolean;
     executable?: string;
     modelBindingId?: string;
+    serviceTier?: "default";
     env?: Record<string, string>;
   } = {},
 ) {
@@ -115,58 +116,74 @@ export async function codexExecHarness(
   const codeHome = join(directory, "codex-home");
   const credentialEvents: string[] = [];
   const credentials: string[] = [];
-  const runtime = createCodexExecRuntime(
-    revision,
-    {
-      cwd: directory,
-      nativeFinalText: options.nativeFinalText ?? true,
-      supervisorDirectory: join(directory, "supervisors"),
-      providerSessionStore: new ProviderSessionStore({
-        rootDirectory: join(directory, "provider-sessions"),
-      }),
-      recordDeliveryAcceptance: (input) => {
-        kernel.markPresentedDeliverySent(host, {
-          activationId: input.activationId,
-          consumerId: input.consumerId,
-          runAttemptId: input.runAttemptId,
-        });
-      },
-      activationEnvironment: async (input) => {
-        const credential = worker.issueActivationCredential(host, input);
-        credentials.push(credential.accessToken);
-        credentialEvents.push("issued");
-        const lease = await createWorkerToolTransportEnvironment({
-          credentialDirectory: join(directory, "credentials"),
-          revokeCredential: () => {
-            credentialEvents.push("revoked");
-            credential.revoke();
+  const runtime = await (async () => {
+    try {
+      return createCodexExecRuntime(
+        revision,
+        {
+          cwd: directory,
+          nativeFinalText: options.nativeFinalText ?? true,
+          supervisorDirectory: join(directory, "supervisors"),
+          providerSessionStore: new ProviderSessionStore({
+            rootDirectory: join(directory, "provider-sessions"),
+          }),
+          recordDeliveryAcceptance: (input) => {
+            kernel.markPresentedDeliverySent(host, {
+              activationId: input.activationId,
+              consumerId: input.consumerId,
+              runAttemptId: input.runAttemptId,
+            });
           },
-          workerAccessToken: credential.accessToken,
-          workerApiOrigin: worker.origin,
-        });
-        return {
-          ...lease,
-          args: ["--prompt", "FAKE ordinary Codex integration standing prompt"],
-          env: {
-            ...lease.env,
-            CODEX_HOME: codeHome,
-            FAKE_CODEX_EXEC_RECORD_PATH: recordPath,
-            ...options.env,
+          activationEnvironment: async (input) => {
+            const credential = worker.issueActivationCredential(host, input);
+            credentials.push(credential.accessToken);
+            credentialEvents.push("issued");
+            const lease = await createWorkerToolTransportEnvironment({
+              credentialDirectory: join(directory, "credentials"),
+              revokeCredential: () => {
+                credentialEvents.push("revoked");
+                credential.revoke();
+              },
+              workerAccessToken: credential.accessToken,
+              workerApiOrigin: worker.origin,
+            });
+            return {
+              ...lease,
+              args: [
+                "--prompt",
+                "FAKE ordinary Codex integration standing prompt",
+              ],
+              env: {
+                ...lease.env,
+                CODEX_HOME: codeHome,
+                FAKE_CODEX_EXEC_RECORD_PATH: recordPath,
+                ...options.env,
+              },
+              standingPromptDigest: "fake-codex-exec-standing",
+            };
           },
-          standingPromptDigest: "fake-codex-exec-standing",
-        };
-      },
-    },
-    report,
-    {
-      source: "explicit_binding",
-      modelBindingId: modelBinding.modelBindingId,
-      provider: modelBinding.provider,
-      modelId: modelBinding.modelId,
-      reasoning: "low",
-    },
-    "full_access",
-  );
+        },
+        report,
+        {
+          source: "explicit_binding",
+          modelBindingId: modelBinding.modelBindingId,
+          ...(options.serviceTier === undefined
+            ? {}
+            : { serviceTier: options.serviceTier }),
+          provider: modelBinding.provider,
+          modelId: modelBinding.modelId,
+          reasoning: "low",
+        },
+        "full_access",
+      );
+    } catch (error) {
+      await worker.close();
+      profiles.close();
+      kernel.close();
+      rmSync(directory, { force: true, recursive: true });
+      throw error;
+    }
+  })();
   // Fixture placement only: AgentHost/Worker identities and durable state remain real.
   const transport: RuntimeAdapter = {
     guideRuntimeId: "codex",

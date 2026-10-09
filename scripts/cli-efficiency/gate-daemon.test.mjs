@@ -3,7 +3,36 @@ import assert from "node:assert/strict";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { gateDaemonConfig, gateRuntimeSettings } from "./gate-daemon.mjs";
+import {
+  gateDaemonConfig,
+  gateRuntimeSettings,
+  gateRuntimeSpec,
+} from "./gate-daemon.mjs";
+
+test("ordinary Codex gate explicitly selects exec while existing gates retain their transport", () => {
+  const input = {
+    provider: "codex",
+    cwd: "/tmp/work",
+    effort: "low",
+    shimPath: "/tmp/guard",
+  };
+  assert.equal(gateRuntimeSpec(input).adapterKind, "codex-app-server/v1");
+  const ordinary = gateRuntimeSpec({
+    ...input,
+    shimOptions: { execTransport: "codex-exec/v1" },
+  });
+  assert.equal(ordinary.adapterKind, "codex-exec/v1");
+  assert.equal(ordinary.executable, input.shimPath);
+  assert.equal(ordinary.modelCatalogProbe.kind, "codex-cli/v1");
+  assert.equal(ordinary.reasoning, "low");
+  assert.throws(() =>
+    gateRuntimeSpec({
+      ...input,
+      provider: "claude",
+      shimOptions: { execTransport: "codex-exec/v1" },
+    }),
+  );
+});
 
 // Channel homes (evo status §39) are created at room.create; the gate daemon
 // keeps them inside its own temporary root, never ~/.loom/channel-workspaces.

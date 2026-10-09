@@ -1,3 +1,7 @@
+import {
+  classifyCodexExecLaunch,
+  observeGuardedCodexExec,
+} from "./codex-exec-guard.mjs";
 import { isDeepStrictEqual } from "node:util";
 import { WorkerFinalOutputEnvelopeSchema } from "@rah-os/protocol";
 import assert from "node:assert/strict";
@@ -229,9 +233,13 @@ export function codexThreadRecord(message, at = new Date().toISOString()) {
 // argv whitelist: `--version`, the catalog probe `debug models [--bundled]`,
 // and `app-server` with only the product's own `-c` pairs and one
 // `--listen`. Every other subcommand (`debug app-server send-message-v2`,
-// `app-server daemon|proxy`, `exec`, ...) could start or reach a model turn
-// outside this fence and is refused.
-export function classifyCodexLaunch(args) {
+// `app-server daemon|proxy`, ...) could start or reach a model turn outside
+// this fence and is refused. Ordinary exec has a separate opt-in argv fence;
+// selecting it refuses app-server instead of silently substituting transports.
+export function classifyCodexLaunch(args, options) {
+  if (args[0] === "exec") return classifyCodexExecLaunch(args, options);
+  if (args[0] === "app-server" && options?.execTransport !== undefined)
+    throw new Error("Ordinary exec gate cannot substitute app-server");
   if (args.length === 1 && args[0] === "--version") return { kind: "version" };
   if (
     args[0] === "debug" &&
@@ -320,7 +328,7 @@ export async function runGuardedCodex(executable, options = {}) {
   const args = process.argv.slice(2);
   let launch;
   try {
-    launch = classifyCodexLaunch(args);
+    launch = classifyCodexLaunch(args, options);
   } catch (e) {
     process.stderr.write("PAID_GATE_MODEL_DENIED " + String(e) + "\n");
     process.exitCode = 1;
@@ -339,6 +347,8 @@ export async function runGuardedCodex(executable, options = {}) {
     process.stderr.write("PAID_GATE_MODEL_DENIED " + String(e) + "\n");
     child.kill("SIGTERM");
   };
+  if (launch.kind === "exec")
+    observeGuardedCodexExec(child, launch, options, deny);
   let proxy;
   if (plan) {
     proxy = await startGuardedUnixProxy({

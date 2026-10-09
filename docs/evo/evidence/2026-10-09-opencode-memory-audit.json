@@ -1,0 +1,186 @@
+{
+  "kind": "OpenCode native auto-memory exact-version delta audit",
+  "date": "2026-10-09",
+  "paidCalls": 0,
+  "accountChanges": false,
+  "productRuntimeChanges": false,
+  "upstream": {
+    "repository": "https://github.com/anomalyco/opencode",
+    "license": "MIT; reference only, no upstream code copied",
+    "previous": {
+      "version": "1.18.32",
+      "revision": "545f51d26cc39a907d2867492d498d9607ea5fa4",
+      "archiveSha256": "65e95c9a6666ca65bbd17de1e7cecddac1504e66eeebbcfaf5ac68f97e6f392b"
+    },
+    "current": {
+      "version": "1.18.35",
+      "revision": "53d1eabb61e21162157817bf677da0a4ad3332e3",
+      "archiveSha256": "3092a7b9f55d80c42a9c1bb2e2cc0a9961316673faf92b741577257a1576dd59"
+    },
+    "tagVerification": "git ls-remote exact tag refs independently matched both revisions; both official codeload archives inspected"
+  },
+  "priorPrivateAudit": {
+    "path": "/Users/sun/.loom/reviews/2026-10-08-invoice-opencode/source-audit/current-tag-memory-audit.json",
+    "sha256": "a78212a7db0c97451ec64f0259893164fe5f6f5621f1d3ce19e8554c82d4796d",
+    "relationship": "P150 private search evidence corroborated, not accepted solely from historical claim"
+  },
+  "installed": {
+    "/opt/homebrew/lib/node_modules/opencode-ai/package.json": {
+      "sha256": "f3dde440fda02ba64505d1e33beb857c916a29801ba9dd2de592c847c7ae0a41",
+      "bytes": 825
+    },
+    "/opt/homebrew/lib/node_modules/opencode-ai/bin/opencode.exe": {
+      "sha256": "8c3c351b138cfe35905ab11846a1373f1beea590aee7eda412fb765b72c79d82",
+      "bytes": 144306528
+    },
+    "/opt/homebrew/lib/node_modules/opencode-ai/node_modules/opencode-darwin-arm64/bin/opencode": {
+      "sha256": "8c3c351b138cfe35905ab11846a1373f1beea590aee7eda412fb765b72c79d82",
+      "bytes": 144306528
+    }
+  },
+  "unchangedAssemblyFiles": [
+    {
+      "path": "packages/opencode/src/index.ts",
+      "unchangedFrom11832": true,
+      "sha256": "bddea4eb640adb6fe72193f292c1ae75526ff1bf5bc507ff7c539e4e93825dbc"
+    },
+    {
+      "path": "packages/opencode/src/effect/runtime-flags.ts",
+      "unchangedFrom11832": true,
+      "sha256": "5b580cb96f9d5300f8ff995a29ec5e602e0e3e0200661dfff971998562f2a1a9"
+    },
+    {
+      "path": "packages/opencode/src/config/config.ts",
+      "unchangedFrom11832": true,
+      "sha256": "87a9071af1ddb04d65947dba49be3fb4c94ecf63e120f17ce46ee81ff25dd45a"
+    },
+    {
+      "path": "packages/opencode/src/session/instruction.ts",
+      "unchangedFrom11832": true,
+      "sha256": "fee79c023eae44f720d4d600f334a987ad5f7615c4a008a20c89131a92684a8f"
+    },
+    {
+      "path": "packages/opencode/src/session/system.ts",
+      "unchangedFrom11832": true,
+      "sha256": "7257f0660202d3e5d7ef86ee48cb4e51d5d0aa67703c274b8eb840b8ae307bbc"
+    },
+    {
+      "path": "packages/opencode/src/session/prompt/default.txt",
+      "unchangedFrom11832": true,
+      "sha256": "962fbf3cb3ec659c9a5244425ee2e7bb141ad4428f489a630a7738566880dc6a"
+    },
+    {
+      "path": "packages/opencode/src/session/prompt/beast.txt",
+      "unchangedFrom11832": true,
+      "sha256": "a384d7b485829c1fe43bd6deaae10466db2c16b8cba045764538974f737958ba"
+    },
+    {
+      "path": "packages/opencode/src/plugin/index.ts",
+      "unchangedFrom11832": true,
+      "sha256": "47c62b7cfae891d268e6b239edb0f1c46df5cb35eb11ccfd8bd4186c156024e9"
+    },
+    {
+      "path": "packages/opencode/src/skill/index.ts",
+      "unchangedFrom11832": true,
+      "sha256": "91dce57f590e1ad3103e0555b893500e098a95cde2739422b699233889b205e6"
+    },
+    {
+      "path": "packages/opencode/src/tool/registry.ts",
+      "unchangedFrom11832": true,
+      "sha256": "a8b24a6d58a80c42307e251905dbaa4f25ca0724569b1e531e412da934ab00fe"
+    },
+    {
+      "path": "packages/opencode/src/session/compaction.ts",
+      "unchangedFrom11832": true,
+      "sha256": "8d478570a7e4ad32b746030d4f86a1c673949b1e2259bd716b3885d99283289a"
+    },
+    {
+      "path": "packages/core/src/session/compaction.ts",
+      "unchangedFrom11832": true,
+      "sha256": "35bc2da1578b6bb80a3c39c1d6c51f234f34ce6586dd4f9d230e2a31b257138d"
+    }
+  ],
+  "changedRuntimeSourceFiles": [
+    "packages/opencode/src/plugin/digitalocean.ts",
+    "packages/opencode/src/plugin/snowflake-cortex.ts",
+    "packages/opencode/src/provider/transform.ts",
+    "packages/opencode/src/provider/provider.ts",
+    "packages/opencode/src/mcp/oauth-provider.ts",
+    "packages/opencode/src/mcp/browser.ts",
+    "packages/opencode/src/session/message-v2.ts",
+    "packages/opencode/src/session/llm/request.ts",
+    "packages/opencode/src/cli/cmd/account.ts",
+    "packages/opencode/src/cli/cmd/web.ts",
+    "packages/opencode/src/cli/cmd/debug/redact.ts",
+    "packages/opencode/src/cli/cmd/debug/config.ts",
+    "packages/opencode/src/plugin/openai/codex.ts",
+    "packages/core/src/open.ts",
+    "packages/core/src/session/runner/llm.ts"
+  ],
+  "removedRuntimeSourceFiles": [],
+  "changedSourceReview": {
+    "requestAssembly": "Both LLM paths add session/parent-session HTTP headers only; no new memory retrieval or extraction.",
+    "provider": "Timeout fetch refactor and Cloudflare gateway routing, Gemini/Gemma variants and OpenAI model availability; Snowflake/DigitalOcean use the new http(s)-only browser opener.",
+    "other": "MCP browser/auth browser paths, CLI account/web/debug redaction, xAI attachment filtering; no new default cross-session memory subsystem."
+  },
+  "controls": {
+    "argv": "run --pure on every first/resume launch",
+    "environment": {
+      "OPENCODE_DISABLE_CLAUDE_CODE": "1",
+      "OPENCODE_DISABLE_EXTERNAL_SKILLS": "1"
+    },
+    "sourceProof": [
+      "index.ts maps --pure to OPENCODE_PURE; plugin/index.ts excludes external plugin origins when pure",
+      "runtime-flags.ts broad Claude disable flag suppresses compatible instructions/skills",
+      "skill/index.ts skips ~/.agents and ~/.claude scans with external-skills disabled",
+      "instruction/system/tool registry and compaction assembly unchanged"
+    ]
+  },
+  "verdict": {
+    "status": "not-applicable",
+    "scope": "Bounded default official native automatic cross-session extraction/storage/reinjection audit; current approved DeepSeek model routes use default.txt, which contains no memory-file instructions.",
+    "limits": [
+      "No reproducible binary build; installed package/version/hash ties to published source, not byte-exact source/binary proof.",
+      "beast.txt contains explicit memory.instruction.md advice for GPT-4/o1/o3 model routes, outside currently approved OpenCode DeepSeek bindings; do not claim every model prompt or file-memory use is disabled.",
+      "Explicit AGENTS/config instructions, native OpenCode skill locations, file tools, arbitrary plugins outside pure launches and same-session history are not globally disabled by this audit.",
+      "Does not validate paid auth, provider usage format upgrades, protocol behavior, quality or efficiency. Independent multi-provider version admission remains unchanged."
+    ]
+  },
+  "gateChanges": [
+    "Add exact 1.18.35 audit; retain exact 1.18.32 evidence and reject unaudited versions",
+    "Select sourceRevision from actual version in baseline and per-launch metadata; preserve old evidence validation",
+    "Do not relax --pure or either isolation variable"
+  ],
+  "validation": {
+    "red": "New exact-version admission and native first/resume tests failed before implementation.",
+    "targeted": "Memory policy, baseline and launch-evidence16 passed; strengthened missing-isolation controls6 passed.",
+    "fullUnit": "npm run test:cli:efficiency:unit:500 passed,0 failed.",
+    "actualInstalledFreeProbe": {
+      "executable": "/opt/homebrew/bin/opencode",
+      "executedArguments": ["--version"],
+      "status": "not-applicable",
+      "version": "1.18.35",
+      "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3"
+    },
+    "logs": {
+      "red": {
+        "path": "/tmp/opencode-memory-135-red.log",
+        "sha256": "c06560e2c4f18d944a175cdb639f28593e723af375e403b0d90e2d15fdf0cbde"
+      },
+      "targeted": {
+        "path": "/tmp/opencode-memory-135-green.log",
+        "sha256": "8733e74dd8d9e823c6829d36e0767039a5402fe87751ff92cab5148f02d718e6"
+      },
+      "isolationControls": {
+        "path": "/tmp/opencode-memory-135-controls.log",
+        "sha256": "1d8a8f77677174398ece1106eb7f7495cfef2f771cee65b73b4f9cc682f1a181"
+      },
+      "fullUnit": {
+        "path": "/tmp/opencode-memory-135-all-unit-final.log",
+        "sha256": "8308ee593f5bab40daa7f1d8509218d6dedb91f45af41b9adbc42059be13d4c9"
+      }
+    },
+    "intermediateFailure": "First full unit run499/500: unaudited version was still correctly rejected before paid startup, but earlier rejection changed expected diagnostic wording. Restored audited CLI version wording; full500 pass. No assertion weakened."
+  },
+  "cleanup": "Downloaded official archives and extracted trees removed after source/hash/diff review; only small audit metadata retained."
+}
