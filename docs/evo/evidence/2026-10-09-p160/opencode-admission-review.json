@@ -1,0 +1,51 @@
+{
+  "batch": "P160",
+  "status": "frozen-admission-independently-verified",
+  "freeRun": "runs/1791547436323-paid-runner-free",
+  "checks": {
+    "taskTextV3Unchanged": true,
+    "freeProbeRemovedFromPaidTask": true,
+    "actualNativeStdinUserExactBothFreeRounds": true,
+    "actualProductTaskIncludedBothFreeRounds": true,
+    "actualV4CaptureAllFourFreeRounds": true,
+    "perArmPrelaunchBudgets": {
+      "input": 12000000,
+      "output": 150000,
+      "requests": 400,
+      "wallMs": 5400000,
+      "turnMs": 600000
+    },
+    "exclusivePaidClaimWx": true,
+    "paidHeadCleanAndAllSourceHashRequired": true,
+    "actualRequestModelEffortToolsStandingAdmission": true,
+    "officialMemoryPolicy": "OpenCode1.18.35 version-audited not-applicable; actual pure launches and instruction isolation",
+    "failedQualityContinuesFixedSequence": true,
+    "failedAccountingStopsNoRetry": true,
+    "allKnownUsageFinallyIncludesFailedTurns": true
+  },
+  "boundaries": [
+    "No full paired result yet; no paid call by reviewer.",
+    "Thresholds checked before each arm, not hard in-flight invoice cap.",
+    "Native ordinary run/resume stdin versus product warm server.",
+    "Same Role sentence has different authority placement.",
+    "Shared temporary directories are not a strong hostile same-UID boundary."
+  ],
+  "reviewedHashes": {
+    "paid-plan.json": "906c40983bb550ab882f8b41688aab8d66bdb7df3e452130469095bf1149410a",
+    "paid-run.mjs": "63a10330287eb4d16309ff9b625b9362b59e1c4e8669675795e9a2a9647e472a",
+    "native-turn.mjs": "3725b50b2364cdd50b24b91f5cbfb4c6edb350e5b6acd9f7642e5b58ccf5a745",
+    "request-admission.mjs": "d3c315860149f78670aaf57abfc2ec965dc928f8bcdc55e1d2d6593b90cd17d7",
+    "wrapper.mjs": "b20d7c013cf316d07750c30823c06402bc45b9b5961f5fbbce70f179beead008",
+    "accounting.mjs": "876d58e86c6e0762545737ad70e8159267ad7703e9e91a8624b2e5cde46b672a",
+    "recorder.mjs": "76c0facab9fcff809c0fe5c49c92ec38a5da066ae356987edb7899b38c0f97a7"
+  },
+  "frozenAdmission": {
+    "sha256": "a077a1ad387cae8774c35675a45a30551ee1607b52db5f6a59205d38d2eb2b10",
+    "planSha256": "906c40983bb550ab882f8b41688aab8d66bdb7df3e452130469095bf1149410a",
+    "sourceHashesVerified": 3642,
+    "mismatches": 0,
+    "head": "7a640b018f4166ed6e50e88a32cfec8ca59bb3b4",
+    "cleanWorktree": true,
+    "paidClaimAbsentAtReview": true
+  }
+}

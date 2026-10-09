@@ -1,0 +1,94 @@
+{
+  "scope": "Free actual Codex 0.161.0 ordinary exec against localhost HTTP fake provider; offline native OTLP audit. No product changes, real account configuration changes, or paid calls.",
+  "paidCalls": 0,
+  "actualRun": "run-1791548384784",
+  "sourceRevision": "Official openai/codex rust-v0.161.0, peeled commit 979011409de0a60b52f179721948e65531d26144; source hashes in sources.json",
+  "actual": {
+    "transport": "HTTP Responses/SSE, custom unauthenticated loopback_fixture provider; NOT real builtin openai/ChatGPT/WS route",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "memory": "Disabled through launch guard/config; ordinary exec, no host or app-server",
+    "requests": 2,
+    "exitCode": 0,
+    "otlpBatches": 3,
+    "spans": 513,
+    "logs": 17,
+    "promptMarkerOccurrencesInOtlp": 0,
+    "scenario": "First stream final text without completed, synthetic 200ms idle timeout, second stream normal completed with input10/output2. Actual stdout has reconnect error, so not exact P158 no-error reproduction."
+  },
+  "nativeConfiguration": {
+    "otel.log_user_prompt": false,
+    "otel.exporter": "otlp-http JSON localhost /v1/logs",
+    "otel.trace_exporter": "otlp-http JSON localhost /v1/traces",
+    "otel.metrics_exporter": "none"
+  },
+  "observedAttemptAudit": {
+    "observedDiagnosticFinalized": false,
+    "errors": ["capture-unsealed", "sampling-unverified", "flush-unverified"],
+    "attempts": [
+      {
+        "traceId": "c1fe3532e6f1a9304cd50911d7742b34",
+        "spanId": "645c9b30da910d27",
+        "usageEvidence": "missing",
+        "usageSpanIds": []
+      },
+      {
+        "traceId": "c1fe3532e6f1a9304cd50911d7742b34",
+        "spanId": "170a5caa3cb23f50",
+        "usageEvidence": "present",
+        "usageSpanIds": ["f5178e0a050740c6"]
+      }
+    ],
+    "requestCoverage": "unknown",
+    "billingCoverage": "unknown",
+    "scope": "Observed parent-linked attempt diagnostics only; no provider response identity or global completeness claim."
+  },
+  "semanticLimits": [
+    "HTTP request logs link by traceId/spanId ancestry to try_run_sampling_request; handle_responses usage links to that same native parent. No timestamp or final-count inference.",
+    "First observed attempt has no completion usage, second has usage. This proves an observed diagnostic gap, not billed response count or missing token quantity.",
+    "API attempt field is 0 for both requests, so it is not globally unique. SSE logs have empty trace/span IDs; failure-to-request mapping cannot be asserted directly from those logs.",
+    "SSE event.kind=response.completed may carry error.message, so that kind alone does not prove success. Span status code0 means unset, not success.",
+    "No provider response_id was found in exported span attributes. rpc.request_id is not assumed to be provider request identity.",
+    "WS and real ChatGPT workspace routing are source-reviewed only. Same native sampling path is a source finding, not a successful real-route capture.",
+    "No inference about exact P158 root cause; final count is not response count."
+  ],
+  "captureCompleteness": {
+    "sampling": "All observed spans have sampled flags; SDK builder has no explicit sampler override in audited source. This run did not verify OTEL_TRACES_SAMPLER=always_on, so 100% capture is NOT established. Binary strings show support names but do not prove runtime behavior.",
+    "flush": "Native batching/shutdown is best effort; shutdown ignores some return values. CLI exit0, receiver200 and quiet interval do not prove all spans exported. Current audit explicitly unsealed/flush-unverified.",
+    "missingTrace": "Unknown. Neither absence of stdout error nor absence of a captured failed span establishes request completeness.",
+    "usageContract": "Native usage fields remain provider-reported usage; actual invoice coverage remains unknown and is not a prerequisite for trusting valid reported records."
+  },
+  "offlineTdd": {
+    "red": "test-red.log: import fails before module exists",
+    "green": "test-green.log: 5 tests passed",
+    "invariants": [
+      "ID-linked observed usage; no total census or billing claim",
+      "Missing usage never becomes zero or a guessed generation",
+      "Duplicate span identity invalidates association",
+      "Missing parent invalidates association",
+      "Unsealed, unknown sampling or unverified flush blocks finalized diagnostic verdict"
+    ],
+    "notImplemented": "No provider-wide request completeness validator, WS collector, product usage ledger, or paid admission."
+  },
+  "retainedFailure": {
+    "run": "run-1791548344781",
+    "cause": "Private fake server expected model on every route, but CLI also requested /v1/analytics/codex/turn-costs. Failure retained in free.log; fixed private routing then separate successful run. No paid calls."
+  },
+  "minimalNextPlan": [
+    "Keep actual provider identity/auth/config/model/effort/transport unchanged; add process-local native OTLP exporters only, with prompt logging disabled and private bounded local storage. Do not introduce endpoint override or proxy for the paid path.",
+    "Before next paid admission, verify process-local always_on sampler is honored by installed CLI and guard preserves that env; receiver records batch hashes/drop counters/export errors. Establish explicit sealing/flush evidence or keep global request coverage unknown.",
+    "Use native attempt-parent associations as additional missing-usage diagnostics. WS-specific request/span association must be exercised without real provider calls first or labeled unverified; never silently substitute HTTP.",
+    "If sampled/exported data cannot prove complete census, retain valid known usage and mark request-coverage unknown; no efficiency-pass conclusion based solely on absence of errors."
+  ],
+  "hashes": {
+    "trace-audit.mjs": "cc309cc4713639c0a531ce24c84cee901880e44d727d212b0344cc5c778b5849",
+    "trace-audit.test.mjs": "71a0076a0932285b529fc1ec3663f6dc279d099e748b970da2e42bbe4fd4add8",
+    "test-red.log": "de83ab2bc6640ded854b52cd3d82b7848f886e50e1f7e7de25f93157832b9aac",
+    "test-green.log": "453d9fde8533fe15e7db300ec4ad8cd9e78b094cba3550012f2bf5af1dd1be88",
+    "run.mjs": "f9b208a63c65e6ae08f68d0d56d8d1f643d6f7e4d851a6731b45a9737e9d1814",
+    "sources.json": "c71cf33e0eaeb1222fef752f51fae14d80efffcf365c5184fc0be89ec5c9338c",
+    "run-1791548384784/otel-1.private.json": "d4ed46280f7213df2cf287fc49336e5eb7f6c6f595cc9412f838a1447a5b0c1b",
+    "run-1791548384784/otel-2.private.json": "0c2e9d2a5c3468e438184e24114daccef4b23af92a21e79529e703993d398d0d",
+    "run-1791548384784/otel-3.private.json": "3326559d17d88cc8d6692ba655529a27b5f0d57a6478a47d03f41075dbcdb801"
+  }
+}

@@ -1,0 +1,940 @@
+{
+  "batch": "P160",
+  "sourceRevision": "7a640b018f4166ed6e50e88a32cfec8ca59bb3b4",
+  "status": "completed",
+  "fake": false,
+  "rows": [
+    {
+      "arm": "loom",
+      "round": 1,
+      "requests": 8,
+      "input": 105020,
+      "cachedInput": 88960,
+      "output": 6397,
+      "reasoning": 2991,
+      "firstGenerationInput": 9379,
+      "tools": {
+        "bash": 4,
+        "read": 2,
+        "write": 2,
+        "edit": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 11015,
+      "environmentProbeCalls": 1,
+      "fileTargets": {
+        "shell/other": 4,
+        "implementation": 2,
+        "README": 2,
+        "tests": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "requests": 10,
+      "input": 114785,
+      "cachedInput": 99968,
+      "output": 5620,
+      "reasoning": 2639,
+      "firstGenerationInput": 7565,
+      "tools": {
+        "bash": 3,
+        "read": 2,
+        "write": 2,
+        "edit": 3
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9198,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "shell/other": 3,
+        "implementation": 2,
+        "README": 2,
+        "tests": 3
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "requests": 4,
+      "input": 71734,
+      "cachedInput": 68992,
+      "output": 1023,
+      "reasoning": 182,
+      "firstGenerationInput": 16887,
+      "tools": {
+        "read": 1,
+        "edit": 1,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 1830,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "tests": 2,
+        "shell/other": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "requests": 4,
+      "input": 59591,
+      "cachedInput": 57984,
+      "output": 810,
+      "reasoning": 125,
+      "firstGenerationInput": 14214,
+      "tools": {
+        "read": 1,
+        "edit": 1,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 1649,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "tests": 2,
+        "shell/other": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "requests": 6,
+      "input": 124420,
+      "cachedInput": 120704,
+      "output": 2546,
+      "reasoning": 637,
+      "firstGenerationInput": 19120,
+      "tools": {
+        "edit": 4,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 5449,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "requests": 5,
+      "input": 81624,
+      "cachedInput": 79744,
+      "output": 1531,
+      "reasoning": 148,
+      "firstGenerationInput": 15504,
+      "tools": {
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 4175,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "requests": 10,
+      "input": 271117,
+      "cachedInput": 263040,
+      "output": 5277,
+      "reasoning": 2296,
+      "firstGenerationInput": 22521,
+      "tools": {
+        "edit": 5,
+        "read": 2,
+        "bash": 2
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 7875,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 4,
+        "shell/other": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "requests": 9,
+      "input": 188558,
+      "cachedInput": 182272,
+      "output": 4267,
+      "reasoning": 1154,
+      "firstGenerationInput": 17209,
+      "tools": {
+        "read": 1,
+        "edit": 4,
+        "bash": 3
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9338,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 2,
+        "shell/other": 3,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "requests": 7,
+      "input": 229220,
+      "cachedInput": 224000,
+      "output": 4534,
+      "reasoning": 1479,
+      "firstGenerationInput": 30176,
+      "tools": {
+        "edit": 5,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9116,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 2,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "requests": 9,
+      "input": 251353,
+      "cachedInput": 243328,
+      "output": 6212,
+      "reasoning": 2279,
+      "firstGenerationInput": 22917,
+      "tools": {
+        "edit": 4,
+        "bash": 3,
+        "read": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 12557,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 3,
+        "shell/other": 3,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "requests": 11,
+      "input": 527451,
+      "cachedInput": 505600,
+      "output": 13453,
+      "reasoning": 5152,
+      "firstGenerationInput": 35064,
+      "tools": {
+        "read": 3,
+        "write": 2,
+        "bash": 3,
+        "edit": 2
+      },
+      "toolErrors": 1,
+      "toolInputCharacters": 28868,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 2,
+        "shell/other": 3,
+        "README": 3
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "requests": 12,
+      "input": 456929,
+      "cachedInput": 443392,
+      "output": 8928,
+      "reasoning": 3603,
+      "firstGenerationInput": 30586,
+      "tools": {
+        "read": 3,
+        "edit": 7,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 17480,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 5,
+        "tests": 4,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "requests": 6,
+      "input": 364217,
+      "cachedInput": 356608,
+      "output": 6462,
+      "reasoning": 2180,
+      "firstGenerationInput": 56240,
+      "tools": {
+        "write": 1,
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 15255,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 2,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "requests": 6,
+      "input": 279813,
+      "cachedInput": 273920,
+      "output": 4284,
+      "reasoning": 1212,
+      "firstGenerationInput": 43463,
+      "tools": {
+        "read": 1,
+        "edit": 3,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 10314,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "requests": 9,
+      "input": 590377,
+      "cachedInput": 585216,
+      "output": 4105,
+      "reasoning": 753,
+      "firstGenerationInput": 63358,
+      "tools": {
+        "edit": 7,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 11161,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 3,
+        "tests": 3,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "requests": 7,
+      "input": 352056,
+      "cachedInput": 348288,
+      "output": 3147,
+      "reasoning": 863,
+      "firstGenerationInput": 48691,
+      "tools": {
+        "edit": 5,
+        "bash": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 7556,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 3,
+        "tests": 1,
+        "shell/other": 1,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 3
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "requests": 7,
+      "input": 491887,
+      "cachedInput": 486912,
+      "output": 4000,
+      "reasoning": 1136,
+      "firstGenerationInput": 67800,
+      "tools": {
+        "edit": 3,
+        "write": 1,
+        "bash": 2
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 9283,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 1,
+        "shell/other": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "requests": 9,
+      "input": 490611,
+      "cachedInput": 485760,
+      "output": 3543,
+      "reasoning": 1009,
+      "firstGenerationInput": 52099,
+      "tools": {
+        "read": 2,
+        "edit": 3,
+        "write": 1,
+        "bash": 2
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 7763,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 4,
+        "tests": 1,
+        "shell/other": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "requests": 7,
+      "input": 517694,
+      "cachedInput": 513792,
+      "output": 3036,
+      "reasoning": 374,
+      "firstGenerationInput": 72185,
+      "tools": {
+        "edit": 4,
+        "bash": 2
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 8372,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "tests": 2,
+        "shell/other": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "requests": 9,
+      "input": 522817,
+      "cachedInput": 519296,
+      "output": 2409,
+      "reasoning": 241,
+      "firstGenerationInput": 56580,
+      "tools": {
+        "edit": 5,
+        "bash": 3
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 6370,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 2,
+        "tests": 2,
+        "shell/other": 3,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 4
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "requests": 8,
+      "input": 644716,
+      "cachedInput": 635904,
+      "output": 8136,
+      "reasoning": 3659,
+      "firstGenerationInput": 75527,
+      "tools": {
+        "bash": 4,
+        "edit": 2,
+        "write": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 14533,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "shell/other": 4,
+        "implementation": 1,
+        "tests": 2
+      },
+      "quality": true,
+      "snapshotFiles": 5
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "requests": 9,
+      "input": 618736,
+      "cachedInput": 601472,
+      "output": 13335,
+      "reasoning": 8779,
+      "firstGenerationInput": 59300,
+      "tools": {
+        "read": 1,
+        "bash": 6,
+        "write": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 13778,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "implementation": 1,
+        "shell/other": 6,
+        "tests": 1
+      },
+      "quality": true,
+      "snapshotFiles": 5
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "requests": 11,
+      "input": 992844,
+      "cachedInput": 982016,
+      "output": 9030,
+      "reasoning": 3103,
+      "firstGenerationInput": 84163,
+      "tools": {
+        "bash": 6,
+        "edit": 3,
+        "write": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 18205,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "shell/other": 6,
+        "implementation": 1,
+        "tests": 2,
+        "README": 1
+      },
+      "quality": true,
+      "snapshotFiles": 5
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "requests": 11,
+      "input": 917347,
+      "cachedInput": 906112,
+      "output": 8770,
+      "reasoning": 4769,
+      "firstGenerationInput": 76377,
+      "tools": {
+        "read": 2,
+        "edit": 3,
+        "bash": 4,
+        "write": 1
+      },
+      "toolErrors": 0,
+      "toolInputCharacters": 12689,
+      "environmentProbeCalls": 0,
+      "fileTargets": {
+        "README": 3,
+        "tests": 3,
+        "shell/other": 4
+      },
+      "quality": true,
+      "snapshotFiles": 5
+    }
+  ],
+  "arms": {
+    "native": {
+      "observedRequests": 100,
+      "rawRequestsVerified": 100,
+      "unknownRequests": [],
+      "knownInput": 4334220,
+      "knownCachedInput": 4241536,
+      "knownOutput": 62856,
+      "completedRounds": 12,
+      "oneContinuousSession": true
+    },
+    "loom": {
+      "observedRequests": 94,
+      "rawRequestsVerified": 94,
+      "unknownRequests": [],
+      "knownInput": 4930697,
+      "knownCachedInput": 4831744,
+      "knownOutput": 67999,
+      "completedRounds": 12,
+      "oneContinuousSession": true
+    }
+  },
+  "limitations": [
+    "One paired trajectory; not generalized multi-model acceptance.",
+    "Provider-reported tokens, not currency cost.",
+    "Post-run independent artifact hashes; quality verdicts from archived runner evaluation."
+  ],
+  "startedAt": "2026-10-09T12:11:07.280Z",
+  "finishedAt": "2026-10-09T12:34:04.668Z",
+  "frozenSourcesVerified": 3642,
+  "allObservedCosts": {
+    "native": {
+      "requests": 100,
+      "uniqueRequests": 100,
+      "assistants": 100,
+      "input": 4334220,
+      "output": 62856,
+      "cachedInput": 4241536,
+      "unknownRequests": 0,
+      "complete": true,
+      "errors": [],
+      "label": "complete provider-reported tokens"
+    },
+    "loom": {
+      "requests": 94,
+      "uniqueRequests": 94,
+      "assistants": 94,
+      "input": 4930697,
+      "output": 67999,
+      "cachedInput": 4831744,
+      "unknownRequests": 0,
+      "complete": true,
+      "errors": [],
+      "label": "complete provider-reported tokens"
+    }
+  },
+  "errors": [],
+  "windows": {
+    "all12": {
+      "native": {
+        "requests": 100,
+        "input": 4334220,
+        "cachedInput": 4241536,
+        "output": 62856,
+        "reasoning": 26821,
+        "environmentProbeCalls": 0,
+        "toolErrors": 0,
+        "uncachedInput": 92684,
+        "totalTokens": 4397076,
+        "meanInputPerRequest": 43342.2,
+        "tools": {
+          "bash": 29,
+          "read": 14,
+          "write": 5,
+          "edit": 41
+        }
+      },
+      "loom": {
+        "requests": 94,
+        "input": 4930697,
+        "cachedInput": 4831744,
+        "output": 67999,
+        "reasoning": 23942,
+        "environmentProbeCalls": 1,
+        "toolErrors": 1,
+        "uncachedInput": 98953,
+        "totalTokens": 4998696,
+        "meanInputPerRequest": 52454.22340425532,
+        "tools": {
+          "bash": 28,
+          "read": 8,
+          "write": 8,
+          "edit": 40
+        }
+      },
+      "loomOverNative": {
+        "requests": 0.94,
+        "input": 1.1376203792147146,
+        "uncachedInput": 1.0676384273445254,
+        "output": 1.0818219422171311,
+        "totalTokens": 1.136822743113833,
+        "meanInputPerRequest": 1.2102344459731007
+      }
+    },
+    "prespecifiedLate6R7to12": {
+      "native": {
+        "requests": 51,
+        "input": 3181380,
+        "cachedInput": 3134848,
+        "output": 35488,
+        "reasoning": 16873,
+        "environmentProbeCalls": 0,
+        "toolErrors": 0,
+        "uncachedInput": 46532,
+        "totalTokens": 3216868,
+        "meanInputPerRequest": 62380.0,
+        "tools": {
+          "read": 6,
+          "edit": 19,
+          "bash": 17,
+          "write": 3
+        }
+      },
+      "loom": {
+        "requests": 48,
+        "input": 3601735,
+        "cachedInput": 3560448,
+        "output": 34769,
+        "reasoning": 11205,
+        "environmentProbeCalls": 0,
+        "toolErrors": 0,
+        "uncachedInput": 41287,
+        "totalTokens": 3636504,
+        "meanInputPerRequest": 75036.14583333333,
+        "tools": {
+          "write": 4,
+          "edit": 22,
+          "bash": 16
+        }
+      },
+      "loomOverNative": {
+        "requests": 0.9411764705882353,
+        "input": 1.132129767585136,
+        "uncachedInput": 0.8872818705407032,
+        "output": 0.9797396302975654,
+        "totalTokens": 1.1304486226976052,
+        "meanInputPerRequest": 1.202887878059207
+      }
+    }
+  },
+  "unknownUsage": 0,
+  "plannedPairs": 12,
+  "completedPairs": 12,
+  "firstGeneration": {
+    "native": 7565,
+    "loom": 9379,
+    "additionalInput": 1814
+  },
+  "cleanup": {
+    "recordedPidsExited": 41,
+    "temporaryProviderConfigurationsRemoved": true,
+    "daemonExitCode": 0,
+    "recorderClosedByAwaitedCleanup": true,
+    "limitation": "No listener-port receipt persisted for independent socket recheck."
+  },
+  "budget": {
+    "inputAdmissionThreshold": 12000000,
+    "outputAdmissionThreshold": 150000,
+    "requestAdmissionThreshold": 400,
+    "wallMs": 5400000,
+    "turnMs": 600000,
+    "totalInput": 9264917,
+    "totalOutput": 130855,
+    "totalRequests": 194,
+    "semantics": "Combined totals checked before each arm start; not in-flight hard cost cap. Prospective fixed budget; no rerun or relaxation."
+  },
+  "quality": {
+    "snapshotCount": 24,
+    "originalResults": {
+      "native": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "loom": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "allSnapshotsPassed": true,
+    "evaluatorVersion": 4,
+    "originalBytesUnchanged": true
+  },
+  "comparability": {
+    "nativeTransport": "Ordinary CLI stdin, exact business text verified on every upstream request; same-session resume. No free transport probe in paid tasks.",
+    "product": "Actual Role/Channel native-final chain; exact task body in platform envelope.",
+    "toolSchema": "Same10tool schema every actual request.",
+    "standing": "Role and native-final guidance present in every actual Loom system request.",
+    "memory": "OpenCode1.18.35 version-audited not-applicable auto-memory policy, --pure and explicit disable flags every native launch/productserver; no invented memory_mode.",
+    "billing": "Complete captured provider-reported usage is not an invoice or currency cost.",
+    "sample": "One paired trajectory, one CLI/model; no five-CLI or repeatability conclusion."
+  },
+  "memoryEvidence": {
+    "productSha256": "ec7162e4e8f701aa2e75f9c0d7e69d1dd2e7ade88d39c9429af84586de22b894",
+    "nativeLaunchHashes": [
+      "d8bbf4d1c6e2fc7c00921421ba83e419fa720f0ff9f40c5f996bf8af9cd5c607",
+      "53eb82dcdbf985ea6a4105937c37d067cbd49557ed22f3786bf9600caeca931c",
+      "8af5451e5a9820a45a3464e0fd816dae5cbeea8977b346f1b54db8af71d749d6",
+      "dff4721ae431439a88360d0e72393476d47440ce9746c086d6bb294bd2bf54c0",
+      "aa0d0773460828cd9542b435d0f093281339d38f93b575589d04804bb6fd0923",
+      "a8429de637dd696d5b748e7a7049074b258cc4dfadfbb57289ed03f8ed8ec599",
+      "4160a10f896546fa45d6917cb8401a174037f4fc48abd681b2a6fd6d3da8f3d1",
+      "fd8922fcaf60d2267f1d9ae310d51e0ecc0e1476b263ee44617494efd0f7763f",
+      "1e67a336bf391003372338266eae4ff40ae24de84e3aca65d7c4ccc5134cc3d9",
+      "3adbe71e5dc77771294588f35c6fc9552a1517192106bbc71cb5f6160d8938aa",
+      "722922baa211cf7afebece130bd7918760adc8cf850051eef5bc2ea84f3ad4fa",
+      "b35be7148d20fecc3da5d19f73e5beb69afc20e68336bb312695b431437681d2"
+    ],
+    "sourceMemoryPolicySha256": "3725b50b2364cdd50b24b91f5cbfb4c6edb350e5b6acd9f7642e5b58ccf5a745",
+    "wrapperSha256": "b20d7c013cf316d07750c30823c06402bc45b9b5961f5fbbce70f179beead008"
+  },
+  "evidenceHashes": {
+    "plan": "906c40983bb550ab882f8b41688aab8d66bdb7df3e452130469095bf1149410a",
+    "admission": "a077a1ad387cae8774c35675a45a30551ee1607b52db5f6a59205d38d2eb2b10",
+    "result": "7252113774bf86ebc406857a5df7e73f0c2e61798b6ed99b718cb30f43fa7250",
+    "requestStructure": "2176f83484af433d1787d928ede93db969bf7c1cf7d776be55828254572fc3a2",
+    "nativeRawMetadata": "74165918bd6ef8068d0e1a7842319976f476d781d1ea3a8b6866b77823157b91",
+    "loomRawMetadata": "75a7d018f441e0d71074a2afa903f2c76542585e0226cd75ecadafdb370701cb"
+  },
+  "readmeReview": {
+    "status": "manual review passed for both final R12 artifacts",
+    "sameRound": 12,
+    "native": "API, validation, exact coefficient arithmetic and grouping documented; file8.25+0.83=9.08 and grouped20.00−1.00+1.90=20.90 examples checked.",
+    "loom": "API, validation, exact Fraction arithmetic and grouping documented; file44.98−0.50+4.45=48.93, stdin4.50 and sorted groups5.00+2.00=7.00 examples checked.",
+    "limitation": "Manual documentation review is separate from automated functional/self-test assertions.",
+    "hashes": {
+      "native": "ae063205ecaa3b5eb13201f762f3077c45da6c50230d22e8e58e10e9e110454c",
+      "loom": "50bd77b6e2d4347a38771ff85b4ae3a5cf24bfa19778c5d05bb01ae41ac6cdc7"
+    }
+  },
+  "descriptiveDecomposition": {
+    "requestCountFactor": 0.94,
+    "meanInputPerRequestFactor": 1.2102344459731007,
+    "productEqualsInputRatio": 1.1376203792147146,
+    "nativeMeanInputPerRequest": 43342.2,
+    "loomMeanInputPerRequest": 52454.22340425532,
+    "warning": "Arithmetic decomposition, not proof of causal attribution. Actual total and all business/communication work remain counted."
+  },
+  "toolClassification": {
+    "nativeWorkerOrProtocolExplorationCalls": 0,
+    "loomWorkerApiCalls": 0,
+    "loomProtocolEnvironmentProbeCalls": 1,
+    "probeRound": 1,
+    "probeGeneration": 1,
+    "probe": "Shell echoes RAH_FROM_SEQ, RAH_TO_SEQ and RAH_WORKER_CLI; no Worker command or readbox invoked.",
+    "probeGenerationUsage": {
+      "input": 9379,
+      "output": 188,
+      "reasoningIncludedInOutput": 64
+    },
+    "classificationNote": "environmentProbeCalls counts the independently inspected R1 shell environment probe; it is not a Worker API call or communication mutation.",
+    "loomTerminalToolErrors": [
+      {
+        "round": 6,
+        "tool": "edit",
+        "cause": "README exact oldString not found; later corrected."
+      }
+    ]
+  },
+  "observations": [
+    "Loom used6fewer generations overall (94vs100) but larger mean context(52454vs43342 provider inputtokens), producing13.76%moreinput and8.18%moreoutput.",
+    "Initial prompt premium persists: current P160 firstgeneration is9379vs7565, +1814tokens. Current actual system chars are16647vs9604; schema isidentical20812chars.",
+    "Mean replayed assistant tool-call arguments, reasoning content and tool results are larger on Loom in this trajectory; request-structure provides character counts only, not token attribution.",
+    "Prespecified late6 inputratio1.13213, outputratio0.97974, uncachedinputratio0.88728. No averaging away of actual totalcost.",
+    "No human intervention, oracle feedback, retry of the experiment or budget change occurred. This is one completed trajectory and does not establish multi-CLI repeatability or invoice cost."
+  ],
+  "sourceFreezeRelease": "P160 runner exited0, all41recorded process IDs absent, all194upstream streams closed. Freeze hashes verified. No further paid calls.",
+  "contextStructureObservation": {
+    "scope": "all12 mean characters per upstream request",
+    "characterConvention": "Unicode code points; compact sorted JSON for structured fields. Structural diagnostics only, never token estimation. Repeated full-history characters are counted once per request.",
+    "systemContent": {
+      "native": 9604.0,
+      "loom": 16647.0
+    },
+    "assistantReasoning": {
+      "native": 40753.52,
+      "loom": 47331.3085106383
+    },
+    "assistantToolCalls": {
+      "native": 63390.08,
+      "loom": 76105.81914893616
+    },
+    "toolContent": {
+      "native": 22636.71,
+      "loom": 29491.627659574468
+    },
+    "schemaCharactersEachRequest": 20812,
+    "interpretation": "Fewer requests do not imply less accumulated input: observed request count factor0.94 times provider-measured mean input factor1.210234 equals total input factor1.137620. Loom actual system and replayed histories are larger on average. Characters diagnose structure only; they do not estimate tokens or isolate protocol causality."
+  }
+}

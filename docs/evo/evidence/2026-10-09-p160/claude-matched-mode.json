@@ -1,0 +1,62 @@
+{
+  "status": "free-matched-mode-proof-passed",
+  "paidCalls": 0,
+  "run": "free-1791548243309",
+  "historicalColdRed": "historical-cold-red.json",
+  "nativeMode": "Direct persistent installed Claude stream-json; product matched disallowed-tools policy, no Room or Worker orchestration in control",
+  "productMode": "Unmodified actual Role/daemon/Kernel warm native-final trial",
+  "turnsPerArm": 2,
+  "providerRequests": 6,
+  "sameSessionEachArm": true,
+  "sameSchemaAcrossAllActualRequests": true,
+  "schemaSha256": "b58af2b52b1509f0bdc865817bd578e80f1ae2e4a2b6c7877704c30020f81995",
+  "toolCount": 17,
+  "tools": [
+    "Agent",
+    "Bash",
+    "DesignSync",
+    "Edit",
+    "EnterWorktree",
+    "ExitWorktree",
+    "ListAgents",
+    "NotebookEdit",
+    "Read",
+    "ReportFindings",
+    "SendMessage",
+    "Skill",
+    "TaskStop",
+    "WebFetch",
+    "WebSearch",
+    "Workflow",
+    "Write"
+  ],
+  "actualModelIds": ["claude-sonnet-5-5"],
+  "effortAllRequests": "low",
+  "officialMemoryDisabledEveryActualLaunch": true,
+  "productRoleAndNativeFinalStandingInActualRequests": true,
+  "realReadToolExecutedEachArmRound1": true,
+  "nativeFinalMarkers": [1, 1],
+  "ownedProcessesAlive": [],
+  "wrapperExitsComplete": true,
+  "daemonExits": [
+    {
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "limits": [
+    "Fresh isolated fake provider config, no real credentials copied/read and Seatbelt localhost-only egress.",
+    "This is a free two-turn transport/tool-parity proof, not paid cost acceptance.",
+    "Historical P153 cold default had20vs16 tools; fresh matched-mode environment currently advertises17 tools (Agent and DesignSync present). Do not retrofit current schemas into old evidence.",
+    "Native direct stream-json same policy is a new control profile, not an unchanged cold CLI baseline."
+  ],
+  "hashes": {
+    "request-1.private.json": "11622a48181e593c6d383245f877e17771b4011a00f357c352fcc395c6dc674b",
+    "request-2.private.json": "c8ce2baa068aae10a477634b4fda4a1db296468b8a51fd8f4aa5c4437f26ec1a",
+    "request-3.private.json": "e9967e05543301a1d7a761603afc0847c4c95d157b3b66feafcb1c9e39559135",
+    "request-4.private.json": "ec9c90f82122445d3fa320888b8c0f58e641506942d9c0a99f749973b7b47f52",
+    "request-5.private.json": "729247a3b2e30cd7590c98243eb63152eb15cf74dc20bea3dc061f639448c449",
+    "request-6.private.json": "58a7dc82e6ba2d04ec538fbf7aba87e6424d609258b6182b5cedc0fa1245d5dc"
+  },
+  "actualCliVersions": ["2.1.293"]
+}

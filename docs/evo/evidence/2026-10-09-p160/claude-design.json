@@ -1,0 +1,46 @@
+{
+  "scope": "read-only design; no product change, CLI launch, provider request or credential access",
+  "finding": "The two mismatches have different causes: tool exclusion is explicit Loom launch policy; Bash background timeout is a native CLI single-shot-print versus streaming-session branch.",
+  "observedP153": {
+    "nativeTools": 20,
+    "productTools": 16,
+    "nativeOnly": ["CronCreate", "CronDelete", "CronList", "ScheduleWakeup"],
+    "commonToolDefinitionDifference": "Bash detached-command default timeout 600000 vs1800000ms; model-facing schema descriptions differ",
+    "evidence": "2026-10-09-production-v3/runs/1791522264095-claude-P153/{native,loom}/turn-1.transcript.private.jsonl attachment.prompt_snapshot; both tools hashes stable through12rounds"
+  },
+  "source": {
+    "productDisallowedTools": {
+      "path": "packages/agent-host/src/claude-stream-launch.js",
+      "sha256": "2959a2f905b2c3bd23a01c0b8ff4caf358d173a181c4f3462f8dfcd1bbce2715",
+      "reason": "Plan/self-scheduling/out-of-lane routine tools and unattended Human question tools excluded by existing product policy."
+    },
+    "warmDriver": {
+      "path": "packages/agent-host/src/claude-warm-driver.mjs",
+      "sha256": "63b16fc1c17248806a575a10c1aff3732e2733f965bd05b8165827f54b45b000",
+      "launch": "--print --input-format stream-json with persistent process; explicit disallowed-tools policy"
+    },
+    "installedCli": {
+      "version": "2.1.293",
+      "sha256": "4e21122a227857da1178aca3299700c1fd7f2b77c93f12e73c2c76db796a105e",
+      "boundedEmbeddedSourceFinding": "OVt() checks JJ() before choosing max(600000, foreground default) or xts(); JJ() reads host.launchOptions.singleShotPrintSession(); xts() returns max(1800000, foreground default). Bash tool description/schema interpolate OVt().",
+      "evidenceType": "Read-only installed binary embedded JavaScript, no claim of public source provenance or copied implementation."
+    }
+  },
+  "recommendedNextFreeProof": {
+    "nativeControl": "Direct installed Claude persistent --print --input-format stream-json session, same native permission/isolation/model/effort/memory policy as product and same disallowed-tools list. Feed business prompts directly; no Room/Worker or Host orchestration in control.",
+    "product": "Unmodified real Role/daemon warm CLI and original policy.",
+    "preflight": "Loopback fake provider captures actual per-request tools/schema and system standing; compare all schemas byte-canonical, native business body exact, same session and memory environment. No matched-schema claim before actual proof.",
+    "guard": "Refuse paid forwarding if schema/model/effort drift; hash exact CLI binary and prompt snapshots.",
+    "why": "Align native mode and existing tool policy without expanding or restricting product permissions."
+  },
+  "notRecommended": [
+    "Enable product Cron/ScheduleWakeup simply to match cold native: changes lane/scheduling safety boundary.",
+    "Change BASH_DEFAULT_TIMEOUT_MS to1800000: also changes foreground default/max semantics and does not isolate only the observed mismatch.",
+    "Post-process or strip tool schema from provider requests: would alter actual native environment and invalidate comparison."
+  ],
+  "interpretation": [
+    "Matched-mode native control remains ordinary native CLI, but it is a different control configuration from historical cold -p native P153. Label both accurately.",
+    "P153 result remains one observed unmatched-tool/mode trajectory, not pure protocol overhead.",
+    "New matched-mode evidence needs future approved experiment; this review launches none."
+  ]
+}

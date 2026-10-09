@@ -1,0 +1,109 @@
+{
+  "batch": "P160",
+  "status": "completed",
+  "characterConvention": "Unicode code points; compact sorted JSON for structured fields. Structural diagnostics only, never token estimation. Repeated full-history characters are counted once per request.",
+  "toolSchemaAllEqual": true,
+  "expectedToolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd",
+  "toolNames": [
+    "bash",
+    "edit",
+    "glob",
+    "grep",
+    "read",
+    "skill",
+    "task",
+    "todowrite",
+    "webfetch",
+    "write"
+  ],
+  "standingPresentEveryProductRequest": true,
+  "windows": {
+    "all12Observed": {
+      "native": {
+        "requests": 100,
+        "summedCharacters": {
+          "systemContent": 960400,
+          "userContent": 438460,
+          "assistantToolCalls": 6339008,
+          "assistantReasoning": 4075352,
+          "toolContent": 2263671,
+          "assistantContent": 294345
+        },
+        "meanCharactersPerRequest": {
+          "systemContent": 9604.0,
+          "userContent": 4384.6,
+          "assistantToolCalls": 63390.08,
+          "assistantReasoning": 40753.52,
+          "toolContent": 22636.71,
+          "assistantContent": 2943.45
+        },
+        "summedSchemaCharacters": 2081200
+      },
+      "loom": {
+        "requests": 94,
+        "summedCharacters": {
+          "systemContent": 1564818,
+          "userContent": 537067,
+          "assistantToolCalls": 7153947,
+          "assistantReasoning": 4449143,
+          "toolContent": 2772213,
+          "assistantContent": 407186
+        },
+        "meanCharactersPerRequest": {
+          "systemContent": 16647.0,
+          "userContent": 5713.478723404255,
+          "assistantToolCalls": 76105.81914893616,
+          "assistantReasoning": 47331.3085106383,
+          "toolContent": 29491.627659574468,
+          "assistantContent": 4331.765957446809
+        },
+        "summedSchemaCharacters": 1956328
+      }
+    },
+    "prespecifiedLate6R7to12Observed": {
+      "native": {
+        "requests": 51,
+        "summedCharacters": {
+          "systemContent": 489804,
+          "userContent": 316126,
+          "assistantContent": 237757,
+          "assistantToolCalls": 4957223,
+          "assistantReasoning": 3170528,
+          "toolContent": 1800845
+        },
+        "meanCharactersPerRequest": {
+          "systemContent": 9604.0,
+          "userContent": 6198.549019607844,
+          "assistantContent": 4661.901960784314,
+          "assistantToolCalls": 97200.45098039215,
+          "assistantReasoning": 62167.21568627451,
+          "toolContent": 35310.686274509804
+        },
+        "summedSchemaCharacters": 1061412
+      },
+      "loom": {
+        "requests": 48,
+        "summedCharacters": {
+          "systemContent": 799056,
+          "userContent": 388309,
+          "assistantContent": 318443,
+          "assistantToolCalls": 5775199,
+          "assistantReasoning": 3381336,
+          "toolContent": 2106856
+        },
+        "meanCharactersPerRequest": {
+          "systemContent": 16647.0,
+          "userContent": 8089.770833333333,
+          "assistantContent": 6634.229166666667,
+          "assistantToolCalls": 120316.64583333333,
+          "assistantReasoning": 70444.5,
+          "toolContent": 43892.833333333336
+        },
+        "summedSchemaCharacters": 998976
+      }
+    }
+  },
+  "originalSourceSha256": "2176f83484af433d1787d928ede93db969bf7c1cf7d776be55828254572fc3a2",
+  "originalRequestRows": 194,
+  "originalRowsOmitted": "Full request-by-request structure remains in the frozen private report; response usage and request hashes also appear in opencode-independent.json."
+}

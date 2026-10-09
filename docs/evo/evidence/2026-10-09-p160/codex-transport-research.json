@@ -1,0 +1,196 @@
+{
+  "scope": "Read-only real configuration/history/source audit plus bounded actual ordinary CLI against localhost synthetic credentials. Zero paid calls, no real credential copied or account configuration changed; no host/app-server command used.",
+  "productHead": "7a640b018f4166ed6e50e88a32cfec8ca59bb3b4",
+  "installedCli": {
+    "version": "0.161.0",
+    "sha256": "12ac11d2c7eee27cfae34393986d7b7c9ed0dea537cb749831cdd7033893e6de"
+  },
+  "realSafeConfiguration": {
+    "authMode": "chatgpt",
+    "modelProviderConfigured": null,
+    "customProviderCount": 0,
+    "openaiBaseUrlOverridePresent": false,
+    "chatgptBaseUrlOverridePresent": false
+  },
+  "historicalTransport": {
+    "batch": "P158",
+    "arm": "loom",
+    "round": 1,
+    "path": "/Users/sun/.loom/reviews/2026-10-09-codex-recovery-v5/runs/1791538885130-P158/loom/launch-1791538941508-86780.stderr",
+    "sha256": "7ab6def337ff60dbd4245b2dcbb119853b37e4eef189201fab414d5467fbb148",
+    "observed": "2026-10-09T09:42:28.442077Z responses_websocket connection tls handshake eof to wss://chatgpt.com/backend-api/codex/responses",
+    "limit": "Proves this WebSocket attempt only, not all historical requests or absence of fallback."
+  },
+  "sourceRevision": "979011409de0a60b52f179721948e65531d26144 (rust-v0.161.0)",
+  "officialDocs": "https://learn.chatgpt.com/docs/config-file/config-reference",
+  "sourceFindings": [
+    {
+      "file": "model-provider-info-lib.rs",
+      "lines": "422-440,520-555,608-619",
+      "fact": "Builtin openai uses ChatGPT backend for ChatGPT auth, supports_websockets=true, requires_openai_auth=true. openai_base_url preserves this builtin definition; backend route capability depends on /backend-api/codex suffix."
+    },
+    {
+      "file": "client.rs",
+      "lines": "1030-1040,650-671",
+      "fact": "WS enabled by provider capability and session fallback state; failure may transition to HTTP. Historical one WS error does not identify every request transport."
+    },
+    {
+      "file": "provider.rs",
+      "lines": "251-278",
+      "fact": "First-party ChatGPT Responses HTTP/compaction/WS resolve account workspace routing before connecting."
+    },
+    {
+      "file": "account-workspace-routing.rs",
+      "lines": "293-323,376-404",
+      "fact": "Routing discovery uses chatgpt_base_url and selected workspace; cannot assume an endpoint is independent merely because custom base URL differs. Discovery failure blocks inference. Origin comparisons affect workspace binding."
+    },
+    {
+      "file": "workspace_routing.rs",
+      "lines": "39-72",
+      "fact": "Selected backend replaces inference origin and can add account-routing override; must retain route/redirect semantics. A base URL proxy may be bypassed or change binding."
+    }
+  ],
+  "localProbe": {
+    "run": "run-1791547617273",
+    "auth": "synthetic ChatGPT tokens only, no real credential copied",
+    "network": "fake wrapper denies non-local network, ordinary exec only",
+    "result": "Local /models received synthetic bearer/account headers; no Responses handshake; CLI reports workspace routing discovery unauthorized (401), bounded45sec timeout. This failed probe is not WS success or auth-parity acceptance.",
+    "initialFailure": "run-1791547606289 python executable path absent, before CLI; retained free-ws.log",
+    "actualOrdinaryExec": true,
+    "cliArgModes": ["exec"],
+    "hostModeUsed": false,
+    "customProviderUsed": false,
+    "websocketsDisabled": false,
+    "callsObserved": [
+      "GET /backend-api/codex/models with synthetic bearer and synthetic account header"
+    ],
+    "responsesHandshakeObserved": false,
+    "nativeDiagnostic": "Reconnecting... 2/5 (workspace routing discovery unauthorized (401))",
+    "allOwnedPidsAbsent": true,
+    "exit": "Bounded45sec timeout/SIGKILL; no successful model turn. Fake server stopped afterward.",
+    "hashes": {
+      "turn-1.binding.json": "492b9c544d416a0774252aa93ec5e96a856227bd6e5d9fd6991d3a6f0905d877",
+      "launch-1791547618741-49068.stdout": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "wrapper-config.json": "87c00dc57b997d9c644c445639dbecf6be9a83b893f2bc0325ae0e40fb003726",
+      "launch-1791547619046-49085.stdout": "22054e4b428e0a164a766c17aa80feb64ce2fab392aa0abb260d2164b10e4f18",
+      "launch-1791547619129-49093.stdout": "4d41f80ac47f7aacd7d1e05889d5d8e7fe82f32d6c9c44689e975eb58ac72458",
+      "launch-1791547618655-49046.stdout": "22054e4b428e0a164a766c17aa80feb64ce2fab392aa0abb260d2164b10e4f18",
+      "requests.json": "9710094e5b3aa80f7dec483c2785900132418bac448ad8e147a4304661dd78b5",
+      "turn-1.stdout": "4d41f80ac47f7aacd7d1e05889d5d8e7fe82f32d6c9c44689e975eb58ac72458",
+      "turn-1.launch.json": "d5a20aabcd218cd4e713ea394841ce27dcc126081eb69f681e3f94a95ba97121",
+      "failure.json": "07d5e05d042f185fff7872eeafba0ee998a64d891f14c16c111b6f230fb3b75e",
+      "turn-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "interpretation": "Not proof that original real credentials fail, not WS-success acceptance, not authorization to bypass routing. No attempt made to fix fake identity by using real credentials."
+  },
+  "nativeDiagnosticsAlternative": {
+    "availableInExactSource": [
+      {
+        "file": "session_telemetry.rs",
+        "lines": "725-786",
+        "event": "codex.api_request",
+        "fields": "HTTP attempt/status/duration/error/auth-header-presence and optional diagnostic request_id; actual secret values are not required."
+      },
+      {
+        "file": "session_telemetry.rs",
+        "lines": "847-881",
+        "event": "codex.websocket_request",
+        "fields": "duration/success/error/connection_reused, lacks explicit complete per-response identity/usage in this event."
+      },
+      {
+        "file": "session_telemetry.rs",
+        "lines": "979-1033",
+        "event": "SSE poll events",
+        "fields": "event kind and failures including idle timeout; parsed response bodies are not preserved as independent usage census."
+      },
+      {
+        "file": "session_telemetry.rs",
+        "lines": "609-647",
+        "event": "Responses completion trace",
+        "fields": "Known completed response token usage; cannot reconstruct terminal usage never received."
+      }
+    ],
+    "minimalNextExperiment": "In an isolated free-only process, add a localhost OpenTelemetry log/trace exporter with prompt logging disabled, without overriding provider URL or transport; test event capture using a fake backend. Verify exact version config syntax and flush/coverage on exit. Keep real paid endpoint unchanged if later separately admitted.",
+    "benefit": "Observes transport/retry failures without intentionally replacing native endpoint/provider or disabling WS; can improve explicit missing-evidence classification.",
+    "limit": "Source audit only; exporter not yet smoke-tested. Current event fields do not prove every response.created/completed identity or recover unreceived upstream usage. It is diagnostic evidence, not a replacement full request-usage ledger."
+  },
+  "minimalExecutablePlan": [
+    "Keep existing native ordinary exec/resume, approved model+effort and memory-off flags. Do not adopt custom provider or supports_websockets=false for measurement.",
+    "First free-verify native OTel export/flush with no prompts or credentials in export. Use it to classify HTTP/WS attempt failures and fallbacks while preserving actual transport choice.",
+    "If full request coverage is still required, a separate bounded transparent recorder must preserve workspace discovery, selected upstream origin, authentication lifecycle, WS upgrades/messages and HTTP fallback. The current HTTP-only proxy cannot do this.",
+    "Do not infer paid equivalence from the synthetic local probe; require free verification of route changes, proxy bypass prevention, retries, cancellation and exact tool/prompt bytes before any new authorized paid admission."
+  ],
+  "blockedClaims": [
+    "No claim that historical traffic was exclusively WS.",
+    "No claim the loopback base override preserves real selected-workspace routing.",
+    "No claim native telemetry already supplies independent complete billing/request coverage.",
+    "No paid admission for existing HTTP-only recorder."
+  ],
+  "files": {
+    "sourceManifest": "upstream-sources.json",
+    "progress": "progress.json",
+    "sourceManifestSha256": "f3aaabca8a37e4df82ba4ef816bedc9f50700f937310282d382e21052dfb8590"
+  },
+  "sourceDownloads": [
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/core/src/model_provider_info.rs",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/core/src/client.rs",
+      "path": "client.rs",
+      "sha256": "6a725a3e1548e667e8fadbbe8e7b39288fd9393daf188276e6f9554cf008c2bb"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/core/src/config/mod.rs",
+      "path": "mod.rs",
+      "sha256": "45250dde1184d339a3ceb3100f18caee86ccd04de22b5d044b03f79a17b8bc97"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/core/src/features.rs",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/model-provider-info/src/lib.rs",
+      "path": "model-provider-info-lib.rs",
+      "sha256": "941a8ec0e8be4b45080cac3df3d052999a4cb104811575634b1a9ed510690958"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/model-provider/src/lib.rs",
+      "path": "model-provider-lib.rs",
+      "sha256": "409648d0522f9f41d21a326708e579e8b547386c60c2ea192efcb07c7f83bb9e"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/model-provider/src/auth.rs",
+      "path": "model-provider-auth.rs",
+      "sha256": "1c1042b33df733ffb583d19bd3102c8511ab37b9e5e8cd91a673103321f249d8"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/model-provider/src/workspace_routing.rs",
+      "path": "workspace_routing.rs",
+      "sha256": "655591ae381d4725eb101155c91669cd776d627252972ec987ae18314b33b2ab"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/model-provider/src/provider.rs",
+      "path": "provider.rs",
+      "sha256": "adabad97f59dbc593431a9c47911e74d1fd9d48648b874026a23db86b32ec5a1"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/login/src/auth/manager/workspace_routing.rs",
+      "path": "login-workspace-routing.rs",
+      "sha256": "876f029d3d706efbd7889adc3538f548fa676fc01ed4a59297993b137cc526aa"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/app-server/src/request_processors/account_processor/workspace_routing.rs",
+      "path": "account-workspace-routing.rs",
+      "sha256": "2d2e1badd55ac8805ac344f8b921ac10d7f6bc0b8b9679108ddb3bb288f09c92"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openai/codex/979011409de0a60b52f179721948e65531d26144/codex-rs/otel/src/events/session_telemetry.rs",
+      "path": "session_telemetry.rs",
+      "sha256": "220aa5d87aac1444c9257bd800c0fdeda7e05361b46ff45278f9898a92d77625"
+    }
+  ],
+  "paidCalls": 0,
+  "conclusion": "Actual installed path is builtin openai with ChatGPT auth and verified WS attempts, with possible fallback and workspace routing. Full transparent paid capture is not yet verified. A bounded native-diagnostic export study is the smallest next step; do not change transport/provider to make capture easier."
+}

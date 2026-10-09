@@ -1,0 +1,238 @@
+{
+  "batch": "P160 plus independent free Claude/Codex investigations",
+  "sourceHead": "7a640b018f4166ed6e50e88a32cfec8ca59bb3b4",
+  "paidExecution": {
+    "cli": "OpenCode 1.18.35",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low",
+    "pairs": 12,
+    "launchesOfPaidTrajectory": 1,
+    "paidReruns": 0,
+    "all24FunctionalAndSelftestsPassed": true,
+    "finalReadmesReviewed": true,
+    "responsesIndependentlyReconciled": 194,
+    "continuousSessionEachArm": true,
+    "nativeMemoryPolicy": "Exact-version audited not-applicable plus isolated pure launch/instruction policy; no fabricated memory_mode flag."
+  },
+  "totals": {
+    "native": {
+      "requests": 100,
+      "input": 4334220,
+      "cachedInput": 4241536,
+      "output": 62856,
+      "reasoning": 26821,
+      "environmentProbeCalls": 0,
+      "toolErrors": 0,
+      "uncachedInput": 92684,
+      "totalTokens": 4397076,
+      "meanInputPerRequest": 43342.2,
+      "tools": {
+        "bash": 29,
+        "read": 14,
+        "write": 5,
+        "edit": 41
+      }
+    },
+    "loom": {
+      "requests": 94,
+      "input": 4930697,
+      "cachedInput": 4831744,
+      "output": 67999,
+      "reasoning": 23942,
+      "environmentProbeCalls": 1,
+      "toolErrors": 1,
+      "uncachedInput": 98953,
+      "totalTokens": 4998696,
+      "meanInputPerRequest": 52454.22340425532,
+      "tools": {
+        "bash": 28,
+        "read": 8,
+        "write": 8,
+        "edit": 40
+      }
+    },
+    "loomOverNative": {
+      "requests": 0.94,
+      "input": 1.1376203792147146,
+      "uncachedInput": 1.0676384273445254,
+      "output": 1.0818219422171311,
+      "totalTokens": 1.136822743113833,
+      "meanInputPerRequest": 1.2102344459731007
+    }
+  },
+  "prespecifiedLateSix": {
+    "native": {
+      "requests": 51,
+      "input": 3181380,
+      "cachedInput": 3134848,
+      "output": 35488,
+      "reasoning": 16873,
+      "environmentProbeCalls": 0,
+      "toolErrors": 0,
+      "uncachedInput": 46532,
+      "totalTokens": 3216868,
+      "meanInputPerRequest": 62380.0,
+      "tools": {
+        "read": 6,
+        "edit": 19,
+        "bash": 17,
+        "write": 3
+      }
+    },
+    "loom": {
+      "requests": 48,
+      "input": 3601735,
+      "cachedInput": 3560448,
+      "output": 34769,
+      "reasoning": 11205,
+      "environmentProbeCalls": 0,
+      "toolErrors": 0,
+      "uncachedInput": 41287,
+      "totalTokens": 3636504,
+      "meanInputPerRequest": 75036.14583333333,
+      "tools": {
+        "write": 4,
+        "edit": 22,
+        "bash": 16
+      }
+    },
+    "loomOverNative": {
+      "requests": 0.9411764705882353,
+      "input": 1.132129767585136,
+      "uncachedInput": 0.8872818705407032,
+      "output": 0.9797396302975654,
+      "totalTokens": 1.1304486226976052,
+      "meanInputPerRequest": 1.202887878059207
+    }
+  },
+  "firstGeneration": {
+    "native": 7565,
+    "loom": 9379,
+    "additionalInput": 1814
+  },
+  "catalogCostDiagnostic": {
+    "native": {
+      "sum": 0.0664855016,
+      "records": 100,
+      "meaning": "CLI model-catalog-derived cost diagnostic, not provider invoice or independently verified tariff"
+    },
+    "loom": {
+      "sum": 0.0724755014,
+      "records": 94,
+      "meaning": "CLI model-catalog-derived cost diagnostic, not provider invoice or independently verified tariff"
+    },
+    "loomToNative": 1.0900948275315412
+  },
+  "billingCoverage": "unknown; CLI catalog-derived estimate is not provider invoice",
+  "interpretation": {
+    "observed": "One complete paired trajectory has 13.762% more total input and 8.182% more output. This sample does not exhibit several-fold amplification.",
+    "requestStructure": {
+      "requestCountFactor": 0.94,
+      "meanInputPerRequestFactor": 1.2102344459731007,
+      "productEqualsInputRatio": 1.1376203792147146,
+      "nativeMeanInputPerRequest": 43342.2,
+      "loomMeanInputPerRequest": 52454.22340425532,
+      "warning": "Arithmetic decomposition, not proof of causal attribution. Actual total and all business/communication work remain counted."
+    },
+    "context": {
+      "scope": "all12 mean characters per upstream request",
+      "characterConvention": "Unicode code points; compact sorted JSON for structured fields. Structural diagnostics only, never token estimation. Repeated full-history characters are counted once per request.",
+      "systemContent": {
+        "native": 9604.0,
+        "loom": 16647.0
+      },
+      "assistantReasoning": {
+        "native": 40753.52,
+        "loom": 47331.3085106383
+      },
+      "assistantToolCalls": {
+        "native": 63390.08,
+        "loom": 76105.81914893616
+      },
+      "toolContent": {
+        "native": 22636.71,
+        "loom": 29491.627659574468
+      },
+      "schemaCharactersEachRequest": 20812,
+      "interpretation": "Fewer requests do not imply less accumulated input: observed request count factor0.94 times provider-measured mean input factor1.210234 equals total input factor1.137620. Loom actual system and replayed histories are larger on average. Characters diagnose structure only; they do not estimate tokens or isolate protocol causality."
+    },
+    "protocolProbe": {
+      "arm": "loom",
+      "round": 1,
+      "generation": 1,
+      "tool": "bash",
+      "readsEnvironmentKeys": ["RAH_FROM_SEQ", "RAH_TO_SEQ", "RAH_WORKER_CLI"],
+      "workerApiCall": false,
+      "observedGenerationTokens": {
+        "input": 9379,
+        "cached": 640,
+        "output": 188,
+        "reasoning": 64
+      },
+      "interpretation": "Model-visible protocol environment exploration is additional behavior despite zero Worker API calls. These are the whole generation counts, not an identifiable incremental charge; all remain in totals."
+    },
+    "causality": "Different business implementations/history remain stochastic. Do not subtract their costs or attribute the entire difference to protocol. Character counts never estimate tokens.",
+    "statisticalScope": "One CLI/model and one paired trajectory; no five-CLI/model, multi-instance, or distribution-wide efficiency verdict. Alternating arm order does not remove cache/order confounding.",
+    "gateScope": "Functional and request-token accounting acceptance only for this full workload; no blanket contract §6 pass, latency guarantee, or default-production enablement."
+  },
+  "freeAdvances": {
+    "claude": {
+      "result": "Direct native persistent stream-json with matched product tool policy versus unmodified product warm mode: two turns per arm, six actual localhost requests have identical full tool schemas, current toolCount17; standing/memory/session/final markers verified.",
+      "evidence": "claude-matched-mode.json",
+      "limit": "New matched-mode control; not unchanged ordinary cold/default CLI and not paid model quality/cost evidence."
+    },
+    "codex": {
+      "result": "Real configuration/source/history reveal builtin openai ChatGPT route and a historical WS attempt; simple endpoint HTTP proxy is not representative. Native OTel HTTP free scenario links two attempts by parent spans, first with missing usage. Five offline verifier tests pass.",
+      "evidence": ["codex-transport-research.json", "codex-otel-free.json"],
+      "limit": "WS/ChatGPT capture, complete sampling and exporter flush unproven. Request coverage unknown; no Codex paid admission."
+    }
+  },
+  "cleanup": {
+    "native": {
+      "launchCount": 12,
+      "exitReceiptCount": 12,
+      "missingExitReceipts": 0,
+      "ownedProcessesStillAlive": 0,
+      "nonzeroExitReceipts": []
+    },
+    "loom": {
+      "launchCount": 8,
+      "exitReceiptCount": 7,
+      "missingExitReceipts": 1,
+      "ownedProcessesStillAlive": 0,
+      "nonzeroExitReceipts": []
+    },
+    "daemonExits": [
+      {
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "temporaryProviderConfigsRemoved": true
+  },
+  "verification": {
+    "frozenFilesBeforeAndAfter": 3642,
+    "rootVerifiedClaudeRawRequestHashesAndSchemas": 6,
+    "rootOtelTests": 5,
+    "rootOtelFileHashes": 9,
+    "repositoryScope": "Documentation and sanitized evidence only. Product source and formal deployment were not changed by this batch."
+  },
+  "nextWork": [
+    {
+      "priority": 1,
+      "work": "Use a prospectively frozen Claude matched-mode long workload to add an independent CLI/model result; include v4 evaluator and exact actual request schema checks."
+    },
+    {
+      "priority": 2,
+      "work": "Resolve Codex native diagnostic sampling/flush and WS association evidence while preserving ordinary CLI provider/auth/transport; keep unknown coverage visible."
+    },
+    {
+      "priority": 3,
+      "work": "Advance Kimi/Pi real product integration and approved model gates separately; no OpenCode result substitutes for them."
+    },
+    {
+      "priority": 4,
+      "work": "Only after cross-CLI/multi-model evidence choose targeted context experiments; this one trace does not justify a broad architecture rewrite."
+    }
+  ]
+}

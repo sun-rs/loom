@@ -1,0 +1,50 @@
+{
+  "scope": "Original private evidence bytes before public formatting; transformations explicitly named",
+  "files": {
+    "opencode-independent.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-p160/handoff-audit/public-evidence.json",
+      "sourceSha256": "3ee95abb7acf8a5302e55df76adcfdc3b50454c1678e1ef3b7d452dc73b67663"
+    },
+    "opencode-runner-audit.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-p160/handoff-draft/p160-independent-final.json",
+      "sourceSha256": "38fd69de09cb4541132cf1f81e87137b5f35490f748be72559df0dc50bf478a8"
+    },
+    "opencode-plan.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-p160/paid-plan.json",
+      "sourceSha256": "906c40983bb550ab882f8b41688aab8d66bdb7df3e452130469095bf1149410a"
+    },
+    "opencode-free-preflight.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-p160/free-preflight-evidence.json",
+      "sourceSha256": "5eb3e03d4defa152024a4026934b3aedd58fee70d896eda62862f488051aaeec"
+    },
+    "opencode-admission-review.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-p160/handoff-audit/admission-review.json",
+      "sourceSha256": "2b7baac103ec34300e41eff76cc319707621ce881b7874c641b1d587529823aa"
+    },
+    "claude-matched-mode.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-claude-tool-parity-review/free-public-evidence.json",
+      "sourceSha256": "da071d6ba4d4a66ecf79ccfdc75c598e400d276f49fd0416fa4781704a2c3a22"
+    },
+    "claude-design.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-claude-tool-parity-review/design.json",
+      "sourceSha256": "9f87135cdce7fe29691f2bb103e39ecd700e55c68985b996a7e95bf85e754cd9"
+    },
+    "claude-historical-mismatch.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-claude-tool-parity-review/historical-cold-red.json",
+      "sourceSha256": "75cb9155508747f787c3e54831e1a9308d7956224e6f7809a2580de93174e189"
+    },
+    "codex-transport-research.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-codex-transport-fidelity/transport-research.json",
+      "sourceSha256": "7faafd103d31c858cf35a1f05b4f6bd0b9fe0ae7fea1c43d6af3bcfcc5992b08"
+    },
+    "codex-otel-free.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-codex-otel-free/public-evidence.json",
+      "sourceSha256": "cdd777862bbb9caef9db41ea95dbf88b25fa447b7621d91fc25819c5a1415e01"
+    },
+    "opencode-request-structure.json": {
+      "source": "/Users/sun/.loom/reviews/2026-10-09-opencode-p160/handoff-draft/p160-request-structure.json",
+      "sourceSha256": "2176f83484af433d1787d928ede93db969bf7c1cf7d776be55828254572fc3a2",
+      "transformation": "rows omitted; all other original fields preserved; explicit provenance added"
+    }
+  }
+}

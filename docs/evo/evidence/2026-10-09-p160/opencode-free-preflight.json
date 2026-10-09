@@ -1,0 +1,220 @@
+{
+  "task": "OpenCode ordinary native stdin transport actual CLI proof",
+  "status": "passed free two rounds per arm",
+  "paidCalls": 0,
+  "cliVersion": "1.18.35",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "run": "1791547436323-paid-runner-free",
+  "startedAt": "2026-10-09T12:03:56.323Z",
+  "finishedAt": "2026-10-09T12:04:10.368Z",
+  "sameSessionEachArm": true,
+  "actualUpstreamRequests": 8,
+  "exactNativeBusinessTextInitialAndResume": true,
+  "sameTenToolsEveryRequest": true,
+  "productRoleAndNativeFinalStandingRetained": true,
+  "probe": "Original fixture tasks only; no added transport probe. Exact native provider user text and verbatim product business body verified.",
+  "memory": [
+    {
+      "arm": "native",
+      "round": 1,
+      "mechanism": "nativeMemoryVersionEvidence executed before spawn; --pure and both disable flags injected by frozen private wrapper",
+      "launchEvidenceSha256": "154045e234395bbf0f3f61c0be3ef85a39e761278accc20bf5f19792144a605c"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "mechanism": "nativeMemoryVersionEvidence executed before spawn; --pure and both disable flags injected by frozen private wrapper",
+      "launchEvidenceSha256": "625bccf57ac71f849278e42772d9cb03886034e337d1061abcc468f6d63b30c7"
+    },
+    {
+      "arm": "loom",
+      "launchEvidenceSha256": "e9dd6d7395b951fd65edd2b31131bab7010714a8a23fd27e574935898e70c3df",
+      "records": [
+        {
+          "provider": "opencode",
+          "version": "1.18.35",
+          "memoryPolicy": {
+            "provider": "opencode",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "1.18.35",
+            "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3"
+          },
+          "evidence": "actual-guarded-launch-options/v1"
+        }
+      ]
+    }
+  ],
+  "quality": {
+    "native": [true, false],
+    "loom": [true, false],
+    "explanation": "Fake provider deliberately solves R1 then leaves R2 invalid. False R2 is preserved, no business-quality or cost claim."
+  },
+  "cleanup": {
+    "recordedPidsExited": 21,
+    "temporaryProviderConfigsRemoved": true,
+    "serversClosedByAwaitedRunner": true
+  },
+  "requests": [
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "687d114bd8d89521675e151857774a6f5b7fc73378b0a7f8ac49e5ad7e360539",
+      "responseSha256": "6a54825403c847300882b939f21fe7bf68bed2ef7be9b3da5b3b0b4c7feb4db2",
+      "businessSha256": "b041be8922524247e0b2c1b5291832bee0e624110271ff9523c368ed95a5547d",
+      "businessCharacters": 1044,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "76ed2bc8bbf65099be371054b59c0e1083761e640ae0e729dffe7c3d0c85c92f",
+      "responseSha256": "20ee367be7197c1f8a1760c94031b516d1a985877e2b012038bd7a556e923951",
+      "businessSha256": "b041be8922524247e0b2c1b5291832bee0e624110271ff9523c368ed95a5547d",
+      "businessCharacters": 1044,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "e50d3dae946657e3a6f217d3b7aa2234c8ef9eb55c494bea97d12c5084a08841",
+      "responseSha256": "b441e21ebe09a918baecda2aff0a983611d2ddf9ea2a4cf7cb80d1e0bd4f39fa",
+      "businessSha256": "8daa2e5ae2eae02dda8f3c3f1166bbf0449276fbf468a611cb5408e95b40fcb3",
+      "businessCharacters": 445,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "14b0c95c7c26ed893bbf075dc709fb8fe8960cb7cb79176cf002fccbe5341f45",
+      "responseSha256": "2ca3edef76950657ee30266cc12d0662dd0a14a58b14d68fdc7bed0052d3a711",
+      "businessSha256": "8daa2e5ae2eae02dda8f3c3f1166bbf0449276fbf468a611cb5408e95b40fcb3",
+      "businessCharacters": 445,
+      "nativeUserExact": true,
+      "loomBusinessVerbatimInsideEnvelope": false,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "cbe4d78274e0c931242c85151fc093a680087c7e81431b60cb7b0c720c592dd1",
+      "responseSha256": "66b9852469b17f9cb3be627c258ea15d8cb53d441c8296b37cc7e2d39c859c86",
+      "businessSha256": "b041be8922524247e0b2c1b5291832bee0e624110271ff9523c368ed95a5547d",
+      "businessCharacters": 1044,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "6100a68dc575332ba50de6bbe1317b50b4555cf719875ffef30112d4ddc55825",
+      "responseSha256": "cbbeae4676edd25cc01b9bac4027fd94f9ca98277c02dafc9f47aa564c3980eb",
+      "businessSha256": "b041be8922524247e0b2c1b5291832bee0e624110271ff9523c368ed95a5547d",
+      "businessCharacters": 1044,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "5bfca1359fd73196fd6d877668401314687acc9cd4bf8cb17f46be838cb61515",
+      "responseSha256": "6503181006b1a5e7ac7bbc7499ba296dc33fba1bcbd265f092a4ceb2f4e51680",
+      "businessSha256": "8daa2e5ae2eae02dda8f3c3f1166bbf0449276fbf468a611cb5408e95b40fcb3",
+      "businessCharacters": 445,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "26185af5dc35935cc602d95e83fc9c44ebadaf221db967c9e1e973075a8a1049",
+      "responseSha256": "d01ccd332bc07362767ccedeeaa6f62d01e7bcff1b16b7dd60db9f65f7900936",
+      "businessSha256": "8daa2e5ae2eae02dda8f3c3f1166bbf0449276fbf468a611cb5408e95b40fcb3",
+      "businessCharacters": 445,
+      "nativeUserExact": false,
+      "loomBusinessVerbatimInsideEnvelope": true,
+      "toolSchemaSha256": "14c8761b2e86377922ed933ad86fa0f0789f57d69affac1a6a6eeafe4635f5bd"
+    }
+  ],
+  "sources": [
+    {
+      "name": "paid-run.mjs",
+      "sha256": "63a10330287eb4d16309ff9b625b9362b59e1c4e8669675795e9a2a9647e472a"
+    },
+    {
+      "name": "native-turn.mjs",
+      "sha256": "3725b50b2364cdd50b24b91f5cbfb4c6edb350e5b6acd9f7642e5b58ccf5a745"
+    },
+    {
+      "name": "wrapper.mjs",
+      "sha256": "b20d7c013cf316d07750c30823c06402bc45b9b5961f5fbbce70f179beead008"
+    },
+    {
+      "name": "request-admission.mjs",
+      "sha256": "d3c315860149f78670aaf57abfc2ec965dc928f8bcdc55e1d2d6593b90cd17d7"
+    },
+    {
+      "name": "expected-tools.json",
+      "sha256": "c91fc96592dc76eb0a73f711b5768275b82178701f15ec57e908e7d5ac4aa73d"
+    },
+    {
+      "name": "product-arm.mjs",
+      "sha256": "74efe8b0c6892df40d2ef1891b0e79c21f3b8d6c598dfd10f32bb054276f3afa"
+    },
+    {
+      "name": "official/opencode-usage.mjs",
+      "sha256": "8db56bf522214db1c678bd522b26c7470a0a91b9c8d2887c7d35b2975390177a"
+    },
+    {
+      "name": "official/native-opencode.mjs",
+      "sha256": "d5a87365a5bf150ba8bae6f2bb12bcb496c0cb4abec43569b0ccbfed937e81b0"
+    },
+    {
+      "name": "official/native-memory-version.mjs",
+      "sha256": "8032195cfa16e3f285d40f5e7d4c69b0fc25124a648c9fd43b308a37916a62f6"
+    }
+  ],
+  "resultSha256": "e0c9bc4d325895412476addb4cde8bb9969a3336fce1ceb2a5123ab938a4eb9c",
+  "businessPromptsSha256": "331f96bb36aaea109780da57d34b8435d7e1a60ae28ebc5b1b0f3f9a4ce5ea00",
+  "verificationCommand": "node --experimental-strip-types paid-run.mjs --fake --two; python3 audit.py",
+  "limitations": [
+    "No paid-provider request. Synthetic usage is not cost evidence.",
+    "Same exact business text does not make total system/user envelopes identical; Loom standing guidance remains.",
+    "Private P157 helper adapted to existing official promptTransport stdin argument generator; no product source changed.",
+    "OpenCode memory policy is exact-version audited not-applicable plus isolation switches, not a transcript memory_mode field."
+  ],
+  "fixtureComposition": {
+    "manifestSha256": "62c4083ace3d4ee9c58f21cde2d2108c28432e30afca07359f43e3d2c6ed050c",
+    "filesVerified": 14,
+    "actualCaptureEntryPoint": "fixture-v4/capture.py",
+    "all4CaptureInvocationsVerified": true,
+    "originalTaskTextNoProbe": true
+  },
+  "negativeAdmission": {
+    "missingPaidAdmissionRejectedBeforeCli": true,
+    "missingAdmissionLogSha256": "f00172476625e8483416a4e92171880697c32477efe60cf50f6c4470ea1bbabb",
+    "requestAdmissionTestsPassed": 3,
+    "requestAdmissionLogSha256": "4e413aa747bfa531730bab3354d90c53936d26d4b7f06447669a64155607f5e8"
+  },
+  "realConnectionOfflineCheck": "Expected provider SDK, HTTPS base, configured low binding and API credential presence verified without forwarding or publishing secrets."
+}

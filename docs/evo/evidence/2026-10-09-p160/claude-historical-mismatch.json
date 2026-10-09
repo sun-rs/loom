@@ -1,0 +1,7 @@
+{
+  "status": "expected-mismatch-reproduced",
+  "nativeTools": 20,
+  "productTools": 16,
+  "source": "P153 actual prompt_snapshot",
+  "notNewProviderRun": true
+}
