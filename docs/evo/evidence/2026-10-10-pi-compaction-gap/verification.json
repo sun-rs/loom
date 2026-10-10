@@ -1,0 +1,16 @@
+{
+  "scope": "Pi current-turn compaction coverage gap; no precise compaction aggregate accounting added",
+  "checks": {
+    "npm run check": 0,
+    "npm run format:check": 0,
+    "git diff --check": 0,
+    "targetedTests": 18
+  },
+  "logSha256": {
+    "check": "bc00b12e0d38b575307829c2a73a1f680d3d25acf014800933827924dc7d4277",
+    "format": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  },
+  "paidCalls": 0,
+  "deployment": "pending separate receipt",
+  "history": "P181 raw totals unchanged; old RunAttempt records not rewritten"
+}

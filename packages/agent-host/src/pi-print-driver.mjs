@@ -173,6 +173,17 @@ async function main() {
     stdio: ["pipe", "pipe", "pipe"],
     shell: false,
   });
+  let compactionGap = false;
+  const markCompactionGap = () => {
+    if (compactionGap) return;
+    compactionGap = true;
+    // Native compaction usage is aggregate, not a proven response generation.
+    usage.emit({
+      provider: PROVIDER,
+      reason: "parse_error",
+      observedAt: new Date().toISOString(),
+    });
+  };
   let stdout = "",
     complete = true,
     stopping = false,
@@ -196,6 +207,8 @@ async function main() {
       buffer = buffer.slice(i + 1);
       try {
         const f = JSON.parse(l);
+        if (f.type === "compaction_start" || f.type === "compaction_end")
+          markCompactionGap();
         if (f.type === "message_end" && f.message?.role === "assistant") {
           const current = piUsageFrames([f.message], {});
           for (const u of [...current.generations, ...current.gaps])
@@ -307,6 +320,15 @@ async function main() {
       reasoning: o.reasoning,
       exit,
     });
+    // inspectPiTurn has verified the exact prefix, session, and current branch.
+    if (
+      after.text
+        .slice(before?.text.length ?? 0)
+        .trim()
+        .split("\n")
+        .some((line) => JSON.parse(line).type === "compaction")
+    )
+      markCompactionGap();
     emit({
       protocol: "rah-delivery-accepted/v1",
       provider: PROVIDER,

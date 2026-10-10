@@ -27,4 +27,6 @@ Catalog 使用离线、无 prompt 的只读 RPC，禁用探测阶段的扩展、
 
 模型配置并发变更另有明确边界：Pi 原生 `--model` 先精确匹配，失败后可能模糊匹配相似名称。Host 校验 catalog 绑定与最终实际模型，但不能撤回已经发生的原生请求。成本门禁必须冻结模型配置身份、启动前检查精确 catalog、运行后复核；本接入不宣称配置漂移时也保证零次替代模型请求。离线合成 resolver 反例已保留，不通过增加提示词解决。
 
-P181 真实长任务补充：共同前8对raw全消费input为原生2.258894倍、output为1.748458倍；输出预算止损，不能称完整12对验收。第8轮发生正常原生压缩，两个原始响应的82296input/3108output与原生compaction聚合一致，但当前driver只采assistant usage，Kernel未计入这笔量，也未主动标gap。这是产品用量覆盖缺陷；不得把聚合伪装成单个provider response补账。原始全消费核算已经包含这笔费用，压缩只解释该样本输入差额约2.67%，其余仍需沿业务轨迹与累积历史调查。[实测与限制](evidence/2026-10-10-five-cli-admission/pi-p181-review.json)。
+P181 真实长任务补充：共同前8对raw全消费input为原生2.258894倍、output为1.748458倍；输出预算止损，不能称完整12对验收。第8轮发生正常原生压缩，两个原始响应的82296input/3108output与原生compaction聚合一致，但当时driver只采assistant usage，Kernel未计入这笔量，也未主动标gap。这是产品用量覆盖缺陷；不得把聚合伪装成单个provider response补账。原始全消费核算已经包含这笔费用，压缩只解释该样本输入差额约2.67%，其余仍需沿业务轨迹与累积历史调查。[实测与限制](evidence/2026-10-10-five-cli-admission/pi-p181-review.json)。
+
+2026-10-10覆盖修复：AgentHost Pi driver在本轮stdout收到`compaction_start`或`compaction_end`时立即发送既有`parse_error`用量gap；若仅session落盘，则在文件身份、精确追加前缀、session与当前分支验证后检查本轮新增compaction条目。历史条目不污染恢复后的新轮。已知assistant逐响应用量照常保留，gap独立于合法final/交付确认；它表示覆盖未知，不证明已收费，也不把多响应聚合伪造成一个generation。产品仍未具备压缩逐响应完整金额/用量，P181旧记录与全消费倍率不改。五项预期红测后18项专项绿，[实现证据](evidence/2026-10-10-pi-compaction-gap/implementation.json)、[独审](evidence/2026-10-10-pi-compaction-gap/independent-review.json)；全仓与部署状态见现状页。

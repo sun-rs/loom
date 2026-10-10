@@ -179,10 +179,14 @@ test("Pi emits completed generation usage before later process termination", asy
       process.kill(-p.pid, "SIGKILL");
     }
   });
-  p.stdin.end("hang");
+  p.stdin.end("hang compact");
   try {
     await done;
     assert.equal(seen, true);
+    assert.ok(
+      buffer.includes("rah-provider-usage-gap/v1"),
+      "compaction gap must precede later termination",
+    );
     assert.equal(existsSync(join(d, "proof")), false);
   } finally {
     clearTimeout(timeout);
@@ -208,3 +212,52 @@ test("Pi unfinished second generation keeps first known usage and records covera
     rmSync(d, { recursive: true, force: true });
   }
 });
+
+for (const mode of [
+  "compact",
+  "compact start-only",
+  "compact end-only",
+  "compact suffix-only",
+]) {
+  test(`Pi ${mode} marks usage partial without replacing native final or known generations`, () => {
+    const d = mkdtempSync(join(tmpdir(), "pi-driver-"));
+    try {
+      const first = run(d, 1, mode, ["--native-final-text"]);
+      assert.equal(first.p.status, 0, first.p.stderr);
+      assert.equal(JSON.parse(readFileSync(first.proof)).text, "done");
+      const known = first.frames.filter(
+        (f) => f.protocol === "rah-provider-usage/v1",
+      );
+      assert.equal(known.length, 1);
+      assert.equal(known[0].inputTokens, 10);
+      assert.equal(known[0].outputTokens, 2);
+      assert.ok(
+        first.frames.some(
+          (f) =>
+            f.protocol === "rah-provider-usage-gap/v1" &&
+            f.reason === "parse_error",
+        ),
+      );
+      assert.equal(
+        first.frames.filter((f) => f.protocol === "rah-delivery-accepted/v1")
+          .length,
+        1,
+      );
+      const resumed = run(d, 2, "ordinary resumed wake", [
+        "--resume-session",
+        "pi-session",
+        "--native-final-text",
+      ]);
+      assert.equal(resumed.p.status, 0, resumed.p.stderr);
+      assert.equal(JSON.parse(readFileSync(resumed.proof)).text, "done");
+      assert.equal(
+        resumed.frames.filter((f) => f.protocol === "rah-provider-usage-gap/v1")
+          .length,
+        0,
+        "old compaction must not pollute resumed turn",
+      );
+    } finally {
+      rmSync(d, { recursive: true, force: true });
+    }
+  });
+}

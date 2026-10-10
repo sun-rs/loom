@@ -30,6 +30,11 @@ if (rows.length === 1) {
 }
 const user = { role: "user", content: [{ type: "text", text: wake }] };
 add("message", { message: user });
+const compaction = wake.includes("compact");
+if (compaction)
+  add("compaction", {
+    usage: { input: 82296, output: 3108, cacheRead: 0, cacheWrite: 0 },
+  });
 const message = {
   role: "assistant",
   provider: value("--provider"),
@@ -56,6 +61,23 @@ for (const f of [
   rows[0],
   { type: "agent_start" },
   { type: "message_end", message: user },
+  ...(compaction && !wake.includes("suffix-only")
+    ? [
+        ...(wake.includes("end-only")
+          ? []
+          : [{ type: "compaction_start", reason: "threshold" }]),
+        ...(wake.includes("start-only")
+          ? []
+          : [
+              {
+                type: "compaction_end",
+                reason: "threshold",
+                aborted: false,
+                willRetry: false,
+              },
+            ]),
+      ]
+    : []),
   { type: "message_end", message },
   { type: "agent_end", willRetry: false },
   { type: "agent_settled", aborted: false },

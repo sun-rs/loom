@@ -1,0 +1,27 @@
+{
+  "verdict": "no-blocking-findings",
+  "scope": "Read-only source/patch review; no CLI or paid invocation; owner red/green logs not independently rerun.",
+  "sourceHashes": {
+    "packages/agent-host/src/pi-print-driver.mjs": "02fc2befef65ab3003a5bf88d6d93a536e0cd689cbb668b28b501ff06c5b831f",
+    "packages/agent-host/test/pi-print-driver.test.mjs": "e600f55a38b744ee129a5820144dffbf4d04fadb5dc7db9712e09dc511823b3f",
+    "packages/agent-host/test/fixtures/fake-pi-print.mjs": "966d99cf5f96bc45b7e84f2c73b89b126a217efef212edc7d25413edfbea2480"
+  },
+  "invariants": [
+    "Live compaction_start/end emits one existing parse_error usage gap immediately, while known assistant generation usage remains unchanged.",
+    "Aggregate compaction usage is never emitted as a response generation or invented response ID.",
+    "No change to complete flag, native final collector or delivery acceptance; accounting gap does not suppress otherwise valid business final.",
+    "Session suffix fallback occurs after file identity and inspectPiTurn prefix/current-branch/session/input checks; only new suffix compaction rows inspected.",
+    "Historical compaction rows in resumed session cannot contaminate current Run usage.",
+    "Tests cover start/end/start-only/end-only/suffix-only, existing known amount, final proof and ACK evidence, resumed clean turn, and gap delivery before process kill."
+  ],
+  "limits": [
+    "A compaction start may precede model request or extension cancellation. Gap denotes unproven coverage, never proof of additional billed generation.",
+    "No recovery of aggregate compaction totals into canonical per-response ledger; observed sums remain partial.",
+    "Hard kill before any observable event still cannot reveal unreported work."
+  ],
+  "sourceSemantics": {
+    "installedPrintMode": "session.subscribe emits every event via toJsonEvent in JSON mode",
+    "installedAgentSession": "compaction_start occurs before extension cancellation and actual generation",
+    "protocol": "parse_error means usage payload could not be proven; does not invent generation"
+  }
+}

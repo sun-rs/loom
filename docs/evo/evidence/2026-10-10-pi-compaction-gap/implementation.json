@@ -1,0 +1,27 @@
+{
+  "status": "implemented-targeted-tests-passed-awaiting-lead-whole-check-and-deployment",
+  "owner": "AgentHost Pi driver, existing usage-gap protocol",
+  "semantics": "Current live compaction start/end or validated new session suffix marks coverage unknown once; does not prove a charge or invent aggregate generation. Known assistant usage and normal native final/delivery acceptance unchanged.",
+  "red": {
+    "log": "red.log",
+    "intendedFailures": 5
+  },
+  "green": {
+    "log": "targeted-final.log",
+    "passed": 18
+  },
+  "formatAndDiffCheck": true,
+  "paidCalls": 0,
+  "committed": false,
+  "sourceHashes": {
+    "packages/agent-host/src/pi-print-driver.mjs": "0713b1a68ec50358015c5d789aad6be0b3f0fe6ae1bffbe4d1c1beee50e5fabb",
+    "packages/agent-host/test/pi-print-driver.test.mjs": "e600f55a38b744ee129a5820144dffbf4d04fadb5dc7db9712e09dc511823b3f",
+    "packages/agent-host/test/fixtures/fake-pi-print.mjs": "966d99cf5f96bc45b7e84f2c73b89b126a217efef212edc7d25413edfbea2480"
+  },
+  "evidenceHashes": {
+    "red.log": "a2c7a6c68cbc33bbc876cf894c77d04759911d7ea2a2f4e78c236ad53e711c81",
+    "green.log": "c1ac6e1344d694f9cf85082e1a625d4cb1dc70bdfa0ef12170a2e6e7c8d238c8",
+    "targeted-final.log": "de7dbc4c90408471cd50ff93cbc9259af2433de5fdef7bd1c02ff74b251aede1"
+  },
+  "suffixFallback": "After same file identity and inspectPiTurn exact prefix/current session/current branch verification; only appended entries considered. If verification fails existing evidence error path already emits gap."
+}
